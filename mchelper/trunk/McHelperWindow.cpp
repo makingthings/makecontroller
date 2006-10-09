@@ -20,6 +20,7 @@
 #include <QFileDialog>
 #include <QSettings>
 #include <QHostAddress>
+#include <QMessageBox>
 
 McHelperWindow::McHelperWindow( QApplication* application ) : QMainWindow( 0 )
 {
@@ -72,6 +73,9 @@ McHelperWindow::McHelperWindow( QApplication* application ) : QMainWindow( 0 )
 	connect( fileSelectButton, SIGNAL( clicked() ), this, SLOT( fileSelectButtonClicked() ) );
 	connect( uploadButton, SIGNAL( clicked() ), this, SLOT( uploadButtonClicked() ) );
 	
+	// setup the menu
+	connect( actionAboutMchelper, SIGNAL( triggered() ), this, SLOT( about( ) ) );
+	
 	uploaderThread = 0;
 	uploaderThread = new UploaderThread( application, this, samba );
 	samba->setMessageInterface( uploaderThread );
@@ -96,7 +100,10 @@ void McHelperWindow::uploadButtonClicked()
 	strcpy( fileNameBuffer, fileSelectText->currentText().toAscii().constData() );
 	if( strlen( fileNameBuffer) < 0 )
 		return;
-		
+	
+	if( usb->usbIsOpen( ) )
+	  usb->usbClose( );
+
 	uploaderThread->setBinFileName( fileNameBuffer );
   
   // If the check box is checked, also flip the bit so that the board boots from flash on reboot
@@ -366,4 +373,11 @@ void McHelperWindow::uiLessUpload( char* filename, bool bootFlash )
 		uploaderThread->setBootFromFlash( true );
 	
 	flash( );
+}
+
+// actions for the menu
+void McHelperWindow::about( )  // set the version number here.
+{
+  QMessageBox::about(this, tr("mchelper v1.1.01"),
+  tr("<b>MakingThings</br> 2006 \n\nwww.makingthings.com") );
 }

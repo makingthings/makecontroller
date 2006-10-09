@@ -214,6 +214,21 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
 				cont = true;
         break;
       }
+			case 'b':
+			{
+			  int blob_len = *(int*)data;  // the first int should give us the length of the blob
+				data += sizeof( int );  // step to the blob contents
+				int i;
+				for( i = 0; i < blob_len; i++ )
+				{
+					message( 1, "%x", *data );
+					data++;
+				}
+				message( 1, " " );
+				count++;
+				cont = true;
+				break;
+			}
     }
   }
 	message( 1, "\n" );
