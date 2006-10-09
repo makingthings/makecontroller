@@ -433,8 +433,20 @@
      <height>22</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile" >
+    <property name="title" >
+     <string>File</string>
+    </property>
+    <addaction name="actionAboutMchelper" />
+   </widget>
+   <addaction name="menuFile" />
   </widget>
   <widget class="QStatusBar" name="statusbar" />
+  <action name="actionAboutMchelper" >
+   <property name="text" >
+    <string>About mchelper...</string>
+   </property>
+  </action>
  </widget>
  <pixmapfunction></pixmapfunction>
  <tabstops>

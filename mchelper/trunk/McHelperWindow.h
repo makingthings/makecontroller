@@ -76,6 +76,9 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void writeUsbSettings();
 		
 		bool noUI;
+  
+	public slots:
+	  void about( );
 
 	private slots:
 		void fileSelectButtonClicked();
