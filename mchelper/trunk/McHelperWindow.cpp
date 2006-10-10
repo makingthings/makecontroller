@@ -38,7 +38,7 @@ McHelperWindow::McHelperWindow( QApplication* application ) : QMainWindow( 0 )
 	oscUsb = new Osc( );
 	samba = new Samba( );
 	usb = new PacketUsbCdc( );
-	
+	 
 	oscUdp->setInterfaces( udp, this, application );
 	oscUdp->setPreamble( "OscUdp" );
 	oscUsb->setInterfaces( usb, this, application );
@@ -72,6 +72,7 @@ McHelperWindow::McHelperWindow( QApplication* application ) : QMainWindow( 0 )
 	//setup the pushbuttons
 	connect( fileSelectButton, SIGNAL( clicked() ), this, SLOT( fileSelectButtonClicked() ) );
 	connect( uploadButton, SIGNAL( clicked() ), this, SLOT( uploadButtonClicked() ) );
+	connect( closeButtonUsb, SIGNAL( clicked() ), this, SLOT( usbCloseClicked() ) );
 	
 	// setup the menu
 	connect( actionAboutMchelper, SIGNAL( triggered() ), this, SLOT( about( ) ) );
@@ -123,19 +124,26 @@ void McHelperWindow::commandLineEvent( )
 	mainConsole->insertPlainText( "\n" );
   oscUdp->uiSendPacket( cmd );
 	commandLine->clearEditText();
+	mainConsole->ensureCursorVisible( );
 	writeUdpSettings( );
 }
 
 void McHelperWindow::commandLineUsbEvent( )
 {
   QString cmd = commandLineUsb->currentText();
-	mainConsole->insertPlainText( "OscUsb< ");
-	mainConsole->insertPlainText( cmd );
-	mainConsole->insertPlainText( "\n" );
+  mainConsole->insertPlainText( "OscUsb< ");
+  mainConsole->insertPlainText( cmd );
+  mainConsole->insertPlainText( "\n" );
   oscUsb->uiSendPacket( cmd );
 	
-	commandLineUsb->clearEditText();
-	writeUsbSettings();
+  commandLineUsb->clearEditText();
+  mainConsole->ensureCursorVisible( );
+  writeUsbSettings();
+}
+
+void McHelperWindow::usbCloseClicked()
+{
+  usb->close( );	
 }
 
 void McHelperWindow::newLocalPort( )
@@ -378,6 +386,8 @@ void McHelperWindow::uiLessUpload( char* filename, bool bootFlash )
 // actions for the menu
 void McHelperWindow::about( )  // set the version number here.
 {
-  QMessageBox::about(this, tr("mchelper v1.1.01"),
-  tr("<b>MakingThings</br> 2006 \n\nwww.makingthings.com") );
+  QMessageBox::about(this, tr("About mchelper"),
+  tr("Make Controller Helper - version 1.1\n\n"
+  "Making Things 2006\n\n"
+  "www.makingthings.com") );
 }

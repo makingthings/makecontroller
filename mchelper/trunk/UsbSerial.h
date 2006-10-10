@@ -24,6 +24,7 @@
 
 #include <QtGlobal>
 #include "MessageInterface.h"
+#include <QMutex>
 
 //Windows-only
 #ifdef Q_WS_WIN
@@ -73,6 +74,7 @@ class UsbSerial
 		bool deviceOpen;
 		bool readInProgress;
 		bool blocking;               // whether it's blocking or not
+		QMutex usbOpenMutex;
 				
 		//Windows only
 		#ifdef Q_WS_WIN
@@ -82,7 +84,7 @@ class UsbSerial
 			int testOpen( TCHAR* deviceName );
 			int openDevice( TCHAR* deviceName );
 			
-			HANDLE deviceHandle;		     // the device handle
+					     // the device handle
 			OVERLAPPED overlappedRead;
 			char readBuffer[512];
 			OVERLAPPED overlappedWrite;
@@ -97,6 +99,11 @@ class UsbSerial
 			
 			int FindUsbSerialDevice(cchar** dest, int index);
 		#endif
+		
+	protected:
+	#ifdef Q_WS_WIN
+	HANDLE deviceHandle;
+	#endif
 };
 
 #endif // USBSERIAL_H

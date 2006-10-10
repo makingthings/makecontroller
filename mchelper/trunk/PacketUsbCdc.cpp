@@ -39,9 +39,15 @@ void PacketUsbCdc::run()
 	bool packetStarted = false;
   
 	open( );
-	while( usbIsOpen( ) )
+	while( 1 )
 	{
+
+	  if( !usbIsOpen() )
+	    open();
+	    
 	  UsbStatus readResult = usbRead( &justGot, 1 );  //we're only ever going to read 1 character at a time
+	  //messageInterface->message( 1, "usb> Just read...usb open? %d, handle? %d\n", usbIsOpen(), deviceHandle );
+
 		if( readResult == GOT_CHAR ) //we got a character
 		{
 		  switch( justGot )
@@ -97,14 +103,13 @@ void PacketUsbCdc::run()
 		}
 		else
 		{
-		  #ifdef Q_WS_WIN
-	    Sleep( 10 );
-			#endif
-			#ifdef Q_WS_MAC
-			sleepMs( 10 );
-			#endif
+		  if( usbIsOpen() )
+		    this->sleepMs( 10 );
+		  else
+		    this->sleepMs( 1000 );
 		}
 	}
+	// should never get here...
 	close( );
 }
 
@@ -188,7 +193,7 @@ int PacketUsbCdc::receivePacket( char* buffer, int size )
 		else
 		{
 			delete packet;
-			return 0;
+			return 0; 
 		}
 	}
 }
@@ -197,6 +202,16 @@ void PacketUsbCdc::setInterfaces( PacketReadyInterface* packetReadyInterface, Me
 {
 	this->messageInterface = messageInterface;
 	this->packetReadyInterface = packetReadyInterface;
+}
+
+void PacketUsbCdc::sleepMs( int ms )
+{
+  #ifdef Q_WS_WIN
+  Sleep( ms );
+  #endif
+  #ifdef Q_WS_MAC
+  sleepMs( ms );
+  #endif
 }
 
 
