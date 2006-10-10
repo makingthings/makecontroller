@@ -51,6 +51,7 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
     private:
 		  QList<OscUsbPacket*> packetList;
 		  QMutex packetListMutex;
+		  void sleepMs( int ms );
 			int packetCount;
 			int packetState;
 			enum State { START, DATASTART, DATA };

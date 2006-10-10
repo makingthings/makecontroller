@@ -16,6 +16,7 @@
 *********************************************************************************/
 
 #include "UsbSerial.h"
+#include <QMutexLocker>
 
 
 UsbSerial::UsbSerial( )
@@ -29,6 +30,8 @@ UsbSerial::UsbSerial( )
 
 UsbSerial::UsbStatus UsbSerial::usbOpen( )
 {
+  QMutexLocker locker( &usbOpenMutex );
+  
   // Linux Only
   #if (defined(Q_WS_LINUX))
 	  printf( "OSC over USB not implemented in Linux\n" );
@@ -78,8 +81,11 @@ UsbSerial::UsbStatus UsbSerial::usbOpen( )
 	
   //Windows-only
 	#ifdef Q_WS_WIN
+		if( deviceOpen )  //if it's already open, do nothing.
+		  return ALREADY_OPEN;
 		TCHAR* openPorts[32];
 		int foundOpen = ScanEnumTree( TEXT("SYSTEM\\CURRENTCONTROLSET\\ENUM\\USB"), openPorts);
+		//messageInterface->message( 1, "Found open: %d\n", foundOpen );
 		int i;
 		for( i = 0; i < foundOpen; i++ )
 		{
@@ -92,7 +98,11 @@ UsbSerial::UsbStatus UsbSerial::usbOpen( )
 					deviceOpen = true;
 					return OK;
 				}
+				//else
+				  //messageInterface->message( 1, "Found device but could not open: %ls\n", openPorts[i] );
 			}
+			//else
+			  //messageInterface->message( 1, "Did not find any potential ports\n" );
 		}
 	  return NOT_OPEN;
 	#endif //Windows-only UsbSerial::open( )
@@ -187,7 +197,14 @@ UsbSerial::UsbStatus UsbSerial::usbRead( char* buffer, int length )
   
   // make sure we're open
   if( !deviceOpen )
-    return NOT_OPEN;
+  {
+    UsbStatus portIsOpen = usbOpen( );
+    if( portIsOpen != OK )
+	{
+	  usbClose( );
+	  return NOT_OPEN;
+	}
+  }
     
   retval = OK;  
   readInProgress = false;
@@ -201,7 +218,11 @@ UsbSerial::UsbStatus UsbSerial::usbRead( char* buffer, int length )
   	DWORD lastError = GetLastError();
 		// messageInterface->message( 1, "USB Read Error: %d \n", lastError );
 	  if ( lastError != ERROR_IO_PENDING)     // read not delayed?
+	  {
+	    usbClose();
+	    //messageInterface->message( 1, "Closed trying to read the file\n" );
 	    retval = UNKNOWN_ERROR;
+	  }
 	  else
 	    readInProgress = true;
   }
@@ -224,11 +245,13 @@ UsbSerial::UsbStatus UsbSerial::usbRead( char* buffer, int length )
 		    //FIXME is there anything else i need to clean up?
 		    // reset events? terminate anything?
 		    usbClose(  );
+		    //messageInterface->message( 1, "Closed after wait failed\n" );
 		    retval = UNKNOWN_ERROR; //( 100 );
 	      break;
 		  case WAIT_TIMEOUT:
 			  //if( debug > 1 ) TRACE_MESSAGE( "timeout occurred while waiting for event\n" );
 		    retval = NOTHING_AVAILABLE; //( TELEO_E_NOTHING );
+		    //messageInterface->message( 1, "Nothing available\n" );
 		    break;
 		  case WAIT_OBJECT_0:
 	  		// check to see if the pending operation completed
@@ -237,14 +260,18 @@ UsbSerial::UsbStatus UsbSerial::usbRead( char* buffer, int length )
 	        ///FIXME is there anything else i need to clean up?
 		      // reset events? terminate anything?
 		      usbClose( );
+		      SetEvent( overlappedRead.hEvent );
+		      //messageInterface->message( 1, "Closed because error getting overlapped result\n" );
 		      retval = IO_ERROR;
+		      break;
 				}
-		    // messageInterface->message( 1, "USB read I: %c numx %d\n", *buffer, numTransferred );
+		    //messageInterface->message( 1, "Successfully got overlapped result\n" );
   			retval = GOT_CHAR;
 			  break; 
 		  case WAIT_ABANDONED:
 		  default:
 		    usbClose( );
+		    //messageInterface->message( 1, "Closed - wait abandoned or default\n" );
 		    retval = IO_ERROR;
 			  break;
 		} // end of switch
@@ -282,7 +309,7 @@ UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
 	  return NOTHING_AVAILABLE;
   else
   {
-	  printf("usbWrite: write failed, errno %d", errno);
+	  //printf("usbWrite: write failed, errno %d", errno);
     usbClose( );
     return IO_ERROR;
   }
@@ -298,11 +325,14 @@ UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
   UsbSerial::UsbStatus retval = OK;
   DWORD numWritten;
     
-  if( !deviceOpen )  //then try to open it
+  if( !deviceOpen )
   {
     UsbStatus portIsOpen = usbOpen( );
-	  if( portIsOpen != OK )
-	    return NOT_OPEN;
+    if( portIsOpen != OK )
+	{
+      usbClose( );
+	  return NOT_OPEN;
+	}
   }
   
   overlappedWrite.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -341,17 +371,21 @@ UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
 	    }
 	    else
 	    {
-	    	retval = IO_ERROR;
+	      usbClose( );
+	      retval = IO_ERROR;
 	    }
 	  }
 	  else
+	  {
+	    usbClose( );
 	    retval = IO_ERROR;
+	  }
   }
   
   CloseHandle( overlappedWrite.hEvent );
   return retval;
   
-	#endif //Windows-only UsbSerial::write( )
+  #endif //Windows-only UsbSerial::write( )
 }
 
 UsbSerial::UsbStatus UsbSerial::usbWriteChar( char c )
@@ -375,10 +409,13 @@ int UsbSerial::testOpen( TCHAR* deviceName )
 			0, 
 			0, 
 			OPEN_EXISTING, 
-			FILE_ATTRIBUTE_NORMAL, 0 );
+			FILE_FLAG_OVERLAPPED, 0 );
   
   if ( deviceHandle == INVALID_HANDLE_VALUE )
+  {
+    CloseHandle( deviceHandle );
     return -1;
+  }
 
   // otherwise, we found one.
   // close it again immediately - we were just checking to see if anything was there...
@@ -410,7 +447,10 @@ int UsbSerial::openDevice( TCHAR* deviceName )
 			0 );
   
   if ( deviceHandle == INVALID_HANDLE_VALUE )
-    return -1;
+  {
+  	//messageInterface->message( 1, "Got invalid handle back\n");
+    return -1; 
+  }
 
   // initialize the overlapped structures
   overlappedRead.Offset  = overlappedWrite.Offset = 0; 
@@ -420,7 +460,7 @@ int UsbSerial::openDevice( TCHAR* deviceName )
 
   if (!overlappedRead.hEvent || !overlappedWrite.hEvent )
   {
-	  printf( "Could Not create overlapped events\n");
+	  //messageInterface->message( 1, "Could Not create overlapped events\n");
     return -1;
   }
 
@@ -434,7 +474,7 @@ int UsbSerial::openDevice( TCHAR* deviceName )
   dcb.fAbortOnError = TRUE;
   if( !SetCommState( deviceHandle, &dcb ) )
   {
-	  printf( "SetCommState failed\n");
+	  //messageInterface->message( 1, "SetCommState failed\n");
 	  return -1;
   }
 /*
@@ -457,13 +497,13 @@ int UsbSerial::openDevice( TCHAR* deviceName )
   timeouts.WriteTotalTimeoutConstant = 0;   
   if( ! SetCommTimeouts( deviceHandle, &timeouts ) )
   {
-	  printf( "SetCommTimeouts failed\n");
+	  //messageInterface->message( 1, "SetCommTimeouts failed\n");
 	  return -1;
   }
 
   EscapeCommFunction( deviceHandle, SETDTR );
 
-  deviceOpen = true;
+  //deviceOpen = true;
 
   return 0;
 }
@@ -616,6 +656,7 @@ int UsbSerial::ScanEnumTree( LPCTSTR lpEnumPath, TCHAR** openPorts )
 			{
 				TCHAR* pname;
 				pname = _tcsdup(portinfo.lpPortName);
+				//messageInterface->message( 1, "Found matching registry entry...\n" );
 				// We've found a matching entry in the registry...
 				// Now see if it's actually there by trying to open it
 				int result = testOpen( pname );
