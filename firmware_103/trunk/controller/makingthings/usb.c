@@ -46,7 +46,6 @@ void vUSBCDCTask( void *pvParameters );
   COM: port.  See also the MC Helper codebase for code snippets.
   \todo expanded usb support to include emulation of other kinds of USB device - mouse, 
         keyboard, etc.
-  \todo rename the INF file to make.inf
 * \ingroup Controller
 * @{
 */

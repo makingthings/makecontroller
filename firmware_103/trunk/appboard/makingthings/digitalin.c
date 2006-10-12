@@ -55,8 +55,8 @@ static int DigitalIn_users[ DIGITALIN_COUNT ];
 
 /** \defgroup DigitalIn
 * The Digital In subsystem reads the 8 inputs as digital values - 1 (on) or 0 (0ff).  
-  The 8 inputs can be either controlled as digital inputs by DigitalIn or as
-  analog inputs by /ref Adc.
+  The 8 inputs can be either controlled as digital inputs by  \ref DigitalIn or as
+  analog inputs by \ref AnalogIn.
 * \ingroup AppBoard
 * @{
 */
