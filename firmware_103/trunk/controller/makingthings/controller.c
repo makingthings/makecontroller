@@ -41,8 +41,8 @@
 	To ensure that the software environment for the Controller is consistent, regardless of the interface hardware,
 	the code for the Controller Board has been kept separate from the code for the Application Board to make this as easy
 	as possible:
-	- The <b>ControllerBoard</b> module provides the core routines required for the MAKE Controller Board.
-	- The <b>AppBoard</b> module provides routines that work with the MAKE Application Board, and are often based on or use
+	- The \ref Controller module provides the core routines required for the MAKE Controller Board.
+	- The  \ref AppBoard module provides routines that work with the MAKE Application Board, and are often based on or use
 	code from the ControllerBoard module.
 	
 	\subsection soft_env Software Environment 
