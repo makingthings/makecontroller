@@ -1,0 +1,14 @@
+bin\Release\dotnet.exe
+bin\Release\dotnet.pdb
+obj\Release\ResolveAssemblyReference.cache
+obj\Release\dotnet.csproj.GenerateResource.Cache
+obj\Release\dotnet.exe
+obj\Release\dotnet.pdb
+bin\Debug\dotnet.exe
+bin\Debug\dotnet.pdb
+obj\Debug\ResolveAssemblyReference.cache
+obj\Debug\dotnet.csproj.GenerateResource.Cache
+obj\Debug\dotnet.exe
+obj\Debug\dotnet.pdb
+obj\Release\MakingThings.Properties.Resources.resources
+obj\Debug\MakingThings.Properties.Resources.resources
