@@ -85,10 +85,10 @@ public class MCTest
           int length = udpPacket.ReceivePacket(buffer);
           if (length > 0)
           {
-            ArrayList messages = osc.PacketToOscMessages(buffer, length);
+            ArrayList messages = Osc.PacketToOscMessages(buffer, length);
             foreach (OscMessage om in messages)
             {
-              string message = osc.OscMessageToString(om);
+              string message = Osc.OscMessageToString(om);
               //Console.WriteLine("Received Message: " + message );
               mct.WriteLine("UDP>"+message);
             }
@@ -114,8 +114,8 @@ public class MCTest
       mct.WriteLine("USB<" + text);
       byte[] buffer = new byte[1000];
 
-      OscMessage oscM = osc.StringToOscMessage(text);
-      int length = osc.OscMessageToPacket(oscM, buffer, 1000);
+      OscMessage oscM = Osc.StringToOscMessage(text);
+      int length = Osc.OscMessageToPacket(oscM, buffer, 1000);
       usbPacket.SendPacket(buffer, length);
     }
   }
@@ -129,8 +129,8 @@ public class MCTest
       mct.WriteLine("UDP<" + text );
       byte[] buffer = new byte[1000];
 
-      OscMessage oscM = osc.StringToOscMessage(text);
-      int length = osc.OscMessageToPacket(oscM, buffer, 1000);
+      OscMessage oscM = Osc.StringToOscMessage(text);
+      int length = Osc.OscMessageToPacket(oscM, buffer, 1000);
       udpPacket.SendPacket(buffer, length);
     }
   }
