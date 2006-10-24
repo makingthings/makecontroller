@@ -267,7 +267,7 @@ namespace MakingThings
       return index;
     }
 
-    private int PadSize(int rawSize)
+    private static int PadSize(int rawSize)
     {
       int pad = rawSize % 4;
       if (pad == 0)
