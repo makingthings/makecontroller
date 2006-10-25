@@ -21,6 +21,8 @@
 
 /* Scheduler includes. */
 
+#include "FreeRTOS.h"
+
 #include "timer_internal.h"
 
 #include "AT91SAM7X256.h"
@@ -29,9 +31,15 @@
 extern struct Timer_ Timer;
 
 void Timer_Isr( void ) __attribute__ ((interrupt("IRQ")));
+// void Timer_Isr( void ) __attribute__ ((interrupt(naked)));
 
 void Timer_Isr( void )
 {
+	/* This ISR can cause a context switch.  Therefore a call to the 
+	portENTER_SWITCHING_ISR() macro is made.  This must come BEFORE any 
+	stack variable declarations. */
+	//portENTER_SWITCHING_ISR();
+
   int status = AT91C_BASE_TC0->TC_SR;
   if ( status & AT91C_TC_CPCS )
   {
@@ -126,5 +134,8 @@ void Timer_Isr( void )
 
 	/* Clear AIC to complete ISR processing */
 	AT91C_BASE_AIC->AIC_EOICR = 0;
+
+	/* Do a task switch if needed */
+	//portEXIT_SWITCHING_ISR( false );
 }
 
