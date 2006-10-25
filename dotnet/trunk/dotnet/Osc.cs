@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Text;
 using System.Collections;
+using System.IO;
 using System;
 
 
@@ -20,14 +21,76 @@ namespace MakingThings
    public ArrayList Values;
   }
 
+  public delegate void OscMessageHandler( OscMessage oscM );
+
   /// <summary>
   /// The Osc class provides the methods required to send, receive, and manipulate OSC messages.
   /// </summary>
   public class Osc
   {
-    public Osc()
+    public Osc(PacketExchange oscPacketExchange)
     {
+      OscPacketExchange = oscPacketExchange;
+
+      AddressTable = new Hashtable();
+
+      OscPacketExchange.Open();
+
+      ReadThread = new Thread(Read);
+      ReaderRunning = true;
+      ReadThread.Start();
     }
+
+    private void Read()
+    {
+      while (ReaderRunning)
+      {
+        byte[] buffer = new byte[1000];
+        int length = OscPacketExchange.ReceivePacket(buffer);
+        if (length > 0)
+        {
+          ArrayList messages = Osc.PacketToOscMessages(buffer, length);
+          foreach (OscMessage om in messages)
+          {
+            if (AllMessageHandler != null)
+              AllMessageHandler(om);
+            OscMessageHandler h = (OscMessageHandler)Hashtable.Synchronized(AddressTable)[om.Address];
+            if ( h != null )
+              h(om);
+          }
+        }
+      }
+    }
+
+    public void Send( OscMessage oscMessage )
+    {
+      byte[] packet = new byte[1000];
+      int length = Osc.OscMessageToPacket( oscMessage, packet, 1000 );
+      OscPacketExchange.SendPacket( packet, length);
+    }
+
+    public void Send(ArrayList oms)
+    {
+      byte[] packet = new byte[1000];
+      int length = Osc.OscMessagesToPacket(oms, packet, 1000);
+      OscPacketExchange.SendPacket(packet, length);
+    }
+
+    public void SetAllMessageHandler(OscMessageHandler amh)
+    {
+      AllMessageHandler = amh;
+    }
+
+    public void SetAddressHandler(string key, OscMessageHandler ah)
+    {
+      Hashtable.Synchronized(AddressTable).Add(key, ah);
+    }
+
+    private PacketExchange OscPacketExchange;
+    Thread ReadThread;
+    private bool ReaderRunning; 
+    private OscMessageHandler AllMessageHandler;
+    Hashtable AddressTable;
 
     /// <summary>
     /// OscMessageToString() returns a string containing the Osc address and values in an OscMessage.
@@ -54,7 +117,7 @@ namespace MakingThings
     public static OscMessage StringToOscMessage(string message)
     {
       OscMessage oM = new OscMessage();
-      Console.WriteLine("Splitting " + message);
+      // Console.WriteLine("Splitting " + message);
       string[] ss = message.Split(new char[] { ' ' });
       IEnumerator sE = ss.GetEnumerator();
       if (sE.MoveNext())
@@ -62,7 +125,7 @@ namespace MakingThings
       while ( sE.MoveNext() )
       {
         string s = (string)sE.Current;
-        Console.WriteLine("  <" + s + ">");
+        // Console.WriteLine("  <" + s + ">");
         if (s.StartsWith("\""))
         {
           StringBuilder quoted = new StringBuilder();
@@ -74,7 +137,7 @@ namespace MakingThings
           while (sE.MoveNext())
           {
             string a = (string)sE.Current;
-            Console.WriteLine("    q:<" + a + ">");
+            // Console.WriteLine("    q:<" + a + ">");
             if (looped)
               quoted.Append(" ");
             if (a.EndsWith("\""))
@@ -100,7 +163,7 @@ namespace MakingThings
             try
             {
               int i = int.Parse(s);
-              Console.WriteLine("  i:" + i);
+              // Console.WriteLine("  i:" + i);
               oM.Values.Add(i);
             }
             catch
@@ -108,12 +171,12 @@ namespace MakingThings
               try
               {
                 float f = float.Parse(s);
-                Console.WriteLine("  f:" + f);
+                // Console.WriteLine("  f:" + f);
                 oM.Values.Add(f);
               }
               catch
               {
-                Console.WriteLine("  s:" + s);
+                // Console.WriteLine("  s:" + s);
                 oM.Values.Add(s);
               }
             }
@@ -121,7 +184,6 @@ namespace MakingThings
           }
         }
       }
-
       return oM;
     }
 
@@ -143,11 +205,36 @@ namespace MakingThings
     /// </summary>
     /// <param name="messages">An ArrayList of OscMessages.</param>
     /// <param name="packet">An array of bytes to be populated with the the OscMessages.</param>
-    /// <param name="length">The length of the array of bytes.</param>
-    /// <returns>Zero on success.</returns>
+    /// <param name="length">The size of the array of bytes.</param>
+    /// <returns>The size of the packet</returns>
     public static int OscMessagesToPacket(ArrayList messages, byte[] packet, int length)
     {
-      return 0;
+      int index = 0;
+      if (messages.Count == 1)
+        index = OscMessageToPacket((OscMessage)messages[0], packet, 0, length);
+      else
+      {
+        // Write the first bundle bit
+        index = InsertString("#bundle", packet, index, length);
+        // Write a null timestamp (another 8bytes)
+        int c = 8;
+        while (( c-- )>0)
+          packet[index++]++;
+        // Now, put each message preceded by it's length
+        foreach (OscMessage oscM in messages)
+        {
+          int lengthIndex = index;
+          index += 4;
+          int packetStart = index;
+          index = OscMessageToPacket(oscM, packet, index, length);
+          int packetSize = index - packetStart;
+          packet[lengthIndex++] = (byte)((packetSize >> 24) & 0xFF);
+          packet[lengthIndex++] = (byte)((packetSize >> 16) & 0xFF);
+          packet[lengthIndex++] = (byte)((packetSize >> 8) & 0xFF);
+          packet[lengthIndex++] = (byte)((packetSize) & 0xFF);
+        }
+      }
+      return index;
     }
 
     /// <summary>
@@ -156,8 +243,8 @@ namespace MakingThings
     /// <remarks>A convenience method, not requiring a start index.</remarks>
     /// <param name="oscM">The OscMessage to be turned into an array of bytes.</param>
     /// <param name="packet">The array of bytes to be populated with the OscMessage.</param>
-    /// <param name="length">The length of the array of bytes.</param>
-    /// <returns>Zero on success.</returns>
+    /// <param name="length">The usable size of the array of bytes.</param>
+    /// <returns>The length of the packet</returns>
     public static int OscMessageToPacket(OscMessage oscM, byte[] packet, int length)
     {
       return OscMessageToPacket(oscM, packet, 0, length);
@@ -197,10 +284,14 @@ namespace MakingThings
           {
             float f = (float)o;
             tag.Append("f");
-            packet[index++] = 0;
-            packet[index++] = 0;
-            packet[index++] = 0;
-            packet[index++] = 0;
+            byte[] buffer = new byte[4];
+            MemoryStream ms = new MemoryStream( buffer );
+            BinaryWriter bw = new BinaryWriter(ms);
+            bw.Write(f);
+            packet[index++] = buffer[3];
+            packet[index++] = buffer[2];
+            packet[index++] = buffer[1];
+            packet[index++] = buffer[0];
           }
           else
           {
@@ -284,7 +375,14 @@ namespace MakingThings
             }
           case 'f':
             {
-              float f = 1.1F;
+              byte[] buffer = new byte[4];
+              buffer[3] = packet[index++];
+              buffer[2] = packet[index++];
+              buffer[1] = packet[index++];
+              buffer[0] = packet[index++];
+              MemoryStream ms = new MemoryStream(buffer);
+              BinaryReader br = new BinaryReader(ms);
+              float f = br.ReadSingle();
               oscM.Values.Add(f);
               break;
             }
@@ -313,7 +411,7 @@ namespace MakingThings
           return index;
       }
       packet[index++] = 0;
-      int pad = s.Length % 4;
+      int pad = (s.Length+1) % 4;
       if (pad != 0)
       {
         while (pad-- > 0)
