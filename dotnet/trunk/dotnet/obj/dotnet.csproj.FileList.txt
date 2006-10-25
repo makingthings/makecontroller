@@ -12,3 +12,5 @@ obj\Debug\dotnet.exe
 obj\Debug\dotnet.pdb
 obj\Release\MakingThings.Properties.Resources.resources
 obj\Debug\MakingThings.Properties.Resources.resources
+bin\Release\MakeControllerOsc.dll
+bin\Release\MakeControllerOsc.pdb
