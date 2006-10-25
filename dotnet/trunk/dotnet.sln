@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual C# Express 2005
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotnet", "dotnet\dotnet.csproj", "{1E532C1A-59F9-4FFD-9F82-66597C6B6CBA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCTest", "MCTest\MCTest.csproj", "{1E532C1A-59F9-4FFD-9F82-66597C6B6CBA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MakeControllerOsc", "MakeControllerOsc\MakeControllerOsc.csproj", "{F4C91935-1C0A-47C1-A6A7-DDEF131EC21C}"
 EndProject
