@@ -5,11 +5,23 @@ using Microsoft.Win32;
 
 namespace MakingThings
 {
+    /// <summary>
+    /// This is the PortChat class.
+    /// </summary>
+    /// <remarks>
+    /// Some more info about PortChat
+    /// </remarks>
     public class PortChat
     {
         static bool _continue;
         static SerialPort _serialPort;
 
+        /// <summary>
+        /// This is the zMain method.
+        /// </summary>
+        /// <remarks>
+        /// Some more info about zMain.
+        /// </remarks>
         public static void zMain()
         {
             string name;
@@ -67,7 +79,9 @@ namespace MakingThings
             readThread.Join();
             _serialPort.Close();
         }
-
+        /// <summary>
+        /// The PortChat.Read() method reads from the serial port and prints out to the console.
+        /// </summary>
         public static void Read()
         {
             while (_continue)
@@ -84,7 +98,11 @@ namespace MakingThings
             }
         }
 
-
+        /// <summary>
+        /// PortChat.PrintKeys() prints the names of entries in the registry that correspond to a given key.
+        /// </summary>
+        /// <param name="indent"></param>
+        /// <param name="rkey">The key to look for.</param>
         static void PrintKeys(string indent, RegistryKey rkey)
         {
             Console.WriteLine(indent + rkey.Name);

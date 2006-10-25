@@ -39,7 +39,10 @@ public class MCTest
 
     Application.Run(mct);
   }
-
+  
+  /// <summary>
+  /// UsbRead() reads a packet from the USB/serial port, and if successful prints the results to the console.
+  /// </summary>
   public void UsbRead()
   {
     while ( Running )
@@ -72,7 +75,10 @@ public class MCTest
       }
     }
   }
-
+  
+  /// <summary>
+  /// UdpRead() reads a UDP packet, and if successful prints the results to the console.
+  /// </summary>
   public void UdpRead()
   {
     while (Running)
@@ -105,6 +111,10 @@ public class MCTest
     }
   }
 
+  /// <summary>
+  /// usbSend() writes a string to the USB/serial port.
+  /// </summary>
+  /// <param name="text">The string to be written.</param>
   public void usbSend(string text)
   {
     if ( !usbPacket.IsOpen() )
@@ -120,6 +130,10 @@ public class MCTest
     }
   }
 
+  /// <summary>
+  /// udpSend() writes a string over Ethernet in a UDP packet.
+  /// </summary>
+  /// <param name="text">The string to be written.</param>
   public void udpSend(string text)
   {
     if (!udpPacket.IsOpen())

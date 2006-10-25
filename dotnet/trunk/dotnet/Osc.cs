@@ -6,6 +6,9 @@ using System;
 
 namespace MakingThings
 {
+  /// <summary>
+  /// The OscMessage class represents an OSC address and an arbitrary number of values to be sent to that address.
+  /// </summary>
   public class OscMessage
   {
     public OscMessage()
@@ -17,12 +20,20 @@ namespace MakingThings
    public ArrayList Values;
   }
 
+  /// <summary>
+  /// The Osc class provides the methods required to send, receive, and manipulate OSC messages.
+  /// </summary>
   public class Osc
   {
     public Osc()
     {
     }
 
+    /// <summary>
+    /// OscMessageToString() returns a string containing the Osc address and values in an OscMessage.
+    /// </summary>
+    /// <param name="message">The OscMessage to be stringified.</param>
+    /// <returns>The OscMessage as a string.</returns>
     public static string OscMessageToString(OscMessage message)
     {
       StringBuilder s = new StringBuilder();
@@ -35,6 +46,11 @@ namespace MakingThings
       return s.ToString();
     }
 
+    /// <summary>
+    /// Creates an OscMessage from a string - extracts the address and determines each of the values. 
+    /// </summary>
+    /// <param name="message">The string to be turned into an OscMessage</param>
+    /// <returns>The OscMessage.</returns>
     public static OscMessage StringToOscMessage(string message)
     {
       OscMessage oM = new OscMessage();
@@ -109,6 +125,12 @@ namespace MakingThings
       return oM;
     }
 
+    /// <summary>
+    /// Takes a packet of bytes and turns it into a list of OscMessages.
+    /// </summary>
+    /// <param name="packet">The packet to be parsed.</param>
+    /// <param name="length">The length of the packet.</param>
+    /// <returns>An ArrayList of OscMessages.</returns>
     public static ArrayList PacketToOscMessages(byte[] packet, int length)
     {
       ArrayList messages = new ArrayList();
@@ -116,16 +138,40 @@ namespace MakingThings
       return messages;
     }
 
+    /// <summary>
+    /// Puts an array of OscMessages into a packet of bytes.
+    /// </summary>
+    /// <param name="messages">An ArrayList of OscMessages.</param>
+    /// <param name="packet">An array of bytes to be populated with the the OscMessages.</param>
+    /// <param name="length">The length of the array of bytes.</param>
+    /// <returns>Zero on success.</returns>
     public static int OscMessagesToPacket(ArrayList messages, byte[] packet, int length)
     {
       return 0;
     }
 
+    /// <summary>
+    /// Creates an array of bytes from a single OscMessage.
+    /// </summary>
+    /// <remarks>A convenience method, not requiring a start index.</remarks>
+    /// <param name="oscM">The OscMessage to be turned into an array of bytes.</param>
+    /// <param name="packet">The array of bytes to be populated with the OscMessage.</param>
+    /// <param name="length">The length of the array of bytes.</param>
+    /// <returns>Zero on success.</returns>
     public static int OscMessageToPacket(OscMessage oscM, byte[] packet, int length)
     {
       return OscMessageToPacket(oscM, packet, 0, length);
     }
 
+    /// <summary>
+    /// Creates an array of bytes from a single OscMessage.
+    /// </summary>
+    /// <remarks>Can specify where in the array of bytes the OscMessage should be put.</remarks>
+    /// <param name="oscM">The OscMessage to be turned into an array of bytes.</param>
+    /// <param name="packet">The array of bytes to be populated with the OscMessage.</param>
+    /// <param name="start">The start index in the packet where the OscMessage should be put.</param>
+    /// <param name="length">The length of the array of bytes.</param>
+    /// <returns>The index into the packet after the last OscMessage.</returns>
     private static int OscMessageToPacket(OscMessage oscM, byte[] packet, int start, int length)
     {
       int index = start;
@@ -174,6 +220,15 @@ namespace MakingThings
       return index;
     }
 
+    /// <summary>
+    /// Receive a raw packet of bytes and extract OscMessages from it.
+    /// </summary>
+    /// <remarks>The packet may be an OSC message or a bundle.</remarks>
+    /// <param name="messages">An ArrayList to be populated with the OscMessages.</param>
+    /// <param name="packet">The packet of bytes to be parsed.</param>
+    /// <param name="start">The index of where to start looking in the packet.</param>
+    /// <param name="length">The length of the packet.</param>
+    /// <returns>The index after the last OscMessage read.</returns>
     private static int ExtractMessages(ArrayList messages, byte[] packet, int start, int length)
     {
       int index = start;
