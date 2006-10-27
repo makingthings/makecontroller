@@ -8,7 +8,7 @@ using Microsoft.Win32;
 
 namespace MakingThings
 {
-  public interface PacketExchange
+  public interface PacketIO
   {
     bool Open();
     void Close();
@@ -17,7 +17,10 @@ namespace MakingThings
     int  ReceivePacket( byte[] packet );
   }
 
-  public class UsbPacket : PacketExchange
+  /// <summary>
+  /// UsbPacket provides packetIO over USB
+  /// </summary>
+  public class UsbPacket : PacketIO
   {
     public UsbPacket()
     {
@@ -26,6 +29,12 @@ namespace MakingThings
       StuffChars[EscIndex] = Esc;
       StuffChars[EscEndIndex] = EscEnd;
       StuffChars[EscEscIndex] = EscEsc;
+    }
+
+    ~UsbPacket()
+    {
+      if (IsOpen())
+        Close();
     }
 
     public bool Open()
@@ -52,6 +61,7 @@ namespace MakingThings
 
     public void Close()
     {
+
       if (Port != null)
         Port.Close();
     }
@@ -102,6 +112,11 @@ namespace MakingThings
 
     public int ReceivePacket( byte[] buffer )
     {
+      if (!IsOpen())
+        Open();
+      if (!IsOpen())
+        return 0; 
+      
       int index = 0;
       // Skip until there's an End character
       while (Port.ReadByte() != End)
@@ -217,22 +232,38 @@ namespace MakingThings
     }
   }
 
-  public class UdpPacket : PacketExchange
+  /// <summary>
+  /// UdpPacket provides packetIO over UDP
+  /// </summary>
+  public class UdpPacket : PacketIO
   {
     public UdpPacket()
     {
-      ToHostName = "192.168.0.200";
-      ToPort = 10000;
-      IncomingPort = 10000;
+      RemoteHostName = "192.168.0.200";
+      RemotePort = 10000;
+      LocalPort = 10000;
       socketsOpen = false;
+    }
+
+    ~UdpPacket()
+    {
+      if (IsOpen())
+        Close();
     }
 
     public bool Open()
     {
-      Sender = new UdpClient();
-      Receiver = new UdpClient(localPort);
-      socketsOpen = true;
-      return true;
+      try
+      {
+        Sender = new UdpClient();
+        Receiver = new UdpClient(localPort);
+        socketsOpen = true;
+        return true;
+      }
+      catch
+      {
+      }
+      return false;
     }
 
     public void Close()
@@ -249,11 +280,21 @@ namespace MakingThings
 
     public void SendPacket(byte[] packet, int length)
     {
+      if (!IsOpen())
+        Open();
+      if (!IsOpen())
+        return; 
+      
       Sender.Send(packet, length, remoteHostName, remotePort);
     }
 
     public int ReceivePacket(byte[] buffer)
     {
+      if (!IsOpen())
+        Open();
+      if (!IsOpen())
+        return 0;
+
       IPEndPoint iep = new IPEndPoint(IPAddress.Any, 0);
       byte[] incoming = Receiver.Receive( ref iep );
       int count = Math.Min(buffer.Length, incoming.Length);
@@ -268,7 +309,7 @@ namespace MakingThings
     private int remotePort;
     private int localPort;
 
-    public string ToHostName
+    public string RemoteHostName
     {
       get
       { 
@@ -280,15 +321,19 @@ namespace MakingThings
       }
     }
   
-    private int ToPort
+    public int RemotePort
     {
       get
-      { return remotePort; }
+      { 
+        return remotePort; 
+      }
       set
-      { remotePort = value; }
+      { 
+        remotePort = value; 
+      }
     }
 
-    private int IncomingPort
+    public int LocalPort
     {
       get
       {
