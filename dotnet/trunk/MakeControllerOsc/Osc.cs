@@ -25,28 +25,61 @@ namespace MakingThings
 
   /// <summary>
   /// The Osc class provides the methods required to send, receive, and manipulate OSC messages.
+  /// Several of the helper methods are static since a running Osc instance is not required for 
+  /// their use.
+  /// 
+  /// When instanciated, the Osc class opens the PacketIO instance that's handed to it and 
+  /// begins to run a reader thread.  The instance is then ready to service Send OscMessage requests 
+  /// and to start supplying OscMessages as received back.
+  /// 
+  /// The Osc class can be called to Send either individual messages or collections of messages
+  /// in an Osc Bundle.  Receiving is done by delegate.  There are two ways: either submit a method
+  /// to receive all incoming messages or submit a method to handle only one particular address.
+  /// 
+  /// Messages can be encoded and decoded from Strings via the static methods on this class, or
+  /// can be hand assembled / disassembled since they're just a string (the address) and a list 
+  /// of other parameters in Object form. 
+  /// 
   /// </summary>
   public class Osc
   {
-    public Osc(PacketExchange oscPacketExchange)
+    /// <summary>
+    /// Osc Constructor.  Starts the Reader thread and initializes some internal state.
+    /// </summary>
+    /// <param name="oscPacketIO">The PacketIO instance used for packet IO.</param>
+    public Osc(PacketIO oscPacketIO)
     {
-      OscPacketExchange = oscPacketExchange;
+      // Save the PacketExchage pointer
+      OscPacketIO = oscPacketIO;
 
+      // Create the hashtable for the address lookup mechanism
       AddressTable = new Hashtable();
-
-      OscPacketExchange.Open();
 
       ReadThread = new Thread(Read);
       ReaderRunning = true;
       ReadThread.Start();
     }
 
+    /// <summary>
+    /// Make sure the PacketExchange is closed.
+    /// </summary>
+    ~Osc()
+    {
+      if (OscPacketIO.IsOpen())
+        OscPacketIO.Close();
+    }
+
+    /// <summary>
+    /// Read Thread.  Loops waiting for packets.  When a packet is received, it is 
+    /// dispatched to any waiting All Message Handler.  Also, the address is looked up and
+    /// any matching handler is called.
+    /// </summary>
     private void Read()
     {
       while (ReaderRunning)
       {
         byte[] buffer = new byte[1000];
-        int length = OscPacketExchange.ReceivePacket(buffer);
+        int length = OscPacketIO.ReceivePacket(buffer);
         if (length > 0)
         {
           ArrayList messages = Osc.PacketToOscMessages(buffer, length);
@@ -55,45 +88,70 @@ namespace MakingThings
             if (AllMessageHandler != null)
               AllMessageHandler(om);
             OscMessageHandler h = (OscMessageHandler)Hashtable.Synchronized(AddressTable)[om.Address];
-            if ( h != null )
+            if (h != null)
               h(om);
           }
         }
+        else
+          Thread.Sleep(500);
       }
     }
 
+    /// <summary>
+    /// Send an individual OSC message.  Internally takes the OscMessage object and 
+    /// serializes it into a byte[] suitable for sending to the PacketIO.
+    /// </summary>
+    /// <param name="oscMessage">The OSC Message to send.</param>   
     public void Send( OscMessage oscMessage )
     {
       byte[] packet = new byte[1000];
       int length = Osc.OscMessageToPacket( oscMessage, packet, 1000 );
-      OscPacketExchange.SendPacket( packet, length);
+      OscPacketIO.SendPacket( packet, length);
     }
 
+    /// <summary>
+    /// Sends a list of OSC Messages.  Internally takes the OscMessage objects and 
+    /// serializes them into a byte[] suitable for sending to the PacketExchange.
+    /// </summary>
+    /// <param name="oscMessage">The OSC Message to send.</param>   
     public void Send(ArrayList oms)
     {
       byte[] packet = new byte[1000];
       int length = Osc.OscMessagesToPacket(oms, packet, 1000);
-      OscPacketExchange.SendPacket(packet, length);
+      OscPacketIO.SendPacket(packet, length);
     }
 
+    /// <summary>
+    /// Set the method to call back on when any message is received.
+    /// The method needs to have the OscMessageHandler signature - i.e. void amh( OscMessage oscM )
+    /// </summary>
+    /// <param name="amh">The method to call back on.</param>   
     public void SetAllMessageHandler(OscMessageHandler amh)
     {
       AllMessageHandler = amh;
     }
 
+    /// <summary>
+    /// Set the method to call back on when a message with the specified
+    /// address is received.  The method needs to have the OscMessageHandler signature - i.e. 
+    /// void amh( OscMessage oscM )
+    /// </summary>
+    /// <param name="key">Address string to be matched</param>   
+    /// <param name="amh">The method to call back on.</param>   
     public void SetAddressHandler(string key, OscMessageHandler ah)
     {
       Hashtable.Synchronized(AddressTable).Add(key, ah);
     }
 
-    private PacketExchange OscPacketExchange;
+    private PacketIO OscPacketIO;
     Thread ReadThread;
     private bool ReaderRunning; 
     private OscMessageHandler AllMessageHandler;
     Hashtable AddressTable;
 
     /// <summary>
-    /// OscMessageToString() returns a string containing the Osc address and values in an OscMessage.
+    /// General static helper that returns a string suitable for printing representing the supplied 
+    /// OscMessage.
     /// </summary>
     /// <param name="message">The OscMessage to be stringified.</param>
     /// <returns>The OscMessage as a string.</returns>
@@ -188,7 +246,7 @@ namespace MakingThings
     }
 
     /// <summary>
-    /// Takes a packet of bytes and turns it into a list of OscMessages.
+    /// Takes a packet (byte[]) and turns it into a list of OscMessages.
     /// </summary>
     /// <param name="packet">The packet to be parsed.</param>
     /// <param name="length">The length of the packet.</param>
@@ -201,12 +259,12 @@ namespace MakingThings
     }
 
     /// <summary>
-    /// Puts an array of OscMessages into a packet of bytes.
+    /// Puts an array of OscMessages into a packet (byte[]).
     /// </summary>
     /// <param name="messages">An ArrayList of OscMessages.</param>
-    /// <param name="packet">An array of bytes to be populated with the the OscMessages.</param>
+    /// <param name="packet">An array of bytes to be populated with the OscMessages.</param>
     /// <param name="length">The size of the array of bytes.</param>
-    /// <returns>The size of the packet</returns>
+    /// <returns>The length of the packet</returns>
     public static int OscMessagesToPacket(ArrayList messages, byte[] packet, int length)
     {
       int index = 0;
@@ -238,11 +296,11 @@ namespace MakingThings
     }
 
     /// <summary>
-    /// Creates an array of bytes from a single OscMessage.
+    /// Creates a packet (an array of bytes) from a single OscMessage.
     /// </summary>
     /// <remarks>A convenience method, not requiring a start index.</remarks>
-    /// <param name="oscM">The OscMessage to be turned into an array of bytes.</param>
-    /// <param name="packet">The array of bytes to be populated with the OscMessage.</param>
+    /// <param name="oscM">The OscMessage to be returned as a packet.</param>
+    /// <param name="packet">The packet to be populated with the OscMessage.</param>
     /// <param name="length">The usable size of the array of bytes.</param>
     /// <returns>The length of the packet</returns>
     public static int OscMessageToPacket(OscMessage oscM, byte[] packet, int length)
@@ -251,7 +309,7 @@ namespace MakingThings
     }
 
     /// <summary>
-    /// Creates an array of bytes from a single OscMessage.
+    /// Creates an array of bytes from a single OscMessage.  Used internally.
     /// </summary>
     /// <remarks>Can specify where in the array of bytes the OscMessage should be put.</remarks>
     /// <param name="oscM">The OscMessage to be turned into an array of bytes.</param>
@@ -312,9 +370,9 @@ namespace MakingThings
     }
 
     /// <summary>
-    /// Receive a raw packet of bytes and extract OscMessages from it.
+    /// Receive a raw packet of bytes and extract OscMessages from it.  Used internally.
     /// </summary>
-    /// <remarks>The packet may be an OSC message or a bundle.</remarks>
+    /// <remarks>The packet may contain a OSC message or a bundle of messages.</remarks>
     /// <param name="messages">An ArrayList to be populated with the OscMessages.</param>
     /// <param name="packet">The packet of bytes to be parsed.</param>
     /// <param name="start">The index of where to start looking in the packet.</param>
@@ -346,6 +404,14 @@ namespace MakingThings
       return index;
     }
 
+    /// <summary>
+    /// Extracts a messages from a packet.
+    /// </summary>
+    /// <param name="messages">An ArrayList to be populated with the OscMessage.</param>
+    /// <param name="packet">The packet of bytes to be parsed.</param>
+    /// <param name="start">The index of where to start looking in the packet.</param>
+    /// <param name="length">The length of the packet.</param>
+    /// <returns>The index after the OscMessage is read.</returns>
     private static int ExtractMessage(ArrayList messages, byte[] packet, int start, int length)
     {
       OscMessage oscM = new OscMessage();
@@ -392,6 +458,13 @@ namespace MakingThings
       return index;
     }
 
+    /// <summary>
+    /// Removes a string from a packet.  Used internally.
+    /// </summary>
+    /// <param name="packet">The packet of bytes to be parsed.</param>
+    /// <param name="start">The index of where to start looking in the packet.</param>
+    /// <param name="length">The length of the packet.</param>
+    /// <returns>The string</returns>
     private static string ExtractString(byte[] packet, int start, int length)
     {
       StringBuilder sb = new StringBuilder();
@@ -401,6 +474,14 @@ namespace MakingThings
       return sb.ToString();
     }
 
+    /// <summary>
+    /// Inserts a string, correctly padded into a packet.  Used internally.
+    /// </summary>
+    /// <param name="string">The string to be inserted</param>
+    /// <param name="packet">The packet of bytes to be parsed.</param>
+    /// <param name="start">The index of where to start looking in the packet.</param>
+    /// <param name="length">The length of the packet.</param>
+    /// <returns>An index to the next byte in the packet after the padded string.</returns>
     private static int InsertString(string s, byte[] packet, int start, int length)
     {
       int index = start;
@@ -420,6 +501,11 @@ namespace MakingThings
       return index;
     }
 
+    /// <summary>
+    /// Takes a length and returns what it would be if padded to the nearest 4 bytes.
+    /// </summary>
+    /// <param name="rawSize">Original size</param>
+    /// <returns>padded size</returns>
     private static int PadSize(int rawSize)
     {
       int pad = rawSize % 4;
