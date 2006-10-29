@@ -495,6 +495,7 @@ namespace MakingThings
       int pad = (s.Length+1) % 4;
       if (pad != 0)
       {
+        pad = 4 - pad;
         while (pad-- > 0)
           packet[index++] = 0;
       }
