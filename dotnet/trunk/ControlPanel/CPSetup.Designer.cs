@@ -65,6 +65,7 @@ namespace ControlPanel
       this.Controls.Add(this.label1);
       this.Name = "CPSetup";
       this.Text = "MC Control Panel";
+      this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.CPSetup_FormClosed);
       this.ResumeLayout(false);
       this.PerformLayout();
 
