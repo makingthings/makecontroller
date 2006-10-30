@@ -48,7 +48,7 @@ int System_users;
 */
 
 /**
-	Sets whether the System subsystem is active.
+	Sets whether the System control is active.   Presently this function has no material effect.
 	@param state An integer specifying the state system
 	@return Zero on success.
 */
@@ -104,22 +104,25 @@ int System_SetSerialNumber( int serial )
 
 /**
 	Returns the build number of this codebase.
-	@return the build number.
+	@return The size free memory.
+  \todo this should probably be just a compiler definition, not an EEPROM value
 */
 int System_GetBuildNumber( void )
 {
-  return FIRMWARE_BUILD_NUMBER;
+  int build;
+  if ( Eeprom_Read( EEPROM_SYSTEM_BUILD_NUMBER, (uchar*)&build, 4 ) == CONTROLLER_OK )
+    return build;
+  return 0;
 }
 
 /**
-	Returns the version number of this codebase.
-	@return the version number.
+	Sets the new Build Number.
+	@return CONTROLLER_OK if OK.
 */
-int System_GetVersionNumber( void )
+int System_SetBuildNumber( int serial )
 {
-  return FIRMWARE_VERSION_NUMBER;
+  return Eeprom_Write( EEPROM_SYSTEM_BUILD_NUMBER, (uchar*)&serial, 4 );
 }
-
 
 /**
 	Returns the board to SAMBA mode, erasing all of FLASH.
@@ -195,7 +198,7 @@ int System_Stop()
 #include "osc.h"
 
 static char* SystemOsc_Name = "system";
-static char* SystemOsc_PropertyNames[] = { "active", "freememory", "samba", "reset", "serialnumber", "versionnumber", "buildnumber", 0 }; // must have a trailing 0
+static char* SystemOsc_PropertyNames[] = { "active", "freememory", "samba", "reset", "serialnumber", "buildnumber", 0 }; // must have a trailing 0
 
 int SystemOsc_PropertySet( int property, int value );
 int SystemOsc_PropertyGet( int property );
@@ -235,6 +238,9 @@ int SystemOsc_PropertySet( int property, int value )
     case 4:
       System_SetSerialNumber( value );
       break;
+    case 5:
+      System_SetBuildNumber( value );
+      break;
   }
   return CONTROLLER_OK;
 }
@@ -255,9 +261,6 @@ int SystemOsc_PropertyGet( int property )
       value = System_GetSerialNumber( );
       break;  
     case 5:
-      value = System_GetVersionNumber( );
-      break;  
-    case 6:
       value = System_GetBuildNumber( );
       break;  
   }
