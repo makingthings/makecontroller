@@ -57,6 +57,7 @@ namespace MakingThings
 
       ReadThread = new Thread(Read);
       ReaderRunning = true;
+      ReadThread.IsBackground = true;
       ReadThread.Start();
     }
 
