@@ -5,7 +5,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCTest", "MCTest\MCTest.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MakeControllerOsc", "MakeControllerOsc\MakeControllerOsc.csproj", "{F4C91935-1C0A-47C1-A6A7-DDEF131EC21C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ControlPanel", "ControlPanel\ControlPanel.csproj", "{490CF3DE-DCE7-4CBA-908D-E8520A225C5B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CPUMonitor", "ControlPanel\CPUMonitor.csproj", "{490CF3DE-DCE7-4CBA-908D-E8520A225C5B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeskTimer", "DeskTimer\DeskTimer.csproj", "{0D5E8DB6-37DE-49BD-B0D6-11DA545AA84B}"
 EndProject
