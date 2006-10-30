@@ -38,7 +38,7 @@ namespace MakingThings
             // UPrintKeys("  ", sk);
 
             // Create a new SerialPort object with default settings.
-            _serialPort = new SerialPort( "COM6" );
+            _serialPort = new SerialPort( "COM12" );
 
             // Set the read/write timeouts
             _serialPort.ReadTimeout = 1000;
