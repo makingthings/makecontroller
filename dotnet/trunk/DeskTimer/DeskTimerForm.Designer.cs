@@ -98,7 +98,7 @@ namespace DeskTimer
       this.Controls.Add(this.WorkingText);
       this.Controls.Add(this.Reset);
       this.Name = "DeskTimerForm";
-      this.Text = "MCK Timer";
+      this.Text = "MC Desk Timer";
       this.ResumeLayout(false);
       this.PerformLayout();
 
