@@ -738,7 +738,81 @@ int Network_Init( )
 
 
 
-/* NetworkOsc Interface */
+/** \defgroup NetworkOSC Network - OSC
+  Configure the Controller Board's Network Settings via OSC.
+  \ingroup OSC
+   
+    \section devices Devices
+    There is only one Network system, so a device index is not used.
+   
+    \section properties Properties
+    The Network system has six properties - \b 'address', \b 'mask', \b 'gateway',
+    \b 'valid', \b 'mac' and \b 'active'.
+
+    \par Address
+    The \b 'address' property corresponds to the IP address of the Controller Board.
+    This value can be both read and written.  To set a new address, send a message like
+    \verbatim /network/address 192.168.0.235 \endverbatim
+    \par
+    To read the current IP address, omit the argument value from the end of the message:
+    \verbatim /network/address \endverbatim
+   
+    \par Mask
+    The \b 'mask' property corresponds to the network mask of the Controller Board.
+    When on a subnet or local network, the network mask must be set in order
+    for the gateway to route information to the board's IP address properly.
+    The mask is commonly 255.255.255.0 for many home networks.
+    \par
+    To set the board's network mask, send a message like
+    \verbatim /network/mask 255.255.255.0 \endverbatim
+    To read the current mask, omit the argument value from the end of the message:
+    \verbatim /network/mask \endverbatim
+   
+    \par Gateway
+    The \b 'gateway' property corresponds to the gateway address for the local network the Make Controller is on.
+    The gateway address is the address
+    The gateway address is commonly the address of the router on many home networks, and its
+    value is commonly 192.168.0.1.\n
+    This value is stored in EEPROM, so it persists even after the board
+    is powered down.
+    \par
+    To set the board's gateway address, send a message like
+    \verbatim /network/gateway 192.168.0.1 \endverbatim
+    To read the current gateway, omit the argument value from the end of the message:
+    \verbatim /network/gateway \endverbatim
+   
+    \par MAC
+    The \b 'mac' property corresponds to the Ethernet MAC address of the Controller Board.
+    This value is read-only.
+    \par
+    To read the MAC address of the Controller, send the message
+    \verbatim /network/mac \endverbatim
+    The board will respond by sending back an OSC message with the MAC address.
+   
+    \par Valid
+    The \b 'valid' property corresponds to a checksum used to make sure the board's network settings are valid.
+    Ideally, this should be called each time an address setting is changed so that if
+    the board gets powered down, it will know when it comes back up whether or
+    not the address settings is currently has are valid.
+    This creates a checksum for the current address settings and stores it in EEPROM.
+    \par
+    To set the board's current network settings as valid, send the message
+    \verbatim /network/valid 1 \endverbatim
+    To check if the current settings have been set as valid, send the message:
+    \verbatim /network/valid \endverbatim
+    with no argument value.
+   
+    \par Active
+    The \b 'active' property corresponds to the active state of the Network system.
+    If the Network system is set to be inactive, it will not respond to any OSC messages. 
+    If you're not seeing appropriate
+    responses to your messages to the Network system, check the whether it's
+    active by sending a message like
+    \verbatim /network/active \endverbatim
+    \par
+    You can set the active flag by sending
+    \verbatim /network/active 1 \endverbatim
+*/
 
 #include "osc.h"
 
