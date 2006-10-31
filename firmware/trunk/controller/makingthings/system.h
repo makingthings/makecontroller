@@ -30,7 +30,7 @@ int System_SetActive( int state );
 int System_GetActive( void );
 int System_GetFreeMemory( void );
 int System_GetBuildNumber( void );
-int System_GetVersionNUmber( void );
+int System_GetVersionNumber( void );
 int System_GetSerialNumber( void );
 
 int System_SetSamba( int sure );
