@@ -157,6 +157,59 @@ int AnalogIn_GetValue( int index )
 }
 
 /**	
+  Read the value of several of the analog inputs.
+  Pass in a mask that specifies the channels you would like to read, 
+  as well as an array into which the values will be placed.
+  @param mask A bit mask specifying which channels to read.
+  @param values A pointer to an int array to be filled with the values.
+  @return 0 on success, otherwise non-zero.
+*/
+int AnalogIn_GetValueMulti( int mask, int* values[] )
+{
+  if ( mask < 0 || mask > 255 ) // check the value is a valid 8-bit mask
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  int i; // Is this the best way to make sure everything is started up properly?
+  for( i = 0; i < 8; i++ )
+  {
+    if( mask >> i & 1 )
+    {
+      if ( AnalogIn.channelUsers[ i ] < 1 )
+      {
+        int status = AnalogIn_Start( i );
+        if ( status != CONTROLLER_OK )
+        return status;
+      }
+    }
+  }
+
+  if ( !xSemaphoreTake( AnalogIn.semaphore, 1000 ) )
+    return -1;
+
+  /* Third Step: Select the active channels */
+  AT91C_BASE_ADC->ADC_CHDR = ~mask;
+  AT91C_BASE_ADC->ADC_CHER = mask;
+  
+  /* Fourth Step: Start the conversion */
+  AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START;
+
+  if ( !xSemaphoreTake( AnalogIn.doneSemaphore, 1000 ) )
+    return -1;
+
+  //Figure out which of the channels we want to read
+  int* reg = &AT91C_BASE_ADC->ADC_CDR0; // the address of the first ADC result register
+  for( i = 0; i < 8; i++ )
+  {
+    if( mask >> i & 1 )
+      values[ i ] = *reg++ & 0xFFFF;
+  }
+
+  xSemaphoreGive( AnalogIn.semaphore );
+
+  return CONTROLLER_OK;
+}
+
+/**	
 	Read the value of an analog input without the use of any OS services.
   Note that this is not thread safe and shouldn't be used if another 
   part of the code might be using it or the thread safe versions.
