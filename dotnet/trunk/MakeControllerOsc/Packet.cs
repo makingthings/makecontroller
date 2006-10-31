@@ -37,6 +37,10 @@ namespace MakingThings
         Close();
     }
 
+    /// <summary>
+    /// Open the serial port that the board is connected to.
+    /// </summary>
+    /// <returns>True on success, false on fail.</returns>
     public bool Open()
     {
       if (Port == null)
@@ -59,6 +63,10 @@ namespace MakingThings
       return true;
     }
 
+    /// <summary>
+    /// Close the serial port that the board is currently connected to.
+    /// If the port is not already open, this has no effect.
+    /// </summary>
     public void Close()
     {
 
@@ -66,11 +74,20 @@ namespace MakingThings
         Port.Close();
     }
 
+    /// <summary>
+    /// Query the open state of the serial port.
+    /// </summary>
+    /// <returns>True if the port is open, false if it is not.</returns>
     public bool IsOpen()
     {
       return Port != null;
     }
 
+    /// <summary>
+    /// Send a packet of bytes out over the serial port.
+    /// </summary>
+    /// <param name="packet">The byte array to be sent.</param>
+    /// <param name="length">The length of the byte array to be sent.</param>
     public void SendPacket( byte[] packet, int length )
     {
       if (!IsOpen())
@@ -110,6 +127,11 @@ namespace MakingThings
       Port.Write(StuffChars, EndIndex, 1);
     }
 
+    /// <summary>
+    /// Receive a packet of bytes from the serial port.
+    /// </summary>
+    /// <param name="buffer">The buffer to be read into.</param>
+    /// <returns>Returns the number of bytes read, or 0 on failure.</returns>
     public int ReceivePacket( byte[] buffer )
     {
       if (!IsOpen())
@@ -150,6 +172,12 @@ namespace MakingThings
       return index;
     }
 
+    /// <summary>
+    /// Read the name and parameters of the serial port that the board is connected to.
+    /// 
+    /// Prints the name and parameters to the Console.
+    /// </summary>
+    /// <returns>The COM port name the board is connected to.</returns>
     private string GetPortName()
     {
       RegistryKey rk = Registry.LocalMachine.OpenSubKey(RegistryLocalMachinePath);
@@ -251,6 +279,15 @@ namespace MakingThings
         Close();
     }
 
+    /// <summary>
+    /// Open a UDP socket and create a UDP sender.
+    /// 
+    /// The default values with which a UdpPacket is created are:
+    /// - Address of the board to send to - 192.168.0.200
+    /// - Remote port to send to - 10000
+    /// - Local port to listen on - 10000
+    /// </summary>
+    /// <returns>True on success, false on failure.</returns>
     public bool Open()
     {
       try
@@ -266,6 +303,9 @@ namespace MakingThings
       return false;
     }
 
+    /// <summary>
+    /// Close the socket currently listening, and destroy the UDP sender device.
+    /// </summary>
     public void Close()
     {
       Sender.Close();
@@ -273,11 +313,20 @@ namespace MakingThings
       socketsOpen = false;
     }
 
+    /// <summary>
+    /// Query the open state of the UDP socket.
+    /// </summary>
+    /// <returns>True if open, false if closed.</returns>
     public bool IsOpen()
     {
       return socketsOpen;
     }
 
+    /// <summary>
+    /// Send a packet of bytes out via UDP.
+    /// </summary>
+    /// <param name="packet">The packet of bytes to be sent.</param>
+    /// <param name="length">The length of the packet of bytes to be sent.</param>
     public void SendPacket(byte[] packet, int length)
     {
       if (!IsOpen())
@@ -288,6 +337,11 @@ namespace MakingThings
       Sender.Send(packet, length, remoteHostName, remotePort);
     }
 
+    /// <summary>
+    /// Receive a packet of bytes over UDP.
+    /// </summary>
+    /// <param name="buffer">The buffer to be read into.</param>
+    /// <returns>The number of bytes read, or 0 on failure.</returns>
     public int ReceivePacket(byte[] buffer)
     {
       if (!IsOpen())
@@ -309,6 +363,9 @@ namespace MakingThings
     private int remotePort;
     private int localPort;
 
+    /// <summary>
+    /// The address of the board that you're sending to.
+    /// </summary>
     public string RemoteHostName
     {
       get
@@ -321,6 +378,9 @@ namespace MakingThings
       }
     }
   
+    /// <summary>
+    /// The remote port that you're sending to.
+    /// </summary>
     public int RemotePort
     {
       get
@@ -333,6 +393,9 @@ namespace MakingThings
       }
     }
 
+    /// <summary>
+    /// The local port you're listening on.
+    /// </summary>
     public int LocalPort
     {
       get
