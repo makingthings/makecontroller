@@ -48,7 +48,7 @@ int System_users;
 */
 
 /**
-	Sets whether the System control is active.   Presently this function has no material effect.
+	Sets whether the System subsystem is active.
 	@param state An integer specifying the state system
 	@return Zero on success.
 */
@@ -104,25 +104,22 @@ int System_SetSerialNumber( int serial )
 
 /**
 	Returns the build number of this codebase.
-	@return The size free memory.
-  \todo this should probably be just a compiler definition, not an EEPROM value
+	@return the build number.
 */
 int System_GetBuildNumber( void )
 {
-  int build;
-  if ( Eeprom_Read( EEPROM_SYSTEM_BUILD_NUMBER, (uchar*)&build, 4 ) == CONTROLLER_OK )
-    return build;
-  return 0;
+  return FIRMWARE_BUILD_NUMBER;
 }
 
 /**
-	Sets the new Build Number.
-	@return CONTROLLER_OK if OK.
+	Returns the version number of this codebase.
+	@return the version number.
 */
-int System_SetBuildNumber( int serial )
+int System_GetVersionNumber( void )
 {
-  return Eeprom_Write( EEPROM_SYSTEM_BUILD_NUMBER, (uchar*)&serial, 4 );
+  return FIRMWARE_VERSION_NUMBER;
 }
+
 
 /**
 	Returns the board to SAMBA mode, erasing all of FLASH.
@@ -193,12 +190,65 @@ int System_Stop()
   return CONTROLLER_OK;
 }
 
-/* SystemOsc Interface */
+/** \defgroup SystemOSC System - OSC
+  System controls many of the logistics of the Controller Board via OSC.
+  \ingroup OSC
+   
+    \section devices Devices
+    There's only one System, so a device index is not used in OSC messages to it.
+   
+    \section properties Properties
+    System has six properties - \b 'freememory', \b 'samba', \b 'reset', \b 'serialnumber', \b 'buildnumber', and \b 'active'.
+
+    \par Free Memory
+    The \b 'freememory' property corresponds to the amount of free memory on the Controller Board.
+    This value is read-only.  To get the amount of free memory, send the message
+    \verbatim /system/freememory \endverbatim
+    The board will respond by sending back an OSC message with the amount of free memory.
+   
+    \par Samba
+    The \b 'samba' property is a write-only value that returns the board to a state in which it's ready
+    to receive new firmware via SAM-BA or mchelper.  The power must be reset on the board before trying
+    to upload new firmware.
+    \par
+    To set the board in SAM-BA state, send the message
+    \verbatim /system/samba 1 \endverbatim
+    and don't forget to power cycle the board.  Remember the board won't be able to send/receive OSC
+    messages until a new program is uploaded to it.
+   
+    \par Reset
+    The \b 'reset' property is a write-only value that stops the program running on the board, and reboots.\n
+    To reset the board, send the message
+    \verbatim /system/reset 1 \endverbatim
+   
+    \par Serial Number
+    The \b 'serialnumber' property corresponds to the unique serial number on each Controller Board.
+    This value can be used in situations where a unique value needs to be used to identify a board.
+    \par
+    To read the board's serial number, send the message
+    \verbatim /system/serialnumber \endverbatim
+   
+    \par Build Number
+    The \b 'buildnumber' property corresponds to the build number of the firmware it's currently running.\n
+    To read the board's build number, send the message
+    \verbatim /system/buildnumber \endverbatim
+   
+    \par Active
+    The \b 'active' property corresponds to the active state of System.
+    If System is set to be inactive, it will not respond to any other OSC messages. 
+    If you're not seeing appropriate
+    responses to your messages to System, check the whether it's
+    active by sending a message like
+    \verbatim /system/active \endverbatim
+    \par
+    You can set the active flag by sending
+    \verbatim /system/active 1 \endverbatim
+*/
 
 #include "osc.h"
 
 static char* SystemOsc_Name = "system";
-static char* SystemOsc_PropertyNames[] = { "active", "freememory", "samba", "reset", "serialnumber", "buildnumber", 0 }; // must have a trailing 0
+static char* SystemOsc_PropertyNames[] = { "active", "freememory", "samba", "reset", "serialnumber", "versionnumber", "buildnumber", 0 }; // must have a trailing 0
 
 int SystemOsc_PropertySet( int property, int value );
 int SystemOsc_PropertyGet( int property );
@@ -238,9 +288,6 @@ int SystemOsc_PropertySet( int property, int value )
     case 4:
       System_SetSerialNumber( value );
       break;
-    case 5:
-      System_SetBuildNumber( value );
-      break;
   }
   return CONTROLLER_OK;
 }
@@ -261,6 +308,9 @@ int SystemOsc_PropertyGet( int property )
       value = System_GetSerialNumber( );
       break;  
     case 5:
+      value = System_GetVersionNumber( );
+      break;  
+    case 6:
       value = System_GetBuildNumber( );
       break;  
   }
