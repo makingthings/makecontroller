@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeskTimer", "DeskTimer\Desk
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CPUMonitor", "CPUMonitor\CPUMonitor.csproj", "{86F68757-A1C9-4563-B92A-F4189FC6D2FC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickTest", "QuickTest\QuickTest.csproj", "{323CA7F0-9770-4C2A-AC7B-ADC59110A181}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,10 @@ Global
 		{86F68757-A1C9-4563-B92A-F4189FC6D2FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86F68757-A1C9-4563-B92A-F4189FC6D2FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{86F68757-A1C9-4563-B92A-F4189FC6D2FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{323CA7F0-9770-4C2A-AC7B-ADC59110A181}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{323CA7F0-9770-4C2A-AC7B-ADC59110A181}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{323CA7F0-9770-4C2A-AC7B-ADC59110A181}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{323CA7F0-9770-4C2A-AC7B-ADC59110A181}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
