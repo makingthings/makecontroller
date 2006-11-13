@@ -5,7 +5,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using Microsoft.Win32;
-using SerialPorts;
 
 namespace MakingThings
 {
@@ -296,54 +295,6 @@ namespace MakingThings
     }
 
     private SerialPort Port;
-  }
-
-  /// <summary>
-  /// UsbPacket provides packetIO over USB
-  /// </summary>
-  public class UsbWin32Packet : UsbPacketBase
-  {
-    Win32Com Port;
-
-    public override bool PortOpen(string portName)
-    {
-      if (Port == null)
-      {
-        Port = new Win32Com();
-
-        if (Port.Open(portName, true))
-          return true;
-
-        Port = null;
-        return false;
-      }
-
-      return true;
-    }
-
-    public override void PortClose()
-    {
-      if (Port != null)
-      {
-        Port.Close();
-        Port = null;
-      }
-    }
-
-    public override bool PortIsOpen()
-    {
-      return ( Port != null );
-    }
-
-    public override int PortReadByte()
-    {
-      return Port.ReadByte();
-    }
-
-    public override int PortWrite(byte[] buffer, int index, int count)
-    {
-      return Port.WriteDirect(buffer, index, count );
-    }
   }
 
   /// <summary>
