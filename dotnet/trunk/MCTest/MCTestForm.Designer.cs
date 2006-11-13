@@ -47,7 +47,6 @@ namespace MakingThings
           this.label2 = new System.Windows.Forms.Label();
           this.Output = new System.Windows.Forms.RichTextBox();
           this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
-          this.label1 = new System.Windows.Forms.Label();
           this.InputPanes.SuspendLayout();
           this.Usb.SuspendLayout();
           this.Udp.SuspendLayout();
@@ -61,7 +60,7 @@ namespace MakingThings
           this.InputPanes.Location = new System.Drawing.Point(3, 31);
           this.InputPanes.Name = "InputPanes";
           this.InputPanes.SelectedIndex = 0;
-          this.InputPanes.Size = new System.Drawing.Size(632, 134);
+          this.InputPanes.Size = new System.Drawing.Size(632, 136);
           this.InputPanes.TabIndex = 0;
           // 
           // Usb
@@ -74,7 +73,7 @@ namespace MakingThings
           this.Usb.Location = new System.Drawing.Point(4, 25);
           this.Usb.Name = "Usb";
           this.Usb.Padding = new System.Windows.Forms.Padding(3);
-          this.Usb.Size = new System.Drawing.Size(624, 105);
+          this.Usb.Size = new System.Drawing.Size(624, 107);
           this.Usb.TabIndex = 0;
           this.Usb.Text = "USB";
           this.Usb.UseVisualStyleBackColor = true;
@@ -136,7 +135,7 @@ namespace MakingThings
           this.Udp.Location = new System.Drawing.Point(4, 25);
           this.Udp.Name = "Udp";
           this.Udp.Padding = new System.Windows.Forms.Padding(3);
-          this.Udp.Size = new System.Drawing.Size(624, 105);
+          this.Udp.Size = new System.Drawing.Size(624, 107);
           this.Udp.TabIndex = 1;
           this.Udp.Text = "UDP";
           this.Udp.UseVisualStyleBackColor = true;
@@ -235,7 +234,6 @@ namespace MakingThings
           this.tableLayoutPanel1.ColumnCount = 1;
           this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
           this.tableLayoutPanel1.Controls.Add(this.InputPanes, 0, 1);
-          this.tableLayoutPanel1.Controls.Add(this.label1, 0, 0);
           this.tableLayoutPanel1.Controls.Add(this.Output, 0, 2);
           this.tableLayoutPanel1.Location = new System.Drawing.Point(12, 12);
           this.tableLayoutPanel1.Name = "tableLayoutPanel1";
@@ -246,16 +244,6 @@ namespace MakingThings
           this.tableLayoutPanel1.Size = new System.Drawing.Size(638, 502);
           this.tableLayoutPanel1.TabIndex = 2;
           // 
-          // label1
-          // 
-          this.label1.Font = new System.Drawing.Font("Arial", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-          this.label1.Location = new System.Drawing.Point(3, 0);
-          this.label1.Name = "label1";
-          this.label1.Size = new System.Drawing.Size(632, 28);
-          this.label1.TabIndex = 2;
-          this.label1.Text = "Make Controller Kit Helper";
-          this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-          // 
           // MCTestForm
           // 
           this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -263,7 +251,7 @@ namespace MakingThings
           this.ClientSize = new System.Drawing.Size(662, 529);
           this.Controls.Add(this.tableLayoutPanel1);
           this.Name = "MCTestForm";
-          this.Text = "MCTest";
+          this.Text = "MC Test";
           this.InputPanes.ResumeLayout(false);
           this.Usb.ResumeLayout(false);
           this.Usb.PerformLayout();
@@ -280,8 +268,7 @@ namespace MakingThings
         private System.Windows.Forms.TabPage Usb;
         private System.Windows.Forms.TabPage Udp;
         private System.Windows.Forms.RichTextBox Output;
-        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
-        private System.Windows.Forms.Label label1;
+      private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.TextBox UdpCommand;
         private System.Windows.Forms.Button UdpSend;
         private System.Windows.Forms.Label label5;

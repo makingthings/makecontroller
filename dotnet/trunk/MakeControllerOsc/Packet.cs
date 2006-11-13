@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using Microsoft.Win32;
+using SerialPorts;
 
 namespace MakingThings
 {
@@ -17,12 +18,9 @@ namespace MakingThings
     int  ReceivePacket( byte[] packet );
   }
 
-  /// <summary>
-  /// UsbPacket provides packetIO over USB
-  /// </summary>
-  public class UsbPacket : PacketIO
+  public abstract class UsbPacketBase: PacketIO
   {
-    public UsbPacket()
+    protected UsbPacketBase()
     {
       StuffChars = new Byte[4];
       StuffChars[EndIndex] = End;
@@ -31,36 +29,17 @@ namespace MakingThings
       StuffChars[EscEscIndex] = EscEsc;
     }
 
-    ~UsbPacket()
-    {
-      if (IsOpen())
-        Close();
-    }
-
     /// <summary>
     /// Open the serial port that the board is connected to.
     /// </summary>
     /// <returns>True on success, false on fail.</returns>
     public bool Open()
     {
-      if (Port == null)
-      {
-        PortName = GetPortName();
-        if ( PortName == null)
-          return false;
-        Port = new SerialPort();
-        Port.PortName = PortName;
-        try
-        {
-          Port.Open();
-        }
-        catch
-        {
-          Port = null;
-          return false;
-        }
-      }
-      return true;
+      PortName = GetPortName();
+      //PortName = "COM1";
+      if (PortName == null)
+        return false;
+      return PortOpen( PortName );
     }
 
     /// <summary>
@@ -69,9 +48,7 @@ namespace MakingThings
     /// </summary>
     public void Close()
     {
-
-      if (Port != null)
-        Port.Close();
+      PortClose( );
     }
 
     /// <summary>
@@ -80,7 +57,7 @@ namespace MakingThings
     /// <returns>True if the port is open, false if it is not.</returns>
     public bool IsOpen()
     {
-      return Port != null;
+      return PortIsOpen();
     }
 
     /// <summary>
@@ -88,43 +65,44 @@ namespace MakingThings
     /// </summary>
     /// <param name="packet">The byte array to be sent.</param>
     /// <param name="length">The length of the byte array to be sent.</param>
-    public void SendPacket( byte[] packet, int length )
+    public void SendPacket(byte[] packet, int length)
     {
       if (!IsOpen())
         Open();
       if (!IsOpen())
         return;
 
-      Console.WriteLine("SendPacket:");
-      Port.Write(StuffChars, EndIndex, 1);
-      Console.WriteLine( "  End" ); 
+      //Console.WriteLine("SendPacket:");
+      PortWrite(StuffChars, EndIndex, 1);
+      //Console.WriteLine("  End");
       for (int i = 0; i < length; i++)
       {
         int c = packet[i];
         if (c == End)
         {
-          Console.WriteLine("  Esc");
-          Port.Write(StuffChars, EscIndex, 1);
-          Console.WriteLine("  EscEnd");
-          Port.Write(StuffChars, EscEndIndex, 1);
+          //Console.WriteLine("  Esc");
+          PortWrite(StuffChars, EscIndex, 1);
+          //Console.WriteLine("  EscEnd");
+          PortWrite(StuffChars, EscEndIndex, 1);
         }
         else
         {
           if (c == Esc)
           {
-            Console.WriteLine("  Esc");
-            Port.Write(StuffChars, EscIndex, 1);
-            Console.WriteLine("  EscEsc");
-            Port.Write(StuffChars, EscEscIndex, 1);
+            //Console.WriteLine("  Esc");
+            PortWrite(StuffChars, EscIndex, 1);
+            //Console.WriteLine("  EscEsc");
+            PortWrite(StuffChars, EscEscIndex, 1);
           }
           else
           {
-            Console.WriteLine("  " + c);
-            Port.Write(packet, i, 1);
-          } 
+            //Console.WriteLine("  " + c);
+            PortWrite(packet, i, 1);
+          }
         }
       }
-      Port.Write(StuffChars, EndIndex, 1);
+      PortWrite(StuffChars, EndIndex, 1);
+      //Console.WriteLine("  End");
     }
 
     /// <summary>
@@ -132,23 +110,23 @@ namespace MakingThings
     /// </summary>
     /// <param name="buffer">The buffer to be read into.</param>
     /// <returns>Returns the number of bytes read, or 0 on failure.</returns>
-    public int ReceivePacket( byte[] buffer )
+    public int ReceivePacket(byte[] buffer)
     {
       if (!IsOpen())
         Open();
       if (!IsOpen())
-        return 0; 
-      
+        return 0;
+
       int index = 0;
       // Skip until there's an End character
-      while (Port.ReadByte() != End)
+      while (PortReadByte() != End)
         ;
       // Now we have a End we can start getting actual chars
       int c;
       bool escaped = false;
       do
       {
-        c = Port.ReadByte();
+        c = PortReadByte();
         if (c != End)
         {
           if (escaped)
@@ -183,21 +161,21 @@ namespace MakingThings
       RegistryKey rk = Registry.LocalMachine.OpenSubKey(RegistryLocalMachinePath);
       string[] topNames = rk.GetSubKeyNames();
       // Print the contents of the array to the console.
-      foreach (string ts in topNames )
+      foreach (string ts in topNames)
       {
         // Console.WriteLine("Top: " + ts);
         try
         {
-          RegistryKey srk = rk.OpenSubKey( ts );
+          RegistryKey srk = rk.OpenSubKey(ts);
 
           string[] subNames = srk.GetSubKeyNames();
           foreach (string ss in subNames)
           {
             RegistryKey trk = srk.OpenSubKey(ss);
 
-            if ( (string)trk.GetValue("Class", "<none>") == "Ports" &&
+            if ((string)trk.GetValue("Class", "<none>") == "Ports" &&
                  (string)trk.GetValue("ClassGUID", "<none>") == MakingThingsUsbGuid &&
-                 (string)trk.GetValue("DeviceDesc", "<none>") == MakingThingsUsbDesc )
+                 (string)trk.GetValue("DeviceDesc", "<none>") == MakingThingsUsbDesc)
             {
               Console.WriteLine("Usb: " + ss);
               Console.WriteLine("  " + trk.GetValue("FriendlyName", "<none>"));
@@ -206,24 +184,20 @@ namespace MakingThings
               string portName = (string)prk.GetValue("PortName", "<none>");
               Console.WriteLine("    " + portName);
 
-              SerialPort port = new SerialPort();
-              port.PortName = portName;
-
               // If this doesn't work, there will be an exception, taking us away
               try
               {
-                port.Open();
-
-                Thread.Sleep(1000);
-
-                // It did work.  This is us.  Return.
-                port.Close();
-
-                return portName;
+                if (PortOpen(portName))
+                {
+                  Thread.Sleep(1000);
+                  // It did work.  This is us.  Return.
+                  PortClose();
+                  return portName;
+                }
               }
               catch
               {
-                Console.WriteLine("    Open Exception" );
+                Console.WriteLine("    Open Exception");
               }
             }
           }
@@ -234,29 +208,141 @@ namespace MakingThings
       }
       return null;
     }
+
     private const string RegistryLocalMachinePath = "SYSTEM\\CURRENTCONTROLSET\\ENUM\\USB";
     private const string MakingThingsUsbGuid = "{4D36E978-E325-11CE-BFC1-08002BE10318}";
     private const string MakingThingsUsbDesc = "Make Controller Kit";
 
     // Byte stuffing 
     // ... characters
-    private const int End = 192; 
-    private const int Esc = 219; 
-    private const int EscEnd = 220; 
-    private const int EscEsc = 221; 
+    private const int End = 192;
+    private const int Esc = 219;
+    private const int EscEnd = 220;
+    private const int EscEsc = 221;
     // ... indicies into the little byte array
     private const int EndIndex = 0;
     private const int EscIndex = 1;
     private const int EscEndIndex = 2;
     private const int EscEscIndex = 3;
-      
+
     Byte[] StuffChars;
 
-    private SerialPort Port;
     private string PortName;
     public string Name
     {
       get { return PortName; }
+    }
+
+    abstract public bool PortOpen(string portName);
+    abstract public void PortClose();
+    abstract public bool PortIsOpen();
+    abstract public int  PortReadByte();
+    abstract public int  PortWrite(byte[] buffer, int index, int count); 
+  }
+
+  public class UsbPacket : UsbPacketBase
+  {
+    public override bool PortOpen( string portName )
+    {
+      if ( Port == null )
+      {
+        Port = new SerialPort();
+        Port.PortName = portName;
+        try
+        {
+          Port.Open();
+          Port.DtrEnable = true;
+        }
+        catch
+        {
+          Port = null;
+          return false;
+        }
+      }
+      return true;
+    }
+
+    public override void PortClose()
+    {
+      if (Port != null)
+      {
+        Port.Close();
+        Port = null;
+      }
+    }
+
+    public override bool PortIsOpen()
+    {
+      return (Port != null);
+    }
+
+    public override int PortReadByte()
+    {
+      int c;
+      c = Port.ReadByte();
+      //Console.WriteLine("R  " + c);
+      return c;
+    }
+
+    public override int PortWrite(byte[] buffer, int index, int count)
+    {
+      if (Port != null)
+      {
+        Port.Write(buffer, index, count);
+        return count;
+      }
+      else
+        return 0;
+    }
+
+    private SerialPort Port;
+  }
+
+  /// <summary>
+  /// UsbPacket provides packetIO over USB
+  /// </summary>
+  public class UsbWin32Packet : UsbPacketBase
+  {
+    Win32Com Port;
+
+    public override bool PortOpen(string portName)
+    {
+      if (Port == null)
+      {
+        Port = new Win32Com();
+
+        if (Port.Open(portName, true))
+          return true;
+
+        Port = null;
+        return false;
+      }
+
+      return true;
+    }
+
+    public override void PortClose()
+    {
+      if (Port != null)
+      {
+        Port.Close();
+        Port = null;
+      }
+    }
+
+    public override bool PortIsOpen()
+    {
+      return ( Port != null );
+    }
+
+    public override int PortReadByte()
+    {
+      return Port.ReadByte();
+    }
+
+    public override int PortWrite(byte[] buffer, int index, int count)
+    {
+      return Port.WriteDirect(buffer, index, count );
     }
   }
 

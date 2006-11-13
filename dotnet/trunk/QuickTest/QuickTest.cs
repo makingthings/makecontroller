@@ -15,14 +15,18 @@ namespace QuickTest
     {
       InitializeComponent();
 
-      udpPacket = new UdpPacket();
-      udpPacket.RemoteHostName = "192.168.0.200";
-      udpPacket.RemotePort = 10000;
-      udpPacket.LocalPort = 10000;
-      udpPacket.Open();
-      oscUdp = new Osc(udpPacket);
+      // udpPacket = new UdpPacket();
+      // udpPacket.RemoteHostName = "192.168.0.200";
+      // udpPacket.RemotePort = 10000;
+      // udpPacket.LocalPort = 10000;
+      // udpPacket.Open();
+      // oscUdp = new Osc(udpPacket);
 
-      oscUdp.SetAddressHandler("/analogin/7/value", TrimPotReading);
+      usbPacket = new UsbPacket();
+      usbPacket.Open();
+      osc = new Osc(usbPacket);
+
+      osc.SetAddressHandler("/analogin/7/value", TrimPotReading);
     }
 
     // This delegate enables asynchronous calls for setting
@@ -51,15 +55,16 @@ namespace QuickTest
       }
     }
 
-    private UdpPacket udpPacket;
+    // private UdpPacket udpPacket;
+    private UsbPacket usbPacket;
 
-    private Osc oscUdp;
+    private Osc osc;
 
     private void timer1_Tick(object sender, EventArgs e)
     {
       OscMessage oscMS = new OscMessage();
       oscMS.Address = "/analogin/7/value";
-      oscUdp.Send(oscMS);
+      osc.Send(oscMS);
     }
 
     private void Led0_CheckedChanged(object sender, EventArgs e)
@@ -87,7 +92,7 @@ namespace QuickTest
       OscMessage oscMS = new OscMessage();
       oscMS.Address = "/appled/" + index.ToString() + "/state";
       oscMS.Values.Add(value?1:0);
-      oscUdp.Send(oscMS);
+      osc.Send(oscMS);
     }
   }
 }

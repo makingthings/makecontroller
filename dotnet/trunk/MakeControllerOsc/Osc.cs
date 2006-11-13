@@ -424,51 +424,55 @@ namespace MakingThings
     {
       int index = start;
       index = InsertString(oscM.Address, packet, index, length);
-      StringBuilder tag = new StringBuilder();
-      tag.Append(",");
-      int tagIndex = index;
-      index += PadSize(1 + oscM.Values.Count);
-      foreach (object o in oscM.Values)
+      //if (oscM.Values.Count > 0)
       {
-        if (o is int)
+        StringBuilder tag = new StringBuilder();
+        tag.Append(",");
+        int tagIndex = index;
+        index += PadSize(1 + oscM.Values.Count);
+
+        foreach (object o in oscM.Values)
         {
-          int i = (int)o;
-          tag.Append("i");
-          packet[index++] = (byte)((i >> 24) & 0xFF);
-          packet[index++] = (byte)((i >> 16) & 0xFF);
-          packet[index++] = (byte)((i >> 8) & 0xFF);
-          packet[index++] = (byte)((i) & 0xFF);
-        }
-        else
-        {
-          if (o is float)
+          if (o is int)
           {
-            float f = (float)o;
-            tag.Append("f");
-            byte[] buffer = new byte[4];
-            MemoryStream ms = new MemoryStream( buffer );
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write(f);
-            packet[index++] = buffer[3];
-            packet[index++] = buffer[2];
-            packet[index++] = buffer[1];
-            packet[index++] = buffer[0];
+            int i = (int)o;
+            tag.Append("i");
+            packet[index++] = (byte)((i >> 24) & 0xFF);
+            packet[index++] = (byte)((i >> 16) & 0xFF);
+            packet[index++] = (byte)((i >> 8) & 0xFF);
+            packet[index++] = (byte)((i) & 0xFF);
           }
           else
           {
-            if (o is string)
+            if (o is float)
             {
-              tag.Append("s");
-              index = InsertString(o.ToString(), packet, index, length);
+              float f = (float)o;
+              tag.Append("f");
+              byte[] buffer = new byte[4];
+              MemoryStream ms = new MemoryStream(buffer);
+              BinaryWriter bw = new BinaryWriter(ms);
+              bw.Write(f);
+              packet[index++] = buffer[3];
+              packet[index++] = buffer[2];
+              packet[index++] = buffer[1];
+              packet[index++] = buffer[0];
             }
             else
             {
-              tag.Append("?");
+              if (o is string)
+              {
+                tag.Append("s");
+                index = InsertString(o.ToString(), packet, index, length);
+              }
+              else
+              {
+                tag.Append("?");
+              }
             }
           }
         }
+        InsertString(tag.ToString(), packet, tagIndex, length);
       }
-      InsertString(tag.ToString(), packet, tagIndex, length);
       return index;
     }
 
