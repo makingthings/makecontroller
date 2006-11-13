@@ -9,8 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MakingThings</RootNamespace>
     <AssemblyName>MCTest</AssemblyName>
-    <StartupObject>
-    </StartupObject>
+    <StartupObject>MCTest</StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>

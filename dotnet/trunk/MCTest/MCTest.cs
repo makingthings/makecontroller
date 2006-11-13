@@ -15,10 +15,14 @@ public class MCTest
   {
     mct = new MCTestForm(this);
 
+    //usbPacket = new UsbWin32Packet();
     usbPacket = new UsbPacket();
+    usbPacket.Open();
+    if (usbPacket.IsOpen())
+      mct.SetUsbPortName(usbPacket.Name);
     oscUsb = null;
-    //oscUsb = new Osc(usbPacket);
-    //oscUsb.SetAllMessageHandler(UsbMessages);
+    oscUsb = new Osc(usbPacket);
+    oscUsb.SetAllMessageHandler(UsbMessages);
 
     udpPacket = new UdpPacket();
     udpPacket.RemoteHostName = mct.GetUdpRemoteHostName();
@@ -44,14 +48,6 @@ public class MCTest
     mct.WriteLine("UDP < " + text);
     OscMessage oscM = Osc.StringToOscMessage(text);
     oscUdp.Send(oscM);
-
-    mct.WriteLine("UDP+< " + text);
-    OscMessage oscM1 = Osc.StringToOscMessage(text);
-    OscMessage oscM2 = Osc.StringToOscMessage("/network/address");
-    ArrayList l = new ArrayList();
-    l.Add(oscM1);
-    l.Add(oscM2);
-    oscUdp.Send(l);
   }
 
   public void UdpMessages(OscMessage oscMessage)
@@ -96,6 +92,7 @@ public class MCTest
     mct.WriteLine("Udp < [New Local Port]" + localPort + "]");
   }
 
+  //private UsbWin32Packet usbPacket;
   private UsbPacket usbPacket;
   private UdpPacket udpPacket;
 

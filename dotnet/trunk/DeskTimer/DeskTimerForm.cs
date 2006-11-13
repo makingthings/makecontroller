@@ -14,23 +14,28 @@ namespace DeskTimer
     public DeskTimerForm()
     {
       InitializeComponent();
-      udpPacket = new UdpPacket();
-      udpPacket.RemoteHostName = "192.168.0.200";
-      udpPacket.RemotePort = 10000;
-      udpPacket.LocalPort = 10000;
-      udpPacket.Open();
-      oscUdp = new Osc(udpPacket);
+
+      // udpPacket = new UdpPacket();
+      // udpPacket.RemoteHostName = "192.168.0.200";
+      // udpPacket.RemotePort = 10000;
+      // udpPacket.LocalPort = 10000;
+      // udpPacket.Open();
+      // osc = new Osc(udpPacket);
+
+      usbPacket = new UsbPacket();
+      usbPacket.Open();
+      osc = new Osc(usbPacket);
+
       Working = true;
       ResetTimers();
 
-      oscUdp.SetAddressHandler("/analogin/0/value", SensorReading);
+      osc.SetAddressHandler("/analogin/0/value", SensorReading);
     }
 
     void SensorReading(OscMessage oscM)
     {
-      
       int value = (int)oscM.Values[0];
-      if (value < 200)
+      if (value < 300)
         AwayCount++;
       else
         AwayCount = 0;
@@ -69,7 +74,7 @@ namespace DeskTimer
 
       OscMessage oscM = new OscMessage();
       oscM.Address = "/analogin/0/value";
-      oscUdp.Send(oscM);
+      osc.Send(oscM);
     }
 
     private void SetTime(System.Windows.Forms.TextBox textbox, float t)
@@ -82,8 +87,9 @@ namespace DeskTimer
       textbox.Text = String.Format( "{0:D2}:{1:D2}:{2:D2}", hours, minutes, seconds );
     }
 
-    private UdpPacket udpPacket;
-    private Osc oscUdp;
+    // private UdpPacket udpPacket;
+    private UsbPacket usbPacket;
+    private Osc osc;
 
     bool Working;
     int AwayCount;

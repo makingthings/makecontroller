@@ -22,7 +22,7 @@ namespace MakingThings
         /// <remarks>
         /// Some more info about zMain.
         /// </remarks>
-        public static void zMain()
+        public static void Main()
         {
             string name;
             string message;
@@ -38,7 +38,7 @@ namespace MakingThings
             // UPrintKeys("  ", sk);
 
             // Create a new SerialPort object with default settings.
-            _serialPort = new SerialPort( "COM12" );
+            _serialPort = new SerialPort( "COM6" );
 
             // Set the read/write timeouts
             _serialPort.ReadTimeout = 1000;

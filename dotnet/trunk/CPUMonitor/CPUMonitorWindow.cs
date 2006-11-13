@@ -22,12 +22,16 @@ namespace CPUMonitor
       cpuCounter.CounterName = "% Processor Time";
       cpuCounter.InstanceName = "_Total";
 
-      udpPacket = new UdpPacket();
-      udpPacket.RemoteHostName = "192.168.0.200";
-      udpPacket.RemotePort = 10000;
-      udpPacket.LocalPort = 10000;
-      udpPacket.Open();
-      oscUdp = new Osc(udpPacket);
+      usbPacket = new UsbPacket();
+      usbPacket.Open();
+      osc = new Osc(usbPacket);
+
+      // udpPacket = new UdpPacket();
+      // udpPacket.RemoteHostName = "192.168.0.200";
+      // udpPacket.RemotePort = 10000;
+      // udpPacket.LocalPort = 10000;
+      // udpPacket.Open();
+      // osc = new Osc(udpPacket);
     }
    
     private void timer1_Tick(object sender, EventArgs e)
@@ -37,7 +41,7 @@ namespace CPUMonitor
         OscMessage oscMS = new OscMessage();
         oscMS.Address = "/servo/0/speed";
         oscMS.Values.Add((int)200);
-        oscUdp.Send(oscMS);
+        osc.Send(oscMS);
         SpeedSet = true;
       }
 
@@ -49,7 +53,7 @@ namespace CPUMonitor
         OscMessage oscM = new OscMessage();
         oscM.Address = "/servo/0/position";
         oscM.Values.Add(((int)cpu) * 10);
-        oscUdp.Send(oscM);
+        osc.Send(oscM);
         lastCpuSpeed = cpuSpeed;
       }
     }
@@ -61,11 +65,9 @@ namespace CPUMonitor
       return cpuCounter.NextValue();
     }
 
-    //private UsbPacket usbPacket;
-    private UdpPacket udpPacket;
-
-    private Osc oscUdp;
-    //private Osc oscUsb;
+    private UsbPacket usbPacket;
+    //private UdpPacket udpPacket;
+    private Osc osc;
 
     private int lastCpuSpeed;
     private bool SpeedSet;
