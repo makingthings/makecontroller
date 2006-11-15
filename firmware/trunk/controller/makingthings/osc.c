@@ -25,6 +25,7 @@
 #include "network.h"
 #include "rtos.h"
 #include "debug.h"
+#include "types.h"
 
 // These for the unwrapped semaphore
 #include "FreeRTOS.h"
@@ -36,7 +37,6 @@
 #include <ctype.h>
 #include <stdarg.h>
 
-#define OSC_SUBSYSTEM_COUNT  14
 #define OSC_CHANNEL_COUNT    2
 #define OSC_MAX_MESSAGE_IN   200
 #define OSC_MAX_MESSAGE_OUT  400
@@ -80,6 +80,7 @@ void Osc_Unlock( OscChannel *ch );
 
 int Osc_Quicky( int channel, char* preamble, char* string );
 char* Osc_WritePaddedString( char* buffer, int* length, char* string );
+char* Osc_WritePaddedBlob( char* buffer, int* length, char* blob, int blen );
 char* Osc_WriteTimetag( char* buffer, int* length, int a, int b );
 int Osc_EndianSwap( int a );
 int Osc_ReceiveMessage( int channel, char* message, int length );
@@ -455,6 +456,69 @@ int Osc_SubsystemError( int channel, char* subsystem, char* string )
 // In order to do anything, we need some extra information from 
 // the subsystem like what the names of its properties are, what 
 // the getters and setters are, etc.
+int Osc_BlobReceiverHelper( int channel, char* message, int length, 
+                           char* subsystemName, 
+                           int (*blobPropertySet)( int property, uchar* buffer, int length ),
+                           int (*blobPropertyGet)( int property, uchar* buffer, int size ),
+                           char* blobPropertyNames[] )
+{
+  if ( message == NULL )
+    return CONTROLLER_ERROR_NO_PROPERTY;
+
+  int propertyIndex = Osc_PropertyLookup( blobPropertyNames, message );
+  if ( propertyIndex == -1 )
+    return CONTROLLER_ERROR_UNKNOWN_PROPERTY;
+
+  // Sometime after the address, the data tag begins - this is the description 
+  // of the data in the rest of the message.  It starts with a comma.  Return
+  // where it is into 'type'.  If there is no comma, this is bad.
+  char* type = Osc_FindDataTag( message, length );
+  if ( type == NULL )
+    return CONTROLLER_ERROR_NO_TYPE_TAG;
+
+  // We can tell if there's data by seeing if the character after the comma
+  // is a zero or not.
+  if ( type[ 1 ] != 0 )
+  {
+    if ( type[ 1 ] == 'b' )
+    {
+      uchar buffer[ OSC_SCRATCH_SIZE ];
+      int size;
+      int count = Osc_ExtractData( type, "b", buffer, OSC_SCRATCH_SIZE, &size );
+      if ( count != 1 )
+        return CONTROLLER_ERROR_BAD_DATA;
+    
+      (*blobPropertySet)( propertyIndex, buffer, size );
+    }
+    else
+      return CONTROLLER_ERROR_BAD_DATA;
+  }
+  else
+  {
+    // No data, then.  I guess it was a read.  The XXXXOsc getters
+    // take the channel number and use it to call
+    // Osc_CreateMessage() which adds a new message to the outgoing
+    // stack
+    uchar buffer[ OSC_SCRATCH_SIZE ];
+    int size = (*blobPropertyGet)( propertyIndex, buffer, OSC_SCRATCH_SIZE );
+    char address[ OSC_SCRATCH_SIZE ]; 
+    snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", subsystemName, blobPropertyNames[ propertyIndex ] ); 
+    Osc_CreateMessage( channel, address, ",b", buffer, size );
+  }
+
+  return CONTROLLER_OK;
+}
+
+// An OSC message has arrived, check it out... although, don't change it - others need
+// to use it.  If the original OSC packet was a BUNDLE - i.e. had many 
+// messages in it, they will be unpacked elsewhere.  We'll only get 
+// individual messages here.
+// What is passed is the part after the first subsystem address.
+// So "/dipswitch/active 1" would be passed to this routine as "active 1"
+// Not literally like this, of course, but as OSC messages
+// In order to do anything, we need some extra information from 
+// the subsystem like what the names of its properties are, what 
+// the getters and setters are, etc.
 int Osc_IntReceiverHelper( int channel, char* message, int length, 
                            char* subsystemName, 
                            int (*propertySet)( int property, int value ),
@@ -462,17 +526,11 @@ int Osc_IntReceiverHelper( int channel, char* message, int length,
                            char* propertyNames[] )
 {
   if ( message == NULL )
-  {
-    return Osc_SubsystemError( channel, subsystemName, "No property specified" );
-  }
+    return CONTROLLER_ERROR_NO_PROPERTY;
 
   int propertyIndex = Osc_PropertyLookup( propertyNames, message );
   if ( propertyIndex == -1 )
-  {
-    char s[ OSC_SCRATCH_SIZE ];
-    snprintf( s, OSC_SCRATCH_SIZE, "Unknown property - %s", message );
-    return Osc_SubsystemError( channel, subsystemName, s );
-  }
+    return CONTROLLER_ERROR_UNKNOWN_PROPERTY;
 
 /*
   int bits;
@@ -486,7 +544,7 @@ int Osc_IntReceiverHelper( int channel, char* message, int length,
   // where it is into 'type'.  If there is no comma, this is bad.
   char* type = Osc_FindDataTag( message, length );
   if ( type == NULL )
-    return Osc_SubsystemError( channel, subsystemName, "No type tag" );
+    return CONTROLLER_ERROR_NO_TYPE_TAG;
 
   // We can tell if there's data by seeing if the character after the comma
   // is a zero or not.
@@ -502,7 +560,7 @@ int Osc_IntReceiverHelper( int channel, char* message, int length,
     int value;
     int count = Osc_ExtractData( type, "i", &value );
     if ( count != 1 )
-      return Osc_SubsystemError( channel, subsystemName, "incorrect data - need an int or float" );
+      return CONTROLLER_ERROR_BAD_DATA;
   
     (*propertySet)( propertyIndex, value );
   }
@@ -546,15 +604,11 @@ int Osc_GeneralReceiverHelper( int channel, char* message, int length,
                            char* propertyNames[] )
 {
   if ( message == NULL )
-    return Osc_SubsystemError( channel, subsystemName, "No property specified" );
+    return CONTROLLER_ERROR_NO_PROPERTY;
 
   int propertyIndex = Osc_PropertyLookup( propertyNames, message );
   if ( propertyIndex == -1 )
-  {
-    char s[ OSC_SCRATCH_SIZE ];
-    snprintf( s, OSC_SCRATCH_SIZE, "Unknown property - %s", message );
-    return Osc_SubsystemError( channel, subsystemName, s );
-  }
+    return CONTROLLER_ERROR_UNKNOWN_PROPERTY;
 
 /*
   int bits;
@@ -580,7 +634,7 @@ int Osc_GeneralReceiverHelper( int channel, char* message, int length,
     int status;
     status = (*propertySet)( propertyIndex, type, channel );
     if ( status != CONTROLLER_OK )
-      return Osc_SubsystemError( channel, subsystemName, "Incorrect data" );  
+      return CONTROLLER_ERROR_BAD_DATA;
   }
   else
   {
@@ -618,7 +672,7 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
   // since there will soon be a string terminator (i.e. a 0)
   char* prop = strchr( message, '/' );
   if ( prop == NULL )
-   return Osc_SubsystemError( channel, subsystemName, "Format - need /subsystem/index/property" );
+    return CONTROLLER_ERROR_BAD_FORMAT;
 
   // Now that we know where the property is, we can see if we can find it.
   // This is a little cheap, since we're also implying that there are no 
@@ -626,11 +680,7 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
   // "speed" would match, "speed/other_stuff" would not.
   int propertyIndex = Osc_PropertyLookup( propertyNames, prop + 1 );
   if ( propertyIndex == -1 )
-  {
-    char s[ OSC_SCRATCH_SIZE ];
-    snprintf( s, OSC_SCRATCH_SIZE, "Unknown property - %s", prop + 1 );
-    return Osc_SubsystemError( channel, subsystemName, s );
-  }
+    return CONTROLLER_ERROR_UNKNOWN_PROPERTY;
 
   // Here's where we try to understand what index we got.  In the world of 
   // OSC, this could be a pattern.  So while we could get "0/speed" we could 
@@ -651,7 +701,7 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
   int bits;
   int number = Osc_NumberMatch( indexCount, message, &bits );
   if ( number == -1 && bits == -1 )
-    return Osc_SubsystemError( channel, subsystemName, "Bad index" );
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
   
   // We tweaked the '/' before - now put it back
   *prop = '/';
@@ -661,7 +711,7 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
   // where it is into 'type'.  If there is no comma, this is bad.
   char* type = Osc_FindDataTag( message, length );
   if ( type == NULL )
-    return Osc_SubsystemError( channel, subsystemName, "No type tag" );
+    return CONTROLLER_ERROR_NO_TYPE_TAG;
 
   // We can tell if there's data by seeing if the character after the comma
   // is a zero or not.
@@ -677,7 +727,7 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
     int value;
     int count = Osc_ExtractData( type, "i", &value );
     if ( count != 1 )
-      return Osc_SubsystemError( channel, subsystemName, "incorrect data - need an int or float" );
+      return CONTROLLER_ERROR_INCORRECT_DATA_TYPE;
   
     // Now with the data we need to decide what to do with it.
     // Is there one or many here?
@@ -729,6 +779,45 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
   return CONTROLLER_OK;
 }
 
+int Osc_SendError( int channel, char* subsystemName, int error )
+{
+  char* errorText;
+  switch ( error )
+  {
+    case CONTROLLER_ERROR_UNKNOWN_PROPERTY:
+      errorText = "Unknown Property";
+      break;
+    case CONTROLLER_ERROR_NO_PROPERTY:
+      errorText = "No Property";
+      break;
+    case CONTROLLER_ERROR_INCORRECT_DATA_TYPE:
+      errorText = "Incorrect Data Type";
+      break;
+    case CONTROLLER_ERROR_ILLEGAL_INDEX:
+      errorText = "Bad Index";
+      break;
+    case CONTROLLER_ERROR_BAD_FORMAT:
+      errorText = "Bad Format";
+      break;
+    case CONTROLLER_ERROR_NO_TYPE_TAG:
+      errorText = "No Type Tag";
+      break;
+    case CONTROLLER_ERROR_BAD_DATA:
+      errorText = "Bad Data";
+      break;
+    default:
+      errorText = "Error";
+      break;
+  }
+  return Osc_SubsystemError( channel, subsystemName, errorText );
+}
+
+// OSC_ExtractData takes a buffer (i.e. a point in the incoming OSC message)
+// And a format e.g. "i" "bb", etc. and unpacks them to the var args
+// The var args need to be pointers to memory ready to receive the values.
+// In the case of blobs, there need to be three parameters: char** buffer, 
+// and int* size on the param list.  The buffer gets a pointer into the 
+// right place in the incoming buffer and the size value gets assigned
 int Osc_ExtractData( char* buffer, char* format, ... )
 {
   // Set up to iterate through the arguments
@@ -794,6 +883,21 @@ int Osc_ExtractData( char* buffer, char* format, ... )
           if ( pad != 0 )
             len += ( 4 - pad );
           data += len;
+          count++;
+          cont = true;
+        }
+        break;
+      case 'b':
+        if ( *tp == 'b' )
+        {
+          int length = Osc_ReadInt( data );
+          data += 4;
+          *(va_arg( args, char** )) = data;
+          *(va_arg( args, int* )) = length;
+          int pad = length % 4;
+          if ( pad != 0 )
+            length += ( 4 - pad );
+          data += length;
           count++;
           cont = true;
         }
@@ -966,6 +1070,15 @@ char* Osc_CreateMessageInternal( char* bp, int* length, char* address, char* for
           cont = false;
         break;
       }
+      case 'b':
+      {
+        char* b = va_arg( args, char* );
+        int blen = va_arg( args, int );
+        bp = Osc_WritePaddedBlob( bp, length, b, blen  );
+        if ( bp == NULL )
+          cont = false;
+        break;
+      }
       default:
         cont = false;
     }
@@ -1098,6 +1211,34 @@ char* Osc_WritePaddedString( char* buffer, int* length, char* string )
   }
   else
     return NULL;
+
+  return buffer;
+}
+
+char* Osc_WritePaddedBlob( char* buffer, int* length, char* blob, int blen )
+{
+  int i;
+  int padLength = blen;
+  int pad = ( padLength ) % 4;
+  if ( pad != 0 )
+    padLength += ( 4 - pad );
+ 
+  if ( *length < ( padLength + 4 ) )
+    return 0;
+
+  // add the length of the blob
+  int l = Osc_EndianSwap( blen );
+  *((int*)buffer) = l;
+  buffer += 4;
+  *length -= 4;
+
+  memcpy( buffer, blob, blen );
+  buffer += blen;
+  // reduce the remaining buffer size
+  *length -= padLength;
+
+  for ( i = blen; i < padLength; i++ ) 
+      *buffer++ = 0;
 
   return buffer;
 }
