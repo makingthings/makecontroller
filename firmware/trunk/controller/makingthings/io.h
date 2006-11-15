@@ -31,6 +31,12 @@ int  Io_Stop( int index );
 int  Io_StartBits( longlong bits, bool lock );
 int  Io_StopBits( longlong bits );
 
+int Io_SetActive( int index, int active );
+int Io_GetActive( int index );
+
+int Io_SetDirection( int index, int output );
+int Io_GetDirection( int index );
+
 int  Io_SetOutput( int index );
 int  Io_SetInput( int index );
 int  Io_SetTrue( int index );
@@ -54,6 +60,9 @@ int  Io_SetPeripheralBBits( longlong bits );
 int  Io_PioEnableBits( longlong bits );
 int  Io_PioDisableBits( longlong bits );
 longlong Io_GetValueBits( void );
+
+const char* IoOsc_GetName( void );
+int IoOsc_ReceiveMessage( int channel, char* message, int length );
 
 int  Io_Test( void );
 

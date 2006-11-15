@@ -218,6 +218,42 @@ int  Io_StopBits( longlong bits )
   return CONTROLLER_OK;
 }
 
+int Io_SetActive( int index, int value )
+{
+  if ( value )
+    return Io_Start( index, false );
+  else
+    return Io_Stop( index );
+  return CONTROLLER_OK;
+}
+
+int Io_GetActive( int index )
+{
+  if ( index < 0 || index > IO_PIN_COUNT )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+  IoPin* p = &Io.pins[ index ];
+  return p->users > 0;
+}
+
+int Io_SetDirection( int index, int output )
+{
+  if ( output )
+    return Io_SetOutput( index );
+  else
+    return Io_SetInput( index );
+}
+
+int Io_GetDirection( int index )
+{
+  if ( index < 0 || index > IO_PIN_COUNT )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  if ( index < 32 ) 
+    return ( AT91C_BASE_PIOA->PIO_OSR & ( 1 << index ) ) != 0;
+  else
+    return ( AT91C_BASE_PIOB->PIO_OSR & ( 1 << ( index & 0x1F ) ) ) != 0;
+}
+
 int Io_SetOutput( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
@@ -453,6 +489,114 @@ longlong Io_GetValueBits( )
 
 /** @}
 */
+
+#ifdef OSC
+
+/** \defgroup IoOSC IO - OSC
+  Control any pin's direction and output from OSC.  Use with care!
+  \ingroup OSC
+	
+	\section devices Devices
+	There are 64 IO's on the Make Controller, numbered 0 - 63.  IO's 0 - 31 
+  correspond to PortA, IO's 32 - 63 correspond to PortB.
+	
+	\section properties Properties
+	The IO's have three properties - 'output', 'value' and 'active'.
+
+	\par Output
+	The 'output' property sets whether the IO is an output.\n
+	For example, to make pin 4 an output, send a message like
+	\verbatim /io/4/output 1\endverbatim
+	Change the argument 1 to a 0 to make it an input.
+
+	\par Value
+	Writing the 'value' property sets the on/off value of a given IO.\n
+	For example, to activate pin 4, send a message like
+	\verbatim /io/4/value 1\endverbatim
+	Change the argument 1 to a 0 to turn it off.
+	Reading the 'value' property returns the value of a given IO.\n
+	For example, to read pin 4, send a message like
+	\verbatim /io/4/value\endverbatim
+    
+	\par Active
+	The 'active' property corresponds to the active state of an IO.
+	\verbatim /io/0/active \endverbatim
+	\par
+	You can set the active flag by sending
+	\verbatim /io/0/active 1 \endverbatim
+*/
+
+#include "osc.h"
+#include "string.h"
+#include "stdio.h"
+
+// Need a list of property names
+// MUST end in zero
+static char* IoOsc_Name = "io";
+static char* IoOsc_PropertyNames[] = { "active", "value", "output", 0 }; // must have a trailing 0
+
+int IoOsc_PropertySet( int index, int property, int value );
+int IoOsc_PropertyGet( int index, int property );
+
+// Returns the name of the subsystem
+const char* IoOsc_GetName( )
+{
+  return IoOsc_Name;
+}
+
+// Now getting a message.  This is actually a part message, with the first
+// part (the subsystem) already parsed off.
+int IoOsc_ReceiveMessage( int channel, char* message, int length )
+{
+  int status = Osc_IndexIntReceiverHelper( channel, message, length, 
+                                           IO_PIN_COUNT, IoOsc_Name,
+                                           IoOsc_PropertySet, IoOsc_PropertyGet, 
+                                           IoOsc_PropertyNames );
+                                     
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, IoOsc_Name, status );
+  return CONTROLLER_OK;
+}
+
+// Set the index LED, property with the value
+int IoOsc_PropertySet( int index, int property, int value )
+{
+  switch ( property )
+  {
+    case 0: 
+      Io_SetActive( index, value );
+      break;      
+    case 1: 
+      Io_SetValue( index, value );
+      break;
+    case 2:
+      Io_SetDirection( index, value );
+      break;
+  }
+  return CONTROLLER_OK;
+}
+
+// Get the index LED, property
+int IoOsc_PropertyGet( int index, int property )
+{
+  int value;
+  switch ( property )
+  {
+    case 0:
+      value = Io_GetActive( index );
+      break;
+    case 1:
+      value = Io_GetValue( index );
+      break;
+    case 2:
+      value = Io_GetDirection( index );
+      break;
+  }
+  
+  return value;
+}
+
+#endif
 
 /**	
 	Io_Test.
