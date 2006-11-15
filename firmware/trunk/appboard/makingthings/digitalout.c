@@ -347,10 +347,14 @@ const char* DigitalOutOsc_GetName( )
 // part (the subsystem) already parsed off.
 int DigitalOutOsc_ReceiveMessage( int channel, char* message, int length )
 {
-  return Osc_IndexIntReceiverHelper( channel, message, length, 
-                                     DIGITALOUT_COUNT, DigitalOutOsc_Name,
-                                     DigitalOutOsc_PropertySet, DigitalOutOsc_PropertyGet, 
-                                     DigitalOutOsc_PropertyNames );
+  int status = Osc_IndexIntReceiverHelper( channel, message, length, 
+                                           DIGITALOUT_COUNT, DigitalOutOsc_Name,
+                                           DigitalOutOsc_PropertySet, DigitalOutOsc_PropertyGet, 
+                                           DigitalOutOsc_PropertyNames );
+                                     
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, DigitalOutOsc_Name, status );
+  return CONTROLLER_OK;
 }
 
 // Set the index LED, property with the value

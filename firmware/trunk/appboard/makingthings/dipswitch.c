@@ -187,10 +187,14 @@ const char* DipSwitchOsc_GetName( void )
 
 int DipSwitchOsc_ReceiveMessage( int channel, char* message, int length )
 {
-  return Osc_IntReceiverHelper( channel, message, length, 
-                                DipSwitchOsc_Name,
-                                DipSwitchOsc_PropertySet, DipSwitchOsc_PropertyGet, 
-                                DipSwitchOsc_PropertyNames );
+  int status = Osc_IntReceiverHelper( channel, message, length, 
+                                      DipSwitchOsc_Name,
+                                      DipSwitchOsc_PropertySet, DipSwitchOsc_PropertyGet, 
+                                      DipSwitchOsc_PropertyNames );
+
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, DipSwitchOsc_Name, status );
+  return CONTROLLER_OK;
 }
 
 int DipSwitchOsc_Poll( )
