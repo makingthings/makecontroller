@@ -167,10 +167,14 @@ const char* LedOsc_GetName( )
 // part (the subsystem) already parsed off.
 int LedOsc_ReceiveMessage( int channel, char* message, int length )
 {
-  return Osc_IntReceiverHelper( channel, message, length, 
+  int status = Osc_IntReceiverHelper( channel, message, length, 
                                 LedOsc_Name,
                                 LedOsc_PropertySet, LedOsc_PropertyGet, 
                                 LedOsc_PropertyNames );
+
+  if ( status != CONTROLLER_OK )
+    Osc_SendError( channel, LedOsc_Name, status );
+  return CONTROLLER_OK;
 }
 
 // Set the index LED, property with the value

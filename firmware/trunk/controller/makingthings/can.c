@@ -347,16 +347,20 @@ const char* CanOsc_GetName( )
 // part (the subsystem) already parsed off.
 int CanOsc_ReceiveMessage( int channel, char* message, int length )
 {
-  return Osc_IntReceiverHelper( channel, message, length, 
-                                     CanOsc_Name,
-                                     CanOsc_PropertySet, CanOsc_PropertyGet, 
-                                     CanOsc_PropertyNames );
+  int status = Osc_IntReceiverHelper( channel, message, length, 
+                                      CanOsc_Name,
+                                      CanOsc_PropertySet, CanOsc_PropertyGet, 
+                                      CanOsc_PropertyNames );
 
   // the can system is complex it will need another kind of helper - one that
   // can handle
   //     /can/active 1  as well as
   //     /can/0/id 21213
   // also the can getters and setters will need to be able to handle complex data
+
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, CanOsc_Name, status );
+  return CONTROLLER_OK;
 }
 
 // Set the index LED, property with the value
