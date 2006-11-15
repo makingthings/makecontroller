@@ -24,6 +24,8 @@
 #ifndef OSC_H
 #define OSC_H
 
+#define OSC_SUBSYSTEM_COUNT  14
+
 #define OSC_SCRATCH_SIZE    100
 
 #define OSC_CHANNEL_UDP 0
@@ -42,7 +44,7 @@ int Osc_RegisterSubsystem( int subsystem,
                            int (*Subsystem_ReceiveMessage)( int channel, char* buffer, int length ), 
                            int (*Subsystem_Poll)( int channel ) );
 
-// Helpers for processing messages
+// Helpers for processing messages - they return error codes as spec'ed above
 int Osc_IntReceiverHelper( int channel, char* message, int length, 
                            char* subsystemName,
                            int (*propertySet)( int property, int value ),
@@ -55,11 +57,20 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
                                 int (*propertyGet)( int index, int property ),
                                 char* propertyNames[] );
 
+int Osc_BlobReceiverHelper( int channel, char* message, int length, 
+                           char* subsystemName, 
+                           int (*blobPropertySet)( int property, uchar* buffer, int length ),
+                           int (*blobPropertyGet)( int property, uchar* buffer, int size ),
+                           char* blobPropertyNames[] );
+
 int Osc_GeneralReceiverHelper( int channel, char* message, int length, 
                            char* subsystemName, 
                            int (*propertySet)( int property, char* typedata, int channel ),
                            int (*propertyGet)( int property, int channel ),
                            char* propertyNames[] );
+
+int Osc_SendError( int channel, char* subsystemName, int error );
+
 
 // Functions needed to process messages
 int Osc_SubsystemError( int channel, char* subsystem, char* string );
