@@ -256,10 +256,15 @@ const char* DigitalInOsc_GetName( )
 // part (the subsystem) already parsed off.
 int DigitalInOsc_ReceiveMessage( int channel, char* message, int length )
 {
-  return Osc_IndexIntReceiverHelper( channel, message, length, 
+  int status = Osc_IndexIntReceiverHelper( channel, message, length, 
                                      DIGITALIN_COUNT, DigitalInOsc_Name,
                                      DigitalInOsc_PropertySet, DigitalInOsc_PropertyGet, 
                                      DigitalInOsc_PropertyNames );
+
+                                     
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, DigitalInOsc_Name, status );
+  return CONTROLLER_OK;
 }
 
 // Set the index LED, property with the value

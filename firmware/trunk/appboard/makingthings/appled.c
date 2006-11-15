@@ -254,10 +254,14 @@ const char* AppLedOsc_GetName( )
 // part (the subsystem) already parsed off.
 int AppLedOsc_ReceiveMessage( int channel, char* message, int length )
 {
-  return Osc_IndexIntReceiverHelper( channel, message, length, 
-                                     APPLED_COUNT, AppLedOsc_Name,
-                                     AppLedOsc_PropertySet, AppLedOsc_PropertyGet, 
-                                     AppLedOsc_PropertyNames );
+  int status = Osc_IndexIntReceiverHelper( channel, message, length, 
+                                           APPLED_COUNT, AppLedOsc_Name,
+                                           AppLedOsc_PropertySet, AppLedOsc_PropertyGet, 
+                                           AppLedOsc_PropertyNames );
+
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, AppLedOsc_Name, status );
+  return CONTROLLER_OK;
 }
 
 // Set the index LED, property with the value

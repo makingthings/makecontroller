@@ -304,10 +304,14 @@ const char* MotorOsc_GetName( )
 // part (the subsystem) already parsed off.
 int MotorOsc_ReceiveMessage( int channel, char* message, int length )
 {
-  return Osc_IndexIntReceiverHelper( channel, message, length, 
+  int status = Osc_IndexIntReceiverHelper( channel, message, length, 
                                      MOTOR_COUNT, MotorOsc_Name,
                                      MotorOsc_PropertySet, MotorOsc_PropertyGet, 
                                      MotorOsc_PropertyNames );
+                                     
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, MotorOsc_Name, status );
+  return CONTROLLER_OK;
 }
 
 // Set the index LED, property with the value

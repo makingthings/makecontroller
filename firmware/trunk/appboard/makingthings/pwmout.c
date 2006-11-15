@@ -326,7 +326,6 @@ int PwmOut_SetAll( int index, int duty, char invertA, char invertB )
 /** @}
 */
 
-
 int PwmOut_Start( int index )
 {
   int status;
@@ -528,10 +527,14 @@ const char* PwmOutOsc_GetName( )
 // part (the subsystem) already parsed off.
 int PwmOutOsc_ReceiveMessage( int channel, char* message, int length )
 {
-  return Osc_IndexIntReceiverHelper( channel, message, length, 
+  int status = Osc_IndexIntReceiverHelper( channel, message, length, 
                                      PWMOUT_COUNT, PwmOutOsc_Name,
                                      PwmOutOsc_PropertySet, PwmOutOsc_PropertyGet, 
                                      PwmOutOsc_PropertyNames );
+                                     
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, PwmOutOsc_Name, status );
+  return CONTROLLER_OK;
 }
 
 // Set the index LED, property with the value
@@ -574,9 +577,8 @@ int PwmOutOsc_PropertyGet( int index, int property )
       value = PwmOut_GetInvertB( index );
       break;
   }
-  
   return value;
 }
 
 
-#endif 
+#endif

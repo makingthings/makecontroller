@@ -444,10 +444,14 @@ const char* ServoOsc_GetName( )
 // part (the subsystem) already parsed off.
 int ServoOsc_ReceiveMessage( int channel, char* message, int length )
 {
-  return Osc_IndexIntReceiverHelper( channel, message, length, 
-                                     SERVO_COUNT, ServoOsc_Name,
-                                     ServoOsc_PropertySet, ServoOsc_PropertyGet, 
-                                     ServoOsc_PropertyNames );
+  int status = Osc_IndexIntReceiverHelper( channel, message, length, 
+                                           SERVO_COUNT, ServoOsc_Name,
+                                           ServoOsc_PropertySet, ServoOsc_PropertyGet, 
+                                           ServoOsc_PropertyNames );
+
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, ServoOsc_Name, status );
+  return CONTROLLER_OK;
 }
 
 // Set the index LED, property with the value
