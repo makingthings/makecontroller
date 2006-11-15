@@ -829,10 +829,15 @@ const char* NetworkOsc_GetName( void )
 
 int NetworkOsc_ReceiveMessage( int channel, char* message, int length )
 {
-  return Osc_GeneralReceiverHelper( channel, message, length, 
+  int status = Osc_GeneralReceiverHelper( channel, message, length, 
                                 NetworkOsc_Name,
                                 NetworkOsc_PropertySet, NetworkOsc_PropertyGet, 
                                 NetworkOsc_PropertyNames );
+
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, NetworkOsc_Name, status );
+
+  return CONTROLLER_OK;
 }
 
 int NetworkOsc_Poll( )

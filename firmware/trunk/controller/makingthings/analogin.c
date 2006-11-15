@@ -443,10 +443,14 @@ const char* AnalogInOsc_GetName( )
 // part (the subsystem) already parsed off.
 int AnalogInOsc_ReceiveMessage( int channel, char* message, int length )
 {
-  return Osc_IndexIntReceiverHelper( channel, message, length, 
+  int status = Osc_IndexIntReceiverHelper( channel, message, length, 
                                      ANALOGIN_CHANNELS, AnalogInOsc_Name,
                                      AnalogInOsc_PropertySet, AnalogInOsc_PropertyGet, 
                                      AnalogInOsc_PropertyNames );
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, AnalogInOsc_Name, status );
+  return CONTROLLER_OK;
+
 }
 
 // Set the index LED, property with the value
