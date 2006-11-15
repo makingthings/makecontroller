@@ -541,6 +541,11 @@ int Serial_SetDefault()
 	To set hardware handshaking on, for example, send the message
 	\verbatim /serial/hardwarehandshaking 1\endverbatim
 
+	\par Readable
+	How many characters are presently available to read.\n
+	To check, for example, send the message
+	\verbatim /serial/readable\endverbatim
+
 	\par Char
 	This property is the mechanism by which individual characters can be sent and received\n
 	To send a character 32 (a space), for example, send the message
@@ -556,13 +561,19 @@ int Serial_SetDefault()
 #include "string.h"
 #include "stdio.h"
 
+#include "types.h"
+
 // Need a list of property names
 // MUST end in zero
 static char* SerialOsc_Name = "serial";
-static char* SerialOsc_PropertyNames[] = { "active", "char", "baud", "bits", "stopbits", "parity", "hardwarehandshake", 0  }; // must have a trailing 0
+static char* SerialOsc_IntPropertyNames[] = { "active", "char", "baud", "bits", "stopbits", "parity", "hardwarehandshake", "readable", 0  }; // must have a trailing 0
+static char* SerialOsc_BlobPropertyNames[] = { "blob", 0  }; // must have a trailing 0
 
-int SerialOsc_PropertySet( int property, int value );
-int SerialOsc_PropertyGet( int property );
+int SerialOsc_IntPropertySet( int property, int value );
+int SerialOsc_IntPropertyGet( int property );
+
+int SerialOsc_BlobPropertySet( int property, uchar* blob, int length );
+int SerialOsc_BlobPropertyGet( int property, uchar* blob, int size );
 
 // Returns the name of the subsystem
 const char* SerialOsc_GetName( )
@@ -574,15 +585,23 @@ const char* SerialOsc_GetName( )
 // part (the subsystem) already parsed off.
 int SerialOsc_ReceiveMessage( int channel, char* message, int length )
 {
-  return Osc_IntReceiverHelper( channel, message, length, 
-                              SerialOsc_Name,
-                              SerialOsc_PropertySet, SerialOsc_PropertyGet, 
-                              SerialOsc_PropertyNames );
+  int status = Osc_IntReceiverHelper( channel, message, length, 
+                                      SerialOsc_Name,
+                                      SerialOsc_IntPropertySet, SerialOsc_IntPropertyGet, 
+                                      SerialOsc_IntPropertyNames );
 
+  if ( status == CONTROLLER_ERROR_UNKNOWN_PROPERTY )
+    status = Osc_BlobReceiverHelper( channel, message, length, 
+                                      SerialOsc_Name,
+                                      SerialOsc_BlobPropertySet, SerialOsc_BlobPropertyGet, 
+                                      SerialOsc_BlobPropertyNames );                        
+
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, SerialOsc_Name, status );
+  return CONTROLLER_OK;
 }
-
 // Set the index LED, property with the value
-int SerialOsc_PropertySet( int property, int value )
+int SerialOsc_IntPropertySet( int property, int value )
 {
   switch ( property )
   {
@@ -612,7 +631,7 @@ int SerialOsc_PropertySet( int property, int value )
 }
 
 // Get the index LED, property
-int SerialOsc_PropertyGet( int property )
+int SerialOsc_IntPropertyGet( int property )
 {
   int value;
   switch ( property )
@@ -638,9 +657,44 @@ int SerialOsc_PropertyGet( int property )
     case 6:
       value = Serial_GetHardwareHandshake( );
       break;
+    case 7:
+      value = Serial_GetReadable( );
+      break;
   }
   
   return value;
+}
+
+// Get the index LED, property
+int SerialOsc_BlobPropertyGet( int property, uchar* blob, int maxSize )
+{
+  int xfer = 0;
+  switch ( property )
+  {
+    case 0:
+    {
+      int length = Serial_GetReadable();
+      xfer = ( length < maxSize ) ? length : maxSize;
+      if ( xfer > 0 )
+        Serial_Read( blob, xfer, 100 );
+      break;
+    }
+  }
+  
+  return xfer;
+}
+
+
+// Set the index LED, property with the value
+int SerialOsc_BlobPropertySet( int property, uchar* blob, int length )
+{
+  switch ( property )
+  {
+    case 0: 
+      Serial_Write( blob, length, 100 );
+      break;      
+  }
+  return CONTROLLER_OK;
 }
 
 #endif
