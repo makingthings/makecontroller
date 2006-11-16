@@ -18,6 +18,56 @@
 /** @defgroup OSC
 	Communicate with the Make Controller Kit via OSC.
 	
+	\section osc OSC
+	"Open Sound Control (OSC) is a protocol for communication among computers, sound synthesizers, 
+	and other multimedia devices that is optimized for modern networking technology."  
+	With OSC implemented on the Make Controller Kit, it can already talk to 
+	a wide variety of environments and devices like Java, Max/MSP, Pd, Flash, Processing, SuperCollider,
+	and many others.
+	
+	OSC is based on the notion of \b messages, which are composed of an address, and the data to 
+	be sent to that address.  The address looks a lot like a URL that you might type into
+	your internet browser.  Each element in the address is like a directory, with other 
+	elements inside it, and each element is separated from the next by a slash (/).  Each OSC
+	message must also start with a slash.  
+	
+	\par Example:
+	For instance, the OSC address
+	\code /make/controller/kit \endcode
+	says, "start in the 'make' directory, go down to the 'controller' directory, and 
+	finally to the 'kit' directory.  
+	
+	Any number of \b argument \b values can be sent to that address by including them in the message
+	after the address.  These values can be integers (ints), floats, or strings.  
+	
+	\par Example:
+	If we wanted to send the value 35.4 to the address above, we would create the message
+	\code /make/controller/kit 35.4 \endcode
+	with a space between the address and the data.\n\n
+	Additional data can be added, each separated by a space
+	\code /make/controller/kit 35.4 lawn 12 \endcode
+	
+	\section osc_mck OSC & the Make Controller Kit
+	Many devices on the Make Controller Kit can be addressed via OSC.  In sending messages to them,
+	we need to know the OSC address, and the appropriate argument values to send.
+	
+	The Make Controller Kit is orgranized, for OSC, into \b subsystems.  Each subsystem has one or more
+	\b devices, and each device has one or more \b properties.  To address a particular device, you'll
+	need to create an OSC message specifying the address in that format: 
+	\code /subsystem/device/property \endcode
+	Each of the modules above provide the details for each of the subsystems on the board, along with their
+	devices and properties.  A simple example is given below.
+	
+	\par Example:
+	To create an OSC message to turn an LED on, first identify the appropriate \b subsystem.
+	In this case, the subsystem is called \b appled.\n\n
+	There are 4 LEDs, so we need to specify which one to control.
+	The LEDs are numbered 0 -3, so choosing the first LED means the \b device value is 0.\n\n
+	The \b property of the LED that turns it on and off is its 'state'.\n\n
+	Lastly, we must specify what the state should actually be, by including an \b argument value after the address.
+	To turn it on, this value should be 1.  0 would turn it off.\n
+	The complete OSC message looks like
+	\code /appled/0/state 1 \endcode
 */
 
 #include "config.h"
