@@ -38,6 +38,8 @@
   <ProjectSessionItem path="heavy" name="unnamed" />
   <ProjectSessionItem path="heavy;heavy" name="unnamed" />
   <ProjectSessionItem path="heavy;heavy;Source Files" name="unnamed" />
+  <ProjectSessionItem path="heavy;heavy;Source Files;AppBoard" name="unnamed" />
+  <ProjectSessionItem path="heavy;heavy;Source Files;AppBoard;MakingThings" name="unnamed" />
   <ProjectSessionItem path="heavy;heavy;Source Files;Controller" name="unnamed" />
   <ProjectSessionItem path="heavy;heavy;Source Files;Controller;FreeRTOS" name="unnamed" />
   <ProjectSessionItem path="heavy;heavy;Source Files;Controller;lwIP" name="unnamed" />
@@ -65,9 +67,9 @@
  </TraceWindow>
  <Watch1>
   <Watches active="1" >
-   <Watchpoint linenumber="364" radix="16" name="AT91C_BASE_US0" expression="AT91C_BASE_US0" filename="C:\mtcode\make\firmware_103\controller\makingthings\serial.c" />
-   <Watchpoint evalMode="1" linenumber="0" evalType="2" radix="-1" name="Osc" expression="Osc" filename="" />
    <Watchpoint evalMode="3" linenumber="71" evalType="0" radix="-1" name="in" expression="in" filename="C:\mtcode\make\firmware_103\heavy\make.c" />
+   <Watchpoint evalMode="1" linenumber="0" evalType="2" radix="-1" name="Osc" expression="Osc" filename="" />
+   <Watchpoint linenumber="364" radix="16" name="AT91C_BASE_US0" expression="AT91C_BASE_US0" filename="C:\mtcode\make\firmware_103\controller\makingthings\serial.c" />
   </Watches>
  </Watch1>
  <Watch2>
@@ -80,8 +82,11 @@
   <Watches active="0" />
  </Watch4>
  <Files>
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware_103\controller\makingthings\network.c" y="0" useHTMLEdit="0" path="C:\mtcode\make\firmware_103\controller\makingthings\network.c" left="0" selected="0" name="unnamed" top="738" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="14" debugPath="C:\mtcode\make\firmware_103\heavy\make.c" y="79" useHTMLEdit="0" path="C:\mtcode\make\firmware_103\heavy\make.c" left="0" selected="1" name="unnamed" top="76" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\heavy\make.c" y="16" useHTMLEdit="0" path="C:\mtcode\make\firmware\heavy\make.c" left="0" selected="0" name="unnamed" top="0" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\makingthings\osc.h" y="79" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\osc.h" left="0" selected="0" name="unnamed" top="71" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\makingthings\osc.c" y="1255" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\osc.c" left="0" selected="0" name="unnamed" top="1243" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="38" debugPath="C:\mtcode\make\firmware\controller\makingthings\serial.c" y="649" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\serial.c" left="0" selected="1" name="unnamed" top="619" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="1" debugPath="C:\mtcode\make\firmware\controller\makingthings\main.c" y="107" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\main.c" left="0" selected="0" name="unnamed" top="88" />
  </Files>
  <ARMCrossStudioWindow activeProject="heavy" autoConnectTarget="/Macraigor Wiggler (20 Pin)" debugSearchFileMap="..\..\gcc-4.1.1\gcc\config\arm\ieee754-df.S
 
