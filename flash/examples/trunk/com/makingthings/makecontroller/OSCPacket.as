@@ -1,0 +1,1 @@
+﻿class com.makingthings.makecontroller.OscPacket{	var address:Number;	var port:Number;	var time:Number;	var xmlData;		function OscPacket( address, port, time, xmlData )	{		this.address = address;		this.port = port;		this.time = time;		this.xmlData = xmlData;	}}
