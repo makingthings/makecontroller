@@ -216,7 +216,7 @@ namespace MakingThings
     /// Sends a list of OSC Messages.  Internally takes the OscMessage objects and 
     /// serializes them into a byte[] suitable for sending to the PacketExchange.
     /// </summary>
-    /// <param name="oms">The OSC Message to send.</param>   
+    /// <param name="oms">The OSC Messages (as an ArrayList) to send.</param>   
     public void Send(ArrayList oms)
     {
       byte[] packet = new byte[1000];
@@ -265,7 +265,23 @@ namespace MakingThings
       foreach( object o in message.Values )
       {
         s.Append(" ");
-        s.Append(o.ToString());
+        if (o is byte[])
+        {
+          byte[] byteArray = (byte[])o;
+          s.Append("<");
+          bool first = true;
+          foreach (byte b in byteArray)
+          {
+            if (!first)
+              s.Append(" ");
+            else
+              first = false;
+            s.Append( String.Format( "{0:X2}",b)); 
+          }
+          s.Append(">"); 
+        }
+        else
+          s.Append(o.ToString());
       }
       return s.ToString();
     }
@@ -287,8 +303,10 @@ namespace MakingThings
       {
         string s = (string)sE.Current;
         // Console.WriteLine("  <" + s + ">");
+        // Check for a string - as indicated by an open quote
         if (s.StartsWith("\""))
         {
+          // Get the whole string
           StringBuilder quoted = new StringBuilder();
           bool looped = false;
           if (s.Length > 1)
@@ -319,29 +337,53 @@ namespace MakingThings
         }
         else
         {
-          if (s.Length > 0)
+          if ( s.StartsWith( "<" ) )
           {
-            try
+            ArrayList byteList = new ArrayList();
+            if (s.Length > 1)
+              ExtractBytesFromString(byteList, s.Substring(1));
+            while (sE.MoveNext())
             {
-              int i = int.Parse(s);
-              // Console.WriteLine("  i:" + i);
-              oM.Values.Add(i);
+              string a = (string)sE.Current;
+
+              ExtractBytesFromString(byteList, a);
+
+              if ( a.EndsWith( ">" ) )
+                break;
             }
-            catch
+
+            byte[] byteArray = new byte[ byteList.Count ];
+            int index = 0;
+            foreach ( byte b in byteList )
+              byteArray[ index++ ] = (byte)b;
+
+            oM.Values.Add( byteArray );
+          }
+          else
+          {
+            if (s.Length > 0)
             {
               try
               {
-                float f = float.Parse(s);
-                // Console.WriteLine("  f:" + f);
-                oM.Values.Add(f);
+                int i = int.Parse(s);
+                // Console.WriteLine("  i:" + i);
+                oM.Values.Add(i);
               }
               catch
               {
-                // Console.WriteLine("  s:" + s);
-                oM.Values.Add(s);
+                try
+                {
+                  float f = float.Parse(s);
+                  // Console.WriteLine("  f:" + f);
+                  oM.Values.Add(f);
+                }
+                catch
+                {
+                  // Console.WriteLine("  s:" + s);
+                  oM.Values.Add(s);
+                }
               }
             }
-
           }
         }
       }
@@ -466,7 +508,27 @@ namespace MakingThings
               }
               else
               {
-                tag.Append("?");
+                if ( o is byte[] )
+                {
+                  tag.Append("b");
+                  byte[] byteArray = (byte[])o;
+                  int len = byteArray.Length;
+                  packet[index++] = (byte)((len >> 24) & 0xFF);
+                  packet[index++] = (byte)((len >> 16) & 0xFF);
+                  packet[index++] = (byte)((len >> 8) & 0xFF);
+                  packet[index++] = (byte)((len) & 0xFF);
+                  Array.Copy(byteArray, 0, packet, index, len);
+                  index += len;
+                  int pad = len % 4;
+                  if (pad != 0)
+                  {
+                    pad = 4 - pad;
+                    while (pad-- > 0)
+                      packet[index++] = 0;
+                  }
+                }
+                else
+                  tag.Append("?");
               }
             }
           }
@@ -540,6 +602,13 @@ namespace MakingThings
               oscM.Values.Add(s);
               break;
             }
+          case 'b':
+            {
+              byte[] b = ExtractBlob(packet, index, length);
+              index += PadSize(b.Length);
+              oscM.Values.Add(b);
+              break;
+            }
           case 'i':
             {
               int i = ( packet[index++] << 24 ) + ( packet[index++] << 16 ) + ( packet[index++] << 8 ) + packet[index++];
@@ -566,7 +635,7 @@ namespace MakingThings
     }
 
     /// <summary>
-    /// Removes a string from a packet.  Used internally.
+    /// Extracts a string from a packet.  Used internally.
     /// </summary>
     /// <param name="packet">The packet of bytes to be parsed.</param>
     /// <param name="start">The index of where to start looking in the packet.</param>
@@ -579,6 +648,28 @@ namespace MakingThings
       while (packet[index] != 0 && index < length)
         sb.Append((char)packet[index++]);
       return sb.ToString();
+    }
+
+    /// <summary>
+    /// Extracts a blob from a packet.  Used internally.
+    /// </summary>
+    /// <param name="packet">The packet of bytes to be parsed.</param>
+    /// <param name="start">The index of where to start looking in the packet.</param>
+    /// <param name="length">The length of the packet.</param>
+    /// <returns>The string</returns>
+    private static byte[] ExtractBlob(byte[] packet, int start, int length)
+    {
+      int index = start;
+      int blobSize = ( packet[index++] << 24 ) + ( packet[index++] << 16 ) + ( packet[index++] << 8 ) + packet[index++];
+      byte[] b = new byte[ blobSize ];
+      int blobIndex = 0;
+      while (blobSize-- > 0 && index < length)
+      {
+        b[ blobIndex ] = packet[ index ];
+        blobIndex++;
+        index++;
+      }
+      return b;
     }
 
     /// <summary>
@@ -621,6 +712,53 @@ namespace MakingThings
         return rawSize;
       else
         return rawSize + (4 - pad);
+    }
+
+    private static void ExtractBytesFromString(ArrayList byteList, string s)
+    {
+      int nibbleCount = 0;
+      int v = 0;
+      // look at each character
+      foreach (char c in s)
+      {
+        // if the character is 0-9, a-f or A-F add it to v left shifting whatever was in there by a nibble
+        if (c >= '0' && c <= '9')
+        {
+          v = ( v << 4 ) + (int)(c - '0');
+          nibbleCount++;
+        }
+        else
+        {
+          if (c >= 'a' && c <= 'f')
+          {
+            v = (v << 4) + (int)(c - 'a') + 10;
+            nibbleCount++;
+          }
+          else
+          {
+            if (c >= 'A' && c <= 'F')
+            {
+              v = (v << 4) + (int)(c - 'A') + 10;
+              nibbleCount++;
+            }
+            else
+            {
+              // if there is a digit in v, and we just got a non-digit then we're done
+              if ( nibbleCount > 0 )
+                nibbleCount++;
+            }
+          }
+        }
+        if (nibbleCount == 2)
+        {
+          byteList.Add((byte)v);
+          v = 0;
+          nibbleCount = 0;
+        }
+      }
+      // if at the end of it all, we were left with a hanging nibble, save it
+      if (nibbleCount > 0)
+        byteList.Add((byte)v);
     }
   }
 }
