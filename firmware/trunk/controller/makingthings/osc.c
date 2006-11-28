@@ -541,7 +541,20 @@ int Osc_BlobReceiverHelper( int channel, char* message, int length,
       (*blobPropertySet)( propertyIndex, buffer, size );
     }
     else
-      return CONTROLLER_ERROR_BAD_DATA;
+    {
+      if ( type[ 1 ] == 's' )
+      {
+        unsigned char *buffer;
+        int count = Osc_ExtractData( type, "s", &buffer );
+        if ( count != 1 )
+          return CONTROLLER_ERROR_BAD_DATA;
+    
+        (*blobPropertySet)( propertyIndex, buffer, strlen( buffer ) );
+      }
+      else
+        return CONTROLLER_ERROR_BAD_DATA;
+    }
+      
   }
   else
   {
