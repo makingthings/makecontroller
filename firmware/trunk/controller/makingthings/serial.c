@@ -567,7 +567,7 @@ int Serial_SetDefault()
 // MUST end in zero
 static char* SerialOsc_Name = "serial";
 static char* SerialOsc_IntPropertyNames[] = { "active", "char", "baud", "bits", "stopbits", "parity", "hardwarehandshake", "readable", 0  }; // must have a trailing 0
-static char* SerialOsc_BlobPropertyNames[] = { "blob", 0  }; // must have a trailing 0
+static char* SerialOsc_BlobPropertyNames[] = { "block", 0  }; // must have a trailing 0
 
 int SerialOsc_IntPropertySet( int property, int value );
 int SerialOsc_IntPropertyGet( int property );
@@ -590,7 +590,7 @@ int SerialOsc_ReceiveMessage( int channel, char* message, int length )
                                       SerialOsc_IntPropertySet, SerialOsc_IntPropertyGet, 
                                       SerialOsc_IntPropertyNames );
 
-  if ( status == CONTROLLER_ERROR_UNKNOWN_PROPERTY )
+  if ( status != CONTROLLER_OK )
     status = Osc_BlobReceiverHelper( channel, message, length, 
                                       SerialOsc_Name,
                                       SerialOsc_BlobPropertySet, SerialOsc_BlobPropertyGet, 
