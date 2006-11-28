@@ -51,14 +51,18 @@
 	and other interactive devices into their projects.  This extension allows Flash
 	applications to communicate with the Make Controller Kit.<br><br>
 	
-	Classes can be found in com.makingthings.makecontroller.*
+	This extension is not Make Controller Kit specific, and can be used in any 
+	Flosc setting.<br><br>
+	
+	Classes can be found in com.makingthings.flosc.*
 	]]>
 	</ui-access>
 
 	<!-- Describe the files that comprise the extension -->
 
 	<files>
-		<file name="com/makingthings/makecontroller/Flosc.as" destination="$flash/Classes/com/makingthings/makecontroller/" />
-		<file name="com/makingthings/makecontroller/OscPacket.as" destination="$flash/Classes/com/makingthings/makecontroller/" />
+		<file name="com/makingthings/flosc/Flosc.as" destination="$flash/Classes/com/makingthings/flosc/" />
+		<file name="com/makingthings/flosc/OscMessage.as" destination="$flash/Classes/com/makingthings/flosc/" />
+		<file name="com/makingthings/flosc/ReadMe.as" destination="$flash/Classes/com/makingthings/flosc/" />
 	</files>
 </macromedia-extension>
