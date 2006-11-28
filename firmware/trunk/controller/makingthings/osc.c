@@ -532,9 +532,9 @@ int Osc_BlobReceiverHelper( int channel, char* message, int length,
   {
     if ( type[ 1 ] == 'b' )
     {
-      uchar buffer[ OSC_SCRATCH_SIZE ];
+      char *buffer;
       int size;
-      int count = Osc_ExtractData( type, "b", buffer, OSC_SCRATCH_SIZE, &size );
+      int count = Osc_ExtractData( type, "b", &buffer, &size );
       if ( count != 1 )
         return CONTROLLER_ERROR_BAD_DATA;
     
