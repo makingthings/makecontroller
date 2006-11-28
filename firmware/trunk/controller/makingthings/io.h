@@ -37,6 +37,15 @@ int Io_GetActive( int index );
 int Io_SetDirection( int index, int output );
 int Io_GetDirection( int index );
 
+int Io_SetPortA( int value );
+int Io_GetPortA( void );
+int Io_SetPortB( int value );
+int Io_GetPortB( void );
+int Io_SetPortAMask( int value );
+int Io_GetPortAMask( void );
+int Io_SetPortBMask( int value );
+int Io_GetPortBMask( void );
+
 int  Io_SetOutput( int index );
 int  Io_SetInput( int index );
 int  Io_SetTrue( int index );
@@ -45,8 +54,12 @@ int  Io_SetValue( int index, char value );
 char Io_GetValue( int index );
 int  Io_SetPeripheralA( int index );
 int  Io_SetPeripheralB( int index );
+int  Io_SetPio( int index, int enable );
+int  Io_GetPio( int index );
 int  Io_PioEnable( int index );
 int  Io_PioDisable( int index );
+int  Io_SetPullup( int index, int enable );
+int  Io_GetPullup( int index );
 int  Io_PullupEnable( int index );
 int  Io_PullupDisable( int index );
 
