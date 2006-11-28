@@ -216,15 +216,20 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
       }
 			case 'b':
 			{
+				message( 1, "<" );
 			  int blob_len = *(int*)data;  // the first int should give us the length of the blob
+        blob_len = endianSwap( blob_len );			  
 				data += sizeof( int );  // step to the blob contents
 				int i;
 				for( i = 0; i < blob_len; i++ )
 				{
-					message( 1, "%x", *data );
+					if ( i != 0 )
+					  message( 1, " " );
+					
+					message( 1, "%02x", *data );
 					data++;
 				}
-				message( 1, " " );
+				message( 1, "> " );
 				count++;
 				cont = true;
 				break;
