@@ -49,6 +49,8 @@ struct Io_
 {
   int users;
   int init; 
+  int portAMask;
+  int portBMask;
   IoPin pins[ IO_PIN_COUNT ];
 } Io;
 
@@ -376,6 +378,26 @@ int  Io_SetPeripheralB( int index )
   return CONTROLLER_OK;
 }
 
+
+int Io_SetPio( int index, int enable )
+{
+  if ( enable )
+    return Io_PioEnable( index );
+  else
+    return Io_PioDisable( index );
+}
+
+int Io_GetPio( int index )
+{
+  if ( index < 0 || index > IO_PIN_COUNT )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  if ( index < 32 ) 
+    return ( AT91C_BASE_PIOA->PIO_PSR & ( 1 << index ) ) != 0;
+  else
+    return ( AT91C_BASE_PIOB->PIO_PSR & ( 1 << ( index & 0x1F ) ) ) != 0;
+}
+
 int  Io_PioEnable( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
@@ -402,6 +424,26 @@ int  Io_PioDisable( int index )
       AT91C_BASE_PIOB->PIO_PDR = mask;
   
   return CONTROLLER_OK;
+}
+
+int Io_SetPullup( int index, int enable )
+{
+  if ( enable )
+    return Io_PullupEnable( index );
+  else
+    return Io_PullupDisable( index );
+}
+
+int Io_GetPullup( int index )
+{
+  if ( index < 0 || index > IO_PIN_COUNT )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  // The PullUp status register is inverted.
+  if ( index < 32 ) 
+    return ( AT91C_BASE_PIOA->PIO_PPUSR & ( 1 << index ) ) == 0;
+  else
+    return ( AT91C_BASE_PIOB->PIO_PPUSR & ( 1 << ( index & 0x1F ) ) ) == 0;
 }
 
 int  Io_PullupEnable( int index )
@@ -468,6 +510,52 @@ void Io_SetInputBits( longlong bits )
   AT91C_BASE_PIOB->PIO_ODR = bits & 0xFFFFFFFF;
 }
 
+int Io_SetPortA( int value )
+{
+  AT91C_BASE_PIOA->PIO_SODR = (int)( Io.portAMask & value );
+  AT91C_BASE_PIOA->PIO_CODR = (int)( Io.portAMask & ~value  );
+  return CONTROLLER_OK;
+}
+
+int Io_GetPortA( )
+{
+  return Io.portAMask & AT91C_BASE_PIOA->PIO_PDSR;
+}
+
+int Io_SetPortB( int value )
+{
+  AT91C_BASE_PIOB->PIO_SODR = (int)( Io.portBMask & value );
+  AT91C_BASE_PIOB->PIO_CODR = (int)( Io.portBMask & ~value  );
+  return CONTROLLER_OK;
+}
+
+int Io_GetPortB( )
+{
+  return Io.portBMask & AT91C_BASE_PIOB->PIO_PDSR;
+}
+
+int Io_SetPortAMask( int value )
+{
+  Io.portAMask = value;
+  return CONTROLLER_OK;
+}
+
+int Io_GetPortAMask( )
+{
+  return Io.portAMask;
+}
+
+int Io_SetPortBMask( int value )
+{
+  Io.portBMask = value;
+  return CONTROLLER_OK;
+}
+
+int Io_GetPortBMask( )
+{
+  return Io.portBMask;
+}
+
 void Io_Init()
 {
   Io.init++;
@@ -475,6 +563,9 @@ void Io_Init()
   	/* Enable the peripheral clock. */
   AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_PIOA;
   AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_PIOB;
+
+  Io.portAMask = 0;
+  Io.portBMask = 0;
 }
 
 void Io_Deinit()
@@ -533,10 +624,14 @@ longlong Io_GetValueBits( )
 // Need a list of property names
 // MUST end in zero
 static char* IoOsc_Name = "io";
-static char* IoOsc_PropertyNames[] = { "active", "value", "output", 0 }; // must have a trailing 0
+static char* IoOsc_IndexIntPropertyNames[] = { "active", "value", "output", "pio", "pullup", 0 }; // must have a trailing 0
 
-int IoOsc_PropertySet( int index, int property, int value );
-int IoOsc_PropertyGet( int index, int property );
+int IoOsc_IndexIntPropertySet( int index, int property, int value );
+int IoOsc_IndexIntPropertyGet( int index, int property );
+
+static char* IoOsc_IntPropertyNames[] = { "porta", "portamask", "portb", "portbmask", 0 }; // must have a trailing 0
+int IoOsc_IntPropertySet( int property, int value );
+int IoOsc_IntPropertyGet( int property );
 
 // Returns the name of the subsystem
 const char* IoOsc_GetName( )
@@ -550,16 +645,24 @@ int IoOsc_ReceiveMessage( int channel, char* message, int length )
 {
   int status = Osc_IndexIntReceiverHelper( channel, message, length, 
                                            IO_PIN_COUNT, IoOsc_Name,
-                                           IoOsc_PropertySet, IoOsc_PropertyGet, 
-                                           IoOsc_PropertyNames );
+                                           IoOsc_IndexIntPropertySet, IoOsc_IndexIntPropertyGet, 
+                                           IoOsc_IndexIntPropertyNames );
+                                     
+  if ( status != CONTROLLER_OK )
+  {
+    int status = Osc_IntReceiverHelper( channel, message, length, 
+                                             IoOsc_Name,
+                                             IoOsc_IntPropertySet, IoOsc_IntPropertyGet, 
+                                             IoOsc_IntPropertyNames );
+  }
                                      
   if ( status != CONTROLLER_OK )
     return Osc_SendError( channel, IoOsc_Name, status );
   return CONTROLLER_OK;
 }
 
-// Set the index LED, property with the value
-int IoOsc_PropertySet( int index, int property, int value )
+// Set the index, property with the value
+int IoOsc_IndexIntPropertySet( int index, int property, int value )
 {
   switch ( property )
   {
@@ -572,12 +675,17 @@ int IoOsc_PropertySet( int index, int property, int value )
     case 2:
       Io_SetDirection( index, value );
       break;
-  }
+    case 3:
+      Io_SetPio( index, value );
+      break;
+    case 4:
+      Io_SetPullup( index, value );
+      break;  }
   return CONTROLLER_OK;
 }
 
-// Get the index LED, property
-int IoOsc_PropertyGet( int index, int property )
+// Get the indexed property
+int IoOsc_IndexIntPropertyGet( int index, int property )
 {
   int value;
   switch ( property )
@@ -591,8 +699,58 @@ int IoOsc_PropertyGet( int index, int property )
     case 2:
       value = Io_GetDirection( index );
       break;
+    case 3:
+      value = Io_GetPio( index );
+      break;
+    case 4:
+      value = Io_GetPullup( index );
+      break;
   }
   
+  return value;
+}
+
+
+// Set the property with the value
+int IoOsc_IntPropertySet( int property, int value )
+{
+  switch ( property )
+  {
+    case 0: 
+      Io_SetPortA( value );
+      break;      
+    case 1: 
+      Io_SetPortAMask( value );
+      break;
+    case 2: 
+      Io_SetPortA( value );
+      break;      
+    case 3: 
+      Io_SetPortAMask( value );
+      break;      
+  }
+  return CONTROLLER_OK;
+}
+
+// Get the indexed property
+int IoOsc_IntPropertyGet( int property )
+{
+  int value;
+  switch ( property )
+  {
+    case 0: 
+      value = Io_GetPortA(  );
+      break;      
+    case 1: 
+      value = Io_GetPortAMask(  );
+      break;
+    case 2: 
+      value = Io_GetPortA(  );
+      break;      
+    case 3: 
+      value = Io_GetPortAMask( );
+      break;
+  }
   return value;
 }
 
