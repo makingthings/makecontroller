@@ -35,12 +35,14 @@
 #include "io.h"
 #include "led.h"
 #include "timer.h"
+#include "fasttimer.h"
 #include "debug.h"
 #include "can.h"
 #include "osc.h"
 #include "system.h"
 #include "usb.h"
 #include "network.h"
+#include "stepper.h"
 
 
 /* Make Helper Functions */

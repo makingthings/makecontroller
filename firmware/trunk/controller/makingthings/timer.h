@@ -27,7 +27,19 @@
 int Timer_SetActive( bool active );
 int Timer_GetActive( void );
 
-int Timer_Set( void (*timer_callback)( int id ), int id, int timeMs, bool repeat );
-int Timer_Cancel( void (*timer_callback)( int id ), int id );
+typedef struct TimerEntryS
+{
+  void (*callback)( int id );
+  short id;
+  int   timeCurrent;
+  int   timeInitial;
+  bool  repeat;
+  struct TimerEntryS* next;
+} TimerEntry;
+
+void Timer_InitializeEntry( TimerEntry* timerEntry, void (*timer_callback)( int id ), int id, int timeMs, bool repeat );
+
+int Timer_Set( TimerEntry* timerEntry );
+int Timer_Cancel( TimerEntry* timerEntry );
 
 #endif
