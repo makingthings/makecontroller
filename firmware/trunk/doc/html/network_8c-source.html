@@ -773,163 +773,242 @@
 <a name="l00737"></a>00737 }
 <a name="l00738"></a>00738 
 <a name="l00739"></a>00739 
-<a name="l00740"></a>00740 
-<a name="l00741"></a>00741 <span class="comment">/* NetworkOsc Interface */</span>
-<a name="l00742"></a>00742 
-<a name="l00743"></a>00743 <span class="preprocessor">#include "osc.h"</span>
-<a name="l00744"></a>00744 
-<a name="l00745"></a>00745 <span class="keyword">static</span> <span class="keywordtype">char</span>* NetworkOsc_Name = <span class="stringliteral">"network"</span>;
-<a name="l00746"></a>00746 <span class="keyword">static</span> <span class="keywordtype">char</span>* NetworkOsc_PropertyNames[] = { <span class="stringliteral">"active"</span>, <span class="stringliteral">"address"</span>, <span class="stringliteral">"mask"</span>, <span class="stringliteral">"gateway"</span>, <span class="stringliteral">"valid"</span>, <span class="stringliteral">"mac"</span>, 0 }; <span class="comment">// must have a trailing 0</span>
-<a name="l00747"></a>00747 
-<a name="l00748"></a>00748 <span class="keywordtype">int</span> <a class="code" href="network_8c.html#79b51a9aa78a8c083f7dac4e481578fd">NetworkOsc_PropertySet</a>( <span class="keywordtype">int</span> property, <span class="keywordtype">char</span>* typedata, <span class="keywordtype">int</span> channel );
-<a name="l00749"></a>00749 <span class="keywordtype">int</span> <a class="code" href="network_8c.html#ee1963ec3cbbd8f883b4bc90fab0dda8">NetworkOsc_PropertyGet</a>( <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> channel );
-<a name="l00750"></a>00750 
-<a name="l00751"></a><a class="code" href="network_8c.html#e202f5c5c64eebdb63cda03d5d2a9f20">00751</a> <span class="keyword">const</span> <span class="keywordtype">char</span>* <a class="code" href="network_8c.html#e202f5c5c64eebdb63cda03d5d2a9f20">NetworkOsc_GetName</a>( <span class="keywordtype">void</span> )
-<a name="l00752"></a>00752 {
-<a name="l00753"></a>00753   <span class="keywordflow">return</span> NetworkOsc_Name;
-<a name="l00754"></a>00754 }
-<a name="l00755"></a>00755 
-<a name="l00756"></a><a class="code" href="network_8c.html#c0dbe5b0835133f51145381266afeaf9">00756</a> <span class="keywordtype">int</span> <a class="code" href="network_8c.html#c0dbe5b0835133f51145381266afeaf9">NetworkOsc_ReceiveMessage</a>( <span class="keywordtype">int</span> channel, <span class="keywordtype">char</span>* message, <span class="keywordtype">int</span> length )
-<a name="l00757"></a>00757 {
-<a name="l00758"></a>00758   <span class="keywordflow">return</span> Osc_GeneralReceiverHelper( channel, message, length, 
-<a name="l00759"></a>00759                                 NetworkOsc_Name,
-<a name="l00760"></a>00760                                 <a class="code" href="network_8c.html#79b51a9aa78a8c083f7dac4e481578fd">NetworkOsc_PropertySet</a>, <a class="code" href="network_8c.html#ee1963ec3cbbd8f883b4bc90fab0dda8">NetworkOsc_PropertyGet</a>, 
-<a name="l00761"></a>00761                                 NetworkOsc_PropertyNames );
-<a name="l00762"></a>00762 }
-<a name="l00763"></a>00763 
-<a name="l00764"></a><a class="code" href="network_8c.html#39bf86b4252879c52c37fcf0705809be">00764</a> <span class="keywordtype">int</span> <a class="code" href="network_8c.html#39bf86b4252879c52c37fcf0705809be">NetworkOsc_Poll</a>( )
-<a name="l00765"></a>00765 {
-<a name="l00766"></a>00766   <span class="keywordflow">return</span> CONTROLLER_OK;
-<a name="l00767"></a>00767 }
-<a name="l00768"></a>00768 
-<a name="l00769"></a>00769 <span class="comment">// Sets the property with the value</span>
-<a name="l00770"></a><a class="code" href="network_8c.html#79b51a9aa78a8c083f7dac4e481578fd">00770</a> <span class="keywordtype">int</span> <a class="code" href="network_8c.html#79b51a9aa78a8c083f7dac4e481578fd">NetworkOsc_PropertySet</a>( <span class="keywordtype">int</span> property, <span class="keywordtype">char</span>* typedata, <span class="keywordtype">int</span> channel )
-<a name="l00771"></a>00771 {
-<a name="l00772"></a>00772   <span class="keywordtype">int</span> a0;
-<a name="l00773"></a>00773   <span class="keywordtype">int</span> a1; 
-<a name="l00774"></a>00774   <span class="keywordtype">int</span> a2;
-<a name="l00775"></a>00775   <span class="keywordtype">int</span> a3;
-<a name="l00776"></a>00776 
-<a name="l00777"></a>00777   <span class="keywordflow">switch</span> ( property )
-<a name="l00778"></a>00778   {
-<a name="l00779"></a>00779     <span class="keywordflow">case</span> 0:
-<a name="l00780"></a>00780     {
-<a name="l00781"></a>00781       <span class="keywordtype">int</span> value;
-<a name="l00782"></a>00782       <span class="keywordtype">int</span> count = Osc_ExtractData( typedata, <span class="stringliteral">"i"</span>, &amp;value );
-<a name="l00783"></a>00783       <span class="keywordflow">if</span> ( count != 1 )
-<a name="l00784"></a>00784         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect data - need an int"</span> );
-<a name="l00785"></a>00785 
-<a name="l00786"></a>00786       <a class="code" href="group___network.html#g0989090dd4929827de8708269f808e5b">Network_SetActive</a>( value );
-<a name="l00787"></a>00787       <span class="keywordflow">break</span>;
-<a name="l00788"></a>00788     }
-<a name="l00789"></a>00789     <span class="keywordflow">case</span> 1:
-<a name="l00790"></a>00790     {
-<a name="l00791"></a>00791       <span class="keywordtype">char</span>* address;
-<a name="l00792"></a>00792       <span class="keywordtype">int</span> count = Osc_ExtractData( typedata, <span class="stringliteral">"s"</span>, &amp;address );
-<a name="l00793"></a>00793       <span class="keywordflow">if</span> ( count != 1 ) 
-<a name="l00794"></a>00794         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect data - need a string"</span> );
-<a name="l00795"></a>00795       <span class="keywordtype">int</span> status = <a class="code" href="network_8c.html#b78d9fa706ffdd293bc3b5326e263892">Network_AddressConvert</a>( address, &amp;a0, &amp;a1, &amp;a2, &amp;a3 );
-<a name="l00796"></a>00796       <span class="keywordflow">if</span> ( status != CONTROLLER_OK )
-<a name="l00797"></a>00797         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect address - need 'a.b.c.d'"</span> );
-<a name="l00798"></a>00798 
-<a name="l00799"></a>00799       <a class="code" href="group___network.html#g8efe3e0915b89c461da231653b7bd3b7">Network_SetAddress</a>( a0, a1, a2, a3 );
-<a name="l00800"></a>00800 
-<a name="l00801"></a>00801       <span class="keywordflow">break</span>;
-<a name="l00802"></a>00802     }
-<a name="l00803"></a>00803     <span class="keywordflow">case</span> 2:
-<a name="l00804"></a>00804     {
-<a name="l00805"></a>00805       <span class="keywordtype">char</span>* address;
-<a name="l00806"></a>00806       <span class="keywordtype">int</span> count = Osc_ExtractData( typedata, <span class="stringliteral">"s"</span>, &amp;address );
-<a name="l00807"></a>00807       <span class="keywordflow">if</span> ( count != 1 ) 
-<a name="l00808"></a>00808         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect data - need a string"</span> );
-<a name="l00809"></a>00809       <span class="keywordtype">int</span> status = <a class="code" href="network_8c.html#b78d9fa706ffdd293bc3b5326e263892">Network_AddressConvert</a>( address, &amp;a0, &amp;a1, &amp;a2, &amp;a3 );
-<a name="l00810"></a>00810       <span class="keywordflow">if</span> ( status != CONTROLLER_OK )
-<a name="l00811"></a>00811         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect mask - need 'a.b.c.d'"</span> );
-<a name="l00812"></a>00812 
-<a name="l00813"></a>00813       <a class="code" href="group___network.html#g8f1c006937cf5985de44cf8cd0751642">Network_SetMask</a>( a0, a1, a2, a3 );
-<a name="l00814"></a>00814 
-<a name="l00815"></a>00815       <span class="keywordflow">break</span>;
-<a name="l00816"></a>00816     }
-<a name="l00817"></a>00817     <span class="keywordflow">case</span> 3:
-<a name="l00818"></a>00818     {
-<a name="l00819"></a>00819       <span class="keywordtype">char</span>* address;
-<a name="l00820"></a>00820       <span class="keywordtype">int</span> count = Osc_ExtractData( typedata, <span class="stringliteral">"s"</span>, &amp;address );
-<a name="l00821"></a>00821       <span class="keywordflow">if</span> ( count != 1 ) 
-<a name="l00822"></a>00822         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect data - need a string"</span> );
-<a name="l00823"></a>00823       <span class="keywordtype">int</span> status = <a class="code" href="network_8c.html#b78d9fa706ffdd293bc3b5326e263892">Network_AddressConvert</a>( address, &amp;a0, &amp;a1, &amp;a2, &amp;a3 );
-<a name="l00824"></a>00824       <span class="keywordflow">if</span> ( status != CONTROLLER_OK )
-<a name="l00825"></a>00825         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect gateway - need 'a.b.c.d'"</span> );
-<a name="l00826"></a>00826 
-<a name="l00827"></a>00827       <a class="code" href="group___network.html#g1a5be7ffdac1a43d83f6c84369d0bb55">Network_SetGateway</a>( a0, a1, a2, a3 );
-<a name="l00828"></a>00828 
-<a name="l00829"></a>00829       <span class="keywordflow">break</span>;
-<a name="l00830"></a>00830     }
-<a name="l00831"></a>00831     <span class="keywordflow">case</span> 4:
-<a name="l00832"></a>00832     {
-<a name="l00833"></a>00833       <span class="keywordtype">int</span> value;
-<a name="l00834"></a>00834       <span class="keywordtype">int</span> count = Osc_ExtractData( typedata, <span class="stringliteral">"i"</span>, &amp;value );
-<a name="l00835"></a>00835       <span class="keywordflow">if</span> ( count != 1 )
-<a name="l00836"></a>00836         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect data - need an int"</span> );
-<a name="l00837"></a>00837 
-<a name="l00838"></a>00838       <a class="code" href="group___network.html#gee640cb0ab458e093969dcbdfed7e246">Network_SetValid</a>( value ); 
-<a name="l00839"></a>00839       <span class="keywordflow">break</span>;
-<a name="l00840"></a>00840     }
-<a name="l00841"></a>00841   }
-<a name="l00842"></a>00842   <span class="keywordflow">return</span> CONTROLLER_OK;
-<a name="l00843"></a>00843 }
-<a name="l00844"></a>00844 
-<a name="l00845"></a>00845 <span class="comment">// Get the property</span>
-<a name="l00846"></a><a class="code" href="network_8c.html#ee1963ec3cbbd8f883b4bc90fab0dda8">00846</a> <span class="keywordtype">int</span> <a class="code" href="network_8c.html#ee1963ec3cbbd8f883b4bc90fab0dda8">NetworkOsc_PropertyGet</a>( <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> channel )
-<a name="l00847"></a>00847 {
-<a name="l00848"></a>00848   <span class="keywordtype">int</span> value;
-<a name="l00849"></a>00849   <span class="keywordtype">int</span> result = CONTROLLER_OK;
-<a name="l00850"></a>00850   <span class="keywordtype">char</span> address[ OSC_SCRATCH_SIZE ];
-<a name="l00851"></a>00851   <span class="keywordtype">char</span> output[ OSC_SCRATCH_SIZE ];
-<a name="l00852"></a>00852   <span class="keywordtype">int</span> a0;
-<a name="l00853"></a>00853   <span class="keywordtype">int</span> a1; 
-<a name="l00854"></a>00854   <span class="keywordtype">int</span> a2;
-<a name="l00855"></a>00855   <span class="keywordtype">int</span> a3;
-<a name="l00856"></a>00856 
-<a name="l00857"></a>00857   <span class="keywordflow">switch</span> ( property )
-<a name="l00858"></a>00858   {
-<a name="l00859"></a>00859     <span class="keywordflow">case</span> 0:
-<a name="l00860"></a>00860       value = <a class="code" href="group___network.html#gb1f4725187ab9011d327ed8e05e4746c">Network_GetActive</a>( );
-<a name="l00861"></a>00861       snprintf( address, OSC_SCRATCH_SIZE, <span class="stringliteral">"/%s/%s"</span>, NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-<a name="l00862"></a>00862       Osc_CreateMessage( channel, address, <span class="stringliteral">",i"</span>, value );      
-<a name="l00863"></a>00863       <span class="keywordflow">break</span>;
-<a name="l00864"></a>00864     <span class="keywordflow">case</span> 1:
-<a name="l00865"></a>00865       <a class="code" href="group___network.html#gf5c24462c4ca5bfcf8a9ffdb80c290d8">Network_GetAddress</a>( &amp;a0, &amp;a1, &amp;a2, &amp;a3 );
-<a name="l00866"></a>00866       snprintf( address, OSC_SCRATCH_SIZE, <span class="stringliteral">"/%s/%s"</span>, NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-<a name="l00867"></a>00867       snprintf( output, OSC_SCRATCH_SIZE, <span class="stringliteral">"%d.%d.%d.%d"</span>, a0, a1, a2, a3 );
-<a name="l00868"></a>00868       Osc_CreateMessage( channel, address, <span class="stringliteral">",s"</span>, output );      
-<a name="l00869"></a>00869       <span class="keywordflow">break</span>;
-<a name="l00870"></a>00870     <span class="keywordflow">case</span> 2:
-<a name="l00871"></a>00871       <a class="code" href="group___network.html#ga0837a01a5bd814cae2a080f8b2bf86b">Network_GetMask</a>( &amp;a0, &amp;a1, &amp;a2, &amp;a3 );
-<a name="l00872"></a>00872       snprintf( address, OSC_SCRATCH_SIZE, <span class="stringliteral">"/%s/%s"</span>, NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-<a name="l00873"></a>00873       snprintf( output, OSC_SCRATCH_SIZE, <span class="stringliteral">"%d.%d.%d.%d"</span>, a0, a1, a2, a3 );
-<a name="l00874"></a>00874       Osc_CreateMessage( channel, address, <span class="stringliteral">",s"</span>, output );      
-<a name="l00875"></a>00875       <span class="keywordflow">break</span>;
-<a name="l00876"></a>00876     <span class="keywordflow">case</span> 3:
-<a name="l00877"></a>00877       <a class="code" href="group___network.html#ge91ce5f124fcfbabc529d75fc222d49e">Network_GetGateway</a>( &amp;a0, &amp;a1, &amp;a2, &amp;a3 );
-<a name="l00878"></a>00878       snprintf( address, OSC_SCRATCH_SIZE, <span class="stringliteral">"/%s/%s"</span>, NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-<a name="l00879"></a>00879       snprintf( output, OSC_SCRATCH_SIZE, <span class="stringliteral">"%d.%d.%d.%d"</span>, a0, a1, a2, a3 );
-<a name="l00880"></a>00880       Osc_CreateMessage( channel, address, <span class="stringliteral">",s"</span>, output );      
-<a name="l00881"></a>00881       <span class="keywordflow">break</span>;
-<a name="l00882"></a>00882     <span class="keywordflow">case</span> 4:
-<a name="l00883"></a>00883       value = <a class="code" href="group___network.html#g66046b3c42a64a18478cdcc685e22528">Network_GetValid</a>( );
-<a name="l00884"></a>00884       snprintf( address, OSC_SCRATCH_SIZE, <span class="stringliteral">"/%s/%s"</span>, NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-<a name="l00885"></a>00885       Osc_CreateMessage( channel, address, <span class="stringliteral">",i"</span>, value );      
-<a name="l00886"></a>00886       <span class="keywordflow">break</span>;
-<a name="l00887"></a>00887     <span class="keywordflow">case</span> 5:
-<a name="l00888"></a>00888       snprintf( address, OSC_SCRATCH_SIZE, <span class="stringliteral">"/%s/%s"</span>, NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-<a name="l00889"></a>00889       snprintf( output, OSC_SCRATCH_SIZE, <span class="stringliteral">"%02X:%02X:%02X:%02X:%02X:%02X"</span>, 
-<a name="l00890"></a>00890                 <a class="code" href="network_8c.html#6d818490aa863faf61dde23e494a78cc">emacETHADDR0</a>, <a class="code" href="network_8c.html#f0da93849eae9070c9bd8ee70ab9c727">emacETHADDR1</a>, <a class="code" href="network_8c.html#1e075d19aa924f313c6cdacf7668ca12">emacETHADDR2</a>, <a class="code" href="network_8c.html#ea5a3af92205dd41ba7b4ebe36cd54d4">emacETHADDR3</a>, <a class="code" href="network_8c.html#12de98bd99b8ce82b2226a7926dee9fb">emacETHADDR4</a>, <a class="code" href="network_8c.html#90ecdd29595e200453a391b59a00f6ff">emacETHADDR5</a> );
-<a name="l00891"></a>00891       Osc_CreateMessage( channel, address, <span class="stringliteral">",s"</span>, output );      
-<a name="l00892"></a>00892       <span class="keywordflow">break</span>;
-<a name="l00893"></a>00893   }
-<a name="l00894"></a>00894   
-<a name="l00895"></a>00895   <span class="keywordflow">return</span> result;
-<a name="l00896"></a>00896 }
+<a name="l00740"></a>00740 <span class="comment"></span>
+<a name="l00741"></a>00741 <span class="comment">/** \defgroup NetworkOSC Network - OSC</span>
+<a name="l00742"></a>00742 <span class="comment">  Configure the Controller Board's Network Settings via OSC.</span>
+<a name="l00743"></a>00743 <span class="comment">  \ingroup OSC</span>
+<a name="l00744"></a>00744 <span class="comment">   </span>
+<a name="l00745"></a>00745 <span class="comment">    \section devices Devices</span>
+<a name="l00746"></a>00746 <span class="comment">    There is only one Network system, so a device index is not used.</span>
+<a name="l00747"></a>00747 <span class="comment">   </span>
+<a name="l00748"></a>00748 <span class="comment">    \section properties Properties</span>
+<a name="l00749"></a>00749 <span class="comment">    The Network system has six properties - \b 'address', \b 'mask', \b 'gateway',</span>
+<a name="l00750"></a>00750 <span class="comment">    \b 'valid', \b 'mac' and \b 'active'.</span>
+<a name="l00751"></a>00751 <span class="comment"></span>
+<a name="l00752"></a>00752 <span class="comment">    \par Address</span>
+<a name="l00753"></a>00753 <span class="comment">    The \b 'address' property corresponds to the IP address of the Controller Board.</span>
+<a name="l00754"></a>00754 <span class="comment">    This value can be both read and written.  To set a new address, send a message like</span>
+<a name="l00755"></a>00755 <span class="comment">    \verbatim /network/address 192.168.0.235 \endverbatim</span>
+<a name="l00756"></a>00756 <span class="comment">    \par</span>
+<a name="l00757"></a>00757 <span class="comment">    To read the current IP address, omit the argument value from the end of the message:</span>
+<a name="l00758"></a>00758 <span class="comment">    \verbatim /network/address \endverbatim</span>
+<a name="l00759"></a>00759 <span class="comment">   </span>
+<a name="l00760"></a>00760 <span class="comment">    \par Mask</span>
+<a name="l00761"></a>00761 <span class="comment">    The \b 'mask' property corresponds to the network mask of the Controller Board.</span>
+<a name="l00762"></a>00762 <span class="comment">    When on a subnet or local network, the network mask must be set in order</span>
+<a name="l00763"></a>00763 <span class="comment">    for the gateway to route information to the board's IP address properly.</span>
+<a name="l00764"></a>00764 <span class="comment">    The mask is commonly 255.255.255.0 for many home networks.</span>
+<a name="l00765"></a>00765 <span class="comment">    \par</span>
+<a name="l00766"></a>00766 <span class="comment">    To set the board's network mask, send a message like</span>
+<a name="l00767"></a>00767 <span class="comment">    \verbatim /network/mask 255.255.255.0 \endverbatim</span>
+<a name="l00768"></a>00768 <span class="comment">    To read the current mask, omit the argument value from the end of the message:</span>
+<a name="l00769"></a>00769 <span class="comment">    \verbatim /network/mask \endverbatim</span>
+<a name="l00770"></a>00770 <span class="comment">   </span>
+<a name="l00771"></a>00771 <span class="comment">    \par Gateway</span>
+<a name="l00772"></a>00772 <span class="comment">    The \b 'gateway' property corresponds to the gateway address for the local network the Make Controller is on.</span>
+<a name="l00773"></a>00773 <span class="comment">    The gateway address is the address</span>
+<a name="l00774"></a>00774 <span class="comment">    The gateway address is commonly the address of the router on many home networks, and its</span>
+<a name="l00775"></a>00775 <span class="comment">    value is commonly 192.168.0.1.\n</span>
+<a name="l00776"></a>00776 <span class="comment">    This value is stored in EEPROM, so it persists even after the board</span>
+<a name="l00777"></a>00777 <span class="comment">    is powered down.</span>
+<a name="l00778"></a>00778 <span class="comment">    \par</span>
+<a name="l00779"></a>00779 <span class="comment">    To set the board's gateway address, send a message like</span>
+<a name="l00780"></a>00780 <span class="comment">    \verbatim /network/gateway 192.168.0.1 \endverbatim</span>
+<a name="l00781"></a>00781 <span class="comment">    To read the current gateway, omit the argument value from the end of the message:</span>
+<a name="l00782"></a>00782 <span class="comment">    \verbatim /network/gateway \endverbatim</span>
+<a name="l00783"></a>00783 <span class="comment">   </span>
+<a name="l00784"></a>00784 <span class="comment">    \par MAC</span>
+<a name="l00785"></a>00785 <span class="comment">    The \b 'mac' property corresponds to the Ethernet MAC address of the Controller Board.</span>
+<a name="l00786"></a>00786 <span class="comment">    This value is read-only.</span>
+<a name="l00787"></a>00787 <span class="comment">    \par</span>
+<a name="l00788"></a>00788 <span class="comment">    To read the MAC address of the Controller, send the message</span>
+<a name="l00789"></a>00789 <span class="comment">    \verbatim /network/mac \endverbatim</span>
+<a name="l00790"></a>00790 <span class="comment">    The board will respond by sending back an OSC message with the MAC address.</span>
+<a name="l00791"></a>00791 <span class="comment">   </span>
+<a name="l00792"></a>00792 <span class="comment">    \par Valid</span>
+<a name="l00793"></a>00793 <span class="comment">    The \b 'valid' property corresponds to a checksum used to make sure the board's network settings are valid.</span>
+<a name="l00794"></a>00794 <span class="comment">    Ideally, this should be called each time an address setting is changed so that if</span>
+<a name="l00795"></a>00795 <span class="comment">    the board gets powered down, it will know when it comes back up whether or</span>
+<a name="l00796"></a>00796 <span class="comment">    not the address settings is currently has are valid.</span>
+<a name="l00797"></a>00797 <span class="comment">    This creates a checksum for the current address settings and stores it in EEPROM.</span>
+<a name="l00798"></a>00798 <span class="comment">    \par</span>
+<a name="l00799"></a>00799 <span class="comment">    To set the board's current network settings as valid, send the message</span>
+<a name="l00800"></a>00800 <span class="comment">    \verbatim /network/valid 1 \endverbatim</span>
+<a name="l00801"></a>00801 <span class="comment">    To check if the current settings have been set as valid, send the message:</span>
+<a name="l00802"></a>00802 <span class="comment">    \verbatim /network/valid \endverbatim</span>
+<a name="l00803"></a>00803 <span class="comment">    with no argument value.</span>
+<a name="l00804"></a>00804 <span class="comment">   </span>
+<a name="l00805"></a>00805 <span class="comment">    \par Active</span>
+<a name="l00806"></a>00806 <span class="comment">    The \b 'active' property corresponds to the active state of the Network system.</span>
+<a name="l00807"></a>00807 <span class="comment">    If the Network system is set to be inactive, it will not respond to any OSC messages. </span>
+<a name="l00808"></a>00808 <span class="comment">    If you're not seeing appropriate</span>
+<a name="l00809"></a>00809 <span class="comment">    responses to your messages to the Network system, check the whether it's</span>
+<a name="l00810"></a>00810 <span class="comment">    active by sending a message like</span>
+<a name="l00811"></a>00811 <span class="comment">    \verbatim /network/active \endverbatim</span>
+<a name="l00812"></a>00812 <span class="comment">    \par</span>
+<a name="l00813"></a>00813 <span class="comment">    You can set the active flag by sending</span>
+<a name="l00814"></a>00814 <span class="comment">    \verbatim /network/active 1 \endverbatim</span>
+<a name="l00815"></a>00815 <span class="comment">*/</span>
+<a name="l00816"></a>00816 
+<a name="l00817"></a>00817 <span class="preprocessor">#include "osc.h"</span>
+<a name="l00818"></a>00818 
+<a name="l00819"></a>00819 <span class="keyword">static</span> <span class="keywordtype">char</span>* NetworkOsc_Name = <span class="stringliteral">"network"</span>;
+<a name="l00820"></a>00820 <span class="keyword">static</span> <span class="keywordtype">char</span>* NetworkOsc_PropertyNames[] = { <span class="stringliteral">"active"</span>, <span class="stringliteral">"address"</span>, <span class="stringliteral">"mask"</span>, <span class="stringliteral">"gateway"</span>, <span class="stringliteral">"valid"</span>, <span class="stringliteral">"mac"</span>, 0 }; <span class="comment">// must have a trailing 0</span>
+<a name="l00821"></a>00821 
+<a name="l00822"></a>00822 <span class="keywordtype">int</span> <a class="code" href="network_8c.html#79b51a9aa78a8c083f7dac4e481578fd">NetworkOsc_PropertySet</a>( <span class="keywordtype">int</span> property, <span class="keywordtype">char</span>* typedata, <span class="keywordtype">int</span> channel );
+<a name="l00823"></a>00823 <span class="keywordtype">int</span> <a class="code" href="network_8c.html#ee1963ec3cbbd8f883b4bc90fab0dda8">NetworkOsc_PropertyGet</a>( <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> channel );
+<a name="l00824"></a>00824 
+<a name="l00825"></a><a class="code" href="network_8c.html#e202f5c5c64eebdb63cda03d5d2a9f20">00825</a> <span class="keyword">const</span> <span class="keywordtype">char</span>* <a class="code" href="network_8c.html#e202f5c5c64eebdb63cda03d5d2a9f20">NetworkOsc_GetName</a>( <span class="keywordtype">void</span> )
+<a name="l00826"></a>00826 {
+<a name="l00827"></a>00827   <span class="keywordflow">return</span> NetworkOsc_Name;
+<a name="l00828"></a>00828 }
+<a name="l00829"></a>00829 
+<a name="l00830"></a><a class="code" href="network_8c.html#c0dbe5b0835133f51145381266afeaf9">00830</a> <span class="keywordtype">int</span> <a class="code" href="network_8c.html#c0dbe5b0835133f51145381266afeaf9">NetworkOsc_ReceiveMessage</a>( <span class="keywordtype">int</span> channel, <span class="keywordtype">char</span>* message, <span class="keywordtype">int</span> length )
+<a name="l00831"></a>00831 {
+<a name="l00832"></a>00832   <span class="keywordtype">int</span> status = Osc_GeneralReceiverHelper( channel, message, length, 
+<a name="l00833"></a>00833                                 NetworkOsc_Name,
+<a name="l00834"></a>00834                                 <a class="code" href="network_8c.html#79b51a9aa78a8c083f7dac4e481578fd">NetworkOsc_PropertySet</a>, <a class="code" href="network_8c.html#ee1963ec3cbbd8f883b4bc90fab0dda8">NetworkOsc_PropertyGet</a>, 
+<a name="l00835"></a>00835                                 NetworkOsc_PropertyNames );
+<a name="l00836"></a>00836 
+<a name="l00837"></a>00837   <span class="keywordflow">if</span> ( status != CONTROLLER_OK )
+<a name="l00838"></a>00838     <span class="keywordflow">return</span> Osc_SendError( channel, NetworkOsc_Name, status );
+<a name="l00839"></a>00839 
+<a name="l00840"></a>00840   <span class="keywordflow">return</span> CONTROLLER_OK;
+<a name="l00841"></a>00841 }
+<a name="l00842"></a>00842 
+<a name="l00843"></a><a class="code" href="network_8c.html#39bf86b4252879c52c37fcf0705809be">00843</a> <span class="keywordtype">int</span> <a class="code" href="network_8c.html#39bf86b4252879c52c37fcf0705809be">NetworkOsc_Poll</a>( )
+<a name="l00844"></a>00844 {
+<a name="l00845"></a>00845   <span class="keywordflow">return</span> CONTROLLER_OK;
+<a name="l00846"></a>00846 }
+<a name="l00847"></a>00847 
+<a name="l00848"></a>00848 <span class="comment">// Sets the property with the value</span>
+<a name="l00849"></a><a class="code" href="network_8c.html#79b51a9aa78a8c083f7dac4e481578fd">00849</a> <span class="keywordtype">int</span> <a class="code" href="network_8c.html#79b51a9aa78a8c083f7dac4e481578fd">NetworkOsc_PropertySet</a>( <span class="keywordtype">int</span> property, <span class="keywordtype">char</span>* typedata, <span class="keywordtype">int</span> channel )
+<a name="l00850"></a>00850 {
+<a name="l00851"></a>00851   <span class="keywordtype">int</span> a0;
+<a name="l00852"></a>00852   <span class="keywordtype">int</span> a1; 
+<a name="l00853"></a>00853   <span class="keywordtype">int</span> a2;
+<a name="l00854"></a>00854   <span class="keywordtype">int</span> a3;
+<a name="l00855"></a>00855 
+<a name="l00856"></a>00856   <span class="keywordflow">switch</span> ( property )
+<a name="l00857"></a>00857   {
+<a name="l00858"></a>00858     <span class="keywordflow">case</span> 0:
+<a name="l00859"></a>00859     {
+<a name="l00860"></a>00860       <span class="keywordtype">int</span> value;
+<a name="l00861"></a>00861       <span class="keywordtype">int</span> count = Osc_ExtractData( typedata, <span class="stringliteral">"i"</span>, &amp;value );
+<a name="l00862"></a>00862       <span class="keywordflow">if</span> ( count != 1 )
+<a name="l00863"></a>00863         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect data - need an int"</span> );
+<a name="l00864"></a>00864 
+<a name="l00865"></a>00865       <a class="code" href="group___network.html#g0989090dd4929827de8708269f808e5b">Network_SetActive</a>( value );
+<a name="l00866"></a>00866       <span class="keywordflow">break</span>;
+<a name="l00867"></a>00867     }
+<a name="l00868"></a>00868     <span class="keywordflow">case</span> 1:
+<a name="l00869"></a>00869     {
+<a name="l00870"></a>00870       <span class="keywordtype">char</span>* address;
+<a name="l00871"></a>00871       <span class="keywordtype">int</span> count = Osc_ExtractData( typedata, <span class="stringliteral">"s"</span>, &amp;address );
+<a name="l00872"></a>00872       <span class="keywordflow">if</span> ( count != 1 ) 
+<a name="l00873"></a>00873         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect data - need a string"</span> );
+<a name="l00874"></a>00874       <span class="keywordtype">int</span> status = <a class="code" href="network_8c.html#b78d9fa706ffdd293bc3b5326e263892">Network_AddressConvert</a>( address, &amp;a0, &amp;a1, &amp;a2, &amp;a3 );
+<a name="l00875"></a>00875       <span class="keywordflow">if</span> ( status != CONTROLLER_OK )
+<a name="l00876"></a>00876         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect address - need 'a.b.c.d'"</span> );
+<a name="l00877"></a>00877 
+<a name="l00878"></a>00878       <a class="code" href="group___network.html#g8efe3e0915b89c461da231653b7bd3b7">Network_SetAddress</a>( a0, a1, a2, a3 );
+<a name="l00879"></a>00879 
+<a name="l00880"></a>00880       <span class="keywordflow">break</span>;
+<a name="l00881"></a>00881     }
+<a name="l00882"></a>00882     <span class="keywordflow">case</span> 2:
+<a name="l00883"></a>00883     {
+<a name="l00884"></a>00884       <span class="keywordtype">char</span>* address;
+<a name="l00885"></a>00885       <span class="keywordtype">int</span> count = Osc_ExtractData( typedata, <span class="stringliteral">"s"</span>, &amp;address );
+<a name="l00886"></a>00886       <span class="keywordflow">if</span> ( count != 1 ) 
+<a name="l00887"></a>00887         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect data - need a string"</span> );
+<a name="l00888"></a>00888       <span class="keywordtype">int</span> status = <a class="code" href="network_8c.html#b78d9fa706ffdd293bc3b5326e263892">Network_AddressConvert</a>( address, &amp;a0, &amp;a1, &amp;a2, &amp;a3 );
+<a name="l00889"></a>00889       <span class="keywordflow">if</span> ( status != CONTROLLER_OK )
+<a name="l00890"></a>00890         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect mask - need 'a.b.c.d'"</span> );
+<a name="l00891"></a>00891 
+<a name="l00892"></a>00892       <a class="code" href="group___network.html#g8f1c006937cf5985de44cf8cd0751642">Network_SetMask</a>( a0, a1, a2, a3 );
+<a name="l00893"></a>00893 
+<a name="l00894"></a>00894       <span class="keywordflow">break</span>;
+<a name="l00895"></a>00895     }
+<a name="l00896"></a>00896     <span class="keywordflow">case</span> 3:
+<a name="l00897"></a>00897     {
+<a name="l00898"></a>00898       <span class="keywordtype">char</span>* address;
+<a name="l00899"></a>00899       <span class="keywordtype">int</span> count = Osc_ExtractData( typedata, <span class="stringliteral">"s"</span>, &amp;address );
+<a name="l00900"></a>00900       <span class="keywordflow">if</span> ( count != 1 ) 
+<a name="l00901"></a>00901         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect data - need a string"</span> );
+<a name="l00902"></a>00902       <span class="keywordtype">int</span> status = <a class="code" href="network_8c.html#b78d9fa706ffdd293bc3b5326e263892">Network_AddressConvert</a>( address, &amp;a0, &amp;a1, &amp;a2, &amp;a3 );
+<a name="l00903"></a>00903       <span class="keywordflow">if</span> ( status != CONTROLLER_OK )
+<a name="l00904"></a>00904         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect gateway - need 'a.b.c.d'"</span> );
+<a name="l00905"></a>00905 
+<a name="l00906"></a>00906       <a class="code" href="group___network.html#g1a5be7ffdac1a43d83f6c84369d0bb55">Network_SetGateway</a>( a0, a1, a2, a3 );
+<a name="l00907"></a>00907 
+<a name="l00908"></a>00908       <span class="keywordflow">break</span>;
+<a name="l00909"></a>00909     }
+<a name="l00910"></a>00910     <span class="keywordflow">case</span> 4:
+<a name="l00911"></a>00911     {
+<a name="l00912"></a>00912       <span class="keywordtype">int</span> value;
+<a name="l00913"></a>00913       <span class="keywordtype">int</span> count = Osc_ExtractData( typedata, <span class="stringliteral">"i"</span>, &amp;value );
+<a name="l00914"></a>00914       <span class="keywordflow">if</span> ( count != 1 )
+<a name="l00915"></a>00915         <span class="keywordflow">return</span> Osc_SubsystemError( channel, NetworkOsc_Name, <span class="stringliteral">"Incorrect data - need an int"</span> );
+<a name="l00916"></a>00916 
+<a name="l00917"></a>00917       <a class="code" href="group___network.html#gee640cb0ab458e093969dcbdfed7e246">Network_SetValid</a>( value ); 
+<a name="l00918"></a>00918       <span class="keywordflow">break</span>;
+<a name="l00919"></a>00919     }
+<a name="l00920"></a>00920   }
+<a name="l00921"></a>00921   <span class="keywordflow">return</span> CONTROLLER_OK;
+<a name="l00922"></a>00922 }
+<a name="l00923"></a>00923 
+<a name="l00924"></a>00924 <span class="comment">// Get the property</span>
+<a name="l00925"></a><a class="code" href="network_8c.html#ee1963ec3cbbd8f883b4bc90fab0dda8">00925</a> <span class="keywordtype">int</span> <a class="code" href="network_8c.html#ee1963ec3cbbd8f883b4bc90fab0dda8">NetworkOsc_PropertyGet</a>( <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> channel )
+<a name="l00926"></a>00926 {
+<a name="l00927"></a>00927   <span class="keywordtype">int</span> value;
+<a name="l00928"></a>00928   <span class="keywordtype">int</span> result = CONTROLLER_OK;
+<a name="l00929"></a>00929   <span class="keywordtype">char</span> address[ OSC_SCRATCH_SIZE ];
+<a name="l00930"></a>00930   <span class="keywordtype">char</span> output[ OSC_SCRATCH_SIZE ];
+<a name="l00931"></a>00931   <span class="keywordtype">int</span> a0;
+<a name="l00932"></a>00932   <span class="keywordtype">int</span> a1; 
+<a name="l00933"></a>00933   <span class="keywordtype">int</span> a2;
+<a name="l00934"></a>00934   <span class="keywordtype">int</span> a3;
+<a name="l00935"></a>00935 
+<a name="l00936"></a>00936   <span class="keywordflow">switch</span> ( property )
+<a name="l00937"></a>00937   {
+<a name="l00938"></a>00938     <span class="keywordflow">case</span> 0:
+<a name="l00939"></a>00939       value = <a class="code" href="group___network.html#gb1f4725187ab9011d327ed8e05e4746c">Network_GetActive</a>( );
+<a name="l00940"></a>00940       snprintf( address, OSC_SCRATCH_SIZE, <span class="stringliteral">"/%s/%s"</span>, NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+<a name="l00941"></a>00941       Osc_CreateMessage( channel, address, <span class="stringliteral">",i"</span>, value );      
+<a name="l00942"></a>00942       <span class="keywordflow">break</span>;
+<a name="l00943"></a>00943     <span class="keywordflow">case</span> 1:
+<a name="l00944"></a>00944       <a class="code" href="group___network.html#gf5c24462c4ca5bfcf8a9ffdb80c290d8">Network_GetAddress</a>( &amp;a0, &amp;a1, &amp;a2, &amp;a3 );
+<a name="l00945"></a>00945       snprintf( address, OSC_SCRATCH_SIZE, <span class="stringliteral">"/%s/%s"</span>, NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+<a name="l00946"></a>00946       snprintf( output, OSC_SCRATCH_SIZE, <span class="stringliteral">"%d.%d.%d.%d"</span>, a0, a1, a2, a3 );
+<a name="l00947"></a>00947       Osc_CreateMessage( channel, address, <span class="stringliteral">",s"</span>, output );      
+<a name="l00948"></a>00948       <span class="keywordflow">break</span>;
+<a name="l00949"></a>00949     <span class="keywordflow">case</span> 2:
+<a name="l00950"></a>00950       <a class="code" href="group___network.html#ga0837a01a5bd814cae2a080f8b2bf86b">Network_GetMask</a>( &amp;a0, &amp;a1, &amp;a2, &amp;a3 );
+<a name="l00951"></a>00951       snprintf( address, OSC_SCRATCH_SIZE, <span class="stringliteral">"/%s/%s"</span>, NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+<a name="l00952"></a>00952       snprintf( output, OSC_SCRATCH_SIZE, <span class="stringliteral">"%d.%d.%d.%d"</span>, a0, a1, a2, a3 );
+<a name="l00953"></a>00953       Osc_CreateMessage( channel, address, <span class="stringliteral">",s"</span>, output );      
+<a name="l00954"></a>00954       <span class="keywordflow">break</span>;
+<a name="l00955"></a>00955     <span class="keywordflow">case</span> 3:
+<a name="l00956"></a>00956       <a class="code" href="group___network.html#ge91ce5f124fcfbabc529d75fc222d49e">Network_GetGateway</a>( &amp;a0, &amp;a1, &amp;a2, &amp;a3 );
+<a name="l00957"></a>00957       snprintf( address, OSC_SCRATCH_SIZE, <span class="stringliteral">"/%s/%s"</span>, NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+<a name="l00958"></a>00958       snprintf( output, OSC_SCRATCH_SIZE, <span class="stringliteral">"%d.%d.%d.%d"</span>, a0, a1, a2, a3 );
+<a name="l00959"></a>00959       Osc_CreateMessage( channel, address, <span class="stringliteral">",s"</span>, output );      
+<a name="l00960"></a>00960       <span class="keywordflow">break</span>;
+<a name="l00961"></a>00961     <span class="keywordflow">case</span> 4:
+<a name="l00962"></a>00962       value = <a class="code" href="group___network.html#g66046b3c42a64a18478cdcc685e22528">Network_GetValid</a>( );
+<a name="l00963"></a>00963       snprintf( address, OSC_SCRATCH_SIZE, <span class="stringliteral">"/%s/%s"</span>, NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+<a name="l00964"></a>00964       Osc_CreateMessage( channel, address, <span class="stringliteral">",i"</span>, value );      
+<a name="l00965"></a>00965       <span class="keywordflow">break</span>;
+<a name="l00966"></a>00966     <span class="keywordflow">case</span> 5:
+<a name="l00967"></a>00967       snprintf( address, OSC_SCRATCH_SIZE, <span class="stringliteral">"/%s/%s"</span>, NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+<a name="l00968"></a>00968       snprintf( output, OSC_SCRATCH_SIZE, <span class="stringliteral">"%02X:%02X:%02X:%02X:%02X:%02X"</span>, 
+<a name="l00969"></a>00969                 <a class="code" href="network_8c.html#6d818490aa863faf61dde23e494a78cc">emacETHADDR0</a>, <a class="code" href="network_8c.html#f0da93849eae9070c9bd8ee70ab9c727">emacETHADDR1</a>, <a class="code" href="network_8c.html#1e075d19aa924f313c6cdacf7668ca12">emacETHADDR2</a>, <a class="code" href="network_8c.html#ea5a3af92205dd41ba7b4ebe36cd54d4">emacETHADDR3</a>, <a class="code" href="network_8c.html#12de98bd99b8ce82b2226a7926dee9fb">emacETHADDR4</a>, <a class="code" href="network_8c.html#90ecdd29595e200453a391b59a00f6ff">emacETHADDR5</a> );
+<a name="l00970"></a>00970       Osc_CreateMessage( channel, address, <span class="stringliteral">",s"</span>, output );      
+<a name="l00971"></a>00971       <span class="keywordflow">break</span>;
+<a name="l00972"></a>00972   }
+<a name="l00973"></a>00973   
+<a name="l00974"></a>00974   <span class="keywordflow">return</span> result;
+<a name="l00975"></a>00975 }
 </pre></div><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -939,6 +1018,6 @@
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 22 Sep 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

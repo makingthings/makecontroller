@@ -42,6 +42,9 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___analog_in.html#g66a6bd10fbb5fc80f32994b756cf0412">AnalogIn_GetValue</a> (int index)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Read the value of an analog input.  <a href="#g66a6bd10fbb5fc80f32994b756cf0412"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___analog_in.html#g49aee6e9be4e3e6982de3ed7c7b11dc1">AnalogIn_GetValueMulti</a> (int mask, int *values[])</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Read the value of several of the analog inputs.  <a href="#g49aee6e9be4e3e6982de3ed7c7b11dc1"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___analog_in.html#g41030fda39d69b15cd29ac95d73fd932">AnalogIn_GetValueWait</a> (int index)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Read the value of an analog input without the use of any OS services.  <a href="#g41030fda39d69b15cd29ac95d73fd932"></a><br></td></tr>
@@ -95,7 +98,7 @@ Definition at line <a class="el" href="analogin_8c-source.html#l00109">109</a> o
 <p>
 References <a class="el" href="analogin__internal_8h-source.html#l00034">AnalogIn_::channelUsers</a>.
 <p>
-Referenced by <a class="el" href="analogin_8c-source.html#l00412">AnalogInOsc_PropertyGet()</a>.    </td>
+Referenced by <a class="el" href="analogin_8c-source.html#l00469">AnalogInOsc_PropertyGet()</a>.    </td>
   </tr>
 </table>
 <a class="anchor" name="g66a6bd10fbb5fc80f32994b756cf0412"></a><!-- doxytag: member="analogin.c::AnalogIn_GetValue" ref="g66a6bd10fbb5fc80f32994b756cf0412" args="(int index)" --><p>
@@ -137,7 +140,57 @@ Definition at line <a class="el" href="analogin_8c-source.html#l00121">121</a> o
 <p>
 References <a class="el" href="analogin__internal_8h-source.html#l00034">AnalogIn_::channelUsers</a>, <a class="el" href="analogin__internal_8h-source.html#l00033">AnalogIn_::doneSemaphore</a>, and <a class="el" href="analogin__internal_8h-source.html#l00032">AnalogIn_::semaphore</a>.
 <p>
-Referenced by <a class="el" href="analogin_8c-source.html#l00412">AnalogInOsc_PropertyGet()</a>, <a class="el" href="digitalin_8c-source.html#l00099">DigitalIn_GetValue()</a>, <a class="el" href="poly_8c-source.html#l00553">Follower_Run()</a>, <a class="el" href="poly_8c-source.html#l00712">Oscillator_Run()</a>, and <a class="el" href="poly_8c-source.html#l00351">Timer_Run()</a>.    </td>
+Referenced by <a class="el" href="analogin_8c-source.html#l00469">AnalogInOsc_PropertyGet()</a>, <a class="el" href="digitalin_8c-source.html#l00099">DigitalIn_GetValue()</a>, <a class="el" href="poly_8c-source.html#l00553">Follower_Run()</a>, <a class="el" href="poly_8c-source.html#l00712">Oscillator_Run()</a>, and <a class="el" href="poly_8c-source.html#l00351">Timer_Run()</a>.    </td>
+  </tr>
+</table>
+<a class="anchor" name="g49aee6e9be4e3e6982de3ed7c7b11dc1"></a><!-- doxytag: member="analogin.c::AnalogIn_GetValueMulti" ref="g49aee6e9be4e3e6982de3ed7c7b11dc1" args="(int mask, int *values[])" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top">int AnalogIn_GetValueMulti           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">int&nbsp;</td>
+          <td class="mdname" nowrap> <em>mask</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td class="md"></td>
+          <td class="md" nowrap>int *&nbsp;</td>
+          <td class="mdname" nowrap> <em>values</em>[]</td>
+        </tr>
+        <tr>
+          <td class="md"></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Read the value of several of the analog inputs. 
+<p>
+Pass in a mask that specifies the channels you would like to read, as well as an array into which the values will be placed. <dl compact><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>mask</em>&nbsp;</td><td>A bit mask specifying which channels to read. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>values</em>&nbsp;</td><td>A pointer to an int array to be filled with the values. </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>Returns:</b></dt><dd>0 on success, otherwise non-zero. </dd></dl>
+
+<p>
+Definition at line <a class="el" href="analogin_8c-source.html#l00167">167</a> of file <a class="el" href="analogin_8c-source.html">analogin.c</a>.
+<p>
+References <a class="el" href="analogin__internal_8h-source.html#l00034">AnalogIn_::channelUsers</a>.    </td>
   </tr>
 </table>
 <a class="anchor" name="g41030fda39d69b15cd29ac95d73fd932"></a><!-- doxytag: member="analogin.c::AnalogIn_GetValueWait" ref="g41030fda39d69b15cd29ac95d73fd932" args="(int index)" --><p>
@@ -175,7 +228,7 @@ Note that this is not thread safe and shouldn't be used if another part of the c
 <dl compact><dt><b>Returns:</b></dt><dd>The value as an integer (0 - 1023). </dd></dl>
 
 <p>
-Definition at line <a class="el" href="analogin_8c-source.html#l00166">166</a> of file <a class="el" href="analogin_8c-source.html">analogin.c</a>.
+Definition at line <a class="el" href="analogin_8c-source.html#l00219">219</a> of file <a class="el" href="analogin_8c-source.html">analogin.c</a>.
 <p>
 References <a class="el" href="analogin__internal_8h-source.html#l00034">AnalogIn_::channelUsers</a>.    </td>
   </tr>
@@ -189,6 +242,6 @@ References <a class="el" href="analogin__internal_8h-source.html#l00034">AnalogI
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 22 Sep 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

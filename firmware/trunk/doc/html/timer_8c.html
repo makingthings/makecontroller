@@ -54,12 +54,15 @@ void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="time
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___timer.html#gbefcf81004fa679f113c0f364d9fca49">Timer_GetActive</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Timer_GetActive.  <a href="group___timer.html#gbefcf81004fa679f113c0f364d9fca49"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___timer.html#gf1473bbb83caf43ed40f49c5d7f00436">Timer_Set</a> (void(*timerCallback)(int id), int id, int timeMs, bool repeat)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___timer.html#g0c6906dbdb6527345121141fb3153744">Timer_InitializeEntry</a> (<a class="el" href="struct_timer_entry_s.html">TimerEntry</a> *timerEntry, void(*timerCallback)(int id), int id, int timeMs, bool repeat)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Create a new timer event.  <a href="group___timer.html#gf1473bbb83caf43ed40f49c5d7f00436"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___timer.html#g4c60571f24829082bb445814e74c6ca3">Timer_Cancel</a> (void(*timerCallback)(int id), int id)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Initializes a new timer structure.  <a href="group___timer.html#g0c6906dbdb6527345121141fb3153744"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___timer.html#g7397510285b17f629445eed71855c2c3">Timer_Set</a> (<a class="el" href="struct_timer_entry_s.html">TimerEntry</a> *timerEntry)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Cancel a timer event.  <a href="group___timer.html#g4c60571f24829082bb445814e74c6ca3"></a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Sets the requested entry to run.  <a href="group___timer.html#g7397510285b17f629445eed71855c2c3"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___timer.html#ge0bc40447f95c2309192ececf1fdee59">Timer_Cancel</a> (<a class="el" href="struct_timer_entry_s.html">TimerEntry</a> *timerEntry)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Cancel a timer event.  <a href="group___timer.html#ge0bc40447f95c2309192ececf1fdee59"></a><br></td></tr>
 <tr><td colspan="2"><br><h2>Variables</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="90fa56d2c1e037ee9dff85f9461c1ae8"></a><!-- doxytag: member="timer.c::Timer" ref="90fa56d2c1e037ee9dff85f9461c1ae8" args="" -->
 <a class="el" href="struct_timer__.html">Timer_</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="timer_8c.html#90fa56d2c1e037ee9dff85f9461c1ae8">Timer</a></td></tr>
@@ -68,7 +71,7 @@ void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="time
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 Timer. 
 <p>
-Functions to use the timer on the Make Controller Board. 
+Functions to use the timer on the Make Controller Board. This uses the regular interrupt mechanism and as such may be blocked by other routines for significant numbers of milliseconds. This code is complex and should be considered experimental. Ideally it would work nicely with the OS, but it is not currently. 
 <p>
 Definition in file <a class="el" href="timer_8c-source.html">timer.c</a>.<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -79,6 +82,6 @@ Definition in file <a class="el" href="timer_8c-source.html">timer.c</a>.<!DOCTY
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 22 Sep 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

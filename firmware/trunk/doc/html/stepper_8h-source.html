@@ -60,14 +60,31 @@
 <a name="l00024"></a>00024 <span class="preprocessor">#ifndef STEPPER_H</span>
 <a name="l00025"></a>00025 <span class="preprocessor"></span><span class="preprocessor">#define STEPPER_H</span>
 <a name="l00026"></a>00026 <span class="preprocessor"></span>
-<a name="l00027"></a>00027 <span class="keywordtype">void</span> Stepper_SetPosition( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> position );
-<a name="l00028"></a>00028 <span class="keywordtype">int</span>  Stepper_GetPosition( <span class="keywordtype">int</span> index );
-<a name="l00029"></a>00029 <span class="keywordtype">void</span> Stepper_SetSpeed( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> speed );
-<a name="l00030"></a>00030 <span class="keywordtype">int</span>  Stepper_GetSpeed( <span class="keywordtype">int</span> index );
-<a name="l00031"></a>00031 <span class="keywordtype">void</span> Stepper_SetAcceleration( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> acceleration );
-<a name="l00032"></a>00032 <span class="keywordtype">int</span>  Stepper_GetAcceleration( <span class="keywordtype">int</span> index );
-<a name="l00033"></a>00033 
-<a name="l00034"></a>00034 <span class="preprocessor">#endif</span>
+<a name="l00027"></a>00027 
+<a name="l00028"></a>00028 <span class="keywordtype">int</span> <a class="code" href="group___stepper.html#g83de2fe1e21adca834585e4e1e98d536">Stepper_SetActive</a>( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> state );
+<a name="l00029"></a>00029 <span class="keywordtype">int</span> <a class="code" href="group___stepper.html#ga65f212117be231d54ff67cb00911e3d">Stepper_GetActive</a>( <span class="keywordtype">int</span> index );
+<a name="l00030"></a>00030 
+<a name="l00031"></a>00031 <span class="keywordtype">int</span>  <a class="code" href="group___stepper.html#g83dbabc60bf20269330dddda711afe4e">Stepper_SetPosition</a>( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> position );
+<a name="l00032"></a>00032 <span class="keywordtype">int</span>  <a class="code" href="group___stepper.html#gd041059f1c047e9487ec1184f4f00d84">Stepper_GetPosition</a>( <span class="keywordtype">int</span> index );
+<a name="l00033"></a>00033 <span class="keywordtype">int</span>  <a class="code" href="group___stepper.html#g3172137d4ac0546433c2e85d2b4ead68">Stepper_SetPositionRequested</a>( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> positionRequested );
+<a name="l00034"></a>00034 <span class="keywordtype">int</span>  <a class="code" href="group___stepper.html#gf150638da28e7c58bc09c0cf1b6f3791">Stepper_GetPositionRequested</a>( <span class="keywordtype">int</span> index );
+<a name="l00035"></a>00035 <span class="keywordtype">int</span>  <a class="code" href="group___stepper.html#g4b8735adfa88cfbf0dc4be5561f8e44f">Stepper_SetDuty</a>( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> duty );
+<a name="l00036"></a>00036 <span class="keywordtype">int</span>  <a class="code" href="group___stepper.html#gaf6cb1e49032eed0e16db704ac02396b">Stepper_GetDuty</a>( <span class="keywordtype">int</span> index );
+<a name="l00037"></a>00037 <span class="keywordtype">int</span>  <a class="code" href="group___stepper.html#geb71bfe520e3eacd08417313ffd7f71e">Stepper_SetBipolar</a>( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> bipolar );
+<a name="l00038"></a>00038 <span class="keywordtype">int</span>  <a class="code" href="group___stepper.html#g43c21812439f70eea1e0cf7fb7f8649c">Stepper_GetBipolar</a>( <span class="keywordtype">int</span> index );
+<a name="l00039"></a>00039 <span class="keywordtype">int</span>  <a class="code" href="group___stepper.html#g731a93f003fa86a34cbde312dd1193d7">Stepper_SetHalfStep</a>( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> bipolar );
+<a name="l00040"></a>00040 <span class="keywordtype">int</span>  <a class="code" href="group___stepper.html#ga5ef21727e1a4bb101aa378c4782e7df">Stepper_GetHalfStep</a>( <span class="keywordtype">int</span> index );
+<a name="l00041"></a>00041 <span class="keywordtype">int</span>  <a class="code" href="group___stepper.html#g891becfba02cc46ee2271ac31a1562ab">Stepper_SetSpeed</a>( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> speed );
+<a name="l00042"></a>00042 <span class="keywordtype">int</span>  <a class="code" href="group___stepper.html#g174186367248f68a9a33228625577cf5">Stepper_GetSpeed</a>( <span class="keywordtype">int</span> index );
+<a name="l00043"></a>00043 <span class="keywordtype">void</span> Stepper_SetAcceleration( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> acceleration );
+<a name="l00044"></a>00044 <span class="keywordtype">int</span>  Stepper_GetAcceleration( <span class="keywordtype">int</span> index );
+<a name="l00045"></a>00045 
+<a name="l00046"></a>00046 <span class="comment">/* OSC Interface */</span>
+<a name="l00047"></a>00047 <span class="keyword">const</span> <span class="keywordtype">char</span>* <a class="code" href="stepper_8c.html#4da1601a155af660ecad829690ecf5d1">StepperOsc_GetName</a>( <span class="keywordtype">void</span> );
+<a name="l00048"></a>00048 <span class="keywordtype">int</span> <a class="code" href="stepper_8c.html#a76464ccac712c86a66d4c18472768f4">StepperOsc_ReceiveMessage</a>( <span class="keywordtype">int</span> channel, <span class="keywordtype">char</span>* message, <span class="keywordtype">int</span> length );
+<a name="l00049"></a>00049 
+<a name="l00050"></a>00050 
+<a name="l00051"></a>00051 <span class="preprocessor">#endif</span>
 </pre></div><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -77,6 +94,6 @@
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 22 Sep 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

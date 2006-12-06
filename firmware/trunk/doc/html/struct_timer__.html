@@ -60,17 +60,23 @@ char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stru
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="51c017400e060ee39d7e8c74109fbec0"></a><!-- doxytag: member="Timer_::servicing" ref="51c017400e060ee39d7e8c74109fbec0" args="" -->
 char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_timer__.html#51c017400e060ee39d7e8c74109fbec0">servicing</a></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="9477dbafe881b511092db10e40f5c928"></a><!-- doxytag: member="Timer_::freeFirst" ref="9477dbafe881b511092db10e40f5c928" args="" -->
-<a class="el" href="struct_timer_entry_s.html">TimerEntry</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_timer__.html#9477dbafe881b511092db10e40f5c928">freeFirst</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="841f8c8023fe73182f62491e6c9ce3f3"></a><!-- doxytag: member="Timer_::nextTime" ref="841f8c8023fe73182f62491e6c9ce3f3" args="" -->
+int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_timer__.html#841f8c8023fe73182f62491e6c9ce3f3">nextTime</a></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="b4893c61760ba452f26f9a699c714a7e"></a><!-- doxytag: member="Timer_::runningFirst" ref="b4893c61760ba452f26f9a699c714a7e" args="" -->
-<a class="el" href="struct_timer_entry_s.html">TimerEntry</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_timer__.html#b4893c61760ba452f26f9a699c714a7e">runningFirst</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="0383a2db349b553b08fcf5dbea4ee078"></a><!-- doxytag: member="Timer_::temp" ref="0383a2db349b553b08fcf5dbea4ee078" args="" -->
+int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_timer__.html#0383a2db349b553b08fcf5dbea4ee078">temp</a></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="f2e84a1418d876e7abc7341e41ca966e"></a><!-- doxytag: member="Timer_::newFirst" ref="f2e84a1418d876e7abc7341e41ca966e" args="" -->
-<a class="el" href="struct_timer_entry_s.html">TimerEntry</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_timer__.html#f2e84a1418d876e7abc7341e41ca966e">newFirst</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="6e2f20719a3cc7d19debb62097dc7fd8"></a><!-- doxytag: member="Timer_::first" ref="6e2f20719a3cc7d19debb62097dc7fd8" args="" -->
+<a class="el" href="struct_timer_entry_s.html">TimerEntry</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_timer__.html#6e2f20719a3cc7d19debb62097dc7fd8">first</a></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="5747610a98b97b2b6ba3f280c7c7e3d7"></a><!-- doxytag: member="Timer_::entry" ref="5747610a98b97b2b6ba3f280c7c7e3d7" args="[TIMER_COUNT]" -->
-<a class="el" href="struct_timer_entry_s.html">TimerEntry</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_timer__.html#5747610a98b97b2b6ba3f280c7c7e3d7">entry</a> [TIMER_COUNT]</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="e63a85da2c5f9ecc212fb32db41ab429"></a><!-- doxytag: member="Timer_::next" ref="e63a85da2c5f9ecc212fb32db41ab429" args="" -->
+<a class="el" href="struct_timer_entry_s.html">TimerEntry</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_timer__.html#e63a85da2c5f9ecc212fb32db41ab429">next</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="fdabbca53b706e80f4f2d6860df6f9b6"></a><!-- doxytag: member="Timer_::previous" ref="fdabbca53b706e80f4f2d6860df6f9b6" args="" -->
+<a class="el" href="struct_timer_entry_s.html">TimerEntry</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_timer__.html#fdabbca53b706e80f4f2d6860df6f9b6">previous</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="ec93ef4de0c50919bf885827ce518ce3"></a><!-- doxytag: member="Timer_::lastAdded" ref="ec93ef4de0c50919bf885827ce518ce3" args="" -->
+<a class="el" href="struct_timer_entry_s.html">TimerEntry</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_timer__.html#ec93ef4de0c50919bf885827ce518ce3">lastAdded</a></td></tr>
 
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
@@ -78,7 +84,7 @@ char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stru
 <p>
 
 <p>
-Definition at line <a class="el" href="timer__internal_8h-source.html#l00044">44</a> of file <a class="el" href="timer__internal_8h-source.html">timer_internal.h</a>.<hr>The documentation for this struct was generated from the following file:<ul>
+Definition at line <a class="el" href="timer__internal_8h-source.html#l00034">34</a> of file <a class="el" href="timer__internal_8h-source.html">timer_internal.h</a>.<hr>The documentation for this struct was generated from the following file:<ul>
 <li><a class="el" href="timer__internal_8h-source.html">timer_internal.h</a></ul>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -89,6 +95,6 @@ Definition at line <a class="el" href="timer__internal_8h-source.html#l00044">44
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 22 Sep 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>
