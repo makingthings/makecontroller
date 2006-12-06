@@ -24,11 +24,28 @@
 #ifndef STEPPER_H
 #define STEPPER_H
 
-void Stepper_SetPosition( int index, int position );
+
+int Stepper_SetActive( int index, int state );
+int Stepper_GetActive( int index );
+
+int  Stepper_SetPosition( int index, int position );
 int  Stepper_GetPosition( int index );
-void Stepper_SetSpeed( int index, int speed );
+int  Stepper_SetPositionRequested( int index, int positionRequested );
+int  Stepper_GetPositionRequested( int index );
+int  Stepper_SetDuty( int index, int duty );
+int  Stepper_GetDuty( int index );
+int  Stepper_SetBipolar( int index, int bipolar );
+int  Stepper_GetBipolar( int index );
+int  Stepper_SetHalfStep( int index, int bipolar );
+int  Stepper_GetHalfStep( int index );
+int  Stepper_SetSpeed( int index, int speed );
 int  Stepper_GetSpeed( int index );
 void Stepper_SetAcceleration( int index, int acceleration );
 int  Stepper_GetAcceleration( int index );
+
+/* OSC Interface */
+const char* StepperOsc_GetName( void );
+int StepperOsc_ReceiveMessage( int channel, char* message, int length );
+
 
 #endif
