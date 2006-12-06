@@ -42,7 +42,6 @@
 #include "system.h"
 #include "usb.h"
 #include "network.h"
-#include "stepper.h"
 
 
 /* Make Helper Functions */
