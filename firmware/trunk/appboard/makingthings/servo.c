@@ -23,9 +23,8 @@
 */
 
 #include "servo.h"
-#include "servo_internal.h"
 #include "io.h"
-
+#include "fasttimer.h"
 #include "config.h"
 
 #include "AT91SAM7X256.h"
@@ -46,13 +45,37 @@
 void DisableFIQFromThumb( void );
 void EnableFIQFromThumb( void );
 
-void FastIsr( void );
+
+void Servo_IRQCallback( int id );
 
 static int Servo_Start( int index );
 static int Servo_Stop( int index );
 static int Servo_Init( void );
 static int Servo_Deinit( void );
 static int Servo_GetIo( int index );
+
+#define SERVO_COUNT 4
+
+typedef struct ServoControlS
+{
+  int users;
+  int speed;
+  int positionRequested;
+  int position;
+  int pin;
+  AT91S_PIO* pIoBase;
+} ServoControl;
+
+typedef struct ServoS
+{
+  int users;
+  int gap;
+  int index;
+  int state;
+  FastTimerEntry fastTimerEntry;
+  ServoControl control[ SERVO_COUNT ];
+} Servo_;
+
 
 Servo_ Servo;
 
@@ -318,53 +341,8 @@ int Servo_Init()
   Servo.gap = 1882; // forces 64'ish cycles a second (1894 + 2012 = 3906, 3906 * 4 = 15624, 15624 * 64 = 999936)
   Servo.index = 0;
 
-  // Configure TC by enabling PWM clock
-	AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_TC1;
-                                    
-  unsigned int mask ;
-  mask = 0x1 << AT91C_ID_TC1 | 0x01;
-
-  /* Disable the interrupt on the interrupt controller */
-  AT91C_BASE_AIC->AIC_IDCR = mask;
-
-  AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_FIQ ] = (unsigned int)FastIsr;
-
-  /* Store the Source Mode Register */
-  AT91C_BASE_AIC->AIC_SMR[ AT91C_ID_TC1 ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 7  ;
-  /* Clear the interrupt on the interrupt controller */
-  AT91C_BASE_AIC->AIC_ICCR = mask ;
-
-  // Set the timer up.  We want just the basics, except when the timer compares 
-  // with RC, retrigger
-  //
-  // MCK is 47923200
-  // DIV1: A tick MCK/2 times a second
-  // This makes every tick every 41.73344ns
-  // DIV2: A tick MCK/8 times a second
-  // This makes every tick every 167ns
-  // DIV3: A tick MCK/32 times a second
-  // This makes every tick every 668ns
-  // DIV4: A tick MCK/128 times a second
-  // This makes every tick every 2.671us
-  // DIV5: A tick MCK/1024 times a second
-  // This makes every tick every 21.368us
-  AT91C_BASE_TC1->TC_CMR = AT91C_TC_CLKS_TIMER_DIV2_CLOCK |  AT91C_TC_CPCTRG;
-                   
-  // Only really interested in interrupts when the RC happens
-  AT91C_BASE_TC1->TC_IDR = 0xFF; 
-  AT91C_BASE_TC1->TC_IER = AT91C_TC_CPCS; 
-
-  // load the RC value with something
-  AT91C_BASE_TC1->TC_RC = 0xFFFF;
-
-  // Make it fast forcing
-  AT91C_BASE_AIC->AIC_FFER = 0x1 << AT91C_ID_TC1;
-
-  // Enable the interrupt
-  AT91C_BASE_AIC->AIC_IECR = mask;
-
-  // Enable the device
-  AT91C_BASE_TC1->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
+  FastTimer_InitializeEntry( &Servo.fastTimerEntry, Servo_IRQCallback, 0, 2000, true );
+  FastTimer_Set( &Servo.fastTimerEntry );
 
   return CONTROLLER_OK;
 }
@@ -374,6 +352,63 @@ int Servo_Deinit()
   // Disable the device
   // AT91C_BASE_TC1->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
   return CONTROLLER_OK;
+}
+
+void Servo_IRQCallback( int id )
+{
+  int period;
+
+  switch ( Servo.state )
+  {
+    case 0:
+    {
+      if ( ++Servo.index >= SERVO_COUNT || Servo.index < 0 )
+        Servo.index = 0;
+      ServoControl* s = &Servo.control[ Servo.index ];
+      
+      if ( s->position != s->positionRequested )
+      {
+        if ( s->speed == -1 )
+          s->position = s->positionRequested;
+        else
+        {
+          int diff = s->positionRequested - s->position;
+          if ( diff < 0 )
+          {
+            s->position -= s->speed;
+            if ( s->position < s->positionRequested )
+              s->position = s->positionRequested;
+          }
+          else
+          {
+            s->position += s->speed;
+            if ( s->position > s->positionRequested )
+              s->position = s->positionRequested;
+          }
+        }
+      }
+
+      period = s->position >> 6;
+      if ( period >= 0 && period <= 1023 )
+      {
+        s->pIoBase->PIO_CODR = s->pin;
+      }
+      else
+        period = 1023;
+      FastTimer_SetTime( &Servo.fastTimerEntry, period + 988 );
+      Servo.state = 1;
+      break;
+    }
+    case 1:
+    {
+      ServoControl* s = &Servo.control[ Servo.index ];
+      period = s->position >> 6;
+      s->pIoBase->PIO_SODR = s->pin;
+      FastTimer_SetTime( &Servo.fastTimerEntry, Servo.gap + ( 1023 - period ) );
+      Servo.state = 0;
+      break;
+    }
+  }
 }
 
 #ifdef OSC // defined in config.h
