@@ -71,7 +71,6 @@ static int Serial_SetDetails( void );
   \todo Need to complete support for the Hardware Handshaking
   \todo Convert to DMA interface for higher performance.
 
-
 	\ingroup Controller
 	@{
 */
@@ -153,7 +152,7 @@ int Serial_Write( uchar* buffer, int count, int timeout )
   is used to determine how many characters are available to read prior to calling
   this function.
 	@param buffer A pointer to the buffer to read into.
-	@param count An integer specifying the number of bytes to read.
+	@param size An integer specifying the maximum number of bytes to read.
   @param timeout Time in milliseconds to block waiting for the specified number of bytes. 0 means don't wait.
   @return number of bytes read (>=0) or error <0 .
 */
@@ -215,8 +214,7 @@ int Serial_SetChar( int character )
 
 /**	
 	Sets the serial baud rate.
-	@param buffer A pointer to the buffer to write from.
-	@param count An integer specifying the number of bytes to write.
+	@param baud The desired baud rate.
   @return status.
 */
 int Serial_SetBaud( int baud )
@@ -253,8 +251,8 @@ int Serial_SetBits( int bits )
 }
 
 /**	
-	Sets the parity.  -1 is odd, 0 is none, 1 is even.  The default is even.
-	@param parity.  -1, 0 or 1.
+	Sets the parity.  -1 is odd, 0 is none, 1 is even.  The default is none - 0.
+	@param parity -1, 0 or 1.
   @return status.
 */
 int Serial_SetParity( int parity )
@@ -263,14 +261,17 @@ int Serial_SetParity( int parity )
   if ( !Serial.detailsInitialized )
     Serial_SetDefault();
 
-  Serial.parity = parity;
+  if ( parity >= -1 && parity <= 1 )
+    Serial.parity = parity;
+  else
+    Serial.parity = 1;
   Serial_SetDetails( );
 
   return CONTROLLER_OK;
 }
 
 /**	
-	Sets the stop bits per character.  1 or 2 are legal values.  2 is the default.
+	Sets the stop bits per character.  1 or 2 are legal values.  1 is the default.
 	@param stopBits stop bits per character
   @return status.
 */

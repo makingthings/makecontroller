@@ -149,7 +149,7 @@ void Oscillator_SaveConstants( OscillatorStruct *fp );
     etc.
 */
 
-/** \defgroup Poly
+/** \defgroup Poly Poly
 	The Poly subsystem controls onboard pre-baked functions.
 * \ingroup Controller
 * @{
@@ -157,7 +157,7 @@ void Oscillator_SaveConstants( OscillatorStruct *fp );
 
 /**
 	Sets whether the Poly subsystem is active.
-	@param state An integer specifying the active state subsystem - 1 (on) or 0 (off).
+	@param value An integer specifying the active state of the subsystem - 1 (on) or 0 (off).
 	@return CONTROLLER_OK (0) on success.
 */
 int Poly_SetActive( int value )
@@ -915,3 +915,6 @@ void Poly_LineInit()
   while ( *piop )
     Io_SetTrue( *piop++ );
 }
+
+/** @}
+  */

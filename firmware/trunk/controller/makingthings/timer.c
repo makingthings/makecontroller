@@ -18,6 +18,10 @@
 /** \file timer.c	
 	Timer.
 	Functions to use the timer on the Make Controller Board.
+  This uses the regular interrupt mechanism and as such may be blocked by other
+  routines for significant numbers of milliseconds.  This code is complex and
+  should be considered experimental.  Ideally it would work nicely with the OS, 
+  but it is not currently.
 */
 
 #include "AT91SAM7X256.h"
@@ -114,6 +118,12 @@ void Timer_InitializeEntry( TimerEntry* timerEntry, void (*timerCallback)( int i
   timerEntry->next = NULL;
 }
 
+/** Sets the requested entry to run.
+  This routine adds the entry to the running queue and then decides if it needs
+  to start the timer (if it's not running) or alter the timer's clock for a shorter
+  period.
+  @param timerEntry pointer to the FastTimerEntry to be run. 
+  */
 int Timer_Set( TimerEntry* timerEntry )
 {
   // this could be a lot smarter - for example, modifying the current period?
@@ -181,10 +191,7 @@ int Timer_Set( TimerEntry* timerEntry )
 
 /**	
   Cancel a timer event.
-	The event is specified by the callback function and id provided.  All events that match 
-	these two parameters are terminated.
-  @param timerCallback A pointer to the callback function.
-  @param id An integer specifying the ID of the callback function.
+  @param timerEntry The entry to be removed.
   @return 0 on success.
 	@see Timer_Start, Timer_Set and Timer_Start
 */
