@@ -64,10 +64,10 @@
  </TraceWindow>
  <Watch1>
   <Watches active="1" >
-   <Watchpoint evalMode="1" linenumber="121" evalType="1" radix="-1" name="te" expression="te" filename="C:\mtcode\make\firmware\controller\makingthings\fasttimer_isr.c" />
-   <Watchpoint linenumber="63" radix="16" name="timeReference" expression="timeReference" filename="C:\mtcode\make\firmware\controller\makingthings\fasttimer_isr.c" />
-   <Watchpoint linenumber="163" radix="-1" name="jitter" expression="jitter" filename="C:\mtcode\make\firmware\controller\makingthings\fasttimer_isr.c" />
    <Watchpoint evalMode="1" linenumber="131" evalType="2" radix="-1" name="FastTimer" expression="FastTimer" filename="C:\mtcode\make\firmware\controller\makingthings\fasttimer_isr.c" />
+   <Watchpoint linenumber="163" radix="-1" name="jitter" expression="jitter" filename="C:\mtcode\make\firmware\controller\makingthings\fasttimer_isr.c" />
+   <Watchpoint linenumber="63" radix="16" name="timeReference" expression="timeReference" filename="C:\mtcode\make\firmware\controller\makingthings\fasttimer_isr.c" />
+   <Watchpoint evalMode="1" linenumber="121" evalType="1" radix="-1" name="te" expression="te" filename="C:\mtcode\make\firmware\controller\makingthings\fasttimer_isr.c" />
   </Watches>
  </Watch1>
  <Watch2>
@@ -80,7 +80,7 @@
   <Watches active="0" />
  </Watch4>
  <Files>
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="22" debugPath="C:\mtcode\make\firmware\appboard\makingthings\stepper.c" y="26" useHTMLEdit="0" path="C:\mtcode\make\firmware\appboard\makingthings\stepper.c" left="0" selected="1" name="unnamed" top="40" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="19" debugPath="C:\mtcode\make\firmware\appboard\makingthings\stepper.c" y="27" useHTMLEdit="0" path="C:\mtcode\make\firmware\appboard\makingthings\stepper.c" left="0" selected="1" name="unnamed" top="20" />
   <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\appboard\makingthings\stepper.h" y="44" useHTMLEdit="0" path="C:\mtcode\make\firmware\appboard\makingthings\stepper.h" left="0" selected="0" name="unnamed" top="36" />
   <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\makingthings\io.c" y="309" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\io.c" left="0" selected="0" name="unnamed" top="285" />
   <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\heavy\make.c" y="25" useHTMLEdit="0" path="C:\mtcode\make\firmware\heavy\make.c" left="0" selected="0" name="unnamed" top="25" />
