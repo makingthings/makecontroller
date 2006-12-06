@@ -24,6 +24,7 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
+
 int Network_SetActive( int active );
 int Network_GetActive( void );
 

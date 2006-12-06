@@ -24,7 +24,7 @@
 #ifndef OSC_H
 #define OSC_H
 
-#define OSC_SUBSYSTEM_COUNT  14
+#define OSC_SUBSYSTEM_COUNT  15
 
 #define OSC_SCRATCH_SIZE    100
 
