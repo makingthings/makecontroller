@@ -13,67 +13,8 @@ void BlinkTask( void* parameters );
 void NetworkCheck( void );
 void vBasicWEBServer( void *pvParameters );
 
-FastTimerEntry fastTimerEntry;
-int ledState;
-
-TimerEntry timerEntry;
-TimerEntry timerEntry1;
-TimerEntry timerEntry2;
-TimerEntry timerEntry3;
-int appledState[ 4 ];
-
-void TimerCallback( int id )
-{
-  AppLed_SetState( id, appledState[ id ] );
-  appledState[ id ] = !appledState[ id ];
-
-  if ( id == 3 )
-  {
-    if ( appledState[  3 ] )
-    {
-      Timer_Cancel( &timerEntry1 );      
-    }
-    else
-    {
-      Timer_Set( &timerEntry1 );
-    }
-  }
-
-  if ( id == 0 )
-  {
-    Timer_Cancel( &timerEntry );
-    Timer_Set( &timerEntry );
-  }
-
-  if ( id == 2 )
-  {
-    Timer_Cancel( &timerEntry2 );
-    Timer_Set( &timerEntry2 );
-  }
-}
-
-void FastTimerCallback( int id )
-{
-  Led_SetState( ledState );
-  ledState = !ledState;
-}
-
 void Make( )
 {
-  Timer_InitializeEntry( &timerEntry, TimerCallback, 0, 50, 1 );
-  Timer_Set( &timerEntry );
-  Timer_InitializeEntry( &timerEntry1, TimerCallback, 1, 120, 1 );
-  Timer_Set( &timerEntry1 );
-  Timer_InitializeEntry( &timerEntry2, TimerCallback, 2, 200, 1 );
-  Timer_Set( &timerEntry2 );
-  Timer_InitializeEntry( &timerEntry3, TimerCallback, 3, 2000, 1 );
-  Timer_Set( &timerEntry3 );
-
-  //FastTimer_InitializeEntry( &fastTimerEntry, FastTimerCallback, 0, 5000, 1 );
-  //FastTimer_Set( &fastTimerEntry );
-
-  //Stepper_SetPosition( 0, 1000 );
-
   TaskCreate( BlinkTask, "Blink", 400, 0, 1 );
 
   // Do this right quick after booting up - otherwise we won't be recognised
@@ -117,31 +58,14 @@ void BlinkTask( void* p )
   Led_SetState( 1 );
   Sleep( 1000 );
 
-  int pos = 500;
-  int speed = 0;
-
-  //Servo_SetPosition( 0, pos );
-
   while ( true )
   {
-    //Servo_SetPosition( 0, pos );
-    //pos = ( pos == 0 ) ? 780 : 0;
+    Led_SetState( 0 );
+    Sleep( 900 );
+    Led_SetState( 1 );
     Sleep( 10 );
-
-    //int speedNew = AnalogIn_GetValue( 0 );
-    //if ( speedNew != speed )
-    //{
-    //  speed = speedNew;
-    //  Stepper_SetSpeed( 0, ( ( speed * speed ) + 1 ) * 50  );
-    //}
-    //Led_SetState( 0 );
-    //Sleep( 90 );
-    //Led_SetState( 1 );
-    //Sleep( 10 );
   }
 }
-
-
 
 // Make sure the network settings are OK
 void NetworkCheck()
