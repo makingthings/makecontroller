@@ -650,7 +650,7 @@ int IoOsc_ReceiveMessage( int channel, char* message, int length )
                                      
   if ( status != CONTROLLER_OK )
   {
-    int status = Osc_IntReceiverHelper( channel, message, length, 
+    status = Osc_IntReceiverHelper( channel, message, length, 
                                              IoOsc_Name,
                                              IoOsc_IntPropertySet, IoOsc_IntPropertyGet, 
                                              IoOsc_IntPropertyNames );
@@ -723,10 +723,10 @@ int IoOsc_IntPropertySet( int property, int value )
       Io_SetPortAMask( value );
       break;
     case 2: 
-      Io_SetPortA( value );
+      Io_SetPortB( value );
       break;      
     case 3: 
-      Io_SetPortAMask( value );
+      Io_SetPortBMask( value );
       break;      
   }
   return CONTROLLER_OK;
@@ -745,10 +745,10 @@ int IoOsc_IntPropertyGet( int property )
       value = Io_GetPortAMask(  );
       break;
     case 2: 
-      value = Io_GetPortA(  );
+      value = Io_GetPortB(  );
       break;      
     case 3: 
-      value = Io_GetPortAMask( );
+      value = Io_GetPortBMask( );
       break;
   }
   return value;
