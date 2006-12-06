@@ -54,83 +54,20 @@ void EnableFIQFromThumb( void )
 
 extern Servo_ Servo;
 
+void Servo_IRQCallback( int id );
+
 void FastIsr( void ) __attribute__ ((interrupt("FIQ")));
 
 void FastIsr( void )
 {
   int status;
-  
-  status = AT91C_BASE_TC0->TC_SR;
-  if ( status & AT91C_TC_CPCS )
-  {
-    AT91C_BASE_AIC->AIC_ICCR = 0x1 << AT91C_ID_TC0;
-  }
 
   status = AT91C_BASE_TC1->TC_SR;
   if ( status & AT91C_TC_CPCS )
   {
     AT91C_BASE_AIC->AIC_ICCR = 0x1 << AT91C_ID_TC1;
 
-    // int jitter = AT91C_BASE_TC1->TC_CV;
-    int period;
-
-    switch ( Servo.state )
-    {
-      case 0:
-      {
-        if ( ++Servo.index >= SERVO_COUNT || Servo.index < 0 )
-          Servo.index = 0;
-        ServoControl* s = &Servo.control[ Servo.index ];
-        
-        if ( s->position != s->positionRequested )
-        {
-          if ( s->speed == -1 )
-            s->position = s->positionRequested;
-          else
-          {
-            int diff = s->positionRequested - s->position;
-            if ( diff < 0 )
-            {
-              s->position -= s->speed;
-              if ( s->position < s->positionRequested )
-                s->position = s->positionRequested;
-            }
-            else
-            {
-              s->position += s->speed;
-              if ( s->position > s->positionRequested )
-                s->position = s->positionRequested;
-            }
-          }
-        }
-
-        period = s->position >> 6;
-        if ( period >= 0 && period <= 1023 )
-        {
-          s->pIoBase->PIO_CODR = s->pin;
-        }
-        else
-          period = 1023;
-        AT91C_BASE_TC1->TC_RC = ( period + 988 ) * 6;
-        Servo.state = 1;
-        break;
-      }
-      case 1:
-      {
-        ServoControl* s = &Servo.control[ Servo.index ];
-        period = s->position >> 6;
-        s->pIoBase->PIO_SODR = s->pin;
-        AT91C_BASE_TC1->TC_RC = ( Servo.gap + ( 1023 - period ) ) * 6;
-        Servo.state = 0;
-        break;
-      }
-    }
-  }
- 
-  status = AT91C_BASE_TC2->TC_SR;
-  if ( status & AT91C_TC_CPCS )
-  {
-    AT91C_BASE_AIC->AIC_ICCR = 0x1 << AT91C_ID_TC2;
+    Servo_IRQCallback( 0 );
   }
 }
 

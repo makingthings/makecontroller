@@ -89,91 +89,88 @@ int Timer_GetActive( )
 }
 
 /**	
-  Create a new timer event.  
+  Initializes a new timer structure.  
 	The event is signified by a callback to the function provided, after the interval specified.  
 	The specified ID is passed back to the function to permit one function to work for many events.  
 	Pass repeat = true to make the event continue to create callbacks until it is canceled.
+  @param timerEntry pointer to the TimerEntry to be intialized. 
   @param timerCallback pointer to the callback function.  The function must
          be of the form <em>void callback( int id )</em>.
   @param id An integer specifying the ID the callback function is to be provided with.
   @param timeMs The time in milliseconds desired for the callback.
   @param repeat Set whether the timer repeats or is a one-time event.
-  @return Status - an integer indicating success (0) or failure (non-zero).
 	@see Timer_Start, Timer_Cancel and Timer_Stop
 */
-int Timer_Set( void (*timerCallback)( int id ), int id, int timeMs, bool repeat )
+void Timer_InitializeEntry( TimerEntry* timerEntry, void (*timerCallback)( int id ), int id, int timeMs, bool repeat )
 {
   int time = timeMs * TIMER_CYCLES_PER_MS;
 
+  // Set the details into the free dude
+  timerEntry->callback = timerCallback;
+  timerEntry->id = id;
+  timerEntry->timeCurrent = 0;
+  timerEntry->timeInitial = time;
+  timerEntry->repeat = repeat;
+  timerEntry->next = NULL;
+}
+
+int Timer_Set( TimerEntry* timerEntry )
+{
   // this could be a lot smarter - for example, modifying the current period?
   if ( !Timer.servicing ) 
     TaskEnterCritical();
 
-  /// ToDo: Get the new timer record from the heap
-
-  // Get one from the free queue
-  TimerEntry* tne = Timer.freeFirst;
-  if ( tne == NULL )
-  {
-    if ( !Timer.servicing ) 
-      TaskExitCritical();
-    return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
-  }
-  Timer.freeFirst = tne->next;
-
-  // Set the details into the free dude
-  tne->callback = timerCallback;
-  tne->id = id;
-  tne->time = time;
-  tne->timeInitial = time;
-  tne->repeat = repeat;
-
-  // Now insert it.  Two cases: 1) timer is running or 2) timer is not
   if ( !Timer.running )
   {
-    // Nothing running right now
-    // Assert Timer.runningFirst == NULL
-    Timer.runningFirst = tne;
-    tne->next = NULL;
-
-    Timer_SetTimeTarget( time );
+    Timer_SetActive( true );
+    Timer_SetTimeTarget( timerEntry->timeInitial );
     Timer_Enable();
   }  
-  else
+
+  // Calculate how long remaining
+  int target = Timer_GetTimeTarget();
+  int timeCurrent = Timer_GetTime();
+  int remaining = target - timeCurrent;
+
+  // Get the entry ready to roll
+  timerEntry->timeCurrent = timerEntry->timeInitial;
+
+  // Add entry
+  TimerEntry* first = Timer.first;
+  Timer.first = timerEntry;
+  timerEntry->next = first;
+
+  // Are we actually servicing an interupt right now?
+  if ( !Timer.servicing )
   {
-    // There's something running - insert the new one
-
-    // Could be servicing the interrupt right now!
-
-    // Calculate how long remaining
-    int target = Timer_GetTimeTarget();
-    int timeCurrent = Timer_GetTime();
-    int remaining = target - timeCurrent;
-
-    if ( !Timer.servicing )
+    // No - so does the time requested by this new timer make the time need to come earlier?
+    if ( timerEntry->timeCurrent < ( remaining - TIMER_MARGIN ) )
     {
-      // Add entry
-      TimerEntry* first = Timer.runningFirst;
-      Timer.runningFirst = tne;
-      tne->next = first;
-  
-      if ( time < ( remaining - TIMER_MARGIN ) )
-      {
-        Timer_SetTimeTarget( target - ( remaining - time  ));
-      }
-      else
-      {
-        // pretend that the existing time has been with us for the whole slice
-        tne->time += timeCurrent;
-      }
+      // Damn it!  Reschedule the next callback
+      Timer_SetTimeTarget( target - ( remaining - timerEntry->timeCurrent ));
     }
     else
     {
-      // Add entry
-      TimerEntry* first = Timer.newFirst;
-      Timer.newFirst = tne;
-      tne->next = first;
+      // pretend that the existing time has been with us for the whole slice so that when the 
+      // IRQ happens it credits the correct (reduced) time.
+      timerEntry->timeCurrent += timeCurrent;
     }
+  }
+  else
+  {
+    // Yep... we're servicing something right now
+
+    // Make sure the previous pointer is OK.  This comes up if we were servicing the first item
+    // and it subsequently wants to delete itself, it would need to alter the next pointer of the 
+    // the new head... err... kind of a pain, this
+    if ( Timer.previous == NULL )
+      Timer.previous = timerEntry;
+
+    // Need to make sure that if this new time is the lowest yet, that the IRQ routine 
+    // knows that.  Since we added this entry onto the beginning of the list, the IRQ
+    // won't look at it again
+    if ( Timer.nextTime == -1 || Timer.nextTime > timerEntry->timeCurrent )
+        Timer.nextTime = timerEntry->timeCurrent;
   }
 
   if ( !Timer.servicing ) 
@@ -191,21 +188,42 @@ int Timer_Set( void (*timerCallback)( int id ), int id, int timeMs, bool repeat 
   @return 0 on success.
 	@see Timer_Start, Timer_Set and Timer_Start
 */
-int Timer_Cancel( void (*timerCallback)( int id ), int id )
+int Timer_Cancel( TimerEntry* timerEntry )
 {
   if ( !Timer.servicing ) 
     TaskEnterCritical();
 
-  // Look through the running list
-  TimerEntry* te = Timer.runningFirst;
+  // Look through the running list - clobber the entry
+  TimerEntry* te = Timer.first;
+  TimerEntry* previousEntry = NULL;
   while ( te != NULL )
   {
-    if ( te->callback == timerCallback && te->id == id )
+    // check for the requested entry
+    if ( te == timerEntry )
     {
-      te->callback = NULL;
-      te->repeat = false;
+      // remove the entry from the list
+      if ( te == Timer.first )
+        Timer.first = te->next;
+      else
+        previousEntry->next = te->next;
+      
+      // make sure the in-IRQ pointers are all OK
+      if ( Timer.servicing )
+      {
+        if ( Timer.previous == timerEntry )
+          Timer.previous = previousEntry;
+        if ( Timer.next == timerEntry )
+          Timer.next = te->next;
+      }
+
+      // update the pointers - leave previous where it is
+      te = te->next;
     }
-    te = te->next;
+    else
+    {
+      previousEntry = te;
+      te = te->next;
+    }
   }
 
   if ( !Timer.servicing ) 
@@ -258,22 +276,7 @@ void Timer_SetTimeTarget( int target )
 
 int Timer_Init()
 {
-  // One time datastructure initialization
-  TimerEntry* te = &Timer.entry[ 0 ];
-  int i;
-  Timer.freeFirst = te;
-  for ( i = 0; i < TIMER_COUNT; i++ ) 
-  {
-    te->callback = NULL;
-    if ( i < TIMER_COUNT - 1 )
-      te->next = te + 1;
-    else
-      te->next = NULL;
-    te++;
-  }
-
-  Timer.runningFirst = NULL;
-  Timer.newFirst = NULL;
+  Timer.first = NULL;
 
   Timer.count = 0;
   Timer.jitterTotal = 0;
@@ -296,7 +299,8 @@ int Timer_Init()
   AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_TC0 ] = (unsigned int)Timer_Isr;
 
   /* Store the Source Mode Register */
-  AT91C_BASE_AIC->AIC_SMR[ AT91C_ID_TC0 ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 7  ;
+  // 4 PRIORITY is random
+  AT91C_BASE_AIC->AIC_SMR[ AT91C_ID_TC0 ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;
   /* Clear the interrupt on the interrupt controller */
   AT91C_BASE_AIC->AIC_ICCR = mask ;
 

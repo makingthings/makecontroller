@@ -31,16 +31,6 @@
 #define TIMER_COUNT 8
 #define TIMER_MARGIN 2
 
-typedef struct TimerEntryS
-{
-  void (*callback)( int id );
-  short id;
-  int   time;
-  int   timeInitial;
-  bool  repeat;
-  struct TimerEntryS* next;
-} TimerEntry;
-
 struct Timer_
 {
   char users;
@@ -52,12 +42,14 @@ struct Timer_
 
   char running;
   char servicing;
-  
-  TimerEntry* freeFirst;
-  TimerEntry* runningFirst;
-  TimerEntry* newFirst;
 
-  TimerEntry entry[ TIMER_COUNT ];
+  int nextTime;
+  int temp;
+  
+  TimerEntry* first;
+  TimerEntry* next;
+  TimerEntry* previous;
+  TimerEntry* lastAdded;
 };
 
 #endif

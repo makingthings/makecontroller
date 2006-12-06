@@ -23,28 +23,35 @@
 
 #include "FreeRTOS.h"
 
+#include "types.h"
+
+#include "timer.h"
 #include "timer_internal.h"
 
+#include "io.h"
+
 #include "AT91SAM7X256.h"
-#include "types.h"
 
 extern struct Timer_ Timer;
 
-//void Timer_Isr( void ) __attribute__ ((interrupt("IRQ")));
-void Timer_Isr( void ) __attribute__ ((interrupt(naked)));
+// At the moment, the Timer ISR or callbacks, very importantly, can't call any OS stuff since
+// the IRQ might happen any old where
+
+void Timer_Isr( void ) __attribute__ ((interrupt("IRQ")));
+//void Timer_Isr( void ) __attribute__ ((interrupt(naked)));
 
 void Timer_Isr( void )
 {
 	/* This ISR can cause a context switch.  Therefore a call to the 
 	portENTER_SWITCHING_ISR() macro is made.  This must come BEFORE any 
 	stack variable declarations. */
-	portENTER_SWITCHING_ISR();
+	// portENTER_SWITCHING_ISR();
 
   int status = AT91C_BASE_TC0->TC_SR;
   if ( status & AT91C_TC_CPCS )
   {
     Timer.servicing = true;
-        
+
     int jitter;
     Timer.count++;
     jitter = AT91C_BASE_TC0->TC_CV;
@@ -56,78 +63,70 @@ void Timer_Isr( void )
       Timer.jitterMaxAllDay = jitter;
 
     // Run through once to make the callback calls
-    TimerEntry* te = Timer.runningFirst;
-    TimerEntry* pe = NULL;
+    TimerEntry* te = Timer.first;
+    Timer.next = NULL;
+    Timer.previous = NULL;
+    Timer.nextTime = -1;
     while ( te != NULL )
     {
-      TimerEntry* ne = te->next;
-      te->time -= AT91C_BASE_TC0->TC_RC + AT91C_BASE_TC0->TC_CV;
-      if ( te->time <= 0 )
+      Timer.next = te->next;
+      te->timeCurrent -= AT91C_BASE_TC0->TC_RC + AT91C_BASE_TC0->TC_CV;
+      if ( te->timeCurrent <= 0 )
       {
-        if ( te->callback != NULL )
-          (*te->callback)( te->id );
-        
         if ( te->repeat )
         {
-          te->time += te->timeInitial;
+          te->timeCurrent += te->timeInitial;
         }
         else
         {
           // remove it if necessary (do this first!)
-          if ( pe == NULL )
-            Timer.runningFirst = ne;
+          if ( Timer.previous == NULL )
+            Timer.first = Timer.next;
           else
-            pe->next = ne;
-               
-          // add it to the free queue
-          te->next = Timer.freeFirst;
-          Timer.freeFirst = te;        
+            Timer.previous->next = Timer.next;     
+        }
+
+        if ( te->callback != NULL )
+        {
+          // in this callback, the callee is free to add and remove any members of this list
+          // which might effect the first, next and previous pointers
+          // so don't assume any of those local variables are good anymore
+          (*te->callback)( te->id );
+        }
+
+        // Assuming we're still on the list (if we were removed, then re-added, we'd be on the beggining of
+        // the list with this task already performed) see whether our time is the next to run
+        if ( ( Timer.previous == NULL && Timer.first == te ) ||
+             ( Timer.previous != NULL && Timer.previous->next == te ) )
+        {
+          if ( Timer.nextTime == -1 || te->timeCurrent < Timer.nextTime )
+            Timer.nextTime = te->timeCurrent;
         }
       } 
       else
       {
-        pe = te;
+        Timer.previous = te;
       }
-      te = ne;
+
+      te = Timer.next;
     }
 
-    // Slightly sad thing: new entries created during the callbacks need to get added after this loop
-    if ( Timer.newFirst != NULL )
+    if ( Timer.first != NULL )
     {
-      if ( pe == NULL )
-      {  
-        Timer.runningFirst = Timer.newFirst; 
-      }
-      else
-      {
-        pe->next = Timer.newFirst;
-      }
-      Timer.newFirst = NULL;
-    }
-
-    te = Timer.runningFirst;
-    if ( te != NULL )
-    {
-      // Run through again to determine the next time
-      int nextTime = -1;
-      while ( te != NULL )
-      {
-        if ( nextTime == -1 || te->time < nextTime )
-          nextTime = te->time;
-        te = te->next;
-      }
       // Add in whatever we're at now
-      nextTime += AT91C_BASE_TC0->TC_CV;
+      Timer.nextTime += AT91C_BASE_TC0->TC_CV;
       // Make sure it's not too big
-      if ( nextTime > 0xFFFF )
-        nextTime = 0xFFFF;
-      AT91C_BASE_TC0->TC_RC = nextTime;
+      if ( Timer.nextTime > 0xFFFF )
+        Timer.nextTime = 0xFFFF;
+      AT91C_BASE_TC0->TC_RC = Timer.nextTime;
     }
     else
     {
       AT91C_BASE_TC0->TC_CCR = AT91C_TC_CLKDIS;
       Timer.running = false;
     }
+
+    jitter = AT91C_BASE_TC0->TC_CV;
 
     Timer.servicing = false;
   }
@@ -136,6 +135,6 @@ void Timer_Isr( void )
 	AT91C_BASE_AIC->AIC_EOICR = 0;
 
 	/* Do a task switch if needed */
-	portEXIT_SWITCHING_ISR( false );
+	// portEXIT_SWITCHING_ISR( false );
 }
 
