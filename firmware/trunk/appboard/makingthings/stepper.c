@@ -164,7 +164,7 @@ int Stepper_SetPosition( int index, int position )
 	Set the position requested of the specified stepper motor.  If the motor is
   at rest at the previously requested position
 	@param index An integer specifying which stepper (0 or 1).
-	@param position An integer specifying the stepper position.
+	@param positionRequested An integer specifying the desired stepper position.
   @return status (0 = OK).
 */
 int Stepper_SetPositionRequested( int index, int positionRequested )
@@ -288,7 +288,7 @@ int Stepper_GetPositionRequested( int index )
 /**	
 	Set the duty - from 0 to 1023.  The default is for 100% power (1023).
 	@param index An integer specifying which stepper (0 or 1).
-	@param speed An integer specifying the stepper duty (0 - 1023).
+	@param duty An integer specifying the stepper duty (0 - 1023).
   @return status (0 = OK).
 */
 int Stepper_SetDuty( int index, int duty )
@@ -338,7 +338,7 @@ int Stepper_GetDuty( int index )
 /**	
 	Declare whether the stepper is bipolar or not.  Default is unipolar.
 	@param index An integer specifying which stepper (0 or 1).
-	@param speed An integer 1 for bipolar, 0 for unipolar
+	@param bipolar An integer 1 for bipolar, 0 for unipolar
   @return status (0 = OK).
 */
 int Stepper_SetBipolar( int index, int bipolar )
@@ -383,7 +383,7 @@ int Stepper_GetBipolar( int index )
 /**	
 	Declare whether the stepper is in half stepping mode or not.  Default is not - i.e. in full step mode.
 	@param index An integer specifying which stepper (0 or 1).
-	@param speed An integer specifying 1 for half step, 0 for full step
+	@param halfStep An integer specifying 1 for half step, 0 for full step
   @return status (0 = OK).
 */
 int Stepper_SetHalfStep( int index, int halfStep )

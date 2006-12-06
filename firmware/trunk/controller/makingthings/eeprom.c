@@ -186,7 +186,6 @@ int Eeprom_Read( int address, uchar* buffer, int count )
 
 /** 
   Returns the last usable address in the EEPROM
-  @param none
   @return address
 */
 int Eeprom_GetLastAddress( )

@@ -17,7 +17,12 @@
 
 /** \file fasttimer.c	
 	FastTimer.
-	Functions to use the fast timer on the Make Controller Board.
+	Functions to use the fast timer on the Make Controller Board.  Based on a list of 
+  Fast Timer Entries.  When the timer interrupts, the duration of the last call is 
+  subtracted from the times of all the entries in the list.  Any entries that are ready
+  are called and their times reset.  A record is kept of the shortest time encountered
+  and that time is set as the next interrupt time.  This is a complex piece of code.  
+  It should be treated with some skepticism until it's been tested some more.
 */
 
 #include "AT91SAM7X256.h"
@@ -119,7 +124,8 @@ void FastTimer_InitializeEntry( FastTimerEntry* fastTimerEntry, void (*timerCall
 /**
   * Change the requeted time of an entry.
   * This must only be called within a callback caused by the Entry specified or when the 
-  * entry is not being used.
+  * entry is not being used.  If you need to change the duration of a timer, you need to cancel it
+  * and re-add it, or alter the time inside a callback.
   @param fastTimerEntry pointer to the FastTimerEntry to be intialized. 
   @param timeUs The time in microseconds desired for the callback.
   */
@@ -131,9 +137,12 @@ void FastTimer_SetTime( FastTimerEntry* fastTimerEntry, int timeUs )
 }
 
 /** Sets the requested entry to run.
+  This routine adds the entry to the running queue and then decides if it needs
+  to start the timer (if it's not running) or alter the timer's clock for a shorter
+  period.
   @param fastTimerEntry pointer to the FastTimerEntry to be run. 
   */
-int FastTimer_Set( FastTimerEntry* timerEntry )
+int FastTimer_Set( FastTimerEntry* fastTimerEntry )
 {
   // this could be a lot smarter - for example, modifying the current period?
   if ( !FastTimer.servicing ) 
@@ -142,7 +151,7 @@ int FastTimer_Set( FastTimerEntry* timerEntry )
   if ( !FastTimer.running )
   {
     FastTimer_SetActive( true );
-    FastTimer_SetTimeTarget( timerEntry->timeInitial );
+    FastTimer_SetTimeTarget( fastTimerEntry->timeInitial );
     FastTimer_Enable();
   }  
 
@@ -152,27 +161,27 @@ int FastTimer_Set( FastTimerEntry* timerEntry )
   int remaining = target - timeCurrent;
 
   // Get the entry ready to roll
-  timerEntry->timeCurrent = timerEntry->timeInitial;
+  fastTimerEntry->timeCurrent = fastTimerEntry->timeInitial;
 
   // Add entry
   FastTimerEntry* first = FastTimer.first;
-  FastTimer.first = timerEntry;
-  timerEntry->next = first;
+  FastTimer.first = fastTimerEntry;
+  fastTimerEntry->next = first;
 
   // Are we actually servicing an interupt right now?
   if ( !FastTimer.servicing )
   {
     // No - so does the time requested by this new timer make the time need to come earlier?
-    if ( timerEntry->timeCurrent < ( remaining - FASTTIMER_MARGIN ) )
+    if ( fastTimerEntry->timeCurrent < ( remaining - FASTTIMER_MARGIN ) )
     {
       // Damn it!  Reschedule the next callback
-      FastTimer_SetTimeTarget( target - ( remaining - timerEntry->timeCurrent ));
+      FastTimer_SetTimeTarget( target - ( remaining - fastTimerEntry->timeCurrent ));
     }
     else
     {
       // pretend that the existing time has been with us for the whole slice so that when the 
       // IRQ happens it credits the correct (reduced) time.
-      timerEntry->timeCurrent += timeCurrent;
+      fastTimerEntry->timeCurrent += timeCurrent;
     }
   }
   else
@@ -183,13 +192,13 @@ int FastTimer_Set( FastTimerEntry* timerEntry )
     // and it subsequently wants to delete itself, it would need to alter the next pointer of the 
     // the new head... err... kind of a pain, this
     if ( FastTimer.previous == NULL )
-      FastTimer.previous = timerEntry;
+      FastTimer.previous = fastTimerEntry;
 
     // Need to make sure that if this new time is the lowest yet, that the IRQ routine 
     // knows that.  Since we added this entry onto the beginning of the list, the IRQ
     // won't look at it again
-    if ( FastTimer.nextTime == -1 || FastTimer.nextTime > timerEntry->timeCurrent )
-        FastTimer.nextTime = timerEntry->timeCurrent;
+    if ( FastTimer.nextTime == -1 || FastTimer.nextTime > fastTimerEntry->timeCurrent )
+        FastTimer.nextTime = fastTimerEntry->timeCurrent;
   }
 
   if ( !FastTimer.servicing ) 
@@ -201,7 +210,7 @@ int FastTimer_Set( FastTimerEntry* timerEntry )
 /** Cancels the requested entry.
   @param fastTimerEntry pointer to the FastTimerEntry to be cancelled.
   */
-int FastTimer_Cancel( FastTimerEntry* timerEntry )
+int FastTimer_Cancel( FastTimerEntry* fastTimerEntry )
 {
   if ( !FastTimer.servicing ) 
     TaskEnterCritical();
@@ -212,7 +221,7 @@ int FastTimer_Cancel( FastTimerEntry* timerEntry )
   while ( te != NULL )
   {
     // check for the requested entry
-    if ( te == timerEntry )
+    if ( te == fastTimerEntry )
     {
       // remove the entry from the list
       if ( te == FastTimer.first )
@@ -223,9 +232,9 @@ int FastTimer_Cancel( FastTimerEntry* timerEntry )
       // make sure the in-IRQ pointers are all OK
       if ( FastTimer.servicing )
       {
-        if ( FastTimer.previous == timerEntry )
+        if ( FastTimer.previous == fastTimerEntry )
           FastTimer.previous = previousEntry;
-        if ( FastTimer.next == timerEntry )
+        if ( FastTimer.next == fastTimerEntry )
           FastTimer.next = te->next;
       }
 
