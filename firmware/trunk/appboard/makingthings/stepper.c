@@ -932,7 +932,6 @@ void Stepper_SetAll( int portAOn, int portBOn, int portAOff, int portBOff )
   AT91C_BASE_PIOB->PIO_CODR = portBOff;
 }
 
-
 #ifdef OSC // defined in config.h
 
 /** \defgroup StepperOSC Stepper - OSC
@@ -1011,7 +1010,7 @@ void Stepper_SetAll( int portAOn, int portBOn, int portAOff, int portBOff )
 	write to the same I/O lines.  If you're not seeing appropriate
 	responses to your messages to a stepper, check the whether it's 
 	locked by sending a message like
-	\verbatim /stepper/3/state \endverbatim
+	\verbatim /stepper/1/active \endverbatim
 */
 
 #include "osc.h"
