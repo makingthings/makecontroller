@@ -67,36 +67,28 @@
 <a name="l00031"></a>00031 <span class="preprocessor">#define TIMER_COUNT 8</span>
 <a name="l00032"></a>00032 <span class="preprocessor"></span><span class="preprocessor">#define TIMER_MARGIN 2</span>
 <a name="l00033"></a>00033 <span class="preprocessor"></span>
-<a name="l00034"></a><a class="code" href="struct_timer_entry_s.html">00034</a> <span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="struct_timer_entry_s.html">TimerEntryS</a>
+<a name="l00034"></a><a class="code" href="struct_timer__.html">00034</a> <span class="keyword">struct </span><a class="code" href="struct_timer__.html">Timer_</a>
 <a name="l00035"></a>00035 {
-<a name="l00036"></a>00036   void (*callback)( <span class="keywordtype">int</span> <a class="code" href="struct_timer_entry_s.html#58e8a1aa8d186d6a52807ce384e8c9de">id</a> );
-<a name="l00037"></a><a class="code" href="struct_timer_entry_s.html#58e8a1aa8d186d6a52807ce384e8c9de">00037</a>   <span class="keywordtype">short</span> <a class="code" href="struct_timer_entry_s.html#58e8a1aa8d186d6a52807ce384e8c9de">id</a>;
-<a name="l00038"></a><a class="code" href="struct_timer_entry_s.html#7375f3eebd7975869f3ec197f73f91da">00038</a>   <span class="keywordtype">int</span>   <a class="code" href="struct_timer_entry_s.html#7375f3eebd7975869f3ec197f73f91da">time</a>;
-<a name="l00039"></a><a class="code" href="struct_timer_entry_s.html#dcd94efc85b9719222926877b75165a9">00039</a>   <span class="keywordtype">int</span>   <a class="code" href="struct_timer_entry_s.html#dcd94efc85b9719222926877b75165a9">timeInitial</a>;
-<a name="l00040"></a><a class="code" href="struct_timer_entry_s.html#9f9eccee18d5dfbcec56b5bb8ceceb83">00040</a>   <span class="keywordtype">bool</span>  <a class="code" href="struct_timer_entry_s.html#9f9eccee18d5dfbcec56b5bb8ceceb83">repeat</a>;
-<a name="l00041"></a><a class="code" href="struct_timer_entry_s.html#f66c8f99656a9ec6932de0bafba64715">00041</a>   <span class="keyword">struct </span><a class="code" href="struct_timer_entry_s.html">TimerEntryS</a>* <a class="code" href="struct_timer_entry_s.html#f66c8f99656a9ec6932de0bafba64715">next</a>;
-<a name="l00042"></a>00042 } <a class="code" href="struct_timer_entry_s.html">TimerEntry</a>;
-<a name="l00043"></a>00043 
-<a name="l00044"></a><a class="code" href="struct_timer__.html">00044</a> <span class="keyword">struct </span><a class="code" href="struct_timer__.html">Timer_</a>
-<a name="l00045"></a>00045 {
-<a name="l00046"></a><a class="code" href="struct_timer__.html#12465ce1a71aee83cdf682188c01ca48">00046</a>   <span class="keywordtype">char</span> <a class="code" href="struct_timer__.html#12465ce1a71aee83cdf682188c01ca48">users</a>;
-<a name="l00047"></a><a class="code" href="struct_timer__.html#5c1f7912ff02d1f2891f1ca1f31582e5">00047</a>   <span class="keywordtype">short</span> <a class="code" href="struct_timer__.html#5c1f7912ff02d1f2891f1ca1f31582e5">count</a>;
-<a name="l00048"></a>00048 
-<a name="l00049"></a><a class="code" href="struct_timer__.html#4d73f1973c4e49695f04b84e30e5895c">00049</a>   <span class="keywordtype">int</span> <a class="code" href="struct_timer__.html#4d73f1973c4e49695f04b84e30e5895c">jitterTotal</a>;
-<a name="l00050"></a><a class="code" href="struct_timer__.html#34cca480c228cae9caf8906a005a980b">00050</a>   <span class="keywordtype">int</span> <a class="code" href="struct_timer__.html#34cca480c228cae9caf8906a005a980b">jitterMax</a>;
-<a name="l00051"></a><a class="code" href="struct_timer__.html#088d0eca6791ca2ec077d148b39ebb84">00051</a>   <span class="keywordtype">int</span> <a class="code" href="struct_timer__.html#088d0eca6791ca2ec077d148b39ebb84">jitterMaxAllDay</a>;
-<a name="l00052"></a>00052 
-<a name="l00053"></a><a class="code" href="struct_timer__.html#292018674e49a83a508ae61beada0d2f">00053</a>   <span class="keywordtype">char</span> <a class="code" href="struct_timer__.html#292018674e49a83a508ae61beada0d2f">running</a>;
-<a name="l00054"></a><a class="code" href="struct_timer__.html#51c017400e060ee39d7e8c74109fbec0">00054</a>   <span class="keywordtype">char</span> <a class="code" href="struct_timer__.html#51c017400e060ee39d7e8c74109fbec0">servicing</a>;
-<a name="l00055"></a>00055   
-<a name="l00056"></a><a class="code" href="struct_timer__.html#9477dbafe881b511092db10e40f5c928">00056</a>   <a class="code" href="struct_timer_entry_s.html">TimerEntry</a>* <a class="code" href="struct_timer__.html#9477dbafe881b511092db10e40f5c928">freeFirst</a>;
-<a name="l00057"></a><a class="code" href="struct_timer__.html#b4893c61760ba452f26f9a699c714a7e">00057</a>   <a class="code" href="struct_timer_entry_s.html">TimerEntry</a>* <a class="code" href="struct_timer__.html#b4893c61760ba452f26f9a699c714a7e">runningFirst</a>;
-<a name="l00058"></a><a class="code" href="struct_timer__.html#f2e84a1418d876e7abc7341e41ca966e">00058</a>   <a class="code" href="struct_timer_entry_s.html">TimerEntry</a>* <a class="code" href="struct_timer__.html#f2e84a1418d876e7abc7341e41ca966e">newFirst</a>;
-<a name="l00059"></a>00059 
-<a name="l00060"></a><a class="code" href="struct_timer__.html#5747610a98b97b2b6ba3f280c7c7e3d7">00060</a>   <a class="code" href="struct_timer_entry_s.html">TimerEntry</a> <a class="code" href="struct_timer__.html#5747610a98b97b2b6ba3f280c7c7e3d7">entry</a>[ TIMER_COUNT ];
-<a name="l00061"></a>00061 };
-<a name="l00062"></a>00062 
-<a name="l00063"></a>00063 <span class="preprocessor">#endif</span>
+<a name="l00036"></a><a class="code" href="struct_timer__.html#12465ce1a71aee83cdf682188c01ca48">00036</a>   <span class="keywordtype">char</span> <a class="code" href="struct_timer__.html#12465ce1a71aee83cdf682188c01ca48">users</a>;
+<a name="l00037"></a><a class="code" href="struct_timer__.html#5c1f7912ff02d1f2891f1ca1f31582e5">00037</a>   <span class="keywordtype">short</span> <a class="code" href="struct_timer__.html#5c1f7912ff02d1f2891f1ca1f31582e5">count</a>;
+<a name="l00038"></a>00038 
+<a name="l00039"></a><a class="code" href="struct_timer__.html#4d73f1973c4e49695f04b84e30e5895c">00039</a>   <span class="keywordtype">int</span> <a class="code" href="struct_timer__.html#4d73f1973c4e49695f04b84e30e5895c">jitterTotal</a>;
+<a name="l00040"></a><a class="code" href="struct_timer__.html#34cca480c228cae9caf8906a005a980b">00040</a>   <span class="keywordtype">int</span> <a class="code" href="struct_timer__.html#34cca480c228cae9caf8906a005a980b">jitterMax</a>;
+<a name="l00041"></a><a class="code" href="struct_timer__.html#088d0eca6791ca2ec077d148b39ebb84">00041</a>   <span class="keywordtype">int</span> <a class="code" href="struct_timer__.html#088d0eca6791ca2ec077d148b39ebb84">jitterMaxAllDay</a>;
+<a name="l00042"></a>00042 
+<a name="l00043"></a><a class="code" href="struct_timer__.html#292018674e49a83a508ae61beada0d2f">00043</a>   <span class="keywordtype">char</span> <a class="code" href="struct_timer__.html#292018674e49a83a508ae61beada0d2f">running</a>;
+<a name="l00044"></a><a class="code" href="struct_timer__.html#51c017400e060ee39d7e8c74109fbec0">00044</a>   <span class="keywordtype">char</span> <a class="code" href="struct_timer__.html#51c017400e060ee39d7e8c74109fbec0">servicing</a>;
+<a name="l00045"></a>00045 
+<a name="l00046"></a><a class="code" href="struct_timer__.html#841f8c8023fe73182f62491e6c9ce3f3">00046</a>   <span class="keywordtype">int</span> <a class="code" href="struct_timer__.html#841f8c8023fe73182f62491e6c9ce3f3">nextTime</a>;
+<a name="l00047"></a><a class="code" href="struct_timer__.html#0383a2db349b553b08fcf5dbea4ee078">00047</a>   <span class="keywordtype">int</span> <a class="code" href="struct_timer__.html#0383a2db349b553b08fcf5dbea4ee078">temp</a>;
+<a name="l00048"></a>00048   
+<a name="l00049"></a><a class="code" href="struct_timer__.html#6e2f20719a3cc7d19debb62097dc7fd8">00049</a>   <a class="code" href="struct_timer_entry_s.html">TimerEntry</a>* <a class="code" href="struct_timer__.html#6e2f20719a3cc7d19debb62097dc7fd8">first</a>;
+<a name="l00050"></a><a class="code" href="struct_timer__.html#e63a85da2c5f9ecc212fb32db41ab429">00050</a>   <a class="code" href="struct_timer_entry_s.html">TimerEntry</a>* <a class="code" href="struct_timer__.html#e63a85da2c5f9ecc212fb32db41ab429">next</a>;
+<a name="l00051"></a><a class="code" href="struct_timer__.html#fdabbca53b706e80f4f2d6860df6f9b6">00051</a>   <a class="code" href="struct_timer_entry_s.html">TimerEntry</a>* <a class="code" href="struct_timer__.html#fdabbca53b706e80f4f2d6860df6f9b6">previous</a>;
+<a name="l00052"></a><a class="code" href="struct_timer__.html#ec93ef4de0c50919bf885827ce518ce3">00052</a>   <a class="code" href="struct_timer_entry_s.html">TimerEntry</a>* <a class="code" href="struct_timer__.html#ec93ef4de0c50919bf885827ce518ce3">lastAdded</a>;
+<a name="l00053"></a>00053 };
+<a name="l00054"></a>00054 
+<a name="l00055"></a>00055 <span class="preprocessor">#endif</span>
 </pre></div><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -106,6 +98,6 @@
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 22 Sep 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

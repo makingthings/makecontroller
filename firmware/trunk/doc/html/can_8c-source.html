@@ -383,47 +383,51 @@
 <a name="l00347"></a>00347 <span class="comment">// part (the subsystem) already parsed off.</span>
 <a name="l00348"></a><a class="code" href="can_8c.html#20e5b58202c569fe01d9caedb95d0a06">00348</a> <span class="keywordtype">int</span> <a class="code" href="can_8c.html#20e5b58202c569fe01d9caedb95d0a06">CanOsc_ReceiveMessage</a>( <span class="keywordtype">int</span> channel, <span class="keywordtype">char</span>* message, <span class="keywordtype">int</span> length )
 <a name="l00349"></a>00349 {
-<a name="l00350"></a>00350   <span class="keywordflow">return</span> Osc_IntReceiverHelper( channel, message, length, 
-<a name="l00351"></a>00351                                      CanOsc_Name,
-<a name="l00352"></a>00352                                      <a class="code" href="can_8c.html#21eda537c467653460730822fda4b6a7">CanOsc_PropertySet</a>, <a class="code" href="can_8c.html#9739dfa40db28978c9a5b2d8aca87c92">CanOsc_PropertyGet</a>, 
-<a name="l00353"></a>00353                                      CanOsc_PropertyNames );
+<a name="l00350"></a>00350   <span class="keywordtype">int</span> status = Osc_IntReceiverHelper( channel, message, length, 
+<a name="l00351"></a>00351                                       CanOsc_Name,
+<a name="l00352"></a>00352                                       <a class="code" href="can_8c.html#21eda537c467653460730822fda4b6a7">CanOsc_PropertySet</a>, <a class="code" href="can_8c.html#9739dfa40db28978c9a5b2d8aca87c92">CanOsc_PropertyGet</a>, 
+<a name="l00353"></a>00353                                       CanOsc_PropertyNames );
 <a name="l00354"></a>00354 
 <a name="l00355"></a>00355   <span class="comment">// the can system is complex it will need another kind of helper - one that</span>
 <a name="l00356"></a>00356   <span class="comment">// can handle</span>
 <a name="l00357"></a>00357   <span class="comment">//     /can/active 1  as well as</span>
 <a name="l00358"></a>00358   <span class="comment">//     /can/0/id 21213</span>
 <a name="l00359"></a>00359   <span class="comment">// also the can getters and setters will need to be able to handle complex data</span>
-<a name="l00360"></a>00360 }
-<a name="l00361"></a>00361 
-<a name="l00362"></a>00362 <span class="comment">// Set the index LED, property with the value</span>
-<a name="l00363"></a><a class="code" href="can_8c.html#21eda537c467653460730822fda4b6a7">00363</a> <span class="keywordtype">int</span> <a class="code" href="can_8c.html#21eda537c467653460730822fda4b6a7">CanOsc_PropertySet</a>( <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> value )
-<a name="l00364"></a>00364 {
-<a name="l00365"></a>00365   <span class="keywordflow">switch</span> ( property )
-<a name="l00366"></a>00366   {
-<a name="l00367"></a>00367     <span class="keywordflow">case</span> 0: 
-<a name="l00368"></a>00368       Can_SetActive( value );
-<a name="l00369"></a>00369       <span class="keywordflow">break</span>;      
-<a name="l00370"></a>00370   }
-<a name="l00371"></a>00371   <span class="keywordflow">return</span> CONTROLLER_OK;
-<a name="l00372"></a>00372 }
-<a name="l00373"></a>00373 
-<a name="l00374"></a>00374 <span class="comment">// Get the property</span>
-<a name="l00375"></a><a class="code" href="can_8c.html#9739dfa40db28978c9a5b2d8aca87c92">00375</a> <span class="keywordtype">int</span> <a class="code" href="can_8c.html#9739dfa40db28978c9a5b2d8aca87c92">CanOsc_PropertyGet</a>( <span class="keywordtype">int</span> property )
-<a name="l00376"></a>00376 {
-<a name="l00377"></a>00377   <span class="keywordtype">int</span> value;
-<a name="l00378"></a>00378   <span class="keywordflow">switch</span> ( property )
-<a name="l00379"></a>00379   {
-<a name="l00380"></a>00380     <span class="keywordflow">case</span> 0:
-<a name="l00381"></a>00381       value = <a class="code" href="group___can.html#g43e2fe76a7166a9d43198b93fd4153c0">Can_GetActive</a>( );
-<a name="l00382"></a>00382       <span class="keywordflow">break</span>;
-<a name="l00383"></a>00383   }
-<a name="l00384"></a>00384   
-<a name="l00385"></a>00385   <span class="keywordflow">return</span> value;
-<a name="l00386"></a>00386 }
-<a name="l00387"></a>00387 
-<a name="l00388"></a>00388 
-<a name="l00389"></a>00389 
-<a name="l00390"></a>00390 
+<a name="l00360"></a>00360 
+<a name="l00361"></a>00361   <span class="keywordflow">if</span> ( status != CONTROLLER_OK )
+<a name="l00362"></a>00362     <span class="keywordflow">return</span> Osc_SendError( channel, CanOsc_Name, status );
+<a name="l00363"></a>00363   <span class="keywordflow">return</span> CONTROLLER_OK;
+<a name="l00364"></a>00364 }
+<a name="l00365"></a>00365 
+<a name="l00366"></a>00366 <span class="comment">// Set the index LED, property with the value</span>
+<a name="l00367"></a><a class="code" href="can_8c.html#21eda537c467653460730822fda4b6a7">00367</a> <span class="keywordtype">int</span> <a class="code" href="can_8c.html#21eda537c467653460730822fda4b6a7">CanOsc_PropertySet</a>( <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> value )
+<a name="l00368"></a>00368 {
+<a name="l00369"></a>00369   <span class="keywordflow">switch</span> ( property )
+<a name="l00370"></a>00370   {
+<a name="l00371"></a>00371     <span class="keywordflow">case</span> 0: 
+<a name="l00372"></a>00372       Can_SetActive( value );
+<a name="l00373"></a>00373       <span class="keywordflow">break</span>;      
+<a name="l00374"></a>00374   }
+<a name="l00375"></a>00375   <span class="keywordflow">return</span> CONTROLLER_OK;
+<a name="l00376"></a>00376 }
+<a name="l00377"></a>00377 
+<a name="l00378"></a>00378 <span class="comment">// Get the property</span>
+<a name="l00379"></a><a class="code" href="can_8c.html#9739dfa40db28978c9a5b2d8aca87c92">00379</a> <span class="keywordtype">int</span> <a class="code" href="can_8c.html#9739dfa40db28978c9a5b2d8aca87c92">CanOsc_PropertyGet</a>( <span class="keywordtype">int</span> property )
+<a name="l00380"></a>00380 {
+<a name="l00381"></a>00381   <span class="keywordtype">int</span> value;
+<a name="l00382"></a>00382   <span class="keywordflow">switch</span> ( property )
+<a name="l00383"></a>00383   {
+<a name="l00384"></a>00384     <span class="keywordflow">case</span> 0:
+<a name="l00385"></a>00385       value = <a class="code" href="group___can.html#g43e2fe76a7166a9d43198b93fd4153c0">Can_GetActive</a>( );
+<a name="l00386"></a>00386       <span class="keywordflow">break</span>;
+<a name="l00387"></a>00387   }
+<a name="l00388"></a>00388   
+<a name="l00389"></a>00389   <span class="keywordflow">return</span> value;
+<a name="l00390"></a>00390 }
+<a name="l00391"></a>00391 
+<a name="l00392"></a>00392 
+<a name="l00393"></a>00393 
+<a name="l00394"></a>00394 
 </pre></div><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -433,6 +437,6 @@
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 22 Sep 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

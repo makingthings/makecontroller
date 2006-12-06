@@ -223,47 +223,51 @@
 <a name="l00187"></a>00187 
 <a name="l00188"></a><a class="code" href="dipswitch_8c.html#2b5d4c4144493671d8ea08b69b0d54f2">00188</a> <span class="keywordtype">int</span> <a class="code" href="dipswitch_8c.html#2b5d4c4144493671d8ea08b69b0d54f2">DipSwitchOsc_ReceiveMessage</a>( <span class="keywordtype">int</span> channel, <span class="keywordtype">char</span>* message, <span class="keywordtype">int</span> length )
 <a name="l00189"></a>00189 {
-<a name="l00190"></a>00190   <span class="keywordflow">return</span> Osc_IntReceiverHelper( channel, message, length, 
-<a name="l00191"></a>00191                                 DipSwitchOsc_Name,
-<a name="l00192"></a>00192                                 <a class="code" href="dipswitch_8c.html#04513ed947bc60841066916023693bb4">DipSwitchOsc_PropertySet</a>, <a class="code" href="dipswitch_8c.html#2f22e0470cef510a92b46a91d8d09417">DipSwitchOsc_PropertyGet</a>, 
-<a name="l00193"></a>00193                                 DipSwitchOsc_PropertyNames );
-<a name="l00194"></a>00194 }
-<a name="l00195"></a>00195 
-<a name="l00196"></a><a class="code" href="dipswitch_8c.html#38d24b0444727ae47be4ce6671a536a3">00196</a> <span class="keywordtype">int</span> <a class="code" href="dipswitch_8c.html#38d24b0444727ae47be4ce6671a536a3">DipSwitchOsc_Poll</a>( )
-<a name="l00197"></a>00197 {
-<a name="l00198"></a>00198   <span class="keywordflow">return</span> CONTROLLER_OK;
-<a name="l00199"></a>00199 }
-<a name="l00200"></a>00200 
-<a name="l00201"></a>00201 <span class="comment">// Set the index LED, property with the value</span>
-<a name="l00202"></a><a class="code" href="dipswitch_8c.html#04513ed947bc60841066916023693bb4">00202</a> <span class="keywordtype">int</span> <a class="code" href="dipswitch_8c.html#04513ed947bc60841066916023693bb4">DipSwitchOsc_PropertySet</a>( <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> value )
-<a name="l00203"></a>00203 {
-<a name="l00204"></a>00204   <span class="keywordflow">switch</span> ( property )
-<a name="l00205"></a>00205   {
-<a name="l00206"></a>00206     <span class="keywordflow">case</span> 0: 
-<a name="l00207"></a>00207       <a class="code" href="group___dip_switch.html#g45035e2d044b940c84a47c9029d42f46">DipSwitch_SetActive</a>( value );
-<a name="l00208"></a>00208       <span class="keywordflow">break</span>;      
-<a name="l00209"></a>00209   }
-<a name="l00210"></a>00210   <span class="keywordflow">return</span> CONTROLLER_OK;
-<a name="l00211"></a>00211 }
-<a name="l00212"></a>00212 
-<a name="l00213"></a>00213 <span class="comment">// Get the property</span>
-<a name="l00214"></a><a class="code" href="dipswitch_8c.html#2f22e0470cef510a92b46a91d8d09417">00214</a> <span class="keywordtype">int</span> <a class="code" href="dipswitch_8c.html#2f22e0470cef510a92b46a91d8d09417">DipSwitchOsc_PropertyGet</a>( <span class="keywordtype">int</span> property )
-<a name="l00215"></a>00215 {
-<a name="l00216"></a>00216   <span class="keywordtype">int</span> value;
-<a name="l00217"></a>00217   <span class="keywordflow">switch</span> ( property )
-<a name="l00218"></a>00218   {
-<a name="l00219"></a>00219     <span class="keywordflow">case</span> 0:
-<a name="l00220"></a>00220       value = <a class="code" href="group___dip_switch.html#geea6d456dca530321697e5b59c304563">DipSwitch_GetActive</a>( );
-<a name="l00221"></a>00221       <span class="keywordflow">break</span>;
-<a name="l00222"></a>00222     <span class="keywordflow">case</span> 1:
-<a name="l00223"></a>00223       value = <a class="code" href="group___dip_switch.html#gd2b31cfb003f107063c9daaf4fe5fcff">DipSwitch_GetValue</a>( );
-<a name="l00224"></a>00224       <span class="keywordflow">break</span>;
-<a name="l00225"></a>00225   }
-<a name="l00226"></a>00226   
-<a name="l00227"></a>00227   <span class="keywordflow">return</span> value;
-<a name="l00228"></a>00228 }
-<a name="l00229"></a>00229 
-<a name="l00230"></a>00230 <span class="preprocessor">#endif</span>
+<a name="l00190"></a>00190   <span class="keywordtype">int</span> status = Osc_IntReceiverHelper( channel, message, length, 
+<a name="l00191"></a>00191                                       DipSwitchOsc_Name,
+<a name="l00192"></a>00192                                       <a class="code" href="dipswitch_8c.html#04513ed947bc60841066916023693bb4">DipSwitchOsc_PropertySet</a>, <a class="code" href="dipswitch_8c.html#2f22e0470cef510a92b46a91d8d09417">DipSwitchOsc_PropertyGet</a>, 
+<a name="l00193"></a>00193                                       DipSwitchOsc_PropertyNames );
+<a name="l00194"></a>00194 
+<a name="l00195"></a>00195   <span class="keywordflow">if</span> ( status != CONTROLLER_OK )
+<a name="l00196"></a>00196     <span class="keywordflow">return</span> Osc_SendError( channel, DipSwitchOsc_Name, status );
+<a name="l00197"></a>00197   <span class="keywordflow">return</span> CONTROLLER_OK;
+<a name="l00198"></a>00198 }
+<a name="l00199"></a>00199 
+<a name="l00200"></a><a class="code" href="dipswitch_8c.html#38d24b0444727ae47be4ce6671a536a3">00200</a> <span class="keywordtype">int</span> <a class="code" href="dipswitch_8c.html#38d24b0444727ae47be4ce6671a536a3">DipSwitchOsc_Poll</a>( )
+<a name="l00201"></a>00201 {
+<a name="l00202"></a>00202   <span class="keywordflow">return</span> CONTROLLER_OK;
+<a name="l00203"></a>00203 }
+<a name="l00204"></a>00204 
+<a name="l00205"></a>00205 <span class="comment">// Set the index LED, property with the value</span>
+<a name="l00206"></a><a class="code" href="dipswitch_8c.html#04513ed947bc60841066916023693bb4">00206</a> <span class="keywordtype">int</span> <a class="code" href="dipswitch_8c.html#04513ed947bc60841066916023693bb4">DipSwitchOsc_PropertySet</a>( <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> value )
+<a name="l00207"></a>00207 {
+<a name="l00208"></a>00208   <span class="keywordflow">switch</span> ( property )
+<a name="l00209"></a>00209   {
+<a name="l00210"></a>00210     <span class="keywordflow">case</span> 0: 
+<a name="l00211"></a>00211       <a class="code" href="group___dip_switch.html#g45035e2d044b940c84a47c9029d42f46">DipSwitch_SetActive</a>( value );
+<a name="l00212"></a>00212       <span class="keywordflow">break</span>;      
+<a name="l00213"></a>00213   }
+<a name="l00214"></a>00214   <span class="keywordflow">return</span> CONTROLLER_OK;
+<a name="l00215"></a>00215 }
+<a name="l00216"></a>00216 
+<a name="l00217"></a>00217 <span class="comment">// Get the property</span>
+<a name="l00218"></a><a class="code" href="dipswitch_8c.html#2f22e0470cef510a92b46a91d8d09417">00218</a> <span class="keywordtype">int</span> <a class="code" href="dipswitch_8c.html#2f22e0470cef510a92b46a91d8d09417">DipSwitchOsc_PropertyGet</a>( <span class="keywordtype">int</span> property )
+<a name="l00219"></a>00219 {
+<a name="l00220"></a>00220   <span class="keywordtype">int</span> value;
+<a name="l00221"></a>00221   <span class="keywordflow">switch</span> ( property )
+<a name="l00222"></a>00222   {
+<a name="l00223"></a>00223     <span class="keywordflow">case</span> 0:
+<a name="l00224"></a>00224       value = <a class="code" href="group___dip_switch.html#geea6d456dca530321697e5b59c304563">DipSwitch_GetActive</a>( );
+<a name="l00225"></a>00225       <span class="keywordflow">break</span>;
+<a name="l00226"></a>00226     <span class="keywordflow">case</span> 1:
+<a name="l00227"></a>00227       value = <a class="code" href="group___dip_switch.html#gd2b31cfb003f107063c9daaf4fe5fcff">DipSwitch_GetValue</a>( );
+<a name="l00228"></a>00228       <span class="keywordflow">break</span>;
+<a name="l00229"></a>00229   }
+<a name="l00230"></a>00230   
+<a name="l00231"></a>00231   <span class="keywordflow">return</span> value;
+<a name="l00232"></a>00232 }
+<a name="l00233"></a>00233 
+<a name="l00234"></a>00234 <span class="preprocessor">#endif</span>
 </pre></div><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -273,6 +277,6 @@
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 22 Sep 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

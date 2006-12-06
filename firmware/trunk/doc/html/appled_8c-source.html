@@ -290,45 +290,49 @@
 <a name="l00254"></a>00254 <span class="comment">// part (the subsystem) already parsed off.</span>
 <a name="l00255"></a><a class="code" href="appled_8c.html#e8894f4214a4d34f3ee4c29e742db413">00255</a> <span class="keywordtype">int</span> <a class="code" href="appled_8c.html#e8894f4214a4d34f3ee4c29e742db413">AppLedOsc_ReceiveMessage</a>( <span class="keywordtype">int</span> channel, <span class="keywordtype">char</span>* message, <span class="keywordtype">int</span> length )
 <a name="l00256"></a>00256 {
-<a name="l00257"></a>00257   <span class="keywordflow">return</span> Osc_IndexIntReceiverHelper( channel, message, length, 
-<a name="l00258"></a>00258                                      <a class="code" href="appled_8c.html#8ee861a6e33dbe77ae9f00cc0ba5a619">APPLED_COUNT</a>, AppLedOsc_Name,
-<a name="l00259"></a>00259                                      <a class="code" href="appled_8c.html#de22a8305cdd43cab4972d4cae8333f8">AppLedOsc_PropertySet</a>, <a class="code" href="appled_8c.html#46e3b6d20b6d3e16bce06fad57b13225">AppLedOsc_PropertyGet</a>, 
-<a name="l00260"></a>00260                                      AppLedOsc_PropertyNames );
-<a name="l00261"></a>00261 }
-<a name="l00262"></a>00262 
-<a name="l00263"></a>00263 <span class="comment">// Set the index LED, property with the value</span>
-<a name="l00264"></a><a class="code" href="appled_8c.html#de22a8305cdd43cab4972d4cae8333f8">00264</a> <span class="keywordtype">int</span> <a class="code" href="appled_8c.html#de22a8305cdd43cab4972d4cae8333f8">AppLedOsc_PropertySet</a>( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> value )
-<a name="l00265"></a>00265 {
-<a name="l00266"></a>00266   <span class="keywordflow">switch</span> ( property )
-<a name="l00267"></a>00267   {
-<a name="l00268"></a>00268     <span class="keywordflow">case</span> 0: 
-<a name="l00269"></a>00269       <a class="code" href="group___app_led.html#gd0ee0aad03c0aa89b442bf75e073510d">AppLed_SetActive</a>( index, value );
-<a name="l00270"></a>00270       <span class="keywordflow">break</span>;      
-<a name="l00271"></a>00271     <span class="keywordflow">case</span> 1:
-<a name="l00272"></a>00272       <a class="code" href="group___app_led.html#gdf0cd1ff241ad17592b9036b674613cc">AppLed_SetState</a>( index, value );
-<a name="l00273"></a>00273       <span class="keywordflow">break</span>;
-<a name="l00274"></a>00274   }
-<a name="l00275"></a>00275   <span class="keywordflow">return</span> CONTROLLER_OK;
-<a name="l00276"></a>00276 }
-<a name="l00277"></a>00277 
-<a name="l00278"></a>00278 <span class="comment">// Get the index LED, property</span>
-<a name="l00279"></a><a class="code" href="appled_8c.html#46e3b6d20b6d3e16bce06fad57b13225">00279</a> <span class="keywordtype">int</span> <a class="code" href="appled_8c.html#46e3b6d20b6d3e16bce06fad57b13225">AppLedOsc_PropertyGet</a>( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property )
-<a name="l00280"></a>00280 {
-<a name="l00281"></a>00281   <span class="keywordtype">int</span> value;
-<a name="l00282"></a>00282   <span class="keywordflow">switch</span> ( property )
-<a name="l00283"></a>00283   {
-<a name="l00284"></a>00284     <span class="keywordflow">case</span> 0:
-<a name="l00285"></a>00285       value = <a class="code" href="group___app_led.html#g7733e566f4a851f1d04ca41635e8a309">AppLed_GetActive</a>( index );
-<a name="l00286"></a>00286       <span class="keywordflow">break</span>;
-<a name="l00287"></a>00287     <span class="keywordflow">case</span> 1:
-<a name="l00288"></a>00288       value = <a class="code" href="group___app_led.html#g8f5aa2a42d5eb1cf6c39a933c9a5baca">AppLed_GetState</a>( index );
-<a name="l00289"></a>00289       <span class="keywordflow">break</span>;
-<a name="l00290"></a>00290   }
-<a name="l00291"></a>00291   
-<a name="l00292"></a>00292   <span class="keywordflow">return</span> value;
-<a name="l00293"></a>00293 }
-<a name="l00294"></a>00294 
-<a name="l00295"></a>00295 <span class="preprocessor">#endif</span>
+<a name="l00257"></a>00257   <span class="keywordtype">int</span> status = Osc_IndexIntReceiverHelper( channel, message, length, 
+<a name="l00258"></a>00258                                            <a class="code" href="appled_8c.html#8ee861a6e33dbe77ae9f00cc0ba5a619">APPLED_COUNT</a>, AppLedOsc_Name,
+<a name="l00259"></a>00259                                            <a class="code" href="appled_8c.html#de22a8305cdd43cab4972d4cae8333f8">AppLedOsc_PropertySet</a>, <a class="code" href="appled_8c.html#46e3b6d20b6d3e16bce06fad57b13225">AppLedOsc_PropertyGet</a>, 
+<a name="l00260"></a>00260                                            AppLedOsc_PropertyNames );
+<a name="l00261"></a>00261 
+<a name="l00262"></a>00262   <span class="keywordflow">if</span> ( status != CONTROLLER_OK )
+<a name="l00263"></a>00263     <span class="keywordflow">return</span> Osc_SendError( channel, AppLedOsc_Name, status );
+<a name="l00264"></a>00264   <span class="keywordflow">return</span> CONTROLLER_OK;
+<a name="l00265"></a>00265 }
+<a name="l00266"></a>00266 
+<a name="l00267"></a>00267 <span class="comment">// Set the index LED, property with the value</span>
+<a name="l00268"></a><a class="code" href="appled_8c.html#de22a8305cdd43cab4972d4cae8333f8">00268</a> <span class="keywordtype">int</span> <a class="code" href="appled_8c.html#de22a8305cdd43cab4972d4cae8333f8">AppLedOsc_PropertySet</a>( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> value )
+<a name="l00269"></a>00269 {
+<a name="l00270"></a>00270   <span class="keywordflow">switch</span> ( property )
+<a name="l00271"></a>00271   {
+<a name="l00272"></a>00272     <span class="keywordflow">case</span> 0: 
+<a name="l00273"></a>00273       <a class="code" href="group___app_led.html#gd0ee0aad03c0aa89b442bf75e073510d">AppLed_SetActive</a>( index, value );
+<a name="l00274"></a>00274       <span class="keywordflow">break</span>;      
+<a name="l00275"></a>00275     <span class="keywordflow">case</span> 1:
+<a name="l00276"></a>00276       <a class="code" href="group___app_led.html#gdf0cd1ff241ad17592b9036b674613cc">AppLed_SetState</a>( index, value );
+<a name="l00277"></a>00277       <span class="keywordflow">break</span>;
+<a name="l00278"></a>00278   }
+<a name="l00279"></a>00279   <span class="keywordflow">return</span> CONTROLLER_OK;
+<a name="l00280"></a>00280 }
+<a name="l00281"></a>00281 
+<a name="l00282"></a>00282 <span class="comment">// Get the index LED, property</span>
+<a name="l00283"></a><a class="code" href="appled_8c.html#46e3b6d20b6d3e16bce06fad57b13225">00283</a> <span class="keywordtype">int</span> <a class="code" href="appled_8c.html#46e3b6d20b6d3e16bce06fad57b13225">AppLedOsc_PropertyGet</a>( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property )
+<a name="l00284"></a>00284 {
+<a name="l00285"></a>00285   <span class="keywordtype">int</span> value;
+<a name="l00286"></a>00286   <span class="keywordflow">switch</span> ( property )
+<a name="l00287"></a>00287   {
+<a name="l00288"></a>00288     <span class="keywordflow">case</span> 0:
+<a name="l00289"></a>00289       value = <a class="code" href="group___app_led.html#g7733e566f4a851f1d04ca41635e8a309">AppLed_GetActive</a>( index );
+<a name="l00290"></a>00290       <span class="keywordflow">break</span>;
+<a name="l00291"></a>00291     <span class="keywordflow">case</span> 1:
+<a name="l00292"></a>00292       value = <a class="code" href="group___app_led.html#g8f5aa2a42d5eb1cf6c39a933c9a5baca">AppLed_GetState</a>( index );
+<a name="l00293"></a>00293       <span class="keywordflow">break</span>;
+<a name="l00294"></a>00294   }
+<a name="l00295"></a>00295   
+<a name="l00296"></a>00296   <span class="keywordflow">return</span> value;
+<a name="l00297"></a>00297 }
+<a name="l00298"></a>00298 
+<a name="l00299"></a>00299 <span class="preprocessor">#endif</span>
 </pre></div><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -338,6 +342,6 @@
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 22 Sep 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

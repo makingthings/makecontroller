@@ -64,13 +64,14 @@
 <a name="l00028"></a>00028 <span class="keywordtype">int</span> <a class="code" href="group___analog_in.html#gdb62eecf34834f2b57e722864581ace7">AnalogIn_GetActive</a>( <span class="keywordtype">int</span> index );
 <a name="l00029"></a>00029 
 <a name="l00030"></a>00030 <span class="keywordtype">int</span> <a class="code" href="group___analog_in.html#g66a6bd10fbb5fc80f32994b756cf0412">AnalogIn_GetValue</a>( <span class="keywordtype">int</span> index );
-<a name="l00031"></a>00031 <span class="keywordtype">int</span> <a class="code" href="group___analog_in.html#g41030fda39d69b15cd29ac95d73fd932">AnalogIn_GetValueWait</a>( <span class="keywordtype">int</span> index );
-<a name="l00032"></a>00032 
-<a name="l00033"></a>00033 <span class="comment">/* OSC Interface */</span>
-<a name="l00034"></a>00034 <span class="keyword">const</span> <span class="keywordtype">char</span>* <a class="code" href="analogin_8c.html#621792c904859b6dbd29116c0fabccbc">AnalogInOsc_GetName</a>( <span class="keywordtype">void</span> );
-<a name="l00035"></a>00035 <span class="keywordtype">int</span> <a class="code" href="analogin_8c.html#11e120fc5cc2ad10b57c31fd699b1eb9">AnalogInOsc_ReceiveMessage</a>( <span class="keywordtype">int</span> channel, <span class="keywordtype">char</span>* message, <span class="keywordtype">int</span> length );
-<a name="l00036"></a>00036 
-<a name="l00037"></a>00037 <span class="preprocessor">#endif</span>
+<a name="l00031"></a>00031 <span class="keywordtype">int</span> <a class="code" href="group___analog_in.html#g49aee6e9be4e3e6982de3ed7c7b11dc1">AnalogIn_GetValueMulti</a>( <span class="keywordtype">int</span> mask, <span class="keywordtype">int</span>* values[] );
+<a name="l00032"></a>00032 <span class="keywordtype">int</span> <a class="code" href="group___analog_in.html#g41030fda39d69b15cd29ac95d73fd932">AnalogIn_GetValueWait</a>( <span class="keywordtype">int</span> index );
+<a name="l00033"></a>00033 
+<a name="l00034"></a>00034 <span class="comment">/* OSC Interface */</span>
+<a name="l00035"></a>00035 <span class="keyword">const</span> <span class="keywordtype">char</span>* <a class="code" href="analogin_8c.html#621792c904859b6dbd29116c0fabccbc">AnalogInOsc_GetName</a>( <span class="keywordtype">void</span> );
+<a name="l00036"></a>00036 <span class="keywordtype">int</span> <a class="code" href="analogin_8c.html#11e120fc5cc2ad10b57c31fd699b1eb9">AnalogInOsc_ReceiveMessage</a>( <span class="keywordtype">int</span> channel, <span class="keywordtype">char</span>* message, <span class="keywordtype">int</span> length );
+<a name="l00037"></a>00037 
+<a name="l00038"></a>00038 <span class="preprocessor">#endif</span>
 </pre></div><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -80,6 +81,6 @@
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 22 Sep 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

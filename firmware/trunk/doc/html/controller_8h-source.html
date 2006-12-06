@@ -71,29 +71,30 @@
 <a name="l00035"></a>00035 <span class="preprocessor">#include "io.h"</span>
 <a name="l00036"></a>00036 <span class="preprocessor">#include "led.h"</span>
 <a name="l00037"></a>00037 <span class="preprocessor">#include "timer.h"</span>
-<a name="l00038"></a>00038 <span class="preprocessor">#include "debug.h"</span>
-<a name="l00039"></a>00039 <span class="preprocessor">#include "can.h"</span>
-<a name="l00040"></a>00040 <span class="preprocessor">#include "osc.h"</span>
-<a name="l00041"></a>00041 <span class="preprocessor">#include "system.h"</span>
-<a name="l00042"></a>00042 <span class="preprocessor">#include "usb.h"</span>
-<a name="l00043"></a>00043 <span class="preprocessor">#include "network.h"</span>
-<a name="l00044"></a>00044 
+<a name="l00038"></a>00038 <span class="preprocessor">#include "fasttimer.h"</span>
+<a name="l00039"></a>00039 <span class="preprocessor">#include "debug.h"</span>
+<a name="l00040"></a>00040 <span class="preprocessor">#include "can.h"</span>
+<a name="l00041"></a>00041 <span class="preprocessor">#include "osc.h"</span>
+<a name="l00042"></a>00042 <span class="preprocessor">#include "system.h"</span>
+<a name="l00043"></a>00043 <span class="preprocessor">#include "usb.h"</span>
+<a name="l00044"></a>00044 <span class="preprocessor">#include "network.h"</span>
 <a name="l00045"></a>00045 
-<a name="l00046"></a>00046 <span class="comment">/* Make Helper Functions */</span>
-<a name="l00047"></a>00047 
-<a name="l00048"></a>00048 <span class="keywordtype">void</span> Make( <span class="keywordtype">void</span> );
-<a name="l00049"></a>00049 
-<a name="l00050"></a>00050 <span class="keywordtype">void</span> Timer0Isr( <span class="keywordtype">void</span> );
-<a name="l00051"></a>00051 <span class="keywordtype">void</span> Timer0Init( <span class="keywordtype">void</span> );
-<a name="l00052"></a>00052 <span class="keywordtype">void</span> Timer0Set( <span class="keywordtype">int</span> t );
-<a name="l00053"></a>00053 <span class="keywordtype">int</span> Timer0Get( <span class="keywordtype">int</span>* jitterTotal, <span class="keywordtype">int</span>* jitterMax, <span class="keywordtype">int</span>* jitterMaxAllDay );
-<a name="l00054"></a>00054 
-<a name="l00055"></a>00055 <span class="keywordtype">void</span> <a class="code" href="servo_8c.html#940a586e5068adb47c5567217e3a2c52">FastIsr</a>( <span class="keywordtype">void</span> );
-<a name="l00056"></a>00056 
-<a name="l00057"></a>00057 <span class="keywordtype">void</span> <a class="code" href="servo_8c.html#0aad1132b911445674ee90fcc23709ed">DisableFIQFromThumb</a>( <span class="keywordtype">void</span> );
-<a name="l00058"></a>00058 <span class="keywordtype">void</span> <a class="code" href="servo_8c.html#c74dd70f3ed45d58c3480735726949ee">EnableFIQFromThumb</a>( <span class="keywordtype">void</span> );
-<a name="l00059"></a>00059 
-<a name="l00060"></a>00060 <span class="preprocessor">#endif</span>
+<a name="l00046"></a>00046 
+<a name="l00047"></a>00047 <span class="comment">/* Make Helper Functions */</span>
+<a name="l00048"></a>00048 
+<a name="l00049"></a>00049 <span class="keywordtype">void</span> Make( <span class="keywordtype">void</span> );
+<a name="l00050"></a>00050 
+<a name="l00051"></a>00051 <span class="keywordtype">void</span> Timer0Isr( <span class="keywordtype">void</span> );
+<a name="l00052"></a>00052 <span class="keywordtype">void</span> Timer0Init( <span class="keywordtype">void</span> );
+<a name="l00053"></a>00053 <span class="keywordtype">void</span> Timer0Set( <span class="keywordtype">int</span> t );
+<a name="l00054"></a>00054 <span class="keywordtype">int</span> Timer0Get( <span class="keywordtype">int</span>* jitterTotal, <span class="keywordtype">int</span>* jitterMax, <span class="keywordtype">int</span>* jitterMaxAllDay );
+<a name="l00055"></a>00055 
+<a name="l00056"></a>00056 <span class="keywordtype">void</span> FastIsr( <span class="keywordtype">void</span> );
+<a name="l00057"></a>00057 
+<a name="l00058"></a>00058 <span class="keywordtype">void</span> <a class="code" href="servo_8c.html#0aad1132b911445674ee90fcc23709ed">DisableFIQFromThumb</a>( <span class="keywordtype">void</span> );
+<a name="l00059"></a>00059 <span class="keywordtype">void</span> <a class="code" href="servo_8c.html#c74dd70f3ed45d58c3480735726949ee">EnableFIQFromThumb</a>( <span class="keywordtype">void</span> );
+<a name="l00060"></a>00060 
+<a name="l00061"></a>00061 <span class="preprocessor">#endif</span>
 </pre></div><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -103,6 +104,6 @@
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 22 Sep 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

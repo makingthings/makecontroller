@@ -222,99 +222,98 @@
 <a name="l00186"></a>00186 <span class="comment"></span>
 <a name="l00187"></a>00187 <span class="comment">/** </span>
 <a name="l00188"></a>00188 <span class="comment">  Returns the last usable address in the EEPROM</span>
-<a name="l00189"></a>00189 <span class="comment">  @param none</span>
-<a name="l00190"></a>00190 <span class="comment">  @return address</span>
-<a name="l00191"></a>00191 <span class="comment">*/</span>
-<a name="l00192"></a><a class="code" href="group___eeprom.html#g0d984a59a03896a61603790ba16dbbad">00192</a> <span class="keywordtype">int</span> <a class="code" href="group___eeprom.html#g0d984a59a03896a61603790ba16dbbad">Eeprom_GetLastAddress</a>( )
-<a name="l00193"></a>00193 {
-<a name="l00194"></a>00194   <span class="keywordflow">return</span> <a class="code" href="group___eeprom.html#ge3ef7bba113f663df6996f286b632a3f">EEPROM_SIZE</a> - <a class="code" href="group___eeprom.html#g400b34091bd189fb89377c406e9f6de8">EEPROM_RESERVE_SIZE</a>;
-<a name="l00195"></a>00195 }
-<a name="l00196"></a>00196 <span class="comment"></span>
-<a name="l00197"></a>00197 <span class="comment">/** @}</span>
-<a name="l00198"></a>00198 <span class="comment">*/</span>
-<a name="l00199"></a>00199 
-<a name="l00200"></a>00200 <span class="keywordtype">int</span> Eeprom_Start()
-<a name="l00201"></a>00201 {
-<a name="l00202"></a>00202   <span class="keywordtype">int</span> status;
-<a name="l00203"></a>00203 
-<a name="l00204"></a>00204   <span class="keywordflow">if</span> ( Eeprom_users++ == 0 )
-<a name="l00205"></a>00205   {    
-<a name="l00206"></a>00206     <span class="comment">// Attempt to open the SPI device</span>
-<a name="l00207"></a>00207     status = <a class="code" href="spi_8c.html#4e2405ce499f7118e4cbcc1763e63aaf">Spi_Start</a>( <a class="code" href="eeprom_8c.html#93243d2da5b0f6e08a12695cc6fd48b0">EEPROM_DEVICE</a> );
-<a name="l00208"></a>00208     <span class="keywordflow">if</span> ( status != CONTROLLER_OK )
-<a name="l00209"></a>00209     {
-<a name="l00210"></a>00210       Eeprom_users--;
-<a name="l00211"></a>00211       <span class="keywordflow">return</span> status;
-<a name="l00212"></a>00212     }
-<a name="l00213"></a>00213   
-<a name="l00214"></a>00214     <span class="comment">// We're here means that we got the Spi open, now set it up</span>
-<a name="l00215"></a>00215     status = <a class="code" href="group___spi.html#gcb528088437ee9b05515984b1033f748">Spi_Configure</a>( <a class="code" href="eeprom_8c.html#93243d2da5b0f6e08a12695cc6fd48b0">EEPROM_DEVICE</a>, 8, 4, 0, 1 );
-<a name="l00216"></a>00216     <span class="keywordflow">if</span> ( status != CONTROLLER_OK )
-<a name="l00217"></a>00217     {
-<a name="l00218"></a>00218       <span class="comment">// Undo all the setup.  Sigh.</span>
-<a name="l00219"></a>00219       Eeprom_Stop();
-<a name="l00220"></a>00220       <span class="keywordflow">return</span> status;
-<a name="l00221"></a>00221     }
-<a name="l00222"></a>00222   }
-<a name="l00223"></a>00223   
-<a name="l00224"></a>00224   <span class="keywordflow">return</span> CONTROLLER_OK;
-<a name="l00225"></a>00225 }
-<a name="l00226"></a>00226 
-<a name="l00227"></a>00227 <span class="keywordtype">int</span> Eeprom_Stop()
-<a name="l00228"></a>00228 {
-<a name="l00229"></a>00229   <span class="keywordflow">if</span> ( Eeprom_users &lt;= 0 )
-<a name="l00230"></a>00230     <span class="keywordflow">return</span> CONTROLLER_ERROR_NOT_LOCKED;
-<a name="l00231"></a>00231 
-<a name="l00232"></a>00232   <span class="keywordflow">if</span> ( --Eeprom_users == 0 )
-<a name="l00233"></a>00233     <a class="code" href="spi_8c.html#fc423a2ec8ad25b9b76ddf214aabbdc2">Spi_Stop</a>( <a class="code" href="eeprom_8c.html#93243d2da5b0f6e08a12695cc6fd48b0">EEPROM_DEVICE</a> );
-<a name="l00234"></a>00234 
-<a name="l00235"></a>00235   <span class="keywordflow">return</span> CONTROLLER_OK;
-<a name="l00236"></a>00236 }
-<a name="l00237"></a>00237 <span class="comment"></span>
-<a name="l00238"></a>00238 <span class="comment">/** </span>
-<a name="l00239"></a>00239 <span class="comment">  Eeprom_WriteEnable.</span>
-<a name="l00240"></a>00240 <span class="comment">  Enable writing from the EEPROM on the Make Controller Board. This function should be called before making calls to Eeprom_Write().</span>
-<a name="l00241"></a>00241 <span class="comment">  @param none.</span>
-<a name="l00242"></a>00242 <span class="comment">  @return none.</span>
-<a name="l00243"></a>00243 <span class="comment">*/</span>
-<a name="l00244"></a>00244 <span class="keywordtype">void</span> Eeprom_WriteEnable()
-<a name="l00245"></a>00245 {
-<a name="l00246"></a>00246   uchar c;
-<a name="l00247"></a>00247   c = <a class="code" href="eeprom_8c.html#642085074ae617f8c5ef8ed85b222703">EEPROM_INSTRUCTION_WREN</a>;
-<a name="l00248"></a>00248   
-<a name="l00249"></a>00249   <a class="code" href="group___spi.html#g3a1aa6f078bf307c36c0d43b33305e2f">Spi_ReadWriteBlock</a>( <a class="code" href="eeprom_8c.html#93243d2da5b0f6e08a12695cc6fd48b0">EEPROM_DEVICE</a>, &amp;c, 1 );
-<a name="l00250"></a>00250 }
-<a name="l00251"></a>00251 <span class="comment"></span>
-<a name="l00252"></a>00252 <span class="comment">/** </span>
-<a name="l00253"></a>00253 <span class="comment">  Disable writing from the EEPROM on the Make Controller Board.</span>
-<a name="l00254"></a>00254 <span class="comment">  @param none.</span>
-<a name="l00255"></a>00255 <span class="comment">  @return none.</span>
-<a name="l00256"></a>00256 <span class="comment">*/</span>
-<a name="l00257"></a>00257 <span class="keywordtype">void</span> Eeprom_WriteDisable()
-<a name="l00258"></a>00258 {
-<a name="l00259"></a>00259   uchar c;
-<a name="l00260"></a>00260   c = <a class="code" href="eeprom_8c.html#d6ff37484c7c8c1b7384d39ae535db8f">EEPROM_INSTRUCTION_WRDI</a>;
-<a name="l00261"></a>00261   
-<a name="l00262"></a>00262   <a class="code" href="group___spi.html#g3a1aa6f078bf307c36c0d43b33305e2f">Spi_ReadWriteBlock</a>( <a class="code" href="eeprom_8c.html#93243d2da5b0f6e08a12695cc6fd48b0">EEPROM_DEVICE</a>, &amp;c, 1 );
-<a name="l00263"></a>00263 }
-<a name="l00264"></a>00264 
-<a name="l00265"></a>00265 <span class="keywordtype">void</span> Eeprom_Ready( <span class="keywordtype">void</span> )
-<a name="l00266"></a>00266 {
-<a name="l00267"></a>00267   <span class="keywordtype">int</span> status;
-<a name="l00268"></a>00268   <span class="keywordflow">do</span>
-<a name="l00269"></a>00269   {
-<a name="l00270"></a>00270     <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> c[ 2 ];
-<a name="l00271"></a>00271 
-<a name="l00272"></a>00272     c[ 0 ] = <a class="code" href="eeprom_8c.html#18546a5c763506cfdbbdbb71436811bd">EEPROM_INSTRUCTION_RDSR</a>;
-<a name="l00273"></a>00273     c[ 1 ] = 0;
-<a name="l00274"></a>00274   
-<a name="l00275"></a>00275     <a class="code" href="group___spi.html#g3a1aa6f078bf307c36c0d43b33305e2f">Spi_ReadWriteBlock</a>( <a class="code" href="eeprom_8c.html#93243d2da5b0f6e08a12695cc6fd48b0">EEPROM_DEVICE</a>, c, 2 );
-<a name="l00276"></a>00276 
-<a name="l00277"></a>00277     status = c[ 1 ] != 0xFF;
-<a name="l00278"></a>00278 
-<a name="l00279"></a>00279   } <span class="keywordflow">while</span> ( !status );
-<a name="l00280"></a>00280 }
-<a name="l00281"></a>00281 
+<a name="l00189"></a>00189 <span class="comment">  @return address</span>
+<a name="l00190"></a>00190 <span class="comment">*/</span>
+<a name="l00191"></a><a class="code" href="group___eeprom.html#g0d984a59a03896a61603790ba16dbbad">00191</a> <span class="keywordtype">int</span> <a class="code" href="group___eeprom.html#g0d984a59a03896a61603790ba16dbbad">Eeprom_GetLastAddress</a>( )
+<a name="l00192"></a>00192 {
+<a name="l00193"></a>00193   <span class="keywordflow">return</span> <a class="code" href="group___eeprom.html#ge3ef7bba113f663df6996f286b632a3f">EEPROM_SIZE</a> - <a class="code" href="group___eeprom.html#g400b34091bd189fb89377c406e9f6de8">EEPROM_RESERVE_SIZE</a>;
+<a name="l00194"></a>00194 }
+<a name="l00195"></a>00195 <span class="comment"></span>
+<a name="l00196"></a>00196 <span class="comment">/** @}</span>
+<a name="l00197"></a>00197 <span class="comment">*/</span>
+<a name="l00198"></a>00198 
+<a name="l00199"></a>00199 <span class="keywordtype">int</span> Eeprom_Start()
+<a name="l00200"></a>00200 {
+<a name="l00201"></a>00201   <span class="keywordtype">int</span> status;
+<a name="l00202"></a>00202 
+<a name="l00203"></a>00203   <span class="keywordflow">if</span> ( Eeprom_users++ == 0 )
+<a name="l00204"></a>00204   {    
+<a name="l00205"></a>00205     <span class="comment">// Attempt to open the SPI device</span>
+<a name="l00206"></a>00206     status = <a class="code" href="spi_8c.html#4e2405ce499f7118e4cbcc1763e63aaf">Spi_Start</a>( <a class="code" href="eeprom_8c.html#93243d2da5b0f6e08a12695cc6fd48b0">EEPROM_DEVICE</a> );
+<a name="l00207"></a>00207     <span class="keywordflow">if</span> ( status != CONTROLLER_OK )
+<a name="l00208"></a>00208     {
+<a name="l00209"></a>00209       Eeprom_users--;
+<a name="l00210"></a>00210       <span class="keywordflow">return</span> status;
+<a name="l00211"></a>00211     }
+<a name="l00212"></a>00212   
+<a name="l00213"></a>00213     <span class="comment">// We're here means that we got the Spi open, now set it up</span>
+<a name="l00214"></a>00214     status = <a class="code" href="group___spi.html#gcb528088437ee9b05515984b1033f748">Spi_Configure</a>( <a class="code" href="eeprom_8c.html#93243d2da5b0f6e08a12695cc6fd48b0">EEPROM_DEVICE</a>, 8, 4, 0, 1 );
+<a name="l00215"></a>00215     <span class="keywordflow">if</span> ( status != CONTROLLER_OK )
+<a name="l00216"></a>00216     {
+<a name="l00217"></a>00217       <span class="comment">// Undo all the setup.  Sigh.</span>
+<a name="l00218"></a>00218       Eeprom_Stop();
+<a name="l00219"></a>00219       <span class="keywordflow">return</span> status;
+<a name="l00220"></a>00220     }
+<a name="l00221"></a>00221   }
+<a name="l00222"></a>00222   
+<a name="l00223"></a>00223   <span class="keywordflow">return</span> CONTROLLER_OK;
+<a name="l00224"></a>00224 }
+<a name="l00225"></a>00225 
+<a name="l00226"></a>00226 <span class="keywordtype">int</span> Eeprom_Stop()
+<a name="l00227"></a>00227 {
+<a name="l00228"></a>00228   <span class="keywordflow">if</span> ( Eeprom_users &lt;= 0 )
+<a name="l00229"></a>00229     <span class="keywordflow">return</span> CONTROLLER_ERROR_NOT_LOCKED;
+<a name="l00230"></a>00230 
+<a name="l00231"></a>00231   <span class="keywordflow">if</span> ( --Eeprom_users == 0 )
+<a name="l00232"></a>00232     <a class="code" href="spi_8c.html#fc423a2ec8ad25b9b76ddf214aabbdc2">Spi_Stop</a>( <a class="code" href="eeprom_8c.html#93243d2da5b0f6e08a12695cc6fd48b0">EEPROM_DEVICE</a> );
+<a name="l00233"></a>00233 
+<a name="l00234"></a>00234   <span class="keywordflow">return</span> CONTROLLER_OK;
+<a name="l00235"></a>00235 }
+<a name="l00236"></a>00236 <span class="comment"></span>
+<a name="l00237"></a>00237 <span class="comment">/** </span>
+<a name="l00238"></a>00238 <span class="comment">  Eeprom_WriteEnable.</span>
+<a name="l00239"></a>00239 <span class="comment">  Enable writing from the EEPROM on the Make Controller Board. This function should be called before making calls to Eeprom_Write().</span>
+<a name="l00240"></a>00240 <span class="comment">  @param none.</span>
+<a name="l00241"></a>00241 <span class="comment">  @return none.</span>
+<a name="l00242"></a>00242 <span class="comment">*/</span>
+<a name="l00243"></a>00243 <span class="keywordtype">void</span> Eeprom_WriteEnable()
+<a name="l00244"></a>00244 {
+<a name="l00245"></a>00245   uchar c;
+<a name="l00246"></a>00246   c = <a class="code" href="eeprom_8c.html#642085074ae617f8c5ef8ed85b222703">EEPROM_INSTRUCTION_WREN</a>;
+<a name="l00247"></a>00247   
+<a name="l00248"></a>00248   <a class="code" href="group___spi.html#g3a1aa6f078bf307c36c0d43b33305e2f">Spi_ReadWriteBlock</a>( <a class="code" href="eeprom_8c.html#93243d2da5b0f6e08a12695cc6fd48b0">EEPROM_DEVICE</a>, &amp;c, 1 );
+<a name="l00249"></a>00249 }
+<a name="l00250"></a>00250 <span class="comment"></span>
+<a name="l00251"></a>00251 <span class="comment">/** </span>
+<a name="l00252"></a>00252 <span class="comment">  Disable writing from the EEPROM on the Make Controller Board.</span>
+<a name="l00253"></a>00253 <span class="comment">  @param none.</span>
+<a name="l00254"></a>00254 <span class="comment">  @return none.</span>
+<a name="l00255"></a>00255 <span class="comment">*/</span>
+<a name="l00256"></a>00256 <span class="keywordtype">void</span> Eeprom_WriteDisable()
+<a name="l00257"></a>00257 {
+<a name="l00258"></a>00258   uchar c;
+<a name="l00259"></a>00259   c = <a class="code" href="eeprom_8c.html#d6ff37484c7c8c1b7384d39ae535db8f">EEPROM_INSTRUCTION_WRDI</a>;
+<a name="l00260"></a>00260   
+<a name="l00261"></a>00261   <a class="code" href="group___spi.html#g3a1aa6f078bf307c36c0d43b33305e2f">Spi_ReadWriteBlock</a>( <a class="code" href="eeprom_8c.html#93243d2da5b0f6e08a12695cc6fd48b0">EEPROM_DEVICE</a>, &amp;c, 1 );
+<a name="l00262"></a>00262 }
+<a name="l00263"></a>00263 
+<a name="l00264"></a>00264 <span class="keywordtype">void</span> Eeprom_Ready( <span class="keywordtype">void</span> )
+<a name="l00265"></a>00265 {
+<a name="l00266"></a>00266   <span class="keywordtype">int</span> status;
+<a name="l00267"></a>00267   <span class="keywordflow">do</span>
+<a name="l00268"></a>00268   {
+<a name="l00269"></a>00269     <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> c[ 2 ];
+<a name="l00270"></a>00270 
+<a name="l00271"></a>00271     c[ 0 ] = <a class="code" href="eeprom_8c.html#18546a5c763506cfdbbdbb71436811bd">EEPROM_INSTRUCTION_RDSR</a>;
+<a name="l00272"></a>00272     c[ 1 ] = 0;
+<a name="l00273"></a>00273   
+<a name="l00274"></a>00274     <a class="code" href="group___spi.html#g3a1aa6f078bf307c36c0d43b33305e2f">Spi_ReadWriteBlock</a>( <a class="code" href="eeprom_8c.html#93243d2da5b0f6e08a12695cc6fd48b0">EEPROM_DEVICE</a>, c, 2 );
+<a name="l00275"></a>00275 
+<a name="l00276"></a>00276     status = c[ 1 ] != 0xFF;
+<a name="l00277"></a>00277 
+<a name="l00278"></a>00278   } <span class="keywordflow">while</span> ( !status );
+<a name="l00279"></a>00279 }
+<a name="l00280"></a>00280 
 </pre></div><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -324,6 +323,6 @@
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 22 Sep 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

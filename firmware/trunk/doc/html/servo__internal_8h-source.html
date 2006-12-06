@@ -64,23 +64,23 @@
 <a name="l00028"></a>00028 
 <a name="l00029"></a>00029 <span class="preprocessor">#define SERVO_COUNT 4</span>
 <a name="l00030"></a>00030 <span class="preprocessor"></span>
-<a name="l00031"></a><a class="code" href="struct_servo_control_s.html">00031</a> <span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="struct_servo_control_s.html">ServoControlS</a>
+<a name="l00031"></a>00031 <span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="struct_servo_control_s.html">ServoControlS</a>
 <a name="l00032"></a>00032 {
-<a name="l00033"></a><a class="code" href="struct_servo_control_s.html#e6982f7aeeabfac6598abde7d161b3a3">00033</a>   <span class="keywordtype">int</span> <a class="code" href="struct_servo_control_s.html#e6982f7aeeabfac6598abde7d161b3a3">users</a>;
-<a name="l00034"></a><a class="code" href="struct_servo_control_s.html#f0bf813c57956233267ee6c272a2b5f4">00034</a>   <span class="keywordtype">int</span> <a class="code" href="struct_servo_control_s.html#f0bf813c57956233267ee6c272a2b5f4">speed</a>;
-<a name="l00035"></a><a class="code" href="struct_servo_control_s.html#a227a5dfba4d88fac595d9f66231448a">00035</a>   <span class="keywordtype">int</span> <a class="code" href="struct_servo_control_s.html#a227a5dfba4d88fac595d9f66231448a">positionRequested</a>;
-<a name="l00036"></a><a class="code" href="struct_servo_control_s.html#7d35da6266de13bf1732ae48721a8fc7">00036</a>   <span class="keywordtype">int</span> <a class="code" href="struct_servo_control_s.html#7d35da6266de13bf1732ae48721a8fc7">position</a>;
-<a name="l00037"></a><a class="code" href="struct_servo_control_s.html#8a619314101ba6b57c50c576a6f9fbac">00037</a>   <span class="keywordtype">int</span> <a class="code" href="struct_servo_control_s.html#8a619314101ba6b57c50c576a6f9fbac">pin</a>;
+<a name="l00033"></a>00033   <span class="keywordtype">int</span> <a class="code" href="struct_servo_control_s.html#e6982f7aeeabfac6598abde7d161b3a3">users</a>;
+<a name="l00034"></a>00034   <span class="keywordtype">int</span> <a class="code" href="struct_servo_control_s.html#f0bf813c57956233267ee6c272a2b5f4">speed</a>;
+<a name="l00035"></a>00035   <span class="keywordtype">int</span> <a class="code" href="struct_servo_control_s.html#a227a5dfba4d88fac595d9f66231448a">positionRequested</a>;
+<a name="l00036"></a>00036   <span class="keywordtype">int</span> <a class="code" href="struct_servo_control_s.html#7d35da6266de13bf1732ae48721a8fc7">position</a>;
+<a name="l00037"></a>00037   <span class="keywordtype">int</span> <a class="code" href="struct_servo_control_s.html#8a619314101ba6b57c50c576a6f9fbac">pin</a>;
 <a name="l00038"></a><a class="code" href="struct_servo_control_s.html#8d836979da214d35b69c552d4da1e436">00038</a>   AT91S_PIO* <a class="code" href="struct_servo_control_s.html#8d836979da214d35b69c552d4da1e436">pIoBase</a>;
 <a name="l00039"></a>00039 } <a class="code" href="struct_servo_control_s.html">ServoControl</a>;
 <a name="l00040"></a>00040 
-<a name="l00041"></a><a class="code" href="struct_servo_s.html">00041</a> <span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="struct_servo_s.html">ServoS</a>
+<a name="l00041"></a>00041 <span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="struct_servo_s.html">ServoS</a>
 <a name="l00042"></a>00042 {
-<a name="l00043"></a><a class="code" href="struct_servo_s.html#75d877039ac932ac1e887b09bdccfd5a">00043</a>   <span class="keywordtype">int</span> <a class="code" href="struct_servo_s.html#75d877039ac932ac1e887b09bdccfd5a">users</a>;
-<a name="l00044"></a><a class="code" href="struct_servo_s.html#9fa1f1ca009b308e81b12adbb3888627">00044</a>   <span class="keywordtype">int</span> <a class="code" href="struct_servo_s.html#9fa1f1ca009b308e81b12adbb3888627">gap</a>;
-<a name="l00045"></a><a class="code" href="struct_servo_s.html#206522510b07c42d4ed803b9401e0783">00045</a>   <span class="keywordtype">int</span> <a class="code" href="struct_servo_s.html#206522510b07c42d4ed803b9401e0783">index</a>;
-<a name="l00046"></a><a class="code" href="struct_servo_s.html#2f9e829fb25da62772a0d250dcc3386a">00046</a>   <span class="keywordtype">int</span> <a class="code" href="struct_servo_s.html#2f9e829fb25da62772a0d250dcc3386a">state</a>;
-<a name="l00047"></a><a class="code" href="struct_servo_s.html#6c13cec45b0e7da61bfba0a8da032286">00047</a>   <a class="code" href="struct_servo_control_s.html">ServoControl</a> <a class="code" href="struct_servo_s.html#6c13cec45b0e7da61bfba0a8da032286">control</a>[ SERVO_COUNT ];
+<a name="l00043"></a>00043   <span class="keywordtype">int</span> <a class="code" href="struct_servo_s.html#75d877039ac932ac1e887b09bdccfd5a">users</a>;
+<a name="l00044"></a>00044   <span class="keywordtype">int</span> <a class="code" href="struct_servo_s.html#9fa1f1ca009b308e81b12adbb3888627">gap</a>;
+<a name="l00045"></a>00045   <span class="keywordtype">int</span> <a class="code" href="struct_servo_s.html#206522510b07c42d4ed803b9401e0783">index</a>;
+<a name="l00046"></a>00046   <span class="keywordtype">int</span> <a class="code" href="struct_servo_s.html#2f9e829fb25da62772a0d250dcc3386a">state</a>;
+<a name="l00047"></a>00047   <a class="code" href="struct_servo_control_s.html">ServoControl</a> <a class="code" href="struct_servo_s.html#893579208c6ea1dafe6592b1c0461ada">control</a>[ <a class="code" href="servo_8c.html#0230bc3c5208cc29f365e182539edd17">SERVO_COUNT</a> ];
 <a name="l00048"></a>00048 } <a class="code" href="struct_servo_s.html">Servo_</a>;
 <a name="l00049"></a>00049 
 <a name="l00050"></a>00050 <span class="preprocessor">#endif</span>
@@ -93,6 +93,6 @@
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 22 Sep 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>
