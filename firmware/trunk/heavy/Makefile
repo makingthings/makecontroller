@@ -35,6 +35,7 @@ THUMB_SRC= \
   ../controller/makingthings/system.c \
   ../controller/makingthings/poly.c \
   ../appboard/makingthings/servo.c \
+  ../appboard/makingthings/stepper.c \
   ../appboard/makingthings/dipswitch.c \
   ../appboard/makingthings/motor.c \
   ../appboard/makingthings/appboard.c \
@@ -45,6 +46,7 @@ THUMB_SRC= \
   ../controller/makingthings/io.c \
   ../controller/makingthings/led.c \
   ../controller/makingthings/timer.c \
+  ../controller/makingthings/fasttimer.c \
   ../controller/makingthings/debugosc.c \
   ../controller/makingthings/can.c \
   ../controller/lwip/src/core/tcp_out.c \
@@ -81,8 +83,8 @@ ARM_SRC= \
   ../controller/makingthings/USBIsr.c \
   ../controller/startup/Cstartup_SAM7.c \
   ../controller/makingthings/analogin_isr.c \
+  ../controller/makingthings/fasttimer_isr.c \
   ../controller/makingthings/serial_isr.c \
-  ../controller/makingthings/controller_isr.c \
   ../controller/makingthings/timer_isr.c \
   ../controller/makingthings/can_isr.c
   
