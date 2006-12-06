@@ -549,7 +549,7 @@ int Osc_BlobReceiverHelper( int channel, char* message, int length,
         if ( count != 1 )
           return CONTROLLER_ERROR_BAD_DATA;
     
-        (*blobPropertySet)( propertyIndex, buffer, strlen( buffer ) );
+        (*blobPropertySet)( propertyIndex, buffer, strlen( (char*)buffer ) );
       }
       else
         return CONTROLLER_ERROR_BAD_DATA;
