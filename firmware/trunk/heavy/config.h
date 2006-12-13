@@ -18,8 +18,10 @@
 #include "controller.h"   // ...everybody uses the MAKE Controller Board
 #include "appboard.h"     // ...if you're using the MAKE Application Board
 
-#define FIRMWARE_VERSION_NUMBER 103
-#define FIRMWARE_BUILD_NUMBER     1
+#define FIRMWARE_VERSION_NUMBER 110
+#define FIRMWARE_BUILD_NUMBER     3
+
+#define CONTROLLER_HEAPSIZE 16000
 
 /********************************************************
   Uncomment the revision of the MAKE Controller Board you're using.
