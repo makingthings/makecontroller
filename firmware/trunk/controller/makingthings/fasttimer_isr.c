@@ -55,7 +55,7 @@ extern struct FastTimer_ FastTimer;
 // At the moment, the FastTimer ISR or callbacks, very importantly, can't call any OS stuff since
 // the IRQ might happen any old where
 
-void FastTimer_Isr( void ) __attribute__ ((interrupt("IRQ")));
+void FastTimer_Isr( void ) __attribute__ ((interrupt("FIQ")));
 
 // Made non-local for debugging
 FastTimerEntry* te;
