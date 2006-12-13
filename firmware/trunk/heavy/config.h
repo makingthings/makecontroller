@@ -21,7 +21,7 @@
 #define FIRMWARE_VERSION_NUMBER 110
 #define FIRMWARE_BUILD_NUMBER     3
 
-#define CONTROLLER_HEAPSIZE 16000
+#define CONTROLLER_HEAPSIZE 15000
 
 /********************************************************
   Uncomment the revision of the MAKE Controller Board you're using.
