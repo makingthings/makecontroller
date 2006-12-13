@@ -16,6 +16,8 @@
 
 #include "controller.h"   // ...everybody uses the MAKE Controller Board
 
+#define CONTROLLER_HEAPSIZE 16000
+
 /********************************************************
   Uncomment the revision of the MAKE Controller Board you're using.
 *********************************************************/
