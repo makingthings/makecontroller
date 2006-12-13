@@ -21,7 +21,7 @@ void Make( )
   Usb_SetActive( 1 );
 
   // Active the Poly Function Task
-  Poly_SetActive( true );
+  // Poly_SetActive( true );
 
   // Fire up the OSC system
   Osc_SetActive( true );
