@@ -132,7 +132,7 @@ void FastTimer_InitializeEntry( FastTimerEntry* fastTimerEntry, void (*timerCall
 void FastTimer_SetTime( FastTimerEntry* fastTimerEntry, int timeUs )
 {
   int time = timeUs * FAST_TIMER_CYCLES_PER_US;
-  // fastTimerEntry->timeCurrent = time;
+  fastTimerEntry->timeCurrent = time;
   fastTimerEntry->timeInitial = time;
 }
 
