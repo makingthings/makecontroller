@@ -206,8 +206,8 @@ int Osc_Start( void )
     if ( Osc.channel[ OSC_CHANNEL_UDP ].replyPort == 0 )
       Osc_SetReplyPort( OSC_CHANNEL_UDP, 10000 );
 
-    TaskCreate( Osc_UdpTask, "OSC-UDP", 300, (void*)OSC_CHANNEL_UDP, 4 );
-    TaskCreate( Osc_UsbTask, "OSC-USB", 300, (void*)OSC_CHANNEL_USB, 4 );
+    TaskCreate( Osc_UdpTask, "OSC-UDP", 300, (void*)OSC_CHANNEL_UDP, 3 );
+    TaskCreate( Osc_UsbTask, "OSC-USB", 300, (void*)OSC_CHANNEL_USB, 3 );
 
     Osc.users++;
     Osc.running = true;
