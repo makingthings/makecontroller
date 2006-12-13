@@ -65,8 +65,6 @@
           <file file_name="../controller/makingthings/analogin.c" Name="analogin.c" />
           <file file_name="../controller/makingthings/analogin.h" Name="analogin.h" />
           <file file_name="../controller/makingthings/analogin_internal.h" Name="analogin_internal.h" />
-          <file file_name="../controller/makingthings/poly.h" Name="poly.h" />
-          <file file_name="../controller/makingthings/poly.c" Name="poly.c" />
           <file file_name="../controller/makingthings/lwipopts.h" Name="lwipopts.h" />
           <file file_name="../controller/makingthings/serial.h" Name="serial.h" />
           <file file_name="../controller/makingthings/serial.c" Name="serial.c" />
