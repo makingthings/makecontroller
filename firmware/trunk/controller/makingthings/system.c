@@ -152,17 +152,17 @@ int System_SetSamba( int sure )
   return 1;
 }
 
+void kill( void )
+{
+  AT91C_BASE_RSTC->RSTC_RCR = ( AT91C_RSTC_EXTRST | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | (0xA5 << 24 ) );
+}
+
 /**
 	Reset the board.
   Will reset the board if the parameter sure is true/
   @param sure confirms the request if true.
 	@return CONTROLLER_OK if OK.
 */
-void kill( void )
-{
-    AT91C_BASE_RSTC->RSTC_RCR = ( AT91C_RSTC_EXTRST | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | (0xA5 << 24 ) );
-}
-
 int System_SetReset( int sure )
 {
   if ( sure )
