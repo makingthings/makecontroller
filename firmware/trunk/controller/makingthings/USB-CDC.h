@@ -38,7 +38,7 @@
 /* FreeRTOS */
 #include "FreeRTOS.h"
 
-#define USB_CDC_QUEUE_SIZE    200
+#define USB_CDC_QUEUE_SIZE    400
 
 /* Structure used to take a snapshot of the USB status from within the ISR. */
 typedef struct X_ISR_STATUS
