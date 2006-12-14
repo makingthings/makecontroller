@@ -164,7 +164,7 @@ int AnalogIn_GetValue( int index )
   @param values A pointer to an int array to be filled with the values.
   @return 0 on success, otherwise non-zero.
 */
-int AnalogIn_GetValueMulti( int mask, int* values[] )
+int AnalogIn_GetValueMulti( int mask, int values[] )
 {
   if ( mask < 0 || mask > 255 ) // check the value is a valid 8-bit mask
     return CONTROLLER_ERROR_ILLEGAL_INDEX;

@@ -28,7 +28,7 @@ int AnalogIn_SetActive( int index, int state );
 int AnalogIn_GetActive( int index );
 
 int AnalogIn_GetValue( int index );
-int AnalogIn_GetValueMulti( int mask, int* values[] );
+int AnalogIn_GetValueMulti( int mask, int values[] );
 int AnalogIn_GetValueWait( int index );
 
 /* OSC Interface */
