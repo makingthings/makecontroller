@@ -160,26 +160,34 @@ __reset_handler:
   (These are declared weak symbols so they can be redefined in user code)
  ******************************************************************************/
 undef_handler:
-  b undef_handler
+//  b undef_handler
+  b gen_handler
   
 swi_handler:
-  b swi_handler
+//  b swi_handler
+  b gen_handler
   
 pabort_handler:
-  b pabort_handler
+//  b pabort_handler
+  b gen_handler
   
 dabort_handler:
-  b dabort_handler
+//  b dabort_handler
+  b gen_handler
   
 irq_handler:
-  b irq_handler
+//  b irq_handler
+  b gen_handler
   
 fiq_handler:
-  b fiq_handler
+//  b fiq_handler
+  b gen_handler
 
   .weak undef_handler, swi_handler, pabort_handler, dabort_handler, irq_handler, fiq_handler
 
+  .extern kill
+
 gen_handler:
 //  b reset_handler
-    b gen_handler
+  b kill
 
