@@ -165,7 +165,7 @@
     <configuration c_user_include_directories=".;../controller/makingthings" gcc_optimization_level="Level 1" build_debug_information="Yes" Name="THUMB Flash Release" />
     <configuration c_user_include_directories=".;../controller/makingthings;../appboard/makingthings;../controller/freertos/include;../controller/lwip/src/include;../controller/lwip/contrib/port/FreeRTOS/AT91SAM7X;../controller/freertos/portable/GCC/ARM7_AT91SAM7S;../controller/lwip/src/include/ipv4" Name="THUMB Flash Debug" />
   </project>
-  <configuration build_quietly="Yes" inherited_configurations="THUMB;Flash;Debug" Name="THUMB Flash Debug" />
+  <configuration build_intermediate_directory="intermediate" build_quietly="Yes" inherited_configurations="THUMB;Flash;Debug" build_output_directory="output" Name="THUMB Flash Debug" />
   <configuration arm_library_instruction_set="THUMB" c_preprocessor_definitions="__THUMB" arm_instruction_set="THUMB" hidden="Yes" Name="THUMB" />
   <configuration c_preprocessor_definitions="__FLASH_BUILD" hidden="Yes" Name="Flash" />
   <configuration c_preprocessor_definitions="DEBUG" link_include_startup_code="No" gcc_optimization_level="None" build_debug_information="Yes" Name="Debug" />
