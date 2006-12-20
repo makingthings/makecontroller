@@ -16,9 +16,9 @@
     <ProgramSection alignment="4" load="No" inputsections="*(.bss .bss.* .gnu.linkonce.b.*) *(COMMON)" name=".bss" />
     <ProgramSection alignment="4" size="__HEAPSIZE__" load="No" name=".heap" />
     <ProgramSection alignment="4" size="__STACKSIZE__" load="No" name=".stack" />
-    <ProgramSection alignment="4" size="0x190" load="No" name=".stack_irq" />
-    <ProgramSection alignment="4" size="0x190" load="No" name=".stack_fiq" />
-    <ProgramSection alignment="4" size="0x190" load="No" name=".stack_svc" />
+    <ProgramSection alignment="4" size="0x200" load="No" name=".stack_irq" />
+    <ProgramSection alignment="4" size="0x200" load="No" name=".stack_fiq" />
+    <ProgramSection alignment="4" size="0x200" load="No" name=".stack_svc" />
     <ProgramSection alignment="4" size="0x0" load="No" name=".stack_abt" />
     <ProgramSection alignment="4" size="0x0" load="No" name=".stack_und" />
   </MemorySegment>
