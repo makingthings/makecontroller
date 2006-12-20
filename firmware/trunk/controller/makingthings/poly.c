@@ -170,7 +170,7 @@ int Poly_SetActive( int value )
       // Poly.readConstants = false;
       Poly.mode0 = -1;
       Poly.mode1 = -1;
-      TaskCreate( PolyTask, "Poly", 150, NULL, 2 );
+      TaskCreate( PolyTask, "Poly", 200, NULL, 2 );
     }
   }
   else
@@ -239,7 +239,10 @@ void PolyTask( void* p )
     Poly_Run( Poly.mode0, data0, POLY_SLEEP, readConstants );
     Poly_Run( Poly.mode1, data1, POLY_SLEEP, readConstants );
 
-    Sleep( POLY_SLEEP );
+    if ( Poly.mode0 == 0 && Poly.mode1 == 0 )
+      Sleep( POLY_SLEEP * 20 );
+    else
+      Sleep( POLY_SLEEP );
   }
 
   TaskDelete( 0 );
