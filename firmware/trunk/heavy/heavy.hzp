@@ -77,6 +77,8 @@
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
           </file>
           <file file_name="../controller/makingthings/fasttimer_internal.h" Name="fasttimer_internal.h" />
+          <file file_name="../controller/makingthings/poly.h" Name="poly.h" />
+          <file file_name="../controller/makingthings/poly.c" Name="poly.c" />
         </folder>
         <folder Name="FreeRTOS" >
           <file file_name="../controller/freertos/tasks.c" Name="tasks.c" />
@@ -182,5 +184,4 @@
       </file>
     </folder>
   </project>
-  <import file_name="../solo/solo.hzp" />
 </solution>

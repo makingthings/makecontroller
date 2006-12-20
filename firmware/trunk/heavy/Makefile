@@ -33,7 +33,6 @@ THUMB_SRC= \
   ../controller/makingthings/usb.c \
   ../controller/makingthings/network.c \
   ../controller/makingthings/system.c \
-  ../controller/makingthings/poly.c \
   ../appboard/makingthings/servo.c \
   ../appboard/makingthings/stepper.c \
   ../appboard/makingthings/dipswitch.c \
@@ -108,7 +107,7 @@ OBJCOPY=arm-elf-objcopy
 ARCH=arm-elf-ar
 CRT0=../controller/startup/boot.s
 DEBUG=
-OPTIM=-O1
+OPTIM=-O0
 LDSCRIPT=../controller/startup/atmel-rom.ld
 
 #

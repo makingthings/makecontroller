@@ -189,7 +189,7 @@ SECTIONS
   {
     __stack_irq_start__ = .;
     *(.stack_irq)
-    . = MAX(__stack_irq_start__ + 0x190 , .);
+    . = MAX(__stack_irq_start__ + 0x200 , .);
   }
   __stack_irq_end__ = __stack_irq_start__ + SIZEOF(.stack_irq);
 
@@ -200,7 +200,7 @@ SECTIONS
   {
     __stack_fiq_start__ = .;
     *(.stack_fiq)
-    . = MAX(__stack_fiq_start__ + 0x190 , .);
+    . = MAX(__stack_fiq_start__ + 0x200 , .);
   }
   __stack_fiq_end__ = __stack_fiq_start__ + SIZEOF(.stack_fiq);
 
@@ -211,7 +211,7 @@ SECTIONS
   {
     __stack_svc_start__ = .;
     *(.stack_svc)
-    . = MAX(__stack_svc_start__ + 0x190 , .);
+    . = MAX(__stack_svc_start__ + 0x200 , .);
   }
   __stack_svc_end__ = __stack_svc_start__ + SIZEOF(.stack_svc);
 
