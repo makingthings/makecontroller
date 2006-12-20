@@ -280,10 +280,10 @@
 <a name="l00244"></a>00244 }
 <a name="l00245"></a>00245 <span class="comment">/*------------------------------------------------------------*/</span>
 <a name="l00246"></a>00246 
-<a name="l00247"></a>00247 <span class="keywordtype">void</span> vUSBSendByte( portCHAR cByte )
+<a name="l00247"></a>00247 <span class="keywordtype">void</span> vUSBSendByte( portCHAR cByte, <span class="keywordtype">int</span> timeout )
 <a name="l00248"></a>00248 {
 <a name="l00249"></a>00249   <span class="comment">/* Queue the byte to be sent.  The USB task will send it. */</span>
-<a name="l00250"></a>00250   xQueueSend( xTxCDC, &amp;cByte, usbNO_BLOCK );
+<a name="l00250"></a>00250   xQueueSend( xTxCDC, &amp;cByte, timeout );
 <a name="l00251"></a>00251 }
 <a name="l00252"></a>00252 
 <a name="l00253"></a>00253 <span class="comment">/* MAKINGTHINGS: ADDITION */</span>
@@ -956,6 +956,6 @@
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 20 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

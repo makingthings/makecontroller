@@ -58,9 +58,9 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___usb.html#gbd6b6b486cb88079f34bf44ebfae9b32">Usb_Get</a> (int timeout)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Get a character from the USB port.  <a href="#gbd6b6b486cb88079f34bf44ebfae9b32"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___usb.html#g9d294648ff9b929eacc88f31bbe2b1c0">Usb_Put</a> (int c)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___usb.html#g962ee8576b3a4df62c9ba8957095df89">Usb_Put</a> (int c, int timeout)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Send a character out on the USB port.  <a href="#g9d294648ff9b929eacc88f31bbe2b1c0"></a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Send a character out on the USB port.  <a href="#g962ee8576b3a4df62c9ba8957095df89"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="g83237266412f310be1779ff07110acdc"></a><!-- doxytag: member="Usb::Usb_SlipSend" ref="g83237266412f310be1779ff07110acdc" args="(char *buffer, int length)" -->
 int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___usb.html#g83237266412f310be1779ff07110acdc">Usb_SlipSend</a> (char *buffer, int length)</td></tr>
 
@@ -151,7 +151,7 @@ Definition at line <a class="el" href="usb_8c-source.html#l00089">89</a> of file
 Referenced by <a class="el" href="debugosc_8c-source.html#l00160">Debug()</a>, and <a class="el" href="usb_8c-source.html#l00270">UsbOsc_PropertyGet()</a>.    </td>
   </tr>
 </table>
-<a class="anchor" name="g9d294648ff9b929eacc88f31bbe2b1c0"></a><!-- doxytag: member="usb.c::Usb_Put" ref="g9d294648ff9b929eacc88f31bbe2b1c0" args="(int c)" --><p>
+<a class="anchor" name="g962ee8576b3a4df62c9ba8957095df89"></a><!-- doxytag: member="usb.c::Usb_Put" ref="g962ee8576b3a4df62c9ba8957095df89" args="(int c, int timeout)" --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -160,9 +160,18 @@ Referenced by <a class="el" href="debugosc_8c-source.html#l00160">Debug()</a>, a
           <td class="md" nowrap valign="top">int Usb_Put           </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">int&nbsp;</td>
-          <td class="mdname1" valign="top" nowrap> <em>c</em>          </td>
-          <td class="md" valign="top">&nbsp;)&nbsp;</td>
-          <td class="md" nowrap></td>
+          <td class="mdname" nowrap> <em>c</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td class="md"></td>
+          <td class="md" nowrap>int&nbsp;</td>
+          <td class="mdname" nowrap> <em>timeout</em></td>
+        </tr>
+        <tr>
+          <td class="md"></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
         </tr>
       </table>
     </td>
@@ -187,7 +196,7 @@ If the USB subsystem is not already initialized, a call to this function will do
 <p>
 Definition at line <a class="el" href="usb_8c-source.html#l00117">117</a> of file <a class="el" href="usb_8c-source.html">usb.c</a>.
 <p>
-References <a class="el" href="usb_8c-source.html#l00059">Usb_SetActive()</a>.
+References <a class="el" href="usb_8c-source.html#l00035">TICKRATE</a>, and <a class="el" href="usb_8c-source.html#l00059">Usb_SetActive()</a>.
 <p>
 Referenced by <a class="el" href="usb_8c-source.html#l00135">Usb_SlipSend()</a>.    </td>
   </tr>
@@ -243,6 +252,6 @@ Referenced by <a class="el" href="usb_8c-source.html#l00103">Usb_Get()</a>, <a c
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 20 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

@@ -82,37 +82,38 @@
 <a name="l00046"></a>00046 <span class="comment">/* The SWI is used by the scheduler. */</span>
 <a name="l00047"></a>00047 <span class="preprocessor">#define vPortYieldProcessor swi_handler</span>
 <a name="l00048"></a>00048 <span class="preprocessor"></span>
-<a name="l00049"></a>00049 
-<a name="l00050"></a>00050 <span class="preprocessor">#define configUSE_PREEMPTION    1</span>
-<a name="l00051"></a>00051 <span class="preprocessor"></span><span class="preprocessor">#define configUSE_IDLE_HOOK     1</span>
-<a name="l00052"></a>00052 <span class="preprocessor"></span><span class="preprocessor">#define configUSE_TICK_HOOK     0</span>
-<a name="l00053"></a>00053 <span class="preprocessor"></span><span class="preprocessor">#define configCPU_CLOCK_HZ      ( ( unsigned portLONG ) 47923200 )</span>
-<a name="l00054"></a>00054 <span class="preprocessor"></span><span class="preprocessor">#define configTICK_RATE_HZ      ( ( portTickType ) 1000 )</span>
-<a name="l00055"></a>00055 <span class="preprocessor"></span><span class="preprocessor">#define configMAX_PRIORITIES    ( ( unsigned portBASE_TYPE ) 6 )</span>
-<a name="l00056"></a>00056 <span class="preprocessor"></span><span class="preprocessor">#define configMINIMAL_STACK_SIZE  ( ( unsigned portSHORT ) 110 )</span>
-<a name="l00057"></a>00057 <span class="preprocessor"></span><span class="preprocessor">#define configTOTAL_HEAP_SIZE   ( ( size_t ) 15000 )</span>
-<a name="l00058"></a>00058 <span class="preprocessor"></span><span class="preprocessor">#define configMAX_TASK_NAME_LEN   ( 16 )</span>
-<a name="l00059"></a>00059 <span class="preprocessor"></span><span class="preprocessor">#define configUSE_TRACE_FACILITY  1</span>
-<a name="l00060"></a>00060 <span class="preprocessor"></span><span class="preprocessor">#define configUSE_16_BIT_TICKS    0</span>
-<a name="l00061"></a>00061 <span class="preprocessor"></span><span class="preprocessor">#define configIDLE_SHOULD_YIELD   1</span>
-<a name="l00062"></a>00062 <span class="preprocessor"></span>
-<a name="l00063"></a>00063 <span class="comment">/* Co-routine definitions. */</span>
-<a name="l00064"></a>00064 <span class="preprocessor">#define configUSE_CO_ROUTINES     0</span>
-<a name="l00065"></a>00065 <span class="preprocessor"></span><span class="preprocessor">#define configMAX_CO_ROUTINE_PRIORITIES ( 2 )</span>
-<a name="l00066"></a>00066 <span class="preprocessor"></span>
-<a name="l00067"></a>00067 <span class="comment">/* Set the following definitions to 1 to include the API function, or zero</span>
-<a name="l00068"></a>00068 <span class="comment">to exclude the API function. */</span>
-<a name="l00069"></a>00069 
-<a name="l00070"></a>00070 <span class="preprocessor">#define INCLUDE_vTaskPrioritySet      1</span>
-<a name="l00071"></a>00071 <span class="preprocessor"></span><span class="preprocessor">#define INCLUDE_uxTaskPriorityGet     1</span>
-<a name="l00072"></a>00072 <span class="preprocessor"></span><span class="preprocessor">#define INCLUDE_vTaskDelete         1</span>
-<a name="l00073"></a>00073 <span class="preprocessor"></span><span class="preprocessor">#define INCLUDE_vTaskCleanUpResources   0</span>
-<a name="l00074"></a>00074 <span class="preprocessor"></span><span class="preprocessor">#define INCLUDE_vTaskSuspend        1</span>
-<a name="l00075"></a>00075 <span class="preprocessor"></span><span class="preprocessor">#define INCLUDE_vTaskDelayUntil       1</span>
-<a name="l00076"></a>00076 <span class="preprocessor"></span><span class="preprocessor">#define INCLUDE_vTaskDelay          1</span>
-<a name="l00077"></a>00077 <span class="preprocessor"></span><span class="preprocessor">#define INCLUDE_xTaskGetCurrentTaskHandle 1</span>
-<a name="l00078"></a>00078 <span class="preprocessor"></span>
-<a name="l00079"></a>00079 <span class="preprocessor">#endif </span><span class="comment">/* FREERTOS_CONFIG_H */</span>
+<a name="l00049"></a>00049 <span class="preprocessor">#include "config.h"</span>
+<a name="l00050"></a>00050 
+<a name="l00051"></a>00051 <span class="preprocessor">#define configUSE_PREEMPTION    1</span>
+<a name="l00052"></a>00052 <span class="preprocessor"></span><span class="preprocessor">#define configUSE_IDLE_HOOK     1</span>
+<a name="l00053"></a>00053 <span class="preprocessor"></span><span class="preprocessor">#define configUSE_TICK_HOOK     0</span>
+<a name="l00054"></a>00054 <span class="preprocessor"></span><span class="preprocessor">#define configCPU_CLOCK_HZ      ( ( unsigned portLONG ) 47923200 )</span>
+<a name="l00055"></a>00055 <span class="preprocessor"></span><span class="preprocessor">#define configTICK_RATE_HZ      ( ( portTickType ) 1000 )</span>
+<a name="l00056"></a>00056 <span class="preprocessor"></span><span class="preprocessor">#define configMAX_PRIORITIES    ( ( unsigned portBASE_TYPE ) 6 )</span>
+<a name="l00057"></a>00057 <span class="preprocessor"></span><span class="preprocessor">#define configMINIMAL_STACK_SIZE  ( ( unsigned portSHORT ) 110 )</span>
+<a name="l00058"></a>00058 <span class="preprocessor"></span><span class="preprocessor">#define configTOTAL_HEAP_SIZE   ( ( size_t ) CONTROLLER_HEAPSIZE)</span>
+<a name="l00059"></a>00059 <span class="preprocessor"></span><span class="preprocessor">#define configMAX_TASK_NAME_LEN   ( 16 )</span>
+<a name="l00060"></a>00060 <span class="preprocessor"></span><span class="preprocessor">#define configUSE_TRACE_FACILITY  1</span>
+<a name="l00061"></a>00061 <span class="preprocessor"></span><span class="preprocessor">#define configUSE_16_BIT_TICKS    0</span>
+<a name="l00062"></a>00062 <span class="preprocessor"></span><span class="preprocessor">#define configIDLE_SHOULD_YIELD   1</span>
+<a name="l00063"></a>00063 <span class="preprocessor"></span>
+<a name="l00064"></a>00064 <span class="comment">/* Co-routine definitions. */</span>
+<a name="l00065"></a>00065 <span class="preprocessor">#define configUSE_CO_ROUTINES     0</span>
+<a name="l00066"></a>00066 <span class="preprocessor"></span><span class="preprocessor">#define configMAX_CO_ROUTINE_PRIORITIES ( 2 )</span>
+<a name="l00067"></a>00067 <span class="preprocessor"></span>
+<a name="l00068"></a>00068 <span class="comment">/* Set the following definitions to 1 to include the API function, or zero</span>
+<a name="l00069"></a>00069 <span class="comment">to exclude the API function. */</span>
+<a name="l00070"></a>00070 
+<a name="l00071"></a>00071 <span class="preprocessor">#define INCLUDE_vTaskPrioritySet      1</span>
+<a name="l00072"></a>00072 <span class="preprocessor"></span><span class="preprocessor">#define INCLUDE_uxTaskPriorityGet     1</span>
+<a name="l00073"></a>00073 <span class="preprocessor"></span><span class="preprocessor">#define INCLUDE_vTaskDelete         1</span>
+<a name="l00074"></a>00074 <span class="preprocessor"></span><span class="preprocessor">#define INCLUDE_vTaskCleanUpResources   0</span>
+<a name="l00075"></a>00075 <span class="preprocessor"></span><span class="preprocessor">#define INCLUDE_vTaskSuspend        1</span>
+<a name="l00076"></a>00076 <span class="preprocessor"></span><span class="preprocessor">#define INCLUDE_vTaskDelayUntil       1</span>
+<a name="l00077"></a>00077 <span class="preprocessor"></span><span class="preprocessor">#define INCLUDE_vTaskDelay          1</span>
+<a name="l00078"></a>00078 <span class="preprocessor"></span><span class="preprocessor">#define INCLUDE_xTaskGetCurrentTaskHandle 1</span>
+<a name="l00079"></a>00079 <span class="preprocessor"></span>
+<a name="l00080"></a>00080 <span class="preprocessor">#endif </span><span class="comment">/* FREERTOS_CONFIG_H */</span>
 </pre></div><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -122,6 +123,6 @@
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 20 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

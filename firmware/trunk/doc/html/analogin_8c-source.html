@@ -200,7 +200,7 @@
 <a name="l00164"></a>00164 <span class="comment">  @param values A pointer to an int array to be filled with the values.</span>
 <a name="l00165"></a>00165 <span class="comment">  @return 0 on success, otherwise non-zero.</span>
 <a name="l00166"></a>00166 <span class="comment">*/</span>
-<a name="l00167"></a><a class="code" href="group___analog_in.html#g49aee6e9be4e3e6982de3ed7c7b11dc1">00167</a> <span class="keywordtype">int</span> <a class="code" href="group___analog_in.html#g49aee6e9be4e3e6982de3ed7c7b11dc1">AnalogIn_GetValueMulti</a>( <span class="keywordtype">int</span> mask, <span class="keywordtype">int</span>* values[] )
+<a name="l00167"></a><a class="code" href="group___analog_in.html#geee076abd9c478c3817552fdd586852d">00167</a> <span class="keywordtype">int</span> <a class="code" href="group___analog_in.html#geee076abd9c478c3817552fdd586852d">AnalogIn_GetValueMulti</a>( <span class="keywordtype">int</span> mask, <span class="keywordtype">int</span> values[] )
 <a name="l00168"></a>00168 {
 <a name="l00169"></a>00169   <span class="keywordflow">if</span> ( mask &lt; 0 || mask &gt; 255 ) <span class="comment">// check the value is a valid 8-bit mask</span>
 <a name="l00170"></a>00170     <span class="keywordflow">return</span> CONTROLLER_ERROR_ILLEGAL_INDEX;
@@ -528,6 +528,6 @@
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 20 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>
