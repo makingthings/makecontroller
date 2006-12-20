@@ -60,6 +60,9 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___system.html#g2c73f861f3856f1189f139d08835f8c1">System_SetSamba</a> (int sure)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns the board to SAMBA mode, erasing all of FLASH.  <a href="#g2c73f861f3856f1189f139d08835f8c1"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="g745120ab159e016e2e2d7a72308cf6c0"></a><!-- doxytag: member="System::kill" ref="g745120ab159e016e2e2d7a72308cf6c0" args="(void)" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___system.html#g745120ab159e016e2e2d7a72308cf6c0">kill</a> (void)</td></tr>
+
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___system.html#g70fc8e90a5c3dd0a36f7c2b4fe0a8bfc">System_SetReset</a> (int sure)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Reset the board.  <a href="#g70fc8e90a5c3dd0a36f7c2b4fe0a8bfc"></a><br></td></tr>
@@ -110,7 +113,7 @@ Definition at line <a class="el" href="system_8c-source.html#l00067">67</a> of f
 <p>
 References <a class="el" href="system_8c-source.html#l00033">System_users</a>.
 <p>
-Referenced by <a class="el" href="system_8c-source.html#l00296">SystemOsc_PropertyGet()</a>.    </td>
+Referenced by <a class="el" href="system_8c-source.html#l00301">SystemOsc_PropertyGet()</a>.    </td>
   </tr>
 </table>
 <a class="anchor" name="g02070c1c0b4ead5a65105244b5bbdc9e"></a><!-- doxytag: member="system.c::System_GetBuildNumber" ref="g02070c1c0b4ead5a65105244b5bbdc9e" args="(void)" --><p>
@@ -145,7 +148,7 @@ Returns the build number of this codebase.
 <p>
 Definition at line <a class="el" href="system_8c-source.html#l00109">109</a> of file <a class="el" href="system_8c-source.html">system.c</a>.
 <p>
-Referenced by <a class="el" href="system_8c-source.html#l00296">SystemOsc_PropertyGet()</a>.    </td>
+Referenced by <a class="el" href="system_8c-source.html#l00301">SystemOsc_PropertyGet()</a>.    </td>
   </tr>
 </table>
 <a class="anchor" name="g70856cdb0248591e1ddc44d1ca96e475"></a><!-- doxytag: member="system.c::System_GetFreeMemory" ref="g70856cdb0248591e1ddc44d1ca96e475" args="(void)" --><p>
@@ -180,7 +183,7 @@ Returns the free size of the heap.
 <p>
 Definition at line <a class="el" href="system_8c-source.html#l00076">76</a> of file <a class="el" href="system_8c-source.html">system.c</a>.
 <p>
-Referenced by <a class="el" href="system_8c-source.html#l00296">SystemOsc_PropertyGet()</a>.    </td>
+Referenced by <a class="el" href="system_8c-source.html#l00301">SystemOsc_PropertyGet()</a>.    </td>
   </tr>
 </table>
 <a class="anchor" name="g42dad93cdc36c55a34f225982a0ff753"></a><!-- doxytag: member="system.c::System_GetSerialNumber" ref="g42dad93cdc36c55a34f225982a0ff753" args="(void)" --><p>
@@ -217,7 +220,7 @@ Definition at line <a class="el" href="system_8c-source.html#l00085">85</a> of f
 <p>
 References <a class="el" href="eeprom_8c-source.html#l00151">Eeprom_Read()</a>, and <a class="el" href="eeprom_8h-source.html#l00073">EEPROM_SYSTEM_SERIAL_NUMBER</a>.
 <p>
-Referenced by <a class="el" href="network_8c-source.html#l00685">Network_Init()</a>, and <a class="el" href="system_8c-source.html#l00296">SystemOsc_PropertyGet()</a>.    </td>
+Referenced by <a class="el" href="network_8c-source.html#l00685">Network_Init()</a>, and <a class="el" href="system_8c-source.html#l00301">SystemOsc_PropertyGet()</a>.    </td>
   </tr>
 </table>
 <a class="anchor" name="gf95b962142bcb3e90dc41392ed2cd10e"></a><!-- doxytag: member="system.c::System_GetVersionNumber" ref="gf95b962142bcb3e90dc41392ed2cd10e" args="(void)" --><p>
@@ -252,7 +255,7 @@ Returns the version number of this codebase.
 <p>
 Definition at line <a class="el" href="system_8c-source.html#l00118">118</a> of file <a class="el" href="system_8c-source.html">system.c</a>.
 <p>
-Referenced by <a class="el" href="system_8c-source.html#l00296">SystemOsc_PropertyGet()</a>.    </td>
+Referenced by <a class="el" href="system_8c-source.html#l00301">SystemOsc_PropertyGet()</a>.    </td>
   </tr>
 </table>
 <a class="anchor" name="g1d44df5bbae21dd02c41910ae7ffd706"></a><!-- doxytag: member="system.c::System_SetActive" ref="g1d44df5bbae21dd02c41910ae7ffd706" args="(int state)" --><p>
@@ -292,9 +295,9 @@ Sets whether the System subsystem is active.
 <p>
 Definition at line <a class="el" href="system_8c-source.html#l00055">55</a> of file <a class="el" href="system_8c-source.html">system.c</a>.
 <p>
-References <a class="el" href="system_8c-source.html#l00172">System_Start()</a>, and <a class="el" href="system_8c-source.html#l00181">System_Stop()</a>.
+References <a class="el" href="system_8c-source.html#l00177">System_Start()</a>, and <a class="el" href="system_8c-source.html#l00186">System_Stop()</a>.
 <p>
-Referenced by <a class="el" href="system_8c-source.html#l00275">SystemOsc_PropertySet()</a>.    </td>
+Referenced by <a class="el" href="system_8c-source.html#l00280">SystemOsc_PropertySet()</a>.    </td>
   </tr>
 </table>
 <a class="anchor" name="g70fc8e90a5c3dd0a36f7c2b4fe0a8bfc"></a><!-- doxytag: member="system.c::System_SetReset" ref="g70fc8e90a5c3dd0a36f7c2b4fe0a8bfc" args="(int sure)" --><p>
@@ -332,9 +335,11 @@ Will reset the board if the parameter sure is true/ <dl compact><dt><b>Parameter
 <dl compact><dt><b>Returns:</b></dt><dd>CONTROLLER_OK if OK. </dd></dl>
 
 <p>
-Definition at line <a class="el" href="system_8c-source.html#l00161">161</a> of file <a class="el" href="system_8c-source.html">system.c</a>.
+Definition at line <a class="el" href="system_8c-source.html#l00166">166</a> of file <a class="el" href="system_8c-source.html">system.c</a>.
 <p>
-Referenced by <a class="el" href="system_8c-source.html#l00275">SystemOsc_PropertySet()</a>.    </td>
+References <a class="el" href="system_8c-source.html#l00155">kill()</a>.
+<p>
+Referenced by <a class="el" href="system_8c-source.html#l00280">SystemOsc_PropertySet()</a>.    </td>
   </tr>
 </table>
 <a class="anchor" name="g2c73f861f3856f1189f139d08835f8c1"></a><!-- doxytag: member="system.c::System_SetSamba" ref="g2c73f861f3856f1189f139d08835f8c1" args="(int sure)" --><p>
@@ -369,7 +374,7 @@ Leaves the board in a non-deterministic state awaiting a power cycle or reset. <
 <p>
 Definition at line <a class="el" href="system_8c-source.html#l00129">129</a> of file <a class="el" href="system_8c-source.html">system.c</a>.
 <p>
-Referenced by <a class="el" href="system_8c-source.html#l00275">SystemOsc_PropertySet()</a>.    </td>
+Referenced by <a class="el" href="system_8c-source.html#l00280">SystemOsc_PropertySet()</a>.    </td>
   </tr>
 </table>
 <a class="anchor" name="g158e76fe4fcb24e3cce77d64c9e018ed"></a><!-- doxytag: member="system.c::System_SetSerialNumber" ref="g158e76fe4fcb24e3cce77d64c9e018ed" args="(int serial)" --><p>
@@ -406,7 +411,7 @@ Definition at line <a class="el" href="system_8c-source.html#l00100">100</a> of 
 <p>
 References <a class="el" href="eeprom_8h-source.html#l00073">EEPROM_SYSTEM_SERIAL_NUMBER</a>, and <a class="el" href="eeprom_8c-source.html#l00106">Eeprom_Write()</a>.
 <p>
-Referenced by <a class="el" href="system_8c-source.html#l00275">SystemOsc_PropertySet()</a>.    </td>
+Referenced by <a class="el" href="system_8c-source.html#l00280">SystemOsc_PropertySet()</a>.    </td>
   </tr>
 </table>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -418,6 +423,6 @@ Referenced by <a class="el" href="system_8c-source.html#l00275">SystemOsc_Proper
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 20 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

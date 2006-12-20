@@ -150,12 +150,12 @@
 <a name="l00114"></a>00114 <span class="comment">  while (1 second?) to return.</span>
 <a name="l00115"></a>00115 <span class="comment">  @param c the character to send out</span>
 <a name="l00116"></a>00116 <span class="comment">*/</span>
-<a name="l00117"></a><a class="code" href="group___usb.html#g9d294648ff9b929eacc88f31bbe2b1c0">00117</a> <span class="keywordtype">int</span> <a class="code" href="group___usb.html#g9d294648ff9b929eacc88f31bbe2b1c0">Usb_Put</a>( <span class="keywordtype">int</span> c )
+<a name="l00117"></a><a class="code" href="group___usb.html#g962ee8576b3a4df62c9ba8957095df89">00117</a> <span class="keywordtype">int</span> <a class="code" href="group___usb.html#g962ee8576b3a4df62c9ba8957095df89">Usb_Put</a>( <span class="keywordtype">int</span> c, <span class="keywordtype">int</span> timeout )
 <a name="l00118"></a>00118 {
 <a name="l00119"></a>00119   <span class="keywordflow">if</span> ( !Usb_Users )
 <a name="l00120"></a>00120     <a class="code" href="group___usb.html#g76d8f65ff3616d070254b5d1d045034c">Usb_SetActive</a>( 1 );
 <a name="l00121"></a>00121 
-<a name="l00122"></a>00122   vUSBSendByte( (<span class="keywordtype">char</span>)c );
+<a name="l00122"></a>00122   vUSBSendByte( (<span class="keywordtype">char</span>)c, timeout / <a class="code" href="usb_8c.html#7f21fe9fdb3605017d51d802b41910ac">TICKRATE</a> );
 <a name="l00123"></a>00123   <span class="keywordflow">return</span> CONTROLLER_OK;
 <a name="l00124"></a>00124 }
 <a name="l00125"></a>00125 
@@ -170,7 +170,7 @@
 <a name="l00134"></a>00134 <span class="comment"> */</span>
 <a name="l00135"></a><a class="code" href="group___usb.html#g83237266412f310be1779ff07110acdc">00135</a> <span class="keywordtype">int</span> <a class="code" href="group___usb.html#g83237266412f310be1779ff07110acdc">Usb_SlipSend</a>( <span class="keywordtype">char</span>* buffer, <span class="keywordtype">int</span> length )
 <a name="l00136"></a>00136 {
-<a name="l00137"></a>00137  <a class="code" href="group___usb.html#g9d294648ff9b929eacc88f31bbe2b1c0">Usb_Put</a>( <a class="code" href="group___usb.html#g29fd18bed01c4d836c7ebfe73a125c3f">END</a> ); <span class="comment">// Flush out any spurious data that may have accumulated</span>
+<a name="l00137"></a>00137  <a class="code" href="group___usb.html#g962ee8576b3a4df62c9ba8957095df89">Usb_Put</a>( <a class="code" href="group___usb.html#g29fd18bed01c4d836c7ebfe73a125c3f">END</a>, 1000 ); <span class="comment">// Flush out any spurious data that may have accumulated</span>
 <a name="l00138"></a>00138 
 <a name="l00139"></a>00139   <span class="keywordflow">while</span>( length-- )
 <a name="l00140"></a>00140   {
@@ -179,25 +179,25 @@
 <a name="l00143"></a>00143       <span class="comment">// if it's the same code as an END character, we send a special </span>
 <a name="l00144"></a>00144       <span class="comment">//two character code so as not to make the receiver think we sent an END</span>
 <a name="l00145"></a>00145       <span class="keywordflow">case</span> <a class="code" href="group___usb.html#g29fd18bed01c4d836c7ebfe73a125c3f">END</a>:
-<a name="l00146"></a>00146         <a class="code" href="group___usb.html#g9d294648ff9b929eacc88f31bbe2b1c0">Usb_Put</a>( <a class="code" href="group___usb.html#g4af1b6159e447ba72652bb7fcdfa726e">ESC</a> );
-<a name="l00147"></a>00147         <a class="code" href="group___usb.html#g9d294648ff9b929eacc88f31bbe2b1c0">Usb_Put</a>( <a class="code" href="group___usb.html#g6fc9b44a3b864f9b898250b8a3385c5a">ESC_END</a> );
+<a name="l00146"></a>00146         <a class="code" href="group___usb.html#g962ee8576b3a4df62c9ba8957095df89">Usb_Put</a>( <a class="code" href="group___usb.html#g4af1b6159e447ba72652bb7fcdfa726e">ESC</a>, 1000 );
+<a name="l00147"></a>00147         <a class="code" href="group___usb.html#g962ee8576b3a4df62c9ba8957095df89">Usb_Put</a>( <a class="code" href="group___usb.html#g6fc9b44a3b864f9b898250b8a3385c5a">ESC_END</a>, 1000 );
 <a name="l00148"></a>00148         <span class="keywordflow">break</span>;
 <a name="l00149"></a>00149         
 <a name="l00150"></a>00150         <span class="comment">// if it's the same code as an ESC character, we send a special </span>
 <a name="l00151"></a>00151         <span class="comment">//two character code so as not to make the receiver think we sent an ESC</span>
 <a name="l00152"></a>00152       <span class="keywordflow">case</span> ESC:
-<a name="l00153"></a>00153         <a class="code" href="group___usb.html#g9d294648ff9b929eacc88f31bbe2b1c0">Usb_Put</a>( ESC );
-<a name="l00154"></a>00154         <a class="code" href="group___usb.html#g9d294648ff9b929eacc88f31bbe2b1c0">Usb_Put</a>( <a class="code" href="group___usb.html#gbfd5264ac25d24d1fe5cd4720849cc4c">ESC_ESC</a> );
+<a name="l00153"></a>00153         <a class="code" href="group___usb.html#g962ee8576b3a4df62c9ba8957095df89">Usb_Put</a>( ESC, 1000 );
+<a name="l00154"></a>00154         <a class="code" href="group___usb.html#g962ee8576b3a4df62c9ba8957095df89">Usb_Put</a>( <a class="code" href="group___usb.html#gbfd5264ac25d24d1fe5cd4720849cc4c">ESC_ESC</a>, 1000 );
 <a name="l00155"></a>00155         <span class="keywordflow">break</span>;
 <a name="l00156"></a>00156         <span class="comment">//otherwise, just send the character</span>
 <a name="l00157"></a>00157       <span class="keywordflow">default</span>:
-<a name="l00158"></a>00158         <a class="code" href="group___usb.html#g9d294648ff9b929eacc88f31bbe2b1c0">Usb_Put</a>( *buffer );
+<a name="l00158"></a>00158         <a class="code" href="group___usb.html#g962ee8576b3a4df62c9ba8957095df89">Usb_Put</a>( *buffer, 1000 );
 <a name="l00159"></a>00159     }
 <a name="l00160"></a>00160     buffer++;
 <a name="l00161"></a>00161   }
 <a name="l00162"></a>00162   
 <a name="l00163"></a>00163   <span class="comment">// tell the receiver that we're done sending the packet</span>
-<a name="l00164"></a>00164   <a class="code" href="group___usb.html#g9d294648ff9b929eacc88f31bbe2b1c0">Usb_Put</a>( <a class="code" href="group___usb.html#g29fd18bed01c4d836c7ebfe73a125c3f">END</a> );
+<a name="l00164"></a>00164   <a class="code" href="group___usb.html#g962ee8576b3a4df62c9ba8957095df89">Usb_Put</a>( <a class="code" href="group___usb.html#g29fd18bed01c4d836c7ebfe73a125c3f">END</a>, 1000 );
 <a name="l00165"></a>00165 
 <a name="l00166"></a>00166   <span class="keywordflow">return</span> CONTROLLER_OK;
 <a name="l00167"></a>00167 }
@@ -326,6 +326,6 @@
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 20 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

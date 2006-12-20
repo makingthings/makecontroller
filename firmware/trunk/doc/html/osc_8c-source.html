@@ -155,7 +155,7 @@
 <a name="l00119"></a><a class="code" href="struct_osc__.html#3309907791dbfeb74b9a1f183478e7ab">00119</a>   <span class="keywordtype">int</span> <a class="code" href="struct_osc__.html#3309907791dbfeb74b9a1f183478e7ab">subsystemHighest</a>;
 <a name="l00120"></a><a class="code" href="struct_osc__.html#050038be04932cda0364daeef1a6e201">00120</a>   <span class="keywordtype">void</span>* <a class="code" href="struct_osc__.html#050038be04932cda0364daeef1a6e201">sendSocket</a>;
 <a name="l00121"></a><a class="code" href="struct_osc__.html#627c903198872c04eb00ccc628dcd3be">00121</a>   <a class="code" href="struct_osc_channel__.html">OscChannel</a> <a class="code" href="struct_osc__.html#627c903198872c04eb00ccc628dcd3be">channel</a>[ OSC_CHANNEL_COUNT ];
-<a name="l00122"></a><a class="code" href="struct_osc__.html#0266e1790b810c40bde15c4699855e16">00122</a>   <a class="code" href="struct_osc_subsystem__.html">OscSubsystem</a> <a class="code" href="struct_osc__.html#0266e1790b810c40bde15c4699855e16">subsystem</a>[ OSC_SUBSYSTEM_COUNT ];
+<a name="l00122"></a><a class="code" href="struct_osc__.html#c7d18d8a4f1fe38662068fea5f06ded7">00122</a>   <a class="code" href="struct_osc_subsystem__.html">OscSubsystem</a> <a class="code" href="struct_osc__.html#c7d18d8a4f1fe38662068fea5f06ded7">subsystem</a>[ OSC_SUBSYSTEM_COUNT ];
 <a name="l00123"></a>00123 } Osc;
 <a name="l00124"></a>00124 
 <a name="l00125"></a>00125 <span class="keyword">static</span> <span class="keywordtype">int</span> Osc_Start( <span class="keywordtype">void</span> );
@@ -242,8 +242,8 @@
 <a name="l00206"></a>00206     <span class="keywordflow">if</span> ( Osc.<a class="code" href="struct_osc__.html#627c903198872c04eb00ccc628dcd3be">channel</a>[ OSC_CHANNEL_UDP ].<a class="code" href="struct_osc_channel__.html#c5996ee13cc79b60cc1d8f63b95220c9">replyPort</a> == 0 )
 <a name="l00207"></a>00207       Osc_SetReplyPort( OSC_CHANNEL_UDP, 10000 );
 <a name="l00208"></a>00208 
-<a name="l00209"></a>00209     <a class="code" href="group___rtos.html#g784f87fb45eebb76d07478036ed228d3">TaskCreate</a>( Osc_UdpTask, <span class="stringliteral">"OSC-UDP"</span>, 300, (<span class="keywordtype">void</span>*)OSC_CHANNEL_UDP, 4 );
-<a name="l00210"></a>00210     <a class="code" href="group___rtos.html#g784f87fb45eebb76d07478036ed228d3">TaskCreate</a>( Osc_UsbTask, <span class="stringliteral">"OSC-USB"</span>, 300, (<span class="keywordtype">void</span>*)OSC_CHANNEL_USB, 4 );
+<a name="l00209"></a>00209     <a class="code" href="group___rtos.html#g784f87fb45eebb76d07478036ed228d3">TaskCreate</a>( Osc_UdpTask, <span class="stringliteral">"OSC-UDP"</span>, 500, (<span class="keywordtype">void</span>*)OSC_CHANNEL_UDP, 3 );
+<a name="l00210"></a>00210     <a class="code" href="group___rtos.html#g784f87fb45eebb76d07478036ed228d3">TaskCreate</a>( Osc_UsbTask, <span class="stringliteral">"OSC-USB"</span>, 300, (<span class="keywordtype">void</span>*)OSC_CHANNEL_USB, 3 );
 <a name="l00211"></a>00211 
 <a name="l00212"></a>00212     Osc.<a class="code" href="struct_osc__.html#0ae9f5731208e4b67be752c80b62b3fb">users</a>++;
 <a name="l00213"></a>00213     Osc.<a class="code" href="struct_osc__.html#74185d675f22e156709539e21416edba">running</a> = <span class="keyword">true</span>;
@@ -375,10 +375,10 @@
 <a name="l00339"></a>00339 
 <a name="l00340"></a>00340   <span class="keywordflow">if</span> ( subsystem &gt; Osc.<a class="code" href="struct_osc__.html#3309907791dbfeb74b9a1f183478e7ab">subsystemHighest</a> )
 <a name="l00341"></a>00341     Osc.<a class="code" href="struct_osc__.html#3309907791dbfeb74b9a1f183478e7ab">subsystemHighest</a> = subsystem;
-<a name="l00342"></a>00342   <a class="code" href="struct_osc_subsystem__.html">OscSubsystem</a>* sub = &amp;Osc.<a class="code" href="struct_osc__.html#0266e1790b810c40bde15c4699855e16">subsystem</a>[ subsystem ];
+<a name="l00342"></a>00342   <a class="code" href="struct_osc_subsystem__.html">OscSubsystem</a>* sub = &amp;Osc.<a class="code" href="struct_osc__.html#c7d18d8a4f1fe38662068fea5f06ded7">subsystem</a>[ subsystem ];
 <a name="l00343"></a>00343   sub-&gt;<a class="code" href="struct_osc_subsystem__.html#224adce937e3eb5c761e4b773221052b">name</a> = name;
-<a name="l00344"></a>00344   sub-&gt;<a class="code" href="struct_osc_subsystem__.html#4eaeb4100be3510a415d26779ed60c62">receiveMessage</a> = subsystem_ReceiveMessage;
-<a name="l00345"></a>00345   sub-&gt;<a class="code" href="struct_osc_subsystem__.html#f7b3817e47e427ac49508973e0af09a0">poll</a> = subsystem_Poll;
+<a name="l00344"></a>00344   sub-&gt;<a class="code" href="struct_osc_subsystem__.html#b4b67f77daa5ef491fd7dac9850606d5">receiveMessage</a> = subsystem_ReceiveMessage;
+<a name="l00345"></a>00345   sub-&gt;<a class="code" href="struct_osc_subsystem__.html#4f3d39a68c259fceccaf49f80a307498">poll</a> = subsystem_Poll;
 <a name="l00346"></a>00346   <span class="keywordflow">return</span> CONTROLLER_OK;
 <a name="l00347"></a>00347 }
 <a name="l00348"></a>00348 
@@ -442,7 +442,7 @@
 <a name="l00406"></a>00406     <span class="keywordtype">int</span> count = 0;
 <a name="l00407"></a>00407     <span class="keywordflow">for</span> ( i = 0; i &lt;= Osc.<a class="code" href="struct_osc__.html#3309907791dbfeb74b9a1f183478e7ab">subsystemHighest</a>; i++ )
 <a name="l00408"></a>00408     {
-<a name="l00409"></a>00409       <a class="code" href="struct_osc_subsystem__.html">OscSubsystem</a>* sub = &amp;Osc.<a class="code" href="struct_osc__.html#0266e1790b810c40bde15c4699855e16">subsystem</a>[ i ];
+<a name="l00409"></a>00409       <a class="code" href="struct_osc_subsystem__.html">OscSubsystem</a>* sub = &amp;Osc.<a class="code" href="struct_osc__.html#c7d18d8a4f1fe38662068fea5f06ded7">subsystem</a>[ i ];
 <a name="l00410"></a>00410       if ( Osc_PatternMatch( message + 1, sub-&gt;name ) )
 <a name="l00411"></a>00411       {
 <a name="l00412"></a>00412         count++;
@@ -1374,6 +1374,6 @@
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 20 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>

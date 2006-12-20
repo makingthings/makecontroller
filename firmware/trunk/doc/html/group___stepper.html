@@ -633,7 +633,7 @@ Set the position of the specified stepper motor.
 <p>
 Definition at line <a class="el" href="stepper_8c-source.html#l00140">140</a> of file <a class="el" href="stepper_8c-source.html">stepper.c</a>.
 <p>
-References <a class="el" href="stepper_8c-source.html#l00073">StepperS::control</a>, <a class="el" href="fasttimer__isr_8c-source.html#l00033">DisableFIQFromThumb()</a>, <a class="el" href="fasttimer__isr_8c-source.html#l00043">EnableFIQFromThumb()</a>, <a class="el" href="stepper_8c-source.html#l00064">StepperControlS::position</a>, <a class="el" href="stepper_8c-source.html#l00093">Stepper</a>, <a class="el" href="stepper_8c-source.html#l00053">STEPPER_COUNT</a>, and <a class="el" href="stepper_8c-source.html#l00057">StepperControlS::users</a>.
+References <a class="el" href="stepper_8c-source.html#l00073">StepperS::control</a>, <a class="el" href="controller__isr_8c-source.html#l00034">DisableFIQFromThumb()</a>, <a class="el" href="controller__isr_8c-source.html#l00044">EnableFIQFromThumb()</a>, <a class="el" href="stepper_8c-source.html#l00064">StepperControlS::position</a>, <a class="el" href="stepper_8c-source.html#l00093">Stepper</a>, <a class="el" href="stepper_8c-source.html#l00053">STEPPER_COUNT</a>, and <a class="el" href="stepper_8c-source.html#l00057">StepperControlS::users</a>.
 <p>
 Referenced by <a class="el" href="stepper_8c-source.html#l01049">StepperOsc_PropertySet()</a>.    </td>
   </tr>
@@ -685,7 +685,7 @@ If the motor is at rest at the previously requested position <dl compact><dt><b>
 <p>
 Definition at line <a class="el" href="stepper_8c-source.html#l00170">170</a> of file <a class="el" href="stepper_8c-source.html">stepper.c</a>.
 <p>
-References <a class="el" href="stepper_8c-source.html#l00073">StepperS::control</a>, <a class="el" href="fasttimer__isr_8c-source.html#l00033">DisableFIQFromThumb()</a>, <a class="el" href="fasttimer__isr_8c-source.html#l00043">EnableFIQFromThumb()</a>, <a class="el" href="stepper_8c-source.html#l00063">StepperControlS::positionRequested</a>, <a class="el" href="stepper_8c-source.html#l00093">Stepper</a>, <a class="el" href="stepper_8c-source.html#l00053">STEPPER_COUNT</a>, and <a class="el" href="stepper_8c-source.html#l00057">StepperControlS::users</a>.
+References <a class="el" href="stepper_8c-source.html#l00073">StepperS::control</a>, <a class="el" href="controller__isr_8c-source.html#l00034">DisableFIQFromThumb()</a>, <a class="el" href="controller__isr_8c-source.html#l00044">EnableFIQFromThumb()</a>, <a class="el" href="stepper_8c-source.html#l00063">StepperControlS::positionRequested</a>, <a class="el" href="stepper_8c-source.html#l00093">Stepper</a>, <a class="el" href="stepper_8c-source.html#l00053">STEPPER_COUNT</a>, and <a class="el" href="stepper_8c-source.html#l00057">StepperControlS::users</a>.
 <p>
 Referenced by <a class="el" href="stepper_8c-source.html#l01049">StepperOsc_PropertySet()</a>.    </td>
   </tr>
@@ -737,7 +737,7 @@ This is a number of ms per step, rather than the more common steps per second. A
 <p>
 Definition at line <a class="el" href="stepper_8c-source.html#l00202">202</a> of file <a class="el" href="stepper_8c-source.html">stepper.c</a>.
 <p>
-References <a class="el" href="stepper_8c-source.html#l00073">StepperS::control</a>, <a class="el" href="fasttimer__isr_8c-source.html#l00033">DisableFIQFromThumb()</a>, <a class="el" href="fasttimer__isr_8c-source.html#l00043">EnableFIQFromThumb()</a>, <a class="el" href="fasttimer_8c-source.html#l00132">FastTimer_SetTime()</a>, <a class="el" href="stepper_8c-source.html#l00067">StepperControlS::fastTimerEntry</a>, <a class="el" href="stepper_8c-source.html#l00060">StepperControlS::speed</a>, <a class="el" href="stepper_8c-source.html#l00093">Stepper</a>, <a class="el" href="stepper_8c-source.html#l00053">STEPPER_COUNT</a>, and <a class="el" href="stepper_8c-source.html#l00057">StepperControlS::users</a>.
+References <a class="el" href="stepper_8c-source.html#l00073">StepperS::control</a>, <a class="el" href="controller__isr_8c-source.html#l00034">DisableFIQFromThumb()</a>, <a class="el" href="controller__isr_8c-source.html#l00044">EnableFIQFromThumb()</a>, <a class="el" href="fasttimer_8c-source.html#l00132">FastTimer_SetTime()</a>, <a class="el" href="stepper_8c-source.html#l00067">StepperControlS::fastTimerEntry</a>, <a class="el" href="stepper_8c-source.html#l00060">StepperControlS::speed</a>, <a class="el" href="stepper_8c-source.html#l00093">Stepper</a>, <a class="el" href="stepper_8c-source.html#l00053">STEPPER_COUNT</a>, and <a class="el" href="stepper_8c-source.html#l00057">StepperControlS::users</a>.
 <p>
 Referenced by <a class="el" href="stepper_8c-source.html#l01049">StepperOsc_PropertySet()</a>.    </td>
   </tr>
@@ -751,6 +751,6 @@ Referenced by <a class="el" href="stepper_8c-source.html#l01049">StepperOsc_Prop
 
 <body>
 <hr size="1">
-<div align="left"><font size="2">Last revision: 6 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
+<div align="left"><font size="2">Last revision: 20 Dec 2006. MAKE Controller Kit, by </font><a href="http://www.makingthings.com"><img src="../resources/logo_brown_small.png" alt="MakingThings" width="100" height="40" border="0" align="middle" longdesc="MakingThings" /></a></div>
 </body>
 </html>
