@@ -5,25 +5,11 @@
  </Autos>
  <Bookmarks/>
  <Breakpoints>
-  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="D_Abort" filename="" />
-  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="FIQ" filename="" />
-  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="IRQ" filename="" />
-  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="P_Abort" filename="" />
-  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="Reset" filename="" />
-  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="SWI" filename="" />
-  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="Undef" filename="" />
-  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="BusFault" filename="" />
-  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="ExceptionEntryReturnFault" filename="" />
-  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="HardFault" filename="" />
-  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="MemManage" filename="" />
-  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="Reset" filename="" />
-  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="UsageFault_CheckingError" filename="" />
-  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="UsageFault_Coprocessor" filename="" />
-  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="UsageFault_StateError" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="231" length="0" triggertype="0" useHWbreakpoint="false" group="Breakpoints" breakdatatype="0" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="" filename="C:\mtcode\make\firmware\controller\makingthings\osc.c" />
  </Breakpoints>
  <ExecutionCountWindow/>
  <Memory1>
-  <MemoryWindow autoEvaluate="0" addressText="0xFFFA0090" numColumns="8" sizeText="0x1000" dataSize="4" radix="16" addressSpace="" />
+  <MemoryWindow autoEvaluate="0" addressText="0x00203600" numColumns="8" sizeText="0x1000" dataSize="1" radix="16" addressSpace="" />
  </Memory1>
  <Memory2>
   <MemoryWindow autoEvaluate="0" addressText="" numColumns="8" sizeText="" dataSize="1" radix="16" addressSpace="" />
@@ -48,7 +34,7 @@
   <ProjectSessionItem path="heavy;heavy;Source Files;Heavy" name="unnamed" />
  </Project>
  <Register1>
-  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" openGroups="" visibleGroups="CPU - Current Mode" decimalDisplays="" binaryDisplays="" />
+  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" openGroups="CPU - All" visibleGroups="CPU - All" decimalDisplays="" binaryDisplays="" />
  </Register1>
  <Register2>
   <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" openGroups="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
@@ -65,7 +51,8 @@
  </TraceWindow>
  <Watch1>
   <Watches active="1" >
-   <Watchpoint linenumber="246" radix="16" name="pxCurrentTCB" expression="pxCurrentTCB" filename="C:\temp\firmware\controller\freertos\tasks.c" />
+   <Watchpoint linenumber="272" radix="16" name="xTickCount" expression="xTickCount" filename="C:\mtcode\make\firmware\controller\freertos\tasks.c" />
+   <Watchpoint evalMode="1" linenumber="246" evalType="1" radix="16" name="pxCurrentTCB" expression="pxCurrentTCB" filename="C:\temp\firmware\controller\freertos\tasks.c" />
   </Watches>
  </Watch1>
  <Watch2>
@@ -78,17 +65,20 @@
   <Watches active="0" />
  </Watch4>
  <Files>
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="35" debugPath="C:\temp\firmware\heavy\make.c" y="128" useHTMLEdit="0" path="C:\temp\firmware\heavy\make.c" left="0" selected="0" name="unnamed" top="16" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="32" debugPath="C:\temp\firmware\controller\makingthings\fasttimer_isr.c" y="116" useHTMLEdit="0" path="C:\temp\firmware\controller\makingthings\fasttimer_isr.c" left="0" selected="0" name="unnamed" top="48" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="4" debugPath="C:\temp\firmware\controller\makingthings\fasttimer.c" y="128" useHTMLEdit="0" path="C:\temp\firmware\controller\makingthings\fasttimer.c" left="0" selected="0" name="unnamed" top="116" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="63" debugPath="C:\temp\firmware\controller\makingthings\main.c" y="206" useHTMLEdit="0" path="C:\temp\firmware\controller\makingthings\main.c" left="0" selected="0" name="unnamed" top="90" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\temp\firmware\heavy\config.h" y="0" useHTMLEdit="0" path="C:\temp\firmware\heavy\config.h" left="0" selected="0" name="unnamed" top="12" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\temp\firmware\appboard\makingthings\servo.c" y="0" useHTMLEdit="0" path="C:\temp\firmware\appboard\makingthings\servo.c" left="0" selected="0" name="unnamed" top="0" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="23" debugPath="C:\temp\firmware\controller\freertos\tasks.c" y="245" useHTMLEdit="0" path="C:\temp\firmware\controller\freertos\tasks.c" left="0" selected="1" name="unnamed" top="226" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\temp\firmware\controller\makingthings\osc.c" y="216" useHTMLEdit="0" path="C:\temp\firmware\controller\makingthings\osc.c" left="0" selected="0" name="unnamed" top="12" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="2" debugPath="C:\temp\firmware\controller\startup\AT91SAM7_Startup.s" y="166" useHTMLEdit="0" path="C:\temp\firmware\controller\startup\AT91SAM7_Startup.s" left="0" selected="0" name="unnamed" top="140" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\startup\AT91SAM7_Startup.s" y="162" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\startup\AT91SAM7_Startup.s" left="0" selected="0" name="unnamed" top="131" />
-  <SessionOpenFile useTextEdit="0" useBinaryEdit="0" x="13" debugPath="C:\mtcode\make\firmware\controller\lwip\src\core\tcp.c" y="3311" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\lwip\src\core\tcp.c" left="0" selected="0" name="unnamed" top="3298" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\startup\AT91SAM7_Startup.s" y="191" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\startup\AT91SAM7_Startup.s" left="0" selected="0" name="unnamed" top="171" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="1" debugPath="C:\mtcode\make\firmware\controller\makingthings\system.c" y="171" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\system.c" left="0" selected="0" name="unnamed" top="0" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="1" debugPath="C:\mtcode\make\firmware\heavy\make.c" y="67" useHTMLEdit="0" path="C:\mtcode\make\firmware\heavy\make.c" left="0" selected="0" name="unnamed" top="51" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\makingthings\main.c" y="212" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\main.c" left="0" selected="0" name="unnamed" top="192" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\makingthings\poly.c" y="200" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\poly.c" left="0" selected="0" name="unnamed" top="170" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\makingthings\rtos.c" y="79" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\rtos.c" left="0" selected="0" name="unnamed" top="74" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\makingthings\poly.h" y="0" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\poly.h" left="0" selected="0" name="unnamed" top="4" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\freertos\tasks.c" y="1693" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\freertos\tasks.c" left="0" selected="0" name="unnamed" top="1664" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\makingthings\usb.c" y="121" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\usb.c" left="0" selected="0" name="unnamed" top="117" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="61" debugPath="C:\mtcode\make\firmware\controller\makingthings\FreeRTOSConfig.h" y="56" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\FreeRTOSConfig.h" left="0" selected="0" name="unnamed" top="45" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\freertos\portable\GCC\ARM7_AT91SAM7S\portISR.c" y="99" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\freertos\portable\GCC\ARM7_AT91SAM7S\portISR.c" left="0" selected="0" name="unnamed" top="79" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="3" debugPath="C:\mtcode\make\firmware\controller\makingthings\SAM7_EMAC.c" y="367" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\SAM7_EMAC.c" left="0" selected="0" name="unnamed" top="311" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="19" debugPath="C:\mtcode\make\firmware\controller\startup\crt0.s" y="34" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\startup\crt0.s" left="0" selected="0" name="unnamed" top="48" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="3" debugPath="C:\mtcode\make\firmware\controller\makingthings\osc.c" y="224" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\osc.c" left="0" selected="1" name="unnamed" top="209" />
  </Files>
  <ARMCrossStudioWindow activeProject="heavy" autoConnectTarget="/Macraigor Wiggler (20 Pin)" debugSearchFileMap="..\..\gcc-4.1.1\gcc\config\arm\ieee754-df.S
 
@@ -197,5 +187,5 @@ C:\mtcode\make\beta\controller\startup\boot.s
 ..\gcc-4.0.2\gcc\config\arm\ieee754-sf.S
 \ieee754-sf.S
 ..\gcc-4.0.2\gcc\config\arm\lib1funcs.asm
-" fileDialogInitialDirectory="C:\mtcode\make\firmware\controller\makingthings" fileDialogDefaultFilter="*" autoConnectCapabilities="1407" debugSearchPath="" buildConfiguration="THUMB Flash Debug" />
+" fileDialogInitialDirectory="C:\mtcode\make\firmware\controller\startup" fileDialogDefaultFilter="*" autoConnectCapabilities="1407" debugSearchPath="" buildConfiguration="THUMB Flash Debug" />
 </session>
