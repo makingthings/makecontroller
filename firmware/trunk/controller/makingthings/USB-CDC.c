@@ -244,10 +244,10 @@ portBASE_TYPE xByte;
 }
 /*------------------------------------------------------------*/
 
-void vUSBSendByte( portCHAR cByte )
+void vUSBSendByte( portCHAR cByte, int timeout )
 {
 	/* Queue the byte to be sent.  The USB task will send it. */
-	xQueueSend( xTxCDC, &cByte, usbNO_BLOCK );
+	xQueueSend( xTxCDC, &cByte, timeout );
 }
 
 /* MAKINGTHINGS: ADDITION */
