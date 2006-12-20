@@ -81,7 +81,7 @@ void vUSBCDCTask( void *pvParameters );
 
 /* Send cByte down the USB port.  Characters are simply buffered and not
 sent unless the port is connected. */
-void vUSBSendByte( portCHAR cByte );
+void vUSBSendByte( portCHAR cByte, int timeout );
 
 /* MakingThings: Get a byte from the USB 
   returns -1 if there is no character before the timeout */

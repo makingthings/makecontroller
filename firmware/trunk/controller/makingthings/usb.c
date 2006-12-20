@@ -114,12 +114,12 @@ int Usb_Get( int timeout )
   while (1 second?) to return.
 	@param c the character to send out
 */
-int Usb_Put( int c )
+int Usb_Put( int c, int timeout )
 {
   if ( !Usb_Users )
     Usb_SetActive( 1 );
 
-  vUSBSendByte( (char)c );
+  vUSBSendByte( (char)c, timeout / TICKRATE );
   return CONTROLLER_OK;
 }
 
@@ -134,7 +134,7 @@ int Usb_Put( int c )
  */
 int Usb_SlipSend( char* buffer, int length )
 {
- Usb_Put( END ); // Flush out any spurious data that may have accumulated
+ Usb_Put( END, 1000 ); // Flush out any spurious data that may have accumulated
 
   while( length-- )
   {
@@ -143,25 +143,25 @@ int Usb_SlipSend( char* buffer, int length )
 			// if it's the same code as an END character, we send a special 
 			//two character code so as not to make the receiver think we sent an END
 			case END:
-				Usb_Put( ESC );
-				Usb_Put( ESC_END );
+				Usb_Put( ESC, 1000 );
+				Usb_Put( ESC_END, 1000 );
 				break;
 				
 				// if it's the same code as an ESC character, we send a special 
 				//two character code so as not to make the receiver think we sent an ESC
 			case ESC:
-				Usb_Put( ESC );
-				Usb_Put( ESC_ESC );
+				Usb_Put( ESC, 1000 );
+				Usb_Put( ESC_ESC, 1000 );
 				break;
 				//otherwise, just send the character
 			default:
-				Usb_Put( *buffer );
+				Usb_Put( *buffer, 1000 );
 		}
 		buffer++;
 	}
 	
 	// tell the receiver that we're done sending the packet
-	Usb_Put( END );
+	Usb_Put( END, 1000 );
 
   return CONTROLLER_OK;
 }

@@ -28,7 +28,7 @@
 int Usb_SetActive( int state );
 int Usb_GetActive( void );
 
-int Usb_Put( int );
+int Usb_Put( int c, int timeout );
 int Usb_Get( int timeout );
 
 /**
