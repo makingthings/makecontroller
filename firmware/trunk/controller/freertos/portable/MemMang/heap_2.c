@@ -204,6 +204,12 @@ void *pvReturn = NULL;
 					prvInsertBlockIntoFreeList( ( pxNewBlockLink ) );
 				}
 			}
+
+      if ( pvReturn == 0 )
+      {
+        pvReturn++;
+        pvReturn--;
+      }
 		}
 	}
 	xTaskResumeAll();
