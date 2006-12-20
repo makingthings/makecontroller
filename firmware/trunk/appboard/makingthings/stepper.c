@@ -242,7 +242,7 @@ int Stepper_GetSpeed( int index )
       return 0;
   }
 
-  return Stepper.control[ index ].speed;
+  return Stepper.control[ index ].speed / 1000;
 }
 
 /**	
