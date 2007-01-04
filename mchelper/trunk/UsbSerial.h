@@ -58,48 +58,7 @@
 #include <IOKit/usb/IOUSBLib.h>
 #include <IOKit/IOMessage.h>
 
-
 typedef const char cchar;
-
-////////////////////////////////////////////////////////////////////////////////////////
-#define kUserClientdoRequest	0
-
-#define kSuccess		0
-#define kError			1
-
-    // Command codes to pass between user-client and the kext
-    // values are arbitrary, but must fit in a byte.
-    
-enum
-{
-    cmdACMData_Message	= 100,
-    ACMData_Magic_Key	= 'ACM!'			// Magic cookie for connect
-};
-
-    // Messages
-
-enum
-{
-    noWarning		= 0x2000,			// Arbitrary values for now
-	warning
-};
-
-typedef struct 
-{
-    UInt8		command;
-	UInt8		filler;
-    UInt16		message;
-    UInt16		vendor;
-	UInt16		product;
-} dataParms;
-
-typedef struct 
-{
-    UInt16		status;
-} statusData;
-
-////////////////////////////////////////////////////////////////////////////////////////
-
 #endif
 
 class UsbSerial
