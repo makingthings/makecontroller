@@ -18,13 +18,19 @@
 #include "UsbSerial.h"
 #include <QMutexLocker>
 
-
 UsbSerial::UsbSerial( )
 {
 	deviceOpen = false;
 	readInProgress = false;
 	#ifdef Q_WS_MAC
-  	blocking = false;
+	blocking = false;
+	foundMakeController = false;
+	kern_return_t err;
+	masterPort = 0;
+	if( ( err = IOMasterPort( MACH_PORT_NULL, &masterPort ) ) ) 
+		printf( "could not create master port, err = %08x\n", err );
+		
+	notifyThread = new UsbNotify( );
 	#endif
 }
 
@@ -42,38 +48,32 @@ UsbSerial::UsbStatus UsbSerial::usbOpen( )
 	#ifdef Q_WS_MAC
 		if( deviceOpen )  //if it's already open, do nothing.
 		  return ALREADY_OPEN;
-		int result = FindUsbSerialDevice(&deviceName, 0);
-		//if( result );  //should return 0 on success
-		  //return; 
+
+		kern_return_t kernResult;
+		io_iterator_t serialPortIterator;
+		
+		kernResult = findMakeController( &serialPortIterator );
+		kernResult = getDevicePath( serialPortIterator, deviceFilePath, sizeof(deviceFilePath) );
+		IOObjectRelease(serialPortIterator);    // Release the iterator.
+		
+		if (!deviceFilePath[0] || !foundMakeController)
+    {
+			printf("Didn't find a Make Controller.\n");
+			
+			return NOT_OPEN;
+    }
 		
 		// now try to actually do something
-		deviceHandle = ::open( deviceName, O_RDWR | O_NOCTTY | ( ( blocking ) ? 0 : O_NDELAY ) );
+		deviceHandle = ::open( deviceFilePath, O_RDWR | O_NOCTTY | ( ( blocking ) ? 0 : O_NDELAY ) );
 		if ( deviceHandle < 0 )
 	  {
 	    printf( "Could not open the port (Error %d)\n", deviceHandle );
 	    return NOT_OPEN;
 	  } else
-		{/*
-			tcgetattr( deviceHandle, &terminalSettingsOld ); 
-			bzero( &terminalSettings, sizeof( terminalSettings ) );
-	    
-			terminalSettings.c_cflag = B115200 | CS8 | CREAD | CRTSCTS;
-			terminalSettings.c_iflag = IGNPAR;
-			terminalSettings.c_oflag = 0;
-			terminalSettings.c_lflag = 0;
-			
-			if ( blocking )
-			{
-				terminalSettings.c_cc[VTIME]    = 0;   // inter-character timer unused
-				terminalSettings.c_cc[VMIN]     = 1;   // blocking read until 5 chars received
-			}
-	    
-			tcflush( deviceHandle, TCIFLUSH );
-			tcsetattr( deviceHandle, TCSANOW, &terminalSettings );
-			*/
+		{
 	    deviceOpen = true;
 			sleepMs( 10 ); //give it a moment after opening before trying to read/write
-	    printf( "USB opened at %s\n", deviceName);
+	    printf( "USB opened at %s\n", deviceFilePath );
 	  }
 	  return OK;
 		
@@ -118,6 +118,7 @@ void UsbSerial::usbClose( )
   	  //Mac-only
 		#ifdef Q_WS_MAC
 		::close( deviceHandle );
+		foundMakeController = false;
 		deviceHandle = -1;
 		deviceOpen = false;
 		#endif
@@ -750,60 +751,271 @@ LONG UsbSerial::QueryStringValue(HKEY hKey,LPCTSTR lpValueName,LPTSTR* lppString
 //Mac-only
 #ifdef Q_WS_MAC
 
-static int matchUsbSerialDevice (struct dirent * tryThis);
-
-int UsbSerial::FindUsbSerialDevice(cchar** dest, int index)
+/*static*/ kern_return_t UsbSerial::getDevicePath(io_iterator_t serialPortIterator, char *path, CFIndex maxPathSize)
 {
-  struct dirent **namelist;
-  int n;
-  char* tempName;
+    io_object_t modemService;
+    kern_return_t kernResult = KERN_FAILURE;
+    Boolean modemFound = false;
+    // Initialize the returned path
+    *path = '\0';
+    
+    // Iterate across all modems found. In this example, we bail after finding the first modem.
+    while ((modemService = IOIteratorNext(serialPortIterator)) && !modemFound)
+    {
+			CFTypeRef bsdPathAsCFString;
+			bsdPathAsCFString = IORegistryEntryCreateCFProperty(modemService,
+                                                            CFSTR(kIOCalloutDeviceKey),
+                                                            kCFAllocatorDefault,
+                                                            0);
+			
+			if (bsdPathAsCFString)
+			{
+				Boolean result;      
+				result = CFStringGetCString( (CFStringRef)bsdPathAsCFString,
+																		path,
+																		maxPathSize, 
+																		kCFStringEncodingUTF8);
+				CFRelease(bsdPathAsCFString);
+				
+				if (result)
+				{
+					printf("Modem found with BSD path: %s", path);
+					modemFound = true;
+					kernResult = KERN_SUCCESS;
+					ourDevice = modemService;
+				}
+				printf("\n");
 
-  if (!dest)
-    return -1; //(TELEO_E_ALLOC);
-  *dest = NULL;
-
-  n = scandir("/dev", &namelist, matchUsbSerialDevice, NULL);
-  if (n < 0)
-  {
-    perror("scandir");
-    return -1; //(TELEO_E_UNKNOWN);
-  }
-  if (n < index+1)
-  {
-    return -1; //(TELEO_E_UNKNOWN);
-  }
-  tempName = (char * ) malloc( sizeof ( namelist[index]->d_name ) + 
-		 sizeof ( "/dev/" ) );
-  if (!tempName) 
-    return -1; //TELEO_E_ALLOC;
-  strcpy(tempName, "/dev/");
-  strcat(tempName, namelist[index]->d_name);
-
-  for (;n;n--)
-    free(namelist[n]);
-  free(namelist);
-
-  *dest = tempName;
-  return 0; //(TELEO_OK);
+				// Release the io_service_t now that we are done with it.
+				(void) IOObjectRelease(modemService);
+			}
+		}
+    return kernResult;
 }
 
-//static void UsbSerial::message( int level, char* format, ... )
-//{
-//}
-
-static int matchUsbSerialDevice (struct dirent * tryThis)
+kern_return_t UsbSerial::findMakeController( io_iterator_t *matchingServices )
 {
-	if (strncmp("cu.usbmodem", tryThis->d_name, strlen("cu.usbmodem")))
-		return 0;
+  // there's probably a good way to combine these steps into one dictionary, but...
+	// first, try to find a BSD Serial Device
+	kern_return_t err; 
+	CFMutableDictionaryRef bsdMatchingDictionary;
+	
+	bsdMatchingDictionary = IOServiceMatching(kIOSerialBSDServiceValue);
+	if (bsdMatchingDictionary == NULL)
+		printf("IOServiceMatching returned a NULL dictionary.\n");
 	else
-		return 1;
+		CFDictionarySetValue(bsdMatchingDictionary, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDModemType));
+	
+	err = IOServiceGetMatchingServices( kIOMasterPortDefault, bsdMatchingDictionary, matchingServices );    
+	if ( KERN_SUCCESS != err )
+	{
+		printf("IOServiceGetMatchingServices returned %d\n", err);
+		return err;
+	}
+	
+	// then, try to match it against the vendor and product IDs of the Make Controller Kit
+	io_iterator_t iterator = 0;
+	//io_service_t usbDeviceReference;
+	createMatchingDictionary( );
+	
+	err = IOServiceGetMatchingServices( masterPort, matchingDictionary, &iterator );
+	matchingDictionary = 0;  // consumed by the above call
+
+	if( ( usbDeviceReference = IOIteratorNext( iterator ) ) )
+	{
+		//messageInterface->message( 2, "usb> Found boot agent.\n" );
+		printf( "usb> Found boot agent\n" );
+		foundMakeController = true;
+		
+		setWarningFlag( usbDeviceReference, false );
+		//(void) IOObjectRelease( ourDevice );
+		
+		IOObjectRelease(usbDeviceReference);
+		IOObjectRelease(iterator);
+		return 0;
+	} else
+	{
+		usbClose( );
+		IOObjectRelease(usbDeviceReference);
+		IOObjectRelease(iterator);
+		return -1;
+	}
+}
+
+void UsbSerial::createMatchingDictionary( )
+{
+	SInt32 idVendor = 0xeb03;
+	SInt32 idProduct = 0x920;
+	CFNumberRef numberRef;
+	
+	if( !(matchingDictionary = IOServiceMatching( kIOUSBDeviceClassName )) )
+	{
+		//messageInterface->message( 1, "usb> could not create matching dictionary.\n" );
+		printf( "could not create matching dictionary\n" );
+		return;
+	}
+	
+	if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idVendor)) )
+	{
+		//messageInterface->message( 1, "usb> could not create CFNumberRef for vendor.\n" );
+		printf( "could not create CFNumberRef for vendor\n" );
+		return;
+	}
+	CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBVendorID), numberRef );
+	CFRelease( numberRef );
+	numberRef = 0;
+	
+	if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idProduct)) )
+	{
+		//messageInterface->message( 1, "usb> could not create CFNumberRef for product.\n" );
+		printf( "could not create CFNumberRef for product\n" );
+		return;
+	}
+	CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBProductID), numberRef);
+	CFRelease( numberRef );
+	numberRef = 0;
 }
 
 int UsbSerial::sleepMs( long ms )
 {
 	  usleep( 1000*ms );
-	    return 0; //TELEO_OK;
+		return 0; //TELEO_OK;
 }
+
+
+
+
+#define kPathToSystemLog 		"/var/log/system.log"
+#define	kwarn					"Warn"
+#define knoWarn					"NoWarn"
+#define kDriver					"AppleUSBCDCACMData"
+
+/****************************************************************************************************/
+//
+//		Function:	getInterfaceWithName
+//
+//		Inputs:		masterPort - the mach master port
+//					className - name of the driver
+//					state - true(warn), false(nowarn)
+//					vendor - Vendor ID
+//					product - Product ID
+//
+//		Outputs:	Return value - kIOReturnSuccess or kIOReturnError
+//
+//		Desc:		Look through the registry and search for an object with the given
+//					name.
+//
+/****************************************************************************************************/
+
+kern_return_t UsbSerial::getInterfaceWithName( bool state )
+{	
+	kern_return_t	kr = kIOReturnSuccess;
+	bool			done = FALSE;
+    io_iterator_t	ite;
+    io_object_t		obj = 0;
+    io_name_t 		name;
+	
+	kr = IORegistryCreateIterator(masterPort, kIOServicePlane, true, &ite);
+    if (kr != kIOReturnSuccess)
+    {
+        printf("ACMUCTool: getInterfaceWithName - IORegistryCreateIterator failed %08lx\n", (unsigned long)kr);
+        return kIOReturnError;
+    }
+
+    while ((obj = IOIteratorNext(ite)))
+    {
+        if (IOObjectConformsTo(obj, (char *)kDriver))
+        {
+            printf("ACMUCTool: getInterfaceWithName - Found a driver\n");
+			
+				// Try and set the flag
+			
+			if (setWarningFlag( obj, state ))
+			{
+				done = TRUE;
+				break;
+			}
+        } else {
+            kr = IOObjectGetClass( obj, name);
+            if (kr == kIOReturnSuccess)
+            {
+                printf("ACMUCTool: getInterfaceWithName - Skipping class %s\n", name);
+            }
+        }
+        IOObjectRelease(obj);
+    }
+	
+	IORegistryDisposeEnumerator(ite);
+    
+	if (!done)
+	{
+		return kIOReturnError;
+	}
+}
+
+
+
+/****************************************************************************************************/
+//
+//		Function:	setWarningFlag
+//
+//		Inputs:		port - the port
+//					state - true (warning) or false (noWarning)
+//
+//		Outputs:	Return code - Various
+//
+//		Desc:		Set the connection state in the driver
+//
+/****************************************************************************************************/
+bool UsbSerial::setWarningFlag( io_object_t		intf, bool state )
+{
+	UInt16 vendor = 0xeb03;
+	UInt16 product = 0x920;
+	
+	bool			res = FALSE;
+	io_connect_t	dataPort;
+    dataParms		input;
+    statusData		output;
+    IOByteCount		insize = sizeof(dataParms);
+    IOByteCount		outsize = sizeof(statusData);
+    kern_return_t 	kernResult;
+	
+		// Open and instantiate the user client
+
+	kernResult = IOServiceOpen( intf, mach_task_self(), ACMData_Magic_Key, &dataPort);
+	if (kernResult != KERN_SUCCESS)
+	{
+		printf("ACMUCTool: IOServiceOpen failed.\n");
+		return res;
+	}
+    
+	input.command = cmdACMData_Message;
+	input.vendor = vendor;
+	input.product = product;
+    if (state)
+    {
+        input.message = warning;
+    } else {
+        input.message = noWarning;
+    }
+	
+    kernResult = IOConnectMethodStructureIStructureO( dataPort, kUserClientdoRequest, insize, &outsize, &input, &output );
+    if (kernResult != KERN_SUCCESS)
+    {
+        printf("ACMUCTool: setWarningFlag failed - %x\n", kernResult);
+    } else {
+		if (output.status != kSuccess)
+		{
+			printf("ACMUCTool: setWarningFlag not successful\n");
+		} else {
+			printf("ACMUCTool: setWarningFlag successful\n");
+			res = TRUE;
+		}
+	}
+    
+    return res;
+    
+} /* end setWarningFlag */
 #endif
 
 

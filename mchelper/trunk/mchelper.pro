@@ -69,7 +69,6 @@ win32{
 
 unix{
   !macx{
-
     message("This project is being built on Linux.")
     DEFINES += Q_WS_LINUX
   }

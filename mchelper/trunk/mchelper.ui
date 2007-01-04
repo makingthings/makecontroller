@@ -1,7 +1,4 @@
 <ui version="4.0" >
- <author></author>
- <comment></comment>
- <exportmacro></exportmacro>
  <class>McHelperWindow</class>
  <widget class="QMainWindow" name="McHelperWindow" >
   <property name="geometry" >
@@ -12,163 +9,18 @@
     <height>564</height>
    </rect>
   </property>
+  <property name="sizePolicy" >
+   <sizepolicy>
+    <hsizetype>5</hsizetype>
+    <vsizetype>5</vsizetype>
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
   <property name="windowTitle" >
    <string>Make Controller Helper</string>
   </property>
   <widget class="QWidget" name="centralwidget" >
-   <widget class="QGroupBox" name="groupBox" >
-    <property name="geometry" >
-     <rect>
-      <x>20</x>
-      <y>270</y>
-      <width>661</width>
-      <height>241</height>
-     </rect>
-    </property>
-    <property name="title" >
-     <string>Output</string>
-    </property>
-    <property name="alignment" >
-     <set>Qt::AlignHCenter</set>
-    </property>
-    <widget class="QTextEdit" name="mainConsole" >
-     <property name="geometry" >
-      <rect>
-       <x>20</x>
-       <y>40</y>
-       <width>621</width>
-       <height>191</height>
-      </rect>
-     </property>
-     <property name="lineWrapMode" >
-      <enum>QTextEdit::WidgetWidth</enum>
-     </property>
-     <property name="readOnly" >
-      <bool>true</bool>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QGroupBox" name="uploaderGroupBox" >
-    <property name="geometry" >
-     <rect>
-      <x>20</x>
-      <y>10</y>
-      <width>661</width>
-      <height>101</height>
-     </rect>
-    </property>
-    <property name="title" >
-     <string>.bin Uploader</string>
-    </property>
-    <property name="alignment" >
-     <set>Qt::AlignHCenter|Qt::AlignTop</set>
-    </property>
-    <widget class="QCheckBox" name="bitFlipSwitch" >
-     <property name="geometry" >
-      <rect>
-       <x>130</x>
-       <y>60</y>
-       <width>201</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text" >
-      <string>Boot from Flash on reboot?</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="fileLabel" >
-     <property name="geometry" >
-      <rect>
-       <x>40</x>
-       <y>30</y>
-       <width>71</width>
-       <height>17</height>
-      </rect>
-     </property>
-     <property name="acceptDrops" >
-      <bool>false</bool>
-     </property>
-     <property name="text" >
-      <string>Binary File:</string>
-     </property>
-     <property name="alignment" >
-      <set>Qt::AlignCenter</set>
-     </property>
-     <property name="buddy" >
-      <cstring>fileSelectText</cstring>
-     </property>
-    </widget>
-    <widget class="QProgressBar" name="progressBar" >
-     <property name="geometry" >
-      <rect>
-       <x>340</x>
-       <y>60</y>
-       <width>171</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="value" >
-      <number>24</number>
-     </property>
-     <property name="orientation" >
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="fileSelectText" >
-     <property name="geometry" >
-      <rect>
-       <x>120</x>
-       <y>30</y>
-       <width>411</width>
-       <height>26</height>
-      </rect>
-     </property>
-     <property name="editable" >
-      <bool>true</bool>
-     </property>
-     <property name="insertPolicy" >
-      <enum>QComboBox::InsertAtTop</enum>
-     </property>
-     <property name="minimumContentsLength" >
-      <number>1</number>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="fileSelectButton" >
-     <property name="geometry" >
-      <rect>
-       <x>550</x>
-       <y>20</y>
-       <width>81</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="focusPolicy" >
-      <enum>Qt::NoFocus</enum>
-     </property>
-     <property name="toolTip" >
-      <string>Select a file to upload to the MAKE Controller</string>
-     </property>
-     <property name="text" >
-      <string>Browse...</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="uploadButton" >
-     <property name="geometry" >
-      <rect>
-       <x>550</x>
-       <y>60</y>
-       <width>81</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="focusPolicy" >
-      <enum>Qt::NoFocus</enum>
-     </property>
-     <property name="text" >
-      <string>Upload</string>
-     </property>
-    </widget>
-   </widget>
    <widget class="QTabWidget" name="tabWidget" >
     <property name="geometry" >
      <rect>
@@ -235,39 +87,14 @@
      <widget class="QPushButton" name="sendButtonUsb" >
       <property name="geometry" >
        <rect>
-        <x>550</x>
+        <x>540</x>
         <y>60</y>
-        <width>81</width>
-        <height>31</height>
+        <width>109</width>
+        <height>32</height>
        </rect>
-      </property>
-      <property name="focusPolicy" >
-       <enum>Qt::NoFocus</enum>
-      </property>
-      <property name="toolTip" >
-       <string>Send OSC messages/bundles to the board.</string>
       </property>
       <property name="text" >
        <string>Send</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="closeButtonUsb" >
-      <property name="geometry" >
-       <rect>
-        <x>550</x>
-        <y>20</y>
-        <width>81</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="focusPolicy" >
-       <enum>Qt::NoFocus</enum>
-      </property>
-      <property name="toolTip" >
-       <string>Close the USB port if you have disconnected the board.</string>
-      </property>
-      <property name="text" >
-       <string>Close</string>
       </property>
      </widget>
     </widget>
@@ -445,6 +272,150 @@
      </widget>
     </widget>
    </widget>
+   <widget class="QGroupBox" name="groupBox" >
+    <property name="geometry" >
+     <rect>
+      <x>20</x>
+      <y>270</y>
+      <width>661</width>
+      <height>251</height>
+     </rect>
+    </property>
+    <property name="title" >
+     <string>Output</string>
+    </property>
+    <property name="alignment" >
+     <set>Qt::AlignHCenter</set>
+    </property>
+    <widget class="QTextEdit" name="mainConsole" >
+     <property name="geometry" >
+      <rect>
+       <x>20</x>
+       <y>40</y>
+       <width>621</width>
+       <height>191</height>
+      </rect>
+     </property>
+     <property name="lineWrapMode" >
+      <enum>QTextEdit::WidgetWidth</enum>
+     </property>
+     <property name="readOnly" >
+      <bool>true</bool>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="uploaderGroupBox" >
+    <property name="geometry" >
+     <rect>
+      <x>20</x>
+      <y>10</y>
+      <width>661</width>
+      <height>101</height>
+     </rect>
+    </property>
+    <property name="title" >
+     <string>.bin Uploader</string>
+    </property>
+    <property name="alignment" >
+     <set>Qt::AlignHCenter|Qt::AlignTop</set>
+    </property>
+    <widget class="QCheckBox" name="bitFlipSwitch" >
+     <property name="geometry" >
+      <rect>
+       <x>130</x>
+       <y>60</y>
+       <width>201</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text" >
+      <string>Boot from Flash on reboot?</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="fileLabel" >
+     <property name="geometry" >
+      <rect>
+       <x>40</x>
+       <y>30</y>
+       <width>71</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="acceptDrops" >
+      <bool>false</bool>
+     </property>
+     <property name="text" >
+      <string>Binary File:</string>
+     </property>
+     <property name="alignment" >
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="buddy" >
+      <cstring>fileSelectText</cstring>
+     </property>
+    </widget>
+    <widget class="QProgressBar" name="progressBar" >
+     <property name="geometry" >
+      <rect>
+       <x>340</x>
+       <y>60</y>
+       <width>171</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="value" >
+      <number>24</number>
+     </property>
+     <property name="orientation" >
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="uploadButton" >
+     <property name="geometry" >
+      <rect>
+       <x>540</x>
+       <y>60</y>
+       <width>109</width>
+       <height>32</height>
+      </rect>
+     </property>
+     <property name="text" >
+      <string>Upload</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="fileSelectText" >
+     <property name="geometry" >
+      <rect>
+       <x>120</x>
+       <y>30</y>
+       <width>411</width>
+       <height>26</height>
+      </rect>
+     </property>
+     <property name="editable" >
+      <bool>true</bool>
+     </property>
+     <property name="insertPolicy" >
+      <enum>QComboBox::InsertAtTop</enum>
+     </property>
+     <property name="minimumContentsLength" >
+      <number>1</number>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="fileSelectButton" >
+     <property name="geometry" >
+      <rect>
+       <x>540</x>
+       <y>30</y>
+       <width>109</width>
+       <height>32</height>
+      </rect>
+     </property>
+     <property name="text" >
+      <string>Browse...</string>
+     </property>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar" >
    <property name="geometry" >
@@ -452,7 +423,7 @@
      <x>0</x>
      <y>0</y>
      <width>710</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile" >
@@ -460,6 +431,7 @@
      <string>File</string>
     </property>
     <addaction name="actionAboutMchelper" />
+    <addaction name="actionClearOutput" />
    </widget>
    <addaction name="menuFile" />
   </widget>
@@ -469,11 +441,14 @@
     <string>About mchelper...</string>
    </property>
   </action>
+  <action name="actionClearOutput" >
+   <property name="text" >
+    <string>Clear Output</string>
+   </property>
+  </action>
  </widget>
- <pixmapfunction></pixmapfunction>
  <tabstops>
   <tabstop>fileSelectText</tabstop>
-  <tabstop>uploadButton</tabstop>
   <tabstop>bitFlipSwitch</tabstop>
   <tabstop>tabWidget</tabstop>
   <tabstop>textIPAddress</tabstop>
