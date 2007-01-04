@@ -72,10 +72,12 @@ McHelperWindow::McHelperWindow( QApplication* application ) : QMainWindow( 0 )
 	//setup the pushbuttons
 	connect( fileSelectButton, SIGNAL( clicked() ), this, SLOT( fileSelectButtonClicked() ) );
 	connect( uploadButton, SIGNAL( clicked() ), this, SLOT( uploadButtonClicked() ) );
-	connect( closeButtonUsb, SIGNAL( clicked() ), this, SLOT( usbCloseClicked() ) );
 	
 	// setup the menu
 	connect( actionAboutMchelper, SIGNAL( triggered() ), this, SLOT( about( ) ) );
+	connect( actionClearOutput, SIGNAL( triggered() ), this, SLOT( clearOutputWindow( ) ) );
+	actionClearOutput->setShortcut(tr("Ctrl+X"));
+	actionClearOutput->setShortcutContext( Qt::ApplicationShortcut ); // this doesn't seem to have much effect
 	
 	uploaderThread = 0;
 	uploaderThread = new UploaderThread( application, this, samba );
@@ -141,9 +143,10 @@ void McHelperWindow::commandLineUsbEvent( )
   writeUsbSettings();
 }
 
-void McHelperWindow::usbCloseClicked()
+void McHelperWindow::clearOutputWindow()
 {
-  usb->close( );	
+  mainConsole->clear( );
+	mainConsole->ensureCursorVisible( );
 }
 
 void McHelperWindow::newLocalPort( )
@@ -265,27 +268,6 @@ void McHelperWindow::sleepMs( int ms )
 {
   //usleep( ms * 1000 );	
 }
-/*
-int McHelperWindow::checkForTestProgram()
-{
-	// Check for a reaction
-	osc->createMessage( "/ctestee/active" );
-	osc->sendPacket();
-	
-	//messageInterface->sleepMs( 100 );
-	
- 	OscMessage oscMessage;
-	Osc::Status s = osc->receive( &oscMessage );
-	if ( s != Osc::OK )
-	{
-    messageInterface->message( 2, "  No response - Not programmed\n" );
-	  return ERROR_NO_RESPONSE;
-	}
-	
-  messageInterface->message( 2, "Testee Already Programmed\n" );
-	return OK;
-}
-*/
 
 // Read and write the last values used - address, ports, directory searched etc...
 void McHelperWindow::readSettings()
@@ -387,7 +369,7 @@ void McHelperWindow::uiLessUpload( char* filename, bool bootFlash )
 void McHelperWindow::about( )  // set the version number here.
 {
   QMessageBox::about(this, tr("About mchelper"),
-  tr("Make Controller Helper - version 1.1\n\n"
+  tr("Make Controller Helper - version 1.2\n\n"
   "Making Things 2006\n\n"
   "www.makingthings.com") );
 }

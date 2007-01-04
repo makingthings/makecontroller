@@ -41,72 +41,77 @@ void PacketUsbCdc::run()
 	open( );
 	while( 1 )
 	{
+	  if( !usbIsOpen() ) // if it's not open, try to open it
+			open();
 
-	  if( !usbIsOpen() )
-	    open();
-	    
-	  UsbStatus readResult = usbRead( &justGot, 1 );  //we're only ever going to read 1 character at a time
-	  //messageInterface->message( 1, "usb> Just read...usb open? %d, handle? %d\n", usbIsOpen(), deviceHandle );
-
-		if( readResult == GOT_CHAR ) //we got a character
+		if( usbIsOpen() ) // then, if open() succeeded, try to read
 		{
-		  switch( justGot )
+			UsbStatus readResult = usbRead( &justGot, 1 );  //we're only ever going to read 1 character at a time
+			//messageInterface->message( 1, "usb> Just read...usb open? %d, handle? %d\n", usbIsOpen(), deviceHandle );
+			
+			if( readResult == ERROR_CLOSE || readResult == IO_ERROR )
+				close();
+			
+			if( readResult == GOT_CHAR ) //we got a character
 			{
-			  case END:
-				  if( packetStarted && currentPacket->length ) // it was the END byte
-					{ 
-						// Need to protect the packetList structure from multithreaded diddling
+				switch( justGot )
+				{
+					case END:
+						if( packetStarted && currentPacket->length ) // it was the END byte
+						{ 
+							// Need to protect the packetList structure from multithreaded diddling
+							{
+								QMutexLocker locker( &packetListMutex );
+							
+								*packetP = '\0';
+								packetList.append( currentPacket );
+								packetCount++;
+							}
+							packetReadyInterface->packetWaiting( );
+							packetStarted = false;
+						} 
+						else // it was the START byte
 						{
-						  QMutexLocker locker( &packetListMutex );
+							currentPacket = new OscUsbPacket( );
+							packetP = currentPacket->packetBuf;
+							packetStarted = true;
+						}
+						break;
 						
-					    *packetP = '\0';
-						  packetList.append( currentPacket );
-  						packetCount++;
-						}
-						packetReadyInterface->packetWaiting( );
-						packetStarted = false;
-					} 
-					else // it was the START byte
-					{
-					  currentPacket = new OscUsbPacket( );
-						packetP = currentPacket->packetBuf;
-						packetStarted = true;
-					}
-					break;
-					
-				// if it's the same code as an ESC character, get another character,
-				// then figure out what to store in the packet based on that.
-				case ESC:
-					readResult = usbRead( &justGot, 1 );
-					if( readResult == GOT_CHAR )
-					{
-					  switch( justGot )
+					// if it's the same code as an ESC character, get another character,
+					// then figure out what to store in the packet based on that.
+					case ESC:
+						readResult = usbRead( &justGot, 1 );
+						if( readResult == GOT_CHAR )
 						{
-						  case ESC_END:
-							  justGot = END;
-								break;
-							case ESC_ESC:
-								justGot = ESC;
-								break;
+							switch( justGot )
+							{
+								case ESC_END:
+									justGot = END;
+									break;
+								case ESC_ESC:
+									justGot = ESC;
+									break;
+							}
 						}
-					}
-					else
-					  break;
-				// otherwise, just stick it in the packet		
-				default:
-				  if( packetP == NULL )
-					  break;
-				  *packetP = justGot;
-					packetP++;
-					currentPacket->length++;
+						else
+							break;
+					// otherwise, just stick it in the packet		
+					default:
+						if( packetP == NULL )
+							break;
+						*packetP = justGot;
+						packetP++;
+						currentPacket->length++;
+				}
 			}
-		}
-		else
-		{
-		  if( usbIsOpen() )
-		    this->sleepMs( 10 );
-		  else
-		    this->sleepMs( 1000 );
+			else
+			{
+				if( usbIsOpen() )
+					this->sleepMs( 10 );
+				else
+					this->sleepMs( 1000 );
+			}
 		}
 	}
 	// should never get here...
@@ -115,12 +120,15 @@ void PacketUsbCdc::run()
 
 PacketUsbCdc::Status PacketUsbCdc::open()
 {
-	usbOpen( );
-	return PacketInterface::OK;
+	if( UsbSerial::OK != usbOpen( ) )
+		return PacketInterface::ERROR_NOT_OPEN;
+	else
+		return PacketInterface::OK;
 }
 
 PacketUsbCdc::Status PacketUsbCdc::close()
 {
+	usbWriteChar( END );
 	usbClose( );
 	return PacketInterface::OK;
 }
@@ -210,7 +218,7 @@ void PacketUsbCdc::sleepMs( int ms )
   Sleep( ms );
   #endif
   #ifdef Q_WS_MAC
-  sleepMs( ms );
+  usleep( ms*1000 );
   #endif
 }
 

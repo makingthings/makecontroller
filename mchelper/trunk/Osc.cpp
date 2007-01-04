@@ -594,7 +594,7 @@ char* Osc::createMessageInternal( char* bp, int* remaining, char* inputString )
   			sscanf( startpoint, "%f", &floatArgument );
   			//message( 3, "Trying to get a float from %s.  Got %f\n", startpoint, floatArgument );
         unsigned int v;
-        *((float*)&v) = floatArgument; 
+        *((float*)&v) = floatArgument;
         v = endianSwap( v );
         *((int*)ap) = v;
   			ap += 4;
@@ -604,7 +604,8 @@ char* Osc::createMessageInternal( char* bp, int* remaining, char* inputString )
   			strcat( typetag, "i" );
   			int intArgument;
   			sscanf( startpoint, "%d", &intArgument );
-  			*((int*)ap) = endianSwap( intArgument );
+				intArgument = endianSwap( intArgument );
+  			*((int*)ap) = intArgument;
   			ap += 4;		
   		}
   		else

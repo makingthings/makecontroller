@@ -21,7 +21,7 @@
 class PacketInterface
 {		
 	public:
-		enum Status { OK, ERROR_CANT_BIND, ERROR_CANT_SEND, ERROR_CANT_GET_ADDRESS };
+		enum Status { OK, ERROR_CANT_BIND, ERROR_CANT_SEND, ERROR_CANT_GET_ADDRESS, ERROR_NOT_OPEN };
 	  	  
 	  virtual Status open( ) = 0;
 	  virtual Status close( ) = 0;

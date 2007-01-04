@@ -85,10 +85,11 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 	  void uploadButtonClicked();
 		void commandLineEvent( );
 		void commandLineUsbEvent( );
-		void usbCloseClicked();
 		void newLocalPort( );
 		void newRemotePort( );
 		void newHostAddress( );
+		//menu functions
+		void clearOutputWindow();
 };
 
 #endif
