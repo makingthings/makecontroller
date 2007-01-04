@@ -49,6 +49,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 	  	            ERROR_INCORRECT_RESPONSE, ERROR_NO_RESPONSE};
 	
     McHelperWindow( QApplication* application );
+		
 	  void message( int level, char *format, ... );
 		void sleepMs( int ms );
 		void flash( );
@@ -60,6 +61,9 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		
 		void setNoUI( bool val );
 		void uiLessUpload( char* filename, bool bootFlash );
+	
+	protected:
+		void closeEvent( QCloseEvent *qcloseevent );
 		
 	private:
 	  QApplication* application;

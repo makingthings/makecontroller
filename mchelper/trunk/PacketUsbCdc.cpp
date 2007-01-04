@@ -47,6 +47,7 @@ void PacketUsbCdc::run()
 		if( usbIsOpen() ) // then, if open() succeeded, try to read
 		{
 			UsbStatus readResult = usbRead( &justGot, 1 );  //we're only ever going to read 1 character at a time
+			printf( "read result: %d\n", readResult );
 			//messageInterface->message( 1, "usb> Just read...usb open? %d, handle? %d\n", usbIsOpen(), deviceHandle );
 			
 			if( readResult == ERROR_CLOSE || readResult == IO_ERROR )
@@ -110,7 +111,7 @@ void PacketUsbCdc::run()
 				if( usbIsOpen() )
 					this->sleepMs( 10 );
 				else
-					this->sleepMs( 1000 );
+					this->sleepMs( 500 );
 			}
 		}
 	}

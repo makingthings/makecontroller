@@ -84,6 +84,11 @@ McHelperWindow::McHelperWindow( QApplication* application ) : QMainWindow( 0 )
 	samba->setMessageInterface( uploaderThread );
 }
 
+void McHelperWindow::closeEvent( QCloseEvent *qcloseevent )
+{
+	usb->close( );
+}
+
 void McHelperWindow::fileSelectButtonClicked()
 {
 	lastDirectory = QFileDialog::getOpenFileName( this, "Select a file", lastDirectory, "Binary Files (*.bin)");
