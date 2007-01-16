@@ -61,7 +61,6 @@ macx{
 
 win32{
   message("This project is being built on Windows.")
-  
   DEFINES += __LITTLE_ENDIAN__
   LIBS += -lSetupapi
 }
@@ -70,7 +69,7 @@ win32{
 unix{
   !macx{
     message("This project is being built on Linux.")
-    DEFINES += Q_WS_LINUX
+    DEFINES += Q_WS_LINUX __LITTLE_ENDIAN__
   }
 }
 
