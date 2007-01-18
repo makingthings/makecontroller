@@ -42,16 +42,20 @@ void PacketUsbCdc::run()
 	while( 1 )
 	{
 	  if( !usbIsOpen() ) // if it's not open, try to open it
-			open();
+		open();
 
 		if( usbIsOpen() ) // then, if open() succeeded, try to read
 		{
+			//messageInterface->message( 1, "USB is open\n" );
 			UsbStatus readResult = usbRead( &justGot, 1 );  //we're only ever going to read 1 character at a time
-			printf( "read result: %d\n", readResult );
+			//messageInterface->message( 1, "read result: %d\n", readResult );
 			//messageInterface->message( 1, "usb> Just read...usb open? %d, handle? %d\n", usbIsOpen(), deviceHandle );
 			
 			if( readResult == ERROR_CLOSE || readResult == IO_ERROR )
+			{
 				close();
+				messageInterface->message( 1, "failed in here\n" );
+			}
 			
 			if( readResult == GOT_CHAR ) //we got a character
 			{
@@ -223,4 +227,10 @@ void PacketUsbCdc::sleepMs( int ms )
   #endif
 }
 
+#ifdef Q_WS_WIN
+void PacketUsbCdc::setWidget( QMainWindow* window )
+{
+	this->mainWindow = window;
+}
+#endif
 

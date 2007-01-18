@@ -22,10 +22,12 @@
 #include <QHostAddress>
 #include <QMessageBox>
 
-McHelperWindow::McHelperWindow( QApplication* application ) : QMainWindow( 0 )
+McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 {
 	this->application = application;
 	setupUi(this);
+	
+	application->setMainWindow( this );
 	
 	#ifdef Q_WS_MAC
 	setWindowIcon( QIcon("IconPackageOSX.icns") );
@@ -35,9 +37,13 @@ McHelperWindow::McHelperWindow( QApplication* application ) : QMainWindow( 0 )
 	
 	udp = new PacketUdp( );
 	oscUdp = new Osc( );
-	oscUsb = new Osc( );
+	oscUsb = new Osc( ); 
 	samba = new Samba( );
 	usb = new PacketUsbCdc( );
+	
+	#ifdef Q_WS_WIN
+	usb->setWidget( this );
+	#endif
 	 
 	oscUdp->setInterfaces( udp, this, application );
 	oscUdp->setPreamble( "OscUdp" );
@@ -378,3 +384,9 @@ void McHelperWindow::about( )  // set the version number here.
   "Making Things 2006\n\n"
   "www.makingthings.com") );
 }
+
+void McHelperWindow::usbRemoved( )
+{
+	usb->usbClose( );
+}
+

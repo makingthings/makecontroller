@@ -33,6 +33,7 @@
 class UploaderThread;
 class PacketUdp;
 class Osc;
+class McHelperApp;
 
 
 class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public MessageInterface
@@ -48,7 +49,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 	  	            ERROR_CANT_OPEN_SOCKET, ERROR_ALREADY_PROGRAMMED,
 	  	            ERROR_INCORRECT_RESPONSE, ERROR_NO_RESPONSE};
 	
-    McHelperWindow( QApplication* application );
+    McHelperWindow( McHelperApp* application );
 		
 	  void message( int level, char *format, ... );
 		void sleepMs( int ms );
@@ -61,6 +62,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		
 		void setNoUI( bool val );
 		void uiLessUpload( char* filename, bool bootFlash );
+		void usbRemoved( );
 	
 	protected:
 		void closeEvent( QCloseEvent *qcloseevent );
@@ -96,4 +98,21 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void clearOutputWindow();
 };
 
-#endif
+class McHelperApp : public QApplication
+{
+  Q_OBJECT
+  public:
+    McHelperApp( int &argc, char **argv ) : QApplication( argc, argv ) {}
+    ~McHelperApp() {}
+    
+    #ifdef Q_WS_WIN // Windows-only
+    void setMainWindow( McHelperWindow* window );
+    bool winEventFilter( MSG* msg, long* retVal );
+    
+  private:
+    McHelperWindow* mchelper;
+    #endif // Windows-only
+};
+
+
+#endif // MCHELPERWINDOW_H
