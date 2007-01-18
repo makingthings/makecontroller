@@ -20,7 +20,7 @@ TEMPLATE	= app
 
 FORMS = mchelper.ui
 
-CONFIG		+= qt warn_on
+CONFIG		+= qt warn_on debug
 
 HEADERS		= McHelperWindow.h \
 				UploaderThread.h \
@@ -63,6 +63,7 @@ win32{
   message("This project is being built on Windows.")
   DEFINES += __LITTLE_ENDIAN__
   LIBS += -lSetupapi
+  RC_FILE = mchelper.rc # for application icon
 }
 
 
