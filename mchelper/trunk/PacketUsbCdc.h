@@ -41,12 +41,16 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
 			void run( );
 			// from PacketInterface
 			Status open( );	
-		  Status close( );
+		  	Status close( );
 			int sendPacket( char* packet, int length );
 			bool isPacketWaiting( );
 			int receivePacket( char* buffer, int size );
-         
-			void setInterfaces( PacketReadyInterface* packetReadyInterface, MessageInterface* messageInterface );
+			void setInterfaces( PacketReadyInterface* packetReadyInterface, 
+								MessageInterface* messageInterface );
+								
+			#ifdef Q_WS_WIN
+			void setWidget( QMainWindow* mainWindow );
+			#endif
                 
     private:
 		  QList<OscUsbPacket*> packetList;

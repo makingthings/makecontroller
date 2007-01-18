@@ -16,7 +16,12 @@
 *********************************************************************************/
 
 #include "UsbSerial.h"
-#include <QMutexLocker>
+#include <QMutexLocker> 
+
+#ifdef Q_WS_WIN
+#define _WIN32_WINDOWS 0x0501 // 0x0501 == WindowsXP...define this for MinGW
+#include <dbt.h>
+#endif 
 
 UsbSerial::UsbSerial( )
 {
@@ -30,6 +35,8 @@ UsbSerial::UsbSerial( )
 	if( ( err = IOMasterPort( MACH_PORT_NULL, &masterPort ) ) ) 
 		printf( "could not create master port, err = %08x\n", err );
 	#endif
+	
+	
 }
 
 UsbSerial::UsbStatus UsbSerial::usbOpen( )
@@ -94,6 +101,10 @@ UsbSerial::UsbStatus UsbSerial::usbOpen( )
 					messageInterface->message( 1, "Usb> Make Controller connected at %ls\n", openPorts[i] );
 					Sleep( 10 );  // wait after opening it before trying to read/write
 					deviceOpen = true;
+			 		// now set up to get called back when it's unplugged
+					bool result;
+					result = DoRegisterForNotification( &deviceNotificationHandle );
+					
 					return OK;
 				}
 				//else
@@ -125,6 +136,7 @@ void UsbSerial::usbClose( )
 	  CloseHandle( deviceHandle );
 	  deviceHandle = INVALID_HANDLE_VALUE;
 	  deviceOpen = false;
+	  UnregisterDeviceNotification( deviceNotificationHandle );
 		#endif //Windows-only UsbSerial::close( )
 		messageInterface->message( 1, "Usb> Make Controller disconnected.\n" );
 	}
@@ -188,13 +200,18 @@ UsbSerial::UsbStatus UsbSerial::usbRead( char* buffer, int length )
 	return OK;
 	#endif //Mac-only UsbSerial::read( )
 	
-  //Windows-only
+  //Windows-only///////////////////////////////////////////////////////////////////////
   #ifdef Q_WS_WIN
-  DWORD count;
+  HANDLE hArray[2]; // stash the overlaps in here so we can monitor them all at once
+  DWORD      dwStoredFlags = 0xFFFFFFFF;      // local copy of event flags
+  DWORD      dwCommEvent;     // result from WaitCommEvent
+  DWORD      overlappedResult;         // result from GetOverlappedResult
+  DWORD 	 readCount;          // bytes actually read
+  DWORD      dwRes;           // result from WaitForSingleObject
+  bool       waitingOnReadFlag = false;
+  bool       waitingOnStatusFlag = false;
   UsbStatus retval;
-  DWORD numTransferred;
-  //int length = 0;
-  
+
   // make sure we're open
   if( !deviceOpen )
   {
@@ -204,83 +221,194 @@ UsbSerial::UsbStatus UsbSerial::usbRead( char* buffer, int length )
 	  usbClose( );
 	  return NOT_OPEN;
 	}
-  }
+  } 
+
+	//
+	// create two overlapped structures, one for read events
+	// and another for status events
+	//
+	overlappedRead.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (overlappedRead.hEvent == NULL)
+	    printf("CreateEvent (Reader Event).\n");
+	
+	overlappedStatus.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (overlappedStatus.hEvent == NULL)
+	    printf("CreateEvent (Status Event).\n");
+	
+	//
+    // We want to detect the following events:
+    //   Read events (from ReadFile)
+    //   Status events (from WaitCommEvent)
+    //   Status message events (from our UpdateStatus)
+    //   Thread exit evetns (from our shutdown functions)
+    //
+    hArray[0] = overlappedRead.hEvent;
+    hArray[1] = overlappedStatus.hEvent;
     
-  retval = OK;  
-  readInProgress = false;
-  overlappedRead.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    // initial check, forces updates
+    DWORD newModemStatus;
+    if (!GetCommModemStatus(deviceHandle, &newModemStatus))
+        printf("GetCommModemStatus\n");
+    DWORD dwErrors;
+    COMSTAT ComStatNew = {0};
+    if (!ClearCommError( deviceHandle, &dwErrors, &ComStatNew))
+        printf("ClearCommError\n");
 
   // reset the read overlapped structure
-  overlappedRead.Offset = overlappedRead.OffsetHigh = 0;
+  //overlappedRead.Offset = overlappedRead.OffsetHigh = 0;
   
-  if ( !ReadFile( deviceHandle, buffer, length, &count, &overlappedRead ) )
+  do
   {
-  	DWORD lastError = GetLastError();
-		// messageInterface->message( 1, "USB Read Error: %d \n", lastError );
-	  if ( lastError != ERROR_IO_PENDING)     // read not delayed?
+	  if( !waitingOnReadFlag )
 	  {
-	    usbClose();
-	    //messageInterface->message( 1, "Closed trying to read the file\n" );
-	    retval = UNKNOWN_ERROR;
+		  if ( !ReadFile( deviceHandle, buffer, length, &readCount, &overlappedRead ) )
+		  {
+		  	DWORD lastError = GetLastError( );
+				// messageInterface->message( 1, "USB Read Error: %d \n", lastError );
+			  if ( lastError != ERROR_IO_PENDING)     // read not delayed?
+			  {
+			    //usbClose();
+			    //messageInterface->message( 1, "Closed trying to read the file\n" );
+			    retval = UNKNOWN_ERROR;
+			    waitingOnReadFlag = true;
+			  }
+			  else
+			  	waitingOnReadFlag = true;
+		  }
+		  else          	
+		  {
+		    //messageInterface->message( 1, "USB read D: %c \n", *buffer );
+		    if( readCount > 0 )
+		  		retval = GOT_CHAR;
+		  	else
+		  		retval = NOTHING_AVAILABLE;
+		  }
 	  }
-	  else
-	    readInProgress = true;
-  }
-  else          	
-  {
-		// messageInterface->message( 1, "USB read D: %c \n", *buffer );
-  	retval = GOT_CHAR;
-  }
-
-  if( readInProgress )
-  {
-  	DWORD r;
-	  do
-	  {
-	    r = WaitForSingleObject( overlappedRead.hEvent, 10000 );	 
-	  } while ( r == WAIT_TIMEOUT );
-	  switch( r )
+	  
+		// If status flags have changed, then reset comm mask.
+		// This will cause a pending WaitCommEvent to complete
+		// and the resultant event flag will be NULL.
+		if( dwStoredFlags != DEFAULT_COMM_FLAGS )
 		{
-		  case WAIT_FAILED:
-		    //FIXME is there anything else i need to clean up?
-		    // reset events? terminate anything?
-		    usbClose(  );
-		    //messageInterface->message( 1, "Closed after wait failed\n" );
-		    retval = UNKNOWN_ERROR; //( 100 );
-	      break;
-		  case WAIT_TIMEOUT:
-			  //if( debug > 1 ) TRACE_MESSAGE( "timeout occurred while waiting for event\n" );
-		    retval = NOTHING_AVAILABLE; //( TELEO_E_NOTHING );
-		    //messageInterface->message( 1, "Nothing available\n" );
-		    break;
-		  case WAIT_OBJECT_0:
-	  		// check to see if the pending operation completed
-        if( !GetOverlappedResult( deviceHandle, &overlappedRead, &numTransferred, FALSE )  ) // don't wait
-				{
-	        ///FIXME is there anything else i need to clean up?
-		      // reset events? terminate anything?
-		      usbClose( );
-		      SetEvent( overlappedRead.hEvent );
-		      //messageInterface->message( 1, "Closed because error getting overlapped result\n" );
-		      retval = IO_ERROR;
-		      break;
-				}
-		    //messageInterface->message( 1, "Successfully got overlapped result\n" );
-  			retval = GOT_CHAR;
-			  break; 
-		  case WAIT_ABANDONED:
-		  default:
-		    usbClose( );
-		    //messageInterface->message( 1, "Closed - wait abandoned or default\n" );
-		    retval = IO_ERROR;
-			  break;
-		} // end of switch
-  }
-  
-  CloseHandle( overlappedRead.hEvent );
-  return retval;
+		    dwStoredFlags = DEFAULT_COMM_FLAGS;
+		    if (!SetCommMask( deviceHandle, dwStoredFlags ) )
+		        printf( "error setting comm mask.\n" );
+		}
+	
+		
+		//If there's not an outstanding status check, start another.
+		if( !waitingOnStatusFlag )
+		{
+			//if (NOEVENTS(TTYInfo))
+	          //      fWaitingOnStat = TRUE;
+	            //else {
+	                if (!WaitCommEvent( deviceHandle, &dwCommEvent, &overlappedStatus)) {
+	                    if (GetLastError() != ERROR_IO_PENDING)	  // Wait not delayed?
+	                        printf( "error starting WaitCommEvent.\n" );
+	                    else
+	                        waitingOnStatusFlag = TRUE;
+	                }
+	                else
+	                    // WaitCommEvent returned immediately
+	                    printf( "got a status event - check dwCommEvent.\n" );
+	            //}
+		}
+		
+		//
+	        // wait for pending operations to complete
+	        //
+	        if ( waitingOnStatusFlag && waitingOnReadFlag ) {
+	            dwRes = WaitForMultipleObjects( OVERLAPPED_HANDLES, hArray, FALSE, 1000 );
+	            switch(dwRes)
+	            {
+	                // read completed
+	                case WAIT_OBJECT_0:
+	                    if (!GetOverlappedResult( deviceHandle, &overlappedRead, &readCount, FALSE)) {
+	                        if (GetLastError() == ERROR_OPERATION_ABORTED)
+	                            printf( "read aborted.\n" );
+	                        else
+	                            printf( "error in GetOverlappedResult.\n" );
+	                    }
+	                    else {      // read completed successfully
+	                        //if( ( readCount != MAX_READ_BUFFER )  ) // && SHOWTIMEOUTS( TTYInfo )
+	                          //  printf( "Read timed out.\n" );
+	                        if( readCount )
+	                            //OutputABuffer(hTTY, lpBuf, dwRead);
+	                            printf( "Do something with the buffer?.\n" );
+	                    }
+	
+	                    waitingOnReadFlag = false;
+	                    break;
+	
+	                // status completed
+	                case WAIT_OBJECT_0 + 1:
+	                	DWORD dwMask;
+    					if (GetCommMask( deviceHandle,&dwMask) )
+    					{
+      						bool dataChanged;
+      						dataChanged = dwMask & EV_TXEMPTY;
+      						dataChanged = dwMask & EV_ERR;
+      						dataChanged = dwMask & EV_BREAK;
+      						dataChanged = dwMask & EV_CTS;
+      						dataChanged = dwMask & EV_DSR;
+      						dataChanged = dwMask & EV_RING;
+      						dataChanged = dwMask & EV_RLSD;
+      						dataChanged = dwMask & EV_RXCHAR;
+      						dataChanged = dwMask & EV_RXFLAG;
+      						dataChanged = false;
+      						//ResetEvent ( ov.hEvent );
+   						}
+	                	
+	                    if (!GetOverlappedResult( deviceHandle, &overlappedStatus, &overlappedResult, FALSE)) {
+	                        if (GetLastError() == ERROR_OPERATION_ABORTED)
+	                            //UpdateStatus("WaitCommEvent aborted\r\n");
+	                            printf( "WaitCommEvent aborted.\n" );
+	                        else
+	                            //ErrorInComm("GetOverlappedResult (in Reader)");
+	                            printf( "error in GetOverlappedResult.\n" );
+	                    }
+	                    else       // status check completed successfully
+	                        //ReportStatusEvent(dwCommEvent);
+	                        printf( "status check completed successfully.\n" );
+	
+	                    waitingOnStatusFlag = FALSE;
+	                    break;
+	
+	                //
+	                // status message event
+	                //
+	                case WAIT_OBJECT_0 + 2:
+	                    //StatusMessage();
+	                    printf( "wtf.\n" );
+	                    break;
+	
+	                //
+	                // thread exit event
+	                //
+	                case WAIT_OBJECT_0 + 3:
+	                    //fThreadDone = TRUE;
+	                    printf( "thread is finished.\n" );
+	                    break;
+	
+	                case WAIT_TIMEOUT:
+	                    // timeouts are not reported because they happen too often
+	                    // OutputDebugString("Timeout in Reader & Status checking\n\r");
+	                    retval = NOTHING_AVAILABLE;
+	                    break;                       
+	
+	                default:
+	                    //ErrorReporter("WaitForMultipleObjects(Reader & Status handles)");
+	                    printf( "WaitForMultipleObjects(Reader & Status handles)\n" );
+	                    break;
+	            }
+	        }
+		} while( retval == NOTHING_AVAILABLE );
+	CloseHandle(overlappedRead.hEvent);
+    CloseHandle(overlappedStatus.hEvent);
+    
+    return retval;
   	
-	#endif //Windows-only UsbSerial::read( )
+  #endif //Windows-only UsbSerial::read( )//////////////////////////////////////////////////////////////
 }
 
 UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
@@ -472,6 +600,7 @@ int UsbSerial::openDevice( TCHAR* deviceName )
   dcb.fOutxCtsFlow = TRUE;
   dcb.fRtsControl = RTS_CONTROL_HANDSHAKE;
   dcb.fAbortOnError = TRUE;
+  //dcb.fDtrControl = DTR_CONTROL_ENABLE; // magic testing...
   if( !SetCommState( deviceHandle, &dcb ) )
   {
 	  //messageInterface->message( 1, "SetCommState failed\n");
@@ -491,6 +620,7 @@ int UsbSerial::openDevice( TCHAR* deviceName )
       timeouts.ReadIntervalTimeout = MAXDWORD; // return immediately
   }
 */
+  timeouts.ReadIntervalTimeout = 5000;
   timeouts.ReadTotalTimeoutMultiplier = 0;
   timeouts.ReadTotalTimeoutConstant = 0;
   timeouts.WriteTotalTimeoutMultiplier = 0;
@@ -740,12 +870,36 @@ LONG UsbSerial::QueryStringValue(HKEY hKey,LPCTSTR lpValueName,LPTSTR* lppString
       return ERROR_SUCCESS;
     }
     else if(dwError==ERROR_MORE_DATA){
-      /* not enough space, keep looping */
+      /* not enough space, keep looping */ 
     }
     else return dwError;
   }
+} //Windows-only UsbSerial::QueryStringValue( )
+ 
+ 
+ // make sure to do this only once the device has been opened,
+ // since it relies on the deviceHandle to register for the call.
+bool UsbSerial::DoRegisterForNotification( HDEVNOTIFY *hDevNotify )
+{
+	DEV_BROADCAST_HANDLE NotificationFilter;
+	
+	ZeroMemory( &NotificationFilter, sizeof(NotificationFilter) );
+	NotificationFilter.dbch_size = sizeof( DEV_BROADCAST_HANDLE );
+	NotificationFilter.dbch_devicetype = DBT_DEVTYP_HANDLE;
+	NotificationFilter.dbch_handle = deviceHandle;  // class variable
+	HWND winId = mainWindow->winId( );
+
+    *hDevNotify = RegisterDeviceNotification( winId, &NotificationFilter, DEVICE_NOTIFY_WINDOW_HANDLE );
+
+    if(!*hDevNotify) 
+    {
+        printf( "RegisterDeviceNotification failed: %ld\n", GetLastError());
+        return false;
+    }
+    printf( "RegisterDeviceNotification success\n" );
+    return true;
 }
-#endif //Windows-only UsbSerial::QueryStringValue( )
+#endif 
 
 //Mac-only
 #ifdef Q_WS_MAC
@@ -756,7 +910,7 @@ LONG UsbSerial::QueryStringValue(HKEY hKey,LPCTSTR lpValueName,LPTSTR* lppString
     kern_return_t kernResult = KERN_FAILURE;
     Boolean modemFound = false;
     // Initialize the returned path
-    *path = '\0';
+    *path = '\0'; 
     
     // Iterate across all modems found. In this example, we bail after finding the first modem.
     while ((modemService = IOIteratorNext(serialPortIterator)) && !modemFound)
@@ -876,5 +1030,6 @@ int UsbSerial::sleepMs( long ms )
 		return 0; //TELEO_OK;
 }
 #endif
+
 
 

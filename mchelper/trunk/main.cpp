@@ -15,13 +15,39 @@
 
 *********************************************************************************/
 
+
 #include "McHelperWindow.h"
 
 #include <QApplication>
+#include <QMessageBox> 
+
+#ifdef Q_WS_WIN
+#define DBT_DEVICEREMOVECOMPLETE 0x8004
+
+bool McHelperApp::winEventFilter( MSG* msg, long* retVal )
+{	
+	if ( msg->message == WM_DEVICECHANGE )
+	{
+		//printf( "Device Change Parameter: %X\n", msg->wParam );
+		if( msg->wParam == DBT_DEVICEREMOVECOMPLETE )
+		{
+			mchelper->usbRemoved( );  // call back to get the usb port shut down.
+			*retVal = false;
+			return true;
+		}
+	}
+	return false;
+}
+
+void McHelperApp::setMainWindow( McHelperWindow* window )
+{
+	mchelper = window;
+}
+#endif // Windows-only
 
 int main(int argc, char *argv[])
 {
-	QApplication app(argc, argv);
+	McHelperApp app(argc, argv);
 	
 	McHelperWindow mcHelperWindow( &app );
 	

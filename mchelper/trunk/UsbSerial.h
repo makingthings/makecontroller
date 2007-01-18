@@ -26,15 +26,27 @@
 #include <QtGlobal>
 #include "MessageInterface.h"
 #include <QMutex>
+#include <QMainWindow>
 
 //Windows-only
 #ifdef Q_WS_WIN
 
 #define _UNICODE
+#if (WINVER != 0x0501) // Hacky business for MinGW...this needs to be set BEFORE including windows.h
+#define WINVER 0x0501
+#endif
+
 #include <windows.h>
 #include <tchar.h>
 
-#endif  //Windows defines/includes
+//DEFINE_GUID( GUID_MAKE_CTRL_KIT, 0x4D36E978, 0xE325, 0x11CE, 
+//								0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18 );
+
+#define DEFAULT_COMM_FLAGS EV_BREAK | EV_CTS   | EV_DSR | EV_ERR | EV_RING | EV_RLSD
+                 //| EV_RXCHAR | EV_RXFLAG | EV_TXEMPTY ;
+#define OVERLAPPED_HANDLES 2
+
+#endif  //Windows defines/includes 
 
 //Mac only
 #ifdef Q_WS_MAC
@@ -74,13 +86,15 @@ class UsbSerial
 		UsbStatus usbWriteChar( char c );
 		bool usbIsOpen( );
 		
+		
 	protected:
 	  //Mac-only
 		#ifdef Q_WS_MAC
 		int sleepMs( long ms );
 		#endif
 		
-	  MessageInterface* messageInterface;		
+	  MessageInterface* messageInterface;
+	  QMainWindow* mainWindow;		
 		
 	private:
 		bool deviceOpen;
@@ -95,11 +109,16 @@ class UsbSerial
 		LONG QueryStringValue(HKEY hKey,LPCTSTR lpValueName,LPTSTR* lppStringValue);
 		int testOpen( TCHAR* deviceName );
 		int openDevice( TCHAR* deviceName );
+		bool DoRegisterForNotification( HDEVNOTIFY *hDevNotify );
 		
 		// the device handle
 		OVERLAPPED overlappedRead;
 		char readBuffer[512];
 		OVERLAPPED overlappedWrite;
+		OVERLAPPED overlappedStatus;
+		DWORD dwStoredFlags;
+		HWND hWnd;
+		HDEVNOTIFY deviceNotificationHandle;
 		#endif
 		
 		//Mac only
