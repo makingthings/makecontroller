@@ -27,7 +27,9 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	this->application = application;
 	setupUi(this);
 	
+	#ifdef Q_WS_WIN
 	application->setMainWindow( this );
+	#endif
 	
 	#ifdef Q_WS_MAC
 	setWindowIcon( QIcon("IconPackageOSX.icns") );
