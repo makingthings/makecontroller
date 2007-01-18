@@ -387,8 +387,10 @@ void McHelperWindow::about( )  // set the version number here.
   "www.makingthings.com") );
 }
 
+#ifdef Q_WS_WIN
 void McHelperWindow::usbRemoved( )
 {
 	usb->usbClose( );
 }
+#endif
 

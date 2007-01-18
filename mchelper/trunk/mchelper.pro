@@ -20,7 +20,7 @@ TEMPLATE	= app
 
 FORMS = mchelper.ui
 
-CONFIG		+= qt warn_on debug
+CONFIG		+= qt release #warn_on
 
 HEADERS		= McHelperWindow.h \
 				UploaderThread.h \
@@ -52,6 +52,7 @@ QTDIR_build:REQUIRES="contains(QT_CONFIG, small-config)"
 
 macx{
   message("This project is being built on a Mac.")
+	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
   LIBS += -framework IOKit
   LIBS+= -dead_strip
   ICON = IconPackageOSX.icns
