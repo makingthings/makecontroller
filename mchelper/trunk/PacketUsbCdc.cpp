@@ -46,16 +46,11 @@ void PacketUsbCdc::run()
 
 		if( usbIsOpen() ) // then, if open() succeeded, try to read
 		{
-			//messageInterface->message( 1, "USB is open\n" );
 			UsbStatus readResult = usbRead( &justGot, 1 );  //we're only ever going to read 1 character at a time
 			//messageInterface->message( 1, "read result: %d\n", readResult );
-			//messageInterface->message( 1, "usb> Just read...usb open? %d, handle? %d\n", usbIsOpen(), deviceHandle );
 			
 			if( readResult == ERROR_CLOSE || readResult == IO_ERROR )
-			{
 				close();
-				messageInterface->message( 1, "failed in here\n" );
-			}
 			
 			if( readResult == GOT_CHAR ) //we got a character
 			{
