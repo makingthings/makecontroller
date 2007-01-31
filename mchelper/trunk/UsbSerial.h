@@ -68,6 +68,7 @@
 #include <IOKit/serial/IOSerialKeys.h>
 #include <CoreFoundation/CFNumber.h>
 #include <IOKit/usb/IOUSBLib.h>
+#include <IOKit/IOBSD.h>
 #include <IOKit/IOMessage.h>
 
 typedef const char cchar;
@@ -130,9 +131,8 @@ class UsbSerial
 		mach_port_t masterPort;
 		bool foundMakeController;
 		CFMutableDictionaryRef matchingDictionary;
-		io_service_t usbDeviceReference;
+		io_object_t usbDeviceReference;
 		
-		kern_return_t findMakeController( io_iterator_t *matchingServices );
 		kern_return_t getDevicePath(io_iterator_t serialPortIterator, char *path, CFIndex maxPathSize);
 		void createMatchingDictionary( );
 		#endif

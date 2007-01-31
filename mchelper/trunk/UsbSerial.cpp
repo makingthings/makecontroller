@@ -55,13 +55,12 @@ UsbSerial::UsbStatus UsbSerial::usbOpen( )
 		  return ALREADY_OPEN;
 
 		kern_return_t kernResult;
-		io_iterator_t serialPortIterator;
+		io_iterator_t iterator = 0;
 		
-		kernResult = findMakeController( &serialPortIterator );
-		kernResult = getDevicePath( serialPortIterator, deviceFilePath, sizeof(deviceFilePath) );
-		IOObjectRelease(serialPortIterator);    // Release the iterator.
+		kernResult = getDevicePath( iterator, deviceFilePath, sizeof(deviceFilePath) );
+		IOObjectRelease( iterator ); // clean up
 		
-		if (!deviceFilePath[0] || !foundMakeController)
+		if (!deviceFilePath[0] )
     {
 			//printf("Didn't find a Make Controller.\n");
 			return NOT_OPEN;
@@ -904,124 +903,86 @@ bool UsbSerial::DoRegisterForNotification( HDEVNOTIFY *hDevNotify )
 //Mac-only
 #ifdef Q_WS_MAC
 
-/*static*/ kern_return_t UsbSerial::getDevicePath(io_iterator_t serialPortIterator, char *path, CFIndex maxPathSize)
+kern_return_t UsbSerial::getDevicePath(io_iterator_t serialPortIterator, char *path, CFIndex maxPathSize)
 {
     io_object_t modemService;
+		char productName[50] = "";
     kern_return_t kernResult = KERN_FAILURE;
-    Boolean modemFound = false;
+    Boolean deviceFound = false;
     // Initialize the returned path
-    *path = '\0'; 
-    
-    // Iterate across all modems found. In this example, we bail after finding the first modem.
-    while ((modemService = IOIteratorNext(serialPortIterator)) && !modemFound)
-    {
-			CFTypeRef bsdPathAsCFString;
-			bsdPathAsCFString = IORegistryEntryCreateCFProperty(modemService,
-                                                            CFSTR(kIOCalloutDeviceKey),
-                                                            kCFAllocatorDefault,
-                                                            0);
-			
-			if (bsdPathAsCFString)
-			{
-				Boolean result;      
-				result = CFStringGetCString( (CFStringRef)bsdPathAsCFString,
-																		path,
-																		maxPathSize, 
-																		kCFStringEncodingUTF8);
-				CFRelease(bsdPathAsCFString);
-				
-				if (result)
-				{
-					//printf("Modem found with BSD path: %s", path);
-					modemFound = true;
-					kernResult = KERN_SUCCESS;
-				}
-				printf("\n");
-
-				// Release the io_service_t now that we are done with it.
-				(void) IOObjectRelease(modemService);
-			}
-		}
-    return kernResult;
-}
-
-kern_return_t UsbSerial::findMakeController( io_iterator_t *matchingServices )
-{
-  // there's probably a good way to combine these steps into one dictionary, but...
-	// first, try to find a BSD Serial Device
-	kern_return_t err; 
+    *path = '\0';
+	
 	CFMutableDictionaryRef bsdMatchingDictionary;
 	
-	bsdMatchingDictionary = IOServiceMatching(kIOSerialBSDServiceValue);
+	// create a dictionary that looks for all BSD modems
+	bsdMatchingDictionary = IOServiceMatching( kIOSerialBSDServiceValue );
 	if (bsdMatchingDictionary == NULL)
 		printf("IOServiceMatching returned a NULL dictionary.\n");
 	else
 		CFDictionarySetValue(bsdMatchingDictionary, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDModemType));
 	
-	err = IOServiceGetMatchingServices( kIOMasterPortDefault, bsdMatchingDictionary, matchingServices );    
-	if ( KERN_SUCCESS != err )
+	// then create the iterator with all the matching devices
+	kernResult = IOServiceGetMatchingServices( kIOMasterPortDefault, bsdMatchingDictionary, &serialPortIterator );    
+	if ( KERN_SUCCESS != kernResult )
 	{
-		printf("IOServiceGetMatchingServices returned %d\n", err);
-		return err;
+		printf("IOServiceGetMatchingServices returned %d\n", kernResult);
+		return kernResult;
 	}
 	
-	// then, try to match it against the vendor and product IDs of the Make Controller Kit
-	io_iterator_t iterator = 0;
-	createMatchingDictionary( );
-	
-	err = IOServiceGetMatchingServices( masterPort, matchingDictionary, &iterator );
-	matchingDictionary = 0;  // consumed by the above call
-
-	if( ( usbDeviceReference = IOIteratorNext( iterator ) ) )
+	// Iterate through all modems found. In this example, we bail after finding the first modem.
+	while ((modemService = IOIteratorNext(serialPortIterator)) && !deviceFound)
 	{
-		//messageInterface->message( 2, "usb> Found boot agent.\n" );
-		//printf( "usb> Found boot agent\n" );
-		foundMakeController = true;
+		CFTypeRef bsdPathAsCFString;
+		CFTypeRef productNameAsCFString;
+		// check the name of the modem's callout device
+		bsdPathAsCFString = IORegistryEntrySearchCFProperty(modemService,
+																													kIOServicePlane,
+																													CFSTR(kIOCalloutDeviceKey),
+																													kCFAllocatorDefault,
+																													0);
+		// then, because the callout device could be any old thing, and because the reference to the modem returned by the
+		// iterator doesn't include much device specific info, look at its parent, and check the product name
+		io_registry_entry_t parent;  
+		kernResult = IORegistryEntryGetParentEntry( modemService,	kIOServicePlane, &parent );																										
+		productNameAsCFString = IORegistryEntrySearchCFProperty(parent,
+																													kIOServicePlane,
+																													CFSTR("Product Name"),
+																													kCFAllocatorDefault,
+																													0);
 		
-		IOObjectRelease(usbDeviceReference);
-		IOObjectRelease(iterator);
-		return 0;
-	} else
-	{
-		usbClose( );
-		IOObjectRelease(usbDeviceReference);
-		IOObjectRelease(iterator);
-		return -1;
+		if( bsdPathAsCFString )
+		{
+			Boolean result;      
+			result = CFStringGetCString( (CFStringRef)bsdPathAsCFString,
+																	path,
+																	maxPathSize, 
+																	kCFStringEncodingUTF8);
+			
+			if( productNameAsCFString )
+			{
+			result = CFStringGetCString( (CFStringRef)productNameAsCFString,
+																	productName,
+																	maxPathSize, 
+																	kCFStringEncodingUTF8);
+			}
+			if (result)
+			{
+				//printf("Modem found with BSD path: %s", path);
+				if( (strcmp( productName, "Make Controller Ki") == 0) )
+				{
+					CFRelease(bsdPathAsCFString);
+					IOObjectRelease(parent);
+					deviceFound = true;
+					kernResult = KERN_SUCCESS;
+				}
+				else
+					*path = '\0';  // clear this, since this is checked above.
+			}
+			printf("\n");
+			(void) IOObjectRelease(modemService);
+		}
 	}
-}
-
-void UsbSerial::createMatchingDictionary( )
-{
-	SInt32 idVendor = 0xeb03;
-	SInt32 idProduct = 0x920;
-	CFNumberRef numberRef;
-	
-	if( !(matchingDictionary = IOServiceMatching( kIOUSBDeviceClassName )) )
-	{
-		//messageInterface->message( 1, "usb> could not create matching dictionary.\n" );
-		printf( "could not create matching dictionary\n" );
-		return;
-	}
-	
-	if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idVendor)) )
-	{
-		//messageInterface->message( 1, "usb> could not create CFNumberRef for vendor.\n" );
-		printf( "could not create CFNumberRef for vendor\n" );
-		return;
-	}
-	CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBVendorID), numberRef );
-	CFRelease( numberRef );
-	numberRef = 0;
-	
-	if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idProduct)) )
-	{
-		//messageInterface->message( 1, "usb> could not create CFNumberRef for product.\n" );
-		printf( "could not create CFNumberRef for product\n" );
-		return;
-	}
-	CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBProductID), numberRef);
-	CFRelease( numberRef );
-	numberRef = 0;
+	return kernResult;
 }
 
 int UsbSerial::sleepMs( long ms )
