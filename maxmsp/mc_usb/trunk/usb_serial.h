@@ -31,11 +31,15 @@ typedef const char cchar;
 #include <termios.h>
 #include <errno.h>
 #include <unistd.h>
-// for scandir
-#include <sys/types.h>
-#include <dirent.h>
 
-#endif
+//IOKit biz for USB connection
+#include <IOKit/IOKitLib.h>
+#include <IOKit/serial/IOSerialKeys.h>
+#include <CoreFoundation/CFNumber.h>
+#include <IOKit/usb/IOUSBLib.h>
+#include <IOKit/IOBSD.h>
+#include <IOKit/IOMessage.h>
+#endif // Mac-only includes
 
 //--------------------------------------- Windows-only -------------------------------
 #ifdef WIN32
@@ -43,7 +47,7 @@ typedef unsigned char bool;
 #include <windows.h>
 #include <tchar.h>
 #include <ctype.h>
-#endif
+#endif // Win-only includes
 
 //mcUsb structure
 typedef struct
@@ -61,7 +65,7 @@ typedef struct
   #ifndef WIN32
   bool blocking;
   int deviceHandle;
-  cchar* deviceName;
+  char deviceFilePath[ 512 ];
   #endif
 	
 } t_usbInterface;
@@ -78,7 +82,8 @@ int usb_writeChar( t_usbInterface* usbInt, char c );
 #ifndef WIN32
 // usb function prototypes
 int FindUsbSerialDevice( cchar** dest, int index );
-static int matchUsbSerialDevice( struct dirent * tryThis );
+//static int matchUsbSerialDevice( struct dirent * tryThis );
+kern_return_t getDevicePath(io_iterator_t serialPortIterator, char *path, CFIndex maxPathSize);
 #endif
 
 //Windows only
@@ -90,4 +95,5 @@ int testOpen( t_usbInterface* usbInt, TCHAR* deviceName );
 int openDevice( t_usbInterface* usbInt, TCHAR* deviceName );
 #endif
 
-#endif
+#endif // USB_SERIAL_H
+
