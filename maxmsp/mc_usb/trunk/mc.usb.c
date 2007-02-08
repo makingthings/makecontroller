@@ -70,6 +70,7 @@ void mcUsb_tick( t_mcUsb *x );
 mcError mc_send_packet( t_mcUsb *x, t_usbInterface* u, char* packet, int length );
 void mc_build_packet( t_mcUsb *x, char c );
 void mcUsb_sampleperiod( t_mcUsb *x, long i );
+void mcUsb_devicepath( t_mcUsb *x );
 
 // pattr support function prototypes
 //t_max_err mcUsb_getvalueof(t_mcUsb *x, long *ac, t_atom **av);
@@ -97,7 +98,8 @@ int main( )
 	class_addmethod(c, (method)mcUsb_int, "int", A_LONG, 0);
 	class_addmethod(c, (method)mcUsb_anything, "anything", A_GIMME, 0);
 	class_addmethod(c, (method)mcUsb_assist, "assist", A_CANT, 0);
-	class_addmethod(c, (method)mcUsb_sampleperiod, "sampleperiod", A_LONG,0);
+	class_addmethod(c, (method)mcUsb_sampleperiod, "sampleperiod", A_LONG, 0);
+	class_addmethod(c, (method)mcUsb_devicepath, "devicepath", A_GIMME, 0);
 	
 	// these methods support the pattr set of objects
 	//class_addmethod(c, (method)mcUsb_getvalueof, "getvalueof", A_CANT, 0);  
@@ -164,14 +166,19 @@ void mcUsb_tick( t_mcUsb *x )
 	while( 1 )
 	{
 	  readResult = usb_read( x->mc_usbInt, &x->singleChar, 1 );  //we're only ever going to read 1 character at a time
-	  if( readResult != MC_GOT_CHAR ) //we got a character
+		if( readResult == MC_ERROR_CLOSE || readResult == MC_IO_ERROR )
+		{
+				usb_close( x->mc_usbInt );
+				break;
+		}
+	  else if( readResult != MC_GOT_CHAR ) //we got a character
 	    break;
 	  mc_build_packet( x, x->singleChar );
 	}
 	if( x->mc_usbInt->deviceOpen )
 	  clock_delay( x->mc_clock, x->sampleperiod ); //set the delay interval for the next tick
 	else
-	  clock_delay( x->mc_clock, 1000 );
+	  clock_delay( x->mc_clock, 100 );
 	  
 }
 
@@ -283,6 +290,15 @@ void mcUsb_sampleperiod( t_mcUsb *x, long i )
 	object_attr_setlong( x, gensym("sampleperiod"), i );
 }
 
+// print out the device's file path, if it's connected, in response to a "filepath" message
+void mcUsb_devicepath( t_mcUsb *x )
+{
+	if( x->mc_usbInt->deviceOpen )
+	  post( "mc.usb is connected to a Make Controller at %s", x->mc_usbInt->deviceFilePath );
+	else
+		post( "mc.usb is not currently connected to a Make Controller Kit." );
+}
+
 void mcUsb_free(t_mcUsb *x)
 {
   freeobject( (t_object*)x->mc_clock );
@@ -296,7 +312,7 @@ void mcUsb_free(t_mcUsb *x)
 void *mcUsb_new( t_symbol *s, long ac, t_atom *av )
 {
 	t_mcUsb* new_mcUsb;
-	int i;
+	//int i;
 	cchar* usbConn = NULL;
 
 	// we use object_alloc here, rather than newobject
@@ -304,15 +320,6 @@ void *mcUsb_new( t_symbol *s, long ac, t_atom *av )
 	{
 		//object_obex_store( new_mcUsb, _sym_dumpout, outlet_new(new_mcUsb, NULL) ); // add a dumpout outlet
 		new_mcUsb->out0 = outlet_new(new_mcUsb, 0L);  // add a left outlet
-		
-		//new_mcUsb->symval->s_thing = (t_object*)new_mcUsb;
-		
-		//for( i = 0; i < ac; i++ )
-		 //post( "Argument %d: %s\n", i, atom_getsym( av + i ));
-
-		//object_register( gensym( "_makeController" ), gensym( "_mcUsb" ), new_mcUsb );
-		
-		//attr_args_process(new_mcUsb, ac, av);		
 	}
 	
 	new_mcUsb->mc_clock = clock_new( new_mcUsb, (method)mcUsb_tick );
