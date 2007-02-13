@@ -1,4 +1,4 @@
-# Doxyfile 1.4.7
+# Doxyfile 1.5.1
 
 #---------------------------------------------------------------------------
 # Project related configuration options
@@ -82,7 +82,7 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = /Users/liam/Documents/mtcode/make/flash/com/makingthings/flosc
+INPUT                  = ../com/makingthings/flosc
 FILE_PATTERNS          = *.as
 RECURSIVE              = YES
 EXCLUDE                = 
