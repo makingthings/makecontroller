@@ -152,7 +152,7 @@ int Motor_GetSpeed( int index )
       return 0;
   }
   
-  return Motor_SetFinal( index, mp );
+  return mp->speed;
 }
 
 /**	
