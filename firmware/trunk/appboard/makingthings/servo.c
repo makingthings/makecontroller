@@ -29,6 +29,15 @@
 
 #include "AT91SAM7X256.h"
 
+// These constants govern how long the pulse preamble is 
+// (SERVO_OFFSET) and how long the pulse can be (SERVO_MAX)
+// So... if you want the servo pulse to be 1ms-2ms, you'd 
+// set SERVO_MAX = 1000, SERVO_OFFEST = 1000
+// So... if you want the servo pulse to be 0.3ms-2.3ms, you'd 
+// set SERVO_MAX = 2000, SERVO_OFFEST = 300
+#define SERVO_MAX     1000
+#define SERVO_OFFSET  1000
+
 #if ( APPBOARD_VERSION == 50 )
   #define SERVO_0_IO IO_PA02
   #define SERVO_1_IO IO_PA02
@@ -144,8 +153,8 @@ int Servo_SetPosition( int index, int position )
 
   if ( position < 0 )
     position = 0;
-  if ( position > 1023 )
-    position = 1023;
+  if ( position > SERVO_MAX )
+    position = SERVO_MAX;
 
   DisableFIQFromThumb();
   Servo.control[ index ].positionRequested = position << 6;
@@ -389,13 +398,13 @@ void Servo_IRQCallback( int id )
       }
 
       period = s->position >> 6;
-      if ( period >= 0 && period <= 1023 )
+      if ( period >= 0 && period <= SERVO_MAX )
       {
         s->pIoBase->PIO_CODR = s->pin;
       }
       else
-        period = 1023;
-      FastTimer_SetTime( &Servo.fastTimerEntry, period + 988 );
+        period = SERVO_MAX;
+      FastTimer_SetTime( &Servo.fastTimerEntry, period + SERVO_OFFSET );
       Servo.state = 1;
       break;
     }
@@ -404,7 +413,7 @@ void Servo_IRQCallback( int id )
       ServoControl* s = &Servo.control[ Servo.index ];
       period = s->position >> 6;
       s->pIoBase->PIO_SODR = s->pin;
-      FastTimer_SetTime( &Servo.fastTimerEntry, Servo.gap + ( 1023 - period ) );
+      FastTimer_SetTime( &Servo.fastTimerEntry, Servo.gap + ( SERVO_MAX - period ) );
       Servo.state = 0;
       break;
     }
