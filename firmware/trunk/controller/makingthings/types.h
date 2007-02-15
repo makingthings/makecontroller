@@ -27,6 +27,7 @@
 /* some types */
 typedef unsigned char bool;
 typedef unsigned char uchar;
+typedef unsigned char uint8;
 typedef unsigned int uint;
 typedef long long int llong;
 typedef long long int longlong;
