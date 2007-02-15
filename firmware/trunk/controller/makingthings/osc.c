@@ -273,6 +273,7 @@ void Osc_UdpTask( void* parameters )
     Osc_SetReplyAddress( channel, address );
 
     Osc_ReceivePacket( channel, ch->incoming, length );
+    Sleep( 1 );
   }
 }
 
