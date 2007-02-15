@@ -199,7 +199,7 @@ static void prvSetupHardware( void )
 	#if ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 )
 		AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA11;
 		AT91C_BASE_PIOA->PIO_OER = AT91C_PIO_PA11;
-    AT91C_BASE_PIOA->PIO_SODR = AT91C_PIO_PA11;
+    AT91C_BASE_PIOA->PIO_CODR = AT91C_PIO_PA11; // had this round the wrong way...
 	#endif
 }
 /*-----------------------------------------------------------*/
