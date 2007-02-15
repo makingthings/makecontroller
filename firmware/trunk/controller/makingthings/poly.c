@@ -170,7 +170,7 @@ int Poly_SetActive( int value )
       // Poly.readConstants = false;
       Poly.mode0 = -1;
       Poly.mode1 = -1;
-      TaskCreate( PolyTask, "Poly", 200, NULL, 2 );
+      TaskCreate( PolyTask, "Poly", 400, NULL, 2 );
     }
   }
   else
