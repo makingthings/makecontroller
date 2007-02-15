@@ -179,7 +179,7 @@ int DigitalOut_GetValue( int index )
 int DigitalOut_Start( int index )
 {
   int status;
-  int enableIndex = index > 1;
+  int enableIndex = index >> 1;
 
   if ( index < 0 || index >= DIGITALOUT_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
