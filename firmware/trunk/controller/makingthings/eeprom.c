@@ -105,7 +105,7 @@ int Eeprom_GetActive( )
 */
 int Eeprom_Write( int address, uchar* buffer, int count )
 {
-  if ( address < 0 || address > EEPROM_SIZE )
+  if ( address < 0 || address >= EEPROM_SIZE )
     return CONTROLLER_ERROR_BAD_ADDRESS;
 
   if ( Eeprom_users == 0 )
@@ -124,7 +124,7 @@ int Eeprom_Write( int address, uchar* buffer, int count )
   uchar c[ count + 4 ];
 
   c[ 0 ] = EEPROM_INSTRUCTION_WRITE;
-  c[ 1 ] = (unsigned char) address >> 8;
+  c[ 1 ] = (unsigned char)( address >> 8 );
   c[ 2 ] = (unsigned char)( address & 0xFF );
   c[ 3 ] = 0;
 
@@ -167,7 +167,7 @@ int Eeprom_Read( int address, uchar* buffer, int count )
   unsigned char c[ count + 4 ];
 
   c[ 0 ] = EEPROM_INSTRUCTION_READ;
-  c[ 1 ] = (unsigned char) address >> 8;
+  c[ 1 ] = (unsigned char)( address >> 8 );
   c[ 2 ] = (unsigned char)( address & 0xFF );
   c[ 3 ] = 0;
   
