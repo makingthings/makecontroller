@@ -24,6 +24,13 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
+// This has builtin endian compensation!
+//#define IP_ADDRESS( a, b, c, d ) ( ( (int)d << 24 ) + ( (int)c << 16 ) + ( (int)b << 8 ) + (int)a )
+#define IP_ADDRESS_D( address )  ( ( (int)address >> 24 ) & 0xFF ) 
+#define IP_ADDRESS_C( address )  ( ( (int)address >> 16 ) & 0xFF ) 
+#define IP_ADDRESS_B( address )  ( ( (int)address >>  8 ) & 0xFF ) 
+#define IP_ADDRESS_A( address )  ( ( (int)address       ) & 0xFF ) 
+
 
 int Network_SetActive( int active );
 int Network_GetActive( void );
@@ -31,30 +38,32 @@ int Network_GetActive( void );
 int Network_Init( void );
 
 int Network_SetAddress( int a0, int a1, int a2, int a3 );
+int Network_SetTcpOutAddress( int a0, int a1, int a2, int a3 );
 int Network_SetMask( int a0, int a1, int a2, int a3 );
 int Network_SetGateway( int a0, int a1, int a2, int a3 );
 int Network_SetValid( int v );
 
 int Network_GetAddress( int* a0, int* a1, int* a2, int* a3 );
+int Network_GetTcpOutAddress( int* a0, int* a1, int* a2, int* a3 );
 int Network_GetMask( int* a0, int* a1, int* a2, int* a3 );
 int Network_GetGateway( int* a0, int* a1, int* a2, int* a3 );
 int Network_GetValid( void );
 
 void* Socket( int address, int port );
-int   SocketRead( void* socket, void* data, int length );
-int   SocketWrite( void* socket, void* data, int length );
-int   SocketClose( void* socket );
+int SocketRead( void* socket, void* data, int length );
+int SocketWrite( void* socket, void* data, int length );
+void SocketClose( void* socket );
 
 void* ServerSocket( int port );
 void* ServerSocketAccept( void* serverSocket );
-int   ServerSocketClose( void* serverSocket );
+int ServerSocketClose( void* serverSocket );
 
 int SocketSendDecimal( void *socket, int d );
 
 void* DatagramSocket( int port );
-int   DatagramSocketSend( void* datagramSocket, int address, int port, void* data, int length );
-int   DatagramSocketReceive( void* datagramSocket, int receivingPort, int* address, int* port, void* data, int length );
-void  DatagramSocketClose( void* socket );
+int DatagramSocketSend( void* datagramSocket, int address, int port, void* data, int length );
+int DatagramSocketReceive( void* datagramSocket, int receivingPort, int* address, int* port, void* data, int length );
+void DatagramSocketClose( void* socket );
 
 
 /* NetworkOsc Interface */

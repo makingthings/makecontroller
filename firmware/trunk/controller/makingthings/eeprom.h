@@ -64,6 +64,21 @@ The location in Eeprom where the IP address of the gateway is stored.
 \def EEPROM_SYSTEM_END
 The location of the end of the "System" information in Eeprom.
 
+\def EEPROM_UDP_PORT
+The location in EEPROM where the local UDP port is stored.
+
+\def EEPROM_TCP_CONNECT_ON_REBOOT
+The location in EEPROM where the flag to automatically make a connection 
+to a remote TCP server is stored.
+
+\def EEPROM_TCP_REMOTE_ADDRESS
+The location in EEPROM where the address for the remote TCP server to connect to 
+is stored.
+
+\def EEPROM_TCP_REMOTE_PORT
+The location in EEPROM where the port of the remote TCP server to connect to 
+is stored.
+
 @}
 */
 
@@ -87,6 +102,10 @@ The location of the end of the "System" information in Eeprom.
 #define EEPROM_POLY_1_FOLLOWER_PEAK   EEPROM_SYSTEM_BASE + 56
 #define EEPROM_POLY_0_OSCILLATOR_PERIODON  EEPROM_SYSTEM_BASE + 60
 #define EEPROM_POLY_0_OSCILLATOR_PERIODOFF EEPROM_SYSTEM_BASE + 64
-#define EEPROM_POLY_1_OSCILLATOR_PERIODON  EEPROM_SYSTEM_BASE + 60
-#define EEPROM_POLY_1_OSCILLATOR_PERIODOFF EEPROM_SYSTEM_BASE + 64
+#define EEPROM_POLY_1_OSCILLATOR_PERIODON  EEPROM_SYSTEM_BASE + 68
+#define EEPROM_POLY_1_OSCILLATOR_PERIODOFF EEPROM_SYSTEM_BASE + 72
+#define EEPROM_UDP_PORT               EEPROM_SYSTEM_BASE + 76
+#define EEPROM_TCP_CONNECT_ON_REBOOT  EEPROM_SYSTEM_BASE + 80
+#define EEPROM_TCP_REMOTE_ADDRESS     EEPROM_SYSTEM_BASE + 84
+#define EEPROM_TCP_REMOTE_PORT        EEPROM_SYSTEM_BASE + 88
 #endif
