@@ -135,13 +135,13 @@ char* Osc_WriteTimetag( char* buffer, int* length, int a, int b );
 int Osc_EndianSwap( int a );
 int Osc_ReceiveMessage( int channel, char* message, int length );
 char* Osc_CreateBundle( char* buffer, int* length, int a, int b );
-char* Osc_CreateMessageInternal( char* bp, int* length, char* address, char* format, va_list args ); 
 int Osc_PropertyLookup( char** properties, char* property );
 int Osc_ReadInt( char* buffer );
 float Osc_ReadFloat( char* buffer );
 
 int Osc_UpdPacketSend( char* packet, int length, int replyAddress, int replyPort );
 int Osc_UsbPacketSend( char* packet, int length, int replyAddress, int replyPort );
+int Osc_TcpPacketSend( char* packet, int length, int replyAddress, int replyPort );
 
 void Osc_ResetChannel( OscChannel* ch );
 
@@ -162,7 +162,8 @@ char* Osc_WriteTimetag( char* buffer, int* length, int a, int b );
 int Osc_EndianSwap( int a );
 int Osc_ReceiveMessage( int channel, char* message, int length );
 char* Osc_CreateBundle( char* buffer, int* length, int a, int b );
-char* Osc_CreateMessageInternal( char* bp, int* length, char* address, char* format, va_list args ); 
+char* Osc_CreateMessageInternal( char* bp, int* length, char* address, char* format, va_list args );
+int Osc_CreateMessageToBuf( char* bp, int* length, char* address, char* format, ... );
 
 int Osc_ReadInt( char* buffer );
 float Osc_ReadFloat( char* buffer );
@@ -172,6 +173,7 @@ int Osc_UdpPacketSend( char* packet, int length, int replyAddress, int replyPort
 
 void Osc_UdpTask( void* parameters );
 void Osc_UsbTask( void* parameters );
+void Osc_TcpTask( void* parameters );
 
 
 /**
@@ -191,7 +193,7 @@ int Osc_SetActive( int state )
 /**
 	Osc_GetActive.
 	Returns the state of the Osc system. \n
-	@return state.
+	@return Non-zero if active, zero if inactive.
 */
 int Osc_GetActive( )
 {
@@ -208,6 +210,7 @@ int Osc_Start( void )
 
     TaskCreate( Osc_UdpTask, "OSC-UDP", 500, (void*)OSC_CHANNEL_UDP, 3 );
     TaskCreate( Osc_UsbTask, "OSC-USB", 300, (void*)OSC_CHANNEL_USB, 3 );
+    TaskCreate( Osc_TcpTask, "Osc-Tcp", 500, (void*)OSC_CHANNEL_TCP, 3 );
 
     Osc.users++;
     Osc.running = true;
@@ -273,6 +276,37 @@ void Osc_UdpTask( void* parameters )
     Osc_SetReplyAddress( channel, address );
 
     Osc_ReceivePacket( channel, ch->incoming, length );
+    Sleep( 1 );
+  }
+}
+
+void Osc_TcpTask( void* parameters )
+{
+  int channel = (int)parameters;
+  OscChannel *ch = &Osc.channel[ channel ];
+  //ch->sendMessage = Osc_TcpPacketSend;
+  Osc_ResetChannel( ch );
+
+  // Chill until the Network is up
+  while ( !Network_GetActive() )
+    Sleep( 100 );
+
+  ch->running = true;
+  struct netconn* sock = NULL;
+
+  // TODO - check to see if the autoconnect property is set, and fire things up now if it is
+
+  // now get down to business
+  while ( true )
+  {
+    int address;
+    int port;
+
+    //int length = DatagramSocketReceive( ds, ch->replyPort, &address, &port, ch->incoming, OSC_MAX_MESSAGE_IN );
+
+    //Osc_SetReplyAddress( channel, address );
+
+    //Osc_ReceivePacket( channel, ch->incoming, length );
     Sleep( 1 );
   }
 }
@@ -1079,6 +1113,18 @@ int Osc_CreateMessage( int channel, char* address, char* format, ... )
   Osc_Unlock( ch );
 
   return ( bp != 0 ) ? CONTROLLER_OK : CONTROLLER_ERROR_ILLEGAL_PARAMETER_VALUE;
+}
+
+int Osc_CreateMessageToBuf( char* bp, int* length, char* address, char* format, ... )
+{
+  if ( address == NULL || format == NULL || *format != ',' )
+    return CONTROLLER_ERROR_BAD_DATA;
+
+  va_list args;
+  va_start( args, format );
+    
+  Osc_CreateMessageInternal( bp, length, address, format, args );
+  return CONTROLLER_OK;
 }
 
 char* Osc_CreateMessageInternal( char* bp, int* length, char* address, char* format, va_list args )

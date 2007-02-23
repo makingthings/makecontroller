@@ -30,6 +30,7 @@
 
 #define OSC_CHANNEL_UDP 0
 #define OSC_CHANNEL_USB 1
+#define OSC_CHANNEL_TCP 2
 
 // Top level functions
 int Osc_SetActive( int state );
@@ -37,6 +38,7 @@ int Osc_GetActive( void );
 int Osc_GetRunning( void );
 
 int Osc_CreateMessage( int channel, char* address, char* format, ... );
+int Osc_CreateMessageToBuf( char* bp, int* length, char* address, char* format, ... );
 int Osc_SendPacket( int channel );
 
 int Osc_RegisterSubsystem( int subsystem,
@@ -77,7 +79,7 @@ int Osc_SubsystemError( int channel, char* subsystem, char* string );
 int Osc_PropertyLookup( char** properties, char* property );
 char *Osc_FindDataTag( char* message, int length );
 int Osc_ExtractData( char* buffer, char* format, ... );
-int  Osc_NumberMatch( int max, char* pattern, int* fancy );
+int Osc_NumberMatch( int max, char* pattern, int* fancy );
 
 // Pattern Match Stuff
 bool Osc_PatternMatch(const char *  pattern, const char * test);

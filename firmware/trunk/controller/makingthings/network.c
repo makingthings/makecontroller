@@ -21,7 +21,6 @@
 */
 
 #include "stdio.h"
-
 #include "network.h"
 #include "io.h"
 #include "eeprom.h"
@@ -38,10 +37,6 @@
 
 // This has builtin endian compensation!
 #define IP_ADDRESS( a, b, c, d ) ( ( (int)d << 24 ) + ( (int)c << 16 ) + ( (int)b << 8 ) + (int)a )
-#define IP_ADDRESS_D( address )  ( ( (int)address >> 24 ) & 0xFF ) 
-#define IP_ADDRESS_C( address )  ( ( (int)address >> 16 ) & 0xFF ) 
-#define IP_ADDRESS_B( address )  ( ( (int)address >>  8 ) & 0xFF ) 
-#define IP_ADDRESS_A( address )  ( ( (int)address       ) & 0xFF ) 
 
 int Network_AddressConvert( char* address, int* a0, int* a1, int* a2, int* a3 );
 
@@ -130,6 +125,14 @@ int Network_GetActive( void )
 	@param a2 An integer corresponding to the third of 4 numbers in the address.
 	@param a3 An integer corresponding to the fourth of 4 numbers in the address.
 	@return 0 on success.
+
+  \par Example
+  \code
+  // set the address to 192.168.0.23
+  if( 0 != Network_SetAddress( 192, 168, 0, 23 ) )
+    // then there was a problem.
+  \endcode
+
 */
 int Network_SetAddress( int a0, int a1, int a2, int a3 )
 {
@@ -139,6 +142,42 @@ int Network_SetAddress( int a0, int a1, int a2, int a3 )
   Eeprom_Write( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&address, 4 );
   
   Network_Valid = NET_INVALID;
+
+  return CONTROLLER_OK;
+}
+
+/**
+	Set the IP address of the Make Controller.
+	The IP address of the Make Controller, in dotted decimal form (xxx.xxx.xxx.xxx),
+	can be set by passing in each of the numbers as a separate parameter.
+	The default IP address of each Make Controller as it ships from the factory
+	is 192.168.0.200
+
+	This value is stored in EEPROM, so it persists even after the board
+	is powered down.
+
+	@param a0 An integer corresponding to the first of 4 numbers in the address.
+	@param a1 An integer corresponding to the second of 4 numbers in the address.
+	@param a2 An integer corresponding to the third of 4 numbers in the address.
+	@param a3 An integer corresponding to the fourth of 4 numbers in the address.
+	@return 0 on success.
+
+  \par Example
+  \code
+  // set the address to 192.168.0.23
+  if( 0 != Network_SetAddress( 192, 168, 0, 23 ) )
+    // then there was a problem.
+  \endcode
+
+*/
+int Network_SetTcpOutAddress( int a0, int a1, int a2, int a3 )
+{
+  int address;
+	address = IP_ADDRESS( a0, a1, a2, a3 );
+
+  Eeprom_Write( EEPROM_TCP_REMOTE_ADDRESS, (uchar*)&address, 4 );
+  
+  //Network_Valid = NET_INVALID;
 
   return CONTROLLER_OK;
 }
@@ -159,6 +198,13 @@ int Network_SetAddress( int a0, int a1, int a2, int a3 )
 	@param a2 An integer corresponding to the third of 4 numbers in the mask.
 	@param a3 An integer corresponding to the fourth of 4 numbers in the mask.
 	@return 0 on success.
+
+  \par Example
+  \code
+  // set the mask to 255.255.255.254
+  if( 0 != Network_SetMask( 255, 255, 255, 254 ) )
+    // then there was a problem.
+  \endcode
 */
 int Network_SetMask( int a0, int a1, int a2, int a3 )
 {
@@ -186,6 +232,13 @@ int Network_SetMask( int a0, int a1, int a2, int a3 )
 	@param a2 An integer corresponding to the third of 4 numbers in the gateway address.
 	@param a3 An integer corresponding to the fourth of 4 numbers in the gateway address.
 	@return 0 on success.
+
+  \par Example
+  \code
+  // set the gateway to 192.168.5.1
+  if( 0 != Network_SetGateway( 192, 168, 5, 1 ) )
+    // then there was a problem.
+  \endcode
 */
 int Network_SetGateway( int a0, int a1, int a2, int a3 )
 {
@@ -306,6 +359,45 @@ int Network_GetAddress( int* a0, int* a1, int* a2, int* a3 )
 }
 
 /**
+	Read the IP address stored in EEPROM that the board will use when told to
+  make a connection to a remote TCP server.
+	Pass in pointers to integers where the address should be stored.
+
+	@param a0 A pointer to an integer where the first of 4 numbers of the address is to be stored.
+	@param a1 A pointer to an integer where the second of 4 numbers of the address is to be stored.
+	@param a2 A pointer to an integer where the third of 4 numbers of the address is to be stored.
+	@param a3 A pointer to an integer where the fourth of 4 numbers of the address is to be stored.
+	@return 0 on success.
+*/
+int Network_GetTcpOutAddress( int* a0, int* a1, int* a2, int* a3 )
+{
+  /*
+  if ( Network_Valid == NET_UNCHECKED )
+    Network_GetValid();
+
+  if ( Network_Valid == NET_INVALID )
+  {
+    *a0 = 192;
+    *a1 = 168;
+    *a2 = 0;
+    *a3 = 200;
+
+    return CONTROLLER_OK;
+  }
+  */
+
+  int address;
+  Eeprom_Read( EEPROM_TCP_REMOTE_ADDRESS, (uchar*)&address, 4 );
+
+  *a0 = IP_ADDRESS_A( address );
+  *a1 = IP_ADDRESS_B( address );
+  *a2 = IP_ADDRESS_C( address );
+  *a3 = IP_ADDRESS_D( address );
+
+  return CONTROLLER_OK;
+}
+
+/**
 	Read the network mask stored in EEPROM.
 	Pass in pointers to integers where the mask should be stored.
 
@@ -378,17 +470,26 @@ int Network_GetGateway( int* a0, int* a1, int* a2, int* a3 )
 }
 
 /**	
-	Make a new TCP socket connected to the address specified.
-	@param address an integer specifying the IP address
-	@param port an integer specifying the port to open
-	@return a pointer to the socket created
-	@see lwIP...
+	Create a new TCP socket connected to the address and port specified.
+	@param address An integer specifying the IP address to connect to.
+	@param port An integer specifying the port to connect on.
+	@return A pointer to the socket, if it was created successfully.  NULL if unsuccessful.
+	@see lwIP, SocketRead(), SocketWrite(), SocketClose()
+
+  \par Example
+  \code
+  // use the IP_ADDRESS macro to format the address properly
+  int addr = IP_ADDRESS( 192, 168, 0, 54 );
+  // then create the socket
+  struct netconn* socket = Socket( addr, 10101 );
+  \endcode
 */
 void* Socket( int address, int port )
 {
   Network_SetActive( 1 );
 
-  struct netconn *conn;
+  struct netconn* conn;
+  err_t retval;
 
   conn = netconn_new( NETCONN_TCP );
   // This is our addition to the conn structure to help with reading
@@ -397,17 +498,33 @@ void* Socket( int address, int port )
   struct ip_addr remote_addr;
   remote_addr.addr = htonl(address);
 
-  netconn_connect( conn, &remote_addr, port );
+  retval = netconn_connect( conn, &remote_addr, port );
+  if( ERR_OK != retval )
+    conn = NULL;
+  
   return conn;
 }
 
 /**	
 	Read from a TCP socket.
+  Make sure you have an open socket before trying to read from it.
 	@param socket A pointer to the existing socket.
 	@param data A pointer to the buffer to read to.
 	@param length An integer specifying the length in bytes of how much data should be read.
 	@return An integer: length of data read if successful, zero on failure.
-	@see lwIP
+	@see lwIP, Socket(), SocketClose()
+
+  \par Example
+  \code
+  // we should already have created a socket \b sock with Socket().
+  struct netconn* sock = Socket( addr, 10101 );
+  // we should also have a buffer to read into - \b data.
+  // and know how many bytes of it we want to read - \b length.
+  int length_read = SocketRead( sock, data, length )
+  // if 0 bytes were read, there was some sort of error
+  if( length_read == 0 )
+    SocketClose( sock );
+  \endcode
 */
 int SocketRead( void* socket, void* data, int length )
 {
@@ -462,14 +579,27 @@ int SocketRead( void* socket, void* data, int length )
 
 /**	
 	Write to a TCP socket.
-	In the current implementation, this will be a whole packet.  
-	So pack data up into a block before calling this.
+	Not surprisingly, we need an existing socket before we can write to it.
 
 	@param socket A pointer to the existing socket.
 	@param data A pointer to the buffer to write from.
 	@param length An integer specifying the length in bytes of how much data should be written.
-	@return An integer: 'length writen' if successful, 0 on failure.
-	@see lwIP
+	@return An integer: 'length written' if successful, 0 on failure.
+	@see lwIP, Socket()
+
+  \par Example
+  \code
+  // we should already have created a socket \b sock with Socket().
+  struct netconn* sock = Socket( addr, 10101 );
+  // we should also have a buffer to write from - \b data.
+  char data[ MY_BUF_SIZE ];
+  // and know how many bytes of it we want to write - \b length.
+  int length = length_of_my_packet;
+  int length_written = SocketWrite( sock, data, length )
+  // if 0 bytes were written, there was some sort of error
+  if( length_written == 0 )
+    SocketClose( sock );
+  \endcode
 */
 int SocketWrite( void* socket, void* data, int length )
 {
@@ -481,16 +611,26 @@ int SocketWrite( void* socket, void* data, int length )
 }
 
 /**	
-	Close a TCP socket.
+	Close an existing TCP socket.
+  Anytime you get an error when trying to read or write, it's best to close the socket and reopen
+  it to make sure that the connection is corrently configured.
 	@param socket A pointer to the existing socket.
-	@return Zero if the process was successful.
-	@see lwIP
+	@return void
+	@see lwIP, Socket()
+
+  \par Example
+  \code
+  // we should already have created a socket 'sock' with Socket().
+  struct netconn* sock = Socket( addr, 10101 );
+  // now close it
+  SocketClose( sock )
+  \endcode
 */
-int SocketClose( void* socket )
+void SocketClose( void* socket )
 {
   netconn_close( (struct netconn *)socket );
   netconn_delete( (struct netconn *)socket );
-  return 0;
+  return; //0;
 }
 
 /**	
@@ -746,8 +886,8 @@ int Network_Init( )
     There is only one Network system, so a device index is not used.
    
     \section properties Properties
-    The Network system has six properties - \b 'address', \b 'mask', \b 'gateway',
-    \b 'valid', \b 'mac' and \b 'active'.
+    The Network system has six properties - \b address, \b mask, \b gateway,
+    \b valid, \b mac and \b active.
 
     \par Address
     The \b 'address' property corresponds to the IP address of the Controller Board.
@@ -756,6 +896,30 @@ int Network_Init( )
     \par
     To read the current IP address, omit the argument value from the end of the message:
     \verbatim /network/address \endverbatim
+
+    \par osc_udp_port OSC UDP Port
+    The \b osc_udp_port corresponds to the port that the Make Controller listens on for
+    incoming OSC messages via UDP.  This value is stored persistently, so it's available
+    even after the board has rebooted.
+    
+    \par osc_tcp_address OSC TCP Address
+    The \b osc_tcp_address property corresponds to the IP address that the Make Controller
+    will try to connect to when 
+
+    \par osc_tcp_port OSC TCP PORT
+    The \b osc_tcp_port property corresponds to the address that the board will try to connect
+    to when making a TCP connection.  This value is stored persistently, so it's available
+    even after the board has rebooted.
+    
+    \par tcp_connect TCP Connect
+    The \b tcp_connect property allows you to make a connection to a remote TCP server.  It
+    will try to connect to a server specified by the \b osc_tcp_address and \b osc_tcp_port properties.
+
+    \par tcp_autoconnect TCP Auto Connect
+    The \b tcp_autoconnect property specifies whether the board should attempt to make a connection
+    to a remote TCP server as soon as it boots up.  It will try to connect to a server 
+    specified by the \b osc_tcp_address and \b osc_tcp_port properties.  This value is stored 
+    persistently, so it's available even after the board has rebooted.
    
     \par Mask
     The \b 'mask' property corresponds to the network mask of the Controller Board.
@@ -815,9 +979,11 @@ int Network_Init( )
 */
 
 #include "osc.h"
-
+// todo - allow a TCP server to be fired up via OSC
 static char* NetworkOsc_Name = "network";
-static char* NetworkOsc_PropertyNames[] = { "active", "address", "mask", "gateway", "valid", "mac", 0 }; // must have a trailing 0
+static char* NetworkOsc_PropertyNames[] = { "active", "address", "mask", "gateway", "valid", "mac", 
+                                              "osc_udp_port", "osc_tcpout_address", "osc_tcpout_port", 
+                                              "tcpout_connect", "tcpout_autoconnect", 0 }; // must have a trailing 0
 
 int NetworkOsc_PropertySet( int property, char* typedata, int channel );
 int NetworkOsc_PropertyGet( int property, int channel );
@@ -855,7 +1021,7 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
 
   switch ( property )
   {
-    case 0:
+    case 0: // active
     {
       int value;
       int count = Osc_ExtractData( typedata, "i", &value );
@@ -865,7 +1031,7 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
       Network_SetActive( value );
       break;
     }
-    case 1:
+    case 1: // address
     {
       char* address;
       int count = Osc_ExtractData( typedata, "s", &address );
@@ -879,7 +1045,7 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
 
       break;
     }
-    case 2:
+    case 2: // mask
     {
       char* address;
       int count = Osc_ExtractData( typedata, "s", &address );
@@ -893,7 +1059,7 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
 
       break;
     }
-    case 3:
+    case 3: // gateway 
     {
       char* address;
       int count = Osc_ExtractData( typedata, "s", &address );
@@ -907,7 +1073,7 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
 
       break;
     }
-    case 4:
+    case 4: // valid
     {
       int value;
       int count = Osc_ExtractData( typedata, "i", &value );
@@ -916,6 +1082,31 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
 
       Network_SetValid( value ); 
       break;
+    }
+    case 5: // mac
+    {
+      return Osc_SubsystemError( channel, NetworkOsc_Name, "MAC is read only." );
+    }
+    case 6: // osc_udp_port
+    {
+      return Osc_SubsystemError( channel, NetworkOsc_Name, "UDP port over OSC not implemented." );
+    }
+    case 7: // osc_tcpout_address
+    {
+      char* address;
+      int count = Osc_ExtractData( typedata, "s", &address );
+      if ( count != 1 ) 
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need a string" );
+      // don't strictly need to do this, but it's god to make sure it's a proper address
+      int status = Network_AddressConvert( address, &a0, &a1, &a2, &a3 );
+      if ( status != CONTROLLER_OK )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect TCP address - need 'xxx.xxx.xxx.xxx'" );
+      
+      Network_SetTcpOutAddress( a0, a1, a2, a3 );
+    }
+    case 8: // osc_tcpout_port
+    {
+      return Osc_SubsystemError( channel, NetworkOsc_Name, "TCP port over OSC not implemented." );
     }
   }
   return CONTROLLER_OK;
@@ -968,6 +1159,14 @@ int NetworkOsc_PropertyGet( int property, int channel )
       snprintf( output, OSC_SCRATCH_SIZE, "%02X:%02X:%02X:%02X:%02X:%02X", 
                 emacETHADDR0, emacETHADDR1, emacETHADDR2, emacETHADDR3, emacETHADDR4, emacETHADDR5 );
       Osc_CreateMessage( channel, address, ",s", output );      
+      break;
+    case 6: // osc_udp_port
+      break;
+    case 7: // osc_tcpout_address
+      Network_GetTcpOutAddress( &a0, &a1, &a2, &a3 );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
+      Osc_CreateMessage( channel, address, ",s", output );    
       break;
   }
   
