@@ -247,7 +247,11 @@ portBASE_TYPE xByte;
 void vUSBSendByte( portCHAR cByte, int timeout )
 {
 	/* Queue the byte to be sent.  The USB task will send it. */
-	xQueueSend( xTxCDC, &cByte, timeout );
+	if ( xQueueSend( xTxCDC, &cByte, timeout ) != pdPASS )
+  {
+    timeout++;
+    timeout--;
+  }
 }
 
 /* MAKINGTHINGS: ADDITION */
@@ -717,7 +721,7 @@ static void vDetachUSBInterface( void)
 	  AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA11;
 	  AT91C_BASE_PIOA->PIO_OER = AT91C_PIO_PA11;
 	  /* Disable pull up */
-	  AT91C_BASE_PIOA->PIO_SODR = AT91C_PIO_PA11;
+	  AT91C_BASE_PIOA->PIO_CODR = AT91C_PIO_PA11;
 	#endif
 } 
 /*-----------------------------------------------------------*/
@@ -779,7 +783,7 @@ extern void ( vUSB_ISR )( void );
 	#if ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 )
 		AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA11;
 		AT91C_BASE_PIOA->PIO_OER = AT91C_PIO_PA11;
-    AT91C_BASE_PIOA->PIO_SODR = AT91C_PIO_PA11;
+    AT91C_BASE_PIOA->PIO_CODR = AT91C_PIO_PA11;
 	#endif
 
 	/* When using the USB debugger the peripheral registers do not always get
@@ -811,7 +815,7 @@ extern void ( vUSB_ISR )( void );
     AT91C_BASE_PIOB->PIO_CODR = AT91C_PIO_PB11;
   #endif
   #if( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 )
-    AT91C_BASE_PIOA->PIO_CODR = AT91C_PIO_PA11;
+    AT91C_BASE_PIOA->PIO_SODR = AT91C_PIO_PA11;
   #endif
 }
 /*-----------------------------------------------------------*/
