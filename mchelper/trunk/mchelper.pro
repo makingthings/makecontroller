@@ -16,13 +16,13 @@
 # ------------------------------------------------------------------------------
 
 
-TEMPLATE	= app
+TEMPLATE = app
 
 FORMS = mchelper.ui
 
-CONFIG		+= qt release #warn_on
+CONFIG += qt release
 
-HEADERS		= McHelperWindow.h \
+HEADERS = McHelperWindow.h \
 				UploaderThread.h \
 				PacketInterface.h \
 				PacketReadyInterface.h \
@@ -32,7 +32,7 @@ HEADERS		= McHelperWindow.h \
 				UsbSerial.h \
 				PacketUsbCdc.h
             
-SOURCES		= main.cpp \
+SOURCES	= main.cpp \
 				McHelperWindow.cpp \
 				UploaderThread.cpp \
 				PacketUdp.cpp \
@@ -41,7 +41,7 @@ SOURCES		= main.cpp \
 				UsbSerial.cpp \
 				PacketUsbCdc.cpp 
 				
-TARGET		= mchelper
+TARGET = mchelper
             
 QT += network
 
@@ -53,10 +53,11 @@ QTDIR_build:REQUIRES="contains(QT_CONFIG, small-config)"
 macx{
   message("This project is being built on a Mac.")
 	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
-  LIBS += -framework IOKit
-  LIBS+= -dead_strip
+	QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
+	CONFIG += x86 ppc
+  LIBS += -framework IOKit #-dead_strip
   ICON = IconPackageOSX.icns
-  QMAKE_POST_LINK = strip mchelper.app/Contents/MacOS/mchelper
+  #QMAKE_POST_LINK = strip mchelper.app/Contents/MacOS/mchelper
 }
 
 
