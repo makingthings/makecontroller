@@ -42,7 +42,7 @@ void PacketUsbCdc::run()
 	while( 1 )
 	{
 	  if( !usbIsOpen() ) // if it's not open, try to open it
-		open();
+			open();
 
 		if( usbIsOpen() ) // then, if open() succeeded, try to read
 		{
@@ -105,14 +105,14 @@ void PacketUsbCdc::run()
 						currentPacket->length++;
 				}
 			}
-			else
+		}
+		else
 			{
 				if( usbIsOpen() )
 					this->sleepMs( 10 );
 				else
 					this->sleepMs( 500 );
 			}
-		}
 	}
 	// should never get here...
 	close( );
