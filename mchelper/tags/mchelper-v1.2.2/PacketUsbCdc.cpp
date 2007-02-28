@@ -106,13 +106,11 @@ void PacketUsbCdc::run()
 				}
 			}
 		}
+		// then have a little nap
+		if( usbIsOpen() )
+			this->sleepMs( 5 );
 		else
-			{
-				if( usbIsOpen() )
-					this->sleepMs( 10 );
-				else
-					this->sleepMs( 500 );
-			}
+			this->sleepMs( 500 );
 	}
 	// should never get here...
 	close( );
