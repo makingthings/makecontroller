@@ -374,31 +374,13 @@ int Network_GetValid( )
 */
 int Network_GetAddress( int* a0, int* a1, int* a2, int* a3 )
 {
-  /*
-  if ( Network_Valid == NET_UNCHECKED )
-    Network_GetValid();
-
-  if ( Network_Valid == NET_INVALID )
-  {
-    *a0 = 192;
-    *a1 = 168;
-    *a2 = 0;
-    *a3 = 200;
-
-    return CONTROLLER_OK;
-  }
-
-  int address;
-  Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&address, 4 );
-  */
-  char mc = { 0xb0, 0x00 };
-  netif* mc_netif;
-  int address;
-
-  mc_netif = netif_find( mc );
+  struct netif* mc_netif;
+  int address = 0;
+  // we specify our network interface as en0 when we init
+  mc_netif = netif_find( "en0" );
   if( mc_netif != NULL )
   {
-    address = *(mc_netif->ip_addr->addr);
+    address = mc_netif->ip_addr.addr;
 
     *a0 = IP_ADDRESS_A( address );
     *a1 = IP_ADDRESS_B( address );
@@ -859,15 +841,11 @@ void DatagramSocketClose( void* socket )
 
 void Network_SetDhcpEnabled( int enabled )
 {
-  if( enabled )
-  {
-    if( !Network_GetDhcpEnabled() )
-      Eeprom_Write( EEPROM_DHCP_ENABLED, (uchar*)&enabled, 4 );
-  }
-  else
-  {
+  if( enabled && !Network_GetDhcpEnabled() )
     Eeprom_Write( EEPROM_DHCP_ENABLED, (uchar*)&enabled, 4 );
-  }
+  else if( Network_GetDhcpEnabled() )
+    Eeprom_Write( EEPROM_DHCP_ENABLED, (uchar*)&enabled, 4 );
+
   return;
 }
 
@@ -964,44 +942,58 @@ int Network_Init( )
 
   extern err_t ethernetif_init( struct netif *netif );
   static struct netif EMAC_if;
-  //sprintf( EMAC_if.name, "%s", "mc" );
+  int address, mask, gateway;
 
   Network_Valid = NET_UNCHECKED;
-
-  int a0, a1, a2, a3;
-  Network_GetAddress( &a0, &a1, &a2, &a3 );
-  unsigned int address = IP_ADDRESS( a0, a1, a2, a3 );
-
-  int m0, m1, m2, m3;
-  Network_GetMask( &m0, &m1, &m2, &m3 );
-  int mask = IP_ADDRESS( m0, m1, m2, m3 );
-
-  int g0, g1, g2, g3;
-  Network_GetGateway( &g0, &g1, &g2, &g3 );
-  int gateway = IP_ADDRESS( g0, g1, g2, g3 );
-
-	/* Create and configure the EMAC interface. */
-//	IP4_ADDR(&xIpAddr,emacIPADDR0,emacIPADDR1,emacIPADDR2,emacIPADDR3);
-//	IP4_ADDR(&xNetMast,emacNET_MASK0,emacNET_MASK1,emacNET_MASK2,emacNET_MASK3);
-//	IP4_ADDR(&xGateway,emacGATEWAY_ADDR0,emacGATEWAY_ADDR1,emacGATEWAY_ADDR2,emacGATEWAY_ADDR3);
-	//netif_add(&EMAC_if, (struct ip_addr *)&address, (struct ip_addr *)&mask, (struct ip_addr *)&gateway, NULL, ethernetif_init, tcpip_input);
+  if( Network_GetDhcpEnabled() )
+  {
+    address = 0;
+    mask = 0;
+    gateway = 0;
+  }
+  else // DHCP not enabled, just read whatever the manual IP address in EEPROM is.
+  {
+    int a0, a1, a2, a3;
+    Network_GetAddress( &a0, &a1, &a2, &a3 );
+    address = IP_ADDRESS( a0, a1, a2, a3 );
   
-  // Liam playing around...
-  int ip, gw, netmask;
-  ip = 0;
-  gw = 0;
-  mask = 0;
-  netif_add(&EMAC_if, (struct ip_addr*)&ip, (struct ip_addr*)&netmask, (struct ip_addr*)&gw, NULL, ethernetif_init, tcpip_input);
-
-	/* make it the default interface */
+    int m0, m1, m2, m3;
+    Network_GetMask( &m0, &m1, &m2, &m3 );
+    mask = IP_ADDRESS( m0, m1, m2, m3 );
+  
+    int g0, g1, g2, g3;
+    Network_GetGateway( &g0, &g1, &g2, &g3 );
+    gateway = IP_ADDRESS( g0, g1, g2, g3 );
+  }
+  // add our network interface to the system
+  netif_add(&EMAC_if, (struct ip_addr*)&address, (struct ip_addr*)&mask, 
+                        (struct ip_addr*)&gateway, NULL, ethernetif_init, tcpip_input);
+	// make it the default interface
   netif_set_default(&EMAC_if);
-
-	/* bring it up */
+	// bring it up
   netif_set_up(&EMAC_if);
-  
-  dhcp_start( &EMAC_if );
-  TaskCreate( DhcpFineTask, "DhcpFine", 100, 0, 1 );
-  TaskCreate( DhcpCoarseTask, "DhcpCoarse", 50, 0, 1 );
+  EMAC_if.name[0] = 'e';
+  EMAC_if.name[1] = 'n';
+  EMAC_if.num = 0;
+
+  if( Network_GetDhcpEnabled() )
+  {
+    dhcp_start( &EMAC_if );
+    TaskCreate( DhcpFineTask, "DhcpFine", 100, 0, 1 );
+    TaskCreate( DhcpCoarseTask, "DhcpCoarse", 50, 0, 1 );
+    // now hang out for a second until we get an address
+    /*
+    int count = 0;
+    while( EMAC_if.ip_addr.addr == 0 && count < 10000 )
+    {
+      count++;
+      Sleep( 100 );
+    }
+    */
+  }
+    
+
+
   /*
   hmm...some work to get this together.
   vSemaphoreCreateBinary( Network.semaphore );
@@ -1125,7 +1117,7 @@ int Network_Init( )
 static char* NetworkOsc_Name = "network";
 static char* NetworkOsc_PropertyNames[] = { "active", "address", "mask", "gateway", "valid", "mac", 
                                               "osc_udp_port", "osc_tcpout_address", "osc_tcpout_port", 
-                                              "tcpout_connect", "tcpout_autoconnect", 0 }; // must have a trailing 0
+                                              "tcpout_connect", "tcpout_autoconnect", "dhcp", 0 }; // must have a trailing 0
 
 int NetworkOsc_PropertySet( int property, char* typedata, int channel );
 int NetworkOsc_PropertyGet( int property, int channel );
@@ -1250,6 +1242,16 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
     {
       return Osc_SubsystemError( channel, NetworkOsc_Name, "TCP port over OSC not implemented." );
     }
+    case 11: // dhcp
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
+      
+      Network_SetDhcpEnabled( value );
+      break;
+    }
   }
   return CONTROLLER_OK;
 }
@@ -1309,6 +1311,11 @@ int NetworkOsc_PropertyGet( int property, int channel )
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
       Osc_CreateMessage( channel, address, ",s", output );    
+      break;
+    case 11: // dhcp
+      value = Network_GetDhcpEnabled( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );      
       break;
   }
   
