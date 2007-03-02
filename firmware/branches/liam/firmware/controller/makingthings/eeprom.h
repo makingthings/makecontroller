@@ -79,6 +79,9 @@ is stored.
 The location in EEPROM where the port of the remote TCP server to connect to 
 is stored.
 
+\def EEPROM_DHCP_ENABLED
+The location in EEPROM where the flag of whether or not to use DHCP is stored.
+
 \def EEPROM_SYSTEM_NAME
 The location in EEPROM where the user assignable name of the board is stored.
 This name can only be a max of 32 characters.
