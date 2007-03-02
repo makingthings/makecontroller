@@ -1,0 +1,157 @@
+<!DOCTYPE CrossStudio_Project_File>
+<solution version="1" Name="solo" >
+  <project file_name="" Name="solo" >
+    <configuration Target="AT91SAM7S256" property_groups_file_path="$(StudioDir)/targets/ATMEL_AT91SAM7/propertyGroups.xml" linker_memory_map_file="$(StudioDir)/targets/ATMEL_AT91SAM7/AT91SAM7S256_MemoryMap.xml" project_directory="" link_include_startup_code="No" project_type="Executable" linker_printf_width_precision_supported="Yes" Name="Common" linker_output_format="bin" />
+    <configuration target_reset_script="RAMReset()" Name="RAM" />
+    <configuration arm_target_flash_loader_file_path="$(StudioDir)/targets/ATMEL_AT91SAM7/Release/Loader.exe" target_reset_script="FLASHReset()" Name="Flash" />
+    <folder Name="Source Files" >
+      <configuration filter="c;cpp;cxx;cc;h;s;asm;inc" Name="Common" />
+      <folder Name="Solo" >
+        <file file_name="make.c" Name="make.c" />
+        <file file_name="config.h" Name="config.h" />
+      </folder>
+      <folder Name="Controller" >
+        <folder Name="MakingThings" >
+          <file file_name="../controller/freertos/portable/MemMang/heap_2.c" Name="heap_2.c" />
+          <file file_name="../controller/makingthings/USBIsr.c" Name="USBIsr.c" >
+            <configuration arm_instruction_set="ARM" Name="Common" />
+          </file>
+          <file file_name="../controller/makingthings/USB-CDC.c" Name="USB-CDC.c" />
+          <file file_name="../controller/makingthings/BasicWEB.c" Name="BasicWEB.c" />
+          <file file_name="../controller/makingthings/main.c" Name="main.c" />
+          <file file_name="../controller/makingthings/eeprom.c" Name="eeprom.c" />
+          <file file_name="../controller/makingthings/osc.h" Name="osc.h" />
+          <file file_name="../controller/makingthings/osc.c" Name="osc.c" />
+          <file file_name="../controller/makingthings/osc_patternmatch.c" Name="osc_patternmatch.c" />
+          <file file_name="../controller/makingthings/osc_patternmatch.h" Name="osc_patternmatch.h" />
+          <file file_name="../controller/makingthings/pwm.c" Name="pwm.c" />
+          <file file_name="../controller/makingthings/spi.c" Name="spi.c" />
+          <file file_name="../controller/makingthings/rtos.c" Name="rtos.c" />
+          <file file_name="../controller/makingthings/rtos.h" Name="rtos.h" />
+          <file file_name="../controller/makingthings/controller.h" Name="controller.h" />
+          <file file_name="../controller/makingthings/spi.h" Name="spi.h" />
+          <file file_name="../controller/makingthings/eeprom.h" Name="eeprom.h" />
+          <file file_name="../controller/makingthings/pwm.h" Name="pwm.h" />
+          <file file_name="../controller/makingthings/types.h" Name="types.h" />
+          <file file_name="../controller/makingthings/io.c" Name="io.c" />
+          <file file_name="../controller/makingthings/io.h" Name="io.h" />
+          <file file_name="../controller/makingthings/led.h" Name="led.h" />
+          <file file_name="../controller/makingthings/led.c" Name="led.c" />
+          <file file_name="../controller/makingthings/timer.c" Name="timer.c" />
+          <file file_name="../controller/makingthings/timer.h" Name="timer.h" />
+          <file file_name="../controller/makingthings/timer_isr.c" Name="timer_isr.c" >
+            <configuration arm_instruction_set="ARM" Name="Common" />
+          </file>
+          <file file_name="../controller/makingthings/timer_internal.h" Name="timer_internal.h" />
+          <file file_name="../controller/makingthings/USB-CDC.h" Name="USB-CDC.h" />
+          <file file_name="../controller/makingthings/debug.h" Name="debug.h" />
+          <file file_name="../controller/makingthings/debugosc.c" Name="debugosc.c" />
+          <file file_name="../controller/makingthings/can_isr.c" Name="can_isr.c" >
+            <configuration arm_instruction_set="ARM" Name="Common" />
+          </file>
+          <file file_name="../controller/makingthings/can.c" Name="can.c" />
+          <file file_name="../controller/makingthings/can.h" Name="can.h" />
+          <file file_name="../controller/makingthings/FreeRTOSConfig.h" Name="FreeRTOSConfig.h" />
+          <file file_name="../controller/makingthings/network.h" Name="network.h" />
+          <file file_name="../controller/makingthings/network.c" Name="network.c" />
+          <file file_name="../controller/makingthings/system.h" Name="system.h" />
+          <file file_name="../controller/makingthings/system.c" Name="system.c" />
+          <file file_name="../controller/makingthings/usb_internal.h" Name="usb_internal.h" />
+          <file file_name="../controller/makingthings/usb.h" Name="usb.h" />
+          <file file_name="../controller/makingthings/usb.c" Name="usb.c" />
+          <file file_name="../controller/makingthings/analogin_isr.c" Name="analogin_isr.c" >
+            <configuration arm_instruction_set="ARM" Name="Common" />
+          </file>
+          <file file_name="../controller/makingthings/analogin.c" Name="analogin.c" />
+          <file file_name="../controller/makingthings/analogin.h" Name="analogin.h" />
+          <file file_name="../controller/makingthings/analogin_internal.h" Name="analogin_internal.h" />
+          <file file_name="../controller/makingthings/lwipopts.h" Name="lwipopts.h" />
+          <file file_name="../controller/makingthings/serial.h" Name="serial.h" />
+          <file file_name="../controller/makingthings/serial.c" Name="serial.c" />
+          <file file_name="../controller/makingthings/serial_isr.c" Name="serial_isr.c" >
+            <configuration arm_instruction_set="ARM" Name="Common" />
+          </file>
+        </folder>
+        <folder Name="FreeRTOS" >
+          <file file_name="../controller/freertos/tasks.c" Name="tasks.c" />
+          <file file_name="../controller/freertos/queue.c" Name="queue.c" />
+          <file file_name="../controller/freertos/list.c" Name="list.c" />
+          <file file_name="../controller/freertos/portable/GCC/ARM7_AT91SAM7S/portISR.c" Name="portISR.c" >
+            <configuration arm_instruction_set="ARM" Name="Common" />
+          </file>
+          <file file_name="../controller/freertos/portable/GCC/ARM7_AT91SAM7S/port.c" Name="port.c" />
+          <file file_name="../controller/freertos/include/FreeRTOS.h" Name="FreeRTOS.h" />
+          <file file_name="../controller/freertos/include/task.h" Name="task.h" />
+          <file file_name="../controller/freertos/portable/GCC/ARM7_AT91SAM7S/portmacro.h" Name="portmacro.h" />
+          <file file_name="../controller/freertos/include/portable.h" Name="portable.h" />
+          <file file_name="../controller/freertos/include/semphr.h" Name="semphr.h" />
+        </folder>
+        <folder Name="lwIP" >
+          <file file_name="../controller/lwip/src/core/tcp_out.c" Name="tcp_out.c" />
+          <file file_name="../controller/lwip/src/core/inet.c" Name="inet.c" />
+          <file file_name="../controller/lwip/src/core/mem.c" Name="mem.c" />
+          <file file_name="../controller/lwip/src/core/memp.c" Name="memp.c" />
+          <file file_name="../controller/lwip/src/core/netif.c" Name="netif.c" />
+          <file file_name="../controller/lwip/src/core/pbuf.c" Name="pbuf.c" />
+          <file file_name="../controller/lwip/src/core/raw.c" Name="raw.c" />
+          <file file_name="../controller/lwip/src/core/stats.c" Name="stats.c" />
+          <file file_name="../controller/lwip/src/core/sys.c" Name="sys.c" />
+          <file file_name="../controller/lwip/src/core/tcp.c" Name="tcp.c" />
+          <file file_name="../controller/lwip/src/core/tcp_in.c" Name="tcp_in.c" />
+          <file file_name="../controller/lwip/src/core/ipv4/ip.c" Name="ip.c" />
+          <file file_name="../controller/lwip/src/core/ipv4/ip_addr.c" Name="ip_addr.c" />
+          <file file_name="../controller/lwip/src/core/ipv4/icmp.c" Name="icmp.c" />
+          <file file_name="../controller/lwip/src/api/tcpip.c" Name="tcpip.c" />
+          <file file_name="../controller/lwip/src/api/api_msg.c" Name="api_msg.c" />
+          <file file_name="../controller/lwip/src/api/err.c" Name="err.c" />
+          <file file_name="../controller/lwip/src/api/api_lib.c" Name="api_lib.c" />
+          <file file_name="../controller/lwip/src/netif/etharp.c" Name="etharp.c" />
+          <file file_name="../controller/lwip/contrib/port/freertos/AT91SAM7X/sys_arch.c" Name="sys_arch.c" />
+          <file file_name="../controller/lwip/src/netif/ethernetif.c" Name="ethernetif.c" />
+          <file file_name="../controller/makingthings/SAM7_EMAC.c" Name="SAM7_EMAC.c" />
+          <file file_name="../controller/makingthings/SAM7_EMAC_ISR.c" Name="SAM7_EMAC_ISR.c" >
+            <configuration arm_instruction_set="ARM" Name="Common" />
+          </file>
+          <file file_name="../controller/lwip/src/core/udp.c" Name="udp.c" />
+          <file file_name="../controller/lwip/src/core/ipv4/ip_frag.c" Name="ip_frag.c" />
+          <file file_name="../controller/makingthings/SAM7_EMAC.h" Name="SAM7_EMAC.h" />
+          <file file_name="../controller/lwip/src/include/lwip/api.h" Name="api.h" />
+          <file file_name="../controller/lwip/src/include/lwip/sys.h" Name="sys.h" />
+          <file file_name="../controller/makingthings/Emac.h" Name="Emac.h" />
+        </folder>
+        <folder Name="Startup" >
+          <file file_name="../controller/startup/AT91SAM7_Startup.s" Name="AT91SAM7_Startup.s" >
+            <configuration asm_additional_options="" arm_instruction_set="ARM" Name="Common" />
+          </file>
+          <file file_name="../controller/startup/AT91SAM7S256_MemoryMap.xml" Name="AT91SAM7S256_MemoryMap.xml" />
+          <file file_name="../controller/startup/crt0.s" Name="crt0.s" />
+          <file file_name="../controller/startup/flash_placement.xml" Name="flash_placement.xml" />
+          <file file_name="../controller/startup/AT91SAM7_Target.js" Name="AT91SAM7_Target.js" >
+            <configuration Name="Common" file_type="Reset Script" />
+          </file>
+          <file file_name="../controller/freertos/portable/GCC/ARM7_AT91SAM7S/AT91SAM7X256.h" Name="AT91SAM7X256.h" />
+        </folder>
+      </folder>
+    </folder>
+    <configuration arm_target_loader_reset_after_download="Yes" arm_library_instruction_set="Thumb" Target="AT91SAM7X256" build_intermediate_directory="intermediate" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" target_reset_script="FLASHReset()" build_output_directory="output" arm_target_flash_loader_type="Comms Channel Loader" Name="THUMB Flash Debug" />
+    <configuration gcc_optimization_level="Level 1" build_debug_information="Yes" Name="THUMB Flash Release" />
+    <configuration Target="AT91SAM7X256" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" c_user_include_directories=".;../controller/makingthings;../appboard/makingthings;../controller/freertos/include;../controller/lwip/src/include;../controller/lwip/contrib/port/FreeRTOS/AT91SAM7X;../controller/freertos/portable/GCC/ARM7_AT91SAM7S;../controller/lwip/src/include/ipv4" Name="Debug" />
+  </project>
+  <configuration build_intermediate_directory="intermediate" build_quietly="Yes" inherited_configurations="THUMB;Flash;Debug" build_output_directory="output" Name="THUMB Flash Debug" />
+  <configuration arm_library_instruction_set="THUMB" c_preprocessor_definitions="__THUMB" arm_instruction_set="THUMB" hidden="Yes" Name="THUMB" />
+  <configuration c_preprocessor_definitions="__FLASH_BUILD" hidden="Yes" Name="Flash" />
+  <configuration c_preprocessor_definitions="DEBUG" link_include_startup_code="No" gcc_optimization_level="None" build_debug_information="Yes" Name="Debug" />
+  <configuration inherited_configurations="THUMB;Flash;Release" gcc_optimization_level="Level 2" Name="THUMB Flash Release" />
+  <configuration c_preprocessor_definitions="NDEBUG" link_include_startup_code="No" gcc_optimization_level="Level 1" build_debug_information="No" Name="Release" />
+  <configuration arm_library_instruction_set="THUMB" gcc_entry_point="0x100000" build_quietly="Yes" c_preprocessor_definitions="SAM7_GCC;THUMB_INTERWORK;SUPERVISOR_START" c_user_include_directories="." link_include_startup_code="Yes" arm_instruction_set="THUMB" c_preprocessor_undefinitions="" c_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wmissing-prototypes;-Wmissing-declarations;-Wno-strict-aliasing" arm_linker_stack_size="0" Name="Common" c_system_include_directories="$(StudioDir)/include" arm_linker_heap_size="0" />
+  <project Name="solo_external" >
+    <configuration arm_target_loader_parameter="18432000" Target="AT91SAM7X256" arm_simulator_memory_simulation_parameter="0x20000;0x4000" property_groups_file_path="$(StudioDir)/targets/Atmel_AT91SAM7/propertyGroups.xml" oscillator_frequency="18.432MHz" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" gcc_entry_point="reset_handler" external_build_file_name="C:/mtcode/make/firmware_103/solo/output/solo.elf" arm_architecture="v4T" project_directory="" project_type="Externally Built Executable" Name="Common" arm_target_debug_interface_type="ARM7TDI" arm_core_type="ARM7TDMI" arm_simulator_memory_simulation_filename="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7SimulatorMemory.dll" />
+    <configuration linker_section_placement_file="$(StudioDir)/targets/sram_placement.xml" target_reset_script="RAMReset()" Name="RAM" Placement="RAM" />
+    <configuration arm_target_flash_loader_file_path="$(StudioDir)/targets/Atmel_AT91SAM7/Release/Loader.elf" linker_section_placement_file="$(StudioDir)/targets/flash_placement.xml" target_reset_script="FLASHReset()" Name="Flash" Placement="Flash" />
+    <folder Name="System Files" >
+      <file file_name="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7_Target.js" Name="AT91SAM7_Target.js" >
+        <configuration Name="Common" file_type="Reset Script" />
+      </file>
+    </folder>
+  </project>
+</solution>
