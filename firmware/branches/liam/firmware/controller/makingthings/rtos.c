@@ -110,11 +110,22 @@ void  TaskExitCritical( )
   taskEXIT_CRITICAL();
 }
 
+/**	
+	Allocate memory from the heap.
+	Pretty much the same as a normal malloc(), but for the SAM7X.  
+  @see Free()
+*/
 void* Malloc( int size )
 {
   return pvPortMalloc( size ); 
 }
 
+/**	
+	Free memory from the heap.
+	Once you've allocated memory using Malloc(), free it when you're done with it.
+  It's usually a good idea to set the pointer the freed memory to NULL after you've freed it.
+  @see Malloc()
+*/
 void Free( void* memory )
 {
   vPortFree( memory ); 

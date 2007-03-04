@@ -19,11 +19,7 @@
 	Network - Ethernet Control.
 	Methods for communicating via the Ethernet port with the Make Controller Board.
 */
-/*
-#include "FreeRTOS.h"
-#include "task.h"
-#include "semphr.h"
-*/
+
 #include "stdio.h"
 
 #include "io.h"
@@ -57,19 +53,10 @@ char emacETHADDR5 = 0x0;
 
 #include "config.h"
 #include "network.h"
+
 // a few globals
-struct Network_
-{
-  xSemaphoreHandle semaphore;
-  // Timer structures for periodic DHCP calls, if we have that enabled.
-  TimerEntry DhcpFineTimer;
-  TimerEntry DhcpCoarseTimer; 
-} Network;
+struct Network_* Network;
 
-//struct Network_ Network;
-
-static int Network_Active;
-static int Network_Pending; // if somebody has started the process of getting an IP address, don't start another process
 enum { NET_UNCHECKED, NET_INVALID, NET_VALID } Network_Valid;
 
 void Network_DhcpFineCallback( int id );
@@ -115,17 +102,29 @@ int Network_SetActive( int state )
 {
   if ( state ) 
   {
-    if ( !Network_Active )
+    if( Network == NULL ) // testing out the possibility of creating this on the heap
     {
+      Network = Malloc( sizeof( struct Network_ ) );
+
+      Network->pending = false;
+      // set the temp addresses to use when setting a new IP address/mask/gateway
+      Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&Network->TempIpAddress, 4 );
+      Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&Network->TempGateway, 4 );
+      Eeprom_Read( EEPROM_SYSTEM_NET_MASK, (uchar*)&Network->TempMask, 4 );
       Network_Init();
-      Network_Active = state;
     }
   }
+  else if( Network )
+  {
+    Free( Network );
+    Network = NULL;
+  }
+
   return CONTROLLER_OK;
 }
 
 /**
-	Sets whether the Network subsystem is active.
+	Sets whether the Network subsystem is currently trying to negotiate its settings.
   This is mostly used by the Network init and deinit processes, so you shouldn't
   be calling this yourself unless you have a good reason to.
 	@param state An integer specifying the active state - 1 (active) or 0 (inactive).
@@ -134,11 +133,11 @@ void Network_SetPending( int state )
 {
   if( state )
   {
-    if( !Network_Pending && !Network_Active )
-      Network_Pending = state;  // this should probably get set in Network_Init if things go well.
+    if( !Network->pending )
+      Network->pending = state;  // this should probably get set in Network_Init if things go well.
   }
   else
-    Network_Pending = state;
+    Network->pending = state;
 }
 
 /**
@@ -147,7 +146,10 @@ void Network_SetPending( int state )
 */
 int Network_GetActive( void )
 {
-  return Network_Active;
+  if( Network == NULL )
+    return 0;
+  else
+    return 1;
 }
 
 /**
@@ -176,11 +178,9 @@ int Network_GetActive( void )
 */
 int Network_SetAddress( int a0, int a1, int a2, int a3 )
 {
-  int address;
-	address = IP_ADDRESS( a0, a1, a2, a3 );
-
-  Eeprom_Write( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&address, 4 );
-  
+	// just store this address, since we're only going to do something with it in response to
+  // Network_SetValid().
+  Network->TempIpAddress = IP_ADDRESS( a0, a1, a2, a3 );
   Network_Valid = NET_INVALID;
 
   return CONTROLLER_OK;
@@ -307,16 +307,22 @@ int Network_SetValid( int v )
 {
   if ( v )
   {
-    int address;
-    Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&address, 4 );
+    struct ip_addr ip, gw, mask;
+    struct netif* mc_netif;
+
+    ip.addr = Network->TempIpAddress;
+    mask.addr = Network->TempMask;
+    gw.addr = Network->TempGateway;
+    // we specify our network interface as en0 when we init
+    mc_netif = netif_find( "en0" );
+    if( mc_netif != NULL )
+      netif_set_addr( mc_netif, &ip, &mask, &gw );
   
-    int mask;
-    Eeprom_Read( EEPROM_SYSTEM_NET_MASK, (uchar*)&mask, 4 );
-  
-    int gateway;
-    Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&gateway, 4 );
-  
-    int total = address + mask + gateway;
+    Eeprom_Write( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&ip.addr, 4 );
+    Eeprom_Write( EEPROM_SYSTEM_NET_MASK, (uchar*)&mask.addr, 4 );
+    Eeprom_Write( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&gw.addr, 4 );
+
+    int total = Network->TempIpAddress + Network->TempMask + Network->TempGateway;
     Eeprom_Write( EEPROM_SYSTEM_NET_CHECK, (uchar*)&total, 4 );
 
     Network_Valid = NET_VALID;
@@ -442,6 +448,7 @@ int Network_GetTcpOutAddress( int* a0, int* a1, int* a2, int* a3 )
 */
 int Network_GetMask( int* a0, int* a1, int* a2, int* a3 )
 {
+  /*
   if ( Network_Valid == NET_UNCHECKED )
     Network_GetValid();
 
@@ -462,6 +469,21 @@ int Network_GetMask( int* a0, int* a1, int* a2, int* a3 )
   *a1 = IP_ADDRESS_B( address );
   *a2 = IP_ADDRESS_C( address );
   *a3 = IP_ADDRESS_D( address );
+  */
+
+  struct netif* mc_netif;
+  int address = 0;
+  // we specify our network interface as en0 when we init
+  mc_netif = netif_find( "en0" );
+  if( mc_netif != NULL )
+  {
+    address = mc_netif->netmask.addr;
+
+    *a0 = IP_ADDRESS_A( address );
+    *a1 = IP_ADDRESS_B( address );
+    *a2 = IP_ADDRESS_C( address );
+    *a3 = IP_ADDRESS_D( address );
+  }
     
   return CONTROLLER_OK;
 }
@@ -478,6 +500,7 @@ int Network_GetMask( int* a0, int* a1, int* a2, int* a3 )
 */
 int Network_GetGateway( int* a0, int* a1, int* a2, int* a3 )
 {
+  /*
   if ( Network_Valid == NET_UNCHECKED )
     Network_GetValid();
 
@@ -498,6 +521,21 @@ int Network_GetGateway( int* a0, int* a1, int* a2, int* a3 )
   *a1 = IP_ADDRESS_B( address );
   *a2 = IP_ADDRESS_C( address );
   *a3 = IP_ADDRESS_D( address );
+  */
+
+  struct netif* mc_netif;
+  int address = 0;
+  // we specify our network interface as en0 when we init
+  mc_netif = netif_find( "en0" );
+  if( mc_netif != NULL )
+  {
+    address = mc_netif->gw.addr;
+
+    *a0 = IP_ADDRESS_A( address );
+    *a1 = IP_ADDRESS_B( address );
+    *a2 = IP_ADDRESS_C( address );
+    *a3 = IP_ADDRESS_D( address );
+  }
   
   return CONTROLLER_OK;
 }
@@ -944,7 +982,6 @@ int Network_Init( )
   static struct netif EMAC_if;
   int address, mask, gateway;
 
-  Network_Valid = NET_UNCHECKED;
   if( Network_GetDhcpEnabled() )
   {
     address = 0;
@@ -953,17 +990,9 @@ int Network_Init( )
   }
   else // DHCP not enabled, just read whatever the manual IP address in EEPROM is.
   {
-    int a0, a1, a2, a3;
-    Network_GetAddress( &a0, &a1, &a2, &a3 );
-    address = IP_ADDRESS( a0, a1, a2, a3 );
-  
-    int m0, m1, m2, m3;
-    Network_GetMask( &m0, &m1, &m2, &m3 );
-    mask = IP_ADDRESS( m0, m1, m2, m3 );
-  
-    int g0, g1, g2, g3;
-    Network_GetGateway( &g0, &g1, &g2, &g3 );
-    gateway = IP_ADDRESS( g0, g1, g2, g3 );
+    address = Network->TempIpAddress;
+    mask = Network->TempMask;
+    gateway = Network->TempGateway;
   }
   // add our network interface to the system
   netif_add(&EMAC_if, (struct ip_addr*)&address, (struct ip_addr*)&mask, 
@@ -972,6 +1001,7 @@ int Network_Init( )
   netif_set_default(&EMAC_if);
 	// bring it up
   netif_set_up(&EMAC_if);
+  // name it so we can find it later
   EMAC_if.name[0] = 'e';
   EMAC_if.name[1] = 'n';
   EMAC_if.num = 0;
@@ -979,21 +1009,28 @@ int Network_Init( )
   if( Network_GetDhcpEnabled() )
   {
     dhcp_start( &EMAC_if );
+    // would prefer to create these as timer callbacks, but there's currently an issue with calling
+    // OS/lwIP stuff from within a timer callback.
     TaskCreate( DhcpFineTask, "DhcpFine", 100, 0, 1 );
     TaskCreate( DhcpCoarseTask, "DhcpCoarse", 50, 0, 1 );
     // now hang out for a second until we get an address
-    /*
     int count = 0;
-    while( EMAC_if.ip_addr.addr == 0 && count < 10000 )
+    // if DHCP is enabled but we don't find a DHCP server, just use the network config stored in EEPROM
+    while( EMAC_if.ip_addr.addr == 0 && count < 100 ) // timeout after 10 (?) seconds of waiting for a DHCP address
     {
       count++;
       Sleep( 100 );
     }
-    */
+    if( EMAC_if.ip_addr.addr == 0 ) // if we timed out getting an address via DHCP, just use whatever's in EEPROM
+    {
+      struct ip_addr ip, gw, mask; // network config stored in EEPROM
+      ip.addr = Network->TempIpAddress;
+      mask.addr = Network->TempMask;
+      gw.addr = Network->TempGateway;
+      netif_set_addr( &EMAC_if, &ip, &mask, &gw );
+    }
   }
     
-
-
   /*
   hmm...some work to get this together.
   vSemaphoreCreateBinary( Network.semaphore );
