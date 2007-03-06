@@ -43,13 +43,24 @@
 */
 
 /**	
-	Put a task to sleep.
+	Put a task to sleep for a given number of milliseconds.
 	This lets the processor give time to other tasks.  
 	@param timems An integer specifying how long to sleep in milliseconds.
 */
 void Sleep( int timems )
 {
   vTaskDelay( timems / portTICK_RATE_MS );
+}
+
+/**	
+	Put a task to sleep for a given number of microseconds.
+	This lets the processor give time to other tasks.  
+	@param timems An integer specifying how long to sleep in microseconds.
+*/
+void uSleep( int timeus )
+{
+  //make sure this can actually work!!
+	//vTaskDelay( timeus / portTICK_RATE_USEC );
 }
 
 /**	
@@ -112,7 +123,8 @@ void  TaskExitCritical( )
 
 /**	
 	Allocate memory from the heap.
-	Pretty much the same as a normal malloc(), but for the SAM7X.  
+	Pretty much the same as a normal malloc(), but for the SAM7X. 
+	@return A pointer to the allocated memory. 
   @see Free()
 */
 void* Malloc( int size )

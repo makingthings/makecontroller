@@ -25,7 +25,7 @@
 #define RTOS_H
 
 void  Sleep( int timems );
-
+void uSleep( int timeus );
 void* TaskCreate(  void (taskCode)(void*), char* name, int stackDepth, void* parameters, int priority );
 void  TaskYield( void );
 void  TaskDelete( void* task );

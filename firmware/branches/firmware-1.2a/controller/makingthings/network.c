@@ -102,11 +102,11 @@ int Network_SetActive( int state )
 {
   if ( state ) 
   {
-    if( Network == NULL ) // testing out the possibility of creating this on the heap
+    if( Network == NULL )
     {
       Network = Malloc( sizeof( struct Network_ ) );
 
-      Network->pending = false;
+      Network->pending = 0;
       // set the temp addresses to use when setting a new IP address/mask/gateway
       Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&Network->TempIpAddress, 4 );
       Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&Network->TempGateway, 4 );
@@ -114,11 +114,14 @@ int Network_SetActive( int state )
       Network_Init();
     }
   }
-  else if( Network )
-  {
-    Free( Network );
-    Network = NULL;
-  }
+  else 
+	{
+		if( Network )
+		{
+			Free( Network );
+			Network = NULL;
+		}
+	}
 
   return CONTROLLER_OK;
 }
@@ -131,12 +134,9 @@ int Network_SetActive( int state )
 */
 void Network_SetPending( int state )
 {
-  if( state )
-  {
-    if( !Network->pending )
+  if( state && !Network->pending )
       Network->pending = state;  // this should probably get set in Network_Init if things go well.
-  }
-  else
+  else if( !state && Network->pending )
     Network->pending = state;
 }
 
@@ -248,11 +248,9 @@ int Network_SetTcpOutAddress( int a0, int a1, int a2, int a3 )
 */
 int Network_SetMask( int a0, int a1, int a2, int a3 )
 {
-  int address;
-	address = IP_ADDRESS( a0, a1, a2, a3 );
-
-  Eeprom_Write( EEPROM_SYSTEM_NET_MASK, (uchar*)&address, 4 );
-
+  // just store this address, since we're only going to do something with it in response to
+  // Network_SetValid().
+  Network->TempMask = IP_ADDRESS( a0, a1, a2, a3 );
   Network_Valid = NET_INVALID;
 
   return CONTROLLER_OK;
@@ -282,11 +280,9 @@ int Network_SetMask( int a0, int a1, int a2, int a3 )
 */
 int Network_SetGateway( int a0, int a1, int a2, int a3 )
 {
-  int address;
-	address = IP_ADDRESS( a0, a1, a2, a3 );
-
-  Eeprom_Write( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&address, 4 );
-
+  // just store this address, since we're only going to do something with it in response to
+  // Network_SetValid().
+  Network->TempGateway = IP_ADDRESS( a0, a1, a2, a3 );
   Network_Valid = NET_INVALID;
   
   return CONTROLLER_OK;
@@ -313,11 +309,15 @@ int Network_SetValid( int v )
     ip.addr = Network->TempIpAddress;
     mask.addr = Network->TempMask;
     gw.addr = Network->TempGateway;
-    // we specify our network interface as en0 when we init
-    mc_netif = netif_find( "en0" );
-    if( mc_netif != NULL )
-      netif_set_addr( mc_netif, &ip, &mask, &gw );
-  
+		if( !Network_GetDhcpEnabled ) // only actually change the address if we're not using DHCP
+		{
+			// we specify our network interface as en0 when we init
+			mc_netif = netif_find( "en0" );
+			if( mc_netif != NULL )
+				netif_set_addr( mc_netif, &ip, &mask, &gw );
+		}
+    
+		// but write the addresses to memory regardless, so we can use them next time we boot up without DHCP
     Eeprom_Write( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&ip.addr, 4 );
     Eeprom_Write( EEPROM_SYSTEM_NET_MASK, (uchar*)&mask.addr, 4 );
     Eeprom_Write( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&gw.addr, 4 );
@@ -448,29 +448,6 @@ int Network_GetTcpOutAddress( int* a0, int* a1, int* a2, int* a3 )
 */
 int Network_GetMask( int* a0, int* a1, int* a2, int* a3 )
 {
-  /*
-  if ( Network_Valid == NET_UNCHECKED )
-    Network_GetValid();
-
-  if ( Network_Valid == NET_INVALID )
-  {
-    *a0 = 255;
-    *a1 = 255;
-    *a2 = 255;
-    *a3 = 0;
-
-    return CONTROLLER_OK;
-  }
-
-  int address;
-  Eeprom_Read( EEPROM_SYSTEM_NET_MASK, (uchar*)&address, 4 );
-
-  *a0 = IP_ADDRESS_A( address );
-  *a1 = IP_ADDRESS_B( address );
-  *a2 = IP_ADDRESS_C( address );
-  *a3 = IP_ADDRESS_D( address );
-  */
-
   struct netif* mc_netif;
   int address = 0;
   // we specify our network interface as en0 when we init
@@ -500,29 +477,6 @@ int Network_GetMask( int* a0, int* a1, int* a2, int* a3 )
 */
 int Network_GetGateway( int* a0, int* a1, int* a2, int* a3 )
 {
-  /*
-  if ( Network_Valid == NET_UNCHECKED )
-    Network_GetValid();
-
-  if ( Network_Valid == NET_INVALID )
-  {
-    *a0 = 192;
-    *a1 = 168;
-    *a2 = 0;
-    *a3 = 1;
-
-    return CONTROLLER_OK;
-  }
-
-  int address;
-  Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&address, 4 );
-
-  *a0 = IP_ADDRESS_A( address );
-  *a1 = IP_ADDRESS_B( address );
-  *a2 = IP_ADDRESS_C( address );
-  *a3 = IP_ADDRESS_D( address );
-  */
-
   struct netif* mc_netif;
   int address = 0;
   // we specify our network interface as en0 when we init
@@ -881,7 +835,7 @@ void Network_SetDhcpEnabled( int enabled )
 {
   if( enabled && !Network_GetDhcpEnabled() )
     Eeprom_Write( EEPROM_DHCP_ENABLED, (uchar*)&enabled, 4 );
-  else if( Network_GetDhcpEnabled() )
+  else if( !enabled && Network_GetDhcpEnabled() )
     Eeprom_Write( EEPROM_DHCP_ENABLED, (uchar*)&enabled, 4 );
 
   return;
@@ -1009,8 +963,9 @@ int Network_Init( )
   if( Network_GetDhcpEnabled() )
   {
     dhcp_start( &EMAC_if );
+		Network_SetPending( 1 ); // set a flag so nobody else tries to set up this netif
     // would prefer to create these as timer callbacks, but there's currently an issue with calling
-    // OS/lwIP stuff from within a timer callback.
+    // OS/lwIP stuff from within a timer callback. bleh.
     TaskCreate( DhcpFineTask, "DhcpFine", 100, 0, 1 );
     TaskCreate( DhcpCoarseTask, "DhcpCoarse", 50, 0, 1 );
     // now hang out for a second until we get an address
@@ -1029,6 +984,7 @@ int Network_Init( )
       gw.addr = Network->TempGateway;
       netif_set_addr( &EMAC_if, &ip, &mask, &gw );
     }
+		Network_SetPending( 0 );
   }
     
   /*
