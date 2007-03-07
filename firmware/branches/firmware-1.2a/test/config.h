@@ -12,8 +12,8 @@
 #include "controller.h"   // ...everybody uses the MAKE Controller Board
 #include "appboard.h"     // ...if you're using the MAKE Application Board
 
-#define FIRMWARE_VERSION_NUMBER 110
-#define FIRMWARE_BUILD_NUMBER     3
+#define FIRMWARE_VERSION_NUMBER 120
+#define FIRMWARE_BUILD_NUMBER     0
 
 #define CONTROLLER_HEAPSIZE 16400
 
@@ -65,6 +65,8 @@
 #define CONTROLLER_ERROR_INCORRECT_DATA_TYPE        -20
 #define CONTROLLER_ERROR_NO_TYPE_TAG                -21
 #define CONTROLLER_ERROR_NO_PROPERTY                -22
+#define CONTROLLER_ERROR_NO_NETWORK                 -23
+#define CONTROLLER_ERROR_STRING_TOO_LONG            -24
 
 #define CONTROLLER_ERROR_COUNT_MISMATCH             -100
 #define CONTROLLER_ERROR_START_FAILED               -101
@@ -78,4 +80,4 @@
 #define CONTROLLER_ERROR_USE_GRANTED_ERROR          -109
 #define CONTROLLER_ERROR_INITIALIZATION             -110
 
-#endif /* CONFIG_H */
+#endif // CONFIG_H

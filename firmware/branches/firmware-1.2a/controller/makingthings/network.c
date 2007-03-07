@@ -62,6 +62,9 @@ enum { NET_UNCHECKED, NET_INVALID, NET_VALID } Network_Valid;
 void Network_DhcpFineCallback( int id );
 void Network_DhcpCoarseCallback( int id );
 void Network_SetPending( int state );
+int Network_GetPending( void );
+void Network_DhcpStart( struct netif* netif );
+void Network_DhcpStop( struct netif* netif );
 
 /** \defgroup Network
   The Network subsystem manages the Ethernet controller.  
@@ -130,19 +133,24 @@ int Network_SetActive( int state )
 	Sets whether the Network subsystem is currently trying to negotiate its settings.
   This is mostly used by the Network init and deinit processes, so you shouldn't
   be calling this yourself unless you have a good reason to.
-	@param state An integer specifying the active state - 1 (active) or 0 (inactive).
+	@param state An integer specifying the pending state - 1 (pending) or 0 (not pending).
 */
 void Network_SetPending( int state )
 {
   if( state && !Network->pending )
-      Network->pending = state;  // this should probably get set in Network_Init if things go well.
-  else if( !state && Network->pending )
+      Network->pending = state;
+  if( !state && Network->pending )
     Network->pending = state;
+}
+
+int Network_GetPending( )
+{
+  return Network->pending;
 }
 
 /**
 	Returns the active state of the Network subsystem.
-	@return State - 1/non-zero (active) or 0 (inactive).
+	@return State - 1 (active) or 0 (inactive).
 */
 int Network_GetActive( void )
 {
@@ -157,7 +165,12 @@ int Network_GetActive( void )
 	The IP address of the Make Controller, in dotted decimal form (xxx.xxx.xxx.xxx),
 	can be set by passing in each of the numbers as a separate parameter.
 	The default IP address of each Make Controller as it ships from the factory
-	is 192.168.0.200
+	is 192.168.0.200.  
+  
+  Because changing the network configuration of the board should
+  really be an atomic operation (in terms of changing the address/mask/gateway), 
+  we need to make a call to Network_SetValid() in order to actually apply
+  the changed address.  
 
 	This value is stored in EEPROM, so it persists even after the board
 	is powered down.
@@ -171,8 +184,9 @@ int Network_GetActive( void )
   \par Example
   \code
   // set the address to 192.168.0.23
-  if( 0 != Network_SetAddress( 192, 168, 0, 23 ) )
-    // then there was a problem.
+  Network_SetAddress( 192, 168, 0, 23 );
+  // now implement the change
+  Network_SetValid( 1 );
   \endcode
 
 */
@@ -306,10 +320,10 @@ int Network_SetValid( int v )
     struct ip_addr ip, gw, mask;
     struct netif* mc_netif;
 
-    ip.addr = Network->TempIpAddress;
-    mask.addr = Network->TempMask;
+    ip.addr = Network->TempIpAddress; // these should each have been set previously
+    mask.addr = Network->TempMask;  // by Network_SetAddress(), etc.
     gw.addr = Network->TempGateway;
-		if( !Network_GetDhcpEnabled ) // only actually change the address if we're not using DHCP
+		if( !Network_GetDhcpEnabled() ) // only actually change the address if we're not using DHCP
 		{
 			// we specify our network interface as en0 when we init
 			mc_netif = netif_find( "en0" );
@@ -380,6 +394,9 @@ int Network_GetValid( )
 */
 int Network_GetAddress( int* a0, int* a1, int* a2, int* a3 )
 {
+  if( Network_GetPending() )
+    return CONTROLLER_ERROR_NO_NETWORK;
+
   struct netif* mc_netif;
   int address = 0;
   // we specify our network interface as en0 when we init
@@ -448,6 +465,9 @@ int Network_GetTcpOutAddress( int* a0, int* a1, int* a2, int* a3 )
 */
 int Network_GetMask( int* a0, int* a1, int* a2, int* a3 )
 {
+  if( Network_GetPending() )
+    return CONTROLLER_ERROR_NO_NETWORK;
+  
   struct netif* mc_netif;
   int address = 0;
   // we specify our network interface as en0 when we init
@@ -477,6 +497,9 @@ int Network_GetMask( int* a0, int* a1, int* a2, int* a3 )
 */
 int Network_GetGateway( int* a0, int* a1, int* a2, int* a3 )
 {
+  if( Network_GetPending() )
+    return CONTROLLER_ERROR_NO_NETWORK;
+  
   struct netif* mc_netif;
   int address = 0;
   // we specify our network interface as en0 when we init
@@ -834,10 +857,26 @@ void DatagramSocketClose( void* socket )
 void Network_SetDhcpEnabled( int enabled )
 {
   if( enabled && !Network_GetDhcpEnabled() )
+  {
+    struct netif* mc_netif;
+    // we specify our network interface as en0 when we init
+    mc_netif = netif_find( "en0" );
+    if( mc_netif != NULL )
+      Network_DhcpStart( mc_netif );
+      
     Eeprom_Write( EEPROM_DHCP_ENABLED, (uchar*)&enabled, 4 );
-  else if( !enabled && Network_GetDhcpEnabled() )
+  }
+  
+  if( !enabled && Network_GetDhcpEnabled() )
+  {
+    struct netif* mc_netif;
+    // we specify our network interface as en0 when we init
+    mc_netif = netif_find( "en0" );
+    if( mc_netif != NULL )
+      Network_DhcpStop( mc_netif );
     Eeprom_Write( EEPROM_DHCP_ENABLED, (uchar*)&enabled, 4 );
-
+    Network_SetValid( 1 ); // bring the 
+  }
   return;
 }
 
@@ -846,6 +885,43 @@ int Network_GetDhcpEnabled( )
   int state;
   Eeprom_Read( EEPROM_DHCP_ENABLED, (uchar*)&state, 4 );
   return state; 
+}
+
+void Network_DhcpStart( struct netif* netif )
+{
+  Network_SetPending( 1 ); // set a flag so nobody else tries to set up this netif
+  int count = 0;
+  dhcp_start( netif );
+  Network->DhcpFineTaskPtr = TaskCreate( DhcpFineTask, "DhcpFine", 100, 0, 1 );
+  Network->DhcpCoarseTaskPtr = TaskCreate( DhcpCoarseTask, "DhcpCoarse", 50, 0, 1 );
+  // now hang out for a second until we get an address
+  // if DHCP is enabled but we don't find a DHCP server, just use the network config stored in EEPROM
+  while( netif->ip_addr.addr == 0 && count < 1000 ) // timeout after 10 (?) seconds of waiting for a DHCP address
+  {
+    count++;
+    Sleep( 10 );
+  }
+  if( netif->ip_addr.addr == 0 ) // if we timed out getting an address via DHCP, just use whatever's in EEPROM
+  {
+    struct ip_addr ip, gw, mask; // network config stored in EEPROM
+    ip.addr = Network->TempIpAddress;
+    mask.addr = Network->TempMask;
+    gw.addr = Network->TempGateway;
+    netif_set_addr( netif, &ip, &mask, &gw );
+  }
+  Network_SetPending( 0 );
+  return;
+}
+
+void Network_DhcpStop( struct netif* netif )
+{
+  dhcp_release( netif );
+  TaskDelete( Network->DhcpFineTaskPtr );
+  TaskDelete( Network->DhcpCoarseTaskPtr );
+  Network->DhcpFineTaskPtr = NULL;
+  Network->DhcpCoarseTaskPtr = NULL;
+  netif_set_up(netif); // bring the interface back up, as dhcp_release() takes it down
+  return;
 }
 
 /*
@@ -934,9 +1010,10 @@ int Network_Init( )
 
   extern err_t ethernetif_init( struct netif *netif );
   static struct netif EMAC_if;
-  int address, mask, gateway;
+  int address, mask, gateway, dhcp;
+  dhcp = Network_GetDhcpEnabled();
 
-  if( Network_GetDhcpEnabled() )
+  if( dhcp )
   {
     address = 0;
     mask = 0;
@@ -949,6 +1026,7 @@ int Network_Init( )
     gateway = Network->TempGateway;
   }
   // add our network interface to the system
+  Network_SetPending( 1 ); //netif_add goes away for a long time if there's no Ethernet cable connected.
   netif_add(&EMAC_if, (struct ip_addr*)&address, (struct ip_addr*)&mask, 
                         (struct ip_addr*)&gateway, NULL, ethernetif_init, tcpip_input);
 	// make it the default interface
@@ -959,33 +1037,10 @@ int Network_Init( )
   EMAC_if.name[0] = 'e';
   EMAC_if.name[1] = 'n';
   EMAC_if.num = 0;
+  Network_SetPending( 0 ); // all done for now
 
-  if( Network_GetDhcpEnabled() )
-  {
-    dhcp_start( &EMAC_if );
-		Network_SetPending( 1 ); // set a flag so nobody else tries to set up this netif
-    // would prefer to create these as timer callbacks, but there's currently an issue with calling
-    // OS/lwIP stuff from within a timer callback. bleh.
-    TaskCreate( DhcpFineTask, "DhcpFine", 100, 0, 1 );
-    TaskCreate( DhcpCoarseTask, "DhcpCoarse", 50, 0, 1 );
-    // now hang out for a second until we get an address
-    int count = 0;
-    // if DHCP is enabled but we don't find a DHCP server, just use the network config stored in EEPROM
-    while( EMAC_if.ip_addr.addr == 0 && count < 100 ) // timeout after 10 (?) seconds of waiting for a DHCP address
-    {
-      count++;
-      Sleep( 100 );
-    }
-    if( EMAC_if.ip_addr.addr == 0 ) // if we timed out getting an address via DHCP, just use whatever's in EEPROM
-    {
-      struct ip_addr ip, gw, mask; // network config stored in EEPROM
-      ip.addr = Network->TempIpAddress;
-      mask.addr = Network->TempMask;
-      gw.addr = Network->TempGateway;
-      netif_set_addr( &EMAC_if, &ip, &mask, &gw );
-    }
-		Network_SetPending( 0 );
-  }
+  if( dhcp )
+    Network_DhcpStart( &EMAC_if );
     
   /*
   hmm...some work to get this together.
@@ -1269,19 +1324,22 @@ int NetworkOsc_PropertyGet( int property, int channel )
       Osc_CreateMessage( channel, address, ",i", value );      
       break;
     case 1:
-      Network_GetAddress( &a0, &a1, &a2, &a3 );
+      if ( Network_GetAddress( &a0, &a1, &a2, &a3 ) == CONTROLLER_ERROR_NO_NETWORK )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "No network address available - try plugging in an Ethernet cable." );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
       Osc_CreateMessage( channel, address, ",s", output );      
       break;
     case 2:
-      Network_GetMask( &a0, &a1, &a2, &a3 );
+      if ( Network_GetMask( &a0, &a1, &a2, &a3 ) == CONTROLLER_ERROR_NO_NETWORK )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "No mask available - try plugging in an Ethernet cable." );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
       Osc_CreateMessage( channel, address, ",s", output );      
       break;
     case 3:
-      Network_GetGateway( &a0, &a1, &a2, &a3 );
+      if ( Network_GetGateway( &a0, &a1, &a2, &a3 ) == CONTROLLER_ERROR_NO_NETWORK )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "No gateway available - try plugging in an Ethernet cable." );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
       Osc_CreateMessage( channel, address, ",s", output );      
