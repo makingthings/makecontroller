@@ -20,6 +20,8 @@
 	Functions for monitoring and controlling the system.
 */
 
+#include "stdio.h"
+#include "string.h" // necessary?
 #include "io.h"
 #include "eeprom.h"
 #include "system.h"
@@ -29,8 +31,10 @@
 int System_Start( void );
 int System_Stop( void );
 int PortFreeMemory( void );
+void kill( void );
 
 int System_users;
+struct System_* System;
 
 /** \defgroup System
     The System subsystem monitors and controls several aspects of the system. 
@@ -86,7 +90,7 @@ int System_GetSerialNumber( void )
 {
   int serial;
   if ( Eeprom_Read( EEPROM_SYSTEM_SERIAL_NUMBER, (uchar*)&serial, 4 ) == CONTROLLER_OK )
-    return serial;
+    return serial & 0xFFFF;
   return 0;
 }
 
@@ -99,6 +103,7 @@ int System_GetSerialNumber( void )
 */
 int System_SetSerialNumber( int serial )
 {
+  serial &= 0xFFFF;
   return Eeprom_Write( EEPROM_SYSTEM_SERIAL_NUMBER, (uchar*)&serial, 4 );
 }
 
@@ -152,6 +157,46 @@ int System_SetSamba( int sure )
   return 1;
 }
 
+int System_SetName( char* name )
+{
+  int length = strlen( name );
+  if( length > SYSTEM_MAX_NAME )
+    return CONTROLLER_ERROR_STRING_TOO_LONG;
+  
+  strncpy( System->name, name, length ); // update the name in our buffer
+  int i;
+  char* ptr = name;
+  for( i = 0; i < length; i++ ) // have to do this because Eeprom_Write can only go 32 at a time.
+  {
+    Eeprom_Write( EEPROM_SYSTEM_NAME + i, (uchar*)ptr, 1 );
+    ptr++;
+  }
+  *ptr = '0';
+  Eeprom_Write( EEPROM_SYSTEM_NAME + (length + 1), (uchar*)ptr, 1 );
+  return CONTROLLER_OK;
+}
+
+char* System_GetName( ) // not working at the moment.
+{
+  if( System->name == NULL )
+  {
+    char* ptr = System->name;
+    int count = 0;
+    while( count < SYSTEM_MAX_NAME && *ptr != '\0' )
+    {
+      Eeprom_Read( EEPROM_SYSTEM_NAME + count, (uchar*)ptr++, 1 );
+      count++;
+    }
+    if( *ptr == '\0' )
+    {
+      ptr = "My Make Controller Kit";
+      return ptr;
+    }
+  }
+  
+  return System->name;
+}
+
 void kill( void )
 {
   AT91C_BASE_RSTC->RSTC_RCR = ( AT91C_RSTC_EXTRST | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | (0xA5 << 24 ) );
@@ -166,23 +211,10 @@ void kill( void )
 int System_SetReset( int sure )
 {
   if ( sure )
-    kill();
+    kill( );
 
   return 1;
 }
-
-/**
-	Set the board's name
-  @param name A pointer to a buffer with the name.
-  @param length An integer specifying the length of the name to write.
-	@return 0 on success, -1 on failure.
-*/
-/*
-int System_SetName( char* name, int length )
-{
-  return Eeprom_Write( EEPROM_SYSTEM_NAME, (uchar*)&name, length );
-}
-*/
 /** @}
 */
 
@@ -192,6 +224,7 @@ int System_Start()
   if ( System_users++ == 0 )
   {
   }
+  System = Malloc( sizeof( struct System_ ) );
   return CONTROLLER_OK;
 }
 
@@ -215,7 +248,7 @@ int System_Stop()
     There's only one System, so a device index is not used in OSC messages to it.
    
     \section properties Properties
-    System has six properties - \b 'freememory', \b 'samba', \b 'reset', \b 'serialnumber', \b 'buildnumber', and \b 'active'.
+    System has six properties - \b freememory, \b samba, \b reset, \b serialnumber, \b buildnumber, and \b active.
 
     \par Free Memory
     The \b 'freememory' property corresponds to the amount of free memory on the Controller Board.
@@ -262,6 +295,7 @@ int System_Stop()
     \verbatim /system/active 1 \endverbatim
 */
 
+#ifdef OSC
 #include "osc.h"
 
 static char* SystemOsc_Name = "system";
@@ -269,8 +303,8 @@ static char* SystemOsc_PropertyNames[] = { "active", "freememory", "samba", "res
                                             "serialnumber", "versionnumber", "buildnumber", 
                                             "name", "info", 0 }; // must have a trailing 0
 
-int SystemOsc_PropertySet( int property, int value );
-int SystemOsc_PropertyGet( int property );
+int SystemOsc_PropertySet( int property, char* typedata, int channel );
+int SystemOsc_PropertyGet( int property, int channel );
 
 const char* SystemOsc_GetName( void )
 {
@@ -279,10 +313,15 @@ const char* SystemOsc_GetName( void )
 // need to allow this to accept non-int arguments
 int SystemOsc_ReceiveMessage( int channel, char* message, int length )
 {
-  return Osc_IntReceiverHelper( channel, message, length, 
+  int status = Osc_GeneralReceiverHelper( channel, message, length, 
                                 SystemOsc_Name,
                                 SystemOsc_PropertySet, SystemOsc_PropertyGet, 
                                 SystemOsc_PropertyNames );
+
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, SystemOsc_Name, status );
+
+  return CONTROLLER_OK;
 }
 
 int SystemOsc_Poll( )
@@ -291,58 +330,113 @@ int SystemOsc_Poll( )
 }
 
 // Set the index LED, property with the value
-int SystemOsc_PropertySet( int property, int value )
+int SystemOsc_PropertySet( int property, char* typedata, int channel )
+//int SystemOsc_PropertySet( int property, int value )
 {
   switch ( property )
   {
     case 0: // active
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
+
       System_SetActive( value );
-      break;      
+      break;
+    }
     case 2: // samba
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
+
       System_SetSamba( value );
       break;
+    }
     case 3: // reset
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
+
       System_SetReset( value );
       break;
+    }
     case 4: // serialnumber
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
+
       System_SetSerialNumber( value );
       break;
+    }
     case 7: // name
-      //System_SetName( value );
+    {
+      char* address;
+      int count = Osc_ExtractData( typedata, "s", &address );
+      if ( count != 1 ) 
+        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need a string" );
+
+      System_SetName( address );
       break;
+    }
   }
   return CONTROLLER_OK;
 }
 
 // Get the property
-int SystemOsc_PropertyGet( int property )
+int SystemOsc_PropertyGet( int property, int channel )
+//int SystemOsc_PropertyGet( int property )
 {
   int value = 0;
+  char address[ OSC_SCRATCH_SIZE ];
+  //char output[ OSC_SCRATCH_SIZE ];
   switch ( property )
   {
     case 0:
       value = System_GetActive( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value ); 
       break;
     case 1:
       value = System_GetFreeMemory( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value ); 
       break;
     case 4:
       value = System_GetSerialNumber( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value ); 
       break;  
     case 5:
       value = System_GetVersionNumber( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value ); 
       break;  
     case 6:
       value = System_GetBuildNumber( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value ); 
       break;
     case 7: // name
-      System_SetSerialNumber( value );
+    {
+      char* name;
+      name = System_GetName( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",s", name ); 
       break;
+    }
     case 8: // info
       // create a bundle to ship back some info about the board.
       break;
   }
   
-  return value;
+  return CONTROLLER_OK;
 }
 
+#endif // OSC

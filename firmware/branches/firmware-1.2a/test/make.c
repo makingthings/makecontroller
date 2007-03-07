@@ -6,7 +6,6 @@
 #include "config.h"
 #include "serial.h"
 #include "string.h"
-#include "lwip/dhcp.h" // <-- move all this stuff into Network, eventually
 
 #define IP_ADDRESS( a, b, c, d ) ( ( (int)a << 24 ) + ( (int)b << 16 ) + ( (int)c << 8 ) + (int)d )
 
@@ -46,13 +45,14 @@ void Make( )
   Osc_RegisterSubsystem( 14, StepperOsc_GetName(), StepperOsc_ReceiveMessage, NULL );
 
   // Permit DIP switches to change the base IP settings
-  NetworkCheck();
+  //NetworkCheck();
 
   // Starts the network up.  Will not return until a network is found...
   Network_SetActive( true );
 
 	// Start the example webserver
-  TaskCreate( vBasicWEBServer, "WebServ", 300, NULL, 4 );
+  //TaskCreate( vBasicWEBServer, "WebServ", 300, NULL, 4 );
+
 }
 
 void BlinkTask( void* p )

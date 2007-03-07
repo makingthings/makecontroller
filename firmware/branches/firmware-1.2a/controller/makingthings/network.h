@@ -41,6 +41,8 @@ struct Network_
   int TempIpAddress; // hold onto the values that will ultimately get set for the network
   int TempGateway; // once it's all set as valid
   int TempMask;
+  void* DhcpFineTaskPtr;
+  void* DhcpCoarseTaskPtr;
 };
 
 // Network API stuff
