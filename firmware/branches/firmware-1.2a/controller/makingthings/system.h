@@ -28,7 +28,7 @@
 
 struct System_
 {
-  char name[ SYSTEM_MAX_NAME ];
+  char name[ SYSTEM_MAX_NAME + 1 ];
   int users;
 };
 

@@ -21,15 +21,14 @@
 */
 
 #include "stdio.h"
-#include "string.h" // necessary?
+#include "string.h"
+#include "ctype.h"
 #include "io.h"
 #include "eeprom.h"
 #include "system.h"
 #include "config.h"
 #include "AT91SAM7X256.h"
 
-int System_Start( void );
-int System_Stop( void );
 int PortFreeMemory( void );
 void kill( void );
 
@@ -58,10 +57,19 @@ struct System_* System;
 */
 int System_SetActive( int state )
 {
-  if ( state )
-    return System_Start(  );
+  if( state )
+  {
+    if( System == NULL )
+      System = Malloc( sizeof( struct System_ ) );
+    return CONTROLLER_OK;
+  }
   else
-    return System_Stop(  );
+  {
+    if ( System != NULL && System->users <= 0 )
+      return CONTROLLER_ERROR_TOO_MANY_STOPS;
+    else
+      return CONTROLLER_OK;
+  }
 }
 
 /**
@@ -159,41 +167,53 @@ int System_SetSamba( int sure )
 
 int System_SetName( char* name )
 {
+  System_SetActive( 1 );
   int length = strlen( name );
   if( length > SYSTEM_MAX_NAME )
     return CONTROLLER_ERROR_STRING_TOO_LONG;
   
-  strncpy( System->name, name, length ); // update the name in our buffer
+  strcpy( System->name, name ); // update the name in our buffer
   int i;
   char* ptr = name;
-  for( i = 0; i < length; i++ ) // have to do this because Eeprom_Write can only go 32 at a time.
+  for( i = 0; i <= length; i++ ) // have to do this because Eeprom_Write can only go 32 at a time.
   {
-    Eeprom_Write( EEPROM_SYSTEM_NAME + i, (uchar*)ptr, 1 );
-    ptr++;
+    Eeprom_Write( EEPROM_SYSTEM_NAME + i, (uchar*)ptr++, 1 );
   }
-  *ptr = '0';
-  Eeprom_Write( EEPROM_SYSTEM_NAME + (length + 1), (uchar*)ptr, 1 );
+
   return CONTROLLER_OK;
 }
 
-char* System_GetName( ) // not working at the moment.
+char* System_GetName( )
 {
   if( System->name == NULL )
   {
-    char* ptr = System->name;
-    int count = 0;
-    while( count < SYSTEM_MAX_NAME && *ptr != '\0' )
+    char* ptr;
+    ptr = System->name;
+    int i;
+    bool legal = false;
+    for( i = 0; i <= SYSTEM_MAX_NAME; i++ )
     {
-      Eeprom_Read( EEPROM_SYSTEM_NAME + count, (uchar*)ptr++, 1 );
-      count++;
+      Eeprom_Read( EEPROM_SYSTEM_NAME + i, (uchar*)ptr, 1 );
+      if( *ptr == '\0' )
+        break;
+      if( !isprint( *ptr ) )
+      {
+        legal = false;
+        break;
+      }
+      legal = true;
+      if( i == SYSTEM_MAX_NAME && *ptr != 0 )
+        *ptr = 0;
+      ptr++;
     }
-    if( *ptr == '\0' )
+
+    if( !legal )
     {
-      ptr = "My Make Controller Kit";
-      return ptr;
+      strcpy( System->name, "Make Controller Kit" );
+      System_SetName( System->name );
     }
   }
-  
+
   return System->name;
 }
 
@@ -218,27 +238,6 @@ int System_SetReset( int sure )
 /** @}
 */
 
-int System_Start()
-{
-  // int status;
-  if ( System_users++ == 0 )
-  {
-  }
-  System = Malloc( sizeof( struct System_ ) );
-  return CONTROLLER_OK;
-}
-
-int System_Stop()
-{
-  if ( System_users <= 0 )
-    return CONTROLLER_ERROR_TOO_MANY_STOPS;
-  
-  if ( --System_users == 0 )
-  {
-  }
-
-  return CONTROLLER_OK;
-}
 
 /** \defgroup SystemOSC System - OSC
   System controls many of the logistics of the Controller Board via OSC.
