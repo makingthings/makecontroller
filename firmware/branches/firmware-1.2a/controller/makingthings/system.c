@@ -28,11 +28,12 @@
 #include "system.h"
 #include "config.h"
 #include "AT91SAM7X256.h"
+#include "network.h"
 
 int PortFreeMemory( void );
 void kill( void );
 
-int System_users;
+//int System_users;
 struct System_* System;
 
 /** \defgroup System
@@ -60,15 +61,20 @@ int System_SetActive( int state )
   if( state )
   {
     if( System == NULL )
+    {
       System = Malloc( sizeof( struct System_ ) );
+      System->name[0] = 0;
+    }
     return CONTROLLER_OK;
   }
   else
   {
-    if ( System != NULL && System->users <= 0 )
-      return CONTROLLER_ERROR_TOO_MANY_STOPS;
-    else
-      return CONTROLLER_OK;
+    if ( System != NULL )
+    {
+      Free( System );
+      System = NULL;
+    }
+    return CONTROLLER_OK;
   }
 }
 
@@ -78,7 +84,7 @@ int System_SetActive( int state )
 */
 int System_GetActive( )
 {
-  return System_users > 0;
+  return System != NULL;
 }
 
 /**
@@ -185,7 +191,8 @@ int System_SetName( char* name )
 
 char* System_GetName( )
 {
-  if( System->name == NULL )
+  System_SetActive( 1 );
+  if( System->name[0] == 0 )
   {
     char* ptr;
     ptr = System->name;
@@ -194,14 +201,15 @@ char* System_GetName( )
     for( i = 0; i <= SYSTEM_MAX_NAME; i++ )
     {
       Eeprom_Read( EEPROM_SYSTEM_NAME + i, (uchar*)ptr, 1 );
-      if( *ptr == '\0' )
+      if( *ptr == 0 )
         break;
-      if( !isprint( *ptr ) )
+      if( !isprint( *ptr ) && *ptr != ' ' )
       {
         legal = false;
         break;
       }
       legal = true;
+      
       if( i == SYSTEM_MAX_NAME && *ptr != 0 )
         *ptr = 0;
       ptr++;
@@ -431,8 +439,18 @@ int SystemOsc_PropertyGet( int property, int channel )
       break;
     }
     case 8: // info
-      // create a bundle to ship back some info about the board.
+    {
+      char* name;
+      char* addr;
+      int a0, a1, a2, a3;
+      name = System_GetName( );
+      value = System_GetSerialNumber( );
+      Network_GetAddress( &a0, &a1, &a2, &a3 );
+      snprintf( addr, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",sis", name, value, addr );
       break;
+    }
   }
   
   return CONTROLLER_OK;
