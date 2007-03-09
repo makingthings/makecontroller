@@ -62,6 +62,7 @@ THUMB_SRC= \
   ../controller/lwip/src/core/ipv4/ip.c \
   ../controller/lwip/src/core/ipv4/ip_addr.c \
   ../controller/lwip/src/core/ipv4/icmp.c \
+  ../controller/lwip/src/core/dhcp.c \
   ../controller/lwip/src/api/tcpip.c \
   ../controller/lwip/src/api/api_msg.c \
   ../controller/lwip/src/api/err.c \
