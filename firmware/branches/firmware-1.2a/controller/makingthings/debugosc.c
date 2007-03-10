@@ -27,9 +27,6 @@
 #include "config.h"
 #include <stdarg.h>
 
-static int Debug_Start( void );
-static int Debug_Stop( void );
-
 #define DEBUG_MAX_MESSAGE 200
 
 struct Debug_
@@ -39,7 +36,9 @@ struct Debug_
   int usb;
   int udp;
   char message[ DEBUG_MAX_MESSAGE ];
-} DebugData;
+};
+
+struct Debug_* DebugData;
 
 /** \defgroup Debug
 	The Debug subsystem offers a simple way to send debug messages back from the MAKE Controller via OSC.
@@ -60,10 +59,19 @@ struct Debug_
 */
 int Debug_SetActive( int state )
 {
-  if ( state )
-    return Debug_Start( );
-  else
-    return Debug_Stop( );
+  if( state && DebugData == NULL )
+  {
+    DebugData = Malloc( sizeof( struct Debug_ ) );
+    DebugData->usb = 1;
+    DebugData->udp = 1;
+    DebugData->level = DEBUG_MESSAGE;
+  }
+  if( !state && DebugData != NULL )
+  {
+    Free( DebugData );
+    DebugData = NULL;
+  }
+  return CONTROLLER_OK;
 }
 
 /**
@@ -72,7 +80,7 @@ int Debug_SetActive( int state )
 */
 int Debug_GetActive( )
 {
-  return DebugData.users > 0;
+  return DebugData != NULL;
 }
 
 /**	
@@ -82,31 +90,26 @@ int Debug_GetActive( )
 */
 int Debug_SetLevel( int level )
 {
-  if ( DebugData.users == 0 )
-  {
-    int status = Debug_Start();
-    if ( status != CONTROLLER_OK )
-      return status;
-  }
-
-  DebugData.level = level;
+  if ( !Debug_GetActive() )
+    Debug_SetActive( 1 );
+  DebugData->level = level;
   return CONTROLLER_OK;
 }
 
 /**	
 	Read the current debugger level.
-  @return Level.
+  Possible levels are:
+  - 0 - Always
+  - 1 - Error messages
+  - 2 - Warning messages
+  - 3 - Normal/test messages
+  @return Level,
 */
 int Debug_GetLevel( )
 {
-  if ( DebugData.users == 0 )
-  {
-    int status = Debug_Start();
-    if ( status != CONTROLLER_OK )
-      return status;
-  }
-
-  return DebugData.level;
+  if ( !Debug_GetActive() )
+    Debug_SetActive( 1 );
+  return DebugData->level;
 }
 
 /**
@@ -116,7 +119,9 @@ int Debug_GetLevel( )
 */
 int Debug_SetUsb( int state )
 {
-  DebugData.usb = state;
+  if ( !Debug_GetActive() )
+    Debug_SetActive( 1 );
+  DebugData->usb = state;
   return CONTROLLER_OK;
 }
 
@@ -126,7 +131,9 @@ int Debug_SetUsb( int state )
 */
 int Debug_GetUsb( )
 {
-  return DebugData.usb;
+  if ( !Debug_GetActive() )
+    Debug_SetActive( 1 );
+  return DebugData->usb;
 }
 
 /**
@@ -136,7 +143,9 @@ int Debug_GetUsb( )
 */
 int Debug_SetUdp( int state )
 {
-  DebugData.udp = state;
+  if ( !Debug_GetActive() )
+    Debug_SetActive( 1 );
+  DebugData->udp = state;
   return CONTROLLER_OK;
 }
 
@@ -146,14 +155,24 @@ int Debug_SetUdp( int state )
 */
 int Debug_GetUdp( )
 {
-  return DebugData.udp;
+  if ( !Debug_GetActive() )
+    Debug_SetActive( 1 );
+
+  return DebugData->udp;
 }
 
 /**
   Create a debug message.
 	@param level An integer specifying the debug level.  
-	@param format The kind of message to send - most often "DEBUG_MESSAGE".
+	@param format printf()-style formatting. %d, %s, %x, etc.
 	@param ... The contents of the debug message - this can look just like a call to printf().
+
+  \par Example
+  \code
+  // send a simple debug message...
+  Debug( DEBUG_MESSAGE, "%s", "Hello." );
+  \endcode
+
 	@return 
 */
 
@@ -164,24 +183,22 @@ int Debug( int level, char* format, ... )
   if ( !Debug_GetActive() )
     Debug_SetActive( 1 );
 
-  if ( Osc_GetActive() && Osc_GetRunning( ) && level <= DebugData.level )
+  if ( Osc_GetActive() && Osc_GetRunning( ) && level <= DebugData->level )
   {
     va_start( args, format );
-    vsnprintf( DebugData.message, DEBUG_MAX_MESSAGE, format, args ); 
+    vsnprintf( DebugData->message, DEBUG_MAX_MESSAGE, format, args ); 
     // va_end( args );
-  
-    if ( DebugData.usb && Usb_GetActive() )
+    if ( DebugData->usb && Usb_GetActive() )
     {
-      Osc_CreateMessage( OSC_CHANNEL_USB, "/debug/message", ",s", DebugData.message );
+      Osc_CreateMessage( OSC_CHANNEL_USB, "/debug/message", ",s", DebugData->message );
       Osc_SendPacket( OSC_CHANNEL_USB );
     }
-    if ( DebugData.udp && Network_GetActive() )
+    if ( DebugData->udp && Network_GetActive() )
     {
-      Osc_CreateMessage( OSC_CHANNEL_UDP, "/debug/message", ",s", DebugData.message );
+      Osc_CreateMessage( OSC_CHANNEL_UDP, "/debug/message", ",s", DebugData->message );
       Osc_SendPacket( OSC_CHANNEL_UDP );
     }
   }
-
   return CONTROLLER_OK;
 }
 
@@ -189,29 +206,67 @@ int Debug( int level, char* format, ... )
 /** @}
 */
 
-int Debug_Start()
-{
-  if ( DebugData.users++ == 0 )
-  {
-    DebugData.usb = 1;
-    DebugData.udp = 1;
-    DebugData.level = DEBUG_MESSAGE;
-  }
-  return CONTROLLER_OK;
-}
+/** \defgroup DebugOSC Debug - OSC
+  Debug allows sending/receiving debug messages via OSC.
+  By default debug messages are sent over both USB and UDP, but this can be modified.
+  \ingroup OSC
+   
+    \section devices Devices
+    There's only one Debug system, so a device index is not used in OSC messages to it.
+   
+    \section properties Properties
+    Debug has six properties - \b active, \b level, \b usb, and \b udp.
 
-int Debug_Stop()
-{
-  if ( --DebugData.users == 0 )
-    Osc_SetActive( false );
+    \par Active
+    The \b 'active' property corresponds to the active state of the Debug system.
+    If Debug is set to be inactive, it will not respond to any other OSC messages. 
+    If you're not seeing appropriate
+    responses to your messages to Debug, check the whether it's
+    active by sending a message like
+    \verbatim /debug/active \endverbatim
+    \par
+    You can set the active flag by sending
+    \verbatim /debug/active 1 \endverbatim
+    
+    \par Level
+    The \b level property corresponds to the level of detail of the debug messages you want to receive.
+    Typically in a debug system, low-level messages are given a low number and higher-level messages
+    get higher numbers.  So, if you don't need to see all the low level stuff, you can simply set the debug
+    level to a higher number so you're not flooded with tons of nitty gritty messages.
 
-  return CONTROLLER_OK;
-}
+    Values for the levels:
+    - 0 - Always
+    - 1 - Error messages
+    - 2 - Warning messages
+    - 3 - Normal/test messages
+    
+    The default debug level is \b 3.  Set the level by sending a message like:
+    \verbatim /debug/level 2 \endverbatim
+   
+    \par Usb
+    The \b usb property determines whether debug messages will be sent over USB.  This is turned on
+    by default.
 
+    To set this to off, send a message like:
+    \code /debug/usb 0 \endcode
+   
+    \par Udp
+    The \b udp property determines whether debug messages will be sent over UDP.  This is turned on
+    by default.
+
+    To set this to off, send a message like:
+    \code /debug/udp 0 \endcode
+*/
+
+#ifdef OSC
 
 #include "osc.h"
 #include "string.h"
 #include "stdio.h"
+
+// OSC Interface 
+//const char* DebugOsc_GetName( void );
+//int DebugOsc_ReceiveMessage( int channel, char* message, int length );
 
 // Need a list of property names
 // MUST end in zero
@@ -277,7 +332,9 @@ int DebugOsc_PropertyGet( int property )
       value = Debug_GetUdp( );
       break;  
   }
-  
   return value;
 }
+
+#endif // OSC
+
 
