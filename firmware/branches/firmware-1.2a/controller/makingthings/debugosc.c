@@ -27,7 +27,7 @@
 #include "config.h"
 #include <stdarg.h>
 
-#define DEBUG_MAX_MESSAGE 200
+#define DEBUG_MAX_MESSAGE 100
 
 struct Debug_
 {
@@ -43,19 +43,37 @@ struct Debug_* DebugData;
 /** \defgroup Debug
 	The Debug subsystem offers a simple way to send debug messages back from the MAKE Controller via OSC.
 	Even without single-stepping through the code running on the MAKE Controller, it is still easy to get helpful
-	debug information about the program through the Debug subsystem.\n
+	debug information about the program through the Debug subsystem.
 	
 	Specify the level of each debug message and then, in a debug session, set the level you would like to see.  More 
 	frequent and lower level messages can be filtered out in a debug session by setting the debug
 	level a bit higher to let through only the messages you're interested in. 
+
+  Possible levels are:
+  - 0 - Always send
+  - 1 - Error messages
+  - 2 - Warning messages
+  - 3 - Normal/test messages
+
 	\ingroup Controller
 	@{
 */
 
 /**
 	Sets whether the Debug subsystem is active.
+  The Debug system is automatically set to active by making a call to any Debug system function,
+  so you don't typically have to worry about doing that.  But, you can set it to inactive
+  to recover a bit of space on the heap.
 	@param state An integer specifying the active state - 1 (active) or 0 (inactive).
 	@return Zero on success.
+
+  \par Example
+  \code
+  // Checking the debug level sets the system to active.
+  int level = Debug_GetLevel();
+  // then we can turn it off
+  Debug_SetActive( 0 );
+  \endcode
 */
 int Debug_SetActive( int state )
 {
@@ -77,6 +95,14 @@ int Debug_SetActive( int state )
 /**
 	Returns the active state of the Debug subsystem.
 	@return State - 1 (active) or 0 (inactive).
+
+  \par Example
+  \code
+  // Check to see if we're active...
+  int active = Debug_GetActive();
+  if( active )
+    // then do something...
+  \endcode
 */
 int Debug_GetActive( )
 {
@@ -84,9 +110,16 @@ int Debug_GetActive( )
 }
 
 /**	
-	Controls the controller debug level.
-	@param level An integer specifying the level.
-  @return none.
+	Sets the debug level.
+  Set to a lower number to get more messages.  Default level is 3.
+	@param level An integer specifying the level (from 0-3).
+  @return 0 on success
+
+  \par Example
+  \code
+  // Set the level to just report error messages.
+  Debug_SetLevel( 1 );
+  \endcode
 */
 int Debug_SetLevel( int level )
 {
@@ -98,12 +131,28 @@ int Debug_SetLevel( int level )
 
 /**	
 	Read the current debugger level.
-  Possible levels are:
-  - 0 - Always
-  - 1 - Error messages
-  - 2 - Warning messages
-  - 3 - Normal/test messages
-  @return Level,
+  @return Level An integer from 0-3 specifying the level.
+
+  \par Example
+  \code
+  // Check the current debug level
+  int level = Debug_GetLevel( );
+  switch( level )
+  {
+    case DEBUG_ALWAYS:
+      // ...
+      break;
+    case DEBUG_ERROR:
+      // ...
+      break;
+    case DEBUG_WARNING:
+      // ...
+      break;
+    case DEBUG_MESSAGE:
+      // ...
+      break;
+  }
+  \endcode
 */
 int Debug_GetLevel( )
 {
@@ -113,9 +162,16 @@ int Debug_GetLevel( )
 }
 
 /**
-	Sets whether the Debug subsystem outputs to USB OSC.
-	@param state An integer specifying the state - 1 (on) or 0 (off).
+	Sets whether the Debug subsystem outputs its OSC messages via USB.
+  This is enabled by default.  
+	@param state An integer specifying whether or not to send over USB - 1 (on) or 0 (off).
 	@return Zero on success.
+
+  \par Example
+  \code
+  // Turn debugging over USB off.
+  Debug_SetUsb( 0 );
+  \endcode
 */
 int Debug_SetUsb( int state )
 {
@@ -126,8 +182,15 @@ int Debug_SetUsb( int state )
 }
 
 /**
-	Returns the active state of the Debug subsystem.
-	@return State - 1 (active) or 0 (inactive).
+	Returns whether the Debug system is set to send its messages over USB.
+  This is enabled by default.
+	@return state An integer specifying whether messages will be sent over USB - 1 (enabled) or 0 (disabled).
+
+  \par Example
+  \code
+  // Check whether we're sending Debug messages over USB
+  int usb_debug = Debug_GetUsb( );
+  \endcode
 */
 int Debug_GetUsb( )
 {
@@ -137,9 +200,16 @@ int Debug_GetUsb( )
 }
 
 /**
-	Sets whether the Debug subsystem outputs to UDP OSC.
+	Sets whether the Debug system is set to send its messages over UDP.
+  This is enabled by default.
 	@param state An integer specifying the state - 1 (on) or 0 (off).
 	@return Zero on success.
+
+  \par Example
+  \code
+  // Turn debugging over UDP off.
+  Debug_SetUdp( 0 );
+  \endcode
 */
 int Debug_SetUdp( int state )
 {
@@ -150,8 +220,15 @@ int Debug_SetUdp( int state )
 }
 
 /**
-	Returns the active state of the Debug subsystem.
-	@return State - 1 (active) or 0 (inactive).
+	Sets whether the Debug subsystem outputs its OSC messages via USB.
+  This is enabled by default.
+	@return state An integer specifying whether messages will be sent over USB - 1 (enabled) or 0 (disabled).
+
+  \par Example
+  \code
+  // Check whether we're sending Debug messages over UDP
+  int udp_debug = Debug_GetUdp( );
+  \endcode
 */
 int Debug_GetUdp( )
 {
@@ -171,6 +248,17 @@ int Debug_GetUdp( )
   \code
   // send a simple debug message...
   Debug( DEBUG_MESSAGE, "%s", "Hello." );
+
+  // or a slightly more interesting message
+  SomeTask( void* p )
+  {
+    int counter = 0;
+    while( 1 )
+    {
+      Debug( DEBUG_MESSAGE, "%s %d", "Current count is: ", counter++ );
+      Sleep( 1000 );
+    }
+  }
   \endcode
 
 	@return 
@@ -235,7 +323,7 @@ int Debug( int level, char* format, ... )
     level to a higher number so you're not flooded with tons of nitty gritty messages.
 
     Values for the levels:
-    - 0 - Always
+    - 0 - Always send
     - 1 - Error messages
     - 2 - Warning messages
     - 3 - Normal/test messages
