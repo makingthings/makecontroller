@@ -1177,6 +1177,9 @@ const char* NetworkOsc_GetName( void )
 
 int NetworkOsc_ReceiveMessage( int channel, char* message, int length )
 {
+  if ( Network_GetPending() )
+    return Osc_SubsystemError( channel, NetworkOsc_Name, "Network initializing...please wait." );
+  
   int status = Osc_GeneralReceiverHelper( channel, message, length, 
                                 NetworkOsc_Name,
                                 NetworkOsc_PropertySet, NetworkOsc_PropertyGet, 
