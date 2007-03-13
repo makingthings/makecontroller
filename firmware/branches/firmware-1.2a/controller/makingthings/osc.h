@@ -33,7 +33,7 @@
 #define OSC_CHANNEL_TCP 2
 
 // Top level functions
-int Osc_SetActive( int state );
+void Osc_SetActive( int state );
 int Osc_GetActive( void );
 int Osc_GetRunning( void );
 

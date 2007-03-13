@@ -103,14 +103,14 @@ typedef struct OscChannel_
   int (*sendMessage)( char* packet, int length, int replyAddress, int replyPort );
   xSemaphoreHandle semaphore;
   int running;
-} OscChannel;
+}OscChannel;
 
 typedef struct OscSubsystem_
 {
   const char* name;
   int (*receiveMessage)( int channel, char* buffer, int length );  
   int (*poll)( int channel );
-} OscSubsystem;
+}OscSubsystem;
 
 struct Osc_
 {
@@ -118,12 +118,13 @@ struct Osc_
   int running;
   int subsystemHighest;
   void* sendSocket;
+  void* UsbTaskPtr;
+  void* UdpTaskPtr;
   OscChannel channel[ OSC_CHANNEL_COUNT ];
   OscSubsystem subsystem[ OSC_SUBSYSTEM_COUNT ];
-} Osc;
+};
 
-static int Osc_Start( void );
-static int Osc_End( void );
+struct Osc_* Osc;
 
 int Osc_Lock( OscChannel* ch );
 void Osc_Unlock( OscChannel *ch );
@@ -182,51 +183,47 @@ void Osc_TcpTask( void* parameters );
 	@param state
 	@return Zero on success.
 */
-int Osc_SetActive( int state )
+void Osc_SetActive( int state )
 {
-  if ( state )
-    return Osc_Start(  );
-  else
-    return Osc_End(  );
+  if ( state && Osc == NULL )
+  {
+    Osc = Malloc( sizeof( struct Osc_ ) );
+    Osc->subsystemHighest = 0;
+    if ( Osc->channel[ OSC_CHANNEL_UDP ].replyPort == 0 )
+      Osc_SetReplyPort( OSC_CHANNEL_UDP, 10000 );
+
+    Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 500, (void*)OSC_CHANNEL_UDP, 3 );
+    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 300, (void*)OSC_CHANNEL_USB, 3 );
+    //TaskCreate( Osc_TcpTask, "Osc-Tcp", 500, (void*)OSC_CHANNEL_TCP, 3 );
+
+    Osc->users = 1;
+    Osc->running = true;
+  }
+  if( !state && Osc )
+  {
+    /* from Osc_End()
+    if ( Osc.users > 0 )
+    {
+      Osc.users--;
+      if ( Osc.users == 0 )
+        Osc.running = false;
+    }
+    */
+    TaskDelete( Osc->UsbTaskPtr );
+    TaskDelete( Osc->UdpTaskPtr );
+    Free ( Osc );
+    Osc = NULL;
+  }
 }
 
 /**
 	Osc_GetActive.
-	Returns the state of the Osc system. \n
+	Returns the state of the Osc system.
 	@return Non-zero if active, zero if inactive.
 */
 int Osc_GetActive( )
 {
-  return Osc.users > 0;
-}
-
-int Osc_Start( void )
-{
-  if ( Osc.users == 0 )
-  {
-    Osc.subsystemHighest = 0;
-    if ( Osc.channel[ OSC_CHANNEL_UDP ].replyPort == 0 )
-      Osc_SetReplyPort( OSC_CHANNEL_UDP, 10000 );
-
-    TaskCreate( Osc_UdpTask, "OSC-UDP", 500, (void*)OSC_CHANNEL_UDP, 3 );
-    TaskCreate( Osc_UsbTask, "OSC-USB", 300, (void*)OSC_CHANNEL_USB, 3 );
-    //TaskCreate( Osc_TcpTask, "Osc-Tcp", 500, (void*)OSC_CHANNEL_TCP, 3 );
-
-    Osc.users++;
-    Osc.running = true;
-  }
-  return CONTROLLER_OK;
-}
-
-int Osc_End( void )
-{
-  if ( Osc.users > 0 )
-  {
-    Osc.users--;
-    if ( Osc.users == 0 )
-      Osc.running = false;
-  }
-  return CONTROLLER_OK;
+  return Osc != NULL;
 }
 
 int Osc_UsbPacketSend( char* packet, int length, int replyAddress, int replyPort )
@@ -237,20 +234,23 @@ int Osc_UsbPacketSend( char* packet, int length, int replyAddress, int replyPort
 int Osc_UdpPacketSend( char* packet, int length, int replyAddress, int replyPort )
 {
   if ( replyAddress != 0 && replyPort != 0 )
-    return DatagramSocketSend( Osc.sendSocket, replyAddress, replyPort, packet, length );
+    return DatagramSocketSend( Osc->sendSocket, replyAddress, replyPort, packet, length );
   else
     return CONTROLLER_ERROR_NO_ADDRESS;
 }
 
 int Osc_GetRunning( )
 {
-  return Osc.running;
+  if( Osc )
+    return Osc->running;
+  else
+    return 0;
 }
 
 void Osc_UdpTask( void* parameters )
 {
   int channel = (int)parameters;
-  OscChannel *ch = &Osc.channel[ channel ];
+  OscChannel *ch = &Osc->channel[ channel ];
 
   ch->sendMessage = Osc_UdpPacketSend;
 
@@ -263,7 +263,7 @@ void Osc_UdpTask( void* parameters )
   ch->running = true;
 
   void* ds = DatagramSocket( ch->replyPort );
-  Osc.sendSocket = DatagramSocket( 0 );
+  Osc->sendSocket = DatagramSocket( 0 );
 
   while ( true )
   {
@@ -282,7 +282,7 @@ void Osc_UdpTask( void* parameters )
 void Osc_TcpTask( void* parameters )
 {
   int channel = (int)parameters;
-  OscChannel *ch = &Osc.channel[ channel ];
+  OscChannel *ch = &Osc->channel[ channel ];
   //ch->sendMessage = Osc_TcpPacketSend;
   Osc_ResetChannel( ch );
 
@@ -313,7 +313,7 @@ void Osc_TcpTask( void* parameters )
 void Osc_UsbTask( void* parameters )
 {
   int channel = (int)parameters;
-  OscChannel *ch = &Osc.channel[ channel ];
+  OscChannel *ch = &Osc->channel[ channel ];
 
   ch->sendMessage = Osc_UsbPacketSend;
 
@@ -340,7 +340,7 @@ int Osc_SetReplyAddress( int channel, int replyAddress )
   if ( channel < 0 || channel >= OSC_CHANNEL_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  OscChannel* ch =  &Osc.channel[ channel ];
+  OscChannel* ch =  &Osc->channel[ channel ];
 
   ch->replyAddress = replyAddress;
 
@@ -352,7 +352,7 @@ int Osc_SetReplyPort( int channel, int replyPort )
   if ( channel < 0 || channel >= OSC_CHANNEL_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  OscChannel* ch =  &Osc.channel[ channel ];
+  OscChannel* ch =  &Osc->channel[ channel ];
 
   ch->replyPort = replyPort;
 
@@ -371,9 +371,9 @@ int Osc_RegisterSubsystem( int subsystem, const char *name, int (*subsystem_Rece
   if ( subsystem < 0 || subsystem >= OSC_SUBSYSTEM_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  if ( subsystem > Osc.subsystemHighest )
-    Osc.subsystemHighest = subsystem;
-  OscSubsystem* sub = &Osc.subsystem[ subsystem ];
+  if ( subsystem > Osc->subsystemHighest )
+    Osc->subsystemHighest = subsystem;
+  OscSubsystem* sub = &Osc->subsystem[ subsystem ];
   sub->name = name;
   sub->receiveMessage = subsystem_ReceiveMessage;
   sub->poll = subsystem_Poll;
@@ -438,9 +438,9 @@ int Osc_ReceiveMessage( int channel, char* message, int length )
       *nextSlash = 0;
     int i;
     int count = 0;
-    for ( i = 0; i <= Osc.subsystemHighest; i++ )
+    for ( i = 0; i <= Osc->subsystemHighest; i++ )
     {
-      OscSubsystem* sub = &Osc.subsystem[ i ];
+      OscSubsystem* sub = &Osc->subsystem[ i ];
       if ( Osc_PatternMatch( message + 1, sub->name ) )
       {
         count++;
@@ -469,7 +469,7 @@ int Osc_SendPacket( int channel )
   if ( channel < 0 || channel >= OSC_CHANNEL_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  OscChannel* ch = &Osc.channel[ channel ];
+  OscChannel* ch = &Osc->channel[ channel ];
 
   if ( ch->messages == 0 )
     return CONTROLLER_OK;
@@ -1034,7 +1034,7 @@ int Osc_CreateMessage( int channel, char* address, char* format, ... )
   if ( channel < 0 || channel >= OSC_CHANNEL_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  OscChannel* ch = &Osc.channel[ channel ];
+  OscChannel* ch = &Osc->channel[ channel ];
 
   if ( !ch->running )
     return CONTROLLER_ERROR_SUBSYSTEM_INACTIVE;
