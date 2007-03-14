@@ -121,7 +121,8 @@ struct Osc_
   void* UsbTaskPtr;
   void* UdpTaskPtr;
   OscChannel* channel[ OSC_CHANNEL_COUNT ];
-  OscSubsystem subsystem[ OSC_SUBSYSTEM_COUNT ];
+  OscSubsystem* subsystem[ OSC_SUBSYSTEM_COUNT ];
+  int registeredSubsystems;
 };
 
 struct Osc_* Osc;
@@ -189,9 +190,12 @@ void Osc_SetActive( int state )
   {
     Osc = Malloc( sizeof( struct Osc_ ) );
     Osc->subsystemHighest = 0;
+    Osc->registeredSubsystems = 0;
     int i;
     for( i = 0; i < OSC_CHANNEL_COUNT; i++ )
       Osc->channel[ i ] = NULL;
+    for( i = 0; i < OSC_SUBSYSTEM_COUNT; i++ )
+      Osc->subsystem[ i ] = NULL;
 
     Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 500, (void*)OSC_CHANNEL_UDP, 3 );
     Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 300, (void*)OSC_CHANNEL_USB, 3 );
@@ -212,6 +216,11 @@ void Osc_SetActive( int state )
     */
     TaskDelete( Osc->UsbTaskPtr );
     TaskDelete( Osc->UdpTaskPtr );
+    int i;
+    for( i = 0; i < OSC_CHANNEL_COUNT; i++ )
+      Free( Osc->channel[ i ] );
+    for( i = 0; i < OSC_SUBSYSTEM_COUNT; i++ )
+      Free( Osc->subsystem[ i ] );
     Free ( Osc );
     Osc = NULL;
   }
@@ -373,14 +382,14 @@ void Osc_ResetChannel( OscChannel* ch )
   ch->messages = 0;
 }
 
-int Osc_RegisterSubsystem( int subsystem, const char *name, int (*subsystem_ReceiveMessage)( int channel, char* buffer, int length ), int (*subsystem_Poll)( int channel ) )
+int Osc_RegisterSubsystem( const char *name, int (*subsystem_ReceiveMessage)( int channel, char* buffer, int length ), int (*subsystem_Poll)( int channel ) )
 {
-  if ( subsystem < 0 || subsystem >= OSC_SUBSYSTEM_COUNT )
-    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+  int subsystem = Osc->registeredSubsystems;
+  if ( Osc->registeredSubsystems++ > OSC_SUBSYSTEM_COUNT )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX; 
 
-  if ( subsystem > Osc->subsystemHighest )
-    Osc->subsystemHighest = subsystem;
-  OscSubsystem* sub = &Osc->subsystem[ subsystem ];
+  Osc->subsystem[ subsystem ] = Malloc( sizeof( OscSubsystem ) );
+  OscSubsystem* sub = Osc->subsystem[ subsystem ];
   sub->name = name;
   sub->receiveMessage = subsystem_ReceiveMessage;
   sub->poll = subsystem_Poll;
@@ -445,16 +454,16 @@ int Osc_ReceiveMessage( int channel, char* message, int length )
       *nextSlash = 0;
     int i;
     int count = 0;
-    for ( i = 0; i <= Osc->subsystemHighest; i++ )
+    for ( i = 0; i < Osc->registeredSubsystems; i++ )
     {
-      OscSubsystem* sub = &Osc->subsystem[ i ];
+      OscSubsystem* sub = Osc->subsystem[ i ];
       if ( Osc_PatternMatch( message + 1, sub->name ) )
       {
         count++;
         if ( nextSlash )
-          (*sub->receiveMessage)( channel, nextSlash + 1, length - ( nextSlash - message ) - 1 );
+          (sub->receiveMessage)( channel, nextSlash + 1, length - ( nextSlash - message ) - 1 );
         else
-          (*sub->receiveMessage)( channel, 0, 0 );          
+          (sub->receiveMessage)( channel, 0, 0 );
       }
     }
     if ( count == 0 )
