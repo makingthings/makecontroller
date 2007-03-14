@@ -120,7 +120,7 @@ struct Osc_
   void* sendSocket;
   void* UsbTaskPtr;
   void* UdpTaskPtr;
-  OscChannel channel[ OSC_CHANNEL_COUNT ];
+  OscChannel* channel[ OSC_CHANNEL_COUNT ];
   OscSubsystem subsystem[ OSC_SUBSYSTEM_COUNT ];
 };
 
@@ -189,8 +189,9 @@ void Osc_SetActive( int state )
   {
     Osc = Malloc( sizeof( struct Osc_ ) );
     Osc->subsystemHighest = 0;
-    if ( Osc->channel[ OSC_CHANNEL_UDP ].replyPort == 0 )
-      Osc_SetReplyPort( OSC_CHANNEL_UDP, 10000 );
+    int i;
+    for( i = 0; i < OSC_CHANNEL_COUNT; i++ )
+      Osc->channel[ i ] = NULL;
 
     Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 500, (void*)OSC_CHANNEL_UDP, 3 );
     Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 300, (void*)OSC_CHANNEL_USB, 3 );
@@ -214,6 +215,7 @@ void Osc_SetActive( int state )
     Free ( Osc );
     Osc = NULL;
   }
+  return;
 }
 
 /**
@@ -250,7 +252,11 @@ int Osc_GetRunning( )
 void Osc_UdpTask( void* parameters )
 {
   int channel = (int)parameters;
-  OscChannel *ch = &Osc->channel[ channel ];
+  Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
+
+  OscChannel *ch = Osc->channel[ channel ];
+  ch->running = false;
+  Osc_SetReplyPort( channel, 10000 );
 
   ch->sendMessage = Osc_UdpPacketSend;
 
@@ -278,7 +284,7 @@ void Osc_UdpTask( void* parameters )
     Sleep( 1 );
   }
 }
-
+/*
 void Osc_TcpTask( void* parameters )
 {
   int channel = (int)parameters;
@@ -309,11 +315,12 @@ void Osc_TcpTask( void* parameters )
     Sleep( 1 );
   }
 }
-
+*/
 void Osc_UsbTask( void* parameters )
 {
   int channel = (int)parameters;
-  OscChannel *ch = &Osc->channel[ channel ];
+  Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
+  OscChannel *ch = Osc->channel[ channel ];
 
   ch->sendMessage = Osc_UsbPacketSend;
 
@@ -340,7 +347,7 @@ int Osc_SetReplyAddress( int channel, int replyAddress )
   if ( channel < 0 || channel >= OSC_CHANNEL_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  OscChannel* ch =  &Osc->channel[ channel ];
+  OscChannel* ch =  Osc->channel[ channel ];
 
   ch->replyAddress = replyAddress;
 
@@ -352,7 +359,7 @@ int Osc_SetReplyPort( int channel, int replyPort )
   if ( channel < 0 || channel >= OSC_CHANNEL_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  OscChannel* ch =  &Osc->channel[ channel ];
+  OscChannel* ch =  Osc->channel[ channel ];
 
   ch->replyPort = replyPort;
 
@@ -469,7 +476,7 @@ int Osc_SendPacket( int channel )
   if ( channel < 0 || channel >= OSC_CHANNEL_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  OscChannel* ch = &Osc->channel[ channel ];
+  OscChannel* ch = Osc->channel[ channel ];
 
   if ( ch->messages == 0 )
     return CONTROLLER_OK;
@@ -1034,7 +1041,7 @@ int Osc_CreateMessage( int channel, char* address, char* format, ... )
   if ( channel < 0 || channel >= OSC_CHANNEL_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  OscChannel* ch = &Osc->channel[ channel ];
+  OscChannel* ch = Osc->channel[ channel ];
 
   if ( !ch->running )
     return CONTROLLER_ERROR_SUBSYSTEM_INACTIVE;
