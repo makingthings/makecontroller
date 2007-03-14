@@ -37,6 +37,7 @@ void PacketUsbCdc::run()
 	OscUsbPacket* currentPacket = NULL;
 	char* packetP = NULL;
 	bool packetStarted = false;
+	bool keepReading = false;
   
 	open( );
 	while( 1 )
@@ -54,6 +55,7 @@ void PacketUsbCdc::run()
 			
 			if( readResult == GOT_CHAR ) //we got a character
 			{
+				keepReading = true;
 				switch( justGot )
 				{
 					case END:
@@ -105,12 +107,16 @@ void PacketUsbCdc::run()
 						currentPacket->length++;
 				}
 			}
+			else
+				keepReading = false;
 		}
-		// then have a little nap
-		if( usbIsOpen() )
-			this->sleepMs( 5 );
-		else
-			this->sleepMs( 500 );
+		if( !keepReading ) // then have a little nap
+		{
+			if( usbIsOpen() )
+				this->sleepMs( 1 );
+			else
+				this->sleepMs( 500 );
+		}
 	}
 	// should never get here...
 	close( );
