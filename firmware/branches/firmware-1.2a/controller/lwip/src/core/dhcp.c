@@ -81,6 +81,7 @@
 #include "lwip/sys.h"
 #include "lwip/opt.h"
 #include "lwip/dhcp.h"
+#include "system.h"
 
 #if LWIP_DHCP /* don't build if not configured for use in lwipopt.h */
 
@@ -239,7 +240,19 @@ static err_t dhcp_select(struct netif *netif)
     dhcp_option_byte(dhcp, DHCP_OPTION_ROUTER);
     dhcp_option_byte(dhcp, DHCP_OPTION_BROADCAST);
     dhcp_option_byte(dhcp, DHCP_OPTION_DNS_SERVER);
-
+    
+    // MakingThings addition...
+    char* name = System_GetName( );
+    if( name )
+    {
+      int length = strlen( name );
+      dhcp_option( dhcp, DHCP_OPTION_HOSTNAME, length + 1 );
+      int i;
+      for( i = 0; i < length; i++ )
+        dhcp_option_byte(dhcp, *name++);
+      dhcp_option_byte(dhcp, 0); // null terminator
+    } // ...back to business as usual.
+    
     dhcp_option_trailer(dhcp);
     /* shrink the pbuf to the actual content length */
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
