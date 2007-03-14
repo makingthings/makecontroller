@@ -201,16 +201,11 @@ UsbSerial::UsbStatus UsbSerial::usbRead( char* buffer, int length )
 	
   //Windows-only///////////////////////////////////////////////////////////////////////
   #ifdef Q_WS_WIN
-  HANDLE hArray[2]; // stash the overlaps in here so we can monitor them all at once
-  DWORD      dwStoredFlags = 0xFFFFFFFF;      // local copy of event flags
-  DWORD      dwCommEvent;     // result from WaitCommEvent
-  DWORD      overlappedResult;         // result from GetOverlappedResult
-  DWORD 	 readCount;          // bytes actually read
-  DWORD      dwRes;           // result from WaitForSingleObject
-  bool       waitingOnReadFlag = false;
-  bool       waitingOnStatusFlag = false;
+  DWORD count;
   UsbStatus retval;
-
+  DWORD numTransferred;
+  //int length = 0;
+  
   // make sure we're open
   if( !deviceOpen )
   {
@@ -220,192 +215,81 @@ UsbSerial::UsbStatus UsbSerial::usbRead( char* buffer, int length )
 	  usbClose( );
 	  return NOT_OPEN;
 	}
-  } 
-
-	//
-	// create two overlapped structures, one for read events
-	// and another for status events
-	//
-	overlappedRead.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	if (overlappedRead.hEvent == NULL)
-	    printf("CreateEvent (Reader Event).\n");
-	
-	overlappedStatus.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	if (overlappedStatus.hEvent == NULL)
-	    printf("CreateEvent (Status Event).\n");
-	
-	//
-    // We want to detect the following events:
-    //   Read events (from ReadFile)
-    //   Status events (from WaitCommEvent)
-    //   Status message events (from our UpdateStatus)
-    //   Thread exit evetns (from our shutdown functions)
-    //
-    hArray[0] = overlappedRead.hEvent;
-    hArray[1] = overlappedStatus.hEvent;
+  }
     
-    // initial check, forces updates
-    DWORD newModemStatus;
-    if (!GetCommModemStatus(deviceHandle, &newModemStatus))
-        printf("GetCommModemStatus\n");
-    DWORD dwErrors;
-    COMSTAT ComStatNew = {0};
-    if (!ClearCommError( deviceHandle, &dwErrors, &ComStatNew))
-        printf("ClearCommError\n");
+  retval = OK;  
+  readInProgress = false;
+  overlappedRead.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
   // reset the read overlapped structure
-  //overlappedRead.Offset = overlappedRead.OffsetHigh = 0;
+  overlappedRead.Offset = overlappedRead.OffsetHigh = 0;
   
-  do
+  if ( !ReadFile( deviceHandle, buffer, length, &count, &overlappedRead ) )
   {
-	  if( !waitingOnReadFlag )
+  	DWORD lastError = GetLastError();
+		// messageInterface->message( 1, "USB Read Error: %d \n", lastError );
+	  if ( lastError != ERROR_IO_PENDING)     // read not delayed?
 	  {
-		  if ( !ReadFile( deviceHandle, buffer, length, &readCount, &overlappedRead ) )
-		  {
-		  	DWORD lastError = GetLastError( );
-				// messageInterface->message( 1, "USB Read Error: %d \n", lastError );
-			  if ( lastError != ERROR_IO_PENDING)     // read not delayed?
-			  {
-			    //usbClose();
-			    //messageInterface->message( 1, "Closed trying to read the file\n" );
-			    retval = UNKNOWN_ERROR;
-			    waitingOnReadFlag = true;
-			  }
-			  else
-			  	waitingOnReadFlag = true;
-		  }
-		  else          	
-		  {
-		    //messageInterface->message( 1, "USB read D: %c \n", *buffer );
-		    if( readCount > 0 )
-		  		retval = GOT_CHAR;
-		  	else
-		  		retval = NOTHING_AVAILABLE;
-		  }
+	    usbClose();
+	    //messageInterface->message( 1, "Closed trying to read the file\n" );
+	    retval = UNKNOWN_ERROR;
 	  }
-	  
-		// If status flags have changed, then reset comm mask.
-		// This will cause a pending WaitCommEvent to complete
-		// and the resultant event flag will be NULL.
-		if( dwStoredFlags != DEFAULT_COMM_FLAGS )
+	  else
+	    readInProgress = true;
+  }
+  else          	
+  {
+		// messageInterface->message( 1, "USB read D: %c \n", *buffer );
+  	retval = GOT_CHAR;
+  }
+
+  if( readInProgress )
+  {
+  	DWORD r;
+	  do
+	  {
+	    r = WaitForSingleObject( overlappedRead.hEvent, 10000 );	 
+	  } while ( r == WAIT_TIMEOUT );
+	  switch( r )
 		{
-		    dwStoredFlags = DEFAULT_COMM_FLAGS;
-		    if (!SetCommMask( deviceHandle, dwStoredFlags ) )
-		        printf( "error setting comm mask.\n" );
-		}
-	
-		
-		//If there's not an outstanding status check, start another.
-		if( !waitingOnStatusFlag )
-		{
-			//if (NOEVENTS(TTYInfo))
-	          //      fWaitingOnStat = TRUE;
-	            //else {
-	                if (!WaitCommEvent( deviceHandle, &dwCommEvent, &overlappedStatus)) {
-	                    if (GetLastError() != ERROR_IO_PENDING)	  // Wait not delayed?
-	                        printf( "error starting WaitCommEvent.\n" );
-	                    else
-	                        waitingOnStatusFlag = TRUE;
-	                }
-	                else
-	                    // WaitCommEvent returned immediately
-	                    printf( "got a status event - check dwCommEvent.\n" );
-	            //}
-		}
-		
-		//
-	        // wait for pending operations to complete
-	        //
-	        if ( waitingOnStatusFlag && waitingOnReadFlag ) {
-	            dwRes = WaitForMultipleObjects( OVERLAPPED_HANDLES, hArray, FALSE, 1000 );
-	            switch(dwRes)
-	            {
-	                // read completed
-	                case WAIT_OBJECT_0:
-	                    if (!GetOverlappedResult( deviceHandle, &overlappedRead, &readCount, FALSE)) {
-	                        if (GetLastError() == ERROR_OPERATION_ABORTED)
-	                            printf( "read aborted.\n" );
-	                        else
-	                            printf( "error in GetOverlappedResult.\n" );
-	                    }
-	                    else {      // read completed successfully
-	                        //if( ( readCount != MAX_READ_BUFFER )  ) // && SHOWTIMEOUTS( TTYInfo )
-	                          //  printf( "Read timed out.\n" );
-	                        if( readCount )
-	                            //OutputABuffer(hTTY, lpBuf, dwRead);
-	                            printf( "Do something with the buffer?.\n" );
-	                    }
-	
-	                    waitingOnReadFlag = false;
-	                    break;
-	
-	                // status completed
-	                case WAIT_OBJECT_0 + 1:
-	                	DWORD dwMask;
-    					if (GetCommMask( deviceHandle,&dwMask) )
-    					{
-      						bool dataChanged;
-      						dataChanged = dwMask & EV_TXEMPTY;
-      						dataChanged = dwMask & EV_ERR;
-      						dataChanged = dwMask & EV_BREAK;
-      						dataChanged = dwMask & EV_CTS;
-      						dataChanged = dwMask & EV_DSR;
-      						dataChanged = dwMask & EV_RING;
-      						dataChanged = dwMask & EV_RLSD;
-      						dataChanged = dwMask & EV_RXCHAR;
-      						dataChanged = dwMask & EV_RXFLAG;
-      						dataChanged = false;
-      						//ResetEvent ( ov.hEvent );
-   						}
-	                	
-	                    if (!GetOverlappedResult( deviceHandle, &overlappedStatus, &overlappedResult, FALSE)) {
-	                        if (GetLastError() == ERROR_OPERATION_ABORTED)
-	                            //UpdateStatus("WaitCommEvent aborted\r\n");
-	                            printf( "WaitCommEvent aborted.\n" );
-	                        else
-	                            //ErrorInComm("GetOverlappedResult (in Reader)");
-	                            printf( "error in GetOverlappedResult.\n" );
-	                    }
-	                    else       // status check completed successfully
-	                        //ReportStatusEvent(dwCommEvent);
-	                        printf( "status check completed successfully.\n" );
-	
-	                    waitingOnStatusFlag = FALSE;
-	                    break;
-	
-	                //
-	                // status message event
-	                //
-	                case WAIT_OBJECT_0 + 2:
-	                    //StatusMessage();
-	                    printf( "wtf.\n" );
-	                    break;
-	
-	                //
-	                // thread exit event
-	                //
-	                case WAIT_OBJECT_0 + 3:
-	                    //fThreadDone = TRUE;
-	                    printf( "thread is finished.\n" );
-	                    break;
-	
-	                case WAIT_TIMEOUT:
-	                    // timeouts are not reported because they happen too often
-	                    // OutputDebugString("Timeout in Reader & Status checking\n\r");
-	                    retval = NOTHING_AVAILABLE;
-	                    break;                       
-	
-	                default:
-	                    //ErrorReporter("WaitForMultipleObjects(Reader & Status handles)");
-	                    printf( "WaitForMultipleObjects(Reader & Status handles)\n" );
-	                    break;
-	            }
-	        }
-		} while( retval == NOTHING_AVAILABLE );
-	CloseHandle(overlappedRead.hEvent);
-    CloseHandle(overlappedStatus.hEvent);
-    
-    return retval;
+		  case WAIT_FAILED:
+		    //FIXME is there anything else i need to clean up?
+		    // reset events? terminate anything?
+		    usbClose(  );
+		    //messageInterface->message( 1, "Closed after wait failed\n" );
+		    retval = UNKNOWN_ERROR; //( 100 );
+	      break;
+		  case WAIT_TIMEOUT:
+			  //if( debug > 1 ) TRACE_MESSAGE( "timeout occurred while waiting for event\n" );
+		    retval = NOTHING_AVAILABLE; //( TELEO_E_NOTHING );
+		    //messageInterface->message( 1, "Nothing available\n" );
+		    break;
+		  case WAIT_OBJECT_0:
+	  		// check to see if the pending operation completed
+        if( !GetOverlappedResult( deviceHandle, &overlappedRead, &numTransferred, FALSE )  ) // don't wait
+				{
+	        ///FIXME is there anything else i need to clean up?
+		      // reset events? terminate anything?
+		      usbClose( );
+		      SetEvent( overlappedRead.hEvent );
+		      //messageInterface->message( 1, "Closed because error getting overlapped result\n" );
+		      retval = IO_ERROR;
+		      break;
+				}
+		    //messageInterface->message( 1, "Successfully got overlapped result\n" );
+  			retval = GOT_CHAR;
+			  break; 
+		  case WAIT_ABANDONED:
+		  default:
+		    usbClose( );
+		    //messageInterface->message( 1, "Closed - wait abandoned or default\n" );
+		    retval = IO_ERROR;
+			  break;
+		} // end of switch
+  }
+  
+  CloseHandle( overlappedRead.hEvent );
+  return retval;
   	
   #endif //Windows-only UsbSerial::read( )//////////////////////////////////////////////////////////////
 }
@@ -588,7 +472,7 @@ int UsbSerial::openDevice( TCHAR* deviceName )
   if (!overlappedRead.hEvent || !overlappedWrite.hEvent )
   {
 	  //messageInterface->message( 1, "Could Not create overlapped events\n");
-    return -1;
+    return -1; 
   }
 
   GetCommState( deviceHandle, &dcb );
