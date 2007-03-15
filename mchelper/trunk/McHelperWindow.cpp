@@ -382,8 +382,8 @@ void McHelperWindow::uiLessUpload( char* filename, bool bootFlash )
 void McHelperWindow::about( )  // set the version number here.
 {
   QMessageBox::about(this, tr("About mchelper"),
-  tr("Make Controller Helper - version 1.2.2\n\n"
-  "Making Things 2006\n\n"
+  tr("Make Controller Helper - version 1.2.3\n\n"
+  "Making Things 2007\n\n"
   "www.makingthings.com") );
 }
 
