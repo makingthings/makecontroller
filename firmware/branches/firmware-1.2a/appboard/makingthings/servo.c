@@ -86,7 +86,7 @@ typedef struct ServoS
 } Servo_;
 
 
-Servo_ Servo;
+Servo_* Servo;
 
 /** \defgroup Servo
 * The Servo Motor subsystem controls speed and position control for up to 4 standard servo motors.
@@ -113,9 +113,20 @@ int Servo_SetActive( int index, int state )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
   if ( state )
+  {
+    if( Servo == NULL )
+      Servo = Malloc( sizeof( Servo_ ) );
     return Servo_Start( index );
+  }
   else
+  {
+    if( --Servo->users == 0 )
+    {
+      Free( Servo );
+      Servo = NULL;
+    }
     return Servo_Stop( index );
+  }
 }
 
 /**
@@ -125,9 +136,9 @@ int Servo_SetActive( int index, int state )
 */
 int Servo_GetActive( int index )
 {
-  if ( index < 0 || index >= SERVO_COUNT )
+  if ( index < 0 || index >= SERVO_COUNT || Servo == NULL )
     return false;
-  return Servo.control[ index ].users > 0;
+  return Servo->control[ index ].users > 0;
 }
 
 
@@ -144,7 +155,9 @@ int Servo_SetPosition( int index, int position )
   if ( index < 0 || index >= SERVO_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  if ( Servo.control[ index ].users < 1 )
+  Servo_SetActive( index, 1 );
+
+  if ( Servo->control[ index ].users < 1 )
   {
     int status = Servo_Start( index );
     if ( status != CONTROLLER_OK )
@@ -157,7 +170,7 @@ int Servo_SetPosition( int index, int position )
     position = SERVO_MAX;
 
   DisableFIQFromThumb();
-  Servo.control[ index ].positionRequested = position << 6;
+  Servo->control[ index ].positionRequested = position << 6;
   EnableFIQFromThumb();
 
   return CONTROLLER_OK;
@@ -175,8 +188,10 @@ int Servo_SetSpeed( int index, int speed )
 {
   if ( index < 0 || index >= SERVO_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
+  
+  Servo_SetActive( index, 1 );
 
-  if ( Servo.control[ index ].users < 1 )
+  if ( Servo->control[ index ].users < 1 )
   {
     int status = Servo_Start( index );
     if ( status != CONTROLLER_OK )
@@ -186,7 +201,7 @@ int Servo_SetSpeed( int index, int speed )
   if ( speed < -1 )
     speed = -1;
   DisableFIQFromThumb();
-  Servo.control[ index ].speed = speed;
+  Servo->control[ index ].speed = speed;
   EnableFIQFromThumb();
 
   return CONTROLLER_OK;
@@ -201,15 +216,17 @@ int Servo_GetPosition( int index )
 {
   if ( index < 0 || index >= SERVO_COUNT )
     return 0;
+  
+  Servo_SetActive( index, 1 );
 
-  if ( Servo.control[ index ].users < 1 )
+  if ( Servo->control[ index ].users < 1 )
   {
     int status = Servo_Start( index );
     if ( status != CONTROLLER_OK )
       return 0;
   }
 
-  return Servo.control[ index ].position >> 6;
+  return Servo->control[ index ].position >> 6;
 }
 
 /**	
@@ -222,15 +239,17 @@ int Servo_GetSpeed( int index )
 {
   if ( index < 0 || index >= SERVO_COUNT )
     return 0;
+  
+  Servo_SetActive( index, 1 );
 
-  if ( Servo.control[ index ].users < 1 )
+  if ( Servo->control[ index ].users < 1 )
   {
     int status = Servo_Start( index );
     if ( status != CONTROLLER_OK )
       return 0;
   }
 
-  return Servo.control[ index ].speed;
+  return Servo->control[ index ].speed;
 }
 
 /** @}
@@ -243,17 +262,17 @@ int Servo_Start( int index )
   if ( index < 0 || index >= SERVO_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  ServoControl* sc = &Servo.control[ index ]; 
+  ServoControl* sc = &Servo->control[ index ]; 
   if ( sc->users++ == 0 )
   {
-    if ( Servo.users++ == 0 )
+    if ( Servo->users++ == 0 )
     {
       int status = Servo_Init();
       if ( status != CONTROLLER_OK )
       {
         // I guess not then
         sc->users--;
-        Servo.users--;
+        Servo->users--;
         return status;
       }   
     }
@@ -265,7 +284,7 @@ int Servo_Start( int index )
     if ( status != CONTROLLER_OK )
     {
       // Damn
-      Servo.users--;
+      Servo->users--;
       sc->users--;
       return status;
     }
@@ -274,7 +293,7 @@ int Servo_Start( int index )
     Io_SetTrue( io );
     Io_SetOutput( io );
 
-    ServoControl* s = &Servo.control[ index ]; 
+    ServoControl* s = &Servo->control[ index ]; 
     s->position = 512 << 6;
     s->speed = -1;
   }
@@ -287,7 +306,7 @@ int Servo_Stop( int index )
   if ( index < 0 || index >= SERVO_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  ServoControl* sc = &Servo.control[ index ]; 
+  ServoControl* sc = &Servo->control[ index ]; 
 
   if ( sc->users <= 0 )
     return CONTROLLER_ERROR_TOO_MANY_STOPS;
@@ -298,7 +317,7 @@ int Servo_Stop( int index )
     Io_SetInput( io );
     Io_Stop( io );
 
-    if ( --Servo.users == 0 )
+    if ( --Servo->users == 0 )
     {
       Servo_Deinit();
     }
@@ -331,7 +350,7 @@ int Servo_GetIo( int index )
 
 int Servo_Init()
 {
-  ServoControl* s = &Servo.control[ 0 ]; 
+  ServoControl* s = &Servo->control[ 0 ]; 
   s->pIoBase = AT91C_BASE_PIOB;
   s->pin = AT91C_PIO_PB24;
   s++;
@@ -346,12 +365,12 @@ int Servo_Init()
   s++;
 
   // Global init stuff
-  Servo.state = 0;
-  Servo.gap = 1882; // forces 64'ish cycles a second (1894 + 2012 = 3906, 3906 * 4 = 15624, 15624 * 64 = 999936)
-  Servo.index = 0;
+  Servo->state = 0;
+  Servo->gap = 1882; // forces 64'ish cycles a second (1894 + 2012 = 3906, 3906 * 4 = 15624, 15624 * 64 = 999936)
+  Servo->index = 0;
 
-  FastTimer_InitializeEntry( &Servo.fastTimerEntry, Servo_IRQCallback, 0, 2000, true );
-  FastTimer_Set( &Servo.fastTimerEntry );
+  FastTimer_InitializeEntry( &Servo->fastTimerEntry, Servo_IRQCallback, 0, 2000, true );
+  FastTimer_Set( &Servo->fastTimerEntry );
 
   return CONTROLLER_OK;
 }
@@ -367,13 +386,13 @@ void Servo_IRQCallback( int id )
 {
   int period;
 
-  switch ( Servo.state )
+  switch ( Servo->state )
   {
     case 0:
     {
-      if ( ++Servo.index >= SERVO_COUNT || Servo.index < 0 )
-        Servo.index = 0;
-      ServoControl* s = &Servo.control[ Servo.index ];
+      if ( ++Servo->index >= SERVO_COUNT || Servo->index < 0 )
+        Servo->index = 0;
+      ServoControl* s = &Servo->control[ Servo->index ];
       
       if ( s->position != s->positionRequested )
       {
@@ -404,17 +423,17 @@ void Servo_IRQCallback( int id )
       }
       else
         period = SERVO_MAX;
-      FastTimer_SetTime( &Servo.fastTimerEntry, period + SERVO_OFFSET );
-      Servo.state = 1;
+      FastTimer_SetTime( &Servo->fastTimerEntry, period + SERVO_OFFSET );
+      Servo->state = 1;
       break;
     }
     case 1:
     {
-      ServoControl* s = &Servo.control[ Servo.index ];
+      ServoControl* s = &Servo->control[ Servo->index ];
       period = s->position >> 6;
       s->pIoBase->PIO_SODR = s->pin;
-      FastTimer_SetTime( &Servo.fastTimerEntry, Servo.gap + ( SERVO_MAX - period ) );
-      Servo.state = 0;
+      FastTimer_SetTime( &Servo->fastTimerEntry, Servo->gap + ( SERVO_MAX - period ) );
+      Servo->state = 0;
       break;
     }
   }
