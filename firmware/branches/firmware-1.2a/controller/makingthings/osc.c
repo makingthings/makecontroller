@@ -141,7 +141,7 @@ int Osc_PropertyLookup( char** properties, char* property );
 int Osc_ReadInt( char* buffer );
 float Osc_ReadFloat( char* buffer );
 
-int Osc_UpdPacketSend( char* packet, int length, int replyAddress, int replyPort );
+int Osc_UdpPacketSend( char* packet, int length, int replyAddress, int replyPort );
 int Osc_UsbPacketSend( char* packet, int length, int replyAddress, int replyPort );
 int Osc_TcpPacketSend( char* packet, int length, int replyAddress, int replyPort );
 
@@ -206,14 +206,6 @@ void Osc_SetActive( int state )
   }
   if( !state && Osc )
   {
-    /* from Osc_End()
-    if ( Osc.users > 0 )
-    {
-      Osc.users--;
-      if ( Osc.users == 0 )
-        Osc.running = false;
-    }
-    */
     TaskDelete( Osc->UsbTaskPtr );
     TaskDelete( Osc->UdpTaskPtr );
     int i;
@@ -239,6 +231,8 @@ int Osc_GetActive( )
 
 int Osc_UsbPacketSend( char* packet, int length, int replyAddress, int replyPort )
 {
+  (void)replyAddress; // get rid of the spurious 'variable not used' warnings
+  (void)replyPort;
   return Usb_SlipSend( packet, length );
 }
 
@@ -276,16 +270,15 @@ void Osc_UdpTask( void* parameters )
     Sleep( 100 );
 
   ch->running = true;
-
-  void* ds = DatagramSocket( ch->replyPort );
+  void* ds = DatagramSocket( NetworkOsc_GetUdpPort() );
+  
   Osc->sendSocket = DatagramSocket( 0 );
 
   while ( true )
   {
     int address;
     int port;
-
-    int length = DatagramSocketReceive( ds, ch->replyPort, &address, &port, ch->incoming, OSC_MAX_MESSAGE_IN );
+    int length = DatagramSocketReceive( ds, NetworkOsc_GetUdpPort(), &address, &port, ch->incoming, OSC_MAX_MESSAGE_IN );
 
     Osc_SetReplyAddress( channel, address );
 

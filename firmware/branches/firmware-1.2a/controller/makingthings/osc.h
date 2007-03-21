@@ -41,8 +41,7 @@ int Osc_CreateMessage( int channel, char* address, char* format, ... );
 int Osc_CreateMessageToBuf( char* bp, int* length, char* address, char* format, ... );
 int Osc_SendPacket( int channel );
 
-int Osc_RegisterSubsystem( int subsystem,
-                           const char *name, 
+int Osc_RegisterSubsystem( const char *name, 
                            int (*Subsystem_ReceiveMessage)( int channel, char* buffer, int length ), 
                            int (*Subsystem_Poll)( int channel ) );
 

@@ -114,6 +114,7 @@ int Network_SetActive( int state )
       Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&Network->TempIpAddress, 4 );
       Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&Network->TempGateway, 4 );
       Eeprom_Read( EEPROM_SYSTEM_NET_MASK, (uchar*)&Network->TempMask, 4 );
+      Eeprom_Read( EEPROM_OSC_UDP_PORT, (uchar*)&Network->OscUdpPort, 4 );
       Network_Init();
     }
   }
@@ -154,10 +155,7 @@ int Network_GetPending( )
 */
 int Network_GetActive( void )
 {
-  if( Network == NULL )
-    return 0;
-  else
-    return 1;
+  return Network != NULL;
 }
 
 /**
@@ -234,6 +232,23 @@ int Network_SetTcpOutAddress( int a0, int a1, int a2, int a3 )
   //Network_Valid = NET_INVALID;
 
   return CONTROLLER_OK;
+}
+
+void NetworkOsc_SetUdpPort( int port )
+{
+  if( port != Network->OscUdpPort ) // only change things if it's a new value
+  {
+    Network->OscUdpPort = port;
+    Eeprom_Write( EEPROM_OSC_UDP_PORT, (uchar*)&port, 4 );
+  }
+}
+
+int NetworkOsc_GetUdpPort(  )
+{
+  if( Network->OscUdpPort > 0 && Network->OscUdpPort < 65536 )
+    return Network->OscUdpPort;
+  else
+    return 10000;
 }
 
 /**
@@ -924,28 +939,6 @@ void Network_DhcpStop( struct netif* netif )
   return;
 }
 
-/*
-void Network_DhcpFineCallback( int id )
-{
-  xSemaphoreTake( Network.semaphore, 500 );// == pdTRUE )
-  //{
-    dhcp_fine_tmr();
-    xSemaphoreGive( Network.semaphore );
-  //}
-  return;
-}
-
-void Network_DhcpCoarseCallback( int id )
-{
-  xSemaphoreTake( Network.semaphore, 500 );// == pdTRUE )
-  //{
-    dhcp_coarse_tmr();
-    xSemaphoreGive( Network.semaphore );
-  //}
-  return;
-}
-*/
-
 // TODO - eventually create these as timers instead of tasks
 // right now, the dhcp_tmr functions cannot be called from within the Timer ISR
 void DhcpFineTask( void* p )
@@ -1274,7 +1267,13 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
     }
     case 6: // osc_udp_port
     {
-      return Osc_SubsystemError( channel, NetworkOsc_Name, "UDP port over OSC not implemented." );
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
+
+      NetworkOsc_SetUdpPort( value );
+      break;
     }
     case 7: // osc_tcpout_address
     {
@@ -1359,6 +1358,9 @@ int NetworkOsc_PropertyGet( int property, int channel )
       Osc_CreateMessage( channel, address, ",s", output );      
       break;
     case 6: // osc_udp_port
+      value = NetworkOsc_GetUdpPort( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );      
       break;
     case 7: // osc_tcpout_address
       Network_GetTcpOutAddress( &a0, &a1, &a2, &a3 );
