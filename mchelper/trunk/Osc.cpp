@@ -531,7 +531,7 @@ char* Osc::createMessageInternal( char* bp, int* remaining, char* inputString )
 	char argumentData[ 256 ];	//intermediate buffer for args/data
 	char* ap = argumentData;	// pointer into the argument buffer
 	
-	bool nullified;
+	bool nullified, firstChar, gotCharacter;
 	
 	//message( 3, "Initial Remaining %d\n", *remaining );
 
@@ -562,14 +562,17 @@ char* Osc::createMessageInternal( char* bp, int* remaining, char* inputString )
   	do
   	{
   		int gotDecimals = 0;
-  		bool gotCharacter = false;
+			gotCharacter = false;
   		nullified = false;
+			firstChar = true; // flag to keep track of whether we're looking at the first character in an argument.
   		
   		// look through each character of the argument, and set the appropriate flags to tell us what kind of argument it is
   		for( startpoint = ip; *ip != ' ' && *ip != 0; ip++ )
   		{
-  			if( *ip == '.' )
+				if( *ip == '.' )
   				gotDecimals++;
+				else if( firstChar && *ip == '-' )
+					firstChar = false; // this will move the loop on, so we don't set the gotCharacter flag true.
   			else if( !isdigit( *ip ) )
   				gotCharacter = true;
   		}
@@ -611,7 +614,7 @@ char* Osc::createMessageInternal( char* bp, int* remaining, char* inputString )
   		else
   		{ 
   		} //do nothing
-  		
+  		firstChar = true;
   	} while( *ip != 0 || nullified );
     
     // now write the type tag and the arguments into the outgoing message buffer to create the full Osc message
