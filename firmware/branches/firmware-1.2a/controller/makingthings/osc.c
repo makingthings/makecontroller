@@ -87,7 +87,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 
-#define OSC_CHANNEL_COUNT    2
+#define OSC_CHANNEL_COUNT    3
 #define OSC_MAX_MESSAGE_IN   200
 #define OSC_MAX_MESSAGE_OUT  400
 
@@ -118,6 +118,7 @@ struct Osc_
   int running;
   int subsystemHighest;
   void* sendSocket;
+  struct netconn* tcpSocket;
   void* UsbTaskPtr;
   void* UdpTaskPtr;
   OscChannel* channel[ OSC_CHANNEL_COUNT ];
@@ -199,7 +200,6 @@ void Osc_SetActive( int state )
 
     Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 500, (void*)OSC_CHANNEL_UDP, 3 );
     Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 300, (void*)OSC_CHANNEL_USB, 3 );
-    //TaskCreate( Osc_TcpTask, "Osc-Tcp", 500, (void*)OSC_CHANNEL_TCP, 3 );
 
     Osc->users = 1;
     Osc->running = true;
@@ -286,12 +286,30 @@ void Osc_UdpTask( void* parameters )
     Sleep( 1 );
   }
 }
-/*
+
+int Osc_TcpPacketSend( char* packet, int length, int replyAddress, int replyPort )
+{
+  (void)replyAddress;
+  (void)replyPort;
+  char tcpBuf[ OSC_MAX_MESSAGE_OUT + 4 ];
+  *((int*)tcpBuf) = length;
+  strcat( tcpBuf, packet );
+      
+  int result = SocketWrite( Osc->tcpSocket, tcpBuf, length + 4 );
+  if( !result )
+  {
+    SocketClose( Osc->tcpSocket );
+    Osc->tcpSocket = NULL;
+  }
+  return result;
+}
+
 void Osc_TcpTask( void* parameters )
 {
-  int channel = (int)parameters;
-  OscChannel *ch = &Osc->channel[ channel ];
-  //ch->sendMessage = Osc_TcpPacketSend;
+  (void)parameters;
+  Osc->channel[ OSC_CHANNEL_TCP ] = Malloc( sizeof( OscChannel ) );
+  OscChannel *ch = Osc->channel[ OSC_CHANNEL_TCP ];
+  ch->sendMessage = Osc_TcpPacketSend;
   Osc_ResetChannel( ch );
 
   // Chill until the Network is up
@@ -299,25 +317,49 @@ void Osc_TcpTask( void* parameters )
     Sleep( 100 );
 
   ch->running = true;
-  struct netconn* sock = NULL;
 
-  // TODO - check to see if the autoconnect property is set, and fire things up now if it is
+  if( NetworkOsc_GetTcpAutoConnect( ) )
+    Osc->tcpSocket = Socket( NetworkOsc_GetTcpOutAddress(), NetworkOsc_GetTcpOutPort() );
+  else
+    Osc->tcpSocket = NULL;
 
-  // now get down to business
-  while ( true )
+  while( true )
   {
-    int address;
-    int port;
+    if( NetworkOsc_GetTcpConnected() )
+    {
+      // check to see if we have an open socket
+      if( Osc->tcpSocket == NULL )
+        Osc->tcpSocket = Socket( NetworkOsc_GetTcpOutAddress(), NetworkOsc_GetTcpOutPort() );
+  
+      if( Osc->tcpSocket != NULL )
+      {
+        int length = SocketRead( Osc->tcpSocket, ch->incoming, OSC_MAX_MESSAGE_IN );
+        // should actually check the given length in the message, and use that.
+        if( length > 0 )
+          Osc_ReceivePacket( OSC_CHANNEL_TCP, ch->incoming+4, length-4 );
+          
+        if( !length )
+        {
+          SocketClose( Osc->tcpSocket );
+          Osc->tcpSocket = NULL;
+        }
+      }
+    }
+    else
+    {
+      if( Osc->tcpSocket != NULL )
+      {
+        SocketClose( Osc->tcpSocket );
+        Osc->tcpSocket = NULL;
+      }
+      Free( Osc->channel[ OSC_CHANNEL_TCP ] );
+      NetworkOsc_DeleteTcpTask( );
+    }
 
-    //int length = DatagramSocketReceive( ds, ch->replyPort, &address, &port, ch->incoming, OSC_MAX_MESSAGE_IN );
-
-    //Osc_SetReplyAddress( channel, address );
-
-    //Osc_ReceivePacket( channel, ch->incoming, length );
-    Sleep( 1 );
+    TaskYield( );
   }
 }
-*/
+
 void Osc_UsbTask( void* parameters )
 {
   int channel = (int)parameters;
@@ -334,13 +376,13 @@ void Osc_UsbTask( void* parameters )
 
   ch->running = true;
 
-  //strcpy( data, "HELLO!!" );
   while ( true )
   {
     int length = Usb_SlipReceive( ch->incoming, OSC_MAX_MESSAGE_IN );
 
     if ( length > 0 )
       Osc_ReceivePacket( channel, ch->incoming, length );
+    TaskYield( );
   }
 }
 
