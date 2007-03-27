@@ -38,9 +38,6 @@
 /* Low level includes. */
 #include "SAM7_EMAC.h"
 
-// This has builtin endian compensation!
-#define IP_ADDRESS( a, b, c, d ) ( ( (int)d << 24 ) + ( (int)c << 16 ) + ( (int)b << 8 ) + (int)a )
-
 int Network_AddressConvert( char* address, int* a0, int* a1, int* a2, int* a3 );
 
 /* MAC address definition.  The MAC address must be unique on the network. */
@@ -110,11 +107,15 @@ int Network_SetActive( int state )
       Network = Malloc( sizeof( struct Network_ ) );
 
       Network->pending = 0;
+      Network->TcpConnected = 0;
+      Network->OscTcpTaskPtr = NULL;
       // set the temp addresses to use when setting a new IP address/mask/gateway
       Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&Network->TempIpAddress, 4 );
       Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&Network->TempGateway, 4 );
       Eeprom_Read( EEPROM_SYSTEM_NET_MASK, (uchar*)&Network->TempMask, 4 );
       Eeprom_Read( EEPROM_OSC_UDP_PORT, (uchar*)&Network->OscUdpPort, 4 );
+      Eeprom_Read( EEPROM_TCP_OUT_ADDRESS, (uchar*)&Network->TcpOutAddress, 4 );
+      Eeprom_Read( EEPROM_TCP_OUT_PORT, (uchar*)&Network->TcpOutPort, 4 );
       Network_Init();
     }
   }
@@ -192,7 +193,7 @@ int Network_SetAddress( int a0, int a1, int a2, int a3 )
 {
 	// just store this address, since we're only going to do something with it in response to
   // Network_SetValid().
-  Network->TempIpAddress = IP_ADDRESS( a0, a1, a2, a3 );
+  Network->TempIpAddress = NETIF_IP_ADDRESS( a0, a1, a2, a3 );
   Network_Valid = NET_INVALID;
 
   return CONTROLLER_OK;
@@ -222,16 +223,28 @@ int Network_SetAddress( int a0, int a1, int a2, int a3 )
   \endcode
 
 */
-int Network_SetTcpOutAddress( int a0, int a1, int a2, int a3 )
+void NetworkOsc_SetTcpOutAddress( int a0, int a1, int a2, int a3 )
 {
-  int address;
-	address = IP_ADDRESS( a0, a1, a2, a3 );
+	int address = IP_ADDRESS( a0, a1, a2, a3 );
+  if( address != Network->TcpOutAddress )
+  {
+    Network->TcpOutAddress = address;
+    Eeprom_Write( EEPROM_TCP_OUT_ADDRESS, (uchar*)&address, 4 );
+  }
+}
 
-  Eeprom_Write( EEPROM_TCP_REMOTE_ADDRESS, (uchar*)&address, 4 );
-  
-  //Network_Valid = NET_INVALID;
+void NetworkOsc_SetTcpOutPort( int port )
+{
+  if( port != Network->TcpOutPort ) // only change if it's a new value
+  {
+    Network->TcpOutPort = port;
+    Eeprom_Write( EEPROM_TCP_OUT_PORT, (uchar*)&port, 4 );
+  }
+}
 
-  return CONTROLLER_OK;
+int NetworkOsc_GetTcpOutPort( )
+{
+  return Network->TcpOutPort;
 }
 
 void NetworkOsc_SetUdpPort( int port )
@@ -279,7 +292,7 @@ int Network_SetMask( int a0, int a1, int a2, int a3 )
 {
   // just store this address, since we're only going to do something with it in response to
   // Network_SetValid().
-  Network->TempMask = IP_ADDRESS( a0, a1, a2, a3 );
+  Network->TempMask = NETIF_IP_ADDRESS( a0, a1, a2, a3 );
   Network_Valid = NET_INVALID;
 
   return CONTROLLER_OK;
@@ -311,7 +324,7 @@ int Network_SetGateway( int a0, int a1, int a2, int a3 )
 {
   // just store this address, since we're only going to do something with it in response to
   // Network_SetValid().
-  Network->TempGateway = IP_ADDRESS( a0, a1, a2, a3 );
+  Network->TempGateway = NETIF_IP_ADDRESS( a0, a1, a2, a3 );
   Network_Valid = NET_INVALID;
   
   return CONTROLLER_OK;
@@ -420,10 +433,10 @@ int Network_GetAddress( int* a0, int* a1, int* a2, int* a3 )
   {
     address = mc_netif->ip_addr.addr;
 
-    *a0 = IP_ADDRESS_A( address );
-    *a1 = IP_ADDRESS_B( address );
-    *a2 = IP_ADDRESS_C( address );
-    *a3 = IP_ADDRESS_D( address );
+    *a0 = NETIF_IP_ADDRESS_A( address );
+    *a1 = NETIF_IP_ADDRESS_B( address );
+    *a2 = NETIF_IP_ADDRESS_C( address );
+    *a3 = NETIF_IP_ADDRESS_D( address );
   }
 
   return CONTROLLER_OK;
@@ -440,32 +453,9 @@ int Network_GetAddress( int* a0, int* a1, int* a2, int* a3 )
 	@param a3 A pointer to an integer where the fourth of 4 numbers of the address is to be stored.
 	@return 0 on success.
 */
-int Network_GetTcpOutAddress( int* a0, int* a1, int* a2, int* a3 )
+int NetworkOsc_GetTcpOutAddress( )
 {
-  /*
-  if ( Network_Valid == NET_UNCHECKED )
-    Network_GetValid();
-
-  if ( Network_Valid == NET_INVALID )
-  {
-    *a0 = 192;
-    *a1 = 168;
-    *a2 = 0;
-    *a3 = 200;
-
-    return CONTROLLER_OK;
-  }
-  */
-
-  int address;
-  Eeprom_Read( EEPROM_TCP_REMOTE_ADDRESS, (uchar*)&address, 4 );
-
-  *a0 = IP_ADDRESS_A( address );
-  *a1 = IP_ADDRESS_B( address );
-  *a2 = IP_ADDRESS_C( address );
-  *a3 = IP_ADDRESS_D( address );
-
-  return CONTROLLER_OK;
+  return Network->TcpOutAddress;
 }
 
 /**
@@ -491,10 +481,10 @@ int Network_GetMask( int* a0, int* a1, int* a2, int* a3 )
   {
     address = mc_netif->netmask.addr;
 
-    *a0 = IP_ADDRESS_A( address );
-    *a1 = IP_ADDRESS_B( address );
-    *a2 = IP_ADDRESS_C( address );
-    *a3 = IP_ADDRESS_D( address );
+    *a0 = NETIF_IP_ADDRESS_A( address );
+    *a1 = NETIF_IP_ADDRESS_B( address );
+    *a2 = NETIF_IP_ADDRESS_C( address );
+    *a3 = NETIF_IP_ADDRESS_D( address );
   }
     
   return CONTROLLER_OK;
@@ -523,10 +513,10 @@ int Network_GetGateway( int* a0, int* a1, int* a2, int* a3 )
   {
     address = mc_netif->gw.addr;
 
-    *a0 = IP_ADDRESS_A( address );
-    *a1 = IP_ADDRESS_B( address );
-    *a2 = IP_ADDRESS_C( address );
-    *a3 = IP_ADDRESS_D( address );
+    *a0 = NETIF_IP_ADDRESS_A( address );
+    *a1 = NETIF_IP_ADDRESS_B( address );
+    *a2 = NETIF_IP_ADDRESS_C( address );
+    *a3 = NETIF_IP_ADDRESS_D( address );
   }
   
   return CONTROLLER_OK;
@@ -563,7 +553,10 @@ void* Socket( int address, int port )
 
   retval = netconn_connect( conn, &remote_addr, port );
   if( ERR_OK != retval )
+  {
+    netconn_delete( conn );
     conn = NULL;
+  }
   
   return conn;
 }
@@ -693,7 +686,7 @@ void SocketClose( void* socket )
 {
   netconn_close( (struct netconn *)socket );
   netconn_delete( (struct netconn *)socket );
-  return; //0;
+  return;
 }
 
 /**	
@@ -1051,8 +1044,6 @@ int Network_Init( )
   return CONTROLLER_OK;
 }
 
-
-
 /** \defgroup NetworkOSC Network - OSC
   Configure the Controller Board's Network Settings via OSC.
   \ingroup OSC
@@ -1152,13 +1143,39 @@ int Network_Init( )
     You can set the active flag by sending
     \verbatim /network/active 1 \endverbatim
 */
+#ifdef OSC
+
+void NetworkOsc_SetTcpAutoConnect( int yesorno )
+{
+  Eeprom_Write( EEPROM_TCP_AUTOCONNECT, (uchar*)&yesorno, 4 );
+  //if( !Network->TcpConnected )
+    //NetworkOsc_TcpConnect( );
+}
+
+int NetworkOsc_GetTcpAutoConnect( )
+{
+  int state;
+  Eeprom_Read( EEPROM_TCP_AUTOCONNECT, (uchar*)&state, 4 );
+  return state;
+}
+
+int NetworkOsc_GetTcpConnected( )
+{
+  return Network->TcpConnected;
+}
+
+void NetworkOsc_DeleteTcpTask( )
+{
+  if( Network->OscTcpTaskPtr )
+    TaskDelete( Network->OscTcpTaskPtr );
+}
+
 
 #include "osc.h"
-// todo - allow a TCP server to be fired up via OSC
 static char* NetworkOsc_Name = "network";
 static char* NetworkOsc_PropertyNames[] = { "active", "address", "mask", "gateway", "valid", "mac", 
                                               "osc_udp_port", "osc_tcpout_address", "osc_tcpout_port", 
-                                              "tcpout_connect", "tcpout_autoconnect", "dhcp", 0 }; // must have a trailing 0
+                                              "osc_tcpout_connect", "osc_tcpout_auto", "dhcp", 0 }; // must have a trailing 0
 
 int NetworkOsc_PropertySet( int property, char* typedata, int channel );
 int NetworkOsc_PropertyGet( int property, int channel );
@@ -1286,11 +1303,45 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
       if ( status != CONTROLLER_OK )
         return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect TCP address - need 'xxx.xxx.xxx.xxx'" );
       
-      Network_SetTcpOutAddress( a0, a1, a2, a3 );
+      NetworkOsc_SetTcpOutAddress( a0, a1, a2, a3 );
+      break;
     }
     case 8: // osc_tcpout_port
     {
-      return Osc_SubsystemError( channel, NetworkOsc_Name, "TCP port over OSC not implemented." );
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
+
+      NetworkOsc_SetTcpOutPort( value );
+      break;
+    }
+    case 9: // osc_tcpout_connect
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
+
+      if( value && Network->TcpConnected == 0 )
+      {
+        Network->TcpConnected = 1;
+        Network->OscTcpTaskPtr = TaskCreate( Osc_TcpTask, "OscTcp", 500, 0, 2 );
+      }
+      if( !value && Network->TcpConnected == 1 )  
+        Network->TcpConnected = 0;
+
+      break;
+    }
+    case 10: // osc_tcpout_auto
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
+
+      NetworkOsc_SetTcpAutoConnect( value );
+      break;
     }
     case 11: // dhcp
     {
@@ -1363,10 +1414,28 @@ int NetworkOsc_PropertyGet( int property, int channel )
       Osc_CreateMessage( channel, address, ",i", value );      
       break;
     case 7: // osc_tcpout_address
-      Network_GetTcpOutAddress( &a0, &a1, &a2, &a3 );
+      value = NetworkOsc_GetTcpOutAddress( );
+      a0 = IP_ADDRESS_A( value );
+      a1 = IP_ADDRESS_B( value );
+      a2 = IP_ADDRESS_C( value );
+      a3 = IP_ADDRESS_D( value );
+      Network_AddressConvert( address, &a0, &a1, &a2, &a3 );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
       Osc_CreateMessage( channel, address, ",s", output );    
+      break;
+    case 8: // osc_tcpout_port
+      value = NetworkOsc_GetTcpOutPort( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );
+      break;
+    case 9: // osc_tcpout_connect
+      
+      break;
+    case 10: // osc_tcpout_auto
+      value = NetworkOsc_GetTcpAutoConnect( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );
       break;
     case 11: // dhcp
       value = Network_GetDhcpEnabled( );
@@ -1377,3 +1446,7 @@ int NetworkOsc_PropertyGet( int property, int channel )
   
   return result;
 }
+
+#endif // OSC
+
+

@@ -82,5 +82,6 @@ int Osc_NumberMatch( int max, char* pattern, int* fancy );
 
 // Pattern Match Stuff
 bool Osc_PatternMatch(const char *  pattern, const char * test);
+void Osc_TcpTask( void *p );
 
 #endif

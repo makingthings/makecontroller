@@ -53,17 +53,6 @@ void Sleep( int timems )
 }
 
 /**	
-	Put a task to sleep for a given number of microseconds.
-	This lets the processor give time to other tasks.  
-	@param timems An integer specifying how long to sleep in microseconds.
-*/
-void uSleep( int timeus )
-{
-  //make sure this can actually work!!
-	//vTaskDelay( timeus / portTICK_RATE_USEC );
-}
-
-/**	
 	Give up the remaining time allotted to this task by the processor.
 	The presently running task immeidately gives up the remaining time it has in the current timeslice 
 	so that other tasks can run.  While Sleep() will wait the specified number of milliseconds 
