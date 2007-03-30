@@ -107,8 +107,7 @@ int Network_SetActive( int state )
       Network = Malloc( sizeof( struct Network_ ) );
 
       Network->pending = 0;
-      Network->TcpConnected = 0;
-      Network->OscTcpTaskPtr = NULL;
+      Network->TcpRequested = 0;
       // set the temp addresses to use when setting a new IP address/mask/gateway
       Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&Network->TempIpAddress, 4 );
       Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&Network->TempGateway, 4 );
@@ -552,9 +551,14 @@ void* Socket( int address, int port )
   remote_addr.addr = htonl(address);
 
   retval = netconn_connect( conn, &remote_addr, port );
+  
   if( ERR_OK != retval )
   {
-    netconn_delete( conn );
+    //netconn_delete( conn );
+    while( netconn_delete( conn ) != ERR_OK )
+			{
+				vTaskDelay( 10 );
+			}
     conn = NULL;
   }
   
@@ -900,14 +904,14 @@ void Network_DhcpStart( struct netif* netif )
   Network_SetPending( 1 ); // set a flag so nobody else tries to set up this netif
   int count = 0;
   dhcp_start( netif );
-  Network->DhcpFineTaskPtr = TaskCreate( DhcpFineTask, "DhcpFine", 100, 0, 1 );
-  Network->DhcpCoarseTaskPtr = TaskCreate( DhcpCoarseTask, "DhcpCoarse", 50, 0, 1 );
+  Network->DhcpFineTaskPtr = TaskCreate( DhcpFineTask, "DhcpFine", 150, 0, 1 );
+  Network->DhcpCoarseTaskPtr = TaskCreate( DhcpCoarseTask, "DhcpCoarse", 100, 0, 1 );
   // now hang out for a second until we get an address
   // if DHCP is enabled but we don't find a DHCP server, just use the network config stored in EEPROM
-  while( netif->ip_addr.addr == 0 && count < 1000 ) // timeout after 10 (?) seconds of waiting for a DHCP address
+  while( netif->ip_addr.addr == 0 && count < 100 ) // timeout after 10 (?) seconds of waiting for a DHCP address
   {
     count++;
-    Sleep( 10 );
+    Sleep( 100 );
   }
   if( netif->ip_addr.addr == 0 ) // if we timed out getting an address via DHCP, just use whatever's in EEPROM
   {
@@ -1027,7 +1031,14 @@ int Network_Init( )
 
   if( dhcp )
     Network_DhcpStart( &EMAC_if );
-    
+  
+  if( NetworkOsc_GetTcpAutoConnect( ) )
+  {
+    Network->TcpRequested = 1;
+    Osc_StartTcpTask( );
+  }
+  
+  
   /*
   hmm...some work to get this together.
   vSemaphoreCreateBinary( Network.semaphore );
@@ -1052,8 +1063,19 @@ int Network_Init( )
     There is only one Network system, so a device index is not used.
    
     \section properties Properties
-    The Network system has six properties - \b address, \b mask, \b gateway,
-    \b valid, \b mac and \b active.
+    The Network system has twelve properties 
+    - \b address
+    - \b mask
+    - \b gateway,
+    - \b valid
+    - \b mac
+    - \b active 
+    - \b osc_udp_port
+    - \b osc_tcpout_address
+    - \b osc_tcpout_port
+    - \b osc_tcpout_connect
+    - \b osc_tcpout_auto
+    - \b dhcp
 
     \par Address
     The \b 'address' property corresponds to the IP address of the Controller Board.
@@ -1062,30 +1084,6 @@ int Network_Init( )
     \par
     To read the current IP address, omit the argument value from the end of the message:
     \verbatim /network/address \endverbatim
-
-    \par osc_udp_port OSC UDP Port
-    The \b osc_udp_port corresponds to the port that the Make Controller listens on for
-    incoming OSC messages via UDP.  This value is stored persistently, so it's available
-    even after the board has rebooted.
-    
-    \par osc_tcp_address OSC TCP Address
-    The \b osc_tcp_address property corresponds to the IP address that the Make Controller
-    will try to connect to when 
-
-    \par osc_tcp_port OSC TCP PORT
-    The \b osc_tcp_port property corresponds to the address that the board will try to connect
-    to when making a TCP connection.  This value is stored persistently, so it's available
-    even after the board has rebooted.
-    
-    \par tcp_connect TCP Connect
-    The \b tcp_connect property allows you to make a connection to a remote TCP server.  It
-    will try to connect to a server specified by the \b osc_tcp_address and \b osc_tcp_port properties.
-
-    \par tcp_autoconnect TCP Auto Connect
-    The \b tcp_autoconnect property specifies whether the board should attempt to make a connection
-    to a remote TCP server as soon as it boots up.  It will try to connect to a server 
-    specified by the \b osc_tcp_address and \b osc_tcp_port properties.  This value is stored 
-    persistently, so it's available even after the board has rebooted.
    
     \par Mask
     The \b 'mask' property corresponds to the network mask of the Controller Board.
@@ -1110,15 +1108,7 @@ int Network_Init( )
     \verbatim /network/gateway 192.168.0.1 \endverbatim
     To read the current gateway, omit the argument value from the end of the message:
     \verbatim /network/gateway \endverbatim
-   
-    \par MAC
-    The \b 'mac' property corresponds to the Ethernet MAC address of the Controller Board.
-    This value is read-only.
-    \par
-    To read the MAC address of the Controller, send the message
-    \verbatim /network/mac \endverbatim
-    The board will respond by sending back an OSC message with the MAC address.
-   
+
     \par Valid
     The \b 'valid' property corresponds to a checksum used to make sure the board's network settings are valid.
     Ideally, this should be called each time an address setting is changed so that if
@@ -1131,6 +1121,100 @@ int Network_Init( )
     To check if the current settings have been set as valid, send the message:
     \verbatim /network/valid \endverbatim
     with no argument value.
+
+    \par OSC UDP Port
+    The \b osc_udp_port corresponds to the port that the Make Controller listens on for
+    incoming OSC messages via UDP.  This value is stored persistently, so it's available
+    even after the board has rebooted.  This is 10000 by default.
+    \par
+    To tell the board to listen on port 10001, instead of the default 10000, send the message
+    \code /network/osc_udp_port 10001 \endcode
+    To read back the port that the board is currently listening on, send the message
+    \verbatim /network/osc_udp_port \endverbatim
+    with no argument value.
+
+    \subsection tcpconnections TCP Connections
+    The Make Controller can act as a TCP client, make a connection to a remote TCP server, and
+    communicate with it via OSC.  This can be quite handy for providing a remote web interface for the board
+    and for solving all the bi-directional communications issues present with UDP communication. 
+
+    To do this, there are just a couple of steps.
+    - You'll need to tell the board the address & the port of the server you want to connect to.
+    - Tell the board to connect
+    - optionally set the board to automatically reconnect when it starts back up (in case it crashes).
+    The commands below allow you to control all of this via OSC.
+    
+    \par OSC TCP Address
+    The \b osc_tcpout_address property corresponds to the IP address that the Make Controller
+    will try to connect to when the \b osc_tcpout_connect \b 1 command is sent.
+    \par
+    To tell the board to prepare to connect to 192.168.0.118, send the message
+    \code /network/osc_tcpout_address 192.168.0.118 \endcode
+    To read back the address that the board is planning on connecting to, send the message
+    \verbatim /network/osc_tcpout_address \endverbatim
+    with no argument value.
+
+    \par OSC TCP PORT
+    The \b osc_tcpout_port property corresponds to the port that the board will try to connect
+    on when making a TCP connection.  This value is stored persistently, so it's available
+    even after the board has rebooted.  This is 10101 by default.
+    \par
+    To tell the board to prepare to connect on port 11111, send the message
+    \code /network/osc_tcpout_port 11111 \endcode
+    To read back the address that the port is planning on connecting on, send the message
+    \verbatim /network/osc_tcpout_port \endverbatim
+    with no argument value.
+    
+    \par TCP Connect
+    The \b osc_tcpout_connect property allows you to make a connection to a remote TCP server.  It
+    will try to connect to a server specified by the \b osc_tcpout_address and \b osc_tcpout_port properties.
+    \par
+    When you send the message
+    \code /network/osc_tcpout_connect 1 \endcode
+    the board will attempt to make a connection to a server specified by the \b osc_tcpout_address and \b osc_tcpout_port properties.
+    You can tell the board to disconnect from the server by sending the message
+    \code /network/osc_tcpout_connect 0 \endcode
+    Lastly, you can read whether the board is currently connected (or trying to connect) by sending the message
+    \code /network/osc_tcpout_connect \endcode
+    with no argument value.
+
+    \par  TCP Auto Connect
+    The \b osc_tcpout_auto property specifies whether the board should attempt to make a connection
+    to a remote TCP server as soon as it boots up.  It will try to connect to a server 
+    specified by the \b osc_tcp_address and \b osc_tcp_port properties.  This value is stored 
+    persistently, so it's available even after the board has rebooted.  If the board is not currently connected
+    to a TCP server, it will attempt to make a connection when this command is given.
+    \par 
+    To set the board to make a TCP connection as soon as it boots up, send the message
+    \code /network/osc_tcpout_auto 1 \endcode
+    To read whether the board will automatically try to connect on reboot, send the message
+    \code /network/osc_tcpout_auto \endcode
+    with no argument value.
+
+    \subsection Miscelleneous
+
+    \par DHCP
+    The \b dhcp property sets whether the board should try to dynamically retrieve a network address from 
+    a network router.  If no DHCP server is available, the board will use the network settings stored in memory
+    for the \b address, \b gateway, and \b mask properties.
+    \par
+    To turn DHCP on, send the message
+    \code /network/dhcp 1 \endcode
+    and the board will immediately try to get an address.  To check what address the board got, send the message
+    \code /network/address \endcode
+    as you normally would.  To turn DHCP off, send the message
+    \code /network/dhcp 0 \endcode
+    To read whether DHCP is currently set on the board, send the message
+    \code /network/dhcp \endcode
+    with no argument value.
+   
+    \par MAC
+    The \b mac property corresponds to the Ethernet MAC address of the Controller Board.
+    This value is read-only.
+    \par
+    To read the MAC address of the Controller, send the message
+    \verbatim /network/mac \endverbatim
+    The board will respond by sending back an OSC message with the MAC address.
    
     \par Active
     The \b 'active' property corresponds to the active state of the Network system.
@@ -1147,9 +1231,13 @@ int Network_Init( )
 
 void NetworkOsc_SetTcpAutoConnect( int yesorno )
 {
-  Eeprom_Write( EEPROM_TCP_AUTOCONNECT, (uchar*)&yesorno, 4 );
-  //if( !Network->TcpConnected )
-    //NetworkOsc_TcpConnect( );
+  if( yesorno != NetworkOsc_GetTcpAutoConnect( ) ) // only write it if it has changed
+    Eeprom_Write( EEPROM_TCP_AUTOCONNECT, (uchar*)&yesorno, 4 );
+  if( Network->TcpRequested == 0 && yesorno ) // if we're not already connected, connect now
+  {
+    Network->TcpRequested = 1;
+    Osc_StartTcpTask( );
+  }
 }
 
 int NetworkOsc_GetTcpAutoConnect( )
@@ -1159,15 +1247,9 @@ int NetworkOsc_GetTcpAutoConnect( )
   return state;
 }
 
-int NetworkOsc_GetTcpConnected( )
+int NetworkOsc_GetTcpRequested( )
 {
-  return Network->TcpConnected;
-}
-
-void NetworkOsc_DeleteTcpTask( )
-{
-  if( Network->OscTcpTaskPtr )
-    TaskDelete( Network->OscTcpTaskPtr );
+  return Network->TcpRequested;
 }
 
 
@@ -1323,13 +1405,13 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
       if ( count != 1 )
         return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
 
-      if( value && Network->TcpConnected == 0 )
+      if( value && Network->TcpRequested == 0 )
       {
-        Network->TcpConnected = 1;
-        Network->OscTcpTaskPtr = TaskCreate( Osc_TcpTask, "OscTcp", 500, 0, 2 );
+        Network->TcpRequested = 1;
+        Osc_StartTcpTask( );
       }
-      if( !value && Network->TcpConnected == 1 )  
-        Network->TcpConnected = 0;
+      if( !value && Network->TcpRequested == 1 )  
+        Network->TcpRequested = 0;
 
       break;
     }
@@ -1430,7 +1512,9 @@ int NetworkOsc_PropertyGet( int property, int channel )
       Osc_CreateMessage( channel, address, ",i", value );
       break;
     case 9: // osc_tcpout_connect
-      
+      value = NetworkOsc_GetTcpRequested( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );
       break;
     case 10: // osc_tcpout_auto
       value = NetworkOsc_GetTcpAutoConnect( );

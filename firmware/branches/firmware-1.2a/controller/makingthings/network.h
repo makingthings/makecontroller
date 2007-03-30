@@ -51,10 +51,9 @@ struct Network_
   int OscUdpPort;
   int TcpOutAddress;
   int TcpOutPort;
-  bool TcpConnected;
+  bool TcpRequested;
   void* DhcpFineTaskPtr;
   void* DhcpCoarseTaskPtr;
-  void* OscTcpTaskPtr;
 };
 
 // Network API stuff
@@ -107,7 +106,6 @@ int NetworkOsc_GetTcpOutPort( void );
 void NetworkOsc_SetTcpOutPort( int port );
 void NetworkOsc_SetTcpAutoConnect( int yesorno );
 int NetworkOsc_GetTcpAutoConnect( void );
-int NetworkOsc_GetTcpConnected( void );
-void NetworkOsc_DeleteTcpTask( void );
+int NetworkOsc_GetTcpRequested( void );
 
 #endif
