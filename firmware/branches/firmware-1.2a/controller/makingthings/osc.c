@@ -70,6 +70,8 @@
 	\code /appled/0/state 1 \endcode
 */
 
+//#ifdef OSC
+
 #include "config.h"
 #include "osc.h"
 #include "network.h"
@@ -121,6 +123,7 @@ struct Osc_
   struct netconn* tcpSocket;
   void* UsbTaskPtr;
   void* UdpTaskPtr;
+  void* TcpTaskPtr;
   OscChannel* channel[ OSC_CHANNEL_COUNT ];
   OscSubsystem* subsystem[ OSC_SUBSYSTEM_COUNT ];
   int registeredSubsystems;
@@ -200,6 +203,7 @@ void Osc_SetActive( int state )
 
     Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 500, (void*)OSC_CHANNEL_UDP, 3 );
     Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 300, (void*)OSC_CHANNEL_USB, 3 );
+    Osc->TcpTaskPtr = NULL;
 
     Osc->users = 1;
     Osc->running = true;
@@ -256,13 +260,15 @@ void Osc_UdpTask( void* parameters )
 {
   int channel = (int)parameters;
   Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
-
+  while( Osc->channel[ channel ] == NULL )
+  {
+    Sleep( 100 );
+    Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
+  }
   OscChannel *ch = Osc->channel[ channel ];
   ch->running = false;
   Osc_SetReplyPort( channel, 10000 );
-
   ch->sendMessage = Osc_UdpPacketSend;
-
   Osc_ResetChannel( ch );
 
   // Chill until the Network is up
@@ -283,19 +289,24 @@ void Osc_UdpTask( void* parameters )
     Osc_SetReplyAddress( channel, address );
 
     Osc_ReceivePacket( channel, ch->incoming, length );
-    Sleep( 1 );
+    TaskYield( );
   }
+}
+
+void Osc_StartTcpTask( )
+{
+  Osc->TcpTaskPtr = TaskCreate( Osc_TcpTask, "OscTcp", 400, 0, 2 );
 }
 
 int Osc_TcpPacketSend( char* packet, int length, int replyAddress, int replyPort )
 {
   (void)replyAddress;
   (void)replyPort;
-  char tcpBuf[ OSC_MAX_MESSAGE_OUT + 4 ];
-  *((int*)tcpBuf) = length;
-  strcat( tcpBuf, packet );
+  char len[ 4 ];
+  sprintf( len, "%d", length );
       
-  int result = SocketWrite( Osc->tcpSocket, tcpBuf, length + 4 );
+  int result = SocketWrite( Osc->tcpSocket, len, 4 );
+  result = SocketWrite( Osc->tcpSocket, packet, length );
   if( !result )
   {
     SocketClose( Osc->tcpSocket );
@@ -308,6 +319,11 @@ void Osc_TcpTask( void* parameters )
 {
   (void)parameters;
   Osc->channel[ OSC_CHANNEL_TCP ] = Malloc( sizeof( OscChannel ) );
+  while( Osc->channel[ OSC_CHANNEL_TCP ] == NULL )
+  {
+    Sleep( 100 );
+    Osc->channel[ OSC_CHANNEL_TCP ] = Malloc( sizeof( OscChannel ) );
+  }
   OscChannel *ch = Osc->channel[ OSC_CHANNEL_TCP ];
   ch->sendMessage = Osc_TcpPacketSend;
   Osc_ResetChannel( ch );
@@ -316,54 +332,59 @@ void Osc_TcpTask( void* parameters )
   while ( !Network_GetActive() )
     Sleep( 100 );
 
+  int ledstate = 0;
+
   ch->running = true;
+  ch->semaphore = NULL; // not sure why I need to do this here and not for the other channels...
 
-  if( NetworkOsc_GetTcpAutoConnect( ) )
-    Osc->tcpSocket = Socket( NetworkOsc_GetTcpOutAddress(), NetworkOsc_GetTcpOutPort() );
-  else
-    Osc->tcpSocket = NULL;
-
-  while( true )
+  while( NetworkOsc_GetTcpRequested( ) )
   {
-    if( NetworkOsc_GetTcpConnected() )
+    // check to see if we have an open socket
+    if( Osc->tcpSocket == NULL )
+      Osc->tcpSocket = Socket( NetworkOsc_GetTcpOutAddress(), NetworkOsc_GetTcpOutPort() );
+
+    if( Osc->tcpSocket != NULL )
     {
-      // check to see if we have an open socket
-      if( Osc->tcpSocket == NULL )
-        Osc->tcpSocket = Socket( NetworkOsc_GetTcpOutAddress(), NetworkOsc_GetTcpOutPort() );
-  
-      if( Osc->tcpSocket != NULL )
+      int length = SocketRead( Osc->tcpSocket, ch->incoming, OSC_MAX_MESSAGE_IN );
+      // should actually read the given length in the message, and use that.
+      if( length > 0 )
       {
-        int length = SocketRead( Osc->tcpSocket, ch->incoming, OSC_MAX_MESSAGE_IN );
-        // should actually check the given length in the message, and use that.
-        if( length > 0 )
-          Osc_ReceivePacket( OSC_CHANNEL_TCP, ch->incoming+4, length-4 );
-          
-        if( !length )
-        {
-          SocketClose( Osc->tcpSocket );
-          Osc->tcpSocket = NULL;
-        }
+        Osc_ReceivePacket( OSC_CHANNEL_TCP, ch->incoming+4, length-4 );
+        // dummy message, for now
+        Osc_CreateMessage( OSC_CHANNEL_TCP, "/appled/*/state", ",i", ledstate );
+        ledstate = !ledstate;
       }
-    }
-    else
-    {
-      if( Osc->tcpSocket != NULL )
+        
+      if( !length )
       {
         SocketClose( Osc->tcpSocket );
         Osc->tcpSocket = NULL;
       }
-      Free( Osc->channel[ OSC_CHANNEL_TCP ] );
-      NetworkOsc_DeleteTcpTask( );
+      TaskYield( );
     }
-
-    TaskYield( );
+    else
+      Sleep( 100 ); // Just so we don't bash the Socket( ) call constantly when we're not open
+  } // while( )
+  // now we shut down
+  if( Osc->tcpSocket != NULL )
+  {
+    SocketClose( Osc->tcpSocket );
+    Osc->tcpSocket = NULL;
   }
+  Free( Osc->channel[ OSC_CHANNEL_TCP ] );
+  Osc->channel[ OSC_CHANNEL_TCP ] = NULL;
+  TaskDelete( Osc->TcpTaskPtr );
 }
 
 void Osc_UsbTask( void* parameters )
 {
   int channel = (int)parameters;
   Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
+  while( Osc->channel[ channel ] == NULL )
+  {
+    Sleep( 100 );
+    Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
+  }
   OscChannel *ch = Osc->channel[ channel ];
 
   ch->sendMessage = Osc_UsbPacketSend;
@@ -1425,4 +1446,7 @@ int Osc_EndianSwap( int a )
          ( ( a & 0xFF000000 ) >> 24 );
 
 }
+
+//#endif // OSC
+
 
