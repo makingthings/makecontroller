@@ -1,0 +1,12 @@
+INPUT(
+./release\main.o
+./release\CTestWindow.o
+./release\CTestThread.o
+./release\CTester.o
+./release\CTestee.o
+./release\PacketUdp.o
+./release\Osc.o
+./release\Samba.o
+./release\moc_CTestWindow.o
+./release\moc_CTestThread.o
+);
