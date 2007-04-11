@@ -50,6 +50,7 @@ char emacETHADDR5 = 0x0;
 
 #include "config.h"
 #include "network.h"
+#include "webserver.h"
 
 // a few globals
 struct Network_* Network;
@@ -108,6 +109,7 @@ int Network_SetActive( int state )
 
       Network->pending = 0;
       Network->TcpRequested = 0;
+      Network->WebServerTaskPtr = NULL;
       // set the temp addresses to use when setting a new IP address/mask/gateway
       Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&Network->TempIpAddress, 4 );
       Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&Network->TempGateway, 4 );
@@ -899,6 +901,50 @@ int Network_GetDhcpEnabled( )
   return state; 
 }
 
+void Network_SetWebServerEnabled( int state )
+{
+  if( state )
+  {
+    if( Network->WebServerTaskPtr == NULL )
+      Network_StartWebServer( );
+
+    if( !Network_GetWebServerEnabled( ) )
+      Eeprom_Write( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
+  }
+  else
+  {
+    Network_StopWebServer( );
+
+    if( Network_GetWebServerEnabled( ) )
+      Eeprom_Write( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
+  }
+}
+
+void Network_StartWebServer( )
+{
+  if( Network->WebServerTaskPtr == NULL )
+    Network->WebServerTaskPtr = TaskCreate( WebServer, "WebServ", 300, NULL, 4 );
+}
+
+void Network_StopWebServer( )
+{
+  if( Network->WebServerTaskPtr != NULL )
+  {
+    TaskDelete( Network->WebServerTaskPtr );
+    Network->WebServerTaskPtr = NULL;
+  }
+  CloseWebServer( );
+}
+
+int Network_GetWebServerEnabled( )
+{
+  int state;
+  Eeprom_Read( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
+  if( state != 1 )
+    state = 0;
+  return state;
+}
+
 void Network_DhcpStart( struct netif* netif )
 {
   Network_SetPending( 1 ); // set a flag so nobody else tries to set up this netif
@@ -1001,7 +1047,7 @@ int Network_Init( )
   extern err_t ethernetif_init( struct netif *netif );
   static struct netif EMAC_if;
   int address, mask, gateway, dhcp;
-  dhcp = Network_GetDhcpEnabled();
+  dhcp = 0; //Network_GetDhcpEnabled();
 
   if( dhcp )
   {
@@ -1037,6 +1083,9 @@ int Network_Init( )
     Network->TcpRequested = 1;
     Osc_StartTcpTask( );
   }
+
+  if( Network_GetWebServerEnabled( ) )
+    Network_StartWebServer( );
   
   
   /*
@@ -1257,7 +1306,7 @@ int NetworkOsc_GetTcpRequested( )
 static char* NetworkOsc_Name = "network";
 static char* NetworkOsc_PropertyNames[] = { "active", "address", "mask", "gateway", "valid", "mac", 
                                               "osc_udp_port", "osc_tcpout_address", "osc_tcpout_port", 
-                                              "osc_tcpout_connect", "osc_tcpout_auto", "dhcp", 0 }; // must have a trailing 0
+                                              "osc_tcpout_connect", "osc_tcpout_auto", "dhcp", "webserver", 0 }; // must have a trailing 0
 
 int NetworkOsc_PropertySet( int property, char* typedata, int channel );
 int NetworkOsc_PropertyGet( int property, int channel );
@@ -1435,6 +1484,16 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
       Network_SetDhcpEnabled( value );
       break;
     }
+    case 12: // webserver
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
+      
+      Network_SetWebServerEnabled( value );
+      break;
+    }
   }
   return CONTROLLER_OK;
 }
@@ -1523,6 +1582,11 @@ int NetworkOsc_PropertyGet( int property, int channel )
       break;
     case 11: // dhcp
       value = Network_GetDhcpEnabled( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );      
+      break;
+    case 12: // webserver
+      value = Network_GetWebServerEnabled( );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       Osc_CreateMessage( channel, address, ",i", value );      
       break;

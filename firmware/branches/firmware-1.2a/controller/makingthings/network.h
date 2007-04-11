@@ -40,10 +40,6 @@
 
 struct Network_
 {
-  // xSemaphoreHandle semaphore; // this can't be in a header file that's referenced by any old body
-  // Timer structures for periodic DHCP calls, if we have that enabled.
-  //TimerEntry DhcpFineTimer;
-  //TimerEntry DhcpCoarseTimer;
   int pending; // if somebody has started the process of getting an IP address, don't start another process
   int TempIpAddress; // hold onto the values that will ultimately get set for the network
   int TempGateway; // once it's all set as valid
@@ -54,6 +50,7 @@ struct Network_
   bool TcpRequested;
   void* DhcpFineTaskPtr;
   void* DhcpCoarseTaskPtr;
+  void* WebServerTaskPtr;
 };
 
 // Network API stuff
@@ -93,6 +90,12 @@ void Network_SetDhcpEnabled( int enabled );
 int Network_GetDhcpEnabled( void );
 void DhcpFineTask( void* p );
 void DhcpCoarseTask( void* p );
+
+// WebServer Stuff
+void Network_SetWebServerEnabled( int enabled );
+int Network_GetWebServerEnabled( void );
+void Network_StartWebServer( void );
+void Network_StopWebServer( void );
 
 // NetworkOsc Interface
 const char* NetworkOsc_GetName( void );
