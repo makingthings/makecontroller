@@ -59,10 +59,17 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
                                 char* propertyNames[] );
 
 int Osc_BlobReceiverHelper( int channel, char* message, int length, 
-                           char* subsystemName, 
-                           int (*blobPropertySet)( int property, uchar* buffer, int length ),
-                           int (*blobPropertyGet)( int property, uchar* buffer, int size ),
-                           char* blobPropertyNames[] );
+                            char* subsystemName, 
+                            int (*blobPropertySet)( int property, uchar* buffer, int length ),
+                            int (*blobPropertyGet)( int property, uchar* buffer, int size ),
+                            char* blobPropertyNames[] );
+
+
+int Osc_IndexBlobReceiverHelper( int channel, char* message, int length, 
+                                 int indexCount, char* subsystemName, 
+                                 int (*blobPropertySet)( int index, int property, uchar* buffer, int length ),
+                                 int (*blobPropertyGet)( int index, int property, uchar* buffer, int size ),
+                                 char* blobPropertyNames[] );
 
 int Osc_GeneralReceiverHelper( int channel, char* message, int length, 
                            char* subsystemName, 

@@ -39,6 +39,7 @@
 #include "Serial2_internal.h"
 
 Serial2_ Serial2[ 2 ];
+int Serial2_Users;
 
 void Serial2_Isr( void ) __attribute__ ((naked));
 
@@ -157,7 +158,7 @@ int Serial2_Write( int index, uchar* buffer, int count, int timeout )
   queue and send it. This does not need to be in a critical section as 
   if the interrupt has already removed the character the next interrupt 
   will simply turn off the Tx interrupt again. */ 
-  AT91C_BASE_US0->US_IER = AT91C_US_TXRDY; 
+  s2p->at91UARTRegs->US_IER = AT91C_US_TXRDY; 
  
   return CONTROLLER_OK;
 }
@@ -237,7 +238,7 @@ int Serial2_SetChar( int index, int character )
     unsigned char c = (unsigned char)character;
     if( xQueueSend( s2p->transmitQueue, &c, 0 ) == 0 ) 
       return CONTROLLER_ERROR_QUEUE_ERROR; 
-    AT91C_BASE_US0->US_IER = AT91C_US_TXRDY; 
+    s2p->at91UARTRegs->US_IER = AT91C_US_TXRDY; 
    }
 
   return CONTROLLER_OK;
@@ -493,54 +494,83 @@ int Serial2_Init( int index )
   if ( index < 0 || index > 1 )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
+  // Do as a one-time thing
+  if ( Serial2_Users++ == 0 )
+  {
+  }
+
   Serial2_* s2p = &Serial2[ index ];
- 
+
+  int id;
+  int rxPin;
+  int txPin;
+  long rxPinBit;
+  long txPinBit;
+  if ( index == 0 )
+  {
+    id = AT91C_ID_US0;
+    rxPinBit = IO_PA00_BIT;
+    txPinBit = IO_PA01_BIT;
+    rxPin = IO_PA00;
+    txPin = IO_PA01;
+    s2p->at91UARTRegs = AT91C_BASE_US0;
+  }
+  else
+  {
+    id = AT91C_ID_US1;
+    rxPinBit = IO_PA05_BIT;
+    txPinBit = IO_PA06_BIT;
+    rxPin = IO_PA05;
+    txPin = IO_PA06;
+    s2p->at91UARTRegs = AT91C_BASE_US1;
+  }
+
+  // Enable the peripheral clock
+  AT91C_BASE_PMC->PMC_PCER = 1 << id;
+
   // If there are no default values, get some
   if ( !s2p->detailsInitialized )
     Serial2_SetDefault( index );
 
-  // Enable the peripheral clock
-  AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_US0;
-
   int status;
    
-  status = Io_StartBits( IO_PA00_BIT | IO_PA01_BIT, false  );
+  status = Io_StartBits( rxPinBit | txPinBit, false  );
   if ( status != CONTROLLER_OK )
     return status;
 
-  Io_SetPeripheralA( IO_PA00 );
-  Io_SetPeripheralA( IO_PA01 );
-  Io_PioDisable( IO_PA00 );
-  Io_PioDisable( IO_PA01 );
+  Io_SetPeripheralA( rxPin );
+  Io_SetPeripheralA( txPin );
+  Io_PioDisable( rxPin );
+  Io_PioDisable( txPin );
   
   // Create the queues
   s2p->receiveQueue = xQueueCreate( 100, 1 ); 
   s2p->transmitQueue = xQueueCreate( 100, 1 ); 
 
   // Disable interrupts
-  AT91C_BASE_US0->US_IDR = (unsigned int) -1;
+  s2p->at91UARTRegs->US_IDR = (unsigned int) -1;
 
   // Timeguard disabled
-  AT91C_BASE_US0->US_TTGR = 0;
+  s2p->at91UARTRegs->US_TTGR = 0;
 
   // Most of the detail setting is done in here
   // Also Resets TXRX and re-enables RX
   Serial2_SetDetails( index );
 
-  unsigned int mask = 0x1 << AT91C_ID_US0;		
+  unsigned int mask = 0x1 << id;		
                         
   /* Disable the interrupt on the interrupt controller */					
   AT91C_BASE_AIC->AIC_IDCR = mask ;										
   /* Save the interrupt handler routine pointer and the interrupt priority */	
-  AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_US0 ] = (unsigned int)Serial2_Isr;			
+  AT91C_BASE_AIC->AIC_SVR[ id ] = (unsigned int)Serial2_Isr;			
   /* Store the Source Mode Register */									
-  AT91C_BASE_AIC->AIC_SMR[ AT91C_ID_US0 ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;				
+  AT91C_BASE_AIC->AIC_SMR[ id ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;				
   /* Clear the interrupt on the interrupt controller */					
   AT91C_BASE_AIC->AIC_ICCR = mask ;					
 
   AT91C_BASE_AIC->AIC_IECR = mask;
 
-  AT91C_BASE_US0->US_IER = AT91C_US_RXRDY; 
+  s2p->at91UARTRegs->US_IER = AT91C_US_RXRDY; 
 
 
   return CONTROLLER_OK;
@@ -561,7 +591,7 @@ int Serial2_SetDetails( int index )
   if ( s2p->users )
   {
      // Reset receiver and transmitter
-    AT91C_BASE_US0->US_CR = AT91C_US_RSTRX | AT91C_US_RSTTX | AT91C_US_RXDIS | AT91C_US_TXDIS; 
+    s2p->at91UARTRegs->US_CR = AT91C_US_RSTRX | AT91C_US_RSTTX | AT91C_US_RXDIS | AT91C_US_TXDIS; 
 
     int baudValue; 
 
@@ -575,9 +605,9 @@ int Serial2_SetDetails( int index )
     else 
       baudValue /= 10;
 
-    AT91C_BASE_US0->US_BRGR = baudValue; 
+    s2p->at91UARTRegs->US_BRGR = baudValue; 
 
-    AT91C_BASE_US0->US_MR = 
+    s2p->at91UARTRegs->US_MR = 
       ( ( s2p->hardwareHandshake ) ? AT91C_US_USMODE_HWHSH : AT91C_US_USMODE_NORMAL ) |
       ( AT91C_US_CLKS_CLOCK ) |
       ( ( ( s2p->bits - 5 ) << 6 ) & AT91C_US_CHRL ) |
@@ -586,7 +616,7 @@ int Serial2_SetDetails( int index )
       // 2 << 14; // this last thing puts it in loopback mode
 
 
-    AT91C_BASE_US0->US_CR = AT91C_US_RXEN | AT91C_US_TXEN; 
+    s2p->at91UARTRegs->US_CR = AT91C_US_RXEN | AT91C_US_TXEN; 
   }
   return CONTROLLER_OK;
 }
@@ -767,7 +797,7 @@ int Serial2Osc_IntPropertyGet( int index, int property )
   return value;
 }
 
-// Get the index LED, property
+// Get the index, property
 int Serial2Osc_BlobPropertyGet( int index, int property, uchar* blob, int maxSize )
 {
   int xfer = 0;
