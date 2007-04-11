@@ -683,6 +683,140 @@ int Osc_BlobReceiverHelper( int channel, char* message, int length,
 // messages in it, they will be unpacked elsewhere.  We'll only get 
 // individual messages here.
 // What is passed is the part after the first subsystem address.
+// So "/appled/0/on 1" would be passed to this routine as "0/on 1"
+// Not literally like this, of course, but as OSC messages
+// In order to do anything, we need some extra information from 
+// the subsystem like what the names of its properties are, what 
+// the getters and setters are, etc.
+// It's great to have this code in one central place.  It will be easier 
+// to effect change from here.o
+int Osc_IndexBlobReceiverHelper( int channel, char* message, int length, 
+                                int indexCount, char* subsystemName, 
+                                int (*blobPropertySet)( int index, int property, uchar* buffer, int length ),
+                                int (*blobPropertyGet)( int index, int property, uchar* buffer, int length ),
+                                char* blobPropertyNames[] )
+{
+  // Look for the next slash - being the one that separates the index
+  // from the property.  Note that this won't go off on a search through the buffer
+  // since there will soon be a string terminator (i.e. a 0)
+  char* prop = strchr( message, '/' );
+  if ( prop == NULL )
+    return CONTROLLER_ERROR_BAD_FORMAT;
+
+  // Now that we know where the property is, we can see if we can find it.
+  // This is a little cheap, since we're also implying that there are no 
+  // more address terms after the property.  That is, if testing for "speed", while
+  // "speed" would match, "speed/other_stuff" would not.
+  int propertyIndex = Osc_PropertyLookup( blobPropertyNames, prop + 1 );
+  if ( propertyIndex == -1 )
+    return CONTROLLER_ERROR_UNKNOWN_PROPERTY;
+
+  // Here's where we try to understand what index we got.  In the world of 
+  // OSC, this could be a pattern.  So while we could get "0/speed" we could 
+  // also get "*/speed" or "[0-4]/speed".  This is kind of a drag, but it is 
+  // quite nice from the user's perspective.
+  // So to deal with this take a look at the text "0" or "{1,2}" or whatever
+  // and produce either a nice integer in the simplest case or a set of bits 
+  // where each bit corresponds to one of the indicies.  Clearly we don't have
+  // to go crazy, since there are only a small finite number of them.
+  // Osc_NumberMatch() does the work for us, producing either number = -1 and 
+  // bits == -1 if there was no index match, or number != -1 for there was a single
+  // number, or bits != -1 if there were several.
+
+  // note that we tweak the string a bit here to make sure the next '/' is not 
+  // mixed up with this.  Insert a string terminator.
+  *prop = 0;
+
+  int bits;
+  int number = Osc_NumberMatch( indexCount, message, &bits );
+  if ( number == -1 && bits == -1 )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+  
+  // We tweaked the '/' before - now put it back
+  *prop = '/';
+
+  // Sometime after the address, the data tag begins - this is the description 
+  // of the data in the rest of the message.  It starts with a comma.  Return
+  // where it is into 'type'.  If there is no comma, this is bad.
+  char* type = Osc_FindDataTag( message, length );
+  if ( type == NULL )
+    return CONTROLLER_ERROR_NO_TYPE_TAG;
+
+  // We can tell if there's data by seeing if the character after the comma
+  // is a zero or not.
+  if ( type[ 1 ] == 'b' || type[ 1 ] == 's' )
+  {
+    // If there was blob or string data, it was a WRITE.
+    // So, sort of scanf-like, go get the data.  Here we pass in where the data is
+    // thanks to the previous routine and then specify what we expect to find there
+    // in tag terms (i.e. "b", "s").  Finally we pass in a set 
+    // of pointers to the data types we want to extract.  Osc_ExtractData()
+    // will rummage around in the message magically grabbing values for you,
+    // reporting how many it got.  It will grab convert strings if necessary.
+    unsigned char *buffer;
+    int size;
+    int count = Osc_ExtractData( type, "b", &buffer, &size );
+    if ( count != 1 )
+      return CONTROLLER_ERROR_INCORRECT_DATA_TYPE;
+  
+    // Now with the data we need to decide what to do with it.
+    // Is there one or many here?
+    if ( number != -1 )
+      (*blobPropertySet)( number, propertyIndex, buffer, size );
+    else
+    {
+      int index = 0;
+      while ( bits > 0 && index < indexCount )
+      { 
+        if ( bits & 1 )
+          (*blobPropertySet)( index, propertyIndex, buffer, size  );
+        bits >>= 1;
+        index++;
+      }
+    }
+  }
+  else
+  {
+    // No data, then.  I guess it was a read.  The XXXXOsc getters
+    // take the channel number and use it to call
+    // Osc_CreateMessage() which adds a new message to the outgoing
+    // stack
+    if ( number != -1 )
+    {
+      uchar buffer[ OSC_SCRATCH_SIZE ];
+      int size = (*blobPropertyGet)( number, propertyIndex, buffer, OSC_SCRATCH_SIZE );
+      char address[ OSC_SCRATCH_SIZE ]; 
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, number, blobPropertyNames[ propertyIndex ] ); 
+      Osc_CreateMessage( channel, address, ",b", buffer, size );
+    }
+    else
+    {
+      int index = 0;
+      while ( bits > 0 && index < indexCount )
+      { 
+        if ( bits & 1 )
+        {
+          uchar buffer[ OSC_SCRATCH_SIZE ];
+          int size = (*blobPropertyGet)( index, propertyIndex, buffer, OSC_SCRATCH_SIZE );
+          char address[ OSC_SCRATCH_SIZE ]; 
+          snprintf( address, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, index, blobPropertyNames[ propertyIndex ] ); 
+          Osc_CreateMessage( channel, address, ",b", buffer, size );
+        }
+        bits >>= 1;
+        index++;
+      }
+    }
+  }
+
+  return CONTROLLER_OK;
+}
+
+
+// An OSC message has arrived, check it out... although, don't change it - others need
+// to use it.  If the original OSC packet was a BUNDLE - i.e. had many 
+// messages in it, they will be unpacked elsewhere.  We'll only get 
+// individual messages here.
+// What is passed is the part after the first subsystem address.
 // So "/dipswitch/active 1" would be passed to this routine as "active 1"
 // Not literally like this, of course, but as OSC messages
 // In order to do anything, we need some extra information from 
@@ -1069,6 +1203,21 @@ int Osc_ExtractData( char* buffer, char* format, ... )
           data += length;
           count++;
           cont = true;
+        }
+        else
+        {
+          if ( *tp == 's' )
+          {
+            *(va_arg( args, char** )) = data;
+            int len = strlen( data ) + 1;
+            *(va_arg( args, int* )) = len;
+            int pad = len % 4;
+            if ( pad != 0 )
+              len += ( 4 - pad );
+            data += len;
+            count++;
+            cont = true;
+          }
         }
         break;
     }

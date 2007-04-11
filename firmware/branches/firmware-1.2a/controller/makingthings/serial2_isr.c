@@ -55,43 +55,56 @@ void Serial2_Isr( void )
     
   unsigned portLONG ulStatus; 
   signed portCHAR cChar; 
+
   long xTaskWokenByTx = false; 
   long xTaskWokenByPost = false; 
+
+  int index;
+  for ( index = 0; index < 2; index++ )
+  {
+    long xTaskWokenByTxThis = false; 
+    long xTaskWokenByPostThis = false; 
  
-  /* What caused the interrupt? */ 
-  ulStatus = AT91C_BASE_US0->US_CSR & AT91C_BASE_US0->US_IMR; 
- 
-  if( ulStatus & AT91C_US_TXRDY ) 
-  { 
-    /* The interrupt was caused by the THR becoming empty. Are there any 
-       more characters to transmit? */ 
-    if( xQueueReceiveFromISR( Serial2[ 0 ].transmitQueue, &cChar, &xTaskWokenByTx ) == pdTRUE ) 
-    { 
-      /* A character was retrieved from the queue so can be sent to the 
-         THR now. */ 
-      AT91C_BASE_US0->US_THR = cChar; 
-    } 
-    else 
-    {    
-      /* Queue empty, nothing to send so turn off the Tx interrupt. */ 
-      AT91C_BASE_US0->US_IDR = AT91C_US_TXRDY; 
-    }   
-  } 
+    Serial2_* s2p = &Serial2[ index ];
+
+    /* What caused the interrupt? */ 
+    ulStatus = ( s2p->at91UARTRegs->US_CSR ) & ( s2p->at91UARTRegs->US_IMR ); 
    
-  if( ulStatus & AT91C_US_RXRDY ) 
-  { 
-    /* The interrupt was caused by a character being received. Grab the 
-    character from the RHR and place it in the queue or received  
-    characters. */ 
-    int t = AT91C_BASE_US0->US_RHR;
-    cChar = t & 0xFF; 
-    xTaskWokenByPost = xQueueSendFromISR( Serial2[ 0 ].receiveQueue, &cChar, xTaskWokenByPost ); 
-  } 
+    if( ulStatus & AT91C_US_TXRDY ) 
+    { 
+      /* The interrupt was caused by the THR becoming empty. Are there any 
+         more characters to transmit? */ 
+      if( xQueueReceiveFromISR( s2p->transmitQueue, &cChar, &xTaskWokenByTx ) == pdTRUE ) 
+      { 
+        /* A character was retrieved from the queue so can be sent to the 
+           THR now. */ 
+        s2p->at91UARTRegs->US_THR = cChar; 
+      } 
+      else 
+      {    
+        /* Queue empty, nothing to send so turn off the Tx interrupt. */ 
+        s2p->at91UARTRegs->US_IDR = AT91C_US_TXRDY; 
+      }   
+    } 
+     
+    if( ulStatus & AT91C_US_RXRDY ) 
+    { 
+      /* The interrupt was caused by a character being received. Grab the 
+      character from the RHR and place it in the queue or received  
+      characters. */ 
+      int t = s2p->at91UARTRegs->US_RHR;
+      cChar = t & 0xFF; 
+      xTaskWokenByPost = xQueueSendFromISR( s2p->receiveQueue, &cChar, xTaskWokenByPost ); 
+    }
+
+    xTaskWokenByTx = xTaskWokenByTx || xTaskWokenByTxThis; 
+    xTaskWokenByPost = xTaskWokenByPost || xTaskWokenByPostThis; 
+  }
    
   /* End the interrupt in the AIC. */ 
   AT91C_BASE_AIC->AIC_EOICR = 0;
 
-	/* Do a task switch if needed */
-	portEXIT_SWITCHING_ISR( ( xTaskWokenByPost || xTaskWokenByTx ) );
+  /* Do a task switch if needed */
+  portEXIT_SWITCHING_ISR( ( xTaskWokenByPost || xTaskWokenByTx ) );
 }
 
