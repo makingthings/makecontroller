@@ -56,63 +56,20 @@
 #include <stdio.h>
 #include <string.h>
 
-/* Scheduler includes. */
 #include "FreeRTOS.h"
-#include "task.h"
-#include "semphr.h"
+#include "webserver.h"
+#include "analogin.h"
+#include "system.h"
 
-/* Demo includes. */
-#include "BasicWEB.h"
-#include "SAM7_EMAC.h"
-
-/* lwIP includes. */
+// lwIP includes. 
 #include "lwip/api.h" 
 #include "lwip/tcpip.h"
 #include "lwip/memp.h" 
 #include "lwip/stats.h"
 #include "netif/loopif.h"
 
-#include "analogin.h"
-#include "system.h"
-
-/* The size of the buffer in which the dynamic WEB page is created. */
-#define webMAX_PAGE_SIZE	1548
-
-/* Standard GET response. */
-#define webHTTP_OK	"HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n"
-
-/* The port on which we listen. */
-#define webHTTP_PORT		( 80 )
-
-/* Delay on close error. */
-#define webSHORT_DELAY		( 10 )
-
-/* Format of the dynamic page that is returned on each connection. */
-#define webHTML_START \
-"<html>\
-<head>\
-</head>\
-<BODY onLoad=\"window.setTimeout(&quot;location.href='index.html'&quot;,1000)\"bgcolor=\"#eeeeee\">\
-<br>Make Magazine - MakingThings<br>MAKE Controller Kit<br><br>Page Hits "
-
-#define webHTML_END \
-"\r\n</pre>\
-\r\n</BODY>\
-</html>"
-
-struct Web_Server
-{
-  portCHAR cDynamicPage[ webMAX_PAGE_SIZE ];
-  portCHAR cPageHits[ 11 ];
-  struct netbuf* pxRxBuffer;
-  portCHAR* pcRxString;
-  unsigned portSHORT usLength;
-  unsigned portLONG ulPageHits;
-};
-
-struct Web_Server* Server;
-
-/*------------------------------------------------------------*/
+struct Web_Server* Server = NULL;
+static void ProcessConnection( struct netconn* NetConn );
 
 /* 
  * Process an incoming connection on port 80.
@@ -122,118 +79,119 @@ struct Web_Server* Server;
  * closed.  A more complete implementation could create a task for each 
  * connection. 
  */
-static void vProcessConnection( struct netconn *pxNetCon );
 
-/*------------------------------------------------------------*/
-
-static void vProcessConnection( struct netconn *pxNetCon )
+static void ProcessConnection( struct netconn *NetConn )
 {
 	/* We expect to immediately get data. */
-	Server->pxRxBuffer = netconn_recv( pxNetCon );
+	Server->RxBuffer = netconn_recv( NetConn );
 
-	if( Server->pxRxBuffer != NULL )
+	if( Server->RxBuffer != NULL )
 	{
 		/* Where is the data? */
-		netbuf_data( Server->pxRxBuffer, (void*)&Server->pcRxString, &Server->usLength );	   
+		netbuf_data( Server->RxBuffer, (void*)&Server->RxString, &Server->Length );
 	
 		/* Is this a GET?  We don't handle anything else. */
-		if( !strncmp( Server->pcRxString, "GET", 3 ) )
+		if( !strncmp( Server->RxString, "GET", 3 ) )
 		{
-			Server->pcRxString = Server->cDynamicPage;
+			Server->RxString = Server->DynamicPage;
 
 			/* Update the hit count. */
-			Server->ulPageHits++;
-			sprintf( Server->cPageHits, "%lu", Server->ulPageHits );
+			Server->PageHits++;
+			sprintf( Server->PageHitsBuf, "%lu", Server->PageHits );
 
 			/* Write out the HTTP OK header. */
-      netconn_write( pxNetCon, webHTTP_OK, (u16_t)strlen( webHTTP_OK ), NETCONN_COPY );
+      netconn_write( NetConn, HTTP_OK, (u16_t)strlen( HTTP_OK ), NETCONN_COPY );
 
 			/* Generate the dynamic page...
 
 			... First the page header. */
-			strcpy( Server->cDynamicPage, webHTML_START );
+			strcpy( Server->DynamicPage, HTML_START );
 			/* ... Then the hit count... */
-			strcat( Server->cDynamicPage, Server->cPageHits );
-			strcat( Server->cDynamicPage, "<p>Version.Build " );
-	    sprintf( Server->cPageHits, "%d.%d", System_GetVersionNumber(), System_GetBuildNumber() ); 
-      strcat( Server->cDynamicPage, Server->cPageHits );
-      strcat( Server->cDynamicPage, "<p>Free Memory " );
-	    sprintf( Server->cPageHits, "%d", System_GetFreeMemory() ); 
-      strcat( Server->cDynamicPage, Server->cPageHits );
-      strcat( Server->cDynamicPage, "</p>" );
+			strcat( Server->DynamicPage, Server->PageHitsBuf );
+			strcat( Server->DynamicPage, "<p>Version.Build " );
+	    sprintf( Server->PageHitsBuf, "%d.%d", System_GetVersionNumber(), System_GetBuildNumber() ); 
+      strcat( Server->DynamicPage, Server->PageHitsBuf );
+      strcat( Server->DynamicPage, "<p>Free Memory " );
+	    sprintf( Server->PageHitsBuf, "%d", System_GetFreeMemory() ); 
+      strcat( Server->DynamicPage, Server->PageHitsBuf );
+      strcat( Server->DynamicPage, "</p>" );
 
-			strcat( Server->cDynamicPage, "<p>Tasks Currently Running" );
-			strcat( Server->cDynamicPage, "<p><pre>Task          State  Priority  Stck Rem	#<br>-------------------------------------------" );
+			strcat( Server->DynamicPage, "<p>Tasks Currently Running" );
+			strcat( Server->DynamicPage, "<p><pre>Task          State  Priority  Stck Rem	#<br>-------------------------------------------" );
 			/* ... Then the list of tasks and their status... */
-			vTaskList( ( signed portCHAR * ) Server->cDynamicPage + strlen( Server->cDynamicPage ) );	
+			vTaskList( (signed portCHAR*)Server->DynamicPage + strlen( Server->DynamicPage ) );	
       int i;
 
-      strcat( Server->cDynamicPage, "<p><pre>Inputs<br>--------------<br>" );
+      strcat( Server->DynamicPage, "<p><pre>Inputs<br>--------------<br>" );
 
       for ( i = 0; i < 8; i++ )
       {
         char b[ 20 ];
         snprintf( b, 20, "%d: %4d<br>", i, AnalogIn_GetValue( i ) );
-        strcat( Server->cDynamicPage, b );
+        strcat( Server->DynamicPage, b );
       }
 
-      strcat( Server->cDynamicPage, "</pre>" );
+      strcat( Server->DynamicPage, "</pre>" );
 
       /* ... Finally the page footer. */
-			strcat( Server->cDynamicPage, webHTML_END );
+			strcat( Server->DynamicPage, HTML_END );
 
 			/* Write out the dynamically generated page. */
-			netconn_write(pxNetCon, Server->cDynamicPage, (u16_t)strlen( Server->cDynamicPage ), NETCONN_COPY );
+			netconn_write(NetConn, Server->DynamicPage, (u16_t)strlen( Server->DynamicPage ), NETCONN_COPY );
 		}
  
-		netbuf_delete( Server->pxRxBuffer );
+		netbuf_delete( Server->RxBuffer );
 	}
 
-	netconn_close( pxNetCon );
+	netconn_close( NetConn );
 }
-/*------------------------------------------------------------*/
 
-/*------------------------------------------------------------*/
-
-void vBasicWEBServer( void *pvParameters )
+void WebServer( void *p )
 {
-  Server = Malloc( sizeof( struct Web_Server ) );
+  (void)p;
   while( Server == NULL )
   {
-    Malloc( sizeof( struct Web_Server ) );
+    Server = Malloc( sizeof( struct Web_Server ) );
     Sleep( 100 );
   }
   // init
-  Server->ulPageHits = 0;
+  Server->PageHits = 0;
+  Server->NewConnection = NULL;
+ 	Server->HTTPListener = netconn_new( NETCONN_TCP );
+	netconn_bind(Server->HTTPListener, NULL, HTTP_PORT );
+	netconn_listen( Server->HTTPListener );
 
-  struct netconn *pxHTTPListener, *pxNewConnection;
-
-  //moreInit();
-
-    /* Parameters are not used - suppress compiler error. */
-  ( void ) pvParameters;
-	/* Create a new tcp connection handle */
-
- 	pxHTTPListener = netconn_new( NETCONN_TCP );
-	netconn_bind(pxHTTPListener, NULL, webHTTP_PORT );
-	netconn_listen( pxHTTPListener );
-
-	/* Loop forever */
-	for( ;; )
+  while( 1 )
 	{
 		/* Wait for connection. */
-		pxNewConnection = netconn_accept(pxHTTPListener);
+		Server->NewConnection = netconn_accept( Server->HTTPListener );
 
-		if(pxNewConnection != NULL)
+		if(Server->NewConnection != NULL)
 		{
-			/* Service connection. */
-			vProcessConnection( pxNewConnection );
-			while( netconn_delete( pxNewConnection ) != ERR_OK )
+			ProcessConnection( Server->NewConnection );
+			while( netconn_delete( Server->NewConnection ) != ERR_OK )
 			{
-				vTaskDelay( webSHORT_DELAY );
+				Sleep( 10 );
 			}
 		}
+    Sleep( 5 );
 	}
 }
+
+void CloseWebServer( )
+{
+  if( Server != NULL )
+  {
+    netconn_delete( Server->HTTPListener );
+
+    if( Server->NewConnection != NULL )
+      netconn_delete( Server->NewConnection );
+
+    Free( Server );
+    Server = NULL;
+  }
+}
+
+
 
 

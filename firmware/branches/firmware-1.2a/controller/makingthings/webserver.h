@@ -33,11 +33,36 @@
 #ifndef BASIC_WEB_SERVER_H
 #define BASIC_WEB_SERVER_H
 
-/* The function that implements the WEB server task. */
-void vBasicWEBServer( void *pvParameters );
+#define MAX_WEBPAGE_SIZE	1548
+#define HTTP_OK	"HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n"
+#define HTTP_PORT		( 80 )
 
-/* Initialisation required by lwIP. */
-void vlwIPInit( void );
+#define HTML_START \
+"<html>\
+<head>\
+</head>\
+<BODY onLoad=\"window.setTimeout(&quot;location.href='index.html'&quot;,1000)\"bgcolor=\"#eeeeee\">\
+<br>Make Magazine - MakingThings<br>MAKE Controller Kit<br><br>Page Hits "
 
-#endif
+#define HTML_END \
+"\r\n</pre>\
+\r\n</BODY>\
+</html>"
+
+struct Web_Server
+{
+  portCHAR DynamicPage[ MAX_WEBPAGE_SIZE ];
+  portCHAR PageHitsBuf[ 11 ];
+  struct netbuf* RxBuffer;
+  portCHAR* RxString;
+  unsigned portSHORT Length;
+  unsigned portLONG PageHits;
+  struct netconn* HTTPListener;
+  struct netconn* NewConnection;
+};
+
+void WebServer( void *p );
+void CloseWebServer( void );
+
+#endif  // BASIC_WEB_SERVER_H
 

@@ -84,7 +84,7 @@ The location in EEPROM where the flag of whether or not to use DHCP is stored.
 
 \def EEPROM_SYSTEM_NAME
 The location in EEPROM where the user assignable name of the board is stored.
-This name can only be a max of 32 characters.
+This name can only be a max of 100 characters.
 
 @}
 */
@@ -117,4 +117,5 @@ This name can only be a max of 32 characters.
 #define EEPROM_TCP_OUT_PORT        EEPROM_SYSTEM_BASE + 88
 #define EEPROM_DHCP_ENABLED           EEPROM_SYSTEM_BASE + 92
 #define EEPROM_SYSTEM_NAME            EEPROM_SYSTEM_BASE + 96 // this is 100 bytes long
+#define EEPROM_WEBSERVER_ENABLED      EEPROM_SYSTEM_BASE + 196
 #endif
