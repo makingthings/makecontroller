@@ -30,6 +30,13 @@ void  TaskYield( void );
 void  TaskDelete( void* task );
 void  TaskEnterCritical( void );
 void  TaskExitCritical( void );
+int TaskGetRemainingStack( void* task );
+void* getTaskByName( char *taskName );
+void* getTaskByID( int taskID );
+int TaskGetPriority( void* task );
+int TaskGetIDNumber( void* task );
+char* TaskGetName( void* task );
+int TaskGetStackAllocated( void* task );
 
 void* Malloc( int size );
 void Free( void* memory );

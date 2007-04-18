@@ -168,11 +168,11 @@ void WebServer( void *p )
 
 		if(Server->NewConnection != NULL)
 		{
-			ProcessConnection( Server->NewConnection );
+      ProcessConnection( Server->NewConnection );
 			while( netconn_delete( Server->NewConnection ) != ERR_OK )
-			{
 				Sleep( 10 );
-			}
+
+      Server->NewConnection = NULL;
 		}
     Sleep( 5 );
 	}

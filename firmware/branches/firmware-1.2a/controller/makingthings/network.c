@@ -932,8 +932,8 @@ void Network_StopWebServer( )
   {
     TaskDelete( Network->WebServerTaskPtr );
     Network->WebServerTaskPtr = NULL;
+    CloseWebServer( );
   }
-  CloseWebServer( );
 }
 
 int Network_GetWebServerEnabled( )
