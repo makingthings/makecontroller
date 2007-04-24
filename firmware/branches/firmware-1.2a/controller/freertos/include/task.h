@@ -951,6 +951,24 @@ void vTaskMissedYield( void );
  */
 struct sys_timeouts* TaskGetTimeouts( xTaskHandle pxTask );
 
+// MakingThings additions...
+// void* getter routines for the tskTCB structure
+#if ( configUSE_TRACE_FACILITY == 1 )
+  unsigned portSHORT usVoidTaskCheckFreeStackSpace( void* task );
+#endif
+unsigned portBASE_TYPE xTaskGetPriority( void* task );
+unsigned portBASE_TYPE xTaskGetIDNumber( void* task );
+signed portCHAR *xTaskGetName( void* task );
+unsigned portSHORT xTaskGetStackAllocated( void* task );
+unsigned portBASE_TYPE xTaskGetTopUsedPriority( void );
+// and global task lists
+xList* GetReadyTaskByPriority( unsigned portBASE_TYPE index );
+xList* GetDelayedTaskList( void );
+xList* GetOverflowDelayedTaskList( void );
+xList* GetListOfTasksWaitingTermination( void );
+xList* GetSuspendedTaskList( void );
+
+
 #endif /* TASK_H */
 
 
