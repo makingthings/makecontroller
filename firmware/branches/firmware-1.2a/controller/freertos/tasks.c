@@ -1788,6 +1788,13 @@ tskTCB *pxNewTCB;
 
 		return usCount;
 	}
+  // MakingThings version...
+  unsigned portSHORT usVoidTaskCheckFreeStackSpace( void* task )
+  {
+    //( unsigned portCHAR * ) tcb->pxStack
+    tskTCB *tcb = (tskTCB*)task;
+    return usTaskCheckFreeStackSpace( ( unsigned portCHAR*) tcb->pxStack );
+  }
 #endif
 /*-----------------------------------------------------------*/
 
@@ -1824,6 +1831,75 @@ tskTCB *pxNewTCB;
 	}
 
 #endif
+
+// MakingThings additions...
+// void* getter routines for the tskTCB structure
+unsigned portBASE_TYPE xTaskGetPriority( void* task )
+{
+  tskTCB* tcb = (tskTCB*)task;
+  if( tcb != NULL )
+    return tcb->uxPriority;
+  else
+    return -1;
+}
+
+unsigned portBASE_TYPE xTaskGetIDNumber( void* task )
+{
+  tskTCB* tcb = (tskTCB*)task;
+  if( tcb != NULL )
+    return tcb->uxTCBNumber;
+  else
+    return -1;
+}
+
+signed portCHAR *xTaskGetName( void* task )
+{
+  tskTCB* tcb = (tskTCB*)task;
+  if( tcb != NULL )
+    return tcb->pcTaskName;
+  else
+    return NULL;
+}
+
+unsigned portSHORT xTaskGetStackAllocated( void* task )
+{
+  tskTCB* tcb = (tskTCB*)task;
+  if( tcb != NULL )
+    return tcb->usStackDepth;
+  else
+    return -1;
+}
+
+unsigned portBASE_TYPE xTaskGetTopUsedPriority( )
+{
+  return uxTopUsedPriority;
+}
+
+xList* GetReadyTaskByPriority( unsigned portBASE_TYPE priority )
+{
+  return &pxReadyTasksLists[ priority ];
+}
+
+xList* GetDelayedTaskList( )
+{
+  return pxDelayedTaskList;
+}
+
+xList* GetOverflowDelayedTaskList( )
+{
+  return pxOverflowDelayedTaskList;
+}
+
+xList* GetListOfTasksWaitingTermination( )
+{
+  return (xList*)&xTasksWaitingTermination;
+}
+
+xList* GetSuspendedTaskList( )
+{
+  return &xSuspendedTaskList;
+}
+
 
 
 
