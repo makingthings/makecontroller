@@ -30,6 +30,7 @@ struct System_
 {
   char name[ SYSTEM_MAX_NAME + 1 ]; // allotted EEPROM space is 100, but leave room for \0!
   int users;
+  void* StackAuditPtr;
 };
 
 /* System Interface */
@@ -46,6 +47,8 @@ int System_SetReset( int sure );
 int System_SetSerialNumber( int serial );
 int System_SetName( char* name );
 char* System_GetName( void );
+
+void System_StackAudit( int on_off );
 
 /* SystemOsc Interface */
 
