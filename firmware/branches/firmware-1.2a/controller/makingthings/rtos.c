@@ -27,8 +27,10 @@
 #include "string.h"
 
 void* findTask( char *taskName, int taskID );
+void* iterateForNextTask( void** lowTask, int* lowID, void** highTask, int* highID, int currentID, xList* pxList );
 void* iterateByID( int id, xList* pxList );
 void* iterateByName( char* taskName, xList* pxList );
+void* TaskGetNext_internal( void* task );
 
 /** \defgroup Rtos
 	The FreeRTOS subsystem provides a real-time operating system (RTOS) for the MAKE Controller.
@@ -78,13 +80,15 @@ void TaskYield( )
 	@param stackDepth An integer specifying in bytes the size of the task's stack.
 	@param parameters A void* parameter which will be passed into the task at create time.
 	@param priority An integer specifying the task's priority (0 lowest - 7 highest priority).
-	@return A pointer to the handle for the newly created task.
+	@return A pointer to the handle for the newly created task, or NULL if it didn't succeed.
 */
 void* TaskCreate( void (taskCode)( void*), char* name, int stackDepth, void* parameters, int priority )
 {
   void* taskHandle;
-  xTaskCreate( taskCode, (signed char*)name, stackDepth, parameters, priority, &taskHandle );
-  return taskHandle;
+  if( xTaskCreate( taskCode, (signed char*)name, stackDepth, parameters, priority, &taskHandle ) == 1 )
+    return taskHandle;
+  else
+    return NULL;
 }
 
 /**	
@@ -207,7 +211,7 @@ int TaskGetPriority( void* task )
 /**	
 	Get the ID number of a task.
   Each task in freeRTOS has a unique ID number.  
-  @return An integer specifying the task's unique ID within freeRTOS
+  @return An integer specifying the task's unique ID within freeRTOS, or -1 on fail.
 */
 int TaskGetIDNumber( void* task )
 {
@@ -233,6 +237,126 @@ int TaskGetStackAllocated( void* task )
   return xTaskGetStackAllocated( task );
 }
 
+/**	
+	Get a pointer to the task that's currently running.
+  @return A pointer to the task that's currently running.
+*/
+void* TaskGetCurrent( )
+{
+  return xTaskGetCurrentTaskHandle( );
+}
+
+/**	
+	Read the highest priority being used by any existing task.
+  @return An integer specifying the priority.
+*/
+int TaskGetTopPriorityUsed( )
+{
+  return xTaskGetTopUsedPriority( );
+}
+
+/**	
+	Get a pointer to the task whose ID comes after a given ID.
+  FreeRTOS assigns each task a unique ID number internally.  This function will
+  return a pointer to the task with the next ID.  Note that this does not necessarily
+  mean that this task will be given processor time next, just that its ID is the next 
+  one along in the list of all tasks.
+
+  This is another expensive function since it needs to stop the scheduler to search the lists
+  of tasks.  It should only really be used in a debug setting.
+  @param currentID An integer specifying the ID of the previous task.
+  @return A pointer to the task that's next in the ID list.
+*/
+void* TaskGetNext( void* task )
+{
+  void* taskreturn = NULL;
+  vTaskSuspendAll();
+  {
+    taskreturn = TaskGetNext_internal( task );
+  }
+  xTaskResumeAll( );
+  return taskreturn;
+}
+
+void* TaskGetNext_internal( void* task )
+{
+  int currentID;
+  int lowID = 1024; // some large number that will be greater than the number of tasks...
+  int highID = 1024;
+  void* lowTask = NULL;
+  void* highTask = NULL;
+  void* tcb = NULL;
+  unsigned portBASE_TYPE uxQueue = TaskGetTopPriorityUsed( ) + 1;
+
+  if( task == NULL )
+    currentID = 1;
+  else
+    currentID = TaskGetIDNumber( task );
+
+  // look through all the possible lists of tasks
+    do
+    {
+      uxQueue--;
+      if( !listLIST_IS_EMPTY( GetReadyTaskByPriority( uxQueue ) ) )
+      {
+        tcb = iterateForNextTask( &lowTask, &lowID, &highTask, &highID, currentID, GetReadyTaskByPriority( uxQueue ) );
+        if( tcb != NULL )
+          return tcb;
+      }   
+    }while( uxQueue > ( unsigned portSHORT ) tskIDLE_PRIORITY );
+
+    // check the list of delayed tasks
+    if( !listLIST_IS_EMPTY( GetDelayedTaskList( ) ) )
+    {
+      tcb = iterateForNextTask( &lowTask, &lowID, &highTask, &highID, currentID, GetDelayedTaskList( ) );
+      if( tcb != NULL )
+        return tcb;
+    }
+    // check the list of overflow delayed tasks
+    if( !listLIST_IS_EMPTY( GetOverflowDelayedTaskList( ) ) )
+    {
+      tcb = iterateForNextTask( &lowTask, &lowID, &highTask, &highID, currentID, GetOverflowDelayedTaskList( ) );
+      if( tcb != NULL )
+        return tcb;
+    }
+    // check the list of tasks about to die
+    if( !listLIST_IS_EMPTY( GetListOfTasksWaitingTermination( ) ) )
+    {
+      tcb = iterateForNextTask( &lowTask, &lowID, &highTask, &highID, currentID, GetListOfTasksWaitingTermination( ) );
+      if( tcb != NULL )
+        return tcb;
+    }
+    // check the list of suspended tasks
+    if( !listLIST_IS_EMPTY( GetSuspendedTaskList( ) ) )
+      tcb = iterateForNextTask( &lowTask, &lowID, &highTask, &highID, currentID, GetSuspendedTaskList( ) );
+
+    
+  if( highTask )
+    return highTask;
+  else
+    return lowTask;
+}
+
+/**	
+	Get the total number of tasks that exist at a given moment.
+  @return An integer specifying the number of tasks.
+*/
+int GetNumberOfTasks( )
+{
+  return uxTaskGetNumberOfTasks( );
+}
+
+/**	
+	Update the priority of a task.
+  Higher numbers mean higher priority/more processor time.
+  @param task A pointer to the task you want to update.
+  @param priority An integer specifying the new priority.
+*/
+void TaskSetPriority( void* task, int priority )
+{
+  vTaskPrioritySet( task, priority );
+}
+
 /** @}
 */
 
@@ -246,10 +370,9 @@ void* findTask( char *taskName, int taskID )
   if( taskName != NULL && taskID < 0 )
     byName = true;
 
-  unsigned portBASE_TYPE uxQueue;
+  unsigned portBASE_TYPE uxQueue = TaskGetTopPriorityUsed( ) + 1;
   void *tcb = NULL;
-  
-  uxQueue = tskIDLE_PRIORITY + 1;
+
   // look through all the possible lists of tasks
     do
     {
@@ -334,6 +457,31 @@ void* iterateByName( char* taskName, xList* pxList )
     if( strcmp( TaskGetName( pxNextTCB ), taskName ) == 0 )
       return pxNextTCB;
     
+  } while( pxNextTCB != pxFirstTCB );
+  // if we get down here, we didn't find it.
+  return NULL;
+}
+
+void* iterateForNextTask( void** lowTask, int* lowID, void** highTask, int* highID, int currentID, xList* pxList )
+{
+  void *pxNextTCB, *pxFirstTCB;
+  listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, pxList );
+  do
+  {
+    listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, pxList );
+    int id = TaskGetIDNumber( pxNextTCB );
+    if( id == (currentID + 1) ) // if it's the ID we're looking for plus one, we got it and we're out.
+      return pxNextTCB;
+    if( id > currentID && id < *highID )
+    {
+      *highID = id;
+      *highTask = pxNextTCB;
+    }
+    if( id < currentID && id < *lowID && id != 1 ) // we don't want id 1 since that's IDLE and there's no real task there.
+    {
+      *lowID = id;
+      *lowTask = pxNextTCB;
+    }
   } while( pxNextTCB != pxFirstTCB );
   // if we get down here, we didn't find it.
   return NULL;

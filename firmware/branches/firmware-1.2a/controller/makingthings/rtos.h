@@ -34,9 +34,14 @@ int TaskGetRemainingStack( void* task );
 void* getTaskByName( char *taskName );
 void* getTaskByID( int taskID );
 int TaskGetPriority( void* task );
+void TaskSetPriority( void* task, int priority );
 int TaskGetIDNumber( void* task );
 char* TaskGetName( void* task );
 int TaskGetStackAllocated( void* task );
+void* TaskGetCurrent( void );
+void* TaskGetNext( void* task );
+int GetNumberOfTasks( void );
+int TaskGetTopPriorityUsed( void );
 
 void* Malloc( int size );
 void Free( void* memory );

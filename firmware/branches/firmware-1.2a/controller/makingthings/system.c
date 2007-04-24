@@ -31,9 +31,9 @@
 #include "network.h"
 
 int PortFreeMemory( void );
+void StackAuditTask( void* p );
 void kill( void );
 
-//int System_users;
 struct System_* System;
 
 /** \defgroup System
@@ -64,6 +64,7 @@ int System_SetActive( int state )
     {
       System = Malloc( sizeof( struct System_ ) );
       System->name[0] = 0;
+      System->StackAuditPtr = NULL;
     }
     return CONTROLLER_OK;
   }
@@ -225,6 +226,49 @@ char* System_GetName( )
   return System->name;
 }
 
+void System_StackAudit( int on_off )
+{
+  System_SetActive( 1 );
+  if( System->StackAuditPtr == NULL && on_off )
+    System->StackAuditPtr = TaskCreate( StackAuditTask, "StackAudit", 175, 0, 5 );
+  
+  if( System->StackAuditPtr != NULL && !on_off )
+  {
+    TaskDelete( System->StackAuditPtr );
+    System->StackAuditPtr = NULL;
+  }
+}
+
+//extern void* TEST_STACK_SIZE;
+//extern void* _stack_und_end__;
+
+void StackAuditTask( void* p )
+{
+  (void)p;
+  void* task = NULL;
+  void* stack_und_end = __stack_und_end__;
+  //stack_und_end++;
+  while( 1 )
+  {
+    task = TaskGetNext( task );
+    int stackremaining = TaskGetRemainingStack( task );
+    if( stackremaining < 50 )
+    {
+      Led_SetState( 1 );
+      Debug( DEBUG_WARNING, "Warning: Stack running low on task %s. %d bytes left.", TaskGetName( task ), stackremaining );
+    }
+
+    int freemem = System_GetFreeMemory( );
+    if( freemem < 100 )
+    {
+      Led_SetState( 1 );
+      Debug( DEBUG_WARNING, "Warning: System memory running low. %d bytes left.", freemem );
+    }
+    
+    Sleep( 5 );
+  }
+}
+
 void kill( void )
 {
   AT91C_BASE_RSTC->RSTC_RCR = ( AT91C_RSTC_EXTRST | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | (0xA5 << 24 ) );
@@ -308,7 +352,7 @@ int System_SetReset( int sure )
 static char* SystemOsc_Name = "system";
 static char* SystemOsc_PropertyNames[] = { "active", "freememory", "samba", "reset", 
                                             "serialnumber", "versionnumber", "buildnumber", 
-                                            "name", "info", 0 }; // must have a trailing 0
+                                            "name", "info", "stack-audit", 0 }; // must have a trailing 0
 
 int SystemOsc_PropertySet( int property, char* typedata, int channel );
 int SystemOsc_PropertyGet( int property, int channel );
@@ -392,6 +436,16 @@ int SystemOsc_PropertySet( int property, char* typedata, int channel )
       System_SetName( address );
       break;
     }
+    case 9: // stack-audit
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
+
+      System_StackAudit( value );
+      break;
+    }
   }
   return CONTROLLER_OK;
 }
@@ -451,6 +505,14 @@ int SystemOsc_PropertyGet( int property, int channel )
       Osc_CreateMessage( channel, address, ",sis", name, value, addr );
       break;
     }
+    case 9: // stack-audit
+      if( System->StackAuditPtr == NULL )
+        value = 0;
+      else
+        value = 1;
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value ); 
+      break;
   }
   
   return CONTROLLER_OK;
