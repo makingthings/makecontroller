@@ -70,7 +70,7 @@ typedef struct StepperControlS
 typedef struct StepperS
 {
   int users;
-  StepperControl control[ STEPPER_COUNT ];
+  StepperControl* control[ STEPPER_COUNT ];
 } Stepper_;
 
 void Stepper_IRQCallback( int id );
@@ -78,7 +78,6 @@ void Stepper_IRQCallback( int id );
 static int Stepper_Start( int index );
 static int Stepper_Stop( int index );
 static int Stepper_Init( void );
-static int Stepper_Deinit( void );
 static int Stepper_GetIo( int index, int io );
 static void Stepper_SetDetails( StepperControl* s );
 static void Stepper_SetUnipolarHalfStepOutput( StepperControl *s, int position );
@@ -90,7 +89,7 @@ void Stepper_SetOn( int index, int* portAOn, int* portBOn );
 void Stepper_SetOff( int index, int* portAOff, int* portBOff );
 void Stepper_SetAll( int portAOn, int portBOn, int portAOff, int portBOff );
 
-Stepper_ Stepper;
+Stepper_* Stepper;
 
 /** \defgroup Stepper
 * The Stepper Motor subsystem provides speed and position control for one or two stepper motors.
@@ -114,7 +113,29 @@ int Stepper_SetActive( int index, int state )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
   if ( state )
-    return Stepper_Start( index );
+  {
+    if( Stepper == NULL ) // if our subsystem has not been fired up
+    {
+      int retVal = Stepper_Init( );
+      if( retVal != CONTROLLER_OK )
+        return retVal;
+    }
+
+    if( Stepper->control[ index ] == NULL ) // if this particular stepper has not been fired up
+    {
+      Stepper->control[ index ] = Malloc( sizeof( StepperControl ) );
+      if( Stepper->control[ index ] == NULL )
+        return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
+      Stepper->control[ index ]->users = 0;
+      if( Stepper_Start( index ) != CONTROLLER_OK )
+        return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
+    }
+
+    if( Stepper->control[ index ] != NULL )
+      return CONTROLLER_OK;
+    else
+      return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
+  }
   else
     return Stepper_Stop( index );
 }
@@ -127,8 +148,12 @@ int Stepper_SetActive( int index, int state )
 int Stepper_GetActive( int index )
 {
   if ( index < 0 || index >= STEPPER_COUNT )
-    return false;
-  return Stepper.control[ index ].users > 0;
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  if( Stepper == NULL )
+    return 0;
+  else
+    return Stepper->control[ index ] != NULL;
 }
 
 /**	
@@ -142,14 +167,10 @@ int Stepper_SetPosition( int index, int position )
   if ( index < 0 || index >= STEPPER_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  if ( Stepper.control[ index ].users < 1 )
-  {
-    int status = Stepper_Start( index );
-    if ( status != CONTROLLER_OK )
-      return status;
-  }
+  if ( Stepper_SetActive( index, 1 ) != CONTROLLER_OK )
+    return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
 
-  StepperControl* s = &Stepper.control[ index ]; 
+  StepperControl* s = Stepper->control[ index ]; 
   
   DisableFIQFromThumb();
   s->position = position;
@@ -172,14 +193,10 @@ int Stepper_SetPositionRequested( int index, int positionRequested )
   if ( index < 0 || index >= STEPPER_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  if ( Stepper.control[ index ].users < 1 )
-  {
-    int status = Stepper_Start( index );
-    if ( status != CONTROLLER_OK )
-      return status;
-  }
+  if ( Stepper_SetActive( index, 1 ) != CONTROLLER_OK )
+    return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
 
-  StepperControl* s = &Stepper.control[ index ]; 
+  StepperControl* s = Stepper->control[ index ]; 
   DisableFIQFromThumb();
   s->positionRequested = positionRequested;
   EnableFIQFromThumb();
@@ -204,14 +221,10 @@ int Stepper_SetSpeed( int index, int speed )
   if ( index < 0 || index >= STEPPER_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  StepperControl* s = &Stepper.control[ index ]; 
-    
-  if ( s->users < 1 )
-  {
-    int status = Stepper_Start( index );
-    if ( status != CONTROLLER_OK )
-      return status;
-  }
+  if ( Stepper_SetActive( index, 1 ) != CONTROLLER_OK )
+    return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
+  
+  StepperControl* s = Stepper->control[ index ]; 
 
   s->speed = speed * 1000;
 
@@ -233,16 +246,12 @@ int Stepper_SetSpeed( int index, int speed )
 int Stepper_GetSpeed( int index )
 {
   if ( index < 0 || index >= STEPPER_COUNT )
-    return 0;
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  if ( Stepper.control[ index ].users < 1 )
-  {
-    int status = Stepper_Start( index );
-    if ( status != CONTROLLER_OK )
-      return 0;
-  }
+  if ( Stepper_SetActive( index, 1 ) != CONTROLLER_OK )
+    return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
 
-  return Stepper.control[ index ].speed / 1000;
+  return Stepper->control[ index ]->speed / 1000;
 }
 
 /**	
@@ -253,16 +262,12 @@ int Stepper_GetSpeed( int index )
 int Stepper_GetPosition( int index )
 {
   if ( index < 0 || index >= STEPPER_COUNT )
-    return 0;
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  if ( Stepper.control[ index ].users < 1 )
-  {
-    int status = Stepper_Start( index );
-    if ( status != CONTROLLER_OK )
-      return 0;
-  }
+  if ( Stepper_SetActive( index, 1 ) != CONTROLLER_OK )
+    return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
 
-  return Stepper.control[ index ].position;
+  return Stepper->control[ index ]->position;
 }
 
 /**	
@@ -273,16 +278,37 @@ int Stepper_GetPosition( int index )
 int Stepper_GetPositionRequested( int index )
 {
   if ( index < 0 || index >= STEPPER_COUNT )
-    return 0;
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  if ( Stepper.control[ index ].users < 1 )
-  {
-    int status = Stepper_Start( index );
-    if ( status != CONTROLLER_OK )
-      return 0;
-  }
+  if ( Stepper_SetActive( index, 1 ) != CONTROLLER_OK )
+    return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
 
-  return Stepper.control[ index ].positionRequested;
+  return Stepper->control[ index ]->positionRequested;
+}
+
+int Stepper_Step( int index, int steps )
+{
+  if ( index < 0 || index >= STEPPER_COUNT )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  if ( Stepper_SetActive( index, 1 ) != CONTROLLER_OK )
+    return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
+
+  StepperControl* s = Stepper->control[ index ]; 
+  DisableFIQFromThumb();
+  s->positionRequested += steps;
+  EnableFIQFromThumb();
+
+  Stepper_SetDetails( s );
+  return CONTROLLER_OK;
+}
+
+int Stepper_GetStep( int index )
+{
+  if ( index < 0 || index >= STEPPER_COUNT )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  return 0; // write-only
 }
 
 /**	
@@ -296,14 +322,10 @@ int Stepper_SetDuty( int index, int duty )
   if ( index < 0 || index >= STEPPER_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  if ( Stepper.control[ index ].users < 1 )
-  {
-    int status = Stepper_Start( index );
-    if ( status != CONTROLLER_OK )
-      return status;
-  }
+  if ( Stepper_SetActive( index, 1 ) != CONTROLLER_OK )
+    return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
 
-  StepperControl* s = &Stepper.control[ index ]; 
+  StepperControl* s = Stepper->control[ index ]; 
   s->duty = duty;
 
   // Fire the PWM's up
@@ -323,16 +345,12 @@ int Stepper_SetDuty( int index, int duty )
 int Stepper_GetDuty( int index )
 {
   if ( index < 0 || index >= STEPPER_COUNT )
-    return 0;
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  if ( Stepper.control[ index ].users < 1 )
-  {
-    int status = Stepper_Start( index );
-    if ( status != CONTROLLER_OK )
-      return 0;
-  }
+  if ( Stepper_SetActive( index, 1 ) != CONTROLLER_OK )
+    return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
 
-  return Stepper.control[ index ].duty;
+  return Stepper->control[ index ]->duty;
 }
 
 /**	
@@ -346,14 +364,10 @@ int Stepper_SetBipolar( int index, int bipolar )
   if ( index < 0 || index >= STEPPER_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  if ( Stepper.control[ index ].users < 1 )
-  {
-    int status = Stepper_Start( index );
-    if ( status != CONTROLLER_OK )
-      return status;
-  }
+  if ( Stepper_SetActive( index, 1 ) != CONTROLLER_OK )
+    return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
 
-  StepperControl* s = &Stepper.control[ index ]; 
+  StepperControl* s = Stepper->control[ index ]; 
   s->bipolar = bipolar;
 
   return CONTROLLER_OK;
@@ -368,16 +382,12 @@ int Stepper_SetBipolar( int index, int bipolar )
 int Stepper_GetBipolar( int index )
 {
   if ( index < 0 || index >= STEPPER_COUNT )
-    return 0;
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  if ( Stepper.control[ index ].users < 1 )
-  {
-    int status = Stepper_Start( index );
-    if ( status != CONTROLLER_OK )
-      return 0;
-  }
+  if ( Stepper_SetActive( index, 1 ) != CONTROLLER_OK )
+    return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
 
-  return Stepper.control[ index ].bipolar;
+  return Stepper->control[ index ]->bipolar;
 }
 
 /**	
@@ -391,38 +401,29 @@ int Stepper_SetHalfStep( int index, int halfStep )
   if ( index < 0 || index >= STEPPER_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  if ( Stepper.control[ index ].users < 1 )
-  {
-    int status = Stepper_Start( index );
-    if ( status != CONTROLLER_OK )
-      return status;
-  }
+  if ( Stepper_SetActive( index, 1 ) != CONTROLLER_OK )
+    return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
 
-  StepperControl* s = &Stepper.control[ index ]; 
+  StepperControl* s = Stepper->control[ index ]; 
   s->halfStep = halfStep;
 
   return CONTROLLER_OK;
 }
 
 /**	
-	Get the HalfStep value 
-  Read the value previously set for the HalfStep.
+	Read whether the stepper is in half stepping mode or not.
 	@param index An integer specifying which stepper (0 or 1).
   @return the HalfStep setting.
 */
 int Stepper_GetHalfStep( int index )
 {
   if ( index < 0 || index >= STEPPER_COUNT )
-    return 0;
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  if ( Stepper.control[ index ].users < 1 )
-  {
-    int status = Stepper_Start( index );
-    if ( status != CONTROLLER_OK )
-      return 0;
-  }
+  if ( Stepper_SetActive( index, 1 ) != CONTROLLER_OK )
+    return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
 
-  return Stepper.control[ index ].halfStep;
+  return Stepper->control[ index ]->halfStep;
 }
 
 
@@ -436,27 +437,14 @@ int Stepper_Start( int index )
   if ( index < 0 || index >= STEPPER_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  StepperControl* sc = &Stepper.control[ index ]; 
+  StepperControl* sc = Stepper->control[ index ];
   if ( sc->users++ == 0 )
   {
-    if ( Stepper.users++ == 0 )
-    {
-      int status = Stepper_Init();
-      if ( status != CONTROLLER_OK )
-      {
-        // I guess not then
-        sc->users--;
-        Stepper.users--;
-        return status;
-      }   
-    }
-
     status = Pwm_Start( index * 2 );
     if ( status != CONTROLLER_OK )
     {
       sc->users--;
-      Stepper_Deinit();
-      Stepper.users--;
+      Stepper->users--;
       return status;
     }
 
@@ -465,8 +453,7 @@ int Stepper_Start( int index )
     {
       Pwm_Stop( index * 2 );
       sc->users--;
-      Stepper_Deinit();
-      Stepper.users--;
+      Stepper->users--;
       return status;
     }
 
@@ -496,7 +483,7 @@ int Stepper_Start( int index )
         Pwm_Stop( pwm );
         Pwm_Stop( pwm + 1 );
 
-        Stepper.users--;
+        Stepper->users--;
         sc->users--;
         return status;
       }
@@ -508,13 +495,14 @@ int Stepper_Start( int index )
     DisableFIQFromThumb();
     sc->position = 0;
     sc->positionRequested = 0;
-    sc->speed = 1000;
+    sc->speed = 10;
+    sc->timerRunning = 0;
     sc->halfStep = false;
-    sc->bipolar = false;
+    sc->bipolar = true;
     EnableFIQFromThumb();
 
     FastTimer_InitializeEntry( &sc->fastTimerEntry, Stepper_IRQCallback, index, sc->speed * 1000, true );
-    // FastTimer_Set( &sc->fastTimerEntry );
+    Stepper->users++;
   }
 
   return CONTROLLER_OK;
@@ -522,10 +510,13 @@ int Stepper_Start( int index )
 
 int Stepper_Stop( int index )
 {
-  if ( index < 0 || index >= STEPPER_COUNT )
+  if ( index < 0 || index >= STEPPER_COUNT || Stepper == NULL )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  StepperControl* s = &Stepper.control[ index ]; 
+  if( Stepper->control[ index ] == NULL )
+    return CONTROLLER_OK;
+
+  StepperControl* s = Stepper->control[ index ]; 
 
   if ( s->users <= 0 )
     return CONTROLLER_ERROR_TOO_MANY_STOPS;
@@ -551,9 +542,13 @@ int Stepper_Stop( int index )
     Pwm_Stop( pwm );
     Pwm_Stop( pwm + 1 );
 
-    if ( --Stepper.users == 0 )
+    Free( s );
+    s = NULL;
+
+    if ( --Stepper->users == 0 )
     {
-      Stepper_Deinit();
+      Free( Stepper );
+      Stepper = NULL;
     }
   }
 
@@ -606,22 +601,23 @@ int Stepper_GetIo( int stepperIndex, int ioIndex )
 
 int Stepper_Init()
 {
-  // FastTimer_InitializeEntry( &Stepper.fastTimerEntry, Stepper_IRQCallback, 0, 100000, true );
-  // FastTimer_Set( &Stepper.fastTimerEntry );
-
-  return CONTROLLER_OK;
-}
-
-int Stepper_Deinit()
-{
-  // Disable the device
-  // AT91C_BASE_TC1->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
+  if( Stepper == NULL )
+  {
+    Stepper = Malloc( sizeof( Stepper_ ) );
+    if( Stepper == NULL )
+      return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
+    Stepper->users = 0;
+    int i;
+    for( i = 0; i < STEPPER_COUNT; i++ )
+      Stepper->control[ i ] = NULL;
+  }
+  // otherwise, we're all set.
   return CONTROLLER_OK;
 }
 
 void Stepper_IRQCallback( int id )
 {
-  StepperControl* s = &Stepper.control[ id ]; 
+  StepperControl* s = Stepper->control[ id ]; 
 
   if ( s->position < s->positionRequested )
     s->position++;
@@ -936,7 +932,7 @@ void Stepper_SetAll( int portAOn, int portBOn, int portAOff, int portBOff )
 
 /** \defgroup StepperOSC Stepper - OSC
   Control Stepper motors with the Application Board via OSC.  Internally it uses the PWM subsystem
-  to control duty and the FastTimer to generate the very accurate timings for the steps.
+  to control duty and the FastTimer to generate very accurate timings for the steps.
   \ingroup OSC
 	
 	\section devices Devices
@@ -946,9 +942,16 @@ void Stepper_SetAll( int portAOn, int portBOn, int portAOff, int portBOff )
 	
 	\section properties Properties
 	Each stepper controller has seven properties - 'position', 'positionrequested', 'speed', 'duty', 'bipolar', 
-  'halfstep' and 'active'.
+  'halfstep', 'step', and 'active'.
 
-	\par Position
+	\par Step
+	The 'step' property simply tells the motor to take a certain number of steps.
+	This is a write-only value.
+	\par
+	To take 1000 steps with the first stepper, send the message
+	\verbatim /stepper/0/step 1000\endverbatim
+  
+  \par Position
 	The 'position' property corresponds to the current step position of the stepper motor
 	This value can be both read and written.  Writing this value changes where the motor thinks it is.
   The initial value of this parameter is 0.
@@ -989,10 +992,10 @@ void Stepper_SetAll( int portAOn, int portBOn, int portAOff, int portBOff )
 	means the stepper gets no power, and the value of 1023 means the stepper gets full power.  
   \par
 	To set the duty of the first stepper to 500, send a message like
-	\verbatim /stepper/0/speed 500 \endverbatim
+	\verbatim /stepper/0/duty 500 \endverbatim
 	Adjust the argument value to one that suits your application.\n
 	Leave the argument value off to read the duty of the stepper:
-	\verbatim /stepper/0/speed \endverbatim
+	\verbatim /stepper/0/duty \endverbatim
 
   \par Bipolar
 	The 'bipolar' property is set to the style of stepper being used.  A 0 here implies unipolar
@@ -1020,7 +1023,9 @@ void Stepper_SetAll( int portAOn, int portBOn, int portAOff, int portBOff )
 // Need a list of property names
 // MUST end in zero
 static char* StepperOsc_Name = "stepper";
-static char* StepperOsc_PropertyNames[] = { "active", "position", "positionrequested", "speed", "duty", "halfstep", "bipolar", 0 }; // must have a trailing 0
+static char* StepperOsc_PropertyNames[] = { "active", "position", "positionrequested", 
+                                            "speed", "duty", "halfstep", 
+                                            "bipolar", "step", 0 }; // must have a trailing 0
 
 int StepperOsc_PropertySet( int index, int property, int value );
 int StepperOsc_PropertyGet( int index, int property );
@@ -1071,6 +1076,9 @@ int StepperOsc_PropertySet( int index, int property, int value )
     case 6:
       Stepper_SetBipolar( index, value );
       break;
+    case 7: // step
+      Stepper_Step( index, value );
+      break;
   }
   return CONTROLLER_OK;
 }
@@ -1102,9 +1110,13 @@ int StepperOsc_PropertyGet( int index, int property )
     case 6:
       value = Stepper_GetBipolar( index );
       break;
+    case 7: // step
+      value = Stepper_GetStep( index );
+      break;
   }
-  
   return value;
 }
 
 #endif
+
+
