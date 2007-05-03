@@ -1,0 +1,482 @@
+<ui version="4.0" >
+ <class>McHelperWindow</class>
+ <widget class="QMainWindow" name="McHelperWindow" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>710</width>
+    <height>564</height>
+   </rect>
+  </property>
+  <property name="sizePolicy" >
+   <sizepolicy>
+    <hsizetype>5</hsizetype>
+    <vsizetype>5</vsizetype>
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle" >
+   <string>Make Controller Helper</string>
+  </property>
+  <widget class="QWidget" name="centralwidget" >
+   <layout class="QVBoxLayout" >
+    <property name="margin" >
+     <number>9</number>
+    </property>
+    <property name="spacing" >
+     <number>6</number>
+    </property>
+    <item>
+     <widget class="QGroupBox" name="uploaderGroupBox" >
+      <property name="minimumSize" >
+       <size>
+        <width>0</width>
+        <height>101</height>
+       </size>
+      </property>
+      <property name="maximumSize" >
+       <size>
+        <width>16777215</width>
+        <height>111</height>
+       </size>
+      </property>
+      <property name="title" >
+       <string>Firmware Uploader</string>
+      </property>
+      <property name="alignment" >
+       <set>Qt::AlignHCenter|Qt::AlignTop</set>
+      </property>
+      <layout class="QGridLayout" >
+       <property name="margin" >
+        <number>9</number>
+       </property>
+       <property name="spacing" >
+        <number>6</number>
+       </property>
+       <item row="1" column="3" >
+        <widget class="QPushButton" name="uploadButton" >
+         <property name="minimumSize" >
+          <size>
+           <width>109</width>
+           <height>32</height>
+          </size>
+         </property>
+         <property name="maximumSize" >
+          <size>
+           <width>109</width>
+           <height>32</height>
+          </size>
+         </property>
+         <property name="focusPolicy" >
+          <enum>Qt::NoFocus</enum>
+         </property>
+         <property name="text" >
+          <string>Upload</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3" >
+        <widget class="QPushButton" name="fileSelectButton" >
+         <property name="minimumSize" >
+          <size>
+           <width>109</width>
+           <height>32</height>
+          </size>
+         </property>
+         <property name="maximumSize" >
+          <size>
+           <width>109</width>
+           <height>32</height>
+          </size>
+         </property>
+         <property name="focusPolicy" >
+          <enum>Qt::NoFocus</enum>
+         </property>
+         <property name="text" >
+          <string>Browse</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2" >
+        <widget class="QProgressBar" name="progressBar" >
+         <property name="value" >
+          <number>24</number>
+         </property>
+         <property name="orientation" >
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1" colspan="2" >
+        <widget class="QComboBox" name="fileSelectText" >
+         <property name="editable" >
+          <bool>true</bool>
+         </property>
+         <property name="insertPolicy" >
+          <enum>QComboBox::InsertAtTop</enum>
+         </property>
+         <property name="minimumContentsLength" >
+          <number>1</number>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0" >
+        <widget class="QLabel" name="fileLabel" >
+         <property name="acceptDrops" >
+          <bool>false</bool>
+         </property>
+         <property name="text" >
+          <string>Binary File:</string>
+         </property>
+         <property name="alignment" >
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="buddy" >
+          <cstring>fileSelectText</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1" >
+        <widget class="QCheckBox" name="bitFlipSwitch" >
+         <property name="text" >
+          <string>Boot from Flash on reboot?</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QTabWidget" name="tabWidget" >
+      <property name="minimumSize" >
+       <size>
+        <width>0</width>
+        <height>121</height>
+       </size>
+      </property>
+      <property name="maximumSize" >
+       <size>
+        <width>16777215</width>
+        <height>121</height>
+       </size>
+      </property>
+      <property name="currentIndex" >
+       <number>1</number>
+      </property>
+      <widget class="QWidget" name="usbTab" >
+       <attribute name="title" >
+        <string>USB</string>
+       </attribute>
+       <attribute name="toolTip" >
+        <string>Send OSC commands to the Make Controller Kit via USB</string>
+       </attribute>
+       <layout class="QHBoxLayout" >
+        <property name="margin" >
+         <number>9</number>
+        </property>
+        <property name="spacing" >
+         <number>6</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="fileLabel_3" >
+          <property name="minimumSize" >
+           <size>
+            <width>98</width>
+            <height>17</height>
+           </size>
+          </property>
+          <property name="maximumSize" >
+           <size>
+            <width>98</width>
+            <height>17</height>
+           </size>
+          </property>
+          <property name="acceptDrops" >
+           <bool>false</bool>
+          </property>
+          <property name="text" >
+           <string>Command Line:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>commandLineUsb</cstring>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="commandLineUsb" >
+          <property name="editable" >
+           <bool>true</bool>
+          </property>
+          <property name="insertPolicy" >
+           <enum>QComboBox::InsertAtTop</enum>
+          </property>
+          <property name="minimumContentsLength" >
+           <number>1</number>
+          </property>
+          <property name="autoCompletionCaseSensitivity" >
+           <enum>Qt::CaseSensitive</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="sendButtonUsb" >
+          <property name="minimumSize" >
+           <size>
+            <width>109</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="maximumSize" >
+           <size>
+            <width>109</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="text" >
+           <string>Send</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="udpTab" >
+       <attribute name="title" >
+        <string>Ethernet</string>
+       </attribute>
+       <attribute name="toolTip" >
+        <string>Send OSC messages to the Make Controller Kit via Ethernet</string>
+       </attribute>
+       <layout class="QGridLayout" >
+        <property name="margin" >
+         <number>9</number>
+        </property>
+        <property name="spacing" >
+         <number>6</number>
+        </property>
+        <item row="0" column="4" >
+         <widget class="QLabel" name="fileLabel_4" >
+          <property name="acceptDrops" >
+           <bool>false</bool>
+          </property>
+          <property name="text" >
+           <string>Incoming Port:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>textLocalPort</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="3" >
+         <widget class="QLineEdit" name="textRemotePort" >
+          <property name="minimumSize" >
+           <size>
+            <width>111</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="toolTip" >
+           <string>Send messages to the board on this port.</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2" >
+         <widget class="QLabel" name="fileLabel_6" >
+          <property name="acceptDrops" >
+           <bool>false</bool>
+          </property>
+          <property name="text" >
+           <string>Outgoing Port:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>textRemotePort</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="5" >
+         <widget class="QLineEdit" name="textLocalPort" >
+          <property name="minimumSize" >
+           <size>
+            <width>111</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="toolTip" >
+           <string>Listen on this port for messages from the board.</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1" >
+         <widget class="QLineEdit" name="textIPAddress" >
+          <property name="minimumSize" >
+           <size>
+            <width>121</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="toolTip" >
+           <string comment="IP address of the board to talk to" >The IP address of the board to talk to.</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1" colspan="4" >
+         <widget class="QComboBox" name="commandLine" >
+          <property name="editable" >
+           <bool>true</bool>
+          </property>
+          <property name="insertPolicy" >
+           <enum>QComboBox::InsertAtTop</enum>
+          </property>
+          <property name="minimumContentsLength" >
+           <number>1</number>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="5" >
+         <widget class="QPushButton" name="sendButton" >
+          <property name="minimumSize" >
+           <size>
+            <width>109</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="maximumSize" >
+           <size>
+            <width>109</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="focusPolicy" >
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="toolTip" >
+           <string>Send OSC messages/bundles to the board.</string>
+          </property>
+          <property name="layoutDirection" >
+           <enum>Qt::RightToLeft</enum>
+          </property>
+          <property name="text" >
+           <string>Send</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0" >
+         <widget class="QLabel" name="fileLabel_5" >
+          <property name="acceptDrops" >
+           <bool>false</bool>
+          </property>
+          <property name="text" >
+           <string>IP Address:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>textIPAddress</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0" >
+         <widget class="QLabel" name="fileLabel_2" >
+          <property name="acceptDrops" >
+           <bool>false</bool>
+          </property>
+          <property name="text" >
+           <string>Command Line:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>commandLineUsb</cstring>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="groupBox" >
+      <property name="title" >
+       <string>Output</string>
+      </property>
+      <property name="alignment" >
+       <set>Qt::AlignHCenter</set>
+      </property>
+      <layout class="QGridLayout" >
+       <property name="margin" >
+        <number>9</number>
+       </property>
+       <property name="spacing" >
+        <number>6</number>
+       </property>
+       <item row="0" column="0" >
+        <widget class="QTextEdit" name="mainConsole" >
+         <property name="lineWrapMode" >
+          <enum>QTextEdit::WidgetWidth</enum>
+         </property>
+         <property name="readOnly" >
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar" >
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>710</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile" >
+    <property name="title" >
+     <string>File</string>
+    </property>
+    <addaction name="actionAboutMchelper" />
+    <addaction name="actionClearOutput" />
+   </widget>
+   <addaction name="menuFile" />
+  </widget>
+  <widget class="QStatusBar" name="statusbar" />
+  <action name="actionAboutMchelper" >
+   <property name="text" >
+    <string>About mchelper...</string>
+   </property>
+  </action>
+  <action name="actionClearOutput" >
+   <property name="text" >
+    <string>Clear Output</string>
+   </property>
+  </action>
+ </widget>
+ <tabstops>
+  <tabstop>fileSelectText</tabstop>
+  <tabstop>bitFlipSwitch</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>textIPAddress</tabstop>
+  <tabstop>textRemotePort</tabstop>
+  <tabstop>textLocalPort</tabstop>
+  <tabstop>commandLine</tabstop>
+  <tabstop>commandLineUsb</tabstop>
+  <tabstop>mainConsole</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>
