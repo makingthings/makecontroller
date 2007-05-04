@@ -54,6 +54,45 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	udp->setInterfaces( oscUdp, this );
 	usb->setInterfaces( oscUsb, oscUsb );
 	
+  ////////////////////////////////////////////////////////////////////////////
+  // Testing
+  TCHAR* openPorts[32];
+  QAction* device_menu_action[32];
+  int foundOpen = 0;
+  foundOpen = usb->scanUsbSerialPorts(openPorts);
+  
+  int i;
+  for( i = 0; i < foundOpen; i++ )
+  {
+    if( openPorts[i] != NULL )
+    {
+      
+      //usb->testOpen(openPorts[i]);
+      //int result = usb->testOpen(openPorts[i]);
+      
+      //if( result == 0 ) {
+        printf("Port: %ls\n", openPorts[i]);
+        
+        device_menu_action[i] = McHelperWindow::menuDevices->addAction( QString::fromUtf16((ushort*)openPorts[i]) );
+        
+        device_menu_action[i]->setCheckable( TRUE );
+        //device_menu_action[i]->setChecked( TRUE );
+        device_menu_action[i]->setEnabled(true);
+        
+        connect( device_menu_action[i], SIGNAL( triggered() ), this, SLOT( doSomething() ));
+      //}
+    }
+  }
+    
+  
+  //QAction *a1 = McHelperWindow::menuDevices->addAction( "COM1" );
+  //a1->setCheckable( TRUE );
+  //a1->setChecked( TRUE );
+  //a1->setEnabled(true);
+  //connect( a1, SIGNAL( triggered(bool) ), this, SLOT( doSomething() ));
+   
+  ////////////////////////////////////////////////////////////////////////////
+  
 	usb->start( );
 	
 	progressBar->setRange( 0, 1000 );

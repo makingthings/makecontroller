@@ -35,8 +35,14 @@ UsbSerial::UsbSerial( )
 	if( ( err = IOMasterPort( MACH_PORT_NULL, &masterPort ) ) ) 
 		printf( "could not create master port, err = %08x\n", err );
 	#endif
-	
-	
+}
+
+int UsbSerial::scanUsbSerialPorts(TCHAR** openPorts) {
+
+  int foundOpen = ScanEnumTree( TEXT("SYSTEM\\CURRENTCONTROLSET\\ENUM\\USB"), openPorts);
+  qDebug( "Found open: %d\n", foundOpen );
+    
+  return foundOpen;
 }
 
 UsbSerial::UsbStatus UsbSerial::usbOpen( )

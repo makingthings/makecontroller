@@ -29,6 +29,7 @@
 #include "Osc.h"
 #include "Samba.h"
 #include "PacketUsbCdc.h"
+#include "Board.h"
 
 class UploaderThread;
 class PacketUdp;

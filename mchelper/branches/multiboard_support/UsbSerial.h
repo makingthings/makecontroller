@@ -87,6 +87,7 @@ class UsbSerial
 		UsbStatus usbWriteChar( char c );
 		bool usbIsOpen( );
 		
+    int scanUsbSerialPorts(TCHAR** openPorts);
 		
 	protected:
 	  //Mac-only
