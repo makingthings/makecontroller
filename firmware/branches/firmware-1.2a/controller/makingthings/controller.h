@@ -47,7 +47,7 @@
 
 /* Make Helper Functions */
 
-void Make( void );
+void Run( void );
 
 void Timer0Isr( void );
 void Timer0Init( void );
