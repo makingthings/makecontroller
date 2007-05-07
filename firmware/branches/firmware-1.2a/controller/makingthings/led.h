@@ -29,12 +29,8 @@ int Led_GetActive( void );
 int Led_SetState( int state );
 int Led_GetState( void );
 
-#ifdef OSC
-
 /* OSC Interface */
 const char* LedOsc_GetName( void );
 int LedOsc_ReceiveMessage( int channel, char* message, int length );
-
-#endif // OSC
 
 #endif
