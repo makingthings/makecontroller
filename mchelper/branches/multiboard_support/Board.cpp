@@ -15,47 +15,37 @@
 
 *********************************************************************************/
 
-#ifndef BOARD_H_
-#define BOARD_H_
-
-#include <stdarg.h>
+#include "Board.h"
+#include "stdio.h"
+#include "string.h"
+#include "ctype.h"
 #include <stdlib.h>
 
-class Board
+
+/* Main Board superclass */
+Board::Board( )
 {
-  public:
-    char* address;
-    char* s;
-    int   i;
-    float f;
-    
-    Board( );
-    
-    ~Board()
-    {
-      if ( address != 0 )
-        free( address );
-    }
-};
+  address = 0;
+}
 
-class UdpBoard : public Board
+
+/* UDP accessible Board subclass */
+UdpBoard::UdpBoard( )
 {
-  public:
-    UdpBoard( );
-};
+  
+}
 
-class UsbSerialBoard : public Board
+
+/* USB Serial accessible Board subclass */
+UsbSerialBoard::UsbSerialBoard( )
 {
-  public:
-    UsbSerialBoard( );
-};
+  
+}
 
-class UsbSambaBoard : public Board
+
+/* USB Samba accessible Board subclass */
+UsbSambaBoard::UsbSambaBoard( )
 {
-  public:
-    UsbSambaBoard( );
-};
+  
+}
 
-
-
-#endif /*BOARD_H_*/

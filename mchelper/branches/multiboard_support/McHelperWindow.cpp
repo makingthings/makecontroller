@@ -91,6 +91,13 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   //a1->setEnabled(true);
   //connect( a1, SIGNAL( triggered(bool) ), this, SLOT( doSomething() ));
    
+  QStringList numbers;
+  numbers << "Board One" << "Board Two" << "Board Three" << "Board Four" << "Board Five";
+
+  boardModel = new BoardListModel(numbers, this);
+  listViewDevices->setModel(boardModel);
+  listViewDevices->show();
+        
   ////////////////////////////////////////////////////////////////////////////
   
 	usb->start( );

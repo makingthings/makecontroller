@@ -15,37 +15,42 @@
 
 *********************************************************************************/
 
-#include "Board.h"
+#include "BoardListModel.h"
 #include "stdio.h"
 #include "string.h"
 #include "ctype.h"
 #include <stdlib.h>
 
 
-/* Main Board superclass */
-Board::Board( )
+/* Board List Model */
+BoardListModel::BoardListModel(const QStringList &strings, QObject *parent) : QAbstractListModel(parent), stringList(strings)
 {
-  
+  this->stringList = strings;
 }
 
 
-/* UDP accessible Board subclass */
-UdpBoard::UdpBoard( )
+int BoardListModel::rowCount(const QModelIndex &parent) const
 {
-  
+    return stringList.count();
+}
+
+QVariant BoardListModel::data(const QModelIndex &index, int role) const
+{
+  if (!index.isValid())
+    return QVariant();
+
+  if (index.row() < 0 || index.row() >= stringList.size())
+    return QVariant();
+
+  if (role == Qt::DisplayRole)
+    return stringList.at(index.row());
+  else
+    return QVariant();
+}
+    
+BoardListModel::~BoardListModel()
+{
 }
 
 
-/* USB Serial accessible Board subclass */
-UsbSerialBoard::UsbSerialBoard( )
-{
-  
-}
-
-
-/* USB Samba accessible Board subclass */
-UsbSambaBoard::UsbSambaBoard( )
-{
-  
-}
-
+    

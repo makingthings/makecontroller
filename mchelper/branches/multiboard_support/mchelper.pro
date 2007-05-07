@@ -30,7 +30,9 @@ HEADERS = McHelperWindow.h \
 				Osc.h \
 				Samba.h \
 				UsbSerial.h \
-				PacketUsbCdc.h
+				PacketUsbCdc.h \
+				Board.h \
+				BoardListModel.h
             
 SOURCES	= main.cpp \
 				McHelperWindow.cpp \
@@ -39,7 +41,9 @@ SOURCES	= main.cpp \
 				Osc.cpp \
 				Samba.cpp \
 				UsbSerial.cpp \
-				PacketUsbCdc.cpp 
+				PacketUsbCdc.cpp \
+				Board.cpp \
+				BoardListModel.cpp
 				
 TARGET = mchelper
             

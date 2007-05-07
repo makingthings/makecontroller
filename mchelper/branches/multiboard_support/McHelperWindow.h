@@ -30,11 +30,13 @@
 #include "Samba.h"
 #include "PacketUsbCdc.h"
 #include "Board.h"
+#include "BoardListModel.h"
 
 class UploaderThread;
 class PacketUdp;
 class Osc;
 class McHelperApp;
+class BoardListModel;
 
 
 class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public MessageInterface
@@ -76,6 +78,8 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		Osc* oscUsb;
 		Samba* samba;
 		PacketUsbCdc* usb;
+    
+    BoardListModel* boardModel;
 		
 		void readSettings();
 		void writeFileSettings();

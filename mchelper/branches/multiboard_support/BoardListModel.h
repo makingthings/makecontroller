@@ -15,47 +15,31 @@
 
 *********************************************************************************/
 
-#ifndef BOARD_H_
-#define BOARD_H_
+#ifndef BOARDLISTMODEL_H_
+#define BOARDLISTMODEL_H_
 
-#include <stdarg.h>
-#include <stdlib.h>
+#include <QAbstractListModel>
+#include <QStringList>
 
-class Board
+class BoardListModel : public QAbstractListModel
 {
-  public:
-    char* address;
-    char* s;
-    int   i;
-    float f;
+  Q_OBJECT
     
-    Board( );
+  public:
     
-    ~Board()
-    {
-      if ( address != 0 )
-        free( address );
-    }
-};
-
-class UdpBoard : public Board
-{
-  public:
-    UdpBoard( );
-};
-
-class UsbSerialBoard : public Board
-{
-  public:
-    UsbSerialBoard( );
-};
-
-class UsbSambaBoard : public Board
-{
-  public:
-    UsbSambaBoard( );
+    BoardListModel(const QStringList &strings, QObject *parent = 0);
+    ~BoardListModel();
+    
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+    int rowCount(const QModelIndex &parent = QModelIndex()) const;
+    
+    
+    /* QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const; */
+                      
+  private:
+     QStringList stringList;
+     
 };
 
 
-
-#endif /*BOARD_H_*/
+#endif /*BOARDLISTMODEL_H_*/
