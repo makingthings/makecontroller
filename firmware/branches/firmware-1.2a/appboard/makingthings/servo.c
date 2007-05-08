@@ -35,8 +35,14 @@
 // set SERVO_MAX = 1000, SERVO_OFFEST = 1000
 // So... if you want the servo pulse to be 0.3ms-2.3ms, you'd 
 // set SERVO_MAX = 2000, SERVO_OFFEST = 300
-#define SERVO_MAX     1000
+//#define SERVO_MAX_PULSE     1000
 #define SERVO_OFFSET  1000
+#define SERVO_MIN_POSITION  -512
+#define SERVO_MAX_POSITION  1536
+#define SERVO_MID_POSITION 512
+#define SERVO_CYCLE 2048
+#define SERVO_SAFE_MIN 0
+#define SERVO_SAFE_MAX 1023
 
 #if ( APPBOARD_VERSION == 50 )
   #define SERVO_0_IO IO_PA02
@@ -153,8 +159,17 @@ int Servo_GetActive( int index )
 
 /**	
 	Set the position of the specified servo motor.
-	Most servos move within a 180 degree range.  The 0 - 1023 range of the position parameter represents
-	the full range of motion of the motor.
+	Most servos like to be driven within a "safe range" which usually ends up being somewhere around 110-120
+  degrees range of motion, or thereabouts.  Some servos don't mind being driven all the way to their 180
+  degree range of motion limit.  With this in mind, the range of values you can send to servos connected
+  to the Make Controller Kit is as follows:
+  \li Values from 0-1023 correspond to the normal, or "safe", range of motion.  
+  \li You can also send values from -512 all the way up to 1536 to drive the servo through its full
+  range of motion.
+  
+  Note that it is sometimes possible to damage your servo by driving it too far, so proceed with a bit of
+  caution when using the extended range until you know your servos can handle it.
+
 	@param index An integer specifying which servo (0 - 3).
 	@param position An integer specifying the servo position (0 - 1023).
   @return status (0 = OK).
@@ -166,10 +181,12 @@ int Servo_SetPosition( int index, int position )
 
   Servo_SetActive( index, 1 );
 
-  if ( position < 0 )
-    position = 0;
-  if ( position > SERVO_MAX )
-    position = SERVO_MAX;
+  if ( position < SERVO_MIN_POSITION )
+    position = SERVO_SAFE_MIN;
+  if ( position > SERVO_MAX_POSITION )
+    position = SERVO_SAFE_MAX;
+
+  position += SERVO_OFFSET;
 
   DisableFIQFromThumb();
   Servo->control[ index ]->positionRequested = position << 6;
@@ -193,8 +210,10 @@ int Servo_SetSpeed( int index, int speed )
   
   Servo_SetActive( index, 1 );
 
-  if ( speed < -1 )
-    speed = -1;
+  if ( speed < 1 )
+    speed = 1;
+  if( speed > 1023 )
+    speed = 1023;
   DisableFIQFromThumb();
   Servo->control[ index ]->speed = speed;
   EnableFIQFromThumb();
@@ -213,7 +232,7 @@ int Servo_GetPosition( int index )
     return 0;
   
   Servo_SetActive( index, 1 );
-  return Servo->control[ index ]->position >> 6;
+  return (Servo->control[ index ]->position >> 6) - SERVO_OFFSET;
 }
 
 /**	
@@ -243,7 +262,7 @@ int Servo_Start( int index )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
   ServoControl* sc = Servo->control[ index ];  
-  if ( sc->users++ == 0 )
+  if ( sc->users == 0 )
   {
     int io = Servo_GetIo( index );
 
@@ -261,8 +280,9 @@ int Servo_Start( int index )
     Io_SetTrue( io );
     Io_SetOutput( io );
 
-    sc->position = 512 << 6;
-    sc->speed = -1;
+    sc->position = (SERVO_MID_POSITION + SERVO_OFFSET) << 6;
+    sc->speed = 1023;
+    sc->users++;
   }
 
   return CONTROLLER_OK;
@@ -327,7 +347,7 @@ int Servo_Init()
 
     ServoControl* s = Servo->control[ i ];
     s->users = 0;
-    s->positionRequested = 0;
+    s->positionRequested = (SERVO_MID_POSITION + SERVO_OFFSET) << 6;
     switch( i )
     {
       case 0:
@@ -388,7 +408,7 @@ void Servo_IRQCallback( int id )
       
       if ( s->position != s->positionRequested )
       {
-        if ( s->speed == -1 )
+        if ( s->speed == 1023 )
           s->position = s->positionRequested;
         else
         {
@@ -409,13 +429,11 @@ void Servo_IRQCallback( int id )
       }
 
       period = s->position >> 6;
-      if ( period >= 0 && period <= SERVO_MAX )
-      {
+      if ( period >= (SERVO_MIN_POSITION + SERVO_OFFSET) && period <= (SERVO_MAX_POSITION + SERVO_OFFSET) )
         s->pIoBase->PIO_CODR = s->pin;
-      }
       else
-        period = SERVO_MAX;
-      FastTimer_SetTime( &Servo->fastTimerEntry, period + SERVO_OFFSET );
+        period = SERVO_MAX_POSITION;
+      FastTimer_SetTime( &Servo->fastTimerEntry, period );
       Servo->state = 1;
       break;
     }
@@ -424,7 +442,7 @@ void Servo_IRQCallback( int id )
       ServoControl* s = Servo->control[ Servo->index ];
       period = s->position >> 6;
       s->pIoBase->PIO_SODR = s->pin;
-      FastTimer_SetTime( &Servo->fastTimerEntry, Servo->gap + ( SERVO_MAX - period ) );
+      FastTimer_SetTime( &Servo->fastTimerEntry, Servo->gap + ( SERVO_CYCLE - period ) );
       Servo->state = 0;
       break;
     }
@@ -447,8 +465,18 @@ void Servo_IRQCallback( int id )
 
 	\par Position
 	The 'position' property corresponds to the position of the servo motor within its range of motion.
-	This value can be both read and written.  The relevant range of values is from 0 - 1023.  
-	A position of 0 sets the servo to one extreme of its range of motion and 1023 to its opposite extreme.
+	This value can be both read and written.  
+  
+  Most servos like to be driven within a "safe range" which usually ends up being somewhere around 110-120
+  degrees range of motion, or thereabouts.  Some servos don't mind being driven all the way to their 180
+  degree range of motion limit.  With this in mind, the range of values you can send to servos connected
+  to the Make Controller Kit is as follows:
+  \li Values from 0-1023 correspond to the normal, or "safe", range of motion.  
+  \li You can also send values from -512 all the way up to 1536 to drive the servo through its full
+  range of motion.
+  
+  Note that it is sometimes possible to damage your servo by driving it too far, so proceed with a bit of
+  caution when using the extended range until you know your servos can handle it.
 	\par
 	To set the first servo to one quarter its position, send the message
 	\verbatim /servo/0/position 256 \endverbatim
