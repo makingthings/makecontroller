@@ -1047,7 +1047,7 @@ int Network_Init( )
   extern err_t ethernetif_init( struct netif *netif );
   static struct netif EMAC_if;
   int address, mask, gateway, dhcp;
-  dhcp = 0; //Network_GetDhcpEnabled();
+  dhcp = Network_GetDhcpEnabled();
 
   if( dhcp )
   {
