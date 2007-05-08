@@ -21,24 +21,37 @@
 #include <QAbstractListModel>
 #include <QStringList>
 
+#include "Board.h"
+
 class BoardListModel : public QAbstractListModel
 {
   Q_OBJECT
     
   public:
+    /**
+     * Additional BoardListModel specific roles.
+     *
+     * @li HeaderRole - The data to be rendered as page header (usually text).
+     * @li WidgetRole - The data which contains a pointer to the page widget.
+     */
+    enum Role
+    {
+      HeaderRole = Qt::UserRole + 1,
+      WidgetRole
+    };
     
-    BoardListModel(const QStringList &strings, QObject *parent = 0);
+    BoardListModel(const QList<Board*> boards, QObject *parent = 0);
     ~BoardListModel();
     
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     
-    
+    bool setData ( const QModelIndex & index, const QVariant & value, int role = Qt::EditRole );
     /* QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const; */
                       
   private:
-     QStringList stringList;
-     
+    QList<Board*> boardList;
+
 };
 
 

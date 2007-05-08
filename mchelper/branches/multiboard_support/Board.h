@@ -21,6 +21,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+#include <QString>
+
 class Board
 {
   public:
@@ -36,6 +38,11 @@ class Board
       if ( address != 0 )
         free( address );
     }
+    
+    QString name;
+      
+  private:
+      
 };
 
 class UdpBoard : public Board

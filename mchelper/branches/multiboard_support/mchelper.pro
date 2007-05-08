@@ -20,7 +20,8 @@ TEMPLATE = app
 
 FORMS = mchelper.ui
 
-CONFIG += qt release
+#CONFIG += qt release
+CONFIG += qt debug
 
 HEADERS = McHelperWindow.h \
 				UploaderThread.h \
@@ -70,6 +71,12 @@ win32{
   DEFINES += __LITTLE_ENDIAN__
   LIBS += -lSetupapi
   RC_FILE = mchelper.rc # for application icon
+  
+  # If in debug mode, let's show the output of any
+  # q[Debug|Warning|Critical|Fatal]() calls to the console
+  debug {
+    CONFIG += console
+  }
 }
 
 
