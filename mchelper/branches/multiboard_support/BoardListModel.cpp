@@ -23,31 +23,38 @@
 
 
 /* Board List Model */
-BoardListModel::BoardListModel(const QStringList &strings, QObject *parent) : QAbstractListModel(parent), stringList(strings)
+BoardListModel::BoardListModel(const QList<Board*> boards, QObject *parent) : QAbstractListModel(parent), boardList(boards)
 {
-  this->stringList = strings;
+  this->boardList = boards;
 }
 
 
 int BoardListModel::rowCount(const QModelIndex &parent) const
 {
-    return stringList.count();
+    return boardList.count();
 }
 
 QVariant BoardListModel::data(const QModelIndex &index, int role) const
 {
-  if (!index.isValid())
+  if ( !index.isValid() || index.model() != this )
     return QVariant();
 
-  if (index.row() < 0 || index.row() >= stringList.size())
+  if (index.row() < 0 || index.row() >= boardList.size())
     return QVariant();
+    
+  const Board *curBoard = boardList.at( index.row() );
 
   if (role == Qt::DisplayRole)
-    return stringList.at(index.row());
+    return curBoard->name;
   else
     return QVariant();
 }
-    
+
+bool BoardListModel::setData ( const QModelIndex & idx, const QVariant & value, int role )
+{
+  return true;
+}
+
 BoardListModel::~BoardListModel()
 {
 }

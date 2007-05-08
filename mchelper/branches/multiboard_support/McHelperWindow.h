@@ -45,7 +45,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 	
 	char fileNameBuffer[ 512 ];
 	QString lastDirectory;
-	
+  
 	public:
 		enum Status { OK, ERROR_COULDNT_CONNECT, ERROR_COULDNT_DOWNLOAD, ERROR_COULDNT_SWITCH,
 	  	            ERROR_WEIRD_CHIP, ERROR_NO_BIN_FILE, ERROR_SAMBA_ERROR,
@@ -90,6 +90,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
   
 	public slots:
 	  void about( );
+    void currentChanged ( const QModelIndex & current, const QModelIndex & previous );
 
 	private slots:
 		void fileSelectButtonClicked();

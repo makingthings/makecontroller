@@ -91,13 +91,23 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   //a1->setEnabled(true);
   //connect( a1, SIGNAL( triggered(bool) ), this, SLOT( doSomething() ));
    
-  QStringList numbers;
-  numbers << "Board One" << "Board Two" << "Board Three" << "Board Four" << "Board Five";
-
-  boardModel = new BoardListModel(numbers, this);
+  QList<Board*> boards;
+  Board *temp_board;
+  
+  temp_board = new Board();
+  temp_board->name = "Board One";
+  boards.append(temp_board);
+  
+  temp_board = new Board();
+  temp_board->name = "Board Two";
+  boards.append(temp_board);
+  
+  boardModel = new BoardListModel(boards, this);
   listViewDevices->setModel(boardModel);
-  listViewDevices->show();
-        
+  //listViewDevices->show();
+  connect( listViewDevices->selectionModel(), SIGNAL(currentChanged(const QModelIndex &, const QModelIndex &)),
+           this,                                SLOT(currentChanged(const QModelIndex &, const QModelIndex &)));
+       
   ////////////////////////////////////////////////////////////////////////////
   
 	usb->start( );
@@ -136,6 +146,13 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	uploaderThread = 0;
 	uploaderThread = new UploaderThread( application, this, samba );
 	samba->setMessageInterface( uploaderThread );
+}
+
+void McHelperWindow::currentChanged ( const QModelIndex & current, const QModelIndex & previous )
+{
+  QString name = boardModel->data( current, Qt::DisplayRole ).toString();
+  
+  message( 1, "list selection changed. Index: %i Name: %s\n", current.row(), name.toAscii().constData());
 }
 
 void McHelperWindow::closeEvent( QCloseEvent *qcloseevent )
