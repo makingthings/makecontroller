@@ -78,7 +78,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		Osc* oscUsb;
 		Samba* samba;
 		PacketUsbCdc* usb;
-    
+
     BoardListModel* boardModel;
 		
 		void readSettings();
@@ -89,19 +89,28 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		bool noUI;
   
 	public slots:
-	  void about( );
-    void currentChanged ( const QModelIndex & current, const QModelIndex & previous );
-
+    // none
+    
 	private slots:
+    // Uploader functions
 		void fileSelectButtonClicked();
 	  void uploadButtonClicked();
+    
+    // Usb functions
+    void commandLineUsbEvent( );
+    
+    // Udp functions
 		void commandLineEvent( );
-		void commandLineUsbEvent( );
 		void newLocalPort( );
 		void newRemotePort( );
 		void newHostAddress( );
-		//menu functions
+    
+		// Menu functions
+    void about( );
 		void clearOutputWindow();
+    
+    // Devices list view functions
+    void deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous );
 };
 
 class McHelperApp : public QApplication

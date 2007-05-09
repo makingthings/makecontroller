@@ -91,7 +91,10 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   //a1->setEnabled(true);
   //connect( a1, SIGNAL( triggered(bool) ), this, SLOT( doSomething() ));
    
+      
+  // An array of all the known boards
   QList<Board*> boards;
+    
   Board *temp_board;
   
   temp_board = new Board();
@@ -103,10 +106,15 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   boards.append(temp_board);
   
   boardModel = new BoardListModel(boards, this);
+  
+  // Connect the board list model to the devices listing view
   listViewDevices->setModel(boardModel);
   //listViewDevices->show();
+  
+  // Wire up the selection changed signal from the model to be
+  // handled here
   connect( listViewDevices->selectionModel(), SIGNAL(currentChanged(const QModelIndex &, const QModelIndex &)),
-           this,                                SLOT(currentChanged(const QModelIndex &, const QModelIndex &)));
+           this,                                SLOT(deviceSelectionChanged(const QModelIndex &, const QModelIndex &)));
        
   ////////////////////////////////////////////////////////////////////////////
   
@@ -148,7 +156,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	samba->setMessageInterface( uploaderThread );
 }
 
-void McHelperWindow::currentChanged ( const QModelIndex & current, const QModelIndex & previous )
+void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous )
 {
   QString name = boardModel->data( current, Qt::DisplayRole ).toString();
   
