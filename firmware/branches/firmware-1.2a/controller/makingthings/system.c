@@ -239,15 +239,11 @@ void System_StackAudit( int on_off )
   }
 }
 
-//extern void* TEST_STACK_SIZE;
-//extern void* _stack_und_end__;
 
 void StackAuditTask( void* p )
 {
   (void)p;
   void* task = NULL;
-  void* stack_und_end = __stack_und_end__;
-  //stack_und_end++;
   while( 1 )
   {
     task = TaskGetNext( task );
