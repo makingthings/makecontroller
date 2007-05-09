@@ -139,8 +139,10 @@ PacketUsbCdc::Status PacketUsbCdc::close()
 
 int PacketUsbCdc::sendPacket( char* packet, int length )
 {
-  int size = length;
-  usbWriteChar( END ); // Flush out any spurious data that may have accumulated
+  char buf[ length * 2 ]; // make it twice as long, as worst case scenario is ALL escape characters
+	buf[0] = END;  // Flush out any spurious data that may have accumulated
+	char* ptr = buf + 1; 
+	int size = length;
 
   while( size-- )
   {
@@ -149,25 +151,27 @@ int PacketUsbCdc::sendPacket( char* packet, int length )
 			// if it's the same code as an END character, we send a special 
 			//two character code so as not to make the receiver think we sent an END
 			case END:
-				usbWriteChar( ESC );
-				usbWriteChar( ESC_END );
+				*ptr++ = ESC;
+				*ptr++ = ESC_END;
 				break;
 				
 				// if it's the same code as an ESC character, we send a special 
 				//two character code so as not to make the receiver think we sent an ESC
 			case ESC:
-				usbWriteChar( ESC );
-				usbWriteChar( ESC_ESC );
+				*ptr++ = ESC;
+				*ptr++ = ESC_ESC;
 				break;
 				//otherwise, just send the character
 			default:
-				usbWriteChar( *packet );
+				*ptr++ = *packet;
 		}
 		packet++;
 	}
 	
 	// tell the receiver that we're done sending the packet
-	usbWriteChar( END );
+	*ptr++ = END;
+	usbWrite( buf, (ptr - buf) );
+	
 	return 0;
 }
 
