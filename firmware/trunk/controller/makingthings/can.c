@@ -320,10 +320,12 @@ int Can_Init()
   return CONTROLLER_OK;
 }
 
-int Can_Deinit()
+int Can_Deinit( )
 {
   return CONTROLLER_OK;
 }
+
+#ifdef OSC
 
 #include "osc.h"
 #include "string.h"
@@ -389,6 +391,7 @@ int CanOsc_PropertyGet( int property )
   return value;
 }
 
+#endif // OSC
 
 
 

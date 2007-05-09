@@ -23,6 +23,24 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+/**
+\ingroup Debug
+@{
+
+\def DEBUG_ALWAYS
+The lowest debug level (0), used for 
+
+\def DEBUG_ERROR
+The debug level (1) to be used for error messages.  
+
+\def DEBUG_WARNING
+The debug level (2) to be used for warnings. 
+
+\def DEBUG_MESSAGE
+The debug level (3) to be used for messages. 
+@}
+*/
+
 #define DEBUG_ALWAYS  0
 #define DEBUG_ERROR   1
 #define DEBUG_WARNING 2
@@ -42,7 +60,6 @@ int Debug_GetUdp( void );
 
 int Debug( int level, char* string, ... );
 
-/* OSC Interface */
 const char* DebugOsc_GetName( void );
 int DebugOsc_ReceiveMessage( int channel, char* message, int length );
 

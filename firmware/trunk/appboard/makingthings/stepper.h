@@ -42,6 +42,8 @@ int  Stepper_SetSpeed( int index, int speed );
 int  Stepper_GetSpeed( int index );
 void Stepper_SetAcceleration( int index, int acceleration );
 int  Stepper_GetAcceleration( int index );
+int Stepper_Step( int index, int steps );
+int Stepper_GetStep( int index );
 
 /* OSC Interface */
 const char* StepperOsc_GetName( void );

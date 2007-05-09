@@ -79,6 +79,13 @@ is stored.
 The location in EEPROM where the port of the remote TCP server to connect to 
 is stored.
 
+\def EEPROM_DHCP_ENABLED
+The location in EEPROM where the flag of whether or not to use DHCP is stored.
+
+\def EEPROM_SYSTEM_NAME
+The location in EEPROM where the user assignable name of the board is stored.
+This name can only be a max of 100 characters.
+
 @}
 */
 
@@ -104,8 +111,11 @@ is stored.
 #define EEPROM_POLY_0_OSCILLATOR_PERIODOFF EEPROM_SYSTEM_BASE + 64
 #define EEPROM_POLY_1_OSCILLATOR_PERIODON  EEPROM_SYSTEM_BASE + 68
 #define EEPROM_POLY_1_OSCILLATOR_PERIODOFF EEPROM_SYSTEM_BASE + 72
-#define EEPROM_UDP_PORT               EEPROM_SYSTEM_BASE + 76
-#define EEPROM_TCP_CONNECT_ON_REBOOT  EEPROM_SYSTEM_BASE + 80
-#define EEPROM_TCP_REMOTE_ADDRESS     EEPROM_SYSTEM_BASE + 84
-#define EEPROM_TCP_REMOTE_PORT        EEPROM_SYSTEM_BASE + 88
+#define EEPROM_OSC_UDP_PORT               EEPROM_SYSTEM_BASE + 76
+#define EEPROM_TCP_AUTOCONNECT     EEPROM_SYSTEM_BASE + 80
+#define EEPROM_TCP_OUT_ADDRESS     EEPROM_SYSTEM_BASE + 84
+#define EEPROM_TCP_OUT_PORT        EEPROM_SYSTEM_BASE + 88
+#define EEPROM_DHCP_ENABLED           EEPROM_SYSTEM_BASE + 92
+#define EEPROM_SYSTEM_NAME            EEPROM_SYSTEM_BASE + 96 // this is 100 bytes long
+#define EEPROM_WEBSERVER_ENABLED      EEPROM_SYSTEM_BASE + 196
 #endif

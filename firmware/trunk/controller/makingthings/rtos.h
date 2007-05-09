@@ -25,12 +25,23 @@
 #define RTOS_H
 
 void  Sleep( int timems );
-
 void* TaskCreate(  void (taskCode)(void*), char* name, int stackDepth, void* parameters, int priority );
 void  TaskYield( void );
 void  TaskDelete( void* task );
 void  TaskEnterCritical( void );
 void  TaskExitCritical( void );
+int TaskGetRemainingStack( void* task );
+void* getTaskByName( char *taskName );
+void* getTaskByID( int taskID );
+int TaskGetPriority( void* task );
+void TaskSetPriority( void* task, int priority );
+int TaskGetIDNumber( void* task );
+char* TaskGetName( void* task );
+int TaskGetStackAllocated( void* task );
+void* TaskGetCurrent( void );
+void* TaskGetNext( void* task );
+int GetNumberOfTasks( void );
+int TaskGetTopPriorityUsed( void );
 
 void* Malloc( int size );
 void Free( void* memory );

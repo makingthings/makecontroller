@@ -37,7 +37,7 @@
 
 /*-----------------------------------------------------------*/
 
-extern struct AnalogIn_ AnalogIn;
+extern struct AnalogIn_* AnalogIn;
 
 /*-----------------------------------------------------------*/
 
@@ -58,7 +58,7 @@ void AnalogInIsr( void )
 
   int status = AT91C_BASE_ADC->ADC_SR;
   if ( status & AT91C_ADC_DRDY )
-  	cTaskWokenByPost = xSemaphoreGiveFromISR( AnalogIn.doneSemaphore, cTaskWokenByPost );
+  	cTaskWokenByPost = xSemaphoreGiveFromISR( AnalogIn->doneSemaphore, cTaskWokenByPost );
 
   int value = AT91C_BASE_ADC->ADC_LCDR;
   (void)value;

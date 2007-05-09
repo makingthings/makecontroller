@@ -95,7 +95,7 @@ void MakeStarterTask( void* parameters );
 void MakeStarterTask( void* parameters )
 {
  (void)parameters;
-  Make();
+  Run( );
   TaskDelete( NULL );
 }
 
@@ -105,7 +105,7 @@ int main( void )
 	prvSetupHardware();
 
 	/* Create the make task. */
-	xTaskCreate( MakeStarterTask, "Make", 300, NULL, 4, NULL );
+	TaskCreate( MakeStarterTask, "Make", 300, NULL, 4 );
 
 	/*NOTE : Tasks run in system mode and the scheduler runs in Supervisor mode.
 	The processor MUST be in supervisor mode when vTaskStartScheduler is 
