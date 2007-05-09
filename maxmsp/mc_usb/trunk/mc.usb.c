@@ -247,39 +247,44 @@ mcError mc_send_packet( t_mcUsb *x, t_usbInterface* u, char* packet, int length 
 	  }
 	  */
 		//packetInterface->sendPacket( buffer, size );
-		
-	int size = length;
-  usb_writeChar( u, END ); // Flush out any spurious data that may have accumulated
+
+	//int totallength = length + 2;
+	char *ptr;
+	int size;
+	char buf[ OSC_MAX_MESSAGE * 2 ]; // make it twice as long, as worst case scenario is ALL escape characters
+	buf[0] = END;  // Flush out any spurious data that may have accumulated
+	ptr = buf + 1; 
+	size = length;
 
   while( size-- )
   {
-    switch( (unsigned char)*packet )
+    switch(*packet)
 		{
 			// if it's the same code as an END character, we send a special 
 			//two character code so as not to make the receiver think we sent an END
 			case END:
-				usb_writeChar( u, ESC );
-				usb_writeChar( u, ESC_END );
+				*ptr++ = ESC;
+				*ptr++ = ESC_END;
 				break;
 				
 				// if it's the same code as an ESC character, we send a special 
 				//two character code so as not to make the receiver think we sent an ESC
 			case ESC:
-				usb_writeChar( u, ESC );
-				usb_writeChar( u, ESC_ESC );
+				*ptr++ = ESC;
+				*ptr++ = ESC_ESC;
 				break;
 				//otherwise, just send the character
 			default:
-				usb_writeChar( u, *packet );
-			  //post( "Just wrote %c", *packet );
-				break;
+				*ptr++ = *packet;
 		}
 		packet++;
 	}
+	
 	// tell the receiver that we're done sending the packet
-	usb_writeChar( u, END );
+	*ptr++ = END;
+	usb_write( u, buf, (ptr - buf) );
 	Osc_resetOutBuffer( x->Osc );
-	return MC_OK;
+	return 0;
 }
 
 // set how often the USB port should be read.
@@ -294,7 +299,7 @@ void mcUsb_sampleperiod( t_mcUsb *x, long i )
 void mcUsb_devicepath( t_mcUsb *x )
 {
 	if( x->mc_usbInt->deviceOpen )
-	  post( "mc.usb is connected to a Make Controller at %s", x->mc_usbInt->deviceFilePath );
+	  post( "mc.usb is connected to a Make Controller at %s", x->mc_usbInt->deviceLocation );
 	else
 		post( "mc.usb is not currently connected to a Make Controller Kit." );
 }

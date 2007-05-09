@@ -45,17 +45,17 @@ int usb_open( t_usbInterface* usbInt )
   kern_return_t kernResult;
 	io_iterator_t iterator = 0;
 	
-	kernResult = getDevicePath( iterator, usbInt->deviceFilePath, sizeof(usbInt->deviceFilePath) );
+	kernResult = getDevicePath( iterator, usbInt->deviceLocation, sizeof(usbInt->deviceLocation) );
 	IOObjectRelease( iterator ); // clean up
 	
-	if (!usbInt->deviceFilePath[0] )
+	if (!usbInt->deviceLocation[0] )
 	{
 		//post("Didn't find a Make Controller!.\n");
 		return MC_NOT_OPEN;
 	}
 		
   // now try to actually do something
-  usbInt->deviceHandle = open( usbInt->deviceFilePath, O_RDWR | O_NOCTTY | ( ( usbInt->blocking ) ? 0 : O_NDELAY ) );
+  usbInt->deviceHandle = open( usbInt->deviceLocation, O_RDWR | O_NOCTTY | ( ( usbInt->blocking ) ? 0 : O_NDELAY ) );
   if ( usbInt->deviceHandle < 0 )
   {
     //post( "Could not open the port (Error %d)\n", usbInt->deviceHandle );
@@ -76,6 +76,7 @@ int usb_open( t_usbInterface* usbInt )
   TCHAR* openPorts[32];
   int i;
   int foundOpen;
+  bool result;
 
   if( usbInt->deviceOpen )  //if it's already open, do nothing.
     return MC_ALREADY_OPEN;
@@ -89,7 +90,12 @@ int usb_open( t_usbInterface* usbInt )
 	{
 	  if( openDevice( usbInt, openPorts[i] ) == 0 )
 	  {
-		post( "mc.usb opened at: %s", openPorts[i] );
+		sprintf( usbInt->deviceLocation, "%s", openPorts[i] );
+		post( "mc.usb connected to a Make Controller Kit at: %s", usbInt->deviceLocation );
+
+		// now set up to get called back when it's unplugged
+		result = DoRegisterForNotification( usbInt );
+
 		Sleep( 10 );  // wait after opening it before trying to read/write
 		usbInt->deviceOpen = true;
 		return MC_OK;
@@ -114,10 +120,11 @@ void usb_close( t_usbInterface* usbInt )
 	//Windows only
     #ifdef WIN32
     CloseHandle( usbInt->deviceHandle );
+	UnregisterDeviceNotification( usbInt->deviceNotificationHandle );
     usbInt->deviceHandle = INVALID_HANDLE_VALUE;
     usbInt->deviceOpen = false;
     #endif
-		post( "mc.usb closed the Make Controller Kit USB connection." );
+	post( "mc.usb closed the Make Controller Kit USB connection." );
   }
 }
 
@@ -319,7 +326,7 @@ int usb_write( t_usbInterface* usbInt, char* buffer, int length )
   //--------------------------------------- Windows-only -------------------------------
   #ifdef WIN32
   DWORD cout;
-  int count = 1;
+  int read = 0;
   bool success;
   DWORD ret;
   int retval = MC_OK;
@@ -338,7 +345,7 @@ int usb_write( t_usbInterface* usbInt, char* buffer, int length )
 	// reset the write overlapped structure
   usbInt->overlappedWrite.Offset = usbInt->overlappedWrite.OffsetHigh = 0; 
   // messageInterface->message( 1, "Writing...\n" );
-  success = WriteFile( usbInt->deviceHandle, buffer, count, &cout, &usbInt->overlappedWrite ) ;
+  success = WriteFile( usbInt->deviceHandle, buffer, length, &cout, &usbInt->overlappedWrite ) ;
   
   if( !success )
   {
@@ -353,19 +360,16 @@ int usb_write( t_usbInterface* usbInt, char* buffer, int length )
 	
 	    if ( ret == WAIT_OBJECT_0 )
 	    {
-				// messageInterface->message( 1, "Write: IO PENDING." );
-			  GetOverlappedResult( usbInt->deviceHandle, &usbInt->overlappedWrite, &numWritten, TRUE);	
-			  if( count == numWritten )
-			  {
-			  	// post( "Write: COMPLETE." );
-			    retval = MC_OK; 
-			  }
-			  else
-			  {
-			  	// post( "write event, but only wrote %d", numWritten );
-		      usb_close( usbInt );
-			    retval = MC_IO_ERROR;
-			  }
+			do
+			{
+				GetOverlappedResult( usbInt->deviceHandle, &usbInt->overlappedWrite, &numWritten, TRUE);
+				read += numWritten;
+			} while( read != length );
+
+			if( read == length )
+				retval = MC_OK;
+			else
+			  retval = MC_IO_ERROR;
 	    }
 	    else
 	    {
@@ -795,6 +799,37 @@ int openDevice( t_usbInterface* usbInt, TCHAR* deviceName )
   usbInt->deviceOpen = true;
 
   return 0;
+}
+
+ // make sure to do this only once the device has been opened,
+ // since it relies on the deviceHandle to register for the call.
+bool DoRegisterForNotification( t_usbInterface* usbInt )
+{
+	DEV_BROADCAST_HANDLE NotificationFilter;
+	HWND winId;
+	bool test;
+	
+	ZeroMemory( &NotificationFilter, sizeof(NotificationFilter) );
+	NotificationFilter.dbch_size = sizeof( DEV_BROADCAST_HANDLE );
+	NotificationFilter.dbch_devicetype = DBT_DEVTYP_HANDLE;
+	NotificationFilter.dbch_handle = usbInt->deviceHandle;
+
+	winId = main_get_frame( );
+	if( winId )
+		post( "Got winId!" );
+	else
+		post( "Didn't get winId" ); 
+
+    usbInt->deviceNotificationHandle = RegisterDeviceNotification( winId, &NotificationFilter, DEVICE_NOTIFY_WINDOW_HANDLE );
+
+    if( !usbInt->deviceNotificationHandle ) 
+    {
+        post( "RegisterDeviceNotification failed: %ld", GetLastError() );
+        return false;
+    }
+    post( "RegisterDeviceNotification success!" ); 
+	
+    return true;
 }
 
 #endif
