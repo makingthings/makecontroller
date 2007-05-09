@@ -123,8 +123,6 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	progressBar->setRange( 0, 1000 );
 	progressBar->setValue( 0 );
 	
-	bitFlipSwitch->setCheckState( Qt::Checked );
-	
 	readSettings( );
 	
 	if ( udp->open( ) != PacketUdp::OK )
@@ -154,13 +152,19 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	uploaderThread = 0;
 	uploaderThread = new UploaderThread( application, this, samba );
 	samba->setMessageInterface( uploaderThread );
+  
+  // Init the status bar and let the user know the app is loaded
+  QString sb_message = tr("Ready.");
+  statusBar()->showMessage(sb_message, 1000);
 }
 
 void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous )
 {
   QString name = boardModel->data( current, Qt::DisplayRole ).toString();
+  QString status_bar_text = boardModel->data( current, Qt::StatusTipRole ).toString();
   
   message( 1, "list selection changed. Index: %i Name: %s\n", current.row(), name.toAscii().constData());
+  statusBar()->showMessage(status_bar_text, 1000);
 }
 
 void McHelperWindow::closeEvent( QCloseEvent *qcloseevent )
@@ -193,9 +197,9 @@ void McHelperWindow::uploadButtonClicked()
 
 	uploaderThread->setBinFileName( fileNameBuffer );
   
-  // If the check box is checked, also flip the bit so that the board boots from flash on reboot
-	if( bitFlipSwitch->checkState() == Qt::Checked )
-		uploaderThread->setBootFromFlash( true );
+  // Let's assume we'll always want to boot from the flash
+  // image we just uploaded on reboot
+  uploaderThread->setBootFromFlash( true );
 	
 	flash( );
 	
