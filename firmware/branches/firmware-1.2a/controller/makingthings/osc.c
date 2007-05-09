@@ -303,7 +303,8 @@ int Osc_TcpPacketSend( char* packet, int length, int replyAddress, int replyPort
   (void)replyAddress;
   (void)replyPort;
   char len[ 4 ];
-  sprintf( len, "%d", length );
+  int endian = Osc_EndianSwap(length);
+  sprintf( len, "%ld", length );
       
   int result = SocketWrite( Osc->tcpSocket, len, 4 );
   result = SocketWrite( Osc->tcpSocket, packet, length );
@@ -350,8 +351,6 @@ void Osc_TcpTask( void* parameters )
       if( length > 0 )
       {
         Osc_ReceivePacket( OSC_CHANNEL_TCP, ch->incoming+4, length-4 );
-        // dummy message, for now
-        Osc_CreateMessage( OSC_CHANNEL_TCP, "/appled/*/state", ",i", ledstate );
         ledstate = !ledstate;
       }
         
@@ -366,11 +365,9 @@ void Osc_TcpTask( void* parameters )
       Sleep( 100 ); // Just so we don't bash the Socket( ) call constantly when we're not open
   } // while( )
   // now we shut down
-  if( Osc->tcpSocket != NULL )
-  {
-    SocketClose( Osc->tcpSocket );
-    Osc->tcpSocket = NULL;
-  }
+  SocketClose( Osc->tcpSocket );
+  Osc->tcpSocket = NULL;
+  Osc_ResetChannel( ch );
   Free( Osc->channel[ OSC_CHANNEL_TCP ] );
   Osc->channel[ OSC_CHANNEL_TCP ] = NULL;
   TaskDelete( Osc->TcpTaskPtr );

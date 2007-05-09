@@ -174,6 +174,7 @@ int Stepper_SetPosition( int index, int position )
   
   DisableFIQFromThumb();
   s->position = position;
+  s->positionRequested = position;
   EnableFIQFromThumb();
 
   Stepper_SetDetails( s );
@@ -251,7 +252,7 @@ int Stepper_GetSpeed( int index )
   if ( Stepper_SetActive( index, 1 ) != CONTROLLER_OK )
     return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
 
-  return Stepper->control[ index ]->speed / 1000;
+  return Stepper->control[ index ]->speed;
 }
 
 /**	
@@ -286,6 +287,13 @@ int Stepper_GetPositionRequested( int index )
   return Stepper->control[ index ]->positionRequested;
 }
 
+/**	
+	Simply take a number of steps from wherever the motor is currently positioned.
+  This function will move the motor a given number of steps from the current position.
+	@param index An integer specifying which stepper (0 or 1).
+	@param duty An integer specifying the number of steps.  Can be negative to go in reverse.
+  @return status (0 = OK).
+*/
 int Stepper_Step( int index, int steps )
 {
   if ( index < 0 || index >= STEPPER_COUNT )
@@ -296,13 +304,17 @@ int Stepper_Step( int index, int steps )
 
   StepperControl* s = Stepper->control[ index ]; 
   DisableFIQFromThumb();
-  s->positionRequested += steps;
+  s->positionRequested = (s->position + steps);
   EnableFIQFromThumb();
 
   Stepper_SetDetails( s );
   return CONTROLLER_OK;
 }
 
+/**	
+	Not implemented - returns 0.
+	@param index An integer specifying which stepper (0 or 1).
+*/
 int Stepper_GetStep( int index )
 {
   if ( index < 0 || index >= STEPPER_COUNT )
@@ -354,7 +366,7 @@ int Stepper_GetDuty( int index )
 }
 
 /**	
-	Declare whether the stepper is bipolar or not.  Default is unipolar.
+	Declare whether the stepper is bipolar or not.  Default is bipolar.
 	@param index An integer specifying which stepper (0 or 1).
 	@param bipolar An integer 1 for bipolar, 0 for unipolar
   @return status (0 = OK).

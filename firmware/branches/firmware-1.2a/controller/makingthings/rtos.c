@@ -264,7 +264,7 @@ int TaskGetTopPriorityUsed( )
 
   This is another expensive function since it needs to stop the scheduler to search the lists
   of tasks.  It should only really be used in a debug setting.
-  @param currentID An integer specifying the ID of the previous task.
+  @param task A pointer to the previous task.
   @return A pointer to the task that's next in the ID list.
 */
 void* TaskGetNext( void* task )
