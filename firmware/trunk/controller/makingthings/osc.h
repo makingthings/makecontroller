@@ -33,7 +33,7 @@
 #define OSC_CHANNEL_TCP 2
 
 // Top level functions
-int Osc_SetActive( int state );
+void Osc_SetActive( int state );
 int Osc_GetActive( void );
 int Osc_GetRunning( void );
 
@@ -41,8 +41,7 @@ int Osc_CreateMessage( int channel, char* address, char* format, ... );
 int Osc_CreateMessageToBuf( char* bp, int* length, char* address, char* format, ... );
 int Osc_SendPacket( int channel );
 
-int Osc_RegisterSubsystem( int subsystem,
-                           const char *name, 
+int Osc_RegisterSubsystem( const char *name, 
                            int (*Subsystem_ReceiveMessage)( int channel, char* buffer, int length ), 
                            int (*Subsystem_Poll)( int channel ) );
 
@@ -60,10 +59,17 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
                                 char* propertyNames[] );
 
 int Osc_BlobReceiverHelper( int channel, char* message, int length, 
-                           char* subsystemName, 
-                           int (*blobPropertySet)( int property, uchar* buffer, int length ),
-                           int (*blobPropertyGet)( int property, uchar* buffer, int size ),
-                           char* blobPropertyNames[] );
+                            char* subsystemName, 
+                            int (*blobPropertySet)( int property, uchar* buffer, int length ),
+                            int (*blobPropertyGet)( int property, uchar* buffer, int size ),
+                            char* blobPropertyNames[] );
+
+
+int Osc_IndexBlobReceiverHelper( int channel, char* message, int length, 
+                                 int indexCount, char* subsystemName, 
+                                 int (*blobPropertySet)( int index, int property, uchar* buffer, int length ),
+                                 int (*blobPropertyGet)( int index, int property, uchar* buffer, int size ),
+                                 char* blobPropertyNames[] );
 
 int Osc_GeneralReceiverHelper( int channel, char* message, int length, 
                            char* subsystemName, 
@@ -83,5 +89,7 @@ int Osc_NumberMatch( int max, char* pattern, int* fancy );
 
 // Pattern Match Stuff
 bool Osc_PatternMatch(const char *  pattern, const char * test);
+void Osc_TcpTask( void *p );
+void Osc_StartTcpTask( void );
 
 #endif

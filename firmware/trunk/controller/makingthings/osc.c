@@ -70,6 +70,8 @@
 	\code /appled/0/state 1 \endcode
 */
 
+//#ifdef OSC
+
 #include "config.h"
 #include "osc.h"
 #include "network.h"
@@ -87,7 +89,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 
-#define OSC_CHANNEL_COUNT    2
+#define OSC_CHANNEL_COUNT    3
 #define OSC_MAX_MESSAGE_IN   200
 #define OSC_MAX_MESSAGE_OUT  400
 
@@ -103,14 +105,14 @@ typedef struct OscChannel_
   int (*sendMessage)( char* packet, int length, int replyAddress, int replyPort );
   xSemaphoreHandle semaphore;
   int running;
-} OscChannel;
+}OscChannel;
 
 typedef struct OscSubsystem_
 {
   const char* name;
   int (*receiveMessage)( int channel, char* buffer, int length );  
   int (*poll)( int channel );
-} OscSubsystem;
+}OscSubsystem;
 
 struct Osc_
 {
@@ -118,12 +120,16 @@ struct Osc_
   int running;
   int subsystemHighest;
   void* sendSocket;
-  OscChannel channel[ OSC_CHANNEL_COUNT ];
-  OscSubsystem subsystem[ OSC_SUBSYSTEM_COUNT ];
-} Osc;
+  struct netconn* tcpSocket;
+  void* UsbTaskPtr;
+  void* UdpTaskPtr;
+  void* TcpTaskPtr;
+  OscChannel* channel[ OSC_CHANNEL_COUNT ];
+  OscSubsystem* subsystem[ OSC_SUBSYSTEM_COUNT ];
+  int registeredSubsystems;
+};
 
-static int Osc_Start( void );
-static int Osc_End( void );
+struct Osc_* Osc;
 
 int Osc_Lock( OscChannel* ch );
 void Osc_Unlock( OscChannel *ch );
@@ -139,7 +145,7 @@ int Osc_PropertyLookup( char** properties, char* property );
 int Osc_ReadInt( char* buffer );
 float Osc_ReadFloat( char* buffer );
 
-int Osc_UpdPacketSend( char* packet, int length, int replyAddress, int replyPort );
+int Osc_UdpPacketSend( char* packet, int length, int replyAddress, int replyPort );
 int Osc_UsbPacketSend( char* packet, int length, int replyAddress, int replyPort );
 int Osc_TcpPacketSend( char* packet, int length, int replyAddress, int replyPort );
 
@@ -182,78 +188,87 @@ void Osc_TcpTask( void* parameters );
 	@param state
 	@return Zero on success.
 */
-int Osc_SetActive( int state )
+void Osc_SetActive( int state )
 {
-  if ( state )
-    return Osc_Start(  );
-  else
-    return Osc_End(  );
+  if ( state && Osc == NULL )
+  {
+    Osc = Malloc( sizeof( struct Osc_ ) );
+    Osc->subsystemHighest = 0;
+    Osc->registeredSubsystems = 0;
+    int i;
+    for( i = 0; i < OSC_CHANNEL_COUNT; i++ )
+      Osc->channel[ i ] = NULL;
+    for( i = 0; i < OSC_SUBSYSTEM_COUNT; i++ )
+      Osc->subsystem[ i ] = NULL;
+
+    Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 500, (void*)OSC_CHANNEL_UDP, 3 );
+    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 300, (void*)OSC_CHANNEL_USB, 3 );
+    Osc->TcpTaskPtr = NULL;
+
+    Osc->users = 1;
+    Osc->running = true;
+  }
+  if( !state && Osc )
+  {
+    TaskDelete( Osc->UsbTaskPtr );
+    TaskDelete( Osc->UdpTaskPtr );
+    int i;
+    for( i = 0; i < OSC_CHANNEL_COUNT; i++ )
+      Free( Osc->channel[ i ] );
+    for( i = 0; i < OSC_SUBSYSTEM_COUNT; i++ )
+      Free( Osc->subsystem[ i ] );
+    Free ( Osc );
+    Osc = NULL;
+  }
+  return;
 }
 
 /**
 	Osc_GetActive.
-	Returns the state of the Osc system. \n
+	Returns the state of the Osc system.
 	@return Non-zero if active, zero if inactive.
 */
 int Osc_GetActive( )
 {
-  return Osc.users > 0;
-}
-
-int Osc_Start( void )
-{
-  if ( Osc.users == 0 )
-  {
-    Osc.subsystemHighest = 0;
-    if ( Osc.channel[ OSC_CHANNEL_UDP ].replyPort == 0 )
-      Osc_SetReplyPort( OSC_CHANNEL_UDP, 10000 );
-
-    TaskCreate( Osc_UdpTask, "OSC-UDP", 500, (void*)OSC_CHANNEL_UDP, 3 );
-    TaskCreate( Osc_UsbTask, "OSC-USB", 300, (void*)OSC_CHANNEL_USB, 3 );
-    TaskCreate( Osc_TcpTask, "Osc-Tcp", 500, (void*)OSC_CHANNEL_TCP, 3 );
-
-    Osc.users++;
-    Osc.running = true;
-  }
-  return CONTROLLER_OK;
-}
-
-int Osc_End( void )
-{
-  if ( Osc.users > 0 )
-  {
-    Osc.users--;
-    if ( Osc.users == 0 )
-      Osc.running = false;
-  }
-  return CONTROLLER_OK;
+  return Osc != NULL;
 }
 
 int Osc_UsbPacketSend( char* packet, int length, int replyAddress, int replyPort )
 {
+  (void)replyAddress; // get rid of the spurious 'variable not used' warnings
+  (void)replyPort;
   return Usb_SlipSend( packet, length );
 }
 
 int Osc_UdpPacketSend( char* packet, int length, int replyAddress, int replyPort )
 {
   if ( replyAddress != 0 && replyPort != 0 )
-    return DatagramSocketSend( Osc.sendSocket, replyAddress, replyPort, packet, length );
+    return DatagramSocketSend( Osc->sendSocket, replyAddress, replyPort, packet, length );
   else
     return CONTROLLER_ERROR_NO_ADDRESS;
 }
 
 int Osc_GetRunning( )
 {
-  return Osc.running;
+  if( Osc )
+    return Osc->running;
+  else
+    return 0;
 }
 
 void Osc_UdpTask( void* parameters )
 {
   int channel = (int)parameters;
-  OscChannel *ch = &Osc.channel[ channel ];
-
+  Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
+  while( Osc->channel[ channel ] == NULL )
+  {
+    Sleep( 100 );
+    Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
+  }
+  OscChannel *ch = Osc->channel[ channel ];
+  ch->running = false;
+  Osc_SetReplyPort( channel, 10000 );
   ch->sendMessage = Osc_UdpPacketSend;
-
   Osc_ResetChannel( ch );
 
   // Chill until the Network is up
@@ -261,60 +276,113 @@ void Osc_UdpTask( void* parameters )
     Sleep( 100 );
 
   ch->running = true;
+  void* ds = DatagramSocket( NetworkOsc_GetUdpPort() );
+  
+  Osc->sendSocket = DatagramSocket( 0 );
 
-  void* ds = DatagramSocket( ch->replyPort );
-  Osc.sendSocket = DatagramSocket( 0 );
-
-  //strcpy( data, "HELLO!!" );
   while ( true )
   {
     int address;
     int port;
-
-    int length = DatagramSocketReceive( ds, ch->replyPort, &address, &port, ch->incoming, OSC_MAX_MESSAGE_IN );
+    int length = DatagramSocketReceive( ds, NetworkOsc_GetUdpPort(), &address, &port, ch->incoming, OSC_MAX_MESSAGE_IN );
 
     Osc_SetReplyAddress( channel, address );
 
     Osc_ReceivePacket( channel, ch->incoming, length );
-    Sleep( 1 );
+    TaskYield( );
   }
+}
+
+void Osc_StartTcpTask( )
+{
+  Osc->TcpTaskPtr = TaskCreate( Osc_TcpTask, "OscTcp", 400, 0, 2 );
+}
+
+int Osc_TcpPacketSend( char* packet, int length, int replyAddress, int replyPort )
+{
+  (void)replyAddress;
+  (void)replyPort;
+  char len[ 4 ];
+  int endian = Osc_EndianSwap(length);
+  sprintf( len, "%ld", length );
+      
+  int result = SocketWrite( Osc->tcpSocket, len, 4 );
+  result = SocketWrite( Osc->tcpSocket, packet, length );
+  if( !result )
+  {
+    SocketClose( Osc->tcpSocket );
+    Osc->tcpSocket = NULL;
+  }
+  return result;
 }
 
 void Osc_TcpTask( void* parameters )
 {
-  int channel = (int)parameters;
-  OscChannel *ch = &Osc.channel[ channel ];
-  //ch->sendMessage = Osc_TcpPacketSend;
+  (void)parameters;
+  Osc->channel[ OSC_CHANNEL_TCP ] = Malloc( sizeof( OscChannel ) );
+  while( Osc->channel[ OSC_CHANNEL_TCP ] == NULL )
+  {
+    Sleep( 100 );
+    Osc->channel[ OSC_CHANNEL_TCP ] = Malloc( sizeof( OscChannel ) );
+  }
+  OscChannel *ch = Osc->channel[ OSC_CHANNEL_TCP ];
+  ch->sendMessage = Osc_TcpPacketSend;
   Osc_ResetChannel( ch );
 
   // Chill until the Network is up
   while ( !Network_GetActive() )
     Sleep( 100 );
 
+  int ledstate = 0;
+
   ch->running = true;
-  struct netconn* sock = NULL;
+  ch->semaphore = NULL; // not sure why I need to do this here and not for the other channels...
 
-  // TODO - check to see if the autoconnect property is set, and fire things up now if it is
-
-  // now get down to business
-  while ( true )
+  while( NetworkOsc_GetTcpRequested( ) )
   {
-    int address;
-    int port;
+    // check to see if we have an open socket
+    if( Osc->tcpSocket == NULL )
+      Osc->tcpSocket = Socket( NetworkOsc_GetTcpOutAddress(), NetworkOsc_GetTcpOutPort() );
 
-    //int length = DatagramSocketReceive( ds, ch->replyPort, &address, &port, ch->incoming, OSC_MAX_MESSAGE_IN );
-
-    //Osc_SetReplyAddress( channel, address );
-
-    //Osc_ReceivePacket( channel, ch->incoming, length );
-    Sleep( 1 );
-  }
+    if( Osc->tcpSocket != NULL )
+    {
+      int length = SocketRead( Osc->tcpSocket, ch->incoming, OSC_MAX_MESSAGE_IN );
+      // should actually read the given length in the message, and use that.
+      if( length > 0 )
+      {
+        Osc_ReceivePacket( OSC_CHANNEL_TCP, ch->incoming+4, length-4 );
+        ledstate = !ledstate;
+      }
+        
+      if( !length )
+      {
+        SocketClose( Osc->tcpSocket );
+        Osc->tcpSocket = NULL;
+      }
+      TaskYield( );
+    }
+    else
+      Sleep( 100 ); // Just so we don't bash the Socket( ) call constantly when we're not open
+  } // while( )
+  // now we shut down
+  SocketClose( Osc->tcpSocket );
+  Osc->tcpSocket = NULL;
+  Osc_ResetChannel( ch );
+  Free( Osc->channel[ OSC_CHANNEL_TCP ] );
+  Osc->channel[ OSC_CHANNEL_TCP ] = NULL;
+  TaskDelete( Osc->TcpTaskPtr );
 }
 
 void Osc_UsbTask( void* parameters )
 {
   int channel = (int)parameters;
-  OscChannel *ch = &Osc.channel[ channel ];
+  Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
+  while( Osc->channel[ channel ] == NULL )
+  {
+    Sleep( 100 );
+    Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
+  }
+  OscChannel *ch = Osc->channel[ channel ];
 
   ch->sendMessage = Osc_UsbPacketSend;
 
@@ -326,13 +394,13 @@ void Osc_UsbTask( void* parameters )
 
   ch->running = true;
 
-  //strcpy( data, "HELLO!!" );
   while ( true )
   {
     int length = Usb_SlipReceive( ch->incoming, OSC_MAX_MESSAGE_IN );
 
     if ( length > 0 )
       Osc_ReceivePacket( channel, ch->incoming, length );
+    TaskYield( );
   }
 }
 
@@ -341,7 +409,7 @@ int Osc_SetReplyAddress( int channel, int replyAddress )
   if ( channel < 0 || channel >= OSC_CHANNEL_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  OscChannel* ch =  &Osc.channel[ channel ];
+  OscChannel* ch =  Osc->channel[ channel ];
 
   ch->replyAddress = replyAddress;
 
@@ -353,7 +421,7 @@ int Osc_SetReplyPort( int channel, int replyPort )
   if ( channel < 0 || channel >= OSC_CHANNEL_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  OscChannel* ch =  &Osc.channel[ channel ];
+  OscChannel* ch =  Osc->channel[ channel ];
 
   ch->replyPort = replyPort;
 
@@ -367,14 +435,14 @@ void Osc_ResetChannel( OscChannel* ch )
   ch->messages = 0;
 }
 
-int Osc_RegisterSubsystem( int subsystem, const char *name, int (*subsystem_ReceiveMessage)( int channel, char* buffer, int length ), int (*subsystem_Poll)( int channel ) )
+int Osc_RegisterSubsystem( const char *name, int (*subsystem_ReceiveMessage)( int channel, char* buffer, int length ), int (*subsystem_Poll)( int channel ) )
 {
-  if ( subsystem < 0 || subsystem >= OSC_SUBSYSTEM_COUNT )
-    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+  int subsystem = Osc->registeredSubsystems;
+  if ( Osc->registeredSubsystems++ > OSC_SUBSYSTEM_COUNT )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX; 
 
-  if ( subsystem > Osc.subsystemHighest )
-    Osc.subsystemHighest = subsystem;
-  OscSubsystem* sub = &Osc.subsystem[ subsystem ];
+  Osc->subsystem[ subsystem ] = Malloc( sizeof( OscSubsystem ) );
+  OscSubsystem* sub = Osc->subsystem[ subsystem ];
   sub->name = name;
   sub->receiveMessage = subsystem_ReceiveMessage;
   sub->poll = subsystem_Poll;
@@ -439,16 +507,16 @@ int Osc_ReceiveMessage( int channel, char* message, int length )
       *nextSlash = 0;
     int i;
     int count = 0;
-    for ( i = 0; i <= Osc.subsystemHighest; i++ )
+    for ( i = 0; i < Osc->registeredSubsystems; i++ )
     {
-      OscSubsystem* sub = &Osc.subsystem[ i ];
+      OscSubsystem* sub = Osc->subsystem[ i ];
       if ( Osc_PatternMatch( message + 1, sub->name ) )
       {
         count++;
         if ( nextSlash )
-          (*sub->receiveMessage)( channel, nextSlash + 1, length - ( nextSlash - message ) - 1 );
+          (sub->receiveMessage)( channel, nextSlash + 1, length - ( nextSlash - message ) - 1 );
         else
-          (*sub->receiveMessage)( channel, 0, 0 );          
+          (sub->receiveMessage)( channel, 0, 0 );
       }
     }
     if ( count == 0 )
@@ -470,7 +538,7 @@ int Osc_SendPacket( int channel )
   if ( channel < 0 || channel >= OSC_CHANNEL_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  OscChannel* ch = &Osc.channel[ channel ];
+  OscChannel* ch = Osc->channel[ channel ];
 
   if ( ch->messages == 0 )
     return CONTROLLER_OK;
@@ -606,6 +674,140 @@ int Osc_BlobReceiverHelper( int channel, char* message, int length,
 
   return CONTROLLER_OK;
 }
+
+// An OSC message has arrived, check it out... although, don't change it - others need
+// to use it.  If the original OSC packet was a BUNDLE - i.e. had many 
+// messages in it, they will be unpacked elsewhere.  We'll only get 
+// individual messages here.
+// What is passed is the part after the first subsystem address.
+// So "/appled/0/on 1" would be passed to this routine as "0/on 1"
+// Not literally like this, of course, but as OSC messages
+// In order to do anything, we need some extra information from 
+// the subsystem like what the names of its properties are, what 
+// the getters and setters are, etc.
+// It's great to have this code in one central place.  It will be easier 
+// to effect change from here.o
+int Osc_IndexBlobReceiverHelper( int channel, char* message, int length, 
+                                int indexCount, char* subsystemName, 
+                                int (*blobPropertySet)( int index, int property, uchar* buffer, int length ),
+                                int (*blobPropertyGet)( int index, int property, uchar* buffer, int length ),
+                                char* blobPropertyNames[] )
+{
+  // Look for the next slash - being the one that separates the index
+  // from the property.  Note that this won't go off on a search through the buffer
+  // since there will soon be a string terminator (i.e. a 0)
+  char* prop = strchr( message, '/' );
+  if ( prop == NULL )
+    return CONTROLLER_ERROR_BAD_FORMAT;
+
+  // Now that we know where the property is, we can see if we can find it.
+  // This is a little cheap, since we're also implying that there are no 
+  // more address terms after the property.  That is, if testing for "speed", while
+  // "speed" would match, "speed/other_stuff" would not.
+  int propertyIndex = Osc_PropertyLookup( blobPropertyNames, prop + 1 );
+  if ( propertyIndex == -1 )
+    return CONTROLLER_ERROR_UNKNOWN_PROPERTY;
+
+  // Here's where we try to understand what index we got.  In the world of 
+  // OSC, this could be a pattern.  So while we could get "0/speed" we could 
+  // also get "*/speed" or "[0-4]/speed".  This is kind of a drag, but it is 
+  // quite nice from the user's perspective.
+  // So to deal with this take a look at the text "0" or "{1,2}" or whatever
+  // and produce either a nice integer in the simplest case or a set of bits 
+  // where each bit corresponds to one of the indicies.  Clearly we don't have
+  // to go crazy, since there are only a small finite number of them.
+  // Osc_NumberMatch() does the work for us, producing either number = -1 and 
+  // bits == -1 if there was no index match, or number != -1 for there was a single
+  // number, or bits != -1 if there were several.
+
+  // note that we tweak the string a bit here to make sure the next '/' is not 
+  // mixed up with this.  Insert a string terminator.
+  *prop = 0;
+
+  int bits;
+  int number = Osc_NumberMatch( indexCount, message, &bits );
+  if ( number == -1 && bits == -1 )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+  
+  // We tweaked the '/' before - now put it back
+  *prop = '/';
+
+  // Sometime after the address, the data tag begins - this is the description 
+  // of the data in the rest of the message.  It starts with a comma.  Return
+  // where it is into 'type'.  If there is no comma, this is bad.
+  char* type = Osc_FindDataTag( message, length );
+  if ( type == NULL )
+    return CONTROLLER_ERROR_NO_TYPE_TAG;
+
+  // We can tell if there's data by seeing if the character after the comma
+  // is a zero or not.
+  if ( type[ 1 ] == 'b' || type[ 1 ] == 's' )
+  {
+    // If there was blob or string data, it was a WRITE.
+    // So, sort of scanf-like, go get the data.  Here we pass in where the data is
+    // thanks to the previous routine and then specify what we expect to find there
+    // in tag terms (i.e. "b", "s").  Finally we pass in a set 
+    // of pointers to the data types we want to extract.  Osc_ExtractData()
+    // will rummage around in the message magically grabbing values for you,
+    // reporting how many it got.  It will grab convert strings if necessary.
+    unsigned char *buffer;
+    int size;
+    int count = Osc_ExtractData( type, "b", &buffer, &size );
+    if ( count != 1 )
+      return CONTROLLER_ERROR_INCORRECT_DATA_TYPE;
+  
+    // Now with the data we need to decide what to do with it.
+    // Is there one or many here?
+    if ( number != -1 )
+      (*blobPropertySet)( number, propertyIndex, buffer, size );
+    else
+    {
+      int index = 0;
+      while ( bits > 0 && index < indexCount )
+      { 
+        if ( bits & 1 )
+          (*blobPropertySet)( index, propertyIndex, buffer, size  );
+        bits >>= 1;
+        index++;
+      }
+    }
+  }
+  else
+  {
+    // No data, then.  I guess it was a read.  The XXXXOsc getters
+    // take the channel number and use it to call
+    // Osc_CreateMessage() which adds a new message to the outgoing
+    // stack
+    if ( number != -1 )
+    {
+      uchar buffer[ OSC_SCRATCH_SIZE ];
+      int size = (*blobPropertyGet)( number, propertyIndex, buffer, OSC_SCRATCH_SIZE );
+      char address[ OSC_SCRATCH_SIZE ]; 
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, number, blobPropertyNames[ propertyIndex ] ); 
+      Osc_CreateMessage( channel, address, ",b", buffer, size );
+    }
+    else
+    {
+      int index = 0;
+      while ( bits > 0 && index < indexCount )
+      { 
+        if ( bits & 1 )
+        {
+          uchar buffer[ OSC_SCRATCH_SIZE ];
+          int size = (*blobPropertyGet)( index, propertyIndex, buffer, OSC_SCRATCH_SIZE );
+          char address[ OSC_SCRATCH_SIZE ]; 
+          snprintf( address, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, index, blobPropertyNames[ propertyIndex ] ); 
+          Osc_CreateMessage( channel, address, ",b", buffer, size );
+        }
+        bits >>= 1;
+        index++;
+      }
+    }
+  }
+
+  return CONTROLLER_OK;
+}
+
 
 // An OSC message has arrived, check it out... although, don't change it - others need
 // to use it.  If the original OSC packet was a BUNDLE - i.e. had many 
@@ -999,6 +1201,21 @@ int Osc_ExtractData( char* buffer, char* format, ... )
           count++;
           cont = true;
         }
+        else
+        {
+          if ( *tp == 's' )
+          {
+            *(va_arg( args, char** )) = data;
+            int len = strlen( data ) + 1;
+            *(va_arg( args, int* )) = len;
+            int pad = len % 4;
+            if ( pad != 0 )
+              len += ( 4 - pad );
+            data += len;
+            count++;
+            cont = true;
+          }
+        }
         break;
     }
     tp++;
@@ -1035,7 +1252,7 @@ int Osc_CreateMessage( int channel, char* address, char* format, ... )
   if ( channel < 0 || channel >= OSC_CHANNEL_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  OscChannel* ch = &Osc.channel[ channel ];
+  OscChannel* ch = Osc->channel[ channel ];
 
   if ( !ch->running )
     return CONTROLLER_ERROR_SUBSYSTEM_INACTIVE;
@@ -1375,4 +1592,7 @@ int Osc_EndianSwap( int a )
          ( ( a & 0xFF000000 ) >> 24 );
 
 }
+
+//#endif // OSC
+
 

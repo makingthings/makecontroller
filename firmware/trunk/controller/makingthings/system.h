@@ -24,6 +24,15 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
+#define SYSTEM_MAX_NAME 99 
+
+struct System_
+{
+  char name[ SYSTEM_MAX_NAME + 1 ]; // allotted EEPROM space is 100, but leave room for \0!
+  int users;
+  void* StackAuditPtr;
+};
+
 /* System Interface */
 
 int System_SetActive( int state );
@@ -36,6 +45,10 @@ int System_GetSerialNumber( void );
 int System_SetSamba( int sure );
 int System_SetReset( int sure );
 int System_SetSerialNumber( int serial );
+int System_SetName( char* name );
+char* System_GetName( void );
+
+void System_StackAudit( int on_off );
 
 /* SystemOsc Interface */
 

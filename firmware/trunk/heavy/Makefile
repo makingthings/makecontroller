@@ -21,7 +21,7 @@ THUMB_SRC= \
   ../controller/startup/extras.c \
   ../controller/freertos/portable/MemMang/heap_2.c \
   ../controller/makingthings/main.c \
-  ../controller/makingthings/BasicWEB.c \
+  ../controller/makingthings/webserver.c \
   make.c \
   ../controller/makingthings/eeprom.c \
   ../controller/makingthings/analogin.c \
@@ -62,6 +62,7 @@ THUMB_SRC= \
   ../controller/lwip/src/core/ipv4/ip.c \
   ../controller/lwip/src/core/ipv4/ip_addr.c \
   ../controller/lwip/src/core/ipv4/icmp.c \
+  ../controller/lwip/src/core/dhcp.c \
   ../controller/lwip/src/api/tcpip.c \
   ../controller/lwip/src/api/api_msg.c \
   ../controller/lwip/src/api/err.c \
@@ -154,4 +155,5 @@ clean :
 	rm -f output/$(OUTPUT).elf     
 	rm -f output/$(OUTPUT).bin     
 	rm -f output/$(OUTPUT)_o.map     
+
 

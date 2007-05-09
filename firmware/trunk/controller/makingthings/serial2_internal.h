@@ -16,47 +16,37 @@
 *********************************************************************************/
 
 /*
-	CONTROLLER.h
+	serial_internal.h
 
-  Includes, etc. so make users don't have to
+  serial Internal headers
 
   MakingThings
 */
 
-#ifndef CONTROLLER_H
-#define CONTROLLER_H
+#ifndef SERIAL2_INTERNAL_H
+#define SERIAL2_INTERNAL_H
 
 #include "types.h"
 
-#include "eeprom.h"
-#include "analogin.h"
-#include "rtos.h"
-#include "pwm.h"
-#include "io.h"
-#include "led.h"
-#include "timer.h"
-#include "fasttimer.h"
-#include "debug.h"
-#include "can.h"
-#include "osc.h"
-#include "system.h"
-#include "usb.h"
-#include "network.h"
-#include "stepper.h"
+/* OS includes. */
+#include "queue.h"
 
+typedef struct
+{
+  int users;
+  int baud;
+  int bits;
+  int parity;
+  int stopBits;
+  int hardwareHandshake;
 
-/* Make Helper Functions */
+  int detailsInitialized;
 
-void Run( void );
+  AT91S_USART* at91UARTRegs;
 
-void Timer0Isr( void );
-void Timer0Init( void );
-void Timer0Set( int t );
-int Timer0Get( int* jitterTotal, int* jitterMax, int* jitterMaxAllDay );
+  xQueueHandle receiveQueue;  
+  xQueueHandle transmitQueue;  
 
-void FastIsr( void );
-
-void DisableFIQFromThumb( void );
-void EnableFIQFromThumb( void );
+} Serial2_;
 
 #endif

@@ -17,7 +17,6 @@
             <configuration arm_instruction_set="ARM" Name="Common" />
           </file>
           <file file_name="../controller/makingthings/USB-CDC.c" Name="USB-CDC.c" />
-          <file file_name="../controller/makingthings/BasicWEB.c" Name="BasicWEB.c" />
           <file file_name="../controller/makingthings/main.c" Name="main.c" />
           <file file_name="../controller/makingthings/eeprom.c" Name="eeprom.c" />
           <file file_name="../controller/makingthings/osc.h" Name="osc.h" />
@@ -79,6 +78,11 @@
           <file file_name="../controller/makingthings/fasttimer_internal.h" Name="fasttimer_internal.h" />
           <file file_name="../controller/makingthings/poly.h" Name="poly.h" />
           <file file_name="../controller/makingthings/poly.c" Name="poly.c" />
+          <file file_name="../controller/makingthings/serial.h" Name="serial.h" />
+          <file file_name="../controller/makingthings/controller.h" Name="controller.h" />
+          <file file_name="../controller/makingthings/error.h" Name="error.h" />
+          <file file_name="../controller/makingthings/webserver.h" Name="webserver.h" />
+          <file file_name="../controller/makingthings/webserver.c" Name="webserver.c" />
         </folder>
         <folder Name="FreeRTOS" >
           <file file_name="../controller/freertos/tasks.c" Name="tasks.c" />
@@ -126,6 +130,7 @@
           <file file_name="../controller/lwip/src/include/lwip/api.h" Name="api.h" />
           <file file_name="../controller/lwip/src/include/lwip/sys.h" Name="sys.h" />
           <file file_name="../controller/makingthings/Emac.h" Name="Emac.h" />
+          <file file_name="../controller/lwip/src/core/dhcp.c" Name="dhcp.c" />
         </folder>
         <folder Name="Startup" >
           <file file_name="../controller/startup/AT91SAM7_Startup.s" Name="AT91SAM7_Startup.s" >

@@ -21,9 +21,11 @@
 */
 
 #include "stdio.h"
-#include "network.h"
+
 #include "io.h"
 #include "eeprom.h"
+#include "timer.h"
+
 
 /* lwIP includes. */
 #include "lwip/api.h"
@@ -31,12 +33,10 @@
 #include "lwip/memp.h" 
 #include "lwip/stats.h"
 #include "netif/loopif.h"
+#include "lwip/dhcp.h"
 
 /* Low level includes. */
 #include "SAM7_EMAC.h"
-
-// This has builtin endian compensation!
-#define IP_ADDRESS( a, b, c, d ) ( ( (int)d << 24 ) + ( (int)c << 16 ) + ( (int)b << 8 ) + (int)a )
 
 int Network_AddressConvert( char* address, int* a0, int* a1, int* a2, int* a3 );
 
@@ -49,9 +49,20 @@ char emacETHADDR4 = 0x0;
 char emacETHADDR5 = 0x0;
 
 #include "config.h"
+#include "network.h"
+#include "webserver.h"
 
-static int Network_Active;
+// a few globals
+struct Network_* Network;
+
 enum { NET_UNCHECKED, NET_INVALID, NET_VALID } Network_Valid;
+
+void Network_DhcpFineCallback( int id );
+void Network_DhcpCoarseCallback( int id );
+void Network_SetPending( int state );
+int Network_GetPending( void );
+void Network_DhcpStart( struct netif* netif );
+void Network_DhcpStop( struct netif* netif );
 
 /** \defgroup Network
   The Network subsystem manages the Ethernet controller.  
@@ -92,22 +103,61 @@ int Network_SetActive( int state )
 {
   if ( state ) 
   {
-    if ( !Network_Active )
+    if( Network == NULL )
     {
+      Network = Malloc( sizeof( struct Network_ ) );
+
+      Network->pending = 0;
+      Network->TcpRequested = 0;
+      Network->WebServerTaskPtr = NULL;
+      // set the temp addresses to use when setting a new IP address/mask/gateway
+      Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&Network->TempIpAddress, 4 );
+      Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&Network->TempGateway, 4 );
+      Eeprom_Read( EEPROM_SYSTEM_NET_MASK, (uchar*)&Network->TempMask, 4 );
+      Eeprom_Read( EEPROM_OSC_UDP_PORT, (uchar*)&Network->OscUdpPort, 4 );
+      Eeprom_Read( EEPROM_TCP_OUT_ADDRESS, (uchar*)&Network->TcpOutAddress, 4 );
+      Eeprom_Read( EEPROM_TCP_OUT_PORT, (uchar*)&Network->TcpOutPort, 4 );
       Network_Init();
-      Network_Active = state;
     }
   }
+  else 
+	{
+		if( Network )
+		{
+			Free( Network );
+			Network = NULL;
+		}
+	}
+
   return CONTROLLER_OK;
 }
 
 /**
+	Sets whether the Network subsystem is currently trying to negotiate its settings.
+  This is mostly used by the Network init and deinit processes, so you shouldn't
+  be calling this yourself unless you have a good reason to.
+	@param state An integer specifying the pending state - 1 (pending) or 0 (not pending).
+*/
+void Network_SetPending( int state )
+{
+  if( state && !Network->pending )
+      Network->pending = state;
+  if( !state && Network->pending )
+    Network->pending = state;
+}
+
+int Network_GetPending( )
+{
+  return Network->pending;
+}
+
+/**
 	Returns the active state of the Network subsystem.
-	@return State - 1/non-zero (active) or 0 (inactive).
+	@return State - 1 (active) or 0 (inactive).
 */
 int Network_GetActive( void )
 {
-  return Network_Active;
+  return Network != NULL;
 }
 
 /**
@@ -115,7 +165,12 @@ int Network_GetActive( void )
 	The IP address of the Make Controller, in dotted decimal form (xxx.xxx.xxx.xxx),
 	can be set by passing in each of the numbers as a separate parameter.
 	The default IP address of each Make Controller as it ships from the factory
-	is 192.168.0.200
+	is 192.168.0.200.  
+  
+  Because changing the network configuration of the board should
+  really be an atomic operation (in terms of changing the address/mask/gateway), 
+  we need to make a call to Network_SetValid() in order to actually apply
+  the changed address.  
 
 	This value is stored in EEPROM, so it persists even after the board
 	is powered down.
@@ -129,18 +184,17 @@ int Network_GetActive( void )
   \par Example
   \code
   // set the address to 192.168.0.23
-  if( 0 != Network_SetAddress( 192, 168, 0, 23 ) )
-    // then there was a problem.
+  Network_SetAddress( 192, 168, 0, 23 );
+  // now implement the change
+  Network_SetValid( 1 );
   \endcode
 
 */
 int Network_SetAddress( int a0, int a1, int a2, int a3 )
 {
-  int address;
-	address = IP_ADDRESS( a0, a1, a2, a3 );
-
-  Eeprom_Write( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&address, 4 );
-  
+	// just store this address, since we're only going to do something with it in response to
+  // Network_SetValid().
+  Network->TempIpAddress = NETIF_IP_ADDRESS( a0, a1, a2, a3 );
   Network_Valid = NET_INVALID;
 
   return CONTROLLER_OK;
@@ -170,16 +224,45 @@ int Network_SetAddress( int a0, int a1, int a2, int a3 )
   \endcode
 
 */
-int Network_SetTcpOutAddress( int a0, int a1, int a2, int a3 )
+void NetworkOsc_SetTcpOutAddress( int a0, int a1, int a2, int a3 )
 {
-  int address;
-	address = IP_ADDRESS( a0, a1, a2, a3 );
+	int address = IP_ADDRESS( a0, a1, a2, a3 );
+  if( address != Network->TcpOutAddress )
+  {
+    Network->TcpOutAddress = address;
+    Eeprom_Write( EEPROM_TCP_OUT_ADDRESS, (uchar*)&address, 4 );
+  }
+}
 
-  Eeprom_Write( EEPROM_TCP_REMOTE_ADDRESS, (uchar*)&address, 4 );
-  
-  //Network_Valid = NET_INVALID;
+void NetworkOsc_SetTcpOutPort( int port )
+{
+  if( port != Network->TcpOutPort ) // only change if it's a new value
+  {
+    Network->TcpOutPort = port;
+    Eeprom_Write( EEPROM_TCP_OUT_PORT, (uchar*)&port, 4 );
+  }
+}
 
-  return CONTROLLER_OK;
+int NetworkOsc_GetTcpOutPort( )
+{
+  return Network->TcpOutPort;
+}
+
+void NetworkOsc_SetUdpPort( int port )
+{
+  if( port != Network->OscUdpPort ) // only change things if it's a new value
+  {
+    Network->OscUdpPort = port;
+    Eeprom_Write( EEPROM_OSC_UDP_PORT, (uchar*)&port, 4 );
+  }
+}
+
+int NetworkOsc_GetUdpPort(  )
+{
+  if( Network->OscUdpPort > 0 && Network->OscUdpPort < 65536 )
+    return Network->OscUdpPort;
+  else
+    return 10000;
 }
 
 /**
@@ -208,11 +291,9 @@ int Network_SetTcpOutAddress( int a0, int a1, int a2, int a3 )
 */
 int Network_SetMask( int a0, int a1, int a2, int a3 )
 {
-  int address;
-	address = IP_ADDRESS( a0, a1, a2, a3 );
-
-  Eeprom_Write( EEPROM_SYSTEM_NET_MASK, (uchar*)&address, 4 );
-
+  // just store this address, since we're only going to do something with it in response to
+  // Network_SetValid().
+  Network->TempMask = NETIF_IP_ADDRESS( a0, a1, a2, a3 );
   Network_Valid = NET_INVALID;
 
   return CONTROLLER_OK;
@@ -242,11 +323,9 @@ int Network_SetMask( int a0, int a1, int a2, int a3 )
 */
 int Network_SetGateway( int a0, int a1, int a2, int a3 )
 {
-  int address;
-	address = IP_ADDRESS( a0, a1, a2, a3 );
-
-  Eeprom_Write( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&address, 4 );
-
+  // just store this address, since we're only going to do something with it in response to
+  // Network_SetValid().
+  Network->TempGateway = NETIF_IP_ADDRESS( a0, a1, a2, a3 );
   Network_Valid = NET_INVALID;
   
   return CONTROLLER_OK;
@@ -267,16 +346,26 @@ int Network_SetValid( int v )
 {
   if ( v )
   {
-    int address;
-    Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&address, 4 );
-  
-    int mask;
-    Eeprom_Read( EEPROM_SYSTEM_NET_MASK, (uchar*)&mask, 4 );
-  
-    int gateway;
-    Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&gateway, 4 );
-  
-    int total = address + mask + gateway;
+    struct ip_addr ip, gw, mask;
+    struct netif* mc_netif;
+
+    ip.addr = Network->TempIpAddress; // these should each have been set previously
+    mask.addr = Network->TempMask;  // by Network_SetAddress(), etc.
+    gw.addr = Network->TempGateway;
+		if( !Network_GetDhcpEnabled() ) // only actually change the address if we're not using DHCP
+		{
+			// we specify our network interface as en0 when we init
+			mc_netif = netif_find( "en0" );
+			if( mc_netif != NULL )
+				netif_set_addr( mc_netif, &ip, &mask, &gw );
+		}
+    
+		// but write the addresses to memory regardless, so we can use them next time we boot up without DHCP
+    Eeprom_Write( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&ip.addr, 4 );
+    Eeprom_Write( EEPROM_SYSTEM_NET_MASK, (uchar*)&mask.addr, 4 );
+    Eeprom_Write( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&gw.addr, 4 );
+
+    int total = Network->TempIpAddress + Network->TempMask + Network->TempGateway;
     Eeprom_Write( EEPROM_SYSTEM_NET_CHECK, (uchar*)&total, 4 );
 
     Network_Valid = NET_VALID;
@@ -334,26 +423,22 @@ int Network_GetValid( )
 */
 int Network_GetAddress( int* a0, int* a1, int* a2, int* a3 )
 {
-  if ( Network_Valid == NET_UNCHECKED )
-    Network_GetValid();
+  if( Network_GetPending() )
+    return CONTROLLER_ERROR_NO_NETWORK;
 
-  if ( Network_Valid == NET_INVALID )
+  struct netif* mc_netif;
+  int address = 0;
+  // we specify our network interface as en0 when we init
+  mc_netif = netif_find( "en0" );
+  if( mc_netif != NULL )
   {
-    *a0 = 192;
-    *a1 = 168;
-    *a2 = 0;
-    *a3 = 200;
+    address = mc_netif->ip_addr.addr;
 
-    return CONTROLLER_OK;
+    *a0 = NETIF_IP_ADDRESS_A( address );
+    *a1 = NETIF_IP_ADDRESS_B( address );
+    *a2 = NETIF_IP_ADDRESS_C( address );
+    *a3 = NETIF_IP_ADDRESS_D( address );
   }
-
-  int address;
-  Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&address, 4 );
-
-  *a0 = IP_ADDRESS_A( address );
-  *a1 = IP_ADDRESS_B( address );
-  *a2 = IP_ADDRESS_C( address );
-  *a3 = IP_ADDRESS_D( address );
 
   return CONTROLLER_OK;
 }
@@ -369,32 +454,9 @@ int Network_GetAddress( int* a0, int* a1, int* a2, int* a3 )
 	@param a3 A pointer to an integer where the fourth of 4 numbers of the address is to be stored.
 	@return 0 on success.
 */
-int Network_GetTcpOutAddress( int* a0, int* a1, int* a2, int* a3 )
+int NetworkOsc_GetTcpOutAddress( )
 {
-  /*
-  if ( Network_Valid == NET_UNCHECKED )
-    Network_GetValid();
-
-  if ( Network_Valid == NET_INVALID )
-  {
-    *a0 = 192;
-    *a1 = 168;
-    *a2 = 0;
-    *a3 = 200;
-
-    return CONTROLLER_OK;
-  }
-  */
-
-  int address;
-  Eeprom_Read( EEPROM_TCP_REMOTE_ADDRESS, (uchar*)&address, 4 );
-
-  *a0 = IP_ADDRESS_A( address );
-  *a1 = IP_ADDRESS_B( address );
-  *a2 = IP_ADDRESS_C( address );
-  *a3 = IP_ADDRESS_D( address );
-
-  return CONTROLLER_OK;
+  return Network->TcpOutAddress;
 }
 
 /**
@@ -409,26 +471,22 @@ int Network_GetTcpOutAddress( int* a0, int* a1, int* a2, int* a3 )
 */
 int Network_GetMask( int* a0, int* a1, int* a2, int* a3 )
 {
-  if ( Network_Valid == NET_UNCHECKED )
-    Network_GetValid();
-
-  if ( Network_Valid == NET_INVALID )
+  if( Network_GetPending() )
+    return CONTROLLER_ERROR_NO_NETWORK;
+  
+  struct netif* mc_netif;
+  int address = 0;
+  // we specify our network interface as en0 when we init
+  mc_netif = netif_find( "en0" );
+  if( mc_netif != NULL )
   {
-    *a0 = 255;
-    *a1 = 255;
-    *a2 = 255;
-    *a3 = 0;
+    address = mc_netif->netmask.addr;
 
-    return CONTROLLER_OK;
+    *a0 = NETIF_IP_ADDRESS_A( address );
+    *a1 = NETIF_IP_ADDRESS_B( address );
+    *a2 = NETIF_IP_ADDRESS_C( address );
+    *a3 = NETIF_IP_ADDRESS_D( address );
   }
-
-  int address;
-  Eeprom_Read( EEPROM_SYSTEM_NET_MASK, (uchar*)&address, 4 );
-
-  *a0 = IP_ADDRESS_A( address );
-  *a1 = IP_ADDRESS_B( address );
-  *a2 = IP_ADDRESS_C( address );
-  *a3 = IP_ADDRESS_D( address );
     
   return CONTROLLER_OK;
 }
@@ -445,26 +503,22 @@ int Network_GetMask( int* a0, int* a1, int* a2, int* a3 )
 */
 int Network_GetGateway( int* a0, int* a1, int* a2, int* a3 )
 {
-  if ( Network_Valid == NET_UNCHECKED )
-    Network_GetValid();
-
-  if ( Network_Valid == NET_INVALID )
+  if( Network_GetPending() )
+    return CONTROLLER_ERROR_NO_NETWORK;
+  
+  struct netif* mc_netif;
+  int address = 0;
+  // we specify our network interface as en0 when we init
+  mc_netif = netif_find( "en0" );
+  if( mc_netif != NULL )
   {
-    *a0 = 192;
-    *a1 = 168;
-    *a2 = 0;
-    *a3 = 1;
+    address = mc_netif->gw.addr;
 
-    return CONTROLLER_OK;
+    *a0 = NETIF_IP_ADDRESS_A( address );
+    *a1 = NETIF_IP_ADDRESS_B( address );
+    *a2 = NETIF_IP_ADDRESS_C( address );
+    *a3 = NETIF_IP_ADDRESS_D( address );
   }
-
-  int address;
-  Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&address, 4 );
-
-  *a0 = IP_ADDRESS_A( address );
-  *a1 = IP_ADDRESS_B( address );
-  *a2 = IP_ADDRESS_C( address );
-  *a3 = IP_ADDRESS_D( address );
   
   return CONTROLLER_OK;
 }
@@ -499,8 +553,16 @@ void* Socket( int address, int port )
   remote_addr.addr = htonl(address);
 
   retval = netconn_connect( conn, &remote_addr, port );
+  
   if( ERR_OK != retval )
+  {
+    //netconn_delete( conn );
+    while( netconn_delete( conn ) != ERR_OK )
+			{
+				vTaskDelay( 10 );
+			}
     conn = NULL;
+  }
   
   return conn;
 }
@@ -630,7 +692,7 @@ void SocketClose( void* socket )
 {
   netconn_close( (struct netconn *)socket );
   netconn_delete( (struct netconn *)socket );
-  return; //0;
+  return;
 }
 
 /**	
@@ -701,8 +763,9 @@ void* DatagramSocket( int port )
   conn->readingbuf = NULL;
 
   // hook it up
+  netconn_bind( conn, NULL, port ); // Liam
   //netconn_connect(conn, 0, port);
-  netconn_bind( conn, IP_ADDR_ANY, port );
+  //netconn_bind( conn, IP_ADDR_ANY, port );
 
   return conn;
 }
@@ -805,6 +868,143 @@ void DatagramSocketClose( void* socket )
 /** @}
 */
 
+void Network_SetDhcpEnabled( int enabled )
+{
+  if( enabled && !Network_GetDhcpEnabled() )
+  {
+    struct netif* mc_netif;
+    // we specify our network interface as en0 when we init
+    mc_netif = netif_find( "en0" );
+    if( mc_netif != NULL )
+      Network_DhcpStart( mc_netif );
+      
+    Eeprom_Write( EEPROM_DHCP_ENABLED, (uchar*)&enabled, 4 );
+  }
+  
+  if( !enabled && Network_GetDhcpEnabled() )
+  {
+    struct netif* mc_netif;
+    // we specify our network interface as en0 when we init
+    mc_netif = netif_find( "en0" );
+    if( mc_netif != NULL )
+      Network_DhcpStop( mc_netif );
+    Eeprom_Write( EEPROM_DHCP_ENABLED, (uchar*)&enabled, 4 );
+    Network_SetValid( 1 ); // bring the 
+  }
+  return;
+}
+
+int Network_GetDhcpEnabled( )
+{
+  int state;
+  Eeprom_Read( EEPROM_DHCP_ENABLED, (uchar*)&state, 4 );
+  return state; 
+}
+
+void Network_SetWebServerEnabled( int state )
+{
+  if( state )
+  {
+    if( Network->WebServerTaskPtr == NULL )
+      Network_StartWebServer( );
+
+    if( !Network_GetWebServerEnabled( ) )
+      Eeprom_Write( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
+  }
+  else
+  {
+    Network_StopWebServer( );
+
+    if( Network_GetWebServerEnabled( ) )
+      Eeprom_Write( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
+  }
+}
+
+void Network_StartWebServer( )
+{
+  if( Network->WebServerTaskPtr == NULL )
+    Network->WebServerTaskPtr = TaskCreate( WebServer, "WebServ", 300, NULL, 4 );
+}
+
+void Network_StopWebServer( )
+{
+  if( Network->WebServerTaskPtr != NULL )
+  {
+    TaskDelete( Network->WebServerTaskPtr );
+    Network->WebServerTaskPtr = NULL;
+    CloseWebServer( );
+  }
+}
+
+int Network_GetWebServerEnabled( )
+{
+  int state;
+  Eeprom_Read( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
+  if( state != 1 )
+    state = 0;
+  return state;
+}
+
+void Network_DhcpStart( struct netif* netif )
+{
+  Network_SetPending( 1 ); // set a flag so nobody else tries to set up this netif
+  int count = 0;
+  dhcp_start( netif );
+  Network->DhcpFineTaskPtr = TaskCreate( DhcpFineTask, "DhcpFine", 150, 0, 1 );
+  Network->DhcpCoarseTaskPtr = TaskCreate( DhcpCoarseTask, "DhcpCoarse", 100, 0, 1 );
+  // now hang out for a second until we get an address
+  // if DHCP is enabled but we don't find a DHCP server, just use the network config stored in EEPROM
+  while( netif->ip_addr.addr == 0 && count < 100 ) // timeout after 10 (?) seconds of waiting for a DHCP address
+  {
+    count++;
+    Sleep( 100 );
+  }
+  if( netif->ip_addr.addr == 0 ) // if we timed out getting an address via DHCP, just use whatever's in EEPROM
+  {
+    struct ip_addr ip, gw, mask; // network config stored in EEPROM
+    ip.addr = Network->TempIpAddress;
+    mask.addr = Network->TempMask;
+    gw.addr = Network->TempGateway;
+    netif_set_addr( netif, &ip, &mask, &gw );
+  }
+  Network_SetPending( 0 );
+  return;
+}
+
+void Network_DhcpStop( struct netif* netif )
+{
+  dhcp_release( netif );
+  TaskDelete( Network->DhcpFineTaskPtr );
+  TaskDelete( Network->DhcpCoarseTaskPtr );
+  Network->DhcpFineTaskPtr = NULL;
+  Network->DhcpCoarseTaskPtr = NULL;
+  netif_set_up(netif); // bring the interface back up, as dhcp_release() takes it down
+  return;
+}
+
+// TODO - eventually create these as timers instead of tasks
+// right now, the dhcp_tmr functions cannot be called from within the Timer ISR
+void DhcpFineTask( void* p )
+{
+  (void)p;
+  while( true )
+  {
+    dhcp_fine_tmr();
+    Sleep( DHCP_FINE_TIMER_MSECS );
+  }
+}
+
+void DhcpCoarseTask( void* p )
+{
+  (void)p;
+  while( true )
+  {
+    dhcp_fine_tmr();
+    Sleep( DHCP_COARSE_TIMER_SECS * 1000 );
+  }
+}
+
+
 int Network_AddressConvert( char* address, int* a0, int* a1, int* a2, int* a3 )
 {
   return ( sscanf( address, "%d.%d.%d.%d", a0, a1, a2, a3 ) == 4 ) ? CONTROLLER_OK : CONTROLLER_ERROR_NO_ADDRESS;
@@ -846,37 +1046,63 @@ int Network_Init( )
 
   extern err_t ethernetif_init( struct netif *netif );
   static struct netif EMAC_if;
+  int address, mask, gateway, dhcp;
+  dhcp = Network_GetDhcpEnabled();
 
-  Network_Valid = NET_UNCHECKED;
-
-  int a0, a1, a2, a3;
-  Network_GetAddress( &a0, &a1, &a2, &a3 );
-  unsigned int address = IP_ADDRESS( a0, a1, a2, a3 );
-
-  int m0, m1, m2, m3;
-  Network_GetMask( &m0, &m1, &m2, &m3 );
-  int mask = IP_ADDRESS( m0, m1, m2, m3 );
-
-  int g0, g1, g2, g3;
-  Network_GetGateway( &g0, &g1, &g2, &g3 );
-  int gateway = IP_ADDRESS( g0, g1, g2, g3 );
-
-	/* Create and configure the EMAC interface. */
-//	IP4_ADDR(&xIpAddr,emacIPADDR0,emacIPADDR1,emacIPADDR2,emacIPADDR3);
-//	IP4_ADDR(&xNetMast,emacNET_MASK0,emacNET_MASK1,emacNET_MASK2,emacNET_MASK3);
-//	IP4_ADDR(&xGateway,emacGATEWAY_ADDR0,emacGATEWAY_ADDR1,emacGATEWAY_ADDR2,emacGATEWAY_ADDR3);
-	netif_add(&EMAC_if, (struct ip_addr *)&address, (struct ip_addr *)&mask, (struct ip_addr *)&gateway, NULL, ethernetif_init, tcpip_input);
-
-	/* make it the default interface */
+  if( dhcp )
+  {
+    address = 0;
+    mask = 0;
+    gateway = 0;
+  }
+  else // DHCP not enabled, just read whatever the manual IP address in EEPROM is.
+  {
+    address = Network->TempIpAddress;
+    mask = Network->TempMask;
+    gateway = Network->TempGateway;
+  }
+  // add our network interface to the system
+  Network_SetPending( 1 ); //netif_add goes away for a long time if there's no Ethernet cable connected.
+  netif_add(&EMAC_if, (struct ip_addr*)&address, (struct ip_addr*)&mask, 
+                        (struct ip_addr*)&gateway, NULL, ethernetif_init, tcpip_input);
+	// make it the default interface
   netif_set_default(&EMAC_if);
-
-	/* bring it up */
+	// bring it up
   netif_set_up(&EMAC_if);
+  // name it so we can find it later
+  EMAC_if.name[0] = 'e';
+  EMAC_if.name[1] = 'n';
+  EMAC_if.num = 0;
+  Network_SetPending( 0 ); // all done for now
 
+  if( dhcp )
+    Network_DhcpStart( &EMAC_if );
+  
+  if( NetworkOsc_GetTcpAutoConnect( ) )
+  {
+    Network->TcpRequested = 1;
+    Osc_StartTcpTask( );
+  }
+
+  if( Network_GetWebServerEnabled( ) )
+    Network_StartWebServer( );
+  
+  
+  /*
+  hmm...some work to get this together.
+  vSemaphoreCreateBinary( Network.semaphore );
+  
+  
+  if( !Timer_GetActive() )
+    Timer_SetActive( true );
+  Timer_InitializeEntry( &Network.DhcpFineTimer, Network_DhcpFineCallback, 0, DHCP_FINE_TIMER_MSECS, true);
+  // timer acting weird at the moment.......
+  Timer_InitializeEntry( &Network.DhcpCoarseTimer, Network_DhcpCoarseCallback, 1, DHCP_COARSE_TIMER_SECS * 150, true);
+  Timer_Set( &Network.DhcpFineTimer );
+  Timer_Set( &Network.DhcpCoarseTimer );
+  */
   return CONTROLLER_OK;
 }
-
-
 
 /** \defgroup NetworkOSC Network - OSC
   Configure the Controller Board's Network Settings via OSC.
@@ -886,8 +1112,19 @@ int Network_Init( )
     There is only one Network system, so a device index is not used.
    
     \section properties Properties
-    The Network system has six properties - \b address, \b mask, \b gateway,
-    \b valid, \b mac and \b active.
+    The Network system has twelve properties 
+    - \b address
+    - \b mask
+    - \b gateway,
+    - \b valid
+    - \b mac
+    - \b active 
+    - \b osc_udp_port
+    - \b osc_tcpout_address
+    - \b osc_tcpout_port
+    - \b osc_tcpout_connect
+    - \b osc_tcpout_auto
+    - \b dhcp
 
     \par Address
     The \b 'address' property corresponds to the IP address of the Controller Board.
@@ -896,30 +1133,6 @@ int Network_Init( )
     \par
     To read the current IP address, omit the argument value from the end of the message:
     \verbatim /network/address \endverbatim
-
-    \par osc_udp_port OSC UDP Port
-    The \b osc_udp_port corresponds to the port that the Make Controller listens on for
-    incoming OSC messages via UDP.  This value is stored persistently, so it's available
-    even after the board has rebooted.
-    
-    \par osc_tcp_address OSC TCP Address
-    The \b osc_tcp_address property corresponds to the IP address that the Make Controller
-    will try to connect to when 
-
-    \par osc_tcp_port OSC TCP PORT
-    The \b osc_tcp_port property corresponds to the address that the board will try to connect
-    to when making a TCP connection.  This value is stored persistently, so it's available
-    even after the board has rebooted.
-    
-    \par tcp_connect TCP Connect
-    The \b tcp_connect property allows you to make a connection to a remote TCP server.  It
-    will try to connect to a server specified by the \b osc_tcp_address and \b osc_tcp_port properties.
-
-    \par tcp_autoconnect TCP Auto Connect
-    The \b tcp_autoconnect property specifies whether the board should attempt to make a connection
-    to a remote TCP server as soon as it boots up.  It will try to connect to a server 
-    specified by the \b osc_tcp_address and \b osc_tcp_port properties.  This value is stored 
-    persistently, so it's available even after the board has rebooted.
    
     \par Mask
     The \b 'mask' property corresponds to the network mask of the Controller Board.
@@ -944,15 +1157,7 @@ int Network_Init( )
     \verbatim /network/gateway 192.168.0.1 \endverbatim
     To read the current gateway, omit the argument value from the end of the message:
     \verbatim /network/gateway \endverbatim
-   
-    \par MAC
-    The \b 'mac' property corresponds to the Ethernet MAC address of the Controller Board.
-    This value is read-only.
-    \par
-    To read the MAC address of the Controller, send the message
-    \verbatim /network/mac \endverbatim
-    The board will respond by sending back an OSC message with the MAC address.
-   
+
     \par Valid
     The \b 'valid' property corresponds to a checksum used to make sure the board's network settings are valid.
     Ideally, this should be called each time an address setting is changed so that if
@@ -965,6 +1170,100 @@ int Network_Init( )
     To check if the current settings have been set as valid, send the message:
     \verbatim /network/valid \endverbatim
     with no argument value.
+
+    \par OSC UDP Port
+    The \b osc_udp_port corresponds to the port that the Make Controller listens on for
+    incoming OSC messages via UDP.  This value is stored persistently, so it's available
+    even after the board has rebooted.  This is 10000 by default.
+    \par
+    To tell the board to listen on port 10001, instead of the default 10000, send the message
+    \code /network/osc_udp_port 10001 \endcode
+    To read back the port that the board is currently listening on, send the message
+    \verbatim /network/osc_udp_port \endverbatim
+    with no argument value.
+
+    \subsection tcpconnections TCP Connections
+    The Make Controller can act as a TCP client, make a connection to a remote TCP server, and
+    communicate with it via OSC.  This can be quite handy for providing a remote web interface for the board
+    and for solving all the bi-directional communications issues present with UDP communication. 
+
+    To do this, there are just a couple of steps.
+    - You'll need to tell the board the address & the port of the server you want to connect to.
+    - Tell the board to connect
+    - optionally set the board to automatically reconnect when it starts back up (in case it crashes).
+    The commands below allow you to control all of this via OSC.
+    
+    \par OSC TCP Address
+    The \b osc_tcpout_address property corresponds to the IP address that the Make Controller
+    will try to connect to when the \b osc_tcpout_connect \b 1 command is sent.
+    \par
+    To tell the board to prepare to connect to 192.168.0.118, send the message
+    \code /network/osc_tcpout_address 192.168.0.118 \endcode
+    To read back the address that the board is planning on connecting to, send the message
+    \verbatim /network/osc_tcpout_address \endverbatim
+    with no argument value.
+
+    \par OSC TCP PORT
+    The \b osc_tcpout_port property corresponds to the port that the board will try to connect
+    on when making a TCP connection.  This value is stored persistently, so it's available
+    even after the board has rebooted.  This is 10101 by default.
+    \par
+    To tell the board to prepare to connect on port 11111, send the message
+    \code /network/osc_tcpout_port 11111 \endcode
+    To read back the address that the port is planning on connecting on, send the message
+    \verbatim /network/osc_tcpout_port \endverbatim
+    with no argument value.
+    
+    \par TCP Connect
+    The \b osc_tcpout_connect property allows you to make a connection to a remote TCP server.  It
+    will try to connect to a server specified by the \b osc_tcpout_address and \b osc_tcpout_port properties.
+    \par
+    When you send the message
+    \code /network/osc_tcpout_connect 1 \endcode
+    the board will attempt to make a connection to a server specified by the \b osc_tcpout_address and \b osc_tcpout_port properties.
+    You can tell the board to disconnect from the server by sending the message
+    \code /network/osc_tcpout_connect 0 \endcode
+    Lastly, you can read whether the board is currently connected (or trying to connect) by sending the message
+    \code /network/osc_tcpout_connect \endcode
+    with no argument value.
+
+    \par  TCP Auto Connect
+    The \b osc_tcpout_auto property specifies whether the board should attempt to make a connection
+    to a remote TCP server as soon as it boots up.  It will try to connect to a server 
+    specified by the \b osc_tcp_address and \b osc_tcp_port properties.  This value is stored 
+    persistently, so it's available even after the board has rebooted.  If the board is not currently connected
+    to a TCP server, it will attempt to make a connection when this command is given.
+    \par 
+    To set the board to make a TCP connection as soon as it boots up, send the message
+    \code /network/osc_tcpout_auto 1 \endcode
+    To read whether the board will automatically try to connect on reboot, send the message
+    \code /network/osc_tcpout_auto \endcode
+    with no argument value.
+
+    \subsection Miscelleneous
+
+    \par DHCP
+    The \b dhcp property sets whether the board should try to dynamically retrieve a network address from 
+    a network router.  If no DHCP server is available, the board will use the network settings stored in memory
+    for the \b address, \b gateway, and \b mask properties.
+    \par
+    To turn DHCP on, send the message
+    \code /network/dhcp 1 \endcode
+    and the board will immediately try to get an address.  To check what address the board got, send the message
+    \code /network/address \endcode
+    as you normally would.  To turn DHCP off, send the message
+    \code /network/dhcp 0 \endcode
+    To read whether DHCP is currently set on the board, send the message
+    \code /network/dhcp \endcode
+    with no argument value.
+   
+    \par MAC
+    The \b mac property corresponds to the Ethernet MAC address of the Controller Board.
+    This value is read-only.
+    \par
+    To read the MAC address of the Controller, send the message
+    \verbatim /network/mac \endverbatim
+    The board will respond by sending back an OSC message with the MAC address.
    
     \par Active
     The \b 'active' property corresponds to the active state of the Network system.
@@ -977,13 +1276,37 @@ int Network_Init( )
     You can set the active flag by sending
     \verbatim /network/active 1 \endverbatim
 */
+#ifdef OSC
+
+void NetworkOsc_SetTcpAutoConnect( int yesorno )
+{
+  if( yesorno != NetworkOsc_GetTcpAutoConnect( ) ) // only write it if it has changed
+    Eeprom_Write( EEPROM_TCP_AUTOCONNECT, (uchar*)&yesorno, 4 );
+  if( Network->TcpRequested == 0 && yesorno ) // if we're not already connected, connect now
+  {
+    Network->TcpRequested = 1;
+    Osc_StartTcpTask( );
+  }
+}
+
+int NetworkOsc_GetTcpAutoConnect( )
+{
+  int state;
+  Eeprom_Read( EEPROM_TCP_AUTOCONNECT, (uchar*)&state, 4 );
+  return state;
+}
+
+int NetworkOsc_GetTcpRequested( )
+{
+  return Network->TcpRequested;
+}
+
 
 #include "osc.h"
-// todo - allow a TCP server to be fired up via OSC
 static char* NetworkOsc_Name = "network";
 static char* NetworkOsc_PropertyNames[] = { "active", "address", "mask", "gateway", "valid", "mac", 
                                               "osc_udp_port", "osc_tcpout_address", "osc_tcpout_port", 
-                                              "tcpout_connect", "tcpout_autoconnect", 0 }; // must have a trailing 0
+                                              "osc_tcpout_connect", "osc_tcpout_auto", "dhcp", "webserver", 0 }; // must have a trailing 0
 
 int NetworkOsc_PropertySet( int property, char* typedata, int channel );
 int NetworkOsc_PropertyGet( int property, int channel );
@@ -995,6 +1318,9 @@ const char* NetworkOsc_GetName( void )
 
 int NetworkOsc_ReceiveMessage( int channel, char* message, int length )
 {
+  if ( Network_GetPending() )
+    return Osc_SubsystemError( channel, NetworkOsc_Name, "Network initializing...please wait." );
+  
   int status = Osc_GeneralReceiverHelper( channel, message, length, 
                                 NetworkOsc_Name,
                                 NetworkOsc_PropertySet, NetworkOsc_PropertyGet, 
@@ -1089,7 +1415,13 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
     }
     case 6: // osc_udp_port
     {
-      return Osc_SubsystemError( channel, NetworkOsc_Name, "UDP port over OSC not implemented." );
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
+
+      NetworkOsc_SetUdpPort( value );
+      break;
     }
     case 7: // osc_tcpout_address
     {
@@ -1102,11 +1434,65 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
       if ( status != CONTROLLER_OK )
         return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect TCP address - need 'xxx.xxx.xxx.xxx'" );
       
-      Network_SetTcpOutAddress( a0, a1, a2, a3 );
+      NetworkOsc_SetTcpOutAddress( a0, a1, a2, a3 );
+      break;
     }
     case 8: // osc_tcpout_port
     {
-      return Osc_SubsystemError( channel, NetworkOsc_Name, "TCP port over OSC not implemented." );
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
+
+      NetworkOsc_SetTcpOutPort( value );
+      break;
+    }
+    case 9: // osc_tcpout_connect
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
+
+      if( value && Network->TcpRequested == 0 )
+      {
+        Network->TcpRequested = 1;
+        Osc_StartTcpTask( );
+      }
+      if( !value && Network->TcpRequested == 1 )  
+        Network->TcpRequested = 0;
+
+      break;
+    }
+    case 10: // osc_tcpout_auto
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
+
+      NetworkOsc_SetTcpAutoConnect( value );
+      break;
+    }
+    case 11: // dhcp
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
+      
+      Network_SetDhcpEnabled( value );
+      break;
+    }
+    case 12: // webserver
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
+      
+      Network_SetWebServerEnabled( value );
+      break;
     }
   }
   return CONTROLLER_OK;
@@ -1132,19 +1518,22 @@ int NetworkOsc_PropertyGet( int property, int channel )
       Osc_CreateMessage( channel, address, ",i", value );      
       break;
     case 1:
-      Network_GetAddress( &a0, &a1, &a2, &a3 );
+      if ( Network_GetAddress( &a0, &a1, &a2, &a3 ) == CONTROLLER_ERROR_NO_NETWORK )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "No network address available - try plugging in an Ethernet cable." );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
       Osc_CreateMessage( channel, address, ",s", output );      
       break;
     case 2:
-      Network_GetMask( &a0, &a1, &a2, &a3 );
+      if ( Network_GetMask( &a0, &a1, &a2, &a3 ) == CONTROLLER_ERROR_NO_NETWORK )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "No mask available - try plugging in an Ethernet cable." );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
       Osc_CreateMessage( channel, address, ",s", output );      
       break;
     case 3:
-      Network_GetGateway( &a0, &a1, &a2, &a3 );
+      if ( Network_GetGateway( &a0, &a1, &a2, &a3 ) == CONTROLLER_ERROR_NO_NETWORK )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "No gateway available - try plugging in an Ethernet cable." );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
       Osc_CreateMessage( channel, address, ",s", output );      
@@ -1161,14 +1550,51 @@ int NetworkOsc_PropertyGet( int property, int channel )
       Osc_CreateMessage( channel, address, ",s", output );      
       break;
     case 6: // osc_udp_port
+      value = NetworkOsc_GetUdpPort( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );      
       break;
     case 7: // osc_tcpout_address
-      Network_GetTcpOutAddress( &a0, &a1, &a2, &a3 );
+      value = NetworkOsc_GetTcpOutAddress( );
+      a0 = IP_ADDRESS_A( value );
+      a1 = IP_ADDRESS_B( value );
+      a2 = IP_ADDRESS_C( value );
+      a3 = IP_ADDRESS_D( value );
+      Network_AddressConvert( address, &a0, &a1, &a2, &a3 );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
       Osc_CreateMessage( channel, address, ",s", output );    
+      break;
+    case 8: // osc_tcpout_port
+      value = NetworkOsc_GetTcpOutPort( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );
+      break;
+    case 9: // osc_tcpout_connect
+      value = NetworkOsc_GetTcpRequested( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );
+      break;
+    case 10: // osc_tcpout_auto
+      value = NetworkOsc_GetTcpAutoConnect( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );
+      break;
+    case 11: // dhcp
+      value = Network_GetDhcpEnabled( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );      
+      break;
+    case 12: // webserver
+      value = Network_GetWebServerEnabled( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );      
       break;
   }
   
   return result;
 }
+
+#endif // OSC
+
+

@@ -4,52 +4,43 @@
 
 #include "stdlib.h"
 #include "config.h"
-#include "poly.h"
 #include "serial.h"
-
 #include "string.h"
 
 void BlinkTask( void* parameters );
 void NetworkCheck( void );
-void vBasicWEBServer( void *pvParameters );
 
-void Make( )
+void Run( ) // this task gets called as soon as we boot up.
 {
-  TaskCreate( BlinkTask, "Blink", 400, 0, 1 );
+  TaskCreate( BlinkTask, "Blink", 100, 0, 1 );
 
   // Do this right quick after booting up - otherwise we won't be recognised
   Usb_SetActive( 1 );
 
-  // Active the Poly Function Task
-  // Poly_SetActive( true );
-
-  // Fire up the OSC system
+  // Fire up the OSC system and register the subsystems you want to use
   Osc_SetActive( true );
-  // Add all the subsystems (make sure OSC_SUBSYSTEM_COUNT is large enough to accomodate them all)
-  Osc_RegisterSubsystem( 0, AppLedOsc_GetName(), AppLedOsc_ReceiveMessage, NULL );
-  Osc_RegisterSubsystem( 1, DipSwitchOsc_GetName(), DipSwitchOsc_ReceiveMessage, NULL );
-  Osc_RegisterSubsystem( 2, ServoOsc_GetName(), ServoOsc_ReceiveMessage, NULL );
-  Osc_RegisterSubsystem( 3, AnalogInOsc_GetName(), AnalogInOsc_ReceiveMessage, NULL );
-  Osc_RegisterSubsystem( 4, DigitalOutOsc_GetName(), DigitalOutOsc_ReceiveMessage, NULL );
-  Osc_RegisterSubsystem( 5, DigitalInOsc_GetName(), DigitalInOsc_ReceiveMessage, NULL );
-  Osc_RegisterSubsystem( 6, MotorOsc_GetName(), MotorOsc_ReceiveMessage, NULL );
-  Osc_RegisterSubsystem( 7, PwmOutOsc_GetName(), PwmOutOsc_ReceiveMessage, NULL );
-  Osc_RegisterSubsystem( 8, LedOsc_GetName(), LedOsc_ReceiveMessage, NULL );
-  Osc_RegisterSubsystem( 9, DebugOsc_GetName(), DebugOsc_ReceiveMessage, NULL );
-  Osc_RegisterSubsystem( 10, SystemOsc_GetName(), SystemOsc_ReceiveMessage, NULL );
-  Osc_RegisterSubsystem( 11, NetworkOsc_GetName(), NetworkOsc_ReceiveMessage, NULL );
-  Osc_RegisterSubsystem( 12, SerialOsc_GetName(), SerialOsc_ReceiveMessage, NULL );
-  Osc_RegisterSubsystem( 13, IoOsc_GetName(), IoOsc_ReceiveMessage, NULL );
-  Osc_RegisterSubsystem( 14, StepperOsc_GetName(), StepperOsc_ReceiveMessage, NULL );
+  // make sure OSC_SUBSYSTEM_COUNT (osc.h) is large enough to accomodate them all
+  Osc_RegisterSubsystem( AppLedOsc_GetName(), AppLedOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( DipSwitchOsc_GetName(), DipSwitchOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( ServoOsc_GetName(), ServoOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( AnalogInOsc_GetName(), AnalogInOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( DigitalOutOsc_GetName(), DigitalOutOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( DigitalInOsc_GetName(), DigitalInOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( MotorOsc_GetName(), MotorOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( PwmOutOsc_GetName(), PwmOutOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( LedOsc_GetName(), LedOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( DebugOsc_GetName(), DebugOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( SystemOsc_GetName(), SystemOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( NetworkOsc_GetName(), NetworkOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( SerialOsc_GetName(), SerialOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( IoOsc_GetName(), IoOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( StepperOsc_GetName(), StepperOsc_ReceiveMessage, NULL );
 
   // Permit DIP switches to change the base IP settings
   NetworkCheck();
 
   // Starts the network up.  Will not return until a network is found...
   Network_SetActive( true );
-
-	// Start the example webserver
-  TaskCreate( vBasicWEBServer, "WebServ", 300, NULL, 4 );
 }
 
 void BlinkTask( void* p )
@@ -63,7 +54,7 @@ void BlinkTask( void* p )
     Led_SetState( 0 );
     Sleep( 900 );
     Led_SetState( 1 );
-    Sleep( 10 );
+    Sleep( 10 ); 
   }
 }
 
@@ -101,3 +92,6 @@ void NetworkCheck()
     Network_SetValid( 1 );
   }
 }
+
+
+
