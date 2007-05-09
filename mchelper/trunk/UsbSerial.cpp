@@ -335,6 +335,8 @@ UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
   DWORD ret;
   UsbSerial::UsbStatus retval = OK;
   DWORD numWritten;
+  
+  int read = 0;
     
   if( !deviceOpen )
   {
@@ -351,7 +353,7 @@ UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
 	// reset the write overlapped structure
   overlappedWrite.Offset = overlappedWrite.OffsetHigh = 0; 
   // messageInterface->message( 1, "Writing...\n" );
-  success = WriteFile( deviceHandle, buffer, count, &cout, &overlappedWrite ) ;
+  success = WriteFile( deviceHandle, buffer, length, &cout, &overlappedWrite );
   
   if( !success )
   {
@@ -367,24 +369,20 @@ UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
 	    if ( ret == WAIT_OBJECT_0 )
 	    {
 				// messageInterface->message( 1, "Write: IO PENDING.\n" );
-			  GetOverlappedResult( deviceHandle, &overlappedWrite, &numWritten, TRUE);	
-			  if( count == numWritten )
-			  {
-			  	// messageInterface->message( 1, "Write: COMPLETE.\n" );
-			    retval = OK; 
-			  }
-			  else
-			  {
-			  	// messageInterface->message( 1, "write event, but only wrote %d\n", numWritten );
-		      usbClose( );
-			    retval = IO_ERROR;
-			  }
+			
+			do
+			{
+				GetOverlappedResult( deviceHandle, &overlappedWrite, &numWritten, TRUE);
+				read += numWritten;
+			} while( read != length );
+			if( read == length )
+				retval = OK;
+			else
+			  retval = IO_ERROR;
 	    }
 	    else
-	    {
-	      usbClose( );
 	      retval = IO_ERROR;
-	    }
+
 	  }
 	  else
 	  {
