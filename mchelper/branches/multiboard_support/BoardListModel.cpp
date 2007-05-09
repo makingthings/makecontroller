@@ -44,10 +44,22 @@ QVariant BoardListModel::data(const QModelIndex &index, int role) const
     
   const Board *curBoard = boardList.at( index.row() );
 
-  if (role == Qt::DisplayRole)
-    return curBoard->name;
-  else
-    return QVariant();
+  switch( role ) {
+    case Qt::DisplayRole:
+      return curBoard->name;
+      break;
+    
+    case Qt::ToolTipRole:
+      return curBoard->name;
+      break;
+    
+    case Qt::StatusTipRole:
+      return curBoard->name;
+      break;
+      
+    default:
+      return QVariant();
+  }
 }
 
 bool BoardListModel::setData ( const QModelIndex & idx, const QVariant & value, int role )
