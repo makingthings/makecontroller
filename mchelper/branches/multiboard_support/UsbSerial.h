@@ -88,6 +88,7 @@ class UsbSerial
 		bool usbIsOpen( );
 		
     int scanUsbSerialPorts(TCHAR** openPorts);
+    TCHAR* active_pname;
 		
 	protected:
 	  //Mac-only

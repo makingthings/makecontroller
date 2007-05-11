@@ -78,7 +78,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 
   // Scan for available USB/Serial devices
   TCHAR* openPorts[32];
-  QAction* device_menu_action[32];
+  //QAction* device_menu_action[32];
   int foundOpen = 0;
   foundOpen = usb->scanUsbSerialPorts(openPorts);
   
@@ -87,27 +87,22 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   {
     if( openPorts[i] != NULL )
     {
+      printf("Port: %ls\n", openPorts[i]);
       
-      //usb->testOpen(openPorts[i]);
-      //int result = usb->testOpen(openPorts[i]);
+      //device_menu_action[i] = McHelperWindow::menuDevices->addAction( QString::fromUtf16((ushort*)openPorts[i]) );
       
-      //if( result == 0 ) {
-        printf("Port: %ls\n", openPorts[i]);
-        
-        device_menu_action[i] = McHelperWindow::menuDevices->addAction( QString::fromUtf16((ushort*)openPorts[i]) );
-        
-        device_menu_action[i]->setCheckable( TRUE );
-        //device_menu_action[i]->setChecked( TRUE );
-        device_menu_action[i]->setEnabled(true);
-        
-        connect( device_menu_action[i], SIGNAL( triggered() ), this, SLOT( doSomething() ));
-        
-        temp_board = new Board();
-        temp_board->name = "UsbSerial Board";
-        temp_board->type = Board::UsbSerial;
-        temp_board->com_port = QString::fromUtf16((ushort*) openPorts[i]);
-        boardModel->addBoard(temp_board);
-      //}
+      //device_menu_action[i]->setCheckable( TRUE );
+      //device_menu_action[i]->setChecked( TRUE );
+      //device_menu_action[i]->setEnabled(true);
+      
+      //QString menu_item_name = QString::fromUtf16((ushort*)openPorts[i]);
+      //connect( device_menu_action[i], SIGNAL( triggered() ), this, SLOT( deviceMenuSelected(const QString &) ));
+      
+      temp_board = new Board();
+      temp_board->name = "UsbSerial Board";
+      temp_board->type = Board::UsbSerial;
+      temp_board->com_port = QString::fromUtf16((ushort*) openPorts[i]);
+      boardModel->addBoard(temp_board);
     }
   }
   
@@ -176,10 +171,19 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous )
 {
   QString name = boardModel->data( current, Qt::DisplayRole ).toString();
+  QString com_port = boardModel->data( current, BoardListModel::COMPortRole ).toString();
   QString status_bar_text = boardModel->data( current, Qt::StatusTipRole ).toString();
   
   if ( boardModel->flags(current) & Qt::ItemIsEnabled ) {
-    message( 1, "Selection changed. Name: %s\n", name.toAscii().constData());
+    message( 1, "Switching to board: %s\n", name.toAscii().constData());
+    
+    // Close down the current link
+    usb->close();
+    
+    // Set the new active board name that we want
+    // the usb open routines to lock onto
+    usb->active_pname = (TCHAR*) com_port.utf16();
+
     statusBar()->showMessage(status_bar_text, 1000);
   }
 }

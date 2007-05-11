@@ -93,13 +93,17 @@ UsbSerial::UsbStatus UsbSerial::usbOpen( )
 	#ifdef Q_WS_WIN
 		if( deviceOpen )  //if it's already open, do nothing.
 		  return ALREADY_OPEN;
-		TCHAR* openPorts[32];
+		
+    TCHAR* openPorts[32];
 		int foundOpen = ScanEnumTree( TEXT("SYSTEM\\CURRENTCONTROLSET\\ENUM\\USB"), openPorts);
 		//messageInterface->message( 1, "Found open: %d\n", foundOpen );
-		int i;
+		
+    int i;
 		for( i = 0; i < foundOpen; i++ )
-		{
-			if( openPorts[i] != NULL )
+		{ 
+      // See if we stumble upon the active selected
+      // board we are looking for...
+      if( _tcscmp(openPorts[i], active_pname) == 0 )
 			{
 				if( openDevice( openPorts[i] ) == 0 )
 				{
@@ -124,7 +128,7 @@ UsbSerial::UsbStatus UsbSerial::usbOpen( )
 
 void UsbSerial::usbClose( )
 {
-	if( deviceOpen )
+  if( deviceOpen )
 	{
     // Linux Only
     #if (defined(Q_WS_LINUX))
@@ -421,6 +425,7 @@ bool UsbSerial::usbIsOpen( )
 #ifdef Q_WS_WIN
 int UsbSerial::testOpen( TCHAR* deviceName )
 {
+  //messageInterface->message( 1, "trying to open... %ls\n", deviceName );
   deviceHandle = CreateFile( deviceName, 
 			GENERIC_READ | GENERIC_WRITE, 
 			0, 
@@ -428,6 +433,7 @@ int UsbSerial::testOpen( TCHAR* deviceName )
 			OPEN_EXISTING, 
 			FILE_FLAG_OVERLAPPED, 0 );
   
+  //messageInterface->message( 1, "handle... %d\n", deviceHandle );
   if ( deviceHandle == INVALID_HANDLE_VALUE )
   {
     CloseHandle( deviceHandle );
