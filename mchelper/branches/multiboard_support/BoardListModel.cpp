@@ -71,6 +71,9 @@ QVariant BoardListModel::data(const QModelIndex &index, int role) const
       return tmp_string;
       break;
       
+    case BoardListModel::COMPortRole:
+     return curBoard->com_port;
+     
     default:
       return QVariant();
   }

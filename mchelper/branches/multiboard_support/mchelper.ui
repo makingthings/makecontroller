@@ -593,13 +593,7 @@
     <addaction name="actionAboutMchelper" />
     <addaction name="actionClearOutput" />
    </widget>
-   <widget class="QMenu" name="menuDevices" >
-    <property name="title" >
-     <string>Devices</string>
-    </property>
-   </widget>
    <addaction name="menuFile" />
-   <addaction name="menuDevices" />
   </widget>
   <widget class="QStatusBar" name="statusbar" />
   <action name="actionAboutMchelper" >

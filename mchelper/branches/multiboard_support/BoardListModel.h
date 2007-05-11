@@ -36,8 +36,8 @@ class BoardListModel : public QAbstractListModel
      */
     enum Role
     {
-      HeaderRole = Qt::UserRole + 1,
-      WidgetRole
+      COMPortRole = Qt::UserRole + 1,
+      WidgetRole,
     };
     
     BoardListModel(const QList<Board*> boards, QObject *parent = 0);
