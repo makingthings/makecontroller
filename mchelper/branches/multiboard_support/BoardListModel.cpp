@@ -42,29 +42,86 @@ QVariant BoardListModel::data(const QModelIndex &index, int role) const
   if (index.row() < 0 || index.row() >= boardList.size())
     return QVariant();
     
-  const Board *curBoard = boardList.at( index.row() );
+  const UsbSerialBoard *curBoard = (UsbSerialBoard*) boardList.at( index.row() );
 
+  QString tmp_string;
+  
   switch( role ) {
     case Qt::DisplayRole:
-      return curBoard->name;
+      tmp_string.append(curBoard->name);
+      tmp_string.append("::");
+      tmp_string.append(curBoard->com_port);
+      
+      return tmp_string;
       break;
     
     case Qt::ToolTipRole:
-      return curBoard->name;
+      tmp_string.append(curBoard->name);
+      tmp_string.append("::");
+      tmp_string.append(curBoard->com_port);
+      
+      return tmp_string;
       break;
     
     case Qt::StatusTipRole:
-      return curBoard->name;
+      tmp_string.append(curBoard->name);
+      tmp_string.append("::");
+      tmp_string.append(curBoard->com_port);
+      
+      return tmp_string;
       break;
       
     default:
       return QVariant();
   }
+  
+  /*
+  static QIcon folder(QPixmap(":/images/folder.png"));
+
+  if (role == Qt::DecorationRole)
+  return qVariantFromValue(folder);
+  */
+}
+
+int BoardListModel::addBoard ( Board *board )
+{
+   beginInsertRows(QModelIndex(), boardList.count(), boardList.count());
+   this->boardList.append(board);
+   endInsertRows();
+
+   return boardList.count() - 1;
+}
+
+bool BoardListModel::removeBoard ( int row, const QModelIndex &parent )
+{
+   beginRemoveRows(QModelIndex(), row, row);
+   this->boardList.removeAt(row);
+   endRemoveRows();
+
+   return true;
+}
+
+Qt::ItemFlags BoardListModel::flags ( const QModelIndex & index ) const
+{
+  Qt::ItemFlags empty;
+  if( !index.isValid() || index.model() != this )
+    return empty;
+
+  Qt::ItemFlags basicFlags = Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled;
+  if( true )
+    return basicFlags; // Read-only
+  else
+    return basicFlags | Qt::ItemIsEditable;
 }
 
 bool BoardListModel::setData ( const QModelIndex & idx, const QVariant & value, int role )
 {
   return true;
+}
+
+Qt::DropActions BoardListModel::supportedDropActions() const
+{
+  return Qt::MoveAction;
 }
 
 BoardListModel::~BoardListModel()

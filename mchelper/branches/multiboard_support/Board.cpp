@@ -25,7 +25,7 @@
 /* Main Board superclass */
 Board::Board( )
 {
-  address = 0;
+  
 }
 
 
@@ -39,7 +39,6 @@ UdpBoard::UdpBoard( )
 /* USB Serial accessible Board subclass */
 UsbSerialBoard::UsbSerialBoard( )
 {
-  
 }
 
 
