@@ -56,6 +56,27 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	
   ////////////////////////////////////////////////////////////////////////////
   // Testing
+
+  // An array of all the known boards
+  QList<Board*> boards;
+    
+  // Just some testing data
+  ///////////////////////////////////////////////
+  Board *temp_board;
+  
+//  temp_board = new Board();
+//  temp_board->name = "Board One";
+//  boards.append(temp_board);
+//  
+//  temp_board = new Board();
+//  temp_board->name = "Board Two";
+//  boards.append(temp_board);
+  ///////////////////////////////////////////////
+  
+  // Create the BoardListModel
+  boardModel = new BoardListModel(boards, this);
+
+  // Scan for available USB/Serial devices
   TCHAR* openPorts[32];
   QAction* device_menu_action[32];
   int foundOpen = 0;
@@ -80,42 +101,36 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
         device_menu_action[i]->setEnabled(true);
         
         connect( device_menu_action[i], SIGNAL( triggered() ), this, SLOT( doSomething() ));
+        
+        temp_board = new Board();
+        temp_board->name = "UsbSerial Board";
+        temp_board->type = Board::UsbSerial;
+        temp_board->com_port = QString::fromUtf16((ushort*) openPorts[i]);
+        boardModel->addBoard(temp_board);
       //}
     }
   }
-    
   
-  //QAction *a1 = McHelperWindow::menuDevices->addAction( "COM1" );
-  //a1->setCheckable( TRUE );
-  //a1->setChecked( TRUE );
-  //a1->setEnabled(true);
-  //connect( a1, SIGNAL( triggered(bool) ), this, SLOT( doSomething() ));
-   
-      
-  // An array of all the known boards
-  QList<Board*> boards;
-    
-  Board *temp_board;
-  
-  temp_board = new Board();
-  temp_board->name = "Board One";
-  boards.append(temp_board);
-  
-  temp_board = new Board();
-  temp_board->name = "Board Two";
-  boards.append(temp_board);
-  
-  boardModel = new BoardListModel(boards, this);
+  // Some stuff about trying to enable drag/drop
+  // list reordering...
+  ///////////////////////////////////////////////
+  //listViewDevices->setMovement(QListView::Free);
+  listViewDevices->setSelectionMode(QAbstractItemView::SingleSelection);
+  listViewDevices->setDragEnabled(true);
+  //listViewDevices->setDropIndicatorShown(true);
+  listViewDevices->setAcceptDrops(true);
+  //listViewDevices->setAlternatingRowColors(true);
+  //listViewDevices->setDragDropMode(QAbstractItemView::InternalMove);
+  ///////////////////////////////////////////////
   
   // Connect the board list model to the devices listing view
   listViewDevices->setModel(boardModel);
-  //listViewDevices->show();
   
-  // Wire up the selection changed signal from the model to be
-  // handled here
+  // Wire up the selection changed signal from the
+  // model to be handled here
   connect( listViewDevices->selectionModel(), SIGNAL(currentChanged(const QModelIndex &, const QModelIndex &)),
            this,                                SLOT(deviceSelectionChanged(const QModelIndex &, const QModelIndex &)));
-       
+  
   ////////////////////////////////////////////////////////////////////////////
   
 	usb->start( );
@@ -155,7 +170,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   
   // Init the status bar and let the user know the app is loaded
   QString sb_message = tr("Ready.");
-  statusBar()->showMessage(sb_message, 1000);
+  statusBar()->showMessage(sb_message, 2000);
 }
 
 void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous )
@@ -163,8 +178,10 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   QString name = boardModel->data( current, Qt::DisplayRole ).toString();
   QString status_bar_text = boardModel->data( current, Qt::StatusTipRole ).toString();
   
-  message( 1, "list selection changed. Index: %i Name: %s\n", current.row(), name.toAscii().constData());
-  statusBar()->showMessage(status_bar_text, 1000);
+  if ( boardModel->flags(current) & Qt::ItemIsEnabled ) {
+    message( 1, "Selection changed. Name: %s\n", name.toAscii().constData());
+    statusBar()->showMessage(status_bar_text, 1000);
+  }
 }
 
 void McHelperWindow::closeEvent( QCloseEvent *qcloseevent )

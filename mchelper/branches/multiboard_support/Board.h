@@ -26,21 +26,26 @@
 class Board
 {
   public:
-    char* address;
-    char* s;
-    int   i;
-    float f;
+  
+    enum Types
+    {
+      UsbSerial,
+      UsbSamba,
+      Udp
+    };
+    
+    QString name;
+    QString type;
+    
+    QString com_port;
+    
+    QString ip_address;
+    QString ip_port;
     
     Board( );
     
-    ~Board()
-    {
-      if ( address != 0 )
-        free( address );
-    }
-    
-    QString name;
-      
+    ~Board() {}
+
   private:
       
 };

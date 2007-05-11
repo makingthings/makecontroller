@@ -19,7 +19,7 @@
 #define BOARDLISTMODEL_H_
 
 #include <QAbstractListModel>
-#include <QStringList>
+#include <QList>
 
 #include "Board.h"
 
@@ -46,9 +46,18 @@ class BoardListModel : public QAbstractListModel
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     
+    Qt::ItemFlags BoardListModel::flags ( const QModelIndex & index ) const;
+    Qt::DropActions BoardListModel::supportedDropActions() const;
+    
     bool setData ( const QModelIndex & index, const QVariant & value, int role = Qt::EditRole );
     /* QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const; */
-                      
+      
+    //bool insertRows(int position, int rows, const QModelIndex &index = QModelIndex());
+    //bool removeRows(int position, int rows, const QModelIndex &index = QModelIndex());
+    
+    int BoardListModel::addBoard ( Board *board );
+    bool BoardListModel::removeBoard ( int row, const QModelIndex &parent );
+                       
   private:
     QList<Board*> boardList;
 
