@@ -1,6 +1,26 @@
 <!DOCTYPE CrossStudio_for_ARM_Session_File>
 <session>
- <Breakpoints/>
+ <Autos>
+  <Watches active="0" />
+ </Autos>
+ <Bookmarks/>
+ <Breakpoints>
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="D_Abort" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="FIQ" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="IRQ" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="P_Abort" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="Reset" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="SWI" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="Undef" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="BusFault" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="ExceptionEntryReturnFault" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="HardFault" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="MemManage" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="Reset" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="UsageFault_CheckingError" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="UsageFault_Coprocessor" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="UsageFault_StateError" filename="" />
+ </Breakpoints>
  <ExecutionCountWindow/>
  <Memory1>
   <MemoryWindow autoEvaluate="0" addressText="0x0020f321" numColumns="8" sizeText="10" dataSize="1" radix="16" addressSpace="" />
@@ -19,25 +39,20 @@
   <ProjectSessionItem path="ctestee;ctestee" name="unnamed" />
   <ProjectSessionItem path="ctestee;ctestee;Source Files" name="unnamed" />
   <ProjectSessionItem path="ctestee;ctestee;Source Files;Controller" name="unnamed" />
-  <ProjectSessionItem path="ctestee;ctestee;Source Files;Controller;FreeRTOS" name="unnamed" />
-  <ProjectSessionItem path="ctestee;ctestee;Source Files;Controller;lwIP" name="unnamed" />
   <ProjectSessionItem path="ctestee;ctestee;Source Files;Controller;MakingThings" name="unnamed" />
-  <ProjectSessionItem path="ctestee;ctestee;Source Files;Controller;Startup" name="unnamed" />
   <ProjectSessionItem path="ctestee;ctestee;Source Files;CTestee" name="unnamed" />
-  <ProjectSessionItem path="ctestee;ctestee;Source Files;Utility" name="unnamed" />
-  <ProjectSessionItem path="ctestee;ctestee;Source Files;Utility;MakingThings" name="unnamed" />
  </Project>
  <Register1>
-  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" visibleGroups="CPU - Current Mode" decimalDisplays="" binaryDisplays="" />
+  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" openGroups="" visibleGroups="CPU - Current Mode" decimalDisplays="" binaryDisplays="" />
  </Register1>
  <Register2>
-  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
+  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" openGroups="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
  </Register2>
  <Register3>
-  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
+  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" openGroups="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
  </Register3>
  <Register4>
-  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
+  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" openGroups="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
  </Register4>
  <SourceNavigatorWindow/>
  <TraceWindow>
@@ -61,10 +76,10 @@
   <Watches active="0" />
  </Watch4>
  <Files>
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="23" debugPath="C:\mtcode\make\beta\ctestee\ctestee.c" y="325" useHTMLEdit="0" path="C:\mtcode\make\beta\ctestee\ctestee.c" left="0" selected="0" name="unnamed" top="315" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="25" debugPath="C:\mtcode\make\beta\controller\makingthings\SAM7_EMAC.h" y="49" useHTMLEdit="0" path="C:\mtcode\make\beta\controller\makingthings\SAM7_EMAC.h" left="0" selected="0" name="unnamed" top="38" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="44" debugPath="C:\mtcode\make\beta\ctestee\main.c" y="262" useHTMLEdit="0" path="C:\mtcode\make\beta\ctestee\main.c" left="0" selected="0" name="unnamed" top="28" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="46" debugPath="C:\mtcode\make\firmware\ctestee\make.c" y="13" useHTMLEdit="0" path="C:\mtcode\make\firmware\ctestee\make.c" left="0" selected="1" name="unnamed" top="0" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="53" debugPath="C:\mtcode\make\firmware\ctestee\config.h" y="38" useHTMLEdit="0" path="C:\mtcode\make\firmware\ctestee\config.h" left="0" selected="0" name="unnamed" top="0" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="c:\mtcode\make\firmware\controller\lwip\src\include\lwip\sys.h" y="122" useHTMLEdit="0" path="c:\mtcode\make\firmware\controller\lwip\src\include\lwip\sys.h" left="0" selected="0" name="unnamed" top="106" />
  </Files>
- <ARMCrossStudioWindow activeProject="ctestee" ignoreExceptions="IRQ;FIQ;SWI" autoConnectTarget="" debugSearchFileMap="..\controller\startup\boot.s
-C:\mtcode\make\beta\controller\startup\boot.s" fileDialogInitialDirectory="C:\mtcode\make\beta\controller\makingthings" fileDialogDefaultFilter="*" debugSearchPath="" buildConfiguration="THUMB Flash Debug" />
+ <ARMCrossStudioWindow activeProject="ctestee" autoConnectTarget="" debugSearchFileMap="..\controller\startup\boot.s
+C:\mtcode\make\beta\controller\startup\boot.s" fileDialogInitialDirectory="C:\mtcode\make\firmware\controller\makingthings\testing" fileDialogDefaultFilter="*" autoConnectCapabilities="1407" debugSearchPath="" buildConfiguration="THUMB Flash Debug" />
 </session>

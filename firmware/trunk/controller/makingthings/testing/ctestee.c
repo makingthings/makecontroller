@@ -10,52 +10,19 @@
 #include <stdio.h>
 #include "osc.h"
 #include "config.h"
-
-static int CTestee_Init( void );
+#include "AT91SAM7X256.h"
 
 #define CTESTEE_IOS 30
 
-int CTestee_Io[ CTESTEE_IOS ] =
+typedef struct CTestee_
 {
-  IO_PA00,
-  IO_PA01,
-  IO_PA02,
-  IO_PA03,
-  IO_PA04,
-  IO_PA05,
-  IO_PA06,
-  IO_PA08,
-  IO_PA13,
-  IO_PA14,
-  IO_PA15,
-  IO_PA23,
-  IO_PA24,
-  IO_PA25,
-  IO_PA26,
-  IO_PA27,
-  IO_PA28,
-  IO_PA29,
-  IO_PA30,
-  IO_PB19,
-  IO_PB20,
-  IO_PB21,
-  IO_PB22,
-  IO_PB23,
-  IO_PB24,
-  IO_PB25,
-  IO_PB27,
-  IO_PB28,
-  IO_PB29,
-  IO_PB30
-};
-
-struct CTestee_
-{
-  char init;
   int  ioPattern;
   int  canOut;
-} CTesteeData;
+  int Io[ CTESTEE_IOS ];
+} CTestee;
+CTestee* CTesteeData;
 
+static int CTestee_Init( void );
 int CTestee_BootFromFlash( void );
 int CTestee_EepromTest( void );
 void CanPowerDown( void );
@@ -78,10 +45,10 @@ int CanReceive( void );
 */
 int CTestee_SetIoPattern( int ioPattern )
 {
-  if ( !CTesteeData.init )
+  if ( CTesteeData == NULL )
     CTestee_Init();
 
-  CTesteeData.ioPattern = ioPattern;
+  CTesteeData->ioPattern = ioPattern;
 
   int i;
 
@@ -90,14 +57,14 @@ int CTestee_SetIoPattern( int ioPattern )
     case 0:
       for ( i = 0; i < CTESTEE_IOS; i++ )
       {
-        int io = CTestee_Io[ i ];
+        int io = CTesteeData->Io[ i ];
         Io_SetFalse( io ); 
       }
       break;
     case 1:
       for ( i = 0; i < CTESTEE_IOS; i++ )
       {
-        int io = CTestee_Io[ i ];
+        int io = CTesteeData->Io[ i ];
         Io_SetTrue( io ); 
       }
       break;
@@ -112,27 +79,27 @@ int CTestee_SetIoPattern( int ioPattern )
 */
 int CTestee_GetIoPattern( )
 {
-  if ( !CTesteeData.init )
+  if ( CTesteeData == NULL )
     CTestee_Init();
   
-  return CTesteeData.ioPattern;
+  return CTesteeData->ioPattern;
 }
 
 
 int CTestee_GetCanOut( )
 {
-  if ( !CTesteeData.init )
+  if ( CTesteeData == NULL )
     CTestee_Init();
   
-  return CTesteeData.canOut;
+  return CTesteeData->canOut;
 }
 
 int CTestee_SetCanOut( int canOut )
 {
-  if ( !CTesteeData.init )
+  if ( CTesteeData == NULL )
     CTestee_Init();
 
-  CTesteeData.canOut = canOut;
+  CTesteeData->canOut = canOut;
   switch ( canOut )
   {
     case 0:
@@ -153,7 +120,7 @@ int CTestee_SetCanOut( int canOut )
 
 int CTestee_GetCanIn( )
 {
-  if ( !CTesteeData.init )
+  if ( CTesteeData == NULL )
     CTestee_Init();
   
   return CanReceive();
@@ -190,6 +157,42 @@ int CanReceive()
 
 int CTestee_Init( )
 {
+  if( CTesteeData != NULL )
+    return 0;
+
+  CTesteeData = Malloc( sizeof( CTestee ) );
+  int i = 0;
+  CTesteeData->Io[ i++ ] = IO_PA00;
+  CTesteeData->Io[ i++ ] = IO_PA01;
+  CTesteeData->Io[ i++ ] = IO_PA02;
+  CTesteeData->Io[ i++ ] = IO_PA03;
+  CTesteeData->Io[ i++ ] = IO_PA04;
+  CTesteeData->Io[ i++ ] = IO_PA05;
+  CTesteeData->Io[ i++ ] = IO_PA06;
+  CTesteeData->Io[ i++ ] = IO_PA08;
+  CTesteeData->Io[ i++ ] = IO_PA13;
+  CTesteeData->Io[ i++ ] = IO_PA14;
+  CTesteeData->Io[ i++ ] = IO_PA15;
+  CTesteeData->Io[ i++ ] = IO_PA23;
+  CTesteeData->Io[ i++ ] = IO_PA24;
+  CTesteeData->Io[ i++ ] = IO_PA25;
+  CTesteeData->Io[ i++ ] = IO_PA26;
+  CTesteeData->Io[ i++ ] = IO_PA27;
+  CTesteeData->Io[ i++ ] = IO_PA28;
+  CTesteeData->Io[ i++ ] = IO_PA29;
+  CTesteeData->Io[ i++ ] = IO_PA30;
+  CTesteeData->Io[ i++ ] = IO_PB19;
+  CTesteeData->Io[ i++ ] = IO_PB20;
+  CTesteeData->Io[ i++ ] = IO_PB21;
+  CTesteeData->Io[ i++ ] = IO_PB22;
+  CTesteeData->Io[ i++ ] = IO_PB23;
+  CTesteeData->Io[ i++ ] = IO_PB24;
+  CTesteeData->Io[ i++ ] = IO_PB25;
+  CTesteeData->Io[ i++ ] = IO_PB27;
+  CTesteeData->Io[ i++ ] = IO_PB28;
+  CTesteeData->Io[ i++ ] = IO_PB29;
+  CTesteeData->Io[ i++ ] = IO_PB30;
+  
   // CAN 
   // RS - Controls speed, etc.
   Io_Start( IO_PA07, true );
@@ -214,14 +217,11 @@ int CTestee_Init( )
   CanPowerDown();
   CanSendNothing();
 
-  CTesteeData.canOut = 0;
+  CTesteeData->canOut = 0;
 
-  CTesteeData.init = true;
-
-  int i;
   for ( i = 0; i < CTESTEE_IOS; i++ )
   {
-    int io = CTestee_Io[ i ];
+    int io = CTesteeData->Io[ i ];
     Io_Start( io, false );
     Io_SetOutput( io ); 
     Io_PullupDisable( io );
@@ -257,17 +257,17 @@ int CTestee_EepromTest()
   int value;
 
   value = 10;
-  Eeprom_Write( address, (char*)&value, 4 );
+  Eeprom_Write( address, (uchar*)&value, 4 );
   value = 0;
-  Eeprom_Read( address, (char*)&value, 4 );
+  Eeprom_Read( address, (uchar*)&value, 4 );
 
   if ( value != 10 )
     return 0;
 
   value = -10;
-  Eeprom_Write( address, (char*)&value, 4 );
+  Eeprom_Write( address, (uchar*)&value, 4 );
   value = 0;
-  Eeprom_Read( address, (char*)&value, 4 );
+  Eeprom_Read( address, (uchar*)&value, 4 );
 
   if ( value != -10 )
     return 0;
@@ -310,12 +310,11 @@ int CTesteeOsc_PropertySet( int property, int value )
   switch ( property )
   {
     case 0:
-      if ( !CTesteeData.init )
+      if ( CTesteeData == NULL )
         CTestee_Init();
       if ( value == 0 )
-      {
         CTestee_BootFromFlash( );
-      }
+      break;
     case 1: 
       CTestee_SetIoPattern( value );
       break;      
@@ -333,7 +332,7 @@ int CTesteeOsc_PropertyGet( int property )
   switch ( property )
   {
     case 0:
-      if ( !CTesteeData.init )
+      if ( CTesteeData == NULL )
         CTestee_Init();
       value = 1;
       break;
