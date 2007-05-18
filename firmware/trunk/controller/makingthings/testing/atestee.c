@@ -10,17 +10,11 @@
 #include <stdio.h>
 #include "osc.h"
 #include "config.h"
-#include "adc.h"
+#include "analogin.h"
+#include "AT91SAM7X256.h"
 
 static int ATestee_Init( void );
 static int ATestee_Test_All( int enable, int outputs, int lower, int upper );
-
-struct ATestee_
-{
-  char init;
-  int  test;
-} ATesteeData;
-
 void ATestee_PrepareOutput( int output );
 
 #define ATESTEE_INS 8
@@ -40,25 +34,14 @@ void ATestee_PrepareOutput( int output );
 #define ATESTEE_45_ENABLE IO_PB21
 #define ATESTEE_67_ENABLE IO_PB22
 
-int ATestee_Out[ ATESTEE_OUTS ] =
-{
-  ATESTEE_0_OUT,  
-  ATESTEE_1_OUT,  
-  ATESTEE_2_OUT,  
-  ATESTEE_3_OUT,  
-  ATESTEE_4_OUT,  
-  ATESTEE_5_OUT,  
-  ATESTEE_6_OUT,  
-  ATESTEE_7_OUT  
-};
 
-int ATestee_OutEnable[ ATESTEE_OUT_ENABLES ] =
+typedef struct ATestee_
 {
-  ATESTEE_01_ENABLE,  
-  ATESTEE_23_ENABLE,  
-  ATESTEE_45_ENABLE,  
-  ATESTEE_67_ENABLE,  
-};
+  int  test;
+  int Out[ ATESTEE_OUTS ];
+  int OutEnable[ ATESTEE_OUT_ENABLES ];
+} ATestee;
+ATestee* ATesteeData;
 
 int ATestee_BootFromFlash( void );
 void __reset_handler( void );
@@ -76,10 +59,10 @@ void __reset_handler( void );
 */
 int ATestee_SetTest( int test)
 {
-  if ( !ATesteeData.init )
+  if ( ATesteeData == NULL )
     ATestee_Init();
 
-  ATesteeData.test = test;
+  ATesteeData->test = test;
 
   return CONTROLLER_OK;
 }
@@ -90,10 +73,10 @@ int ATestee_SetTest( int test)
 */
 int ATestee_GetTest( )
 {
-  if ( !ATesteeData.init )
+  if ( ATesteeData == NULL )
     ATestee_Init();
   
-  return ATesteeData.test;
+  return ATesteeData->test;
 }
 
 /**
@@ -104,10 +87,10 @@ int ATestee_GetTestResult( )
 {
   int result;
 
-  if ( !ATesteeData.init )
+  if ( ATesteeData == NULL )
     ATestee_Init();
 
-  switch ( ATesteeData.test )
+  switch ( ATesteeData->test )
   {
     case 0:
       // Enable off and outputs off should give near zero
@@ -142,20 +125,20 @@ int ATestee_Test_All( int enables, int outputs, int lower, int upper )
   // ... all outputs off
   for ( i = 0; i < ATESTEE_OUTS; i++ )
   {
-    int io = ATestee_Out[ i ];
+    int io = ATesteeData->Out[ i ];
     Io_SetValue( io, outputs );
   }
   // ... all enables off
   for ( i = 0; i < ATESTEE_OUT_ENABLES; i++ )
   {
-    int io = ATestee_OutEnable[ i ];
+    int io = ATesteeData->OutEnable[ i ];
     Io_SetValue( io, enables );
   }
   
   // Test
   for ( i = 0; i < 8; i++ )
   {
-    int v = Adc_GetValue( i );
+    int v = AnalogIn_GetValue( i );
     if ( v < lower || v > upper )
       result |= fault;
     fault <<= 1;
@@ -169,27 +152,45 @@ int ATestee_Test_All( int enables, int outputs, int lower, int upper )
 
 int ATestee_Init( )
 {
-  ATesteeData.init = true;
+  if( ATesteeData != NULL )
+    return 0;
+  
+  ATesteeData = Malloc( sizeof( ATestee ) );
+  ATesteeData->test = 0;
+
+  ATesteeData->Out[0] = ATESTEE_0_OUT; 
+  ATesteeData->Out[1] = ATESTEE_1_OUT;  
+  ATesteeData->Out[2] = ATESTEE_2_OUT;  
+  ATesteeData->Out[3] = ATESTEE_3_OUT;  
+  ATesteeData->Out[4] = ATESTEE_4_OUT;  
+  ATesteeData->Out[5] = ATESTEE_5_OUT;  
+  ATesteeData->Out[6] = ATESTEE_6_OUT;  
+  ATesteeData->Out[7] = ATESTEE_7_OUT;
+  
+  ATesteeData->OutEnable[0] = ATESTEE_01_ENABLE;
+  ATesteeData->OutEnable[1] = ATESTEE_01_ENABLE;  
+  ATesteeData->OutEnable[2] = ATESTEE_23_ENABLE;  
+  ATesteeData->OutEnable[3] = ATESTEE_45_ENABLE;  
+  ATesteeData->OutEnable[4] = ATESTEE_67_ENABLE;
 
   int i;
-
   // Setup
   // ... all outputs are PIO's, Not pulled up, etc. 
   for ( i = 0; i < ATESTEE_OUTS; i++ )
   {
-    int io = ATestee_Out[ i ];
+    int io = ATesteeData->Out[ i ];
     ATestee_PrepareOutput( io );
   }
   // ... all enables are PIO's, Not pulled up, etc. 
   for ( i = 0; i < ATESTEE_OUT_ENABLES; i++ )
   {
-    int io = ATestee_OutEnable[ i ];
+    int io = ATesteeData->OutEnable[ i ];
     ATestee_PrepareOutput( io );
   }
-  // ... all ADC's on
+  // ... all Analogin's on
   for ( i = 0; i < ATESTEE_INS; i++ )
   {
-    Adc_SetActive( i, true );
+    AnalogIn_SetActive( i, true );
   }
 
   return 0;
@@ -261,7 +262,7 @@ int ATesteeOsc_PropertySet( int property, int value )
   switch ( property )
   {
     case 0:
-      if ( !ATesteeData.init )
+      if ( ATesteeData == NULL )
         ATestee_Init();
       if ( value == 0 )
       {
@@ -269,7 +270,7 @@ int ATesteeOsc_PropertySet( int property, int value )
       }
       if ( value == 2 )
       {
-        __reset_handler();
+        __reset_handler( );
       }
       break;
     case 1: 
@@ -288,7 +289,7 @@ int ATesteeOsc_PropertyGet( int property )
   switch ( property )
   {
     case 0:
-      if ( !ATesteeData.init )
+      if ( ATesteeData == NULL )
         ATestee_Init();
       value = 1;
       break;

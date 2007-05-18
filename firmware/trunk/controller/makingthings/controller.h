@@ -18,7 +18,7 @@
 /*
 	CONTROLLER.h
 
-  Includes, etc. so make users don't have to
+  All the includes needed for just the Controller Board to work.
 
   MakingThings
 */
@@ -43,6 +43,8 @@
 #include "usb.h"
 #include "network.h"
 #include "stepper.h"
+#include "ctestee.h"
+#include "atestee.h"
 
 
 /* Make Helper Functions */
