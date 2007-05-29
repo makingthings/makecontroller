@@ -204,7 +204,7 @@ char* System_GetName( )
       Eeprom_Read( EEPROM_SYSTEM_NAME + i, (uchar*)ptr, 1 );
       if( *ptr == 0 )
         break;
-      if( !isprint( *ptr ) && *ptr != ' ' )
+      if( !isalnum( *ptr ) && *ptr != ' ' )
       {
         legal = false;
         break;

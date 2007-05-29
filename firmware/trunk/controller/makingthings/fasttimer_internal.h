@@ -30,7 +30,7 @@
 
 // Uncomment this to put a pulse out on the specified input when the FastIRQ routine is running
 // Note that this make timing a bit more rough
-#define FASTIRQ_MONITOR_IO IO_PA04
+// #define FASTIRQ_MONITOR_IO IO_PA04
 // Uncomment this to track some stats
 // #define FASTIRQ_STATS      1
 

@@ -898,7 +898,10 @@ int Network_GetDhcpEnabled( )
 {
   int state;
   Eeprom_Read( EEPROM_DHCP_ENABLED, (uchar*)&state, 4 );
-  return state; 
+  if( state <= 0 )
+    return 0;
+  else
+    return state; 
 }
 
 void Network_SetWebServerEnabled( int state )
