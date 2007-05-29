@@ -43,6 +43,7 @@
 #include "usb.h"
 #include "network.h"
 #include "stepper.h"
+#include "serial.h"
 #include "ctestee.h"
 #include "atestee.h"
 
