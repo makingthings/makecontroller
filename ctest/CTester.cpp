@@ -27,13 +27,13 @@ CTester::Status CTester::start()
 
 CTester::Status CTester::checkForTesterProgram()
 {	
-	messageInterface->message( 2, "  Sending Active Test\n" );
+	messageInterface->message( 2, "  Sending Active Test\n" ); 
 
   // Make sure the unit is on
 	osc->createMessage( "/ctester/active" );
 	osc->sendPacket();
 	
-	messageInterface->sleepMs( 100 );
+	messageInterface->sleepMs( 100 ); 
 	
  	OscMessage oscMessage;
 	Osc::Status s = osc->receive( &oscMessage );
@@ -51,7 +51,6 @@ CTester::Status CTester::checkForTesterProgram()
 	
 	return OK;
 }
-
 
 CTester::Status CTester::stop()
 {
@@ -222,3 +221,5 @@ CTester::Status CTester::canIn( int* value )
 	
   return OK;
 }
+
+

@@ -101,28 +101,32 @@ void CTestThread::run()
 	
 	message( 1, "OK\n" );
 	
-	if ( current > 60 )
+	if ( current > 70 )
 	{
 		message( 1, "Checking for pre-programmed Testee..." );
+		cTesteeStatus = CTestee::ERROR_NO_RESPONSE;
 
 		// Suspect that it's already programmed... check...
-		sleep( 5 );
-		cTesteeStatus = cTestee->checkForTestProgram();
-		if ( cTesteeStatus == CTestee::OK )
+		int timeout = 20; // wait up to 10 seconds in half-second increments
+		while( timeout-- )
 		{
-			message( 1, "Already Programmed\n" );
-			message( 1, "Erasing..." );
-		  cTesteeStatus = cTestee->requestErase();	
-			message( 1, "OK\n" );
-		  
-		  sleep( 1 );
+			cTesteeStatus = cTestee->checkForTestProgram();
+			if ( cTesteeStatus == CTestee::OK )
+			{
+				message( 1, "Already Programmed\n" );
+				message( 1, "Erasing..." );
+			  	cTesteeStatus = cTestee->requestErase();	
+				message( 1, "OK\n" );
+			  	break;
+			}
+			sleepMs( 500 );
 		}
-		else
+		if ( cTesteeStatus != CTestee::OK )
 		{
 			message( 1, "No Program\n" );
-  		message( 1, "Current of %d is too high", current );
-      failed();				
-      return;	
+  			message( 1, "Current of %d is too high", current );
+      		failed();				
+      		return;	
 		}
 	}	
 
@@ -153,7 +157,7 @@ void CTestThread::run()
 		failed();
 		return;
 	}
-  if ( current > 60 )
+  if ( current > 70 )
 	{
 		message( 1, "FAILED - Current Too High\n" );
 		message( 1, "  ** Check for bridges from V+ lines to Gnd\n" );
@@ -235,20 +239,26 @@ void CTestThread::run()
   sleepMs( 250 );
   
 	cTesterStatus = cTester->testeePowerUpVPlus();
-
-  sleep( 6 );
   
-	cTesteeStatus = cTestee->checkForTestProgram();
+	int timeout = 20; // wait up to 10 seconds in half-second increments
+	while( timeout-- )
+	{
+		cTesteeStatus = cTestee->checkForTestProgram();
+		if ( cTesteeStatus == CTestee::OK )
+		{	
+			message( 1, "OK\n" );
+		  	break;
+		}
+		sleepMs( 500 );
+	}
 	if ( cTesteeStatus != CTestee::OK )
 	{
 		message( 1, "FAILED - No Test Program after download\n" );
-    message( 1, "  ** Check ethernet cable is plugged into the testee\n" );
-    message( 1, "  ** Check ethernet circuit on board\n" );
-    failed();
-    return;
+    	message( 1, "  ** Check ethernet cable is plugged into the testee\n" );
+    	message( 1, "  ** Check ethernet circuit on board\n" );
+  		failed();				
+  		return;	
 	}
-	else
-	  message( 1, "OK\n" );
   
 	message( 1, "Testing IO - All Lines OFF..." );
 	cTesterStatus = cTester->ioPattern( 0 );
@@ -421,6 +431,10 @@ void CTestThread::run()
   cTesterStatus = cTester->canOut( 0 );
 
   message( 1, "OK\n" );
+  
+  cTestee->setNetworkConfig( );
+  cTestee->setSerialNumber( );
+  
   
 	reset();
 	

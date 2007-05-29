@@ -27,7 +27,7 @@ class CTester
 	  
 	  Status start();
 	  Status stop();
-    Status checkForTesterProgram();
+      Status checkForTesterProgram();
 
 	  Status testeePowerUp3_3V();
 	  Status testeePowerUpVPlus();

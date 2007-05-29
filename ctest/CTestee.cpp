@@ -7,6 +7,7 @@
 
 #include "CTestee.h"
 #include "CTestThread.h"
+#include <QSettings>
 
 CTestee::CTestee( MessageInterface *messageInterface )
 {
@@ -14,7 +15,7 @@ CTestee::CTestee( MessageInterface *messageInterface )
 	samba = new Samba( messageInterface );
 		
 	packetUdp = new PacketUdp( messageInterface );
-  osc = new Osc( packetUdp, messageInterface );
+  osc = new Osc( packetUdp, messageInterface ); 
 }
 
 CTestee::Status CTestee::start()
@@ -41,7 +42,7 @@ CTestee::Status CTestee::checkForTestProgram()
 	osc->createMessage( "/ctestee/active" );
 	osc->sendPacket();
 	
-	messageInterface->sleepMs( 100 );
+	messageInterface->sleepMs( 1000 );
 	
  	OscMessage oscMessage;
 	Osc::Status s = osc->receive( &oscMessage );
@@ -183,6 +184,33 @@ CTestee::Status CTestee::canIn( int* value )
 	*value = oscMessage.i;
 	
   return OK;
+}
+
+void CTestee::setNetworkConfig( )
+{	
+	osc->createMessage( "/network/address", ",s", "192.168.0.200" );
+	osc->createMessage( "/network/gateway", ",s", "192.168.0.1" );
+	osc->createMessage( "/network/mask", ",s", "255.255.255.0" );
+	osc->createMessage( "/network/valid", ",i", 1 );
+	osc->createMessage( "/network/dhcp", ",i", 1 );
+	osc->sendPacket();
+	
+	messageInterface->sleepMs( 100 ); 
+}
+
+
+void CTestee::setSerialNumber( )
+{
+	QSettings settings("MakingThings", "ctest");
+	int sernum = settings.value("serialNumber", 2000 ).toInt();
+	
+	osc->createMessage( "/system/serialnumber", ",i", sernum );
+	osc->sendPacket();
+	
+	sernum += 1; 
+	settings.setValue("serialNumber", sernum );
+	
+	messageInterface->sleepMs( 100 );
 }
 
 

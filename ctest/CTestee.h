@@ -29,15 +29,14 @@ class CTestee
 	  Status stop();
 	  
 	  Status eepromTest( );
-		Status flash();
-
+	Status flash();
     Status checkForTestProgram();
     Status requestErase();
-    	  
     Status ioPattern( int pattern );
-    
 	  Status canOut( int mode );
 	  Status canIn( int* value );
+	  void setSerialNumber( );
+	  void setNetworkConfig( );
     		
 	private:
     MessageInterface *messageInterface;
