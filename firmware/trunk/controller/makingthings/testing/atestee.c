@@ -2,7 +2,6 @@
 
 /** \file atestee.c	
 	Controller Testee
-	Functions for working with the status LED on the Make Controller Board.
 */
 
 #include "atestee.h"
@@ -46,17 +45,8 @@ ATestee* ATesteeData;
 int ATestee_BootFromFlash( void );
 void __reset_handler( void );
 
-/** \defgroup ATestee
-* ATestee Subsystem of the Make Controller Kit.
-* \ingroup ControllerBoard
-* @{
-*/
 
-/**
-	ATestee_SetTest.
-	@param test
-	@return Zero on success.
-*/
+
 int ATestee_SetTest( int test)
 {
   if ( ATesteeData == NULL )
@@ -67,10 +57,7 @@ int ATestee_SetTest( int test)
   return CONTROLLER_OK;
 }
 
-/**
-	ATestee_GetTest.
-	@return test.
-*/
+
 int ATestee_GetTest( )
 {
   if ( ATesteeData == NULL )
@@ -79,10 +66,7 @@ int ATestee_GetTest( )
   return ATesteeData->test;
 }
 
-/**
-	ATestee_GetTestResult.
-	@return state.
-*/
+
 int ATestee_GetTestResult( )
 {
   int result;
@@ -147,8 +131,6 @@ int ATestee_Test_All( int enables, int outputs, int lower, int upper )
   return result;
 }
 
-/** @}
-*/
 
 int ATestee_Init( )
 {
@@ -168,10 +150,9 @@ int ATestee_Init( )
   ATesteeData->Out[7] = ATESTEE_7_OUT;
   
   ATesteeData->OutEnable[0] = ATESTEE_01_ENABLE;
-  ATesteeData->OutEnable[1] = ATESTEE_01_ENABLE;  
-  ATesteeData->OutEnable[2] = ATESTEE_23_ENABLE;  
-  ATesteeData->OutEnable[3] = ATESTEE_45_ENABLE;  
-  ATesteeData->OutEnable[4] = ATESTEE_67_ENABLE;
+  ATesteeData->OutEnable[1] = ATESTEE_23_ENABLE;  
+  ATesteeData->OutEnable[2] = ATESTEE_45_ENABLE;  
+  ATesteeData->OutEnable[3] = ATESTEE_67_ENABLE;
 
   int i;
   // Setup
@@ -186,11 +167,6 @@ int ATestee_Init( )
   {
     int io = ATesteeData->OutEnable[ i ];
     ATestee_PrepareOutput( io );
-  }
-  // ... all Analogin's on
-  for ( i = 0; i < ATESTEE_INS; i++ )
-  {
-    AnalogIn_SetActive( i, true );
   }
 
   return 0;

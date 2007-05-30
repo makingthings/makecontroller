@@ -33,8 +33,8 @@ void Run( )
   Osc_RegisterSubsystem( CTesteeOsc_GetName(), CTesteeOsc_ReceiveMessage, NULL );
   Osc_RegisterSubsystem( ATesteeOsc_GetName(), ATesteeOsc_ReceiveMessage, NULL );
 
-  //NetworkCheck( );
   Network_SetActive( true ); 
+  NetworkCheck( );
 }
 
 void BlinkTask( void* p )
