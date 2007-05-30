@@ -22,7 +22,7 @@ ATestee::Status ATestee::start()
 	messageInterface->message( 2, "Testee Start..." );
 	if ( packetUdp->connect(	"192.168.0.200", 10000, 10000 ) != PacketUdp::OK )
 	{
-  	messageInterface->message( 2, "  Couldn't set up connection\n" );
+  	messageInterface->message( 2, "  Couldn't set up connection\n" ); 
 	  return ERROR_CANT_OPEN_SOCKET;
 	}	
 	
@@ -41,7 +41,7 @@ ATestee::Status ATestee::checkForCTestProgram()
 
   // Make sure the unit is on
 	osc->createMessage( "/ctestee/active" );
-	osc->sendPacket();
+	osc->sendPacket( );
 	
 	messageInterface->sleepMs( 100 );
 	
@@ -74,11 +74,10 @@ ATestee::Status ATestee::checkForATestProgram()
 	Osc::Status s = osc->receive( &oscMessage );
 	if ( s != Osc::OK )
 	{
-    messageInterface->message( 2, "  No response - Not programmed\n" );
-	  return ERROR_NO_PROGRAM;
+		messageInterface->message( 2, "  No response - Not programmed\n" );
+	  	return ERROR_NO_PROGRAM;
 	}
-	
-  messageInterface->message( 2, "Testee Already Programmed\n" );
+
 	return OK;
 }
 
@@ -103,12 +102,46 @@ ATestee::Status ATestee::restart()
 	return ERROR_NO_SAMBA;
 }
 	  
-ATestee::Status ATestee::performTest( int i, int* result )
+ATestee::Status ATestee::performTest( int index, int* result )
 {
+	osc->createMessage( "/atestee/test", ",i", index );
+	osc->sendPacket();
+	messageInterface->sleepMs( 10 );
+	
+	osc->createMessage( "/atestee/testresult" );
+	osc->sendPacket();
+	messageInterface->sleepMs( 50 );
+	
+	OscMessage oscMessage;
+	*result = -1;
+	Osc::Status s = osc->receive( &oscMessage );
+	if ( s != Osc::OK )
+	  	return ERROR_NO_REPLY;
+	  	
+	if ( strcmp( oscMessage.address, "/atestee/testresult" ) != 0 )
+		return ERROR_INCORRECT_RESPONSE;
+
+	switch( index )
+	{
+		case 0:
+			if( oscMessage.i != 0 )
+			return ERROR_TEST_FAILED;
+			break;
+		case 1:
+			if( oscMessage.i != 0 ) return ERROR_TEST_FAILED; break;
+		case 2: 
+			if( oscMessage.i != 0 ) return ERROR_TEST_FAILED; break;
+		case 3:
+			if( oscMessage.i != 255 ) return ERROR_TEST_FAILED; break;
+	}
+	
+	// messageInterface->message( 1, "Test result: %d\n", oscMessage.i );
+	*result = oscMessage.i;
+	
 	return OK;
 }
 
-ATestee::Status ATestee::requestErase()
+ATestee::Status ATestee::requestErase( )
 {
 	// Shut her down
 	osc->createMessage( "/ctestee/active", ",i", 0 );

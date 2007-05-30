@@ -39,29 +39,38 @@ void ATestThread::run()
 	status( "Testing" );
 		
 	message( 1, "Checking for Ethernet Connection..." );
-	aTesteeStatus = aTestee->checkForCTestProgram();
-	if ( aTesteeStatus == ATestee::OK )
+	aTesteeStatus = ATestee::ERROR_INCORRECT_RESPONSE;
+	int timeout = 20; // wait up to 10 seconds in half-second increments
+	while( timeout-- )
 	{
-	  message( 1, "OK\n" );
-		message( 1, "Checking for ATest subsystem..." );
-
-		aTesteeStatus = aTestee->checkForATestProgram();
-		if ( aTesteeStatus != ATestee::OK )
-    {
-    	message( 1, "Need to reprogram - running old program\n" );
-    	
-    	aTestee->requestErase();
-			  
-    	message( 1, "PLEASE DISCONNECT AND RECONNECT\n" );
-
-			failed();
-    }
-    else
-		{
-		  message( 1, "OK\n" );	
-		}			
+		aTesteeStatus = aTestee->checkForCTestProgram();
+		if ( aTesteeStatus == ATestee::OK )
+		{	
+			timeout = 20;
+			while( timeout-- )
+			{
+				aTesteeStatus = aTestee->checkForATestProgram();
+				if( aTesteeStatus == ATestee::OK )
+				{
+					message( 1, "OK\n" );
+					break;
+				}
+				sleepMs( 500 );
+			}
+			if ( aTesteeStatus != ATestee::OK )
+		    {
+		    	message( 1, "Need to reprogram - running old program\n" );
+		    	aTestee->requestErase();
+		    	message( 1, "Please unplug & replug the Application Tester, then run this test again.\n" );
+				failed();
+				return;
+		    }
+			message( 1, "OK\n" );
+		  	break;
+		}
+		sleepMs( 500 );
 	}
-
+	
 	if ( aTesteeStatus != ATestee::OK )
 	{
 		message( 1, "  None\n" );
@@ -82,10 +91,7 @@ void ATestThread::run()
 			}				
 			message( 1, "OK\n" );
 
-		  message( 1, "PLEASE UNPLUG AND REPLUG THE APPLICATION BOARD\n" );
-			
-	    // aTestee->restart();
-	    
+		  message( 1, "Please unplug & replug the Application Tester, then run this test again.\n" );
 	    failed();
 	    return;		
 		}
@@ -99,7 +105,7 @@ void ATestThread::run()
 		if ( aTesteeStatus != ATestee::OK )
 		{
 			message( 1, "  No Connection to Testee\n" );
-			message( 1, "  Check Ethernet Hardware\n" );
+			message( 1, "  Check Ethernet Hardware, location J27\n" );
 	    failed();
 	    return;
 		}
@@ -140,21 +146,10 @@ void ATestThread::run()
 		return;
 	}
 	else
-	  message( 1, "OK\n" );
+	  message( 1, "OK\n" ); 
 
 	message( 1, "Testing Enable On Lines On..." );
 	aTesteeStatus = aTestee->performTest( 3, &result );
-	if ( aTesteeStatus != ATestee::OK )
-	{
-		message( 1, "Failed %d\n", result  );
-		failed();
-		return;
-	}
-	else
-	  message( 1, "OK\n" );
-
-	message( 1, "Requesting Erase..." );
-	aTesteeStatus = aTestee->requestErase( );
 	if ( aTesteeStatus != ATestee::OK )
 	{
 		message( 1, "Failed %d\n", result  );
