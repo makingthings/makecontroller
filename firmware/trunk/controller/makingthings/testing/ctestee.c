@@ -31,18 +31,6 @@ void CanSendDominant( void );
 void CanSendNothing( void );
 int CanReceive( void );
 
-/** \defgroup CTestee
-* CTestee Subsystem of the Make Controller Kit.
-* \ingroup ControllerBoard
-* @{
-*/
-
-/**
-	CTestee_SetTesteePower.
-	Sets whether the specified LED is active. \n
-	@param state 0 = off, 1 = V+ Power, 2 = 3.3V Power
-	@return Zero on success.
-*/
 int CTestee_SetIoPattern( int ioPattern )
 {
   if ( CTesteeData == NULL )
@@ -73,10 +61,6 @@ int CTestee_SetIoPattern( int ioPattern )
   return 0;
 }
 
-/**
-	CTestee_GetIoPattern.
-	@return state.
-*/
 int CTestee_GetIoPattern( )
 {
   if ( CTesteeData == NULL )
