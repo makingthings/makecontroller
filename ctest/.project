@@ -7,7 +7,6 @@
 	<buildSpec>
 		<buildCommand>
 			<name>org.eclipse.ui.externaltools.ExternalToolBuilder</name>
-			<triggers>incremental,</triggers>
 			<arguments>
 				<dictionary>
 					<key>LaunchConfigHandle</key>
@@ -27,20 +26,32 @@
 					<value>org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GASErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.VCErrorParser;</value>
 				</dictionary>
 				<dictionary>
-					<key>org.eclipse.cdt.make.core.enableAutoBuild</key>
-					<value>true</value>
+					<key>org.eclipse.cdt.make.core.fullBuildTarget</key>
+					<value>debug</value>
+				</dictionary>
+				<dictionary>
+					<key>org.eclipse.cdt.make.core.incrementalBuildTarget</key>
+					<value>debug</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.environment</key>
 					<value></value>
 				</dictionary>
 				<dictionary>
-					<key>org.eclipse.cdt.make.core.enableFullBuild</key>
-					<value>true</value>
+					<key>org.eclipse.cdt.make.core.enableAutoBuild</key>
+					<value>false</value>
+				</dictionary>
+				<dictionary>
+					<key>org.eclipse.cdt.make.core.buildLocation</key>
+					<value></value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.build.target.inc</key>
 					<value>all</value>
+				</dictionary>
+				<dictionary>
+					<key>org.eclipse.cdt.make.core.enableFullBuild</key>
+					<value>true</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.enabledIncrementalBuild</key>
@@ -51,12 +62,12 @@
 					<value>\ctest</value>
 				</dictionary>
 				<dictionary>
-					<key>org.eclipse.cdt.make.core.build.target.clean</key>
-					<value>clean</value>
-				</dictionary>
-				<dictionary>
 					<key>org.eclipse.cdt.make.core.build.command</key>
 					<value>make</value>
+				</dictionary>
+				<dictionary>
+					<key>org.eclipse.cdt.make.core.build.target.clean</key>
+					<value>clean</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.enableCleanBuild</key>
@@ -65,6 +76,10 @@
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.append_environment</key>
 					<value>true</value>
+				</dictionary>
+				<dictionary>
+					<key>org.eclipse.cdt.make.core.cleanBuildTarget</key>
+					<value>clean</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.build.target.full</key>
@@ -82,11 +97,19 @@
 					<key>org.eclipse.cdt.make.core.stopOnError</key>
 					<value>false</value>
 				</dictionary>
+				<dictionary>
+					<key>org.eclipse.cdt.make.core.autoBuildTarget</key>
+					<value></value>
+				</dictionary>
 			</arguments>
 		</buildCommand>
 		<buildCommand>
 			<name>org.eclipse.cdt.make.core.ScannerConfigBuilder</name>
 			<arguments>
+				<dictionary>
+					<key>org.eclipse.cdt.make.core.ScannerConfigDiscoveryEnabled</key>
+					<value>false</value>
+				</dictionary>
 			</arguments>
 		</buildCommand>
 	</buildSpec>
