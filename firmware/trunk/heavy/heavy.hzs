@@ -1,6 +1,11 @@
 <!DOCTYPE CrossStudio_for_ARM_Session_File>
 <session>
+ <Autos>
+  <Watches active="0" />
+ </Autos>
+ <Bookmarks/>
  <Breakpoints>
+  <BreakpointListItem actiontype="0" chainFrom="" line="449" length="0" triggertype="0" useHWbreakpoint="false" group="Breakpoints" breakdatatype="0" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="" filename="C:\mtcode\make\firmware\controller\lwip\src\netif\ethernetif.c" />
   <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="D_Abort" filename="" />
   <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="FIQ" filename="" />
   <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="IRQ" filename="" />
@@ -37,27 +42,33 @@
   <ProjectSessionItem path="heavy;heavy;Source Files;AppBoard" name="unnamed" />
   <ProjectSessionItem path="heavy;heavy;Source Files;AppBoard;MakingThings" name="unnamed" />
   <ProjectSessionItem path="heavy;heavy;Source Files;Controller" name="unnamed" />
+  <ProjectSessionItem path="heavy;heavy;Source Files;Controller;FreeRTOS" name="unnamed" />
+  <ProjectSessionItem path="heavy;heavy;Source Files;Controller;lwIP" name="unnamed" />
   <ProjectSessionItem path="heavy;heavy;Source Files;Controller;MakingThings" name="unnamed" />
+  <ProjectSessionItem path="heavy;heavy;Source Files;Controller;Startup" name="unnamed" />
   <ProjectSessionItem path="heavy;heavy;Source Files;Heavy" name="unnamed" />
  </Project>
  <Register1>
-  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
+  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" openGroups="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
  </Register1>
  <Register2>
-  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
+  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" openGroups="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
  </Register2>
  <Register3>
-  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
+  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" openGroups="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
  </Register3>
  <Register4>
-  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
+  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" openGroups="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
  </Register4>
  <SourceNavigatorWindow/>
  <TraceWindow>
   <Trace wrap="Yes" type="1" enabled="Yes" />
  </TraceWindow>
  <Watch1>
-  <Watches active="1" />
+  <Watches active="1" >
+   <Watchpoint evalMode="2" linenumber="113" numelements="10" evalType="1" radix="1" name="buffer" expression="buffer" filename="C:\mtcode\make\firmware\controller\makingthings\usb.c" />
+   <Watchpoint linenumber="134" radix="-1" name="DeQueue" expression="DeQueue" filename="C:\mtcode\make\firmware\controller\makingthings\usb.c" />
+  </Watches>
  </Watch1>
  <Watch2>
   <Watches active="0" />
@@ -69,7 +80,11 @@
   <Watches active="0" />
  </Watch4>
  <Files>
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\heavy\make.c" y="15" useHTMLEdit="0" path="C:\mtcode\make\firmware\heavy\make.c" left="0" selected="0" name="unnamed" top="2" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\heavy\make.c" y="42" useHTMLEdit="0" path="C:\mtcode\make\firmware\heavy\make.c" left="0" selected="0" name="unnamed" top="28" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="67" debugPath="C:\mtcode\make\firmware\controller\makingthings\usb.c" y="221" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\usb.c" left="0" selected="0" name="unnamed" top="194" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="3" debugPath="C:\mtcode\make\firmware\controller\makingthings\osc.c" y="396" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\osc.c" left="0" selected="0" name="unnamed" top="401" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\makingthings\USB-CDC.c" y="195" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\USB-CDC.c" left="0" selected="0" name="unnamed" top="173" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="30" debugPath="C:\mtcode\make\firmware\controller\makingthings\network.c" y="776" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\network.c" left="0" selected="1" name="unnamed" top="767" />
  </Files>
- <ARMCrossStudioWindow activeProject="heavy" ignoreExceptions="IRQ;FIQ;SWI" autoConnectTarget="" debugSearchFileMap="" fileDialogInitialDirectory="" fileDialogDefaultFilter="*.cpp;*.cxx;*.cc;*.c;*.h" debugSearchPath="" buildConfiguration="THUMB Flash Debug" />
+ <ARMCrossStudioWindow activeProject="heavy" autoConnectTarget="/Macraigor Wiggler (20 Pin)" debugSearchFileMap="" fileDialogInitialDirectory="" fileDialogDefaultFilter="*.cpp;*.cxx;*.cc;*.c;*.h" autoConnectCapabilities="1407" debugSearchPath="" buildConfiguration="THUMB Flash Debug" />
 </session>

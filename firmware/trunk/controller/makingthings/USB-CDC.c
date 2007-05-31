@@ -117,8 +117,8 @@ xQueueHandle xUSBInterruptQueue;
 
 /* Queues used to hold received characters, and characters waiting to be
 transmitted.  Rx queue must be larger than FIFO size. */
-static xQueueHandle xRxCDC; 
-static xQueueHandle xTxCDC; 
+xQueueHandle xRxCDC; 
+xQueueHandle xTxCDC; 
 
 /* Line coding - 115,200 baud, N-8-1 */
 static const unsigned portCHAR pxLineCoding[] = { 0x00, 0xC2, 0x01, 0x00, 0x00, 0x00, 0x08 };
@@ -127,9 +127,8 @@ static const unsigned portCHAR pxLineCoding[] = { 0x00, 0xC2, 0x01, 0x00, 0x00, 
 static unsigned portCHAR ucControlState;
 static unsigned int uiCurrentBank;
 
-
 /*------------------------------------------------------------*/
-
+extern int OscBusy;
 extern int Usb_Running;
 extern int Usb_Running;
 
@@ -138,8 +137,6 @@ void vUSBCDCTask( void *pvParameters )
 xISRStatus *pxMessage;
 unsigned portLONG ulStatus;
 unsigned portLONG ulRxBytes;
-unsigned portCHAR ucByte;
-portBASE_TYPE xByte;
 
 	( void ) pvParameters;
 
@@ -183,35 +180,39 @@ portBASE_TYPE xByte;
 		{
 			if( ( !(AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_2 ] & AT91C_UDP_TXPKTRDY) ) && uxQueueMessagesWaiting( xTxCDC ) )
 			{
-				for( xByte = 0; xByte < 64; xByte++ )
-				{				   
-					if( !xQueueReceive( xTxCDC, &ucByte, 0 ) ) 
-					{
-						/* No data buffered to transmit. */
-						break;
-					}
+                                xBULKBUFFER Queue2USB;
 
-					/* Got a byte to transmit. */
-					AT91C_BASE_UDP->UDP_FDR[ usbEND_POINT_2 ] = ucByte;
-				} 
+                                if( xQueueReceive( xTxCDC, &Queue2USB, 0 ) ) 
+                                {
+                                  unsigned char out = 0;
+
+                                  while (out < Queue2USB.Count)
+                                    AT91C_BASE_UDP->UDP_FDR[ usbEND_POINT_2 ] = Queue2USB.Data[out++];
+                                }
 				AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_2 ] |= AT91C_UDP_TXPKTRDY;
 			}
 
 			/* Check for incoming data (host-to-device) on endpoint 1. */
 			while( AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_1 ] & (AT91C_UDP_RX_DATA_BK0 | AT91C_UDP_RX_DATA_BK1) )
 			{
-				ulRxBytes = (AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_1 ] >> 16) & usbRX_COUNT_MASK;
-
+                            if (!OscBusy)
+                            {
 				/* Only process FIFO if there's room to store it in the queue */
-				if( ulRxBytes < ( USB_CDC_QUEUE_SIZE - uxQueueMessagesWaiting( xRxCDC ) ) )
-				{
-					while( ulRxBytes-- )
-					{
-						ucByte = AT91C_BASE_UDP->UDP_FDR[ usbEND_POINT_1 ];
-						xQueueSend( xRxCDC, &ucByte, 0 );
-					}
+				if ( USB_CDC_QUEUE_SIZE > uxQueueMessagesWaiting( xRxCDC ))
+				{	
+                                        xBULKBUFFER USB2Queue;
 
-					/* Release the FIFO */
+                                        ulRxBytes = (AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_1 ] >> 16) & usbRX_COUNT_MASK;
+                                        // collect however many bytes are in endpoint ... may be a whole osc packet
+                                        // may just be a fragment.
+                                        USB2Queue.Count = 0;
+					while( ulRxBytes-- )
+                                          USB2Queue.Data[USB2Queue.Count++] = AT91C_BASE_UDP->UDP_FDR[ usbEND_POINT_1 ];
+
+                                        // put it in the queue
+                                        xQueueSend( xRxCDC, &USB2Queue, 0 );
+
+                                        /* Release the FIFO */
 					portENTER_CRITICAL();
 					{
 						ulStatus = AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_1 ];
@@ -238,32 +239,69 @@ portBASE_TYPE xByte;
 				{
 					break;
 				}
+                            }
 			}
 		}
 	}
 }
 /*------------------------------------------------------------*/
-
+#if 0
 void vUSBSendByte( portCHAR cByte, int timeout )
 {
-	/* Queue the byte to be sent.  The USB task will send it. */
-	if ( xQueueSend( xTxCDC, &cByte, timeout ) != pdPASS )
+  static xBULKBUFFER EnQueue;
+  static char inPacket = 0;  // OSC packet detection eliminates need for tx timeouts
+
+  if (!inPacket && (cByte == SOP))
+  { 
+    inPacket = 1;
+    EnQueue.Count = 0;
+    EnQueue.Data[EnQueue.Count++] = cByte;
+  }
+  else  // in a packet
   {
-    timeout++;
-    timeout--;
+    EnQueue.Data[EnQueue.Count++] = cByte;
+
+    // if end of packet of buffer full, commit buffer to queue
+    if ((cByte == SOP) || (EnQueue.Count == EP_FIFO)) 
+    {
+      if (cByte == SOP) inPacket = 0;
+//      if ( xQueueSend( xTxCDC, &EnQueue, timeout ) != pdPASS )
+      while (xQueueSend( xTxCDC, &EnQueue, 0 ) != pdPASS ) 
+        ;
+
+      EnQueue.Count = 0;
+    }
   }
 }
+#endif
 
-/* MAKINGTHINGS: ADDITION */
-int cUSBGetByte( portTickType timeout )
+#if 0
+inline int cUSBGetByte( portTickType timeout )
 {
-  unsigned char cByte;
+  static xBULKBUFFER DeQueue;
+  static char QueueValid = 0;
+  static unsigned char out;
 
-  if ( xQueueReceive( xRxCDC, &cByte, timeout ) == pdFAIL )
-    return -1;
+  // first look for bytes in a buffer we've already gotten
+drainQueue:
+  if (QueueValid) {
+    if (out < DeQueue.Count)
+      return DeQueue.Data[out++];  // drain the buffer
+    else
+      QueueValid = 0;   // buffer was empty ... next check for new one.
+  }
 
-  return (int)cByte;
+  if ( xQueueReceive( xRxCDC, &DeQueue, timeout ) != pdFAIL )
+  {
+    // got a new message from USB waiting on the queue
+    out = 0;    // reset drain index
+    QueueValid = 1;   // indicate we'll be working from the just copied message
+    goto drainQueue;  // now go back and fetch the first entry from message
+  }
+  else
+    return -1;        // nope, there was really nothing available
 }
+#endif
 /*------------------------------------------------------------*/
 
 static void prvSendZLP( void )
@@ -734,8 +772,8 @@ extern void ( vUSB_ISR )( void );
 	xUSBInterruptQueue = xQueueCreate( usbQUEUE_LENGTH + 1, sizeof( xISRStatus * ) );
 	
 	/* Create the queues used to hold Rx and Tx characters. */
-	xRxCDC = xQueueCreate( USB_CDC_QUEUE_SIZE, ( unsigned portCHAR ) sizeof( signed portCHAR ) );
-	xTxCDC = xQueueCreate( USB_CDC_QUEUE_SIZE + 1, ( unsigned portCHAR ) sizeof( signed portCHAR ) );
+	xRxCDC = xQueueCreate( USB_CDC_QUEUE_SIZE, ( unsigned portCHAR ) sizeof(  struct BulkBufferStruct ) );
+	xTxCDC = xQueueCreate( USB_CDC_QUEUE_SIZE + 1, ( unsigned portCHAR ) sizeof(  struct BulkBufferStruct  ) );
 
 	if( (!xUSBInterruptQueue) || (!xRxCDC) || (!xTxCDC) )
 	{	

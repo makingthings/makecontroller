@@ -145,14 +145,15 @@ int Osc_PropertyLookup( char** properties, char* property );
 int Osc_ReadInt( char* buffer );
 float Osc_ReadFloat( char* buffer );
 
+void Osc_UdpTask( void* parameters );
+void Osc_UsbTask( void* parameters );
+void Osc_TcpTask( void* parameters );
 int Osc_UdpPacketSend( char* packet, int length, int replyAddress, int replyPort );
 int Osc_UsbPacketSend( char* packet, int length, int replyAddress, int replyPort );
 int Osc_TcpPacketSend( char* packet, int length, int replyAddress, int replyPort );
 
 void Osc_ResetChannel( OscChannel* ch );
-
 int Osc_SendPacketInternal( OscChannel* ch );
-
 int Osc_SetReplyAddress( int channel, int replyAddress );
 int Osc_SetReplyPort( int channel, int replyPort );
 
@@ -161,7 +162,6 @@ int Osc_ReceivePacket( int channel, char* packet, int length );
 int Osc_Poll( int channel, char* buffer, int maxLength, int* length );
 
 bool Osc_PatternMatch(const char * pattern, const char * test); 
- 
 int Osc_Quicky( int channel, char* preamble, char* string );
 char* Osc_WritePaddedString( char* buffer, int* length, char* string );
 char* Osc_WriteTimetag( char* buffer, int* length, int a, int b );
@@ -175,11 +175,9 @@ int Osc_ReadInt( char* buffer );
 float Osc_ReadFloat( char* buffer );
 int Osc_UdpPacketSend( char* packet, int length, int replyAddress, int replyPort );
 
-//void Osc_ResetChannel( OscChannel* ch );
+int OscBusy;
 
-void Osc_UdpTask( void* parameters );
-void Osc_UsbTask( void* parameters );
-void Osc_TcpTask( void* parameters );
+//void Osc_ResetChannel( OscChannel* ch );
 
 
 /**
@@ -288,6 +286,7 @@ void Osc_UdpTask( void* parameters )
 
     Osc_SetReplyAddress( channel, address );
 
+    
     Osc_ReceivePacket( channel, ch->incoming, length );
     TaskYield( );
   }
@@ -303,7 +302,7 @@ int Osc_TcpPacketSend( char* packet, int length, int replyAddress, int replyPort
   (void)replyAddress;
   (void)replyPort;
   char len[ 4 ];
-  int endian = Osc_EndianSwap(length);
+  //int endian = Osc_EndianSwap(length);
   sprintf( len, "%ld", length );
       
   int result = SocketWrite( Osc->tcpSocket, len, 4 );
@@ -399,8 +398,12 @@ void Osc_UsbTask( void* parameters )
     int length = Usb_SlipReceive( ch->incoming, OSC_MAX_MESSAGE_IN );
 
     if ( length > 0 )
+    {
+      OscBusy = 1;
       Osc_ReceivePacket( channel, ch->incoming, length );
-    TaskYield( );
+      OscBusy = 0;
+    }
+    Sleep( 1 );
   }
 }
 
