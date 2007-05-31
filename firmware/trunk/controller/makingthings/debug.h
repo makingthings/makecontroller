@@ -26,25 +26,14 @@
 /**
 \ingroup Debug
 @{
-
-\def DEBUG_ALWAYS
-The lowest debug level (0), used for 
-
-\def DEBUG_ERROR
-The debug level (1) to be used for error messages.  
-
-\def DEBUG_WARNING
-The debug level (2) to be used for warnings. 
-
-\def DEBUG_MESSAGE
-The debug level (3) to be used for messages. 
-@}
 */
 
-#define DEBUG_ALWAYS  0
-#define DEBUG_ERROR   1
-#define DEBUG_WARNING 2
-#define DEBUG_MESSAGE 3
+#define DEBUG_ALWAYS  0 /**< The lowest debug level, used for messages that should go out no matter what.*/
+#define DEBUG_ERROR   1 /**< Used for critical/fatal error messages. */
+#define DEBUG_WARNING 2 /**< Used for warnings. */
+#define DEBUG_MESSAGE 3 /**< Used for normal/test messages.  */
+
+/* @} */
 
 int Debug_SetActive( int state );
 int Debug_GetActive( void );
@@ -64,3 +53,5 @@ const char* DebugOsc_GetName( void );
 int DebugOsc_ReceiveMessage( int channel, char* message, int length );
 
 #endif
+
+
