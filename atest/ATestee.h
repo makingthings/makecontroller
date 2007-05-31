@@ -35,10 +35,10 @@ class ATestee
     Status checkForATestProgram();
     Status requestErase();
     Status restart();
-    
     Status checkForSamba();
-    	  
     Status performTest( int i, int* result );
+    void setSerialNumber( );
+    void setNetworkConfig( );
     		
 	private:
     MessageInterface *messageInterface;

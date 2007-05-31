@@ -7,7 +7,7 @@
 
 #include "ATestThread.h"
 #include "ATestWindow.h"
-#include "ATestee.h"
+#include "ATestee.h" 
 
 ATestThread::ATestThread( QApplication* application, ATestWindow* aTestWindow ) : QThread()
 {
@@ -17,7 +17,6 @@ ATestThread::ATestThread( QApplication* application, ATestWindow* aTestWindow ) 
 	aTestee = new ATestee( this );
 }
 
-// 
 void ATestThread::run()
 {
 	ATestee::Status aTesteeStatus;
@@ -61,7 +60,7 @@ void ATestThread::run()
 		    {
 		    	message( 1, "Need to reprogram - running old program\n" );
 		    	aTestee->requestErase();
-		    	message( 1, "Please unplug & replug the Application Tester, then run this test again.\n" );
+		    	message( 1, "Please unplug & replug the Application Tester, then press GO.\n" );
 				failed();
 				return;
 		    }
@@ -91,7 +90,7 @@ void ATestThread::run()
 			}				
 			message( 1, "OK\n" );
 
-		  message( 1, "Please unplug & replug the Application Tester, then run this test again.\n" );
+		  message( 1, "Please unplug & replug the Application Tester, then press GO.\n" );
 	    failed();
 	    return;		
 		}
@@ -158,6 +157,14 @@ void ATestThread::run()
 	}
 	else
 	  message( 1, "OK\n" );
+	  
+	  
+	// now, since everything else worked, and we know we have a good network connection
+	// to the board, set its serial number and turn dhcp on by default.
+	// this is the place to add any further initialization/factory default kind of stuff.
+	aTestee->setSerialNumber( );
+	sleepMs( 100 );
+	aTestee->setNetworkConfig( );
 
   message( 1, "ALL OK" );
 
