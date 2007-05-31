@@ -130,6 +130,8 @@ void CTestThread::run()
 		}
 	}	
 
+	sleepMs( 250 );
+	
 	message( 1, "Testing Current @ V+... " );
 	
 	cTesterStatus = cTester->testeePowerDown();
@@ -153,7 +155,7 @@ void CTestThread::run()
   if ( current < 30 )
 	{
 		message( 1, "FAILED - Current Too Low\n" );
-		message( 1, "  ** Check board is inserted properly\n" );
+		message( 1, "  ** Ensure the Testee board is inserted properly\n" );
 		failed();
 		return;
 	}
@@ -161,7 +163,7 @@ void CTestThread::run()
 	{
 		message( 1, "FAILED - Current Too High\n" );
 		message( 1, "  ** Check for bridges from V+ lines to Gnd\n" );
-		message( 1, "  ** Check on-board regulator\n" );
+		message( 1, "  ** Check on-board regulator, location U3\n" );
 		failed();
 		return;
 	}
@@ -184,7 +186,7 @@ void CTestThread::run()
   if ( voltage < 3200 )
 	{
 		message( 1, "FAILED - Voltage Too Low\n" );
-		message( 1, "  ** Check regulator\n" );
+		message( 1, "  ** Check regulator, location U3\n" );
 		failed();
 		return;
 	}
@@ -192,7 +194,7 @@ void CTestThread::run()
   if ( voltage > 3400 )
 	{
 		message( 1, "FAILED - Voltage Too High\n" );
-		message( 1, "  ** Check regulator\n" );
+		message( 1, "  ** Check regulator, location U3\n" );
 		failed();
 		return;
 	}
@@ -207,11 +209,11 @@ void CTestThread::run()
 			case CTestee::ERROR_COULDNT_CONNECT:
     		message( 1, "FAILED - Couldn't Connect" );
     		message( 1, "  ** Check USB cable is plugged into the testee\n" );
-    		message( 1, "  ** Check USB lines on board\n" );
+    		message( 1, "  ** Check USB lines on board, location U7\n" );
 			  break;
 			case CTestee::ERROR_WEIRD_CHIP:
     		message( 1, "FAILED - Strange Chip ID" );
-    		message( 1, "  ** Check Atmel chip on board\n" );
+    		message( 1, "  ** Check Atmel chip on board, location U1\n" );
 			  break;
 			case CTestee::ERROR_NO_CTESTEE_BIN:
     		message( 1, "FAILED - Couldn't find ctestee.bin" );
@@ -255,7 +257,7 @@ void CTestThread::run()
 	{
 		message( 1, "FAILED - No Test Program after download\n" );
     	message( 1, "  ** Check ethernet cable is plugged into the testee\n" );
-    	message( 1, "  ** Check ethernet circuit on board\n" );
+    	message( 1, "  ** Check ethernet circuit on board, location U2\n" );
   		failed();				
   		return;	
 	}
@@ -272,7 +274,7 @@ void CTestThread::run()
 	if ( cTesterStatus != CTester::OK )
 	{
 		message( 1, "FAILED - no results\n" );
-    message( 1, "  ** Check ethernet circuit on board\n" );
+    message( 1, "  ** Check ethernet circuit on board, location U2\n" );
     message( 1, "  ** Processor not running right?\n" );
    	failed();
 		return;
@@ -299,7 +301,7 @@ void CTestThread::run()
 	if ( cTesterStatus != CTester::OK )
 	{
 		message( 1, "FAILED - no results\n" );
-    message( 1, "  ** Check ethernet circuit on board\n" );
+    message( 1, "  ** Check ethernet circuit on board, location U2\n" );
     message( 1, "  ** Processor not running right?\n" );
 		failed();
 		return;
@@ -320,6 +322,7 @@ void CTestThread::run()
 	if ( cTesteeStatus != CTestee::OK )
 	{
 		message( 1, "FAILED - Testee failed EEPROM test\n" );
+		message( 1, "  ** Check EEPROM circuit on board, location U5\n" );
 		failed();
 		return;
 	}
@@ -346,7 +349,7 @@ void CTestThread::run()
   if ( value != 1 )
   {
 		message( 1, "FAILED - Got dominant\n" );
-		message( 1, "  ** Check output on CAN chip\n" );
+		message( 1, "  ** Check CAN chip, location U6\n" );
 		failed();
 		return;
   }  	
@@ -371,7 +374,7 @@ void CTestThread::run()
   if ( value != 1 )
   {
 		message( 1, "FAILED - Got dominant with chip on but no signal\n" );
-		message( 1, "  ** Check CAN IO lines on board to connector\n" );
+		message( 1, "  ** Check CAN IO lines on board to connector, location U6\n" );
 		failed();
 		return;
   }  	
@@ -396,7 +399,7 @@ void CTestThread::run()
   if ( value != 0 )
   {
 		message( 1, "FAILED - Signalling, but no signal\n" );
-		message( 1, "  ** Check CAN chip\n" );
+		message( 1, "  ** Check CAN chip, location U6\n" );
 		message( 1, "  ** Check CAN Rx lines\n" );
 		failed();
 		return;
@@ -423,7 +426,7 @@ void CTestThread::run()
   if ( value != 0 )
   {
 		message( 1, "FAILED - No dominant signal\n" );
-		message( 1, "  ** Check CAN IO lines on board\n" );
+		message( 1, "  ** Check CAN IO lines on board, location U6\n" );
 		failed();
 		return;
   }  	
@@ -431,10 +434,6 @@ void CTestThread::run()
   cTesterStatus = cTester->canOut( 0 );
 
   message( 1, "OK\n" );
-  
-  cTestee->setNetworkConfig( );
-  cTestee->setSerialNumber( );
-  
   
 	reset();
 	
@@ -478,6 +477,7 @@ void CTestThread::sleepMs( int ms )
 void CTestThread::failed( )
 {
   status( "FAILED" );
+  cTestee->requestErase( );
 	cTester->testeePowerDown();
 	cTester->stop();
 	cTestee->stop();

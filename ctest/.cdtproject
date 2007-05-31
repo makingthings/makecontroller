@@ -49,12 +49,19 @@
 </profile>
 </item>
 <item id="org.eclipse.cdt.core.pathentry">
+<pathentry kind="con" path="org.eclipse.cdt.make.core.DISCOVERED_SCANNER_INFO"/>
 <pathentry kind="src" path=""/>
 <pathentry kind="out" path=""/>
-<pathentry kind="con" path="org.eclipse.cdt.make.core.DISCOVERED_SCANNER_INFO"/>
 </item>
 
 
 
+<item id="cdt_resolver">
+<custom value="false"/>
+</item>
+<item id="cdt_indexer">
+<indexEnabled indexValue="false"/>
+<indexerProblemsEnabled indexProblemsValue="0"/>
+</item>
 </data>
 </cdtproject>

@@ -35,8 +35,6 @@ class CTestee
     Status ioPattern( int pattern );
 	  Status canOut( int mode );
 	  Status canIn( int* value );
-	  void setSerialNumber( );
-	  void setNetworkConfig( );
     		
 	private:
     MessageInterface *messageInterface;

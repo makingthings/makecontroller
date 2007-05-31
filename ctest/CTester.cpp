@@ -169,14 +169,14 @@ CTester::Status CTester::ioTest( int* result )
 	Osc::Status s = osc->receive( &oscMessage );
 	if ( s != Osc::OK )
 	{
-  	messageInterface->message( 2, "  No message back from the tester\n" );
+  	messageInterface->message( 1, "  No message back from the tester\n" );
 	  return ERROR_NO_REPLY_IOTEST;
 	}
 	
    if ( strcmp( oscMessage.address, "/ctester/iotest" ) != 0 )
   {
-  	messageInterface->message( 2, "  Wrong message back from the tester - %s\n", oscMessage.address );
-    return ERROR_INCORRECT_RESPONSE;
+  	messageInterface->message( 1, "  Wrong message back from the tester - %s\n", oscMessage.address );
+    return ERROR_INCORRECT_RESPONSE; 
   }
 	
 	*result = oscMessage.i;
