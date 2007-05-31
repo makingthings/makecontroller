@@ -7,10 +7,11 @@
 
 #include "ATestee.h"
 #include "ATestThread.h"
+#include <QSettings>
 
 ATestee::ATestee( MessageInterface *messageInterface )
 {
-	this->messageInterface = messageInterface;
+	this->messageInterface = messageInterface; 
 	samba = new Samba( messageInterface );
 		
 	packetUdp = new PacketUdp( messageInterface );
@@ -148,6 +149,29 @@ ATestee::Status ATestee::requestErase( )
 	osc->sendPacket();
 	
 	return OK;
+}
+
+void ATestee::setNetworkConfig( )
+{	
+	osc->createMessage( "/network/dhcp", ",i", 1 );
+	osc->sendPacket();
+	
+	messageInterface->sleepMs( 100 ); 
+}
+
+
+void ATestee::setSerialNumber( )
+{
+	QSettings settings("MakingThings", "atest");
+	int sernum = settings.value("serialNumber", 2000 ).toInt();
+	
+	osc->createMessage( "/system/serialnumber", ",i", sernum );
+	osc->sendPacket();
+	
+	sernum += 1; 
+	settings.setValue("serialNumber", sernum );
+	
+	messageInterface->sleepMs( 100 );
 }
 
 ATestee::Status ATestee::flash()
