@@ -74,7 +74,10 @@ THUMB_SRC= \
   ../controller/lwip/src/core/udp.c \
   ../controller/lwip/src/core/ipv4/ip_frag.c \
   ../controller/makingthings/osc.c \
-  ../controller/makingthings/osc_patternmatch.c
+  ../controller/makingthings/osc_patternmatch.c \
+	../controller/makingthings/testing/atestee.c \
+	../controller/makingthings/testing/ctestee.c \
+	../controller/makingthings/testing/ctester.c
   
 # Source files that must be built in ARM mode.
 ARM_SRC= \
@@ -94,6 +97,7 @@ INCLUDEDIRS = \
 -I../appboard/makingthings  \
 -I../utility/makingthings  \
 -I../controller/makingthings  \
+-I../controller/makingthings/testing  \
 -I../controller/lwip/src/include  \
 -I../controller/lwip/contrib/port/FreeRTOS/AT91SAM7X  \
 -I../controller/freertos/include  \
