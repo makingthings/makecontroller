@@ -35,11 +35,10 @@ void Run( ) // this task gets called as soon as we boot up.
   Osc_RegisterSubsystem( IoOsc_GetName(), IoOsc_ReceiveMessage, NULL );
   Osc_RegisterSubsystem( StepperOsc_GetName(), StepperOsc_ReceiveMessage, NULL );
 
-  // Permit DIP switches to change the base IP settings
-  //NetworkCheck();
-
   // Starts the network up.  Will not return until a network is found...
   Network_SetActive( true );
+  // Permit DIP switches to change the base IP settings
+  NetworkCheck();
 }
 
 void BlinkTask( void* p )

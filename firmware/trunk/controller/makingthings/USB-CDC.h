@@ -38,7 +38,7 @@
 /* FreeRTOS */
 #include "FreeRTOS.h"
 
-#define USB_CDC_QUEUE_SIZE    400
+#define USB_CDC_QUEUE_SIZE    8
 
 /* Structure used to take a snapshot of the USB status from within the ISR. */
 typedef struct X_ISR_STATUS
@@ -76,6 +76,13 @@ typedef struct
 	unsigned portLONG ulTotalDataLength;
 } xCONTROL_MESSAGE;
 
+#define EP_FIFO 64
+typedef struct BulkBufferStruct
+{
+  unsigned portCHAR Data[EP_FIFO];
+  unsigned portCHAR Count;  // count of valid bytes (inIdx)
+} xBULKBUFFER;
+
 /*-----------------------------------------------------------*/
 void vUSBCDCTask( void *pvParameters );
 
@@ -85,7 +92,7 @@ void vUSBSendByte( portCHAR cByte, int timeout );
 
 /* MakingThings: Get a byte from the USB 
   returns -1 if there is no character before the timeout */
-int cUSBGetByte( portTickType timeout );
+inline int cUSBGetByte( portTickType timeout );
 
 #endif
 
