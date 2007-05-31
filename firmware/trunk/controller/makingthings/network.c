@@ -112,9 +112,13 @@ int Network_SetActive( int state )
       Network->WebServerTaskPtr = NULL;
       // set the temp addresses to use when setting a new IP address/mask/gateway
       Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&Network->TempIpAddress, 4 );
+      if( Network->TempIpAddress < 0 ) Network->TempIpAddress = -939480896; // decimal representation of 192.168.0.200
       Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&Network->TempGateway, 4 );
+      if( Network->TempGateway < 0 ) Network->TempGateway = 16820416; // decimal representation of 192.168.0.1
       Eeprom_Read( EEPROM_SYSTEM_NET_MASK, (uchar*)&Network->TempMask, 4 );
+      if( Network->TempMask < 0 ) Network->TempMask = 16777215; // decimal representation of 255.255.255.0
       Eeprom_Read( EEPROM_OSC_UDP_PORT, (uchar*)&Network->OscUdpPort, 4 );
+      if( Network->OscUdpPort < 0 ) Network->OscUdpPort = 10000;
       Eeprom_Read( EEPROM_TCP_OUT_ADDRESS, (uchar*)&Network->TcpOutAddress, 4 );
       Eeprom_Read( EEPROM_TCP_OUT_PORT, (uchar*)&Network->TcpOutPort, 4 );
       Network_Init();

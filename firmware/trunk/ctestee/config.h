@@ -9,6 +9,15 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+//----------------------------------------------------------------
+//  Comment out the systems that you don't want to include in your build.
+// todo: make sure the code is organized so these are meaningful
+//----------------------------------------------------------------
+#define USB  // enable the USB system
+#define NETWORK // enable the Ethernet system
+#define OSC // enable the OSC system
+#define FACTORY_TESTING
+
 #include "controller.h"   // ...everybody uses the MAKE Controller Board
 #include "appboard.h"     // ...if you're using the MAKE Application Board
 #include "error.h"
@@ -18,13 +27,6 @@
 
 #define CONTROLLER_HEAPSIZE 20650
 
-//----------------------------------------------------------------
-//  Comment out the systems that you don't want to include in your build.
-// todo: make sure the code is organized so these are meaningful
-//----------------------------------------------------------------
-#define USB  // enable the USB system
-#define NETWORK // enable the Ethernet system
-#define OSC // enable the OSC system
 
 //----------------------------------------------------------------
 //  Uncomment the revision of the MAKE Controller Board you're using.
