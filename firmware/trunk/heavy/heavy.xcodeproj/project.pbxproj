@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		0C66191D0C0F792500E96E9F /* atestee.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = atestee.c; sourceTree = "<group>"; };
+		0C66191E0C0F792500E96E9F /* atestee.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = atestee.h; sourceTree = "<group>"; };
+		0C66191F0C0F792500E96E9F /* ctestee.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ctestee.c; sourceTree = "<group>"; };
+		0C6619200C0F792500E96E9F /* ctestee.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ctestee.h; sourceTree = "<group>"; };
+		0C6619210C0F792500E96E9F /* ctester.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ctester.c; sourceTree = "<group>"; };
+		0C6619220C0F792500E96E9F /* ctester.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ctester.h; sourceTree = "<group>"; };
 		6EEDC4F50BEFB38200A867A6 /* appboard.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = appboard.c; sourceTree = "<group>"; };
 		6EEDC4F60BEFB38200A867A6 /* appboard.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = appboard.h; sourceTree = "<group>"; };
 		6EEDC4F70BEFB38200A867A6 /* appled.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = appled.c; sourceTree = "<group>"; };
@@ -250,9 +256,22 @@
 			children = (
 				6EEDC4F30BEFB38200A867A6 /* appboard */,
 				6EEDC5080BEFB38200A867A6 /* controller */,
-				6EEDC5FE0BEFB38200A867A6 /* test */,
+				6EEDC5FE0BEFB38200A867A6 /* heavy */,
 			);
 			name = heavy;
+			sourceTree = "<group>";
+		};
+		0C66191C0C0F792500E96E9F /* testing */ = {
+			isa = PBXGroup;
+			children = (
+				0C66191D0C0F792500E96E9F /* atestee.c */,
+				0C66191E0C0F792500E96E9F /* atestee.h */,
+				0C66191F0C0F792500E96E9F /* ctestee.c */,
+				0C6619200C0F792500E96E9F /* ctestee.h */,
+				0C6619210C0F792500E96E9F /* ctester.c */,
+				0C6619220C0F792500E96E9F /* ctester.h */,
+			);
+			path = testing;
 			sourceTree = "<group>";
 		};
 		6EEDC4F30BEFB38200A867A6 /* appboard */ = {
@@ -659,6 +678,7 @@
 		6EEDC5A90BEFB38200A867A6 /* makingthings */ = {
 			isa = PBXGroup;
 			children = (
+				0C66191C0C0F792500E96E9F /* testing */,
 				6EEDC5AA0BEFB38200A867A6 /* analogin.c */,
 				6EEDC5AB0BEFB38200A867A6 /* analogin.h */,
 				6EEDC5AC0BEFB38200A867A6 /* analogin_internal.h */,
@@ -751,14 +771,14 @@
 			path = startup;
 			sourceTree = "<group>";
 		};
-		6EEDC5FE0BEFB38200A867A6 /* test */ = {
+		6EEDC5FE0BEFB38200A867A6 /* heavy */ = {
 			isa = PBXGroup;
 			children = (
 				6EEDC60F0BEFB38200A867A6 /* config.h */,
 				6EEDC6610BEFB38200A867A6 /* make.c */,
 				6EEDC6620BEFB38200A867A6 /* Makefile */,
 			);
-			name = test;
+			name = heavy;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
