@@ -5,12 +5,14 @@
 	Functions for working with the status LED on the Make Controller Board.
 */
 
-#include "ctestee.h"
 #include "debug.h"
 #include <stdio.h>
 #include "osc.h"
 #include "config.h"
 #include "AT91SAM7X256.h"
+#include "ctestee.h"
+
+#ifdef FACTORY_TESTING
 
 #define CTESTEE_IOS 30
 
@@ -336,5 +338,7 @@ int CTesteeOsc_PropertyGet( int property )
   
   return value;
 }
+
+#endif // FACTORY_TESTING
 
 

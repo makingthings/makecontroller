@@ -4,13 +4,15 @@
 	Controller Testee
 */
 
-#include "atestee.h"
 #include "debug.h"
 #include <stdio.h>
 #include "osc.h"
 #include "config.h"
+#include "atestee.h"
 #include "analogin.h"
 #include "AT91SAM7X256.h"
+
+#ifdef FACTORY_TESTING
 
 static int ATestee_Init( void );
 static int ATestee_Test_All( int enable, int outputs, int lower, int upper );
@@ -279,4 +281,6 @@ int ATesteeOsc_PropertyGet( int property )
   
   return value;
 }
+
+#endif  // FACTORY_TESTING
 

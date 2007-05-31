@@ -11,6 +11,8 @@
 #include "config.h"
 #include "ctester.h"
 
+#ifdef FACTORY_TESTING
+
 static int CTester_CalculateCurrent( int index );
 
 void CanPowerDown( void );
@@ -68,18 +70,7 @@ struct CTester_
   int  canOut;
 } CTesterData;
 
-/** \defgroup CTester
-* CTester Subsystem of the Make Controller Kit.
-* \ingroup ControllerBoard
-* @{
-*/
 
-/**
-	CTester_SetTesteePower.
-	Sets whether the specified LED is active. \n
-	@param state 0 = off, 1 = V+ Power, 2 = 3.3V Power
-	@return Zero on success.
-*/
 int CTester_SetTesteePower( int state )
 {
   if ( !CTesterData.init )
@@ -106,11 +97,6 @@ int CTester_SetTesteePower( int state )
   return 0;
 }
 
-/**
-	CTester_GetTesteePower.
-	Returns the active state of the LED. \n
-	@return state.
-*/
 int CTester_GetTesteePower( )
 {
   if ( !CTesterData.init )
@@ -119,11 +105,7 @@ int CTester_GetTesteePower( )
   return CTesterData.testeePower;
 }
 
-/**
-	CTester_GetCurrent
-	Returns the current draw from respective current sense. \n
-	@return state.
-*/
+
 int CTester_GetTesteeCurrent( )
 {
   if ( !CTesterData.init )
@@ -132,11 +114,7 @@ int CTester_GetTesteeCurrent( )
   return CTester_CalculateCurrent( 4 );
 }
 
-/**
-	CTester_GetVoltage
-	Returns the voltage from the testee. Unit is millivolts\n
-	@return state.
-*/
+
 int CTester_GetTesteeVoltage( )
 {
   if ( !CTesterData.init )
@@ -148,12 +126,7 @@ int CTester_GetTesteeVoltage( )
   return (int)c;
 }
 
-/**
-	CTestee_SetTesteePower.
-	Sets whether the specified LED is active. \n
-	@param state 0 = off, 1 = V+ Power, 2 = 3.3V Power
-	@return Zero on success.
-*/
+
 int CTester_SetIoPattern( int ioPattern )
 {
   if ( !CTesterData.init )
@@ -271,8 +244,6 @@ int CanReceive()
   return Io_GetValue( IO_PA19 );
 }
 
-/** @}
-*/
 
 int CTester_Init( )
 {
@@ -425,5 +396,7 @@ int CTesterOsc_PropertyGet( int property )
   
   return value;
 }
+
+#endif // FACTORY_TESTING
 
 
