@@ -1,0 +1,80 @@
+[Version]
+Signature="$Windows NT$"
+Class=Ports
+ClassGuid={4D36E978-E325-11CE-BFC1-08002BE10318}
+Provider=%MakingThings%
+LayoutFile=layout.inf
+DriverVer=10/15/1999,5.0.2153.1
+
+[MANUFACTURER]
+%MakingThings%=MakingThings
+
+[MakingThings]
+%MakeControllerKit%=MakeControllerKit,USB\VID_EB03&PID_0920
+
+[MakeControllerKit_Install.NTx86]
+;Windows2000
+
+[DestinationDirs]
+DefaultDestDir=12
+MakeControllerKit.NT.Copy=12
+SerialEnumerator.NT.Copy=12 ;DIRID_DRIVERS
+
+[MakeControllerKit.NT]
+include=mdmcpq.inf
+CopyFiles=MakeControllerKit.NT.Copy
+AddReg=MakeControllerKit.NT.AddReg
+
+[MakeControllerKit.NT.HW]
+AddReg=MakeControllerKit.NT.HW.AddReg
+
+[MakeControllerKit.NT.Copy]
+usbser.sys,,,0x20
+serenum.sys,,,0x20
+
+[MakeControllerKit.NT.AddReg]
+HKR,,NTMPDriver,,*ntkern
+HKR,,NTMPDriver,,usbser.sys
+HKR,,EnumPropPages32,,"MsPorts.dll,SerialPortPropPageProvider"
+HKR,,PortSubClass,1,01
+
+[MakeControllerKit.NT.Services]
+include=mdmcpq.inf
+AddService = usbser, 0x00000002,Service_Inst
+AddService = Serenum,,Serenum_Service_Inst
+
+[SerialEnumerator.NT.Services]
+AddService = Serenum,,Serenum_Service_Inst
+
+[MakeControllerKit.NT.HW.AddReg]
+HKR,,"UpperFilters",0x00010000,"serenum"
+
+; -------------- Serial Port Driver install sections
+[Service_Inst]
+DisplayName = %Serial.SvcDesc%
+ServiceType = 1 ; SERVICE_KERNEL_DRIVER
+StartType = 3 ; SERVICE_DEMAND_START
+ErrorControl = 1 ;SERVICE_ERROR_NORMAL
+ServiceBinary = %12%\usbser.sys
+LoadOrderGroup = Base
+
+; -------------- Serenum Driver install section
+[Serenum_Service_Inst]
+DisplayName    = %Serenum.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\serenum.sys
+LoadOrderGroup = PNP Filter
+
+[SerialEnumerator.NT]
+CopyFiles=SerialEnumerator.NT.Copy
+
+[SerialEnumerator.NT.Copy]
+serenum.sys,,,0x20
+
+[Strings]
+MakingThings = "MakingThings"
+MakeControllerKit = "Make Controller Kit"
+Serial.SvcDesc = "USB Serial emulation driver"
+Serenum.SVCDESC = "Serenum Filter Driver"
