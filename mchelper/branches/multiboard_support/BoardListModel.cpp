@@ -42,7 +42,7 @@ QVariant BoardListModel::data(const QModelIndex &index, int role) const
   if (index.row() < 0 || index.row() >= boardList.size())
     return QVariant();
     
-  const UsbSerialBoard *curBoard = (UsbSerialBoard*) boardList.at( index.row() );
+  const Board *curBoard = (Board*) boardList.at( index.row() );
 
   QString tmp_string;
   
