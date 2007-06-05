@@ -50,24 +50,4 @@ class Board
       
 };
 
-class UdpBoard : public Board
-{
-  public:
-    UdpBoard( );
-};
-
-class UsbSerialBoard : public Board
-{
-  public:
-    UsbSerialBoard( );
-};
-
-class UsbSambaBoard : public Board
-{
-  public:
-    UsbSambaBoard( );
-};
-
-
-
 #endif /*BOARD_H_*/

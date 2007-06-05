@@ -28,23 +28,3 @@ Board::Board( )
   
 }
 
-
-/* UDP accessible Board subclass */
-UdpBoard::UdpBoard( )
-{
-  
-}
-
-
-/* USB Serial accessible Board subclass */
-UsbSerialBoard::UsbSerialBoard( )
-{
-}
-
-
-/* USB Samba accessible Board subclass */
-UsbSambaBoard::UsbSambaBoard( )
-{
-  
-}
-
