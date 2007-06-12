@@ -24,7 +24,7 @@
 
 McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 {
-	this->application = application;
+	this->application = application; 
 	setupUi(this);
 	
 	#ifdef Q_WS_WIN
@@ -41,7 +41,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	oscUdp = new Osc( );
 	oscUsb = new Osc( ); 
 	samba = new Samba( );
-	usb = new PacketUsbCdc( );
+	usb = new UsbMonitor( );
 	
 	#ifdef Q_WS_WIN
 	usb->setWidget( this );
@@ -49,10 +49,15 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	 
 	oscUdp->setInterfaces( udp, this, application );
 	oscUdp->setPreamble( "OscUdp" );
-	oscUsb->setInterfaces( usb, this, application );
+	//oscUsb->setInterfaces( usb, this, application );
 	oscUsb->setPreamble( "OscUsb" );
 	udp->setInterfaces( oscUdp, this );
-	usb->setInterfaces( oscUsb, oscUsb );
+	usb->setMessageInterface( this );
+	
+	checkForNewDevices( ); // initially check for any devices out there
+	monitorTimer = new QTimer(this); // then set up a timer to check for others periodically
+    connect(monitorTimer, SIGNAL(timeout()), this, SLOT( checkForNewDevices() ) );
+    monitorTimer->start( 1000 ); // check for new devices once a second...more often?
 	
   ////////////////////////////////////////////////////////////////////////////
   // Testing
@@ -80,7 +85,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   TCHAR* openPorts[32];
   //QAction* device_menu_action[32];
   int foundOpen = 0;
-  foundOpen = usb->scanUsbSerialPorts(openPorts);
+  foundOpen = 1; //usb->scanUsbSerialPorts(openPorts);
   
   int i;
   for( i = 0; i < foundOpen; i++ )
@@ -127,8 +132,6 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
            this,                                SLOT(deviceSelectionChanged(const QModelIndex &, const QModelIndex &)));
   
   ////////////////////////////////////////////////////////////////////////////
-  
-	usb->start( );
 	
 	progressBar->setRange( 0, 1000 );
 	progressBar->setValue( 0 );
@@ -168,6 +171,17 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   statusBar()->showMessage(sb_message, 2000);
 }
 
+void McHelperWindow::checkForNewDevices( )
+{
+	QList<PacketInterface*> newBoards;
+	usb->scan( &newBoards );
+	int newBoardCount = newBoards.count( );
+	if( newBoardCount > 0 )
+	{
+		// then do something with newBoards.at(i)	
+	}
+}
+
 void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous )
 {
   QString name = boardModel->data( current, Qt::DisplayRole ).toString();
@@ -178,11 +192,11 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
     message( 1, "Switching to board: %s\n", name.toAscii().constData());
     
     // Close down the current link
-    usb->close();
+    //usb->close();
     
     // Set the new active board name that we want
     // the usb open routines to lock onto
-    usb->active_pname = (TCHAR*) com_port.utf16();
+    //usb->active_pname = "COM9"; //(TCHAR*) com_port.utf16();
 
     statusBar()->showMessage(status_bar_text, 1000);
   }
@@ -190,7 +204,7 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
 
 void McHelperWindow::closeEvent( QCloseEvent *qcloseevent )
 {
-	usb->close( );
+	usb->closeAll( );
 }
 
 void McHelperWindow::fileSelectButtonClicked()
@@ -213,13 +227,12 @@ void McHelperWindow::uploadButtonClicked()
 	if( strlen( fileNameBuffer) < 0 )
 		return;
 	
-	if( usb->usbIsOpen( ) )
-	  usb->usbClose( );
+	//if( usb->usbIsOpen( ) )
+	  //usb->usbClose( );
 
 	uploaderThread->setBinFileName( fileNameBuffer );
   
-  // Let's assume we'll always want to boot from the flash
-  // image we just uploaded on reboot
+  // Let's assume we'll always want to boot from the flash image we just uploaded on reboot
   uploaderThread->setBootFromFlash( true );
 	
 	flash( );
@@ -478,7 +491,7 @@ void McHelperWindow::uiLessUpload( char* filename, bool bootFlash )
 void McHelperWindow::about( )  // set the version number here.
 {
   QMessageBox::about(this, tr("About mchelper"),
-  tr("Make Controller Helper - version 1.2.3\n\n"
+  tr("Make Controller Helper - version 2.0.0\n\n"
   "Making Things 2007\n\n"
   "www.makingthings.com") );
 }
@@ -486,7 +499,7 @@ void McHelperWindow::about( )  // set the version number here.
 #ifdef Q_WS_WIN
 void McHelperWindow::usbRemoved( )
 {
-	usb->usbClose( );
+	// usb->usbClose( );
 }
 #endif
 

@@ -28,6 +28,8 @@ class PacketInterface
 	  virtual int sendPacket( char* packet, int length ) = 0;
 	  virtual bool isPacketWaiting( ) = 0;
 	  virtual int receivePacket( char* buffer, int length ) = 0;
+	  virtual char* location( ) = 0;
+	  virtual ~PacketInterface( ) {}
 };
 
 #endif

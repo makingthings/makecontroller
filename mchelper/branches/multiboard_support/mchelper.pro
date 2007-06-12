@@ -27,13 +27,15 @@ HEADERS = McHelperWindow.h \
 				UploaderThread.h \
 				PacketInterface.h \
 				PacketReadyInterface.h \
+				MonitorInterface.h \
 				PacketUdp.h \
 				Osc.h \
 				Samba.h \
 				UsbSerial.h \
 				PacketUsbCdc.h \
+				UsbMonitor.h \
 				Board.h \
-				BoardListModel.h
+				BoardListModel.h \
             
 SOURCES	= main.cpp \
 				McHelperWindow.cpp \
@@ -43,6 +45,7 @@ SOURCES	= main.cpp \
 				Samba.cpp \
 				UsbSerial.cpp \
 				PacketUsbCdc.cpp \
+				UsbMonitor.cpp \
 				Board.cpp \
 				BoardListModel.cpp
 				

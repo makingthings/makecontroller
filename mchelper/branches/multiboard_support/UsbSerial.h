@@ -39,11 +39,6 @@
 #include <windows.h>
 #include <tchar.h>
 
-//DEFINE_GUID( GUID_MAKE_CTRL_KIT, 0x4D36E978, 0xE325, 0x11CE, 
-//								0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18 );
-
-#define DEFAULT_COMM_FLAGS EV_BREAK | EV_CTS   | EV_DSR | EV_ERR | EV_RING | EV_RLSD
-                 //| EV_RXCHAR | EV_RXFLAG | EV_TXEMPTY ;
 #define OVERLAPPED_HANDLES 2
 
 #endif  //Windows defines/includes 
@@ -82,15 +77,21 @@ class UsbSerial
 		
 		UsbStatus usbOpen( );
 		void usbClose( );
-		UsbStatus usbRead( char* buffer, int length );
+		int usbRead( char* buffer, int length );
 		UsbStatus usbWrite( char* buffer, int length );
 		UsbStatus usbWriteChar( char c );
-		bool usbIsOpen( );
-		
-    int scanUsbSerialPorts(TCHAR** openPorts);
-    TCHAR* active_pname;
+		bool isOpen( );
+		int numberOfAvailableBytes( );
+		char portName[1024]; // should be protected?
+		#ifdef Q_WS_WIN
+		HANDLE deviceHandle;
+		#endif
 		
 	protected:
+		bool deviceOpen;
+		bool readInProgress;
+		QMutex usbOpenMutex;
+		
 	  //Mac-only
 		#ifdef Q_WS_MAC
 		int sleepMs( long ms );
@@ -100,28 +101,17 @@ class UsbSerial
 	  QMainWindow* mainWindow;		
 		
 	private:
-		bool deviceOpen;
-		bool readInProgress;
-		bool blocking;               // whether it's blocking or not
-		QMutex usbOpenMutex;
-				
 		//Windows only
 		#ifdef Q_WS_WIN
-		int ScanEnumTree( LPCTSTR lpEnumPath, TCHAR** pname );
-		LONG OpenSubKeyByIndex(HKEY hKey,DWORD dwIndex,REGSAM samDesired,PHKEY phkResult);
-		LONG QueryStringValue(HKEY hKey,LPCTSTR lpValueName,LPTSTR* lppStringValue);
-		int testOpen( TCHAR* deviceName );
-		int openDevice( TCHAR* deviceName );
-		bool DoRegisterForNotification( HDEVNOTIFY *hDevNotify );
+		UsbStatus openDevice( TCHAR* deviceName );
+		bool DoRegisterForNotification( );
 		
-		// the device handle
 		OVERLAPPED overlappedRead;
 		char readBuffer[512];
 		OVERLAPPED overlappedWrite;
 		OVERLAPPED overlappedStatus;
 		DWORD dwStoredFlags;
-		HWND hWnd;
-		HDEVNOTIFY deviceNotificationHandle;
+		HDEVNOTIFY notificationHandle;
 		#endif
 		
 		//Mac only
@@ -137,12 +127,7 @@ class UsbSerial
 		
 		kern_return_t getDevicePath(io_iterator_t serialPortIterator, char *path, CFIndex maxPathSize);
 		void createMatchingDictionary( );
-		#endif
-		
-	protected:
-	#ifdef Q_WS_WIN
-	HANDLE deviceHandle;
-	#endif
+		#endif	
 };
 
 #endif // USBSERIAL_H

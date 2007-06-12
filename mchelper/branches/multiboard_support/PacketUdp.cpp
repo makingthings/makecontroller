@@ -69,6 +69,11 @@ PacketUdp::Status PacketUdp::close( )	//part of PacketInterface
   return OK;
 }
 
+char* PacketUdp::location( )
+{
+	return "not implemented";
+}
+
 int PacketUdp::sendPacket( char* packet, int length )	//part of PacketInterface
 {
 	//printf( "PacketUdp Sending %s:%d\n", *remoteHostAddress.toString().toAscii().toConstData(), remotePort );	
