@@ -53,63 +53,9 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	oscUsb->setPreamble( "OscUsb" );
 	udp->setInterfaces( oscUdp, this );
 	usb->setMessageInterface( this );
-	
-	checkForNewDevices( ); // initially check for any devices out there
-	monitorTimer = new QTimer(this); // then set up a timer to check for others periodically
-    connect(monitorTimer, SIGNAL(timeout()), this, SLOT( checkForNewDevices() ) );
-    monitorTimer->start( 1000 ); // check for new devices once a second...more often?
-	
-  ////////////////////////////////////////////////////////////////////////////
-  // Testing
-
-  // An array of all the known boards
-  QList<Board*> boards;
-    
-  // Just some testing data
-  ///////////////////////////////////////////////
-  Board *temp_board;
-  
-//  temp_board = new Board();
-//  temp_board->name = "Board One";
-//  boards.append(temp_board);
-//  
-//  temp_board = new Board();
-//  temp_board->name = "Board Two";
-//  boards.append(temp_board);
-  ///////////////////////////////////////////////
   
   // Create the BoardListModel
-  boardModel = new BoardListModel(boards, this);
-
-  // Scan for available USB/Serial devices
-  TCHAR* openPorts[32];
-  //QAction* device_menu_action[32];
-  int foundOpen = 0;
-  foundOpen = 1; //usb->scanUsbSerialPorts(openPorts);
-  
-  int i;
-  for( i = 0; i < foundOpen; i++ )
-  {
-    if( openPorts[i] != NULL )
-    {
-      printf("Port: %ls\n", openPorts[i]);
-      
-      //device_menu_action[i] = McHelperWindow::menuDevices->addAction( QString::fromUtf16((ushort*)openPorts[i]) );
-      
-      //device_menu_action[i]->setCheckable( TRUE );
-      //device_menu_action[i]->setChecked( TRUE );
-      //device_menu_action[i]->setEnabled(true);
-      
-      //QString menu_item_name = QString::fromUtf16((ushort*)openPorts[i]);
-      //connect( device_menu_action[i], SIGNAL( triggered() ), this, SLOT( deviceMenuSelected(const QString &) ));
-      
-      temp_board = new Board();
-      temp_board->name = "UsbSerial Board";
-      temp_board->type = Board::UsbSerial;
-      temp_board->com_port = QString::fromUtf16((ushort*) openPorts[i]);
-      boardModel->addBoard(temp_board);
-    }
-  }
+  boardModel = new BoardListModel( this );
   
   // Some stuff about trying to enable drag/drop
   // list reordering...
@@ -119,12 +65,12 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   listViewDevices->setDragEnabled(true);
   //listViewDevices->setDropIndicatorShown(true);
   listViewDevices->setAcceptDrops(true);
-  //listViewDevices->setAlternatingRowColors(true);
+  listViewDevices->setAlternatingRowColors(true);
   //listViewDevices->setDragDropMode(QAbstractItemView::InternalMove);
   ///////////////////////////////////////////////
   
   // Connect the board list model to the devices listing view
-  listViewDevices->setModel(boardModel);
+  listViewDevices->setModel( boardModel );
   
   // Wire up the selection changed signal from the
   // model to be handled here
@@ -165,10 +111,15 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	uploaderThread = 0;
 	uploaderThread = new UploaderThread( application, this, samba );
 	samba->setMessageInterface( uploaderThread );
+	
+	// after all is set up, fire up the mechanism that looks for new boards
+	checkForNewDevices( ); // initially check for any devices out there
+	monitorTimer = new QTimer(this); // then set up a timer to check for others periodically
+    connect(monitorTimer, SIGNAL(timeout()), this, SLOT( checkForNewDevices() ) );
+    monitorTimer->start( 1000 ); // check for new devices once a second...more often?
   
   // Init the status bar and let the user know the app is loaded
-  QString sb_message = tr("Ready.");
-  statusBar()->showMessage(sb_message, 2000);
+  statusBar()->showMessage( tr("Ready."), 2000);
 }
 
 void McHelperWindow::checkForNewDevices( )
@@ -178,7 +129,15 @@ void McHelperWindow::checkForNewDevices( )
 	int newBoardCount = newBoards.count( );
 	if( newBoardCount > 0 )
 	{
-		// then do something with newBoards.at(i)	
+		int i;
+		for( i=0; i<newBoardCount; i++ )
+		{
+			Board *board = new Board();
+      		board->name = "UsbSerial Board";
+      		board->type = Board::UsbSerial;
+      		board->com_port = QString( newBoards.at(i)->location() );
+      		boardModel->addBoard( board );
+		}
 	}
 }
 
@@ -190,13 +149,6 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   
   if ( boardModel->flags(current) & Qt::ItemIsEnabled ) {
     message( 1, "Switching to board: %s\n", name.toAscii().constData());
-    
-    // Close down the current link
-    //usb->close();
-    
-    // Set the new active board name that we want
-    // the usb open routines to lock onto
-    //usb->active_pname = "COM9"; //(TCHAR*) com_port.utf16();
 
     statusBar()->showMessage(status_bar_text, 1000);
   }

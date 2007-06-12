@@ -40,7 +40,7 @@ class BoardListModel : public QAbstractListModel
       WidgetRole,
     };
     
-    BoardListModel(const QList<Board*> boards, QObject *parent = 0);
+    BoardListModel(QObject *parent = 0);
     ~BoardListModel();
     
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
