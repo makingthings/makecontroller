@@ -16,7 +16,6 @@
 *********************************************************************************/
 
 #include "PacketUsbCdc.h"
-
 #include <QMutexLocker>
 
 // SLIP codes
@@ -29,118 +28,63 @@ PacketUsbCdc::PacketUsbCdc( ) : QThread( )
 {
 	packetCount = 0;
 	packetState = START;
+	packetReadyInterface = new Osc( );
 }
 
 void PacketUsbCdc::run()
 {
-  char justGot;
 	OscUsbPacket* currentPacket = NULL;
-	char* packetP = NULL;
-	bool packetStarted = false;
-	bool keepReading = false;
   
 	open( );
 	while( 1 )
 	{
-	  if( !usbIsOpen() ) // if it's not open, try to open it
-			open();
+	  if( !deviceOpen ) // if it's not open, try to open it
+			usbOpen( );
 
-		if( usbIsOpen() ) // then, if open() succeeded, try to read
+		if( deviceOpen ) // then, if open() succeeded, try to read
 		{
-			UsbStatus readResult = usbRead( &justGot, 1 );  //we're only ever going to read 1 character at a time
-			//messageInterface->message( 1, "read result: %d\n", readResult );
-			
-			if( readResult == ERROR_CLOSE || readResult == IO_ERROR )
-				close();
-			
-			if( readResult == GOT_CHAR ) //we got a character
+			currentPacket = new OscUsbPacket( );
+			int packetLength = slipReceive( currentPacket->packetBuf, OSC_MAX_MESSAGE );
+			if( packetLength > 0 )
 			{
-				keepReading = true;
-				switch( justGot )
+				currentPacket->length = packetLength;
 				{
-					case END:
-						if( packetStarted && currentPacket->length ) // it was the END byte
-						{ 
-							// Need to protect the packetList structure from multithreaded diddling
-							{
-								QMutexLocker locker( &packetListMutex );
-							
-								*packetP = '\0';
-								packetList.append( currentPacket );
-								packetCount++;
-							}
-							packetReadyInterface->packetWaiting( );
-							packetStarted = false;
-						} 
-						else // it was the START byte
-						{
-							currentPacket = new OscUsbPacket( );
-							packetP = currentPacket->packetBuf;
-							packetStarted = true;
-						}
-						break;
-						
-					// if it's the same code as an ESC character, get another character,
-					// then figure out what to store in the packet based on that.
-					case ESC:
-						readResult = usbRead( &justGot, 1 );
-						if( readResult == GOT_CHAR )
-						{
-							switch( justGot )
-							{
-								case ESC_END:
-									justGot = END;
-									break;
-								case ESC_ESC:
-									justGot = ESC;
-									break;
-							}
-						}
-						else
-							break;
-					// otherwise, just stick it in the packet		
-					default:
-						if( packetP == NULL )
-							break;
-						*packetP = justGot;
-						packetP++;
-						currentPacket->length++;
+					QMutexLocker locker( &packetListMutex );
+					packetList.append( currentPacket );
+					packetCount++;
 				}
+				packetReadyInterface->packetWaiting( );
 			}
 			else
-				keepReading = false;
+				this->sleepMs( 1 ); // usb is still open, but we didn't receive anything last time
 		}
-		if( !keepReading ) // then have a little nap
-		{
-			if( usbIsOpen() )
-				this->sleepMs( 1 );
-			else
-				this->sleepMs( 500 );
-		}
+		else // usb isn't open...chill out.
+			this->sleepMs( 50 );
 	}
-	// should never get here...
-	close( );
+	close( ); // should never get here...
 }
 
 PacketUsbCdc::Status PacketUsbCdc::open()
 {
-	if( UsbSerial::OK != usbOpen( ) )
-		return PacketInterface::ERROR_NOT_OPEN;
-	else
+	//if( UsbSerial::OK != usbOpen( ) )
+		//return PacketInterface::ERROR_NOT_OPEN;
+	//else
 		return PacketInterface::OK;
 }
 
 PacketUsbCdc::Status PacketUsbCdc::close()
 {
-	usbWriteChar( END );
+	//usbWriteChar( END );
 	usbClose( );
 	return PacketInterface::OK;
 }
 
 int PacketUsbCdc::sendPacket( char* packet, int length )
 {
-  int size = length;
-  usbWriteChar( END ); // Flush out any spurious data that may have accumulated
+  char buf[ length * 2 ]; // make it twice as long, as worst case scenario is ALL escape characters
+	buf[0] = END;  // Flush out any spurious data that may have accumulated
+	char* ptr = buf + 1; 
+	int size = length;
 
   while( size-- )
   {
@@ -149,26 +93,73 @@ int PacketUsbCdc::sendPacket( char* packet, int length )
 			// if it's the same code as an END character, we send a special 
 			//two character code so as not to make the receiver think we sent an END
 			case END:
-				usbWriteChar( ESC );
-				usbWriteChar( ESC_END );
+				*ptr++ = ESC;
+				*ptr++ = ESC_END;
 				break;
 				
 				// if it's the same code as an ESC character, we send a special 
 				//two character code so as not to make the receiver think we sent an ESC
 			case ESC:
-				usbWriteChar( ESC );
-				usbWriteChar( ESC_ESC );
+				*ptr++ = ESC;
+				*ptr++ = ESC_ESC;
 				break;
 				//otherwise, just send the character
 			default:
-				usbWriteChar( *packet );
+				*ptr++ = *packet;
 		}
 		packet++;
 	}
-	
 	// tell the receiver that we're done sending the packet
-	usbWriteChar( END );
+	*ptr++ = END;
+	usbWrite( buf, (ptr - buf) );
+	
 	return 0;
+}
+
+int PacketUsbCdc::slipReceive( char* buffer, int length )
+{
+  int started = 0, count = 0, justGot = 0;
+  char tempBuffer[length];
+  char *bufferPtr = buffer, *tempPtr = tempBuffer;
+
+  while ( true )
+  {
+    int available = numberOfAvailableBytes( );
+    if( available > 0 )
+    {
+    	justGot = usbRead( tempBuffer, available );
+    	tempPtr = tempBuffer;
+    	if( justGot < 0 )
+			close( );
+    }
+	
+    int i;
+    for( i = 0; i < justGot; i++ )
+    {
+      switch( *tempPtr )
+      {
+        case END:
+          if( started && count ) // it was the END byte
+			return count; // We're done now if we had received any characters
+          else // skipping all starting END bytes
+            started = true;
+          break;					
+        case ESC:
+          // if it's the same code as an ESC character, we just want to skip it and 
+          // stick the next byte in the packet
+          tempPtr++;
+          // no break here, just stick it in the packet		
+        default:
+          *bufferPtr++ = *tempPtr;
+          count++;
+      }
+      tempPtr++;
+    }
+    if( justGot == 0 ) // if we didn't get anything, sleep...otherwise just rip through again
+    	Sleep( 1 );
+    justGot = 0; // reset our count for the next run through
+  }
+  return IO_ERROR; // should never get here
 }
 
 bool PacketUsbCdc::isPacketWaiting( )
@@ -210,11 +201,22 @@ int PacketUsbCdc::receivePacket( char* buffer, int size )
 	}
 }
 
-void PacketUsbCdc::setInterfaces( PacketReadyInterface* packetReadyInterface, MessageInterface* messageInterface )
+char* PacketUsbCdc::location( )
+{
+	return portName;
+}
+
+void PacketUsbCdc::setInterfaces( MessageInterface* messageInterface )
 {
 	this->messageInterface = messageInterface;
-	this->packetReadyInterface = packetReadyInterface;
 }
+
+#ifdef Q_WS_WIN
+void PacketUsbCdc::setWidget( QMainWindow* window )
+{
+	this->mainWindow = window;
+}
+#endif
 
 void PacketUsbCdc::sleepMs( int ms )
 {
@@ -226,10 +228,5 @@ void PacketUsbCdc::sleepMs( int ms )
   #endif
 }
 
-#ifdef Q_WS_WIN
-void PacketUsbCdc::setWidget( QMainWindow* window )
-{
-	this->mainWindow = window;
-}
-#endif
+
 

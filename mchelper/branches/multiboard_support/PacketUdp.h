@@ -40,6 +40,7 @@ class PacketUdp : public QObject, public PacketInterface
 	  int sendPacket( char* packet, int length );
 		int receivePacket( char* packet, int length );
 	  bool isPacketWaiting( );
+	  char* location( void );
 		
 	public slots:
 		void setLocalPort( int port, bool change );

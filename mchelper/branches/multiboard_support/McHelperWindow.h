@@ -23,12 +23,13 @@
 //Qt includes
 #include <QMainWindow>
 #include <QThread>
+#include <QTimer>
 
 #include "UploaderThread.h"
 #include "PacketUdp.h"
 #include "Osc.h"
 #include "Samba.h"
-#include "PacketUsbCdc.h"
+#include "UsbMonitor.h"
 #include "Board.h"
 #include "BoardListModel.h"
 
@@ -37,6 +38,7 @@ class PacketUdp;
 class Osc;
 class McHelperApp;
 class BoardListModel;
+class UsbMonitor;
 
 
 class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public MessageInterface
@@ -77,7 +79,8 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		Osc* oscUdp;
 		Osc* oscUsb;
 		Samba* samba;
-		PacketUsbCdc* usb;
+		UsbMonitor* usb;
+		QTimer* monitorTimer;
 
     BoardListModel* boardModel;
 		
@@ -95,6 +98,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
     // Uploader functions
 		void fileSelectButtonClicked();
 	  void uploadButtonClicked();
+	  void checkForNewDevices( );
     
     // Usb functions
     void commandLineUsbEvent( );
