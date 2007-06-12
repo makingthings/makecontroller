@@ -82,7 +82,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		UsbMonitor* usb;
 		QTimer* monitorTimer;
 
-    BoardListModel* boardModel;
+    	BoardListModel* boardModel;
 		
 		void readSettings();
 		void writeFileSettings();

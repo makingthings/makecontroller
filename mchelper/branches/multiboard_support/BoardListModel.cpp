@@ -23,9 +23,9 @@
 
 
 /* Board List Model */
-BoardListModel::BoardListModel(const QList<Board*> boards, QObject *parent) : QAbstractListModel(parent), boardList(boards)
+BoardListModel::BoardListModel( QObject *parent ) : QAbstractListModel(parent)
 {
-  this->boardList = boards;
+
 }
 
 
@@ -89,7 +89,7 @@ QVariant BoardListModel::data(const QModelIndex &index, int role) const
 int BoardListModel::addBoard ( Board *board )
 {
    beginInsertRows(QModelIndex(), boardList.count(), boardList.count());
-   this->boardList.append(board);
+   boardList.append(board);
    endInsertRows();
 
    return boardList.count() - 1;
@@ -98,7 +98,7 @@ int BoardListModel::addBoard ( Board *board )
 bool BoardListModel::removeBoard ( int row, const QModelIndex &parent )
 {
    beginRemoveRows(QModelIndex(), row, row);
-   this->boardList.removeAt(row);
+   boardList.removeAt(row);
    endRemoveRows();
 
    return true;

@@ -87,7 +87,7 @@ UsbSerial::UsbStatus UsbSerial::usbOpen( )
 	UsbStatus result = openDevice( (TCHAR*)deviceHandle );
 	if( result == OK )
 	{
-		messageInterface->message( 1, "Usb> Make Controller connected at %s", portName );
+		// messageInterface->message( 1, "Usb> Make Controller connected at %s\n", portName );
 		Sleep( 10 );  // wait after opening it before trying to read/write
 		deviceOpen = true;
 		DoRegisterForNotification( ); // now set up to get called back when it's unplugged
