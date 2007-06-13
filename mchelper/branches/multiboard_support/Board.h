@@ -21,6 +21,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+#include "PacketInterface.h"
+
 #include <QString>
 
 class Board
@@ -41,6 +43,8 @@ class Board
     
     QString ip_address;
     QString ip_port;
+    
+    PacketInterface* packetInterface;
     
     Board( );
     

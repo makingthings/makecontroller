@@ -70,6 +70,12 @@ QVariant BoardListModel::data(const QModelIndex &index, int role) const
       
       return tmp_string;
       break;
+    
+    case BoardListModel::NameRole:
+     return curBoard->name;
+    
+    case BoardListModel::PacketInterfaceRole:
+     return curBoard->packetInterface;
       
     case BoardListModel::COMPortRole:
      return curBoard->com_port;
@@ -119,7 +125,24 @@ Qt::ItemFlags BoardListModel::flags ( const QModelIndex & index ) const
 
 bool BoardListModel::setData ( const QModelIndex & idx, const QVariant & value, int role )
 {
+  // :TODO: implement this
   return true;
+}
+
+void BoardListModel::setActiveBoardIndex ( const QModelIndex & index )
+{
+  this->activeBoard = index;
+}
+
+const QModelIndex BoardListModel::getActiveBoardIndex ()
+{
+  return this->activeBoard;
+}
+
+Board* BoardListModel::getActiveBoard ()
+{
+  Board *curBoard = (Board*) boardList.at( this->activeBoard.row() );
+  return curBoard;
 }
 
 Qt::DropActions BoardListModel::supportedDropActions() const

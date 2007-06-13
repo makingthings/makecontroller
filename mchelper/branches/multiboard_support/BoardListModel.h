@@ -37,7 +37,8 @@ class BoardListModel : public QAbstractListModel
     enum Role
     {
       COMPortRole = Qt::UserRole + 1,
-      WidgetRole,
+      NameRole,
+      PacketInterfaceRole,
     };
     
     BoardListModel(QObject *parent = 0);
@@ -50,6 +51,11 @@ class BoardListModel : public QAbstractListModel
     Qt::DropActions BoardListModel::supportedDropActions() const;
     
     bool setData ( const QModelIndex & index, const QVariant & value, int role = Qt::EditRole );
+    void setActiveBoardIndex ( const QModelIndex & index );
+    const QModelIndex getActiveBoardIndex ();
+    
+    Board* getActiveBoard();
+    
     /* QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const; */
       
     //bool insertRows(int position, int rows, const QModelIndex &index = QModelIndex());
@@ -60,7 +66,7 @@ class BoardListModel : public QAbstractListModel
                        
   private:
     QList<Board*> boardList;
-
+    QModelIndex activeBoard;
 };
 
 
