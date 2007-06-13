@@ -85,6 +85,12 @@ int PacketUdp::sendPacket( char* packet, int length )	//part of PacketInterface
 	return 0;
 }
 
+void PacketUdp::uiSendPacket( QString rawString )
+{
+  // :TODO: implement this
+}
+
+
 bool PacketUdp::isPacketWaiting( )	//part of PacketInterface
 {
   return socket->hasPendingDatagrams();

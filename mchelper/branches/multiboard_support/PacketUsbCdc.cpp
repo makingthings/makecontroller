@@ -29,11 +29,15 @@ PacketUsbCdc::PacketUsbCdc( ) : QThread( )
 	packetCount = 0;
 	packetState = START;
 	packetReadyInterface = new Osc( );
+  oscTranslator = new Osc();
 }
 
 void PacketUsbCdc::run()
 {
 	OscUsbPacket* currentPacket = NULL;
+  
+  // :TODO: set this up properly
+  // oscTranslator->setInterfaces( this, messageInterface, application );
   
 	open( );
 	while( 1 )
@@ -114,6 +118,14 @@ int PacketUsbCdc::sendPacket( char* packet, int length )
 	usbWrite( buf, (ptr - buf) );
 	
 	return 0;
+}
+
+void PacketUsbCdc::uiSendPacket( QString rawString )
+{
+  // :TODO: once this OSC link is properly plumbed,
+  // we can pass this on for translation
+  
+  // oscTranslator->uiSendPacket(rawString);
 }
 
 int PacketUsbCdc::slipReceive( char* buffer, int length )

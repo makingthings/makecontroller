@@ -62,10 +62,10 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   ///////////////////////////////////////////////
   //listViewDevices->setMovement(QListView::Free);
   listViewDevices->setSelectionMode(QAbstractItemView::SingleSelection);
-  listViewDevices->setDragEnabled(true);
+  //listViewDevices->setDragEnabled(true);
   //listViewDevices->setDropIndicatorShown(true);
-  listViewDevices->setAcceptDrops(true);
-  listViewDevices->setAlternatingRowColors(true);
+  //listViewDevices->setAcceptDrops(true);
+  //listViewDevices->setAlternatingRowColors(true);
   //listViewDevices->setDragDropMode(QAbstractItemView::InternalMove);
   ///////////////////////////////////////////////
   
@@ -133,10 +133,11 @@ void McHelperWindow::checkForNewDevices( )
 		for( i=0; i<newBoardCount; i++ )
 		{
 			Board *board = new Board();
-      		board->name = "UsbSerial Board";
-      		board->type = Board::UsbSerial;
-      		board->com_port = QString( newBoards.at(i)->location() );
-      		boardModel->addBoard( board );
+      board->name = "UsbSerial Board";
+      board->type = Board::UsbSerial;
+      board->packetInterface = newBoards.at(i);
+      board->com_port = QString( newBoards.at(i)->location() );
+      boardModel->addBoard( board );
 		}
 	}
 }
@@ -149,7 +150,7 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   
   if ( boardModel->flags(current) & Qt::ItemIsEnabled ) {
     message( 1, "Switching to board: %s\n", name.toAscii().constData());
-
+    boardModel->setActiveBoardIndex( current );
     statusBar()->showMessage(status_bar_text, 1000);
   }
 }
@@ -198,7 +199,9 @@ void McHelperWindow::commandLineEvent( )
 	mainConsole->insertPlainText( "OscUdp< ");
 	mainConsole->insertPlainText( cmd );
 	mainConsole->insertPlainText( "\n" );
-  oscUdp->uiSendPacket( cmd );
+  
+  //oscUdp->uiSendPacket( cmd );
+  
 	commandLine->clearEditText();
 	mainConsole->ensureCursorVisible( );
 	writeUdpSettings( );
@@ -210,8 +213,16 @@ void McHelperWindow::commandLineUsbEvent( )
   mainConsole->insertPlainText( "OscUsb< ");
   mainConsole->insertPlainText( cmd );
   mainConsole->insertPlainText( "\n" );
-  oscUsb->uiSendPacket( cmd );
+  
+  // oscUsb->uiSendPacket( cmd );
 	
+    
+  QModelIndex activeBoard = boardModel->getActiveBoardIndex();
+  QString name = boardModel->data( activeBoard, Qt::DisplayRole ).toString();
+  
+  message( 1, "Sending to board: %s\n", name.toAscii().constData() );
+  boardModel->getActiveBoard()->packetInterface->uiSendPacket(cmd);
+  
   commandLineUsb->clearEditText();
   mainConsole->ensureCursorVisible( );
   writeUsbSettings();
