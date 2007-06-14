@@ -63,7 +63,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   //listViewDevices->setDragEnabled(true);
   //listViewDevices->setDropIndicatorShown(true);
   //listViewDevices->setAcceptDrops(true);
-  listViewDevices->setAlternatingRowColors(true);
+  //listViewDevices->setAlternatingRowColors(true);
   //listViewDevices->setDragDropMode(QAbstractItemView::InternalMove);
   ///////////////////////////////////////////////
   
@@ -131,7 +131,8 @@ void McHelperWindow::checkForNewDevices( )
 		int i;
 		for( i=0; i<newBoardCount; i++ )
 		{
-			Board *board = new Board();
+			  Board *board = new Board();
+        board->key = QString( newBoards.at(i)->location() );
 	      board->name = "UsbSerial Board";
 	      board->type = Board::UsbSerial;
 	      board->packetInterface = newBoards.at(i);
