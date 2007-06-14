@@ -36,8 +36,9 @@ class Board
       Udp
     };
     
+    QString key;
     QString name;
-    QString type;
+    Board::Types type;
     
     QString com_port;
     
