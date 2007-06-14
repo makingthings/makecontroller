@@ -26,15 +26,14 @@
 #include <QTimer>
 
 #include "UploaderThread.h"
-#include "PacketUdp.h"
-#include "Osc.h"
 #include "Samba.h"
 #include "UsbMonitor.h"
+#include "NetworkMonitor.h"
 #include "Board.h"
 #include "BoardListModel.h"
 
 class UploaderThread;
-class PacketUdp;
+class NetworkMonitor;
 class Osc;
 class McHelperApp;
 class BoardListModel;
@@ -59,15 +58,13 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 	  void message( int level, char *format, ... );
 		void sleepMs( int ms );
 		void flash( );
-		Status requestErase( );
-		Status checkForTestProgram();
 		void customEvent( QEvent* event );
 		void customMessage( char* text );
 		void progress( int value );
 		
 		void setNoUI( bool val );
 		void uiLessUpload( char* filename, bool bootFlash );
-		void usbRemoved( );
+		void usbRemoved( HANDLE deviceHandle );
 	
 	protected:
 		void closeEvent( QCloseEvent *qcloseevent );
@@ -75,13 +72,10 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 	private:
 	  QApplication* application;
 	  UploaderThread* uploaderThread;
-		PacketUdp* udp;
-		Osc* oscUdp;
-		Osc* oscUsb;
 		Samba* samba;
 		UsbMonitor* usb;
+		NetworkMonitor* udp;
 		QTimer* monitorTimer;
-
     	BoardListModel* boardModel;
 		
 		void readSettings();

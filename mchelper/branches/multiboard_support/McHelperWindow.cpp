@@ -22,6 +22,8 @@
 #include <QHostAddress>
 #include <QMessageBox>
 
+#define DEVICE_SCAN_FREQ 1000
+
 McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 {
 	this->application = application; 
@@ -37,9 +39,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	
 	noUI = false;
 	
-	udp = new PacketUdp( );
-	oscUdp = new Osc( );
-	oscUsb = new Osc( ); 
+	udp = new NetworkMonitor( );
 	samba = new Samba( );
 	usb = new UsbMonitor( );
 	
@@ -47,12 +47,10 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	usb->setWidget( this );
 	#endif
 	 
-	oscUdp->setInterfaces( udp, this, application );
-	oscUdp->setPreamble( "OscUdp" );
-	//oscUsb->setInterfaces( usb, this, application );
-	oscUsb->setPreamble( "OscUsb" );
-	udp->setInterfaces( oscUdp, this );
-	usb->setMessageInterface( this );
+	udp->setInterfaces( this, application );
+	//oscUdp->setPreamble( "OscUdp" );
+	//oscUsb->setPreamble( "OscUsb" );
+	usb->setInterfaces( this, application );
   
   // Create the BoardListModel
   boardModel = new BoardListModel( this );
@@ -65,7 +63,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   //listViewDevices->setDragEnabled(true);
   //listViewDevices->setDropIndicatorShown(true);
   //listViewDevices->setAcceptDrops(true);
-  //listViewDevices->setAlternatingRowColors(true);
+  listViewDevices->setAlternatingRowColors(true);
   //listViewDevices->setDragDropMode(QAbstractItemView::InternalMove);
   ///////////////////////////////////////////////
   
@@ -84,8 +82,8 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	
 	readSettings( );
 	
-	if ( udp->open( ) != PacketUdp::OK )
-		mainConsole->insertPlainText( "udp> Cannot open socket.\n" );
+	// if ( udp->open( ) != PacketUdp::OK )
+		// mainConsole->insertPlainText( "udp> Cannot open socket.\n" );
 	
 	// UDP signals/slots
 	connect( textLocalPort, SIGNAL( editingFinished() ), this, SLOT( newLocalPort( ) ) );
@@ -116,7 +114,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	checkForNewDevices( ); // initially check for any devices out there
 	monitorTimer = new QTimer(this); // then set up a timer to check for others periodically
     connect(monitorTimer, SIGNAL(timeout()), this, SLOT( checkForNewDevices() ) );
-    monitorTimer->start( 1000 ); // check for new devices once a second...more often?
+    monitorTimer->start( DEVICE_SCAN_FREQ ); // check for new devices once a second...more often?
   
   // Init the status bar and let the user know the app is loaded
   statusBar()->showMessage( tr("Ready."), 2000);
@@ -124,6 +122,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 
 void McHelperWindow::checkForNewDevices( )
 {
+	// first check for USB boards
 	QList<PacketInterface*> newBoards;
 	usb->scan( &newBoards );
 	int newBoardCount = newBoards.count( );
@@ -133,11 +132,29 @@ void McHelperWindow::checkForNewDevices( )
 		for( i=0; i<newBoardCount; i++ )
 		{
 			Board *board = new Board();
-      board->name = "UsbSerial Board";
-      board->type = Board::UsbSerial;
-      board->packetInterface = newBoards.at(i);
-      board->com_port = QString( newBoards.at(i)->location() );
-      boardModel->addBoard( board );
+	      board->name = "UsbSerial Board";
+	      board->type = Board::UsbSerial;
+	      board->packetInterface = newBoards.at(i);
+	      board->com_port = QString( newBoards.at(i)->location() );
+	      boardModel->addBoard( board );
+		}
+	}
+	
+	// then for UDP boards
+	QList<PacketInterface*> udpBoards;
+	udp->scan( &udpBoards );
+	newBoardCount = udpBoards.count( );
+	if( newBoardCount > 0 )
+	{
+		int i;
+		for( i=0; i<newBoardCount; i++ )
+		{
+		  Board *board = new Board();
+	      board->name = "Udp Board";
+	      board->type = Board::Udp;
+	      board->packetInterface = udpBoards.at(i);
+	      board->ip_address = QString( udpBoards.at(i)->location() );
+	      boardModel->addBoard( board );
 		}
 	}
 }
@@ -149,7 +166,7 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   QString status_bar_text = boardModel->data( current, Qt::StatusTipRole ).toString();
   
   if ( boardModel->flags(current) & Qt::ItemIsEnabled ) {
-    message( 1, "Switching to board: %s\n", name.toAscii().constData());
+   // message( 1, "Switching to board: %s\n", name.toAscii().constData());
     boardModel->setActiveBoardIndex( current );
     statusBar()->showMessage(status_bar_text, 1000);
   }
@@ -236,18 +253,18 @@ void McHelperWindow::clearOutputWindow()
 
 void McHelperWindow::newLocalPort( )
 {
-	udp->setLocalPort( textLocalPort->text().toInt(), true );
+	//udp->setLocalPort( textLocalPort->text().toInt(), true );
 }
 
 void McHelperWindow::newRemotePort( )
 {
-	udp->setRemotePort( textRemotePort->text().toInt() );
+	//udp->setRemotePort( textRemotePort->text().toInt() );
 }
 
 void McHelperWindow::newHostAddress( )
 {
 	QHostAddress hostAddress = QHostAddress( textIPAddress->text() );
-	udp->setHostAddress( hostAddress );
+	//udp->setHostAddress( hostAddress );
 }
 
 void McHelperWindow::flash()
@@ -256,31 +273,6 @@ void McHelperWindow::flash()
     //return;
 		
 	uploaderThread->start( );
-}
-
-McHelperWindow::Status McHelperWindow::requestErase( )
-{
-	// Check for a reaction
-	oscUdp->createMessage( "/ctestee/active", ",i", 0 );
-	oscUdp->sendPacket();
-	
-	return OK;
-}
-
-McHelperWindow::Status McHelperWindow::checkForTestProgram()
-{
-	// Check for a reaction
-	oscUdp->createMessage( "/ctestee/active" );
-	oscUdp->sendPacket();
-	
-	//messageInterface->sleepMs( 100 ); ?????????
-	
- 	OscMessage oscMessage;
-	Osc::Status s = oscUdp->receive( &oscMessage );
-	if ( s != Osc::OK )
-	  return ERROR_NO_RESPONSE;
-	// if it returns ok, the chip is programmed and needs to be erased
-	return OK;
 }
 
 void McHelperWindow::customEvent( QEvent* event )
@@ -363,18 +355,18 @@ void McHelperWindow::readSettings()
 	fileSelectText->setEditText( lastDirectory );
 	
 	int remotePort = settings.value("remotePort", 10000 ).toInt();	//read the port back as an int
-	udp->setRemotePort( remotePort );	// set it in the UDP system
+	//udp->setRemotePort( remotePort );	// set it in the UDP system
 	QString remotePortString = QString::number( remotePort );	// turn it into a string
 	textRemotePort->setText( remotePortString );	// and display it onscreen
 	
 	int localPort = settings.value("localPort", 10000 ).toInt();
-	udp->setLocalPort( localPort, false );
+	//udp->setLocalPort( localPort, false );
 	QString localPortString = QString::number( localPort );
 	textLocalPort->setText( localPortString );
 	
 	QString addressString = settings.value("remoteHostAddress", "192.168.0.200").toString();
 	QHostAddress hostAddress = QHostAddress( addressString );
-	udp->setHostAddress( hostAddress );
+	//udp->setHostAddress( hostAddress );
 	textIPAddress->setText( addressString );
 	
 	QStringList udpCmdList = settings.value( "udpCmdList", "" ).toStringList();
@@ -460,9 +452,9 @@ void McHelperWindow::about( )  // set the version number here.
 }
 
 #ifdef Q_WS_WIN
-void McHelperWindow::usbRemoved( )
+void McHelperWindow::usbRemoved( HANDLE deviceHandle )
 {
-	// usb->usbClose( );
+	usb->deviceRemoved( deviceHandle );
 }
 #endif
 

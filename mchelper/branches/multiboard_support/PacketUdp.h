@@ -21,10 +21,15 @@
 #include <QUdpSocket>
 #include <QHostAddress>
 #include <QHostInfo>
+#include <QTimer>
 
 #include "PacketInterface.h"
 #include "MessageInterface.h"
 #include "PacketReadyInterface.h"
+#include "Osc.h"
+#include "MonitorInterface.h"
+
+class Osc;
 
 class PacketUdp : public QObject, public PacketInterface
 {	
@@ -33,8 +38,8 @@ class PacketUdp : public QObject, public PacketInterface
 	public:
 	  PacketUdp( );
 	  Status open( );
-	  Status close( );
-		void setInterfaces( PacketReadyInterface* packetReadyInterface, MessageInterface* messageInterface );
+		void setInterfaces( MessageInterface* messageInterface, QApplication* application, MonitorInterface* monitor );
+		void resetTimer( void );
 		
 		// From PacketInterface
 	  int sendPacket( char* packet, int length );
@@ -42,24 +47,30 @@ class PacketUdp : public QObject, public PacketInterface
 		int receivePacket( char* packet, int length );
 	  bool isPacketWaiting( );
 	  char* location( void );
+	  void incomingMessage( QByteArray* message );
+	  void setRemoteHostInfo( QHostAddress* address, quint16 port );
 		
 	public slots:
-		void setLocalPort( int port, bool change );
-		void setRemotePort( int port );
-		void setHostAddress( QHostAddress address );
+		// void setLocalPort( int port, bool change );
+		//void setRemotePort( int port );
+		//void setHostAddress( QHostAddress address );
+		Status close( );
+		void processPacket( );
 		
 	private:
 	  MessageInterface* messageInterface;
 		PacketReadyInterface* packetReadyInterface;
+		Osc* oscTranslator;
 	  QUdpSocket* socket;
 	  QHostAddress* remoteHostAddress;
+	  QTimer* timer;
+	  MonitorInterface* monitor;
+	  QByteArray* lastMessage;
 	
     char* remoteAddress;
-    int remotePort;
+    quint16 remotePort;
     int localPort;
-	
-	private slots:
-		void processPacket( );
+		
 };
 
 #endif

@@ -257,6 +257,21 @@ char* Osc::createBundle( char* buffer, int* length, int a, int b )
   return bp;
 }
 
+char* Osc::createOneMessage( char* message )
+{
+	char* packet;
+	int length = strlen(message);
+	packet = writePaddedString( packet, &length, message );
+	if( packet == NULL )
+		return NULL;
+		
+	packet = writePaddedString( packet, &length, "," );
+	if( packet == NULL )
+		return NULL;
+		
+	return packet;
+}
+
 Osc::Status Osc::createMessage( char* address, char* format, ... )
 {  
   // try to send this message - if there's a problem somewhere, 

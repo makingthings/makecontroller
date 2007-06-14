@@ -17,6 +17,7 @@
 
 
 #include "McHelperWindow.h"
+#include "dbt.h"
 
 #include <QApplication>
 #include <QMessageBox> 
@@ -28,12 +29,16 @@ bool McHelperApp::winEventFilter( MSG* msg, long* retVal )
 {	
 	if ( msg->message == WM_DEVICECHANGE )
 	{
-		//printf( "Device Change Parameter: %X\n", msg->wParam );
 		if( msg->wParam == DBT_DEVICEREMOVECOMPLETE )
 		{
-			mchelper->usbRemoved( );  // call back to get the usb port shut down.
-			*retVal = false;
-			return true;
+			PDEV_BROADCAST_HDR lpdb = (PDEV_BROADCAST_HDR)msg->lParam;
+			if( lpdb->dbch_devicetype == DBT_DEVTYP_HANDLE )
+			{
+				PDEV_BROADCAST_HANDLE lpdbv = (PDEV_BROADCAST_HANDLE)lpdb;
+				mchelper->usbRemoved( lpdbv->dbch_handle );  // call back to get the usb port shut down.
+				*retVal = false;
+				return true;
+			}
 		}
 	}
 	return false;

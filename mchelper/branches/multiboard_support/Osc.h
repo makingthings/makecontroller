@@ -63,6 +63,7 @@ class Osc : public QObject, public PacketReadyInterface, public MessageInterface
 
 		Status createMessage( char* textMessage ); 
 		Status createMessage( char* address, char* format, ... );
+		char* createOneMessage( char* message );
 		Status sendPacket( );
 		bool isMessageWaiting();
 		Status receive( OscMessage* message = 0 );

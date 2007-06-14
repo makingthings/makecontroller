@@ -38,9 +38,10 @@ void UsbMonitor::closeAll( )
 		i.value( )->close( );
 }
 
-void UsbMonitor::setMessageInterface( MessageInterface* messageInterface )
+void UsbMonitor::setInterfaces( MessageInterface* messageInterface, QApplication* application )
 {
-	this->messageInterface = messageInterface;	
+	this->messageInterface = messageInterface;
+	this->application = application;
 }
 
 #ifdef Q_WS_WIN
@@ -97,7 +98,7 @@ void UsbMonitor::FindUsbDevices( QList<PacketInterface*>* arrived )
 	      	connectedDevices.insert( portNameKey, device );  // stick it in our own list of boards we know about
 	      	arrived->append( device ); // then stick it on the list of new boards that's been requested
 	      	
-	      	device->setInterfaces( messageInterface );
+	      	device->setInterfaces( messageInterface, application );
 			device->setWidget( mainWindow );
 	      	device->start( );
 	      }
@@ -207,6 +208,22 @@ bool UsbMonitor::checkFriendlyName( HDEVINFO HardwareDeviceInfo,
 	}
 		
 	return false;
+}
+
+// zip through our list of devices, and check if the HANDLE from the DEVICEREMOVED broadcast matches any of them
+void UsbMonitor::deviceRemoved( HANDLE handle )
+{  
+	QHash<QString, PacketUsbCdc*>::iterator i;
+	for( i=connectedDevices.begin( ); i != connectedDevices.end( ); ++i )
+	{
+		if( i.value( )->deviceHandle == handle )
+		{
+			i.value( )->close( ); // close the USB connection
+			delete i.value( );
+			// remove it form boardListModel
+			connectedDevices.erase( i );
+		}
+	}
 }
 
 

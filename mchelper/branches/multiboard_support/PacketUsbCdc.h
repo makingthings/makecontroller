@@ -50,7 +50,7 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
 			bool isPacketWaiting( );
 			int receivePacket( char* buffer, int size );
 			char* location( void );
-			void setInterfaces( MessageInterface* messageInterface );
+			void setInterfaces( MessageInterface* messageInterface, QApplication* application );
 			#ifdef Q_WS_WIN
 			void setWidget( QMainWindow* window );
 			#endif
@@ -65,7 +65,8 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
 			enum State { START, DATASTART, DATA };
 			
 		  PacketReadyInterface* packetReadyInterface;
-      Osc* oscTranslator;
+		  QApplication* application;
+      	Osc* oscTranslator;
 		  int slipReceive( char* buffer, int length );
 
 };
