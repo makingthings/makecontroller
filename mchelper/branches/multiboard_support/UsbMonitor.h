@@ -18,12 +18,11 @@
 #ifndef USB_MONITOR_H_
 #define USB_MONITOR_H_
 
-#include <QThread>
 #include <QList>
 #include <QHash>
-#include "UsbSerial.h"
 #include "PacketUsbCdc.h"
 #include "MonitorInterface.h"
+#include "BoardListModel.h"
 
 class PacketUsbCdc;
 
@@ -34,11 +33,12 @@ class UsbMonitor : public MonitorInterface
   	Status scan( QList<PacketInterface*>* arrived );
   	~UsbMonitor( ) {}
   	void closeAll( );
-  	void setMessageInterface( MessageInterface* messageInterface );
+  	void setInterfaces( MessageInterface* messageInterface, QApplication* application );
   	
   	
   	#ifdef Q_WS_WIN
 	void setWidget( QMainWindow* mainWindow );
+	void deviceRemoved( HANDLE handle );
 	#endif
   	
   private:
@@ -49,6 +49,8 @@ class UsbMonitor : public MonitorInterface
 	
 	MessageInterface* messageInterface;
 	QMainWindow* mainWindow;
+	QApplication* application;
+	BoardListModel* boardListModel;
 };
 
 

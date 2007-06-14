@@ -34,6 +34,7 @@ HEADERS = McHelperWindow.h \
 				UsbSerial.h \
 				PacketUsbCdc.h \
 				UsbMonitor.h \
+				NetworkMonitor.h \
 				Board.h \
 				BoardListModel.h \
             
@@ -46,6 +47,7 @@ SOURCES	= main.cpp \
 				UsbSerial.cpp \
 				PacketUsbCdc.cpp \
 				UsbMonitor.cpp \
+				NetworkMonitor.cpp \
 				Board.cpp \
 				BoardListModel.cpp
 				
