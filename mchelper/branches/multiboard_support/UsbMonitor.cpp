@@ -38,10 +38,11 @@ void UsbMonitor::closeAll( )
 		i.value( )->close( );
 }
 
-void UsbMonitor::setInterfaces( MessageInterface* messageInterface, QApplication* application )
+void UsbMonitor::setInterfaces( MessageInterface* messageInterface, QApplication* application, BoardListModel* boardListModel )
 {
 	this->messageInterface = messageInterface;
 	this->application = application;
+	this->boardListModel = boardListModel;
 }
 
 #ifdef Q_WS_WIN
@@ -211,19 +212,26 @@ bool UsbMonitor::checkFriendlyName( HDEVINFO HardwareDeviceInfo,
 }
 
 // zip through our list of devices, and check if the HANDLE from the DEVICEREMOVED broadcast matches any of them
-void UsbMonitor::deviceRemoved( HANDLE handle )
+void UsbMonitor::removalNotification( HANDLE handle )
 {  
-	QHash<QString, PacketUsbCdc*>::iterator i;
-	for( i=connectedDevices.begin( ); i != connectedDevices.end( ); ++i )
+	QHash<QString, PacketUsbCdc*>::iterator i = connectedDevices.begin( );
+	while( i != connectedDevices.end( ) )
 	{
 		if( i.value( )->deviceHandle == handle )
 		{
 			i.value( )->close( ); // close the USB connection
 			delete i.value( );
-			// remove it form boardListModel
-			connectedDevices.erase( i );
+			boardListModel->removeBoard( i.key(), Board::UsbSerial );
+			i = connectedDevices.erase( i );
 		}
+		else
+			++i;
 	}
+}
+
+void UsbMonitor::deviceRemoved( QString key )
+{
+	// not implemented...
 }
 
 

@@ -26,6 +26,7 @@ class MonitorInterface
 		enum Status { OK };
 	  	  
 	  	virtual Status scan( QList<PacketInterface*>* arrived ) = 0;
+	  	virtual void deviceRemoved( QString key ) = 0;
 	  	virtual ~MonitorInterface( ) {}
 };
 

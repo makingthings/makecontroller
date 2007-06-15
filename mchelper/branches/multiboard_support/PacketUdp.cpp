@@ -29,24 +29,13 @@ PacketUdp::PacketUdp( )
 	oscTranslator = new Osc();
 	packetReadyInterface = oscTranslator;
 	timer = new QTimer(this);
+	lastMessage = NULL;
     connect( timer, SIGNAL(timeout()), this, SLOT( close( ) ) );
 }
 
 PacketUdp::Status PacketUdp::open( ) //part of PacketInterface
 {	
   socket = new QUdpSocket( this );
-  /*
-  if ( !socket->bind( localPort ) )
-  {
-  	socket->close();
-  	socket = 0;
-		messageInterface->message( 1, "udp> Can't listen on port %d - make sure it's not already in use.\n", localPort );
-    return ERROR_CANT_BIND;
-  }
-  QAbstractSocket::SocketState s = socket->state();
-	connect( socket, SIGNAL( readyRead( ) ), this, SLOT( processPacket( ) ) );
-  messageInterface->message( 2, "  PacketUdp Listening on %d - state %d\n", localPort, (int)s );
-  */
     timer->start( COMM_TIMEOUT );
   
   return OK;	
@@ -54,7 +43,6 @@ PacketUdp::Status PacketUdp::open( ) //part of PacketInterface
 
 PacketUdp::Status PacketUdp::close( )	//part of PacketInterface
 {
-  // TODO - notify the NetworkMonitor on close( )
   
   if ( socket != 0 )
 	  socket->close( );
@@ -62,6 +50,8 @@ PacketUdp::Status PacketUdp::close( )	//part of PacketInterface
 	delete remoteHostAddress;
 	if( lastMessage != NULL )
   		delete lastMessage;
+  		
+  	monitor->deviceRemoved( socketKey );
   		
   return OK;
 }
@@ -71,9 +61,9 @@ void PacketUdp::resetTimer( void )
 	timer->start( COMM_TIMEOUT );
 }
 
-char* PacketUdp::location( )
+QString PacketUdp::location( )
 {
-	return remoteHostAddress->toString().toAscii().data();
+	return socketKey;
 }
 
 int PacketUdp::sendPacket( char* packet, int length )	//part of PacketInterface
@@ -102,7 +92,7 @@ void PacketUdp::processPacket( )	//slot to be called back automatically when dat
   packetReadyInterface->packetWaiting( );
 }
 
-int PacketUdp::receivePacket( char* buffer, int size )	//part of PacketInterface
+int PacketUdp::receivePacket( char* buffer, int size )
 {
 	int length = lastMessage->size( );
 	if( length > size )
@@ -112,7 +102,7 @@ int PacketUdp::receivePacket( char* buffer, int size )	//part of PacketInterface
 	}
 	memcpy( buffer, lastMessage->data( ), length );
 	delete lastMessage;
-	lastMessage = NULL; // neccessary?
+	lastMessage = NULL;
 	
 	return length;
 }
@@ -121,46 +111,22 @@ void PacketUdp::incomingMessage( QByteArray* message )
 {
 	lastMessage = message;
 }
-/*
-void PacketUdp::setLocalPort( int port, bool change )
-{
-	if( port != 0 && port != localPort )	// this will be zero when nothing has been entered into the text field
-	{	
-		localPort = port;
-		if( change )
-		{
-		  socket->close();
-		  if( !socket->bind( localPort ) )
-				messageInterface->message( 1, "udp> Can't listen on port %d - make sure it's not already in use.\n", localPort );
-			else if( socket->state() == QAbstractSocket::BoundState )
-				messageInterface->message( 1, "udp> New local port: %d\n", localPort );
-		}
-	}
-}
-*/
+
 void PacketUdp::setRemoteHostInfo( QHostAddress* address, quint16 port )
 {
-	if( *address == QHostAddress::Null || port < 0 )
+	if( *address == QHostAddress::Null )
 		return;
 		
 	remoteHostAddress = address;
+	remoteHostName = remoteHostAddress->toString( ).toAscii();
 	remotePort = port;
 }
-/*
-void PacketUdp::setRemotePort( int port )
+
+void PacketUdp::setKey( QString key )
 {
-	if( port != 0 )		// this will be zero when nothing has been entered into the text field
-		remotePort = port;
+	socketKey = key;
 }
 
-void PacketUdp::setHostAddress( QHostAddress address )
-{
-	if( address == QHostAddress::Null )
-		return;
-	QHostAddress* hostAddress = new QHostAddress( address );
-	remoteHostAddress = hostAddress;
-}
-*/
 void PacketUdp::setInterfaces( MessageInterface* messageInterface, QApplication* application, MonitorInterface* monitor )
 {
 	this->messageInterface = messageInterface;
@@ -168,5 +134,6 @@ void PacketUdp::setInterfaces( MessageInterface* messageInterface, QApplication*
 	this->monitor = monitor;
 	// once we have these, we can set up our Osc object
 	oscTranslator->setInterfaces( this, messageInterface, application );
+	oscTranslator->setPreamble( remoteHostName.data() );
 }
 

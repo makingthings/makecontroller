@@ -257,19 +257,19 @@ char* Osc::createBundle( char* buffer, int* length, int a, int b )
   return bp;
 }
 
-char* Osc::createOneMessage( char* message )
+Osc::Status Osc::createOneRequest( char* buffer, char* message )
 {
-	char* packet;
-	int length = strlen(message);
-	packet = writePaddedString( packet, &length, message );
+	char* packet = buffer;
+	int size = 128; // dummy
+	packet = writePaddedString( packet, &size, message );
 	if( packet == NULL )
-		return NULL;
+		return ERROR_CREATING_REQUEST;
 		
-	packet = writePaddedString( packet, &length, "," );
+	packet = writePaddedString( packet, &size, "," );
 	if( packet == NULL )
-		return NULL;
+		return ERROR_CREATING_REQUEST;
 		
-	return packet;
+	return OK;
 }
 
 Osc::Status Osc::createMessage( char* address, char* format, ... )

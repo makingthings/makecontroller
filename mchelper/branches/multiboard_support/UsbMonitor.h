@@ -23,6 +23,7 @@
 #include "PacketUsbCdc.h"
 #include "MonitorInterface.h"
 #include "BoardListModel.h"
+#include "Board.h"
 
 class PacketUsbCdc;
 
@@ -33,12 +34,13 @@ class UsbMonitor : public MonitorInterface
   	Status scan( QList<PacketInterface*>* arrived );
   	~UsbMonitor( ) {}
   	void closeAll( );
-  	void setInterfaces( MessageInterface* messageInterface, QApplication* application );
+  	void setInterfaces( MessageInterface* messageInterface, QApplication* application, BoardListModel* boardListModel );
+  	void deviceRemoved( QString key );
   	
   	
   	#ifdef Q_WS_WIN
 	void setWidget( QMainWindow* mainWindow );
-	void deviceRemoved( HANDLE handle );
+	void removalNotification( HANDLE handle );
 	#endif
   	
   private:

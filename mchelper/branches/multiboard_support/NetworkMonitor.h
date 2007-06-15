@@ -36,7 +36,8 @@ class NetworkMonitor : public QObject, public MonitorInterface
   	NetworkMonitor( );
   	~NetworkMonitor( ) {}
   	Status scan( QList<PacketInterface*>* arrived );
-  	void setInterfaces( MessageInterface* messageInterface, QApplication* application );
+  	void setInterfaces( MessageInterface* messageInterface, QApplication* application, BoardListModel* boardListModel );
+  	void deviceRemoved( QString key );
   	
   private:
   	QHash<QString, PacketUdp*> connectedDevices; // our internal list
@@ -50,9 +51,11 @@ class NetworkMonitor : public QObject, public MonitorInterface
 	QTimer* timer;
 	QUdpSocket* socket;
 	QByteArray broadcastPing;
+	QHostAddress myAddress;
 	
   private slots:
 	void processPendingDatagrams( );
+	void lookedUp(const QHostInfo &host);
 };
 
 

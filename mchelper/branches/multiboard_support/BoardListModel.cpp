@@ -107,9 +107,10 @@ bool BoardListModel::removeBoard ( QString key, Board::Types type )
    // See if we have this board in our list
    int i;
    Board *testBoard;
+   int test = boardList.size();
    for( i = 0; i < boardList.size(); i++ )
    {
-       testBoard = (Board*) boardList.at( i );
+       testBoard = boardList.at( i );
        
        // if so, remove it by row id
        if ( testBoard->key == key &&
@@ -117,6 +118,7 @@ bool BoardListModel::removeBoard ( QString key, Board::Types type )
          beginRemoveRows(QModelIndex(), i, i);
          boardList.removeAt(i);
          endRemoveRows();
+         // delete boardList.at( i );  need to delete the Board object here, but this crashes it currently
        }
    }
    
