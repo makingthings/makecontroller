@@ -46,14 +46,12 @@ class PacketUdp : public QObject, public PacketInterface
     void uiSendPacket( QString rawString );
 		int receivePacket( char* packet, int length );
 	  bool isPacketWaiting( );
-	  char* location( void );
+	  QString location( void );
 	  void incomingMessage( QByteArray* message );
 	  void setRemoteHostInfo( QHostAddress* address, quint16 port );
+	  void setKey( QString key );
 		
 	public slots:
-		// void setLocalPort( int port, bool change );
-		//void setRemotePort( int port );
-		//void setHostAddress( QHostAddress address );
 		Status close( );
 		void processPacket( );
 		
@@ -63,9 +61,11 @@ class PacketUdp : public QObject, public PacketInterface
 		Osc* oscTranslator;
 	  QUdpSocket* socket;
 	  QHostAddress* remoteHostAddress;
+	  QByteArray remoteHostName;
 	  QTimer* timer;
 	  MonitorInterface* monitor;
 	  QByteArray* lastMessage;
+	  QString socketKey;
 	
     char* remoteAddress;
     quint16 remotePort;

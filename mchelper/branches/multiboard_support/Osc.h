@@ -57,19 +57,19 @@ class Osc : public QObject, public PacketReadyInterface, public MessageInterface
 		
 	public:
 		enum Status { OK, ERROR_SENDING_TEXT_MESSAGE, ERROR_SENDING_COMPLEX_MESSAGE, 
-			            ERROR_NO_PACKET, ERROR_CREATING_BUNDLE, ERROR_PACKET_LENGTH_0 };				
+			            ERROR_NO_PACKET, ERROR_CREATING_REQUEST, ERROR_CREATING_BUNDLE, ERROR_PACKET_LENGTH_0 };				
 
 		Osc( );
 
 		Status createMessage( char* textMessage ); 
 		Status createMessage( char* address, char* format, ... );
-		char* createOneMessage( char* message );
+		Status createOneRequest( char* buffer, char* message );
 		Status sendPacket( );
 		bool isMessageWaiting();
 		Status receive( OscMessage* message = 0 );
 		void packetWaiting( );	//from PacketReadyInterface
 		void setInterfaces( PacketInterface* packetInterface, MessageInterface* messageInterface, QApplication* application );
-    void setPreamble( const char* preamble ) { this->preamble = preamble; }
+    	void setPreamble( const char* preamble ) { this->preamble = preamble; }
 
 	  void message( int level, char* format, ... );
 	  void sleepMs( int ms );

@@ -49,7 +49,7 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
       void uiSendPacket( QString rawString );
 			bool isPacketWaiting( );
 			int receivePacket( char* buffer, int size );
-			char* location( void );
+			QString location( void );
 			void setInterfaces( MessageInterface* messageInterface, QApplication* application );
 			#ifdef Q_WS_WIN
 			void setWidget( QMainWindow* window );

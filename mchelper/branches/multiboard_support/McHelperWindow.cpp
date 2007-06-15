@@ -42,18 +42,17 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	udp = new NetworkMonitor( );
 	samba = new Samba( );
 	usb = new UsbMonitor( );
+	boardModel = new BoardListModel( this );
 	
 	#ifdef Q_WS_WIN
 	usb->setWidget( this );
 	#endif
 	 
-	udp->setInterfaces( this, application );
-	//oscUdp->setPreamble( "OscUdp" );
-	//oscUsb->setPreamble( "OscUsb" );
-	usb->setInterfaces( this, application );
+	udp->setInterfaces( this, application, boardModel );
+	usb->setInterfaces( this, application, boardModel );
   
   // Create the BoardListModel
-  boardModel = new BoardListModel( this );
+  
   
   // Some stuff about trying to enable drag/drop
   // list reordering...
@@ -132,11 +131,11 @@ void McHelperWindow::checkForNewDevices( )
 		for( i=0; i<newBoardCount; i++ )
 		{
 			  Board *board = new Board();
-        board->key = QString( newBoards.at(i)->location() );
+        board->key = newBoards.at(i)->location();
 	      board->name = "UsbSerial Board";
 	      board->type = Board::UsbSerial;
 	      board->packetInterface = newBoards.at(i);
-	      board->com_port = QString( newBoards.at(i)->location() );
+	      board->com_port = newBoards.at(i)->location();
 	      boardModel->addBoard( board );
 		}
 	}
@@ -151,10 +150,11 @@ void McHelperWindow::checkForNewDevices( )
 		for( i=0; i<newBoardCount; i++ )
 		{
 		  Board *board = new Board();
+		  board->key = udpBoards.at(i)->location();
 	      board->name = "Udp Board";
 	      board->type = Board::Udp;
 	      board->packetInterface = udpBoards.at(i);
-	      board->ip_address = QString( udpBoards.at(i)->location() );
+	      board->ip_address = udpBoards.at(i)->location();
 	      boardModel->addBoard( board );
 		}
 	}
@@ -238,7 +238,7 @@ void McHelperWindow::commandLineUsbEvent( )
   QModelIndex activeBoard = boardModel->getActiveBoardIndex();
   QString name = boardModel->data( activeBoard, Qt::DisplayRole ).toString();
   
-  message( 1, "Sending to board: %s\n", name.toAscii().constData() );
+  // message( 1, "Sending to board: %s\n", name.toAscii().constData() );
   boardModel->getActiveBoard()->packetInterface->uiSendPacket(cmd);
   
   commandLineUsb->clearEditText();
@@ -455,7 +455,7 @@ void McHelperWindow::about( )  // set the version number here.
 #ifdef Q_WS_WIN
 void McHelperWindow::usbRemoved( HANDLE deviceHandle )
 {
-	usb->deviceRemoved( deviceHandle );
+	usb->removalNotification( deviceHandle );
 }
 #endif
 

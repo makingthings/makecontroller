@@ -76,6 +76,7 @@ PacketUsbCdc::Status PacketUsbCdc::open()
 
 PacketUsbCdc::Status PacketUsbCdc::close()
 {
+	exit( ); // stop the thread
 	usbClose( );
 	return PacketInterface::OK;
 }
@@ -207,15 +208,16 @@ int PacketUsbCdc::receivePacket( char* buffer, int size )
 	}
 }
 
-char* PacketUsbCdc::location( )
+QString PacketUsbCdc::location( )
 {
-	return portName;
+	return QString( portName );
 }
 
 void PacketUsbCdc::setInterfaces( MessageInterface* messageInterface, QApplication* application )
 {
 	this->messageInterface = messageInterface;
 	this->application = application;
+	oscTranslator->setPreamble( portName );
 }
 
 #ifdef Q_WS_WIN
@@ -225,7 +227,7 @@ void PacketUsbCdc::setWidget( QMainWindow* window )
 }
 #endif
 
-void PacketUsbCdc::sleepMs( int ms )
+void PacketUsbCdc::sleepMs( int ms ) 
 {
   #ifdef Q_WS_WIN
   Sleep( ms );
