@@ -61,9 +61,8 @@ void NetworkMonitor::processPendingDatagrams()
     {
         QByteArray* datagram = new QByteArray( );
         QHostAddress* sender = new QHostAddress( );
-        quint16 senderPort;
         datagram->resize( socket->pendingDatagramSize() );
-        socket->readDatagram( datagram->data(), datagram->size(), sender, &senderPort );
+        socket->readDatagram( datagram->data(), datagram->size(), sender );
         if( datagram->size() <= 0 || *sender == myAddress )
         {
         	delete datagram;
@@ -78,7 +77,7 @@ void NetworkMonitor::processPendingDatagrams()
 	      	connectedDevices.insert( socketKey, device );  // stick it in our own list of boards we know about
 	      	newDevices.insert( socketKey, device );
 	      	
-	      	device->setRemoteHostInfo( sender, senderPort );
+	      	device->setRemoteHostInfo( sender, BROADCAST_TX_PORT );
 	      	device->setKey( socketKey );
 	      	device->setInterfaces( messageInterface, application, this );
 	      	device->open( );

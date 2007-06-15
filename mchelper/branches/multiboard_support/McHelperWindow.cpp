@@ -242,7 +242,7 @@ void McHelperWindow::commandLineUsbEvent( )
   boardModel->getActiveBoard()->packetInterface->uiSendPacket(cmd);
   
   commandLineUsb->clearEditText();
-  mainConsole->ensureCursorVisible( );
+  mainConsole->ensureCursorVisible( ); 
   writeUsbSettings();
 }
 
