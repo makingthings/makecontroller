@@ -25,8 +25,7 @@
 #include <QThread>
 #include <QTimer>
 
-#include "UploaderThread.h"
-#include "Samba.h"
+#include "SambaMonitor.h"
 #include "UsbMonitor.h"
 #include "NetworkMonitor.h"
 #include "Board.h"
@@ -34,6 +33,7 @@
 
 class UploaderThread;
 class NetworkMonitor;
+class SambaMonitor;
 class Osc;
 class McHelperApp;
 class BoardListModel;
@@ -72,7 +72,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 	private:
 	  QApplication* application;
 	  UploaderThread* uploaderThread;
-		Samba* samba;
+		SambaMonitor* samba;
 		UsbMonitor* usb;
 		NetworkMonitor* udp;
 		QTimer* monitorTimer;
@@ -86,7 +86,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		bool noUI;
   
 	public slots:
-    // none
+    void commandLineUsbEvent( );
     
 	private slots:
     // Uploader functions
@@ -95,7 +95,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 	  void checkForNewDevices( );
     
     // Usb functions
-    void commandLineUsbEvent( );
+    
     
     // Udp functions
 		void commandLineEvent( );

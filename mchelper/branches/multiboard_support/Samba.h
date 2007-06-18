@@ -27,6 +27,7 @@
 #define SAMBA_H
 
 #include <QtGlobal>
+#include <QString>
 
 // Linux-only includes
 #ifdef Q_WS_LINUX
@@ -165,6 +166,9 @@ struct sam7_chip_info{
 #include <stdint.h>
 
 #include "MessageInterface.h"
+#include "SambaMonitor.h"
+
+class SambaMonitor;
 
 class Samba
 {
@@ -173,7 +177,7 @@ class Samba
     	            ERROR_COULDNT_FIND_FILE, ERROR_COULDNT_OPEN_FILE, 
     	            ERROR_SENDING_FILE, ERROR_SETTING_BOOT_BIT };
 
-		Samba( );
+		Samba( SambaMonitor* monitor );
 
 		Status connect();
 		Status disconnect();		
@@ -181,6 +185,7 @@ class Samba
 		Status flashUpload( char* bin_file );
 		Status bootFromFlash( );
 		void setMessageInterface( MessageInterface* messageInterface );
+		QString getDeviceKey( );
     
   private:
 		int init( );
@@ -204,6 +209,8 @@ class Samba
 		int uploadProgress;
     
     MessageInterface* messageInterface;
+    SambaMonitor* monitor;
+    QString deviceKey;
 		sam7_chip_info samba_chip_info;
 
 #ifdef Q_WS_LINUX
@@ -236,6 +243,8 @@ class Samba
     HANDLE OpenOneDevice (HDEVINFO HardwareDeviceInfo,
                           PSP_INTERFACE_DEVICE_DATA DeviceInfoData,
 	                        WCHAR **devName);
+	bool checkDeviceService( HDEVINFO HardwareDeviceInfo, PSP_DEVINFO_DATA deviceSpecificInfo );
+	bool getDeviceObjectName( HDEVINFO HardwareDeviceInfo, PSP_DEVINFO_DATA deviceSpecificInfo );
     #endif
 };
 

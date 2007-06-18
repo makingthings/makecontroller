@@ -35,6 +35,7 @@ HEADERS = McHelperWindow.h \
 				PacketUsbCdc.h \
 				UsbMonitor.h \
 				NetworkMonitor.h \
+				SambaMonitor.h \
 				Board.h \
 				BoardListModel.h \
             
@@ -48,6 +49,7 @@ SOURCES	= main.cpp \
 				PacketUsbCdc.cpp \
 				UsbMonitor.cpp \
 				NetworkMonitor.cpp \
+				SambaMonitor.cpp \
 				Board.cpp \
 				BoardListModel.cpp
 				
