@@ -116,25 +116,24 @@ const struct { unsigned id; const char *name; } archs[] = {
 
 // Other stuff
 
-Samba::Samba( )
+Samba::Samba( SambaMonitor* monitor )
 {	
 	#ifdef Q_WS_WIN
 	BulkUSB = 0;
 	#endif
+	this->monitor = monitor;
 }
 
 
-Samba::Status Samba::connect()
+Samba::Status Samba::connect( )
 {
 	if ( usbOpen( ) < 0 )
 	  return ERROR_INITIALIZING;
 	return OK;
 }
 
-Samba::Status Samba::disconnect()
+Samba::Status Samba::disconnect( )
 {
-	// messageInterface->message( 3, "  Disconnecting.\n" );
-  // messageInterface->sleepMs( 100 );
   usbClose( );
   return OK;
 }
@@ -265,6 +264,11 @@ Samba::Status Samba::bootFromFlash( )
 void Samba::setMessageInterface( MessageInterface* messageInterface )
 {
 	this->messageInterface = messageInterface;
+}
+
+QString Samba::getDeviceKey( )
+{
+	return deviceKey;
 }
 
 int Samba::init( )
@@ -627,21 +631,18 @@ int Samba::usbOpen( )
 		IOObjectRelease(iterator);
 		return -1;
   }
-	#endif /* Mac-only UsbConnection::init( ) */
+	#endif /* Mac-only UsbConnection::init( ) */ 
     
   // Windows-only
   #ifdef Q_WS_WIN
   
   char /*message[100], */buffer[2], temp[2];
 
-  // messageInterface->message( 3, "  Opening.\n" );
-  // messageInterface->sleepMs( 100 );
-
   int result = testOpen();
   
   if (result == FC_DRIVER_NOT_FOUND ) {
-    messageInterface->message( 1, "usb> Cannot find boot agent.\n" );
-		messageInterface->message( 1, "  **Make sure you have erased and reset the power.\n" );
+    //messageInterface->message( 1, "usb> Cannot find boot agent.\n" );
+		//messageInterface->message( 1, "  **Make sure you have erased and reset the power.\n" );
     disconnect();
     return -1;
   } else if (result != FC_OK) {
@@ -852,6 +853,8 @@ int Samba::testOpen( )
 
   WCHAR *sPipeNameIn;
   WCHAR *sPipeNameOut;
+  m_hPipeIn = INVALID_HANDLE_VALUE;
+  m_hPipeOut = INVALID_HANDLE_VALUE;
 
   // messageInterface->message( 3, "  Getting usb device name\n" );
   // messageInterface->sleepMs( 100 );
@@ -913,12 +916,10 @@ int Samba::usbFlushOut( )
 HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf)
 {
   HANDLE hOut = INVALID_HANDLE_VALUE;
-
-  ULONG                    NumberDevices;
   HDEVINFO                 hardwareDeviceInfo;
   SP_INTERFACE_DEVICE_DATA deviceInfoData;
-  ULONG                    i;
-  BOOLEAN                  done;
+  ULONG                    i = 0;
+  BOOLEAN					done = FALSE;
 
   //
   // Open a handle to the plug and play dev node.
@@ -932,21 +933,10 @@ HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf)
                          (DIGCF_PRESENT | // Only Devices present
                          DIGCF_INTERFACEDEVICE)); // Function class devices.
 
-  //
-  // Take a wild guess at the number of devices we have;
-  // Be prepared to realloc and retry if there are more than we guessed
-  //
-  NumberDevices = 4;
-  done = FALSE;
   deviceInfoData.cbSize = sizeof(SP_INTERFACE_DEVICE_DATA);
 
-  i=0;
-  while(!done) 
+  while( !done ) 
   {
-    NumberDevices *= 2;
-
-    for(; i < NumberDevices; i++) 
-    {
       // SetupDiEnumDeviceInterfaces() returns information about device interfaces
       // exposed by one or more devices. Each call returns information about one interface;
       // the routine can be called repeatedly to get information about several interfaces
@@ -954,14 +944,17 @@ HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf)
       if(SetupDiEnumDeviceInterfaces (hardwareDeviceInfo,
                                       0, // We don't care about specific PDOs
                                       pGuid,
-                                      i,
+                                      i++,
                                       &deviceInfoData)) 
       {
         hOut = OpenOneDevice (hardwareDeviceInfo, &deviceInfoData, outNameBuf);
         if(hOut != INVALID_HANDLE_VALUE) 
         {
-          done = TRUE;
-          break;
+          if( !monitor->alreadyHas( deviceKey ) )// if this one is new, we're done
+          {
+          	done = TRUE;
+          	break;
+          }
         }
       } 
       else 
@@ -969,10 +962,10 @@ HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf)
         if(ERROR_NO_MORE_ITEMS == GetLastError()) 
         {
            done = TRUE;
+           hOut = INVALID_HANDLE_VALUE;
            break;
         }
       }
-    }
   }
 
   // SetupDiDestroyDeviceInfoList() destroys a device information set
@@ -980,6 +973,89 @@ HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf)
   SetupDiDestroyDeviceInfoList(hardwareDeviceInfo);
 
   return hOut;
+}
+
+//-----------------------------------------------------------------
+//                  Windows-only checkFriendlyName( )
+//-----------------------------------------------------------------
+bool Samba::checkDeviceService( HDEVINFO HardwareDeviceInfo, PSP_DEVINFO_DATA deviceSpecificInfo )
+{
+	DWORD DataT;
+    LPTSTR buffer = NULL;
+    DWORD buffersize = 0;
+    
+    while (!SetupDiGetDeviceRegistryProperty(
+               HardwareDeviceInfo,
+               deviceSpecificInfo,
+               SPDRP_SERVICE, 
+               &DataT,
+               (PBYTE)buffer,
+               buffersize,
+               &buffersize))
+   {
+       if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) // then change the buffer size.
+       {
+           if (buffer) LocalFree(buffer); 
+           // Double the size to avoid problems on W2k MBCS systems per KB 888609.
+           buffer = (TCHAR*)LocalAlloc(LPTR, buffersize * 2);
+       }
+       else
+           break;
+   }  
+	if (buffer)
+	{	// if it's using the atm6124 driver, then that's us.
+		if(!_tcsncmp(TEXT("atm6124"), buffer, 7))
+		{
+			LocalFree(buffer);
+			return true;
+		}
+			
+		LocalFree(buffer);
+	}
+		
+	return false;
+}
+
+//-----------------------------------------------------------------
+//                  Windows-only getDeviceObjectName( )
+//-----------------------------------------------------------------
+bool Samba::getDeviceObjectName( HDEVINFO HardwareDeviceInfo, PSP_DEVINFO_DATA deviceSpecificInfo )
+{
+	DWORD DataT;
+    LPTSTR buffer = NULL;
+    DWORD buffersize = 0;
+    
+    while (!SetupDiGetDeviceRegistryProperty(
+               HardwareDeviceInfo,
+               deviceSpecificInfo,
+               SPDRP_PHYSICAL_DEVICE_OBJECT_NAME, 
+               &DataT,
+               (PBYTE)buffer,
+               buffersize,
+               &buffersize))
+   {
+       if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) // then change the buffer size.
+       {
+           if (buffer) LocalFree(buffer); 
+           // Double the size to avoid problems on W2k MBCS systems per KB 888609.
+           buffer = (TCHAR*)LocalAlloc(LPTR, buffersize * 2);
+       }
+       else
+           break;
+   }  
+	if (buffer)
+	{	// this is a unique value for each instance of a SAMBA board in the system
+		char name[buffersize];
+		char* ptr = name;
+		while( buffersize-- )
+			*ptr++ = *buffer++;
+
+		deviceKey = QString( name );
+		LocalFree(buffer);
+		return true;
+	}
+		
+	return false;
 }
 
 HANDLE Samba::OpenOneDevice (HDEVINFO HardwareDeviceInfo,
@@ -1004,6 +1080,9 @@ HANDLE Samba::OpenOneDevice (HDEVINFO HardwareDeviceInfo,
                                   NULL); // not interested in the specific dev-node
 
   predictedLength = requiredLength;
+  
+  SP_DEVINFO_DATA deviceSpecificInfo;
+  deviceSpecificInfo.cbSize = sizeof(SP_DEVINFO_DATA);
 
   functionClassDeviceData = (PSP_INTERFACE_DEVICE_DETAIL_DATA) malloc (predictedLength);
   functionClassDeviceData->cbSize = sizeof (SP_INTERFACE_DEVICE_DETAIL_DATA);
@@ -1016,11 +1095,17 @@ HANDLE Samba::OpenOneDevice (HDEVINFO HardwareDeviceInfo,
                                         functionClassDeviceData,
                                         predictedLength,
                                         &requiredLength,
-                                        NULL))
+                                        &deviceSpecificInfo))
   {
     free(functionClassDeviceData);
     return INVALID_HANDLE_VALUE;
   }
+  
+  if( !checkDeviceService( HardwareDeviceInfo, &deviceSpecificInfo ) )
+  	return INVALID_HANDLE_VALUE;
+  	
+  if( !getDeviceObjectName( HardwareDeviceInfo, &deviceSpecificInfo ) )
+  	return INVALID_HANDLE_VALUE;
 
   *devName = wcsdup(functionClassDeviceData->DevicePath);
   //strcpy(devName, functionClassDeviceData->DevicePath) ;

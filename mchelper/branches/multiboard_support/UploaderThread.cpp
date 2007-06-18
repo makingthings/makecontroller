@@ -82,6 +82,11 @@ void UploaderThread::run()
 	progress( -1 );
 }
 
+QString UploaderThread::getDeviceKey( )
+{
+	return samba->getDeviceKey( );
+}
+
 void UploaderThread::setBinFileName( char* filename )
 {
 	bin_file = filename;

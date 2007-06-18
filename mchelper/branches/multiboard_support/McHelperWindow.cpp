@@ -39,10 +39,10 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	
 	noUI = false;
 	
-	udp = new NetworkMonitor( );
-	samba = new Samba( );
-	usb = new UsbMonitor( );
 	boardModel = new BoardListModel( this );
+	udp = new NetworkMonitor( ); 
+	samba = new SambaMonitor( application, this, boardModel );
+	usb = new UsbMonitor( );
 	
 	#ifdef Q_WS_WIN
 	usb->setWidget( this );
@@ -85,15 +85,15 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 		// mainConsole->insertPlainText( "udp> Cannot open socket.\n" );
 	
 	// UDP signals/slots
-	connect( textLocalPort, SIGNAL( editingFinished() ), this, SLOT( newLocalPort( ) ) );
-	connect( textRemotePort, SIGNAL( editingFinished() ), this, SLOT( newRemotePort( ) ) );
-	connect( textIPAddress, SIGNAL( editingFinished() ), this, SLOT( newHostAddress( ) ) );
-	connect( sendButton, SIGNAL( clicked() ), this, SLOT( commandLineEvent( ) ) );
-	connect( commandLine->lineEdit(), SIGNAL( returnPressed() ), sendButton, SLOT( click() ) );
+	//connect( textLocalPort, SIGNAL( editingFinished() ), this, SLOT( newLocalPort( ) ) );
+	//connect( textRemotePort, SIGNAL( editingFinished() ), this, SLOT( newRemotePort( ) ) );
+	//connect( textIPAddress, SIGNAL( editingFinished() ), this, SLOT( newHostAddress( ) ) );
+	//connect( sendButton, SIGNAL( clicked() ), this, SLOT( commandLineEvent( ) ) );
+	//connect( commandLine->lineEdit(), SIGNAL( returnPressed() ), this, SLOT( commandLineEvent() ) );
 	
 	//USB signals/slots
-	connect( commandLineUsb->lineEdit(), SIGNAL( returnPressed() ), sendButtonUsb, SLOT( click() ) );
-	connect( sendButtonUsb, SIGNAL( clicked() ), this, SLOT( commandLineUsbEvent( ) ) );
+	connect( commandLineUsb->lineEdit(), SIGNAL(returnPressed()), this, SLOT(commandLineUsbEvent()) );
+	//connect( sendButtonUsb, SIGNAL( clicked() ), this, SLOT( commandLineUsbEvent( ) ) );
 	
 	//setup the pushbuttons
 	connect( fileSelectButton, SIGNAL( clicked() ), this, SLOT( fileSelectButtonClicked() ) );
@@ -104,10 +104,6 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	connect( actionClearOutput, SIGNAL( triggered() ), this, SLOT( clearOutputWindow( ) ) );
 	actionClearOutput->setShortcut(tr("Ctrl+X"));
 	actionClearOutput->setShortcutContext( Qt::ApplicationShortcut ); // this doesn't seem to have much effect
-	
-	uploaderThread = 0;
-	uploaderThread = new UploaderThread( application, this, samba );
-	samba->setMessageInterface( uploaderThread );
 	
 	// after all is set up, fire up the mechanism that looks for new boards
 	checkForNewDevices( ); // initially check for any devices out there
@@ -158,6 +154,22 @@ void McHelperWindow::checkForNewDevices( )
 	      boardModel->addBoard( board );
 		}
 	}
+	
+	QList<UploaderThread*> sambaBoards;
+	samba->scan( &sambaBoards );
+	newBoardCount = sambaBoards.count( );
+	if( newBoardCount > 0 )
+	{
+		int i;
+		for( i=0; i<newBoardCount; i++ )
+		{
+		  Board *board = new Board();
+		  board->key = sambaBoards.at(i)->getDeviceKey();
+	      board->name = "Samba Board";
+	      board->type = Board::UsbSamba;
+	      boardModel->addBoard( board );
+		}
+	}
 }
 
 void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous )
@@ -201,10 +213,10 @@ void McHelperWindow::uploadButtonClicked()
 	//if( usb->usbIsOpen( ) )
 	  //usb->usbClose( );
 
-	uploaderThread->setBinFileName( fileNameBuffer );
+	//uploaderThread->setBinFileName( fileNameBuffer );
   
   // Let's assume we'll always want to boot from the flash image we just uploaded on reboot
-  uploaderThread->setBootFromFlash( true );
+  //uploaderThread->setBootFromFlash( true );
 	
 	flash( );
 	
@@ -213,6 +225,7 @@ void McHelperWindow::uploadButtonClicked()
 
 void McHelperWindow::commandLineEvent( )
 {
+	/*
 	QString cmd = commandLine->currentText();
 	mainConsole->insertPlainText( "OscUdp< ");
 	mainConsole->insertPlainText( cmd );
@@ -223,6 +236,7 @@ void McHelperWindow::commandLineEvent( )
 	commandLine->clearEditText();
 	mainConsole->ensureCursorVisible( );
 	writeUdpSettings( );
+	*/
 }
 
 void McHelperWindow::commandLineUsbEvent( )
@@ -231,9 +245,6 @@ void McHelperWindow::commandLineUsbEvent( )
   mainConsole->insertPlainText( "OscUsb< ");
   mainConsole->insertPlainText( cmd );
   mainConsole->insertPlainText( "\n" );
-  
-  // oscUsb->uiSendPacket( cmd );
-	
     
   QModelIndex activeBoard = boardModel->getActiveBoardIndex();
   QString name = boardModel->data( activeBoard, Qt::DisplayRole ).toString();
@@ -242,6 +253,12 @@ void McHelperWindow::commandLineUsbEvent( )
   boardModel->getActiveBoard()->packetInterface->uiSendPacket(cmd);
   
   commandLineUsb->clearEditText();
+  // in order to get a readline-style history of commands via up/down arrows
+  // we ened to keep an empty item at the end of the list so we have a context from which to up-arrow
+  commandLineUsb->removeItem( 0 );
+  commandLineUsb->insertItem( 8, cmd );
+  commandLineUsb->insertItem( 9, "" );
+  commandLineUsb->setCurrentIndex( 9 );
   mainConsole->ensureCursorVisible( ); 
   writeUsbSettings();
 }
@@ -264,7 +281,7 @@ void McHelperWindow::newRemotePort( )
 
 void McHelperWindow::newHostAddress( )
 {
-	QHostAddress hostAddress = QHostAddress( textIPAddress->text() );
+	//QHostAddress hostAddress = QHostAddress( textIPAddress->text() );
 	//udp->setHostAddress( hostAddress );
 }
 
@@ -273,7 +290,7 @@ void McHelperWindow::flash()
 	//if ( !uploaderThread->isFinished() )
     //return;
 		
-	uploaderThread->start( );
+	// uploaderThread->start( );
 }
 
 void McHelperWindow::customEvent( QEvent* event )
@@ -358,20 +375,20 @@ void McHelperWindow::readSettings()
 	int remotePort = settings.value("remotePort", 10000 ).toInt();	//read the port back as an int
 	//udp->setRemotePort( remotePort );	// set it in the UDP system
 	QString remotePortString = QString::number( remotePort );	// turn it into a string
-	textRemotePort->setText( remotePortString );	// and display it onscreen
+	//textRemotePort->setText( remotePortString );	// and display it onscreen
 	
 	int localPort = settings.value("localPort", 10000 ).toInt();
 	//udp->setLocalPort( localPort, false );
 	QString localPortString = QString::number( localPort );
-	textLocalPort->setText( localPortString );
+	//textLocalPort->setText( localPortString );
 	
 	QString addressString = settings.value("remoteHostAddress", "192.168.0.200").toString();
 	QHostAddress hostAddress = QHostAddress( addressString );
 	//udp->setHostAddress( hostAddress );
-	textIPAddress->setText( addressString );
+	//textIPAddress->setText( addressString );
 	
-	QStringList udpCmdList = settings.value( "udpCmdList", "" ).toStringList();
-	commandLine->addItems( udpCmdList );
+	//QStringList udpCmdList = settings.value( "udpCmdList", "" ).toStringList();
+	//commandLine->addItems( udpCmdList );
 	
 	QStringList usbCmdList = settings.value( "usbCmdList", "" ).toStringList();
 	commandLineUsb->addItems( usbCmdList );
@@ -386,7 +403,7 @@ void McHelperWindow::writeFileSettings()
 void McHelperWindow::writeUdpSettings()
 {
 	QSettings settings("MakingThings", "mchelper");
-	
+	/*
 	QString remoteHostAddress = textIPAddress->text();
 	settings.setValue("remoteHostAddress", remoteHostAddress );
 	
@@ -405,6 +422,7 @@ void McHelperWindow::writeUdpSettings()
 		  udpCmdList.insert( i, cmd );
 	}
 	settings.setValue("udpCmdList", udpCmdList );
+	*/
 }
 
 void McHelperWindow::writeUsbSettings()
@@ -435,10 +453,10 @@ void McHelperWindow::uiLessUpload( char* filename, bool bootFlash )
 	strcpy( fileNameBuffer, filename );
 		//fileNameBuffer = *filename;
 		
-	uploaderThread->setBinFileName( fileNameBuffer );
+	// uploaderThread->setBinFileName( fileNameBuffer );
   
-	if( bootFlash )
-		uploaderThread->setBootFromFlash( true );
+	//if( bootFlash )
+		//uploaderThread->setBootFromFlash( true );
 	
 	flash( );
 }

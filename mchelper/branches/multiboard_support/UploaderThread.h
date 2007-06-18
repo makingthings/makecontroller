@@ -48,6 +48,7 @@ class UploaderThread : public QThread, public MessageInterface
 		void message( int level, char *format, ... );
 		void sleepMs( int ms );
 		void progress( int value );
+		QString getDeviceKey( );
 	  
 	private:
 	  QApplication* application;
