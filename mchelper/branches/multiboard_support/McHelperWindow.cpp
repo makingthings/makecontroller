@@ -80,20 +80,14 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	progressBar->setValue( 0 );
 	
 	readSettings( );
+	lastTabIndex = 0;
 	
 	// if ( udp->open( ) != PacketUdp::OK )
 		// mainConsole->insertPlainText( "udp> Cannot open socket.\n" );
-	
-	// UDP signals/slots
-	//connect( textLocalPort, SIGNAL( editingFinished() ), this, SLOT( newLocalPort( ) ) );
-	//connect( textRemotePort, SIGNAL( editingFinished() ), this, SLOT( newRemotePort( ) ) );
-	//connect( textIPAddress, SIGNAL( editingFinished() ), this, SLOT( newHostAddress( ) ) );
-	//connect( sendButton, SIGNAL( clicked() ), this, SLOT( commandLineEvent( ) ) );
-	//connect( commandLine->lineEdit(), SIGNAL( returnPressed() ), this, SLOT( commandLineEvent() ) );
+	connect( tabWidget, SIGNAL( currentChanged(int) ), this, SLOT( tabIndexChanged(int) ) );
 	
 	//USB signals/slots
-	connect( commandLineUsb->lineEdit(), SIGNAL(returnPressed()), this, SLOT(commandLineUsbEvent()) );
-	//connect( sendButtonUsb, SIGNAL( clicked() ), this, SLOT( commandLineUsbEvent( ) ) );
+	connect( commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(commandLineEvent()) );
 	
 	//setup the pushbuttons
 	connect( fileSelectButton, SIGNAL( clicked() ), this, SLOT( fileSelectButtonClicked() ) );
@@ -153,7 +147,7 @@ void McHelperWindow::checkForNewDevices( )
 	      board->ip_address = udpBoards.at(i)->location();
 	      boardModel->addBoard( board );
 		}
-	}
+	} 
 	
 	QList<UploaderThread*> sambaBoards;
 	samba->scan( &sambaBoards );
@@ -167,6 +161,7 @@ void McHelperWindow::checkForNewDevices( )
 		  board->key = sambaBoards.at(i)->getDeviceKey();
 	      board->name = "Samba Board";
 	      board->type = Board::UsbSamba;
+	      //board->uploaderThread = sambaBoards.at(i);
 	      boardModel->addBoard( board );
 		}
 	}
@@ -179,15 +174,38 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   QString status_bar_text = boardModel->data( current, Qt::StatusTipRole ).toString();
   
   if ( boardModel->flags(current) & Qt::ItemIsEnabled ) {
-   // message( 1, "Switching to board: %s\n", name.toAscii().constData());
     boardModel->setActiveBoardIndex( current );
     statusBar()->showMessage(status_bar_text, 1000);
   }
+  
+  switch( boardModel->getActiveBoard()->type )
+  {
+  	case Board::UsbSerial: // same for both
+  	case Board::Udp:
+  		tabWidget->setCurrentIndex( lastTabIndex );
+  		tabWidget->setTabEnabled( 0, 1 );
+  		tabWidget->setTabEnabled( 1, 1 );
+  		tabWidget->setTabEnabled( 2, 0 );
+  		break;
+  	case Board::UsbSamba:
+  		tabWidget->setCurrentIndex( 2 );
+  		tabWidget->setTabEnabled( 0, 0 );
+  		tabWidget->setTabEnabled( 1, 0 );
+  		tabWidget->setTabEnabled( 2, 1 );
+  		break;
+  }
+}
+
+void McHelperWindow::tabIndexChanged(int index)
+{
+	if( index < 2 )
+		lastTabIndex = index;
 }
 
 void McHelperWindow::closeEvent( QCloseEvent *qcloseevent )
 {
 	usb->closeAll( );
+	samba->closeAll( );
 }
 
 void McHelperWindow::fileSelectButtonClicked()
@@ -225,23 +243,7 @@ void McHelperWindow::uploadButtonClicked()
 
 void McHelperWindow::commandLineEvent( )
 {
-	/*
-	QString cmd = commandLine->currentText();
-	mainConsole->insertPlainText( "OscUdp< ");
-	mainConsole->insertPlainText( cmd );
-	mainConsole->insertPlainText( "\n" );
-  
-  //oscUdp->uiSendPacket( cmd );
-  
-	commandLine->clearEditText();
-	mainConsole->ensureCursorVisible( );
-	writeUdpSettings( );
-	*/
-}
-
-void McHelperWindow::commandLineUsbEvent( )
-{
-  QString cmd = commandLineUsb->currentText();
+  QString cmd = commandLine->currentText();
   mainConsole->insertPlainText( "OscUsb< ");
   mainConsole->insertPlainText( cmd );
   mainConsole->insertPlainText( "\n" );
@@ -252,13 +254,13 @@ void McHelperWindow::commandLineUsbEvent( )
   // message( 1, "Sending to board: %s\n", name.toAscii().constData() );
   boardModel->getActiveBoard()->packetInterface->uiSendPacket(cmd);
   
-  commandLineUsb->clearEditText();
+  commandLine->clearEditText();
   // in order to get a readline-style history of commands via up/down arrows
   // we ened to keep an empty item at the end of the list so we have a context from which to up-arrow
-  commandLineUsb->removeItem( 0 );
-  commandLineUsb->insertItem( 8, cmd );
-  commandLineUsb->insertItem( 9, "" );
-  commandLineUsb->setCurrentIndex( 9 );
+  commandLine->removeItem( 0 );
+  commandLine->insertItem( 8, cmd );
+  commandLine->insertItem( 9, "" );
+  commandLine->setCurrentIndex( 9 );
   mainConsole->ensureCursorVisible( ); 
   writeUsbSettings();
 }
@@ -391,7 +393,7 @@ void McHelperWindow::readSettings()
 	//commandLine->addItems( udpCmdList );
 	
 	QStringList usbCmdList = settings.value( "usbCmdList", "" ).toStringList();
-	commandLineUsb->addItems( usbCmdList );
+	commandLine->addItems( usbCmdList );
 }
 
 void McHelperWindow::writeFileSettings()
@@ -433,7 +435,7 @@ void McHelperWindow::writeUsbSettings()
 	int i;
 	for( i = 0; i < 10; i++ )
 	{
-	  QString cmd = commandLineUsb->itemText( i );
+	  QString cmd = commandLine->itemText( i );
 		if( !cmd.isEmpty() )
 		  usbCmdList.insert( i, cmd );
 	}

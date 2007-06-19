@@ -22,6 +22,7 @@
 #include <QList>
 
 #include "Board.h"
+class Board;
 
 class BoardListModel : public QAbstractListModel
 {
