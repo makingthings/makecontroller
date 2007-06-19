@@ -350,7 +350,7 @@ int Samba::init( )
 	    at91ArchStr( samba_chip_info.arch ) );
     return -1;
   }
-
+/*
   printf("Chip Version: %d\n", samba_chip_info.version );
   printf("Embedded Processor: %s\n", eprocs[samba_chip_info.eproc] );
   printf("NVRAM Region 1 Size: %d K\n", samba_chip_info.nvpsiz / K );
@@ -359,7 +359,7 @@ int Samba::init( )
   printf("Series: %s\n", at91ArchStr( samba_chip_info.arch ) );
   printf("Page Size: %d bytes\n", samba_chip_info.page_size );
   printf("Lock Regions: %d\n", samba_chip_info.lock_bits );
-
+*/
   return 0;
 }
 
@@ -913,6 +913,66 @@ int Samba::usbFlushOut( )
   return FC_OK;	
 }
 
+int Samba::FindUsbDevices( QList<QString>* arrived )
+{
+  HANDLE hOut = INVALID_HANDLE_VALUE;
+  HDEVINFO                 hardwareDeviceInfo;
+  SP_INTERFACE_DEVICE_DATA deviceInfoData;
+  ULONG                    i = 0;
+  BOOLEAN					done = FALSE;
+  int count = 0;
+
+  //
+  // Open a handle to the plug and play dev node.
+  // SetupDiGetClassDevs() returns a device information set that contains info on all
+  // installed devices of a specified class.
+  //
+  hardwareDeviceInfo = SetupDiGetClassDevs (
+                         (LPGUID) &GUID_CLASS_I82930_BULK,
+                         NULL,            // Define no enumerator (global)
+                         NULL,            // Define no
+                         (DIGCF_PRESENT | // Only Devices present
+                         DIGCF_INTERFACEDEVICE)); // Function class devices.
+
+  deviceInfoData.cbSize = sizeof(SP_INTERFACE_DEVICE_DATA);
+
+  while( !done ) 
+  {
+      // SetupDiEnumDeviceInterfaces() returns information about device interfaces
+      // exposed by one or more devices. Each call returns information about one interface;
+      // the routine can be called repeatedly to get information about several interfaces
+      // exposed by one or more devices.
+      if(SetupDiEnumDeviceInterfaces (hardwareDeviceInfo,
+                                      0, // We don't care about specific PDOs
+                                      (LPGUID) &GUID_CLASS_I82930_BULK,
+                                      i++,
+                                      &deviceInfoData)) 
+      {
+        WCHAR *outNameBuf; // dummy
+        hOut = OpenOneDevice (hardwareDeviceInfo, &deviceInfoData, &outNameBuf);
+        if(hOut != INVALID_HANDLE_VALUE)
+        {
+			arrived->append( deviceKey );
+			count++;
+        }
+      } 
+      else 
+      {
+        if(ERROR_NO_MORE_ITEMS == GetLastError()) 
+        {
+           done = TRUE;
+           break;
+        }
+      }
+  }
+
+  // SetupDiDestroyDeviceInfoList() destroys a device information set
+  // and frees all associated memory.
+  SetupDiDestroyDeviceInfoList(hardwareDeviceInfo);
+
+  return count;
+}
+
 HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf)
 {
   HANDLE hOut = INVALID_HANDLE_VALUE;
@@ -1045,10 +1105,11 @@ bool Samba::getDeviceObjectName( HDEVINFO HardwareDeviceInfo, PSP_DEVINFO_DATA d
    }  
 	if (buffer)
 	{	// this is a unique value for each instance of a SAMBA board in the system
-		char name[buffersize];
-		char* ptr = name;
+		char name[buffersize], *ptr;
+		TCHAR* tptr = buffer;
+		ptr = name;
 		while( buffersize-- )
-			*ptr++ = *buffer++;
+			*ptr++ = *tptr++;
 
 		deviceKey = QString( name );
 		LocalFree(buffer);

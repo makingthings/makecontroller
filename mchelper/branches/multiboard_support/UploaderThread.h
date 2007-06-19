@@ -31,6 +31,7 @@
 
 #include "McHelperWindow.h"
 #include "Samba.h"
+#include "MessageInterface.h"
 
 class McHelperWindow;
 class Samba;
@@ -41,6 +42,7 @@ class UploaderThread : public QThread, public MessageInterface
 		
 	public:	
     UploaderThread( QApplication* application, McHelperWindow* mainWindow, Samba* samba );
+    ~UploaderThread( );
 	  void run();
 		void setBinFileName( char* filename );
 		void setBootFromFlash( bool value );

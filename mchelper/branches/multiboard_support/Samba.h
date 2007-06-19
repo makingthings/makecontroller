@@ -28,6 +28,7 @@
 
 #include <QtGlobal>
 #include <QString>
+#include <QList>
 
 // Linux-only includes
 #ifdef Q_WS_LINUX
@@ -186,6 +187,7 @@ class Samba
 		Status bootFromFlash( );
 		void setMessageInterface( MessageInterface* messageInterface );
 		QString getDeviceKey( );
+		int FindUsbDevices( QList<QString>* arrived );
     
   private:
 		int init( );

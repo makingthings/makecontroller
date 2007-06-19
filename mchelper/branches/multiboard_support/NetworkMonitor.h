@@ -28,6 +28,7 @@
 #include "BoardListModel.h"
 
 class PacketUdp;
+class BoardListModel;
 
 class NetworkMonitor : public QObject, public MonitorInterface
 {

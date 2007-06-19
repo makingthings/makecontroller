@@ -23,9 +23,10 @@
 #include "PacketUsbCdc.h"
 #include "MonitorInterface.h"
 #include "BoardListModel.h"
-#include "Board.h"
+#include "PacketInterface.h"
 
 class PacketUsbCdc;
+class PacketInterface;
 
 class UsbMonitor : public MonitorInterface
 {

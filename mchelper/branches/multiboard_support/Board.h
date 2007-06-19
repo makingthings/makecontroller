@@ -21,7 +21,11 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+//#include "UploaderThread.h"
 #include "PacketInterface.h"
+
+//class UploaderThread;
+class PacketInterface;
 
 #include <QString>
 
@@ -46,6 +50,7 @@ class Board
     QString ip_port;
     
     PacketInterface* packetInterface;
+   // UploaderThread* uploaderThread;
     
     Board( );
     

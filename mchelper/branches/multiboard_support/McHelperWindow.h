@@ -25,19 +25,22 @@
 #include <QThread>
 #include <QTimer>
 
-#include "SambaMonitor.h"
-#include "UsbMonitor.h"
-#include "NetworkMonitor.h"
+#include "UploaderThread.h"
 #include "Board.h"
 #include "BoardListModel.h"
+#include "NetworkMonitor.h"
+#include "SambaMonitor.h"
+#include "UsbMonitor.h"
 
+
+class BoardListModel;
 class UploaderThread;
+class Board;
+class UsbMonitor;
 class NetworkMonitor;
 class SambaMonitor;
-class Osc;
 class McHelperApp;
-class BoardListModel;
-class UsbMonitor;
+
 
 
 class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public MessageInterface
@@ -84,9 +87,9 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void writeUsbSettings();
 		
 		bool noUI;
+		int lastTabIndex;
   
 	public slots:
-    void commandLineUsbEvent( );
     
 	private slots:
     // Uploader functions
@@ -109,6 +112,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
     
     // Devices list view functions
     void deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous );
+    void tabIndexChanged(int index);
 };
 
 class McHelperApp : public QApplication
