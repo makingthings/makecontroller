@@ -34,7 +34,7 @@ void Make( )
   Network_SetActive( true );
 
 	// Start the example webserver
-  TaskCreate( vBasicWEBServer, "WebServ", 300, NULL, 4 );
+  TaskCreate( vBasicWEBServer, "WebServ", 1200, NULL, 4 );
 }
 
 void BlinkTask( void* p )

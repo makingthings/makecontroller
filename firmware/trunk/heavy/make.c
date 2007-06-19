@@ -11,7 +11,7 @@ void NetworkCheck( void );
 
 void Run( ) // this task gets called as soon as we boot up.
 {
-  TaskCreate( BlinkTask, "Blink", 100, 0, 1 );
+  TaskCreate( BlinkTask, "Blink", 400, 0, 1 );
 
   // Do this right quick after booting up - otherwise we won't be recognised
   Usb_SetActive( 1 );

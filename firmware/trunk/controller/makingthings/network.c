@@ -576,7 +576,7 @@ void* Socket( int address, int port )
   Make sure you have an open socket before trying to read from it.
 	@param socket A pointer to the existing socket.
 	@param data A pointer to the buffer to read to.
-	@param length An integer specifying the length in bytes of how much data should be read.
+	@param length An integer specifying the maximum length in bytes that can be read.
 	@return An integer: length of data read if successful, zero on failure.
 	@see lwIP, Socket(), SocketClose()
 
@@ -585,14 +585,14 @@ void* Socket( int address, int port )
   // we should already have created a socket \b sock with Socket().
   struct netconn* sock = Socket( addr, 10101 );
   // we should also have a buffer to read into - \b data.
-  // and know how many bytes of it we want to read - \b length.
+  // and know how many bytes of it we want to try to read - \b length.
   int length_read = SocketRead( sock, data, length )
   // if 0 bytes were read, there was some sort of error
   if( length_read == 0 )
     SocketClose( sock );
   \endcode
 */
-int SocketRead( void* socket, void* data, int length )
+int SocketRead( void* socket, char* data, int length )
 {
   struct netconn *conn = socket;
   struct netbuf *buf;
@@ -642,6 +642,55 @@ int SocketRead( void* socket, void* data, int length )
   return buflen;
 }
 
+/**	
+  Read a line from a TCP socket terminated by CR LF (0x0D 0x0A), ('\r' '\n').  
+  Make sure you have an open socket before trying to read from it.
+	@param socket A pointer to the existing socket.
+	@param data A pointer to the buffer to read to.
+	@param length An integer specifying the maximum length in bytes to read.
+	@return An integer: length of data read if successful, zero on failure.
+	@see lwIP, Socket(), SocketRead(), SocketClose()
+
+  \par Example
+  \code
+  // we should already have created a socket \b sock with Socket().
+  struct netconn* sock = Socket( addr, 10101 );
+  // we should also have a buffer to read into - \b data.
+  // and know its size - \b length.
+  int length_read = SocketRead( sock, data, length )
+  // if 0 bytes were read, there was some sort of error
+  if( length_read == 0 )
+    SocketClose( sock );
+  // otherwise we have the next line in the buffer
+  \endcode
+*/
+
+int SocketReadLine( void* socket, char* data, int length )
+{
+  int readLength;
+  int lineLength = -1;
+  int terminated = false;
+  data--;
+
+  // Upon entering, data points to char prior to buffer, length is -1
+  do 
+  {
+    data++;
+    // here data points to where byte will be written
+    lineLength++;
+    // linelength now reflects true number of bytes
+    readLength = SocketRead( socket, data, 1 );
+    // here, if readlength == 1, data has a new char in next position, linelength is one off,
+    //       if readlength == 0, data had no new char and linelength is right
+  } while ( ( readLength == 1 ) && ( lineLength < length - 1 ) && ( *data != '\n' ) );
+
+  // here, length is corrected if there was a character  
+  if ( readLength == 1 )
+    lineLength++;
+  
+  return lineLength;
+}
+
 
 /**	
 	Write to a TCP socket.
@@ -667,7 +716,7 @@ int SocketRead( void* socket, void* data, int length )
     SocketClose( sock );
   \endcode
 */
-int SocketWrite( void* socket, void* data, int length )
+int SocketWrite( void* socket, char* data, int length )
 {
   int err = netconn_write( (struct netconn *)socket, data, length, NETCONN_COPY);
   if ( err != ERR_OK )
@@ -930,7 +979,7 @@ void Network_SetWebServerEnabled( int state )
 void Network_StartWebServer( )
 {
   if( Network->WebServerTaskPtr == NULL )
-    Network->WebServerTaskPtr = TaskCreate( WebServer, "WebServ", 300, NULL, 4 );
+    Network->WebServerTaskPtr = TaskCreate( WebServer, "WebServ", 1200, NULL, 4 );
 }
 
 void Network_StopWebServer( )
@@ -957,8 +1006,8 @@ void Network_DhcpStart( struct netif* netif )
   Network_SetPending( 1 ); // set a flag so nobody else tries to set up this netif
   int count = 0;
   dhcp_start( netif );
-  Network->DhcpFineTaskPtr = TaskCreate( DhcpFineTask, "DhcpFine", 150, 0, 1 );
-  Network->DhcpCoarseTaskPtr = TaskCreate( DhcpCoarseTask, "DhcpCoarse", 100, 0, 1 );
+  Network->DhcpFineTaskPtr = TaskCreate( DhcpFineTask, "DhcpFine", 600, 0, 1 );
+  Network->DhcpCoarseTaskPtr = TaskCreate( DhcpCoarseTask, "DhcpCoarse", 400, 0, 1 );
   // now hang out for a second until we get an address
   // if DHCP is enabled but we don't find a DHCP server, just use the network config stored in EEPROM
   while( netif->ip_addr.addr == 0 && count < 100 ) // timeout after 10 (?) seconds of waiting for a DHCP address

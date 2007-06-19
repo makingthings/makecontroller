@@ -9,7 +9,7 @@ void BlinkTask( void* p );
 
 void Run( )
 { 
-  TaskCreate( BlinkTask, "Blink", 100, 0, 1 );
+  TaskCreate( BlinkTask, "Blink", 400, 0, 1 );
   Usb_SetActive( 1 );
 
   Osc_SetActive( true );

@@ -105,7 +105,7 @@ int main( void )
 	prvSetupHardware();
 
 	/* Create the make task. */
-	TaskCreate( MakeStarterTask, "Make", 300, NULL, 4 );
+	TaskCreate( MakeStarterTask, "Make", 1200, NULL, 4 );
 
 	/*NOTE : Tasks run in system mode and the scheduler runs in Supervisor mode.
 	The processor MUST be in supervisor mode when vTaskStartScheduler is 

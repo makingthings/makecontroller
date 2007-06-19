@@ -230,7 +230,7 @@ void System_StackAudit( int on_off )
 {
   System_SetActive( 1 );
   if( System->StackAuditPtr == NULL && on_off )
-    System->StackAuditPtr = TaskCreate( StackAuditTask, "StackAudit", 175, 0, 5 );
+    System->StackAuditPtr = TaskCreate( StackAuditTask, "StackAudit", 700, 0, 5 );
   
   if( System->StackAuditPtr != NULL && !on_off )
   {
