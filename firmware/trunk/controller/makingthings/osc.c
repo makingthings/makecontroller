@@ -199,8 +199,8 @@ void Osc_SetActive( int state )
     for( i = 0; i < OSC_SUBSYSTEM_COUNT; i++ )
       Osc->subsystem[ i ] = NULL;
 
-    Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 500, (void*)OSC_CHANNEL_UDP, 3 );
-    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 300, (void*)OSC_CHANNEL_USB, 3 );
+    Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 2000, (void*)OSC_CHANNEL_UDP, 3 );
+    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1200, (void*)OSC_CHANNEL_USB, 3 );
     Osc->TcpTaskPtr = NULL;
 
     Osc->users = 1;
@@ -294,7 +294,7 @@ void Osc_UdpTask( void* parameters )
 
 void Osc_StartTcpTask( )
 {
-  Osc->TcpTaskPtr = TaskCreate( Osc_TcpTask, "OscTcp", 400, 0, 2 );
+  Osc->TcpTaskPtr = TaskCreate( Osc_TcpTask, "OscTcp", 1600, 0, 2 );
 }
 
 int Osc_TcpPacketSend( char* packet, int length, int replyAddress, int replyPort )

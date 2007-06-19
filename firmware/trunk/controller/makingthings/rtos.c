@@ -85,7 +85,7 @@ void TaskYield( )
 void* TaskCreate( void (taskCode)( void*), char* name, int stackDepth, void* parameters, int priority )
 {
   void* taskHandle;
-  if( xTaskCreate( taskCode, (signed char*)name, stackDepth, parameters, priority, &taskHandle ) == 1 )
+  if( xTaskCreate( taskCode, (signed char*)name, ( stackDepth >> 2 ), parameters, priority, &taskHandle ) == 1 )
     return taskHandle;
   else
     return NULL;

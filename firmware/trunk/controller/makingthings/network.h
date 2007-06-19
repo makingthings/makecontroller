@@ -70,8 +70,9 @@ int Network_GetValid( void );
 
 // TCP stuff
 void* Socket( int address, int port );
-int SocketRead( void* socket, void* data, int length );
-int SocketWrite( void* socket, void* data, int length );
+int SocketRead( void* socket, char* data, int length );
+int SocketReadLine( void* socket, char* data, int length );
+int SocketWrite( void* socket, char* data, int length );
 void SocketClose( void* socket );
 
 void* ServerSocket( int port );

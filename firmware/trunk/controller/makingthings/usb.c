@@ -40,7 +40,7 @@ static int Usb_Users;
 int Usb_Running;
 
 #define mainUSB_PRIORITY			( 4 )
-#define mainUSB_TASK_STACK		( 150 )
+#define mainUSB_TASK_STACK		( 600 )
 #define TICKRATE 1000
 
 void vUSBCDCTask( void *pvParameters );

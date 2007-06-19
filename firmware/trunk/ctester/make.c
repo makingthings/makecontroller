@@ -13,7 +13,7 @@ void MakeInit( )
 { 
   CTester_SetTesteePower( 0 );
 
-  TaskCreate( BlinkTask, "Blink", 200, 0, 2 );
+  TaskCreate( BlinkTask, "Blink", 800, 0, 2 );
  
   Osc_SetReplyPort( 0, 12000 );
   Osc_SetActive( true );
