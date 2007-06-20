@@ -54,7 +54,7 @@ void Board::flash( )
 {
 	if( type != Board::UsbSamba )
 		return;
-	//if ( !uploaderThread->isFinished() )
+	//if ( uploaderThread->isRunning() )
     	//return;
 	uploaderThread->start( );
 }

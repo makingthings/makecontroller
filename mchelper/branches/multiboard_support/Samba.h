@@ -182,7 +182,7 @@ class Samba
 
 		Samba( SambaMonitor* monitor, MessageInterface* messageInterface );
 
-		Status connect();
+		Status connect( QString deviceKey );
 		Status disconnect();		
 
 		Status flashUpload( char* bin_file );
@@ -200,7 +200,7 @@ class Samba
 		int sendCommand( char *cmd, void *response, int response_len );
 		const char* at91ArchStr( int id );
 
-    int usbOpen( );
+    int usbOpen( QString deviceKey );
     int usbWrite( char* buffer, int length );
     int usbRead( char* buffer, int length );
     int usbClose( );
@@ -242,9 +242,9 @@ class Samba
     HANDLE m_hPipeOut;
     int BulkUSB;
     int usbFlushOut( );
-    int testOpen( );
-    BOOL GetUsbDeviceFileName(LPGUID  pGuid, WCHAR **outNameBuf);
-    HANDLE OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf);
+    int testOpen( QString deviceKey );
+    BOOL GetUsbDeviceFileName(LPGUID  pGuid, WCHAR **outNameBuf, QString deviceKey );
+    HANDLE OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf, QString deviceKey );
     HANDLE OpenOneDevice (HDEVINFO HardwareDeviceInfo,
                           PSP_INTERFACE_DEVICE_DATA DeviceInfoData,
 	                        WCHAR **devName);

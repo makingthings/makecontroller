@@ -126,9 +126,9 @@ Samba::Samba( SambaMonitor* monitor, MessageInterface* messageInterface )
 }
 
 
-Samba::Status Samba::connect( )
+Samba::Status Samba::connect( QString deviceKey )
 {
-	if ( usbOpen( ) < 0 )
+	if ( usbOpen( deviceKey ) < 0 )
 	  return ERROR_INITIALIZING;
 	return OK;
 }
@@ -542,7 +542,7 @@ void Samba::fileClose( void* file_fd )
 
 #define SAM7_TTY "/dev/at91_0"
 
-int Samba::usbOpen( )
+int Samba::usbOpen( QString deviceKey )
 {
   // Linux-only
   #if (defined(Q_WS_LINUX))
@@ -639,7 +639,7 @@ int Samba::usbOpen( )
   
   char /*message[100], */buffer[2], temp[2];
 
-  int result = testOpen();
+  int result = testOpen( deviceKey );
   
   if (result == FC_DRIVER_NOT_FOUND ) {
     //messageInterface->message( 1, "usb> Cannot find boot agent.\n" );
@@ -835,9 +835,9 @@ int Samba::usbClose( )
 // Windows-only...
 #ifdef Q_WS_WIN
 
-BOOL Samba::GetUsbDeviceFileName(LPGUID  pGuid, WCHAR **outNameBuf)
+BOOL Samba::GetUsbDeviceFileName(LPGUID  pGuid, WCHAR **outNameBuf, QString deviceKey)
 {
-  HANDLE hDev = OpenUsbDevice(pGuid, outNameBuf);
+  HANDLE hDev = OpenUsbDevice(pGuid, outNameBuf, deviceKey );
 
   if(hDev != INVALID_HANDLE_VALUE)
   {
@@ -848,7 +848,7 @@ BOOL Samba::GetUsbDeviceFileName(LPGUID  pGuid, WCHAR **outNameBuf)
 }
 
 
-int Samba::testOpen( )
+int Samba::testOpen( QString deviceKey )
 {
   WCHAR *sDeviceName;
 
@@ -860,7 +860,7 @@ int Samba::testOpen( )
   // messageInterface->message( 3, "  Getting usb device name\n" );
   // messageInterface->sleepMs( 100 );
   
-  if(! GetUsbDeviceFileName( (LPGUID) &GUID_CLASS_I82930_BULK, &sDeviceName))
+  if(! GetUsbDeviceFileName( (LPGUID) &GUID_CLASS_I82930_BULK, &sDeviceName, deviceKey ))
     return FC_DRIVER_NOT_FOUND;
 
   // messageInterface->message( 3, "  Got usb device name\n" );
@@ -974,7 +974,7 @@ int Samba::FindUsbDevices( QList<QString>* arrived )
   return count;
 }
 
-HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf)
+HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf, QString deviceKey )
 {
   HANDLE hOut = INVALID_HANDLE_VALUE;
   HDEVINFO                 hardwareDeviceInfo;
@@ -1009,10 +1009,8 @@ HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf)
                                       &deviceInfoData)) 
       {
         hOut = OpenOneDevice (hardwareDeviceInfo, &deviceInfoData, outNameBuf);
-        if(hOut != INVALID_HANDLE_VALUE) 
+        if(hOut != INVALID_HANDLE_VALUE && deviceKey == this->deviceKey ) 
         {
-          	// todo - perhaps in the future pass in the board's key and compare it here
-          	// although this will mean that we need to append a unique something or other to the board's name in the UI...
           	done = TRUE;
           	break;
         }
