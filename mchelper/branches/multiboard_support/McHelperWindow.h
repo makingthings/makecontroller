@@ -19,6 +19,7 @@
 #define MCHELPERWINDOW_H
 
 #include "ui_mchelper.h"
+#include "ui_aboutMchelper.h"
 
 //Qt includes
 #include <QMainWindow>
@@ -57,12 +58,15 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 	  void message( QString string );
 		void sleepMs( int ms );
 		void customEvent( QEvent* event );
-		void customMessage( char* text );
 		void progress( int value );
+		void setAboutDialog( QDialog* about );
 		
 		void setNoUI( bool val );
 		void uiLessUpload( char* filename, bool bootFlash );
+		
+		#ifdef Q_WS_WIN // Windows-only
 		void usbRemoved( HANDLE deviceHandle );
+		#endif
 	
 	protected:
 		void closeEvent( QCloseEvent *qcloseevent );
@@ -74,6 +78,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		NetworkMonitor* udp;
 		QTimer* monitorTimer;
     	BoardListModel* boardModel;
+    	QDialog* aboutMchelper;
 		
 		void readSettings();
 		void writeFileSettings();
@@ -91,15 +96,8 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void fileSelectButtonClicked();
 	  void uploadButtonClicked();
 	  void checkForNewDevices( );
-    
-    // Usb functions
-    
-    
-    // Udp functions
+
 		void commandLineEvent( );
-		void newLocalPort( );
-		void newRemotePort( );
-		void newHostAddress( );
     
 		// Menu functions
     void about( );

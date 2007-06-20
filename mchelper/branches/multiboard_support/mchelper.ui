@@ -860,6 +860,9 @@
    <property name="text" >
     <string>Clear Output</string>
    </property>
+   <property name="shortcut" >
+    <string>Ctrl+X</string>
+   </property>
   </action>
  </widget>
  <pixmapfunction></pixmapfunction>

@@ -18,7 +18,8 @@
 
 TEMPLATE = app
 
-FORMS = mchelper.ui
+FORMS = mchelper.ui \
+				aboutMchelper.ui
 
 #CONFIG += qt release
 CONFIG += qt debug
