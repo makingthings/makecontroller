@@ -60,10 +60,10 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   ///////////////////////////////////////////////
   //listViewDevices->setMovement(QListView::Free);
   listViewDevices->setSelectionMode(QAbstractItemView::SingleSelection);
-  //listViewDevices->setDragEnabled(true);
+ // listViewDevices->setDragEnabled(true);
   //listViewDevices->setDropIndicatorShown(true);
   //listViewDevices->setAcceptDrops(true);
-  //listViewDevices->setAlternatingRowColors(true);
+  listViewDevices->setAlternatingRowColors(true);
   //listViewDevices->setDragDropMode(QAbstractItemView::InternalMove);
   ///////////////////////////////////////////////
   

@@ -46,7 +46,7 @@ UploaderThread::~UploaderThread( )
 
 void UploaderThread::run()
 {
-	if ( samba->connect( ) != Samba::OK )
+	if ( samba->connect( deviceKey ) != Samba::OK )
 	{
 		mainWindow->messageThreadSafe( QString( "Usb> Upload Failed - couldn't connect.") );
 		mainWindow->messageThreadSafe( QString( "  ** Check USB cable is plugged in.") );
