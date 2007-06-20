@@ -58,10 +58,15 @@ int main(int argc, char *argv[])
 	
 	if( argc < 2 )
 	{
+		QDialog *aboutMchelper = new QDialog( );
+        Ui::aboutMchelper ui;
+        ui.setupUi(aboutMchelper);
+        mcHelperWindow.setAboutDialog( aboutMchelper );
+        
 		mcHelperWindow.show();
 		mcHelperWindow.setNoUI( false );
 	} else
-	{
+	{	
 		char* argv1 = argv[1];
 		mcHelperWindow.setNoUI( true );
 		mcHelperWindow.uiLessUpload( argv1, true );

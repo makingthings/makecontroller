@@ -97,8 +97,8 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	// setup the menu
 	connect( actionAboutMchelper, SIGNAL( triggered() ), this, SLOT( about( ) ) );
 	connect( actionClearOutput, SIGNAL( triggered() ), this, SLOT( clearOutputWindow( ) ) );
-	actionClearOutput->setShortcut(tr("Ctrl+X"));
-	actionClearOutput->setShortcutContext( Qt::ApplicationShortcut ); // this doesn't seem to have much effect
+	//actionClearOutput->setShortcut(tr("Ctrl+X"));
+	//actionClearOutput->setShortcutContext( Qt::ApplicationShortcut ); // this doesn't seem to have much effect
 	
 	// after all is set up, fire up the mechanism that looks for new boards
 	checkForNewDevices( ); // initially check for any devices out there
@@ -281,22 +281,6 @@ void McHelperWindow::clearOutputWindow()
 	mainConsole->ensureCursorVisible( );
 }
 
-void McHelperWindow::newLocalPort( )
-{
-	//udp->setLocalPort( textLocalPort->text().toInt(), true );
-}
-
-void McHelperWindow::newRemotePort( )
-{
-	//udp->setRemotePort( textRemotePort->text().toInt() );
-}
-
-void McHelperWindow::newHostAddress( )
-{
-	//QHostAddress hostAddress = QHostAddress( textIPAddress->text() );
-	//udp->setHostAddress( hostAddress );
-}
-
 void McHelperWindow::customEvent( QEvent* event )
 {
 	switch( event->type() )
@@ -342,13 +326,6 @@ void McHelperWindow::messageThreadSafe( QString string )
 {	
 	MessageEvent* messageEvent = new MessageEvent( string );
 	application->postEvent( this, messageEvent );
-}
-
-void McHelperWindow::customMessage( char* text )
-{
-	if ( text != 0 )
-    	mainConsole->append( text );
-  	mainConsole->ensureCursorVisible( );
 }
 
 void McHelperWindow::progress( int value )
@@ -438,31 +415,6 @@ void McHelperWindow::writeFileSettings()
 	settings.setValue("directory", lastDirectory );
 }
 
-void McHelperWindow::writeUdpSettings()
-{
-	QSettings settings("MakingThings", "mchelper");
-	/*
-	QString remoteHostAddress = textIPAddress->text();
-	settings.setValue("remoteHostAddress", remoteHostAddress );
-	
-	int remotePort = textRemotePort->text().toInt();
-	settings.setValue("remotePort", remotePort );
-	
-	int localPort = textLocalPort->text().toInt();
-	settings.setValue("localPort", localPort );
-	
-	QStringList udpCmdList;
-	int i;
-	for( i = 0; i < 10; i++ )
-	{
-	  QString cmd = commandLine->itemText( i );
-		if( !cmd.isEmpty() )
-		  udpCmdList.insert( i, cmd );
-	}
-	settings.setValue("udpCmdList", udpCmdList );
-	*/
-}
-
 void McHelperWindow::writeUsbSettings()
 {
 	QSettings settings("MakingThings", "mchelper");
@@ -500,12 +452,14 @@ void McHelperWindow::uiLessUpload( char* filename, bool bootFlash )
 }
 
 // actions for the menu
+void McHelperWindow::setAboutDialog( QDialog* about )
+{
+	this->aboutMchelper = about; 
+}
+
 void McHelperWindow::about( )  // set the version number here.
 {
-  QMessageBox::about(this, tr("About mchelper"),
-  tr("Make Controller Helper - version 2.0.0\n\n"
-  "Making Things 2007\n\n"
-  "www.makingthings.com") );
+  aboutMchelper->show(); 
 }
 
 #ifdef Q_WS_WIN
