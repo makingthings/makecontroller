@@ -56,7 +56,6 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 	  void messageThreadSafe( QString string );
 	  void message( QString string );
 		void sleepMs( int ms );
-		void flash( );
 		void customEvent( QEvent* event );
 		void customMessage( char* text );
 		void progress( int value );

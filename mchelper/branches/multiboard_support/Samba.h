@@ -166,10 +166,12 @@ struct sam7_chip_info{
 
 #include <stdint.h>
 
+#include "UploaderThread.h"
 #include "MessageInterface.h"
 #include "SambaMonitor.h"
 
 class SambaMonitor;
+class UploaderThread;
 
 class Samba
 {
@@ -178,14 +180,14 @@ class Samba
     	            ERROR_COULDNT_FIND_FILE, ERROR_COULDNT_OPEN_FILE, 
     	            ERROR_SENDING_FILE, ERROR_SETTING_BOOT_BIT };
 
-		Samba( SambaMonitor* monitor );
+		Samba( SambaMonitor* monitor, MessageInterface* messageInterface );
 
 		Status connect();
 		Status disconnect();		
 
 		Status flashUpload( char* bin_file );
 		Status bootFromFlash( );
-		void setMessageInterface( MessageInterface* messageInterface );
+		void setUploader( UploaderThread* uploader );
 		QString getDeviceKey( );
 		int FindUsbDevices( QList<QString>* arrived );
     
@@ -210,6 +212,7 @@ class Samba
     void uSleep( int usecs );
 		int uploadProgress;
     
+    UploaderThread* uploader;
     MessageInterface* messageInterface;
     SambaMonitor* monitor;
     QString deviceKey;

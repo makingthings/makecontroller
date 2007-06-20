@@ -116,12 +116,13 @@ const struct { unsigned id; const char *name; } archs[] = {
 
 // Other stuff
 
-Samba::Samba( SambaMonitor* monitor )
+Samba::Samba( SambaMonitor* monitor, MessageInterface* messageInterface )
 {	
 	#ifdef Q_WS_WIN
 	BulkUSB = 0;
 	#endif
 	this->monitor = monitor;
+	this->messageInterface = messageInterface;
 }
 
 
@@ -152,7 +153,7 @@ Samba::Status Samba::flashUpload( char* bin_file )
   int block = 0;
 	uploadProgress = 0;
 	
-	messageInterface->message( 1, "usb> Starting upload...don't disconnect board.\n" );
+	uploader->showStatus( QString( "Usb> Starting upload...don't disconnect board."), 3000 );
 	
   if( ps == 256 ) 
   {
@@ -185,7 +186,7 @@ Samba::Status Samba::flashUpload( char* bin_file )
     return ERROR_COULDNT_OPEN_FILE ;
   }
 
-  messageInterface->message( 3, "    " );
+  // messageInterface->message( 3, "    " );
 
   for( i=0 ; i<file_len ; i+=ps ) {
     /* set page # */
@@ -217,7 +218,7 @@ Samba::Status Samba::flashUpload( char* bin_file )
 		{
       //messageInterface->message( 1, "." );
 			uploadProgress = int(1000 * i / file_len);
-			messageInterface->progress( uploadProgress );
+			uploader->progress( uploadProgress );
 		}
   }
   
@@ -225,7 +226,7 @@ Samba::Status Samba::flashUpload( char* bin_file )
   fileClose( file_fd );
  
   
-  messageInterface->message( 3, "\n" );
+  //messageInterface->message( 3, "\n" );
 
   return OK;
 
@@ -261,9 +262,9 @@ Samba::Status Samba::bootFromFlash( )
   return OK;
 }
 
-void Samba::setMessageInterface( MessageInterface* messageInterface )
+void Samba::setUploader( UploaderThread* uploader )
 {
-	this->messageInterface = messageInterface;
+	this->uploader = uploader;
 }
 
 QString Samba::getDeviceKey( )
@@ -646,7 +647,7 @@ int Samba::usbOpen( )
     disconnect();
     return -1;
   } else if (result != FC_OK) {
-  	messageInterface->message( 1, "usb> Error - cannot open USB.\n" );
+  	messageInterface->messageThreadSafe( QString( "Usb> Error - cannot open USB.") );
     disconnect();
     return -1;
   }
@@ -665,7 +666,7 @@ int Samba::usbOpen( )
   buffer[0] = 'N';
   buffer[1] = '#';
   if (usbWrite( (char*)buffer, 2 ) != FC_OK ) {
-  	messageInterface->message( 1, "usb> Error initializing - could not write to USB.\n" );
+  	messageInterface->messageThreadSafe( QString( "Usb> Error initializing - could not write to USB.") );
     return -1;
   }
 
@@ -678,7 +679,7 @@ int Samba::usbOpen( )
   // messageInterface->sleepMs( 100 );
   BulkUSB = 1; // BulkUSB Mode
 
-  messageInterface->message( 3, "  Initializing\n" );
+  //messageInterface->message( 3, "  Initializing\n" );
   // messageInterface->sleepMs( 100 );
 
   return init();
@@ -707,7 +708,7 @@ int Samba::usbWrite( char* buffer, int length )
   // Mac-only...
   #ifdef Q_WS_MAC
   if( (*intf)->WritePipe( intf, outPipeRef, buffer, (UInt32) length ) != kIOReturnSuccess )
-    messageInterface->message( 1, "usb> Write error.\n" );
+    messageInterface->messageThreadSafe( QString( "Usb> Write error." ) );
 
   return length;
   #endif /* Mac-only usbWrite( ) */
@@ -748,7 +749,7 @@ int Samba::usbRead( char* buffer, int length )
   UInt32 size = length;
 
   if( (*intf)->ReadPipe( intf, inPipeRef, buffer, &size ) != kIOReturnSuccess )
-    messageInterface->message( 1, "usb> Read error.\n" );
+    messageInterface->messageThreadSafe( QString( "Usb> Read error.") );
   
   return (int)size;
   #endif  /* Mac-only usbWrite( ) */
@@ -1010,11 +1011,10 @@ HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf)
         hOut = OpenOneDevice (hardwareDeviceInfo, &deviceInfoData, outNameBuf);
         if(hOut != INVALID_HANDLE_VALUE) 
         {
-          if( !monitor->alreadyHas( deviceKey ) )// if this one is new, we're done
-          {
+          	// todo - perhaps in the future pass in the board's key and compare it here
+          	// although this will mean that we need to append a unique something or other to the board's name in the UI...
           	done = TRUE;
           	break;
-          }
         }
       } 
       else 

@@ -41,6 +41,8 @@ class Board : public PacketReadyInterface
     void setUploaderThread( UploaderThread* uploaderThread );
     void packetWaiting( ); // from PacketReadyInterface
     void sendMessage( QString rawMessage );
+    bool setBinFileName( char* filename );
+    void flash( );
     
     QString key;
     Board::Types type;

@@ -16,16 +16,12 @@
 *********************************************************************************/
 
 #include "BoardListModel.h"
-#include "stdio.h"
-#include "string.h"
-#include "ctype.h"
-#include <stdlib.h>
-
 
 /* Board List Model */
-BoardListModel::BoardListModel( QObject *parent ) : QAbstractListModel(parent)
+BoardListModel::BoardListModel( QApplication* application, McHelperWindow* mainWindow, QObject *parent  ) : QAbstractListModel(parent)
 {
-
+	this->application = application;
+	this->mainWindow = mainWindow;
 }
 
 
@@ -101,6 +97,17 @@ int BoardListModel::addBoard ( Board *board )
    return boardList.count() - 1;
 }
 
+void BoardListModel::removeBoardThreadSafe ( QString key )
+{
+	BoardEvent* boardEvent = new BoardEvent( key );
+	application->postEvent( mainWindow, boardEvent );
+}
+
+BoardEvent::BoardEvent( QString string ) : QEvent( (Type)10005 )
+{
+	message = string;
+}
+
 bool BoardListModel::removeBoard ( QString key )
 {
   
@@ -167,6 +174,7 @@ Qt::DropActions BoardListModel::supportedDropActions() const
 BoardListModel::~BoardListModel()
 {
 }
+
 
 
     

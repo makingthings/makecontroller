@@ -20,9 +20,11 @@
 
 #include <QAbstractListModel>
 #include <QList>
-
 #include "Board.h"
+#include "McHelperWindow.h"
+
 class Board;
+class McHelperWindow;
 
 class BoardListModel : public QAbstractListModel
 {
@@ -42,7 +44,7 @@ class BoardListModel : public QAbstractListModel
       PacketInterfaceRole,
     };
     
-    BoardListModel(QObject *parent = 0);
+    BoardListModel( QApplication* application, McHelperWindow* mainWindow, QObject *parent = 0);
     ~BoardListModel();
     
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
@@ -62,12 +64,24 @@ class BoardListModel : public QAbstractListModel
     //bool insertRows(int position, int rows, const QModelIndex &index = QModelIndex());
     //bool removeRows(int position, int rows, const QModelIndex &index = QModelIndex());
     
-    int BoardListModel::addBoard ( Board *board );
-    bool BoardListModel::removeBoard ( QString key );
+    int addBoard ( Board *board );
+    bool removeBoard ( QString key );
+    void removeBoardThreadSafe ( QString key );
                        
   private:
     QList<Board*> boardList;
     QModelIndex activeBoard;
+    QApplication* application;
+    QMainWindow* mainWindow;
+};
+
+class BoardEvent : public QEvent
+{
+	public:
+	  BoardEvent( QString string );
+	  ~BoardEvent( ) { }
+	  
+	QString message;
 };
 
 
