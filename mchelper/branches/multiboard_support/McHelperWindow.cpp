@@ -21,6 +21,8 @@
 #include <QSettings>
 #include <QHostAddress>
 #include <QMessageBox>
+#include "Osc.h"
+//#include "UploaderThread.h"
 
 #define DEVICE_SCAN_FREQ 1000
 
@@ -120,18 +122,17 @@ void McHelperWindow::checkForNewDevices( )
 		int i;
 		for( i=0; i<newBoardCount; i++ )
 		{
-			  Board *board = new Board();
-        board->key = newBoards.at(i)->location();
-	      board->name = "UsbSerial Board";
+		  Board *board = new Board( this, application );
+          board->key = newBoards.at(i)->getKey();
 	      board->type = Board::UsbSerial;
-	      board->packetInterface = newBoards.at(i);
+	      board->setPacketInterface( newBoards.at(i) );
 	      board->com_port = newBoards.at(i)->location();
 	      boardModel->addBoard( board );
 		}
 	}
-	
+
 	// then for UDP boards
-	QList<PacketInterface*> udpBoards;
+	QList<PacketUdp*> udpBoards;
 	udp->scan( &udpBoards );
 	newBoardCount = udpBoards.count( );
 	if( newBoardCount > 0 )
@@ -139,16 +140,14 @@ void McHelperWindow::checkForNewDevices( )
 		int i;
 		for( i=0; i<newBoardCount; i++ )
 		{
-		  Board *board = new Board();
-		  board->key = udpBoards.at(i)->location();
-	      board->name = "Udp Board";
+		  Board *board = new Board( this, application );
+		  board->setPacketInterface( udpBoards.at(i) );
+		  board->key = udpBoards.at(i)->getKey();
 	      board->type = Board::Udp;
-	      board->packetInterface = udpBoards.at(i);
-	      board->ip_address = udpBoards.at(i)->location();
 	      boardModel->addBoard( board );
 		}
 	} 
-	
+
 	QList<UploaderThread*> sambaBoards;
 	samba->scan( &sambaBoards );
 	newBoardCount = sambaBoards.count( );
@@ -157,11 +156,11 @@ void McHelperWindow::checkForNewDevices( )
 		int i;
 		for( i=0; i<newBoardCount; i++ )
 		{
-		  Board *board = new Board();
+		  Board *board = new Board( this, application );
 		  board->key = sambaBoards.at(i)->getDeviceKey();
 	      board->name = "Samba Board";
 	      board->type = Board::UsbSamba;
-	      //board->uploaderThread = sambaBoards.at(i);
+	      board->setUploaderThread( sambaBoards.at(i) );
 	      boardModel->addBoard( board );
 		}
 	}
@@ -194,6 +193,24 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   		tabWidget->setTabEnabled( 2, 1 );
   		break;
   }
+  // fill up the line edits in the Summary tab with the new board's info
+  updateSummaryInfo( boardModel->getActiveBoard() );
+}
+
+void McHelperWindow::updateSummaryInfo( Board* board )
+{
+	systemName->setText( board->name );
+	systemSerialNumber->setText( board->serialNumber );
+	//systemFirmwareVersion->setText( );
+	//systemFreeMemory->setText( );
+	netAddressLineEdit->setText( board->ip_address );
+	/*
+	netMaskLineEdit->setText( );
+	netGatewayLineEdit->setText( );
+	netMACLineEdit->setText( );
+	dhcpCheckBox->setCheckState( );
+	webserverCheckBox->setCheckState( ); // Qt::Checked, Qt::Unchecked
+	*/
 }
 
 void McHelperWindow::tabIndexChanged(int index)
@@ -243,25 +260,21 @@ void McHelperWindow::uploadButtonClicked()
 
 void McHelperWindow::commandLineEvent( )
 {
-  QString cmd = commandLine->currentText();
-  mainConsole->insertPlainText( "OscUsb< ");
-  mainConsole->insertPlainText( cmd );
-  mainConsole->insertPlainText( "\n" );
+  QString cmd = QString( "OscUsb< %1" ).arg(commandLine->currentText() );
+  mainConsole->append( cmd );
     
   QModelIndex activeBoard = boardModel->getActiveBoardIndex();
   QString name = boardModel->data( activeBoard, Qt::DisplayRole ).toString();
+  boardModel->getActiveBoard()->sendMessage( commandLine->currentText() );
   
-  // message( 1, "Sending to board: %s\n", name.toAscii().constData() );
-  boardModel->getActiveBoard()->packetInterface->uiSendPacket(cmd);
-  
-  commandLine->clearEditText();
   // in order to get a readline-style history of commands via up/down arrows
   // we ened to keep an empty item at the end of the list so we have a context from which to up-arrow
   commandLine->removeItem( 0 );
-  commandLine->insertItem( 8, cmd );
+  commandLine->insertItem( 8, commandLine->currentText() );
   commandLine->insertItem( 9, "" );
   commandLine->setCurrentIndex( 9 );
-  mainConsole->ensureCursorVisible( ); 
+  mainConsole->ensureCursorVisible( );
+  commandLine->clearEditText();
   writeUsbSettings();
 }
 
@@ -303,7 +316,7 @@ void McHelperWindow::customEvent( QEvent* event )
 		{
 			McHelperEvent* mcHelperEvent = (McHelperEvent*)event;
 			if ( !mcHelperEvent->statusBound )
-				customMessage( mcHelperEvent->message );
+				message( mcHelperEvent->message );
 			break;
 		}
 		case 10001: //to get progress bar info back from the uploader thread
@@ -312,16 +325,29 @@ void McHelperWindow::customEvent( QEvent* event )
 			progress( mcHelperProgressEvent->progress );
 			break;
 		}
+		case 10003: //to get progress bar info back from the uploader thread
+		{
+			MessageEvent* messageEvent = (MessageEvent*)event;
+			message( messageEvent->message );
+			//delete messageEvent;
+			break;
+		}
 		default:
 			break;
 	}
 }
 
+void McHelperWindow::messageThreadSafe( QString string )
+{	
+	MessageEvent* messageEvent = new MessageEvent( string );
+	application->postEvent( this, messageEvent );
+}
+
 void McHelperWindow::customMessage( char* text )
 {
 	if ( text != 0 )
-    mainConsole->insertPlainText( text );
-  mainConsole->ensureCursorVisible( );
+    	mainConsole->append( text );
+  	mainConsole->ensureCursorVisible( );
 }
 
 void McHelperWindow::progress( int value )
@@ -352,13 +378,22 @@ void McHelperWindow::message( int level, char *format, ... )
 			printf( buffer );
 		else
 		{
-			if ( buffer != NULL )
-				mainConsole->insertPlainText( buffer );
-			else
-				mainConsole->clear();
 			mainConsole->ensureCursorVisible( );
+			if ( buffer != NULL && strlen(buffer) > 1 )
+				mainConsole->insertPlainText( buffer );
+			mainConsole->ensureCursorVisible( ); // just to be sure...
 		}
 	}
+}
+
+void McHelperWindow::message( QString string )
+{
+	if( noUI )
+		return;
+	mainConsole->ensureCursorVisible( );
+	if ( !string.isEmpty( ) && !string.isNull( ) )
+		mainConsole->append( string );
+	mainConsole->ensureCursorVisible( ); // just to be sure...
 }
 
 void McHelperWindow::sleepMs( int ms )
@@ -478,4 +513,11 @@ void McHelperWindow::usbRemoved( HANDLE deviceHandle )
 	usb->removalNotification( deviceHandle );
 }
 #endif
+
+MessageEvent::MessageEvent( QString string ) : QEvent( (Type)10003 )
+{
+	message = string;
+}
+
+
 

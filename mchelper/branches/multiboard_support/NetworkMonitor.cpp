@@ -20,7 +20,6 @@
 
 #define BROADCAST_TX_PORT 10000
 #define BROADCAST_RX_PORT 10000
-#define BROADCAST_PING_LENGTH 20
 
 NetworkMonitor::NetworkMonitor( )
 {
@@ -32,14 +31,21 @@ NetworkMonitor::NetworkMonitor( )
 	  socket = 0;
 	  messageInterface->message( 1, "udp> Can't listen on port %d - make sure it's not already in use.\n", BROADCAST_RX_PORT );
 	}
-	Osc* osc = new Osc();
-	broadcastPing.resize( BROADCAST_PING_LENGTH );
-	osc->createOneRequest( broadcastPing.data(), "/system/info" ); // our constant OSC ping
-	delete osc;
 	connect( socket, SIGNAL(readyRead()), this, SLOT( processPendingDatagrams() ) );
+	
+	// set up our 
+	Osc* osc = new Osc();
+	int length, i;
+	char packet[1024], *ptr;
+	osc->createOneRequest( packet, &length, "/system/info" ); // our constant OSC ping
+	ptr = packet;
+	broadcastPing.resize( length );
+	for( i=0; i < length; i++ )
+		broadcastPing.insert( i, *ptr++ );
+	delete osc;
 }
 
-NetworkMonitor::Status NetworkMonitor::scan( QList<PacketInterface*>* arrived )
+NetworkMonitor::Status NetworkMonitor::scan( QList<PacketUdp*>* arrived )
 {
 	// responses to our broadcast will be asynchronous...don't wait around, just check on the next scan
 	socket->writeDatagram( broadcastPing.data(), broadcastPing.size(), QHostAddress::Broadcast, BROADCAST_TX_PORT );
@@ -70,7 +76,6 @@ void NetworkMonitor::processPendingDatagrams()
         	break;
         }
         QString socketKey = sender->toString( );
-        // printf( "Message from %s\n", socketKey.toAscii().data() );
         if( !connectedDevices.contains( socketKey ) )
         {
         	PacketUdp* device = new PacketUdp( );
@@ -79,17 +84,13 @@ void NetworkMonitor::processPendingDatagrams()
 	      	
 	      	device->setRemoteHostInfo( sender, BROADCAST_TX_PORT );
 	      	device->setKey( socketKey );
-	      	device->setInterfaces( messageInterface, application, this );
+	      	device->setInterfaces( messageInterface, this );
 	      	device->open( );
         }
         if( connectedDevices.contains( socketKey ) ) // pass the packet through to the packet interface
         {
-        	QString filter( "/system/info" );
-        	if( QString( datagram->data( ) ) != filter )
-        	{
-        		connectedDevices.value( socketKey )->incomingMessage( datagram );
-        		connectedDevices.value( socketKey )->processPacket( );
-        	}
+        	connectedDevices.value( socketKey )->incomingMessage( datagram );
+        	connectedDevices.value( socketKey )->processPacket( );
         	connectedDevices.value( socketKey )->resetTimer( );
         }
     }
@@ -108,7 +109,7 @@ void NetworkMonitor::deviceRemoved( QString key )
 	if( connectedDevices.contains( key ) )
 	{
 		delete connectedDevices.value( key );
-		boardListModel->removeBoard( key, Board::Udp );
+		boardListModel->removeBoard( key );
 		if( !connectedDevices.remove( key ) )
 			return;  // TODO - return an error here
 	}

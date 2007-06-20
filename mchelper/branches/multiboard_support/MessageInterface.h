@@ -22,6 +22,8 @@ class MessageInterface
 {		
 	public:
 	  virtual void message( int level, char* format, ... ) = 0;
+	  virtual void message( QString string ) = 0;
+	  virtual void messageThreadSafe( QString string ) = 0;
 	  virtual void sleepMs( int ms ) = 0;
 	  virtual void progress( int value ) = 0;
 };

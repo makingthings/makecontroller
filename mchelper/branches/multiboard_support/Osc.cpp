@@ -21,42 +21,55 @@
 #include "ctype.h"
 #include <stdlib.h>
 
+QString OscMessage::toString( )
+{
+	QString ret = QString( "> %1" ).arg(address);
+	int j;
+	for( j = 0; j < data.size( ); j++ )
+	{
+		ret.append( " " );
+		switch( data.at( j )->omdType )
+		{
+			case OscMessageData::OmdBlob:
+				ret.append( (char*)data.at( j )->b );
+				break;
+			case OscMessageData::OmdString:
+				ret.append( data.at( j )->s );
+				break;
+			case OscMessageData::OmdInt:
+				ret.append( QString::number(data.at( j )->i) );
+				break;
+			case OscMessageData::OmdFloat:
+				ret.append( QString::number(data.at( j )->f) );
+				break;
+		}
+	}
+	return ret;
+}
 
 Osc::Osc( )
 {
 	resetOutBuffer( );
+	preamble = NULL;
 }
 
-void Osc::packetWaiting( )	//get called back here when there are packets available
-{
-	//qWarning( "Packet" );
-	//printf( "Packet In\n" );
-  //
-  receive( );
-}
+const char* Osc::getPreamble( )
+{ 
+	return preamble;
+} 
 
-Osc::Status Osc::receive( OscMessage* oscMessage )
+Osc::Status Osc::receive( QList<OscMessage*>* oscMessageList )
 {
   char buffer[ 1024 ];
   
 	if ( packetInterface->isPacketWaiting() )
   {
-		if ( oscMessage != 0 )
-		{
-			oscMessage->address = 0;
-			oscMessage->s = 0;
-			oscMessage->i = 0;
-			oscMessage->f = 0.0;
-		}
 		int length;
 		length = packetInterface->receivePacket( buffer, 1024 );
 		if ( length == 0 )
-		{
-  		message( 2, "  OSC Length 0\n" );
 			return ERROR_PACKET_LENGTH_0;
-		}
 		
-		receivePacket( buffer, length, oscMessage );
+		receivePacket( buffer, length, oscMessageList );
 		return OK;
 	}
 	else
@@ -94,13 +107,13 @@ char* Osc::findDataTag( char* message, int length )
 }
 
 // When we receive a packet, check to see whether it is a message or a bundle.
-void Osc::receivePacket( char* packet, int length, OscMessage* oscMessage )
+void Osc::receivePacket( char* packet, int length, QList<OscMessage*>* oscMessageList )
 {
 	//printf( "Raw: %s, Length: %d\n", packet, length );
 	switch( *packet )
 	{
 		case '/':		// the '/' in front tells us this is an Osc message.
-			receiveMessage( packet, length, oscMessage );
+			receiveMessage( packet, length, oscMessageList );
 			break;
 		case '#':		// the '#' tells us this is an Osc bundle, and we check for "#bundle" just to be sure.
 			if ( strcmp( packet, "#bundle" ) == 0 )
@@ -112,11 +125,11 @@ void Osc::receivePacket( char* packet, int length, OscMessage* oscMessage )
         {
           // read the length (pretend packet is a pointer to integer)
           int messageLength = this->endianSwap( *((int*)packet) );
-					printf( "Unpacking bundle of length %d.\n", messageLength );
+			printf( "Unpacking bundle of length %d.\n", messageLength );
           packet += 4;
           length -= 4;
           if ( messageLength <= length )
-            receivePacket( packet, messageLength, oscMessage );
+            receivePacket( packet, messageLength, oscMessageList );
           length -= messageLength;
           packet += messageLength;
         }
@@ -124,7 +137,8 @@ void Osc::receivePacket( char* packet, int length, OscMessage* oscMessage )
       break;
 		default:
 			// something we don't recognize...
-			message( 1, "%s> Error - Osc packets must start with either a '/' (message) or '[' (bundle).\n", preamble ); 
+			QString msg = QString( "%1> Error - Osc packets must start with either a '/' (message) or '[' (bundle).").arg( preamble );
+			messageInterface->messageThreadSafe( msg );
 	}
 }
 
@@ -132,24 +146,35 @@ void Osc::receivePacket( char* packet, int length, OscMessage* oscMessage )
 	Once we receive a message, we need to make sure it's in the right format,
 	and then send it off to be interpreted (via extractData() ).
 */
-void Osc::receiveMessage( char* in, int length, OscMessage* oscMessage )
+void Osc::receiveMessage( char* in, int length, QList<OscMessage*>* oscMessageList )
 {
 	// We can print the address by just trying to print message, since it's null-terminated after the address.
-	message( 1, "%s> %s ", preamble, in );
-	if ( oscMessage != 0 )
+	OscMessage* oscMessage = NULL;
+	//message( 1, "%s> %s ", preamble, in );
+	if ( oscMessageList != 0 )
+	{
+	  oscMessage = new OscMessage( );
 	  oscMessage->address = strdup( in );
+	  oscMessageList->append( oscMessage );
+	}
 	
 	// Then try to find the type tag
 	char* type = findDataTag( in, length );
   if ( type == NULL )		//If there was no type tag, say so and stop processing this message.
-		message( 1, "%s> Error - No type tag.\n", preamble );
+  {
+		QString msg = QString( "%1> Error - No type tag.").arg( preamble );
+		messageInterface->messageThreadSafe( msg );
+  }
 	else		//Otherwise, step through the type tag and print the data out accordingly.
 	{
 		//We get a count back from extractData() of how many items were included - if this
 		//doesn't match the length of the type tag, something funky is happening.
 		int count = extractData( type, oscMessage );
 		if ( count != (int)( strlen(type) - 1 ) )
-			message( 1, "%s> Error extracting data from packet - type tag doesn't correspond to data included.\n", preamble );
+		{
+			QString msg = QString( "%1> Error extracting data from packet - type tag doesn't correspond to data included.").arg( preamble );
+			messageInterface->messageThreadSafe( msg );
+		}
 	}
 }
 
@@ -181,62 +206,77 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
       {
         int i = *(int*)data;
         i = endianSwap( i );
-				message( 1, "%d ", i );
-				data += 4;
-				count++;
-				if ( oscMessage) 
-				  oscMessage->i = i;
-				cont = true;
+		//message( 1, "%d ", i );
+		data += 4;
+		count++;
+		if ( oscMessage)
+		{
+		  OscMessageData* omdata = new OscMessageData( );
+		  omdata->i = i;
+		  omdata->omdType = OscMessageData::OmdInt;
+		  oscMessage->data.append( omdata );
+		}
+		cont = true;
         break;
       }
       case 'f':
       {
-				int i = *(int*)data;
+		int i = *(int*)data;
         i = endianSwap( i );
         float f = *(float*)&i;
-				message( 1, "%f ", f );
-				data += 4;
-				count++;
-				if ( oscMessage) 
-  				oscMessage->f = f;
-				cont = true;
+        if ( oscMessage)
+		{
+		  OscMessageData* omdata = new OscMessageData( );
+		  omdata->f = f;
+		  omdata->omdType = OscMessageData::OmdFloat;
+		  oscMessage->data.append( omdata );
+		}
+		//message( 1, "%f ", f );
+		data += 4;
+		count++;
+		cont = true;
         break;
       }
       case 's':
       {
-				message( 1, "%s ", data );
-				int len = strlen( data ) + 1;
-				int pad = len % 4;
-				if ( pad != 0 )
-					len += ( 4 - pad );
-				data += len;
-				count++;
-				cont = true;
+		//message( 1, "%s ", data );
+		if ( oscMessage)
+		{
+		  OscMessageData* omdata = new OscMessageData( );
+		  omdata->s = strdup( data );
+		  omdata->omdType = OscMessageData::OmdString;
+		  oscMessage->data.append( omdata );
+		}
+		int len = strlen( data ) + 1;
+		int pad = len % 4;
+		if ( pad != 0 )
+			len += ( 4 - pad );
+		data += len;
+		count++;
+		cont = true;
         break;
       }
 			case 'b':
 			{
-				message( 1, "<" );
-			  int blob_len = *(int*)data;  // the first int should give us the length of the blob
-        blob_len = endianSwap( blob_len );			  
+			  	int blob_len = *(int*)data;  // the first int should give us the length of the blob
+        		blob_len = endianSwap( blob_len );	
+        		if ( oscMessage)
+				{
+				  OscMessageData* omdata = new OscMessageData( );
+				  memcpy( omdata->b, data, blob_len );
+				  omdata->omdType = OscMessageData::OmdBlob;
+				  oscMessage->data.append( omdata );
+				}		  
 				data += sizeof( int );  // step to the blob contents
 				int i;
 				for( i = 0; i < blob_len; i++ )
-				{
-					if ( i != 0 )
-					  message( 1, " " );
-					
-					message( 1, "%02x", *data );
 					data++;
-				}
-				message( 1, "> " );
 				count++;
 				cont = true;
 				break;
 			}
     }
   }
-	message( 1, "\n" );
   return count;
 }
 
@@ -257,7 +297,7 @@ char* Osc::createBundle( char* buffer, int* length, int a, int b )
   return bp;
 }
 
-Osc::Status Osc::createOneRequest( char* buffer, char* message )
+Osc::Status Osc::createOneRequest( char* buffer, int *length, char* message )
 {
 	char* packet = buffer;
 	int size = 128; // dummy
@@ -268,6 +308,8 @@ Osc::Status Osc::createOneRequest( char* buffer, char* message )
 	packet = writePaddedString( packet, &size, "," );
 	if( packet == NULL )
 		return ERROR_CREATING_REQUEST;
+	
+	*length = packet - buffer;
 		
 	return OK;
 }
@@ -675,59 +717,12 @@ unsigned int Osc::endianSwap( unsigned int a )
 	#endif
 }
 
-// This function makes sure that any messages are processed in the UI thread
-void Osc::message( int level, char *format, ... )
-{
-	va_list args;
-	char buffer[ 1000 ];
-	
-	va_start( args, format );
-	vsnprintf( buffer, 1000, format, args );
-	va_end( args );
-	
-	OscMessageEvent* oscMessageEvent = new OscMessageEvent( level, buffer );
-	
-	if( level == 1 )
-	  application->postEvent( this, oscMessageEvent );
-}
-
 void Osc::sleepMs( int ms )
 {
 }
 
 void Osc::progress( int value )
 {
-}
-
-void Osc::customEvent( QEvent* event )
-{
-	switch( event->type() )
-	{
-		case 10002: 
-		{
-		  OscMessageEvent* oscMessageEvent = (OscMessageEvent*)event;
-			messageInterface->message( 1, oscMessageEvent->message );
-			break;
-		}
-		default:
-			break;
-	}
-}
-
-OscMessageEvent::OscMessageEvent( int level, char* message ) : QEvent( (Type)10002 )
-{
-	this->level = level;
-	
-  if ( message != 0 )
-	  this->message = strdup( message ); 
-	else
-	  this->message = 0;
-}
-
-OscMessageEvent::~OscMessageEvent( )
-{
-  if ( message != 0 )
-    free( message );
 }
 
 

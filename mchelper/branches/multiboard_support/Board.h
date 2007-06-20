@@ -18,46 +18,47 @@
 #ifndef BOARD_H_
 #define BOARD_H_
 
-#include <stdarg.h>
-#include <stdlib.h>
-
-//#include "UploaderThread.h"
+#include "PacketReadyInterface.h"
+#include "UploaderThread.h"
 #include "PacketInterface.h"
+#include "Osc.h"
 
-//class UploaderThread;
+class UploaderThread;
 class PacketInterface;
+class Osc;
 
 #include <QString>
 
-class Board
+class Board : public PacketReadyInterface
 {
   public:
   
-    enum Types
-    {
-      UsbSerial,
-      UsbSamba,
-      Udp
-    };
+    enum Types{ UsbSerial, UsbSamba, Udp };
+    
+    Board( MessageInterface* messageInterface, QApplication* application );
+    ~Board( );
+    void setPacketInterface( PacketInterface* packetInterface );
+    void setUploaderThread( UploaderThread* uploaderThread );
+    void packetWaiting( ); // from PacketReadyInterface
+    void sendMessage( QString rawMessage );
     
     QString key;
-    QString name;
     Board::Types type;
-    
     QString com_port;
     
-    QString ip_address;
-    QString ip_port;
+    // System properties
+    QString name, serialNumber, firmwareVersion, freeMemory;
     
-    PacketInterface* packetInterface;
-   // UploaderThread* uploaderThread;
-    
-    Board( );
-    
-    ~Board() {}
+    // Network properties
+    QString ip_address, netMask, gateway, mac;
+    bool dhcp, webserver;
 
   private:
-      
+    MessageInterface* messageInterface;
+    QApplication* application;
+    PacketInterface* packetInterface;
+    Osc* osc;
+    UploaderThread* uploaderThread;
 };
 
 #endif /*BOARD_H_*/

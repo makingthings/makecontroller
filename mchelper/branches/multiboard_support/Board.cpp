@@ -16,15 +16,57 @@
 *********************************************************************************/
 
 #include "Board.h"
-#include "stdio.h"
-#include "string.h"
-#include "ctype.h"
-#include <stdlib.h>
 
-
-/* Main Board superclass */
-Board::Board( )
+Board::Board( MessageInterface* messageInterface, QApplication* application )
 {
-  
+  osc = new Osc( );
+  this->messageInterface = messageInterface;
+  this->application = application;
+}
+
+Board::~Board( )
+{
+  delete osc;
+}
+
+void Board::setPacketInterface( PacketInterface* packetInterface )
+{
+	osc->setInterfaces( packetInterface, messageInterface, application );
+	osc->setPreamble( packetInterface->location( ) );
+	packetInterface->setPacketReadyInterface( this );
+	packetInterface->open( );
+}
+
+void Board::setUploaderThread( UploaderThread* uploaderThread )
+{
+	this->uploaderThread = uploaderThread;
+}
+
+void Board::packetWaiting( )
+{
+	QList<OscMessage*> oscMessageList;
+	osc->receive( &oscMessageList );
+	
+	int messageCount = oscMessageList.size( ), i;
+	for (i = 0; i < messageCount; i++)
+	{
+		if( strcmp( oscMessageList.at(i)->address, "/system/info" ) == 0 )
+		{ // we're counting on the board to send the pieces of data in this order
+			name = QString( oscMessageList.at(i)->data.at( 0 )->s ); //name
+			serialNumber = QString::number( oscMessageList.at(i)->data.at( 1 )->i ); // serial number
+			ip_address = QString( oscMessageList.at(i)->data.at( 2 )->s ); // IP address
+		}
+		else // just print them out
+		{
+			QString msg = oscMessageList.at(i)->toString( );
+			msg.prepend( osc->getPreamble( ) );
+			messageInterface->messageThreadSafe( msg );
+		}
+	}
+}
+
+void Board::sendMessage( QString rawMessage )
+{
+	osc->uiSendPacket( rawMessage );
 }
 

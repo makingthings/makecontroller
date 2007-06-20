@@ -221,7 +221,7 @@ void UsbMonitor::removalNotification( HANDLE handle )
 		{
 			i.value( )->close( ); // close the USB connection
 			delete i.value( );
-			boardListModel->removeBoard( i.key(), Board::UsbSerial );
+			boardListModel->removeBoard( i.key() );
 			i = connectedDevices.erase( i );
 		}
 		else

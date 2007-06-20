@@ -36,7 +36,7 @@ class NetworkMonitor : public QObject, public MonitorInterface
   public:
   	NetworkMonitor( );
   	~NetworkMonitor( ) {}
-  	Status scan( QList<PacketInterface*>* arrived );
+  	Status scan( QList<PacketUdp*>* arrived );
   	void setInterfaces( MessageInterface* messageInterface, QApplication* application, BoardListModel* boardListModel );
   	void deviceRemoved( QString key );
   	

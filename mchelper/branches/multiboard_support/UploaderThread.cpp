@@ -121,6 +121,16 @@ void UploaderThread::message( int level, char *format, ... )
 	  application->postEvent( mainWindow, mcHelperEvent );
 }
 
+void UploaderThread::message( QString string )
+{
+	// not implemented
+}
+
+void UploaderThread::messageThreadSafe( QString string )
+{
+	// not implemented
+}
+
 void UploaderThread::progress( int value )
 {
 	McHelperProgressEvent* mcHelperProgressEvent = new McHelperProgressEvent( value );
