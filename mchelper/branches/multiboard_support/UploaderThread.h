@@ -31,33 +31,34 @@
 
 #include "McHelperWindow.h"
 #include "Samba.h"
-#include "MessageInterface.h"
+#include "SambaMonitor.h"
 
 class McHelperWindow;
 class Samba;
 
-class UploaderThread : public QThread, public MessageInterface
+class UploaderThread : public QThread
 {
 	Q_OBJECT
 		
 	public:	
-    UploaderThread( QApplication* application, McHelperWindow* mainWindow, Samba* samba );
+    UploaderThread( QApplication* application, McHelperWindow* mainWindow,
+    					Samba* samba, SambaMonitor* monitor );
     ~UploaderThread( );
 	  void run();
 		void setBinFileName( char* filename );
 		void setBootFromFlash( bool value );
-		// From Message Interface
-		void message( int level, char *format, ... );
-		void message( QString string );
-		void messageThreadSafe( QString string );
+		void showStatus( QString message, int duration );
 		void sleepMs( int ms );
 		void progress( int value );
 		QString getDeviceKey( );
+		void setDeviceKey( QString key );
 	  
 	private:
 	  QApplication* application;
 	  McHelperWindow* mainWindow;
+	  SambaMonitor* monitor;
 		Samba* samba;
+		QString deviceKey;
 		
 		char* bin_file;
 		bool bootFromFlash;
@@ -78,9 +79,19 @@ class McHelperProgressEvent : public QEvent
 {
 	public:
 	  McHelperProgressEvent( int progress );
-	  ~McHelperProgressEvent( );
+	  ~McHelperProgressEvent( ) {}
 	  
 	int progress;
+};
+
+class StatusEvent : public QEvent
+{
+	public:
+	  StatusEvent( QString message, int duration );
+	  ~StatusEvent( ) {}
+	  
+	QString message;
+	int duration;
 };
 
 #endif

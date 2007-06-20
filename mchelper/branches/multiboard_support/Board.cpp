@@ -42,6 +42,23 @@ void Board::setUploaderThread( UploaderThread* uploaderThread )
 	this->uploaderThread = uploaderThread;
 }
 
+bool Board::setBinFileName( char* filename )
+{
+	if( type != Board::UsbSamba )
+		return false;
+	uploaderThread->setBinFileName( filename );
+		return true;
+}
+
+void Board::flash( )
+{
+	if( type != Board::UsbSamba )
+		return;
+	//if ( !uploaderThread->isFinished() )
+    	//return;
+	uploaderThread->start( );
+}
+
 void Board::packetWaiting( )
 {
 	QList<OscMessage*> oscMessageList;

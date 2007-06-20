@@ -25,11 +25,13 @@
 
 #include "UploaderThread.h"
 
-UploaderThread::UploaderThread( QApplication* application, McHelperWindow* mainWindow, Samba* samba ) : QThread()
+UploaderThread::UploaderThread( QApplication* application, McHelperWindow* mainWindow, 
+								Samba* samba, SambaMonitor* monitor ) : QThread()
 {
   this->application = application;
   this->mainWindow = mainWindow;
 	this->samba = samba;
+	this->monitor = monitor;
 }
 
 UploaderThread::~UploaderThread( )
@@ -46,9 +48,9 @@ void UploaderThread::run()
 {
 	if ( samba->connect( ) != Samba::OK )
 	{
-		message( 1, "usb> Upload Failed - couldn't connect.\n" );
-		message( 1, "  ** Check USB cable is plugged in.\n" );
-		message( 1, "  ** Make sure you've erased the current program, reset the power, and try again.\n" );
+		mainWindow->messageThreadSafe( QString( "Usb> Upload Failed - couldn't connect.") );
+		mainWindow->messageThreadSafe( QString( "  ** Check USB cable is plugged in.") );
+		mainWindow->messageThreadSafe( QString( "  ** Make sure you've erased the current program, reset the power, and try again.") );
 		Samba::Status disconnectStatus;
 		disconnectStatus = samba->disconnect( );
 		return;
@@ -57,43 +59,55 @@ void UploaderThread::run()
 	Samba::Status uploaderStatus = samba->flashUpload( bin_file );
 	if ( uploaderStatus != Samba::OK )
   {
+  	showStatus( QString( "Usb> Upload Failed." ), 2000 );
   	switch ( uploaderStatus )
   	{
   		case Samba::ERROR_INCORRECT_CHIP_INFO:
-				message( 1, "usb> Upload Failed - don't recognize the chip you're trying to program.\n" );
+			mainWindow->messageThreadSafe( QString( 
+				"Usb> Upload Failed - don't recognize the chip you're trying to program.") );
 			  break;
   		case Samba::ERROR_COULDNT_FIND_FILE:
   		case Samba::ERROR_COULDNT_OPEN_FILE:
-				message( 1, "usb> Upload Failed - Couldn't find or open the specified .bin file.\n" );
+			mainWindow->messageThreadSafe( QString( 
+				"Usb> Upload Failed - Couldn't find or open the specified .bin file.") );
 			  break;
   		case Samba::ERROR_SENDING_FILE:
-				message( 1, "usb> Upload Failed - Couldn't complete download.\n" );
-    		message( 1, "  ** Noisy power supply?  Flakey USB connection?\n");
+			mainWindow->messageThreadSafe( QString( 
+				"Usb> Upload Failed - Couldn't complete download.") );
+    		mainWindow->messageThreadSafe( QString( 
+    			"  ** Noisy power supply?  Flakey USB connection?") );
 			  break;
   		default:
-				message( 1, "usb> Upload Failed - Unknown Error - %d\n", uploaderStatus );
-    		message( 1, "  ** Note error number and consult the support forums.\n");
+			mainWindow->messageThreadSafe( QString( 
+				"Usb> Upload Failed - Unknown Error - %d.").arg(uploaderStatus) );
+    		mainWindow->messageThreadSafe( QString( 
+    			"  ** Note error number and consult the support forums.") );
 			  break;	
   	}
   }
 	
-	if( bootFromFlash )
-	{
-		if ( samba->bootFromFlash(  ) != Samba::OK )
-			message( 1, "usb> Could not switch to boot from flash.\n" );
-		bootFromFlash = false;
-	}
+	// set up samba to actually boot from this file
+	if ( samba->bootFromFlash(  ) != Samba::OK )
+		mainWindow->messageThreadSafe( QString( "Usb> Could not switch to boot from flash.") );
+
 	
 	if ( samba->disconnect(  ) != Samba::OK )
-  	message( 1, "usb> Error disconnecting.\n" );
+  		mainWindow->messageThreadSafe( QString( "Usb> Error disconnecting.") );
 		
-	message( 1, "usb> Upload complete - reset the power on the board to run the new program.\n" );
+	showStatus( QString( 
+		"Usb> Upload complete - reset the power on the board to run the new program."), 2000 );
 	progress( -1 );
+	monitor->deviceRemoved( deviceKey );
 }
 
 QString UploaderThread::getDeviceKey( )
 {
-	return samba->getDeviceKey( );
+	return deviceKey;
+}
+
+void UploaderThread::setDeviceKey( QString key )
+{
+	this->deviceKey = key;
 }
 
 void UploaderThread::setBinFileName( char* filename )
@@ -106,29 +120,10 @@ void UploaderThread::setBootFromFlash( bool value )
 	bootFromFlash = value;
 }
 
-void UploaderThread::message( int level, char *format, ... )
+void UploaderThread::showStatus( QString message, int duration )
 {
-	va_list args;
-	char buffer[ 1000 ];
-	
-	va_start( args, format );
-	vsnprintf( buffer, 1000, format, args );
-	va_end( args );
-	
-	McHelperEvent* mcHelperEvent = new McHelperEvent( false, level, buffer );
-	
-	if( level == 1 )
-	  application->postEvent( mainWindow, mcHelperEvent );
-}
-
-void UploaderThread::message( QString string )
-{
-	// not implemented
-}
-
-void UploaderThread::messageThreadSafe( QString string )
-{
-	// not implemented
+	StatusEvent* statusEvent = new StatusEvent( message, duration );
+	application->postEvent( mainWindow, statusEvent );
 }
 
 void UploaderThread::progress( int value )
@@ -161,12 +156,14 @@ McHelperEvent::~McHelperEvent( )
 
 McHelperProgressEvent::McHelperProgressEvent( int progress ) : QEvent( (Type)10001 )
 {
-	this->progress = progress;
+	this->progress = progress; 
 }
 
-McHelperProgressEvent::~McHelperProgressEvent( )
+StatusEvent::StatusEvent( QString message, int duration ) : QEvent( (Type)10010 )
 {
-
+	this->message = message;
+	this->duration = duration;
 }
+
 
 

@@ -122,7 +122,7 @@ void UsbSerial::usbClose( )
 	  deviceOpen = false;
 	  UnregisterDeviceNotification( notificationHandle );
 		#endif //Windows-only UsbSerial::close( )
-		messageInterface->message( 1, "Usb> Make Controller disconnected.\n" );
+		//messageInterface->messageThreadSafe( "Usb> Make Controller disconnected." );
 	}
 }
 

@@ -22,7 +22,6 @@
 #include <QHostAddress>
 #include <QMessageBox>
 #include "Osc.h"
-//#include "UploaderThread.h"
 
 #define DEVICE_SCAN_FREQ 1000
 
@@ -41,7 +40,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	
 	noUI = false;
 	
-	boardModel = new BoardListModel( this );
+	boardModel = new BoardListModel( application, this, this );
 	udp = new NetworkMonitor( ); 
 	samba = new SambaMonitor( application, this, boardModel );
 	usb = new UsbMonitor( );
@@ -222,7 +221,7 @@ void McHelperWindow::tabIndexChanged(int index)
 void McHelperWindow::closeEvent( QCloseEvent *qcloseevent )
 {
 	usb->closeAll( );
-	samba->closeAll( );
+	// samba->closeAll( );
 }
 
 void McHelperWindow::fileSelectButtonClicked()
@@ -238,23 +237,21 @@ void McHelperWindow::fileSelectButtonClicked()
 	}
 }
  
-void McHelperWindow::uploadButtonClicked()
+void McHelperWindow::uploadButtonClicked( )
 {
 	//Make sure there's actually something in the text field
-	strcpy( fileNameBuffer, fileSelectText->currentText().toAscii().constData() );
-	if( strlen( fileNameBuffer) < 0 )
+	if( fileSelectText->currentText().isEmpty( ) || fileSelectText->currentText().isNull( ) )
 		return;
+	else
+		strcpy( fileNameBuffer, fileSelectText->currentText().toAscii().constData() );
 	
-	//if( usb->usbIsOpen( ) )
-	  //usb->usbClose( );
-
-	//uploaderThread->setBinFileName( fileNameBuffer );
-  
-  // Let's assume we'll always want to boot from the flash image we just uploaded on reboot
-  //uploaderThread->setBootFromFlash( true );
-	
-	flash( );
-	
+	Board* board = boardModel->getActiveBoard();
+	if( board->type == Board::UsbSamba )
+	{
+		if( !board->setBinFileName( fileNameBuffer ) )
+			return;
+		board->flash( );
+	}
 	writeFileSettings();
 }
 
@@ -300,14 +297,6 @@ void McHelperWindow::newHostAddress( )
 	//udp->setHostAddress( hostAddress );
 }
 
-void McHelperWindow::flash()
-{
-	//if ( !uploaderThread->isFinished() )
-    //return;
-		
-	// uploaderThread->start( );
-}
-
 void McHelperWindow::customEvent( QEvent* event )
 {
 	switch( event->type() )
@@ -325,12 +314,24 @@ void McHelperWindow::customEvent( QEvent* event )
 			progress( mcHelperProgressEvent->progress );
 			break;
 		}
-		case 10003: //to get progress bar info back from the uploader thread
+		case 10003:
 		{
 			MessageEvent* messageEvent = (MessageEvent*)event;
 			message( messageEvent->message );
 			//delete messageEvent;
 			break;
+		}
+		case 10005: // a board was uploaded/removed
+		{
+			MessageEvent* messageEvent = (MessageEvent*)event;
+			boardModel->removeBoard( messageEvent->message );
+			//delete messageEvent;
+			break;
+		}
+		case 10010: // put a status message in the window
+		{
+			StatusEvent* statusEvent = (StatusEvent*)event;
+			statusBar()->showMessage( statusEvent->message, statusEvent->duration );
 		}
 		default:
 			break;
@@ -495,7 +496,7 @@ void McHelperWindow::uiLessUpload( char* filename, bool bootFlash )
 	//if( bootFlash )
 		//uploaderThread->setBootFromFlash( true );
 	
-	flash( );
+	//flash( );
 }
 
 // actions for the menu
