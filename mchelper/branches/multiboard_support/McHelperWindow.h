@@ -24,24 +24,18 @@
 #include <QMainWindow>
 #include <QThread>
 #include <QTimer>
-
-#include "UploaderThread.h"
 #include "Board.h"
 #include "BoardListModel.h"
 #include "NetworkMonitor.h"
 #include "SambaMonitor.h"
 #include "UsbMonitor.h"
 
-
-class BoardListModel;
-class UploaderThread;
 class Board;
+class BoardListModel;
 class UsbMonitor;
 class NetworkMonitor;
 class SambaMonitor;
 class McHelperApp;
-
-
 
 class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public MessageInterface
 {
@@ -59,6 +53,8 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
     McHelperWindow( McHelperApp* application );
 		
 	  void message( int level, char *format, ... );
+	  void messageThreadSafe( QString string );
+	  void message( QString string );
 		void sleepMs( int ms );
 		void flash( );
 		void customEvent( QEvent* event );
@@ -74,7 +70,6 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		
 	private:
 	  QApplication* application;
-	  UploaderThread* uploaderThread;
 		SambaMonitor* samba;
 		UsbMonitor* usb;
 		NetworkMonitor* udp;
@@ -85,6 +80,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void writeFileSettings();
 		void writeUdpSettings();
 		void writeUsbSettings();
+		void updateSummaryInfo( Board* board );
 		
 		bool noUI;
 		int lastTabIndex;
@@ -129,6 +125,15 @@ class McHelperApp : public QApplication
   private:
     McHelperWindow* mchelper;
     #endif // Windows-only
+};
+
+class MessageEvent : public QEvent
+{
+	public:
+	  MessageEvent( QString string );
+	  ~MessageEvent( ) {}
+	  
+	QString message;
 };
 
 

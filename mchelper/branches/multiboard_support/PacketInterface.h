@@ -19,6 +19,7 @@
 #define PACKETINTERFACE_H
 
 #include <QString>
+#include "PacketReadyInterface.h"
 
 class PacketInterface
 {		
@@ -28,10 +29,11 @@ class PacketInterface
 	  virtual Status open( ) = 0;
 	  virtual Status close( ) = 0;
 	  virtual int sendPacket( char* packet, int length ) = 0;
-    virtual void uiSendPacket( QString rawString ) = 0;
 	  virtual bool isPacketWaiting( ) = 0;
 	  virtual int receivePacket( char* buffer, int length ) = 0;
-	  virtual QString location( ) = 0;
+	  virtual char* location( ) = 0;
+	  virtual QString getKey( ) = 0;
+	  virtual void setPacketReadyInterface( PacketReadyInterface* packetReadyInterface) = 0;
 	  virtual ~PacketInterface( ) {}
 };
 

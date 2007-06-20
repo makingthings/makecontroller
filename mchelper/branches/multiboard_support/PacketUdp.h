@@ -22,14 +22,13 @@
 #include <QHostAddress>
 #include <QHostInfo>
 #include <QTimer>
+#include <QList>
 
 #include "PacketInterface.h"
 #include "MessageInterface.h"
 #include "PacketReadyInterface.h"
-#include "Osc.h"
 #include "MonitorInterface.h"
 
-class Osc;
 
 class PacketUdp : public QObject, public PacketInterface
 {	
@@ -37,16 +36,18 @@ class PacketUdp : public QObject, public PacketInterface
 	
 	public:
 	  PacketUdp( );
+	  ~PacketUdp( );
 	  Status open( );
-		void setInterfaces( MessageInterface* messageInterface, QApplication* application, MonitorInterface* monitor );
+		void setInterfaces( MessageInterface* messageInterface , MonitorInterface* monitor );
+		void setPacketReadyInterface( PacketReadyInterface* packetReadyInterface );
 		void resetTimer( void );
 		
 		// From PacketInterface
 	  int sendPacket( char* packet, int length );
-    void uiSendPacket( QString rawString );
 		int receivePacket( char* packet, int length );
 	  bool isPacketWaiting( );
-	  QString location( void );
+	  QString getKey( void );
+	  char* location( );
 	  void incomingMessage( QByteArray* message );
 	  void setRemoteHostInfo( QHostAddress* address, quint16 port );
 	  void setKey( QString key );
@@ -58,7 +59,6 @@ class PacketUdp : public QObject, public PacketInterface
 	private:
 	  MessageInterface* messageInterface;
 		PacketReadyInterface* packetReadyInterface;
-		Osc* oscTranslator;
 	  QUdpSocket* socket;
 	  QHostAddress* remoteHostAddress;
 	  QByteArray remoteHostName;
@@ -68,8 +68,8 @@ class PacketUdp : public QObject, public PacketInterface
 	  QString socketKey;
 	
     char* remoteAddress;
-    quint16 remotePort;
     int localPort;
+    int remotePort;
 		
 };
 

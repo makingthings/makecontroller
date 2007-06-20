@@ -48,6 +48,8 @@ class UploaderThread : public QThread, public MessageInterface
 		void setBootFromFlash( bool value );
 		// From Message Interface
 		void message( int level, char *format, ... );
+		void message( QString string );
+		void messageThreadSafe( QString string );
 		void sleepMs( int ms );
 		void progress( int value );
 		QString getDeviceKey( );

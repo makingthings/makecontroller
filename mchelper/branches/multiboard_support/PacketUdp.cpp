@@ -26,24 +26,27 @@
 
 PacketUdp::PacketUdp( )
 { 
-	oscTranslator = new Osc();
-	packetReadyInterface = oscTranslator;
 	timer = new QTimer(this);
 	lastMessage = NULL;
+	packetReadyInterface = NULL;
     connect( timer, SIGNAL(timeout()), this, SLOT( close( ) ) );
+}
+
+PacketUdp::~PacketUdp( )
+{
+	// todo - delete all our pointers
 }
 
 PacketUdp::Status PacketUdp::open( ) //part of PacketInterface
 {	
   socket = new QUdpSocket( this );
-    timer->start( COMM_TIMEOUT );
+  timer->start( COMM_TIMEOUT );
   
   return OK;	
 }
 
 PacketUdp::Status PacketUdp::close( )	//part of PacketInterface
 {
-  
   if ( socket != 0 )
 	  socket->close( );
 	
@@ -61,9 +64,14 @@ void PacketUdp::resetTimer( void )
 	timer->start( COMM_TIMEOUT );
 }
 
-QString PacketUdp::location( )
+QString PacketUdp::getKey( )
 {
 	return socketKey;
+}
+
+char* PacketUdp::location( )
+{
+	return remoteHostName.data( );
 }
 
 int PacketUdp::sendPacket( char* packet, int length )	//part of PacketInterface
@@ -75,13 +83,6 @@ int PacketUdp::sendPacket( char* packet, int length )	//part of PacketInterface
 	return 0;
 }
 
-void PacketUdp::uiSendPacket( QString rawString )
-{
-  // pass this straight through to Osc
-  oscTranslator->uiSendPacket(rawString);
-}
-
-
 bool PacketUdp::isPacketWaiting( )	//part of PacketInterface
 {
   return lastMessage != NULL;
@@ -89,7 +90,8 @@ bool PacketUdp::isPacketWaiting( )	//part of PacketInterface
 
 void PacketUdp::processPacket( )	//slot to be called back automatically when datagrams are ready to be read
 {
-  packetReadyInterface->packetWaiting( );
+  if( packetReadyInterface != NULL )
+  	packetReadyInterface->packetWaiting( );
 }
 
 int PacketUdp::receivePacket( char* buffer, int size )
@@ -127,13 +129,14 @@ void PacketUdp::setKey( QString key )
 	socketKey = key;
 }
 
-void PacketUdp::setInterfaces( MessageInterface* messageInterface, QApplication* application, MonitorInterface* monitor )
+void PacketUdp::setPacketReadyInterface( PacketReadyInterface* packetReadyInterface )
+{
+	this->packetReadyInterface = packetReadyInterface;
+}
+
+void PacketUdp::setInterfaces( MessageInterface* messageInterface, MonitorInterface* monitor )
 {
 	this->messageInterface = messageInterface;
-	this->packetReadyInterface = packetReadyInterface;
 	this->monitor = monitor;
-	// once we have these, we can set up our Osc object
-	oscTranslator->setInterfaces( this, messageInterface, application );
-	oscTranslator->setPreamble( remoteHostName.data() );
 }
 

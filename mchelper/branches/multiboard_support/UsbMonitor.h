@@ -24,6 +24,7 @@
 #include "MonitorInterface.h"
 #include "BoardListModel.h"
 #include "PacketInterface.h"
+#include "Setupapi.h"
 
 class PacketUsbCdc;
 class PacketInterface;

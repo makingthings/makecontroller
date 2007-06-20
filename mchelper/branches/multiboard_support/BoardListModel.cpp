@@ -74,8 +74,8 @@ QVariant BoardListModel::data(const QModelIndex &index, int role) const
     case BoardListModel::NameRole:
      return curBoard->name;
     
-    case BoardListModel::PacketInterfaceRole:
-     return curBoard->packetInterface;
+    //case BoardListModel::PacketInterfaceRole:
+     //return curBoard->packetInterface;
       
     case BoardListModel::COMPortRole:
      return curBoard->com_port;
@@ -101,20 +101,19 @@ int BoardListModel::addBoard ( Board *board )
    return boardList.count() - 1;
 }
 
-bool BoardListModel::removeBoard ( QString key, Board::Types type )
+bool BoardListModel::removeBoard ( QString key )
 {
   
    // See if we have this board in our list
    int i;
    Board *testBoard;
-   int test = boardList.size();
    for( i = 0; i < boardList.size(); i++ )
    {
        testBoard = boardList.at( i );
        
        // if so, remove it by row id
-       if ( testBoard->key == key &&
-            testBoard->type == type ) {
+       if ( testBoard->key == key )
+       {
          beginRemoveRows(QModelIndex(), i, i);
          boardList.removeAt(i);
          endRemoveRows();

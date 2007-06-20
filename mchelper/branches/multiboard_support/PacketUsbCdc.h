@@ -26,14 +26,13 @@
 #include "PacketInterface.h"
 #include "MessageInterface.h"
 #include "PacketReadyInterface.h"
-#include "Osc.h"
 
-class Osc;
+#define MAX_MESSAGE 2048
 
 class OscUsbPacket
 {
   public:
-	  char packetBuf[OSC_MAX_MESSAGE];
+	  char packetBuf[MAX_MESSAGE];
 		int length;
 };
 
@@ -46,11 +45,12 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
 			Status open( );	
 		  	Status close( );
 			int sendPacket( char* packet, int length );
-      void uiSendPacket( QString rawString );
 			bool isPacketWaiting( );
 			int receivePacket( char* buffer, int size );
-			QString location( void );
+			QString getKey( void );
+			char* location( void );
 			void setInterfaces( MessageInterface* messageInterface, QApplication* application );
+			void setPacketReadyInterface( PacketReadyInterface* packetReadyInterface);
 			#ifdef Q_WS_WIN
 			void setWidget( QMainWindow* window );
 			#endif
@@ -66,7 +66,6 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
 			
 		  PacketReadyInterface* packetReadyInterface;
 		  QApplication* application;
-      	Osc* oscTranslator;
 		  int slipReceive( char* buffer, int length );
 
 };

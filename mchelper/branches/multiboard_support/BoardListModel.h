@@ -63,7 +63,7 @@ class BoardListModel : public QAbstractListModel
     //bool removeRows(int position, int rows, const QModelIndex &index = QModelIndex());
     
     int BoardListModel::addBoard ( Board *board );
-    bool BoardListModel::removeBoard ( QString key, Board::Types type );
+    bool BoardListModel::removeBoard ( QString key );
                        
   private:
     QList<Board*> boardList;

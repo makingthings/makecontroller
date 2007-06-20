@@ -27,15 +27,14 @@
 PacketUsbCdc::PacketUsbCdc( ) : QThread( )
 {
 	packetCount = 0;
-	oscTranslator = new Osc();
-	packetReadyInterface = oscTranslator;
+	packetReadyInterface = NULL;
 }
 
 void PacketUsbCdc::run()
 {
 	OscUsbPacket* currentPacket = NULL;
   
-  oscTranslator->setInterfaces( this, messageInterface, application );
+  //oscTranslator->setInterfaces( this, messageInterface, application );
   
 	open( );
 	while( 1 )
@@ -46,7 +45,7 @@ void PacketUsbCdc::run()
 		if( deviceOpen ) // then, if open() succeeded, try to read
 		{
 			currentPacket = new OscUsbPacket( );
-			int packetLength = slipReceive( currentPacket->packetBuf, OSC_MAX_MESSAGE );
+			int packetLength = slipReceive( currentPacket->packetBuf, MAX_MESSAGE );
 			if( packetLength > 0 )
 			{
 				currentPacket->length = packetLength;
@@ -71,7 +70,7 @@ PacketUsbCdc::Status PacketUsbCdc::open()
 	//if( UsbSerial::OK != usbOpen( ) )
 		//return PacketInterface::ERROR_NOT_OPEN;
 	//else
-		return PacketInterface::OK;
+	return PacketInterface::OK;
 }
 
 PacketUsbCdc::Status PacketUsbCdc::close()
@@ -116,11 +115,6 @@ int PacketUsbCdc::sendPacket( char* packet, int length )
 	usbWrite( buf, (ptr - buf) );
 	
 	return 0;
-}
-
-void PacketUsbCdc::uiSendPacket( QString rawString )
-{
-  oscTranslator->uiSendPacket(rawString);
 }
 
 int PacketUsbCdc::slipReceive( char* buffer, int length )
@@ -208,7 +202,12 @@ int PacketUsbCdc::receivePacket( char* buffer, int size )
 	}
 }
 
-QString PacketUsbCdc::location( )
+char* PacketUsbCdc::location( )
+{
+	return portName;
+}
+
+QString PacketUsbCdc::getKey( )
 {
 	return QString( portName );
 }
@@ -217,7 +216,11 @@ void PacketUsbCdc::setInterfaces( MessageInterface* messageInterface, QApplicati
 {
 	this->messageInterface = messageInterface;
 	this->application = application;
-	oscTranslator->setPreamble( portName );
+}
+
+void PacketUsbCdc::setPacketReadyInterface( PacketReadyInterface* packetReadyInterface)
+{
+	this->packetReadyInterface = packetReadyInterface;
 }
 
 #ifdef Q_WS_WIN
