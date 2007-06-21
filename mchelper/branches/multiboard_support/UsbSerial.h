@@ -47,7 +47,6 @@
 #ifdef Q_WS_MAC
 
 #include <fcntl.h>
-#include <termios.h>
 #include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -86,6 +85,9 @@ class UsbSerial
 		#ifdef Q_WS_WIN
 		HANDLE deviceHandle;
 		#endif
+		#ifdef Q_WS_MAC
+		UsbStatus setDeviceFilePath( char* filePath );
+		#endif
 		
 	protected:
 		bool deviceOpen;
@@ -118,14 +120,11 @@ class UsbSerial
 		#ifdef Q_WS_MAC
 		char deviceFilePath[MAXPATHLEN];
 		int deviceHandle;
-		struct termios terminalSettings;
-		struct termios terminalSettingsOld;
 		mach_port_t masterPort;
 		bool foundMakeController;
-		CFMutableDictionaryRef matchingDictionary;
 		io_object_t usbDeviceReference;
 		
-		kern_return_t getDevicePath(io_iterator_t serialPortIterator, char *path, CFIndex maxPathSize);
+		
 		void createMatchingDictionary( );
 		#endif	
 };

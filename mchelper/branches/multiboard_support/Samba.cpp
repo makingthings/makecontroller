@@ -913,10 +913,16 @@ int Samba::usbFlushOut( )
   ::FlushFileBuffers(m_hPipeOut);
   return FC_OK;	
 }
+#endif // Windows-only stuff
 
 int Samba::FindUsbDevices( QList<QString>* arrived )
 {
-  HANDLE hOut = INVALID_HANDLE_VALUE;
+  #ifdef Q_WS_MAC
+	
+	#endif // Mac-only FindUsbDevices( )
+	
+	#ifdef Q_WS_WIN
+	HANDLE hOut = INVALID_HANDLE_VALUE;
   HDEVINFO                 hardwareDeviceInfo;
   SP_INTERFACE_DEVICE_DATA deviceInfoData;
   ULONG                    i = 0;
@@ -972,8 +978,10 @@ int Samba::FindUsbDevices( QList<QString>* arrived )
   SetupDiDestroyDeviceInfoList(hardwareDeviceInfo);
 
   return count;
+	#endif // Windows-only FindUsbDevices( )
 }
 
+#ifdef Q_WS_WIN
 HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf, QString deviceKey )
 {
   HANDLE hOut = INVALID_HANDLE_VALUE;
@@ -1181,7 +1189,7 @@ HANDLE Samba::OpenOneDevice (HDEVINFO HardwareDeviceInfo,
   return hOut;
 }
 
-#endif
+#endif // Windows-only stuff
 
 // Mac-only...
 #ifdef Q_WS_MAC

@@ -36,6 +36,18 @@ UsbSerial::UsbSerial( )
 	#endif
 }
 
+#ifdef Q_WS_MAC 
+UsbSerial::UsbStatus UsbSerial::setDeviceFilePath( char* filePath )
+{
+	char *result = NULL;
+	result = strncpy( deviceFilePath, filePath, strlen( filePath )+1 );
+	if( result != NULL )
+		return OK;
+	else
+		return ALLOC_ERROR;
+}
+#endif
+
 UsbSerial::UsbStatus UsbSerial::usbOpen( )
 {
   QMutexLocker locker( &usbOpenMutex );
@@ -51,20 +63,7 @@ UsbSerial::UsbStatus UsbSerial::usbOpen( )
 
   //Mac-only
 	#ifdef Q_WS_MAC
-		kern_return_t kernResult;
-		io_iterator_t iterator = 0;
-		
-		kernResult = getDevicePath( iterator, deviceFilePath, sizeof(deviceFilePath) );
-		IOObjectRelease( iterator ); // clean up
-		
-		if (!deviceFilePath[0] )
-    {
-			//printf("Didn't find a Make Controller.\n");
-			return NOT_OPEN;
-    }
-		
-		// now try to actually do something
-		deviceHandle = ::open( deviceFilePath, O_RDWR | O_NOCTTY | ( ( blocking ) ? 0 : O_NDELAY ) );
+		deviceHandle = ::open( deviceFilePath, O_RDWR | O_NOCTTY | O_NDELAY ); // ( ( blocking ) ? 0 : O_NDELAY ) );
 		if ( deviceHandle < 0 )
 	  {
 	    //printf( "Could not open the port (Error %d)\n", deviceHandle );
@@ -74,7 +73,7 @@ UsbSerial::UsbStatus UsbSerial::usbOpen( )
 	    deviceOpen = true;
 			sleepMs( 10 ); //give it a moment after opening before trying to read/write
 			// printf( "USB opened at %s\n", deviceFilePath );
-			messageInterface->message( 1, "Usb> Make Controller connected.\n" );
+			// messageInterface->message( 1, "Usb> Make Controller connected.\n" );
 	  }
 	  return OK;
 		
@@ -133,10 +132,10 @@ int UsbSerial::usbRead( char* buffer, int length )
   {
     UsbStatus portIsOpen = usbOpen( );
     if( portIsOpen != OK )
-	{
-	  usbClose( );
-	  return NOT_OPEN;
-	}
+		{
+			usbClose( );
+			return NOT_OPEN;
+		}
   }
   
   // Linux Only
@@ -152,29 +151,24 @@ int UsbSerial::usbRead( char* buffer, int length )
 		
 	count = ::read( deviceHandle, buffer, length );
 	printf( "Reading...count = %d\n", count );
-	switch ( count )
-  {
-    case 0:
-		return ERROR_CLOSE; // EOF; possibly file was closed
-      break;
+	if( count > 1 )
+		return count;
+	else
+	{
+		switch ( count )
+		{
+			case 0:
+			return ERROR_CLOSE; // EOF; possibly file was closed
+				break;
 
-    case 1:
-      return GOT_CHAR; // got a character
-      break;
-
-    case -1:
-      if ( errno == EAGAIN )
-	      return NOTHING_AVAILABLE; // non-blocking but no data available
-      else
-	      return IO_ERROR; //printf( "Some other error...\n" );
-      break;
-
-    default:
-		  //printf( "Unknown error.\n" );
-      return IO_ERROR;
-      break;
-  }
-	return OK;
+			case -1:
+				if ( errno == EAGAIN )
+					return NOTHING_AVAILABLE; // non-blocking but no data available
+				else
+					return IO_ERROR; //printf( "Some other error...\n" );
+				break;
+		}
+	}
 	#endif //Mac-only UsbSerial::read( )
 	
   //Windows-only///////////////////////////////////////////////////////////////////////
@@ -348,8 +342,20 @@ bool UsbSerial::isOpen( )
 
 int UsbSerial::numberOfAvailableBytes( )
 {
-    COMSTAT status;
-    int             n = 0;
+    int n = 0;
+		#ifdef Q_WS_MAC
+		
+		if( ::ioctl( deviceHandle, FIONREAD, &n ) < 0 )
+		{
+			// ioctl error
+			return 0;
+		}
+		return n;
+		
+		#endif // Mac-only numberOfAvailableBytes( )
+		
+		#ifdef Q_WS_WIN
+		COMSTAT status;
     unsigned long   state;
 
     if (deviceHandle != INVALID_HANDLE_VALUE)
@@ -358,7 +364,7 @@ int UsbSerial::numberOfAvailableBytes( )
         success = ClearCommError( deviceHandle, &state, &status);
         n = status.cbInQue;
     }
-
+		#endif // Windows-only numberOfAvailableBytes( )
     return(n);
 }
 
@@ -461,89 +467,6 @@ bool UsbSerial::DoRegisterForNotification( )
 
 //Mac-only
 #ifdef Q_WS_MAC
-
-kern_return_t UsbSerial::getDevicePath(io_iterator_t serialPortIterator, char *path, CFIndex maxPathSize)
-{
-    io_object_t modemService;
-		char productName[50] = "";
-    kern_return_t kernResult = KERN_FAILURE;
-    Boolean deviceFound = false;
-    // Initialize the returned path
-    *path = '\0';
-	
-	CFMutableDictionaryRef bsdMatchingDictionary;
-	
-	// create a dictionary that looks for all BSD modems
-	bsdMatchingDictionary = IOServiceMatching( kIOSerialBSDServiceValue );
-	if (bsdMatchingDictionary == NULL)
-		printf("IOServiceMatching returned a NULL dictionary.\n");
-	else
-		CFDictionarySetValue(bsdMatchingDictionary, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDModemType));
-	
-	// then create the iterator with all the matching devices
-	kernResult = IOServiceGetMatchingServices( kIOMasterPortDefault, bsdMatchingDictionary, &serialPortIterator );    
-	if ( KERN_SUCCESS != kernResult )
-	{
-		printf("IOServiceGetMatchingServices returned %d\n", kernResult);
-		return kernResult;
-	}
-	
-	// Iterate through all modems found. In this example, we bail after finding the first modem.
-	while ((modemService = IOIteratorNext(serialPortIterator)) && !deviceFound)
-	{
-		CFTypeRef bsdPathAsCFString;
-		CFTypeRef productNameAsCFString;
-		// check the name of the modem's callout device
-		bsdPathAsCFString = IORegistryEntrySearchCFProperty(modemService,
-																													kIOServicePlane,
-																													CFSTR(kIOCalloutDeviceKey),
-																													kCFAllocatorDefault,
-																													0);
-		// then, because the callout device could be any old thing, and because the reference to the modem returned by the
-		// iterator doesn't include much device specific info, look at its parent, and check the product name
-		io_registry_entry_t parent;  
-		kernResult = IORegistryEntryGetParentEntry( modemService,	kIOServicePlane, &parent );																										
-		productNameAsCFString = IORegistryEntrySearchCFProperty(parent,
-																													kIOServicePlane,
-																													CFSTR("Product Name"),
-																													kCFAllocatorDefault,
-																													0);
-		
-		if( bsdPathAsCFString )
-		{
-			Boolean result;      
-			result = CFStringGetCString( (CFStringRef)bsdPathAsCFString,
-																	path,
-																	maxPathSize, 
-																	kCFStringEncodingUTF8);
-			
-			if( productNameAsCFString )
-			{
-			result = CFStringGetCString( (CFStringRef)productNameAsCFString,
-																	productName,
-																	maxPathSize, 
-																	kCFStringEncodingUTF8);
-			}
-			if (result)
-			{
-				//printf("Modem found with BSD path: %s", path);
-				if( (strcmp( productName, "Make Controller Ki") == 0) )
-				{
-					CFRelease(bsdPathAsCFString);
-					IOObjectRelease(parent);
-					deviceFound = true;
-					kernResult = KERN_SUCCESS;
-				}
-				else
-					*path = '\0';  // clear this, since this is checked above.
-			}
-			printf("\n");
-			(void) IOObjectRelease(modemService);
-		}
-	}
-	return kernResult;
-}
-
 int UsbSerial::sleepMs( long ms )
 {
 	  usleep( 1000*ms );

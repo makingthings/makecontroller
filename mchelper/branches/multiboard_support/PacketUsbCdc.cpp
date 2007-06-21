@@ -131,7 +131,7 @@ int PacketUsbCdc::slipReceive( char* buffer, int length )
     	justGot = usbRead( tempBuffer, available );
     	tempPtr = tempBuffer;
     	if( justGot < 0 )
-			close( );
+				close( );
     }
 	
     int i;
@@ -157,7 +157,7 @@ int PacketUsbCdc::slipReceive( char* buffer, int length )
       tempPtr++;
     }
     if( justGot == 0 ) // if we didn't get anything, sleep...otherwise just rip through again
-    	Sleep( 1 );
+    	sleepMs( 1 );
     justGot = 0; // reset our count for the next run through
   }
   return IO_ERROR; // should never get here
