@@ -112,6 +112,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 
 void McHelperWindow::checkForNewDevices( )
 {
+	
 	// first check for USB boards
 	QList<PacketInterface*> newBoards;
 	usb->scan( &newBoards );
@@ -146,7 +147,7 @@ void McHelperWindow::checkForNewDevices( )
 	      boardModel->addBoard( board );
 		}
 	} 
-
+/*
 	QList<UploaderThread*> sambaBoards;
 	samba->scan( &sambaBoards );
 	newBoardCount = sambaBoards.count( );
@@ -163,6 +164,7 @@ void McHelperWindow::checkForNewDevices( )
 	      boardModel->addBoard( board );
 		}
 	}
+	*/
 }
 
 void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous )

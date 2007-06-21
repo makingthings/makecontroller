@@ -17,12 +17,12 @@
 
 
 #include "McHelperWindow.h"
-#include "dbt.h"
 
 #include <QApplication>
 #include <QMessageBox> 
 
 #ifdef Q_WS_WIN
+#include "dbt.h"
 #define DBT_DEVICEREMOVECOMPLETE 0x8004
 
 bool McHelperApp::winEventFilter( MSG* msg, long* retVal )

@@ -26,6 +26,7 @@ class MessageInterface
 	  virtual void messageThreadSafe( QString string ) = 0;
 	  virtual void sleepMs( int ms ) = 0;
 	  virtual void progress( int value ) = 0;
+		virtual ~MessageInterface( ) {}
 };
 
 #endif

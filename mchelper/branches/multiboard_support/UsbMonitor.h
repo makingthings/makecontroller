@@ -24,7 +24,18 @@
 #include "MonitorInterface.h"
 #include "BoardListModel.h"
 #include "PacketInterface.h"
+
+#ifdef Q_WS_WIN
 #include "Setupapi.h"
+#endif
+
+#ifdef Q_WS_MAC
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#endif
 
 class PacketUsbCdc;
 class PacketInterface;
@@ -40,7 +51,7 @@ class UsbMonitor : public MonitorInterface
   	void deviceRemoved( QString key );
   	
   	
-  	#ifdef Q_WS_WIN
+	#ifdef Q_WS_WIN
 	void setWidget( QMainWindow* mainWindow );
 	void removalNotification( HANDLE handle );
 	#endif
@@ -48,8 +59,16 @@ class UsbMonitor : public MonitorInterface
   private:
   	QHash<QString, PacketUsbCdc*> connectedDevices;
   	void FindUsbDevices( QList<PacketInterface*>* arrived );
+		
+	#ifdef Q_WS_WIN
 	HANDLE GetDeviceInfo( HDEVINFO HardwareDeviceInfo, PSP_INTERFACE_DEVICE_DATA DeviceInfoData, char* portName );
 	bool checkFriendlyName( HDEVINFO HardwareDeviceInfo, PSP_DEVINFO_DATA deviceSpecificInfo, char* portName );
+	#endif
+	
+	#ifdef Q_WS_MAC
+	char deviceFilePath[MAXPATHLEN];
+	CFMutableDictionaryRef matchingDictionary;
+	#endif
 	
 	MessageInterface* messageInterface;
 	QMainWindow* mainWindow;

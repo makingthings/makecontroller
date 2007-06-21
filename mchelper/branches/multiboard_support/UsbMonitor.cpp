@@ -16,9 +16,11 @@
 *********************************************************************************/
 
 #include "UsbMonitor.h"
-#include <initguid.h>
 
+#ifdef Q_WS_WIN // Windows-only
+#include <initguid.h>
 DEFINE_GUID( GUID_MAKE_CTRL_KIT, 0x4D36E978, 0xE325, 0x11CE, 0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18 );
+#endif
 
 UsbMonitor::UsbMonitor( )
 {
@@ -52,16 +54,105 @@ void UsbMonitor::setWidget( QMainWindow* window )
 }
 #endif
 
-
-
-
-
-//-----------------------------------------------------------------
-//                  Windows-only FindUsbDevices( )
-//-----------------------------------------------------------------
 void UsbMonitor::FindUsbDevices( QList<PacketInterface*>* arrived )
 {
-  HANDLE hOut;
+  #ifdef Q_WS_MAC
+	io_iterator_t serialPortIterator = 0;
+	
+	io_object_t modemService;
+		char productName[50] = "";
+    kern_return_t kernResult = KERN_FAILURE;
+    // Initialize the returned path
+		int maxPathSize = sizeof(deviceFilePath);
+    char* path = deviceFilePath;
+		*path = '\0';
+	
+	CFMutableDictionaryRef bsdMatchingDictionary;
+	
+	// create a dictionary that looks for all BSD modems
+	bsdMatchingDictionary = IOServiceMatching( kIOSerialBSDServiceValue );
+	if (bsdMatchingDictionary == NULL)
+		printf("IOServiceMatching returned a NULL dictionary.\n");
+	else
+		CFDictionarySetValue(bsdMatchingDictionary, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDModemType));
+	
+	// then create the iterator with all the matching devices
+	kernResult = IOServiceGetMatchingServices( kIOMasterPortDefault, bsdMatchingDictionary, &serialPortIterator );    
+	if ( KERN_SUCCESS != kernResult )
+	{
+		printf("IOServiceGetMatchingServices returned %d\n", kernResult);
+		return;
+	}
+	
+	// Iterate through all modems found. In this example, we bail after finding the first modem.
+	while( (modemService = IOIteratorNext(serialPortIterator) ) )
+	{
+		CFTypeRef bsdPathAsCFString;
+		CFTypeRef productNameAsCFString;
+		// check the name of the modem's callout device
+		bsdPathAsCFString = IORegistryEntrySearchCFProperty(modemService,
+																													kIOServicePlane,
+																													CFSTR(kIOCalloutDeviceKey),
+																													kCFAllocatorDefault,
+																													0);
+		// then, because the callout device could be any old thing, and because the reference to the modem returned by the
+		// iterator doesn't include much device specific info, look at its parent, and check the product name
+		io_registry_entry_t parent;  
+		kernResult = IORegistryEntryGetParentEntry( modemService,	kIOServicePlane, &parent );																										
+		productNameAsCFString = IORegistryEntrySearchCFProperty(parent,
+																													kIOServicePlane,
+																													CFSTR("Product Name"),
+																													kCFAllocatorDefault,
+																													0);
+		
+		if( bsdPathAsCFString )
+		{
+			Boolean result;      
+			result = CFStringGetCString( (CFStringRef)bsdPathAsCFString,
+																	path,
+																	maxPathSize, 
+																	kCFStringEncodingUTF8);
+			
+			if( productNameAsCFString )
+			{
+			result = CFStringGetCString( (CFStringRef)productNameAsCFString,
+																	productName,
+																	maxPathSize, 
+																	kCFStringEncodingUTF8);
+			}
+			if (result)
+			{
+				//printf("Modem found with BSD path: %s", path);
+				if( (strcmp( productName, "Make Controller Kit") == 0) )
+				{
+					QString portNameKey( path );
+					if( !connectedDevices.contains( portNameKey ) ) // make sure we don't already have this board in our list
+					{
+						PacketUsbCdc* device = new PacketUsbCdc( );
+						device->setDeviceFilePath( path );
+						connectedDevices.insert( portNameKey, device );  // stick it in our own list of boards we know about
+						arrived->append( device ); // then stick it on the list of new boards that's been requested
+						
+						device->setInterfaces( messageInterface, application );
+						device->start( );
+					}
+					
+					productName[0] = 0; // clear this out for the next time around
+					CFRelease(bsdPathAsCFString);
+					IOObjectRelease(parent);
+				}
+				else
+					*path = '\0';  // clear this, since this is checked above.
+			}
+			(void) IOObjectRelease(modemService);
+		}
+	}
+	return;
+	#endif // Mac-only FindUsbDevices( )
+	
+	
+	#ifdef Q_WS_WIN // Windows only
+	HANDLE hOut;
   HDEVINFO                 hardwareDeviceInfo;
   SP_INTERFACE_DEVICE_DATA deviceInfoData;
   ULONG                    i = 0;
@@ -114,8 +205,10 @@ void UsbMonitor::FindUsbDevices( QList<PacketInterface*>* arrived )
   // destroy the device information set and free all associated memory.
   SetupDiDestroyDeviceInfoList(hardwareDeviceInfo);
   return;
+	#endif // Windows-only FindUsbDevices( )
 }
 
+#ifdef Q_WS_WIN
 //-----------------------------------------------------------------
 //                  Windows-only GetDevicePath( )
 //-----------------------------------------------------------------
@@ -228,6 +321,8 @@ void UsbMonitor::removalNotification( HANDLE handle )
 			++i;
 	}
 }
+
+#endif // Windows-only stuff
 
 void UsbMonitor::deviceRemoved( QString key )
 {
