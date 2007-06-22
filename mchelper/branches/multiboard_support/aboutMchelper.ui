@@ -20,7 +20,7 @@
   </property>
   <layout class="QVBoxLayout" >
    <property name="margin" >
-    <number>15</number>
+    <number>9</number>
    </property>
    <property name="spacing" >
     <number>6</number>
@@ -132,34 +132,44 @@
     </layout>
    </item>
    <item>
-    <widget class="QLabel" name="label" >
-     <property name="sizePolicy" >
-      <sizepolicy>
-       <hsizetype>0</hsizetype>
-       <vsizetype>0</vsizetype>
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+    <layout class="QHBoxLayout" >
+     <property name="margin" >
+      <number>0</number>
      </property>
-     <property name="maximumSize" >
-      <size>
-       <width>550</width>
-       <height>16777215</height>
-      </size>
+     <property name="spacing" >
+      <number>6</number>
      </property>
-     <property name="text" >
-      <string>&lt;html>&lt;head>&lt;meta name="qrichtext" content="1" />&lt;/head>&lt;body style=" white-space: pre-wrap; font-family:MS Shell Dlg 2; font-size:8.25pt; font-weight:400; font-style:normal; text-decoration:none;">&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">&lt;span style=" font-weight:600;">mchelper&lt;/span> (Make Controller Helper) is part of the &lt;span style=" font-weight:600;">Make Controller Kit&lt;/span> project - an open source hardware platform for everybody.  mchelper can upload new firmware to your Make Controller, and allow you to easily manage it.&lt;/p>&lt;p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">&lt;/p>&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">mchelper is released under the &lt;span style=" font-weight:600;">Apache 2.0&lt;/span> license, which can be found at http://www.apache.org/licenses/LICENSE-2.0.html and uses code from Erik Gilling's &lt;span style=" font-weight:600;">sam7utils&lt;/span> project - http://oss.tekno.us/sam7utils.&lt;/p>&lt;p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">&lt;/p>&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">Copyright (C) 2006-2007 MakingThings LLC.  http://www.makingthings.com&lt;/p>&lt;p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">&lt;/p>&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">This program is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.&lt;/p>&lt;/body>&lt;/html></string>
-     </property>
-     <property name="textFormat" >
-      <enum>Qt::AutoText</enum>
-     </property>
-     <property name="scaledContents" >
-      <bool>false</bool>
-     </property>
-     <property name="wordWrap" >
-      <bool>true</bool>
-     </property>
-    </widget>
+     <item>
+      <widget class="QLabel" name="label" >
+       <property name="sizePolicy" >
+        <sizepolicy>
+         <hsizetype>0</hsizetype>
+         <vsizetype>0</vsizetype>
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize" >
+        <size>
+         <width>550</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text" >
+        <string>&lt;html>&lt;head>&lt;meta name="qrichtext" content="1" />&lt;/head>&lt;body style=" white-space: pre-wrap; font-family:MS Shell Dlg 2; font-size:8.25pt; font-weight:400; font-style:normal; text-decoration:none;">&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">&lt;span style=" font-weight:600;">mchelper&lt;/span> (Make Controller Helper) is part of the &lt;span style=" font-weight:600;">Make Controller Kit&lt;/span> project - an open source hardware platform for everybody.  mchelper can upload new firmware to your Make Controller, and allow you to easily manage it.&lt;/p>&lt;p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">&lt;/p>&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">mchelper is released under the &lt;span style=" font-weight:600;">Apache 2.0&lt;/span> license, which can be found at http://www.apache.org/licenses/LICENSE-2.0.html and uses code from Erik Gilling's &lt;span style=" font-weight:600;">sam7utils&lt;/span> project - http://oss.tekno.us/sam7utils.&lt;/p>&lt;p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">&lt;/p>&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">Copyright (C) 2006-2007 MakingThings LLC.  http://www.makingthings.com&lt;/p>&lt;p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">&lt;/p>&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">This program is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.&lt;/p>&lt;/body>&lt;/html></string>
+       </property>
+       <property name="textFormat" >
+        <enum>Qt::AutoText</enum>
+       </property>
+       <property name="scaledContents" >
+        <bool>false</bool>
+       </property>
+       <property name="wordWrap" >
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <layout class="QHBoxLayout" >

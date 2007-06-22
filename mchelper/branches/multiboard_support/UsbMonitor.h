@@ -20,9 +20,9 @@
 
 #include <QList>
 #include <QHash>
+#include "McHelperWindow.h"
 #include "PacketUsbCdc.h"
 #include "MonitorInterface.h"
-#include "BoardListModel.h"
 #include "PacketInterface.h"
 
 #ifdef Q_WS_WIN
@@ -39,6 +39,7 @@
 
 class PacketUsbCdc;
 class PacketInterface;
+class McHelperWindow;
 
 class UsbMonitor : public MonitorInterface
 {
@@ -47,12 +48,11 @@ class UsbMonitor : public MonitorInterface
   	Status scan( QList<PacketInterface*>* arrived );
   	~UsbMonitor( ) {}
   	void closeAll( );
-  	void setInterfaces( MessageInterface* messageInterface, QApplication* application, BoardListModel* boardListModel );
+  	void setInterfaces( MessageInterface* messageInterface, QApplication* application, McHelperWindow* mainWindow );
   	void deviceRemoved( QString key );
   	
   	
 	#ifdef Q_WS_WIN
-	void setWidget( QMainWindow* mainWindow );
 	void removalNotification( HANDLE handle );
 	#endif
   	
@@ -71,9 +71,8 @@ class UsbMonitor : public MonitorInterface
 	#endif
 	
 	MessageInterface* messageInterface;
-	QMainWindow* mainWindow;
+	McHelperWindow* mainWindow;
 	QApplication* application;
-	BoardListModel* boardListModel;
 };
 
 

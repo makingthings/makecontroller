@@ -55,6 +55,7 @@ class PacketUdp : public QObject, public PacketInterface
 	public slots:
 		Status close( );
 		void processPacket( );
+		Status pingTimedOut( );
 		
 	private:
 	  MessageInterface* messageInterface;

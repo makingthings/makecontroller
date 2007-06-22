@@ -51,6 +51,16 @@ Osc::Osc( )
 {
 	resetOutBuffer( );
 	preamble = NULL;
+	packetInterface = NULL;
+}
+
+Osc::~Osc( )
+{
+	if( packetInterface != NULL )
+	{
+		packetInterface->close( );
+		delete packetInterface;
+	}
 }
 
 const char* Osc::getPreamble( )

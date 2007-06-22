@@ -17,11 +17,10 @@
 
 #include "SambaMonitor.h"
 
-SambaMonitor::SambaMonitor( QApplication* application, McHelperWindow* mainWindow, BoardListModel* boardModel )
+SambaMonitor::SambaMonitor( QApplication* application, McHelperWindow* mainWindow )
 {
 	this->application = application;
 	this->mainWindow = mainWindow;
-	this->boardModel = boardModel;
 }
 
 SambaMonitor::~SambaMonitor( )
@@ -62,8 +61,7 @@ int SambaMonitor::scan( QList<UploaderThread*>* arrived )
 				if( awaitingRemoval.contains( i.key( ) ) )
 					awaitingRemoval.removeAt( awaitingRemoval.indexOf( i.key( ) ) );
 				else
-					boardModel->removeBoard( i.key( ) );
-				//delete i.value( );
+					mainWindow->removeDeviceThreadSafe( i.key( ) );
 				
 				i = connectedDevices.erase( i ); // this increments the iterator
 			}
@@ -93,7 +91,7 @@ void SambaMonitor::closeAll( )
 void SambaMonitor::deviceRemoved( QString key )
 {
 	awaitingRemoval.append( key );
-	boardModel->removeBoardThreadSafe( key );
+	//mainWindow->removeBoardThreadSafe( key );
 }
 
 

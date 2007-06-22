@@ -28,17 +28,24 @@ PacketUsbCdc::PacketUsbCdc( ) : QThread( )
 {
 	packetCount = 0;
 	packetReadyInterface = NULL;
+	currentPacket = NULL;
+	exit = false;
+}
+
+PacketUsbCdc::~PacketUsbCdc( )
+{
+	if( currentPacket != NULL )
+		delete currentPacket;
 }
 
 void PacketUsbCdc::run()
 {
-	OscUsbPacket* currentPacket = NULL;
-  
-  //oscTranslator->setInterfaces( this, messageInterface, application );
-  
 	open( );
 	while( 1 )
 	{
+	  if( exit == true )
+	  	return;
+	  	
 	  if( !deviceOpen ) // if it's not open, try to open it
 			usbOpen( );
 
@@ -57,10 +64,10 @@ void PacketUsbCdc::run()
 				packetReadyInterface->packetWaiting( );
 			}
 			else
-				this->sleepMs( 1 ); // usb is still open, but we didn't receive anything last time
+				msleep( 1 ); // usb is still open, but we didn't receive anything last time
 		}
 		else // usb isn't open...chill out.
-			this->sleepMs( 50 );
+			msleep( 50 );
 	}
 	close( ); // should never get here...
 }
@@ -75,8 +82,12 @@ PacketUsbCdc::Status PacketUsbCdc::open()
 
 PacketUsbCdc::Status PacketUsbCdc::close()
 {
-	exit( ); // stop the thread
-	usbClose( );
+	quit( ); // stop the thread
+	exit = true;
+	if( deviceOpen )
+		usbClose( );
+	while( !wait( ) )
+		msleep( 1 );
 	return PacketInterface::OK;
 }
 
@@ -125,6 +136,8 @@ int PacketUsbCdc::slipReceive( char* buffer, int length )
 
   while ( true )
   {
+    if( exit == true )
+    	return -1;
     int available = numberOfAvailableBytes( );
     if( available > 0 )
     {
@@ -157,7 +170,7 @@ int PacketUsbCdc::slipReceive( char* buffer, int length )
       tempPtr++;
     }
     if( justGot == 0 ) // if we didn't get anything, sleep...otherwise just rip through again
-    	sleepMs( 1 );
+    	msleep( 1 );
     justGot = 0; // reset our count for the next run through
   }
   return IO_ERROR; // should never get here
@@ -230,15 +243,7 @@ void PacketUsbCdc::setWidget( QMainWindow* window )
 }
 #endif
 
-void PacketUsbCdc::sleepMs( int ms ) 
-{
-  #ifdef Q_WS_WIN
-  Sleep( ms );
-  #endif
-  #ifdef Q_WS_MAC
-  usleep( ms*1000 );
-  #endif
-}
+
 
 
 

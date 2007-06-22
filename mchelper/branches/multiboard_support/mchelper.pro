@@ -37,8 +37,7 @@ HEADERS = McHelperWindow.h \
 				UsbMonitor.h \
 				NetworkMonitor.h \
 				SambaMonitor.h \
-				Board.h \
-				BoardListModel.h \
+				Board.h 
             
 SOURCES	= main.cpp \
 				McHelperWindow.cpp \
@@ -51,8 +50,7 @@ SOURCES	= main.cpp \
 				UsbMonitor.cpp \
 				NetworkMonitor.cpp \
 				SambaMonitor.cpp \
-				Board.cpp \
-				BoardListModel.cpp
+				Board.cpp 
 				
 TARGET = mchelper
             
@@ -67,7 +65,7 @@ macx{
   message("This project is being built on a Mac.")
 	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
 	QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
-	!debug{ CONFIG += x86 ppc }
+	release{ CONFIG += x86 ppc }
   LIBS += -framework IOKit #-dead_strip
   ICON = IconPackageOSX.icns
   #QMAKE_POST_LINK = strip mchelper.app/Contents/MacOS/mchelper

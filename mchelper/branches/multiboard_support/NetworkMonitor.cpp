@@ -29,7 +29,7 @@ NetworkMonitor::NetworkMonitor( )
 	{
 	  socket->close();
 	  socket = 0;
-	  messageInterface->message( 1, "udp> Can't listen on port %d - make sure it's not already in use.\n", BROADCAST_RX_PORT );
+	  mainWindow->messageThreadSafe( QString( "Udp> Can't listen on port %1 - make sure it's not already in use.").arg( BROADCAST_RX_PORT) );
 	}
 	connect( socket, SIGNAL(readyRead()), this, SLOT( processPendingDatagrams() ) );
 	
@@ -108,18 +108,16 @@ void NetworkMonitor::deviceRemoved( QString key )
 {
 	if( connectedDevices.contains( key ) )
 	{
-		delete connectedDevices.value( key );
-		boardListModel->removeBoard( key );
+		mainWindow->removeDeviceThreadSafe( key );
 		if( !connectedDevices.remove( key ) )
 			return;  // TODO - return an error here
 	}
 }
 
-void NetworkMonitor::setInterfaces( MessageInterface* messageInterface, QApplication* application, BoardListModel* boardListModel )
+void NetworkMonitor::setInterfaces( MessageInterface* messageInterface, McHelperWindow* mainWindow )
 {
 	this->messageInterface = messageInterface;
-	this->application = application;
-	this->boardListModel = boardListModel;
+	this->mainWindow = mainWindow;
 }
 
 

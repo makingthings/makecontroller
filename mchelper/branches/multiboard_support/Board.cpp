@@ -26,7 +26,7 @@ Board::Board( MessageInterface* messageInterface, QApplication* application )
 
 Board::~Board( )
 {
-  delete osc;
+  delete osc; 
 }
 
 void Board::setPacketInterface( PacketInterface* packetInterface )
@@ -50,6 +50,27 @@ bool Board::setBinFileName( char* filename )
 		return true;
 }
 
+QString Board::typeString( )
+{
+	switch( type )
+	{
+		case Board::UsbSamba:
+			return QString( "Samba" );
+		case Board::UsbSerial:
+		{
+			#ifdef Q_WS_WIN
+				return QString( "USB (%1)" ).arg(com_port);
+			#else
+				return QString( "USB" );
+			#endif
+		}
+		case Board::Udp:
+			return QString( "Ethernet" );
+		default:
+			return QString( "" );
+	}
+}
+
 void Board::flash( )
 {
 	if( type != Board::UsbSamba )
@@ -70,6 +91,7 @@ void Board::packetWaiting( )
 		if( strcmp( oscMessageList.at(i)->address, "/system/info" ) == 0 )
 		{ // we're counting on the board to send the pieces of data in this order
 			name = QString( oscMessageList.at(i)->data.at( 0 )->s ); //name
+			setText( QString( "%1:%2" ).arg(name).arg(typeString()) );
 			serialNumber = QString::number( oscMessageList.at(i)->data.at( 1 )->i ); // serial number
 			ip_address = QString( oscMessageList.at(i)->data.at( 2 )->s ); // IP address
 		}

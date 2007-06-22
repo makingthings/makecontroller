@@ -40,39 +40,17 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	
 	noUI = false;
 	
-	boardModel = new BoardListModel( application, this, this );
+	//listWidget = new BoardListModel( application, this, this );
 	udp = new NetworkMonitor( ); 
-	samba = new SambaMonitor( application, this, boardModel );
+	samba = new SambaMonitor( application, this );
 	usb = new UsbMonitor( );
-	
-	#ifdef Q_WS_WIN
-	usb->setWidget( this );
-	#endif
 	 
-	udp->setInterfaces( this, application, boardModel );
-	usb->setInterfaces( this, application, boardModel );
-  
-  // Create the BoardListModel
-  
-  
-  // Some stuff about trying to enable drag/drop
-  // list reordering...
-  ///////////////////////////////////////////////
-  //listViewDevices->setMovement(QListView::Free);
-  listViewDevices->setSelectionMode(QAbstractItemView::SingleSelection);
- // listViewDevices->setDragEnabled(true);
-  //listViewDevices->setDropIndicatorShown(true);
-  //listViewDevices->setAcceptDrops(true);
-  listViewDevices->setAlternatingRowColors(true);
-  //listViewDevices->setDragDropMode(QAbstractItemView::InternalMove);
-  ///////////////////////////////////////////////
-  
-  // Connect the board list model to the devices listing view
-  listViewDevices->setModel( boardModel );
+	udp->setInterfaces( this, this );
+	usb->setInterfaces( this, application, this );
   
   // Wire up the selection changed signal from the
   // model to be handled here
-  connect( listViewDevices->selectionModel(), SIGNAL(currentChanged(const QModelIndex &, const QModelIndex &)),
+  connect( listWidget->selectionModel(), SIGNAL(currentChanged(const QModelIndex &, const QModelIndex &)),
            this,                                SLOT(deviceSelectionChanged(const QModelIndex &, const QModelIndex &)));
   
   ////////////////////////////////////////////////////////////////////////////
@@ -112,7 +90,6 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 
 void McHelperWindow::checkForNewDevices( )
 {
-	
 	// first check for USB boards
 	QList<PacketInterface*> newBoards;
 	usb->scan( &newBoards );
@@ -127,10 +104,12 @@ void McHelperWindow::checkForNewDevices( )
 	      board->type = Board::UsbSerial;
 	      board->setPacketInterface( newBoards.at(i) );
 	      board->com_port = newBoards.at(i)->location();
-	      boardModel->addBoard( board );
+	      board->setText( QString( ":%1" ).arg( board->typeString() ) );
+	      connectedBoards.insert( board->key, board );
+	      listWidget->addItem( board ); 
 		}
 	}
-
+	
 	// then for UDP boards
 	QList<PacketUdp*> udpBoards;
 	udp->scan( &udpBoards );
@@ -144,10 +123,11 @@ void McHelperWindow::checkForNewDevices( )
 		  board->setPacketInterface( udpBoards.at(i) );
 		  board->key = udpBoards.at(i)->getKey();
 	      board->type = Board::Udp;
-	      boardModel->addBoard( board );
+	      connectedBoards.insert( board->key, board );
+	      listWidget->addItem( board );
 		}
 	} 
-/*
+	/*
 	QList<UploaderThread*> sambaBoards;
 	samba->scan( &sambaBoards );
 	newBoardCount = sambaBoards.count( );
@@ -161,24 +141,39 @@ void McHelperWindow::checkForNewDevices( )
 	      board->name = "Samba Board";
 	      board->type = Board::UsbSamba;
 	      board->setUploaderThread( sambaBoards.at(i) );
-	      boardModel->addBoard( board );
+	      connectedBoards.insert( board->key, board );
+	      listWidget->addItem( board );
 		}
 	}
 	*/
+	if( listWidget->currentRow( ) < 0 && listWidget->count( ) > 0 )
+		listWidget->setCurrentRow( 0 ); // if nothing is selected, just select the first item
+}
+
+void McHelperWindow::removeDeviceThreadSafe( QString key )
+{
+	BoardEvent* boardEvent = new BoardEvent( key );
+	application->postEvent( this, boardEvent );
+}
+
+void McHelperWindow::removeDevice( QString key )
+{
+	if( connectedBoards.contains( key ) )
+	{
+		int row = listWidget->row( connectedBoards.value(key) );
+		Board* removed = (Board*)listWidget->takeItem( row );
+		connectedBoards.remove( key );
+		delete removed;
+	}
 }
 
 void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous )
 {
-  QString name = boardModel->data( current, Qt::DisplayRole ).toString();
-  QString com_port = boardModel->data( current, BoardListModel::COMPortRole ).toString();
-  QString status_bar_text = boardModel->data( current, Qt::StatusTipRole ).toString();
-  
-  if ( boardModel->flags(current) & Qt::ItemIsEnabled ) {
-    boardModel->setActiveBoardIndex( current );
-    statusBar()->showMessage(status_bar_text, 1000);
-  }
-  
-  switch( boardModel->getActiveBoard()->type )
+  Board* board = (Board*)listWidget->currentItem();
+  if( board == NULL )
+  	return;
+  	
+  switch( board->type )
   {
   	case Board::UsbSerial: // same for both
   	case Board::Udp:
@@ -195,7 +190,7 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   		break;
   }
   // fill up the line edits in the Summary tab with the new board's info
-  updateSummaryInfo( boardModel->getActiveBoard() );
+  updateSummaryInfo( board );
 }
 
 void McHelperWindow::updateSummaryInfo( Board* board )
@@ -247,7 +242,7 @@ void McHelperWindow::uploadButtonClicked( )
 	else
 		strcpy( fileNameBuffer, fileSelectText->currentText().toAscii().constData() );
 	
-	Board* board = boardModel->getActiveBoard();
+	Board* board = (Board*)listWidget->currentItem();
 	if( board->type == Board::UsbSamba )
 	{
 		if( !board->setBinFileName( fileNameBuffer ) )
@@ -261,17 +256,19 @@ void McHelperWindow::commandLineEvent( )
 {
   QString cmd = QString( "OscUsb< %1" ).arg(commandLine->currentText() );
   mainConsole->append( cmd );
-    
-  QModelIndex activeBoard = boardModel->getActiveBoardIndex();
-  QString name = boardModel->data( activeBoard, Qt::DisplayRole ).toString();
-  boardModel->getActiveBoard()->sendMessage( commandLine->currentText() );
+  Board* board = (Board*)listWidget->currentItem();
+  if( board == NULL )
+  	return;
+  board->sendMessage( commandLine->currentText());
   
   // in order to get a readline-style history of commands via up/down arrows
   // we ened to keep an empty item at the end of the list so we have a context from which to up-arrow
-  commandLine->removeItem( 0 );
+  
+  /*commandLine->removeItem( 0 );
   commandLine->insertItem( 8, commandLine->currentText() );
   commandLine->insertItem( 9, "" );
   commandLine->setCurrentIndex( 9 );
+  */
   mainConsole->ensureCursorVisible( );
   commandLine->clearEditText();
   writeUsbSettings();
@@ -310,7 +307,7 @@ void McHelperWindow::customEvent( QEvent* event )
 		case 10005: // a board was uploaded/removed
 		{
 			MessageEvent* messageEvent = (MessageEvent*)event;
-			boardModel->removeBoard( messageEvent->message );
+			removeDevice( messageEvent->message );
 			//delete messageEvent;
 			break;
 		}
@@ -472,6 +469,11 @@ void McHelperWindow::usbRemoved( HANDLE deviceHandle )
 #endif
 
 MessageEvent::MessageEvent( QString string ) : QEvent( (Type)10003 )
+{
+	message = string;
+}
+
+BoardEvent::BoardEvent( QString string ) : QEvent( (Type)10005 )
 {
 	message = string;
 }
