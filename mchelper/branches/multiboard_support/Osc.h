@@ -83,6 +83,7 @@ class Osc : public QObject
 			            ERROR_NO_PACKET, ERROR_CREATING_REQUEST, ERROR_CREATING_BUNDLE, ERROR_PACKET_LENGTH_0 };				
 
 		Osc( );
+		~Osc( );
 
 		Status createMessage( char* textMessage ); 
 		Status createMessage( char* address, char* format, ... );

@@ -40,6 +40,7 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
 {
     public:
 			PacketUsbCdc( );
+			~PacketUsbCdc( );
 			void run( );
 			// from PacketInterface
 			Status open( );	
@@ -58,6 +59,7 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
                 
     private:
 		  QList<OscUsbPacket*> packetList;
+		  OscUsbPacket* currentPacket;
 		  QMutex packetListMutex;
 		  void sleepMs( int ms );
 			int packetCount;
@@ -67,6 +69,7 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
 		  PacketReadyInterface* packetReadyInterface;
 		  QApplication* application;
 		  int slipReceive( char* buffer, int length );
+		  bool exit;
 
 };
 

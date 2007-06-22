@@ -23,12 +23,12 @@
 #include <QHash>
 #include <QTimer>
 #include <QtNetwork>
+#include "McHelperWindow.h"
 #include "PacketUdp.h"
 #include "MonitorInterface.h"
-#include "BoardListModel.h"
 
 class PacketUdp;
-class BoardListModel;
+class McHelperWindow;
 
 class NetworkMonitor : public QObject, public MonitorInterface
 {
@@ -37,7 +37,7 @@ class NetworkMonitor : public QObject, public MonitorInterface
   	NetworkMonitor( );
   	~NetworkMonitor( ) {}
   	Status scan( QList<PacketUdp*>* arrived );
-  	void setInterfaces( MessageInterface* messageInterface, QApplication* application, BoardListModel* boardListModel );
+  	void setInterfaces( MessageInterface* messageInterface, McHelperWindow* mainWindow );
   	void deviceRemoved( QString key );
   	
   private:
@@ -46,9 +46,7 @@ class NetworkMonitor : public QObject, public MonitorInterface
   	QHash<QString, PacketUdp*> newDevices;  
 	
 	MessageInterface* messageInterface;
-	PacketReadyInterface* packetReadyInterface;
-	QApplication* application;
-	BoardListModel* boardListModel;
+	McHelperWindow* mainWindow;
 	QTimer* timer;
 	QUdpSocket* socket;
 	QByteArray broadcastPing;

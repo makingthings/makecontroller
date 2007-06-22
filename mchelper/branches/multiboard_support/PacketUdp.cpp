@@ -29,7 +29,7 @@ PacketUdp::PacketUdp( )
 	timer = new QTimer(this);
 	lastMessage = NULL;
 	packetReadyInterface = NULL;
-    connect( timer, SIGNAL(timeout()), this, SLOT( close( ) ) );
+    connect( timer, SIGNAL(timeout()), this, SLOT( pingTimedOut( ) ) );
 }
 
 PacketUdp::~PacketUdp( )
@@ -40,9 +40,13 @@ PacketUdp::~PacketUdp( )
 PacketUdp::Status PacketUdp::open( ) //part of PacketInterface
 {	
   socket = new QUdpSocket( this );
-  timer->start( COMM_TIMEOUT );
-  
   return OK;	
+}
+
+PacketUdp::Status PacketUdp::pingTimedOut( )
+{
+	monitor->deviceRemoved( socketKey );
+	return OK;
 }
 
 PacketUdp::Status PacketUdp::close( )	//part of PacketInterface
@@ -53,8 +57,6 @@ PacketUdp::Status PacketUdp::close( )	//part of PacketInterface
 	delete remoteHostAddress;
 	if( lastMessage != NULL )
   		delete lastMessage;
-  		
-  	monitor->deviceRemoved( socketKey );
   		
   return OK;
 }

@@ -35,24 +35,20 @@ UsbMonitor::Status UsbMonitor::scan( QList<PacketInterface*>* arrived )
 
 void UsbMonitor::closeAll( )
 {	// app is shut down - close everything out.
-	QHash<QString, PacketUsbCdc*>::iterator i;
-	for( i=connectedDevices.begin( ); i != connectedDevices.end( ); ++i )
+	QHash<QString, PacketUsbCdc*>::iterator i  = connectedDevices.begin( );
+	while( i != connectedDevices.end( ) )
+	{
 		i.value( )->close( );
+		++i;
+	}
 }
 
-void UsbMonitor::setInterfaces( MessageInterface* messageInterface, QApplication* application, BoardListModel* boardListModel )
+void UsbMonitor::setInterfaces( MessageInterface* messageInterface, QApplication* application, McHelperWindow* mainWindow )
 {
 	this->messageInterface = messageInterface;
 	this->application = application;
-	this->boardListModel = boardListModel;
+	this->mainWindow = mainWindow;
 }
-
-#ifdef Q_WS_WIN
-void UsbMonitor::setWidget( QMainWindow* window )
-{
-	this->mainWindow = window;
-}
-#endif
 
 void UsbMonitor::FindUsbDevices( QList<PacketInterface*>* arrived )
 {
@@ -312,9 +308,7 @@ void UsbMonitor::removalNotification( HANDLE handle )
 	{
 		if( i.value( )->deviceHandle == handle )
 		{
-			i.value( )->close( ); // close the USB connection
-			delete i.value( );
-			boardListModel->removeBoard( i.key() );
+			mainWindow->removeDeviceThreadSafe( i.key() );
 			i = connectedDevices.erase( i );
 		}
 		else

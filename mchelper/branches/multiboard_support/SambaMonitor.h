@@ -24,7 +24,6 @@
 #include "Samba.h"
 #include "UploaderThread.h"
 #include "McHelperWindow.h"
-#include "BoardListModel.h"
 
 class Samba;
 class McHelperWindow;
@@ -34,7 +33,7 @@ class BoardListModel;
 class SambaMonitor
 {
   public:
-  	SambaMonitor( QApplication* application, McHelperWindow* mainWindow, BoardListModel* boardModel );
+  	SambaMonitor( QApplication* application, McHelperWindow* mainWindow );
   	~SambaMonitor( );
   	int scan( QList<UploaderThread*>* arrived );
   	void deviceRemoved( QString key );
@@ -50,7 +49,6 @@ class SambaMonitor
 	MessageInterface* messageInterface;
 	QApplication* application;
 	McHelperWindow* mainWindow;
-	BoardListModel* boardModel;
 };
 
 #endif // SAMBA_MONITOR_H_

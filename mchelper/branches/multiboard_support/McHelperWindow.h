@@ -26,7 +26,6 @@
 #include <QThread>
 #include <QTimer>
 #include "Board.h"
-#include "BoardListModel.h"
 #include "NetworkMonitor.h"
 #include "SambaMonitor.h"
 #include "UsbMonitor.h"
@@ -60,6 +59,8 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void customEvent( QEvent* event );
 		void progress( int value );
 		void setAboutDialog( QDialog* about );
+		void removeDevice( QString key );
+		void removeDeviceThreadSafe( QString key );
 		
 		void setNoUI( bool val );
 		void uiLessUpload( char* filename, bool bootFlash );
@@ -77,8 +78,8 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		UsbMonitor* usb;
 		NetworkMonitor* udp;
 		QTimer* monitorTimer;
-    	BoardListModel* boardModel;
     	QDialog* aboutMchelper;
+    	QHash<QString, Board*> connectedBoards;
 		
 		void readSettings();
 		void writeFileSettings();
@@ -129,6 +130,15 @@ class MessageEvent : public QEvent
 	public:
 	  MessageEvent( QString string );
 	  ~MessageEvent( ) {}
+	  
+	QString message;
+};
+
+class BoardEvent : public QEvent
+{
+	public:
+	  BoardEvent( QString string );
+	  ~BoardEvent( ) { }
 	  
 	QString message;
 };

@@ -18,6 +18,7 @@
 #ifndef BOARD_H_
 #define BOARD_H_
 
+#include <QListWidgetItem>
 #include "PacketReadyInterface.h"
 #include "UploaderThread.h"
 #include "PacketInterface.h"
@@ -29,7 +30,7 @@ class Osc;
 
 #include <QString>
 
-class Board : public PacketReadyInterface
+class Board : public QListWidgetItem, public PacketReadyInterface
 {
   public:
   
@@ -43,8 +44,9 @@ class Board : public PacketReadyInterface
     void sendMessage( QString rawMessage );
     bool setBinFileName( char* filename );
     void flash( );
+    QString typeString( );
     
-    QString key;
+    QString key; 
     Board::Types type;
     QString com_port;
     
