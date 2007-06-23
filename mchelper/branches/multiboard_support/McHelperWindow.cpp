@@ -21,6 +21,9 @@
 #include <QSettings>
 #include <QHostAddress>
 #include <QMessageBox>
+#include <QTableWidget>
+#include <QTableWidgetItem>
+#include <QHeaderView>
 #include "Osc.h"
 
 #define DEVICE_SCAN_FREQ 1000
@@ -48,6 +51,8 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	udp->setInterfaces( this, this );
 	usb->setInterfaces( this, application, this );
   
+  setupOutputTable();
+
   // Wire up the selection changed signal from the
   // model to be handled here
   connect( listWidget->selectionModel(), SIGNAL(currentChanged(const QModelIndex &, const QModelIndex &)),
@@ -62,7 +67,6 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	lastTabIndex = 0;
 	
 	// if ( udp->open( ) != PacketUdp::OK )
-		// mainConsole->insertPlainText( "udp> Cannot open socket.\n" );
 	connect( tabWidget, SIGNAL( currentChanged(int) ), this, SLOT( tabIndexChanged(int) ) );
 	
 	//USB signals/slots
@@ -254,11 +258,13 @@ void McHelperWindow::uploadButtonClicked( )
 
 void McHelperWindow::commandLineEvent( )
 {
-  QString cmd = QString( "OscUsb< %1" ).arg(commandLine->currentText() );
-  mainConsole->append( cmd );
   Board* board = (Board*)listWidget->currentItem();
   if( board == NULL )
   	return;
+  
+  QString cmd = QString( "%1" ).arg(commandLine->currentText() );
+  messageThreadSafe( cmd, MessageEvent::Command, board->key  );
+  
   board->sendMessage( commandLine->currentText());
   
   // in order to get a readline-style history of commands via up/down arrows
@@ -269,15 +275,23 @@ void McHelperWindow::commandLineEvent( )
   commandLine->insertItem( 9, "" );
   commandLine->setCurrentIndex( 9 );
   */
-  mainConsole->ensureCursorVisible( );
   commandLine->clearEditText();
   writeUsbSettings();
 }
 
 void McHelperWindow::clearOutputWindow()
 {
-  mainConsole->clear( );
-	mainConsole->ensureCursorVisible( );
+  int r, c;
+  for( r = 0; r < outputTable->rowCount(); r++ )
+  {
+    for( c = 0; c < outputTable->columnCount(); c++ )
+    {
+      delete outputTable->item(r,c);
+    }
+  }
+  
+  outputTable->clearContents();
+  outputTable->setRowCount(0);
 }
 
 void McHelperWindow::customEvent( QEvent* event )
@@ -300,7 +314,7 @@ void McHelperWindow::customEvent( QEvent* event )
 		case 10003:
 		{
 			MessageEvent* messageEvent = (MessageEvent*)event;
-			message( messageEvent->message );
+			message( messageEvent->message, messageEvent->type, messageEvent->from );
 			//delete messageEvent;
 			break;
 		}
@@ -321,10 +335,22 @@ void McHelperWindow::customEvent( QEvent* event )
 	}
 }
 
-void McHelperWindow::messageThreadSafe( QString string )
+void McHelperWindow::messageThreadSafe( QString string  )
+{ 
+  // Default to an "Info" message if we don't know otherwise
+  messageThreadSafe( string, MessageEvent::Info );
+}
+
+void McHelperWindow::messageThreadSafe( QString string, MessageEvent::Types type  )
 {	
-	MessageEvent* messageEvent = new MessageEvent( string );
-	application->postEvent( this, messageEvent );
+  // Default to coming from the "App" itself if we don't know otherwise
+  messageThreadSafe( string, type, QString("App") );
+}
+
+void McHelperWindow::messageThreadSafe( QString string, MessageEvent::Types type, QString from )
+{ 
+  MessageEvent* messageEvent = new MessageEvent( string, type, from );
+  application->postEvent( this, messageEvent );
 }
 
 void McHelperWindow::progress( int value )
@@ -340,6 +366,8 @@ void McHelperWindow::progress( int value )
 		progressBar->setValue( value );
 }
 
+// Deprecated...
+// Use one of the messageThreadSafe methods
 void McHelperWindow::message( int level, char *format, ... )
 {
 	va_list args;
@@ -355,23 +383,87 @@ void McHelperWindow::message( int level, char *format, ... )
 			printf( buffer );
 		else
 		{
-			mainConsole->ensureCursorVisible( );
-			if ( buffer != NULL && strlen(buffer) > 1 )
-				mainConsole->insertPlainText( buffer );
-			mainConsole->ensureCursorVisible( ); // just to be sure...
+            if ( buffer != NULL && strlen(buffer) > 1 )
+                message( QString(buffer) );
 		}
 	}
 }
 
+// Deprecated...
+// Use one of the messageThreadSafe methods
 void McHelperWindow::message( QString string )
 {
 	if( noUI )
 		return;
-	mainConsole->ensureCursorVisible( );
+        
 	if ( !string.isEmpty( ) && !string.isNull( ) )
-		mainConsole->append( string );
-	mainConsole->ensureCursorVisible( ); // just to be sure...
+        message( string, MessageEvent::Info, QString("App") );
 }
+
+void McHelperWindow::message( QString string, MessageEvent::Types type, QString from )
+{
+    if( noUI )
+        return;
+
+    if ( !string.isEmpty( ) && !string.isNull( ) ) {
+    
+        // Set the background row color
+        QColor bgColor;
+        switch( type )
+        {
+            case MessageEvent::Command:
+                bgColor = QColor(225, 225, 225, 127); // light-light gray
+                break;
+            
+            case MessageEvent::Response:
+                bgColor = QColor(98, 191, 142, 127); // Green
+                break;
+                
+            case MessageEvent::Error:
+                bgColor = QColor(219, 62, 0, 127); // Red
+                break;
+              
+            case MessageEvent::Warning:
+                bgColor = QColor(255, 176, 59, 127); // Orange
+                break;
+                
+            case MessageEvent::Info:
+            case MessageEvent::Notice:  
+            default:
+                bgColor = Qt::white;;
+        } 
+           
+        // Increase the row count
+        outputTable->setRowCount(outputTable->rowCount() + 1);
+        
+        // Timestamp
+        QTableWidgetItem *timeStampItem = new QTableWidgetItem( QTime::currentTime().toString() );
+        timeStampItem->setTextAlignment(Qt::AlignRight);
+        timeStampItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+        timeStampItem->setBackgroundColor( bgColor );
+        outputTable->setItem(outputTable->rowCount() - 1, 0, timeStampItem);
+        
+        // From
+        QTableWidgetItem *fromItem = new QTableWidgetItem(from);
+        fromItem->setTextAlignment(Qt::AlignHCenter);
+        fromItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+        fromItem->setBackgroundColor( bgColor );
+        outputTable->setItem(outputTable->rowCount() - 1, 1, fromItem );
+        
+        // Message
+        QTableWidgetItem *messageItem = new QTableWidgetItem(string);
+        messageItem->setTextAlignment(Qt::AlignLeft);
+        messageItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+        messageItem->setBackgroundColor( bgColor );
+        outputTable->setItem(outputTable->rowCount() - 1, 2, messageItem);
+        
+        // Set the row height to allow more data to show than
+        // the default height would and scroll down to the last item
+        outputTable->verticalHeader()->resizeSection(outputTable->rowCount() - 1, 15);
+        outputTable->scrollToItem(timeStampItem, QAbstractItemView::EnsureVisible);
+    }
+}
+
 
 void McHelperWindow::sleepMs( int ms )
 {
@@ -456,9 +548,32 @@ void McHelperWindow::setAboutDialog( QDialog* about )
 	this->aboutMchelper = about; 
 }
 
+// Setup the output table
+void McHelperWindow::setupOutputTable()
+{
+  //outputTable->setRowCount(0);
+  //outputTable->setColumnCount(3);
+  //QStringList horizontalLabels;
+  //horizontalLabels << "TimeStamp" << "From" << "Message";
+  //outputTable->setHorizontalHeaderLabels(horizontalLabels);
+  
+  // The message column should stretch to fill the table
+  QHeaderView *headerHView = outputTable->horizontalHeader();
+  headerHView->setResizeMode(QHeaderView::Interactive);
+  headerHView->resizeSection(0, 60);
+  headerHView->resizeSection(1, 50);
+  headerHView->setResizeMode(2, QHeaderView::Stretch);
+
+  QHeaderView *headerVView = outputTable->verticalHeader();
+  headerVView->setResizeMode(QHeaderView::ResizeToContents);
+  
+  // We don't want to show the vertical header column
+  outputTable->verticalHeader()->hide();
+}
+
 void McHelperWindow::about( )  // set the version number here.
 {
-  aboutMchelper->show(); 
+  aboutMchelper->show();
 }
 
 #ifdef Q_WS_WIN
@@ -468,10 +583,6 @@ void McHelperWindow::usbRemoved( HANDLE deviceHandle )
 }
 #endif
 
-MessageEvent::MessageEvent( QString string ) : QEvent( (Type)10003 )
-{
-	message = string;
-}
 
 BoardEvent::BoardEvent( QString string ) : QEvent( (Type)10005 )
 {

@@ -24,33 +24,37 @@ FORMS = mchelper.ui \
 #CONFIG += qt release
 CONFIG += qt debug
 
-HEADERS = McHelperWindow.h \
-				UploaderThread.h \
-				PacketInterface.h \
-				PacketReadyInterface.h \
-				MonitorInterface.h \
-				PacketUdp.h \
-				Osc.h \
-				Samba.h \
-				UsbSerial.h \
-				PacketUsbCdc.h \
-				UsbMonitor.h \
-				NetworkMonitor.h \
-				SambaMonitor.h \
-				Board.h 
+HEADERS = 	McHelperWindow.h \
+			UploaderThread.h \
+			PacketInterface.h \
+			PacketReadyInterface.h \
+			MonitorInterface.h \
+			PacketUdp.h \
+			Osc.h \
+			Samba.h \
+			UsbSerial.h \
+			PacketUsbCdc.h \
+			UsbMonitor.h \
+			NetworkMonitor.h \
+			SambaMonitor.h \
+			Board.h \
+			MessageEvent.h \
+				
             
-SOURCES	= main.cpp \
-				McHelperWindow.cpp \
-				UploaderThread.cpp \
-				PacketUdp.cpp \
-				Osc.cpp \
-				Samba.cpp \
-				UsbSerial.cpp \
-				PacketUsbCdc.cpp \
-				UsbMonitor.cpp \
-				NetworkMonitor.cpp \
-				SambaMonitor.cpp \
-				Board.cpp 
+SOURCES	= 	main.cpp \
+			McHelperWindow.cpp \
+			UploaderThread.cpp \
+			PacketUdp.cpp \
+			Osc.cpp \
+			Samba.cpp \
+			UsbSerial.cpp \
+			PacketUsbCdc.cpp \
+			UsbMonitor.cpp \
+			NetworkMonitor.cpp \
+			SambaMonitor.cpp \
+			Board.cpp \
+			MessageEvent.cpp \
+				
 				
 TARGET = mchelper
             
