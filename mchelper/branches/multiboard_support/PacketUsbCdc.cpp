@@ -192,8 +192,8 @@ int PacketUsbCdc::receivePacket( char* buffer, int size )
 	
 	if( !packetList.size() )
 	{
-	  messageInterface->message( 1, "usb> Error receiving packet.\n" );
-		
+        QString msg = QString( "Error receiving packet.");
+        messageInterface->messageThreadSafe( msg, MessageEvent::Error);
 		return 0;
 	} 
 	else

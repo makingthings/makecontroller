@@ -80,7 +80,10 @@ int PacketUdp::sendPacket( char* packet, int length )	//part of PacketInterface
 {
 	qint64 result = socket->writeDatagram( (const char*)packet, (qint64)length, *remoteHostAddress, remotePort );
 	if( result < 0 )
-		messageInterface->message( 1, "udp> Could not send packet.\n" );
+    {
+        QString msg = QString( "Could not send packet.");
+        messageInterface->messageThreadSafe( msg, MessageEvent::Error, QString("udp") );
+    }
 
 	return 0;
 }
@@ -101,7 +104,8 @@ int PacketUdp::receivePacket( char* buffer, int size )
 	int length = lastMessage->size( );
 	if( length > size )
 	{
-		messageInterface->message( 1, "udp> error - packet too large.\n" );
+        QString msg = QString( "error - packet too large.");
+        messageInterface->messageThreadSafe( msg, MessageEvent::Error, QString("udp") );
 		return 0;
 	}
 	memcpy( buffer, lastMessage->data( ), length );

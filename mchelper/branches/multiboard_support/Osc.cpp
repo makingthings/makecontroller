@@ -23,7 +23,7 @@
 
 QString OscMessage::toString( )
 {
-	QString ret = QString( "> %1" ).arg(address);
+	QString ret = QString( "%1" ).arg(address);
 	int j;
 	for( j = 0; j < data.size( ); j++ )
 	{
@@ -147,8 +147,8 @@ void Osc::receivePacket( char* packet, int length, QList<OscMessage*>* oscMessag
       break;
 		default:
 			// something we don't recognize...
-			QString msg = QString( "%1> Error - Osc packets must start with either a '/' (message) or '[' (bundle).").arg( preamble );
-			messageInterface->messageThreadSafe( msg );
+			QString msg = QString( "Error - Osc packets must start with either a '/' (message) or '[' (bundle).");
+			messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
 	}
 }
 
@@ -172,8 +172,8 @@ void Osc::receiveMessage( char* in, int length, QList<OscMessage*>* oscMessageLi
 	char* type = findDataTag( in, length );
   if ( type == NULL )		//If there was no type tag, say so and stop processing this message.
   {
-		QString msg = QString( "%1> Error - No type tag.").arg( preamble );
-		messageInterface->messageThreadSafe( msg );
+		QString msg = QString( "Error - No type tag.");
+		messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
   }
 	else		//Otherwise, step through the type tag and print the data out accordingly.
 	{
@@ -182,8 +182,8 @@ void Osc::receiveMessage( char* in, int length, QList<OscMessage*>* oscMessageLi
 		int count = extractData( type, oscMessage );
 		if ( count != (int)( strlen(type) - 1 ) )
 		{
-			QString msg = QString( "%1> Error extracting data from packet - type tag doesn't correspond to data included.").arg( preamble );
-			messageInterface->messageThreadSafe( msg );
+			QString msg = QString( "Error extracting data from packet - type tag doesn't correspond to data included.");
+			messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
 		}
 	}
 }

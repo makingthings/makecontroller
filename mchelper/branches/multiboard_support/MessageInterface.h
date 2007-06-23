@@ -18,15 +18,24 @@
 #ifndef MESSAGEINTERFACE_H
 #define MESSAGEINTERFACE_H
 
+#include "MessageEvent.h"
+
 class MessageInterface
 {		
-	public:
-	  virtual void message( int level, char* format, ... ) = 0;
-	  virtual void message( QString string ) = 0;
-	  virtual void messageThreadSafe( QString string ) = 0;
-	  virtual void sleepMs( int ms ) = 0;
-	  virtual void progress( int value ) = 0;
+    public:
+        virtual void message( int level, char* format, ... ) = 0;
+        virtual void message( QString string ) = 0;
+        
+        virtual void messageThreadSafe( QString string ) = 0;
+        virtual void messageThreadSafe( QString string, MessageEvent::Types type ) = 0;
+        virtual void messageThreadSafe( QString string, MessageEvent::Types type, QString from ) = 0;
+        
+        virtual void sleepMs( int ms ) = 0;
+        virtual void progress( int value ) = 0;
 		virtual ~MessageInterface( ) {}
+        
+    private:
+        virtual void message( QString string, MessageEvent::Types type, QString from ) = 0;
 };
 
 #endif

@@ -25,6 +25,7 @@
 #include <QMainWindow>
 #include <QThread>
 #include <QTimer>
+#include "MessageEvent.h"
 #include "Board.h"
 #include "NetworkMonitor.h"
 #include "SambaMonitor.h"
@@ -50,11 +51,15 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 	  	            ERROR_CANT_OPEN_SOCKET, ERROR_ALREADY_PROGRAMMED,
 	  	            ERROR_INCORRECT_RESPONSE, ERROR_NO_RESPONSE};
 	
-    McHelperWindow( McHelperApp* application );
+        McHelperWindow( McHelperApp* application );
 		
-	  void message( int level, char *format, ... );
-	  void messageThreadSafe( QString string );
-	  void message( QString string );
+        void message( int level, char *format, ... );
+        void message( QString string );
+        
+        void messageThreadSafe( QString string );
+        void messageThreadSafe( QString string, MessageEvent::Types type );
+        void messageThreadSafe( QString string, MessageEvent::Types type, QString from ); 
+        
 		void sleepMs( int ms );
 		void customEvent( QEvent* event );
 		void progress( int value );
@@ -73,8 +78,8 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void closeEvent( QCloseEvent *qcloseevent );
 		
 	private:
-	  QApplication* application;
-		SambaMonitor* samba;
+        QApplication* application;
+        SambaMonitor* samba;
 		UsbMonitor* usb;
 		NetworkMonitor* udp;
 		QTimer* monitorTimer;
@@ -86,27 +91,31 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void writeUdpSettings();
 		void writeUsbSettings();
 		void updateSummaryInfo( Board* board );
+        
+        void message( QString string, MessageEvent::Types type, QString from );
 		
+    void setupOutputTable();
+    
 		bool noUI;
 		int lastTabIndex;
   
 	public slots:
     
 	private slots:
-    // Uploader functions
-		void fileSelectButtonClicked();
-	  void uploadButtonClicked();
-	  void checkForNewDevices( );
+        // Uploader functions
+        void fileSelectButtonClicked();
+        void uploadButtonClicked();
+        void checkForNewDevices( );
 
 		void commandLineEvent( );
     
 		// Menu functions
-    void about( );
-		void clearOutputWindow();
+        void about( );
+        void clearOutputWindow();
     
-    // Devices list view functions
-    void deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous );
-    void tabIndexChanged(int index);
+        // Devices list view functions
+        void deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous );
+        void tabIndexChanged(int index);
 };
 
 class McHelperApp : public QApplication
@@ -125,14 +134,6 @@ class McHelperApp : public QApplication
     #endif // Windows-only
 };
 
-class MessageEvent : public QEvent
-{
-	public:
-	  MessageEvent( QString string );
-	  ~MessageEvent( ) {}
-	  
-	QString message;
-};
 
 class BoardEvent : public QEvent
 {

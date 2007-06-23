@@ -95,11 +95,17 @@ void Board::packetWaiting( )
 			serialNumber = QString::number( oscMessageList.at(i)->data.at( 1 )->i ); // serial number
 			ip_address = QString( oscMessageList.at(i)->data.at( 2 )->s ); // IP address
 		}
+        /* Maybe we want to detect errors coming back from the boards?
+        else if( strstr( oscMessageList.at(i)->address, "/error" ) != NULL )
+        {
+            QString msg = oscMessageList.at(i)->toString( );
+            messageInterface->messageThreadSafe( msg, MessageEvent::Error, key );
+        }
+        */
 		else // just print them out
 		{
 			QString msg = oscMessageList.at(i)->toString( );
-			msg.prepend( osc->getPreamble( ) );
-			messageInterface->messageThreadSafe( msg );
+			messageInterface->messageThreadSafe( msg, MessageEvent::Response, key );
 		}
 	}
 }
