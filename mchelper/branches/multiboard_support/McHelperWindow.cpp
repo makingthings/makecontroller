@@ -15,22 +15,22 @@
 
 *********************************************************************************/
 
-#include "McHelperWindow.h"
+#include "McHelperWindow.h" 
 
 #include <QFileDialog>
 #include <QSettings>
 #include <QHostAddress>
-#include <QMessageBox>
+#include <QMessageBox> 
 #include <QTableWidget>
-#include <QTableWidgetItem>
-#include <QHeaderView>
+#include <QTableWidgetItem> 
+#include <QHeaderView> 
 #include "Osc.h"
 
 #define DEVICE_SCAN_FREQ 1000
 
 McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 {
-	this->application = application; 
+	this->application = application;
 	setupUi(this);
 	
 	#ifdef Q_WS_WIN
@@ -247,6 +247,9 @@ void McHelperWindow::uploadButtonClicked( )
 		strcpy( fileNameBuffer, fileSelectText->currentText().toAscii().constData() );
 	
 	Board* board = (Board*)listWidget->currentItem();
+	if( board == NULL )
+		return;
+		
 	if( board->type == Board::UsbSamba )
 	{
 		if( !board->setBinFileName( fileNameBuffer ) )
@@ -290,7 +293,7 @@ void McHelperWindow::clearOutputWindow()
     }
   }
   
-  outputTable->clearContents();
+  //outputTable->clearContents();
   outputTable->setRowCount(0);
 }
 
@@ -564,8 +567,8 @@ void McHelperWindow::setupOutputTable()
   headerHView->resizeSection(1, 50);
   headerHView->setResizeMode(2, QHeaderView::Stretch);
 
-  QHeaderView *headerVView = outputTable->verticalHeader();
-  headerVView->setResizeMode(QHeaderView::ResizeToContents);
+  //QHeaderView *headerVView = outputTable->verticalHeader();
+  //headerVView->setResizeMode(QHeaderView::ResizeToContents);
   
   // We don't want to show the vertical header column
   outputTable->verticalHeader()->hide();

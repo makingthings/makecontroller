@@ -22,6 +22,7 @@ Board::Board( MessageInterface* messageInterface, QApplication* application )
   osc = new Osc( );
   this->messageInterface = messageInterface;
   this->application = application;
+  packetInterface = NULL;
 }
 
 Board::~Board( )
@@ -31,6 +32,7 @@ Board::~Board( )
 
 void Board::setPacketInterface( PacketInterface* packetInterface )
 {
+	this->packetInterface = packetInterface;
 	osc->setInterfaces( packetInterface, messageInterface, application );
 	osc->setPreamble( packetInterface->location( ) );
 	packetInterface->setPacketReadyInterface( this );
@@ -112,6 +114,9 @@ void Board::packetWaiting( )
 
 void Board::sendMessage( QString rawMessage )
 {
-	osc->uiSendPacket( rawMessage );
+	if( packetInterface == NULL || !packetInterface->isOpen( ) )
+		return;
+	else
+		osc->uiSendPacket( rawMessage );
 }
 

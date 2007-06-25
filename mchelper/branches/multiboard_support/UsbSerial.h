@@ -79,7 +79,6 @@ class UsbSerial
 		int usbRead( char* buffer, int length );
 		UsbStatus usbWrite( char* buffer, int length );
 		UsbStatus usbWriteChar( char c );
-		bool isOpen( );
 		int numberOfAvailableBytes( );
 		char portName[1024]; // should be protected?
 		#ifdef Q_WS_WIN

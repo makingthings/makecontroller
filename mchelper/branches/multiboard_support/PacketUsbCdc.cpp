@@ -184,6 +184,11 @@ bool PacketUsbCdc::isPacketWaiting( )
 	  return true;
 }
 
+bool PacketUsbCdc::isOpen( )
+{
+  return deviceOpen;
+}
+
 int PacketUsbCdc::receivePacket( char* buffer, int size )
 {
 	// Need to protect the packetList structure from multithreaded diddling

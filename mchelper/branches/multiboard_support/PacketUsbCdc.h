@@ -47,6 +47,7 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
 		  	Status close( );
 			int sendPacket( char* packet, int length );
 			bool isPacketWaiting( );
+			bool isOpen( );
 			int receivePacket( char* buffer, int size );
 			QString getKey( void );
 			char* location( void );
