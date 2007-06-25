@@ -28,8 +28,9 @@ PacketUdp::PacketUdp( )
 { 
 	timer = new QTimer(this);
 	lastMessage = NULL;
+	socket = NULL;
 	packetReadyInterface = NULL;
-    connect( timer, SIGNAL(timeout()), this, SLOT( pingTimedOut( ) ) );
+	connect( timer, SIGNAL(timeout()), this, SLOT( pingTimedOut( ) ) );
 }
 
 PacketUdp::~PacketUdp( )
@@ -91,6 +92,11 @@ int PacketUdp::sendPacket( char* packet, int length )	//part of PacketInterface
 bool PacketUdp::isPacketWaiting( )	//part of PacketInterface
 {
   return lastMessage != NULL;
+}
+
+bool PacketUdp::isOpen( )
+{
+	return socket != NULL;
 }
 
 void PacketUdp::processPacket( )	//slot to be called back automatically when datagrams are ready to be read

@@ -335,11 +335,6 @@ UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
   #endif //Windows-only UsbSerial::write( )
 }
 
-bool UsbSerial::isOpen( )
-{
-  return deviceOpen;
-}
-
 int UsbSerial::numberOfAvailableBytes( )
 {
     int n = 0;

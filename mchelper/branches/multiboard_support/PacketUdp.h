@@ -46,6 +46,7 @@ class PacketUdp : public QObject, public PacketInterface
 	  int sendPacket( char* packet, int length );
 		int receivePacket( char* packet, int length );
 	  bool isPacketWaiting( );
+	  bool isOpen( );
 	  QString getKey( void );
 	  char* location( );
 	  void incomingMessage( QByteArray* message );
