@@ -17,10 +17,11 @@
 
 #include "Board.h"
 
-Board::Board( MessageInterface* messageInterface, QApplication* application )
+Board::Board( MessageInterface* messageInterface, McHelperWindow* mainWindow, QApplication* application )
 {
   osc = new Osc( );
   this->messageInterface = messageInterface;
+  this->mainWindow = mainWindow;
   this->application = application;
   packetInterface = NULL;
 }
@@ -91,12 +92,20 @@ void Board::packetWaiting( )
 	for (i = 0; i < messageCount; i++)
 	{
 		if( strcmp( oscMessageList.at(i)->address, "/system/info" ) == 0 )
-		{ // we're counting on the board to send the pieces of data in this order
+		{ 
+            // we're counting on the board to send the pieces of data in this order
 			name = QString( oscMessageList.at(i)->data.at( 0 )->s ); //name
-			setText( QString( "%1:%2" ).arg(name).arg(typeString()) );
-			serialNumber = QString::number( oscMessageList.at(i)->data.at( 1 )->i ); // serial number
-			ip_address = QString( oscMessageList.at(i)->data.at( 2 )->s ); // IP address
+            serialNumber = QString::number( oscMessageList.at(i)->data.at( 1 )->i ); // serial number
+            ip_address = QString( oscMessageList.at(i)->data.at( 2 )->s ); // IP address
+            
+            // Let the main window know to do an update of the "Summary" info tab
+            BoardSummaryInfoUpdateEvent* boardSummaryInfoUpdateEvent = new BoardSummaryInfoUpdateEvent( this->key );
+            application->postEvent( mainWindow, boardSummaryInfoUpdateEvent );
+
+            // Update the name of the board in the board list
+			this->setText( QString( "%1:%2" ).arg(name).arg(typeString()) );
 		}
+        
         /* Maybe we want to detect errors coming back from the boards?
         else if( strstr( oscMessageList.at(i)->address, "/error" ) != NULL )
         {
@@ -104,11 +113,10 @@ void Board::packetWaiting( )
             messageInterface->messageThreadSafe( msg, MessageEvent::Error, key );
         }
         */
-		else // just print them out
-		{
-			QString msg = oscMessageList.at(i)->toString( );
-			messageInterface->messageThreadSafe( msg, MessageEvent::Response, key );
-		}
+		
+        // In any case, print the response
+		QString msg = oscMessageList.at(i)->toString( );
+		messageInterface->messageThreadSafe( msg, MessageEvent::Response, key );
 	}
 }
 

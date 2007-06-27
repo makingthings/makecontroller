@@ -75,7 +75,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	//setup the pushbuttons
 	connect( fileSelectButton, SIGNAL( clicked() ), this, SLOT( fileSelectButtonClicked() ) );
 	connect( uploadButton, SIGNAL( clicked() ), this, SLOT( uploadButtonClicked() ) );
-	
+    
 	// setup the menu
 	connect( actionAboutMchelper, SIGNAL( triggered() ), this, SLOT( about( ) ) );
 	connect( actionClearOutput, SIGNAL( triggered() ), this, SLOT( clearOutputWindow( ) ) );
@@ -94,6 +94,8 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 
 void McHelperWindow::checkForNewDevices( )
 {
+    Board *board;
+    
 	// first check for USB boards
 	QList<PacketInterface*> newBoards;
 	usb->scan( &newBoards );
@@ -103,7 +105,7 @@ void McHelperWindow::checkForNewDevices( )
 		int i;
 		for( i=0; i<newBoardCount; i++ )
 		{
-		  Board *board = new Board( this, application );
+		  board = new Board( this, this, application );
           board->key = newBoards.at(i)->getKey();
 	      board->type = Board::UsbSerial;
 	      board->setPacketInterface( newBoards.at(i) );
@@ -123,7 +125,7 @@ void McHelperWindow::checkForNewDevices( )
 		int i;
 		for( i=0; i<newBoardCount; i++ )
 		{
-		  Board *board = new Board( this, application );
+		  board = new Board( this, this, application );
 		  board->setPacketInterface( udpBoards.at(i) );
 		  board->key = udpBoards.at(i)->getKey();
 	      board->type = Board::Udp;
@@ -140,7 +142,7 @@ void McHelperWindow::checkForNewDevices( )
 		int i;
 		for( i=0; i<newBoardCount; i++ )
 		{
-		  Board *board = new Board( this, application );
+		  board = new Board( this, this, application );
 		  board->key = sambaBoards.at(i)->getDeviceKey();
 	      board->name = "Samba Board";
 	      board->type = Board::UsbSamba;
@@ -185,7 +187,20 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   		tabWidget->setTabEnabled( 0, 1 );
   		tabWidget->setTabEnabled( 1, 1 );
   		tabWidget->setTabEnabled( 2, 0 );
+        
+        // fill up the line edits in the Summary tab with the new
+        // board's info by sending off a "/system/info" command
+        //
+        // :NOTE: added a bit of sleep in here to help with the
+        // case when you first start the app with a board attached
+        // that gets autoselected and the device hasn't fully
+        // connected yet. Once the "system info" checking
+        // thread is in place, we should remove the sending of
+        // the "/system/info" message here since isn't really very reliable.
+        Sleep( 250 );
+        board->sendMessage( QString("/system/info") );
   		break;
+        
   	case Board::UsbSamba:
   		tabWidget->setCurrentIndex( 2 );
   		tabWidget->setTabEnabled( 0, 0 );
@@ -193,24 +208,32 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   		tabWidget->setTabEnabled( 2, 1 );
   		break;
   }
-  // fill up the line edits in the Summary tab with the new board's info
-  updateSummaryInfo( board );
 }
 
-void McHelperWindow::updateSummaryInfo( Board* board )
+void McHelperWindow::updateSummaryInfo( QString key )
 {
-	systemName->setText( board->name );
-	systemSerialNumber->setText( board->serialNumber );
-	//systemFirmwareVersion->setText( );
-	//systemFreeMemory->setText( );
-	netAddressLineEdit->setText( board->ip_address );
-	/*
-	netMaskLineEdit->setText( );
-	netGatewayLineEdit->setText( );
-	netMACLineEdit->setText( );
-	dhcpCheckBox->setCheckState( );
-	webserverCheckBox->setCheckState( ); // Qt::Checked, Qt::Unchecked
-	*/
+    // Make sure we know about this board ...
+    if( connectedBoards.contains( key ) )
+    {
+        // ... and it's the currently selected one from the list
+        Board* board = (Board*)listWidget->currentItem();
+        if (board->key == key )
+        {
+            systemName->setText( board->name );
+            systemSerialNumber->setText( board->serialNumber );
+            systemFirmwareVersion->setText( board->firmwareVersion );
+            systemFreeMemory->setText( board->freeMemory );
+            netAddressLineEdit->setText( board->ip_address );
+            netMaskLineEdit->setText( board->netMask );
+            netGatewayLineEdit->setText( board->gateway );
+            netMACLineEdit->setText( board->mac );
+            
+            /* :TODO: what and how should these be set
+            dhcpCheckBox->setCheckState( );
+            webserverCheckBox->setCheckState( ); // Qt::Checked, Qt::Unchecked
+            */
+        }
+    }
 }
 
 void McHelperWindow::tabIndexChanged(int index)
@@ -332,7 +355,14 @@ void McHelperWindow::customEvent( QEvent* event )
 		{
 			StatusEvent* statusEvent = (StatusEvent*)event;
 			statusBar()->showMessage( statusEvent->message, statusEvent->duration );
+            break;
 		}
+        case 10015: // put a status message in the window
+        {
+            BoardSummaryInfoUpdateEvent* boardSummaryInfoUpdateEvent = (BoardSummaryInfoUpdateEvent*)event;
+            updateSummaryInfo( boardSummaryInfoUpdateEvent->key );
+            break;
+        }
 		default:
 			break;
 	}
@@ -590,6 +620,12 @@ void McHelperWindow::usbRemoved( HANDLE deviceHandle )
 BoardEvent::BoardEvent( QString string ) : QEvent( (Type)10005 )
 {
 	message = string;
+}
+
+BoardSummaryInfoUpdateEvent::BoardSummaryInfoUpdateEvent( QString key ) : QEvent( (Type)10015 )
+{
+    // The key of the board that sent the event
+    this->key = key;
 }
 
 

@@ -36,7 +36,7 @@ class Board : public QListWidgetItem, public PacketReadyInterface
   
     enum Types{ UsbSerial, UsbSamba, Udp };
     
-    Board( MessageInterface* messageInterface, QApplication* application );
+    Board( MessageInterface* messageInterface, McHelperWindow* mainWindow, QApplication* application );
     ~Board( );
     void setPacketInterface( PacketInterface* packetInterface );
     void setUploaderThread( UploaderThread* uploaderThread );
@@ -59,6 +59,7 @@ class Board : public QListWidgetItem, public PacketReadyInterface
 
   private:
     MessageInterface* messageInterface;
+    McHelperWindow* mainWindow;
     QApplication* application;
     PacketInterface* packetInterface;
     Osc* osc;
