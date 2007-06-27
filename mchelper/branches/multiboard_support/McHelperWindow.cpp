@@ -76,6 +76,9 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	connect( fileSelectButton, SIGNAL( clicked() ), this, SLOT( fileSelectButtonClicked() ) );
 	connect( uploadButton, SIGNAL( clicked() ), this, SLOT( uploadButtonClicked() ) );
     
+    connect( systemName, SIGNAL( editingFinished() ), this, SLOT ( systemNameChanged() ) );
+    connect( systemSerialNumber, SIGNAL( editingFinished() ), this, SLOT ( systemSerialNumberChanged() ) );
+    
 	// setup the menu
 	connect( actionAboutMchelper, SIGNAL( triggered() ), this, SLOT( about( ) ) );
 	connect( actionClearOutput, SIGNAL( triggered() ), this, SLOT( clearOutputWindow( ) ) );
@@ -444,8 +447,9 @@ void McHelperWindow::message( QString string, MessageEvent::Types type, QString 
         QColor bgColor;
         switch( type )
         {
-            case MessageEvent::Command:
-                bgColor = QColor(225, 225, 225, 127); // light-light gray
+            case MessageEvent::Info:
+            case MessageEvent::Notice:
+                bgColor = QColor(225, 225, 225, 127); // white
                 break;
             
             case MessageEvent::Response:
@@ -459,9 +463,8 @@ void McHelperWindow::message( QString string, MessageEvent::Types type, QString 
             case MessageEvent::Warning:
                 bgColor = QColor(255, 176, 59, 127); // Orange
                 break;
-                
-            case MessageEvent::Info:
-            case MessageEvent::Notice:  
+
+            case MessageEvent::Command:
             default:
                 bgColor = Qt::white;;
         } 
@@ -607,6 +610,32 @@ void McHelperWindow::setupOutputTable()
 void McHelperWindow::about( )  // set the version number here.
 {
   aboutMchelper->show();
+}
+
+void McHelperWindow::systemNameChanged( )
+{
+    Board* board = (Board*)listWidget->currentItem();
+    if( board == NULL )
+    return;
+
+    QString cmd = QString( "%1 %2" ).arg("/system/name").arg(systemName->text());
+    board->sendMessage( cmd );
+    
+    // :TODO: Maybe we want to add these to the output, maybe we don't?
+    messageThreadSafe( cmd, MessageEvent::Command, board->key );
+}
+
+void McHelperWindow::systemSerialNumberChanged( )
+{
+    Board* board = (Board*)listWidget->currentItem();
+    if( board == NULL )
+    return;
+    
+    QString cmd = QString( "%1 %2" ).arg("/system/serialnumber").arg(systemSerialNumber->text());
+    board->sendMessage( cmd );
+    
+    // :TODO: Maybe we want to add these to the output, maybe we don't?
+    messageThreadSafe( cmd, MessageEvent::Command, board->key );
 }
 
 #ifdef Q_WS_WIN

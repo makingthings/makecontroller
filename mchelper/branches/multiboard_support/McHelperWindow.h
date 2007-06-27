@@ -112,7 +112,11 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		// Menu functions
         void about( );
         void clearOutputWindow();
-    
+        
+        // Summary tab editing
+        void systemNameChanged( );
+        void systemSerialNumberChanged( );
+        
         // Devices list view functions
         void deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous );
         void tabIndexChanged(int index);
