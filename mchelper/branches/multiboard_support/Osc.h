@@ -94,9 +94,6 @@ class Osc : public QObject
 		void setInterfaces( PacketInterface* packetInterface, MessageInterface* messageInterface, QApplication* application );
     	void setPreamble( const char* preamble ) { this->preamble = preamble; }
     	const char* getPreamble( );
-
-	  void sleepMs( int ms );
-	  void progress( int value );
 		
 	public slots:
 		void uiSendPacket( QString rawString );
@@ -113,9 +110,6 @@ class Osc : public QObject
 		char* writePaddedString( char* buffer, int* length, char* string );
 		char* writeTimetag( char* buffer, int* length, int a, int b );
 		void resetOutBuffer( );
-
-		// utility
-		unsigned int endianSwap( unsigned int a );
 				
 		PacketInterface* packetInterface;
 		MessageInterface* messageInterface;

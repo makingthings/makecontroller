@@ -134,7 +134,7 @@ void Osc::receivePacket( char* packet, int length, QList<OscMessage*>* oscMessag
         while ( length > 0 )
         {
           // read the length (pretend packet is a pointer to integer)
-          int messageLength = this->endianSwap( *((int*)packet) );
+          int messageLength = qFromBigEndian( *((int*)packet) );
 			printf( "Unpacking bundle of length %d.\n", messageLength );
           packet += 4;
           length -= 4;
@@ -215,7 +215,7 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
       case 'i':
       {
         int i = *(int*)data;
-        i = endianSwap( i );
+        i = qFromBigEndian( i );
 		//message( 1, "%d ", i );
 		data += 4;
 		count++;
@@ -232,7 +232,7 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
       case 'f':
       {
 		int i = *(int*)data;
-        i = endianSwap( i );
+        i = qFromBigEndian( i );
         float f = *(float*)&i;
         if ( oscMessage)
 		{
@@ -269,7 +269,7 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
 			case 'b':
 			{
 			  	int blob_len = *(int*)data;  // the first int should give us the length of the blob
-        		blob_len = endianSwap( blob_len );	
+        		blob_len = qFromBigEndian( blob_len );	
         		if ( oscMessage)
 				{
 				  OscMessageData* omdata = new OscMessageData( );
@@ -372,7 +372,7 @@ Osc::Status Osc::createMessage( char* address, char* format, ... )
     if ( bp != 0 )
     {
       // Set the size
-      *lp = endianSwap( bp - mp ); 
+      *lp = qFromBigEndian( bp - mp ); 
   
       outBufferPointer = bp;
       outBufferRemaining = length;
@@ -435,7 +435,7 @@ Osc::Status Osc::createMessage( char* textMessageOriginal )
     if ( bp != 0 )
     {
       // Set the size
-      *lp = endianSwap( bp - mp ); 
+      *lp = qFromBigEndian( bp - mp ); 
   
       outBufferPointer = bp;
       outBufferRemaining = remaining;
@@ -478,7 +478,7 @@ char* Osc::createMessageInternal( char* bp, int* length, char* address, char* fo
           if ( *length >= 0 )
           {
             int v = va_arg( args, int );
-            v = this->endianSwap( v );
+            v = qFromBigEndian( v );
             *((int*)bp) = v;
             bp += 4;
           }
@@ -491,7 +491,7 @@ char* Osc::createMessageInternal( char* bp, int* length, char* address, char* fo
         {
           int v;
           *((float*)&v) = (float)( va_arg( args, double ) ); 
-          v = endianSwap( v );
+          v = qFromBigEndian( v );
           *((int*)bp) = v;
           bp += 4;
         }
@@ -579,9 +579,9 @@ char* Osc::writeTimetag( char* buffer, int* length, int a, int b )
   if ( *length < 8 )
     return NULL;
 
-  *((int*)buffer) = endianSwap( a );
+  *((int*)buffer) = qFromBigEndian( a );
   buffer += 4;
-  *((int*)buffer) = endianSwap( b );
+  *((int*)buffer) = qFromBigEndian( b );
   buffer += 4;
   *length -= 8;
 
@@ -665,7 +665,7 @@ char* Osc::createMessageInternal( char* bp, int* remaining, char* inputString )
   			//message( 3, "Trying to get a float from %s.  Got %f\n", startpoint, floatArgument );
         unsigned int v;
         *((float*)&v) = floatArgument;
-        v = endianSwap( v );
+        v = qFromBigEndian( v );
         *((int*)ap) = v;
   			ap += 4;
   		}
@@ -674,7 +674,7 @@ char* Osc::createMessageInternal( char* bp, int* remaining, char* inputString )
   			strcat( typetag, "i" );
   			int intArgument;
   			sscanf( startpoint, "%d", &intArgument );
-				intArgument = endianSwap( intArgument );
+				intArgument = qFromBigEndian( intArgument );
   			*((int*)ap) = intArgument;
   			ap += 4;		
   		}
@@ -713,9 +713,10 @@ void Osc::resetOutBuffer( )
   outMessageCount = 0;
 }
 
+/*
 // Osc transmits bytes in big endian format.
 // ...must change them if we're on a little endian machine.
-unsigned int Osc::endianSwap( unsigned int a )
+unsigned int Osc::qFromBigEndian( unsigned int a )
 {
 	#ifdef __LITTLE_ENDIAN__
 		return ( ( a & 0x000000FF ) << 24 ) |
@@ -726,14 +727,8 @@ unsigned int Osc::endianSwap( unsigned int a )
 		return a;
 	#endif
 }
+*/
 
-void Osc::sleepMs( int ms )
-{
-}
-
-void Osc::progress( int value )
-{
-}
 
 
 
