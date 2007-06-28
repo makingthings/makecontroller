@@ -38,7 +38,7 @@ HEADERS = 	McHelperWindow.h \
 			NetworkMonitor.h \
 			SambaMonitor.h \
 			Board.h \
-			MessageEvent.h \
+			MessageEvent.h 
 				
             
 SOURCES	= 	main.cpp \
@@ -53,7 +53,7 @@ SOURCES	= 	main.cpp \
 			NetworkMonitor.cpp \
 			SambaMonitor.cpp \
 			Board.cpp \
-			MessageEvent.cpp \
+			MessageEvent.cpp 
 				
 				
 TARGET = mchelper
@@ -78,7 +78,6 @@ macx{
 
 win32{
   message("This project is being built on Windows.")
-  DEFINES += __LITTLE_ENDIAN__
   LIBS += -lSetupapi
   RC_FILE = mchelper.rc # for application icon
   
@@ -91,10 +90,7 @@ win32{
 
 
 unix{
-  !macx{
-    message("This project is being built on Linux.")
-    DEFINES += Q_WS_LINUX __LITTLE_ENDIAN__
-  }
+
 }
 
 

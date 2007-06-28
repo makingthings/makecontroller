@@ -63,6 +63,7 @@ int SambaMonitor::scan( QList<UploaderThread*>* arrived )
 				else
 					mainWindow->removeDeviceThreadSafe( i.key( ) );
 				
+				delete i.value( );
 				i = connectedDevices.erase( i ); // this increments the iterator
 			}
 			else
@@ -90,8 +91,10 @@ void SambaMonitor::closeAll( )
 
 void SambaMonitor::deviceRemoved( QString key )
 {
+	// the upload is complete, but the board has probably not been disconnected
+	// from the system...so it should be removed frmo the UI, but not from our internal list of connected devices.
 	awaitingRemoval.append( key );
-	//mainWindow->removeBoardThreadSafe( key );
+	mainWindow->removeDeviceThreadSafe( key );
 }
 
 

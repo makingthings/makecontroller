@@ -97,7 +97,8 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 
 void McHelperWindow::checkForNewDevices( )
 {
-    Board *board;
+  Board *board;
+  int i;
     
 	// first check for USB boards
 	QList<PacketInterface*> newBoards;
@@ -105,7 +106,6 @@ void McHelperWindow::checkForNewDevices( )
 	int newBoardCount = newBoards.count( );
 	if( newBoardCount > 0 )
 	{
-		int i;
 		for( i=0; i<newBoardCount; i++ )
 		{
 		  board = new Board( this, this, application );
@@ -125,7 +125,6 @@ void McHelperWindow::checkForNewDevices( )
 	newBoardCount = udpBoards.count( );
 	if( newBoardCount > 0 )
 	{
-		int i;
 		for( i=0; i<newBoardCount; i++ )
 		{
 		  board = new Board( this, this, application );
@@ -136,13 +135,12 @@ void McHelperWindow::checkForNewDevices( )
 	      listWidget->addItem( board );
 		}
 	} 
-	/*
+	
 	QList<UploaderThread*> sambaBoards;
 	samba->scan( &sambaBoards );
 	newBoardCount = sambaBoards.count( );
 	if( newBoardCount > 0 )
 	{
-		int i;
 		for( i=0; i<newBoardCount; i++ )
 		{
 		  board = new Board( this, this, application );
@@ -151,10 +149,11 @@ void McHelperWindow::checkForNewDevices( )
 	      board->type = Board::UsbSamba;
 	      board->setUploaderThread( sambaBoards.at(i) );
 	      connectedBoards.insert( board->key, board );
+	      board->setText( board->name );
 	      listWidget->addItem( board );
 		}
 	}
-	*/
+	
 	if( listWidget->currentRow( ) < 0 && listWidget->count( ) > 0 )
 		listWidget->setCurrentRow( 0 ); // if nothing is selected, just select the first item
 }
