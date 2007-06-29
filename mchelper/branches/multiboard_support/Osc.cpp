@@ -597,10 +597,7 @@ char* Osc::createMessageInternal( char* bp, int* remaining, char* inputString )
 	char typetag[ 32 ];				//intermediate buffer for typetag
 	char argumentData[ 256 ];	//intermediate buffer for args/data
 	char* ap = argumentData;	// pointer into the argument buffer
-	
-	bool nullified, firstChar, gotCharacter;
-	
-	//message( 3, "Initial Remaining %d\n", *remaining );
+	bool nullified, firstChar, gotCharacter, gotString, inQuotes;
 
 	strcpy( typetag, "," );	//always needs to start with a comma
 	
@@ -629,19 +626,37 @@ char* Osc::createMessageInternal( char* bp, int* remaining, char* inputString )
   	do
   	{
   		int gotDecimals = 0;
-			gotCharacter = false;
-  		nullified = false;
+			gotCharacter = gotString = nullified = inQuotes = false;
 			firstChar = true; // flag to keep track of whether we're looking at the first character in an argument.
   		
   		// look through each character of the argument, and set the appropriate flags to tell us what kind of argument it is
-  		for( startpoint = ip; *ip != ' ' && *ip != 0; ip++ )
+  		startpoint = ip;
+  		while( *ip != 0 )
   		{
-				if( *ip == '.' )
+  			if( *ip == '.' )
   				gotDecimals++;
-				else if( firstChar && *ip == '-' )
-					firstChar = false; // this will move the loop on, so we don't set the gotCharacter flag true.
-  			else if( !isdigit( *ip ) )
-  				gotCharacter = true;
+  			else if( firstChar && *ip == '-' )
+					{ } // do nothing, but don't register it as a character
+				else
+  			{
+  				if( !isdigit( *ip ) )
+  					gotCharacter = true;
+  				if( *ip == '"' )
+  				{
+  					if( firstChar )
+  					{
+  						gotString = true;
+  						inQuotes = true;
+  					}
+  					else
+  						inQuotes = false;
+  				}
+  			}
+  			if( *ip == ' ' && inQuotes == false )
+  				break;
+  			if( firstChar )
+  				firstChar = false;
+  			ip++;
   		}
   		// if we're not at the end of the string, we need to grab just this argument
   		if( *ip == ' ' )
@@ -654,8 +669,26 @@ char* Osc::createMessageInternal( char* bp, int* remaining, char* inputString )
   		if( gotCharacter || gotDecimals > 1 )
   		{
   			strcat( typetag, "s" );
-  			int dummy = 1000;
-  			ap = writePaddedString( ap, &dummy, startpoint );
+  			int dummy = 1000, i;
+  			if( gotString )
+  			{
+  				char *stringContents = startpoint + 1; // don't include the first "
+  				char* endquote = stringContents; // and don't include the last one
+  				for( i = 0; i < (int)strlen( stringContents ); i++ )
+  				{
+  					if( *endquote != '"' )
+  						endquote++;
+  					else
+  					{
+  						*endquote = '\0'; // replace the endquote with a null terminator
+  						break;
+  					}
+  				}
+  				ap = writePaddedString( ap, &dummy, stringContents );
+  				gotString = false;
+  			}
+  			else
+  				ap = writePaddedString( ap, &dummy, startpoint );
   		}
   		else if( gotDecimals == 1 )
   		{
