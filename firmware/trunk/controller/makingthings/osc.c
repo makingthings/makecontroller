@@ -86,6 +86,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <stdarg.h>
 
@@ -114,7 +115,7 @@ typedef struct OscSubsystem_
   int (*poll)( int channel );
 }OscSubsystem;
 
-struct Osc_
+typedef struct Osc_
 {
   int users;
   int running;
@@ -127,12 +128,16 @@ struct Osc_
   OscChannel* channel[ OSC_CHANNEL_COUNT ];
   OscSubsystem* subsystem[ OSC_SUBSYSTEM_COUNT ];
   int registeredSubsystems;
-};
+  char scratch1[ OSC_SCRATCH_SIZE ], scratch2[ OSC_SCRATCH_SIZE ];
+  xSemaphoreHandle scratch1Semaphore, scratch2Semaphore;
+}OscStruct;
 
-struct Osc_* Osc;
+OscStruct* Osc;
 
 int Osc_Lock( OscChannel* ch );
 void Osc_Unlock( OscChannel *ch );
+int Osc_LockScratchBuf( xSemaphoreHandle scratchSemaphore );
+int Osc_UnlockScratchBuf( xSemaphoreHandle scratchSemaphore );
 
 int Osc_Quicky( int channel, char* preamble, char* string );
 char* Osc_WritePaddedString( char* buffer, int* length, char* string );
@@ -190,7 +195,7 @@ void Osc_SetActive( int state )
 {
   if ( state && Osc == NULL )
   {
-    Osc = Malloc( sizeof( struct Osc_ ) );
+    Osc = Malloc( sizeof( OscStruct ) );
     Osc->subsystemHighest = 0;
     Osc->registeredSubsystems = 0;
     int i;
@@ -202,6 +207,9 @@ void Osc_SetActive( int state )
     Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 2000, (void*)OSC_CHANNEL_UDP, 3 );
     Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1200, (void*)OSC_CHANNEL_USB, 3 );
     Osc->TcpTaskPtr = NULL;
+
+    vSemaphoreCreateBinary( Osc->scratch1Semaphore );
+    vSemaphoreCreateBinary( Osc->scratch2Semaphore );
 
     Osc->users = 1;
     Osc->running = true;
@@ -241,7 +249,10 @@ int Osc_UsbPacketSend( char* packet, int length, int replyAddress, int replyPort
 int Osc_UdpPacketSend( char* packet, int length, int replyAddress, int replyPort )
 {
   if ( replyAddress != 0 && replyPort != 0 )
-    return DatagramSocketSend( Osc->sendSocket, replyAddress, replyPort, packet, length );
+  {
+    int retval = DatagramSocketSend( Osc->sendSocket, replyAddress, replyPort, packet, length );
+    return retval;
+  }
   else
     return CONTROLLER_ERROR_NO_ADDRESS;
 }
@@ -257,11 +268,10 @@ int Osc_GetRunning( )
 void Osc_UdpTask( void* parameters )
 {
   int channel = (int)parameters;
-  Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
   while( Osc->channel[ channel ] == NULL )
   {
-    Sleep( 100 );
     Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
+    Sleep( 10 );
   }
   OscChannel *ch = Osc->channel[ channel ];
   ch->running = false;
@@ -275,7 +285,6 @@ void Osc_UdpTask( void* parameters )
 
   ch->running = true;
   void* ds = DatagramSocket( NetworkOsc_GetUdpPort() );
-  
   Osc->sendSocket = DatagramSocket( 0 );
 
   while ( true )
@@ -283,11 +292,11 @@ void Osc_UdpTask( void* parameters )
     int address;
     int port;
     int length = DatagramSocketReceive( ds, NetworkOsc_GetUdpPort(), &address, &port, ch->incoming, OSC_MAX_MESSAGE_IN );
-
-    Osc_SetReplyAddress( channel, address );
-
-    
-    Osc_ReceivePacket( channel, ch->incoming, length );
+    if( length > 0 )
+    {
+      Osc_SetReplyAddress( channel, address );
+      Osc_ReceivePacket( channel, ch->incoming, length );
+    }
     TaskYield( );
   }
 }
@@ -463,11 +472,11 @@ int Osc_SendMessage( int channel, char* message, int length )
 int Osc_ReceivePacket( int channel, char* packet, int length )
 {
   // Got a packet.  Unpacket.
-
+  int status = -1;
   switch ( *packet )
   {
     case '/':
-      Osc_ReceiveMessage( channel, packet, length );
+      status = Osc_ReceiveMessage( channel, packet, length );
       break;
     case '#':
       if ( strcmp( packet, "#bundle" ) == 0 )
@@ -504,6 +513,8 @@ int Osc_ReceiveMessage( int channel, char* message, int length )
   // Confirm it's a message
   if ( *message == '/' )
   {
+    if( strlen(message) > (unsigned int)length )
+      return CONTROLLER_ERROR_BAD_DATA;
     // Plain message
     char* nextSlash = strchr( message + 1, '/' );
     if ( nextSlash != NULL )
@@ -524,9 +535,10 @@ int Osc_ReceiveMessage( int channel, char* message, int length )
     }
     if ( count == 0 )
     {
-      char s[ OSC_SCRATCH_SIZE ];
-      snprintf( s, OSC_SCRATCH_SIZE, "No Subsystem Match - %s", message + 1 ); 
-      Osc_CreateMessage( channel, "/error", ",s", s );
+      Osc_LockScratchBuf( Osc->scratch1Semaphore );
+      snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "No Subsystem Match - %s", message + 1 ); 
+      Osc_CreateMessage( channel, "/error", ",s", Osc->scratch1 );
+      Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
     }
   }
   else
@@ -573,7 +585,6 @@ int Osc_SendPacketInternal( OscChannel* ch )
     // shorter too
     length -= 20;
   }
-
   (*ch->sendMessage)( buffer, length, ch->replyAddress, ch->replyPort );
 
   Osc_ResetChannel( ch );
@@ -597,9 +608,12 @@ int Osc_Quicky( int channel, char* preamble, char* string )
 
 int Osc_SubsystemError( int channel, char* subsystem, char* string )
 {
-  char address[ OSC_SCRATCH_SIZE ];
-  snprintf( address, OSC_SCRATCH_SIZE, "/%s/error", subsystem ); 
-  return Osc_CreateMessage( channel, address, ",s", string );
+  int retval;
+  Osc_LockScratchBuf( Osc->scratch1Semaphore );
+  snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/error", subsystem ); 
+  retval = Osc_CreateMessage( channel, Osc->scratch1, ",s", string );
+  Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
+  return retval;
 }
 
 // An OSC message has arrived, check it out... although, don't change it - others need
@@ -668,11 +682,13 @@ int Osc_BlobReceiverHelper( int channel, char* message, int length,
     // take the channel number and use it to call
     // Osc_CreateMessage() which adds a new message to the outgoing
     // stack
-    uchar buffer[ OSC_SCRATCH_SIZE ];
-    int size = (*blobPropertyGet)( propertyIndex, buffer, OSC_SCRATCH_SIZE );
-    char address[ OSC_SCRATCH_SIZE ]; 
-    snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", subsystemName, blobPropertyNames[ propertyIndex ] ); 
-    Osc_CreateMessage( channel, address, ",b", buffer, size );
+    Osc_LockScratchBuf( Osc->scratch1Semaphore );
+    Osc_LockScratchBuf( Osc->scratch2Semaphore );
+    int size = (*blobPropertyGet)( propertyIndex, (uchar*)Osc->scratch1, OSC_SCRATCH_SIZE );
+    snprintf( Osc->scratch2, OSC_SCRATCH_SIZE, "/%s/%s", subsystemName, blobPropertyNames[ propertyIndex ] ); 
+    Osc_CreateMessage( channel, Osc->scratch2, ",b", Osc->scratch1, size );
+    Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
+    Osc_UnlockScratchBuf( Osc->scratch2Semaphore );
   }
 
   return CONTROLLER_OK;
@@ -783,11 +799,13 @@ int Osc_IndexBlobReceiverHelper( int channel, char* message, int length,
     // stack
     if ( number != -1 )
     {
-      uchar buffer[ OSC_SCRATCH_SIZE ];
-      int size = (*blobPropertyGet)( number, propertyIndex, buffer, OSC_SCRATCH_SIZE );
-      char address[ OSC_SCRATCH_SIZE ]; 
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, number, blobPropertyNames[ propertyIndex ] ); 
-      Osc_CreateMessage( channel, address, ",b", buffer, size );
+      Osc_LockScratchBuf( Osc->scratch1Semaphore );
+      Osc_LockScratchBuf( Osc->scratch2Semaphore );
+      int size = (*blobPropertyGet)( number, propertyIndex, (uchar*)Osc->scratch1, OSC_SCRATCH_SIZE );
+      snprintf( Osc->scratch2, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, number, blobPropertyNames[ propertyIndex ] ); 
+      Osc_CreateMessage( channel, Osc->scratch2, ",b", Osc->scratch1, size );
+      Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
+      Osc_UnlockScratchBuf( Osc->scratch2Semaphore );
     }
     else
     {
@@ -796,11 +814,13 @@ int Osc_IndexBlobReceiverHelper( int channel, char* message, int length,
       { 
         if ( bits & 1 )
         {
-          uchar buffer[ OSC_SCRATCH_SIZE ];
-          int size = (*blobPropertyGet)( index, propertyIndex, buffer, OSC_SCRATCH_SIZE );
-          char address[ OSC_SCRATCH_SIZE ]; 
-          snprintf( address, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, index, blobPropertyNames[ propertyIndex ] ); 
-          Osc_CreateMessage( channel, address, ",b", buffer, size );
+          Osc_LockScratchBuf( Osc->scratch1Semaphore );
+          Osc_LockScratchBuf( Osc->scratch2Semaphore );
+          int size = (*blobPropertyGet)( index, propertyIndex, (uchar*)Osc->scratch1, OSC_SCRATCH_SIZE );
+          snprintf( Osc->scratch2, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, index, blobPropertyNames[ propertyIndex ] ); 
+          Osc_CreateMessage( channel, Osc->scratch2, ",b", Osc->scratch1, size );
+          Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
+          Osc_UnlockScratchBuf( Osc->scratch2Semaphore );
         }
         bits >>= 1;
         index++;
@@ -874,9 +894,14 @@ int Osc_IntReceiverHelper( int channel, char* message, int length,
     // Osc_CreateMessage() which adds a new message to the outgoing
     // stack
     int value = (*propertyGet)( propertyIndex );
-    char address[ OSC_SCRATCH_SIZE ]; 
-    snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", subsystemName, propertyNames[ propertyIndex ] ); 
-    Osc_CreateMessage( channel, address, ",i", value );
+    Osc_LockScratchBuf( Osc->scratch1Semaphore );
+    strcpy( Osc->scratch1, "/" );
+    strcat( Osc->scratch1, subsystemName );
+    strcat( Osc->scratch1, "/" );
+    strcat( Osc->scratch1, propertyNames[ propertyIndex ] );
+    //snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", subsystemName, propertyNames[ propertyIndex ] ); 
+    Osc_CreateMessage( channel, Osc->scratch1, ",i", value );
+    Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
   }
 
   return CONTROLLER_OK;
@@ -1057,9 +1082,20 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
     if ( number != -1 )
     {
       int value = (*propertyGet)( number, propertyIndex );
-      char address[ OSC_SCRATCH_SIZE ]; 
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, number, propertyNames[ propertyIndex ] ); 
-      Osc_CreateMessage( channel, address, ",i", value );
+      char numberBuf[ 33 ];
+      Osc_LockScratchBuf( Osc->scratch1Semaphore );
+      
+      strcpy( Osc->scratch1, "/" );
+      strcat( Osc->scratch1, subsystemName );
+      strcat( Osc->scratch1, "/" );
+      itoa( number, numberBuf, 10 );
+      strcat( Osc->scratch1, numberBuf );
+      strcat( Osc->scratch1, "/" );
+      strcat( Osc->scratch1, propertyNames[ propertyIndex ] );
+      
+      //snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, number, propertyNames[ propertyIndex ] ); 
+      Osc_CreateMessage( channel, Osc->scratch1, ",i", value );
+      Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
     }
     else
     {
@@ -1069,9 +1105,10 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
         if ( bits & 1 )
         {
           int value = (*propertyGet)( index, propertyIndex );
-          char address[ OSC_SCRATCH_SIZE ]; 
-          snprintf( address, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, index, propertyNames[ propertyIndex ] ); 
-          Osc_CreateMessage( channel, address, ",i", value );
+          Osc_LockScratchBuf( Osc->scratch1Semaphore );
+          snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, index, propertyNames[ propertyIndex ] ); 
+          Osc_CreateMessage( channel, Osc->scratch1, ",i", value );
+          Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
         }
         bits >>= 1;
         index++;
@@ -1452,6 +1489,23 @@ int Osc_Lock( OscChannel* ch )
 void Osc_Unlock( OscChannel *ch )
 {
   xSemaphoreGive( ch->semaphore );
+}
+
+int Osc_LockScratchBuf( xSemaphoreHandle scratchSemaphore )
+{
+  // Lock up this program segment to prevent multiple use
+  if ( !xSemaphoreTake( scratchSemaphore, 1000 ) )
+    return CONTROLLER_ERROR_LOCK_ERROR;
+
+  return CONTROLLER_OK;
+}
+
+int Osc_UnlockScratchBuf( xSemaphoreHandle scratchSemaphore )
+{
+  if( !xSemaphoreGive( scratchSemaphore ) )
+    return CONTROLLER_ERROR_LOCK_ERROR;
+  else
+    return CONTROLLER_OK;
 }
 
 int Osc_NumberMatch( int count, char* message, int* bits )

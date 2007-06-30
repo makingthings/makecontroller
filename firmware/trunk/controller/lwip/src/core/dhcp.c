@@ -282,8 +282,9 @@ static err_t dhcp_select(struct netif *netif)
  * The DHCP timer that checks for lease renewal/rebind timeouts.
  *
  */
-void dhcp_coarse_tmr()
+void dhcp_coarse_tmr( void *arg )
 {
+  (void) arg; // MakingThings: added void arg to conform to sys_timeout_handler signature
   struct netif *netif = netif_list;
   LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_coarse_tmr()\n"));
   /* iterate through all network interfaces */
@@ -305,6 +306,8 @@ void dhcp_coarse_tmr()
     /* proceed to next netif */
     netif = netif->next;
   }
+  // MakingThings - set up to use lwIP's timer so we don't have to create our own
+  sys_timeout( DHCP_COARSE_TIMER_SECS * 1000, dhcp_coarse_tmr, NULL ); // setup the next callback
 }
 
 /**
@@ -314,8 +317,9 @@ void dhcp_coarse_tmr()
  * This timer checks whether an outstanding DHCP request is timed out.
  * 
  */
-void dhcp_fine_tmr()
+void dhcp_fine_tmr( void *arg )
 {
+  (void)arg; // MakingThings: added void arg to conform to sys_timeout_handler signature
   struct netif *netif = netif_list;
   /* loop through netif's */
   while (netif != NULL) {
@@ -332,6 +336,8 @@ void dhcp_fine_tmr()
     /* proceed to next network interface */
     netif = netif->next;
   }
+  // MakingThings - set up to use lwIP's timer so we don't have to create our own
+  sys_timeout( DHCP_FINE_TIMER_MSECS, dhcp_fine_tmr, NULL ); // setup the next callback
 }
 
 /**

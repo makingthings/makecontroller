@@ -3,9 +3,20 @@
  <Autos>
   <Watches active="0" />
  </Autos>
- <Bookmarks/>
+ <Bookmarks>
+  <BookmarkItem column="-1" line="334" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" number="11" name="Unnamed 11" />
+  <BookmarkItem column="-1" line="559" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" number="12" name="Unnamed 12" />
+  <BookmarkItem column="-1" line="634" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" number="13" name="Unnamed 13" />
+  <BookmarkItem column="-1" line="709" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" number="14" name="Unnamed 14" />
+  <BookmarkItem column="-1" line="826" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" number="15" name="Unnamed 15" />
+  <BookmarkItem column="-1" line="841" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" number="16" name="Unnamed 16" />
+  <BookmarkItem column="-1" line="924" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" number="17" name="Unnamed 17" />
+  <BookmarkItem column="-1" line="1118" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" number="18" name="Unnamed 18" />
+  <BookmarkItem column="-1" line="1131" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" number="19" name="Unnamed 19" />
+  <BookmarkItem column="-1" line="1560" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" number="20" name="Unnamed 20" />
+ </Bookmarks>
  <Breakpoints>
-  <BreakpointListItem actiontype="0" chainFrom="" line="449" length="0" triggertype="0" useHWbreakpoint="false" group="Breakpoints" breakdatatype="0" value="0" name="unnamed" counter="0" state="4" mask="0" comparison="0" expression="" filename="C:\mtcode\make\firmware\controller\lwip\src\netif\ethernetif.c" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="13" length="0" triggertype="0" useHWbreakpoint="false" group="Breakpoints" breakdatatype="0" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\heavy\make.c" />
   <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="D_Abort" filename="" />
   <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="FIQ" filename="" />
   <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="IRQ" filename="" />
@@ -39,6 +50,8 @@
   <ProjectSessionItem path="heavy" name="unnamed" />
   <ProjectSessionItem path="heavy;heavy" name="unnamed" />
   <ProjectSessionItem path="heavy;heavy;Source Files" name="unnamed" />
+  <ProjectSessionItem path="heavy;heavy;Source Files;Controller" name="unnamed" />
+  <ProjectSessionItem path="heavy;heavy;Source Files;Controller;MakingThings" name="unnamed" />
   <ProjectSessionItem path="heavy;heavy;Source Files;Heavy" name="unnamed" />
  </Project>
  <Register1>
@@ -59,8 +72,12 @@
  </TraceWindow>
  <Watch1>
   <Watches active="1" >
-   <Watchpoint evalMode="2" linenumber="113" numelements="10" evalType="1" radix="1" name="buffer" expression="buffer" filename="C:\mtcode\make\firmware\controller\makingthings\usb.c" />
-   <Watchpoint linenumber="134" radix="-1" name="DeQueue" expression="DeQueue" filename="C:\mtcode\make\firmware\controller\makingthings\usb.c" />
+   <Watchpoint evalMode="1" linenumber="1598" evalType="1" radix="10" name="length" expression="length" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" />
+   <Watchpoint evalMode="1" linenumber="1330" evalType="1" radix="16" name="ch" expression="ch" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" />
+   <Watchpoint linenumber="284" radix="10" name="test" expression="test" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" />
+   <Watchpoint evalMode="3" linenumber="283" evalType="0" radix="16" name="mess" expression="mess" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" />
+   <Watchpoint evalMode="3" linenumber="1415" evalType="1" radix="-1" name="bp" expression="bp" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" />
+   <Watchpoint linenumber="308" radix="10" name="messlength" expression="messlength" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" />
   </Watches>
  </Watch1>
  <Watch2>
@@ -73,9 +90,19 @@
   <Watches active="0" />
  </Watch4>
  <Files>
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\trunk\controller\makingthings\main.c" y="102" useHTMLEdit="0" path="C:\mtcode\make\firmware\trunk\controller\makingthings\main.c" left="0" selected="0" name="unnamed" top="102" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\trunk\controller\freertos\tasks.c" y="1593" useHTMLEdit="0" path="C:\mtcode\make\firmware\trunk\controller\freertos\tasks.c" left="0" selected="0" name="unnamed" top="1567" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\trunk\heavy\config.h" y="0" useHTMLEdit="0" path="C:\mtcode\make\firmware\trunk\heavy\config.h" left="0" selected="1" name="unnamed" top="0" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.c" y="342" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.c" left="0" selected="0" name="unnamed" top="185" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="61" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\USB-CDC.c" y="293" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\USB-CDC.c" left="0" selected="0" name="unnamed" top="270" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\USB-CDC.h" y="98" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\USB-CDC.h" left="0" selected="0" name="unnamed" top="63" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="19" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.h" y="25" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.h" left="0" selected="0" name="unnamed" top="14" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\heavy\make.c" y="12" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\heavy\make.c" left="0" selected="0" name="unnamed" top="1" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="36" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\heavy\config.h" y="18" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\heavy\config.h" left="0" selected="0" name="unnamed" top="0" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" y="1115" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" left="0" selected="1" name="unnamed" top="1087" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\analogin.c" y="478" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\analogin.c" left="0" selected="0" name="unnamed" top="446" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\eeprom.c" y="235" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\eeprom.c" left="0" selected="0" name="unnamed" top="208" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="2" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\can_isr.c" y="24" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\can_isr.c" left="0" selected="0" name="unnamed" top="0" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="24" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\controller.h" y="56" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\controller.h" left="0" selected="0" name="unnamed" top="28" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\can.c" y="322" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\can.c" left="0" selected="0" name="unnamed" top="292" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="48" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\network.c" y="648" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\network.c" left="0" selected="0" name="unnamed" top="639" />
  </Files>
- <ARMCrossStudioWindow activeProject="heavy" autoConnectTarget="/Segger J-Link" debugSearchFileMap="" fileDialogInitialDirectory="" fileDialogDefaultFilter="*.cpp;*.cxx;*.cc;*.c;*.h" autoConnectCapabilities="1407" debugSearchPath="" buildConfiguration="THUMB Flash Debug" />
+ <ARMCrossStudioWindow activeProject="heavy" autoConnectTarget="/USB CrossConnect for ARM-RTCK" debugSearchFileMap="" fileDialogInitialDirectory="" fileDialogDefaultFilter="*.cpp;*.cxx;*.cc;*.c;*.h" autoConnectCapabilities="1407" debugSearchPath="" buildConfiguration="THUMB Flash Debug" />
 </session>

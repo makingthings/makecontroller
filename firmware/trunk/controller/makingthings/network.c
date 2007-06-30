@@ -57,8 +57,6 @@ struct Network_* Network;
 
 enum { NET_UNCHECKED, NET_INVALID, NET_VALID } Network_Valid;
 
-void Network_DhcpFineCallback( int id );
-void Network_DhcpCoarseCallback( int id );
 void Network_SetPending( int state );
 int Network_GetPending( void );
 void Network_DhcpStart( struct netif* netif );
@@ -669,7 +667,7 @@ int SocketReadLine( void* socket, char* data, int length )
 {
   int readLength;
   int lineLength = -1;
-  int terminated = false;
+  //int terminated = false;
   data--;
 
   // Upon entering, data points to char prior to buffer, length is -1
@@ -816,9 +814,7 @@ void* DatagramSocket( int port )
   conn->readingbuf = NULL;
 
   // hook it up
-  netconn_bind( conn, NULL, port ); // Liam
-  //netconn_connect(conn, 0, port);
-  //netconn_bind( conn, IP_ADDR_ANY, port );
+  netconn_bind( conn, NULL, port );
 
   return conn;
 }
@@ -837,29 +833,23 @@ int DatagramSocketSend( void* datagramSocket, int address, int port, void* data,
 { 
   struct netconn *conn = (struct netconn *)datagramSocket;
   struct netbuf *buf;
-
   struct ip_addr remote_addr;
-
-  //struct ip_addr prior_addr;
-  //int prior_port;
-  //netconn_peer( conn, &prior_addr, &prior_port );
+  int lengthsent = 0;
 
   remote_addr.addr = htonl(address);
   netconn_connect(conn, &remote_addr, port);
 
   // create a buffer
   buf = netbuf_new();
-  // make the buffer point to the data that should be sent
-  netbuf_ref( buf, data, length);
-  // send the data
-  netconn_send( conn, buf);
-  // deallocated the buffer
-  netbuf_delete(buf);
+  if( buf != NULL )
+  {
+    netbuf_ref( buf, data, length); // make the buffer point to the data that should be sent
+    netconn_send( conn, buf); // send the data
+    lengthsent = length;
+    netbuf_delete(buf); // deallocate the buffer
+  }
 
-  // return the connection addr & port
-  // netconn_bind( conn, &prior_addr, port );
-
-  return length;
+  return lengthsent;
 }
 
 /**	
@@ -882,20 +872,26 @@ int DatagramSocketReceive( void* datagramSocket, int incomingPort, int* address,
   struct netconn *conn = (struct netconn*)datagramSocket;
   struct netbuf *buf;
   struct ip_addr *addr;
-  int buflen;
+  int buflen = 0;
+
+  int test = 0;
 
   netconn_bind( conn, IP_ADDR_ANY, incomingPort );
     
   buf = netconn_recv( conn );
-  buflen = netbuf_len( buf );
-
-  // copy the contents of the received buffer into
-  //the supplied memory pointer 
-  netbuf_copy(buf, data, length);
-  addr = netbuf_fromaddr(buf);
-  *port = netbuf_fromport(buf);
-  *address = ntohl( addr->addr );
-  netbuf_delete(buf);
+  if( buf != NULL )
+  {
+    buflen = netbuf_len( buf );
+    // copy the contents of the received buffer into
+    //the supplied memory pointer 
+    netbuf_copy(buf, data, length);
+    addr = netbuf_fromaddr(buf);
+    *port = netbuf_fromport(buf);
+    *address = ntohl( addr->addr );
+    netbuf_delete(buf);
+  }
+  else
+    test = 2;  // testing if this ever comes back as NULL
 
   /* if the length of the received data is larger than
   len, this data is discarded and we return len.
@@ -979,7 +975,7 @@ void Network_SetWebServerEnabled( int state )
 void Network_StartWebServer( )
 {
   if( Network->WebServerTaskPtr == NULL )
-    Network->WebServerTaskPtr = TaskCreate( WebServer, "WebServ", 1200, NULL, 4 );
+    Network->WebServerTaskPtr = TaskCreate( WebServer, "WebServ", 1600, NULL, 4 );
 }
 
 void Network_StopWebServer( )
@@ -1006,8 +1002,6 @@ void Network_DhcpStart( struct netif* netif )
   Network_SetPending( 1 ); // set a flag so nobody else tries to set up this netif
   int count = 0;
   dhcp_start( netif );
-  Network->DhcpFineTaskPtr = TaskCreate( DhcpFineTask, "DhcpFine", 600, 0, 1 );
-  Network->DhcpCoarseTaskPtr = TaskCreate( DhcpCoarseTask, "DhcpCoarse", 400, 0, 1 );
   // now hang out for a second until we get an address
   // if DHCP is enabled but we don't find a DHCP server, just use the network config stored in EEPROM
   while( netif->ip_addr.addr == 0 && count < 100 ) // timeout after 10 (?) seconds of waiting for a DHCP address
@@ -1023,6 +1017,8 @@ void Network_DhcpStart( struct netif* netif )
     gw.addr = Network->TempGateway;
     netif_set_addr( netif, &ip, &mask, &gw );
   }
+  sys_timeout( DHCP_FINE_TIMER_MSECS, dhcp_fine_tmr, NULL );
+  sys_timeout( DHCP_COARSE_TIMER_SECS * 1000, dhcp_coarse_tmr, NULL );
   Network_SetPending( 0 );
   return;
 }
@@ -1030,34 +1026,10 @@ void Network_DhcpStart( struct netif* netif )
 void Network_DhcpStop( struct netif* netif )
 {
   dhcp_release( netif );
-  TaskDelete( Network->DhcpFineTaskPtr );
-  TaskDelete( Network->DhcpCoarseTaskPtr );
-  Network->DhcpFineTaskPtr = NULL;
-  Network->DhcpCoarseTaskPtr = NULL;
+  sys_untimeout( dhcp_fine_tmr, NULL );
+  sys_untimeout( dhcp_coarse_tmr, NULL );
   netif_set_up(netif); // bring the interface back up, as dhcp_release() takes it down
   return;
-}
-
-// TODO - eventually create these as timers instead of tasks
-// right now, the dhcp_tmr functions cannot be called from within the Timer ISR
-void DhcpFineTask( void* p )
-{
-  (void)p;
-  while( true )
-  {
-    dhcp_fine_tmr();
-    Sleep( DHCP_FINE_TIMER_MSECS );
-  }
-}
-
-void DhcpCoarseTask( void* p )
-{
-  (void)p;
-  while( true )
-  {
-    dhcp_fine_tmr();
-    Sleep( DHCP_COARSE_TIMER_SECS * 1000 );
-  }
 }
 
 
@@ -1130,9 +1102,6 @@ int Network_Init( )
   EMAC_if.name[1] = 'n';
   EMAC_if.num = 0;
   Network_SetPending( 0 ); // all done for now
-
-  if( dhcp )
-    Network_DhcpStart( &EMAC_if );
   
   if( NetworkOsc_GetTcpAutoConnect( ) )
   {
@@ -1143,20 +1112,14 @@ int Network_Init( )
   if( Network_GetWebServerEnabled( ) )
     Network_StartWebServer( );
   
-  
-  /*
-  hmm...some work to get this together.
-  vSemaphoreCreateBinary( Network.semaphore );
-  
-  
-  if( !Timer_GetActive() )
-    Timer_SetActive( true );
-  Timer_InitializeEntry( &Network.DhcpFineTimer, Network_DhcpFineCallback, 0, DHCP_FINE_TIMER_MSECS, true);
-  // timer acting weird at the moment.......
-  Timer_InitializeEntry( &Network.DhcpCoarseTimer, Network_DhcpCoarseCallback, 1, DHCP_COARSE_TIMER_SECS * 150, true);
-  Timer_Set( &Network.DhcpFineTimer );
-  Timer_Set( &Network.DhcpCoarseTimer );
-  */
+  if( dhcp )
+    Network_DhcpStart( &EMAC_if );
+  else
+  {
+    sys_untimeout( dhcp_fine_tmr, NULL );
+    sys_untimeout( dhcp_coarse_tmr, NULL );
+  }
+
   return CONTROLLER_OK;
 }
 
@@ -1336,6 +1299,9 @@ int Network_Init( )
 
 void NetworkOsc_SetTcpAutoConnect( int yesorno )
 {
+  int val = yesorno;
+  if( val != 1 )
+    val = 0;
   if( yesorno != NetworkOsc_GetTcpAutoConnect( ) ) // only write it if it has changed
     Eeprom_Write( EEPROM_TCP_AUTOCONNECT, (uchar*)&yesorno, 4 );
   if( Network->TcpRequested == 0 && yesorno ) // if we're not already connected, connect now
@@ -1349,7 +1315,10 @@ int NetworkOsc_GetTcpAutoConnect( )
 {
   int state;
   Eeprom_Read( EEPROM_TCP_AUTOCONNECT, (uchar*)&state, 4 );
-  return state;
+  if( state != 1 )
+    return 0;
+  else
+    return state;
 }
 
 int NetworkOsc_GetTcpRequested( )
@@ -1375,7 +1344,7 @@ const char* NetworkOsc_GetName( void )
 int NetworkOsc_ReceiveMessage( int channel, char* message, int length )
 {
   if ( Network_GetPending() )
-    return Osc_SubsystemError( channel, NetworkOsc_Name, "Network initializing...please wait." );
+    return CONTROLLER_ERROR_NO_NETWORK;
   
   int status = Osc_GeneralReceiverHelper( channel, message, length, 
                                 NetworkOsc_Name,

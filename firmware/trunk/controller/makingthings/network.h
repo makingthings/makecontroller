@@ -48,8 +48,6 @@ struct Network_
   int TcpOutAddress;
   int TcpOutPort;
   bool TcpRequested;
-  void* DhcpFineTaskPtr;
-  void* DhcpCoarseTaskPtr;
   void* WebServerTaskPtr;
 };
 
