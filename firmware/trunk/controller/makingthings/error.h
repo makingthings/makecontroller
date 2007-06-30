@@ -55,6 +55,7 @@
 #define CONTROLLER_ERROR_NO_NETWORK                 -23
 #define CONTROLLER_ERROR_STRING_TOO_LONG            -24
 #define CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE          -25
+#define CONTROLLER_ERROR_WRITE_FAILED               -26
 
 #define CONTROLLER_ERROR_COUNT_MISMATCH             -100
 #define CONTROLLER_ERROR_START_FAILED               -101
