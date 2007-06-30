@@ -110,6 +110,14 @@ tcpip_thread(void *arg)
 #if IP_REASSEMBLY
   sys_timeout(1000, ip_timer, NULL);
 #endif
+  // MakingThings: need to start these timers from a thread that will be hanging around for a while 
+  // (ie, not the startup task)
+  if( Network_GetDhcpEnabled( ) )
+  {
+    sys_timeout( DHCP_FINE_TIMER_MSECS, dhcp_fine_tmr, NULL );
+    sys_timeout( DHCP_COARSE_TIMER_SECS * 1000, dhcp_coarse_tmr, NULL );
+  }
+
   if (tcpip_init_done != NULL) {
     tcpip_init_done(tcpip_init_done_arg);
   }

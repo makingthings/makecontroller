@@ -119,9 +119,9 @@ void dhcp_arp_reply(struct netif *netif, struct ip_addr *addr);
 #endif
 
 /** to be called every minute */
-void dhcp_coarse_tmr(void);
+void dhcp_coarse_tmr(void *arg);
 /** to be called every half second */
-void dhcp_fine_tmr(void);
+void dhcp_fine_tmr(void *arg);
  
 /** DHCP message item offsets and length */
 #define DHCP_MSG_OFS (UDP_DATA_OFS)  
