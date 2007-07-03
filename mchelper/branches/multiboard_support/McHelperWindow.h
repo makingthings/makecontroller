@@ -51,6 +51,8 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 	  	            ERROR_CANT_OPEN_SOCKET, ERROR_ALREADY_PROGRAMMED,
 	  	            ERROR_INCORRECT_RESPONSE, ERROR_NO_RESPONSE};
 	
+        enum OutputColumn { TO_FROM, MESSAGE, TIMESTAMP };
+        
         McHelperWindow( McHelperApp* application );
 		
         void message( int level, char *format, ... );
@@ -116,6 +118,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
         // Summary tab editing
         void systemNameChanged( );
         void systemSerialNumberChanged( );
+        void userInitiatedBoardChange( Board* board, QString attribute, QString orig_value, QString new_value );
         
         // Devices list view functions
         void deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous );

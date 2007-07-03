@@ -448,49 +448,51 @@ void McHelperWindow::message( QString string, MessageEvent::Types type, QString 
         {
             case MessageEvent::Info:
             case MessageEvent::Notice:
-                bgColor = QColor(225, 225, 225, 127); // white
+                bgColor = QColor(225, 225, 225, 255); // light-light grey
                 break;
             
             case MessageEvent::Response:
-                bgColor = QColor(98, 191, 142, 127); // Green
+                bgColor = QColor(221, 255, 221, 255); // Green
                 break;
                 
             case MessageEvent::Error:
-                bgColor = QColor(219, 62, 0, 127); // Red
+                bgColor = QColor(255, 221, 221, 255); // Red
                 break;
               
             case MessageEvent::Warning:
-                bgColor = QColor(255, 176, 59, 127); // Orange
+                bgColor = QColor(255, 225, 185, 255); // Orange
                 break;
 
             case MessageEvent::Command:
             default:
-                bgColor = Qt::white;;
+                bgColor = Qt::white;
         } 
            
         // Increase the row count
         outputTable->setRowCount(outputTable->rowCount() + 1);
-        
-        // Timestamp
-        QTableWidgetItem *timeStampItem = new QTableWidgetItem( QTime::currentTime().toString() );
-        timeStampItem->setTextAlignment(Qt::AlignRight);
-        timeStampItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-        timeStampItem->setBackgroundColor( bgColor );
-        outputTable->setItem(outputTable->rowCount() - 1, 0, timeStampItem);
         
         // From
         QTableWidgetItem *fromItem = new QTableWidgetItem(from);
         fromItem->setTextAlignment(Qt::AlignHCenter);
         fromItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
         fromItem->setBackgroundColor( bgColor );
-        outputTable->setItem(outputTable->rowCount() - 1, 1, fromItem );
+        outputTable->setItem(outputTable->rowCount() - 1, McHelperWindow::TO_FROM, fromItem );
+        outputTable->resizeColumnToContents(McHelperWindow::TO_FROM);
         
         // Message
         QTableWidgetItem *messageItem = new QTableWidgetItem(string);
         messageItem->setTextAlignment(Qt::AlignLeft);
         messageItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
         messageItem->setBackgroundColor( bgColor );
-        outputTable->setItem(outputTable->rowCount() - 1, 2, messageItem);
+        outputTable->setItem(outputTable->rowCount() - 1, McHelperWindow::MESSAGE, messageItem);
+        
+        // Timestamp
+        QTableWidgetItem *timeStampItem = new QTableWidgetItem( QTime::currentTime().toString() );
+        timeStampItem->setTextAlignment(Qt::AlignRight);
+        timeStampItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+        timeStampItem->setBackgroundColor( bgColor );
+        outputTable->setItem(outputTable->rowCount() - 1, McHelperWindow::TIMESTAMP, timeStampItem);
+        outputTable->resizeColumnToContents(McHelperWindow::TIMESTAMP);
         
         // Set the row height to allow more data to show than
         // the default height would and scroll down to the last item
@@ -594,16 +596,26 @@ void McHelperWindow::setupOutputTable()
   
   // The message column should stretch to fill the table
   QHeaderView *headerHView = outputTable->horizontalHeader();
-  headerHView->setResizeMode(QHeaderView::Interactive);
-  headerHView->resizeSection(0, 60);
-  headerHView->resizeSection(1, 50);
-  headerHView->setResizeMode(2, QHeaderView::Stretch);
-
+  //headerHView->setResizeMode(QHeaderView::Interactive);
+  //headerHView->resizeSection(McHelperWindow::TO_FROM, 50);
+  
+  headerHView->setResizeMode(McHelperWindow::TO_FROM, QHeaderView::ResizeToContents);
+  headerHView->setResizeMode(McHelperWindow::MESSAGE, QHeaderView::Stretch);
+  headerHView->setResizeMode(McHelperWindow::TIMESTAMP, QHeaderView::ResizeToContents);
+  //headerHView->resizeSection(McHelperWindow::TIMESTAMP, 60 );
+  
+  // Don't highlight selected headers and don't make
+  // them clickable
+  headerHView->setHighlightSections( false );
+  headerHView->setClickable ( false );
+  
   //QHeaderView *headerVView = outputTable->verticalHeader();
   //headerVView->setResizeMode(QHeaderView::ResizeToContents);
   
   // We don't want to show the vertical header column
   outputTable->verticalHeader()->hide();
+  
+  outputTable->setShowGrid(false);
 }
 
 void McHelperWindow::about( )  // set the version number here.
@@ -617,11 +629,7 @@ void McHelperWindow::systemNameChanged( )
     if( board == NULL )
     return;
 
-    QString cmd = QString( "%1 %2" ).arg("/system/name").arg(systemName->text());
-    board->sendMessage( cmd );
-    
-    // :TODO: Maybe we want to add these to the output, maybe we don't?
-    messageThreadSafe( cmd, MessageEvent::Command, board->key );
+    userInitiatedBoardChange( board, QString("/system/name"), board->name, systemName->text() );
 }
 
 void McHelperWindow::systemSerialNumberChanged( )
@@ -629,13 +637,30 @@ void McHelperWindow::systemSerialNumberChanged( )
     Board* board = (Board*)listWidget->currentItem();
     if( board == NULL )
     return;
-    
-    QString cmd = QString( "%1 %2" ).arg("/system/serialnumber").arg(systemSerialNumber->text());
-    board->sendMessage( cmd );
-    
-    // :TODO: Maybe we want to add these to the output, maybe we don't?
-    messageThreadSafe( cmd, MessageEvent::Command, board->key );
+
+    userInitiatedBoardChange( board, QString("/system/serialnumber"), board->serialNumber, systemSerialNumber->text() );
 }
+
+void McHelperWindow::userInitiatedBoardChange( Board* board, QString attribute, QString orig_value, QString new_value )
+{
+    // Only make the change if the value has changed
+    if ( orig_value.compare( new_value ) != 0 )
+    {
+        QString cmd = QString( "%1 %2" ).arg(attribute).arg(new_value);
+        board->sendMessage( cmd );
+        
+        // Re-query /system/info so that the board and summary tab get updated
+        Sleep( 250 );
+        board->sendMessage( QString("/system/info") );
+        
+        // Give some visual feedback that the change occurred
+        statusBar()->showMessage( tr("Board changed: ").append(cmd), 2000);
+        
+        // :TODO: Maybe we want to add these to the output, maybe we don't?
+        messageThreadSafe( cmd, MessageEvent::Command, board->key );
+    }
+}
+
 
 #ifdef Q_WS_WIN
 void McHelperWindow::usbRemoved( HANDLE deviceHandle )

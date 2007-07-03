@@ -594,17 +594,17 @@
           </property>
           <column>
            <property name="text" >
-            <string>Timestamp</string>
-           </property>
-          </column>
-          <column>
-           <property name="text" >
             <string>To/From</string>
            </property>
           </column>
           <column>
            <property name="text" >
             <string>Message</string>
+           </property>
+          </column>
+          <column>
+           <property name="text" >
+            <string>Timestamp</string>
            </property>
           </column>
          </widget>
