@@ -259,6 +259,14 @@ Samba::Status Samba::bootFromFlash( )
     printf( "Couldn't flip the bit to boot from Flash.\n" );
     return ERROR_SETTING_BOOT_BIT;
   }
+  
+  /* wait for EFC to finish command */
+  do {
+    if( readWord( 0xffffff68, &val ) < 0 ) {
+      return ERROR_SETTING_BOOT_BIT;
+    }
+  } while( !val & 0x1 );
+  
   return OK;
 }
 
