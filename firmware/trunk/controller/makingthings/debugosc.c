@@ -21,10 +21,12 @@
 	Controller Debug.
 */
 
+#include "config.h"
+#ifdef OSC
+
 #include "debug.h"
 #include <stdio.h>
 #include "osc.h"
-#include "config.h"
 #include <stdarg.h>
 
 #define DEBUG_MAX_MESSAGE 100
@@ -276,16 +278,20 @@ int Debug( int level, char* format, ... )
     va_start( args, format );
     vsnprintf( DebugData->message, DEBUG_MAX_MESSAGE, format, args ); 
     // va_end( args );
+    #ifdef MAKE_CTRL_USB
     if ( DebugData->usb && Usb_GetActive() )
     {
       Osc_CreateMessage( OSC_CHANNEL_USB, "/debug/message", ",s", DebugData->message );
       Osc_SendPacket( OSC_CHANNEL_USB );
     }
+    #endif
+    #ifdef MAKE_CTRL_NETWORK
     if ( DebugData->udp && Network_GetActive() )
     {
       Osc_CreateMessage( OSC_CHANNEL_UDP, "/debug/message", ",s", DebugData->message );
       Osc_SendPacket( OSC_CHANNEL_UDP );
     }
+    #endif
   }
   return CONTROLLER_OK;
 }
@@ -345,8 +351,6 @@ int Debug( int level, char* format, ... )
     To set this to off, send a message like:
     \code /debug/udp 0 \endcode
 */
-
-#ifdef OSC
 
 #include "osc.h"
 #include "string.h"

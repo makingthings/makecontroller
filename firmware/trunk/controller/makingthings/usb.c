@@ -20,20 +20,20 @@
 	Functions for controlling the USB port on the Make Controller Board.
 */
 
+#include "config.h"
+#ifdef MAKE_CTRL_USB
+
 #include "usb.h"
 #include "rtos.h"
 #include "stdio.h"
 #include "USB-CDC.h"
-#include "config.h"
 #include "queue.h"
 #include "string.h"
 
-int Usb_Write(xBULKBUFFER *q);
-int Usb_Read(char *buffer, int length);
+#define MAX_INCOMING_SLIP_PACKET 400
 
 extern xQueueHandle xTxCDC; 
 extern xQueueHandle xRxCDC; 
-
 
 static int Usb_Users;
 // set by the running task when it gets started
@@ -44,6 +44,7 @@ int Usb_Running;
 #define TICKRATE 1000
 
 void vUSBCDCTask( void *pvParameters );
+int TestAndSend(xBULKBUFFER *pq, char newByte);
 
 /** \defgroup Usb
 	The Usb subsystem provides access to USB CDC functionality.  On Mac OS X, when this
@@ -71,7 +72,7 @@ int Usb_SetActive( int state )
   {
     if ( Usb_Users++ == 0 )
     {
-      /* Create the USB task.*/
+      // Create the USB task.
       TaskCreate(  vUSBCDCTask, "USB", mainUSB_TASK_STACK, NULL, mainUSB_PRIORITY );
 
       while ( !Usb_Running )
@@ -109,7 +110,6 @@ int Usb_GetActive( )
 	@param timeout an integer specifying, in milliseconds, how long to wait for a character before quitting
 	@return the latest character from the USB port, or -1 if there was none
 */
-#define MAX_BUFFER_LENGTH 400
 int Usb_Read(char *buffer, int length)
 {
   static xBULKBUFFER DeQueue;
@@ -146,45 +146,45 @@ int Usb_Read(char *buffer, int length)
   while (1 second?) to return.
 	@param c the character to send out
 */
-#if 0
-int Usb_Put( int c, int timeout )
+int Usb_Write( char* buffer, int length )
 {
   if ( !Usb_Users )
     Usb_SetActive( 1 );
 
-  vUSBSendByte( (char)c, timeout / TICKRATE );
-  return CONTROLLER_OK;
-}
-#else
+  xBULKBUFFER q;
+  q.Count = 0;
+  int count = length;
+  char *bp = buffer;
 
-int Usb_Write(xBULKBUFFER *q)
-{
-  if ( !Usb_Users )
-    Usb_SetActive( 1 );
+  while( count-- )
+    TestAndSend( &q, *bp++ );
 
-  while(xQueueSend( xTxCDC, q, 0) != pdPASS)
-    {
+  // if bytes have been loaded into the buffer, but not sent because it's not full yet, send it now
+  if( q.Count ) 
+  {
+    while(xQueueSend( xTxCDC, &q, 0) != pdPASS)
       Sleep( usbSHORTEST_DELAY );
-    }
+    q.Count = 0;
+  }
   
   return CONTROLLER_OK;
 }
-#endif
-#if 0
-int QueueAndTest(xBULKBUFFER *pq, char newByte, int i)
+
+// the outgoing USB hardware can write a block of 64 (EP_FIFO) bytes.
+// test the buffer's size and send it if we're full.
+int TestAndSend(xBULKBUFFER *pq, char newByte)
 {
-  pq->Data[i++] = newByte;
+  pq->Data[pq->Count++] = newByte;
+  
+  if(pq->Count == EP_FIFO) 
+  { 
+    while(xQueueSend( xTxCDC, pq, 0) != pdPASS)
+      Sleep( usbSHORTEST_DELAY );
+    pq->Count = 0; 
+  }
 
-  if (i == EP_FIFO) 
-    { 
-      queue.Count = i; 
-      Usb_Write(&queue); 
-      i = 0; 
-    }
-
-  return i;
+  return pq->Count;
 }
-#endif
 
 
 // SLIP codes
@@ -195,84 +195,86 @@ int QueueAndTest(xBULKBUFFER *pq, char newByte, int i)
 
 int Usb_SlipSend( char* buffer, int length )
 {
-  xBULKBUFFER queue;
-  int i = 0;
+  char outgoingBuf[ length * 2 ];
+  char *obp = outgoingBuf, *bp = buffer;
+  int count = length;
 
-  queue.Data[i++] = (char) END;
+  *obp++ = (char)END;
 
-  while( length-- )
+  while( count-- )
+  {
+    switch(*bp)
     {
-      switch(*buffer)
-	{
-	  // if it's the same code as an END character, we send a special 
-	  //two character code so as not to make the receiver think we sent an END
-	case END:
-	  queue.Data[i++] = (char) ESC;
-	  if (i == EP_FIFO) { queue.Count = i; Usb_Write(&queue); i = 0; }
-	  queue.Data[i++] = (char) ESC_END;
-	  if (i == EP_FIFO) { queue.Count = i; Usb_Write(&queue); i = 0; }
-	  break;
-	  
-	  // if it's the same code as an ESC character, we send a special 
-	  //two character code so as not to make the receiver think we sent an ESC
-	case ESC:
-	  queue.Data[i++] = (char) ESC;
-	  if (i == EP_FIFO) { queue.Count = i; Usb_Write(&queue); i = 0; }
-	  queue.Data[i++] = (char) ESC_ESC;
-	  if (i == EP_FIFO) { queue.Count = i; Usb_Write(&queue); i = 0; }
-	  break;
-	  //otherwise, just send the character
-	default:
-	  queue.Data[i++] = *buffer;
-	  if (i == EP_FIFO) { queue.Count = i; Usb_Write(&queue); i = 0; }
-	}
-      buffer++;
+      // if it's the same code as an END character, we send a special 
+      //two character code so as not to make the receiver think we sent an END
+      case END:
+        *obp++ = (char) ESC;
+        *obp++ = (char) ESC_END;
+        break;
+        // if it's the same code as an ESC character, we send a special 
+        //two character code so as not to make the receiver think we sent an ESC
+      case ESC:
+        *obp++ = (char) ESC;
+        *obp++ = (char) ESC_ESC;
+        break;
+        //otherwise, just send the character
+      default:
+        *obp++ = *bp;
     }
+    bp++;
+  }
   
-  // tell the receiver that we're done sending the packet
-  queue.Data[i++] = END;
-  queue.Count = i; 
-  Usb_Write(&queue);
+  *obp++ = END; // tell the receiver that we're done sending the packet
+  int sendLength = obp - outgoingBuf;
+  Usb_Write( outgoingBuf, sendLength );
   
   return CONTROLLER_OK;
 }
 
-/* 
- */
-
 int Usb_SlipReceive( char* buffer, int length )
 {
-  int started = 0, count = 0;
-  int justGot;
-  char parseBuf[EP_FIFO];
-  char* bp = buffer, *pbp;
+  int started = 0, count = 0, i;
+  static char parseBuf[MAX_INCOMING_SLIP_PACKET], *pbp = parseBuf;
+  static int bufRemaining = 0;
+  char* bp = buffer;
 
   while ( count < length )
   {
-    justGot = Usb_Read( parseBuf, length );
-    pbp = parseBuf;
+    if( !bufRemaining ) // if there's nothing left over from last time
+    {
+      bufRemaining = Usb_Read( parseBuf, MAX_INCOMING_SLIP_PACKET );
+      int test;
+      if( bufRemaining > 26 )
+        test = 0;
+      pbp = parseBuf;
+    }
 
-    int i;
-    for( i = 0; i < justGot; i++ )
+    for( i = 0; i < bufRemaining; i++ )
     {
       switch( *pbp )
       {
         case END:
           if( started && count ) // it was the END byte
+          {
+            bufRemaining--; // decrement this here since we're returning
             return count; // We're done now if we had received any characters
+          }
           else // skipping all starting END bytes
             started = true;
-          break;					
+          break;
         case ESC:
-          // if it's the same code as an ESC character, we just want to skip it and 
-          // stick the next byte in the packet
-          pbp++;
-          // no break here, just stick it in the packet		
+          // if it's an ESC character, we just want to skip it and stick the next byte in the packet
+          pbp++;  // no break here
         default:
-          *bp++ = *pbp;
-          count++;
+          if( started )
+          {
+            *bp++ = *pbp;
+            count++;
+          }
+          break;
       }
       pbp++;
+      bufRemaining--;
     }
     Sleep(1);
   }
@@ -339,5 +341,7 @@ int UsbOsc_PropertyGet( int property )
 }
 
 #endif  // OSC
+
+#endif // MAKE_CTRL_USB
 
 

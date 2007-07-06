@@ -61,6 +61,8 @@ Changes from V4.0.4
 	  rx descriptor.
 */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
 
 /* Standard includes. */
 #include <string.h>
@@ -79,7 +81,7 @@ Changes from V4.0.4
 #include "AT91SAM7X256.h"
 
 /* MAKINGTHING: ADDED */
-#include "config.h"
+
 #include "Board.h"
 
 /* USE_RMII_INTERFACE must be defined as 1 to use an RMII interface, or 0
@@ -898,3 +900,5 @@ void vEMACWaitForInput( void )
 	we simply time out. */
 	xSemaphoreTake( xSemaphore, emacBLOCK_TIME_WAITING_FOR_INPUT );
 }
+
+#endif // MAKE_CTRL_NETWORK

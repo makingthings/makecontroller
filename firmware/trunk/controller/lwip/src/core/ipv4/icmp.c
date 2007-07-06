@@ -33,6 +33,9 @@
 /* Some ICMP messages should be passed to the transport protocols. This
    is not implemented. */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 #include <string.h>
 
 #include "lwip/opt.h"
@@ -194,6 +197,7 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
 
 #endif /* IP_FORWARD */
 
+#endif // MAKE_CTRL_NETWORK
 
 
 

@@ -41,6 +41,9 @@
  *
  */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 #include <string.h>
 
 #include "lwip/opt.h"
@@ -1159,6 +1162,7 @@ tcp_pcbs_sane(void)
 }
 #endif /* TCP_DEBUG */
 #endif /* LWIP_TCP */
+#endif // MAKE_CTRL_NETWORK
 
 
 

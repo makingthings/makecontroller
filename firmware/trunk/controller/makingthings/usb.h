@@ -28,23 +28,14 @@
 int Usb_SetActive( int state );
 int Usb_GetActive( void );
 
-int Usb_Put( int c, int timeout );
-int Usb_Get( int timeout );
+int Usb_Write( char *buffer, int length );
+int Usb_Read(char *buffer, int length);
 
-/**
- */
 int Usb_SlipSend( char* buffer, int length );
-
-/* 
- */
 int Usb_SlipReceive( char* buffer, int length );
 
-#ifdef OSC
-
-/* OSC Interface */
+// OSC Interface
 const char* UsbOsc_GetName( void );
 int UsbOsc_ReceiveMessage( int channel, char* message, int length );
-
-#endif // OSC
 
 #endif

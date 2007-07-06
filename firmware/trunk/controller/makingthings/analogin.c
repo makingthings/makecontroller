@@ -39,7 +39,7 @@
 
 #include "io.h"
 
-#include "AnalogIn.h"
+#include "analogin.h"
 #include "analogin_internal.h"
 
 #define ANALOGIN_0_IO IO_PB27
@@ -111,11 +111,7 @@ int AnalogIn_SetActive( int index, int state )
   }
   else
   {
-    if( AnalogIn )
-    {
-      Free( AnalogIn );
-      AnalogIn = NULL;
-    }
+    // TODO: check if any channels are still active and if not, Free( ) the AnalogIn struct
     return AnalogIn_Stop( index );
   }
 }

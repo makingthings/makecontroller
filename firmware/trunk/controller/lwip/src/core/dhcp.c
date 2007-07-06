@@ -68,6 +68,9 @@
  *
  */
  
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 #include <string.h>
  
 #include "lwip/stats.h"
@@ -1472,3 +1475,5 @@ static u32_t dhcp_get_option_long(u8_t *ptr)
 }
 
 #endif /* LWIP_DHCP */
+
+#endif // MAKE_CTRL_NETWORK

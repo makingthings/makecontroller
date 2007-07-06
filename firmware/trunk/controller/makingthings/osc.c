@@ -70,9 +70,10 @@
 	\code /appled/0/state 1 \endcode
 */
 
-//#ifdef OSC
 
 #include "config.h"
+#ifdef OSC
+
 #include "osc.h"
 #include "network.h"
 #include "rtos.h"
@@ -182,8 +183,6 @@ int Osc_UdpPacketSend( char* packet, int length, int replyAddress, int replyPort
 
 int OscBusy;
 
-//void Osc_ResetChannel( OscChannel* ch );
-
 
 /**
 	Osc_SetActive.
@@ -204,9 +203,13 @@ void Osc_SetActive( int state )
     for( i = 0; i < OSC_SUBSYSTEM_COUNT; i++ )
       Osc->subsystem[ i ] = NULL;
 
+    #ifdef MAKE_CTRL_NETWORK
     Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 2000, (void*)OSC_CHANNEL_UDP, 3 );
-    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1200, (void*)OSC_CHANNEL_USB, 3 );
     Osc->TcpTaskPtr = NULL;
+    #endif
+    #ifdef MAKE_CTRL_USB
+    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1200, (void*)OSC_CHANNEL_USB, 3 );
+    #endif
 
     vSemaphoreCreateBinary( Osc->scratch1Semaphore );
     vSemaphoreCreateBinary( Osc->scratch2Semaphore );
@@ -216,8 +219,12 @@ void Osc_SetActive( int state )
   }
   if( !state && Osc )
   {
+    #ifdef MAKE_CTRL_USB
     TaskDelete( Osc->UsbTaskPtr );
+    #endif
+    #ifdef MAKE_CTRL_NETWORK
     TaskDelete( Osc->UdpTaskPtr );
+    #endif
     int i;
     for( i = 0; i < OSC_CHANNEL_COUNT; i++ )
       Free( Osc->channel[ i ] );
@@ -239,24 +246,6 @@ int Osc_GetActive( )
   return Osc != NULL;
 }
 
-int Osc_UsbPacketSend( char* packet, int length, int replyAddress, int replyPort )
-{
-  (void)replyAddress; // get rid of the spurious 'variable not used' warnings
-  (void)replyPort;
-  return Usb_SlipSend( packet, length );
-}
-
-int Osc_UdpPacketSend( char* packet, int length, int replyAddress, int replyPort )
-{
-  if ( replyAddress != 0 && replyPort != 0 )
-  {
-    int retval = DatagramSocketSend( Osc->sendSocket, replyAddress, replyPort, packet, length );
-    return retval;
-  }
-  else
-    return CONTROLLER_ERROR_NO_ADDRESS;
-}
-
 int Osc_GetRunning( )
 {
   if( Osc )
@@ -265,6 +254,7 @@ int Osc_GetRunning( )
     return 0;
 }
 
+#ifdef MAKE_CTRL_NETWORK
 void Osc_UdpTask( void* parameters )
 {
   int channel = (int)parameters;
@@ -299,6 +289,17 @@ void Osc_UdpTask( void* parameters )
     }
     TaskYield( );
   }
+}
+
+int Osc_UdpPacketSend( char* packet, int length, int replyAddress, int replyPort )
+{
+  if ( replyAddress != 0 && replyPort != 0 )
+  {
+    int retval = DatagramSocketSend( Osc->sendSocket, replyAddress, replyPort, packet, length );
+    return retval;
+  }
+  else
+    return CONTROLLER_ERROR_NO_ADDRESS;
 }
 
 void Osc_StartTcpTask( )
@@ -380,7 +381,9 @@ void Osc_TcpTask( void* parameters )
   Osc->channel[ OSC_CHANNEL_TCP ] = NULL;
   TaskDelete( Osc->TcpTaskPtr );
 }
+#endif // MAKE_CTRL_NETWORK
 
+#ifdef MAKE_CTRL_USB
 void Osc_UsbTask( void* parameters )
 {
   int channel = (int)parameters;
@@ -391,9 +394,7 @@ void Osc_UsbTask( void* parameters )
     Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
   }
   OscChannel *ch = Osc->channel[ channel ];
-
   ch->sendMessage = Osc_UsbPacketSend;
-
   Osc_ResetChannel( ch );
 
   // Chill until the USB connection is up
@@ -405,16 +406,19 @@ void Osc_UsbTask( void* parameters )
   while ( true )
   {
     int length = Usb_SlipReceive( ch->incoming, OSC_MAX_MESSAGE_IN );
-
     if ( length > 0 )
-    {
-      OscBusy = 1;
       Osc_ReceivePacket( channel, ch->incoming, length );
-      OscBusy = 0;
-    }
     Sleep( 1 );
   }
 }
+
+int Osc_UsbPacketSend( char* packet, int length, int replyAddress, int replyPort )
+{
+  (void)replyAddress;
+  (void)replyPort;
+  return Usb_SlipSend( packet, length );
+}
+#endif // MAKE_CTRL_USB
 
 int Osc_SetReplyAddress( int channel, int replyAddress )
 {
@@ -1092,7 +1096,6 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
       strcat( Osc->scratch1, numberBuf );
       strcat( Osc->scratch1, "/" );
       strcat( Osc->scratch1, propertyNames[ propertyIndex ] );
-      
       //snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, number, propertyNames[ propertyIndex ] ); 
       Osc_CreateMessage( channel, Osc->scratch1, ",i", value );
       Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
@@ -1106,7 +1109,9 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
         {
           int value = (*propertyGet)( index, propertyIndex );
           Osc_LockScratchBuf( Osc->scratch1Semaphore );
-          snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, index, propertyNames[ propertyIndex ] ); 
+          char buf[ 5 ]; // FIX ME: this is a complete disaster, but for some reason, this snprintf no longer
+          itoa( index, buf, 10 ); // wants to format index 0 properly...wtf?
+          snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%s/%s", subsystemName, buf, propertyNames[ propertyIndex ] ); 
           Osc_CreateMessage( channel, Osc->scratch1, ",i", value );
           Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
         }
@@ -1650,6 +1655,6 @@ int Osc_EndianSwap( int a )
 
 }
 
-//#endif // OSC
+#endif // OSC
 
 

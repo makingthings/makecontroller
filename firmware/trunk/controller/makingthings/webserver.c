@@ -52,6 +52,9 @@
   We have extended it slightly to make it a bit more pretty and to add
   some additional functions to it */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 /* Standard includes. */
 #include <stdio.h>
 #include <string.h>
@@ -68,7 +71,7 @@
 #include "lwip/stats.h"
 #include "netif/loopif.h"
 
-struct Web_Server* Server = NULL;
+Web_Server* Server = NULL;
 static void ProcessConnection( struct netconn* NetConn );
 
 /* 
@@ -119,6 +122,7 @@ static void ProcessConnection( struct netconn *NetConn )
 			strcat( Server->DynamicPage, "<p>Tasks Currently Running" );
 			strcat( Server->DynamicPage, "<p><pre>Task          State  Priority  Stck Rem	#<br>-------------------------------------------" );
 			/* ... Then the list of tasks and their status... */
+      /*
 			vTaskList( (signed portCHAR*)Server->DynamicPage + strlen( Server->DynamicPage ) );	
       int i;
 
@@ -132,6 +136,7 @@ static void ProcessConnection( struct netconn *NetConn )
       }
 
       strcat( Server->DynamicPage, "</pre>" );
+      */
 
       /* ... Finally the page footer. */
 			strcat( Server->DynamicPage, HTML_END );
@@ -151,15 +156,16 @@ void WebServer( void *p )
   (void)p;
   while( Server == NULL )
   {
-    Server = Malloc( sizeof( struct Web_Server ) );
+    Server = Malloc( sizeof( Web_Server ) );
     Sleep( 100 );
   }
   // init
+  int retval = 0;
   Server->PageHits = 0;
   Server->NewConnection = NULL;
  	Server->HTTPListener = netconn_new( NETCONN_TCP );
-	netconn_bind(Server->HTTPListener, NULL, HTTP_PORT );
-	netconn_listen( Server->HTTPListener );
+	retval = netconn_bind(Server->HTTPListener, NULL, HTTP_PORT );
+	retval = netconn_listen( Server->HTTPListener );
 
   while( 1 )
 	{
@@ -174,6 +180,8 @@ void WebServer( void *p )
 
       Server->NewConnection = NULL;
 		}
+    else
+      retval = -1;
     Sleep( 5 );
 	}
 }
@@ -191,6 +199,8 @@ void CloseWebServer( )
     Server = NULL;
   }
 }
+
+#endif // MAKE_CTRL_NETWORK
 
 
 

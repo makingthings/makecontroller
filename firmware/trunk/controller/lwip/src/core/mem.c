@@ -36,15 +36,15 @@
  *
  */
 
-#include <string.h>
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
 
+#include <string.h>
 #include "lwip/arch.h"
 #include "lwip/opt.h"
 #include "lwip/def.h"
 #include "lwip/mem.h"
-
 #include "lwip/sys.h"
-
 #include "lwip/stats.h"
 
 struct mem {
@@ -308,3 +308,5 @@ mem_malloc(mem_size_t size)
   sys_sem_signal(mem_sem);
   return NULL;
 }
+
+#endif // MAKE_CTRL_NETWORK

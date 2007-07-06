@@ -38,6 +38,9 @@
  *
  */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 #include <string.h>
 
 #include "lwip/opt.h"
@@ -326,3 +329,4 @@ raw_new(u16_t proto) {
 }
 
 #endif /* LWIP_RAW */
+#endif // MAKE_CTRL_NETWORK

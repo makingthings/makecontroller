@@ -37,7 +37,9 @@
  * something that better describes your network interface.
  */
 
-/* MakingThings: ? */
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 #include <string.h>
 
 #include "lwip/opt.h"
@@ -455,5 +457,6 @@ ethernetif_init(struct netif *netif)
   return ERR_OK;
 }
 
+#endif // MAKE_CTRL_NETWORK
 
 

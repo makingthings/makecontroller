@@ -30,6 +30,9 @@
  *
  */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 /* lwIP includes. */
 #include "lwip/debug.h"
 #include "lwip/def.h"
@@ -393,3 +396,4 @@ void sys_arch_unprotect(sys_prot_t pval)
 	vPortExitCritical();
 }
 
+#endif // MAKE_CTRL_NETWORK
