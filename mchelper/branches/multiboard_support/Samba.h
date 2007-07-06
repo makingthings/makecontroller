@@ -178,7 +178,7 @@ class Samba
 	public:
     enum Status { OK, ERROR_INITIALIZING, ERROR_INCORRECT_CHIP_INFO, 
     	            ERROR_COULDNT_FIND_FILE, ERROR_COULDNT_OPEN_FILE, 
-    	            ERROR_SENDING_FILE, ERROR_SETTING_BOOT_BIT };
+    	            ERROR_SENDING_FILE, ERROR_SETTING_BOOT_BIT, ERROR_RESETTING };
 
 		Samba( SambaMonitor* monitor, MessageInterface* messageInterface );
 
@@ -187,6 +187,7 @@ class Samba
 
 		Status flashUpload( char* bin_file );
 		Status bootFromFlash( );
+		Status reset( );
 		void setUploader( UploaderThread* uploader );
 		QString getDeviceKey( );
 		int FindUsbDevices( QList<QString>* arrived );
