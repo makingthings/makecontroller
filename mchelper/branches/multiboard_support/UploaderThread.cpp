@@ -90,8 +90,6 @@ void UploaderThread::run()
 	if ( samba->bootFromFlash( ) != Samba::OK )
 		mainWindow->messageThreadSafe( QString( "Usb> Could not switch to boot from flash.") );
 		
-	msleep( 10 ); // reset doesn't seem to work without this little delay first...
-		
 	if ( samba->reset(  ) != Samba::OK )
 		mainWindow->messageThreadSafe( QString( "Usb> Could not switch to boot from flash.") );
 		
