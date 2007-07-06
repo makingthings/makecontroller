@@ -123,25 +123,6 @@ int System_SetSerialNumber( int serial )
 }
 
 /**
-	Returns the build number of this codebase.
-	@return the build number.
-*/
-int System_GetBuildNumber( void )
-{
-  return FIRMWARE_BUILD_NUMBER;
-}
-
-/**
-	Returns the version number of this codebase.
-	@return the version number.
-*/
-int System_GetVersionNumber( void )
-{
-  return FIRMWARE_VERSION_NUMBER;
-}
-
-
-/**
 	Returns the board to SAMBA mode, erasing all of FLASH.
   Leaves the board in a non-deterministic state awaiting a power cycle or reset.
 	@return CONTROLLER_OK if OK.
@@ -348,7 +329,7 @@ int System_SetReset( int sure )
 
 static char* SystemOsc_Name = "system";
 static char* SystemOsc_PropertyNames[] = { "active", "freememory", "samba", "reset", 
-                                            "serialnumber", "versionnumber", "buildnumber", 
+                                            "serialnumber", "version",
                                             "name", "info", "stack-audit", 0 }; // must have a trailing 0
 
 int SystemOsc_PropertySet( int property, char* typedata, int channel );
@@ -423,7 +404,7 @@ int SystemOsc_PropertySet( int property, char* typedata, int channel )
       System_SetSerialNumber( value );
       break;
     }
-    case 7: // name
+    case 6: // name
     {
       char* address;
       int count = Osc_ExtractData( typedata, "s", &address );
@@ -433,7 +414,7 @@ int SystemOsc_PropertySet( int property, char* typedata, int channel )
       System_SetName( address );
       break;
     }
-    case 9: // stack-audit
+    case 8: // stack-audit
     {
       int value;
       int count = Osc_ExtractData( typedata, "i", &value );
@@ -456,32 +437,30 @@ int SystemOsc_PropertyGet( int property, int channel )
   //char output[ OSC_SCRATCH_SIZE ];
   switch ( property )
   {
-    case 0:
+    case 0: // active
       value = System_GetActive( );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
       Osc_CreateMessage( channel, address, ",i", value ); 
       break;
-    case 1:
+    case 1: // freememory
       value = System_GetFreeMemory( );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
       Osc_CreateMessage( channel, address, ",i", value ); 
       break;
-    case 4:
+    case 4: // serialnumber
       value = System_GetSerialNumber( );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
       Osc_CreateMessage( channel, address, ",i", value ); 
       break;  
-    case 5:
-      value = System_GetVersionNumber( );
+    case 5: // version
+    {
+      char versionString[50];
+      snprintf( versionString, 50, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value ); 
-      break;  
-    case 6:
-      value = System_GetBuildNumber( );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value ); 
+      Osc_CreateMessage( channel, address, ",s", versionString ); 
       break;
-    case 7: // name
+    }
+    case 6: // name
     {
       char* name;
       name = System_GetName( );
@@ -489,7 +468,7 @@ int SystemOsc_PropertyGet( int property, int channel )
       Osc_CreateMessage( channel, address, ",s", name ); 
       break;
     }
-    case 8: // info
+    case 7: // info
     {
       char* name;
       char* addr;
@@ -507,7 +486,7 @@ int SystemOsc_PropertyGet( int property, int channel )
       Osc_CreateMessage( channel, address, ",sis", name, value, addr );
       break;
     }
-    case 9: // stack-audit
+    case 8: // stack-audit
       if( System->StackAuditPtr == NULL )
         value = 0;
       else
