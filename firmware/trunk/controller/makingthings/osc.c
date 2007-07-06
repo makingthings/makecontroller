@@ -87,7 +87,7 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <ctype.h>
 #include <stdarg.h>
 
@@ -1086,9 +1086,9 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
     if ( number != -1 )
     {
       int value = (*propertyGet)( number, propertyIndex );
-      char numberBuf[ 33 ];
       Osc_LockScratchBuf( Osc->scratch1Semaphore );
-      
+      /*
+      char numberBuf[ 33 ];
       strcpy( Osc->scratch1, "/" );
       strcat( Osc->scratch1, subsystemName );
       strcat( Osc->scratch1, "/" );
@@ -1096,7 +1096,8 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
       strcat( Osc->scratch1, numberBuf );
       strcat( Osc->scratch1, "/" );
       strcat( Osc->scratch1, propertyNames[ propertyIndex ] );
-      //snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, number, propertyNames[ propertyIndex ] ); 
+      */
+      snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, number, propertyNames[ propertyIndex ] ); 
       Osc_CreateMessage( channel, Osc->scratch1, ",i", value );
       Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
     }
@@ -1109,9 +1110,9 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
         {
           int value = (*propertyGet)( index, propertyIndex );
           Osc_LockScratchBuf( Osc->scratch1Semaphore );
-          char buf[ 5 ]; // FIX ME: this is a complete disaster, but for some reason, this snprintf no longer
-          itoa( index, buf, 10 ); // wants to format index 0 properly...wtf?
-          snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%s/%s", subsystemName, buf, propertyNames[ propertyIndex ] ); 
+          //char buf[ 5 ]; // FIX ME: this is a complete disaster, but for some reason, this snprintf no longer
+          //itoa( index, buf, 10 ); // wants to format index 0 properly...wtf?
+          snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, index, propertyNames[ propertyIndex ] ); 
           Osc_CreateMessage( channel, Osc->scratch1, ",i", value );
           Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
         }
