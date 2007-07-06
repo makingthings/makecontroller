@@ -48,7 +48,6 @@ class UploaderThread : public QThread
 		void setBinFileName( char* filename );
 		void setBootFromFlash( bool value );
 		void showStatus( QString message, int duration );
-		void sleepMs( int ms );
 		void progress( int value );
 		QString getDeviceKey( );
 		void setDeviceKey( QString key );

@@ -153,7 +153,7 @@ Samba::Status Samba::flashUpload( char* bin_file )
   int block = 0;
 	uploadProgress = 0;
 	
-	uploader->showStatus( QString( "Usb> Starting upload...don't disconnect board."), 3000 );
+	uploader->showStatus( QString( "Starting upload...don't disconnect board."), 3000 );
 	
   if( ps == 256 ) 
   {
@@ -259,6 +259,29 @@ Samba::Status Samba::bootFromFlash( )
     printf( "Couldn't flip the bit to boot from Flash.\n" );
     return ERROR_SETTING_BOOT_BIT;
   }
+  return OK;
+}
+
+Samba::Status Samba::reset( )
+{
+  /* reset controller at 0xfffffd00
+   *
+   * RSTC_CR[31..24] = KEY = 0xa5
+   * RSTC_CR[3]      = EXTRST
+   * RSTC_CR[2]      = PERRST
+   * RSTC_CR[0]      = PROCRST
+   *
+   * EXTRST, PERRST, and PROCRST are all aserted.  A possible
+   * feature would be to add an argument to reset to specify 
+   * the type of reset wanted.
+   *  
+   */
+
+  if( writeWord( 0xFFFFFD00, 0xA500000D ) < 0 ) {
+    printf( "Couldn't reset target.\n" );
+    return ERROR_RESETTING;
+  }
+
   return OK;
 }
 

@@ -87,15 +87,15 @@ void UploaderThread::run()
   }
 	
 	// set up samba to actually boot from this file
-	if ( samba->bootFromFlash(  ) != Samba::OK )
+	if ( samba->bootFromFlash( ) != Samba::OK )
 		mainWindow->messageThreadSafe( QString( "Usb> Could not switch to boot from flash.") );
-
-	
-	if ( samba->disconnect(  ) != Samba::OK )
-  		mainWindow->messageThreadSafe( QString( "Usb> Error disconnecting.") );
 		
-	showStatus( QString( 
-		"Usb> Upload complete - reset the power on the board to run the new program."), 2000 );
+	msleep( 10 ); // reset doesn't seem to work without this little delay first...
+		
+	if ( samba->reset(  ) != Samba::OK )
+		mainWindow->messageThreadSafe( QString( "Usb> Could not switch to boot from flash.") );
+		
+	showStatus( QString( "Upload complete." ), 2000 );
 	progress( -1 );
 	monitor->deviceRemoved( deviceKey );
 }
@@ -130,11 +130,6 @@ void UploaderThread::progress( int value )
 {
 	McHelperProgressEvent* mcHelperProgressEvent = new McHelperProgressEvent( value );
 	application->postEvent( mainWindow, mcHelperProgressEvent );
-}
-
-void UploaderThread::sleepMs( int ms )
-{
-  //usleep( ms * 1000 );	
 }
 
 McHelperEvent::McHelperEvent( bool statusBound, int level, char* message ) : QEvent( (Type)10000 )
