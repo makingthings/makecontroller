@@ -36,8 +36,10 @@
  *
  */
 
-#include "lwip/opt.h"
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
 
+#include "lwip/opt.h"
 #include "lwip/def.h"
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
@@ -286,3 +288,4 @@ netif_init(void)
   netif_list = netif_default = NULL;
 }
 
+#endif // MAKE_CTRL_NETWORK

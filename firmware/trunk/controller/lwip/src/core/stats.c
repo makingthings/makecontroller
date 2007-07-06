@@ -30,6 +30,9 @@
  *
  */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 #include <string.h>
 
 #include "lwip/opt.h"
@@ -113,3 +116,4 @@ stats_display(void)
 #endif /* LWIP_STATS_DISPLAY */
 #endif /* LWIP_STATS */
 
+#endif // MAKE_CTRL_NETWORK

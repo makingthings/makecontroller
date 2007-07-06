@@ -30,6 +30,9 @@
  *
  */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/err.h"
 
 #ifdef LWIP_DEBUG
@@ -57,3 +60,5 @@ lwip_strerr(err_t err)
 
 
 #endif /* LWIP_DEBUG */
+
+#endif // MAKE_CTRL_NETWORK

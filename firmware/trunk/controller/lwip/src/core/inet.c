@@ -38,14 +38,13 @@
  *
  */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
 
 #include "lwip/opt.h"
-
 #include "lwip/arch.h"
-
 #include "lwip/def.h"
 #include "lwip/inet.h"
-
 #include "lwip/sys.h"
 
 /* This is a reference implementation of the checksum algorithm, with the
@@ -523,3 +522,5 @@ ntohl(u32_t n)
 }
 
 #endif /* BYTE_ORDER == LITTLE_ENDIAN */
+
+#endif // MAKE_CTRL_NETWORK

@@ -42,6 +42,9 @@
  *
  */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 #include <string.h>
 
 #include "lwip/opt.h"
@@ -644,6 +647,9 @@ udp_debug_print(struct udp_hdr *udphdr)
 #endif /* UDP_DEBUG */
 
 #endif /* LWIP_UDP */
+#endif // MAKE_CTRL_NETWORK
+
+
 
 
 

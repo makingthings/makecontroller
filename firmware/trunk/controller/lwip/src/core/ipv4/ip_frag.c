@@ -37,8 +37,10 @@
  * 
  */
 
-#include <string.h>
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
 
+#include <string.h>
 #include "lwip/opt.h"
 /* #include "lwip/sys.h" */
 #include "lwip/ip.h"
@@ -364,3 +366,5 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
   pbuf_free(rambuf);
   return ERR_OK;
 }
+
+#endif // MAKE_CTRL_NETWORK

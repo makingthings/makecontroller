@@ -30,6 +30,9 @@
  *
  */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 #include "lwip/arch.h"
 #include "lwip/api_msg.h"
@@ -799,6 +802,8 @@ api_msg_post(struct api_msg *msg)
 {
   tcpip_apimsg(msg);
 }
+
+#endif // MAKE_CTRL_NETWORK
 
 
 

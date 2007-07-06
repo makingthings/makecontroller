@@ -226,6 +226,7 @@ char* System_GetName( )
   return System->name;
 }
 
+#ifdef OSC  // the Debug system makes use of OSC
 void System_StackAudit( int on_off )
 {
   System_SetActive( 1 );
@@ -238,7 +239,6 @@ void System_StackAudit( int on_off )
     System->StackAuditPtr = NULL;
   }
 }
-
 
 void StackAuditTask( void* p )
 {
@@ -264,6 +264,7 @@ void StackAuditTask( void* p )
     Sleep( 5 );
   }
 }
+#endif // OSC
 
 void kill( void )
 {
@@ -495,7 +496,12 @@ int SystemOsc_PropertyGet( int property, int channel )
       int a0, a1, a2, a3;
       name = System_GetName( );
       value = System_GetSerialNumber( );
-      Network_GetAddress( &a0, &a1, &a2, &a3 );
+      #ifdef MAKE_CTRL_NETWORK
+      if( Network_GetAddress( &a0, &a1, &a2, &a3 ) != CONTROLLER_OK )
+        a0 = a1 = a2 = a3 = -1;
+      #else
+      a0 = a1 = a2 = a3 = -1;
+      #endif // MAKE_CTRL_NETWORK
       snprintf( addr, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
       Osc_CreateMessage( channel, address, ",sis", name, value, addr );

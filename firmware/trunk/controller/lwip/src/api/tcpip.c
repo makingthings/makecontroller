@@ -30,6 +30,9 @@
  *
  */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #include "lwip/sys.h"
@@ -201,6 +204,8 @@ tcpip_init(void (* initfunc)(void *), void *arg)
   mbox = sys_mbox_new();
   sys_thread_new(tcpip_thread, NULL, TCPIP_THREAD_PRIO);
 }
+
+#endif // MAKE_CTRL_NETWORK
 
 
 

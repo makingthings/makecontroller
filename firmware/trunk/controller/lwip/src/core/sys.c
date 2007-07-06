@@ -30,6 +30,9 @@
  *
  */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/sys.h"
 #include "lwip/opt.h"
 #include "lwip/def.h"
@@ -292,3 +295,5 @@ sys_msleep(u32_t ms)
 
 
 #endif /* NO_SYS */
+
+#endif // MAKE_CTRL_NETWORK

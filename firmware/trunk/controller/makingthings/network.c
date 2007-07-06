@@ -20,12 +20,13 @@
 	Methods for communicating via the Ethernet port with the Make Controller Board.
 */
 
-#include "stdio.h"
+#include "config.h"
+#ifdef MAKE_CTRL_NETWORK
 
+#include "stdio.h"
 #include "io.h"
 #include "eeprom.h"
 #include "timer.h"
-
 
 /* lwIP includes. */
 #include "lwip/api.h"
@@ -441,6 +442,9 @@ int Network_GetAddress( int* a0, int* a1, int* a2, int* a3 )
     *a2 = NETIF_IP_ADDRESS_C( address );
     *a3 = NETIF_IP_ADDRESS_D( address );
   }
+  // if the Ethernet interface is not up, we'll just get garbage back
+  if( *a0 < 0 || *a0 > 255 )
+    *a0 = *a1 = *a2 = *a3 = -1;
 
   return CONTROLLER_OK;
 }
@@ -489,6 +493,8 @@ int Network_GetMask( int* a0, int* a1, int* a2, int* a3 )
     *a2 = NETIF_IP_ADDRESS_C( address );
     *a3 = NETIF_IP_ADDRESS_D( address );
   }
+  if( *a0 < 0 || *a0 > 255 )
+    *a0 = *a1 = *a2 = *a3 = -1;
     
   return CONTROLLER_OK;
 }
@@ -521,6 +527,8 @@ int Network_GetGateway( int* a0, int* a1, int* a2, int* a3 )
     *a2 = NETIF_IP_ADDRESS_C( address );
     *a3 = NETIF_IP_ADDRESS_D( address );
   }
+  if( *a0 < 0 || *a0 > 255 )
+    *a0 = *a1 = *a2 = *a3 = -1;
   
   return CONTROLLER_OK;
 }
@@ -560,9 +568,8 @@ void* Socket( int address, int port )
   {
     //netconn_delete( conn );
     while( netconn_delete( conn ) != ERR_OK )
-			{
-				vTaskDelay( 10 );
-			}
+      vTaskDelay( 10 );
+
     conn = NULL;
   }
   
@@ -1103,22 +1110,19 @@ int Network_Init( )
   EMAC_if.num = 0;
   Network_SetPending( 0 ); // all done for now
   
+  #ifdef OSC
   if( NetworkOsc_GetTcpAutoConnect( ) )
   {
     Network->TcpRequested = 1;
     Osc_StartTcpTask( );
   }
+  #endif
 
   if( Network_GetWebServerEnabled( ) )
     Network_StartWebServer( );
   
   if( dhcp )
     Network_DhcpStart( &EMAC_if );
-  else
-  {
-    sys_untimeout( dhcp_fine_tmr, NULL );
-    sys_untimeout( dhcp_coarse_tmr, NULL );
-  }
 
   return CONTROLLER_OK;
 }
@@ -1621,5 +1625,7 @@ int NetworkOsc_PropertyGet( int property, int channel )
 }
 
 #endif // OSC
+
+#endif // MAKE_CTRL_NETWORK
 
 

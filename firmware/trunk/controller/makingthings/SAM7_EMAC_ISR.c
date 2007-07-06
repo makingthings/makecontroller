@@ -43,6 +43,9 @@ Changes from V4.0.1
 	  has occurred.  Previously the TSR register was also inspected.
 */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
@@ -107,4 +110,6 @@ void vPassEMACSemaphore( xSemaphoreHandle xCreatedSemaphore )
 	/* Simply store the semaphore that should be used by the ISR. */
 	xSemaphore = xCreatedSemaphore;
 }
+
+#endif // MAKE_CTRL_NETWORK
 

@@ -41,24 +41,19 @@
 	- modified to support 3.2 GCC by najay
 */
 
-/* Standard includes. */
+/* MakingThings */
+#include "config.h"
+#ifdef MAKE_CTRL_USB
+
 #include <string.h>
 #include <stdio.h>
-
-/* Demo board includes. */
 #include "Board.h"
-
-/* Scheduler includes. */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
-
-/* Demo app includes. */
 #include "USB-CDC.h"
 #include "descriptors.h"
 
-/* MakingThings */
-#include "config.h"
 
 #define usbNO_BLOCK ( ( portTickType ) 0 )
 
@@ -118,7 +113,7 @@ xQueueHandle xUSBInterruptQueue;
 /* Queues used to hold received characters, and characters waiting to be
 transmitted.  Rx queue must be larger than FIFO size. */
 xQueueHandle xRxCDC; 
-xQueueHandle xTxCDC; 
+xQueueHandle xTxCDC;
 
 /* Line coding - 115,200 baud, N-8-1 */
 static const unsigned portCHAR pxLineCoding[] = { 0x00, 0xC2, 0x01, 0x00, 0x00, 0x00, 0x08 };
@@ -129,7 +124,6 @@ static unsigned int uiCurrentBank;
 
 /*------------------------------------------------------------*/
 extern int OscBusy;
-extern int Usb_Running;
 extern int Usb_Running;
 
 void vUSBCDCTask( void *pvParameters )
@@ -180,39 +174,39 @@ unsigned portLONG ulRxBytes;
 		{
 			if( ( !(AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_2 ] & AT91C_UDP_TXPKTRDY) ) && uxQueueMessagesWaiting( xTxCDC ) )
 			{
-                                xBULKBUFFER Queue2USB;
+        xBULKBUFFER Queue2USB;
 
-                                if( xQueueReceive( xTxCDC, &Queue2USB, 0 ) ) 
-                                {
-                                  unsigned char out = 0;
+        if( xQueueReceive( xTxCDC, &Queue2USB, 0 ) ) 
+        {
+          unsigned char out = 0;
 
-                                  while (out < Queue2USB.Count)
-                                    AT91C_BASE_UDP->UDP_FDR[ usbEND_POINT_2 ] = Queue2USB.Data[out++];
-                                }
+          while (out < Queue2USB.Count)
+            AT91C_BASE_UDP->UDP_FDR[ usbEND_POINT_2 ] = Queue2USB.Data[out++];
+        }
 				AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_2 ] |= AT91C_UDP_TXPKTRDY;
 			}
 
 			/* Check for incoming data (host-to-device) on endpoint 1. */
 			while( AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_1 ] & (AT91C_UDP_RX_DATA_BK0 | AT91C_UDP_RX_DATA_BK1) )
 			{
-                            if (!OscBusy)
-                            {
+        //if (!OscBusy)
+        //{
 				/* Only process FIFO if there's room to store it in the queue */
 				if ( USB_CDC_QUEUE_SIZE > uxQueueMessagesWaiting( xRxCDC ))
 				{	
-                                        xBULKBUFFER USB2Queue;
+          xBULKBUFFER USB2Queue;
 
-                                        ulRxBytes = (AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_1 ] >> 16) & usbRX_COUNT_MASK;
-                                        // collect however many bytes are in endpoint ... may be a whole osc packet
-                                        // may just be a fragment.
-                                        USB2Queue.Count = 0;
+          ulRxBytes = (AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_1 ] >> 16) & usbRX_COUNT_MASK;
+          // collect however many bytes are in endpoint ... may be a whole osc packet
+          // may just be a fragment.
+          USB2Queue.Count = 0;
 					while( ulRxBytes-- )
-                                          USB2Queue.Data[USB2Queue.Count++] = AT91C_BASE_UDP->UDP_FDR[ usbEND_POINT_1 ];
+            USB2Queue.Data[USB2Queue.Count++] = AT91C_BASE_UDP->UDP_FDR[ usbEND_POINT_1 ];
 
-                                        // put it in the queue
-                                        xQueueSend( xRxCDC, &USB2Queue, 0 );
+          // put it in the queue
+          xQueueSend( xRxCDC, &USB2Queue, 0 );
 
-                                        /* Release the FIFO */
+          /* Release the FIFO */
 					portENTER_CRITICAL();
 					{
 						ulStatus = AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_1 ];
@@ -226,20 +220,14 @@ unsigned portLONG ulRxBytes;
 				
 					/* Update the current bank in use */
 					if( uiCurrentBank == AT91C_UDP_RX_DATA_BK0 ) 
-					{
 						uiCurrentBank = AT91C_UDP_RX_DATA_BK1;
-					}
 					else 
-					{
 						uiCurrentBank = AT91C_UDP_RX_DATA_BK0;
-					}
 
 				}
 				else 
-				{
 					break;
-				}
-                            }
+        //}
 			}
 		}
 	}
@@ -951,5 +939,7 @@ volatile unsigned portLONG ulNextLength, ulStatus, ulLengthLeftToSend;
 		}
 	}
 }
+
+#endif // MAKE_CTRL_USB
 
 

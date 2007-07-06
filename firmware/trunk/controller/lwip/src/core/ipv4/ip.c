@@ -37,6 +37,9 @@
  *
  */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #include "lwip/def.h"
@@ -501,6 +504,7 @@ ip_debug_print(struct pbuf *p)
 }
 #endif /* IP_DEBUG */
 
+#endif // MAKE_CTRL_NETWORK
 
 
 

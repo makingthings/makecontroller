@@ -49,7 +49,7 @@
 \r\n</BODY>\
 </html>"
 
-struct Web_Server
+typedef struct Web_Server_
 {
   portCHAR DynamicPage[ MAX_WEBPAGE_SIZE ];
   portCHAR PageHitsBuf[ 11 ];
@@ -59,7 +59,7 @@ struct Web_Server
   unsigned portLONG PageHits;
   struct netconn* HTTPListener;
   struct netconn* NewConnection;
-};
+}Web_Server;
 
 void WebServer( void *p );
 void CloseWebServer( void );

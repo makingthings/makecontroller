@@ -33,6 +33,9 @@
 /* This is the part of the API that is linked with
    the application */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 #include "lwip/api.h"
 #include "lwip/api_msg.h"
@@ -726,4 +729,6 @@ netconn_err(struct netconn *conn)
 {
   return conn->err;
 }
+
+#endif // MAKE_CTRL_NETWORK
 

@@ -44,6 +44,9 @@
  *
  */
 
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 #include "lwip/inet.h"
 #include "netif/etharp.h"
@@ -829,3 +832,5 @@ err_t etharp_request(struct netif *netif, struct ip_addr *ipaddr)
   }
   return result;
 }
+
+#endif // MAKE_CTRL_NETWORK

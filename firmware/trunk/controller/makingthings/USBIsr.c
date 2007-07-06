@@ -40,12 +40,13 @@
 
 */
 
-/* Scheduler includes. */
+/* MakingThings */
+#include "config.h"
+#ifdef MAKE_CTRL_USB
+
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
-
-/* Demo application includes. */
 #include "Board.h"
 // MakingThings: renamed
 #include "usb_internal.h"
@@ -57,6 +58,7 @@
 /* Messages and queue used to communicate between the ISR and the USB task. */
 static xISRStatus xISRMessages[ usbQUEUE_LENGTH + 1 ];
 extern xQueueHandle xUSBInterruptQueue;
+
 /*-----------------------------------------------------------*/
 
 /* The ISR can cause a context switch so is declared naked. */
@@ -158,4 +160,6 @@ void vUSB_ISR( void )
 	/* Do a task switch if needed */
 	portEXIT_SWITCHING_ISR( cTaskWokenByPost )
 }
+
+#endif // MAKE_CTRL_USB
 
