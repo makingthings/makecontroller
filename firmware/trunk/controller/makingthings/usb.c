@@ -233,19 +233,16 @@ int Usb_SlipSend( char* buffer, int length )
 
 int Usb_SlipReceive( char* buffer, int length )
 {
-  int started = 0, count = 0, i;
+  int started = 0, finished = 0, count = 0, i;
   static char parseBuf[MAX_INCOMING_SLIP_PACKET], *pbp = parseBuf;
   static int bufRemaining = 0;
-  char* bp = buffer;
+  char *bp = buffer;
 
   while ( count < length )
   {
-    if( !bufRemaining ) // if there's nothing left over from last time
+    if( !bufRemaining ) // if there's nothing left over from last time, get more
     {
       bufRemaining = Usb_Read( parseBuf, MAX_INCOMING_SLIP_PACKET );
-      int test;
-      if( bufRemaining > 26 )
-        test = 0;
       pbp = parseBuf;
     }
 
@@ -255,15 +252,11 @@ int Usb_SlipReceive( char* buffer, int length )
       {
         case END:
           if( started && count ) // it was the END byte
-          {
-            bufRemaining--; // decrement this here since we're returning
-            return count; // We're done now if we had received any characters
-          }
+            finished = true;
           else // skipping all starting END bytes
             started = true;
           break;
-        case ESC:
-          // if it's an ESC character, we just want to skip it and stick the next byte in the packet
+        case ESC: // if it's an ESC character, we just want to skip it and stick the next byte in the packet
           pbp++;  // no break here
         default:
           if( started )
@@ -275,6 +268,8 @@ int Usb_SlipReceive( char* buffer, int length )
       }
       pbp++;
       bufRemaining--;
+      if( finished )
+        return count;
     }
     Sleep(1);
   }

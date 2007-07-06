@@ -85,63 +85,48 @@ static void ProcessConnection( struct netconn* NetConn );
 
 static void ProcessConnection( struct netconn *NetConn )
 {
-	/* We expect to immediately get data. */
-	Server->RxBuffer = netconn_recv( NetConn );
+  Server->RxBuffer = netconn_recv( NetConn ); // We expect to immediately get data.
 
 	if( Server->RxBuffer != NULL )
 	{
-		/* Where is the data? */
-		netbuf_data( Server->RxBuffer, (void*)&Server->RxString, &Server->Length );
+		netbuf_data( Server->RxBuffer, (void*)&Server->RxString, &Server->Length );  // Where is the data?
 	
-		/* Is this a GET?  We don't handle anything else. */
-		if( !strncmp( Server->RxString, "GET", 3 ) )
+		if( !strncmp( Server->RxString, "GET", 3 ) ) // Is this a GET?  We don't handle anything else. 
 		{
 			Server->RxString = Server->DynamicPage;
-
-			/* Update the hit count. */
-			Server->PageHits++;
+			Server->PageHits++; // Update the hit count.
 			sprintf( Server->PageHitsBuf, "%lu", Server->PageHits );
+      netconn_write( NetConn, HTTP_OK, (u16_t)strlen( HTTP_OK ), NETCONN_COPY ); // Write out the HTTP OK header.
 
-			/* Write out the HTTP OK header. */
-      netconn_write( NetConn, HTTP_OK, (u16_t)strlen( HTTP_OK ), NETCONN_COPY );
-
-			/* Generate the dynamic page...
-
-			... First the page header. */
-			strcpy( Server->DynamicPage, HTML_START );
-			/* ... Then the hit count... */
+			// Generate the dynamic page...
+			strcpy( Server->DynamicPage, HTML_START );  // ... First the page header.
+			// ... Then the hit count...
 			strcat( Server->DynamicPage, Server->PageHitsBuf );
-			strcat( Server->DynamicPage, "<p>Version.Build " );
-	    sprintf( Server->PageHitsBuf, "%d.%d", System_GetVersionNumber(), System_GetBuildNumber() ); 
+			strcat( Server->DynamicPage, "<p>Version: " );
+	    sprintf( Server->PageHitsBuf, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER ); 
       strcat( Server->DynamicPage, Server->PageHitsBuf );
       strcat( Server->DynamicPage, "<p>Free Memory " );
 	    sprintf( Server->PageHitsBuf, "%d", System_GetFreeMemory() ); 
       strcat( Server->DynamicPage, Server->PageHitsBuf );
       strcat( Server->DynamicPage, "</p>" );
-
 			strcat( Server->DynamicPage, "<p>Tasks Currently Running" );
 			strcat( Server->DynamicPage, "<p><pre>Task          State  Priority  Stck Rem	#<br>-------------------------------------------" );
-			/* ... Then the list of tasks and their status... */
-      /*
+			// ... Then the list of tasks and their status... 
 			vTaskList( (signed portCHAR*)Server->DynamicPage + strlen( Server->DynamicPage ) );	
       int i;
-
-      strcat( Server->DynamicPage, "<p><pre>Inputs<br>--------------<br>" );
+      strcat( Server->DynamicPage, "<p><pre>Analog Inputs<br>--------------<br>" );
 
       for ( i = 0; i < 8; i++ )
       {
         char b[ 20 ];
-        snprintf( b, 20, "%d: %4d<br>", i, AnalogIn_GetValue( i ) );
+        snprintf( b, 20, "%d: %d<br>", i, AnalogIn_GetValue( i ) );
         strcat( Server->DynamicPage, b );
       }
-
       strcat( Server->DynamicPage, "</pre>" );
-      */
-
-      /* ... Finally the page footer. */
+      
+      // ... Finally the page footer.
 			strcat( Server->DynamicPage, HTML_END );
-
-			/* Write out the dynamically generated page. */
+			// Write out the dynamically generated page.
 			netconn_write(NetConn, Server->DynamicPage, (u16_t)strlen( Server->DynamicPage ), NETCONN_COPY );
 		}
  
