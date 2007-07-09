@@ -91,32 +91,25 @@ void Board::packetWaiting( )
 	int messageCount = oscMessageList.size( ), i;
 	for (i = 0; i < messageCount; i++)
 	{
+		QString msg = oscMessageList.at(i)->toString( );
 		if( strcmp( oscMessageList.at(i)->address, "/system/info" ) == 0 )
 		{ 
-            // we're counting on the board to send the pieces of data in this order
+      // we're counting on the board to send the pieces of data in this order
 			name = QString( oscMessageList.at(i)->data.at( 0 )->s ); //name
-            serialNumber = QString::number( oscMessageList.at(i)->data.at( 1 )->i ); // serial number
-            ip_address = QString( oscMessageList.at(i)->data.at( 2 )->s ); // IP address
+      serialNumber = QString::number( oscMessageList.at(i)->data.at( 1 )->i ); // serial number
+      ip_address = QString( oscMessageList.at(i)->data.at( 2 )->s ); // IP address
             
-            // Let the main window know to do an update of the "Summary" info tab
-            BoardSummaryInfoUpdateEvent* boardSummaryInfoUpdateEvent = new BoardSummaryInfoUpdateEvent( this->key );
-            application->postEvent( mainWindow, boardSummaryInfoUpdateEvent );
+      // Let the main window know to do an update of the "Summary" info tab
+      BoardSummaryInfoUpdateEvent* boardSummaryInfoUpdateEvent = new BoardSummaryInfoUpdateEvent( this->key );
+      application->postEvent( mainWindow, boardSummaryInfoUpdateEvent );
 
-            // Update the name of the board in the board list
+      // Update the name of the board in the board list
 			this->setText( QString( "%1:%2" ).arg(name).arg(typeString()) );
 		}
-        
-        /* Maybe we want to detect errors coming back from the boards?
-        else if( strstr( oscMessageList.at(i)->address, "/error" ) != NULL )
-        {
-            QString msg = oscMessageList.at(i)->toString( );
-            messageInterface->messageThreadSafe( msg, MessageEvent::Error, key );
-        }
-        */
-		
-        // In any case, print the response
-		QString msg = oscMessageList.at(i)->toString( );
-		messageInterface->messageThreadSafe( msg, MessageEvent::Response, key );
+		else if( QString(oscMessageList.at(i)->address).contains( "error", Qt::CaseInsensitive ) )
+			messageInterface->messageThreadSafe( msg, MessageEvent::Warning, key );
+		else
+			messageInterface->messageThreadSafe( msg, MessageEvent::Response, key );
 	}
 }
 

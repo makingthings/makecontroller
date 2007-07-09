@@ -24,6 +24,8 @@
 #define ESC_END         0334    // ESC ESC_END means END data byte 
 #define ESC_ESC         0335    // ESC ESC_ESC means ESC data byte 
 
+#define MAX_READ_SIZE 16384
+
 PacketUsbCdc::PacketUsbCdc( ) : QThread( )
 {
 	packetCount = 0;
@@ -40,7 +42,6 @@ PacketUsbCdc::~PacketUsbCdc( )
 
 void PacketUsbCdc::run()
 {
-	open( );
 	while( 1 )
 	{
 	  if( exit == true )
@@ -74,24 +75,21 @@ void PacketUsbCdc::run()
 
 PacketUsbCdc::Status PacketUsbCdc::open()
 {
-	//if( UsbSerial::OK != usbOpen( ) )
-		//return PacketInterface::ERROR_NOT_OPEN;
-	//else
-	return PacketInterface::OK;
+	if( UsbSerial::OK == usbOpen( ) )
+		return PacketInterface::OK;
+	else
+		return PacketInterface::ERROR_NOT_OPEN;
 }
 
 PacketUsbCdc::Status PacketUsbCdc::close()
 {
-	quit( ); // stop the thread
 	exit = true;
-	if( deviceOpen )
-		usbClose( );
-	while( !wait( ) )
-		msleep( 1 );
+	usbClose( );
+	wait( 1000 );
 	return PacketInterface::OK;
 }
 
-int PacketUsbCdc::sendPacket( char* packet, int length )
+PacketUsbCdc::Status PacketUsbCdc::sendPacket( char* packet, int length )
 {
   char buf[ length * 2 ]; // make it twice as long, as worst case scenario is ALL escape characters
 	buf[0] = END;  // Flush out any spurious data that may have accumulated
@@ -108,7 +106,6 @@ int PacketUsbCdc::sendPacket( char* packet, int length )
 				*ptr++ = ESC;
 				*ptr++ = ESC_END;
 				break;
-				
 				// if it's the same code as an ESC character, we send a special 
 				//two character code so as not to make the receiver think we sent an ESC
 			case ESC:
@@ -123,15 +120,21 @@ int PacketUsbCdc::sendPacket( char* packet, int length )
 	}
 	// tell the receiver that we're done sending the packet
 	*ptr++ = END;
-	usbWrite( buf, (ptr - buf) );
-	
-	return 0;
+	if( UsbSerial::OK != usbWrite( buf, (ptr - buf) ) )
+	{
+		#ifdef Q_WS_WIN
+		monitor->deviceRemoved( QString(portName) );
+		#endif
+		return PacketInterface::IO_ERROR;
+	}
+	else
+		return PacketInterface::OK;
 }
 
 int PacketUsbCdc::slipReceive( char* buffer, int length )
 {
-  int started = 0, count = 0, justGot = 0;
-  char tempBuffer[length];
+  int started = 0, count = 0, justGot = 0, i;
+  char tempBuffer[MAX_READ_SIZE];
   char *bufferPtr = buffer, *tempPtr = tempBuffer;
 
   while ( true )
@@ -141,20 +144,21 @@ int PacketUsbCdc::slipReceive( char* buffer, int length )
     int available = numberOfAvailableBytes( );
     if( available > 0 )
     {
+    	if( available > MAX_READ_SIZE )
+    		available = MAX_READ_SIZE;
     	justGot = usbRead( tempBuffer, available );
     	tempPtr = tempBuffer;
     	if( justGot < 0 )
 				close( );
     }
 	
-    int i;
     for( i = 0; i < justGot; i++ )
     {
       switch( *tempPtr )
       {
         case END:
           if( started && count ) // it was the END byte
-			return count; // We're done now if we had received any characters
+						return count; // We're done now if we had received any characters
           else // skipping all starting END bytes
             started = true;
           break;					
@@ -173,7 +177,7 @@ int PacketUsbCdc::slipReceive( char* buffer, int length )
     	msleep( 1 );
     justGot = 0; // reset our count for the next run through
   }
-  return IO_ERROR; // should never get here
+  return PacketInterface::IO_ERROR; // should never get here
 }
 
 bool PacketUsbCdc::isPacketWaiting( )
@@ -230,10 +234,11 @@ QString PacketUsbCdc::getKey( )
 	return QString( portName );
 }
 
-void PacketUsbCdc::setInterfaces( MessageInterface* messageInterface, QApplication* application )
+void PacketUsbCdc::setInterfaces( MessageInterface* messageInterface, QApplication* application, MonitorInterface* monitor )
 {
 	this->messageInterface = messageInterface;
 	this->application = application;
+	this->monitor = monitor;
 }
 
 void PacketUsbCdc::setPacketReadyInterface( PacketReadyInterface* packetReadyInterface)

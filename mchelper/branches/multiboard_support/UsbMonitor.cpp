@@ -181,14 +181,18 @@ void UsbMonitor::FindUsbDevices( QList<PacketInterface*>* arrived )
 	      if( !connectedDevices.contains( portNameKey ) ) // make sure we don't already have this board in our list
 	      {
 	      	PacketUsbCdc* device = new PacketUsbCdc( );
-	     	device->deviceHandle = hOut;
-	     	strncpy( device->portName, portName, strlen( portName )+1 );
-	      	connectedDevices.insert( portNameKey, device );  // stick it in our own list of boards we know about
-	      	arrived->append( device ); // then stick it on the list of new boards that's been requested
-	      	
-	      	device->setInterfaces( messageInterface, application );
-			device->setWidget( mainWindow );
-	      	device->start( );
+	     		device->deviceHandle = hOut;
+	     		strncpy( device->portName, portName, strlen( portName )+1 );
+	     		device->setInterfaces( messageInterface, application, this );
+					device->setWidget( mainWindow );
+	     		if( PacketInterface::OK == device->open( ) )
+	     		{
+	     			connectedDevices.insert( portNameKey, device );  // stick it in our own list of boards we know about
+		      	arrived->append( device ); // then stick it on the list of new boards that's been requested
+		      	device->start( );
+	     		}
+	     		else
+	     			delete device;
 	      }
 	    }
 	  }
@@ -308,6 +312,7 @@ void UsbMonitor::removalNotification( HANDLE handle )
 	{
 		if( i.value( )->deviceHandle == handle )
 		{
+			i.value( )->close( );
 			mainWindow->removeDeviceThreadSafe( i.key() );
 			i = connectedDevices.erase( i );
 		}
@@ -320,7 +325,12 @@ void UsbMonitor::removalNotification( HANDLE handle )
 
 void UsbMonitor::deviceRemoved( QString key )
 {
-	// not implemented...
+	if( connectedDevices.contains(key) )
+	{
+		connectedDevices.value( key )->close( );
+		mainWindow->removeDeviceThreadSafe( key );
+		connectedDevices.remove( key );
+	}
 }
 
 

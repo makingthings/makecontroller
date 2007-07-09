@@ -26,6 +26,7 @@
 #include "PacketInterface.h"
 #include "MessageInterface.h"
 #include "PacketReadyInterface.h"
+#include "MonitorInterface.h"
 
 #define MAX_MESSAGE 2048
 
@@ -44,14 +45,14 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
 			void run( );
 			// from PacketInterface
 			Status open( );	
-		  	Status close( );
-			int sendPacket( char* packet, int length );
+		  Status close( );
+			Status sendPacket( char* packet, int length );
 			bool isPacketWaiting( );
 			bool isOpen( );
 			int receivePacket( char* buffer, int size );
 			QString getKey( void );
 			char* location( void );
-			void setInterfaces( MessageInterface* messageInterface, QApplication* application );
+			void setInterfaces( MessageInterface* messageInterface, QApplication* application, MonitorInterface* monitor );
 			void setPacketReadyInterface( PacketReadyInterface* packetReadyInterface);
 			#ifdef Q_WS_WIN
 			void setWidget( QMainWindow* window );
@@ -64,11 +65,10 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
 		  QMutex packetListMutex;
 		  void sleepMs( int ms );
 			int packetCount;
-			int packetState;
-			enum State { START, DATASTART, DATA };
 			
 		  PacketReadyInterface* packetReadyInterface;
 		  QApplication* application;
+		  MonitorInterface* monitor;
 		  int slipReceive( char* buffer, int length );
 		  bool exit;
 

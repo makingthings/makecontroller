@@ -20,6 +20,7 @@
 
 #include <QList>
 #include <QHash>
+#include <QThread>
 #include "McHelperWindow.h"
 #include "PacketUsbCdc.h"
 #include "MonitorInterface.h"
