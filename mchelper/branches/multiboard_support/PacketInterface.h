@@ -24,11 +24,11 @@
 class PacketInterface
 {		
 	public:
-		enum Status { OK, ERROR_CANT_BIND, ERROR_CANT_SEND, ERROR_CANT_GET_ADDRESS, ERROR_NOT_OPEN };
+		enum Status { OK, ERROR_CANT_BIND, ERROR_CANT_SEND, ERROR_CANT_GET_ADDRESS, ERROR_NOT_OPEN, IO_ERROR };
 	  	  
 	  virtual Status open( ) = 0;
 	  virtual Status close( ) = 0;
-	  virtual int sendPacket( char* packet, int length ) = 0;
+	  virtual Status sendPacket( char* packet, int length ) = 0;
 	  virtual bool isPacketWaiting( ) = 0;
 	  virtual bool isOpen( ) = 0;
 	  virtual int receivePacket( char* buffer, int length ) = 0;

@@ -77,16 +77,16 @@ char* PacketUdp::location( )
 	return remoteHostName.data( );
 }
 
-int PacketUdp::sendPacket( char* packet, int length )	//part of PacketInterface
+PacketUdp::Status PacketUdp::sendPacket( char* packet, int length )	//part of PacketInterface
 {
 	qint64 result = socket->writeDatagram( (const char*)packet, (qint64)length, *remoteHostAddress, remotePort );
 	if( result < 0 )
-    {
-        QString msg = QString( "Could not send packet.");
-        messageInterface->messageThreadSafe( msg, MessageEvent::Error, QString("udp") );
-    }
-
-	return 0;
+  {
+      QString msg = QString( "Could not send packet.");
+      messageInterface->messageThreadSafe( msg, MessageEvent::Error, QString("udp") );
+      return IO_ERROR;
+  }
+	return OK;
 }
 
 bool PacketUdp::isPacketWaiting( )	//part of PacketInterface

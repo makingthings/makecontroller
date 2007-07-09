@@ -43,7 +43,7 @@ class PacketUdp : public QObject, public PacketInterface
 		void resetTimer( void );
 		
 		// From PacketInterface
-	  int sendPacket( char* packet, int length );
+	  Status sendPacket( char* packet, int length );
 		int receivePacket( char* packet, int length );
 	  bool isPacketWaiting( );
 	  bool isOpen( );

@@ -58,7 +58,8 @@ Osc::~Osc( )
 {
 	if( packetInterface != NULL )
 	{
-		packetInterface->close( );
+		if( packetInterface->isOpen( ) )
+			packetInterface->close( );
 		delete packetInterface;
 	}
 }
