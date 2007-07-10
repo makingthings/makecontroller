@@ -25,6 +25,7 @@
 #include <QTableWidgetItem> 
 #include <QHeaderView> 
 #include "Osc.h"
+#include "BoardArrivalEvent.h"
 
 #define DEVICE_SCAN_FREQ 1000
 
@@ -48,7 +49,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	samba = new SambaMonitor( application, this );
 	usb = new UsbMonitor( );
 	 
-	udp->setInterfaces( this, this );
+	udp->setInterfaces( this, this, application );
 	usb->setInterfaces( this, application, this );
   
   setupOutputTable();
@@ -88,74 +89,88 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	// after all is set up, fire up the mechanism that looks for new boards
 	checkForNewDevices( ); // initially check for any devices out there
 	monitorTimer = new QTimer(this); // then set up a timer to check for others periodically
-    connect(monitorTimer, SIGNAL(timeout()), this, SLOT( checkForNewDevices() ) );
-    monitorTimer->start( DEVICE_SCAN_FREQ ); // check for new devices once a second...more often?
+  connect(monitorTimer, SIGNAL(timeout()), this, SLOT( checkForNewDevices() ) );
+  monitorTimer->start( DEVICE_SCAN_FREQ ); // check for new devices once a second...more often?
+  usb->start( );
+  udp->start( );
+  samba->start( );
   
   // Init the status bar and let the user know the app is loaded
   statusBar()->showMessage( tr("Ready."), 2000);
+}
+
+void McHelperWindow::usbBoardsArrived( QList<PacketInterface*>* arrived )
+{
+	Board* board;
+	int i;
+	for( i=0; i<arrived->count( ); i++ )
+	{
+	  board = new Board( this, this, application );
+    board->key = arrived->at(i)->getKey();
+    board->type = Board::UsbSerial;
+    board->setPacketInterface( arrived->at(i) );
+    board->com_port = arrived->at(i)->location();
+    board->setText( QString( ":%1" ).arg( board->typeString() ) );
+    connectedBoards.insert( board->key, board );
+    listWidget->addItem( board ); 
+	}
+}
+
+void McHelperWindow::udpBoardsArrived( QList<PacketUdp*>* arrived )
+{
+	Board* board;
+	int i;
+	for( i=0; i<arrived->count( ); i++ )
+	{
+	  board = new Board( this, this, application );
+	  board->setPacketInterface( arrived->at(i) );
+	  board->key = arrived->at(i)->getKey();
+    board->type = Board::Udp;
+    connectedBoards.insert( board->key, board );
+    listWidget->addItem( board );
+	}
+}
+
+void McHelperWindow::sambaBoardsArrived( QList<UploaderThread*>* arrived )
+{
+	Board* board;
+	int i;
+	for( i=0; i<arrived->count( ); i++ )
+	{
+	  board = new Board( this, this, application );
+  	board->key = arrived->at(i)->getDeviceKey();
+    board->name = "Samba Board";
+    board->type = Board::UsbSamba;
+    board->setUploaderThread( arrived->at(i) );
+    connectedBoards.insert( board->key, board );
+    board->setText( board->name );
+    listWidget->addItem( board );
+	}
 }
 
 void McHelperWindow::checkForNewDevices( )
 {
   Board *board;
   int i;
-    
-	// first check for USB boards
-	QList<PacketInterface*> newBoards;
-	usb->scan( &newBoards );
-	int newBoardCount = newBoards.count( );
-	if( newBoardCount > 0 )
+	for( i = 0; i < listWidget->count( ); i++ )
 	{
-		for( i=0; i<newBoardCount; i++ )
+		board = (Board*)listWidget->item( i );
+		if( board != NULL )
 		{
-		  board = new Board( this, this, application );
-          board->key = newBoards.at(i)->getKey();
-	      board->type = Board::UsbSerial;
-	      board->setPacketInterface( newBoards.at(i) );
-	      board->com_port = newBoards.at(i)->location();
-	      board->setText( QString( ":%1" ).arg( board->typeString() ) );
-	      connectedBoards.insert( board->key, board );
-	      listWidget->addItem( board ); 
-		}
-	}
-	
-	// then for UDP boards
-	QList<PacketUdp*> udpBoards;
-	udp->scan( &udpBoards );
-	newBoardCount = udpBoards.count( );
-	if( newBoardCount > 0 )
-	{
-		for( i=0; i<newBoardCount; i++ )
-		{
-		  board = new Board( this, this, application );
-		  board->setPacketInterface( udpBoards.at(i) );
-		  board->key = udpBoards.at(i)->getKey();
-	      board->type = Board::Udp;
-	      connectedBoards.insert( board->key, board );
-	      listWidget->addItem( board );
-		}
-	} 
-	
-	QList<UploaderThread*> sambaBoards;
-	samba->scan( &sambaBoards );
-	newBoardCount = sambaBoards.count( );
-	if( newBoardCount > 0 )
-	{
-		for( i=0; i<newBoardCount; i++ )
-		{
-		  board = new Board( this, this, application );
-		  board->key = sambaBoards.at(i)->getDeviceKey();
-	      board->name = "Samba Board";
-	      board->type = Board::UsbSamba;
-	      board->setUploaderThread( sambaBoards.at(i) );
-	      connectedBoards.insert( board->key, board );
-	      board->setText( board->name );
-	      listWidget->addItem( board );
+			if( board->type == Board::UsbSerial )
+				board->sendMessage( "/system/info" );
 		}
 	}
 	
 	if( listWidget->currentRow( ) < 0 && listWidget->count( ) > 0 )
 		listWidget->setCurrentRow( 0 ); // if nothing is selected, just select the first item
+		
+	if( systemName->text().isEmpty() && listWidget->count( ) > 0 )
+	{ // if we haven't filled up the summary tab, do it now
+		Board* board = (Board*)listWidget->currentItem();
+  	if( board != NULL )
+			updateSummaryInfo( board );
+	}
 }
 
 void McHelperWindow::removeDeviceThreadSafe( QString key )
@@ -189,18 +204,7 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   		tabWidget->setTabEnabled( 0, 1 );
   		tabWidget->setTabEnabled( 1, 1 );
   		tabWidget->setTabEnabled( 2, 0 );
-        
-        // fill up the line edits in the Summary tab with the new
-        // board's info by sending off a "/system/info" command
-        //
-        // :NOTE: added a bit of sleep in here to help with the
-        // case when you first start the app with a board attached
-        // that gets autoselected and the device hasn't fully
-        // connected yet. Once the "system info" checking
-        // thread is in place, we should remove the sending of
-        // the "/system/info" message here since isn't really very reliable.
-        Sleep( 250 );
-        board->sendMessage( QString("/system/info") );
+  		updateSummaryInfo( board );
   		break;
         
   	case Board::UsbSamba:
@@ -212,30 +216,20 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   }
 }
 
-void McHelperWindow::updateSummaryInfo( QString key )
+void McHelperWindow::updateSummaryInfo( Board* board )
 {
-    // Make sure we know about this board ...
-    if( connectedBoards.contains( key ) )
-    {
-        // ... and it's the currently selected one from the list
-        Board* board = (Board*)listWidget->currentItem();
-        if (board->key == key )
-        {
-            systemName->setText( board->name );
-            systemSerialNumber->setText( board->serialNumber );
-            systemFirmwareVersion->setText( board->firmwareVersion );
-            systemFreeMemory->setText( board->freeMemory );
-            netAddressLineEdit->setText( board->ip_address );
-            netMaskLineEdit->setText( board->netMask );
-            netGatewayLineEdit->setText( board->gateway );
-            netMACLineEdit->setText( board->mac );
-            
-            /* :TODO: what and how should these be set
-            dhcpCheckBox->setCheckState( );
-            webserverCheckBox->setCheckState( ); // Qt::Checked, Qt::Unchecked
-            */
-        }
-    }
+	systemName->setText( board->name );
+	systemSerialNumber->setText( board->serialNumber );
+	systemFirmwareVersion->setText( board->firmwareVersion );
+	systemFreeMemory->setText( board->freeMemory );
+	netAddressLineEdit->setText( board->ip_address );
+	netMaskLineEdit->setText( board->netMask );
+	netGatewayLineEdit->setText( board->gateway );
+	netMACLineEdit->setText( board->mac );
+	
+	// :TODO: what and how should these be set
+	//dhcpCheckBox->setCheckState( );
+	//webserverCheckBox->setCheckState( ); // Qt::Checked, Qt::Unchecked
 }
 
 void McHelperWindow::tabIndexChanged(int index)
@@ -296,7 +290,7 @@ void McHelperWindow::commandLineEvent( )
   board->sendMessage( commandLine->currentText());
   
   // in order to get a readline-style history of commands via up/down arrows
-  // we ened to keep an empty item at the end of the list so we have a context from which to up-arrow
+  // we need to keep an empty item at the end of the list so we have a context from which to up-arrow
   
   /*commandLine->removeItem( 0 );
   commandLine->insertItem( 8, commandLine->currentText() );
@@ -359,12 +353,25 @@ void McHelperWindow::customEvent( QEvent* event )
 			statusBar()->showMessage( statusEvent->message, statusEvent->duration );
             break;
 		}
-        case 10015: // put a status message in the window
+    case 10020: // a new board has been connected
+    {
+        BoardArrivalEvent* arrivalEvent = (BoardArrivalEvent*)event;
+        switch( arrivalEvent->type )
         {
-            BoardSummaryInfoUpdateEvent* boardSummaryInfoUpdateEvent = (BoardSummaryInfoUpdateEvent*)event;
-            updateSummaryInfo( boardSummaryInfoUpdateEvent->key );
-            break;
+        	case Board::UsbSerial:
+        		usbBoardsArrived( arrivalEvent->pInt );
+        		break;
+        	case Board::Udp:
+        		udpBoardsArrived( &arrivalEvent->pUdp );
+        		break;
+        	case Board::UsbSamba:
+        		sambaBoardsArrived( arrivalEvent->uThread );
+        		break;
+        	default:
+        		break;
         }
+        break;
+    }
 		default:
 			break;
 	}
@@ -379,7 +386,7 @@ void McHelperWindow::messageThreadSafe( QString string  )
 void McHelperWindow::messageThreadSafe( QString string, MessageEvent::Types type  )
 {	
   // Default to coming from the "App" itself if we don't know otherwise
-  messageThreadSafe( string, type, QString("App") );
+  messageThreadSafe( string, type, QString("mchelper") );
 }
 
 void McHelperWindow::messageThreadSafe( QString string, MessageEvent::Types type, QString from )
@@ -452,7 +459,8 @@ void McHelperWindow::message( QString string, MessageEvent::Types type, QString 
                 break;
             
             case MessageEvent::Response:
-                bgColor = QColor(221, 255, 221, 255); // Green
+                //bgColor = QColor(221, 255, 221, 255); // Green
+                bgColor = QColor(229, 237, 247, 255); // Blue
                 break;
                 
             case MessageEvent::Error:
@@ -460,7 +468,7 @@ void McHelperWindow::message( QString string, MessageEvent::Types type, QString 
                 break;
               
             case MessageEvent::Warning:
-                bgColor = QColor(255, 225, 185, 255); // Orange
+                bgColor = QColor(255, 228, 118, 255); // Orange
                 break;
 
             case MessageEvent::Command:
@@ -501,12 +509,6 @@ void McHelperWindow::message( QString string, MessageEvent::Types type, QString 
     }
 }
 
-
-void McHelperWindow::sleepMs( int ms )
-{
-  //usleep( ms * 1000 );	
-}
-
 // Read and write the last values used - address, ports, directory searched etc...
 void McHelperWindow::readSettings()
 {
@@ -514,24 +516,6 @@ void McHelperWindow::readSettings()
 	
 	lastDirectory = settings.value("directory", "/home").toString();
 	fileSelectText->setEditText( lastDirectory );
-	
-	int remotePort = settings.value("remotePort", 10000 ).toInt();	//read the port back as an int
-	//udp->setRemotePort( remotePort );	// set it in the UDP system
-	QString remotePortString = QString::number( remotePort );	// turn it into a string
-	//textRemotePort->setText( remotePortString );	// and display it onscreen
-	
-	int localPort = settings.value("localPort", 10000 ).toInt();
-	//udp->setLocalPort( localPort, false );
-	QString localPortString = QString::number( localPort );
-	//textLocalPort->setText( localPortString );
-	
-	QString addressString = settings.value("remoteHostAddress", "192.168.0.200").toString();
-	QHostAddress hostAddress = QHostAddress( addressString );
-	//udp->setHostAddress( hostAddress );
-	//textIPAddress->setText( addressString );
-	
-	//QStringList udpCmdList = settings.value( "udpCmdList", "" ).toStringList();
-	//commandLine->addItems( udpCmdList );
 	
 	QStringList usbCmdList = settings.value( "usbCmdList", "" ).toStringList();
 	commandLine->addItems( usbCmdList );
@@ -675,11 +659,8 @@ BoardEvent::BoardEvent( QString string ) : QEvent( (Type)10005 )
 	message = string;
 }
 
-BoardSummaryInfoUpdateEvent::BoardSummaryInfoUpdateEvent( QString key ) : QEvent( (Type)10015 )
-{
-    // The key of the board that sent the event
-    this->key = key;
-}
+
+
 
 
 

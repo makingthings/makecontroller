@@ -18,6 +18,7 @@
 #ifndef USB_MONITOR_H_
 #define USB_MONITOR_H_
 
+#include <QTimer>
 #include <QList>
 #include <QHash>
 #include <QThread>
@@ -42,12 +43,13 @@ class PacketUsbCdc;
 class PacketInterface;
 class McHelperWindow;
 
-class UsbMonitor : public MonitorInterface
+class UsbMonitor : public QThread, public MonitorInterface
 {
   public:
   	UsbMonitor( );
   	Status scan( QList<PacketInterface*>* arrived );
   	~UsbMonitor( ) {}
+  	void run( );
   	void closeAll( );
   	void setInterfaces( MessageInterface* messageInterface, QApplication* application, McHelperWindow* mainWindow );
   	void deviceRemoved( QString key );
@@ -59,6 +61,7 @@ class UsbMonitor : public MonitorInterface
   	
   private:
   	QHash<QString, PacketUsbCdc*> connectedDevices;
+  	QTimer deviceScanTimer;
   	void FindUsbDevices( QList<PacketInterface*>* arrived );
 		
 	#ifdef Q_WS_WIN

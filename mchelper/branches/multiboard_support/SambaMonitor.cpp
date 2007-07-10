@@ -16,8 +16,9 @@
 *********************************************************************************/
 
 #include "SambaMonitor.h"
+#include "BoardArrivalEvent.h"
 
-SambaMonitor::SambaMonitor( QApplication* application, McHelperWindow* mainWindow )
+SambaMonitor::SambaMonitor( QApplication* application, McHelperWindow* mainWindow ) : QThread( )
 {
 	this->application = application;
 	this->mainWindow = mainWindow;
@@ -26,6 +27,24 @@ SambaMonitor::SambaMonitor( QApplication* application, McHelperWindow* mainWindo
 SambaMonitor::~SambaMonitor( )
 {
 	
+}
+
+void SambaMonitor::run( )
+{
+	while( 1 )
+	{
+		QList<UploaderThread*>* newBoards = new QList<UploaderThread*>;
+		scan( newBoards );
+		if( newBoards->count( ) > 0 )
+		{
+			BoardArrivalEvent* event = new BoardArrivalEvent( Board::UsbSamba );
+			event->uThread = newBoards;
+			application->postEvent( mainWindow, event );
+		}
+		else
+			delete newBoards;
+		sleep( 1 ); // check once a second
+	}
 }
 
 int SambaMonitor::scan( QList<UploaderThread*>* arrived )

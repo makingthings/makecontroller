@@ -23,6 +23,7 @@
 #include <QHash>
 #include <QTimer>
 #include <QtNetwork>
+#include <QMutex>
 #include "McHelperWindow.h"
 #include "PacketUdp.h"
 #include "MonitorInterface.h"
@@ -36,18 +37,19 @@ class NetworkMonitor : public QObject, public MonitorInterface
   public:
   	NetworkMonitor( );
   	~NetworkMonitor( ) {}
+  	void start( );
   	Status scan( QList<PacketUdp*>* arrived );
-  	void setInterfaces( MessageInterface* messageInterface, McHelperWindow* mainWindow );
+  	void setInterfaces( MessageInterface* messageInterface, McHelperWindow* mainWindow, QApplication* application );
   	void deviceRemoved( QString key );
   	
   private:
   	QHash<QString, PacketUdp*> connectedDevices; // our internal list
-  	// and a list to keep track of whether or not we've reported a new device to the model/view
-  	QHash<QString, PacketUdp*> newDevices;  
 	
 	MessageInterface* messageInterface;
 	McHelperWindow* mainWindow;
+	QApplication* application;
 	QTimer* timer;
+	QTimer pingTimer;
 	QUdpSocket* socket;
 	QByteArray broadcastPing;
 	QHostAddress myAddress;
@@ -55,9 +57,8 @@ class NetworkMonitor : public QObject, public MonitorInterface
   private slots:
 	void processPendingDatagrams( );
 	void lookedUp(const QHostInfo &host);
+	void sendPing( );
 };
-
-
 
 #endif // NETWORK_MONITOR_H_
 

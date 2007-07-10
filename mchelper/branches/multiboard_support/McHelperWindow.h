@@ -30,6 +30,7 @@
 #include "NetworkMonitor.h"
 #include "SambaMonitor.h"
 #include "UsbMonitor.h"
+#include "PacketUdp.h"
 
 class Board;
 class BoardListModel;
@@ -62,12 +63,15 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
         void messageThreadSafe( QString string, MessageEvent::Types type );
         void messageThreadSafe( QString string, MessageEvent::Types type, QString from ); 
         
-		void sleepMs( int ms );
 		void customEvent( QEvent* event );
 		void progress( int value );
 		void setAboutDialog( QDialog* about );
 		void removeDevice( QString key );
 		void removeDeviceThreadSafe( QString key );
+		
+		void usbBoardsArrived( QList<PacketInterface*>* arrived );
+		void udpBoardsArrived( QList<PacketUdp*>* arrived );
+		void sambaBoardsArrived( QList<UploaderThread*>* arrived );
         
 		void setNoUI( bool val );
 		void uiLessUpload( char* filename, bool bootFlash );
@@ -92,7 +96,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void writeFileSettings();
 		void writeUdpSettings();
 		void writeUsbSettings();
-		void updateSummaryInfo( QString key);
+		void updateSummaryInfo( Board* board );
         
         void message( QString string, MessageEvent::Types type, QString from );
 		
@@ -150,16 +154,5 @@ class BoardEvent : public QEvent
 	  
 	QString message;
 };
-
-class BoardSummaryInfoUpdateEvent : public QEvent
-{
-    public:
-      BoardSummaryInfoUpdateEvent( QString key );
-      ~BoardSummaryInfoUpdateEvent( ) { }
-      
-    QString key;
-};
-
-
 
 #endif // MCHELPERWINDOW_H

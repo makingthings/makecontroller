@@ -98,10 +98,6 @@ void Board::packetWaiting( )
 			name = QString( oscMessageList.at(i)->data.at( 0 )->s ); //name
       serialNumber = QString::number( oscMessageList.at(i)->data.at( 1 )->i ); // serial number
       ip_address = QString( oscMessageList.at(i)->data.at( 2 )->s ); // IP address
-            
-      // Let the main window know to do an update of the "Summary" info tab
-      BoardSummaryInfoUpdateEvent* boardSummaryInfoUpdateEvent = new BoardSummaryInfoUpdateEvent( this->key );
-      application->postEvent( mainWindow, boardSummaryInfoUpdateEvent );
 
       // Update the name of the board in the board list
 			this->setText( QString( "%1:%2" ).arg(name).arg(typeString()) );
