@@ -17,9 +17,11 @@
 
 #include "NetworkMonitor.h"
 #include "Osc.h"
+#include "BoardArrivalEvent.h"
 
 #define BROADCAST_TX_PORT 10000
 #define BROADCAST_RX_PORT 10000
+#define PING_FREQUENCY 1000
 
 NetworkMonitor::NetworkMonitor( )
 {
@@ -32,8 +34,8 @@ NetworkMonitor::NetworkMonitor( )
 	  mainWindow->messageThreadSafe( QString( "Udp> Can't listen on port %1 - make sure it's not already in use.").arg( BROADCAST_RX_PORT) );
 	}
 	connect( socket, SIGNAL(readyRead()), this, SLOT( processPendingDatagrams() ) );
+	connect( &pingTimer, SIGNAL( timeout() ), this, SLOT( sendPing() ) );
 	
-	// set up our 
 	Osc* osc = new Osc();
 	int length, i;
 	char packet[1024], *ptr;
@@ -45,55 +47,59 @@ NetworkMonitor::NetworkMonitor( )
 	delete osc;
 }
 
+void NetworkMonitor::start( )
+{
+	pingTimer.start( PING_FREQUENCY );
+}
+
+void NetworkMonitor::sendPing( )
+{
+	socket->writeDatagram( broadcastPing.data(), broadcastPing.size(), QHostAddress::Broadcast, BROADCAST_TX_PORT );
+}
+
 NetworkMonitor::Status NetworkMonitor::scan( QList<PacketUdp*>* arrived )
 {
-	// responses to our broadcast will be asynchronous...don't wait around, just check on the next scan
-	socket->writeDatagram( broadcastPing.data(), broadcastPing.size(), QHostAddress::Broadcast, BROADCAST_TX_PORT );
-	if( !newDevices.isEmpty() ) 
-	{
-		QHash<QString, PacketUdp*>::iterator i = newDevices.begin( );
-		while( i != newDevices.end( ) )
-		{
-			arrived->append( i.value( ) );
-			i = newDevices.erase( i ); // this increments the iterator
-		}
-	}
+	// not used
 	return OK; 
 }
 
 void NetworkMonitor::processPendingDatagrams()
 {
-    while (socket->hasPendingDatagrams())
+  while (socket->hasPendingDatagrams())
+  {
+    QByteArray* datagram = new QByteArray( );
+    QHostAddress* sender = new QHostAddress( );
+    datagram->resize( socket->pendingDatagramSize() );
+    socket->readDatagram( datagram->data(), datagram->size(), sender );
+    if( datagram->size() <= 0 || *sender == myAddress )
     {
-        QByteArray* datagram = new QByteArray( );
-        QHostAddress* sender = new QHostAddress( );
-        datagram->resize( socket->pendingDatagramSize() );
-        socket->readDatagram( datagram->data(), datagram->size(), sender );
-        if( datagram->size() <= 0 || *sender == myAddress )
-        {
-        	delete datagram;
-        	delete sender;
-        	break;
-        }
-        QString socketKey = sender->toString( );
-        if( !connectedDevices.contains( socketKey ) )
-        {
-        	PacketUdp* device = new PacketUdp( );
-	      	connectedDevices.insert( socketKey, device );  // stick it in our own list of boards we know about
-	      	newDevices.insert( socketKey, device );
-	      	
-	      	device->setRemoteHostInfo( sender, BROADCAST_TX_PORT );
-	      	device->setKey( socketKey );
-	      	device->setInterfaces( messageInterface, this );
-	      	device->open( );
-        }
-        if( connectedDevices.contains( socketKey ) ) // pass the packet through to the packet interface
-        {
-        	connectedDevices.value( socketKey )->incomingMessage( datagram );
-        	connectedDevices.value( socketKey )->processPacket( );
-        	connectedDevices.value( socketKey )->resetTimer( );
-        }
+    	delete datagram;
+    	delete sender;
+    	break;
     }
+    QString socketKey = sender->toString( );
+    if( !connectedDevices.contains( socketKey ) )
+    {
+    	PacketUdp* device = new PacketUdp( );
+    	connectedDevices.insert( socketKey, device );  // stick it in our own list of boards we know about
+    	
+    	device->setRemoteHostInfo( sender, BROADCAST_TX_PORT );
+    	device->setKey( socketKey );
+    	device->setInterfaces( messageInterface, this );
+    	device->open( );
+    	
+    	// post it to the UI
+    	BoardArrivalEvent* event = new BoardArrivalEvent( Board::Udp );
+			event->pUdp.append( device );
+			application->postEvent( mainWindow, event );
+    }
+    if( connectedDevices.contains( socketKey ) ) // pass the packet through to the packet interface
+    {
+    	connectedDevices.value( socketKey )->incomingMessage( datagram );
+    	connectedDevices.value( socketKey )->processPacket( );
+    	connectedDevices.value( socketKey )->resetTimer( );
+    }
+  }
 }
 
 void NetworkMonitor::lookedUp(const QHostInfo &host)
@@ -114,10 +120,11 @@ void NetworkMonitor::deviceRemoved( QString key )
 	}
 }
 
-void NetworkMonitor::setInterfaces( MessageInterface* messageInterface, McHelperWindow* mainWindow )
+void NetworkMonitor::setInterfaces( MessageInterface* messageInterface, McHelperWindow* mainWindow, QApplication* application )
 {
 	this->messageInterface = messageInterface;
 	this->mainWindow = mainWindow;
+	this->application = application;
 }
 
 

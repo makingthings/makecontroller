@@ -38,7 +38,8 @@ HEADERS = 	McHelperWindow.h \
 			NetworkMonitor.h \
 			SambaMonitor.h \
 			Board.h \
-			MessageEvent.h 
+			MessageEvent.h \
+			BoardArrivalEvent.h
 				
             
 SOURCES	= 	main.cpp \

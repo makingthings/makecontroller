@@ -21,6 +21,7 @@
 
 #include <QList>
 #include <QHash>
+#include <QThread>
 #include "Samba.h"
 #include "UploaderThread.h"
 #include "McHelperWindow.h"
@@ -30,11 +31,12 @@ class McHelperWindow;
 class UploaderThread;
 class BoardListModel;
 
-class SambaMonitor
+class SambaMonitor : public QThread
 {
   public:
   	SambaMonitor( QApplication* application, McHelperWindow* mainWindow );
   	~SambaMonitor( );
+  	void run( );
   	int scan( QList<UploaderThread*>* arrived );
   	void deviceRemoved( QString key );
   	bool alreadyHas( QString key );

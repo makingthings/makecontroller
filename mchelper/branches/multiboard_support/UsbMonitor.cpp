@@ -16,15 +16,34 @@
 *********************************************************************************/
 
 #include "UsbMonitor.h"
+#include "BoardArrivalEvent.h"
 
 #ifdef Q_WS_WIN // Windows-only
 #include <initguid.h>
 DEFINE_GUID( GUID_MAKE_CTRL_KIT, 0x4D36E978, 0xE325, 0x11CE, 0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18 );
 #endif
 
-UsbMonitor::UsbMonitor( )
+UsbMonitor::UsbMonitor( ) : QThread( )
 {
 	
+}
+
+void UsbMonitor::run( )
+{
+	while( 1 )
+	{
+		QList<PacketInterface*>* newBoards = new QList<PacketInterface*>;
+		scan( newBoards );
+		if( newBoards->count( ) > 0 )
+		{
+			BoardArrivalEvent* event = new BoardArrivalEvent( Board::UsbSerial );
+			event->pInt = newBoards;
+			application->postEvent( mainWindow, event );
+		}
+		else
+			delete newBoards;
+		sleep( 1 ); // check once a second
+	}
 }
 
 UsbMonitor::Status UsbMonitor::scan( QList<PacketInterface*>* arrived )
