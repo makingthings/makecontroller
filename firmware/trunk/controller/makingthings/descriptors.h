@@ -47,7 +47,7 @@ const portCHAR pxManufacturerStringDescriptor[] =
 
 const portCHAR pxProductStringDescriptor[] = 
 {
-	40,
+	39,
 	usbDESCRIPTOR_TYPE_STRING,
 
 	'M', 0x00, 'a', 0x00, 'k', 0x00, 'e', 0x00, ' ', 0x00, 

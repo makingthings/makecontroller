@@ -156,9 +156,9 @@ _pabt:  .word __pabt                    /* program abort			*/
 _dabt:  .word __dabt                    /* data abort				*/
 _fiq:   .word __fiq                     /* FIQ						*/
 
-__undf: b     .                         /* undefined				*/
-__pabt: b     .   
-__dabt: b     .                         /* data abort				*/
-__fiq:  b     .                         /* FIQ						*/
+__undf: b     _start                      /* undefined				*/
+__pabt: b     _start   
+__dabt: b     _start                       /* data abort				*/
+__fiq:  b     _start                       /* FIQ						*/
 
 

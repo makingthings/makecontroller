@@ -1,5 +1,9 @@
 /*
-	Make.c
+	make.c
+	
+	make.c is the main project file.  The Run( ) task gets called on bootup, so stick any initialization stuff in there.
+	In Heavy, by default we set the USB, OSC, and Network systems active, but you don't need to if you aren't using them.
+	Furthermore, only register the OSC subsystems you need - by default, we register all of them.
 */
 
 #include "stdlib.h"
@@ -36,7 +40,6 @@ void Run( ) // this task gets called as soon as we boot up.
 
   // Starts the network up.  Will not return until a network is found...
   Network_SetActive( true );
-  
 }
 
 void BlinkTask( void* p )
