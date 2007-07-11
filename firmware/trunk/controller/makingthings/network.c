@@ -844,14 +844,19 @@ int DatagramSocketSend( void* datagramSocket, int address, int port, void* data,
   int lengthsent = 0;
 
   remote_addr.addr = htonl(address);
-  netconn_connect(conn, &remote_addr, port);
+  if( ERR_OK != netconn_connect(conn, &remote_addr, port) )
+		return lengthsent;
 
   // create a buffer
   buf = netbuf_new();
   if( buf != NULL )
   {
     netbuf_ref( buf, data, length); // make the buffer point to the data that should be sent
-    netconn_send( conn, buf); // send the data
+    if( ERR_OK != netconn_send( conn, buf) ) // send the data
+		{
+			netbuf_delete(buf);
+			return 0;
+		}
     lengthsent = length;
     netbuf_delete(buf); // deallocate the buffer
   }
@@ -881,9 +886,8 @@ int DatagramSocketReceive( void* datagramSocket, int incomingPort, int* address,
   struct ip_addr *addr;
   int buflen = 0;
 
-  int test = 0;
-
-  netconn_bind( conn, IP_ADDR_ANY, incomingPort );
+  if( ERR_OK != netconn_bind( conn, IP_ADDR_ANY, incomingPort ) )
+		return buflen;
     
   buf = netconn_recv( conn );
   if( buf != NULL )
@@ -897,8 +901,6 @@ int DatagramSocketReceive( void* datagramSocket, int incomingPort, int* address,
     *address = ntohl( addr->addr );
     netbuf_delete(buf);
   }
-  else
-    test = 2;  // testing if this ever comes back as NULL
 
   /* if the length of the received data is larger than
   len, this data is discarded and we return len.

@@ -286,25 +286,8 @@
 		6EEDC4F40BEFB38200A867A6 /* makingthings */ = {
 			isa = PBXGroup;
 			children = (
-				6EEDC4F50BEFB38200A867A6 /* appboard.c */,
-				6EEDC4F60BEFB38200A867A6 /* appboard.h */,
-				6EEDC4F70BEFB38200A867A6 /* appled.c */,
-				6EEDC4F80BEFB38200A867A6 /* appled.h */,
-				6EEDC4F90BEFB38200A867A6 /* digitalin.c */,
-				6EEDC4FA0BEFB38200A867A6 /* digitalin.h */,
-				6EEDC4FB0BEFB38200A867A6 /* digitalout.c */,
-				6EEDC4FC0BEFB38200A867A6 /* digitalout.h */,
-				6EEDC4FD0BEFB38200A867A6 /* dipswitch.c */,
-				6EEDC4FE0BEFB38200A867A6 /* dipswitch.h */,
-				6EEDC4FF0BEFB38200A867A6 /* motor.c */,
-				6EEDC5000BEFB38200A867A6 /* motor.h */,
-				6EEDC5010BEFB38200A867A6 /* pwmout.c */,
-				6EEDC5020BEFB38200A867A6 /* pwmout.h */,
-				6EEDC5030BEFB38200A867A6 /* servo.c */,
-				6EEDC5040BEFB38200A867A6 /* servo.h */,
-				6EEDC5050BEFB38200A867A6 /* servo_internal.h */,
-				6EEDC5060BEFB38200A867A6 /* stepper.c */,
-				6EEDC5070BEFB38200A867A6 /* stepper.h */,
+				9AC7E9CD0C44124D00D78FEA /* include */,
+				9AC7E9CC0C44124800D78FEA /* src */,
 			);
 			path = makingthings;
 			sourceTree = "<group>";
@@ -678,79 +661,10 @@
 		6EEDC5A90BEFB38200A867A6 /* makingthings */ = {
 			isa = PBXGroup;
 			children = (
+				9AC7E9CB0C4411FC00D78FEA /* include */,
+				9AC7E9CA0C4411F500D78FEA /* src */,
 				0C66191C0C0F792500E96E9F /* testing */,
-				6EEDC5AA0BEFB38200A867A6 /* analogin.c */,
-				6EEDC5AB0BEFB38200A867A6 /* analogin.h */,
-				6EEDC5AC0BEFB38200A867A6 /* analogin_internal.h */,
-				6EEDC5AD0BEFB38200A867A6 /* analogin_isr.c */,
-				6EEDC5B00BEFB38200A867A6 /* Board.h */,
-				6EEDC5B10BEFB38200A867A6 /* can.c */,
-				6EEDC5B20BEFB38200A867A6 /* can.h */,
-				6EEDC5B30BEFB38200A867A6 /* can_internal.h */,
-				6EEDC5B40BEFB38200A867A6 /* can_isr.c */,
-				6EEDC5B50BEFB38200A867A6 /* controller.c */,
-				6EEDC5B60BEFB38200A867A6 /* controller.h */,
-				6EEDC5B70BEFB38200A867A6 /* debug.h */,
-				6EEDC5B80BEFB38200A867A6 /* debugosc.c */,
-				6EEDC5B90BEFB38200A867A6 /* descriptors.h */,
-				6EEDC5BA0BEFB38200A867A6 /* eeprom.c */,
-				6EEDC5BB0BEFB38200A867A6 /* eeprom.h */,
-				6EEDC5BC0BEFB38200A867A6 /* Emac.h */,
-				6EEDC5BD0BEFB38200A867A6 /* error.h */,
-				6EEDC5BE0BEFB38200A867A6 /* fasttimer.c */,
-				6EEDC5BF0BEFB38200A867A6 /* fasttimer.h */,
-				6EEDC5C00BEFB38200A867A6 /* fasttimer_internal.h */,
-				6EEDC5C10BEFB38200A867A6 /* fasttimer_isr.c */,
-				6EEDC5C20BEFB38200A867A6 /* FreeRTOSConfig.h */,
-				6EEDC5C30BEFB38200A867A6 /* io.c */,
-				6EEDC5C40BEFB38200A867A6 /* io.h */,
-				6EEDC5C50BEFB38200A867A6 /* led.c */,
-				6EEDC5C60BEFB38200A867A6 /* led.h */,
-				6EEDC5C70BEFB38200A867A6 /* lwipopts.h */,
-				6EEDC5C80BEFB38200A867A6 /* main.c */,
 				6EEDC5C90BEFB38200A867A6 /* make_controller_kit.inf */,
-				6EEDC5CA0BEFB38200A867A6 /* mii.h */,
-				6EEDC5CB0BEFB38200A867A6 /* network.c */,
-				6EEDC5CC0BEFB38200A867A6 /* network.h */,
-				6EEDC5CD0BEFB38200A867A6 /* osc.c */,
-				6EEDC5CE0BEFB38200A867A6 /* osc.h */,
-				6EEDC5CF0BEFB38200A867A6 /* osc_patternmatch.c */,
-				6EEDC5D00BEFB38200A867A6 /* osc_patternmatch.h */,
-				6EEDC5D10BEFB38200A867A6 /* poly.c */,
-				6EEDC5D20BEFB38200A867A6 /* poly.h */,
-				6EEDC5D30BEFB38200A867A6 /* pwm.c */,
-				6EEDC5D40BEFB38200A867A6 /* pwm.h */,
-				6EEDC5D50BEFB38200A867A6 /* rtos.c */,
-				6EEDC5D60BEFB38200A867A6 /* rtos.h */,
-				6EEDC5D70BEFB38200A867A6 /* SAM7_EMAC.c */,
-				6EEDC5D80BEFB38200A867A6 /* SAM7_EMAC.h */,
-				6EEDC5D90BEFB38200A867A6 /* SAM7_EMAC_ISR.c */,
-				6EEDC5DA0BEFB38200A867A6 /* serial.c */,
-				6EEDC5DB0BEFB38200A867A6 /* serial.h */,
-				6EEDC5DC0BEFB38200A867A6 /* serial2.c */,
-				6EEDC5DD0BEFB38200A867A6 /* serial2.h */,
-				6EEDC5DE0BEFB38200A867A6 /* serial2_internal.h */,
-				6EEDC5DF0BEFB38200A867A6 /* serial2_isr.c */,
-				6EEDC5E00BEFB38200A867A6 /* serial_internal.h */,
-				6EEDC5E10BEFB38200A867A6 /* serial_isr.c */,
-				6EEDC5E20BEFB38200A867A6 /* spi.c */,
-				6EEDC5E30BEFB38200A867A6 /* spi.h */,
-				6EEDC5E40BEFB38200A867A6 /* system.c */,
-				6EEDC5E50BEFB38200A867A6 /* system.h */,
-				6EEDC5E60BEFB38200A867A6 /* timer.c */,
-				6EEDC5E70BEFB38200A867A6 /* timer.h */,
-				6EEDC5E80BEFB38200A867A6 /* timer_internal.h */,
-				6EEDC5E90BEFB38200A867A6 /* timer_isr.c */,
-				6EEDC5EA0BEFB38200A867A6 /* types.h */,
-				6EEDC5EB0BEFB38200A867A6 /* USB-CDC.c */,
-				6EEDC5EC0BEFB38200A867A6 /* USB-CDC.h */,
-				6EEDC5ED0BEFB38200A867A6 /* usb-internal.h */,
-				6EEDC5EE0BEFB38200A867A6 /* usb.c */,
-				6EEDC5EF0BEFB38200A867A6 /* usb.h */,
-				6EEDC5F00BEFB38200A867A6 /* usb_internal.h */,
-				6EEDC5F10BEFB38200A867A6 /* USBIsr.c */,
-				6EEDC5F20BEFB38200A867A6 /* webserver.c */,
-				6EEDC5F30BEFB38200A867A6 /* webserver.h */,
 			);
 			path = makingthings;
 			sourceTree = "<group>";
@@ -779,6 +693,124 @@
 				6EEDC6620BEFB38200A867A6 /* Makefile */,
 			);
 			name = heavy;
+			sourceTree = "<group>";
+		};
+		9AC7E9CA0C4411F500D78FEA /* src */ = {
+			isa = PBXGroup;
+			children = (
+				6EEDC5AA0BEFB38200A867A6 /* analogin.c */,
+				6EEDC5AD0BEFB38200A867A6 /* analogin_isr.c */,
+				6EEDC5B10BEFB38200A867A6 /* can.c */,
+				6EEDC5B40BEFB38200A867A6 /* can_isr.c */,
+				6EEDC5B50BEFB38200A867A6 /* controller.c */,
+				6EEDC5B80BEFB38200A867A6 /* debugosc.c */,
+				6EEDC5BA0BEFB38200A867A6 /* eeprom.c */,
+				6EEDC5BE0BEFB38200A867A6 /* fasttimer.c */,
+				6EEDC5C10BEFB38200A867A6 /* fasttimer_isr.c */,
+				6EEDC5C30BEFB38200A867A6 /* io.c */,
+				6EEDC5C50BEFB38200A867A6 /* led.c */,
+				6EEDC5C80BEFB38200A867A6 /* main.c */,
+				6EEDC5CB0BEFB38200A867A6 /* network.c */,
+				6EEDC5CD0BEFB38200A867A6 /* osc.c */,
+				6EEDC5CF0BEFB38200A867A6 /* osc_patternmatch.c */,
+				6EEDC5D10BEFB38200A867A6 /* poly.c */,
+				6EEDC5D30BEFB38200A867A6 /* pwm.c */,
+				6EEDC5D50BEFB38200A867A6 /* rtos.c */,
+				6EEDC5D70BEFB38200A867A6 /* SAM7_EMAC.c */,
+				6EEDC5D90BEFB38200A867A6 /* SAM7_EMAC_ISR.c */,
+				6EEDC5DA0BEFB38200A867A6 /* serial.c */,
+				6EEDC5DC0BEFB38200A867A6 /* serial2.c */,
+				6EEDC5DF0BEFB38200A867A6 /* serial2_isr.c */,
+				6EEDC5E10BEFB38200A867A6 /* serial_isr.c */,
+				6EEDC5E20BEFB38200A867A6 /* spi.c */,
+				6EEDC5E40BEFB38200A867A6 /* system.c */,
+				6EEDC5E60BEFB38200A867A6 /* timer.c */,
+				6EEDC5E90BEFB38200A867A6 /* timer_isr.c */,
+				6EEDC5EB0BEFB38200A867A6 /* USB-CDC.c */,
+				6EEDC5EE0BEFB38200A867A6 /* usb.c */,
+				6EEDC5F10BEFB38200A867A6 /* USBIsr.c */,
+				6EEDC5F20BEFB38200A867A6 /* webserver.c */,
+			);
+			name = src;
+			sourceTree = "<group>";
+		};
+		9AC7E9CB0C4411FC00D78FEA /* include */ = {
+			isa = PBXGroup;
+			children = (
+				6EEDC5AB0BEFB38200A867A6 /* analogin.h */,
+				6EEDC5AC0BEFB38200A867A6 /* analogin_internal.h */,
+				6EEDC5B00BEFB38200A867A6 /* Board.h */,
+				6EEDC5B20BEFB38200A867A6 /* can.h */,
+				6EEDC5B30BEFB38200A867A6 /* can_internal.h */,
+				6EEDC5B60BEFB38200A867A6 /* controller.h */,
+				6EEDC5B70BEFB38200A867A6 /* debug.h */,
+				6EEDC5B90BEFB38200A867A6 /* descriptors.h */,
+				6EEDC5BB0BEFB38200A867A6 /* eeprom.h */,
+				6EEDC5BC0BEFB38200A867A6 /* Emac.h */,
+				6EEDC5BD0BEFB38200A867A6 /* error.h */,
+				6EEDC5BF0BEFB38200A867A6 /* fasttimer.h */,
+				6EEDC5C00BEFB38200A867A6 /* fasttimer_internal.h */,
+				6EEDC5C20BEFB38200A867A6 /* FreeRTOSConfig.h */,
+				6EEDC5C40BEFB38200A867A6 /* io.h */,
+				6EEDC5C60BEFB38200A867A6 /* led.h */,
+				6EEDC5C70BEFB38200A867A6 /* lwipopts.h */,
+				6EEDC5CA0BEFB38200A867A6 /* mii.h */,
+				6EEDC5CC0BEFB38200A867A6 /* network.h */,
+				6EEDC5CE0BEFB38200A867A6 /* osc.h */,
+				6EEDC5D00BEFB38200A867A6 /* osc_patternmatch.h */,
+				6EEDC5D20BEFB38200A867A6 /* poly.h */,
+				6EEDC5D40BEFB38200A867A6 /* pwm.h */,
+				6EEDC5D60BEFB38200A867A6 /* rtos.h */,
+				6EEDC5D80BEFB38200A867A6 /* SAM7_EMAC.h */,
+				6EEDC5DB0BEFB38200A867A6 /* serial.h */,
+				6EEDC5DD0BEFB38200A867A6 /* serial2.h */,
+				6EEDC5DE0BEFB38200A867A6 /* serial2_internal.h */,
+				6EEDC5E00BEFB38200A867A6 /* serial_internal.h */,
+				6EEDC5E30BEFB38200A867A6 /* spi.h */,
+				6EEDC5E50BEFB38200A867A6 /* system.h */,
+				6EEDC5E70BEFB38200A867A6 /* timer.h */,
+				6EEDC5E80BEFB38200A867A6 /* timer_internal.h */,
+				6EEDC5EA0BEFB38200A867A6 /* types.h */,
+				6EEDC5EC0BEFB38200A867A6 /* USB-CDC.h */,
+				6EEDC5ED0BEFB38200A867A6 /* usb-internal.h */,
+				6EEDC5EF0BEFB38200A867A6 /* usb.h */,
+				6EEDC5F00BEFB38200A867A6 /* usb_internal.h */,
+				6EEDC5F30BEFB38200A867A6 /* webserver.h */,
+			);
+			name = include;
+			sourceTree = "<group>";
+		};
+		9AC7E9CC0C44124800D78FEA /* src */ = {
+			isa = PBXGroup;
+			children = (
+				6EEDC4F50BEFB38200A867A6 /* appboard.c */,
+				6EEDC4F70BEFB38200A867A6 /* appled.c */,
+				6EEDC4F90BEFB38200A867A6 /* digitalin.c */,
+				6EEDC4FB0BEFB38200A867A6 /* digitalout.c */,
+				6EEDC4FD0BEFB38200A867A6 /* dipswitch.c */,
+				6EEDC4FF0BEFB38200A867A6 /* motor.c */,
+				6EEDC5010BEFB38200A867A6 /* pwmout.c */,
+				6EEDC5030BEFB38200A867A6 /* servo.c */,
+				6EEDC5060BEFB38200A867A6 /* stepper.c */,
+			);
+			name = src;
+			sourceTree = "<group>";
+		};
+		9AC7E9CD0C44124D00D78FEA /* include */ = {
+			isa = PBXGroup;
+			children = (
+				6EEDC4F60BEFB38200A867A6 /* appboard.h */,
+				6EEDC4F80BEFB38200A867A6 /* appled.h */,
+				6EEDC4FA0BEFB38200A867A6 /* digitalin.h */,
+				6EEDC4FC0BEFB38200A867A6 /* digitalout.h */,
+				6EEDC4FE0BEFB38200A867A6 /* dipswitch.h */,
+				6EEDC5000BEFB38200A867A6 /* motor.h */,
+				6EEDC5020BEFB38200A867A6 /* pwmout.h */,
+				6EEDC5040BEFB38200A867A6 /* servo.h */,
+				6EEDC5050BEFB38200A867A6 /* servo_internal.h */,
+				6EEDC5070BEFB38200A867A6 /* stepper.h */,
+			);
+			name = include;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

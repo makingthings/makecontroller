@@ -204,11 +204,11 @@ void Osc_SetActive( int state )
       Osc->subsystem[ i ] = NULL;
 
     #ifdef MAKE_CTRL_NETWORK
-    Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 2000, (void*)OSC_CHANNEL_UDP, 3 );
+    Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 2400, (void*)OSC_CHANNEL_UDP, 3 );
     Osc->TcpTaskPtr = NULL;
     #endif
     #ifdef MAKE_CTRL_USB
-    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1200, (void*)OSC_CHANNEL_USB, 3 );
+    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1600, (void*)OSC_CHANNEL_USB, 3 );
     #endif
 
     vSemaphoreCreateBinary( Osc->scratch1Semaphore );
@@ -540,10 +540,10 @@ int Osc_ReceiveMessage( int channel, char* message, int length )
     if ( count == 0 )
     {
       Osc_LockScratchBuf( Osc->scratch1Semaphore );
-      snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "No Subsystem Match - %s", message + 1 ); 
-      Osc_CreateMessage( channel, "/error", ",s", Osc->scratch1 );
-      Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
-    }
+      snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "No Subsystem Match - %s", message + 1 );
+			Osc_CreateMessage( channel, "/error", ",s", Osc->scratch1 );
+			Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
+		}
   }
   else
   {
@@ -1110,8 +1110,8 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
         {
           int value = (*propertyGet)( index, propertyIndex );
           Osc_LockScratchBuf( Osc->scratch1Semaphore );
-          //char buf[ 5 ]; // FIX ME: this is a complete disaster, but for some reason, this snprintf no longer
-          //itoa( index, buf, 10 ); // wants to format index 0 properly...wtf?
+          //char buf[ 5 ];
+          //itoa( index, buf, 10 );
           snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, index, propertyNames[ propertyIndex ] ); 
           Osc_CreateMessage( channel, Osc->scratch1, ",i", value );
           Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
