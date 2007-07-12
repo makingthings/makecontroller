@@ -204,7 +204,7 @@ void UsbMonitor::FindUsbDevices( QList<PacketInterface*>* arrived )
 	      {
 	      	PacketUsbCdc* device = new PacketUsbCdc( );
 	     		device->deviceHandle = hOut;
-	     		strncpy( device->portName, portName, strlen( portName )+1 );
+	     		device->setportName( portName );
 	     		device->setInterfaces( messageInterface, application, this );
 					device->setWidget( mainWindow );
 	     		if( PacketInterface::OK == device->open( ) )

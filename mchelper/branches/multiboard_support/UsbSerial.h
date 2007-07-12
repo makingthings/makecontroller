@@ -84,9 +84,7 @@ class UsbSerial
 		#ifdef Q_WS_WIN
 		HANDLE deviceHandle;
 		#endif
-		#ifdef Q_WS_MAC
 		UsbStatus setportName( char* filePath );
-		#endif
 		
 	protected:
 		bool deviceOpen;

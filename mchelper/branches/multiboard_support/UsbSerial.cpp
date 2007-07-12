@@ -39,7 +39,6 @@ UsbSerial::UsbSerial( )
 	#endif
 }
 
-#ifdef Q_WS_MAC 
 UsbSerial::UsbStatus UsbSerial::setportName( char* filePath )
 {
 	char *result = NULL;
@@ -49,7 +48,6 @@ UsbSerial::UsbStatus UsbSerial::setportName( char* filePath )
 	else
 		return ALLOC_ERROR;
 }
-#endif
 
 UsbSerial::UsbStatus UsbSerial::usbOpen( )
 {

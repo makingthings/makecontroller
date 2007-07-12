@@ -62,7 +62,7 @@ QString Board::typeString( )
 		case Board::UsbSerial:
 		{
 			#ifdef Q_WS_WIN
-				return QString( "USB (%1)" ).arg(com_port);
+				return QString( "USB (%1)" ).arg(location);
 			#else
 				return QString( "USB" );
 			#endif
