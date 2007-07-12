@@ -21,8 +21,8 @@
 #include <QSettings>
 #include <QHostAddress>
 #include <QMessageBox> 
-#include <QTableWidget>
-#include <QTableWidgetItem> 
+#include <QTreeWidget>
+#include <QTreeWidgetItem> 
 #include <QHeaderView> 
 #include "Osc.h"
 #include "BoardArrivalEvent.h"
@@ -52,7 +52,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	udp->setInterfaces( this, this, application );
 	usb->setInterfaces( this, application, this );
   
-  setupOutputTable();
+  setupOutputWindow();
 
   // Wire up the selection changed signal from the
   // model to be handled here
@@ -82,7 +82,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
     
 	// setup the menu
 	connect( actionAboutMchelper, SIGNAL( triggered() ), this, SLOT( about( ) ) );
-	connect( actionClearOutput, SIGNAL( triggered() ), this, SLOT( clearOutputWindow( ) ) );
+	connect( actionClearOutput, SIGNAL( triggered() ), outputWindow, SLOT( clear( ) ) );
 	//actionClearOutput->setShortcut(tr("Ctrl+X"));
 	//actionClearOutput->setShortcutContext( Qt::ApplicationShortcut ); // this doesn't seem to have much effect
 	
@@ -94,9 +94,6 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   usb->start( );
   udp->start( );
   samba->start( );
-  
-  // Init the status bar and let the user know the app is loaded
-  statusBar()->showMessage( tr("Ready."), 2000);
 }
 
 void McHelperWindow::usbBoardsArrived( QList<PacketInterface*>* arrived )
@@ -109,7 +106,7 @@ void McHelperWindow::usbBoardsArrived( QList<PacketInterface*>* arrived )
     board->key = arrived->at(i)->getKey();
     board->type = Board::UsbSerial;
     board->setPacketInterface( arrived->at(i) );
-    board->com_port = arrived->at(i)->location();
+    board->location = QString( arrived->at(i)->location( ) );
     board->setText( QString( ":%1" ).arg( board->typeString() ) );
     connectedBoards.insert( board->key, board );
     listWidget->addItem( board ); 
@@ -125,6 +122,7 @@ void McHelperWindow::udpBoardsArrived( QList<PacketUdp*>* arrived )
 	  board = new Board( this, this, application );
 	  board->setPacketInterface( arrived->at(i) );
 	  board->key = arrived->at(i)->getKey();
+		board->location = QString( arrived->at(i)->location( ) );
     board->type = Board::Udp;
     connectedBoards.insert( board->key, board );
     listWidget->addItem( board );
@@ -146,6 +144,20 @@ void McHelperWindow::sambaBoardsArrived( QList<UploaderThread*>* arrived )
     board->setText( board->name );
     listWidget->addItem( board );
 	}
+}
+
+Board* McHelperWindow::getCurrentBoard( )
+{
+	Board* board = (Board*)listWidget->currentItem( );
+	return board;
+}
+
+bool McHelperWindow::summaryTabIsActive( )
+{
+	if( tabWidget->currentIndex() == 1 )
+		return true;
+	else
+		return false;
 }
 
 void McHelperWindow::checkForNewDevices( )
@@ -192,7 +204,9 @@ void McHelperWindow::removeDevice( QString key )
 
 void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous )
 {
-  Board* board = (Board*)listWidget->currentItem();
+  (void)current;
+	(void)previous;
+	Board* board = (Board*)listWidget->currentItem();
   if( board == NULL )
   	return;
   	
@@ -284,10 +298,10 @@ void McHelperWindow::commandLineEvent( )
   if( board == NULL )
   	return;
   
-  QString cmd = QString( "%1" ).arg(commandLine->currentText() );
-  messageThreadSafe( cmd, MessageEvent::Command, board->key  );
+  QString cmd = commandLine->currentText();
+  messageThreadSafe( cmd, MessageEvent::Command, board->location );
   
-  board->sendMessage( commandLine->currentText());
+  board->sendMessage( cmd );
   
   // in order to get a readline-style history of commands via up/down arrows
   // we need to keep an empty item at the end of the list so we have a context from which to up-arrow
@@ -298,22 +312,7 @@ void McHelperWindow::commandLineEvent( )
   commandLine->setCurrentIndex( 9 );
   */
   commandLine->clearEditText();
-  writeUsbSettings();
-}
-
-void McHelperWindow::clearOutputWindow()
-{
-  int r, c;
-  for( r = 0; r < outputTable->rowCount(); r++ )
-  {
-    for( c = 0; c < outputTable->columnCount(); c++ )
-    {
-      delete outputTable->item(r,c);
-    }
-  }
-  
-  //outputTable->clearContents();
-  outputTable->setRowCount(0);
+  writeUsbSettings( );
 }
 
 void McHelperWindow::customEvent( QEvent* event )
@@ -475,38 +474,36 @@ void McHelperWindow::message( QString string, MessageEvent::Types type, QString 
             default:
                 bgColor = Qt::white;
         } 
-           
-        // Increase the row count
-        outputTable->setRowCount(outputTable->rowCount() + 1);
-        
-        // From
-        QTableWidgetItem *fromItem = new QTableWidgetItem(from);
-        fromItem->setTextAlignment(Qt::AlignHCenter);
-        fromItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-        fromItem->setBackgroundColor( bgColor );
-        outputTable->setItem(outputTable->rowCount() - 1, McHelperWindow::TO_FROM, fromItem );
-        outputTable->resizeColumnToContents(McHelperWindow::TO_FROM);
-        
-        // Message
-        QTableWidgetItem *messageItem = new QTableWidgetItem(string);
-        messageItem->setTextAlignment(Qt::AlignLeft);
-        messageItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-        messageItem->setBackgroundColor( bgColor );
-        outputTable->setItem(outputTable->rowCount() - 1, McHelperWindow::MESSAGE, messageItem);
-        
-        // Timestamp
-        QTableWidgetItem *timeStampItem = new QTableWidgetItem( QTime::currentTime().toString() );
-        timeStampItem->setTextAlignment(Qt::AlignRight);
-        timeStampItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-        timeStampItem->setBackgroundColor( bgColor );
-        outputTable->setItem(outputTable->rowCount() - 1, McHelperWindow::TIMESTAMP, timeStampItem);
-        outputTable->resizeColumnToContents(McHelperWindow::TIMESTAMP);
-        
-        // Set the row height to allow more data to show than
-        // the default height would and scroll down to the last item
-        outputTable->verticalHeader()->resizeSection(outputTable->rowCount() - 1, 15);
-        outputTable->scrollToItem(timeStampItem, QAbstractItemView::EnsureVisible);
+				
+				// create the to/from, message, and timestamp columns for the new message
+        QTreeWidgetItem *newItem = new QTreeWidgetItem( outputWindow );
+				newItem->setText( McHelperWindow::TO_FROM, from );
+				newItem->setTextAlignment( McHelperWindow::TO_FROM, Qt::AlignHCenter );
+				newItem->setText( McHelperWindow::MESSAGE, string );
+				newItem->setTextAlignment( McHelperWindow::MESSAGE, Qt::AlignLeft );
+				newItem->setText( McHelperWindow::TIMESTAMP, QTime::currentTime().toString() );
+				newItem->setTextAlignment( McHelperWindow::TIMESTAMP, Qt::AlignHCenter );
+				outputWindow->addTopLevelItem( newItem );
+				
+				int i;
+				for( i=0; i<outputWindow->columnCount(); i++ )
+					newItem->setBackground( i, QBrush(bgColor) );
+					
+				outputWindow->resizeColumnToContents( McHelperWindow::TO_FROM );
+				outputWindow->resizeColumnToContents( McHelperWindow::TIMESTAMP );
+				outputWindow->scrollToItem(newItem, QAbstractItemView::EnsureVisible);
     }
+}
+
+void McHelperWindow::setupOutputWindow( )
+{
+	QHeaderView *headerHView = outputWindow->header( );
+	headerHView->setDefaultAlignment( Qt::AlignHCenter );
+	headerHView->setClickable( false );
+	headerHView->setMovable( false );
+	headerHView->setStretchLastSection( false ); // we want the middle message section to be the one that does the stretching
+	headerHView->setResizeMode( McHelperWindow::MESSAGE, QHeaderView::Stretch);
+	headerHView->setResizeMode( McHelperWindow::TO_FROM, QHeaderView::Fixed);
 }
 
 // Read and write the last values used - address, ports, directory searched etc...
@@ -569,39 +566,6 @@ void McHelperWindow::setAboutDialog( QDialog* about )
 	this->aboutMchelper = about; 
 }
 
-// Setup the output table
-void McHelperWindow::setupOutputTable()
-{
-  //outputTable->setRowCount(0);
-  //outputTable->setColumnCount(3);
-  //QStringList horizontalLabels;
-  //horizontalLabels << "TimeStamp" << "From" << "Message";
-  //outputTable->setHorizontalHeaderLabels(horizontalLabels);
-  
-  // The message column should stretch to fill the table
-  QHeaderView *headerHView = outputTable->horizontalHeader();
-  //headerHView->setResizeMode(QHeaderView::Interactive);
-  //headerHView->resizeSection(McHelperWindow::TO_FROM, 50);
-  
-  headerHView->setResizeMode(McHelperWindow::TO_FROM, QHeaderView::ResizeToContents);
-  headerHView->setResizeMode(McHelperWindow::MESSAGE, QHeaderView::Stretch);
-  headerHView->setResizeMode(McHelperWindow::TIMESTAMP, QHeaderView::ResizeToContents);
-  //headerHView->resizeSection(McHelperWindow::TIMESTAMP, 60 );
-  
-  // Don't highlight selected headers and don't make
-  // them clickable
-  headerHView->setHighlightSections( false );
-  headerHView->setClickable ( false );
-  
-  //QHeaderView *headerVView = outputTable->verticalHeader();
-  //headerVView->setResizeMode(QHeaderView::ResizeToContents);
-  
-  // We don't want to show the vertical header column
-  outputTable->verticalHeader()->hide();
-  
-  outputTable->setShowGrid(false);
-}
-
 void McHelperWindow::about( )  // set the version number here.
 {
   aboutMchelper->show();
@@ -632,10 +596,6 @@ void McHelperWindow::userInitiatedBoardChange( Board* board, QString attribute, 
     {
         QString cmd = QString( "%1 %2" ).arg(attribute).arg(new_value);
         board->sendMessage( cmd );
-        
-        // Re-query /system/info so that the board and summary tab get updated
-        Sleep( 250 );
-        board->sendMessage( QString("/system/info") );
         
         // Give some visual feedback that the change occurred
         statusBar()->showMessage( tr("Board changed: ").append(cmd), 2000);

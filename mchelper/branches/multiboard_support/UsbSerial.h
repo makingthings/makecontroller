@@ -71,7 +71,8 @@ typedef const char cchar;
 class UsbSerial
 {									
 	public:
-	  enum UsbStatus { OK, ALREADY_OPEN, NOT_OPEN, NOTHING_AVAILABLE, IO_ERROR, UNKNOWN_ERROR, GOT_CHAR, ALLOC_ERROR, ERROR_CLOSE };
+	  enum UsbStatus { OK, ALREADY_OPEN=-1, NOT_OPEN=-2, NOTHING_AVAILABLE=-3, IO_ERROR=-4, UNKNOWN_ERROR=-5, 
+											GOT_CHAR=-6, ALLOC_ERROR=-7, ERROR_CLOSE=-8 };
 		UsbSerial( );
 		
 		UsbStatus usbOpen( );
@@ -80,23 +81,18 @@ class UsbSerial
 		UsbStatus usbWrite( char* buffer, int length );
 		UsbStatus usbWriteChar( char c );
 		int numberOfAvailableBytes( );
-		char portName[1024]; // should be protected?
 		#ifdef Q_WS_WIN
 		HANDLE deviceHandle;
 		#endif
 		#ifdef Q_WS_MAC
-		UsbStatus setDeviceFilePath( char* filePath );
+		UsbStatus setportName( char* filePath );
 		#endif
 		
 	protected:
 		bool deviceOpen;
 		bool readInProgress;
 		QMutex usbOpenMutex;
-		
-	  //Mac-only
-		#ifdef Q_WS_MAC
-		int sleepMs( long ms );
-		#endif
+	  char portName[1024];
 		
 	  MessageInterface* messageInterface;
 	  QMainWindow* mainWindow;		
@@ -117,7 +113,6 @@ class UsbSerial
 		
 		//Mac only
 		#ifdef Q_WS_MAC
-		char deviceFilePath[MAXPATHLEN];
 		int deviceHandle;
 		mach_port_t masterPort;
 		bool foundMakeController;

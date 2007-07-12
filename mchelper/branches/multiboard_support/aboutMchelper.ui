@@ -1,7 +1,4 @@
 <ui version="4.0" >
- <author></author>
- <comment></comment>
- <exportmacro></exportmacro>
  <class>aboutMchelper</class>
  <widget class="QDialog" name="aboutMchelper" >
   <property name="geometry" >
@@ -9,8 +6,20 @@
     <x>0</x>
     <y>0</y>
     <width>580</width>
-    <height>457</height>
+    <height>488</height>
    </rect>
+  </property>
+  <property name="minimumSize" >
+   <size>
+    <width>580</width>
+    <height>488</height>
+   </size>
+  </property>
+  <property name="maximumSize" >
+   <size>
+    <width>580</width>
+    <height>488</height>
+   </size>
   </property>
   <property name="windowTitle" >
    <string>About mchelper</string>
@@ -19,20 +28,8 @@
    <bool>true</bool>
   </property>
   <layout class="QVBoxLayout" >
-   <property name="margin" >
-    <number>9</number>
-   </property>
-   <property name="spacing" >
-    <number>6</number>
-   </property>
    <item>
     <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
-     <property name="spacing" >
-      <number>6</number>
-     </property>
      <item>
       <spacer>
        <property name="orientation" >
@@ -47,72 +44,24 @@
       </spacer>
      </item>
      <item>
-      <widget class="QLabel" name="label_3" >
+      <widget class="QLabel" name="label_4" >
+       <property name="autoFillBackground" >
+        <bool>false</bool>
+       </property>
        <property name="text" >
         <string/>
        </property>
        <property name="pixmap" >
-        <pixmap>mticon128.png</pixmap>
+        <pixmap resource="mchelper.qrc" >:/mticon128.png</pixmap>
        </property>
-      </widget>
-     </item>
-     <item>
-      <spacer>
-       <property name="orientation" >
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" >
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
-     <property name="spacing" >
-      <number>6</number>
-     </property>
-     <item>
-      <spacer>
-       <property name="orientation" >
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" >
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_2" >
-       <property name="sizePolicy" >
-        <sizepolicy>
-         <hsizetype>0</hsizetype>
-         <vsizetype>0</vsizetype>
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="maximumSize" >
-        <size>
-         <width>16777215</width>
-         <height>45</height>
-        </size>
-       </property>
-       <property name="text" >
-        <string>&lt;html>&lt;head>&lt;meta name="qrichtext" content="1" />&lt;/head>&lt;body style=" white-space: pre-wrap; font-family:MS Shell Dlg 2; font-size:8.25pt; font-weight:400; font-style:normal; text-decoration:none;">&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">&lt;span style=" font-size:10pt; font-weight:600;">Make Controller Helper&lt;/span>&lt;/p>&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:10pt; font-weight:600;">&lt;span style=" font-size:8pt; font-weight:400;">Version 2.0.0&lt;/span>&lt;/p>&lt;p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">&lt;/p>&lt;p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">&lt;/p>&lt;/body>&lt;/html></string>
+       <property name="scaledContents" >
+        <bool>false</bool>
        </property>
        <property name="alignment" >
-        <set>Qt::AlignHCenter|Qt::AlignTop</set>
+        <set>Qt::AlignCenter</set>
+       </property>
+       <property name="wordWrap" >
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -133,18 +82,70 @@
    </item>
    <item>
     <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
-     <property name="spacing" >
-      <number>6</number>
-     </property>
+     <item>
+      <spacer>
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" >
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" >
+       <item>
+        <widget class="QLabel" name="label_3" >
+         <property name="text" >
+          <string>&lt;html>&lt;head>&lt;meta name="qrichtext" content="1" />&lt;style type="text/css">
+p, li { white-space: pre-wrap; }
+&lt;/style>&lt;/head>&lt;body style=" font-family:'Lucida Grande'; font-size:13pt; font-weight:400; font-style:normal;">
+&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">&lt;span style=" font-size:15pt;">Make Controller Helper&lt;/span>&lt;/p>&lt;/body>&lt;/html></string>
+         </property>
+         <property name="alignment" >
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="wordWrap" >
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_2" >
+         <property name="text" >
+          <string>Version 2.0.0</string>
+         </property>
+         <property name="alignment" >
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <spacer>
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" >
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" >
      <item>
       <widget class="QLabel" name="label" >
        <property name="sizePolicy" >
-        <sizepolicy>
-         <hsizetype>0</hsizetype>
-         <vsizetype>0</vsizetype>
+        <sizepolicy vsizetype="Fixed" hsizetype="Fixed" >
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -155,8 +156,23 @@
          <height>16777215</height>
         </size>
        </property>
+       <property name="font" >
+        <font>
+         <family>Lucida Grande</family>
+         <stylestrategy>PreferAntialias</stylestrategy>
+        </font>
+       </property>
        <property name="text" >
-        <string>&lt;html>&lt;head>&lt;meta name="qrichtext" content="1" />&lt;/head>&lt;body style=" white-space: pre-wrap; font-family:MS Shell Dlg 2; font-size:8.25pt; font-weight:400; font-style:normal; text-decoration:none;">&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">&lt;span style=" font-weight:600;">mchelper&lt;/span> (Make Controller Helper) is part of the &lt;span style=" font-weight:600;">Make Controller Kit&lt;/span> project - an open source hardware platform for everybody.  mchelper can upload new firmware to your Make Controller, and allow you to easily manage it.&lt;/p>&lt;p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">&lt;/p>&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">mchelper is released under the &lt;span style=" font-weight:600;">Apache 2.0&lt;/span> license, which can be found at http://www.apache.org/licenses/LICENSE-2.0.html and uses code from Erik Gilling's &lt;span style=" font-weight:600;">sam7utils&lt;/span> project - http://oss.tekno.us/sam7utils.&lt;/p>&lt;p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">&lt;/p>&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">Copyright (C) 2006-2007 MakingThings LLC.  http://www.makingthings.com&lt;/p>&lt;p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">&lt;/p>&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">This program is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.&lt;/p>&lt;/body>&lt;/html></string>
+        <string>&lt;html>&lt;head>&lt;meta name="qrichtext" content="1" />&lt;style type="text/css">
+p, li { white-space: pre-wrap; }
+&lt;/style>&lt;/head>&lt;body style=" font-family:'Lucida Grande'; font-size:13pt; font-weight:400; font-style:normal;">
+&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2'; font-size:8pt;">&lt;span style=" font-size:13pt; font-weight:600;">mchelper&lt;/span>&lt;span style=" font-size:13pt;"> (Make Controller Helper) is part of the &lt;/span>&lt;span style=" font-size:13pt; font-weight:600;">Make Controller Kit&lt;/span>&lt;span style=" font-size:13pt;"> project - an open source hardware platform for everybody.  mchelper can upload new firmware to your Make Controller, and allow you to easily manage it.&lt;/span>&lt;/p>
+&lt;p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2';">&lt;/p>
+&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2';">mchelper is released under the &lt;span style=" font-weight:600;">Apache 2.0&lt;/span> license, which can be found at &lt;a href="http://www.apache.org/licenses/LICENSE-2.0.html">&lt;span style=" text-decoration: underline; color:#0000ff;">http://www.apache.org/licenses/LICENSE-2.0.html&lt;/span>&lt;/a> and uses code from Erik Gilling's &lt;span style=" font-weight:600;">sam7utils&lt;/span> project - &lt;a href="http://oss.tekno.us/sam7utils">&lt;span style=" text-decoration: underline; color:#0000ff;">http://oss.tekno.us/sam7utils&lt;/span>&lt;/a>.&lt;/p>
+&lt;p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2';">&lt;/p>
+&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2';">Copyright (C) 2006-2007 MakingThings LLC.  &lt;a href="http://www.makingthings.com">&lt;span style=" text-decoration: underline; color:#0000ff;">http://www.makingthings.com&lt;/span>&lt;/a>&lt;/p>
+&lt;p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2';">&lt;/p>
+&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2';">This program is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.&lt;/p>&lt;/body>&lt;/html></string>
        </property>
        <property name="textFormat" >
         <enum>Qt::AutoText</enum>
@@ -167,18 +183,15 @@
        <property name="wordWrap" >
         <bool>true</bool>
        </property>
+       <property name="openExternalLinks" >
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
     </layout>
    </item>
    <item>
     <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
-     <property name="spacing" >
-      <number>6</number>
-     </property>
      <item>
       <spacer>
        <property name="orientation" >
@@ -196,6 +209,15 @@
       <widget class="QPushButton" name="okButton" >
        <property name="text" >
         <string>OK</string>
+       </property>
+       <property name="autoDefault" >
+        <bool>true</bool>
+       </property>
+       <property name="default" >
+        <bool>false</bool>
+       </property>
+       <property name="flat" >
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -216,8 +238,9 @@
    </item>
   </layout>
  </widget>
- <pixmapfunction></pixmapfunction>
- <resources/>
+ <resources>
+  <include location="mchelper.qrc" />
+ </resources>
  <connections>
   <connection>
    <sender>okButton</sender>

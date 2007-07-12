@@ -136,7 +136,6 @@ void Osc::receivePacket( char* packet, int length, QList<OscMessage*>* oscMessag
         {
           // read the length (pretend packet is a pointer to integer)
           int messageLength = qFromBigEndian( *((int*)packet) );
-			printf( "Unpacking bundle of length %d.\n", messageLength );
           packet += 4;
           length -= 4;
           if ( messageLength <= length )

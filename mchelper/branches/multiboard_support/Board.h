@@ -46,9 +46,8 @@ class Board : public QListWidgetItem, public PacketReadyInterface
     void flash( );
     QString typeString( );
     
-    QString key; 
+    QString key, location; 
     Board::Types type;
-    QString com_port;
     
     // System properties
     QString name, serialNumber, firmwareVersion, freeMemory;

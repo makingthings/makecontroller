@@ -573,7 +573,7 @@ void Samba::fileClose( void* file_fd )
 
 #define SAM7_TTY "/dev/at91_0"
 
-int Samba::usbOpen( QString deviceKey )
+int Samba::usbOpen( QString key )
 {
   // Linux-only
   #if (defined(Q_WS_LINUX))
@@ -642,27 +642,24 @@ int Samba::usbOpen( QString deviceKey )
 	err = IOServiceGetMatchingServices( masterPort, matchingDictionary, &iterator );
   matchingDictionary = 0;  // consumed by the above call
 
-  if( (usbDeviceRef = IOIteratorNext( iterator ) ) )
+  while( (usbDeviceRef = IOIteratorNext( iterator ) ) )
 	{
-		messageInterface->message( 2, "usb> Found boot agent.\n" );
-    //printf( "usb> Found boot agent\n" );
-
-    do_dev( usbDeviceRef );
-		
-		IOObjectRelease(usbDeviceRef);
-		IOObjectRelease(iterator);
-		return init();
-		
-  } else
-	{
-		//messageInterface->message( 1, "usb> Cannot find boot agent.\n" );
-		//messageInterface->message( 1, "  **Make sure you have erased and reset the power.\n" );
-    //printf( "cannot find boot agent\n" );
-		usbClose( );
-		IOObjectRelease(usbDeviceRef);
-		IOObjectRelease(iterator);
-		return -1;
+		//printf( "usb> Found boot agent\n" );
+		char path[1024];
+		IORegistryEntryGetPath( usbDeviceRef, kIOServicePlane, path );
+		if( key == QString(path) )
+		{
+			do_dev( usbDeviceRef );
+			IOObjectRelease(usbDeviceRef);
+			IOObjectRelease(iterator);
+			return init();
+		}
   }
+	//printf( "cannot find boot agent\n" );
+	usbClose( );
+	IOObjectRelease(usbDeviceRef);
+	IOObjectRelease(iterator);
+	return -1;
 	#endif /* Mac-only UsbConnection::init( ) */ 
     
   // Windows-only
@@ -673,8 +670,6 @@ int Samba::usbOpen( QString deviceKey )
   int result = testOpen( deviceKey );
   
   if (result == FC_DRIVER_NOT_FOUND ) {
-    //messageInterface->message( 1, "usb> Cannot find boot agent.\n" );
-		//messageInterface->message( 1, "  **Make sure you have erased and reset the power.\n" );
     disconnect();
     return -1;
   } else if (result != FC_OK) {
@@ -683,15 +678,8 @@ int Samba::usbOpen( QString deviceKey )
     return -1;
   }
   
-  // messageInterface->message( 3, "  Flushing.\n" );
-  // messageInterface->sleepMs( 100 );
-  
   // Flush buffer
   usbFlushOut();
-
-
-  // messageInterface->message( 3, "  Writing useless command.\n" );
-  // messageInterface->sleepMs( 100 );
 
   // Put Normal PutData mode for the target
   buffer[0] = 'N';
@@ -702,16 +690,9 @@ int Samba::usbOpen( QString deviceKey )
   }
 
   // No errors test because 2 case possible : 0 byte or 2 bytes to flush... (depends if the board reset or not)
-  //messageInterface->message( 3, "  Reading useless command.\n" );
-  //messageInterface->sleepMs( 100 );
   usbRead((char*)temp,2);
 
-  // messageInterface->message( 2, "usb> Found boot agent.\n" );
-  // messageInterface->sleepMs( 100 );
   BulkUSB = 1; // BulkUSB Mode
-
-  //messageInterface->message( 3, "  Initializing\n" );
-  // messageInterface->sleepMs( 100 );
 
   return init();
   
@@ -949,7 +930,59 @@ int Samba::usbFlushOut( )
 int Samba::FindUsbDevices( QList<QString>* arrived )
 {
   #ifdef Q_WS_MAC
+	masterPort = 0;
+
+  // from io_iokit.c
+  kern_return_t err;
+  CFMutableDictionaryRef matchingDictionary = 0;
+  CFNumberRef numberRef;
+  SInt32 idVendor = 0x03eb;
+  SInt32 idProduct = 0x6124;
+  io_iterator_t iterator = 0;
+  io_registry_entry_t usbDeviceRef;
 	
+	if( ( err = IOMasterPort( MACH_PORT_NULL, &masterPort ) ) ) 
+	{
+	  messageInterface->message( 2, "could not create master port, err = %08x\n", err );
+		return -1;
+  }
+	
+	if( !(matchingDictionary = IOServiceMatching(kIOUSBDeviceClassName)) )
+	{
+		messageInterface->message( 1, "usb> could not create matching dictionary.\n" );
+		return -1;
+  }
+	
+	if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idVendor)) )
+	{
+		messageInterface->message( 1, "usb> could not create CFNumberRef for vendor.\n" );
+		return -1;
+  }
+	CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBVendorID), numberRef);
+  CFRelease( numberRef );
+  numberRef = 0;
+	
+	if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idProduct)) )
+	{
+		messageInterface->message( 1, "usb> could not create CFNumberRef for product.\n" );
+		return -1;
+  }
+  CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBProductID), numberRef);
+  CFRelease( numberRef );
+  numberRef = 0;
+	
+	err = IOServiceGetMatchingServices( masterPort, matchingDictionary, &iterator );
+  matchingDictionary = 0;  // consumed by the above call
+
+  while( (usbDeviceRef = IOIteratorNext( iterator ) ) )
+	{
+		char path[1024];
+		IORegistryEntryGetPath(usbDeviceRef, kIOServicePlane, path );
+		deviceKey = QString( path );
+		arrived->append( deviceKey );
+		IOObjectRelease(usbDeviceRef);
+  }
+	IOObjectRelease(iterator);
 	#endif // Mac-only FindUsbDevices( )
 	
 	#ifdef Q_WS_WIN
@@ -1300,8 +1333,9 @@ int Samba::do_dev( io_service_t usbDeviceRef )
 	
   //printf( "doing device thing\n" );
    
-  while( (usbInterfaceRef = IOIteratorNext(iterator)) ) {
-    if( do_intf( usbInterfaceRef ) == 0 ) {
+  while( (usbInterfaceRef = IOIteratorNext(iterator)) )
+	{
+		if( do_intf( usbInterfaceRef ) == 0 ) {
       IOObjectRelease(iterator);
       iterator = 0;
       return 0;

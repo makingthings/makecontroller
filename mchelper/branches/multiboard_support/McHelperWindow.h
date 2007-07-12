@@ -72,6 +72,9 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void usbBoardsArrived( QList<PacketInterface*>* arrived );
 		void udpBoardsArrived( QList<PacketUdp*>* arrived );
 		void sambaBoardsArrived( QList<UploaderThread*>* arrived );
+		Board* getCurrentBoard( );
+		bool summaryTabIsActive( );
+		void updateSummaryInfo( Board* board );
         
 		void setNoUI( bool val );
 		void uiLessUpload( char* filename, bool bootFlash );
@@ -96,11 +99,10 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void writeFileSettings();
 		void writeUdpSettings();
 		void writeUsbSettings();
-		void updateSummaryInfo( Board* board );
         
         void message( QString string, MessageEvent::Types type, QString from );
 		
-    void setupOutputTable();
+    void setupOutputWindow();
     
 		bool noUI;
 		int lastTabIndex;
@@ -117,7 +119,6 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
     
 		// Menu functions
         void about( );
-        void clearOutputWindow();
         
         // Summary tab editing
         void systemNameChanged( );

@@ -122,9 +122,7 @@ PacketUsbCdc::Status PacketUsbCdc::sendPacket( char* packet, int length )
 	*ptr++ = END;
 	if( UsbSerial::OK != usbWrite( buf, (ptr - buf) ) )
 	{
-		#ifdef Q_WS_WIN
-		monitor->deviceRemoved( QString(portName) );
-		#endif
+		monitor->deviceRemoved( QString(portName) ); // shut ourselves down
 		return PacketInterface::IO_ERROR;
 	}
 	else
@@ -142,15 +140,23 @@ int PacketUsbCdc::slipReceive( char* buffer, int length )
     if( exit == true )
     	return -1;
     int available = numberOfAvailableBytes( );
+		//if( available < 0 )
+		//{
+			//monitor->deviceRemoved( QString(portName) ); // shut ourselves down
+			//return -1;
+		//}
     if( available > 0 )
     {
     	if( available > MAX_READ_SIZE )
     		available = MAX_READ_SIZE;
     	justGot = usbRead( tempBuffer, available );
     	tempPtr = tempBuffer;
-    	if( justGot < 0 )
-				close( );
     }
+		if( justGot < 0 && justGot != NOTHING_AVAILABLE )
+		{
+			monitor->deviceRemoved( QString(portName) ); // shut ourselves down
+			return -1;
+		}
 	
     for( i = 0; i < justGot; i++ )
     {
@@ -226,7 +232,11 @@ int PacketUsbCdc::receivePacket( char* buffer, int size )
 
 char* PacketUsbCdc::location( )
 {
+	#ifdef Q_WS_WIN
 	return portName;
+	#else
+	return "USB";
+	#endif
 }
 
 QString PacketUsbCdc::getKey( )
