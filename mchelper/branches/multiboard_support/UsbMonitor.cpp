@@ -78,8 +78,8 @@ void UsbMonitor::FindUsbDevices( QList<PacketInterface*>* arrived )
 		char productName[50] = "";
     kern_return_t kernResult = KERN_FAILURE;
     // Initialize the returned path
-		int maxPathSize = sizeof(deviceFilePath);
-    char* path = deviceFilePath;
+		int maxPathSize = sizeof(portName);
+    char* path = portName;
 		*path = '\0';
 	
 	CFMutableDictionaryRef bsdMatchingDictionary;
@@ -137,21 +137,24 @@ void UsbMonitor::FindUsbDevices( QList<PacketInterface*>* arrived )
 			}
 			if (result)
 			{
-				//printf("Modem found with BSD path: %s", path);
-				if( (strcmp( productName, "Make Controller Kit") == 0) )
+				if( (strcmp( productName, "Make Controller Ki") == 0) )
 				{
 					QString portNameKey( path );
 					if( !connectedDevices.contains( portNameKey ) ) // make sure we don't already have this board in our list
 					{
 						PacketUsbCdc* device = new PacketUsbCdc( );
-						device->setDeviceFilePath( path );
-						connectedDevices.insert( portNameKey, device );  // stick it in our own list of boards we know about
-						arrived->append( device ); // then stick it on the list of new boards that's been requested
-						
-						device->setInterfaces( messageInterface, application );
-						device->start( );
+						device->setportName( path );
+						device->setInterfaces( messageInterface, application, this );
+						if( PacketInterface::OK == device->open( ) )
+						{
+							connectedDevices.insert( portNameKey, device );  // stick it in our own list of boards we know about
+							arrived->append( device ); // then stick it on the list of new boards that's been requested
+							msleep( 10 );
+							device->start( );
+						}
+						else
+							delete device;
 					}
-					
 					productName[0] = 0; // clear this out for the next time around
 					CFRelease(bsdPathAsCFString);
 					IOObjectRelease(parent);
@@ -344,9 +347,10 @@ void UsbMonitor::removalNotification( HANDLE handle )
 
 void UsbMonitor::deviceRemoved( QString key )
 {
-	if( connectedDevices.contains(key) )
+	if( connectedDevices.contains( key) )
 	{
-		connectedDevices.value( key )->close( );
+		if( connectedDevices.value( key )->isOpen() )
+			connectedDevices.value( key )->close( );
 		mainWindow->removeDeviceThreadSafe( key );
 		connectedDevices.remove( key );
 	}

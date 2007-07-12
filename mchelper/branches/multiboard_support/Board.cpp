@@ -101,11 +101,15 @@ void Board::packetWaiting( )
 
       // Update the name of the board in the board list
 			this->setText( QString( "%1:%2" ).arg(name).arg(typeString()) );
+			/*
+			if( this == mainWindow->getCurrentBoard( ) && mainWindow->summaryTabIsActive( ) )
+				mainWindow->updateSummaryInfo( this );
+			*/
 		}
 		else if( QString(oscMessageList.at(i)->address).contains( "error", Qt::CaseInsensitive ) )
-			messageInterface->messageThreadSafe( msg, MessageEvent::Warning, key );
+			messageInterface->messageThreadSafe( msg, MessageEvent::Warning, QString( location ) );
 		else
-			messageInterface->messageThreadSafe( msg, MessageEvent::Response, key );
+			messageInterface->messageThreadSafe( msg, MessageEvent::Response, QString( location ) );
 	}
 }
 

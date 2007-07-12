@@ -37,10 +37,7 @@ UploaderThread::UploaderThread( QApplication* application, McHelperWindow* mainW
 UploaderThread::~UploaderThread( )
 {
 	if( samba != NULL )
-	{
-		samba->disconnect( );
 		delete samba;
-	}
 }
 
 

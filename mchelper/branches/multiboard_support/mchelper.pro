@@ -60,6 +60,7 @@ SOURCES	= 	main.cpp \
 TARGET = mchelper
             
 QT += network
+RESOURCES     = mchelper.qrc
 
 QTDIR_build:REQUIRES="contains(QT_CONFIG, small-config)"
 
@@ -70,7 +71,7 @@ macx{
   message("This project is being built on a Mac.")
 	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
 	QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
-	release{ CONFIG += x86 ppc }
+	!debug{ CONFIG += x86 ppc }
   LIBS += -framework IOKit #-dead_strip
   ICON = IconPackageOSX.icns
   #QMAKE_POST_LINK = strip mchelper.app/Contents/MacOS/mchelper

@@ -40,10 +40,10 @@ UsbSerial::UsbSerial( )
 }
 
 #ifdef Q_WS_MAC 
-UsbSerial::UsbStatus UsbSerial::setDeviceFilePath( char* filePath )
+UsbSerial::UsbStatus UsbSerial::setportName( char* filePath )
 {
 	char *result = NULL;
-	result = strncpy( deviceFilePath, filePath, strlen( filePath )+1 );
+	result = strncpy( portName, filePath, strlen( filePath )+1 );
 	if( result != NULL )
 		return OK;
 	else
@@ -66,20 +66,14 @@ UsbSerial::UsbStatus UsbSerial::usbOpen( )
 
   //Mac-only
 	#ifdef Q_WS_MAC
-		deviceHandle = ::open( deviceFilePath, O_RDWR | O_NOCTTY | O_NDELAY ); // ( ( blocking ) ? 0 : O_NDELAY ) );
+		deviceHandle = ::open( portName, O_RDWR | O_NOCTTY | O_NDELAY ); 
 		if ( deviceHandle < 0 )
-	  {
-	    //printf( "Could not open the port (Error %d)\n", deviceHandle );
 	    return NOT_OPEN;
-	  } else
+	  else
 		{
-	    deviceOpen = true;
-			sleepMs( 10 ); //give it a moment after opening before trying to read/write
-			// printf( "USB opened at %s\n", deviceFilePath );
-			// messageInterface->message( 1, "Usb> Make Controller connected.\n" );
+			deviceOpen = true;
+			return OK;
 	  }
-	  return OK;
-		
 	#endif //Mac-only UsbSerial::open( )
 	
   //-----------------------------------------------------------------
@@ -155,7 +149,6 @@ int UsbSerial::usbRead( char* buffer, int length )
 	int count;
 		
 	count = ::read( deviceHandle, buffer, length );
-	printf( "Reading...count = %d\n", count );
 	if( count > 1 )
 		return count;
 	else
@@ -168,9 +161,9 @@ int UsbSerial::usbRead( char* buffer, int length )
 
 			case -1:
 				if ( errno == EAGAIN )
-					return NOTHING_AVAILABLE; // non-blocking but no data available
+					return NOTHING_AVAILABLE;
 				else
-					return IO_ERROR; //printf( "Some other error...\n" );
+					return IO_ERROR;
 				break;
 		}
 	}
@@ -253,10 +246,10 @@ UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
   {
     UsbStatus portIsOpen = usbOpen( );
     if( portIsOpen != OK )
-	{
-      usbClose( );
-	  return NOT_OPEN;
-	}
+		{
+				usbClose( );
+			return NOT_OPEN;
+		}
   }
   
   // Linux Only
@@ -273,11 +266,7 @@ UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
 	else if( errno == EAGAIN )
 	  return NOTHING_AVAILABLE;
   else
-  {
-	  //printf("usbWrite: write failed, errno %d", errno);
-    usbClose( );
     return IO_ERROR;
-  }
 	
 	#endif //Mac-only UsbSerial::write( )
 
@@ -335,21 +324,16 @@ UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
 
 int UsbSerial::numberOfAvailableBytes( )
 {
-    int n = 0;
+    int n;
+		
 		#ifdef Q_WS_MAC
-		
 		if( ::ioctl( deviceHandle, FIONREAD, &n ) < 0 )
-		{
-			// ioctl error
-			return 0;
-		}
-		return n;
-		
+			return IO_ERROR;
 		#endif // Mac-only numberOfAvailableBytes( )
 		
 		#ifdef Q_WS_WIN
 		COMSTAT status;
-    unsigned long   state;
+    unsigned long state;
 
     if (deviceHandle != INVALID_HANDLE_VALUE)
     {
@@ -466,15 +450,6 @@ bool UsbSerial::DoRegisterForNotification( )
 }
 
 #endif 
-
-//Mac-only
-#ifdef Q_WS_MAC
-int UsbSerial::sleepMs( long ms )
-{
-	  usleep( 1000*ms );
-		return 0; //TELEO_OK;
-}
-#endif
 
 
 
