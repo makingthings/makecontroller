@@ -235,7 +235,7 @@ extern volatile unsigned portLONG ulCriticalNesting;					\
 		asm volatile (															\
 			"STMDB	SP!, {R0}		\n\t"	/* Push R0.						*/	\
 			"MRS	R0, CPSR		\n\t"	/* Get CPSR.					*/	\
-			"ORR	R0, R0, #0x80	\n\t"	/* MakingThings Disable IRQ, only	  	*/	\
+			"ORR	R0, R0, #0x80	\n\t"	/* MakingThings Disable IRQ only = 0x80, IRQ & FIQ = 0xC0	  	*/	\
 			"MSR	CPSR, R0		\n\t"	/* Write back modified value.	*/	\
 			"LDMIA	SP!, {R0}			" )	/* Pop R0.						*/
 			
@@ -243,7 +243,7 @@ extern volatile unsigned portLONG ulCriticalNesting;					\
 		asm volatile (															\
 			"STMDB	SP!, {R0}		\n\t"	/* Push R0.						*/	\
 			"MRS	R0, CPSR		\n\t"	/* Get CPSR.					*/	\
-			"BIC	R0, R0, #0x80	\n\t"	/* MakingThings Enable IRQ, only				*/	\
+			"BIC	R0, R0, #0x80	\n\t"	/* MakingThings Enable IRQ, only = 0x80, IRQ & FIQ = 0xC0				*/	\
 			"MSR	CPSR, R0		\n\t"	/* Write back modified value.	*/	\
 			"LDMIA	SP!, {R0}			" )	/* Pop R0.						*/
 
@@ -259,6 +259,18 @@ extern void vPortExitCritical( void );
 /* Task function macros as described on the FreeRTOS.org WEB site. */
 #define portTASK_FUNCTION_PROTO( vFunction, pvParameters ) void vFunction( void *pvParameters )
 #define portTASK_FUNCTION( vFunction, pvParameters ) void vFunction( void *pvParameters )
+
+// MakingThings
+#define portENTER_FIQ( ) \
+  asm volatile (     \
+    "STMDB SP!, {R0-R7, LR}" ); /* Save the user environment */ \
+    {
+
+#define portEXIT_FIQ( ) \
+  } \
+  asm volatile ( \
+    "LDMFD SP!, {R0-R7, LR}   \n\t"   /*Restore the user environment */ \
+    "SUBS PC, LR, #4" );               /* Return from the interrupt */
 
 #endif /* PORTMACRO_H */
 

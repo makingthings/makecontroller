@@ -663,7 +663,9 @@ void Stepper_SetDetails( StepperControl* s )
   if ( !s->timerRunning && ( s->position != s->positionRequested ) && ( s->speed != 0 ) )
   {
     s->timerRunning = true;
+    DisableFIQFromThumb();
     FastTimer_Set( &s->fastTimerEntry );
+    EnableFIQFromThumb();
   }
   else
   {
