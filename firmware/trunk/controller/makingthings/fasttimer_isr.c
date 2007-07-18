@@ -22,12 +22,9 @@
 /* Scheduler includes. */
 
 #include "FreeRTOS.h"
-
 #include "types.h"
-
 #include "fasttimer.h"
 #include "fasttimer_internal.h"
-
 #include "AT91SAM7X256.h"
 
 void DisableFIQFromThumb( void )
@@ -55,7 +52,7 @@ extern struct FastTimer_ FastTimer;
 // At the moment, the FastTimer ISR or callbacks, very importantly, can't call any OS stuff since
 // the IRQ might happen any old where
 
-void FastTimer_Isr( void ) __attribute__ ((interrupt("FIQ")));
+void FastTimer_Isr( void ) __attribute__ ((naked));
 
 // Made non-local for debugging
 FastTimerEntry* te;
@@ -64,6 +61,7 @@ int timeReference;
 
 void FastTimer_Isr( void )
 {
+  portENTER_FIQ( );
   int status = AT91C_BASE_TC2->TC_SR;
   if ( status & AT91C_TC_CPCS )
   {
@@ -198,9 +196,6 @@ void FastTimer_Isr( void )
     // AT91C_BASE_TC2->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
     FastTimer.servicing = false;
   }
-
-	/* Clear AIC to complete ISR processing */
-	AT91C_BASE_AIC->AIC_EOICR = 0;
-
+  portEXIT_FIQ( );
 }
 
