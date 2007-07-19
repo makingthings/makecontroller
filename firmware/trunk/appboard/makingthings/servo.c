@@ -218,7 +218,7 @@ int Servo_SetSpeed( int index, int speed )
   if( speed > 1023 )
     speed = 1023;
   DisableFIQFromThumb();
-  Servo->control[ index ]->speed = speed;
+  Servo->control[ index ]->speed = speed << 6;
   EnableFIQFromThumb();
 
   return CONTROLLER_OK;
@@ -251,7 +251,7 @@ int Servo_GetSpeed( int index )
   
   Servo_SetActive( index, 1 );
 
-  return Servo->control[ index ]->speed;
+  return Servo->control[ index ]->speed >> 6;
 }
 
 /** @}
@@ -284,7 +284,7 @@ int Servo_Start( int index )
     Io_SetOutput( io );
 
     sc->position = (SERVO_MID_POSITION + SERVO_OFFSET) << 6;
-    sc->speed = 1023;
+    sc->speed = 1023 << 6;
     sc->users++;
   }
 
@@ -411,23 +411,18 @@ void Servo_IRQCallback( int id )
       
       if ( s->position != s->positionRequested )
       {
-        if ( s->speed == 1023 )
-          s->position = s->positionRequested;
+        int diff = s->positionRequested - s->position;
+        if ( diff < 0 )
+        {
+          s->position -= s->speed;
+          if ( s->position < s->positionRequested )
+            s->position = s->positionRequested;
+        }
         else
         {
-          int diff = s->positionRequested - s->position;
-          if ( diff < 0 )
-          {
-            s->position -= s->speed;
-            if ( s->position < s->positionRequested )
-              s->position = s->positionRequested;
-          }
-          else
-          {
-            s->position += s->speed;
-            if ( s->position > s->positionRequested )
-              s->position = s->positionRequested;
-          }
+          s->position += s->speed;
+          if ( s->position > s->positionRequested )
+            s->position = s->positionRequested;
         }
       }
 
