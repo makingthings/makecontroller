@@ -27,6 +27,7 @@
 #define CONTROLLER_H
 
 #include "types.h"
+#include "config.h"
 
 #include "eeprom.h"
 #include "analogin.h"
@@ -37,16 +38,17 @@
 #include "timer.h"
 #include "fasttimer.h"
 #include "debug.h"
-//#include "can.h"
+#include "can.h"
 #include "osc.h"
 #include "system.h"
 #include "usb.h"
 #include "network.h"
 #include "stepper.h"
 #include "serial.h"
-//#include "ctestee.h"
-//#include "atestee.h"
-
+#ifdef FACTORY_TESTING
+#include "ctestee.h"
+#include "atestee.h"
+#endif
 
 /* Make Helper Functions */
 

@@ -92,10 +92,19 @@ void Stepper_SetAll( int portAOn, int portBOn, int portAOff, int portBOff );
 Stepper_* Stepper;
 
 /** \defgroup Stepper
-* The Stepper Motor subsystem provides speed and position control for one or two stepper motors.
-* Up to 2 stepper motors can be controlled with the MAKE Application Board.\n
-* You may specify whether the stepper is bipolar or unipolar, and whether half steps are 
-* taken or not.
+  The Stepper Motor subsystem provides speed and position control for one or two stepper motors.
+  Up to 2 stepper motors can be controlled with the Make Application Board.
+  Specify settings for your stepper motor by setting whether it's:
+  - bipolar or unipolar
+  - normal of half-stepping
+
+  You can generally use the stepper motor in 2 modes - \b absolute positioning or \b relative positioning.
+
+  For absolute positioning, call Stepper_SetPositionRequested() with the desired position, and the motor will move there.
+  You can read back the stepper's position at any point along the way to determine where it is at a given moment.  The board
+  keeps an internal count of how many steps the motor has taken in order to keep track of where it is.
+
+  For relative positioning, use Stepper_Step( ) to simply move a number of steps from the current position.
 * \ingroup AppBoard
 * @{
 */
@@ -183,8 +192,7 @@ int Stepper_SetPosition( int index, int position )
 }
 
 /**	
-	Set the position requested of the specified stepper motor.  If the motor is
-  at rest at the previously requested position
+	Set the destination position for a stepper motor.
 	@param index An integer specifying which stepper (0 or 1).
 	@param positionRequested An integer specifying the desired stepper position.
   @return status (0 = OK).
@@ -272,7 +280,7 @@ int Stepper_GetPosition( int index )
 }
 
 /**	
-	Read the current requested position of a stepper motor.
+	Read the destination position of a stepper motor.
 	@param index An integer specifying which stepper (0 or 1).
   @return The position and 0 on error
 */
@@ -444,7 +452,7 @@ int Stepper_GetHalfStep( int index )
 
 int Stepper_Start( int index )
 {
-  int status;
+  static int status; // why does this not seem to work at -O2 when this is not declared as static?
 
   if ( index < 0 || index >= STEPPER_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
@@ -945,28 +953,45 @@ void Stepper_SetAll( int portAOn, int portBOn, int portAOff, int portBOff )
 #ifdef OSC // defined in config.h
 
 /** \defgroup StepperOSC Stepper - OSC
-  Control Stepper motors with the Application Board via OSC.  Internally it uses the PWM subsystem
-  to control duty and the FastTimer to generate very accurate timings for the steps.
   \ingroup OSC
+  Control Stepper motors with the Application Board via OSC.
+  Specify settings for your stepper motor by setting whether it's:
+  - bipolar or unipolar
+  - normal of half-stepping
+
+  You can generally use the stepper motor in 2 modes - \b absolute positioning or \b relative positioning.
+
+  For absolute positioning, set \b positionrequested with the desired position, and the motor will move there.
+  You can read back the stepper's \b position property at any point along the way to determine where it is at a given moment.  The board
+  keeps an internal count of how many steps the motor has taken in order to keep track of where it is.
+
+  For relative positioning, use the \b step property to simply move a number of steps from the current position.
 	
 	\section devices Devices
-	There are 2 Stepper controllers available on the Application Board, numbered 0 & 1.\n
+	There are 2 Stepper controllers available on the Application Board, numbered 0 & 1.
 	See the Stepper section in the Application Board user's guide for more information
 	on hooking steppers up to the board.
 	
 	\section properties Properties
-	Each stepper controller has seven properties - 'position', 'positionrequested', 'speed', 'duty', 'bipolar', 
-  'halfstep', 'step', and 'active'.
+	Each stepper controller has eight properties:
+  - position
+  - positionrequested
+  - speed
+  - duty
+  - bipolar
+  - halfstep
+  - step
+  - active
 
 	\par Step
-	The 'step' property simply tells the motor to take a certain number of steps.
+	The \b step property simply tells the motor to take a certain number of steps.
 	This is a write-only value.
 	\par
 	To take 1000 steps with the first stepper, send the message
 	\verbatim /stepper/0/step 1000\endverbatim
   
   \par Position
-	The 'position' property corresponds to the current step position of the stepper motor
+	The \b position property corresponds to the current step position of the stepper motor
 	This value can be both read and written.  Writing this value changes where the motor thinks it is.
   The initial value of this parameter is 0.
 	\par
@@ -976,21 +1001,21 @@ void Stepper_SetAll( int portAOn, int portBOn, int portAOff, int portBOff )
 	\verbatim /stepper/0/position \endverbatim
 
   \par PositionRequested
-	The 'positionrequested' property describes the desired step position of the stepper motor
-	This value can be both read and written.  Writing this value changes where the motor thinks it needs to be.
-  The initial value of this parameter is 0.
+	The \b positionrequested property describes the desired step position of the stepper motor
+	This value can be both read and written.  Writing this value changes the motor's destination.
 	\par
-	To set the first stepper to go to step position 10000, send the message
+	To set the first stepper to go to position 10000, send the message
 	\verbatim /stepper/0/positionrequested 10000\endverbatim
 	Leave the argument value off to read the last requested position of the stepper:
 	\verbatim /stepper/0/positionrequested \endverbatim
 
 	\par Speed
-	The 'speed' property corresponds to the speed with which the stepper responds to changes 
-	of position.
-	This value can be both read and written, and the range of values is 0 - 71000.  A speed of 1
-	means the stepper performs a new step every millisecond.  Bigger numbers result in slower 
-  steps.
+	The \b speed property corresponds to the speed with which the stepper responds to changes 
+	of position.  This value is the number of milliseconds between each step.  So, a speed of one
+  would be a step every millisecond, or 1000 steps a second.  
+  \par
+	Note that not all stepper motors can be stepped quite that fast.  If you find your stepper motor acting strangely, 
+  experiment with slowing down the speed a bit.
 	\par
 	To set the speed of the first stepper to step at 100ms per step, send a message like
 	\verbatim /stepper/0/speed 100 \endverbatim
@@ -999,7 +1024,7 @@ void Stepper_SetAll( int portAOn, int portBOn, int portAOff, int portBOff )
 	\verbatim /stepper/0/speed \endverbatim
 	
   \par Duty
-	The 'duty' property corresponds to the how much of the power supply is to be sent to the
+	The \b duty property corresponds to the how much of the power supply is to be sent to the
   stepper.  This is handy for when the stepper is static and not being required to perform too
   much work and reducing its power helps reduce heat dissipation.
 	This value can be both read and written, and the range of values is 0 - 1023.  A duty of 0
@@ -1012,17 +1037,17 @@ void Stepper_SetAll( int portAOn, int portBOn, int portAOff, int portBOff )
 	\verbatim /stepper/0/duty \endverbatim
 
   \par Bipolar
-	The 'bipolar' property is set to the style of stepper being used.  A 0 here implies unipolar
-  (the default) and 1 implies a bipolar stepper.
+	The \b bipolar property is set to the style of stepper being used.  A value of 1 specifies bipolar
+  (the default) and 0 specifies a unipolar stepper.
 	This value can be both read and written.
 
   \par HalfStep
-	The 'halfstep' property controls whether the stepper is being half stepped or not.  A 0 here implies full stepping
+	The \b halfstep property controls whether the stepper is being half stepped or not.  A 0 here implies full stepping
   (the default) and 1 implies a half stepping.
 	This value can be both read and written.
 
 	\par Active
-	The 'active' property corresponds to the active state of the stepper.
+	The \b active property corresponds to the active state of the stepper.
 	If the stepper is set to be active, no other tasks will be able to
 	write to the same I/O lines.  If you're not seeing appropriate
 	responses to your messages to a stepper, check the whether it's 

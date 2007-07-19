@@ -17,8 +17,7 @@
 
 // MakingThings - Make Controller Board - 2006
 
-/** \file AnalogIn->c	
-	AnalogIn - Analog to Digital Converter.
+/** \file analogin.c	
 	Functions for reading the analog inputs on the MAKE Application Board.
 */
 
@@ -57,10 +56,9 @@ static int AnalogIn_GetIo( int index );
 
 extern void ( AnalogInIsr )( void );
 
-//struct AnalogIn_ AnalogIn;
 struct AnalogIn_* AnalogIn;
 
-/** \defgroup AnalogIn
+/** \defgroup AnalogIn Analog Inputs
 	The AnalogIn subsystem converts 0-3.3V signals to 10-bit digital values.
 	The analog to digital converters read incoming signals from 0 - 3.3V.  They are rated as 5V tolerant, 
   and indeed can momentarily withstand higher voltages, but will not return meaningful values for anything 
@@ -419,10 +417,12 @@ int AnalogIn_GetIo( int index )
 	There are 8 Analog Inputs on the Make Application Board, numbered 0 - 7.
 	
 	\section properties Properties
-	The Analog Ins have two properties - 'value' and 'active'.
+	The Analog Ins have two properties:
+  - value
+  - active
 
 	\par Value
-	The 'value' property corresponds to the incoming signal of an Analog In.
+	The \b value property corresponds to the incoming signal of an Analog In.
 	The range of values you can expect to get back are from 0 - 1023.
 	Because you can only ever \em read the value of an input, you'll never
 	want to include an argument at the end of your OSC message to read the value.\n
@@ -431,7 +431,7 @@ int AnalogIn_GetIo( int index )
 	The board will then respond by sending back an OSC message with the Analog In value.
 	
 	\par Active
-	The 'active' property corresponds to the active state of an Analog In.
+	The \b active property corresponds to the active state of an Analog In.
 	If an Analog In is set to be active, no other tasks will be able to
 	read from it as an Analog In.  If you're not seeing appropriate
 	responses to your messages to the Analog In, check the whether it's 
