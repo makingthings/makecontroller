@@ -87,8 +87,6 @@ void DatagramSocketClose( void* socket );
 // DHCP stuff
 void Network_SetDhcpEnabled( int enabled );
 int Network_GetDhcpEnabled( void );
-void DhcpFineTask( void* p );
-void DhcpCoarseTask( void* p );
 
 // WebServer Stuff
 void Network_SetWebServerEnabled( int enabled );
