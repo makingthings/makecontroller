@@ -122,7 +122,7 @@ int Serial_Write( uchar* buffer, int count, int timeout )
   // Do the business
   while ( count )
   {
-    if( xQueueSend( Serial.transmitQueue, buffer++, timeout ) == 0 ) 
+    if( xQueueSend( Serial.transmitQueue, buffer++, timeout / portTICK_RATE_MS  ) == 0 ) 
       return CONTROLLER_ERROR_QUEUE_ERROR; 
     count--;
   }

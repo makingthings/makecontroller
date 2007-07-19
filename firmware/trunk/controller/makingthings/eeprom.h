@@ -33,62 +33,6 @@ int Eeprom_GetLastAddress( void );
 int Eeprom_Write( int address, uchar *buffer, int count );
 int Eeprom_Read( int address, uchar* buffer, int count );
 
-/**
-\ingroup Eeprom
-@{
-
-\def EEPROM_RESERVE_SIZE
-Sets the amount of the EEPROM reserved for system information.
-
-\def EEPROM_SIZE
-The size of the EEPROM on the MAKE Controller Board.
-
-\def EEPROM_SYSTEM_BASE
-The location in Eeprom that the "System" information begins.
-
-\def EEPROM_SYSTEM_SERIAL_NUMBER
-The location in Eeprom where the Controller's serial number is stored.
-
-\def EEPROM_SYSTEM_NET_CHECK
-The location in Eeprom of the checksum that validates the IP settings.
-
-\def EEPROM_SYSTEM_NET_ADDRESS
-The location in Eeprom of the Controller's IP address.
-
-\def EEPROM_SYSTEM_NET_MASK
-The location in Eeprom where the IP address mask is stored.
-
-\def EEPROM_SYSTEM_NET_GATEWAY
-The location in Eeprom where the IP address of the gateway is stored.
-
-\def EEPROM_SYSTEM_END
-The location of the end of the "System" information in Eeprom.
-
-\def EEPROM_UDP_PORT
-The location in EEPROM where the local UDP port is stored.
-
-\def EEPROM_TCP_CONNECT_ON_REBOOT
-The location in EEPROM where the flag to automatically make a connection 
-to a remote TCP server is stored.
-
-\def EEPROM_TCP_REMOTE_ADDRESS
-The location in EEPROM where the address for the remote TCP server to connect to 
-is stored.
-
-\def EEPROM_TCP_REMOTE_PORT
-The location in EEPROM where the port of the remote TCP server to connect to 
-is stored.
-
-\def EEPROM_DHCP_ENABLED
-The location in EEPROM where the flag of whether or not to use DHCP is stored.
-
-\def EEPROM_SYSTEM_NAME
-The location in EEPROM where the user assignable name of the board is stored.
-This name can only be a max of 100 characters.
-
-@}
-*/
-
 #define EEPROM_RESERVE_SIZE 1024
 #define EEPROM_SIZE ( 32 * 1024 )
 #define EEPROM_SYSTEM_BASE          ( EEPROM_SIZE - EEPROM_RESERVE_SIZE )

@@ -61,11 +61,11 @@ static int Eeprom_users;
 /** \defgroup Eeprom
 	Eeprom allows for the persistent storage of 32k bytes data. 
   The last 1k (1024) bytes of this space are reserved for system
-  use storing things like the board's IP address, serial number, build version, etc.
+  use storing things like the board's IP address, serial number, build version, etc.  Get the last
+  EEPROM address available before this reserved section with a call to Eeprom_GetLastAddress( ).
 
-  Eeprom is activated by the first use of the Eeprom_Write() or Eeprom_Read()
-  functions.  Whether its running or not can be determined by calling the Eeprom_GetActive() 
-  function.  It can be turned off by calling Eeprom_SetActive( ) passing in false or 0.
+  Use Eeprom_Write() and Eeprom_Read() to store and retrieve characters.  These both internally set
+  the EEPROM system to active automatically.  
 
   Internally, Eeprom relies on \ref Spi, so activating Eeprom also activates \ref Spi.
 
@@ -236,7 +236,8 @@ int Eeprom_Stop()
 
 /**	
 	Eeprom_WriteEnable.
-	Enable writing from the EEPROM on the Make Controller Board. This function should be called before making calls to Eeprom_Write().
+	Enable writing from the EEPROM on the Make Controller Board. 
+  This function should be called before making calls to Eeprom_Write().
 	@param none.
   @return none.
 */

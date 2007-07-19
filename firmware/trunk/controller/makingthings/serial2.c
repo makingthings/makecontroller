@@ -606,8 +606,8 @@ int Serial2_SetDefault( int index )
 }
 
 #ifdef OSC
-
-/** \defgroup Serial2OSC Serial2 - OSC
+// \defgroup Serial2OSC Serial2 - OSC // not including this in main doc, for now
+/*
   Configure the Serial Port and Read Characters via OSC.
   \ingroup OSC
 	

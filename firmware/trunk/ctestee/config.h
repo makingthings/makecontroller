@@ -13,20 +13,26 @@
 //  Comment out the systems that you don't want to include in your build.
 // todo: make sure the code is organized so these are meaningful
 //----------------------------------------------------------------
-#define USB  // enable the USB system
-#define NETWORK // enable the Ethernet system
-#define OSC // enable the OSC system
+
 #define FACTORY_TESTING
 
 #include "controller.h"   // ...everybody uses the MAKE Controller Board
 #include "appboard.h"     // ...if you're using the MAKE Application Board
 #include "error.h"
 
-#define FIRMWARE_VERSION_NUMBER 120
-#define FIRMWARE_BUILD_NUMBER     0
+#define FIRMWARE_NAME          "Heavy"
+#define FIRMWARE_MAJOR_VERSION 1
+#define FIRMWARE_MINOR_VERSION 2
+#define FIRMWARE_BUILD_NUMBER  0
 
-#define CONTROLLER_HEAPSIZE 20650
+#define CONTROLLER_HEAPSIZE 23000
 
+//----------------------------------------------------------------
+//  Comment out the systems that you don't want to include in your build.
+//----------------------------------------------------------------
+#define MAKE_CTRL_USB     // enable the USB system
+#define MAKE_CTRL_NETWORK // enable the Ethernet system
+#define OSC               // enable the OSC system
 
 //----------------------------------------------------------------
 //  Uncomment the revision of the MAKE Controller Board you're using.

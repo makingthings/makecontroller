@@ -17,12 +17,7 @@
 
 /** \file fasttimer.c	
 	FastTimer.
-	Functions to use the fast timer on the Make Controller Board.  Based on a list of 
-  Fast Timer Entries.  When the timer interrupts, the duration of the last call is 
-  subtracted from the times of all the entries in the list.  Any entries that are ready
-  are called and their times reset.  A record is kept of the shortest time encountered
-  and that time is set as the next interrupt time.  This is a complex piece of code.  
-  It should be treated with some skepticism until it's been tested some more.
+	Functions to use the fast timer on the Make Controller Board. 
 */
 
 #include "AT91SAM7X256.h"
@@ -46,15 +41,23 @@ static void FastTimer_Enable( void );
 
 void FastTimer_Isr( void );
 
-/** \defgroup FastTimer
-* The FastTimer subsystem provides a high resolution timer in a microsecond context.
-* The longest delays are therefore 2^32 / 1000000 = 4294s.
+/** \defgroup FastTimer Fast Timer
+  The FastTimer subsystem provides a high resolution timer in a microsecond context.
+  If you don't need such high resolution timing, check the \ref Timer
+
+  The Fast Timer subsystem is based on a collection of \b FastTimerEntries.  To start a new timer, create a new
+  \b FastTimerEntry structure, initialize it with FastTimer_InitializeEntry( ), and start it with FastTimer_Set( ).
+
+  There are currently one main limitation to the Fast Timer system:
+  - In your callback function, you must not sleep or make any FreeRTOS-related calls.
+
+  \todo Allow the fast timer callbacks to cooperate with \ref FreeRTOS
 * \ingroup Controller
 * @{
 */
 
 /**	
-  Controls the activation of the timer
+  Controls the active state of the Fast Timer system
   @param active whether the FastTimer subsystem is active or not
 	@return Zero on success.
 	@see FastTimer_Set, FastTimer_Cancel
@@ -84,7 +87,6 @@ int FastTimer_SetActive( bool active )
 }
 
 /**	
-	FastTimer_GetActive.
   Returns whether the timer subsystem is active or not
 	@return active.
 	@see FastTimer_Set, FastTimer_Cancel
@@ -100,13 +102,26 @@ int FastTimer_GetActive( )
 	The specified ID is passed back to the function to permit one function to work for many events.  
 	Pass repeat = true to make the event continue to create callbacks until it is canceled.
   Note that the timer entry structure needs to be created and managed by the caller.
+  The longest period for a fast timer entry is 2^32 / 1000000 = 4294s.
   @param fastTimerEntry pointer to the FastTimerEntry to be intialized. 
   @param timerCallback pointer to the callback function.  The function must
-         be of the form <em>void callback( int id )</em>.
+         be of the form \verbatim void callback( int id ) \endverbatim
   @param id An integer specifying the ID the callback function is to be provided with.
   @param timeUs The time in microseconds desired for the callback.
   @param repeat Set whether the timer repeats or is a one-time event.
-	@see FastTimer_Start, FastTimer_Cancel and FastTimer_Stop
+	@see FastTimer_Cancel
+
+  \par Example
+  \code
+  TimerEntry myTimer; // our TimerEntry
+  FastTimer_InitializeEntry( &myTimer, myCallback, 0, 250, true );
+  FastTimer_Set( &myTimer ); // start our timer
+
+  void myCallback( int id ) // our code that will get called by the timer every 250 microseconds.
+  {
+    // do something here
+  }
+  \endcode
 */
 void FastTimer_InitializeEntry( FastTimerEntry* fastTimerEntry, void (*timerCallback)( int id ), int id, int timeUs, bool repeat )
 {
@@ -126,7 +141,7 @@ void FastTimer_InitializeEntry( FastTimerEntry* fastTimerEntry, void (*timerCall
   * This must only be called within a callback caused by the Entry specified or when the 
   * entry is not being used.  If you need to change the duration of a timer, you need to cancel it
   * and re-add it, or alter the time inside a callback.
-  @param fastTimerEntry pointer to the FastTimerEntry to be intialized. 
+  @param fastTimerEntry A pointer to the FastTimerEntry to be intialized. 
   @param timeUs The time in microseconds desired for the callback.
   */
 void FastTimer_SetTime( FastTimerEntry* fastTimerEntry, int timeUs )
@@ -140,7 +155,7 @@ void FastTimer_SetTime( FastTimerEntry* fastTimerEntry, int timeUs )
   This routine adds the entry to the running queue and then decides if it needs
   to start the timer (if it's not running) or alter the timer's clock for a shorter
   period.
-  @param fastTimerEntry pointer to the FastTimerEntry to be run. 
+  @param fastTimerEntry A pointer to the FastTimerEntry to be run. 
   */
 int FastTimer_Set( FastTimerEntry* fastTimerEntry )
 {
@@ -207,7 +222,8 @@ int FastTimer_Set( FastTimerEntry* fastTimerEntry )
   return CONTROLLER_OK;
 }
 
-/** Cancels the requested entry.
+/**
+  Stops the requested fast timer entry from running.
   @param fastTimerEntry pointer to the FastTimerEntry to be cancelled.
   */
 int FastTimer_Cancel( FastTimerEntry* fastTimerEntry )

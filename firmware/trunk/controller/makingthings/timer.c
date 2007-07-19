@@ -16,12 +16,9 @@
 *********************************************************************************/
 
 /** \file timer.c	
-	Timer.
 	Functions to use the timer on the Make Controller Board.
   This uses the regular interrupt mechanism and as such may be blocked by other
-  routines for significant numbers of milliseconds.  This code is complex and
-  should be considered experimental.  Ideally it would work nicely with the OS, 
-  but it is not currently.
+  routines for significant numbers of milliseconds. 
 */
 
 #include "AT91SAM7X256.h"
@@ -46,14 +43,25 @@ static void Timer_Enable( void );
 void Timer_Isr( void );
 
 /** \defgroup Timer
-* The Timer subsystem provides a high resolution timer in a 4 usec timeframe.
+* The Timer subsystem provides a timer in a millisecond timeframe.
+  For higher resolution timing, check the \ref FastTimer
+
+  The Timer subsystem is based on a collection of \b TimerEntries.  To start a new timer, create a new
+  \b TimerEntry structure, initialize it with Timer_InitializeEntry( ), and start it with Timer_Set( ).
+
+  There are currently a couple of limitations to the Timer system:
+  - In your callback function, you must not sleep or make any FreeRTOS-related calls.
+  - To modify an existing TimerEntry, you must cancel the timer with Timer_Cancel( ), and reinitialize the TimerEntry.
+
+  \todo Allow the timer callbacks to cooperate with \ref FreeRTOS
+  \todo Allow existing timer entries to be modified (repeat or not, modify the period, etc.)
 * \ingroup Controller
 * @{
 */
 
 /**	
-  Controls the activation of the timer
-  @param active whether the Timer subsystem is active or not
+  Controls the active state of the \b Timer subsystem
+  @param active whether this subsystem is active or not
 	@return Zero on success.
 	@see Timer_Set, Timer_Cancel
 */
@@ -82,7 +90,6 @@ int Timer_SetActive( bool active )
 }
 
 /**	
-	Timer_GetActive.
   Returns whether the timer subsystem is active or not
 	@return active.
 	@see Timer_Set, Timer_Cancel
@@ -99,11 +106,23 @@ int Timer_GetActive( )
 	Pass repeat = true to make the event continue to create callbacks until it is canceled.
   @param timerEntry pointer to the TimerEntry to be intialized. 
   @param timerCallback pointer to the callback function.  The function must
-         be of the form <em>void callback( int id )</em>.
+         be of the form \verbatim void timerCallback( int id )\endverbatim
   @param id An integer specifying the ID the callback function is to be provided with.
   @param timeMs The time in milliseconds desired for the callback.
   @param repeat Set whether the timer repeats or is a one-time event.
-	@see Timer_Start, Timer_Cancel and Timer_Stop
+	@see Timer_Cancel
+
+  \par Example
+  \code
+  TimerEntry myTimer; // our TimerEntry
+  Timer_InitializeEntry( &myTimer, myCallback, 0, 250, true );
+  Timer_Set( &myTimer ); // start our timer
+
+  void myCallback( int id ) // our code that will get called by the timer every 250 ms.
+  {
+    // do something here
+  }
+  \endcode
 */
 void Timer_InitializeEntry( TimerEntry* timerEntry, void (*timerCallback)( int id ), int id, int timeMs, bool repeat )
 {
@@ -118,7 +137,8 @@ void Timer_InitializeEntry( TimerEntry* timerEntry, void (*timerCallback)( int i
   timerEntry->next = NULL;
 }
 
-/** Sets the requested entry to run.
+/**
+  Sets a given TimerEntry to run.
   This routine adds the entry to the running queue and then decides if it needs
   to start the timer (if it's not running) or alter the timer's clock for a shorter
   period.
@@ -193,7 +213,7 @@ int Timer_Set( TimerEntry* timerEntry )
   Cancel a timer event.
   @param timerEntry The entry to be removed.
   @return 0 on success.
-	@see Timer_Start, Timer_Set and Timer_Start
+	@see Timer_Set
 */
 int Timer_Cancel( TimerEntry* timerEntry )
 {
