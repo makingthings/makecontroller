@@ -112,7 +112,7 @@ OBJCOPY=arm-elf-objcopy
 ARCH=arm-elf-ar
 CRT0=../controller/startup/boot.s
 DEBUG=
-OPTIM=-O0
+OPTIM=-O2
 LDSCRIPT=../controller/startup/atmel-rom.ld
 
 #
