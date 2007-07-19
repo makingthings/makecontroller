@@ -60,6 +60,7 @@ void Network_SetPending( int state );
 int Network_GetPending( void );
 void Network_DhcpStart( struct netif* netif );
 void Network_DhcpStop( struct netif* netif );
+void Network_SetDefaults( void );
 
 /** \defgroup Sockets
   The Sockets system provides a simple interface for creating, reading and writing over both TCP and UDP.  
@@ -530,15 +531,17 @@ int Network_SetActive( int state )
       Network->pending = 0;
       Network->TcpRequested = 0;
       Network->WebServerTaskPtr = NULL;
-      // set the temp addresses to use when setting a new IP address/mask/gateway
-      Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&Network->TempIpAddress, 4 );
-      if( Network->TempIpAddress < 0 ) Network->TempIpAddress = -939480896; // decimal representation of 192.168.0.200
-      Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&Network->TempGateway, 4 );
-      if( Network->TempGateway < 0 ) Network->TempGateway = 16820416; // decimal representation of 192.168.0.1
-      Eeprom_Read( EEPROM_SYSTEM_NET_MASK, (uchar*)&Network->TempMask, 4 );
-      if( Network->TempMask < 0 ) Network->TempMask = 16777215; // decimal representation of 255.255.255.0
-      Eeprom_Read( EEPROM_OSC_UDP_PORT, (uchar*)&Network->OscUdpPort, 4 );
-      if( Network->OscUdpPort < 0 ) Network->OscUdpPort = 10000;
+
+      if( !Network_GetValid() ) // if we don't have good values, set the defaults
+        Network_SetDefaults( );
+      else // load the values from EEPROM
+      {
+        Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&Network->TempIpAddress, 4 );
+        Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&Network->TempGateway, 4 );
+        Eeprom_Read( EEPROM_SYSTEM_NET_MASK, (uchar*)&Network->TempMask, 4 );
+      }
+
+      Network->OscUdpPort = NetworkOsc_GetUdpPort( );
       Eeprom_Read( EEPROM_TCP_OUT_ADDRESS, (uchar*)&Network->TcpOutAddress, 4 );
       Eeprom_Read( EEPROM_TCP_OUT_PORT, (uchar*)&Network->TcpOutPort, 4 );
       Network_Init();
@@ -571,11 +574,6 @@ int Network_GetActive( void )
 	can be set by passing in each of the numbers as a separate parameter.
 	The default IP address of each Make Controller as it ships from the factory
 	is 192.168.0.200.  
-  
-  Because changing the network configuration of the board should
-  really be an atomic operation (in terms of changing the address/mask/gateway), 
-  we need to make a call to Network_SetValid() in order to actually apply
-  the changed address.  
 
 	This value is stored in EEPROM, so it persists even after the board
 	is powered down.
@@ -590,17 +588,19 @@ int Network_GetActive( void )
   \code
   // set the address to 192.168.0.23
   Network_SetAddress( 192, 168, 0, 23 );
-  // now implement the change
-  Network_SetValid( 1 );
   \endcode
 
 */
 int Network_SetAddress( int a0, int a1, int a2, int a3 )
 {
 	// just store this address, since we're only going to do something with it in response to
-  // Network_SetValid().
+  if( !Network_GetValid() )
+  {
+    Network_SetDefaults( );
+    Network_SetValid( 1 );
+  }
   Network->TempIpAddress = NETIF_IP_ADDRESS( a0, a1, a2, a3 );
-  Network_Valid = NET_INVALID;
+  Network_SetValid( 1 );
 
   return CONTROLLER_OK;
 }
@@ -632,9 +632,13 @@ int Network_SetAddress( int a0, int a1, int a2, int a3 )
 int Network_SetMask( int a0, int a1, int a2, int a3 )
 {
   // just store this address, since we're only going to do something with it in response to
-  // Network_SetValid().
+  if( !Network_GetValid() )
+  {
+    Network_SetDefaults( );
+    Network_SetValid( 1 );
+  }
   Network->TempMask = NETIF_IP_ADDRESS( a0, a1, a2, a3 );
-  Network_Valid = NET_INVALID;
+  Network_SetValid( 1 );
 
   return CONTROLLER_OK;
 }
@@ -664,91 +668,15 @@ int Network_SetMask( int a0, int a1, int a2, int a3 )
 int Network_SetGateway( int a0, int a1, int a2, int a3 )
 {
   // just store this address, since we're only going to do something with it in response to
-  // Network_SetValid().
+  if( !Network_GetValid() )
+  {
+    Network_SetDefaults( );
+    Network_SetValid( 1 );
+  }
   Network->TempGateway = NETIF_IP_ADDRESS( a0, a1, a2, a3 );
-  Network_Valid = NET_INVALID;
+  Network_SetValid( 1 );
   
   return CONTROLLER_OK;
-}
-
-/**
-	Create a checksum for the current address settings and store it in EEPROM.
-	This should be called each time an address setting is changed so that if
-	the board gets powered down, it will know when it comes back up whether or
-	not the address settings is currently has are valid.
-
-	@param v An integer specifying whether to validate the current settings (1)
-  or to force them to be invalidated (0).
-	Passing in 0 returns the address settings to their factory defaults.
-	@return 0 on success.
-*/
-int Network_SetValid( int v )
-{
-  if ( v )
-  {
-    struct ip_addr ip, gw, mask;
-    struct netif* mc_netif;
-
-    ip.addr = Network->TempIpAddress; // these should each have been set previously
-    mask.addr = Network->TempMask;  // by Network_SetAddress(), etc.
-    gw.addr = Network->TempGateway;
-		if( !Network_GetDhcpEnabled() ) // only actually change the address if we're not using DHCP
-		{
-			// we specify our network interface as en0 when we init
-			mc_netif = netif_find( "en0" );
-			if( mc_netif != NULL )
-				netif_set_addr( mc_netif, &ip, &mask, &gw );
-		}
-    
-		// but write the addresses to memory regardless, so we can use them next time we boot up without DHCP
-    Eeprom_Write( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&ip.addr, 4 );
-    Eeprom_Write( EEPROM_SYSTEM_NET_MASK, (uchar*)&mask.addr, 4 );
-    Eeprom_Write( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&gw.addr, 4 );
-
-    int total = Network->TempIpAddress + Network->TempMask + Network->TempGateway;
-    Eeprom_Write( EEPROM_SYSTEM_NET_CHECK, (uchar*)&total, 4 );
-
-    Network_Valid = NET_VALID;
-  }
-  else
-  {
-    int value = 0;
-    Eeprom_Write( EEPROM_SYSTEM_NET_CHECK, (uchar*)&value, 4 );
-  }
-
-  return CONTROLLER_OK;
-}
-
-/**
-	Read the checksum for address settings in EEPROM, and determine if it matches 
-  the current settings.
-
-	@return An integer specifying the validity of the settings - 1 (valid) or 0 (invalid).
-*/
-int Network_GetValid( )
-{
-  int address;
-  Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&address, 4 );
-
-  int mask;
-  Eeprom_Read( EEPROM_SYSTEM_NET_MASK, (uchar*)&mask, 4 );
-
-  int gateway;
-  Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&gateway, 4 );
-
-  int total;
-  Eeprom_Read( EEPROM_SYSTEM_NET_CHECK, (uchar*)&total, 4 );
-
-  if ( total == address + mask + gateway )
-  {
-    Network_Valid = NET_VALID;
-    return 1;
-  }
-  else
-  {
-    Network_Valid = NET_INVALID;
-    return 0;
-  }
 }
 
 /**
@@ -922,10 +850,7 @@ int Network_GetDhcpEnabled( )
 {
   int state;
   Eeprom_Read( EEPROM_DHCP_ENABLED, (uchar*)&state, 4 );
-  if( state <= 0 )
-    return 0;
-  else
-    return state; 
+  return (state == 1) ? 1 : 0;
 }
 
 /**
@@ -964,13 +889,95 @@ int Network_GetWebServerEnabled( )
 {
   int state;
   Eeprom_Read( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
-  if( state != 1 )
-    state = 0;
-  return state;
+  return (state == 1) ? 1 : 0;
 }
 
 /** @}
 */
+
+/**
+	Create a checksum for the current address settings and store it in EEPROM.
+	This should be called each time an address setting is changed so that if
+	the board gets powered down, it will know when it comes back up whether or
+	not the address settings is currently has are valid.
+
+	@param v An integer specifying whether to validate the current settings (1)
+  or to force them to be invalidated (0).
+	Passing in 0 returns the address settings to their factory defaults.
+	@return 0 on success.
+*/
+int Network_SetValid( int v )
+{
+  if ( v )
+  {
+    struct ip_addr ip, gw, mask;
+    struct netif* mc_netif;
+
+    ip.addr = Network->TempIpAddress; // these should each have been set previously
+    mask.addr = Network->TempMask;  // by Network_SetAddress(), etc.
+    gw.addr = Network->TempGateway;
+		if( !Network_GetDhcpEnabled() ) // only actually change the address if we're not using DHCP
+		{
+			// we specify our network interface as en0 when we init
+			mc_netif = netif_find( "en0" );
+			if( mc_netif != NULL )
+				netif_set_addr( mc_netif, &ip, &mask, &gw );
+		}
+    
+		// but write the addresses to memory regardless, so we can use them next time we boot up without DHCP
+    Eeprom_Write( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&ip.addr, 4 );
+    Eeprom_Write( EEPROM_SYSTEM_NET_MASK, (uchar*)&mask.addr, 4 );
+    Eeprom_Write( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&gw.addr, 4 );
+
+    int total = Network->TempIpAddress + Network->TempMask + Network->TempGateway;
+    Eeprom_Write( EEPROM_SYSTEM_NET_CHECK, (uchar*)&total, 4 );
+
+    Network_Valid = NET_VALID;
+  }
+  else
+  {
+    int value = 0;
+    Eeprom_Write( EEPROM_SYSTEM_NET_CHECK, (uchar*)&value, 4 );
+    Network_Valid = NET_INVALID;
+  }
+
+  return CONTROLLER_OK;
+}
+
+/**
+	Read the checksum for address settings in EEPROM, and determine if it matches 
+  the current settings.
+
+	@return An integer specifying the validity of the settings - 1 (valid) or 0 (invalid).
+*/
+int Network_GetValid( )
+{
+  int address, mask, gateway, total;
+  Eeprom_Read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&address, 4 );
+  Eeprom_Read( EEPROM_SYSTEM_NET_MASK, (uchar*)&mask, 4 );
+  Eeprom_Read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&gateway, 4 );
+  Eeprom_Read( EEPROM_SYSTEM_NET_CHECK, (uchar*)&total, 4 );
+
+  if ( total == address + mask + gateway )
+  {
+    Network_Valid = NET_VALID;
+    return 1;
+  }
+  else
+  {
+    Network_Valid = NET_INVALID;
+    return 0;
+  }
+}
+
+// if things aren't valid, just set the defaults
+void Network_SetDefaults( )
+{
+  Network->TempIpAddress = NETIF_IP_ADDRESS( 192, 168, 0, 200 );
+  Network->TempGateway = NETIF_IP_ADDRESS( 192, 168, 0, 1 );
+  Network->TempMask = NETIF_IP_ADDRESS( 255, 255, 255, 0 );
+  Network_SetValid( 1 );
+}
 
 /**
 	Sets whether the Network subsystem is currently trying to negotiate its settings.
@@ -1042,8 +1049,11 @@ void NetworkOsc_SetUdpPort( int port )
 
 int NetworkOsc_GetUdpPort(  )
 {
-  if( Network->OscUdpPort > 0 && Network->OscUdpPort < 65536 )
-    return Network->OscUdpPort;
+  int port;
+  Eeprom_Read( EEPROM_OSC_UDP_PORT, (uchar*)&port, 4 );
+  
+  if( port > 0 && port < 65536 )
+    return port;
   else
     return 10000;
 }
