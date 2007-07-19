@@ -15,8 +15,6 @@
 
 *********************************************************************************/
 
-// MakingThings - Make Controller Kit - 2006
-
 /** \file debugosc.c	
 	Controller Debug.
 */

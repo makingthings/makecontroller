@@ -68,20 +68,19 @@ static int Io_TestPins( short users, bool lock );
 */
 
 /** \defgroup Io
-	A mechanism to manage the 32 parallel io lines on the controller.
+	A mechanism to manage the 64 parallel IO lines on the controller.
 
   Control of the SAM7X's IO lines is more complex than most microcontrollers.  All 
   lines may be inputs or outputs, have pull-ups or not, have a glitch filter enabled 
   or not, and so on.  In addition all IO pins serve at least double and sometimes 
   triple duty, being general IO lines and also being IO lines for one or more of 
   the controller's many on-chip peripherals.  All these functions can be controlled
-  from the Io subsystem.
+  from the IO subsystem.
 
   This API can be used in two ways - either one line at a time or many at a time.  
-  Functions supporting the latter are suffixed with "Bits".  So the one-at-a-time 
+  Functions supporting the latter are suffixed with \b Bits.  So the one-at-a-time 
   mechanism for setting an IO to true is called Io_SetTrue().  It takes an index and
-  the ones for setting
-  a number of lines is Io_SetTrueBits( ).
+  the ones for setting a number of lines is Io_SetTrueBits( ).
 
   The pattern of use is as follows:  prior to using an IO line, Call Io_Start() on it, the 
   return value indicates if the start operation was successful.  After this, call any 
@@ -584,35 +583,55 @@ longlong Io_GetValueBits( )
 #ifdef OSC
 
 /** \defgroup IoOSC IO - OSC
-  Control any pin's direction and output from OSC.  Use with care!
+  Control any pin's direction and output from OSC.
+
+  The IO system allows for the manual manipulation of individual signal lines on the Make Controller.
+  Proceed with care if you're using these at the same time as any of the other subsystems, as most 
+  other subsystems rely on the IO system internally to maintain control of the appropriate signal lines.
   \ingroup OSC
 	
 	\section devices Devices
-	There are 64 IO's on the Make Controller, numbered 0 - 63.  IO's 0 - 31 
-  correspond to PortA, IO's 32 - 63 correspond to PortB.
+	There are 64 IO's on the Make Controller, numbered 0 - 63.
+  - IOs <b>0 - 31</b> correspond to \b PortA
+  - IOs <b>32 - 63 </b> correspond to \b PortB.
 	
 	\section properties Properties
-	The IO's have three properties - 'output', 'value' and 'active'.
+	Each IO has four properties:
+  - output
+  - value
+  - pullup
+  - active
 
 	\par Output
-	The 'output' property sets whether the IO is an output.\n
+	The \b output property sets whether the IO is an output.
+  A value of \b 1 makes it an output, and a value of \b 0 makes it an input.
 	For example, to make pin 4 an output, send a message like
 	\verbatim /io/4/output 1\endverbatim
-	Change the argument 1 to a 0 to make it an input.
+	Send the message
+  \verbatim /io/4/output 0\endverbatim
+  to make it an input.
+
+  \par Pullup
+  The \b pullup property determines whether a given IOs pullup resistor is enabled.
+  To enable it on IO 2, send the message
+  \verbatim /io/2/pullup 1\endverbatim
+  and to disable it, send the message
+  \verbatim /io/2/pullup 0\endverbatim
 
 	\par Value
-	Writing the 'value' property sets the on/off value of a given IO.\n
+	Writing the \b value property sets the on/off value of a given IO.
+  The IO system only permits digital IO so, we only want to send ones and zeros as values.
 	For example, to activate pin 4, send a message like
 	\verbatim /io/4/value 1\endverbatim
 	Change the argument 1 to a 0 to turn it off.
-	Reading the 'value' property returns the value of a given IO.\n
+	Reading the \b value property returns the value of a given IO.
 	For example, to read pin 4, send a message like
 	\verbatim /io/4/value\endverbatim
     
 	\par Active
-	The 'active' property corresponds to the active state of an IO.
+	The \b active property corresponds to the active state of an IO.
+  Read whether IO 0 is active by sending the message
 	\verbatim /io/0/active \endverbatim
-	\par
 	You can set the active flag by sending
 	\verbatim /io/0/active 1 \endverbatim
 */

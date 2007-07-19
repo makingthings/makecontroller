@@ -30,6 +30,11 @@
 #include "queue.h"
 #include "string.h"
 
+// SLIP codes
+#define END             0300    // indicates end of packet 
+#define ESC             0333    // indicates byte stuffing 
+#define ESC_END         0334    // ESC ESC_END means END data byte 
+#define ESC_ESC         0335    // ESC ESC_ESC means ESC data byte
 #define MAX_INCOMING_SLIP_PACKET 400
 
 extern xQueueHandle xTxCDC; 
@@ -46,17 +51,19 @@ int Usb_Running;
 void vUSBCDCTask( void *pvParameters );
 int TestAndSend(xBULKBUFFER *pq, char newByte);
 
-/** \defgroup Usb
-	The Usb subsystem provides access to USB CDC functionality.  On Mac OS X, when this
-  subsystem is running and plugged in, a new serial device is created.  The filename 
-  that appears is similar to /dev/cu.usbmodem.xxxx.  It may be opened for reading and 
-  writing like a regular file.  On Windows, the first time the device is seen, it needs 
-  to be pointed to a .INF file containing additional information.  The INF file is in 
-  the same directory as this file.  When this is set up, the device can be opened as a 
-  COM: port.  See also the MC Helper codebase for code snippets.
-  \todo expanded usb support to include emulation of other kinds of USB device - mouse, 
-        keyboard, etc.
-  \todo rename the INF file to make.inf
+/** \defgroup USB USB
+	The USB subsystem provides access to USB Virtual Serial Port (CDC) functionality.  
+  
+  On OS X, the system USB CDC driver is used - no external drivers are needed.
+  An entry in \b /dev is created - similar to <b>/dev/cu.usbmodem.xxxx</b>.  It may be opened for reading and 
+  writing like a regular file using the standard POSIX open(), close(), read(), write() functions.
+  
+  On Windows, the first time the device is seen, it needs 
+  to be pointed to a .INF file containing additional information - the \b make_controller_kit.inf in 
+  the same directory as this file.  Once Windows sets this up, the device can be opened as a normal
+  COM port.  See also the \b mchelper codebase for code snippets.
+
+  \todo expand usb support to include emulation of other kinds of USB device - mouse, keyboard, etc.
 * \ingroup Controller
 * @{
 */
@@ -103,12 +110,12 @@ int Usb_GetActive( )
 
 
 /**	
-	Get a character from the USB port.  If the USB subsystem is not already initialized,
-  a call to this function will do so.  If this is the case, this first call may take a little
-  while (1 second?) to return.  The return value is an integer to accomodate full 8 bit
-  communication and still provide a mechanism to return "no character" - the -1.
-	@param timeout an integer specifying, in milliseconds, how long to wait for a character before quitting
-	@return the latest character from the USB port, or -1 if there was none
+	Read from the USB port.  
+  Pass in a pointer to a char buffer to read into, and the number of characters requested to read.
+  This function will return immediately with the number of characters read.
+	@param buffer A pointer to a char buffer to read into
+  @param length An integer specifying the number of characters to read
+	@return The number of characters successfully read.
 */
 int Usb_Read(char *buffer, int length)
 {
@@ -141,10 +148,11 @@ int Usb_Read(char *buffer, int length)
 }
 
 /**	
-	Send a character out on the USB port.   If the USB subsystem is not already initialized,
-  a call to this function will do so.  If this is the case, this first call may take a little
-  while (1 second?) to return.
-	@param c the character to send out
+	Write to the USB port.
+  Pass in a pointer to a char buffer to from, and the number of characters requested to write.
+	@param buffer A pointer to a char buffer to write from
+  @param length An integer specifying the number of characters to write
+	@return The number of characters successfully written
 */
 int Usb_Write( char* buffer, int length )
 {
@@ -170,29 +178,18 @@ int Usb_Write( char* buffer, int length )
   return CONTROLLER_OK;
 }
 
-// the outgoing USB hardware can write a block of 64 (EP_FIFO) bytes.
-// test the buffer's size and send it if we're full.
-int TestAndSend(xBULKBUFFER *pq, char newByte)
-{
-  pq->Data[pq->Count++] = newByte;
-  
-  if(pq->Count == EP_FIFO) 
-  { 
-    while(xQueueSend( xTxCDC, pq, 0) != pdPASS)
-      Sleep( usbSHORTEST_DELAY );
-    pq->Count = 0; 
-  }
+/**	
+	Write to the USB port using SLIP codes to packetize messages.
+  SLIP (Serial Line Internet Protocol) is a way to separate one "packet" from another on an open serial connection.
+  This is the way OSC messages are sent over USB, for example.  SLIP uses a simple start/end byte and an escape
+  byte in case your data actually contains the start/end byte.  Pass your normal buffer to this function to
+  have the SLIP codes inserted and then write it out over USB.
 
-  return pq->Count;
-}
-
-
-// SLIP codes
-#define END             0300    // indicates end of packet 
-#define ESC             0333    // indicates byte stuffing 
-#define ESC_END         0334    // ESC ESC_END means END data byte 
-#define ESC_ESC         0335    // ESC ESC_ESC means ESC data byte
-
+  Check the Wikipedia description of SLIP at http://en.wikipedia.org/wiki/Serial_Line_Internet_Protocol
+	@param buffer A pointer to a char buffer to write from
+  @param length An integer specifying the number of characters to write
+	@return The number of characters successfully written
+*/
 int Usb_SlipSend( char* buffer, int length )
 {
   char outgoingBuf[ length * 2 ];
@@ -231,6 +228,18 @@ int Usb_SlipSend( char* buffer, int length )
   return CONTROLLER_OK;
 }
 
+/**	
+	Read from the USB port using SLIP codes to de-packetize messages.
+  SLIP (Serial Line Internet Protocol) is a way to separate one "packet" from another on an open serial connection.
+  This is the way OSC messages are sent over USB, for example.  SLIP uses a simple start/end byte and an escape
+  byte in case your data actually contains the start/end byte.  This function will block until it has received a 
+  complete SLIP encoded message, and will pass back the original message with the SLIP codes removed.
+
+  Check the Wikipedia description of SLIP at http://en.wikipedia.org/wiki/Serial_Line_Internet_Protocol
+	@param buffer A pointer to a char buffer to read into
+  @param length An integer specifying the number of characters to read
+	@return The number of characters successfully written
+*/
 int Usb_SlipReceive( char* buffer, int length )
 {
   int started = 0, finished = 0, count = 0, i;
@@ -278,6 +287,22 @@ int Usb_SlipReceive( char* buffer, int length )
 
 /** @}
 */
+
+// the outgoing USB hardware can write a block of 64 (EP_FIFO) bytes.
+// test the buffer's size and send it if we're full.
+int TestAndSend(xBULKBUFFER *pq, char newByte)
+{
+  pq->Data[pq->Count++] = newByte;
+  
+  if(pq->Count == EP_FIFO) 
+  { 
+    while(xQueueSend( xTxCDC, pq, 0) != pdPASS)
+      Sleep( usbSHORTEST_DELAY );
+    pq->Count = 0; 
+  }
+
+  return pq->Count;
+}
 
 #ifdef OSC
 

@@ -18,8 +18,7 @@
 // MakingThings - Make Controller Kit - 2006
 
 /** \file digitalout.c	
-	Digital Out.
-	Library of functions for the Make Application Board's Digital Output section.
+	Library of functions for the Make Application Board's Digital Outputs.
 */
 
 #include "io.h"
@@ -84,8 +83,11 @@ int DigitalOut_GetEnableIo( int enableIndex );
 int DigitalOut_users[ DIGITALOUT_COUNT ];
 int DigitalOut_enableUsers[ DIGITALOUT_COUNT >> 1 ];
 
-/** \defgroup DigitalOut
-* The Digital Out subsystem sends digital values out the 8 high current outputs - 1 (on) or 0 (0ff).
+/** \defgroup DigitalOut Digital Outputs
+* The Digital Out subsystem sends digital values out the 8 high current outputs - 1 (on) or 0 (off).
+  
+  If you've previously used any of the other systems on the outputs (steppers, motors, etc.), you'll need
+  to set them to \b inactive to unlock the IO lines and use the Digital Outs.
 * \ingroup AppBoard
 * @{
 */
@@ -302,19 +304,21 @@ int DigitalOut_GetEnableIo( int enableIndex )
   \ingroup OSC
 	
 	\section devices Devices
-	There are 8 Digital Outs on the Make Application Board, numbered 0 - 7.
+	There are 8 Digital Outs on the Make Application Board, numbered <b>0 - 7</b>.
 	
 	\section properties Properties
-	The Digital Outs have two properties - 'value' and 'active'.
+	The Digital Outs have two properties:
+  - value
+  - active
 
 	\par Value
-	The 'value' property corresponds to the on/off value of a given Digital Out.\n
+	The \b value property corresponds to the on/off value of a given Digital Out.
 	For example, to turn on the fifth Digital Out, send a message like
 	\verbatim /digitalout/6/value 1\endverbatim
-	Simply change the argument of 1 to a 0 to turn it off.
+	Turn it off by sending the message \verbatim /digitalout/6/value 0\endverbatim
 	
 	\par Active
-	The 'active' property corresponds to the active state of a Digital Out.
+	The \b active property corresponds to the active state of a Digital Out.
 	If a Digital Out is set to be active, no other tasks will be able to
 	write to that Digital Out.  If you're not seeing appropriate
 	responses to your messages to the Digital Out, check the whether a Digital Out is 

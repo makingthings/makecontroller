@@ -42,7 +42,7 @@ static int Motor_SetFinal( int index, struct Motor_ * mp );
 
 /** \defgroup Motor
 The Motor subsystem provides forward/reverse and speed control for up to 4 DC motors across the 8 high current outputs.
-Each motor controller is composed of 2 adjacent Digital Outs on the MAKE Application Board:
+Each motor controller is composed of 2 adjacent Digital Outs on the Make Application Board:
 - motor 0 - Digital Outs 0 and 1.
 - motor 1 - Digital Outs 2 and 3.
 - motor 2 - Digital Outs 4 and 5.
@@ -242,15 +242,20 @@ static int Motor_SetFinal( int index, struct Motor_ * mp )
 	\section devices Devices
 	There are 4 DC Motor controllers available on the Application Board, numbered 0 - 3.
 	
-	Motors must be hooked up to pairs of Digital Outs as specified on the
-	Application Board user guide - Digital Out pairs 0/1, 2/3, 4/5, and 6/7
-	are used together to control motors.
+	Each motor controller is composed of 2 adjacent Digital Outs on the Make Application Board:
+  - motor 0 - Digital Outs 0 and 1.
+  - motor 1 - Digital Outs 2 and 3.
+  - motor 2 - Digital Outs 4 and 5.
+  - motor 3 - Digital Outs 6 and 7.
 	
 	\section properties Properties
-	Each motor controller has three properties - 'speed', 'direction', and 'active'.
+	Each motor controller has three properties:
+  - speed
+  - direction
+  - active
 
 	\par Speed
-	The 'speed' property corresponds to the speed at which a motor is being driven.
+	The \b speed property corresponds to the speed at which a motor is being driven.
 	This value can be both read and written.  The range of values expected by the board
 	is from 0 - 1023.  A speed of 0 means the motor is stopped, and 1023 means it is
 	being driven at full speed.
@@ -261,7 +266,7 @@ static int Motor_SetFinal( int index, struct Motor_ * mp )
 	\verbatim /motor/1/speed \endverbatim
 	
 	\par Direction
-	The 'direction' property corresponds to the forward/reverse direction of the motor.
+	The \b direction property corresponds to the forward/reverse direction of the motor.
 	This value can be both read and written, and the range of values expected is simply 
 	0 or 1.  1 means forward and 0 means reverse.
 	\par
@@ -270,7 +275,7 @@ static int Motor_SetFinal( int index, struct Motor_ * mp )
 	Simply change the argument of 0 to a 1 in order to set the motor's direction to forward.
 	
 	\par Active
-	The 'active' property corresponds to the active state of the motor.
+	The \b active property corresponds to the active state of the motor.
 	If the motor is set to be active, no other tasks will be able to
 	use its 2 digital out lines.  If you're not seeing appropriate
 	responses to your messages to the motor, check the whether it's 

@@ -38,14 +38,6 @@ struct System_* System;
 
 /** \defgroup System
     The System subsystem monitors and controls several aspects of the system. 
-    From OSC this subsystem can be addressed as "system".  It has the following 
-    properties:
-    \li active (R/W) - not currently meaningful
-    \li freememory (R) - returns the remaining free memory size
-    \li samba (W) - requests the board erase itself and return to SAMBA state
-    \li reset (W) - requests the board reboot
-    \li serialnumber (R/W) - permits the reading and writing of the serial number 
-    \li buildnumber (R) - permits the reading of the board's build number
 
 * \ingroup Controller
 * @{
@@ -123,7 +115,7 @@ int System_SetSerialNumber( int serial )
 }
 
 /**
-	Returns the board to SAMBA mode, erasing all of FLASH.
+	Returns the board to SAM-BA mode, erasing the flash memory.
   Leaves the board in a non-deterministic state awaiting a power cycle or reset.
 	@return CONTROLLER_OK if OK.
 */
@@ -153,6 +145,12 @@ int System_SetSamba( int sure )
   return 1;
 }
 
+/**
+	Gives the board a name.
+  The name must be alpha-numeric - only letters and numbers.
+  @param name A string specifying the board's name
+	@return CONTROLLER_OK if OK.
+*/
 int System_SetName( char* name )
 {
   System_SetActive( 1 );
@@ -171,6 +169,10 @@ int System_SetName( char* name )
   return CONTROLLER_OK;
 }
 
+/**
+	Read the board's name.
+	@return The board's name as a string.
+*/
 char* System_GetName( )
 {
   System_SetActive( 1 );
@@ -207,7 +209,30 @@ char* System_GetName( )
   return System->name;
 }
 
-#ifdef OSC  // the Debug system makes use of OSC
+/**
+	Reset the board.
+  Will reboot the board if the parameter sure is true.
+  @param sure confirms the request is true.
+	@return CONTROLLER_OK if OK.
+*/
+int System_SetReset( int sure )
+{
+  if ( sure )
+    kill( );
+
+  return 1;
+}
+/** @}
+*/
+
+void kill( void )
+{
+  AT91C_BASE_RSTC->RSTC_RCR = ( AT91C_RSTC_EXTRST | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | (0xA5 << 24 ) );
+}
+
+#ifdef OSC
+#include "osc.h"
+
 void System_StackAudit( int on_off )
 {
   System_SetActive( 1 );
@@ -245,29 +270,6 @@ void StackAuditTask( void* p )
     Sleep( 5 );
   }
 }
-#endif // OSC
-
-void kill( void )
-{
-  AT91C_BASE_RSTC->RSTC_RCR = ( AT91C_RSTC_EXTRST | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | (0xA5 << 24 ) );
-}
-
-/**
-	Reset the board.
-  Will reset the board if the parameter sure is true/
-  @param sure confirms the request if true.
-	@return CONTROLLER_OK if OK.
-*/
-int System_SetReset( int sure )
-{
-  if ( sure )
-    kill( );
-
-  return 1;
-}
-/** @}
-*/
-
 
 /** \defgroup SystemOSC System - OSC
   System controls many of the logistics of the Controller Board via OSC.
@@ -277,18 +279,35 @@ int System_SetReset( int sure )
     There's only one System, so a device index is not used in OSC messages to it.
    
     \section properties Properties
-    System has six properties - \b freememory, \b samba, \b reset, \b serialnumber, \b buildnumber, and \b active.
+    System has eight properties:
+    - name
+    - freememory
+    - samba
+    - reset
+    - serialnumber
+    - version
+    - stack-audit
+    - active
 
+    \par Name
+    The \b name property allows you to give a board its own name.  The name can only contain 
+    alphabetic characters and numbers.
+    To set your board's name, send the message
+    \verbatim /system/name "My Board"\endverbatim
+    To read the board's name, send the message
+    \verbatim /system/name \endverbatim
+    The board will respond by sending back an OSC message with the board's name.
+    
     \par Free Memory
-    The \b 'freememory' property corresponds to the amount of free memory on the Controller Board.
+    The \b freememory property corresponds to the amount of free memory on the Controller Board.
     This value is read-only.  To get the amount of free memory, send the message
     \verbatim /system/freememory \endverbatim
     The board will respond by sending back an OSC message with the amount of free memory.
    
     \par Samba
-    The \b 'samba' property is a write-only value that returns the board to a state in which it's ready
-    to receive new firmware via SAM-BA or mchelper.  The power must be reset on the board before trying
-    to upload new firmware.
+    The \b samba property is a write-only value that returns the board to a state in which it's ready
+    to receive new firmware via SAM-BA or mchelper.  Once you've set the board to SAM-BA state,
+    unplug and replug the power on the board before uploading new firmware.
     \par
     To set the board in SAM-BA state, send the message
     \verbatim /system/samba 1 \endverbatim
@@ -296,24 +315,40 @@ int System_SetReset( int sure )
     messages until a new program is uploaded to it.
    
     \par Reset
-    The \b 'reset' property is a write-only value that stops the program running on the board, and reboots.\n
+    The \b reset property is a write-only value that reboots the board.
     To reset the board, send the message
     \verbatim /system/reset 1 \endverbatim
    
     \par Serial Number
-    The \b 'serialnumber' property corresponds to the unique serial number on each Controller Board.
+    The \b serialnumber property corresponds to the unique serial number on each Controller Board.
     This value can be used in situations where a unique value needs to be used to identify a board.
+    The serial number can be both read and written.
     \par
     To read the board's serial number, send the message
     \verbatim /system/serialnumber \endverbatim
    
-    \par Build Number
-    The \b 'buildnumber' property corresponds to the build number of the firmware it's currently running.\n
-    To read the board's build number, send the message
-    \verbatim /system/buildnumber \endverbatim
+    \par Version
+    The \b version property corresponds to the of the firmware currently running on the board.
+    This is read-only.
+    To read the board's version, send the message
+    \verbatim /system/version \endverbatim
+
+    \par Stack Audit
+    The \b stack-audit property can fire up a task that will monitor the stack usage
+    of all tasks running on the board.  If the remaining stack of any of the tasks drops below 50 bytes,
+    the board will attempt to send an OSC message back via the \ref Debug system to let you know.
+    \par
+    This uses up quite a lot of processor time, so it's really only designed to be used in a 
+    debug context.
+    \par
+    To start up the stack audit, send the message
+    \verbatim /system/stack-audit 1 \endverbatim
+    \par
+    and turn it off by sending 
+    \verbatim /system/stack-audit 0 \endverbatim
    
     \par Active
-    The \b 'active' property corresponds to the active state of System.
+    The \b active property corresponds to the active state of System.
     If System is set to be inactive, it will not respond to any other OSC messages. 
     If you're not seeing appropriate
     responses to your messages to System, check the whether it's
@@ -323,9 +358,6 @@ int System_SetReset( int sure )
     You can set the active flag by sending
     \verbatim /system/active 1 \endverbatim
 */
-
-#ifdef OSC
-#include "osc.h"
 
 static char* SystemOsc_Name = "system";
 static char* SystemOsc_PropertyNames[] = { "active", "freememory", "samba", "reset", 

@@ -55,7 +55,7 @@ static int AppLed_Stop( int index );
 
 static int AppLed_users[ APPLED_COUNT ];
 
-/** \defgroup AppLed
+/** \defgroup AppLed Application Board LEDs
 * The Application Board LED subsystem controls the 4 LEDs on the Application Board, for status and program feedback.
 * \ingroup AppBoard
 * @{
@@ -96,6 +96,12 @@ int AppLed_GetActive( int index )
 	@param index an integer specifying which LED (0-3).
 	@param state an integer specifying on (1) or off (0).
 	@return Zero on success, otherwise error code.
+
+  \par Example
+  \code
+  // turn on LED 2
+  AppLed_SetState( 2, 1 );
+  \endcode
 */
 int AppLed_SetState( int index, int state )
 {
@@ -212,16 +218,18 @@ int AppLed_GetIo( int index )
 	There are 4 LEDs on the Make Application Board, numbered 0 - 3.
 	
 	\section properties Properties
-	The LEDs have two properties - 'state' and 'active'.
+	The LEDs have two properties:
+  - state
+  - active
 
 	\par State
-	The 'state' property corresponds to the on/off state of a given LED.
+	The \b state property corresponds to the on/off state of a given LED.
 	For example, to turn on the first LED, send a message like
 	\verbatim /appled/0/state 1\endverbatim
-	Simply change the argument of 1 to a 0 to turn it off.
+	To turn it off, send the message \verbatim /appled/0/state 0\endverbatim
 	
 	\par Active
-	The 'active' property corresponds to the active state of an LED.
+	The \b active property corresponds to the active state of an LED.
 	If an LED is set to be active, no other tasks will be able to
 	write to it.  If you're not seeing appropriate
 	responses to your messages to the LED, check the whether it's 

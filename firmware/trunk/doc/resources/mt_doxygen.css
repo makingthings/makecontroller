@@ -1,32 +1,40 @@
 BODY,H1,H2,H3,H4,H5,H6,P,CENTER,TD,TH,UL,DL,DIV {
-	font-family: Geneva, Arial, Helvetica, sans-serif;
-}
-BODY,TD {
-       font-size: 90%;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 13px;
 }
 
-P, BODY { width: 800px; }
+HTML {
+	background-color: #DDDDDD;
+}
 
-hr { width: 800px;
+BODY { 
+	width: 800px;
+	margin: 10px auto;
+	background-color:white;
+	padding: 15px;
+}
+
+hr { 
 		text-align: left;
 		 margin: 0 auto 0 0;
  }
  
-
 H1 {
-	text-align: left;
-	padding-left: 150px;
-       font-size: 140%;
+	font-size: 140%;
+	text-align: center;
+	color: #555555;
 }
 H2 {
-       font-size: 110%;
+       font-size: 120%;
+			 color: #555555;
 }
 H3 {
-       font-size: 100%;
+	font-size: 100%;
+	color: #555555;
 }
+
 CAPTION { font-weight: bold }
 DIV.qindex {
-	width: 100%;
 	background-color: #e8eef2;
 	border: 1px solid #84b0c7;
 	text-align: center;
@@ -35,7 +43,6 @@ DIV.qindex {
 	line-height: 140%;
 }
 DIV.nav {
-	width: 800px;
 	background-color: #e8eef2;
 	border: 1px solid #84b0c7;
 	text-align: center;
@@ -80,6 +87,15 @@ A.qindexHL:hover {
 	background-color: #6666cc;
 	color: #ffffff;
 }
+
+.anchor {
+	color: #555555;
+}
+
+.anchor:hover {
+	background-color: #ffffff;
+}
+
 A.qindexHL:visited { text-decoration: none; background-color: #6666cc; color: #ffffff }
 A.el { text-decoration: none; font-weight: bold }
 A.elRef { font-weight: bold }
@@ -121,12 +137,7 @@ DIV.groupHeader {
        font-weight: bold;
 }
 DIV.groupText { margin-left: 16px; font-style: italic; font-size: 90% }
-BODY {
-	background: white;
-	color: black;
-	margin-right: 20px;
-	margin-left: 20px;
-}
+
 TD.indexkey {
 	background-color: #e8eef2;
 	font-weight: bold;
@@ -186,7 +197,7 @@ SPAN.charliteral   { color: #008080 }
 }
 .mdescRight {
        padding: 0px 8px 4px 8px;
-	font-size: 80%;
+	font-size: 90%;
 	font-style: italic;
 	background-color: #FAFAFA;
 	border-top: 1px none #E0E0E0;
@@ -229,7 +240,7 @@ SPAN.charliteral   { color: #008080 }
 	border-bottom-style: none;
 	border-left-style: none;
 	background-color: #FAFAFA;
-	font-size: 80%;
+	font-size: 90%;
 }
 .memTemplItemLeft {
 	padding: 1px 0px 0px 8px;
@@ -334,7 +345,7 @@ HR { height: 1px;
 }
 .memitem {
   padding: 4px;
-	width: 800px;
+	/*width: 800px; */
   background-color: #FFFFFF;
   border-width: 1px;
   border-style: solid;
@@ -349,7 +360,7 @@ HR { height: 1px;
   padding-left: 10px;
 }
 .memproto {
-  background-color: #DDDDDD;
+  background-color: #EEEEEE;
   width: 100%;
   border-width: 1px;
   border-style: solid;
@@ -362,11 +373,10 @@ HR { height: 1px;
 }
 .paramtype {
   white-space: nowrap;
-	/*font-size: 110%; */
+	color: #000000;
 }
 .paramname {
   color: #000000;
   font-style: italic;
 }
 /* End Styling for detailed member documentation */
-

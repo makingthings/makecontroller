@@ -25,6 +25,7 @@
 
 /**
 \defgroup Error Error Return Codes
+Error return values for Make Controller API calls.
 \ingroup Controller
 @{
 */
