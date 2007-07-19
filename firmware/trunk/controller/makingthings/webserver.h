@@ -52,7 +52,7 @@
 typedef struct Web_Server_
 {
   portCHAR DynamicPage[ MAX_WEBPAGE_SIZE ];
-  portCHAR PageHitsBuf[ 11 ];
+  portCHAR PageHitsBuf[ 50 ];
   struct netbuf* RxBuffer;
   portCHAR* RxString;
   unsigned portSHORT Length;
