@@ -1213,6 +1213,7 @@ int Network_Init( )
     - mac
     - osc_udp_port
     - dhcp
+		- webserver
 
     \par Address
     The \b address property corresponds to the IP address of the Controller Board.
@@ -1283,6 +1284,17 @@ int Network_Init( )
     To read whether DHCP is currently enabled on the board, send the message
     \code /network/dhcp \endcode
     with no argument value.
+		
+		\par Web Server
+    The \b webserver property sets whether the demo web server on the Make Controller is running or not.
+		The web server can provide current stats about the board through a web browser interface.  Because the web server
+		consumes a significant chunk of the board's resources, it's best to turn it off when you're not using it.
+    \par
+    To turn the web server on, send the message
+    \code /network/webserver 1 \endcode
+		then enter the board's IP address into the address bar of your favorite web browser.  Send the message
+		\code /network/webserver 0 \endcode
+		to turn the webserver off.
    
     \par MAC
     The \b mac property corresponds to the Ethernet MAC address of the Controller Board.
