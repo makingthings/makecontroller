@@ -53,10 +53,9 @@ static int DigitalIn_GetIo( int index );
 static int DigitalIn_users[ DIGITALIN_COUNT ];
 
 
-/** \defgroup DigitalIn
-* The Digital In subsystem reads the 8 inputs as digital values - 1 (on) or 0 (0ff).  
-  The 8 inputs can be either controlled as digital inputs by DigitalIn or as
-  analog inputs by /ref Adc.
+/** \defgroup DigitalIn Digital Inputs
+* The Digital In subsystem reads the 8 inputs on the Make Controller as digital values - 1 (on) or 0 (off).  
+  The 8 inputs can be either read as digital inputs by DigitalIn or as \ref AnalogIn.
 * \ingroup AppBoard
 * @{
 */
@@ -206,24 +205,28 @@ int DigitalIn_GetIo( int index )
   \ingroup OSC
 	
 	\section devices Devices
-	There are 8 Digital Inputs on the Make Application Board, numbered 0 - 7.
+	There are 8 Digital Inputs on the Make Application Board, numbered <b>0 - 7</b>.
+
 	The Digital Ins are physically the same as the Analog Ins - they're on the same 
 	signal lines and the same connectors - but reading them as Digital Ins is 
-	slightly more efficient/quicker.\n
-	If the voltage on the input is greater than ~0.6V, the Digital In will read high.
+	slightly more efficient/quicker.
+
+	If the voltage on the input is greater than <b>~0.6V</b>, the Digital In will read high.
 	
 	\section properties Properties
-	The Digital Ins have two properties - 'value' and 'active'.
+	The Digital Ins have two properties
+  - value
+  - active
 
 	\par Value
-	The 'value' property corresponds to the on/off value of a Digital In.
-	Because you can only ever \em read the value of an input, you'll never
-	want to include an argument at the end of your OSC message to read the value.\n
-	To read the third Digital In, send a message like
+	The \b value property corresponds to the on/off value of a Digital In.
+	Because you can only ever \b read the value of an input, you'll never
+	want to include an argument at the end of your OSC message to read the value.
+	To read the third Digital In, send the message
 	\verbatim /digitalin/2/value \endverbatim
 	
 	\par Active
-	The 'active' property corresponds to the active state of a Digital In.
+	The \b active property corresponds to the active state of a Digital In.
 	If a Digital In is set to be active, no other tasks will be able to
 	read from it as an Analog In.  If you're not seeing appropriate
 	responses to your messages to the Digital In, check the whether it's 
@@ -231,7 +234,7 @@ int DigitalIn_GetIo( int index )
 	\verbatim /digitalin/0/active \endverbatim
 	\par
 	You can set the active flag by sending
-	\verbatim /digitalin/0/active 1 \endverbatim
+	\verbatim /digitalin/0/active 0 \endverbatim
 */
 
 #include "osc.h"

@@ -16,8 +16,7 @@
 *********************************************************************************/
 
 /** \file network.c	
-	Network - Ethernet Control.
-	Methods for communicating via the Ethernet port with the Make Controller Board.
+	Communicate with the Make Controller Board via Ethernet.
 */
 
 #include "config.h"
@@ -49,7 +48,6 @@ char emacETHADDR3 = 0x55;
 char emacETHADDR4 = 0x0;
 char emacETHADDR5 = 0x0;
 
-#include "config.h"
 #include "network.h"
 #include "webserver.h"
 
@@ -63,38 +61,461 @@ int Network_GetPending( void );
 void Network_DhcpStart( struct netif* netif );
 void Network_DhcpStop( struct netif* netif );
 
+/** \defgroup Sockets
+  The Sockets system provides a simple interface for creating, reading and writing over both TCP and UDP.  
+  This subsystem is a light wrapper around LwIP, the open source TCP/IP stack used by the Make Controller Kit.
+	There are 3 groups of socket functions:
+	- DatagramSocket - sockets for \b UDP communication
+	- Socket - sockets for \b TCP communication
+	- ServerSocket - sockets for accepting \b incoming TCP client connections
+  \ingroup Controller
+  @{
+*/
+
+/**	
+	Create a new TCP socket connected to the address and port specified.
+	@param address An integer specifying the IP address to connect to.
+	@param port An integer specifying the port to connect on.
+	@return A pointer to the socket, if it was created successfully.  NULL if unsuccessful.
+	@see SocketRead(), SocketWrite(), SocketClose()
+
+  \par Example
+  \code
+  // use the IP_ADDRESS macro to format the address properly
+  int addr = IP_ADDRESS( 192, 168, 0, 54 );
+  // then create the socket, connecting on port 10101
+  struct netconn* socket = Socket( addr, 10101 );
+  \endcode
+*/
+void* Socket( int address, int port )
+{
+  Network_SetActive( 1 );
+
+  struct netconn* conn;
+  err_t retval;
+
+  conn = netconn_new( NETCONN_TCP );
+  // This is our addition to the conn structure to help with reading
+  conn->readingbuf = NULL;
+
+  struct ip_addr remote_addr;
+  remote_addr.addr = htonl(address);
+
+  retval = netconn_connect( conn, &remote_addr, port );
+  
+  if( ERR_OK != retval )
+  {
+    //netconn_delete( conn );
+    while( netconn_delete( conn ) != ERR_OK )
+      vTaskDelay( 10 );
+
+    conn = NULL;
+  }
+  
+  return conn;
+}
+
+/**	
+	Read from a TCP socket.
+  Make sure you have an open socket before trying to read from it.
+	@param socket A pointer to the existing socket.
+	@param data A pointer to the buffer to read to.
+	@param length An integer specifying the maximum length in bytes that can be read.
+	@return An integer: length of data read if successful, zero on failure.
+	@see Socket(), SocketClose()
+
+  \par Example
+  \code
+  // we should already have created a socket sock with Socket().
+  struct netconn* sock = Socket( addr, 10101 );
+  int length_read = SocketRead( sock, data, length )
+  // if 0 bytes were read, there was some sort of error
+  if( length_read == 0 )
+    SocketClose( sock );
+  \endcode
+*/
+int SocketRead( void* socket, char* data, int length )
+{
+  struct netconn *conn = socket;
+  struct netbuf *buf;
+  int buflen;
+
+  if ( conn->readingbuf == NULL )
+  {
+    buf = netconn_recv( conn );
+    if ( buf == NULL )
+      return 0;
+
+    buflen = netbuf_len( buf );
+    /* copy the contents of the received buffer into
+    the supplied memory pointer mem */
+    netbuf_copy( buf, data, length );
+
+    // Test to see if the buffer is done, or needs to be saved
+    if ( buflen <= length )
+    {
+      netbuf_delete( buf );
+    }
+    else
+    {
+      conn->readingbuf = buf;
+      conn->readingoffset = length;
+      buflen = length;
+    }
+  }
+  else
+  {
+    buf = conn->readingbuf;
+    buflen = netbuf_len( buf ) - conn->readingoffset;
+    netbuf_copy_partial( buf, data, length, conn->readingoffset );
+
+    if ( buflen <= length )
+    {
+      netbuf_delete( buf );
+      conn->readingbuf = NULL;
+    }  
+    else
+    {
+      conn->readingoffset += length;
+      buflen = length;
+    }
+  }
+
+  return buflen;
+}
+
+/**	
+  Read a line from a TCP socket terminated by CR LF (0x0D 0x0A).  
+  Make sure you have an open socket before trying to read from it.
+	@param socket A pointer to the existing socket.
+	@param data A pointer to the buffer to read to.
+	@param length An integer specifying the maximum length in bytes to read.
+	@return An integer: length of data read if successful, zero on failure.
+	@see Socket(), SocketRead(), SocketClose()
+*/
+
+int SocketReadLine( void* socket, char* data, int length )
+{
+  int readLength;
+  int lineLength = -1;
+  //int terminated = false;
+  data--;
+
+  // Upon entering, data points to char prior to buffer, length is -1
+  do 
+  {
+    data++;
+    // here data points to where byte will be written
+    lineLength++;
+    // linelength now reflects true number of bytes
+    readLength = SocketRead( socket, data, 1 );
+    // here, if readlength == 1, data has a new char in next position, linelength is one off,
+    //       if readlength == 0, data had no new char and linelength is right
+  } while ( ( readLength == 1 ) && ( lineLength < length - 1 ) && ( *data != '\n' ) );
+
+  // here, length is corrected if there was a character  
+  if ( readLength == 1 )
+    lineLength++;
+  
+  return lineLength;
+}
+
+
+/**	
+	Write to a TCP socket.
+	Not surprisingly, we need an existing socket before we can write to it.
+
+	@param socket A pointer to the existing socket.
+	@param data A pointer to the buffer to write from.
+	@param length An integer specifying the length in bytes of how much data should be written.
+	@return An integer: 'length written' if successful, 0 on failure.
+	@see Socket()
+
+  \par Example
+  \code
+  // we should already have created a socket with Socket()
+  struct netconn* sock = Socket( addr, 10101 );
+  int length_written = SocketWrite( sock, data, length )
+  // if 0 bytes were written, there was some sort of error
+  if( length_written == 0 )
+    SocketClose( sock );
+  \endcode
+*/
+int SocketWrite( void* socket, char* data, int length )
+{
+  int err = netconn_write( (struct netconn *)socket, data, length, NETCONN_COPY);
+  if ( err != ERR_OK )
+    return 0;
+  else
+    return length;
+}
+
+/**	
+	Close an existing TCP socket.
+  Anytime you get an error when trying to read or write, it's best to close the socket and reopen
+  it to make sure that the connection is corrently configured.
+	@param socket A pointer to the existing socket.
+	@return void
+	@see Socket()
+
+  \par Example
+  \code
+  // we should already have created a socket 'sock' with Socket().
+  struct netconn* sock = Socket( addr, 10101 );
+  // now close it
+  SocketClose( sock )
+  \endcode
+*/
+void SocketClose( void* socket )
+{
+  netconn_close( (struct netconn *)socket );
+  netconn_delete( (struct netconn *)socket );
+  return;
+}
+
+/**	
+	Create a new TCP server socket and start listening for connections.
+	@param port An integer specifying the port to listen on.
+	@return A pointer to the socket created.
+	@see ServerSocketAccept( )
+	
+	\par Example
+  \code
+  // create a socket and start listening on port 10101
+  struct netconn* server = ServerSocket( 10101 );
+  // ServerSocketAccept( ) will block until an incoming connection is made
+  struct netconn* newConnection = ServerSocketAccept( server );
+  // now grab the data from the new connection
+  \endcode
+*/
+void* ServerSocket( int port )
+{
+  Network_SetActive( 1 );
+
+  struct netconn *conn;
+
+  conn = netconn_new( NETCONN_TCP );
+  netconn_listen( conn );
+  netconn_bind( conn, 0, port );
+
+  return conn;
+}
+
+/**	
+	Accept an incoming connection to a ServerSocket that you have created.  This
+  function will block until a new connection is waiting to be serviced.  It returns
+  a regular socket on which you can use SocketWrite(), SocketRead() and SocketClose().
+	@param serverSocket a pointer to a ServerSocket that you created
+	@return a pointer to the new socket created to handle the connection
+	@see ServerSocket(), SocketWrite(), SocketRead(), SocketClose()
+*/
+void* ServerSocketAccept( void* serverSocket )
+{
+  struct netconn *conn;
+  conn = netconn_accept( (struct netconn *)serverSocket );
+  // This is our addition to the conn structure to help with reading
+  conn->readingbuf = NULL;
+  return conn;
+}
+
+/**	
+	Close a ServerSocket that you have created.
+	@param serverSocket A pointer to a ServerSocket.
+	@return 0 if the process was successful.
+	@see ServerSocket()
+	
+	\par Example
+  \code
+  // we created a server socket at some point
+  struct netconn* server = ServerSocket( 10101 );
+  // now close it
+  ServerSocketClose( server );
+  \endcode
+*/
+int ServerSocketClose( void* serverSocket )
+{
+  netconn_close( serverSocket );
+  netconn_delete( serverSocket );
+  return 0;
+}
+
+/**	
+	Create a socket to read and write UDP packets.
+	@param port An integer specifying the port to open.
+	@return a pointer to the socket created.
+	@see DatagramSocketSend( ), DatagramSocketReceive( )
+	
+	\par Example
+  \code
+  // create a new UDP socket on port 10101
+  struct netconn* udpSocket = DatagramSocket( 10101 );
+  // now read and write to it using DatagramSocketSend( ) and DatagramSocketReceive( )
+  \endcode
+*/
+void* DatagramSocket( int port )
+{
+  Network_SetActive( 1 );
+
+  struct netconn *conn;
+
+  conn = netconn_new( NETCONN_UDP );
+  // This is our addition to the conn structure to help with reading
+  conn->readingbuf = NULL;
+
+  // hook it up
+  netconn_bind( conn, NULL, port );
+
+  return conn;
+}
+
+/**	
+	Send a UDP packet to a specified address.
+	@param datagramSocket A pointer to the DatagramSocket() you're using to write.
+	@param address An integer specifying the IP address to write to.
+	@param port An integer specifying the port to write to.
+	@param data A pointer to the packet to send.
+	@param length An integer specifying the number of bytes in the packet being sent.
+	@return An integer corresponding to the number of bytes successfully written.
+	@see DatagramSocket( )
+	
+	\par Example
+  \code
+  struct netconn* udpSocket = DatagramSocket( 10101 ); // our socket
+  int address = IP_ADDRESS( 192, 168, 0, 200 );
+  int sent = DatagramSocketSend( udpSocket, address, 10101, myBuffer, myLength );
+  \endcode
+*/
+int DatagramSocketSend( void* datagramSocket, int address, int port, void* data, int length )
+{ 
+  struct netconn *conn = (struct netconn *)datagramSocket;
+  struct netbuf *buf;
+  struct ip_addr remote_addr;
+  int lengthsent = 0;
+
+  remote_addr.addr = htonl(address);
+  if( ERR_OK != netconn_connect(conn, &remote_addr, port) )
+		return lengthsent;
+
+  // create a buffer
+  buf = netbuf_new();
+  if( buf != NULL )
+  {
+    netbuf_ref( buf, data, length); // make the buffer point to the data that should be sent
+    if( ERR_OK != netconn_send( conn, buf) ) // send the data
+		{
+			netbuf_delete(buf);
+			return 0;
+		}
+    lengthsent = length;
+    netbuf_delete(buf); // deallocate the buffer
+  }
+
+  return lengthsent;
+}
+
+/**	
+	Receive a UDP packet.  
+  This function will block until a packet is received. The address and port of the 
+  sender are returned in the locations pointed to by the address and port parameters.  
+  If the incoming packet is larger than the specified size of the buffer, it will
+  be truncated.
+	@param datagramSocket A pointer to the DatagramSocket() you're using to read.
+	@param incomingPort An integer specifying the port to listen on.
+	@param address A pointer to the IP address that sent the packet.
+	@param port A pointer to the port of the sender.
+	@param data A pointer to the buffer to read into.
+	@param length An integer specifying the number of bytes in the packet being read.
+	@return An integer corresponding to the number of bytes successfully read.
+	@see DatagramSocket( )
+	
+  \par Example
+  \code
+  struct netconn* udpSocket = DatagramSocket( 10101 ); // our socket
+  int address, port;
+  int sent = DatagramSocketReceive( udpSocket, &address, &port, myBuffer, myLength );
+  \endcode
+*/
+int DatagramSocketReceive( void* datagramSocket, int incomingPort, int* address, int* port, void* data, int length )
+{
+  struct netconn *conn = (struct netconn*)datagramSocket;
+  struct netbuf *buf;
+  struct ip_addr *addr;
+  int buflen = 0;
+
+  if( ERR_OK != netconn_bind( conn, IP_ADDR_ANY, incomingPort ) )
+		return buflen;
+    
+  buf = netconn_recv( conn );
+  if( buf != NULL )
+  {
+    buflen = netbuf_len( buf );
+    // copy the contents of the received buffer into
+    //the supplied memory pointer 
+    netbuf_copy(buf, data, length);
+    addr = netbuf_fromaddr(buf);
+    *port = netbuf_fromport(buf);
+    *address = ntohl( addr->addr );
+    netbuf_delete(buf);
+  }
+
+  /* if the length of the received data is larger than
+  len, this data is discarded and we return len.
+  otherwise we return the actual length of the received
+  data */
+  if(length > buflen)
+    return buflen;
+  else
+    return length;
+}
+
+/**	
+	Close a DatagramSocket().
+	@param socket A pointer to the DatagramSocket() to close.
+	@see DatagramSocket( )
+	
+  \par Example
+  \code
+  struct netconn* udpSocket = DatagramSocket( 10101 ); // create our socket
+  // now close it
+  DatagramSocketClose( udpSocket );
+  \endcode
+*/
+void DatagramSocketClose( void* socket )
+{
+  netconn_close( socket );
+  netconn_delete( socket );
+}
+
+/** @}
+*/
+
 /** \defgroup Network
-  The Network subsystem manages the Ethernet controller.  
-  This subsystem is based on LwIP, an open source TCP/IP stack.  It provides TCP
-  and UPD sockets and handles storage and retrieval of the IP address, address 
-  mask, gateway address.  Also handled is the device's MAC address.
+  The Network subsystem manages the Ethernet controller.
+	
+  Like any other network enabled device, the Make Controller has an IP address, net mask and gateway.
+	- The default IP address is 192.168.0.200
+	- The default mask is 255.255.255.0
+	- The default gateway 192.168.0.1
+	
+	You can set any of these values manually, or use DHCP to get them automatically.
+	
+	\section MAC
+  The Make Controller's MAC address defaults to AC.DE.48.55.x.y where x & y are calculated from the 
+  unit's serial number, handled by the \ref System subsystem.
+	
+	\section webserver Web Server
+	The Make Controller Kit can also act as a web server.  The demo web server running on the Make Controller
+	displays some stats about the board's current state through a web interface.  It is intended mainly as
+	a starting point for more useful web applications.  See the source in webserver.c.
 
-  IP Address, mask and gatway default to 192.168.0.200, 255.255.255.0 and 192.168.0.1.
-  The MAC address defaults to AC.DE.48.55.x.y where x & y are calculated from the 
-  unit's serial number which is handled by the \ref System subsystem.
-
-  From OSC this subsystem can be addressed as "network".  It has the following 
-  properties:
-    \li active - can be used to activate / deactivate the Network subsystem and to read its status
-    \li address - reading or writing the ip address in string a1.a2.a3.a4 form
-    \li mask - reading or writing the ip address mask in string m1.m2.m3.m4 form
-    \li gateway - reading or writing the ip address mask in string g1.g2.g3.g4 form
-    \li valid - reading or asserting the validity of the currently stored address set
-    \li mac - reading the MAC address in string form.  To change it see the \ref System subsystem
-
-  \todo provide some address packing and unpacking functions
-  \todo re-org the function names slightly so they conform a bit better to the
-    rest of the system
-  \todo remove the port param from the datagram socket create function - it's not
-    used
   \ingroup Controller
   @{
 */
 
 /**
-	Sets whether the Network subsystem is active.  This is automatically called by
-  any of the Socket functions.  Make sure the address is set correctly before 
-  calling this function.
+	Sets whether the Network subsystem is active.  
+	This fires up the networking system on the Make Controller, and will not return until a network is found,
+	ie. a network cable is plugged in.
 	@param state An integer specifying the active state - 1 (active) or 0 (inactive).
 	@return 0 on success.
 */
@@ -133,25 +554,6 @@ int Network_SetActive( int state )
 	}
 
   return CONTROLLER_OK;
-}
-
-/**
-	Sets whether the Network subsystem is currently trying to negotiate its settings.
-  This is mostly used by the Network init and deinit processes, so you shouldn't
-  be calling this yourself unless you have a good reason to.
-	@param state An integer specifying the pending state - 1 (pending) or 0 (not pending).
-*/
-void Network_SetPending( int state )
-{
-  if( state && !Network->pending )
-      Network->pending = state;
-  if( !state && Network->pending )
-    Network->pending = state;
-}
-
-int Network_GetPending( )
-{
-  return Network->pending;
 }
 
 /**
@@ -201,71 +603,6 @@ int Network_SetAddress( int a0, int a1, int a2, int a3 )
   Network_Valid = NET_INVALID;
 
   return CONTROLLER_OK;
-}
-
-/**
-	Set the IP address of the Make Controller.
-	The IP address of the Make Controller, in dotted decimal form (xxx.xxx.xxx.xxx),
-	can be set by passing in each of the numbers as a separate parameter.
-	The default IP address of each Make Controller as it ships from the factory
-	is 192.168.0.200
-
-	This value is stored in EEPROM, so it persists even after the board
-	is powered down.
-
-	@param a0 An integer corresponding to the first of 4 numbers in the address.
-	@param a1 An integer corresponding to the second of 4 numbers in the address.
-	@param a2 An integer corresponding to the third of 4 numbers in the address.
-	@param a3 An integer corresponding to the fourth of 4 numbers in the address.
-	@return 0 on success.
-
-  \par Example
-  \code
-  // set the address to 192.168.0.23
-  if( 0 != Network_SetAddress( 192, 168, 0, 23 ) )
-    // then there was a problem.
-  \endcode
-
-*/
-void NetworkOsc_SetTcpOutAddress( int a0, int a1, int a2, int a3 )
-{
-	int address = IP_ADDRESS( a0, a1, a2, a3 );
-  if( address != Network->TcpOutAddress )
-  {
-    Network->TcpOutAddress = address;
-    Eeprom_Write( EEPROM_TCP_OUT_ADDRESS, (uchar*)&address, 4 );
-  }
-}
-
-void NetworkOsc_SetTcpOutPort( int port )
-{
-  if( port != Network->TcpOutPort ) // only change if it's a new value
-  {
-    Network->TcpOutPort = port;
-    Eeprom_Write( EEPROM_TCP_OUT_PORT, (uchar*)&port, 4 );
-  }
-}
-
-int NetworkOsc_GetTcpOutPort( )
-{
-  return Network->TcpOutPort;
-}
-
-void NetworkOsc_SetUdpPort( int port )
-{
-  if( port != Network->OscUdpPort ) // only change things if it's a new value
-  {
-    Network->OscUdpPort = port;
-    Eeprom_Write( EEPROM_OSC_UDP_PORT, (uchar*)&port, 4 );
-  }
-}
-
-int NetworkOsc_GetUdpPort(  )
-{
-  if( Network->OscUdpPort > 0 && Network->OscUdpPort < 65536 )
-    return Network->OscUdpPort;
-  else
-    return 10000;
 }
 
 /**
@@ -415,7 +752,7 @@ int Network_GetValid( )
 }
 
 /**
-	Read the IP address stored in EEPROM.
+	Read the board's current IP address.
 	Pass in pointers to integers where the address should be stored.
 
 	@param a0 A pointer to an integer where the first of 4 numbers of the address is to be stored.
@@ -423,6 +760,13 @@ int Network_GetValid( )
 	@param a2 A pointer to an integer where the third of 4 numbers of the address is to be stored.
 	@param a3 A pointer to an integer where the fourth of 4 numbers of the address is to be stored.
 	@return 0 on success.
+	
+  \par Example
+  \code
+  int a0, a1, a2, a3;
+  Network_GetAddress( &a0, &a1, &a2, &a3 );
+  // now our variables are filled with the current address values
+  \endcode
 */
 int Network_GetAddress( int* a0, int* a1, int* a2, int* a3 )
 {
@@ -450,23 +794,7 @@ int Network_GetAddress( int* a0, int* a1, int* a2, int* a3 )
 }
 
 /**
-	Read the IP address stored in EEPROM that the board will use when told to
-  make a connection to a remote TCP server.
-	Pass in pointers to integers where the address should be stored.
-
-	@param a0 A pointer to an integer where the first of 4 numbers of the address is to be stored.
-	@param a1 A pointer to an integer where the second of 4 numbers of the address is to be stored.
-	@param a2 A pointer to an integer where the third of 4 numbers of the address is to be stored.
-	@param a3 A pointer to an integer where the fourth of 4 numbers of the address is to be stored.
-	@return 0 on success.
-*/
-int NetworkOsc_GetTcpOutAddress( )
-{
-  return Network->TcpOutAddress;
-}
-
-/**
-	Read the network mask stored in EEPROM.
+	Read the board's current network mask.
 	Pass in pointers to integers where the mask should be stored.
 
 	@param a0 A pointer to an integer where the first of 4 numbers of the mask is to be stored.
@@ -474,6 +802,13 @@ int NetworkOsc_GetTcpOutAddress( )
 	@param a2 A pointer to an integer where the third of 4 numbers of the mask is to be stored.
 	@param a3 A pointer to an integer where the fourth of 4 numbers of the mask is to be stored.
 	@return 0 on success.
+	
+  \par Example
+  \code
+  int a0, a1, a2, a3;
+  Network_GetMask( &a0, &a1, &a2, &a3 );
+  // now our variables are filled with the current mask values
+  \endcode
 */
 int Network_GetMask( int* a0, int* a1, int* a2, int* a3 )
 {
@@ -500,7 +835,7 @@ int Network_GetMask( int* a0, int* a1, int* a2, int* a3 )
 }
 
 /**
-	Read the gateway address stored in EEPROM.
+	Read the board's current gateway address.
 	Pass in pointers to integers where the gateway address should be stored.
 
 	@param a0 A pointer to an integer where the first of 4 numbers of the gateway address is to be stored.
@@ -508,6 +843,13 @@ int Network_GetMask( int* a0, int* a1, int* a2, int* a3 )
 	@param a2 A pointer to an integer where the third of 4 numbers of the gateway address is to be stored.
 	@param a3 A pointer to an integer where the fourth of 4 numbers of the gateway address is to be stored.
 	@return 0 on success.
+	
+  \par Example
+  \code
+  int a0, a1, a2, a3;
+  Network_GetGateway( &a0, &a1, &a2, &a3 );
+  // now our variables are filled with the current gateway values
+  \endcode
 */
 int Network_GetGateway( int* a0, int* a1, int* a2, int* a3 )
 {
@@ -533,399 +875,18 @@ int Network_GetGateway( int* a0, int* a1, int* a2, int* a3 )
   return CONTROLLER_OK;
 }
 
-/**	
-	Create a new TCP socket connected to the address and port specified.
-	@param address An integer specifying the IP address to connect to.
-	@param port An integer specifying the port to connect on.
-	@return A pointer to the socket, if it was created successfully.  NULL if unsuccessful.
-	@see lwIP, SocketRead(), SocketWrite(), SocketClose()
-
-  \par Example
-  \code
-  // use the IP_ADDRESS macro to format the address properly
-  int addr = IP_ADDRESS( 192, 168, 0, 54 );
-  // then create the socket
-  struct netconn* socket = Socket( addr, 10101 );
-  \endcode
+/**
+	Set whether DHCP is enabled.
+  The Make Controller can use DHCP (Dynamic Host Configuration Protocol) to automatically
+	retrieve an IP address from a router.  If you're using your Make Controller on a network
+	with a router, it is generally preferred (and more convenient) to use DHCP.  Otherwise, turn
+	DHCP off and set the IP address, mask, and gateway manually.
+	
+	Wikipedia has a good article about DHCP at http://en.wikipedia.org/wiki/Dynamic_Host_Configuration_Protocol
+	
+	This value is stored persistently, so it will remain constant across system reboots.
+	@param enabled An integer specifying whether to enable DHCP - 1 (enable) or 0 (disable).
 */
-void* Socket( int address, int port )
-{
-  Network_SetActive( 1 );
-
-  struct netconn* conn;
-  err_t retval;
-
-  conn = netconn_new( NETCONN_TCP );
-  // This is our addition to the conn structure to help with reading
-  conn->readingbuf = NULL;
-
-  struct ip_addr remote_addr;
-  remote_addr.addr = htonl(address);
-
-  retval = netconn_connect( conn, &remote_addr, port );
-  
-  if( ERR_OK != retval )
-  {
-    //netconn_delete( conn );
-    while( netconn_delete( conn ) != ERR_OK )
-      vTaskDelay( 10 );
-
-    conn = NULL;
-  }
-  
-  return conn;
-}
-
-/**	
-	Read from a TCP socket.
-  Make sure you have an open socket before trying to read from it.
-	@param socket A pointer to the existing socket.
-	@param data A pointer to the buffer to read to.
-	@param length An integer specifying the maximum length in bytes that can be read.
-	@return An integer: length of data read if successful, zero on failure.
-	@see lwIP, Socket(), SocketClose()
-
-  \par Example
-  \code
-  // we should already have created a socket \b sock with Socket().
-  struct netconn* sock = Socket( addr, 10101 );
-  // we should also have a buffer to read into - \b data.
-  // and know how many bytes of it we want to try to read - \b length.
-  int length_read = SocketRead( sock, data, length )
-  // if 0 bytes were read, there was some sort of error
-  if( length_read == 0 )
-    SocketClose( sock );
-  \endcode
-*/
-int SocketRead( void* socket, char* data, int length )
-{
-  struct netconn *conn = socket;
-  struct netbuf *buf;
-  int buflen;
-
-  if ( conn->readingbuf == NULL )
-  {
-    buf = netconn_recv( conn );
-    if ( buf == NULL )
-      return 0;
-
-    buflen = netbuf_len( buf );
-    /* copy the contents of the received buffer into
-    the supplied memory pointer mem */
-    netbuf_copy( buf, data, length );
-
-    // Test to see if the buffer is done, or needs to be saved
-    if ( buflen <= length )
-    {
-      netbuf_delete( buf );
-    }
-    else
-    {
-      conn->readingbuf = buf;
-      conn->readingoffset = length;
-      buflen = length;
-    }
-  }
-  else
-  {
-    buf = conn->readingbuf;
-    buflen = netbuf_len( buf ) - conn->readingoffset;
-    netbuf_copy_partial( buf, data, length, conn->readingoffset );
-
-    if ( buflen <= length )
-    {
-      netbuf_delete( buf );
-      conn->readingbuf = NULL;
-    }  
-    else
-    {
-      conn->readingoffset += length;
-      buflen = length;
-    }
-  }
-
-  return buflen;
-}
-
-/**	
-  Read a line from a TCP socket terminated by CR LF (0x0D 0x0A), ('\r' '\n').  
-  Make sure you have an open socket before trying to read from it.
-	@param socket A pointer to the existing socket.
-	@param data A pointer to the buffer to read to.
-	@param length An integer specifying the maximum length in bytes to read.
-	@return An integer: length of data read if successful, zero on failure.
-	@see lwIP, Socket(), SocketRead(), SocketClose()
-
-  \par Example
-  \code
-  // we should already have created a socket \b sock with Socket().
-  struct netconn* sock = Socket( addr, 10101 );
-  // we should also have a buffer to read into - \b data.
-  // and know its size - \b length.
-  int length_read = SocketRead( sock, data, length )
-  // if 0 bytes were read, there was some sort of error
-  if( length_read == 0 )
-    SocketClose( sock );
-  // otherwise we have the next line in the buffer
-  \endcode
-*/
-
-int SocketReadLine( void* socket, char* data, int length )
-{
-  int readLength;
-  int lineLength = -1;
-  //int terminated = false;
-  data--;
-
-  // Upon entering, data points to char prior to buffer, length is -1
-  do 
-  {
-    data++;
-    // here data points to where byte will be written
-    lineLength++;
-    // linelength now reflects true number of bytes
-    readLength = SocketRead( socket, data, 1 );
-    // here, if readlength == 1, data has a new char in next position, linelength is one off,
-    //       if readlength == 0, data had no new char and linelength is right
-  } while ( ( readLength == 1 ) && ( lineLength < length - 1 ) && ( *data != '\n' ) );
-
-  // here, length is corrected if there was a character  
-  if ( readLength == 1 )
-    lineLength++;
-  
-  return lineLength;
-}
-
-
-/**	
-	Write to a TCP socket.
-	Not surprisingly, we need an existing socket before we can write to it.
-
-	@param socket A pointer to the existing socket.
-	@param data A pointer to the buffer to write from.
-	@param length An integer specifying the length in bytes of how much data should be written.
-	@return An integer: 'length written' if successful, 0 on failure.
-	@see lwIP, Socket()
-
-  \par Example
-  \code
-  // we should already have created a socket \b sock with Socket().
-  struct netconn* sock = Socket( addr, 10101 );
-  // we should also have a buffer to write from - \b data.
-  char data[ MY_BUF_SIZE ];
-  // and know how many bytes of it we want to write - \b length.
-  int length = length_of_my_packet;
-  int length_written = SocketWrite( sock, data, length )
-  // if 0 bytes were written, there was some sort of error
-  if( length_written == 0 )
-    SocketClose( sock );
-  \endcode
-*/
-int SocketWrite( void* socket, char* data, int length )
-{
-  int err = netconn_write( (struct netconn *)socket, data, length, NETCONN_COPY);
-  if ( err != ERR_OK )
-    return 0;
-  else
-    return length;
-}
-
-/**	
-	Close an existing TCP socket.
-  Anytime you get an error when trying to read or write, it's best to close the socket and reopen
-  it to make sure that the connection is corrently configured.
-	@param socket A pointer to the existing socket.
-	@return void
-	@see lwIP, Socket()
-
-  \par Example
-  \code
-  // we should already have created a socket 'sock' with Socket().
-  struct netconn* sock = Socket( addr, 10101 );
-  // now close it
-  SocketClose( sock )
-  \endcode
-*/
-void SocketClose( void* socket )
-{
-  netconn_close( (struct netconn *)socket );
-  netconn_delete( (struct netconn *)socket );
-  return;
-}
-
-/**	
-	Create a new TCP server socket and start listening for connections.
-	@param port An integer specifying the port to listen on.
-	@return A pointer to the socket created.
-	@see lwIP
-*/
-void* ServerSocket( int port )
-{
-  Network_SetActive( 1 );
-
-  struct netconn *conn;
-
-  conn = netconn_new( NETCONN_TCP );
-  netconn_listen( conn );
-  netconn_bind( conn, 0, port );
-
-  return conn;
-}
-
-/**	
-	Accept an incoming connection to a ServerSocket that you have created.  This
-  function will block until a new connection is waiting to be serviced.  It returns
-  a regular socket on which you can use SocketWrite(), SocketRead() and SocketClose().
-	@param serverSocket a pointer to a ServerSocket that you created
-	@return a pointer to the new socket created to handle the connection
-	@see lwIP
-	@see ServerSocket()
-*/
-void* ServerSocketAccept( void* serverSocket )
-{
-  struct netconn *conn;
-  conn = netconn_accept( (struct netconn *)serverSocket );
-  // This is our addition to the conn structure to help with reading
-  conn->readingbuf = NULL;
-  return conn;
-}
-
-/**	
-	Close a ServerSocket that you have created.
-	@param serverSocket A pointer to a ServerSocket.
-	@return 0 if the process was successful.
-	@see lwIP
-	@see ServerSocket()
-*/
-int ServerSocketClose( void* serverSocket )
-{
-  netconn_close( serverSocket );
-  netconn_delete( serverSocket );
-  return 0;
-}
-
-/**	
-	Create a socket to read and write UDP packets.
-	@param port An integer specifying the port to open.
-	@return a pointer to the socket created.
-	@see lwIP
-*/
-void* DatagramSocket( int port )
-{
-  Network_SetActive( 1 );
-
-  struct netconn *conn;
-
-  conn = netconn_new( NETCONN_UDP );
-  // This is our addition to the conn structure to help with reading
-  conn->readingbuf = NULL;
-
-  // hook it up
-  netconn_bind( conn, NULL, port );
-
-  return conn;
-}
-
-/**	
-	Send a UDP packet to a specified address.
-	@param datagramSocket A pointer to the DatagramSocket() you're using to write.
-	@param address An integer specifying the IP address to write to.
-	@param port An integer specifying the port to write to.
-	@param data A pointer to the packet to send.
-	@param length An integer specifying the number of bytes in the packet being sent.
-	@return An integer corresponding to the number of bytes successfully written.
-	@see lwIP
-*/
-int DatagramSocketSend( void* datagramSocket, int address, int port, void* data, int length )
-{ 
-  struct netconn *conn = (struct netconn *)datagramSocket;
-  struct netbuf *buf;
-  struct ip_addr remote_addr;
-  int lengthsent = 0;
-
-  remote_addr.addr = htonl(address);
-  if( ERR_OK != netconn_connect(conn, &remote_addr, port) )
-		return lengthsent;
-
-  // create a buffer
-  buf = netbuf_new();
-  if( buf != NULL )
-  {
-    netbuf_ref( buf, data, length); // make the buffer point to the data that should be sent
-    if( ERR_OK != netconn_send( conn, buf) ) // send the data
-		{
-			netbuf_delete(buf);
-			return 0;
-		}
-    lengthsent = length;
-    netbuf_delete(buf); // deallocate the buffer
-  }
-
-  return lengthsent;
-}
-
-/**	
-	Receive a UDP packet.  
-  This function will block until a packet is received. The address and port of the 
-  sender are returned in the locations pointed to by the address and port parameters.  
-  If the incoming packet is larger than the specified size of the buffer, it will
-  be truncated.
-	@param datagramSocket A pointer to the DatagramSocket() you're using to read.
-	@param incomingPort An integer specifying the port to listen on.
-	@param address A pointer to the IP address that sent the packet.
-	@param port A pointer to the port of the sender.
-	@param data A pointer to the buffer to read into.
-	@param length An integer specifying the number of bytes in the packet being read.
-	@return An integer corresponding to the number of bytes successfully read.
-	@see lwIP
-*/
-int DatagramSocketReceive( void* datagramSocket, int incomingPort, int* address, int* port, void* data, int length )
-{
-  struct netconn *conn = (struct netconn*)datagramSocket;
-  struct netbuf *buf;
-  struct ip_addr *addr;
-  int buflen = 0;
-
-  if( ERR_OK != netconn_bind( conn, IP_ADDR_ANY, incomingPort ) )
-		return buflen;
-    
-  buf = netconn_recv( conn );
-  if( buf != NULL )
-  {
-    buflen = netbuf_len( buf );
-    // copy the contents of the received buffer into
-    //the supplied memory pointer 
-    netbuf_copy(buf, data, length);
-    addr = netbuf_fromaddr(buf);
-    *port = netbuf_fromport(buf);
-    *address = ntohl( addr->addr );
-    netbuf_delete(buf);
-  }
-
-  /* if the length of the received data is larger than
-  len, this data is discarded and we return len.
-  otherwise we return the actual length of the received
-  data */
-  if(length > buflen)
-    return buflen;
-  else
-    return length;
-}
-
-/**	
-	Close a DatagramSocket().
-	@param socket A pointer to the DatagramSocket() to close.
-	@see lwIP
-*/
-void DatagramSocketClose( void* socket )
-{
-  netconn_close( socket );
-  netconn_delete( socket );
-}
-
-/** @}
-*/
-
 void Network_SetDhcpEnabled( int enabled )
 {
   if( enabled && !Network_GetDhcpEnabled() )
@@ -947,11 +908,16 @@ void Network_SetDhcpEnabled( int enabled )
     if( mc_netif != NULL )
       Network_DhcpStop( mc_netif );
     Eeprom_Write( EEPROM_DHCP_ENABLED, (uchar*)&enabled, 4 );
-    Network_SetValid( 1 ); // bring the 
+    Network_SetValid( 1 );
   }
   return;
 }
 
+/**
+	Read whether DHCP is currently enabled.
+  This value is stored presistently, so it will be the same across system reboots.
+	@return An integer specifying whether DHCP is enabled - 1 (enabled) or 0 (disabled).
+*/
 int Network_GetDhcpEnabled( )
 {
   int state;
@@ -962,6 +928,14 @@ int Network_GetDhcpEnabled( )
     return state; 
 }
 
+/**
+	Set whether the demo webserver is enabled.
+  The demo webserver provides access to some of the Make Controller's stats via a
+	standard web browser.  It is intended mainly as a reference for creating web based applications.
+	
+	This value is stored persistently, so it will remain constant across system reboots.
+	@param state An integer specifying whether to enable the webserver - 1 (enable) or 0 (disable).
+*/
 void Network_SetWebServerEnabled( int state )
 {
   if( state )
@@ -981,6 +955,99 @@ void Network_SetWebServerEnabled( int state )
   }
 }
 
+/**
+	Read whether the demo webserver is enabled.
+  This value is stored presistently, so it will be the same across system reboots.
+	@return An integer specifying whether the webserver is enabled - 1 (enabled) or 0 (disabled).
+*/
+int Network_GetWebServerEnabled( )
+{
+  int state;
+  Eeprom_Read( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
+  if( state != 1 )
+    state = 0;
+  return state;
+}
+
+/** @}
+*/
+
+/**
+	Sets whether the Network subsystem is currently trying to negotiate its settings.
+  This is mostly used by the Network init and deinit processes, so you shouldn't
+  be calling this yourself unless you have a good reason to.
+	@param state An integer specifying the pending state - 1 (pending) or 0 (not pending).
+*/
+void Network_SetPending( int state )
+{
+  if( state && !Network->pending )
+      Network->pending = state;
+  if( !state && Network->pending )
+    Network->pending = state;
+}
+
+int Network_GetPending( )
+{
+  return Network->pending;
+}
+
+void NetworkOsc_SetTcpOutAddress( int a0, int a1, int a2, int a3 )
+{
+	int address = IP_ADDRESS( a0, a1, a2, a3 );
+  if( address != Network->TcpOutAddress )
+  {
+    Network->TcpOutAddress = address;
+    Eeprom_Write( EEPROM_TCP_OUT_ADDRESS, (uchar*)&address, 4 );
+  }
+}
+
+/**
+	Read the IP address stored in EEPROM that the board will use when told to
+  make a connection to a remote TCP server.
+	Pass in pointers to integers where the address should be stored.
+
+	@param a0 A pointer to an integer where the first of 4 numbers of the address is to be stored.
+	@param a1 A pointer to an integer where the second of 4 numbers of the address is to be stored.
+	@param a2 A pointer to an integer where the third of 4 numbers of the address is to be stored.
+	@param a3 A pointer to an integer where the fourth of 4 numbers of the address is to be stored.
+	@return 0 on success.
+*/
+int NetworkOsc_GetTcpOutAddress( )
+{
+  return Network->TcpOutAddress;
+}
+
+void NetworkOsc_SetTcpOutPort( int port )
+{
+  if( port != Network->TcpOutPort ) // only change if it's a new value
+  {
+    Network->TcpOutPort = port;
+    Eeprom_Write( EEPROM_TCP_OUT_PORT, (uchar*)&port, 4 );
+  }
+}
+
+int NetworkOsc_GetTcpOutPort( )
+{
+  return Network->TcpOutPort;
+}
+
+void NetworkOsc_SetUdpPort( int port )
+{
+  if( port != Network->OscUdpPort ) // only change things if it's a new value
+  {
+    Network->OscUdpPort = port;
+    Eeprom_Write( EEPROM_OSC_UDP_PORT, (uchar*)&port, 4 );
+  }
+}
+
+int NetworkOsc_GetUdpPort(  )
+{
+  if( Network->OscUdpPort > 0 && Network->OscUdpPort < 65536 )
+    return Network->OscUdpPort;
+  else
+    return 10000;
+}
+
 void Network_StartWebServer( )
 {
   if( Network->WebServerTaskPtr == NULL )
@@ -995,15 +1062,6 @@ void Network_StopWebServer( )
     Network->WebServerTaskPtr = NULL;
     CloseWebServer( );
   }
-}
-
-int Network_GetWebServerEnabled( )
-{
-  int state;
-  Eeprom_Read( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
-  if( state != 1 )
-    state = 0;
-  return state;
 }
 
 void Network_DhcpStart( struct netif* netif )
@@ -1137,22 +1195,17 @@ int Network_Init( )
     There is only one Network system, so a device index is not used.
    
     \section properties Properties
-    The Network system has twelve properties 
-    - \b address
-    - \b mask
-    - \b gateway,
-    - \b valid
-    - \b mac
-    - \b active 
-    - \b osc_udp_port
-    - \b osc_tcpout_address
-    - \b osc_tcpout_port
-    - \b osc_tcpout_connect
-    - \b osc_tcpout_auto
-    - \b dhcp
+    The Network system has seven properties 
+    - address
+    - mask
+    - gateway
+    - valid
+    - mac
+    - osc_udp_port
+    - dhcp
 
     \par Address
-    The \b 'address' property corresponds to the IP address of the Controller Board.
+    The \b address property corresponds to the IP address of the Controller Board.
     This value can be both read and written.  To set a new address, send a message like
     \verbatim /network/address 192.168.0.235 \endverbatim
     \par
@@ -1160,7 +1213,7 @@ int Network_Init( )
     \verbatim /network/address \endverbatim
    
     \par Mask
-    The \b 'mask' property corresponds to the network mask of the Controller Board.
+    The \b mask property corresponds to the network mask of the Controller Board.
     When on a subnet or local network, the network mask must be set in order
     for the gateway to route information to the board's IP address properly.
     The mask is commonly 255.255.255.0 for many home networks.
@@ -1171,7 +1224,7 @@ int Network_Init( )
     \verbatim /network/mask \endverbatim
    
     \par Gateway
-    The \b 'gateway' property corresponds to the gateway address for the local network the Make Controller is on.
+    The \b gateway property corresponds to the gateway address for the local network the Make Controller is on.
     The gateway address is the address
     The gateway address is commonly the address of the router on many home networks, and its
     value is commonly 192.168.0.1.\n
@@ -1184,11 +1237,9 @@ int Network_Init( )
     \verbatim /network/gateway \endverbatim
 
     \par Valid
-    The \b 'valid' property corresponds to a checksum used to make sure the board's network settings are valid.
-    Ideally, this should be called each time an address setting is changed so that if
-    the board gets powered down, it will know when it comes back up whether or
-    not the address settings is currently has are valid.
-    This creates a checksum for the current address settings and stores it in EEPROM.
+    The \b valid property is used to make sure the board's network settings are valid.
+    If you're manually setting the \b address, \b gateway, or \b mask settings, you'll need
+		to send the valid message for them to take effect.
     \par
     To set the board's current network settings as valid, send the message
     \verbatim /network/valid 1 \endverbatim
@@ -1197,7 +1248,7 @@ int Network_Init( )
     with no argument value.
 
     \par OSC UDP Port
-    The \b osc_udp_port corresponds to the port that the Make Controller listens on for
+    The \b osc_udp_port property corresponds to the port that the Make Controller listens on for
     incoming OSC messages via UDP.  This value is stored persistently, so it's available
     even after the board has rebooted.  This is 10000 by default.
     \par
@@ -1207,70 +1258,11 @@ int Network_Init( )
     \verbatim /network/osc_udp_port \endverbatim
     with no argument value.
 
-    \subsection tcpconnections TCP Connections
-    The Make Controller can act as a TCP client, make a connection to a remote TCP server, and
-    communicate with it via OSC.  This can be quite handy for providing a remote web interface for the board
-    and for solving all the bi-directional communications issues present with UDP communication. 
-
-    To do this, there are just a couple of steps.
-    - You'll need to tell the board the address & the port of the server you want to connect to.
-    - Tell the board to connect
-    - optionally set the board to automatically reconnect when it starts back up (in case it crashes).
-    The commands below allow you to control all of this via OSC.
-    
-    \par OSC TCP Address
-    The \b osc_tcpout_address property corresponds to the IP address that the Make Controller
-    will try to connect to when the \b osc_tcpout_connect \b 1 command is sent.
-    \par
-    To tell the board to prepare to connect to 192.168.0.118, send the message
-    \code /network/osc_tcpout_address 192.168.0.118 \endcode
-    To read back the address that the board is planning on connecting to, send the message
-    \verbatim /network/osc_tcpout_address \endverbatim
-    with no argument value.
-
-    \par OSC TCP PORT
-    The \b osc_tcpout_port property corresponds to the port that the board will try to connect
-    on when making a TCP connection.  This value is stored persistently, so it's available
-    even after the board has rebooted.  This is 10101 by default.
-    \par
-    To tell the board to prepare to connect on port 11111, send the message
-    \code /network/osc_tcpout_port 11111 \endcode
-    To read back the address that the port is planning on connecting on, send the message
-    \verbatim /network/osc_tcpout_port \endverbatim
-    with no argument value.
-    
-    \par TCP Connect
-    The \b osc_tcpout_connect property allows you to make a connection to a remote TCP server.  It
-    will try to connect to a server specified by the \b osc_tcpout_address and \b osc_tcpout_port properties.
-    \par
-    When you send the message
-    \code /network/osc_tcpout_connect 1 \endcode
-    the board will attempt to make a connection to a server specified by the \b osc_tcpout_address and \b osc_tcpout_port properties.
-    You can tell the board to disconnect from the server by sending the message
-    \code /network/osc_tcpout_connect 0 \endcode
-    Lastly, you can read whether the board is currently connected (or trying to connect) by sending the message
-    \code /network/osc_tcpout_connect \endcode
-    with no argument value.
-
-    \par  TCP Auto Connect
-    The \b osc_tcpout_auto property specifies whether the board should attempt to make a connection
-    to a remote TCP server as soon as it boots up.  It will try to connect to a server 
-    specified by the \b osc_tcp_address and \b osc_tcp_port properties.  This value is stored 
-    persistently, so it's available even after the board has rebooted.  If the board is not currently connected
-    to a TCP server, it will attempt to make a connection when this command is given.
-    \par 
-    To set the board to make a TCP connection as soon as it boots up, send the message
-    \code /network/osc_tcpout_auto 1 \endcode
-    To read whether the board will automatically try to connect on reboot, send the message
-    \code /network/osc_tcpout_auto \endcode
-    with no argument value.
-
-    \subsection Miscelleneous
-
     \par DHCP
     The \b dhcp property sets whether the board should try to dynamically retrieve a network address from 
     a network router.  If no DHCP server is available, the board will use the network settings stored in memory
-    for the \b address, \b gateway, and \b mask properties.
+    for the \b address, \b gateway, and \b mask properties. If you're connecting the board directly to your computer, 
+		DHCP will not be available, so you should turn this off.
     \par
     To turn DHCP on, send the message
     \code /network/dhcp 1 \endcode
@@ -1278,28 +1270,18 @@ int Network_Init( )
     \code /network/address \endcode
     as you normally would.  To turn DHCP off, send the message
     \code /network/dhcp 0 \endcode
-    To read whether DHCP is currently set on the board, send the message
+    To read whether DHCP is currently enabled on the board, send the message
     \code /network/dhcp \endcode
     with no argument value.
    
     \par MAC
     The \b mac property corresponds to the Ethernet MAC address of the Controller Board.
-    This value is read-only.
+    This value is read-only.  Each board on a network must have a unique MAC address.  The MAC address is generated
+		using the board's serial number, so ensure that your board's serial numbers are unique.
     \par
     To read the MAC address of the Controller, send the message
     \verbatim /network/mac \endverbatim
     The board will respond by sending back an OSC message with the MAC address.
-   
-    \par Active
-    The \b 'active' property corresponds to the active state of the Network system.
-    If the Network system is set to be inactive, it will not respond to any OSC messages. 
-    If you're not seeing appropriate
-    responses to your messages to the Network system, check the whether it's
-    active by sending a message like
-    \verbatim /network/active \endverbatim
-    \par
-    You can set the active flag by sending
-    \verbatim /network/active 1 \endverbatim
 */
 #ifdef OSC
 

@@ -15,11 +15,6 @@
 
 *********************************************************************************/
 
-/** \file serial.c	
-	Serial.
-	Functions for working with the Serial Interface on the Make Controller Board.
-*/
-
 /* Library includes. */
 #include <string.h>
 #include <stdio.h>
@@ -31,10 +26,8 @@
 /* Hardware specific headers. */
 #include "Board.h"
 #include "AT91SAM7X256.h"
-
 #include "config.h"
 #include "io.h"
-
 #include "serial.h"
 #include "serial_internal.h"
 
@@ -47,26 +40,22 @@ static int Serial_Deinit( void );
 static int Serial_SetDefault( void );
 static int Serial_SetDetails( void );
 
-/** \defgroup Serial
+/** \file serial.c	
+	Functions for working with the Serial Interface on the Make Controller Board.
+*/
+
+/** \defgroup serial Serial
   Serial provides a way to send and receive data via the serial port.
 
   The subsystem is supplied with small input and output buffers (of 100 characters each) and at present
   the implementation is interrupt per character so it's not particularly fast.
 
-  Permits all of the common serial characteristics to be set including
-  
-  baud - the speed of the connection (110 - >2M) in baud or raw bits per second.  9600 baud is the default setting.
-  
-  bits - the size of each character (5 - 8).  8 bits is the default setting.
-  
-  stopBits - the number of stop bits transmitted (1 or 2)  1 stop bit is the default setting.
-  
-  parity - the parity policy (-1 is odd, 0 is none and 1 is even).  Even is the default setting.
-  
-  hardwareHandshake - whether hardware handshaking is used or not.  HardwareHandshaking is off by default.
-
-  There is also an OSC interface for getting and setting the interface specifics and
-  for sending and receiving individual characters.
+  Permits all of the common serial characteristics to be set including:
+  - baud - the speed of the connection (110 - > 2M) in baud or raw bits per second.  9600 baud is the default setting.
+  - bits - the size of each character (5 - 8).  8 bits is the default setting.
+  - stopBits - the number of stop bits transmitted (1 or 2)  1 stop bit is the default setting.
+  - parity - the parity policy (-1 is odd, 0 is none and 1 is even).  Even is the default setting.
+  - hardwareHandshake - whether hardware handshaking is used or not.  HardwareHandshaking is off by default.
 
   \todo Need to complete support for the Hardware Handshaking
   \todo Convert to DMA interface for higher performance.
@@ -74,6 +63,7 @@ static int Serial_SetDetails( void );
 	\ingroup Controller
 	@{
 */
+
 
 /**
 	Set the active state of the Serial subsystem.  This is automatically set to 
@@ -514,10 +504,22 @@ int Serial_SetDefault()
   \ingroup OSC
 	
 	\section properties Properties
-	The Serial Subsystem has several configurational properties and a character getter
-  and a character setter.
+	The Serial Subsystem has eight properties:
+  - block
+  - baud
+  - bits
+  - stopbits
+  - parity
+  - hardwarehandshake
+  - readable
+  - char
 
-	\par Baud
+	\par Block
+	To read a block of 128 characters at once, send the message
+	\verbatim /serial/block 128\endverbatim
+  and the board will return an OSC message with a blob of 128 characters.
+  
+  \par Baud
 	The Baud rate of the device. Valid from 110 baud to >2M baud\n
 	To set baud rate to 115200, for example, send the message
 	\verbatim /serial/baud 112500\endverbatim
@@ -540,7 +542,7 @@ int Serial_SetDefault()
 	\par HardwareHandshake
 	Whether hardware handshaking (i.e. CTS RTS) is being employed.\n
 	To set hardware handshaking on, for example, send the message
-	\verbatim /serial/hardwarehandshaking 1\endverbatim
+	\verbatim /serial/hardwarehandshake 1\endverbatim
 
 	\par Readable
 	How many characters are presently available to read.\n

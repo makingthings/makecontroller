@@ -462,10 +462,14 @@ void PwmOut_GetIos( int index, int* ioA, int* ioB )
 	Each channel can also be set to invert the given PWM signal.
 	
 	\section properties Properties
-	Each PWM Out has four properties - 'duty', 'invA', 'invB', and 'active'.
+	Each PWM Out has four properties:
+  - duty
+  - invA
+  - invB
+  - active
 
 	\par Duty
-	The 'duty' property corresponds to the duty at which a load connected to the output is being driven.
+	The \b duty property corresponds to the duty at which a load connected to the output is being driven.
 	This value can be both read and written.  The range of values expected by the board
 	is from 0 - 1023.
 	\par
@@ -475,7 +479,7 @@ void PwmOut_GetIos( int index, int* ioA, int* ioB )
 	\verbatim /pwmout/1/duty \endverbatim
 	
 	\par invA
-	The 'invA' property corresponds to the inversion of the A channel of a PWM Out.
+	The \b invA property corresponds to the inversion of the A channel of a PWM Out.
 	This value can be both read and written, and the range of values expected is simply 
 	0 or 1.  1 means inverted and 0 means normal.  0 is the default.
 	\par
@@ -484,7 +488,7 @@ void PwmOut_GetIos( int index, int* ioA, int* ioB )
 	Note that the A channel of PWM Out 1 is Digital Out 2.
 	
 	\par invB
-	The 'invB' property corresponds to the inversion of the B channel of a PWM Out.
+	The \b invB property corresponds to the inversion of the B channel of a PWM Out.
 	This value can be both read and written, and the range of values expected is simply 
 	0 or 1.  1 means inverted and 0 means normal.  0 is the default.
 	\par
@@ -493,7 +497,7 @@ void PwmOut_GetIos( int index, int* ioA, int* ioB )
 	Note that the A channel of PWM Out 1 is Digital Out 7.
 	
 	\par Active
-	The 'active' property corresponds to the active state of the PWM Out.
+	The \b active property corresponds to the active state of the PWM Out.
 	If the device is set to be active, no other tasks will be able to
 	use its 2 digital out lines.  If you're not seeing appropriate
 	responses to your messages to the PWM Out, check the whether it's 

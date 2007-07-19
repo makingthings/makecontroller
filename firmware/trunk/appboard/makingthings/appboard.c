@@ -20,13 +20,17 @@
 
 /** \file appboard.c	
   MAKE Application Board.
-  Library of methods for the Make Application Board.
+  Functions available when the Make Controller is used with the Make Application Board.
 */
 
 /** @defgroup AppBoard
- Functions for the MAKE Application Board.
- The MAKE Application Board provides an interface between the MAKE Controller Board and common electronic devices.\n
- Several subsystems extend the capability of the Controller Board, each with their own functions.
+ Functions available when the Make Controller is used with the Make Application Board.
+ The MAKE Application Board provides an interface between the MAKE Controller Board and common electronic devices.
+ Several subsystems extend the capability of the Controller Board, each with their own functions.  Many of the functions
+ in the AppBoard module are built upon code in the \ref Controller module.
+
+ If you're using your own interface electronics around the Make Controller, the AppBoard module may not 
+ necessarily work for you.
  */
 
 #include "controller.h"

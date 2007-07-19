@@ -15,8 +15,7 @@
 
 *********************************************************************************/
 
-/** \file s2p->c	
-	s2p->
+/** \file serial2.c	
 	Functions for working with the Serial Interface on the Make Controller Board.
 */
 
@@ -35,8 +34,8 @@
 #include "config.h"
 #include "io.h"
 
-#include "Serial2.h"
-#include "Serial2_internal.h"
+#include "serial2.h"
+#include "serial2_internal.h"
 
 Serial2_ Serial2[ 2 ];
 int Serial2_Users;
@@ -47,35 +46,6 @@ static int Serial2_Init( int index );
 static int Serial2_Deinit( int index );
 static int Serial2_SetDefault( int index );
 static int Serial2_SetDetails( int index );
-
-
-/** \defgroup Serial
-  Serial provides a way to send and receive data via the serial port.
-
-  The subsystem is supplied with small input and output buffers (of 100 characters each) and at present
-  the implementation is interrupt per character so it's not particularly fast.
-
-  Permits all of the common serial characteristics to be set including
-  
-  baud - the speed of the connection (110 - >2M) in baud or raw bits per second.  9600 baud is the default setting.
-  
-  bits - the size of each character (5 - 8).  8 bits is the default setting.
-  
-  stopBits - the number of stop bits transmitted (1 or 2)  1 stop bit is the default setting.
-  
-  parity - the parity policy (-1 is odd, 0 is none and 1 is even).  Even is the default setting.
-  
-  hardwareHandshake - whether hardware handshaking is used or not.  HardwareHandshaking is off by default.
-
-  There is also an OSC interface for getting and setting the interface specifics and
-  for sending and receiving individual characters.
-
-  \todo Need to complete support for the Hardware Handshaking
-  \todo Convert to DMA interface for higher performance.
-
-	\ingroup Controller
-	@{
-*/
 
 /**
 	Set the active state of the Serial subsystem.  This is automatically set to 
@@ -486,9 +456,6 @@ int Serial2_GetHardwareHandshake( int index )
   return s2p->hardwareHandshake;
 }
 
-/** @}
-*/
-
 int Serial2_Init( int index )
 {
   if ( index < 0 || index > 1 )
@@ -640,7 +607,7 @@ int Serial2_SetDefault( int index )
 
 #ifdef OSC
 
-/** \defgroup SerialOSC Serial - OSC
+/** \defgroup Serial2OSC Serial2 - OSC
   Configure the Serial Port and Read Characters via OSC.
   \ingroup OSC
 	

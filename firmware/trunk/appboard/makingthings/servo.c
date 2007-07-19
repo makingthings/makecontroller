@@ -95,13 +95,16 @@ typedef struct ServoS
 Servo_* Servo;
 
 /** \defgroup Servo
-* The Servo Motor subsystem controls speed and position control for up to 4 standard servo motors.
-* Up to 4 standard servo motors can be controlled with the MAKE Application Board.\n\n
-* Standard servos have a range of motion of approximately 180 degrees, although this varies from motor to motor.
-* Be sure to plug in the connector with the correct orientation with regard to the GND/5V signals on the board.\n\n
-* Set the position of each motor by specifying a value from 0-1023, which will be mapped to the full range of motion
-* of the motor.  You can also specify the speed with which the motors will respond to new position commands - a high
-* value will result in an immediate response, while a lower value can offer some smoothing when appropriate.
+  The Servo Motor subsystem controls speed and position control for up to 4 standard servo motors.
+  Standard servos have a range of motion of approximately 180 degrees, although this varies from motor to motor.
+  Be sure to plug in the connector with the correct orientation with regard to the GND/5V signals on the board.
+
+  Because not all servo motors are created equal, and not all of them can be safely driven across all 180 degrees,
+  the default (safe) range of motion is from values 0 to 1023.  The full range of motion is from -512 to 1536, but use this
+  extra range cautiously if you don't know how your motor can handle it.  A little gentle experimentation should do the trick.
+  
+  You can also specify the speed with which the motors will respond to new position commands - a high
+  value will result in an immediate response, while a lower value can offer some smoothing when appropriate.
 * \ingroup AppBoard
 * @{
 */
@@ -163,8 +166,8 @@ int Servo_GetActive( int index )
   degrees range of motion, or thereabouts.  Some servos don't mind being driven all the way to their 180
   degree range of motion limit.  With this in mind, the range of values you can send to servos connected
   to the Make Controller Kit is as follows:
-  \li Values from 0-1023 correspond to the normal, or "safe", range of motion.  
-  \li You can also send values from -512 all the way up to 1536 to drive the servo through its full
+  - Values from 0-1023 correspond to the normal, or "safe", range of motion.  
+  - You can also send values from -512 all the way up to 1536 to drive the servo through its full
   range of motion.
   
   Note that it is sometimes possible to damage your servo by driving it too far, so proceed with a bit of
@@ -461,20 +464,23 @@ void Servo_IRQCallback( int id )
 	on hooking up servos to the board.
 	
 	\section properties Properties
-	Each servo controller has three properties - 'position', 'speed', and 'active'.
+	Each servo controller has three properties:
+  - position
+  - speed
+  - active
 
 	\par Position
-	The 'position' property corresponds to the position of the servo motor within its range of motion.
+	The \b position property corresponds to the position of the servo motor within its range of motion.
 	This value can be both read and written.  
-  
+  \par 
   Most servos like to be driven within a "safe range" which usually ends up being somewhere around 110-120
   degrees range of motion, or thereabouts.  Some servos don't mind being driven all the way to their 180
   degree range of motion limit.  With this in mind, the range of values you can send to servos connected
   to the Make Controller Kit is as follows:
-  \li Values from 0-1023 correspond to the normal, or "safe", range of motion.  
-  \li You can also send values from -512 all the way up to 1536 to drive the servo through its full
+  - Values from 0-1023 correspond to the normal, or "safe", range of motion.  
+  - You can also send values from -512 to 1536 to drive the servo through its full
   range of motion.
-  
+  \par
   Note that it is sometimes possible to damage your servo by driving it too far, so proceed with a bit of
   caution when using the extended range until you know your servos can handle it.
 	\par
@@ -484,11 +490,10 @@ void Servo_IRQCallback( int id )
 	\verbatim /servo/0/position \endverbatim
 	
 	\par Speed
-	The 'speed' property corresponds to the speed with which the servo responds to changes 
+	The \b speed property corresponds to the speed with which the servo responds to changes 
 	of position.
 	This value can be both read and written, and the range of values is 0 - 1023.  A speed of 1023
-	means the servo responds immediately, and lower values will result in slower, and often smoother, 
-	responses.  
+	means the servo responds immediately, and lower values will result in slower, and smoother, responses.  
 	\par
 	To set the speed of the first servo to just under full speed, send a message like
 	\verbatim /servo/0/speed 975 \endverbatim
@@ -497,12 +502,12 @@ void Servo_IRQCallback( int id )
 	\verbatim /servo/0/speed \endverbatim
 	
 	\par Active
-	The 'active' property corresponds to the active state of the servo.
+	The \b active property corresponds to the active state of the servo.
 	If the servo is set to be active, no other tasks will be able to
 	write to the same I/O lines.  If you're not seeing appropriate
 	responses to your messages to a servo, check the whether it's 
 	locked by sending a message like
-	\verbatim /servo/3/state \endverbatim
+	\verbatim /servo/3/active \endverbatim
 */
 
 #include "osc.h"

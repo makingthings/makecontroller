@@ -34,8 +34,9 @@ int DipSwitch_Stop( void );
 
 int DipSwitch_users;
 
-/** \defgroup DipSwitch
-* The DIP Switch subsystem reads values in from the 8 position DIP Switch (0 - 255).
+/** \defgroup DipSwitch DIP Switch
+* The DIP Switch subsystem reads values in from the 8 position DIP Switch (0 - 255) on the Application Board.
+  Mask off the appropriate bits in the value returned from the DIP switch to determine whether a particular channel is on or off.
 * \ingroup AppBoard
 * @{
 */
@@ -64,8 +65,7 @@ int DipSwitch_GetActive( )
 
 /**	
 	Read the current configuration of the on-board DIP switch.
-	@return An integer address corresponding to one of the 256 possible configurations.
-	@see SPI
+	@return An integer from 0-255 indicating the current configuration of the DIP switch.
 */
 int DipSwitch_GetValue( )
 {
@@ -145,27 +145,27 @@ int DipSwitch_Stop()
 	DIP Switch.
 	
 	\section properties Properties
-	The DIP Switch has two properties - 'value' and 'active'.
+	The DIP Switch has two properties
+  - value
+  - active
 
 	\par Value
-	The 'value' property corresponds to current configuration of the DIP Switch.
+	The \b value property corresponds to current configuration of the DIP Switch.
 	The DIP switch is 8-position, which means that it will send a value from 0-255
-	depending on the orientation of each of the switches.  Convert the binary number
-	represented by the switches to decimal to arrive at this value.
+	depending on the orientation of each of the switches. Mask off the appropriate bits to 
+  determine the value of a particular channel.
 	\par
 	Because you can only ever \em read the value of an input, you'll never
 	want to include an argument at the end of your OSC message to read the value.\n
 	To read from the DIP Switch, send the message
 	\verbatim /dipswitch/value \endverbatim
-	Note the lack of a device index, and the lack of an argument value.
 	
 	\par Active
-	The 'active' property corresponds to the active state of the DIP Switch.
+	The \b active property corresponds to the active state of the DIP Switch.
 	If the DIP Switch is set to be active, no other tasks will be able to
-	use its I/O lines.  This might be useful if the Controller is being used with
-	another piece of hardware.  If you're not seeing appropriate
-	responses to your messages to the DIP Switch, check the whether it's 
-	locked by sending a message like
+	use its I/O lines.  If you're not seeing appropriate
+	responses to your messages to the DIP Switch, check whether it's 
+	locked by sending the message
 	\verbatim /dipswitch/active \endverbatim
 	\par
 	You can set the active flag by sending
