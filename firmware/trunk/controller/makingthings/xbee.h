@@ -114,6 +114,10 @@ typedef struct
   };
 } XBeePacket_;
 
+
+int XBee_SetActive( int state );
+int XBee_GetActive( );
+
 int XBee_GetPacket();
 
 #endif // XBEE_H
