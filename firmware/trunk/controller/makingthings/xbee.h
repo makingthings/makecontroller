@@ -23,6 +23,8 @@
 #ifndef XBEE_H
 #define XBEE_H
 
+#include "types.h"
+
 typedef struct
 {
   uint8 frameID;
@@ -64,15 +66,6 @@ typedef struct
 typedef struct
 {
   uint8 frameID;
-  uint8 destination[ 2 ];
-  uint8 options;
-  uint8 data[ 100 ];
-
-}  XBee_TX16;
-
-typedef struct
-{
-  uint8 frameID;
   uint8 source[ 8 ];
   uint8 rssi;
   uint8 options;
@@ -99,14 +92,14 @@ typedef struct
 {
   enum 
   { 
-    XBEE_TX64 = 0x00,
-    XBEE_TX16 = 0x01,
-    XBEE_TXSTATUS = 0x89,
-    XBEE_RX64 = 0x80,
-    XBEE_RX16 = 0x81
-    XBEE_ATCommand = 0x08,
-    XBEE_ATCommandQueue = 0x09,
-    XBEE_ATCommandResponse = 0x88,
+    XBEE_COMM_TX64 = 0x00,
+    XBEE_COMM_TX16 = 0x01,
+    XBEE_COMM_TXSTATUS = 0x89,
+    XBEE_COMM_RX64 = 0x80,
+    XBEE_COMM_RX16 = 0x81,
+    XBEE_COMM_ATCOMMAND = 0x08,
+    XBEE_COMM_ATCOMMANDQ = 0x09,
+    XBEE_COMM_ATCOMMANDRESPONSE = 0x88
   } apiIndentifier;
 
   union

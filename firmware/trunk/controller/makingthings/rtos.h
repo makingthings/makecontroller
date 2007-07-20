@@ -42,6 +42,7 @@ void* TaskGetCurrent( void );
 void* TaskGetNext( void* task );
 int GetNumberOfTasks( void );
 int TaskGetTopPriorityUsed( void );
+int TaskGetTickCount( void );
 
 void* Malloc( int size );
 void Free( void* memory );
