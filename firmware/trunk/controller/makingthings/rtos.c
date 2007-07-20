@@ -430,6 +430,16 @@ void TaskSetPriority( void* task, int priority )
   vTaskPrioritySet( task, priority );
 }
 
+/**	
+  Returns the number of ticks since the scheduler started.
+  @return the number of ticks
+*/
+
+int TaskGetTickCount( void )
+{
+  return xTaskGetTickCount( );
+}
+
 /** @}
 */
 
