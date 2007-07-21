@@ -16,7 +16,7 @@
 *********************************************************************************/
 
 /*
-  WebClient.h
+  xbee.h
   MakingThings
 */
 
@@ -24,6 +24,9 @@
 #define XBEE_H
 
 #include "types.h"
+
+#define XBEE_PACKET_STARTBYTE 0x7E
+#define XBEE_PACKET_ESCAPE 0x7D
 
 typedef struct
 {
@@ -85,7 +88,7 @@ typedef struct
 
 typedef struct
 {
-  enum { XB_IDLE, XB_REC_ } state;
+  enum { XB_IDLE, XB_SLEEP, XB_RECEIVE, XB_TRANSMIT, XB_COMMAND } mode;
 } XBee_;
 
 typedef struct
@@ -109,15 +112,16 @@ typedef struct
     XBee_TXStatus txStatus;
     XBee_RX64 rx64;
     XBee_RX16 rx16;
-    XBee_ATCommand;
-    XBee_ATCommandResponse;
+    XBee_ATCommand atCommand;
+    XBee_ATCommandResponse atResponse;
   };
 } XBeePacket_;
 
 
 int XBee_SetActive( int state );
-int XBee_GetActive( );
-
-int XBee_GetPacket();
+int XBee_GetActive( void );
+int XBee_GetPacket( XBeePacket_* packet );
+int XBee_GetMode( void );
+void XBee_SetPacketApiMode( void );
 
 #endif // XBEE_H
