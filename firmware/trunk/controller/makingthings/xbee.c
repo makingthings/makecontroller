@@ -20,18 +20,6 @@
 #include "string.h"
 #include "xbee.h"
 
-#define XBEE_PACKET_RX_START 0
-#define XBEE_PACKET_RX_LENGTH_1 1
-#define XBEE_PACKET_RX_LENGTH_2 2
-#define XBEE_PACKET_RX_CMD_ID 3
-#define XBEE_PACKET_RX_DATA 4
-#define XBEE_PACKET_RX_CRC 5
-
-uint8 XBee_CalculateChecksum( uchar* buffer, int length );
-int XBee_VerifyChecksum( uchar* buffer, int length );
-uint8* XBee_GetPacketDataPointer( XBeePacket_* packet );
-int XBee_SetPacketData( XBeePacket_* packet );
-
 XBee_* XBee;
 
 int XBee_SetActive( int state )
@@ -66,122 +54,99 @@ int XBee_GetActive( )
   return ( XBee != NULL );
 }
 
-int XBee_GetPacket( XBeePacket_* packet )
+int XBee_GetPacket( XBeePacket* packet )
 {
   if( CONTROLLER_OK != XBee_SetActive( 1 ) )
     return CONTROLLER_ERROR_SUBSYSTEM_INACTIVE;
-
-  static uchar buffer[ sizeof( XBeePacket_ ) ], *bp = buffer;
-  static uint8 *pp = 0;
-  static int charsRxed = 0, state = XBEE_PACKET_RX_START, length = 0, bufferLength = 0;
-
-  if( charsRxed == 0 ) // if we don't have any data from a previous read
-  {
-    static int available; // -O2 thing...
-    available = Serial_GetReadable( );
-    if( available < 1 )
-      return 0;
-    else
-    {
-      charsRxed = Serial_Read( buffer, available, 0 );
-      bufferLength = charsRxed;
-      bp = buffer;
-    }
-  }
   
-  while( charsRxed-- )
+  while( Serial_GetReadable( ) )
   {
-    switch( state )
+    int newChar = Serial_GetChar( );
+    if( newChar == -1 )
+      break;
+
+    switch( packet->rxState )
     {
       case XBEE_PACKET_RX_START:
-        if( *bp++ == XBEE_PACKET_STARTBYTE )
-          state = XBEE_PACKET_RX_LENGTH_1;
+        if( newChar == XBEE_PACKET_STARTBYTE )
+          packet->rxState = XBEE_PACKET_RX_LENGTH_1;
         break;
       case XBEE_PACKET_RX_LENGTH_1:
-        length = *bp++ << 1;
-        state = XBEE_PACKET_RX_LENGTH_2;
+        packet->length = newChar << 1;
+        packet->rxState = XBEE_PACKET_RX_LENGTH_2;
         break;
       case XBEE_PACKET_RX_LENGTH_2:
-        length += *bp++;
-        state = XBEE_PACKET_RX_CMD_ID;
+        packet->length += newChar;
+        packet->rxState = XBEE_PACKET_RX_CMD_ID;
         break;
       case XBEE_PACKET_RX_CMD_ID:
-        packet->apiIndentifier = *bp++;
-        pp = XBee_GetPacketDataPointer( packet );
-        state = XBEE_PACKET_RX_DATA;
+        packet->apiId = newChar;
+        packet->index++;
+        packet->crc += newChar;
+        packet->rxState = XBEE_PACKET_RX_DATA;
         break;
       case XBEE_PACKET_RX_DATA:
-        if( length != 0 && pp != NULL )
-        {
-          *pp++ = *bp++;
-          length--;
-        }
+        if( packet->index++ < packet->length )
+          *packet->dataPtr++ = newChar;
         else
-        {
-          // not working yet
-          //XBee_SetPacketData( XBeePacket_* packet )
-          state = XBEE_PACKET_RX_CRC;
-        }
+          packet->rxState = XBEE_PACKET_RX_CRC;
+        packet->crc += newChar;
         break;
       case XBEE_PACKET_RX_CRC:
-      {
-        // not working yet
-        //if( !XBee_VerifyChecksum( buffer, bufferLength ) )
-          //return 0;
-        pp = NULL;
-        state = XBEE_PACKET_RX_START;
-        return 1;
-      }
+        packet->rxState = XBEE_PACKET_RX_START;
+        return (packet->crc == 0xFF) ? 1 : 0;
     }
   }
   return 0;
 }
-/*
-// zip the packet-specific parts of the data into their containers in the packet structure
-int XBee_SetPacketData( XBeePacket_* packet )
+
+int XBee_SendPacket( XBeePacket* packet, int datalength )
 {
-  switch( packet->apiIndentifier )
+  Serial_SetChar( XBEE_PACKET_STARTBYTE );
+  int size = datalength;
+  switch( packet->apiId )
   {
-    case XBEE_COMM_TX64:
-      return packet->tx64.data;
-    case XBEE_COMM_TX16:
-      return packet->tx16.data;
-    case XBEE_COMM_RX64:
-      return packet->rx64.data;
-    case XBEE_COMM_RX16:
-      return packet->rx16.data;
-    case XBEE_COMM_ATCOMMAND:
-      return packet->atCommand.parameter;
-    case XBEE_COMM_ATCOMMANDQ:
-      return packet->.data;
-    case XBEE_COMM_ATCOMMANDRESPONSE:
-      return packet->atResponse.value;
+    case XBEE_COMM_RX64: //account for apiId, 8 bytes source address, signal strength, and options
+    case XBEE_COMM_TX64: //account for apiId, frameId, 8 bytes destination, and options
+      size += 11;
+      break;
+    case XBEE_COMM_RX16: //account for apiId, 2 bytes source address, signal strength, and options
+    case XBEE_COMM_TX16: //account for apiId, frameId, 2 bytes destination, and options
+    case XBEE_COMM_ATCOMMANDRESPONSE: // account for apiId, frameID, 2 bytes AT cmd, 1 byte status
+      size += 5; 
+      break;
+    case XBEE_COMM_TXSTATUS:
+      size = 3; // explicitly set this, since there's no data afterwards
+      break;
+    case XBEE_COMM_ATCOMMAND: // account for apiId, frameID, 2 bytes AT command
+    case XBEE_COMM_ATCOMMANDQ: // same
+      size += 4;
+      break;
     default:
-      return NULL;
+      size = 0;
+      break;
   }
+
+  Serial_SetChar( (size >> 8) & 0xFF ); // send the most significant bit
+  Serial_SetChar( size & 0xFF ); // then the LSB
+  packet->crc = 0; // just in case it hasn't been initialized.
+  uint8* p = (uint8*)packet;
+  while( size-- )
+  {
+    Serial_SetChar( *p );
+    packet->crc += *p++;
+  }
+  Serial_SetChar( 0xFF - packet->crc );
+  return 0;
 }
-*/
-uint8* XBee_GetPacketDataPointer( XBeePacket_* packet )
+
+void XBee_InitPacket( XBeePacket* packet )
 {
-  switch( packet->apiIndentifier )
-  {
-    case XBEE_COMM_TX64:
-      return packet->tx64.data;
-    case XBEE_COMM_TX16:
-      return packet->tx16.data;
-    case XBEE_COMM_RX64:
-      return packet->rx64.data;
-    case XBEE_COMM_RX16:
-      return packet->rx16.data;
-    case XBEE_COMM_ATCOMMAND:
-      return packet->atCommand.parameter;
-    //case XBEE_COMM_ATCOMMANDQ:
-      //return packet->.data;
-    case XBEE_COMM_ATCOMMANDRESPONSE:
-      return packet->atResponse.value;
-    default:
-      return NULL;
-  }
+  packet->dataPtr = (uint8*)packet;
+  packet->crc = 0;
+  packet->rxState = XBEE_PACKET_RX_START;
+  packet->length = 0;
+  packet->index = 0;
 }
 
 void XBee_SetPacketApiMode( )
@@ -195,45 +160,4 @@ void XBee_SetPacketApiMode( )
   Serial_Write( (uchar*)buf, strlen(buf), 0 );
 }
 
-/*
-  from XBee doc: not including frame delimiters and length, add all non-escaped bytes keeping 
-  only the lowest 8 bits of the result, and subtract from 0xFF
-*/
-uint8 XBee_CalculateChecksum( uchar* buffer, int length )
-{
-  uchar *bptr = buffer;
-  bptr += 2; // skip the start byte and the 2 bytes of length
-  uint8 crc = *bptr++;
-
-  int i, count = length - 3; // we've already initialized to the first char
-  for( i=0; i<count; i++ )
-    crc += *bptr++;
-
-  return (0xFF - crc);
-  
-}
-
-/*
-  from XBee doc: Add all bytes (include checksum, but not the delimiter and length).
-  If the checksum is correct, the sum will equal 0xFF
-*/
-int XBee_VerifyChecksum( uchar* buffer, int length )
-{
-  uchar *bptr = buffer;
-  bptr += 2; // skip the start byte and the 2 bytes of length
-  uint8 crc = *bptr++;
-
-  int i;
-  static int count;
-  count = length - 6;
-  for( i=0; i<count; i++ )
-    crc += *bptr++;
-
-  return ( crc == 0xFF ) ? 1 : 0;
-}
-
-int XBee_GetMode( )
-{
-  return 0;
-}
 
