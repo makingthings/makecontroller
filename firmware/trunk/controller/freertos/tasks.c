@@ -1784,7 +1784,7 @@ tskTCB *pxNewTCB;
 			usCount++;
 		}
 
-		usCount /= sizeof( portSTACK_TYPE );
+		// usCount /= sizeof( portSTACK_TYPE );
 
 		return usCount;
 	}
