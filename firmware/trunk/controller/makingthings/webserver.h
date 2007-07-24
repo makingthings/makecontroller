@@ -33,6 +33,8 @@
 #ifndef BASIC_WEB_SERVER_H
 #define BASIC_WEB_SERVER_H
 
+#include "FreeRTOS.h"
+
 #define MAX_WEBPAGE_SIZE	1548
 #define HTTP_OK	"HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n"
 #define HTTP_PORT		( 80 )
