@@ -204,11 +204,11 @@ void Osc_SetActive( int state )
       Osc->subsystem[ i ] = NULL;
 
     #ifdef MAKE_CTRL_NETWORK
-    Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 2400, (void*)OSC_CHANNEL_UDP, 3 );
+    Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 800, (void*)OSC_CHANNEL_UDP, 3 );
     Osc->TcpTaskPtr = NULL;
     #endif
     #ifdef MAKE_CTRL_USB
-    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1600, (void*)OSC_CHANNEL_USB, 3 );
+    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 600, (void*)OSC_CHANNEL_USB, 3 );
     #endif
 
     vSemaphoreCreateBinary( Osc->scratch1Semaphore );
@@ -304,7 +304,7 @@ int Osc_UdpPacketSend( char* packet, int length, int replyAddress, int replyPort
 
 void Osc_StartTcpTask( )
 {
-  Osc->TcpTaskPtr = TaskCreate( Osc_TcpTask, "OscTcp", 1600, 0, 2 );
+  Osc->TcpTaskPtr = TaskCreate( Osc_TcpTask, "OscTcp", 600, 0, 2 );
 }
 
 int Osc_TcpPacketSend( char* packet, int length, int replyAddress, int replyPort )
