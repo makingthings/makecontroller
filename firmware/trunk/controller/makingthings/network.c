@@ -268,7 +268,15 @@ int SocketWrite( void* socket, char* data, int length )
   \endcode
 */
 void SocketClose( void* socket )
-{
+{ 
+  // Make sure there is no buffer lying around
+  struct netconn *conn = socket;
+  if ( conn->readingbuf != NULL )
+  {   
+    netbuf_delete( conn->readingbuf );
+    conn->readingbuf = NULL;
+  }
+
   netconn_close( (struct netconn *)socket );
   netconn_delete( (struct netconn *)socket );
   return;
@@ -1061,7 +1069,7 @@ int NetworkOsc_GetUdpPort(  )
 void Network_StartWebServer( )
 {
   if( Network->WebServerTaskPtr == NULL )
-    Network->WebServerTaskPtr = TaskCreate( WebServer, "WebServ", 1600, NULL, 4 );
+    Network->WebServerTaskPtr = TaskCreate( WebServer, "WebServ", 600, NULL, 4 );
 }
 
 void Network_StopWebServer( )
