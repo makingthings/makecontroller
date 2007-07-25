@@ -37,13 +37,36 @@
 #define XBEE_PACKET_STARTBYTE 0x7E
 #define XBEE_PACKET_ESCAPE 0x7D
 
+/** \defgroup XBeePacketTypes XBee Packet Types
+	The different types of packet that can be used with the \ref XBee subsystem.
+
+  These structures are to be used when the module has already been set into packet (API) mode
+  with a call to XBee_SetPacketApiMode( )
+
+  \ingroup XBee
+  @{
+*/
+
+/**
+  The structure used for a standard AT Command packet.
+  - \b frameID is the ID for this packet that subsequent response/status messages can refer to.
+  - \b command is the 2-character AT command.
+  - \b parameters is a buffer that holds the value of the AT command.
+ */
 typedef struct
 {
   uint8 frameID;
   uint8 command[ 2 ];
-  uint8 parameter[ 97 ];
+  uint8 parameters[ 97 ];
 } XBee_ATCommand;
 
+/** 
+  The structure used for a response to a standard AT Command packet.
+  - \b frameID is the ID that this response is referring to.
+  - \b command is the 2-character AT command.
+  - \b status is response value - 0 (OK) or 1 (ERROR).
+  - \b value is a buffer that holds the value of the AT command response.
+ */
 typedef struct
 {
   uint8 frameID;
@@ -52,6 +75,13 @@ typedef struct
   uint8 value[ 96 ];
 }  XBee_ATCommandResponse;
 
+/** 
+  The structure used to transmit an XBee packet with a 64-bit destination address.
+  - \b frameID is the ID for this packet that subsequent response/status messages can refer to.
+  - \b destination is the 64-bit (8-byte) address of the destination.
+  - \b options - 0x01 (disable ACK) or 0x04 (Send with Broadcast PAN ID).
+  - \b data is a buffer that holds the value of the outgoing packet.
+ */
 typedef struct
 {
   uint8 frameID;
@@ -60,6 +90,13 @@ typedef struct
   uint8 data[ 90 ];
 }  XBee_TX64;
 
+/** 
+  The structure used to transmit an XBee packet with a 16-bit destination address.
+  - \b frameID is the ID for this packet that subsequent response/status messages can refer to.
+  - \b destination is the 16-bit (2-byte) address of the destination.
+  - \b options - 0x01 (disable ACK) or 0x04 (Send with Broadcast PAN ID).
+  - \b data is a buffer that holds the value of the outgoing packet.
+ */
 typedef struct
 {
   uint8 frameID;
@@ -68,13 +105,29 @@ typedef struct
   uint8 data[ 96 ];
 }  XBee_TX16;
 
+/** 
+  When a transmit request is completed, the module sends a transmit status message.
+  - \b frameID is the ID that this response is referring to.
+  - \b status can have values of:
+    - 0 - success
+    - 1 - No ACK received
+    - 2 - CCA failure
+    - 3 - Purged
+ */
 typedef struct
 {
   uint8 frameID;
-  uint8 destination[ 2 ];
   uint8 status;
 }  XBee_TXStatus;
 
+/** 
+  An incoming packet with a 64-bit address.
+  - \b frameID is the ID for this packet that subsequent response/status messages can refer to.
+  - \b source is the 64-bit (8-byte) address of the sender.
+  - \b rssi is the signal strength of the received message.
+  - \b options - bit 1 is Address Broadcast, bit 2 is PAN broadcast.  Other bits reserved.
+  - \b data is a buffer that holds the value of the incoming packet.
+ */
 typedef struct
 {
   uint8 frameID;
@@ -84,6 +137,14 @@ typedef struct
   uint8 data[ 89 ];
 }  XBee_RX64;
 
+/** 
+  An incoming packet with a 16-bit address.
+  - \b frameID is the ID for this packet that subsequent response/status messages can refer to.
+  - \b source is the 16-bit (2-byte) address of the sender.
+  - \b rssi is the signal strength of the received message.
+  - \b options - bit 1 is Address Broadcast, bit 2 is PAN broadcast.  Other bits reserved.
+  - \b data is a buffer that holds the value of the incoming packet.
+ */
 typedef struct
 {
   uint8 frameID;
@@ -92,11 +153,6 @@ typedef struct
   uint8 options;
   uint8 data[ 95 ];
 }  XBee_RX16;
-
-typedef struct
-{
-  enum { XB_IDLE, XB_SLEEP, XB_RECEIVE, XB_TRANSMIT, XB_COMMAND } mode;
-} XBee_;
 
 typedef enum 
 { 
@@ -109,6 +165,15 @@ typedef enum
   XBEE_COMM_ATCOMMANDQ = 0x09,
   XBEE_COMM_ATCOMMANDRESPONSE = 0x88
 } XBeeApiId;
+
+/** @}
+*/
+
+
+typedef struct
+{
+  enum { XB_IDLE, XB_SLEEP, XB_RECEIVE, XB_TRANSMIT, XB_COMMAND } mode;
+} XBee_;
 
 typedef struct
 {
@@ -139,5 +204,6 @@ int XBee_GetPacket( XBeePacket* packet );
 int XBee_SendPacket( XBeePacket* packet, int datalength );
 void XBee_SetPacketApiMode( void );
 void XBee_InitPacket( XBeePacket* packet );
+void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, uint8* params, int datalength );
 
 #endif // XBEE_H

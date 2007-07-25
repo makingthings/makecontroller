@@ -22,6 +22,35 @@
 
 XBee_* XBee;
 
+/** \defgroup XBee
+	Communicate with XBee (Zigbee) wireless modules via the Make Controller's serial port.
+  
+  XBee modules from \b MaxStream are small, cheap ($19 each), wireless \b RF (radio frequency) modules that
+  can easily be used with the Make Controller Kit to create projects that require wireless communication.
+  XBee modules are <b>ZigBee/IEEE 802.15.4</b> compliant and can operate in several modes:
+  - Transparent serial port.  Messages in one side magically end up at the other endpoint.
+  - AT command mode.  Send traditional AT commands to configure the module itself (as opposed to having
+  the data go straight through via serial mode.
+  - Packet (API) mode.  Lower level communication that doesn't have to wait for the module to be in
+  AT command mode.  Check the \ref XBeePacketTypes for a description of how these packets are laid out.
+
+  The general idea is that you have one XBee module connected directly to your Make Controller Kit, and then
+  any number of other XBee modules that can communicate with it in order to get information to and from the
+  Make Controller.
+
+  XBee modules also have some digital and analog I/O right on them, which means you can directly connect
+  sensors to the XBee modules which will both read the values and send them wirelessly.  Check the XBee doc
+  for the appropriate commands to send in order to set this up.
+
+  \ingroup Controller
+  @{
+*/
+
+/**	
+  Controls the active state of the \b XBee subsystem
+  @param state Whether this subsystem is active or not
+	@return Zero on success.
+*/
 int XBee_SetActive( int state )
 {
   if ( state != 0 && XBee == NULL ) 
@@ -49,11 +78,42 @@ int XBee_SetActive( int state )
   return CONTROLLER_OK;
 }
 
+/**	
+  Read the active state of the \b XBee subsystem
+	@return An integer specifying the active state - 1 (active) or 0 (inactive).
+*/
 int XBee_GetActive( )
 {
   return ( XBee != NULL );
 }
 
+/**	
+  Receive an incoming XBee packet.
+  This function will not block, and will return as soon as there's no more incoming data or
+  the packet is fully received.  If the packet was not fully received, call the function repeatedly
+  until it is.
+
+  Clear out a packet before reading into it with a call to XBee_InitPacket( )
+  @param packet The XBeePacket to receive into.
+	@return 1 if a complete packet has been received, 0 if not.
+  @see XBee_SetPacketApiMode( )
+
+  \par Example
+  \code
+  // we're inside a task here...
+  XBeePacket myPacket;
+  XBee_InitPacket( &myPacket );
+  while( 1 )
+  {
+    if( XBee_GetPacket( &myPacket ) )
+    {
+      // process the new packet
+      XBee_InitPacket( &myPacket ); // then clear it out before reading again
+    }
+    Sleep( 10 );
+  }
+  \endcode
+*/
 int XBee_GetPacket( XBeePacket* packet )
 {
   if( CONTROLLER_OK != XBee_SetActive( 1 ) )
@@ -100,8 +160,36 @@ int XBee_GetPacket( XBeePacket* packet )
   return 0;
 }
 
+/**	
+  Send an XBee packet.
+
+  Check the possible \ref XBeePacketTypes that can be sent, and populate the packet structures
+  appropriately before sending them.
+  @param packet The XBeePacket to send.
+  @param datalength The length of the actual data being sent (not including headers, options, etc.)
+	@return Zero on success.
+  @see XBee_SetPacketApiMode( )
+
+  \par Example
+  \code
+  XBeePacket myPacket;
+  packet->apiId = XBEE_COMM_TX16; // we're going to send a packet with a 16-bit address
+  packet->tx16.frameID = 0x00;
+  packet->tx16.destination[0] = 0xFF; // 0xFFFF is the broadcast address
+  packet->tx16.destination[1] = 0xFF;
+  packet->tx16.options = 0x00; // no options
+  packet->tx16.data[0] = 'A'; // now pack in the data
+  packet->tx16.data[1] = 'B';
+  packet->tx16.data[2] = 'C';
+  // finally, send the packet indicating that we're sending 3 bytes of data - "ABC"
+  XBee_SendPacket( &myPacket, 3 ); 
+  \endcode
+*/
 int XBee_SendPacket( XBeePacket* packet, int datalength )
 {
+  if( CONTROLLER_OK != XBee_SetActive( 1 ) )
+    return CONTROLLER_ERROR_SUBSYSTEM_INACTIVE;
+  
   Serial_SetChar( XBEE_PACKET_STARTBYTE );
   int size = datalength;
   switch( packet->apiId )
@@ -137,9 +225,15 @@ int XBee_SendPacket( XBeePacket* packet, int datalength )
     packet->crc += *p++;
   }
   Serial_SetChar( 0xFF - packet->crc );
-  return 0;
+  return CONTROLLER_OK;
 }
 
+/**	
+  Initialize a packet before reading into it.
+  @param packet The XBeePacket to initialize.
+	@return An integer specifying the active state - 1 (active) or 0 (inactive).
+  @see XBee_GetPacket( )
+*/
 void XBee_InitPacket( XBeePacket* packet )
 {
   packet->dataPtr = (uint8*)packet;
@@ -149,15 +243,59 @@ void XBee_InitPacket( XBeePacket* packet )
   packet->index = 0;
 }
 
+/**	
+  Set a module into AT command mode.  
+  Because XBee modules need to wait 1 second after sending the command sequence before they're 
+  ready to receive any AT commands, this function will block for about a second.
+	@return An integer specifying the active state - 1 (active) or 0 (inactive).
+*/
 void XBee_SetPacketApiMode( )
 {
+  if( CONTROLLER_OK != XBee_SetActive( 1 ) )
+    return;
+  
   char buf[50];
   snprintf( buf, 50, "+++" ); // enter command mode
   Serial_Write( (uchar*)buf, strlen(buf), 0 );
   Sleep( 1025 ); // have to wait one second after +++ to actually get set to receive in AT mode
-
+  
   snprintf( buf, 50, "ATAP %x,CN\r", 1 ); // turn API mode on, and leave command mode
   Serial_Write( (uchar*)buf, strlen(buf), 0 );
 }
+
+/**	
+  A convenience function for creating an AT command packet.
+  Because XBee modules need to wait 1 second after sending the command sequence before they're 
+  ready to receive any AT commands, this function will block for about a second.
+  @param packet The XBeePacket to create.
+  @param frameID The frame ID for this packet that subsequent response/status messages can refer to.
+  @param cmd The 2-character AT command.
+  @param params A pointer to the buffer containing the data to be sent.
+  @param datalength The number of bytes to send from the params buffer.
+	@return An integer specifying the active state - 1 (active) or 0 (inactive).
+  
+  \par Example
+  \code
+  XBeePacket txPacket;
+  uint8 params[5];
+  params[0] = 0x14; // only 1 byte of data in this case
+  XBee_CreateATCommandPacket( &txPacket, 0, "IR", params, 1 );
+  XBee_SendPacket( &txPacket, 1 );
+  \endcode
+*/
+void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, uint8* params, int datalength )
+{
+  packet->apiId = XBEE_COMM_ATCOMMAND;
+  packet->atCommand.frameID = frameID;
+  uint8* p = packet->atCommand.command;
+  *p++ = *cmd++;
+  *p++ = *cmd++;
+  p = packet->atCommand.parameters;
+  while( datalength-- )
+    *p++ = *params++;
+}
+
+/** @}
+*/
 
 
