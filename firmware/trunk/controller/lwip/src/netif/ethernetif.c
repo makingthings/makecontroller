@@ -59,7 +59,7 @@
 
 /* MAKINGTHINGS: Addition for FreeRTOS */
 #define netifMTU							( 1500 )
-#define netifINTERFACE_TASK_STACK_SIZE		( 450 )
+#define netifINTERFACE_TASK_STACK_SIZE		( 150 )
 #define netifINTERFACE_TASK_PRIORITY		( configMAX_PRIORITIES - 1 )
 #define netifGUARD_BLOCK_TIME				( 250 )
                                                                                                                              
