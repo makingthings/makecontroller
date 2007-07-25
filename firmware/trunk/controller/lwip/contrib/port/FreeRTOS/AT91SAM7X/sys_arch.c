@@ -52,7 +52,7 @@ struct timeoutlist
 /* This is the number of threads that can be started with sys_thread_new() */
 // #define SYS_THREAD_MAX 6
 
-#define lwipTCP_STACK_SIZE			600
+#define lwipTCP_STACK_SIZE			200
 #define lwipBASIC_SERVER_STACK_SIZE	150
 
 // static struct timeoutlist timeoutlist[SYS_THREAD_MAX];
