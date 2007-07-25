@@ -10,7 +10,7 @@
 
 #include "webclient.h"
 
-#define WEBCLIENT_INTERNAL_BUFFER_SIZE 100
+#define WEBCLIENT_INTERNAL_BUFFER_SIZE 200
 
 /**	
 	Performs an HTTP GET operation to the path at the address / port specified.  The result 
