@@ -519,11 +519,26 @@ int Osc_ReceiveMessage( int channel, char* message, int length )
   {
     if( strlen(message) > (unsigned int)length )
       return CONTROLLER_ERROR_BAD_DATA;
-    // Plain message
+
+    int i;
+    char* nextChar = message + 1; // first, try to see if it was a "help" query
+    if( *nextChar == '\0' || *nextChar == ' ' )
+    {
+      for ( i = 0; i < Osc->registeredSubsystems; i++ )
+      {
+        OscSubsystem* sub = Osc->subsystem[ i ];
+        Osc_LockScratchBuf( Osc->scratch1Semaphore );
+        snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s", sub->name ); 
+        Osc_CreateMessage( channel, Osc->scratch1, ",", 0 );
+        Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
+      }
+      return CONTROLLER_OK;
+    }
+
     char* nextSlash = strchr( message + 1, '/' );
     if ( nextSlash != NULL )
       *nextSlash = 0;
-    int i;
+    
     int count = 0;
     for ( i = 0; i < Osc->registeredSubsystems; i++ )
     {
@@ -534,7 +549,10 @@ int Osc_ReceiveMessage( int channel, char* message, int length )
         if ( nextSlash )
           (sub->receiveMessage)( channel, nextSlash + 1, length - ( nextSlash - message ) - 1 );
         else
-          (sub->receiveMessage)( channel, 0, 0 );
+        {
+          char* noNextSlash = message + strlen(message);
+          (sub->receiveMessage)( channel, noNextSlash, 0 );
+        }
       }
     }
     if ( count == 0 )
@@ -852,8 +870,23 @@ int Osc_IntReceiverHelper( int channel, char* message, int length,
                            int (*propertyGet)( int property ),
                            char* propertyNames[] )
 {
-  if ( message == NULL )
-    return CONTROLLER_ERROR_NO_PROPERTY;
+  if( *message == '\0' || *message == ' ' ) // first, try to see if it was a property "help" query
+  {
+    int i = 0;
+    while( true )
+    {
+      if( propertyNames[i] != 0 )
+      {
+        Osc_LockScratchBuf( Osc->scratch1Semaphore );
+        snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", subsystemName, propertyNames[i] ); 
+        Osc_CreateMessage( channel, Osc->scratch1, ",", 0 );
+        Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
+        i++;
+      }
+      else
+        return CONTROLLER_OK;
+    }
+  }
 
   int propertyIndex = Osc_PropertyLookup( propertyNames, message );
   if ( propertyIndex == -1 )
@@ -899,11 +932,7 @@ int Osc_IntReceiverHelper( int channel, char* message, int length,
     // stack
     int value = (*propertyGet)( propertyIndex );
     Osc_LockScratchBuf( Osc->scratch1Semaphore );
-    strcpy( Osc->scratch1, "/" );
-    strcat( Osc->scratch1, subsystemName );
-    strcat( Osc->scratch1, "/" );
-    strcat( Osc->scratch1, propertyNames[ propertyIndex ] );
-    //snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", subsystemName, propertyNames[ propertyIndex ] ); 
+    snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", subsystemName, propertyNames[ propertyIndex ] ); 
     Osc_CreateMessage( channel, Osc->scratch1, ",i", value );
     Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
   }
@@ -937,6 +966,24 @@ int Osc_GeneralReceiverHelper( int channel, char* message, int length,
 {
   if ( message == NULL )
     return CONTROLLER_ERROR_NO_PROPERTY;
+
+  if( *message == '\0' || *message == ' ' ) // first, try to see if it was a property "help" query
+  {
+    int i = 0;
+    while( true )
+    {
+      if( propertyNames[i] != 0 )
+      {
+        Osc_LockScratchBuf( Osc->scratch1Semaphore );
+        snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", subsystemName, propertyNames[i] ); 
+        Osc_CreateMessage( channel, Osc->scratch1, ",", 0 );
+        Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
+        i++;
+      }
+      else
+        return CONTROLLER_OK;
+    }
+  }
 
   int propertyIndex = Osc_PropertyLookup( propertyNames, message );
   if ( propertyIndex == -1 )
@@ -999,20 +1046,27 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
                                 int (*propertyGet)( int index, int property ),
                                 char* propertyNames[] )
 {
+  int i;
+  if( *message == '\0' || *message == ' ' ) // first, try to see if it was an index "help" query
+  {
+    for ( i = 0; i < indexCount; i++ )
+    {
+      Osc_LockScratchBuf( Osc->scratch1Semaphore );
+      snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%d", subsystemName, i ); 
+      Osc_CreateMessage( channel, Osc->scratch1, ",", 0 );
+      Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
+    }
+    return CONTROLLER_OK;
+  }
+  
   // Look for the next slash - being the one that separates the index
   // from the property.  Note that this won't go off on a search through the buffer
   // since there will soon be a string terminator (i.e. a 0)
   char* prop = strchr( message, '/' );
+  char* propHelp;
   if ( prop == NULL )
-    return CONTROLLER_ERROR_BAD_FORMAT;
+    propHelp = message + strlen(message);
 
-  // Now that we know where the property is, we can see if we can find it.
-  // This is a little cheap, since we're also implying that there are no 
-  // more address terms after the property.  That is, if testing for "speed", while
-  // "speed" would match, "speed/other_stuff" would not.
-  int propertyIndex = Osc_PropertyLookup( propertyNames, prop + 1 );
-  if ( propertyIndex == -1 )
-    return CONTROLLER_ERROR_UNKNOWN_PROPERTY;
 
   // Here's where we try to understand what index we got.  In the world of 
   // OSC, this could be a pattern.  So while we could get "0/speed" we could 
@@ -1037,6 +1091,35 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
   
   // We tweaked the '/' before - now put it back
   *prop = '/';
+
+  //char* propHelp = prop + 1; // then, see if it was a property "help" query
+  if( *propHelp == '\0' || *propHelp == ' ' ) // first, try to see if it was an index "help" query
+  {
+    i = 0;
+    while( true )
+    {
+      if( propertyNames[i] != 0 )
+      {
+        Osc_LockScratchBuf( Osc->scratch1Semaphore );
+        snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, number, propertyNames[i] ); 
+        Osc_CreateMessage( channel, Osc->scratch1, ",", 0 );
+        Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
+        i++;
+      }
+      else
+        return CONTROLLER_OK;
+    }
+  }
+
+  // Now that we know where the property is, we can see if we can find it.
+  // This is a little cheap, since we're also implying that there are no 
+  // more address terms after the property.  That is, if testing for "speed", while
+  // "speed" would match, "speed/other_stuff" would not.
+  int propertyIndex = Osc_PropertyLookup( propertyNames, prop + 1 );
+  if ( propertyIndex == -1 )
+    return CONTROLLER_ERROR_UNKNOWN_PROPERTY;
+
+  
 
   // Sometime after the address, the data tag begins - this is the description 
   // of the data in the rest of the message.  It starts with a comma.  Return
@@ -1084,19 +1167,9 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
     // Osc_CreateMessage() which adds a new message to the outgoing
     // stack
     if ( number != -1 )
-    {
+    { 
       int value = (*propertyGet)( number, propertyIndex );
       Osc_LockScratchBuf( Osc->scratch1Semaphore );
-      /*
-      char numberBuf[ 33 ];
-      strcpy( Osc->scratch1, "/" );
-      strcat( Osc->scratch1, subsystemName );
-      strcat( Osc->scratch1, "/" );
-      itoa( number, numberBuf, 10 );
-      strcat( Osc->scratch1, numberBuf );
-      strcat( Osc->scratch1, "/" );
-      strcat( Osc->scratch1, propertyNames[ propertyIndex ] );
-      */
       snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, number, propertyNames[ propertyIndex ] ); 
       Osc_CreateMessage( channel, Osc->scratch1, ",i", value );
       Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
@@ -1110,8 +1183,6 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
         {
           int value = (*propertyGet)( index, propertyIndex );
           Osc_LockScratchBuf( Osc->scratch1Semaphore );
-          //char buf[ 5 ];
-          //itoa( index, buf, 10 );
           snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, index, propertyNames[ propertyIndex ] ); 
           Osc_CreateMessage( channel, Osc->scratch1, ",i", value );
           Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
