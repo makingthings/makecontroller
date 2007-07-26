@@ -527,10 +527,7 @@ int Osc_ReceiveMessage( int channel, char* message, int length )
       for ( i = 0; i < Osc->registeredSubsystems; i++ )
       {
         OscSubsystem* sub = Osc->subsystem[ i ];
-        Osc_LockScratchBuf( Osc->scratch1Semaphore );
-        snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s", sub->name ); 
-        Osc_CreateMessage( channel, Osc->scratch1, ",", 0 );
-        Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
+        Osc_CreateMessage( channel, "/", ",s", sub->name );
       }
       return CONTROLLER_OK;
     }
@@ -878,8 +875,8 @@ int Osc_IntReceiverHelper( int channel, char* message, int length,
       if( propertyNames[i] != 0 )
       {
         Osc_LockScratchBuf( Osc->scratch1Semaphore );
-        snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", subsystemName, propertyNames[i] ); 
-        Osc_CreateMessage( channel, Osc->scratch1, ",", 0 );
+        snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s", subsystemName ); 
+        Osc_CreateMessage( channel, Osc->scratch1, ",s", propertyNames[i] );
         Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
         i++;
       }
@@ -975,8 +972,8 @@ int Osc_GeneralReceiverHelper( int channel, char* message, int length,
       if( propertyNames[i] != 0 )
       {
         Osc_LockScratchBuf( Osc->scratch1Semaphore );
-        snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", subsystemName, propertyNames[i] ); 
-        Osc_CreateMessage( channel, Osc->scratch1, ",", 0 );
+        snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s", subsystemName ); 
+        Osc_CreateMessage( channel, Osc->scratch1, ",s", propertyNames[i] );
         Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
         i++;
       }
@@ -1052,8 +1049,8 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
     for ( i = 0; i < indexCount; i++ )
     {
       Osc_LockScratchBuf( Osc->scratch1Semaphore );
-      snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%d", subsystemName, i ); 
-      Osc_CreateMessage( channel, Osc->scratch1, ",", 0 );
+      snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s", subsystemName ); 
+      Osc_CreateMessage( channel, Osc->scratch1, ",i", i );
       Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
     }
     return CONTROLLER_OK;
@@ -1101,8 +1098,8 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
       if( propertyNames[i] != 0 )
       {
         Osc_LockScratchBuf( Osc->scratch1Semaphore );
-        snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%d/%s", subsystemName, number, propertyNames[i] ); 
-        Osc_CreateMessage( channel, Osc->scratch1, ",", 0 );
+        snprintf( Osc->scratch1, OSC_SCRATCH_SIZE, "/%s/%d", subsystemName, number ); 
+        Osc_CreateMessage( channel, Osc->scratch1, ",s", propertyNames[i] );
         Osc_UnlockScratchBuf( Osc->scratch1Semaphore );
         i++;
       }
