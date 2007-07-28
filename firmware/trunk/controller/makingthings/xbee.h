@@ -29,13 +29,13 @@
 #define XBEE_PACKET_RX_START 0
 #define XBEE_PACKET_RX_LENGTH_1 1
 #define XBEE_PACKET_RX_LENGTH_2 2
-#define XBEE_PACKET_RX_CMD_ID 3
-#define XBEE_PACKET_RX_DATA 4
-#define XBEE_PACKET_RX_CRC 5
+#define XBEE_PACKET_RX_PAYLOAD 3
+#define XBEE_PACKET_RX_CRC 4
 
 // general xbee constants
 #define XBEE_PACKET_STARTBYTE 0x7E
 #define XBEE_PACKET_ESCAPE 0x7D
+#define XBEE_INPUTS 15 // counts analog and digital ins separately
 
 /** \defgroup XBeePacketTypes XBee Packet Types
 	The different types of packet that can be used with the \ref XBee subsystem.
@@ -122,7 +122,6 @@ typedef struct
 
 /** 
   An incoming packet with a 64-bit address.
-  - \b frameID is the ID for this packet that subsequent response/status messages can refer to.
   - \b source is the 64-bit (8-byte) address of the sender.
   - \b rssi is the signal strength of the received message.
   - \b options - bit 1 is Address Broadcast, bit 2 is PAN broadcast.  Other bits reserved.
@@ -130,7 +129,6 @@ typedef struct
  */
 typedef struct
 {
-  uint8 frameID;
   uint8 source[ 8 ];
   uint8 rssi;
   uint8 options;
@@ -139,7 +137,6 @@ typedef struct
 
 /** 
   An incoming packet with a 16-bit address.
-  - \b frameID is the ID for this packet that subsequent response/status messages can refer to.
   - \b source is the 16-bit (2-byte) address of the sender.
   - \b rssi is the signal strength of the received message.
   - \b options - bit 1 is Address Broadcast, bit 2 is PAN broadcast.  Other bits reserved.
@@ -147,12 +144,49 @@ typedef struct
  */
 typedef struct
 {
-  uint8 frameID;
   uint8 source[ 2 ];
   uint8 rssi;
   uint8 options;
   uint8 data[ 95 ];
 }  XBee_RX16;
+
+/** 
+  An incoming packet with IO data from a 64-bit address.
+  - \b source is the 64-bit (8-byte) address of the sender.
+  - \b rssi is the signal strength of the received message.
+  - \b options - bit 1 is Address Broadcast, bit 2 is PAN broadcast.  Other bits reserved.
+  - \b samples - the number of samples in this packet.
+  - \b channelIndicators - bit mask indicating which channels have been sampled.
+  - \b data is a buffer that holds the IO values as indicated by \b channelIndicators.
+ */
+typedef struct
+{
+  uint8 source[ 8 ];
+  uint8 rssi;
+  uint8 options;
+  uint8 samples;
+  uint8 channelIndicators[ 2 ];
+  uint8 data[ 86 ];
+}  XBee_IO64;
+
+/** 
+  An incoming packet with IO data from a 16-bit address.
+  - \b source is the 16-bit (2-byte) address of the sender.
+  - \b rssi is the signal strength of the received message.
+  - \b options - bit 1 is Address Broadcast, bit 2 is PAN broadcast.  Other bits reserved.
+  - \b samples - the number of samples in this packet.
+  - \b channelIndicators - bit mask indicating which channels have been sampled.
+  - \b data is a buffer that holds the IO values as indicated by \b channelIndicators.
+ */
+typedef struct
+{
+  uint8 source[ 2 ];
+  uint8 rssi;
+  uint8 options;
+  uint8 samples;
+  uint8 channelIndicators[ 2 ];
+  uint8 data[ 92 ];
+}  XBee_IO16;
 
 typedef enum 
 { 
@@ -163,7 +197,9 @@ typedef enum
   XBEE_COMM_RX16 = 0x81,
   XBEE_COMM_ATCOMMAND = 0x08,
   XBEE_COMM_ATCOMMANDQ = 0x09,
-  XBEE_COMM_ATCOMMANDRESPONSE = 0x88
+  XBEE_COMM_ATCOMMANDRESPONSE = 0x88,
+  XBEE_COMM_IO64 = 0x82,
+  XBEE_COMM_IO16 = 0x83
 } XBeeApiId;
 
 /** @}
@@ -180,7 +216,7 @@ typedef struct
   uint8 apiId;
   union
   {
-    uint8 data[ 100 ];
+    uint8 payload[ 100 ];
     XBee_TX64 tx64;
     XBee_TX16 tx16;
     XBee_TXStatus txStatus;
@@ -188,6 +224,8 @@ typedef struct
     XBee_RX16 rx16;
     XBee_ATCommand atCommand;
     XBee_ATCommandResponse atResponse;
+    XBee_IO64 io64;
+    XBee_IO16 io16;
   };
   
   uint8 crc;
@@ -205,5 +243,6 @@ int XBee_SendPacket( XBeePacket* packet, int datalength );
 void XBee_SetPacketApiMode( void );
 void XBee_InitPacket( XBeePacket* packet );
 void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, uint8* params, int datalength );
+int XBee_GetIOValues( XBeePacket* packet, int *inputs );
 
 #endif // XBEE_H

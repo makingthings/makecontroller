@@ -137,15 +137,9 @@ int XBee_GetPacket( XBeePacket* packet )
         break;
       case XBEE_PACKET_RX_LENGTH_2:
         packet->length += newChar;
-        packet->rxState = XBEE_PACKET_RX_CMD_ID;
+        packet->rxState = XBEE_PACKET_RX_PAYLOAD;
         break;
-      case XBEE_PACKET_RX_CMD_ID:
-        packet->apiId = newChar;
-        packet->index++;
-        packet->crc += newChar;
-        packet->rxState = XBEE_PACKET_RX_DATA;
-        break;
-      case XBEE_PACKET_RX_DATA:
+      case XBEE_PACKET_RX_PAYLOAD:
         if( packet->index++ < packet->length )
           *packet->dataPtr++ = newChar;
         else
@@ -293,6 +287,48 @@ void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, u
   p = packet->atCommand.parameters;
   while( datalength-- )
     *p++ = *params++;
+}
+
+int XBee_GetIOValues( XBeePacket* packet, int *inputs )
+{
+  if( packet->apiId == XBEE_COMM_IO16 )
+  {
+    int i;
+    static bool enabled;
+    int digitalins = 0;
+    uint8* p = packet->io16.data;
+    int channelIndicators = (packet->io16.channelIndicators[0] << 0x08) | packet->io16.channelIndicators[1];
+    for( i = 0; i < XBEE_INPUTS; i++ )
+    {
+      enabled = channelIndicators & 1;
+      channelIndicators >>= 1;
+      if( i < 9 ) // digital ins
+      {
+        if( enabled )
+        {
+          if( !digitalins )
+          {
+            int dig0 = *p++ << 0x08;
+            digitalins = dig0 | *p++;
+          }
+          inputs[i] = ((digitalins >> i) & 1) * 1023;
+        }
+        else
+          inputs[i] = 0;
+      }
+      else // analog ins
+      {
+        if( enabled )
+        {
+          int ain_msb = *p++ << 0x08;
+          inputs[i-9] = ain_msb | *p++;
+        }
+        else
+          inputs[i] = 0;
+      }
+    }
+  }
+  return 0;
 }
 
 /** @}
