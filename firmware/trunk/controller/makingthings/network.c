@@ -1068,18 +1068,12 @@ int NetworkOsc_GetUdpPort(  )
 
 void Network_StartWebServer( )
 {
-  if( Network->WebServerTaskPtr == NULL )
-    Network->WebServerTaskPtr = TaskCreate( WebServer, "WebServ", 600, NULL, 4 );
+  WebServer_Start( );
 }
 
 void Network_StopWebServer( )
 {
-  if( Network->WebServerTaskPtr != NULL )
-  {
-    TaskDelete( Network->WebServerTaskPtr );
-    Network->WebServerTaskPtr = NULL;
-    CloseWebServer( );
-  }
+  WebServer_Stop();
 }
 
 void Network_DhcpStart( struct netif* netif )

@@ -59,20 +59,51 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "FreeRTOS.h"
+#include "network.h"
+
+#define REQUEST_SIZE_MAX	100
+#define RESPONSE_SIZE_MAX	1548
+#define HTTP_OK	"HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n"
+#define HTTP_PORT		( 80 )
+
+#define HTML_START_RELOAD( what ) \
+"<html>\
+<head>\
+<style type=\"text/css\">\
+<!--\
+body {\
+	font-family: Arial, Helvetica, sans-serif;\
+}\
+-->\
+</style>\
+</head>\
+<BODY onLoad=\"window.setTimeout(&quot;location.href='" what "'&quot;,1000)\"bgcolor=\"#eeeeee\">\
+<br>Make Magazine - MakingThings<br>MAKE Controller Kit<br><br>Page Hits "
+
+#define HTML_END \
+"\r\n</pre>\
+\r\n</BODY>\
+</html>"
+
+void WebServerTask( void *p );
+
+typedef struct WebServerS
+{
+  int hits;
+  void* serverTask;
+  void* serverSocket;
+  void* requestSocket;
+
+  char request[ REQUEST_SIZE_MAX ];
+  char response[ RESPONSE_SIZE_MAX ];
+} WebServer_;
+
+WebServer_* WebServer = NULL;
+
 #include "webserver.h"
 #include "analogin.h"
 #include "system.h"
-
-// lwIP includes. 
-#include "lwip/api.h" 
-#include "lwip/tcpip.h"
-#include "lwip/memp.h" 
-#include "lwip/stats.h"
-#include "netif/loopif.h"
-
-Web_Server* Server = NULL;
-static void ProcessConnection( struct netconn* NetConn );
+#include "FreeRTOS.h"
 
 /* 
  * Process an incoming connection on port 80.
@@ -83,9 +114,65 @@ static void ProcessConnection( struct netconn* NetConn );
  * connection. 
  */
 
-static void ProcessConnection( struct netconn *NetConn )
+void WebServer_OldSchool( void *requestSocket );
+
+void WebServer_ProcessRequest( void* requestSocket )
 {
-  Server->RxBuffer = netconn_recv( NetConn ); // We expect to immediately get data.
+  SocketRead( requestSocket, WebServer->request, REQUEST_SIZE_MAX ); 
+  if( !strncmp( WebServer->request, "GET", 3 ) ) 
+  {
+    SocketWrite( requestSocket, HTTP_OK, strlen( HTTP_OK ) );
+    WebServer_OldSchool( requestSocket ); 
+  }
+  if( !strncmp( WebServer->request, "PUT", 3 ) ) 
+  {
+    SocketWrite( requestSocket, HTTP_OK, strlen( HTTP_OK ) );
+    SocketWrite( requestSocket, "GET: HELLO", 10 );
+  }
+  SocketClose( requestSocket );
+}
+
+void WebServer_OldSchool( void *requestSocket )
+{
+  char temp[ 100 ];
+
+  // Generate the dynamic page...
+  strcpy( WebServer->response, HTML_START_RELOAD( "/" ) );  // ... First the page header.
+  // ... Then the hit count...
+  snprintf( temp, 100, "%d", WebServer->hits );
+  strcat( WebServer->response, temp );
+  strcat( WebServer->response, "<p>Version: " );
+  snprintf( temp, 100, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER ); 
+  strcat( WebServer->response, temp );
+  strcat( WebServer->response, "<p>Free Memory " );
+  sprintf( temp, "%d", System_GetFreeMemory() ); 
+  strcat( WebServer->response, temp );
+  strcat( WebServer->response, "</p>" );
+  strcat( WebServer->response, "<p>Tasks Currently Running" );
+  strcat( WebServer->response, "<p><pre>Task          State  Priority  Stck Rem	#<br>-------------------------------------------" );
+  // ... Then the list of tasks and their status... 
+  vTaskList( (signed portCHAR*)WebServer->response + strlen( WebServer->response ) );	
+  int i;
+  strcat( WebServer->response, "<p><pre>Analog Inputs<br>--------------<br>" );
+  
+  for ( i = 0; i < 8; i++ )
+  {
+    char b[ 20 ];
+    snprintf( b, 20, "%d: %d<br>", i, AnalogIn_GetValue( i ) );
+    strcat( WebServer->response, b );
+  }
+  strcat( WebServer->response, "</pre>" );
+  
+  // ... Finally the page footer.
+  strcat( WebServer->response, HTML_END );
+  // Write out the dynamically generated page.
+  
+  SocketWrite( requestSocket, WebServer->response, strlen( WebServer->response ) );
+}
+
+
+/*
+  WebServer->RxBuffer = netconn_recv( NetConn ); // We expect to immediately get data.
 
 	if( Server->RxBuffer != NULL )
 	{
@@ -98,95 +185,70 @@ static void ProcessConnection( struct netconn *NetConn )
 			sprintf( Server->PageHitsBuf, "%lu", Server->PageHits );
       netconn_write( NetConn, HTTP_OK, (u16_t)strlen( HTTP_OK ), NETCONN_COPY ); // Write out the HTTP OK header.
 
-			// Generate the dynamic page...
-			strcpy( Server->DynamicPage, HTML_START );  // ... First the page header.
-			// ... Then the hit count...
-			strcat( Server->DynamicPage, Server->PageHitsBuf );
-			strcat( Server->DynamicPage, "<p>Version: " );
-	    sprintf( Server->PageHitsBuf, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER ); 
-      strcat( Server->DynamicPage, Server->PageHitsBuf );
-      strcat( Server->DynamicPage, "<p>Free Memory " );
-	    sprintf( Server->PageHitsBuf, "%d", System_GetFreeMemory() ); 
-      strcat( Server->DynamicPage, Server->PageHitsBuf );
-      strcat( Server->DynamicPage, "</p>" );
-			strcat( Server->DynamicPage, "<p>Tasks Currently Running" );
-			strcat( Server->DynamicPage, "<p><pre>Task          State  Priority  Stck Rem	#<br>-------------------------------------------" );
-			// ... Then the list of tasks and their status... 
-			vTaskList( (signed portCHAR*)Server->DynamicPage + strlen( Server->DynamicPage ) );	
-      int i;
-      strcat( Server->DynamicPage, "<p><pre>Analog Inputs<br>--------------<br>" );
-
-      for ( i = 0; i < 8; i++ )
-      {
-        char b[ 20 ];
-        snprintf( b, 20, "%d: %d<br>", i, AnalogIn_GetValue( i ) );
-        strcat( Server->DynamicPage, b );
-      }
-      strcat( Server->DynamicPage, "</pre>" );
-      
-      // ... Finally the page footer.
-			strcat( Server->DynamicPage, HTML_END );
-			// Write out the dynamically generated page.
-			netconn_write(NetConn, Server->DynamicPage, (u16_t)strlen( Server->DynamicPage ), NETCONN_COPY );
 		}
  
 		netbuf_delete( Server->RxBuffer );
 	}
 
 	netconn_close( NetConn );
+*/
+
+
+
+void WebServer_Start( )
+{
+  if ( WebServer == NULL )
+  {
+    WebServer = Malloc( sizeof( WebServer_ ) );    
+    if ( WebServer == NULL )
+      return;
+    WebServer->hits = 0;
+    WebServer->serverSocket = NULL;
+    WebServer->requestSocket = NULL;
+    WebServer->serverTask = TaskCreate( WebServerTask, "WebServ", 600, NULL, 4 );
+    if ( WebServer->serverTask == NULL )
+      Free( WebServer );
+  }
 }
 
-void WebServer( void *p )
+void WebServer_Stop( )
 {
-  (void)p;
-  while( Server == NULL )
+  if( WebServer != NULL )
   {
-    Server = Malloc( sizeof( Web_Server ) );
-    Sleep( 100 );
+    TaskDelete( WebServer->serverTask );
+    ServerSocketClose( WebServer->serverSocket );
+    if ( WebServer->requestSocket != NULL )
+      SocketClose( WebServer->requestSocket );
+
+    Free( WebServer );
+    WebServer = NULL;
   }
-  // init
-  int retval = 0;
-  Server->PageHits = 0;
-  Server->NewConnection = NULL;
- 	Server->HTTPListener = netconn_new( NETCONN_TCP );
-	retval = netconn_bind(Server->HTTPListener, NULL, HTTP_PORT );
-	retval = netconn_listen( Server->HTTPListener );
+}
+
+void WebServerTask( void *p )
+{
+  // Try to create a socket on the appropriate port
+  while ( WebServer->serverSocket == NULL )
+  { 
+    WebServer->serverSocket = ServerSocket( HTTP_PORT );
+    if ( WebServer->serverSocket == NULL )
+      Sleep( 1000 );
+  }
 
   while( 1 )
 	{
 		/* Wait for connection. */
-		Server->NewConnection = netconn_accept( Server->HTTPListener );
-
-		if(Server->NewConnection != NULL)
+		WebServer->requestSocket = ServerSocketAccept( WebServer->serverSocket );
+    
+		if ( WebServer->requestSocket != NULL )
 		{
-      ProcessConnection( Server->NewConnection );
-			while( netconn_delete( Server->NewConnection ) != ERR_OK )
-				Sleep( 10 );
-
-      Server->NewConnection = NULL;
+      WebServer->hits++;
+      WebServer_ProcessRequest( WebServer->requestSocket );
+      WebServer->requestSocket = NULL;
 		}
-    else
-      retval = -1;
+
     Sleep( 5 );
 	}
 }
 
-void CloseWebServer( )
-{
-  if( Server != NULL )
-  {
-    netconn_delete( Server->HTTPListener );
-
-    if( Server->NewConnection != NULL )
-      netconn_delete( Server->NewConnection );
-
-    Free( Server );
-    Server = NULL;
-  }
-}
-
-#endif // MAKE_CTRL_NETWORK
-
-
-
-
+#endif
