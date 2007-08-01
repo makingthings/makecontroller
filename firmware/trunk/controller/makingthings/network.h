@@ -76,6 +76,7 @@ void SocketClose( void* socket );
 void* ServerSocket( int port );
 void* ServerSocketAccept( void* serverSocket );
 int ServerSocketClose( void* serverSocket );
+
 int SocketSendDecimal( void *socket, int d );
 
 // UDP stuff

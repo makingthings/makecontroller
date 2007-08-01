@@ -33,38 +33,15 @@
 #ifndef BASIC_WEB_SERVER_H
 #define BASIC_WEB_SERVER_H
 
-#include "FreeRTOS.h"
+// void WebServer( void *p );
 
-#define MAX_WEBPAGE_SIZE	1548
-#define HTTP_OK	"HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n"
-#define HTTP_PORT		( 80 )
+// NEW WEB SERVER
 
-#define HTML_START \
-"<html>\
-<head>\
-</head>\
-<BODY onLoad=\"window.setTimeout(&quot;location.href='index.html'&quot;,1000)\"bgcolor=\"#eeeeee\">\
-<br>Make Magazine - MakingThings<br>MAKE Controller Kit<br><br>Page Hits "
+// Web Server Task
+void WebServer_Start( void );
+void WebServer_Stop( void );
 
-#define HTML_END \
-"\r\n</pre>\
-\r\n</BODY>\
-</html>"
-
-typedef struct Web_Server_
-{
-  portCHAR DynamicPage[ MAX_WEBPAGE_SIZE ];
-  portCHAR PageHitsBuf[ 50 ];
-  struct netbuf* RxBuffer;
-  portCHAR* RxString;
-  unsigned portSHORT Length;
-  unsigned portLONG PageHits;
-  struct netconn* HTTPListener;
-  struct netconn* NewConnection;
-}Web_Server;
-
-void WebServer( void *p );
-void CloseWebServer( void );
+// void WebServer_RouteToText( char* path, char* text );
 
 #endif  // BASIC_WEB_SERVER_H
 
