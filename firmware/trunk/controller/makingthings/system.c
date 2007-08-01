@@ -503,7 +503,7 @@ int SystemOsc_PropertyGet( int property, int channel )
     case 7: // info
     {
       char* name;
-      char* addr;
+      char addr[50];
       int a0, a1, a2, a3;
       name = System_GetName( );
       value = System_GetSerialNumber( );
