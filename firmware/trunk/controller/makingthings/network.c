@@ -304,8 +304,11 @@ void* ServerSocket( int port )
   struct netconn *conn;
 
   conn = netconn_new( NETCONN_TCP );
-  netconn_listen( conn );
-  netconn_bind( conn, 0, port );
+  if ( conn != NULL )
+  { 
+    netconn_bind( conn, 0, port );
+    netconn_listen( conn );
+  }
 
   return conn;
 }
@@ -323,7 +326,8 @@ void* ServerSocketAccept( void* serverSocket )
   struct netconn *conn;
   conn = netconn_accept( (struct netconn *)serverSocket );
   // This is our addition to the conn structure to help with reading
-  conn->readingbuf = NULL;
+  if ( conn != NULL )
+    conn->readingbuf = NULL;
   return conn;
 }
 
@@ -343,7 +347,7 @@ void* ServerSocketAccept( void* serverSocket )
 */
 int ServerSocketClose( void* serverSocket )
 {
-  netconn_close( serverSocket );
+  // netconn_close( serverSocket );
   netconn_delete( serverSocket );
   return 0;
 }
@@ -876,8 +880,7 @@ void Network_SetWebServerEnabled( int state )
 {
   if( state )
   {
-    if( Network->WebServerTaskPtr == NULL )
-      Network_StartWebServer( );
+    Network_StartWebServer( );
 
     if( !Network_GetWebServerEnabled( ) )
       Eeprom_Write( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
