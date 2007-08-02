@@ -40,8 +40,9 @@
 // Web Server Task
 void WebServer_Start( void );
 void WebServer_Stop( void );
+int  WebServer_Running( void );
 
-// void WebServer_RouteToText( char* path, char* text );
+int WebServer_Route( char* address, int (*handler)( char* requestType, char* address, void* socket )  );
 
 #endif  // BASIC_WEB_SERVER_H
 
