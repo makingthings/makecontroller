@@ -1,0 +1,184 @@
+<!DOCTYPE CrossStudio_for_ARM_Session_File>
+<session>
+ <Autos>
+  <Watches active="0" />
+ </Autos>
+ <Bookmarks/>
+ <Breakpoints>
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="D_Abort" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="FIQ" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="IRQ" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="P_Abort" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="Reset" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="SWI" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="ARM Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="Undef" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="BusFault" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="ExceptionEntryReturnFault" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="HardFault" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="MemManage" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="3" mask="0" comparison="0" expression="Reset" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="UsageFault_CheckingError" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="UsageFault_Coprocessor" filename="" />
+  <BreakpointListItem actiontype="0" chainFrom="" line="-1" length="0" triggertype="0" useHWbreakpoint="false" group="Cortex-M3 Exceptions" breakdatatype="5" value="0" name="unnamed" counter="0" state="2" mask="0" comparison="0" expression="UsageFault_StateError" filename="" />
+ </Breakpoints>
+ <ExecutionCountWindow/>
+ <Memory1>
+  <MemoryWindow autoEvaluate="0" addressText="0x2009b0" numColumns="8" sizeText="0x1000" dataSize="1" radix="16" addressSpace="" />
+ </Memory1>
+ <Memory2>
+  <MemoryWindow autoEvaluate="0" addressText="" numColumns="8" sizeText="" dataSize="1" radix="16" addressSpace="" />
+ </Memory2>
+ <Memory3>
+  <MemoryWindow autoEvaluate="0" addressText="" numColumns="8" sizeText="" dataSize="1" radix="16" addressSpace="" />
+ </Memory3>
+ <Memory4>
+  <MemoryWindow autoEvaluate="0" addressText="" numColumns="8" sizeText="" dataSize="1" radix="16" addressSpace="" />
+ </Memory4>
+ <Project>
+  <ProjectSessionItem path="solo" name="unnamed" />
+  <ProjectSessionItem path="solo;solo" name="unnamed" />
+  <ProjectSessionItem path="solo;solo;Source Files" name="unnamed" />
+  <ProjectSessionItem path="solo;solo;Source Files;Controller" name="unnamed" />
+  <ProjectSessionItem path="solo;solo;Source Files;Controller;lwIP" name="unnamed" />
+  <ProjectSessionItem path="solo;solo;Source Files;Controller;MakingThings" name="unnamed" />
+  <ProjectSessionItem path="solo;solo;Source Files;Controller;Startup" name="unnamed" />
+  <ProjectSessionItem path="solo;solo;Source Files;Solo" name="unnamed" />
+ </Project>
+ <Register1>
+  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" openGroups="CPU - Current Mode" visibleGroups="CPU - Current Mode" decimalDisplays="" binaryDisplays="" />
+ </Register1>
+ <Register2>
+  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" openGroups="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
+ </Register2>
+ <Register3>
+  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" openGroups="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
+ </Register3>
+ <Register4>
+  <RegisterWindow unsignedDisplays="" asciiDisplays="" octalDisplays="" openGroups="" visibleGroups="" decimalDisplays="" binaryDisplays="" />
+ </Register4>
+ <SourceNavigatorWindow/>
+ <TraceWindow>
+  <Trace wrap="Yes" type="1" enabled="Yes" />
+ </TraceWindow>
+ <Watch1>
+  <Watches active="1" />
+ </Watch1>
+ <Watch2>
+  <Watches active="0" />
+ </Watch2>
+ <Watch3>
+  <Watches active="0" />
+ </Watch3>
+ <Watch4>
+  <Watches active="0" />
+ </Watch4>
+ <Files/>
+ <ARMCrossStudioWindow activeProject="solo" autoConnectTarget="/Macraigor Wiggler (20 Pin)" debugSearchFileMap="..\..\gcc-4.1.1\gcc\config\arm\ieee754-df.S
+
+..\..\gcc-4.1.1\gcc\config\arm\ieee754-sf.S
+
+..\..\gcc-4.1.1\gcc\config\arm\lib1funcs.asm
+
+..\..\newlib-1.14.0\newlib\libc\ctype\iswspace.c
+\iswspace.c
+..\..\newlib-1.14.0\newlib\libc\locale\locale.c
+\locale.c
+..\..\newlib-1.14.0\newlib\libc\stdio\fclose.c
+\fclose.c
+..\..\newlib-1.14.0\newlib\libc\stdio\fflush.c
+\fflush.c
+..\..\newlib-1.14.0\newlib\libc\stdio\findfp.c
+\findfp.c
+..\..\newlib-1.14.0\newlib\libc\stdio\fread.c
+\fread.c
+..\..\newlib-1.14.0\newlib\libc\stdio\fvwrite.c
+\fvwrite.c
+..\..\newlib-1.14.0\newlib\libc\stdio\fwalk.c
+\fwalk.c
+..\..\newlib-1.14.0\newlib\libc\stdio\makebuf.c
+\makebuf.c
+..\..\newlib-1.14.0\newlib\libc\stdio\refill.c
+\refill.c
+..\..\newlib-1.14.0\newlib\libc\stdio\sccl.c
+\sccl.c
+..\..\newlib-1.14.0\newlib\libc\stdio\snprintf.c
+
+..\..\newlib-1.14.0\newlib\libc\stdio\sprintf.c
+
+..\..\newlib-1.14.0\newlib\libc\stdio\sscanf.c
+
+..\..\newlib-1.14.0\newlib\libc\stdio\stdio.c
+\stdio.c
+..\..\newlib-1.14.0\newlib\libc\stdio\ungetc.c
+\ungetc.c
+..\..\newlib-1.14.0\newlib\libc\stdio\vfprintf.c
+
+..\..\newlib-1.14.0\newlib\libc\stdio\vfscanf.c
+
+..\..\newlib-1.14.0\newlib\libc\stdio\vsnprintf.c
+
+..\..\newlib-1.14.0\newlib\libc\stdio\wsetup.c
+\wsetup.c
+..\..\newlib-1.14.0\newlib\libc\stdlib\dtoa.c
+\dtoa.c
+..\..\newlib-1.14.0\newlib\libc\stdlib\mallocr.c
+\mallocr.c
+..\..\newlib-1.14.0\newlib\libc\stdlib\mbrtowc.c
+\mbrtowc.c
+..\..\newlib-1.14.0\newlib\libc\stdlib\mbtowc_r.c
+\mbtowc_r.c
+..\..\newlib-1.14.0\newlib\libc\stdlib\mlock.c
+\mlock.c
+..\..\newlib-1.14.0\newlib\libc\stdlib\mprec.c
+\mprec.c
+..\..\newlib-1.14.0\newlib\libc\stdlib\strtod.c
+\strtod.c
+..\..\newlib-1.14.0\newlib\libc\stdlib\strtol.c
+\strtol.c
+..\..\newlib-1.14.0\newlib\libc\stdlib\strtoul.c
+\strtoul.c
+..\..\newlib-1.14.0\newlib\libc\stdlib\wcrtomb.c
+
+..\..\newlib-1.14.0\newlib\libc\stdlib\wcsrtombs.c
+\wcsrtombs.c
+..\..\newlib-1.14.0\newlib\libc\stdlib\wctomb_r.c
+\wctomb_r.c
+..\..\newlib-1.14.0\newlib\libc\string\memchr.c
+\memchr.c
+..\..\newlib-1.14.0\newlib\libc\string\memcpy.c
+
+..\..\newlib-1.14.0\newlib\libc\string\memmove.c
+\memmove.c
+..\..\newlib-1.14.0\newlib\libc\string\memset.c
+
+..\..\newlib-1.14.0\newlib\libc\string\strcat.c
+
+..\..\newlib-1.14.0\newlib\libc\string\strchr.c
+
+..\..\newlib-1.14.0\newlib\libc\string\strcmp.c
+
+..\..\newlib-1.14.0\newlib\libc\string\strcpy.c
+
+..\..\newlib-1.14.0\newlib\libc\string\strlen.c
+
+..\..\newlib-1.14.0\newlib\libc\string\strncmp.c
+
+..\..\newlib-1.14.0\newlib\libc\string\strncpy.c
+
+..\..\newlib-1.14.0\newlib\libm\common\s_nan.c
+\s_nan.c
+..\..\newlib-1.14.0\newlib\libm\common\sf_nan.c
+\sf_nan.c
+..\..\newlib-1.14.0\newlib\libm\math\s_isinf.c
+\s_isinf.c
+..\..\newlib-1.14.0\newlib\libm\math\s_isnan.c
+\s_isnan.c
+..\controller\startup\boot.s
+C:\mtcode\make\beta\controller\startup\boot.s
+..\gcc-4.0.2\gcc\config\arm\ieee754-df.S
+\ieee754-df.S
+..\gcc-4.0.2\gcc\config\arm\ieee754-sf.S
+\ieee754-sf.S
+..\gcc-4.0.2\gcc\config\arm\lib1funcs.asm
+" fileDialogInitialDirectory="C:\mtcode\make\firmware\solo" fileDialogDefaultFilter="*" autoConnectCapabilities="1407" debugSearchPath="" buildConfiguration="THUMB Flash Debug" />
+</session>
