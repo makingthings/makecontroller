@@ -198,6 +198,7 @@ int TestHandler( char* requestType, char* address, void* socket, char* buffer, i
   snprintf( buffer, len, "<H1>TEST</H1>%d hits", WebServer->hits );
   SocketWrite( socket, buffer, strlen( buffer ) );
   WebServer_WriteBodyEnd( socket );
+  return true;
 }
   \endcode
 	@param address An string specify the addresses to match.
@@ -327,6 +328,7 @@ int TestHandler( char* requestType, char* address, void* socket, char* buffer, i
   snprintf( buffer, len, "<H1>TEST</H1>%d hits", WebServer->hits );
   SocketWrite( socket, buffer, strlen( buffer ) );
   WebServer_WriteBodyEnd( socket );
+  return true;
 }
 
 void WebServer_OldSchool( char* address, void *requestSocket, char* buffer, int len );
