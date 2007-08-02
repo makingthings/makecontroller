@@ -42,7 +42,16 @@ void WebServer_Start( void );
 void WebServer_Stop( void );
 int  WebServer_Running( void );
 
-int WebServer_Route( char* address, int (*handler)( char* requestType, char* address, void* socket )  );
+int WebServer_Route( char* address, int (*handler)( char* requestType, char* address, void* socket, char* buffer, int len )  );
+
+// HTTP Helpers
+void WebServer_WriteResponseOkHTML( void* socket, char* buffer, int len );
+void WebServer_WriteResponseOkPlain( void* socket, char* buffer, int len );
+
+// HTML Helpers
+void WebServer_WriteHeader( int includeCSS, void* socket, char* buffer, int len );
+void WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, int len );
+void WebServer_WriteBodyEnd( void* socket, char* buffer, int len );
 
 #endif  // BASIC_WEB_SERVER_H
 

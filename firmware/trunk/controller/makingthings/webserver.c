@@ -58,44 +58,27 @@
 /* Standard includes. */
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "network.h"
 
 #define HANDLERS_MAX        5
-#define REQUEST_SIZE_MAX	100
-#define RESPONSE_SIZE_MAX	1548
-#define HTTP_OK	"HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n"
+#define REQUEST_SIZE_MAX	256
+#define RESPONSE_SIZE_MAX	1000
+#define HTTP_OK	"HTTP/1.0 200 OK\r\nContent-type: "
+#define HTTP_CONTENT_HTML "text/html\r\n\r\n"
+#define HTTP_CONTENT_PLAIN "text/plain\r\n\r\n"
 #define HTTP_PORT		( 80 )
 
-#define HTML_START_RELOAD( what ) \
-"<html>\
-<head>\
-<style type=\"text/css\">\
-<!--\
-body {\
-	font-family: Arial, Helvetica, sans-serif;\
-} \
-h1 { \
-	font-family: Arial, Helvetica, sans-serif; \
-	font-weight: bold; \
-}\
--->\
-</style>\
-</head>\
-<BODY onLoad=\"window.setTimeout(&quot;location.href='" what "'&quot;,1000)\"bgcolor=\"#eeeeee\">\
-<br>Make Magazine - MakingThings<br><h1>MAKE Controller Kit</h1>Page Hits "
-
-#define HTML_END \
-"\r\n</pre>\
-\r\n</BODY>\
-</html>"
+#define HTML_OS_START \
+"<BR>Make Magazine - MakingThings<BR><H1>MAKE Controller Kit</H1>Page Hits "
 
 void WebServerTask( void *p );
 
 typedef struct WebServerHandlerS
 {
   char* address;
-  int (*handler)( char* requestType, char* address, void* socket ); 
+  int (*handler)( char* requestType, char* address, void* socket, char* buffer, int len ); 
 } WebServerHandler;
 
 typedef struct WebServerHandlersS
@@ -135,11 +118,11 @@ WebServer_* WebServer = NULL;
  * connection. 
  */
 
-void WebServer_OldSchool( void *requestSocket, char* address );
+void WebServer_OldSchool( char* address, void *requestSocket, char* buffer, int len );
 void WebServer_ProcessRequest( void* requestSocket );
 char* WebServer_GetRequestAddress( char* request, int length, char** requestType );
 
-int WebServer_Route( char* address, int (*handler)( char* requestType, char* address, void* socket )  )
+int WebServer_Route( char* address, int (*handler)( char* requestType, char* address, void* socket, char* buffer, int len )  )
 {
   if ( WebServerHandlers == NULL )
   {
@@ -173,8 +156,6 @@ void WebServer_ProcessRequest( void* requestSocket )
   SocketRead( requestSocket, WebServer->request, REQUEST_SIZE_MAX ); 
   address = WebServer_GetRequestAddress( WebServer->request, REQUEST_SIZE_MAX, &requestType );
 
-  SocketWrite( requestSocket, HTTP_OK, strlen( HTTP_OK ) );
-
   responded = false;
   if ( WebServerHandlers != NULL )
   {
@@ -183,7 +164,7 @@ void WebServer_ProcessRequest( void* requestSocket )
       WebServerHandler* hp = &WebServerHandlers->handlers[ i ];
       if ( strncmp( hp->address, address, strlen( hp->address ) ) == 0 )
       {
-        responded = (*hp->handler)( requestType, address, requestSocket );
+        responded = (*hp->handler)( requestType, address, requestSocket, WebServer->response, RESPONSE_SIZE_MAX );
         if ( responded )
           break;
       }
@@ -192,38 +173,43 @@ void WebServer_ProcessRequest( void* requestSocket )
 
   if( !responded ) 
   {
-    WebServer_OldSchool( requestSocket, address ); 
+    WebServer_OldSchool( address, requestSocket, WebServer->response, RESPONSE_SIZE_MAX ); 
   }
 
   SocketClose( requestSocket );
 }
 
-void WebServer_OldSchool( void *requestSocket, char* address )
+void WebServer_OldSchool( char* address, void *requestSocket, char* buffer, int len )
 {
   (void)address;
   char temp[ 100 ];
   #ifdef AUTOCHECK
-  memset( temp, 0, 100 );
+  memset( temp, 0, 50 );
   #endif
 
+  WebServer_WriteResponseOkHTML( requestSocket, buffer, len );
+
+  WebServer_WriteHeader( true, requestSocket, buffer, len );
+  WebServer_WriteBodyStart( address, requestSocket, buffer, len );
+
   // Generate the dynamic page...
-  strcpy( WebServer->response, HTML_START_RELOAD( "/" ) );  // ... First the page header.
+  strcpy( buffer, HTML_OS_START );  // ... First the page header.
   // ... Then the hit count...
   snprintf( temp, 100, "%d", WebServer->hits );
-  strcat( WebServer->response, temp );
-  strcat( WebServer->response, "<p>Version: " );
+  strcat( buffer, temp );
+  strcat( buffer, "<p>Version: " );
   snprintf( temp, 100, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER ); 
-  strcat( WebServer->response, temp );
-  strcat( WebServer->response, "<p>Free Memory " );
+  strcat( buffer, temp );
+  strcat( buffer, "<p>Free Memory " );
   sprintf( temp, "%d", System_GetFreeMemory() ); 
-  strcat( WebServer->response, temp );
-  strcat( WebServer->response, "</p>" );
-  strcat( WebServer->response, "<p>Tasks Currently Running" );
-  strcat( WebServer->response, "<p><pre>Task          State  Priority  StackRem	#<br>-------------------------------------------" );
+  strcat( buffer, temp );
+  strcat( buffer, "</p>" );
+  strcat( buffer, "<p>Tasks Currently Running" );
+  strcat( buffer, "<p><pre>Task          State  Priority  StackRem	#<br>-------------------------------------------" );
   // ... Then the list of tasks and their status... 
-  vTaskList( (signed portCHAR*)WebServer->response + strlen( WebServer->response ) );	
+  vTaskList( (signed portCHAR*)buffer + strlen( buffer ) );	
   int i;
-  strcat( WebServer->response, "<p><pre>Analog Inputs<br>--------------<br>" );
+  strcat( buffer, "<p><pre>Analog Inputs<br>--------------<br>" );
   
   for ( i = 0; i < 8; i++ )
   {
@@ -232,15 +218,14 @@ void WebServer_OldSchool( void *requestSocket, char* address )
     memset( b, 0, 20 );
     #endif
     snprintf( b, 20, "%d: %d<br>", i, AnalogIn_GetValue( i ) );
-    strcat( WebServer->response, b );
+    strcat( buffer, b );
   }
-  strcat( WebServer->response, "</pre>" );
+  strcat( buffer, "</pre>" );
   
-  // ... Finally the page footer.
-  strcat( WebServer->response, HTML_END );
   // Write out the dynamically generated page.
+  SocketWrite( requestSocket, buffer, strlen( buffer ) );
   
-  SocketWrite( requestSocket, WebServer->response, strlen( WebServer->response ) );
+  WebServer_WriteBodyEnd( requestSocket, buffer, len );
 }
 
 void WebServer_Start( )
@@ -311,6 +296,74 @@ void WebServerTask( void *p )
 	}
 }
 
+static void WebServer_WriteResponseOk_( char* content, void* socket, char* buffer, int len );
+
+void WebServer_WriteResponseOkHTML( void* socket, char* buffer, int len )
+{
+  WebServer_WriteResponseOk_( socket, HTTP_CONTENT_HTML, buffer, len );
+}
+  
+void WebServer_WriteResponseOkPlain( void* socket, char* buffer, int len )
+{
+  WebServer_WriteResponseOk_( socket, HTTP_CONTENT_PLAIN, buffer, len );
+}
+
+static void WebServer_WriteResponseOk_( char* contentType, void* socket, char* buffer, int len )
+{
+  (void)buffer;
+  (void)len;
+  SocketWrite( socket, HTTP_OK, strlen( HTTP_OK ) );
+  SocketWrite( socket, contentType, strlen( contentType ) );
+}
+
+void WebServer_WriteHeader( int includeCSS, void* socket, char* buffer, int len )
+{
+  (void)buffer;
+  (void)len;
+  char* headerStart = "<HTML>\r\n<HEAD>";
+  char* headerEnd = "\r\n</HEAD>";
+  char* style = "\r\n<STYLE type=\"text/css\"><!--\
+body { font-family: Arial, Helvetica, sans-serif; } \
+h1 { font-family: Arial, Helvetica, sans-serif; font-weight: bold; }\
+--></STYLE>";
+
+  strcpy( buffer, headerStart );
+  if ( includeCSS )
+    strcat( buffer, style );
+  strcat( buffer, headerEnd );
+  SocketWrite( socket, buffer, strlen( buffer ) );
+}
+
+void WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, int len )
+{
+  (void)buffer;
+  (void)len;
+  char* bodyStart = "\r\n<BODY";
+  char* bodyEnd = " bgcolor=\"#eeeeee\">\r\n";
+
+  char* reloadStart = " onLoad=\"window.setTimeout(&quot;location.href='";
+  char* reloadEnd = "'&quot;,1000)\"";
+  strcpy( buffer, bodyStart );
+  if ( reloadAddress )
+  {
+    strcat( buffer, reloadStart  );
+    strcat( buffer, reloadAddress  );
+    strcat( buffer, reloadEnd  );
+  }
+  strcat( buffer, bodyEnd  );
+  SocketWrite( socket, buffer, strlen( buffer ) );
+}
+
+void WebServer_WriteBodyEnd( void* socket, char* buffer, int len )
+{
+  (void)buffer;
+  (void)len;
+  char* bodyEnd = "\r\n</BODY>\r\n</HTML>";
+
+  SocketWrite( socket, bodyEnd, strlen( bodyEnd ) );
+}
+
+
 char* WebServer_GetRequestAddress( char* request, int length, char** requestType  )
 {
   char *last = request + length;
@@ -340,7 +393,15 @@ char* WebServer_GetRequestAddress( char* request, int length, char** requestType
   if ( request > last )
     return address;
 
-  return request;
+  address = request;
+
+  while( !isspace( *request ) )
+    request++;
+  
+  if ( request < last )
+    *request = 0;
+
+  return address;
 }
 
 #endif
