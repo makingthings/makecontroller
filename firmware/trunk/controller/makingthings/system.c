@@ -362,7 +362,7 @@ void StackAuditTask( void* p )
 static char* SystemOsc_Name = "system";
 static char* SystemOsc_PropertyNames[] = { "active", "freememory", "samba", "reset", 
                                             "serialnumber", "version",
-                                            "name", "info", "stack-audit", 0 }; // must have a trailing 0
+                                            "name", "info-internal", "info", "stack-audit", 0 }; // must have a trailing 0
 
 int SystemOsc_PropertySet( int property, char* typedata, int channel );
 int SystemOsc_PropertyGet( int property, int channel );
@@ -446,7 +446,7 @@ int SystemOsc_PropertySet( int property, char* typedata, int channel )
       System_SetName( address );
       break;
     }
-    case 8: // stack-audit
+    case 9: // stack-audit
     {
       int value;
       int count = Osc_ExtractData( typedata, "i", &value );
@@ -500,25 +500,49 @@ int SystemOsc_PropertyGet( int property, int channel )
       Osc_CreateMessage( channel, address, ",s", name ); 
       break;
     }
-    case 7: // info
+    case 7: // info-internal
+    case 8: // info
     {
-      char* name;
-      char addr[50];
+      char ipAddr[25];
+      char gateway[25];
+      char mask[25];
       int a0, a1, a2, a3;
-      name = System_GetName( );
-      value = System_GetSerialNumber( );
+      int g0, g1, g2, g3;
+      int m0, m1, m2, m3;
+      char* sysName = System_GetName( );
+      int serialnum = System_GetSerialNumber( );
+      int oscUdpListen = NetworkOsc_GetUdpListenPort( );
+      int oscUdpSend = NetworkOsc_GetUdpSendPort( );
+      char sysVersion[50];
+      snprintf( sysVersion, 50, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER );
+      int freemem = System_GetFreeMemory( );
+      int dhcp;
+      int webserver;
       #ifdef MAKE_CTRL_NETWORK
       if( Network_GetAddress( &a0, &a1, &a2, &a3 ) != CONTROLLER_OK )
         a0 = a1 = a2 = a3 = -1;
+      if( Network_GetGateway( &g0, &g1, &g2, &g3 ) != CONTROLLER_OK )
+        g0 = g1 = g2 = g3 = -1;
+      if( Network_GetMask( &m0, &m1, &m2, &m3 ) != CONTROLLER_OK )
+        m0 = m1 = m2 = m3 = -1;
+      dhcp = Network_GetDhcpEnabled( );
+      webserver = Network_GetWebServerEnabled( );
       #else
       a0 = a1 = a2 = a3 = -1;
+      g0 = g1 = g2 = g3 = -1;
+      m0 = m1 = m2 = m3 = -1;
+      dhcp = 0;
+      webserver = 0;
       #endif // MAKE_CTRL_NETWORK
-      snprintf( addr, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
+      snprintf( ipAddr, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
+      snprintf( gateway, 25, "%d.%d.%d.%d", g0, g1, g2, g3 );
+      snprintf( mask, 25, "%d.%d.%d.%d", m0, m1, m2, m3 );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",sis", name, value, addr );
+      Osc_CreateMessage( channel, address, ",sissiiissii", sysName, serialnum, ipAddr, sysVersion, 
+                                                          freemem, dhcp, webserver, gateway, mask, oscUdpListen, oscUdpSend );
       break;
     }
-    case 8: // stack-audit
+    case 9: // stack-audit
       if( System->StackAuditPtr == NULL )
         value = 0;
       else
