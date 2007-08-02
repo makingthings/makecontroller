@@ -208,7 +208,7 @@ void Osc_SetActive( int state )
     Osc->TcpTaskPtr = NULL;
     #endif
     #ifdef MAKE_CTRL_USB
-    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 800, (void*)OSC_CHANNEL_USB, 3 );
+    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1000, (void*)OSC_CHANNEL_USB, 3 );
     #endif
 
     vSemaphoreCreateBinary( Osc->scratch1Semaphore );
