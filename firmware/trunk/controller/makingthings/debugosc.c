@@ -406,7 +406,7 @@ int DebugOsc_PropertySet( int property, int value )
 // Get the index LED, property
 int DebugOsc_PropertyGet( int property )
 {
-  int value;
+  int value = 0;
   switch ( property )
   {
     case 0:
