@@ -200,6 +200,7 @@ void WebServer_ProcessRequest( void* requestSocket )
 
 void WebServer_OldSchool( void *requestSocket, char* address )
 {
+  (void)address;
   char temp[ 100 ];
   #ifdef AUTOCHECK
   memset( temp, 0, 100 );
@@ -252,9 +253,12 @@ void WebServer_Start( )
     WebServer->hits = 0;
     WebServer->serverSocket = NULL;
     WebServer->requestSocket = NULL;
-    WebServer->serverTask = TaskCreate( WebServerTask, "WebServ", 600, NULL, 4 );
+    WebServer->serverTask = TaskCreate( WebServerTask, "WebServ", 800, NULL, 4 );
     if ( WebServer->serverTask == NULL )
+    {
       Free( WebServer );
+      WebServer = NULL;
+    }
   }
 }
 
@@ -262,8 +266,10 @@ void WebServer_Stop( )
 {
   if( WebServer != NULL )
   {
-    TaskDelete( WebServer->serverTask );
-    ServerSocketClose( WebServer->serverSocket );
+    if ( WebServer->serverTask != NULL )
+      TaskDelete( WebServer->serverTask );
+    if ( WebServer->serverSocket != NULL )
+      ServerSocketClose( WebServer->serverSocket );
     if ( WebServer->requestSocket != NULL )
       SocketClose( WebServer->requestSocket );
 
@@ -279,6 +285,8 @@ int  WebServer_Running( void )
 
 void WebServerTask( void *p )
 {
+  (void)p;
+
   // Try to create a socket on the appropriate port
   while ( WebServer->serverSocket == NULL )
   { 
