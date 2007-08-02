@@ -35,8 +35,6 @@
 #define ESC             0333    // indicates byte stuffing 
 #define ESC_END         0334    // ESC ESC_END means END data byte 
 #define ESC_ESC         0335    // ESC ESC_ESC means ESC data byte
-#define MAX_INCOMING_SLIP_PACKET 400
-#define MAX_OUTGOING_SLIP_PACKET 600
 
 extern xQueueHandle xTxCDC; 
 extern xQueueHandle xRxCDC; 
@@ -51,7 +49,7 @@ int Usb_Running;
 
 void vUSBCDCTask( void *pvParameters );
 int TestAndSend(xBULKBUFFER *pq, char newByte);
-char *Usb_slipSendBuffer;
+Usb_* Usb = NULL;
 
 /** \defgroup USB USB
 	The USB subsystem provides access to USB Virtual Serial Port (CDC) functionality.  
@@ -83,9 +81,9 @@ int Usb_SetActive( int state )
     {
       // Create the USB task.
       
-      while( Usb_slipSendBuffer == NULL )
+      while( Usb == NULL )
       {
-        Usb_slipSendBuffer = Malloc( MAX_OUTGOING_SLIP_PACKET );
+        Usb = Malloc( sizeof( Usb_ ) );
         Sleep( 10 );
       }
       
@@ -204,7 +202,7 @@ int Usb_SlipSend( char* buffer, int length )
   if( length > MAX_OUTGOING_SLIP_PACKET )
     return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
 
-  char *obp = Usb_slipSendBuffer, *bp = buffer;
+  char *obp = Usb->slipSendBuffer, *bp = buffer;
   int count = length;
 
   *obp++ = (char)END;
@@ -233,8 +231,8 @@ int Usb_SlipSend( char* buffer, int length )
   }
   
   *obp++ = END; // tell the receiver that we're done sending the packet
-  int sendLength = obp - Usb_slipSendBuffer;
-  Usb_Write( Usb_slipSendBuffer, sendLength );
+  int sendLength = obp - Usb->slipSendBuffer;
+  Usb_Write( Usb->slipSendBuffer, sendLength );
   
   return CONTROLLER_OK;
 }
@@ -253,8 +251,11 @@ int Usb_SlipSend( char* buffer, int length )
 */
 int Usb_SlipReceive( char* buffer, int length )
 {
+  if( length > MAX_INCOMING_SLIP_PACKET )
+    return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
+
   int started = 0, finished = 0, count = 0, i;
-  static char parseBuf[MAX_INCOMING_SLIP_PACKET], *pbp = parseBuf;
+  char *pbp = Usb->slipReadBuffer;
   static int bufRemaining = 0;
   char *bp = buffer;
 
@@ -262,8 +263,8 @@ int Usb_SlipReceive( char* buffer, int length )
   {
     if( !bufRemaining ) // if there's nothing left over from last time, get more
     {
-      bufRemaining = Usb_Read( parseBuf, MAX_INCOMING_SLIP_PACKET );
-      pbp = parseBuf;
+      bufRemaining = Usb_Read( Usb->slipReadBuffer, MAX_INCOMING_SLIP_PACKET );
+      pbp = Usb->slipReadBuffer;
     }
 
     for( i = 0; i < bufRemaining; i++ )

@@ -25,6 +25,15 @@
 
 #include "config.h"
 
+#define MAX_INCOMING_SLIP_PACKET 400
+#define MAX_OUTGOING_SLIP_PACKET 600
+
+typedef struct
+{
+  char slipSendBuffer[ MAX_OUTGOING_SLIP_PACKET ];
+  char slipReadBuffer[ MAX_INCOMING_SLIP_PACKET ];
+} Usb_;
+
 int Usb_SetActive( int state );
 int Usb_GetActive( void );
 
