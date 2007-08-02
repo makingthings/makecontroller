@@ -19,9 +19,7 @@
 #include <QMutexLocker> 
 
 #ifdef Q_WS_WIN
-#define _WIN32_WINDOWS 0x0501 // 0x0501 == WindowsXP...define this for MinGW
 #include <dbt.h>
-
 #endif 
 
 UsbSerial::UsbSerial( )

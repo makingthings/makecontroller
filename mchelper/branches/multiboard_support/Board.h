@@ -44,7 +44,7 @@ class Board : public QListWidgetItem, public PacketReadyInterface
     void sendMessage( QString rawMessage );
     bool setBinFileName( char* filename );
     void flash( );
-    QString typeString( );
+    QString locationString( );
     
     QString key, location; 
     Board::Types type;
@@ -53,7 +53,7 @@ class Board : public QListWidgetItem, public PacketReadyInterface
     QString name, serialNumber, firmwareVersion, freeMemory;
     
     // Network properties
-    QString ip_address, netMask, gateway, mac;
+    QString ip_address, netMask, gateway, udp_listen_port, udp_send_port;
     bool dhcp, webserver;
 
   private:

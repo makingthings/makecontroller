@@ -23,12 +23,12 @@
 class MessageInterface
 {		
     public:
-        virtual void message( int level, char* format, ... ) = 0;
         virtual void message( QString string ) = 0;
         
         virtual void messageThreadSafe( QString string ) = 0;
         virtual void messageThreadSafe( QString string, MessageEvent::Types type ) = 0;
         virtual void messageThreadSafe( QString string, MessageEvent::Types type, QString from ) = 0;
+        virtual void messageThreadSafe( QStringList strings, MessageEvent::Types type, QString from ) = 0;
         virtual void progress( int value ) = 0;
 		virtual ~MessageInterface( ) {}
         

@@ -23,7 +23,7 @@
 
 QString OscMessage::toString( )
 {
-	QString ret = QString( "%1" ).arg(address);
+	QString ret = QString( address );
 	int j;
 	for( j = 0; j < data.size( ); j++ )
 	{

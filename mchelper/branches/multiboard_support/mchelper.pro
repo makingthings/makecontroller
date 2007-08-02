@@ -82,6 +82,7 @@ win32{
   message("This project is being built on Windows.")
   LIBS += -lSetupapi
   RC_FILE = mchelper.rc # for application icon
+  DEFINES += WINVER=0x0501
   
   # If in debug mode, let's show the output of any
   # q[Debug|Warning|Critical|Fatal]() calls to the console
