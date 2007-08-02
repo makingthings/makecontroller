@@ -93,7 +93,7 @@
 
 #define OSC_CHANNEL_COUNT    3
 #define OSC_MAX_MESSAGE_IN   200
-#define OSC_MAX_MESSAGE_OUT  400
+#define OSC_MAX_MESSAGE_OUT  600
 
 typedef struct OscChannel_
 {
@@ -204,11 +204,11 @@ void Osc_SetActive( int state )
       Osc->subsystem[ i ] = NULL;
 
     #ifdef MAKE_CTRL_NETWORK
-    Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 800, (void*)OSC_CHANNEL_UDP, 3 );
+    Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 1000, (void*)OSC_CHANNEL_UDP, 3 );
     Osc->TcpTaskPtr = NULL;
     #endif
     #ifdef MAKE_CTRL_USB
-    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1000, (void*)OSC_CHANNEL_USB, 3 );
+    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 800, (void*)OSC_CHANNEL_USB, 3 );
     #endif
 
     vSemaphoreCreateBinary( Osc->scratch1Semaphore );
@@ -265,7 +265,7 @@ void Osc_UdpTask( void* parameters )
   }
   OscChannel *ch = Osc->channel[ channel ];
   ch->running = false;
-  Osc_SetReplyPort( channel, 10000 );
+  Osc_SetReplyPort( channel, NetworkOsc_GetUdpSendPort() );
   ch->sendMessage = Osc_UdpPacketSend;
   Osc_ResetChannel( ch );
 
@@ -274,14 +274,14 @@ void Osc_UdpTask( void* parameters )
     Sleep( 100 );
 
   ch->running = true;
-  void* ds = DatagramSocket( NetworkOsc_GetUdpPort() );
+  void* ds = DatagramSocket( NetworkOsc_GetUdpListenPort() );
   Osc->sendSocket = DatagramSocket( 0 );
 
   while ( true )
   {
     int address;
     int port;
-    int length = DatagramSocketReceive( ds, NetworkOsc_GetUdpPort(), &address, &port, ch->incoming, OSC_MAX_MESSAGE_IN );
+    int length = DatagramSocketReceive( ds, NetworkOsc_GetUdpListenPort(), &address, &port, ch->incoming, OSC_MAX_MESSAGE_IN );
     if( length > 0 )
     {
       Osc_SetReplyAddress( channel, address );
@@ -1060,7 +1060,7 @@ int Osc_IndexIntReceiverHelper( int channel, char* message, int length,
   // from the property.  Note that this won't go off on a search through the buffer
   // since there will soon be a string terminator (i.e. a 0)
   char* prop = strchr( message, '/' );
-  char* propHelp;
+  char* propHelp = NULL;
   if ( prop == NULL )
     propHelp = message + strlen(message);
 

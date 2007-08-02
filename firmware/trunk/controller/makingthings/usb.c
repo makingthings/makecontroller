@@ -36,6 +36,7 @@
 #define ESC_END         0334    // ESC ESC_END means END data byte 
 #define ESC_ESC         0335    // ESC ESC_ESC means ESC data byte
 #define MAX_INCOMING_SLIP_PACKET 400
+#define MAX_OUTGOING_SLIP_PACKET 600
 
 extern xQueueHandle xTxCDC; 
 extern xQueueHandle xRxCDC; 
@@ -50,6 +51,7 @@ int Usb_Running;
 
 void vUSBCDCTask( void *pvParameters );
 int TestAndSend(xBULKBUFFER *pq, char newByte);
+char *Usb_slipSendBuffer;
 
 /** \defgroup USB USB
 	The USB subsystem provides access to USB Virtual Serial Port (CDC) functionality.  
@@ -80,6 +82,13 @@ int Usb_SetActive( int state )
     if ( Usb_Users++ == 0 )
     {
       // Create the USB task.
+      
+      while( Usb_slipSendBuffer == NULL )
+      {
+        Usb_slipSendBuffer = Malloc( MAX_OUTGOING_SLIP_PACKET );
+        Sleep( 10 );
+      }
+      
       TaskCreate(  vUSBCDCTask, "USB", mainUSB_TASK_STACK, NULL, mainUSB_PRIORITY );
 
       while ( !Usb_Running )
@@ -192,8 +201,10 @@ int Usb_Write( char* buffer, int length )
 */
 int Usb_SlipSend( char* buffer, int length )
 {
-  char outgoingBuf[ length * 2 ];
-  char *obp = outgoingBuf, *bp = buffer;
+  if( length > MAX_OUTGOING_SLIP_PACKET )
+    return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
+
+  char *obp = Usb_slipSendBuffer, *bp = buffer;
   int count = length;
 
   *obp++ = (char)END;
@@ -222,8 +233,8 @@ int Usb_SlipSend( char* buffer, int length )
   }
   
   *obp++ = END; // tell the receiver that we're done sending the packet
-  int sendLength = obp - outgoingBuf;
-  Usb_Write( outgoingBuf, sendLength );
+  int sendLength = obp - Usb_slipSendBuffer;
+  Usb_Write( Usb_slipSendBuffer, sendLength );
   
   return CONTROLLER_OK;
 }
@@ -349,7 +360,7 @@ int UsbOsc_PropertySet( int property, int value )
 // Get the index Usb, property
 int UsbOsc_PropertyGet( int property )
 {
-  int value;
+  int value = 0;
   switch ( property )
   {
     case 0:

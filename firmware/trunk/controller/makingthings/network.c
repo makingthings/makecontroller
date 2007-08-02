@@ -368,6 +368,8 @@ void* DatagramSocket( int port )
   struct netconn *conn;
 
   conn = netconn_new( NETCONN_UDP );
+  if( conn == NULL || conn->err != ERR_OK )
+    return NULL;
   // This is our addition to the conn structure to help with reading
   conn->readingbuf = NULL;
 
@@ -549,7 +551,8 @@ int Network_SetActive( int state )
         Eeprom_Read( EEPROM_SYSTEM_NET_MASK, (uchar*)&Network->TempMask, 4 );
       }
 
-      Network->OscUdpPort = NetworkOsc_GetUdpPort( );
+      Network->OscUdpListenPort = NetworkOsc_GetUdpListenPort( );
+      Network->OscUdpSendPort = NetworkOsc_GetUdpSendPort( );
       Eeprom_Read( EEPROM_TCP_OUT_ADDRESS, (uchar*)&Network->TcpOutAddress, 4 );
       Eeprom_Read( EEPROM_TCP_OUT_PORT, (uchar*)&Network->TcpOutPort, 4 );
       Network_Init();
@@ -1046,19 +1049,39 @@ int NetworkOsc_GetTcpOutPort( )
   return Network->TcpOutPort;
 }
 
-void NetworkOsc_SetUdpPort( int port )
+void NetworkOsc_SetUdpListenPort( int port )
 {
-  if( port != Network->OscUdpPort ) // only change things if it's a new value
+  if( port != Network->OscUdpListenPort ) // only change things if it's a new value
   {
-    Network->OscUdpPort = port;
-    Eeprom_Write( EEPROM_OSC_UDP_PORT, (uchar*)&port, 4 );
+    Network->OscUdpListenPort = port;
+    Eeprom_Write( EEPROM_OSC_UDP_LISTEN_PORT, (uchar*)&port, 4 );
   }
 }
 
-int NetworkOsc_GetUdpPort(  )
+int NetworkOsc_GetUdpListenPort(  )
 {
   int port;
-  Eeprom_Read( EEPROM_OSC_UDP_PORT, (uchar*)&port, 4 );
+  Eeprom_Read( EEPROM_OSC_UDP_LISTEN_PORT, (uchar*)&port, 4 );
+  
+  if( port > 0 && port < 65536 )
+    return port;
+  else
+    return 10000;
+}
+
+void NetworkOsc_SetUdpSendPort( int port )
+{
+  if( port != Network->OscUdpSendPort ) // only change things if it's a new value
+  {
+    Network->OscUdpSendPort = port;
+    Eeprom_Write( EEPROM_OSC_UDP_SEND_PORT, (uchar*)&port, 4 );
+  }
+}
+
+int NetworkOsc_GetUdpSendPort(  )
+{
+  int port;
+  Eeprom_Read( EEPROM_OSC_UDP_SEND_PORT, (uchar*)&port, 4 );
   
   if( port > 0 && port < 65536 )
     return port;
@@ -1342,8 +1365,9 @@ int NetworkOsc_GetTcpRequested( )
 #include "osc.h"
 static char* NetworkOsc_Name = "network";
 static char* NetworkOsc_PropertyNames[] = { "active", "address", "mask", "gateway", "valid", "mac", 
-                                              "osc_udp_port", "osc_tcpout_address", "osc_tcpout_port", 
-                                              "osc_tcpout_connect", "osc_tcpout_auto", "dhcp", "webserver", 0 }; // must have a trailing 0
+                                              "osc_udp_listen_port", "osc_tcpout_address", "osc_tcpout_port", 
+                                              "osc_tcpout_connect", "osc_tcpout_auto", "dhcp", 
+                                              "webserver", "find", "osc_udp_send_port", 0 }; // must have a trailing 0
 
 int NetworkOsc_PropertySet( int property, char* typedata, int channel );
 int NetworkOsc_PropertyGet( int property, int channel );
@@ -1450,14 +1474,14 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
     {
       return Osc_SubsystemError( channel, NetworkOsc_Name, "MAC is read only." );
     }
-    case 6: // osc_udp_port
+    case 6: // osc_udp_listen_port
     {
       int value;
       int count = Osc_ExtractData( typedata, "i", &value );
       if ( count != 1 )
         return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
 
-      NetworkOsc_SetUdpPort( value );
+      NetworkOsc_SetUdpListenPort( value );
       break;
     }
     case 7: // osc_tcpout_address
@@ -1531,6 +1555,16 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
       Network_SetWebServerEnabled( value );
       break;
     }
+    case 14: // osc_udp_send_port
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
+
+      NetworkOsc_SetUdpSendPort( value );
+      break;
+    }
   }
   return CONTROLLER_OK;
 }
@@ -1586,8 +1620,8 @@ int NetworkOsc_PropertyGet( int property, int channel )
                 emacETHADDR0, emacETHADDR1, emacETHADDR2, emacETHADDR3, emacETHADDR4, emacETHADDR5 );
       Osc_CreateMessage( channel, address, ",s", output );      
       break;
-    case 6: // osc_udp_port
-      value = NetworkOsc_GetUdpPort( );
+    case 6: // osc_udp_listen_port
+      value = NetworkOsc_GetUdpListenPort( );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       Osc_CreateMessage( channel, address, ",i", value );      
       break;
@@ -1626,6 +1660,21 @@ int NetworkOsc_PropertyGet( int property, int channel )
       value = Network_GetWebServerEnabled( );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       Osc_CreateMessage( channel, address, ",i", value );      
+      break;
+    case 13: // find
+      if ( Network_GetAddress( &a0, &a1, &a2, &a3 ) == CONTROLLER_ERROR_NO_NETWORK )
+        return Osc_SubsystemError( channel, NetworkOsc_Name, "No network address available - try plugging in an Ethernet cable." );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
+      int listen = NetworkOsc_GetUdpListenPort( );
+      int send = NetworkOsc_GetUdpSendPort( );
+      char* sysName = System_GetName( );
+      Osc_CreateMessage( channel, address, ",siis", output, listen, send, sysName );      
+      break;
+    case 14: // osc_udp_send_port
+      value = NetworkOsc_GetUdpSendPort( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );         
       break;
   }
   

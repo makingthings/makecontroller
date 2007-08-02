@@ -44,7 +44,8 @@ struct Network_
   int TempIpAddress; // hold onto the values that will ultimately get set for the network
   int TempGateway; // once it's all set as valid
   int TempMask;
-  int OscUdpPort;
+  int OscUdpListenPort;
+  int OscUdpSendPort;
   int TcpOutAddress;
   int TcpOutPort;
   bool TcpRequested;
@@ -99,8 +100,10 @@ void Network_StopWebServer( void );
 const char* NetworkOsc_GetName( void );
 int NetworkOsc_ReceiveMessage( int channel, char* message, int length );
 int NetworkOsc_Poll( void );
-void NetworkOsc_SetUdpPort( int port );
-int NetworkOsc_GetUdpPort( void );
+void NetworkOsc_SetUdpListenPort( int port );
+int NetworkOsc_GetUdpListenPort( void );
+void NetworkOsc_SetUdpSendPort( int port );
+int NetworkOsc_GetUdpSendPort( void );
 void NetworkOsc_SetTcpOutAddress( int a0, int a1, int a2, int a3 );
 int NetworkOsc_GetTcpOutAddress( void );
 int NetworkOsc_GetTcpOutPort( void );
