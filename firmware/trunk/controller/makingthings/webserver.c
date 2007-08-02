@@ -61,6 +61,7 @@
 
 #include "network.h"
 
+#define HANDLERS_MAX        5
 #define REQUEST_SIZE_MAX	100
 #define RESPONSE_SIZE_MAX	1548
 #define HTTP_OK	"HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n"
@@ -73,12 +74,16 @@
 <!--\
 body {\
 	font-family: Arial, Helvetica, sans-serif;\
+} \
+h1 { \
+	font-family: Arial, Helvetica, sans-serif; \
+	font-weight: bold; \
 }\
 -->\
 </style>\
 </head>\
 <BODY onLoad=\"window.setTimeout(&quot;location.href='" what "'&quot;,1000)\"bgcolor=\"#eeeeee\">\
-<br>Make Magazine - MakingThings<br>MAKE Controller Kit<br><br>Page Hits "
+<br>Make Magazine - MakingThings<br><h1>MAKE Controller Kit</h1>Page Hits "
 
 #define HTML_END \
 "\r\n</pre>\
@@ -86,6 +91,20 @@ body {\
 </html>"
 
 void WebServerTask( void *p );
+
+typedef struct WebServerHandlerS
+{
+  char* address;
+  int (*handler)( char* requestType, char* address, void* socket ); 
+} WebServerHandler;
+
+typedef struct WebServerHandlersS
+{
+  int count;
+  WebServerHandler handlers[ HANDLERS_MAX ];
+} WebServerHandlers_;
+
+WebServerHandlers_* WebServerHandlers = NULL;
 
 typedef struct WebServerS
 {
@@ -103,7 +122,9 @@ WebServer_* WebServer = NULL;
 #include "webserver.h"
 #include "analogin.h"
 #include "system.h"
+
 #include "FreeRTOS.h"
+#include "task.h"
 
 /* 
  * Process an incoming connection on port 80.
@@ -114,27 +135,75 @@ WebServer_* WebServer = NULL;
  * connection. 
  */
 
-void WebServer_OldSchool( void *requestSocket );
+void WebServer_OldSchool( void *requestSocket, char* address );
+void WebServer_ProcessRequest( void* requestSocket );
+char* WebServer_GetRequestAddress( char* request, int length, char** requestType );
+
+int WebServer_Route( char* address, int (*handler)( char* requestType, char* address, void* socket )  )
+{
+  if ( WebServerHandlers == NULL )
+  {
+    WebServerHandlers = Malloc( sizeof( WebServerHandlers_ ) );    
+    if ( WebServerHandlers != NULL )
+      WebServerHandlers->count = 0;
+  }
+  if ( WebServerHandlers != NULL )
+  {
+    if ( WebServerHandlers->count < HANDLERS_MAX )
+    {
+      WebServerHandler* hp = &WebServerHandlers->handlers[ WebServerHandlers->count++ ];
+      hp->address = address;
+      hp->handler = handler;
+      return CONTROLLER_OK;
+    }
+   return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
+  }
+
+  return CONTROLLER_ERROR_NOT_OPEN;
+}
+
 
 void WebServer_ProcessRequest( void* requestSocket )
 {
+  char* requestType = 0;
+  char* address = 0;
+  int i;
+  int responded;
+
   SocketRead( requestSocket, WebServer->request, REQUEST_SIZE_MAX ); 
-  if( !strncmp( WebServer->request, "GET", 3 ) ) 
+  address = WebServer_GetRequestAddress( WebServer->request, REQUEST_SIZE_MAX, &requestType );
+
+  SocketWrite( requestSocket, HTTP_OK, strlen( HTTP_OK ) );
+
+  responded = false;
+  if ( WebServerHandlers != NULL )
   {
-    SocketWrite( requestSocket, HTTP_OK, strlen( HTTP_OK ) );
-    WebServer_OldSchool( requestSocket ); 
+    for ( i = 0; i < WebServerHandlers->count; i++ )
+    {
+      WebServerHandler* hp = &WebServerHandlers->handlers[ i ];
+      if ( strncmp( hp->address, address, strlen( hp->address ) ) == 0 )
+      {
+        responded = (*hp->handler)( requestType, address, requestSocket );
+        if ( responded )
+          break;
+      }
+    }
   }
-  if( !strncmp( WebServer->request, "PUT", 3 ) ) 
+
+  if( !responded ) 
   {
-    SocketWrite( requestSocket, HTTP_OK, strlen( HTTP_OK ) );
-    SocketWrite( requestSocket, "GET: HELLO", 10 );
+    WebServer_OldSchool( requestSocket, address ); 
   }
+
   SocketClose( requestSocket );
 }
 
-void WebServer_OldSchool( void *requestSocket )
+void WebServer_OldSchool( void *requestSocket, char* address )
 {
   char temp[ 100 ];
+  #ifdef AUTOCHECK
+  memset( temp, 0, 100 );
+  #endif
 
   // Generate the dynamic page...
   strcpy( WebServer->response, HTML_START_RELOAD( "/" ) );  // ... First the page header.
@@ -149,7 +218,7 @@ void WebServer_OldSchool( void *requestSocket )
   strcat( WebServer->response, temp );
   strcat( WebServer->response, "</p>" );
   strcat( WebServer->response, "<p>Tasks Currently Running" );
-  strcat( WebServer->response, "<p><pre>Task          State  Priority  Stck Rem	#<br>-------------------------------------------" );
+  strcat( WebServer->response, "<p><pre>Task          State  Priority  StackRem	#<br>-------------------------------------------" );
   // ... Then the list of tasks and their status... 
   vTaskList( (signed portCHAR*)WebServer->response + strlen( WebServer->response ) );	
   int i;
@@ -158,6 +227,9 @@ void WebServer_OldSchool( void *requestSocket )
   for ( i = 0; i < 8; i++ )
   {
     char b[ 20 ];
+    #ifdef AUTOCHECK
+    memset( b, 0, 20 );
+    #endif
     snprintf( b, 20, "%d: %d<br>", i, AnalogIn_GetValue( i ) );
     strcat( WebServer->response, b );
   }
@@ -169,31 +241,6 @@ void WebServer_OldSchool( void *requestSocket )
   
   SocketWrite( requestSocket, WebServer->response, strlen( WebServer->response ) );
 }
-
-
-/*
-  WebServer->RxBuffer = netconn_recv( NetConn ); // We expect to immediately get data.
-
-	if( Server->RxBuffer != NULL )
-	{
-		netbuf_data( Server->RxBuffer, (void*)&Server->RxString, &Server->Length );  // Where is the data?
-	
-		if( !strncmp( Server->RxString, "GET", 3 ) ) // Is this a GET?  We don't handle anything else. 
-		{
-			Server->RxString = Server->DynamicPage;
-			Server->PageHits++; // Update the hit count.
-			sprintf( Server->PageHitsBuf, "%lu", Server->PageHits );
-      netconn_write( NetConn, HTTP_OK, (u16_t)strlen( HTTP_OK ), NETCONN_COPY ); // Write out the HTTP OK header.
-
-		}
- 
-		netbuf_delete( Server->RxBuffer );
-	}
-
-	netconn_close( NetConn );
-*/
-
-
 
 void WebServer_Start( )
 {
@@ -225,6 +272,11 @@ void WebServer_Stop( )
   }
 }
 
+int  WebServer_Running( void )
+{
+  return WebServer != NULL;
+}
+
 void WebServerTask( void *p )
 {
   // Try to create a socket on the appropriate port
@@ -251,4 +303,37 @@ void WebServerTask( void *p )
 	}
 }
 
+char* WebServer_GetRequestAddress( char* request, int length, char** requestType  )
+{
+  char *last = request + length;
+  *requestType = NULL;
+  char* address = NULL;
+
+  // Skip any initial spaces
+  while( *request == ' ' )
+    request++;
+
+  if ( request > last )
+    return address;
+
+  *requestType = request;
+
+  // Skip the request type
+  while ( *request != ' ' )
+    request++;
+
+  if ( request > last )
+    return address;
+
+  // Skip any subsequent spaces
+  while( *request == ' ' )
+    request++;
+
+  if ( request > last )
+    return address;
+
+  return request;
+}
+
 #endif
+
