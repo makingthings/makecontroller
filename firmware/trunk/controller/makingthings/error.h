@@ -57,6 +57,8 @@ Error return values for Make Controller API calls.
 #define CONTROLLER_ERROR_STRING_TOO_LONG            -24
 #define CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE          -25
 #define CONTROLLER_ERROR_WRITE_FAILED               -26
+#define CONTROLLER_ERROR_INSUFFICIENT_MEMORY        -27
+#define CONTROLLER_ERROR_CANT_START_TASK            -28
 
 #define CONTROLLER_ERROR_COUNT_MISMATCH             -100
 #define CONTROLLER_ERROR_START_FAILED               -101
