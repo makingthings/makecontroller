@@ -1094,12 +1094,12 @@ int NetworkOsc_GetUdpSendPort(  )
 
 void Network_StartWebServer( )
 {
-  WebServer_Start( );
+  WebServer_SetActive( 1 );
 }
 
 void Network_StopWebServer( )
 {
-  WebServer_Stop();
+  WebServer_SetActive( 0 );
 }
 
 void Network_DhcpStart( struct netif* netif )
