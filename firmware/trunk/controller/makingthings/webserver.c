@@ -1,56 +1,24 @@
-/*
-	FreeRTOS V4.0.1 - copyright (C) 2003-2006 Richard Barry.
+/*********************************************************************************
 
-	This file is part of the FreeRTOS distribution.
+ Copyright 2006 MakingThings
 
-	FreeRTOS is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
 
-	FreeRTOS is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
 
-	You should have received a copy of the GNU General Public License
-	along with FreeRTOS; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*********************************************************************************/
 
-	A special exception to the GPL can be applied should you wish to distribute
-	a combined work that includes FreeRTOS, without being obliged to provide
-	the source code for any proprietary components.  See the licensing section
-	of http://www.FreeRTOS.org for full details of how and when the exception
-	can be applied.
 
-	***************************************************************************
-	See http://www.FreeRTOS.org for documentation, latest information, license
-	and contact details.  Please ensure to read the configuration and relevant
-	port sections of the online documentation.
-	***************************************************************************
+/** \file webserver.c	
+	Functions for implementing a WebServer on the Make Controller Board.
 */
-
-/*
-	Implements a simplistic WEB server.  Every time a connection is made and
-	data is received a dynamic page that shows the current TCP/IP statistics
-	is generated and returned.  The connection is then closed.
-
-	This file was adapted from a FreeRTOS lwIP slip demo supplied by a third
-	party.
-*/
-
-/*
-	Changes from V3.2.2
-
-	+ Changed the page returned by the lwIP WEB server demo to display the 
-	  task status table rather than the TCP/IP statistics.
-*/
-
-/* MakingThings:  This is a sample file using LWIP and FreeRTOS directly
-  to implement a Web Server. 
-  
-  We have extended it slightly to make it a bit more pretty and to add
-  some additional functions to it */
 
 #include "config.h" // MakingThings.
 #ifdef MAKE_CTRL_NETWORK
@@ -109,19 +77,121 @@ WebServer_* WebServer = NULL;
 #include "FreeRTOS.h"
 #include "task.h"
 
-/* 
- * Process an incoming connection on port 80.
- *
- * This simply checks to see if the incoming data contains a GET request, and
- * if so sends back a single dynamically created page.  The connection is then
- * closed.  A more complete implementation could create a task for each 
- * connection. 
- */
+int TestHandler( char* requestType, char* address, void* socket, char* buffer, int len );
 
-void WebServer_OldSchool( char* address, void *requestSocket, char* buffer, int len );
-void WebServer_ProcessRequest( void* requestSocket );
-char* WebServer_GetRequestAddress( char* request, int length, char** requestType );
+static void WebServer_WriteResponseOk_( char* content, void* socket );
 
+
+/** \defgroup webserver Web Server
+  Main Line (title line)
+
+  Rest of stuff
+
+	\ingroup Controller
+	@{
+*/
+
+/**
+	Set the active state of the WebServer subsystem.  This is automatically set to true
+  by the Network Subsystem as it activates if the /network/webserver property is 
+  set to true.  If there are no specifed handlers at the time of initialization,
+  the default test handler is installed.
+	@param state An integer specifying the active state - 1 (on) or 0 (off).
+	@return CONTROLLER_OK (=0) on success or the appropriate error if not
+*/
+int WebServer_SetActive( int active )
+{
+  if ( active )
+  {
+    if ( WebServer == NULL )
+    {
+      WebServer = Malloc( sizeof( WebServer_ ) );    
+      if ( WebServer == NULL )
+        return CONTROLLER_ERROR_INSUFFICIENT_MEMORY;
+      WebServer->hits = 0;
+      WebServer->serverSocket = NULL;
+      WebServer->requestSocket = NULL;
+      WebServer->serverTask = TaskCreate( WebServerTask, "WebServ", 800, NULL, 4 );
+      if ( WebServer->serverTask == NULL )
+      {
+        Free( WebServer );
+        WebServer = NULL;
+        return CONTROLLER_ERROR_CANT_START_TASK;
+      }
+  
+      // Test the routing system
+      if ( WebServerHandlers == NULL )
+        WebServer_Route( "/test", TestHandler );
+    }
+  }
+  else
+  {
+    if( WebServer != NULL )
+    {
+      if ( WebServer->serverTask != NULL )
+        TaskDelete( WebServer->serverTask );
+      if ( WebServer->serverSocket != NULL )
+        ServerSocketClose( WebServer->serverSocket );
+      if ( WebServer->requestSocket != NULL )
+        SocketClose( WebServer->requestSocket );
+  
+      Free( WebServer );
+      WebServer = NULL;
+    }
+  }
+  return CONTROLLER_OK;
+}
+
+/**
+	Read the active state of the WebServer subsystem.
+	@return State - 1/non-zero (on) or 0 (off).
+*/
+int  WebServer_GetActive( void )
+{
+  return ( WebServer != NULL ) ? 1 : 0;
+}
+
+/**
+	Adds a route handler to the WebServer.
+
+  This function binds an address fragment (e.g. "/", "/adcs", etc.) to a handler
+  that will be called when the address matches.  Matching ignores characters in the 
+  incoming address that are beyond the end of the address specified to this function.
+  The first function to match the address will receive all the traffic and no more 
+  handlers will be checked.  Thus if a handler is set up to match "/images" it will match
+  "/images" and "/images/logo.png" and so on.  Also if there is a subseqent handler 
+  set to match "/images/diagram" it will never be called since the prior handler
+  will match the entire "/images" space.
+
+  The handler will be called with the request type specified (usually "GET" or  "PUT"), 
+  the incoming address ( "/device/0", "/images/logo.png", etc.).  Then there will be 
+  the socket which will take the response and a helpful large buffer or specified length
+  which can be used to build strings.
+
+  The handler itself must first write the response using one of WebServer_WriteResponseOkHTML for
+  sending HTML or WebServer_WriteResponseOkPlain for returning plain text.  
+  These send the appropriate HTTP header (for example "HTTP/1.0 200 OK\r\nContent-type:text/html\r\n\r\n").
+  All responses may be simply written to the Socket, but several helpers are provided to assist in the 
+  construction of simple web pages (for example WebServer_WriteHeader, WebServer_WriteBodyStart, etc.)
+
+  Here is an example handler which is installed when the server is started if there are no handlers already present.
+  \code
+int TestHandler( char* requestType, char* address, void* socket, char* buffer, int len )
+{
+  (void)requestType;
+  (void)address;
+  WebServer_WriteResponseOkHTML( socket );
+  WebServer_WriteHeader( true, socket, buffer, len );
+  WebServer_WriteBodyStart( address, socket, buffer, len );
+  snprintf( buffer, len, "<H1>TEST</H1>%d hits", WebServer->hits );
+  SocketWrite( socket, buffer, strlen( buffer ) );
+  WebServer_WriteBodyEnd( socket );
+}
+  \endcode
+	@param address An string specify the addresses to match.
+	@param handler pointer to a handler function that will be called when the address is matched.
+  @return CONTROLLER_OK (=0) on success or the appropriate error if not
+*/
 int WebServer_Route( char* address, int (*handler)( char* requestType, char* address, void* socket, char* buffer, int len )  )
 {
   if ( WebServerHandlers == NULL )
@@ -145,6 +215,111 @@ int WebServer_Route( char* address, int (*handler)( char* requestType, char* add
   return CONTROLLER_ERROR_NOT_OPEN;
 }
 
+
+/**
+	Writes the HTTP OK message and sets the content type to HTML.
+	@param socket The socket to write to
+*/
+void WebServer_WriteResponseOkHTML( void* socket )
+{
+  WebServer_WriteResponseOk_( socket, HTTP_CONTENT_HTML );
+}
+  
+/**
+	Writes the HTTP OK message and sets the content type to HTML.
+	@param socket The socket to write to
+*/
+void WebServer_WriteResponseOkPlain( void* socket )
+{
+  WebServer_WriteResponseOk_( socket, HTTP_CONTENT_PLAIN );
+}
+
+/**
+	Writes the HTML header.
+  Should be preceded by a call to WebServer_WriteResponseOkHTML
+  @param includeCSS flag signalling the inclusion of a very simple CSS header refining <H1> and body text slightly.
+	@param socket The socket to write to
+	@param buffer Helper buffer which the function can use.  Should be at least 300 bytes.
+	@param len Helper buffer length
+  \todo more parameterization
+*/
+void WebServer_WriteHeader( int includeCSS, void* socket, char* buffer, int len )
+{
+  (void)buffer;
+  (void)len;
+  char* headerStart = "<HTML>\r\n<HEAD>";
+  char* headerEnd = "\r\n</HEAD>";
+  char* style = "\r\n<STYLE type=\"text/css\"><!--\
+body { font-family: Arial, Helvetica, sans-serif; } \
+h1 { font-family: Arial, Helvetica, sans-serif; font-weight: bold; }\
+--></STYLE>";
+
+  strcpy( buffer, headerStart );
+  if ( includeCSS )
+    strcat( buffer, style );
+  strcat( buffer, headerEnd );
+  SocketWrite( socket, buffer, strlen( buffer ) );
+}
+
+/**
+	Writes the start of the BODY tag.
+  Should be preceded by a call to WebServer_WriteHeader.  Also writes a light grey background.
+  @param reloadAddress string signalling the address of a 1s reload request.  If it is NULL, no reload is requested.
+	@param socket The socket to write to
+	@param buffer Helper buffer which the function can use.  Should be at least 300 bytes.
+	@param len Helper buffer length
+  \todo more parameterization of the tag
+*/
+void WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, int len )
+{
+  (void)buffer;
+  (void)len;
+  char* bodyStart = "\r\n<BODY";
+  char* bodyEnd = " bgcolor=\"#eeeeee\">\r\n";
+
+  char* reloadStart = " onLoad=\"window.setTimeout(&quot;location.href='";
+  char* reloadEnd = "'&quot;,1000)\"";
+  strcpy( buffer, bodyStart );
+  if ( reloadAddress )
+  {
+    strcat( buffer, reloadStart  );
+    strcat( buffer, reloadAddress  );
+    strcat( buffer, reloadEnd  );
+  }
+  strcat( buffer, bodyEnd  );
+  SocketWrite( socket, buffer, strlen( buffer ) );
+}
+
+/**
+	Writes the end of the Body tag - and the final end of HTML tag.
+  Should be preceded writes to the socket with the content of the page.
+	@param socket The socket to write to
+*/
+void WebServer_WriteBodyEnd( void* socket )
+{
+  char* bodyEnd = "\r\n</BODY>\r\n</HTML>";
+
+  SocketWrite( socket, bodyEnd, strlen( bodyEnd ) );
+}
+
+/** @}
+*/
+
+int TestHandler( char* requestType, char* address, void* socket, char* buffer, int len )
+{
+  (void)requestType;
+  (void)address;
+  WebServer_WriteResponseOkHTML( socket );
+  WebServer_WriteHeader( true, socket, buffer, len );
+  WebServer_WriteBodyStart( address, socket, buffer, len );
+  snprintf( buffer, len, "<H1>TEST</H1>%d hits", WebServer->hits );
+  SocketWrite( socket, buffer, strlen( buffer ) );
+  WebServer_WriteBodyEnd( socket );
+}
+
+void WebServer_OldSchool( char* address, void *requestSocket, char* buffer, int len );
+void WebServer_ProcessRequest( void* requestSocket );
+char* WebServer_GetRequestAddress( char* request, int length, char** requestType );
 
 void WebServer_ProcessRequest( void* requestSocket )
 {
@@ -187,10 +362,10 @@ void WebServer_OldSchool( char* address, void *requestSocket, char* buffer, int 
   memset( temp, 0, 50 );
   #endif
 
-  WebServer_WriteResponseOkHTML( requestSocket, buffer, len );
+  WebServer_WriteResponseOkHTML( requestSocket );
 
   WebServer_WriteHeader( true, requestSocket, buffer, len );
-  WebServer_WriteBodyStart( address, requestSocket, buffer, len );
+  WebServer_WriteBodyStart( "/info", requestSocket, buffer, len );
 
   // Generate the dynamic page...
   strcpy( buffer, HTML_OS_START );  // ... First the page header.
@@ -225,48 +400,10 @@ void WebServer_OldSchool( char* address, void *requestSocket, char* buffer, int 
   // Write out the dynamically generated page.
   SocketWrite( requestSocket, buffer, strlen( buffer ) );
   
-  WebServer_WriteBodyEnd( requestSocket, buffer, len );
+  WebServer_WriteBodyEnd( requestSocket );
 }
 
-void WebServer_Start( )
-{
-  if ( WebServer == NULL )
-  {
-    WebServer = Malloc( sizeof( WebServer_ ) );    
-    if ( WebServer == NULL )
-      return;
-    WebServer->hits = 0;
-    WebServer->serverSocket = NULL;
-    WebServer->requestSocket = NULL;
-    WebServer->serverTask = TaskCreate( WebServerTask, "WebServ", 800, NULL, 4 );
-    if ( WebServer->serverTask == NULL )
-    {
-      Free( WebServer );
-      WebServer = NULL;
-    }
-  }
-}
 
-void WebServer_Stop( )
-{
-  if( WebServer != NULL )
-  {
-    if ( WebServer->serverTask != NULL )
-      TaskDelete( WebServer->serverTask );
-    if ( WebServer->serverSocket != NULL )
-      ServerSocketClose( WebServer->serverSocket );
-    if ( WebServer->requestSocket != NULL )
-      SocketClose( WebServer->requestSocket );
-
-    Free( WebServer );
-    WebServer = NULL;
-  }
-}
-
-int  WebServer_Running( void )
-{
-  return WebServer != NULL;
-}
 
 void WebServerTask( void *p )
 {
@@ -296,73 +433,11 @@ void WebServerTask( void *p )
 	}
 }
 
-static void WebServer_WriteResponseOk_( char* content, void* socket, char* buffer, int len );
-
-void WebServer_WriteResponseOkHTML( void* socket, char* buffer, int len )
+static void WebServer_WriteResponseOk_( char* contentType, void* socket )
 {
-  WebServer_WriteResponseOk_( socket, HTTP_CONTENT_HTML, buffer, len );
-}
-  
-void WebServer_WriteResponseOkPlain( void* socket, char* buffer, int len )
-{
-  WebServer_WriteResponseOk_( socket, HTTP_CONTENT_PLAIN, buffer, len );
-}
-
-static void WebServer_WriteResponseOk_( char* contentType, void* socket, char* buffer, int len )
-{
-  (void)buffer;
-  (void)len;
   SocketWrite( socket, HTTP_OK, strlen( HTTP_OK ) );
   SocketWrite( socket, contentType, strlen( contentType ) );
 }
-
-void WebServer_WriteHeader( int includeCSS, void* socket, char* buffer, int len )
-{
-  (void)buffer;
-  (void)len;
-  char* headerStart = "<HTML>\r\n<HEAD>";
-  char* headerEnd = "\r\n</HEAD>";
-  char* style = "\r\n<STYLE type=\"text/css\"><!--\
-body { font-family: Arial, Helvetica, sans-serif; } \
-h1 { font-family: Arial, Helvetica, sans-serif; font-weight: bold; }\
---></STYLE>";
-
-  strcpy( buffer, headerStart );
-  if ( includeCSS )
-    strcat( buffer, style );
-  strcat( buffer, headerEnd );
-  SocketWrite( socket, buffer, strlen( buffer ) );
-}
-
-void WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, int len )
-{
-  (void)buffer;
-  (void)len;
-  char* bodyStart = "\r\n<BODY";
-  char* bodyEnd = " bgcolor=\"#eeeeee\">\r\n";
-
-  char* reloadStart = " onLoad=\"window.setTimeout(&quot;location.href='";
-  char* reloadEnd = "'&quot;,1000)\"";
-  strcpy( buffer, bodyStart );
-  if ( reloadAddress )
-  {
-    strcat( buffer, reloadStart  );
-    strcat( buffer, reloadAddress  );
-    strcat( buffer, reloadEnd  );
-  }
-  strcat( buffer, bodyEnd  );
-  SocketWrite( socket, buffer, strlen( buffer ) );
-}
-
-void WebServer_WriteBodyEnd( void* socket, char* buffer, int len )
-{
-  (void)buffer;
-  (void)len;
-  char* bodyEnd = "\r\n</BODY>\r\n</HTML>";
-
-  SocketWrite( socket, bodyEnd, strlen( bodyEnd ) );
-}
-
 
 char* WebServer_GetRequestAddress( char* request, int length, char** requestType  )
 {
