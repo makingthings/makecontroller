@@ -57,12 +57,7 @@ int main(int argc, char *argv[])
 	McHelperWindow mcHelperWindow( &app );
 	
 	if( argc < 2 )
-	{
-		QDialog *aboutMchelper = new QDialog( );
-        Ui::aboutMchelper ui;
-        ui.setupUi(aboutMchelper);
-        mcHelperWindow.setAboutDialog( aboutMchelper );
-        
+	{        
 		mcHelperWindow.show();
 		mcHelperWindow.setNoUI( false );
 	} else

@@ -20,6 +20,7 @@
 
 #include <QString>
 #include <QEvent>
+#include <QStringList>
 
 class MessageEvent : public QEvent
 {
@@ -28,10 +29,12 @@ class MessageEvent : public QEvent
     
     MessageEvent( QString string, MessageEvent::Types type, QString from );
     ~MessageEvent( ) {}
+    MessageEvent( QStringList messages, MessageEvent::Types type, QString from );
     
     QString message;
     QString from;
     MessageEvent::Types type;
+    QStringList messages;
 };
 
 #endif /*MESSAGE_EVENT_H_*/

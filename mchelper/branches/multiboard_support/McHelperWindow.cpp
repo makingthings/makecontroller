@@ -15,7 +15,7 @@
 
 *********************************************************************************/
 
-#include "McHelperWindow.h" 
+#include "McHelperWindow.h"  
 
 #include <QFileDialog>
 #include <QSettings>
@@ -23,16 +23,22 @@
 #include <QMessageBox> 
 #include <QTreeWidget>
 #include <QTreeWidgetItem> 
-#include <QHeaderView> 
+#include <QHeaderView>
+#include <QCheckBox>
 #include "Osc.h"
 #include "BoardArrivalEvent.h"
 
 #define DEVICE_SCAN_FREQ 1000
+#define SUMMARY_MESSAGE_FREQ 2000
 
 McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 {
 	this->application = application;
 	setupUi(this);
+	
+	aboutMchelper = new QDialog( );
+	Ui::aboutMchelper ui;
+  ui.setupUi(aboutMchelper);
 	
 	#ifdef Q_WS_WIN
 	application->setMainWindow( this );
@@ -76,15 +82,19 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	//setup the pushbuttons
 	connect( fileSelectButton, SIGNAL( clicked() ), this, SLOT( fileSelectButtonClicked() ) );
 	connect( uploadButton, SIGNAL( clicked() ), this, SLOT( uploadButtonClicked() ) );
-    
-    connect( systemName, SIGNAL( editingFinished() ), this, SLOT ( systemNameChanged() ) );
-    connect( systemSerialNumber, SIGNAL( editingFinished() ), this, SLOT ( systemSerialNumberChanged() ) );
+	connect( systemName, SIGNAL( editingFinished() ), this, SLOT ( systemNameChanged() ) );
+	connect( systemSerialNumber, SIGNAL( editingFinished() ), this, SLOT ( systemSerialNumberChanged() ) );
+	connect( netAddressLineEdit, SIGNAL( editingFinished() ), this, SLOT ( ipAddressChanged() ) );
+	connect( dhcpCheckBox, SIGNAL( stateChanged(int) ), this, SLOT ( dhcpChanged(int) ) );
+	connect( webserverCheckBox, SIGNAL( stateChanged(int) ), this, SLOT ( webserverChanged(int) ) );
+	connect( udpListenPort, SIGNAL( editingFinished() ), this, SLOT ( udpListenChanged() ) );
+	connect( udpSendPort, SIGNAL( editingFinished() ), this, SLOT ( udpSendChanged() ) );
     
 	// setup the menu
 	connect( actionAboutMchelper, SIGNAL( triggered() ), this, SLOT( about( ) ) );
 	connect( actionClearOutput, SIGNAL( triggered() ), outputWindow, SLOT( clear( ) ) );
-	//actionClearOutput->setShortcut(tr("Ctrl+X"));
-	//actionClearOutput->setShortcutContext( Qt::ApplicationShortcut ); // this doesn't seem to have much effect
+	
+	connect( &summaryTimer, SIGNAL(timeout()), this, SLOT( sendSummaryMessage() ) );
 	
 	// after all is set up, fire up the mechanism that looks for new boards
 	checkForNewDevices( ); // initially check for any devices out there
@@ -107,7 +117,7 @@ void McHelperWindow::usbBoardsArrived( QList<PacketInterface*>* arrived )
     board->type = Board::UsbSerial;
     board->setPacketInterface( arrived->at(i) );
     board->location = QString( arrived->at(i)->location( ) );
-    board->setText( QString( ":%1" ).arg( board->typeString() ) );
+    board->setText( QString( board->locationString() ) );
     connectedBoards.insert( board->key, board );
     listWidget->addItem( board ); 
 	}
@@ -125,7 +135,9 @@ void McHelperWindow::udpBoardsArrived( QList<PacketUdp*>* arrived )
 		board->location = QString( arrived->at(i)->location( ) );
     board->type = Board::Udp;
     connectedBoards.insert( board->key, board );
+    board->setText( QString( board->locationString() ) );
     listWidget->addItem( board );
+    board->sendMessage( "/system/info-internal" );
 	}
 }
 
@@ -162,26 +174,12 @@ bool McHelperWindow::summaryTabIsActive( )
 
 void McHelperWindow::checkForNewDevices( )
 {
-  Board *board;
-  int i;
-	for( i = 0; i < listWidget->count( ); i++ )
-	{
-		board = (Board*)listWidget->item( i );
-		if( board != NULL )
-		{
-			if( board->type == Board::UsbSerial )
-				board->sendMessage( "/system/info" );
-		}
-	}
-	
 	if( listWidget->currentRow( ) < 0 && listWidget->count( ) > 0 )
 		listWidget->setCurrentRow( 0 ); // if nothing is selected, just select the first item
 		
 	if( systemName->text().isEmpty() && listWidget->count( ) > 0 )
 	{ // if we haven't filled up the summary tab, do it now
-		Board* board = (Board*)listWidget->currentItem();
-  	if( board != NULL )
-			updateSummaryInfo( board );
+		updateSummaryInfo( );
 	}
 }
 
@@ -212,13 +210,16 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   	
   switch( board->type )
   {
-  	case Board::UsbSerial: // same for both
+  	case Board::UsbSerial:
   	case Board::Udp:
   		tabWidget->setCurrentIndex( lastTabIndex );
   		tabWidget->setTabEnabled( 0, 1 );
   		tabWidget->setTabEnabled( 1, 1 );
   		tabWidget->setTabEnabled( 2, 0 );
-  		updateSummaryInfo( board );
+  		if( summaryTabIsActive( ) )
+  			board->sendMessage( "/system/info-internal" );
+  			
+  		updateSummaryInfo( );
   		break;
         
   	case Board::UsbSamba:
@@ -230,26 +231,80 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   }
 }
 
-void McHelperWindow::updateSummaryInfo( Board* board )
+void McHelperWindow::updateDeviceList( )
 {
-	systemName->setText( board->name );
-	systemSerialNumber->setText( board->serialNumber );
-	systemFirmwareVersion->setText( board->firmwareVersion );
-	systemFreeMemory->setText( board->freeMemory );
-	netAddressLineEdit->setText( board->ip_address );
-	netMaskLineEdit->setText( board->netMask );
-	netGatewayLineEdit->setText( board->gateway );
-	netMACLineEdit->setText( board->mac );
+	UpdateEvent* event = new UpdateEvent( );
+  application->postEvent( this, event );
+}
+
+void McHelperWindow::updateSummaryInfo( )
+{
+	Board* board = (Board*)listWidget->currentItem();
+  if( board == NULL )
+  	return;
 	
-	// :TODO: what and how should these be set
-	//dhcpCheckBox->setCheckState( );
-	//webserverCheckBox->setCheckState( ); // Qt::Checked, Qt::Unchecked
+	if( systemName->text() != board->name && !systemName->hasFocus() )
+		systemName->setText( board->name );
+		
+	if( systemSerialNumber->text() != board->serialNumber && !systemSerialNumber->hasFocus() )
+		systemSerialNumber->setText( board->serialNumber );
+		
+	if( systemFirmwareVersion->text() != board->firmwareVersion && !systemFirmwareVersion->hasFocus() )
+		systemFirmwareVersion->setText( board->firmwareVersion );
+		
+	if( systemFreeMemory->text() != board->freeMemory && !systemFreeMemory->hasFocus() )
+		systemFreeMemory->setText( board->freeMemory );
+		
+	if( netAddressLineEdit->text() != board->ip_address && !netAddressLineEdit->hasFocus() )
+		netAddressLineEdit->setText( board->ip_address );
+		
+	if( netMaskLineEdit->text() != board->netMask && !netMaskLineEdit->hasFocus() )
+		netMaskLineEdit->setText( board->netMask );
+		
+	if( netGatewayLineEdit->text() != board->gateway && !netGatewayLineEdit->hasFocus() )
+		netGatewayLineEdit->setText( board->gateway );
+		
+	if( udpListenPort->text() != board->udp_listen_port && !udpListenPort->hasFocus() )
+		udpListenPort->setText( board->udp_listen_port );
+	
+	if( udpSendPort->text() != board->udp_send_port && !udpSendPort->hasFocus() )
+		udpSendPort->setText( board->udp_send_port );
+	
+	Qt::CheckState boardDhcpState = (board->dhcp) ? Qt::Checked : Qt::Unchecked;
+	if( dhcpCheckBox->checkState( ) != boardDhcpState )
+		dhcpCheckBox->setCheckState( boardDhcpState );
+		
+	Qt::CheckState boardWebServerState = (board->webserver) ? Qt::Checked : Qt::Unchecked;
+	if( webserverCheckBox->checkState( ) != boardWebServerState )
+		webserverCheckBox->setCheckState( boardWebServerState );
 }
 
 void McHelperWindow::tabIndexChanged(int index)
 {
 	if( index < 2 )
 		lastTabIndex = index;
+	
+	if( index == 1 )
+	{
+		Board* board = (Board*)listWidget->currentItem();
+  	if( board != NULL )
+  		board->sendMessage( "/system/info-internal" );
+  		
+  	if( !summaryTimer.isActive( ) )
+  		summaryTimer.start( SUMMARY_MESSAGE_FREQ );
+	}
+	else
+	{
+		if( summaryTimer.isActive( ) )
+			summaryTimer.stop( );
+	}
+}
+
+void McHelperWindow::sendSummaryMessage( )
+{
+	Board* board = (Board*)listWidget->currentItem();
+	if( board != NULL )
+		board->sendMessage( "/system/info-internal" );
 }
 
 void McHelperWindow::closeEvent( QCloseEvent *qcloseevent )
@@ -299,18 +354,24 @@ void McHelperWindow::commandLineEvent( )
   	return;
   
   QString cmd = commandLine->currentText();
-  messageThreadSafe( cmd, MessageEvent::Command, board->location );
-  
+  if( cmd.isEmpty() )
+  	return;
+  	
+  messageThreadSafe( cmd, MessageEvent::Command, board->locationString() );
   board->sendMessage( cmd );
   
   // in order to get a readline-style history of commands via up/down arrows
   // we need to keep an empty item at the end of the list so we have a context from which to up-arrow
+  if( commandLine->count() < 10 )
+  	commandLine->addItem( cmd );
+  else
+  {
+	  commandLine->removeItem( 0 );
+	  commandLine->insertItem( 9, "" );
+	  commandLine->insertItem( 8, cmd );
+	  commandLine->setCurrentIndex( 9 );
+  }
   
-  /*commandLine->removeItem( 0 );
-  commandLine->insertItem( 8, commandLine->currentText() );
-  commandLine->insertItem( 9, "" );
-  commandLine->setCurrentIndex( 9 );
-  */
   commandLine->clearEditText();
   writeUsbSettings( );
 }
@@ -339,10 +400,26 @@ void McHelperWindow::customEvent( QEvent* event )
 			//delete messageEvent;
 			break;
 		}
+		case 10004:
+		{
+			MessageEvent* messageEvent = (MessageEvent*)event;
+			int i;
+			for( i = 0; i < messageEvent->messages.count(); i++ )
+				message( messageEvent->messages.at(i), messageEvent->type, messageEvent->from );
+				//delete messageEvent;
+			break;
+		}
 		case 10005: // a board was uploaded/removed
 		{
 			MessageEvent* messageEvent = (MessageEvent*)event;
 			removeDevice( messageEvent->message );
+			//delete messageEvent;
+			break;
+		}
+		case 11111: // there's new info about the board to shove into the UI
+		{
+			updateSummaryInfo( );
+			listWidget->update( );
 			//delete messageEvent;
 			break;
 		}
@@ -394,6 +471,12 @@ void McHelperWindow::messageThreadSafe( QString string, MessageEvent::Types type
   application->postEvent( this, messageEvent );
 }
 
+void McHelperWindow::messageThreadSafe( QStringList strings, MessageEvent::Types type, QString from )
+{ 
+  MessageEvent* messageEvent = new MessageEvent( strings, type, from );
+  application->postEvent( this, messageEvent );
+}
+
 void McHelperWindow::progress( int value )
 {
 	if( value < 0 )
@@ -405,29 +488,6 @@ void McHelperWindow::progress( int value )
 	}
 	else
 		progressBar->setValue( value );
-}
-
-// Deprecated...
-// Use one of the messageThreadSafe methods
-void McHelperWindow::message( int level, char *format, ... )
-{
-	va_list args;
-	char buffer[ 1000 ];
-	
-	va_start( args, format );
-	vsnprintf( buffer, 1000, format, args );
-	va_end( args );
-	
-	if( level == 1 )
-	{
-		if( noUI )
-			printf( buffer );
-		else
-		{
-            if ( buffer != NULL && strlen(buffer) > 1 )
-                message( QString(buffer) );
-		}
-	}
 }
 
 // Deprecated...
@@ -459,7 +519,7 @@ void McHelperWindow::message( QString string, MessageEvent::Types type, QString 
             
             case MessageEvent::Response:
                 //bgColor = QColor(221, 255, 221, 255); // Green
-                bgColor = QColor(229, 237, 247, 255); // Blue
+                bgColor = Qt::white;
                 break;
                 
             case MessageEvent::Error:
@@ -472,7 +532,7 @@ void McHelperWindow::message( QString string, MessageEvent::Types type, QString 
 
             case MessageEvent::Command:
             default:
-                bgColor = Qt::white;
+                bgColor = QColor(229, 237, 247, 255); // Blue
         } 
 				
 				// create the to/from, message, and timestamp columns for the new message
@@ -516,6 +576,11 @@ void McHelperWindow::readSettings()
 	
 	QStringList usbCmdList = settings.value( "usbCmdList", "" ).toStringList();
 	commandLine->addItems( usbCmdList );
+	if( usbCmdList.count() > 0 )
+	{
+		commandLine->insertItem( 9, "" );
+		commandLine->setCurrentIndex( 9 );
+	}
 }
 
 void McHelperWindow::writeFileSettings()
@@ -560,11 +625,6 @@ void McHelperWindow::uiLessUpload( char* filename, bool bootFlash )
 	//flash( );
 }
 
-// actions for the menu
-void McHelperWindow::setAboutDialog( QDialog* about )
-{
-	this->aboutMchelper = about; 
-}
 
 void McHelperWindow::about( )  // set the version number here.
 {
@@ -575,36 +635,114 @@ void McHelperWindow::systemNameChanged( )
 {
     Board* board = (Board*)listWidget->currentItem();
     if( board == NULL )
-    return;
-
-    userInitiatedBoardChange( board, QString("/system/name"), board->name, systemName->text() );
+    	return;
+    
+    QString newName = systemName->text();
+    if( newName.isEmpty() || board->name == newName )
+    	return;
+    
+    QString cmd = QString( "/system/name %1" ).arg( QString("\"%1\"").arg(newName) );
+    board->sendMessage( cmd );
+    statusBar()->showMessage( tr("Name changed to ").append(newName), 2000);
 }
 
 void McHelperWindow::systemSerialNumberChanged( )
 {
     Board* board = (Board*)listWidget->currentItem();
     if( board == NULL )
-    return;
+    	return;
+    	
+    QString newNumber = systemSerialNumber->text();
+    if( newNumber.isEmpty() || board->serialNumber == newNumber )
+    	return;
 
-    userInitiatedBoardChange( board, QString("/system/serialnumber"), board->serialNumber, systemSerialNumber->text() );
+    QString cmd = QString( "/system/serialnumber %1" ).arg( newNumber );
+    board->sendMessage( cmd );
+    statusBar()->showMessage( tr("Serial number changed to ").append( newNumber ), 2000);
 }
 
-void McHelperWindow::userInitiatedBoardChange( Board* board, QString attribute, QString orig_value, QString new_value )
+void McHelperWindow::ipAddressChanged( )
 {
-    // Only make the change if the value has changed
-    if ( orig_value.compare( new_value ) != 0 )
-    {
-        QString cmd = QString( "%1 %2" ).arg(attribute).arg(new_value);
-        board->sendMessage( cmd );
-        
-        // Give some visual feedback that the change occurred
-        statusBar()->showMessage( tr("Board changed: ").append(cmd), 2000);
-        
-        // :TODO: Maybe we want to add these to the output, maybe we don't?
-        messageThreadSafe( cmd, MessageEvent::Command, board->key );
-    }
+    Board* board = (Board*)listWidget->currentItem();
+    if( board == NULL )
+    	return;
+    	
+    QString newAddress = netAddressLineEdit->text();
+    if( newAddress.isEmpty() || board->ip_address == newAddress )
+    	return;
+
+    QString cmd = QString( "/network/address %1" ).arg( newAddress );
+    board->sendMessage( cmd );
+    statusBar()->showMessage( tr("IP address changed to ").append( newAddress ), 2000);
 }
 
+void McHelperWindow::dhcpChanged( int newState )
+{
+	Board* board = (Board*)listWidget->currentItem();
+  if( board == NULL )
+  	return;
+  
+  if( newState == Qt::Checked && !board->dhcp )
+  {
+  	board->sendMessage( QString( "/network/dhcp 1" ) );
+  	statusBar()->showMessage( tr("DHCP has been turned on."), 2000);
+  }
+  
+  if( newState == Qt::Unchecked && board->dhcp )
+  {
+  	board->sendMessage( QString( "/network/dhcp 0" ) );
+  	statusBar()->showMessage( tr("DHCP has been turned off."), 2000);
+  }
+}
+
+void McHelperWindow::webserverChanged( int newState )
+{
+	Board* board = (Board*)listWidget->currentItem();
+  if( board == NULL )
+  	return;
+  
+  if( newState == Qt::Checked && !board->webserver )
+  {
+  	board->sendMessage( QString( "/network/webserver 1" ) );
+  	statusBar()->showMessage( tr("The board's web server has been turned on."), 2000);
+  }
+  
+  if( newState == Qt::Unchecked && board->webserver )
+  {
+  	board->sendMessage( QString( "/network/webserver 0" ) );
+  	statusBar()->showMessage( tr("The board's web server has been turned off."), 2000);
+  }
+}
+
+void McHelperWindow::udpListenChanged( )
+{
+	Board* board = (Board*)listWidget->currentItem();
+	if( board == NULL )
+		return;
+		
+	QString newPort = udpListenPort->text();
+	if( newPort.isEmpty() || board->udp_listen_port == newPort )
+		return;
+	
+	QString cmd = QString( "/network/osc_udp_listen_port %1" ).arg( newPort );
+	board->sendMessage( cmd );
+	statusBar()->showMessage( tr("UDP (listening) port changed to ").append( newPort ), 2000);
+}
+
+void McHelperWindow::udpSendChanged( )
+{
+	Board* board = (Board*)listWidget->currentItem();
+	if( board == NULL )
+		return;
+		
+	QString newPort = udpSendPort->text();
+	if( newPort.isEmpty() || board->udp_send_port == newPort )
+		return;
+	
+	QString cmd = QString( "/network/osc_udp_send_port %1" ).arg( newPort );
+	board->sendMessage( cmd );
+	statusBar()->showMessage( tr("UDP (send) port changed to ").append( newPort ), 2000);
+}
 
 #ifdef Q_WS_WIN
 void McHelperWindow::usbRemoved( HANDLE deviceHandle )

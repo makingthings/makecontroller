@@ -39,7 +39,7 @@ NetworkMonitor::NetworkMonitor( )
 	Osc* osc = new Osc();
 	int length, i;
 	char packet[1024], *ptr;
-	osc->createOneRequest( packet, &length, "/system/info" ); // our constant OSC ping
+	osc->createOneRequest( packet, &length, "/network/find" ); // our constant OSC ping
 	ptr = packet;
 	broadcastPing.resize( length );
 	for( i=0; i < length; i++ )

@@ -23,3 +23,11 @@ MessageEvent::MessageEvent( QString string, MessageEvent::Types type, QString fr
   this->type = type;
   this->from = from;
 }
+
+MessageEvent::MessageEvent( QStringList strings, MessageEvent::Types type, QString from ) : QEvent( (Type)10004 )
+{
+  this->messages = strings;
+  this->type = type;
+  this->from = from;
+}
+

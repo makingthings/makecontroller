@@ -61,11 +61,11 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
         
         void messageThreadSafe( QString string );
         void messageThreadSafe( QString string, MessageEvent::Types type );
-        void messageThreadSafe( QString string, MessageEvent::Types type, QString from ); 
+        void messageThreadSafe( QString string, MessageEvent::Types type, QString from );
+        void messageThreadSafe( QStringList strings, MessageEvent::Types type, QString from );
         
 		void customEvent( QEvent* event );
 		void progress( int value );
-		void setAboutDialog( QDialog* about );
 		void removeDevice( QString key );
 		void removeDeviceThreadSafe( QString key );
 		
@@ -74,7 +74,8 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void sambaBoardsArrived( QList<UploaderThread*>* arrived );
 		Board* getCurrentBoard( );
 		bool summaryTabIsActive( );
-		void updateSummaryInfo( Board* board );
+		void updateSummaryInfo( );
+		void updateDeviceList( );
         
 		void setNoUI( bool val );
 		void uiLessUpload( char* filename, bool bootFlash );
@@ -92,6 +93,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		UsbMonitor* usb;
 		NetworkMonitor* udp;
 		QTimer* monitorTimer;
+		QTimer summaryTimer;
     	QDialog* aboutMchelper;
     	QHash<QString, Board*> connectedBoards;
 		
@@ -123,11 +125,16 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
         // Summary tab editing
         void systemNameChanged( );
         void systemSerialNumberChanged( );
-        void userInitiatedBoardChange( Board* board, QString attribute, QString orig_value, QString new_value );
+        void ipAddressChanged( );
+        void dhcpChanged( int newState );
+        void webserverChanged( int newState );
+        void udpListenChanged( );
+        void udpSendChanged( );
         
         // Devices list view functions
         void deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous );
         void tabIndexChanged(int index);
+        void sendSummaryMessage( );
 };
 
 class McHelperApp : public QApplication
@@ -154,6 +161,13 @@ class BoardEvent : public QEvent
 	  ~BoardEvent( ) { }
 	  
 	QString message;
+};
+
+class UpdateEvent : public QEvent
+{
+	public:
+	  UpdateEvent( ) : QEvent( (Type)11111 ) { }
+	  ~UpdateEvent( ) { }
 };
 
 #endif // MCHELPERWINDOW_H

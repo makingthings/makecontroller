@@ -16,6 +16,7 @@
 *********************************************************************************/
 
 #include "Board.h"
+#include <QStringList>
 
 Board::Board( MessageInterface* messageInterface, McHelperWindow* mainWindow, QApplication* application )
 {
@@ -53,7 +54,7 @@ bool Board::setBinFileName( char* filename )
 		return true;
 }
 
-QString Board::typeString( )
+QString Board::locationString( )
 {
 	switch( type )
 	{
@@ -68,7 +69,7 @@ QString Board::typeString( )
 			#endif
 		}
 		case Board::Udp:
-			return QString( "Ethernet" );
+			return location;
 		default:
 			return QString( "" );
 	}
@@ -86,30 +87,56 @@ void Board::flash( )
 void Board::packetWaiting( )
 {
 	QList<OscMessage*> oscMessageList;
+	QStringList messageList;
 	osc->receive( &oscMessageList );
 	
 	int messageCount = oscMessageList.size( ), i;
-	for (i = 0; i < messageCount; i++)
+	bool sysInfoReceived = false;
+	
+	for( i = 0; i < messageCount; i++ )
 	{
 		QString msg = oscMessageList.at(i)->toString( );
-		if( strcmp( oscMessageList.at(i)->address, "/system/info" ) == 0 )
+		if( strcmp( oscMessageList.at(i)->address, "/system/info-internal" ) == 0 )
 		{ 
       // we're counting on the board to send the pieces of data in this order
 			name = QString( oscMessageList.at(i)->data.at( 0 )->s ); //name
       serialNumber = QString::number( oscMessageList.at(i)->data.at( 1 )->i ); // serial number
       ip_address = QString( oscMessageList.at(i)->data.at( 2 )->s ); // IP address
+      firmwareVersion = QString( oscMessageList.at(i)->data.at( 3 )->s );
+      freeMemory = QString::number( oscMessageList.at(i)->data.at( 4 )->i );
+      dhcp = oscMessageList.at(i)->data.at( 5 )->i;
+      webserver = oscMessageList.at(i)->data.at( 6 )->i;
+      gateway = QString( oscMessageList.at(i)->data.at( 7 )->s );
+      netMask = QString( oscMessageList.at(i)->data.at( 8 )->s );
+      udp_listen_port = QString::number( oscMessageList.at(i)->data.at( 9 )->i );
+      udp_send_port = QString::number( oscMessageList.at(i)->data.at( 10 )->i );
 
-      // Update the name of the board in the board list
-			this->setText( QString( "%1:%2" ).arg(name).arg(typeString()) );
-			/*
-			if( this == mainWindow->getCurrentBoard( ) && mainWindow->summaryTabIsActive( ) )
-				mainWindow->updateSummaryInfo( this );
-			*/
+			sysInfoReceived = true;
+		}
+		else if( strcmp( oscMessageList.at(i)->address, "/network/find" ) == 0 )
+		{
+			ip_address = QString( oscMessageList.at(i)->data.at( 0 )->s ); // IP address
+			udp_listen_port = QString::number( oscMessageList.at(i)->data.at( 1 )->i );
+      udp_send_port = QString::number( oscMessageList.at(i)->data.at( 2 )->i );
+      name = QString( oscMessageList.at(i)->data.at( 3 )->s ); //name
+      sysInfoReceived = true;
 		}
 		else if( QString(oscMessageList.at(i)->address).contains( "error", Qt::CaseInsensitive ) )
-			messageInterface->messageThreadSafe( msg, MessageEvent::Warning, QString( location ) );
+			messageInterface->messageThreadSafe( msg, MessageEvent::Warning, QString( locationString( ) ) );
 		else
-			messageInterface->messageThreadSafe( msg, MessageEvent::Response, QString( location ) );
+			messageList.append( msg );
+	}
+	if( messageList.count( ) > 0 )
+		messageInterface->messageThreadSafe( messageList, MessageEvent::Response, QString( locationString( ) ) );
+		
+	if( sysInfoReceived )
+	{
+		
+		if( this == mainWindow->getCurrentBoard( ) )
+		{
+			this->setText( QString( "%1 : %2" ).arg(name).arg(locationString()) );
+			mainWindow->updateDeviceList( );
+		}
 	}
 }
 
