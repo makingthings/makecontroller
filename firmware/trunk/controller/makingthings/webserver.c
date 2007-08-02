@@ -83,9 +83,21 @@ static void WebServer_WriteResponseOk_( char* content, void* socket );
 
 
 /** \defgroup webserver Web Server
-  Main Line (title line)
+  Very simple Web Server
 
-  Rest of stuff
+  This Web Server implementation is based on the ServerSocket and Socket functions defined
+  in \ref Sockets.  When started (usually by the Network subsystem), a ServerSocket is opened
+  and set to listen on port 80.
+
+  When the server receives a request, it checks the incoming address against a list of handlers.
+  If the address matches, the handler is invoked and checking stops.  Users can add their own
+  handlers to return custom information.  Handlers persist even when the server is deactivated.
+
+  There are two default handlers.  One is mounted at "/test" and will reply with the message "Test"
+  and a current hit count.  This handler will only be mounted if no other handlers are present when
+  the server is started up.  The other handler is a default handler which will match any address not 
+  already matched.  This is the standard information page showing free memory, running tasks, etc.  This
+  page will reload every second from "/info".
 
 	\ingroup Controller
 	@{
@@ -237,7 +249,7 @@ void WebServer_WriteResponseOkPlain( void* socket )
 /**
 	Writes the HTML header.
   Should be preceded by a call to WebServer_WriteResponseOkHTML
-  @param includeCSS flag signalling the inclusion of a very simple CSS header refining <H1> and body text slightly.
+  @param includeCSS flag signalling the inclusion of a very simple CSS header refining header one and body text slightly.
 	@param socket The socket to write to
 	@param buffer Helper buffer which the function can use.  Should be at least 300 bytes.
 	@param len Helper buffer length
