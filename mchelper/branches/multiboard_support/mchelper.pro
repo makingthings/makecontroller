@@ -39,7 +39,8 @@ HEADERS = 	McHelperWindow.h \
 			SambaMonitor.h \
 			Board.h \
 			MessageEvent.h \
-			BoardArrivalEvent.h
+			BoardArrivalEvent.h \
+			OutputWindow.h
 				
             
 SOURCES	= 	main.cpp \
@@ -54,7 +55,8 @@ SOURCES	= 	main.cpp \
 			NetworkMonitor.cpp \
 			SambaMonitor.cpp \
 			Board.cpp \
-			MessageEvent.cpp 
+			MessageEvent.cpp \
+			OutputWindow.cpp
 				
 				
 TARGET = mchelper

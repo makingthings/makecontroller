@@ -60,6 +60,7 @@ void NetworkMonitor::sendPing( )
 NetworkMonitor::Status NetworkMonitor::scan( QList<PacketUdp*>* arrived )
 {
 	// not used
+	(void)arrived;
 	return OK; 
 }
 

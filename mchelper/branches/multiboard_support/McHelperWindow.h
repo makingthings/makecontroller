@@ -31,6 +31,7 @@
 #include "SambaMonitor.h"
 #include "UsbMonitor.h"
 #include "PacketUdp.h"
+#include "OutputWindow.h"
 
 class Board;
 class BoardListModel;
@@ -58,6 +59,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		
         void message( int level, char *format, ... );
         void message( QString string );
+				void message( QStringList strings, MessageEvent::Types type, QString from );
         
         void messageThreadSafe( QString string );
         void messageThreadSafe( QString string, MessageEvent::Types type );
@@ -79,6 +81,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
         
 		void setNoUI( bool val );
 		void uiLessUpload( char* filename, bool bootFlash );
+		OutputWindow* outputModel;
 		
 		#ifdef Q_WS_WIN // Windows-only
 		void usbRemoved( HANDLE deviceHandle );
@@ -96,6 +99,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		QTimer summaryTimer;
     	QDialog* aboutMchelper;
     	QHash<QString, Board*> connectedBoards;
+			TableEntry* createOutputWindowEntry( QString string, MessageEvent::Types type, QString from );
 		
 		void readSettings();
 		void writeFileSettings();

@@ -158,15 +158,8 @@ void Osc::receivePacket( char* packet, int length, QList<OscMessage*>* oscMessag
 */
 void Osc::receiveMessage( char* in, int length, QList<OscMessage*>* oscMessageList )
 {
-	// We can print the address by just trying to print message, since it's null-terminated after the address.
-	OscMessage* oscMessage = NULL;
-	//message( 1, "%s> %s ", preamble, in );
-	if ( oscMessageList != 0 )
-	{
-	  oscMessage = new OscMessage( );
-	  oscMessage->address = strdup( in );
-	  oscMessageList->append( oscMessage );
-	}
+	OscMessage* oscMessage = new OscMessage( );
+	oscMessage->address = strdup( in );
 	
 	// Then try to find the type tag
 	char* type = findDataTag( in, length );
@@ -174,6 +167,7 @@ void Osc::receiveMessage( char* in, int length, QList<OscMessage*>* oscMessageLi
   {
 		QString msg = QString( "Error - No type tag.");
 		messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
+		delete oscMessage;
   }
 	else		//Otherwise, step through the type tag and print the data out accordingly.
 	{
@@ -184,7 +178,10 @@ void Osc::receiveMessage( char* in, int length, QList<OscMessage*>* oscMessageLi
 		{
 			QString msg = QString( "Error extracting data from packet - type tag doesn't correspond to data included.");
 			messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
+			delete oscMessage;
 		}
+		else
+			oscMessageList->append( oscMessage );
 	}
 }
 
@@ -219,7 +216,7 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
 		//message( 1, "%d ", i );
 		data += 4;
 		count++;
-		if ( oscMessage)
+		if ( oscMessage )
 		{
 		  OscMessageData* omdata = new OscMessageData( );
 		  omdata->i = i;
