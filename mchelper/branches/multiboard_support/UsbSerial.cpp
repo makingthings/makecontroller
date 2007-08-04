@@ -67,6 +67,7 @@ UsbSerial::UsbStatus UsbSerial::usbOpen( )
 	    return NOT_OPEN;
 	  else
 		{
+			usleep( 10000 );
 			deviceOpen = true;
 			return OK;
 	  }
@@ -163,6 +164,7 @@ int UsbSerial::usbRead( char* buffer, int length )
 				break;
 		}
 	}
+	return 0; // should never get here
 	#endif //Mac-only UsbSerial::read( )
 	
   //Windows-only///////////////////////////////////////////////////////////////////////

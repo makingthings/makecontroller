@@ -204,11 +204,12 @@ int PacketUsbCdc::receivePacket( char* buffer, int size )
 	// Need to protect the packetList structure from multithreaded diddling
 	QMutexLocker locker( &packetListMutex );
 	int length;
+	int retval;
 	
 	if( !packetList.size() )
 	{
-        QString msg = QString( "Error receiving packet.");
-        messageInterface->messageThreadSafe( msg, MessageEvent::Error);
+		QString msg = QString( "Error receiving packet.");
+		messageInterface->messageThreadSafe( msg, MessageEvent::Error);
 		return 0;
 	} 
 	else
@@ -220,13 +221,15 @@ int PacketUsbCdc::receivePacket( char* buffer, int size )
 		{
 	    buffer = (char*)memcpy( buffer, packet->packetBuf, length );
   	  delete packet;
-  	  return length;
+  	  retval = length;
 		}
 		else
 		{
 			delete packet;
-			return 0; 
+			retval = 0; 
 		}
+		qDeleteAll( packetList );
+		return retval;
 	}
 }
 

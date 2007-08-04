@@ -21,12 +21,11 @@
 #include <QSettings>
 #include <QHostAddress>
 #include <QMessageBox> 
-#include <QTreeWidget>
-#include <QTreeWidgetItem> 
 #include <QHeaderView>
 #include <QCheckBox>
 #include "Osc.h"
 #include "BoardArrivalEvent.h"
+
 
 #define DEVICE_SCAN_FREQ 1000
 #define SUMMARY_MESSAGE_FREQ 2000
@@ -57,6 +56,9 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	 
 	udp->setInterfaces( this, this, application );
 	usb->setInterfaces( this, application, this );
+	
+	outputModel = new OutputWindow( );
+	outputView->setModel( outputModel );
   
   setupOutputWindow();
 
@@ -92,7 +94,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
     
 	// setup the menu
 	connect( actionAboutMchelper, SIGNAL( triggered() ), this, SLOT( about( ) ) );
-	connect( actionClearOutput, SIGNAL( triggered() ), outputWindow, SLOT( clear( ) ) );
+	connect( actionClearOutput, SIGNAL( triggered() ), outputModel, SLOT( clear( ) ) );
 	
 	connect( &summaryTimer, SIGNAL(timeout()), this, SLOT( sendSummaryMessage() ) );
 	
@@ -101,7 +103,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	monitorTimer = new QTimer(this); // then set up a timer to check for others periodically
   connect(monitorTimer, SIGNAL(timeout()), this, SLOT( checkForNewDevices() ) );
   monitorTimer->start( DEVICE_SCAN_FREQ ); // check for new devices once a second...more often?
-  usb->start( );
+  //usb->start( );
   udp->start( );
   samba->start( );
 }
@@ -309,6 +311,7 @@ void McHelperWindow::sendSummaryMessage( )
 
 void McHelperWindow::closeEvent( QCloseEvent *qcloseevent )
 {
+	(void)qcloseevent;
 	usb->closeAll( );
 	// samba->closeAll( );
 }
@@ -397,37 +400,32 @@ void McHelperWindow::customEvent( QEvent* event )
 		{
 			MessageEvent* messageEvent = (MessageEvent*)event;
 			message( messageEvent->message, messageEvent->type, messageEvent->from );
-			//delete messageEvent;
+			
 			break;
 		}
 		case 10004:
 		{
 			MessageEvent* messageEvent = (MessageEvent*)event;
-			int i;
-			for( i = 0; i < messageEvent->messages.count(); i++ )
-				message( messageEvent->messages.at(i), messageEvent->type, messageEvent->from );
-				//delete messageEvent;
+			message( messageEvent->messages, messageEvent->type, messageEvent->from );
 			break;
 		}
 		case 10005: // a board was uploaded/removed
 		{
 			MessageEvent* messageEvent = (MessageEvent*)event;
 			removeDevice( messageEvent->message );
-			//delete messageEvent;
 			break;
 		}
 		case 11111: // there's new info about the board to shove into the UI
 		{
 			updateSummaryInfo( );
 			listWidget->update( );
-			//delete messageEvent;
 			break;
 		}
 		case 10010: // put a status message in the window
 		{
 			StatusEvent* statusEvent = (StatusEvent*)event;
 			statusBar()->showMessage( statusEvent->message, statusEvent->duration );
-            break;
+			break;
 		}
     case 10020: // a new board has been connected
     {
@@ -503,67 +501,76 @@ void McHelperWindow::message( QString string )
 
 void McHelperWindow::message( QString string, MessageEvent::Types type, QString from )
 {
-    if( noUI )
+	if( noUI )
+		return;
+
+	if ( !string.isEmpty( ) && !string.isNull( ) )
+	{
+		QList<TableEntry*> entryList;
+		TableEntry* newItem = createOutputWindowEntry( string, type, from );
+		if( newItem != NULL )
+			entryList.append( newItem );
+		
+		outputModel->newRows( entryList );
+		outputView->resizeColumnToContents( McHelperWindow::TO_FROM );
+		outputView->resizeColumnToContents( McHelperWindow::TIMESTAMP );
+		outputView->scrollToBottom( );
+	}
+}
+
+void McHelperWindow::message( QStringList strings, MessageEvent::Types type, QString from )
+{
+		 if( noUI )
         return;
 
-    if ( !string.isEmpty( ) && !string.isNull( ) ) {
-    
-        // Set the background row color
-        QColor bgColor;
-        switch( type )
-        {
-            case MessageEvent::Info:
-            case MessageEvent::Notice:
-                bgColor = QColor(225, 225, 225, 255); // light-light grey
-                break;
-            
-            case MessageEvent::Response:
-                //bgColor = QColor(221, 255, 221, 255); // Green
-                bgColor = Qt::white;
-                break;
-                
-            case MessageEvent::Error:
-                bgColor = QColor(255, 221, 221, 255); // Red
-                break;
-              
-            case MessageEvent::Warning:
-                bgColor = QColor(255, 228, 118, 255); // Orange
-                break;
+    int msgCount = strings.count( );
+		int i;
+		QList<TableEntry*> entryList;
+		for( i = 0; i < msgCount; i++ )
+		{
+			TableEntry* newItem = createOutputWindowEntry( strings.at(i), type, from );
+			if( newItem != NULL )
+				entryList.append( newItem );
+		}
+		
+		outputModel->newRows( entryList );
+		outputView->resizeColumnToContents( McHelperWindow::TO_FROM );
+		outputView->resizeColumnToContents( McHelperWindow::TIMESTAMP );
+		outputView->scrollToBottom( );
+}
 
-            case MessageEvent::Command:
-            default:
-                bgColor = QColor(229, 237, 247, 255); // Blue
-        } 
-				
-				// create the to/from, message, and timestamp columns for the new message
-        QTreeWidgetItem *newItem = new QTreeWidgetItem( outputWindow );
-				newItem->setText( McHelperWindow::TO_FROM, from );
-				newItem->setTextAlignment( McHelperWindow::TO_FROM, Qt::AlignHCenter );
-				newItem->setText( McHelperWindow::MESSAGE, string );
-				newItem->setTextAlignment( McHelperWindow::MESSAGE, Qt::AlignLeft );
-				newItem->setText( McHelperWindow::TIMESTAMP, QTime::currentTime().toString() );
-				newItem->setTextAlignment( McHelperWindow::TIMESTAMP, Qt::AlignHCenter );
-				outputWindow->addTopLevelItem( newItem );
-				
-				int i;
-				for( i=0; i<outputWindow->columnCount(); i++ )
-					newItem->setBackground( i, QBrush(bgColor) );
-					
-				outputWindow->resizeColumnToContents( McHelperWindow::TO_FROM );
-				outputWindow->resizeColumnToContents( McHelperWindow::TIMESTAMP );
-				outputWindow->scrollToItem(newItem, QAbstractItemView::EnsureVisible);
-    }
+
+TableEntry* McHelperWindow::createOutputWindowEntry( QString string, MessageEvent::Types type, QString from )
+{
+	if ( !string.isEmpty( ) && !string.isNull( ) )
+	{		
+		// create the to/from, message, and timestamp columns for the new message
+		TableEntry *newItem = new TableEntry( );
+		newItem->column0 = from;
+		newItem->column1 = string;
+		newItem->column2 = QTime::currentTime().toString();
+		newItem->type = type;
+		return newItem;
+	}
+	else
+		return NULL;
 }
 
 void McHelperWindow::setupOutputWindow( )
 {
-	QHeaderView *headerHView = outputWindow->header( );
+	QHeaderView *headerHView = outputView->horizontalHeader();
 	headerHView->setDefaultAlignment( Qt::AlignHCenter );
 	headerHView->setClickable( false );
 	headerHView->setMovable( false );
 	headerHView->setStretchLastSection( false ); // we want the middle message section to be the one that does the stretching
 	headerHView->setResizeMode( McHelperWindow::MESSAGE, QHeaderView::Stretch);
 	headerHView->setResizeMode( McHelperWindow::TO_FROM, QHeaderView::Fixed);
+	headerHView->hide( );
+	
+	QHeaderView *headerV = outputView->verticalHeader();
+	headerV->setResizeMode(QHeaderView::Fixed);
+	headerV->setDefaultSectionSize( 18 );
+	headerV->hide();
 }
 
 // Read and write the last values used - address, ports, directory searched etc...
@@ -615,6 +622,7 @@ void McHelperWindow::setNoUI( bool val )
 void McHelperWindow::uiLessUpload( char* filename, bool bootFlash )
 {
 	strcpy( fileNameBuffer, filename );
+	(void)bootFlash;
 		//fileNameBuffer = *filename;
 		
 	// uploaderThread->setBinFileName( fileNameBuffer );

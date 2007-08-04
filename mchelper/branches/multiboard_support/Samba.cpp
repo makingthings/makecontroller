@@ -44,18 +44,18 @@
 #endif
 
 // from sam7utils/samba.c
-
+/*
 static const char *eprocs[] = {
-  /* 000 */ "",
-  /* 001 */ "ARM946E-S",
-  /* 010 */ "ARM7TDMI",
-  /* 011 */ "",
-  /* 100 */ "ARM920T",
-  /* 101 */ "ARM926EJ-S",
-  /* 110 */ "",
-  /* 111 */ ""
+		"", // 000 
+    "ARM946E-S", // 001
+    "ARM7TDMI", // 010
+    "", // 011
+    "ARM920T", // 100
+    "ARM926EJ-S", // 101
+    "", // 110
+    "" // 111
 };
-
+*/
 
 #define K 1024
 
@@ -607,22 +607,22 @@ int Samba::usbOpen( QString key )
 	
 	if( ( err = IOMasterPort( MACH_PORT_NULL, &masterPort ) ) ) 
 	{
-	  messageInterface->message( 2, "could not create master port, err = %08x\n", err );
-    //printf( "could not create master port, err = %08x\n", err );
+	  //messageInterface->message( 2, "could not create master port, err = %08x\n", err );
+    printf( "could not create master port, err = %08x\n", err );
 		return -1;
   }
 	
 	if( !(matchingDictionary = IOServiceMatching(kIOUSBDeviceClassName)) )
 	{
-		messageInterface->message( 1, "usb> could not create matching dictionary.\n" );
-    //printf( "could not create matching dictionary\n" );
+		//messageInterface->message( 1, "usb> could not create matching dictionary.\n" );
+    printf( "could not create matching dictionary\n" );
 		return -1;
   }
 	
 	if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idVendor)) )
 	{
-		messageInterface->message( 1, "usb> could not create CFNumberRef for vendor.\n" );
-    //printf( "could not create CFNumberRef for vendor\n" );
+		//messageInterface->message( 1, "usb> could not create CFNumberRef for vendor.\n" );
+    printf( "could not create CFNumberRef for vendor\n" );
 		return -1;
   }
 	CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBVendorID), numberRef);
@@ -631,8 +631,8 @@ int Samba::usbOpen( QString key )
 	
 	if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idProduct)) )
 	{
-		messageInterface->message( 1, "usb> could not create CFNumberRef for product.\n" );
-    //printf( "could not create CFNumberRef for product\n" );
+		//messageInterface->message( 1, "usb> could not create CFNumberRef for product.\n" );
+    printf( "could not create CFNumberRef for product\n" );
 		return -1;
   }
   CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBProductID), numberRef);
@@ -931,6 +931,7 @@ int Samba::FindUsbDevices( QList<QString>* arrived )
 {
   #ifdef Q_WS_MAC
 	masterPort = 0;
+	int count = 0;
 
   // from io_iokit.c
   kern_return_t err;
@@ -943,19 +944,22 @@ int Samba::FindUsbDevices( QList<QString>* arrived )
 	
 	if( ( err = IOMasterPort( MACH_PORT_NULL, &masterPort ) ) ) 
 	{
-	  messageInterface->message( 2, "could not create master port, err = %08x\n", err );
+	  //messageInterface->message( 2, "could not create master port, err = %08x\n", err );
+		printf( "could not create master port, err = %08x\n", err );
 		return -1;
   }
 	
 	if( !(matchingDictionary = IOServiceMatching(kIOUSBDeviceClassName)) )
 	{
-		messageInterface->message( 1, "usb> could not create matching dictionary.\n" );
+		//messageInterface->message( 1, "usb> could not create matching dictionary.\n" );
+		printf( "usb> could not create matching dictionary.\n" );
 		return -1;
   }
 	
 	if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idVendor)) )
 	{
-		messageInterface->message( 1, "usb> could not create CFNumberRef for vendor.\n" );
+		//messageInterface->message( 1, "usb> could not create CFNumberRef for vendor.\n" );
+		printf( "usb> could not create CFNumberRef for vendor.\n" );
 		return -1;
   }
 	CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBVendorID), numberRef);
@@ -964,7 +968,8 @@ int Samba::FindUsbDevices( QList<QString>* arrived )
 	
 	if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idProduct)) )
 	{
-		messageInterface->message( 1, "usb> could not create CFNumberRef for product.\n" );
+		//messageInterface->message( 1, "usb> could not create CFNumberRef for product.\n" );
+		printf( "usb> could not create CFNumberRef for product.\n" );
 		return -1;
   }
   CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBProductID), numberRef);
@@ -981,8 +986,10 @@ int Samba::FindUsbDevices( QList<QString>* arrived )
 		deviceKey = QString( path );
 		arrived->append( deviceKey );
 		IOObjectRelease(usbDeviceRef);
+		count++;
   }
 	IOObjectRelease(iterator);
+	return count;
 	#endif // Mac-only FindUsbDevices( )
 	
 	#ifdef Q_WS_WIN

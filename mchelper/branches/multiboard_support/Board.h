@@ -27,6 +27,7 @@
 class UploaderThread;
 class PacketInterface;
 class Osc;
+class OscMessage;
 
 #include <QString>
 
@@ -63,6 +64,9 @@ class Board : public QListWidgetItem, public PacketReadyInterface
     PacketInterface* packetInterface;
     Osc* osc;
     UploaderThread* uploaderThread;
+		
+		void extractSystemInfoA( OscMessage* msg );
+		void extractSystemInfoB( OscMessage* msg );
 };
 
 #endif /*BOARD_H_*/

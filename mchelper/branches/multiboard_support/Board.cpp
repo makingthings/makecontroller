@@ -17,6 +17,7 @@
 
 #include "Board.h"
 #include <QStringList>
+#include <QList>
 
 Board::Board( MessageInterface* messageInterface, McHelperWindow* mainWindow, QApplication* application )
 {
@@ -96,21 +97,14 @@ void Board::packetWaiting( )
 	for( i = 0; i < messageCount; i++ )
 	{
 		QString msg = oscMessageList.at(i)->toString( );
-		if( strcmp( oscMessageList.at(i)->address, "/system/info-internal" ) == 0 )
+		if( strcmp( oscMessageList.at(i)->address, "/system/info-internal-a" ) == 0 )
 		{ 
-      // we're counting on the board to send the pieces of data in this order
-			name = QString( oscMessageList.at(i)->data.at( 0 )->s ); //name
-      serialNumber = QString::number( oscMessageList.at(i)->data.at( 1 )->i ); // serial number
-      ip_address = QString( oscMessageList.at(i)->data.at( 2 )->s ); // IP address
-      firmwareVersion = QString( oscMessageList.at(i)->data.at( 3 )->s );
-      freeMemory = QString::number( oscMessageList.at(i)->data.at( 4 )->i );
-      dhcp = oscMessageList.at(i)->data.at( 5 )->i;
-      webserver = oscMessageList.at(i)->data.at( 6 )->i;
-      gateway = QString( oscMessageList.at(i)->data.at( 7 )->s );
-      netMask = QString( oscMessageList.at(i)->data.at( 8 )->s );
-      udp_listen_port = QString::number( oscMessageList.at(i)->data.at( 9 )->i );
-      udp_send_port = QString::number( oscMessageList.at(i)->data.at( 10 )->i );
-
+      extractSystemInfoA( oscMessageList.at(i) );
+			sysInfoReceived = true;
+		}
+		else if( strcmp( oscMessageList.at(i)->address, "/system/info-internal-b" ) == 0 )
+		{ 
+      extractSystemInfoB( oscMessageList.at(i) );
 			sysInfoReceived = true;
 		}
 		else if( strcmp( oscMessageList.at(i)->address, "/network/find" ) == 0 )
@@ -136,6 +130,72 @@ void Board::packetWaiting( )
 		{
 			this->setText( QString( "%1 : %2" ).arg(name).arg(locationString()) );
 			mainWindow->updateDeviceList( );
+		}
+	}
+	qDeleteAll( oscMessageList );
+}
+
+void Board::extractSystemInfoA( OscMessage* msg )
+{
+	QList<OscMessageData*> msgData = msg->data;
+	int dataCount = msg->data.count( );
+	int i;
+	
+	for( i = 0; i < dataCount; i++ )
+	{
+		if( msgData.at( i ) == 0 )
+			break;
+		switch( i ) // we're counting on the board to send the pieces of data in this order
+		{
+			case 0:
+				name = QString( msgData.at( 0 )->s ); //name
+				break;
+			case 1:
+				serialNumber = QString::number( msgData.at( 1 )->i ); // serial number
+				break;
+			case 2:
+				ip_address = QString( msgData.at( 2 )->s ); // IP address
+				break;
+			case 3:
+				firmwareVersion = QString( msgData.at( 3 )->s );
+				break;
+			case 4:
+				freeMemory = QString::number( msgData.at( 4 )->i );
+				break;
+		}
+	}
+}
+
+void Board::extractSystemInfoB( OscMessage* msg )
+{
+	QList<OscMessageData*> msgData = msg->data;
+	int dataCount = msg->data.count( );
+	int i;
+	
+	for( i = 0; i < dataCount; i++ )
+	{
+		if( msgData.at( i ) == 0 )
+			break;
+		switch( i ) // we're counting on the board to send the pieces of data in this order
+		{
+			case 0:
+				dhcp = msgData.at( 0 )->i;
+				break;
+			case 1:
+				webserver = msgData.at( 1 )->i;
+				break;
+			case 2:
+				gateway = QString( msgData.at( 2 )->s );
+				break;
+			case 3:
+				netMask = QString( msgData.at( 3 )->s );
+				break;
+			case 4:
+				udp_listen_port = QString::number( msgData.at( 4 )->i );
+				break;
+			case 5:
+				udp_send_port = QString::number( msgData.at( 5 )->i );
+				break;
 		}
 	}
 }
