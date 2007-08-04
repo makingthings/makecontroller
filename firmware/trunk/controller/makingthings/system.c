@@ -537,9 +537,10 @@ int SystemOsc_PropertyGet( int property, int channel )
       snprintf( ipAddr, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
       snprintf( gateway, 25, "%d.%d.%d.%d", g0, g1, g2, g3 );
       snprintf( mask, 25, "%d.%d.%d.%d", m0, m1, m2, m3 );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",sissiiissii", sysName, serialnum, ipAddr, sysVersion, 
-                                                          freemem, dhcp, webserver, gateway, mask, oscUdpListen, oscUdpSend );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s-a", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",sissi", sysName, serialnum, ipAddr, sysVersion, freemem );
+			snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s-b", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",iissii", dhcp, webserver, gateway, mask, oscUdpListen, oscUdpSend );
       break;
     }
     case 9: // stack-audit
