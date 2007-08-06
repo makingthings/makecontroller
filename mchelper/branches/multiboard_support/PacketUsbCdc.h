@@ -29,6 +29,7 @@
 #include "MonitorInterface.h"
 
 #define MAX_MESSAGE 2048
+#define MAX_SLIP_READ_SIZE 16384
 
 class OscUsbPacket
 {
@@ -71,6 +72,9 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
 		  MonitorInterface* monitor;
 		  int slipReceive( char* buffer, int length );
 		  bool exit;
+		  char slipRxBuffer[MAX_SLIP_READ_SIZE];
+		  int slipRxBytesAvailable;
+		  char *slipRxPtr;
 
 };
 
