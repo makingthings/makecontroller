@@ -64,6 +64,12 @@ QVariant OutputWindow::data( const QModelIndex & index, int role ) const
 		}
 	}
 	
+	if( role == Qt::ForegroundRole ) // the text color
+	{
+		if( index.column( ) == 2 ) // timestamp column
+			return Qt::gray;
+	}
+	
 	return QVariant( );
 }
 

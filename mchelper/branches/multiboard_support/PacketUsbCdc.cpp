@@ -24,14 +24,14 @@
 #define ESC_END         0334    // ESC ESC_END means END data byte 
 #define ESC_ESC         0335    // ESC ESC_ESC means ESC data byte 
 
-#define MAX_READ_SIZE 16384
-
 PacketUsbCdc::PacketUsbCdc( ) : QThread( )
 {
 	packetCount = 0;
 	packetReadyInterface = NULL;
 	currentPacket = NULL;
 	exit = false;
+	slipRxBytesAvailable = 0;
+	slipRxPtr = slipRxBuffer;
 }
 
 PacketUsbCdc::~PacketUsbCdc( )
@@ -130,58 +130,65 @@ PacketUsbCdc::Status PacketUsbCdc::sendPacket( char* packet, int length )
 }
 
 int PacketUsbCdc::slipReceive( char* buffer, int length )
-{
-  int started = 0, count = 0, justGot = 0, i;
-  char tempBuffer[MAX_READ_SIZE];
-  char *bufferPtr = buffer, *tempPtr = tempBuffer;
+{  
+  if( length > MAX_SLIP_READ_SIZE )
+  	return PacketInterface::IO_ERROR;
+  
+  int started = 0, count = 0, finished = 0, i;
+  char *bufferPtr = buffer;
 
   while ( true )
   {
     if( exit == true )
     	return -1;
-    int available = numberOfAvailableBytes( );
-		//if( available < 0 )
-		//{
-			//monitor->deviceRemoved( QString(portName) ); // shut ourselves down
-			//return -1;
-		//}
-    if( available > 0 )
+    	
+    if( !slipRxBytesAvailable ) // if there's nothing left over from last time
     {
-    	if( available > MAX_READ_SIZE )
-    		available = MAX_READ_SIZE;
-    	justGot = usbRead( tempBuffer, available );
-    	tempPtr = tempBuffer;
+    	int available = numberOfAvailableBytes( );
+	    if( available > 0 )
+	    {
+	    	if( available > MAX_SLIP_READ_SIZE )
+	    		available = MAX_SLIP_READ_SIZE;
+	    	slipRxBytesAvailable = usbRead( slipRxBuffer, available );
+	    	slipRxPtr = slipRxBuffer;
+	    }
+			if( slipRxBytesAvailable < 0 && slipRxBytesAvailable != NOTHING_AVAILABLE )
+			{
+				monitor->deviceRemoved( QString(portName) ); // shut ourselves down
+				return -1;
+			}
     }
-		if( justGot < 0 && justGot != NOTHING_AVAILABLE )
-		{
-			monitor->deviceRemoved( QString(portName) ); // shut ourselves down
-			return -1;
-		}
 	
-    for( i = 0; i < justGot; i++ )
+    for( i = 0; i < slipRxBytesAvailable; i++ )
     {
-      switch( *tempPtr )
+      switch( *slipRxPtr )
       {
         case END:
           if( started && count ) // it was the END byte
-						return count; // We're done now if we had received any characters
+						finished = true; // We're done now if we had received any characters
           else // skipping all starting END bytes
             started = true;
           break;					
         case ESC:
           // if it's the same code as an ESC character, we just want to skip it and 
           // stick the next byte in the packet
-          tempPtr++;
+          slipRxPtr++;
           // no break here, just stick it in the packet		
         default:
-          *bufferPtr++ = *tempPtr;
-          count++;
+        	if( started )
+        	{
+          	*bufferPtr++ = *slipRxPtr;
+          	count++;
+        	}
+        	break;
       }
-      tempPtr++;
+      slipRxPtr++;
+      slipRxBytesAvailable--;
+      if( finished )
+        return count;
     }
-    if( justGot == 0 ) // if we didn't get anything, sleep...otherwise just rip through again
+    if( slipRxBytesAvailable == 0 ) // if we didn't get anything, sleep...otherwise just rip through again
     	msleep( 1 );
-    justGot = 0; // reset our count for the next run through
   }
   return PacketInterface::IO_ERROR; // should never get here
 }
