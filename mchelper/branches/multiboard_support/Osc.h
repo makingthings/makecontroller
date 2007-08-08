@@ -24,7 +24,7 @@
 #include "MessageInterface.h"
 #include "PacketReadyInterface.h"
 #include "McHelperWindow.h"
-#include <QObject>
+#include <QHostAddress>
 
 class McHelperWindow;
 
@@ -72,6 +72,8 @@ class OscMessage
 	  	data.clear( );
 	  }
 	  QString toString( );
+		QHostAddress destAddress;
+		int destPort;
 };
 
 class Osc : public QObject
@@ -88,6 +90,7 @@ class Osc : public QObject
 		Status createMessage( char* textMessage ); 
 		Status createMessage( char* address, char* format, ... );
 		Status createOneRequest( char* buffer, int *length, char* message );
+		Status createMessage( OscMessage* message );
 		Status sendPacket( );
 		bool isMessageWaiting();
 		Status receive( QList<OscMessage*>* oscMessageList = 0 );
@@ -107,6 +110,7 @@ class Osc : public QObject
 		char* createBundle( char* buffer, int* length, int a, int b );
 		char* createMessageInternal( char* bp, int* length, char* inputString );
 		char* createMessageInternal( char* bp, int* length, char* address, char* format, va_list args );
+		char* createMessageInternal( char* bp, int* length, char* address, char* format, QList<OscMessageData*> msgData );
 		char* writePaddedString( char* buffer, int* length, char* string );
 		char* writeTimetag( char* buffer, int* length, int a, int b );
 		void resetOutBuffer( );

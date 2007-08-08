@@ -321,6 +321,73 @@ Osc::Status Osc::createOneRequest( char* buffer, int *length, char* message )
 	return OK;
 }
 
+Osc::Status Osc::createMessage( OscMessage* msg )
+{
+	char typetag[50];
+	strcpy( typetag, "," );
+	for( int i = 0; i < msg->data.count( ); i++ )
+	{
+		OscMessageData *data = msg->data.at( i );
+		if( data->omdType == OscMessageData::OmdString )
+			strcat( typetag, "s" );
+		if( data->omdType == OscMessageData::OmdInt )
+			strcat( typetag, "i" );
+		if( data->omdType == OscMessageData::OmdFloat )
+			strcat( typetag, "f" );
+		if( data->omdType == OscMessageData::OmdBlob )
+			strcat( typetag, "b" );
+	}
+	int count = 0;
+  char *bp;
+  do
+  {  
+    count++;
+
+    char* buffer = outBufferPointer;
+    int length = outBufferRemaining;
+  
+    bp = buffer;
+  
+    // First message in the buffer?
+    if ( bp == outBuffer )
+    {
+      bp = createBundle( bp, &length, 0, 0 );
+      if ( bp == NULL )
+        return ERROR_CREATING_BUNDLE;
+    }
+  
+ 
+    // remember the place we're going to store the message length
+    int* lp = (int *)bp;
+    bp += 4;
+    length -= 4;
+
+    // remember the start of the message
+    char* mp = bp;    
+
+    if ( length > 0 ) // Set up to iterate through the arguments 
+      bp = createMessageInternal( bp, &length, msg->address, typetag, msg->data );
+    else
+      bp = 0;
+      
+    if ( bp != 0 )
+    {
+      // Set the size
+      *lp = qFromBigEndian( bp - mp ); 
+  
+      outBufferPointer = bp;
+      outBufferRemaining = length;
+      outMessageCount++;
+    }
+    else
+    {
+      sendPacket( );
+    }
+  } while ( bp == 0 && count == 1 );
+
+  return ( bp != 0 ) ? OK : ERROR_SENDING_TEXT_MESSAGE;
+}
+
 Osc::Status Osc::createMessage( char* address, char* format, ... )
 {  
   // try to send this message - if there's a problem somewhere, 
@@ -449,6 +516,62 @@ Osc::Status Osc::createMessage( char* textMessageOriginal )
   return ( bp != 0 ) ? OK : ERROR_SENDING_COMPLEX_MESSAGE;
 }
 
+
+char* Osc::createMessageInternal( char* bp, int* length, char* address, char* format, QList<OscMessageData*> msgData )
+{
+  // do the address
+  bp = writePaddedString( bp, length, address );
+  if ( bp == NULL )
+    return 0;
+
+  // do the type
+  bp = writePaddedString( bp, length, format );
+  if ( bp == NULL )
+    return 0;
+
+  // Going to be walking the tag string, the format string and the data
+  // skip the ',' comma
+  bool cont = true;
+	for( int i = 0; i < msgData.count( ); i++ )
+  {
+    OscMessageData *data = msgData.at(i);
+		if( data->omdType == OscMessageData::OmdInt )
+		{
+			*length -= 4;
+			if ( *length >= 0 )
+			{
+				int v = data->i;
+				v = qFromBigEndian( v );
+				*((int*)bp) = v;
+				bp += 4;
+			}
+			else 
+				cont = false;
+     }
+		if( data->omdType == OscMessageData::OmdFloat )
+		{
+			*length -= 4;
+			if ( *length >= 0 )
+			{
+				int v;
+				*((float*)&v) = data->f;
+				v = qFromBigEndian( v );
+				*((int*)bp) = v;
+				bp += 4;
+			}
+			else 
+				cont = false;
+     }
+		if( data->omdType == OscMessageData::OmdFloat )
+		{
+			bp = this->writePaddedString( bp, length, data->s );
+			if ( bp == NULL )
+				cont = false;
+    }
+	}
+
+  return ( cont ) ? bp : NULL;
+}
 
 char* Osc::createMessageInternal( char* bp, int* length, char* address, char* format, va_list args )
 {
@@ -743,21 +866,6 @@ void Osc::resetOutBuffer( )
   outMessageCount = 0;
 }
 
-/*
-// Osc transmits bytes in big endian format.
-// ...must change them if we're on a little endian machine.
-unsigned int Osc::qFromBigEndian( unsigned int a )
-{
-	#ifdef __LITTLE_ENDIAN__
-		return ( ( a & 0x000000FF ) << 24 ) |
-					( ( a & 0x0000FF00 ) << 8 )  | 
-					( ( a & 0x00FF0000 ) >> 8 )  | 
-					( ( a & 0xFF000000 ) >> 24 );
-	#elif __BIG_ENDIAN__
-		return a;
-	#endif
-}
-*/
 
 
 

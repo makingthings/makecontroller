@@ -32,6 +32,7 @@
 #include "UsbMonitor.h"
 #include "PacketUdp.h"
 #include "OutputWindow.h"
+#include "OscXmlServer.h"
 
 class Board;
 class BoardListModel;
@@ -39,6 +40,7 @@ class UsbMonitor;
 class NetworkMonitor;
 class SambaMonitor;
 class McHelperApp;
+class OscXmlServer;
 
 class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public MessageInterface
 {
@@ -78,6 +80,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		bool summaryTabIsActive( );
 		void updateSummaryInfo( );
 		void updateDeviceList( );
+		void newXmlPacketReceived( QList<OscMessage*> messageList, QString address );
         
 		void setNoUI( bool val );
 		void uiLessUpload( char* filename, bool bootFlash );
@@ -95,6 +98,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
         SambaMonitor* samba;
 		UsbMonitor* usb;
 		NetworkMonitor* udp;
+		OscXmlServer *xmlServer;
 		QTimer* monitorTimer;
 		QTimer summaryTimer;
     	QDialog* aboutMchelper;

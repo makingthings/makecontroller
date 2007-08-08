@@ -40,7 +40,8 @@ HEADERS = 	McHelperWindow.h \
 			Board.h \
 			MessageEvent.h \
 			BoardArrivalEvent.h \
-			OutputWindow.h
+			OutputWindow.h \
+			OscXmlServer.h
 				
             
 SOURCES	= 	main.cpp \
@@ -56,12 +57,13 @@ SOURCES	= 	main.cpp \
 			SambaMonitor.cpp \
 			Board.cpp \
 			MessageEvent.cpp \
-			OutputWindow.cpp
+			OutputWindow.cpp \
+			OscXmlServer.cpp
 				
 				
 TARGET = mchelper
             
-QT += network
+QT += network xml
 RESOURCES     = mchelper.qrc
 
 QTDIR_build:REQUIRES="contains(QT_CONFIG, small-config)"

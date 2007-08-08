@@ -53,6 +53,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	udp = new NetworkMonitor( ); 
 	samba = new SambaMonitor( application, this );
 	usb = new UsbMonitor( );
+	xmlServer = new OscXmlServer( this );
 	 
 	udp->setInterfaces( this, this, application );
 	usb->setInterfaces( this, application, this );
@@ -79,7 +80,8 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	connect( tabWidget, SIGNAL( currentChanged(int) ), this, SLOT( tabIndexChanged(int) ) );
 	
 	//USB signals/slots
-	connect( commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(commandLineEvent()) );
+	connect( commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(commandLineEvent( ) ) );
+	connect( sendButton, SIGNAL( clicked( ) ), this, SLOT(commandLineEvent( ) ) );
 	
 	//setup the pushbuttons
 	connect( fileSelectButton, SIGNAL( clicked() ), this, SLOT( fileSelectButtonClicked() ) );
@@ -105,7 +107,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   monitorTimer->start( DEVICE_SCAN_FREQ ); // check for new devices once a second...more often?
   //usb->start( );
   udp->start( );
-  samba->start( );
+  //samba->start( );
 }
 
 void McHelperWindow::usbBoardsArrived( QList<PacketInterface*>* arrived )
@@ -377,6 +379,17 @@ void McHelperWindow::commandLineEvent( )
   
   commandLine->clearEditText();
   writeUsbSettings( );
+}
+
+void McHelperWindow::newXmlPacketReceived( QList<OscMessage*> messageList, QString address )
+{
+	Board *board;
+	for( int i = 0; i < listWidget->count( ); i++ )
+	{
+		board = (Board*)listWidget->item( i );
+		if( board->key == address )
+			board->sendMessage( messageList );
+	}
 }
 
 void McHelperWindow::customEvent( QEvent* event )

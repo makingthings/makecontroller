@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>780</width>
-    <height>533</height>
+    <width>749</width>
+    <height>560</height>
    </rect>
   </property>
   <property name="sizePolicy" >
@@ -551,6 +551,9 @@
            <property name="focusPolicy" >
             <enum>Qt::WheelFocus</enum>
            </property>
+           <property name="frameShape" >
+            <enum>QFrame::StyledPanel</enum>
+           </property>
            <property name="showDropIndicator" stdset="0" >
             <bool>true</bool>
            </property>
@@ -578,23 +581,14 @@
           <string>Dialog</string>
          </attribute>
          <layout class="QVBoxLayout" >
-          <property name="spacing" >
-           <number>6</number>
-          </property>
-          <property name="leftMargin" >
-           <number>9</number>
-          </property>
-          <property name="topMargin" >
-           <number>9</number>
-          </property>
-          <property name="rightMargin" >
-           <number>9</number>
-          </property>
-          <property name="bottomMargin" >
-           <number>9</number>
-          </property>
           <item>
            <widget class="QTableView" name="outputView" >
+            <property name="focusPolicy" >
+             <enum>Qt::TabFocus</enum>
+            </property>
+            <property name="frameShape" >
+             <enum>QFrame::StyledPanel</enum>
+            </property>
             <property name="selectionMode" >
              <enum>QAbstractItemView::SingleSelection</enum>
             </property>
@@ -607,38 +601,49 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="commandLine" >
-            <property name="sizePolicy" >
-             <sizepolicy vsizetype="Fixed" hsizetype="Expanding" >
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="maximumSize" >
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="editable" >
-             <bool>true</bool>
-            </property>
-            <property name="currentIndex" >
-             <number>-1</number>
-            </property>
-            <property name="maxCount" >
-             <number>10</number>
-            </property>
-            <property name="insertPolicy" >
-             <enum>QComboBox::NoInsert</enum>
-            </property>
-            <property name="autoCompletionCaseSensitivity" >
-             <enum>Qt::CaseSensitive</enum>
-            </property>
-            <property name="frame" >
-             <bool>true</bool>
-            </property>
-           </widget>
+           <layout class="QHBoxLayout" >
+            <item>
+             <widget class="QComboBox" name="commandLine" >
+              <property name="sizePolicy" >
+               <sizepolicy vsizetype="Fixed" hsizetype="Expanding" >
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="maximumSize" >
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="editable" >
+               <bool>true</bool>
+              </property>
+              <property name="currentIndex" >
+               <number>-1</number>
+              </property>
+              <property name="maxCount" >
+               <number>10</number>
+              </property>
+              <property name="insertPolicy" >
+               <enum>QComboBox::NoInsert</enum>
+              </property>
+              <property name="autoCompletionCaseSensitivity" >
+               <enum>Qt::CaseSensitive</enum>
+              </property>
+              <property name="frame" >
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="sendButton" >
+              <property name="text" >
+               <string>Send</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>
@@ -904,33 +909,18 @@
           <string>Uploader</string>
          </attribute>
          <layout class="QVBoxLayout" >
-          <property name="spacing" >
-           <number>6</number>
-          </property>
-          <property name="leftMargin" >
-           <number>9</number>
-          </property>
-          <property name="topMargin" >
-           <number>9</number>
-          </property>
-          <property name="rightMargin" >
-           <number>9</number>
-          </property>
-          <property name="bottomMargin" >
-           <number>9</number>
-          </property>
           <item>
            <widget class="QGroupBox" name="uploaderGroupBox" >
             <property name="minimumSize" >
              <size>
               <width>380</width>
-              <height>115</height>
+              <height>140</height>
              </size>
             </property>
             <property name="maximumSize" >
              <size>
               <width>16777215</width>
-              <height>115</height>
+              <height>140</height>
              </size>
             </property>
             <property name="title" >
@@ -940,21 +930,6 @@
              <set>Qt::AlignHCenter|Qt::AlignTop</set>
             </property>
             <layout class="QVBoxLayout" >
-             <property name="spacing" >
-              <number>6</number>
-             </property>
-             <property name="leftMargin" >
-              <number>9</number>
-             </property>
-             <property name="topMargin" >
-              <number>9</number>
-             </property>
-             <property name="rightMargin" >
-              <number>9</number>
-             </property>
-             <property name="bottomMargin" >
-              <number>9</number>
-             </property>
              <item>
               <widget class="QLabel" name="label_9" >
                <property name="text" >
@@ -985,7 +960,7 @@
                <property name="verticalSpacing" >
                 <number>6</number>
                </property>
-               <item row="1" column="1" >
+               <item row="2" column="1" >
                 <widget class="QProgressBar" name="progressBar" >
                  <property name="value" >
                   <number>24</number>
@@ -995,7 +970,7 @@
                  </property>
                 </widget>
                </item>
-               <item row="1" column="2" >
+               <item row="2" column="2" >
                 <widget class="QPushButton" name="uploadButton" >
                  <property name="minimumSize" >
                   <size>
@@ -1052,6 +1027,22 @@
                  </property>
                 </widget>
                </item>
+               <item row="1" column="1" >
+                <spacer>
+                 <property name="orientation" >
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeType" >
+                  <enum>QSizePolicy::Fixed</enum>
+                 </property>
+                 <property name="sizeHint" >
+                  <size>
+                   <width>20</width>
+                   <height>8</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
               </layout>
              </item>
             </layout>
@@ -1083,7 +1074,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>780</width>
+     <width>749</width>
      <height>22</height>
     </rect>
    </property>
