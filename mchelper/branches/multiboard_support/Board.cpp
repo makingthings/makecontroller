@@ -148,19 +148,19 @@ void Board::extractSystemInfoA( OscMessage* msg )
 		switch( i ) // we're counting on the board to send the pieces of data in this order
 		{
 			case 0:
-				name = QString( msgData.at( 0 )->s ); //name
+				name = QString( msgData.at( i )->s ); //name
 				break;
 			case 1:
-				serialNumber = QString::number( msgData.at( 1 )->i ); // serial number
+				serialNumber = QString::number( msgData.at( i )->i ); // serial number
 				break;
 			case 2:
-				ip_address = QString( msgData.at( 2 )->s ); // IP address
+				ip_address = QString( msgData.at( i )->s ); // IP address
 				break;
 			case 3:
-				firmwareVersion = QString( msgData.at( 3 )->s );
+				firmwareVersion = QString( msgData.at( i )->s );
 				break;
 			case 4:
-				freeMemory = QString::number( msgData.at( 4 )->i );
+				freeMemory = QString::number( msgData.at( i )->i );
 				break;
 		}
 	}
@@ -206,5 +206,15 @@ void Board::sendMessage( QString rawMessage )
 		return;
 	else
 		osc->uiSendPacket( rawMessage );
+}
+
+void Board::sendMessage( QList<OscMessage*> messageList )
+{
+	int msgCount = messageList.count( );
+	for( int i = 0; i < msgCount; i++ )
+		osc->createMessage( messageList.at(i) );
+	if( msgCount > 0 )
+		osc->sendPacket( );
+
 }
 

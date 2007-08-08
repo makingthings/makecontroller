@@ -43,6 +43,7 @@ class Board : public QListWidgetItem, public PacketReadyInterface
     void setUploaderThread( UploaderThread* uploaderThread );
     void packetWaiting( ); // from PacketReadyInterface
     void sendMessage( QString rawMessage );
+		void sendMessage( QList<OscMessage*> messageList );
     bool setBinFileName( char* filename );
     void flash( );
     QString locationString( );
