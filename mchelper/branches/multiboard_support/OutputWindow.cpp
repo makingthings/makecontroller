@@ -61,6 +61,8 @@ QVariant OutputWindow::data( const QModelIndex & index, int role ) const
 				return QColor(255, 228, 118, 255); // Orange
 			case MessageEvent::Command:
 				return QColor(229, 237, 247, 255); // Blue
+			case MessageEvent::XMLMessage:
+				return QColor(219, 250, 224, 255); // Green
 		}
 	}
 	

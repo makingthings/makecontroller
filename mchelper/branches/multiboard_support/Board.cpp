@@ -121,7 +121,10 @@ void Board::packetWaiting( )
 			messageList.append( msg );
 	}
 	if( messageList.count( ) > 0 )
+	{
 		messageInterface->messageThreadSafe( messageList, MessageEvent::Response, QString( locationString( ) ) );
+		mainWindow->sendXmlPacket( oscMessageList, locationString( ), 10000 );
+	}
 		
 	if( sysInfoReceived )
 	{
