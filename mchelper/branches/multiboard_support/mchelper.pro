@@ -18,8 +18,8 @@
 
 TEMPLATE = app
 
-FORMS = mchelper.ui \
-				aboutMchelper.ui \
+FORMS = layouts/mchelper.ui \
+				layouts/aboutMchelper.ui \
 				layouts/mchelperPrefs.ui
 
 #CONFIG += qt release
