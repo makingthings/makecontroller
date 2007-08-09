@@ -1083,6 +1083,7 @@
      <string>File</string>
     </property>
     <addaction name="actionAboutMchelper" />
+    <addaction name="actionPreferences" />
     <addaction name="actionClearOutput" />
    </widget>
    <addaction name="menuFile" />
@@ -1102,6 +1103,11 @@
    </property>
    <property name="shortcutContext" >
     <enum>Qt::ApplicationShortcut</enum>
+   </property>
+  </action>
+  <action name="actionPreferences" >
+   <property name="text" >
+    <string>Preferences...</string>
    </property>
   </action>
  </widget>

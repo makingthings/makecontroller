@@ -18,12 +18,13 @@
 #include "OscXmlServer.h"
 #include <QDomDocument>
 
-OscXmlServer::OscXmlServer( McHelperWindow *mainWindow )
+OscXmlServer::OscXmlServer( McHelperWindow *mainWindow, int port )
 {
 	this->mainWindow = mainWindow;
+	listenPort = port;
 	serverSocket = new QTcpServer( );
 	serverSocket->setMaxPendingConnections( 1 ); // just listen for 1 for now
-	serverSocket->listen( QHostAddress::LocalHost, 10000 );
+	serverSocket->listen( QHostAddress::Any, listenPort );
 	connect( serverSocket, SIGNAL( newConnection() ), this, SLOT( openNewConnection() ) );
 	clientSocket = NULL;
 
@@ -52,6 +53,18 @@ void OscXmlServer::openNewConnection( )
 	connect( clientSocket, SIGNAL( disconnected() ), this, SLOT( clientDisconnected() ) );
 	connect( clientSocket, SIGNAL( error(  QAbstractSocket::SocketError ) ), this, SLOT( clientError( QAbstractSocket::SocketError) ) );
 	xmlInput = new QXmlInputSource( clientSocket );
+}
+
+bool OscXmlServer::changeListenPort( int port )
+{
+	serverSocket->close( );
+	if( !serverSocket->listen( QHostAddress::Any, port ) )
+		return false;
+	else
+	{
+		listenPort = port;
+		return true;
+	}
 }
 
 void OscXmlServer::processClientData( )

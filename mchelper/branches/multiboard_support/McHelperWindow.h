@@ -20,6 +20,7 @@
 
 #include "ui_mchelper.h"
 #include "ui_aboutMchelper.h"
+#include "ui_mchelperPrefs.h"
 
 //Qt includes
 #include <QMainWindow>
@@ -41,6 +42,8 @@ class NetworkMonitor;
 class SambaMonitor;
 class McHelperApp;
 class OscXmlServer;
+class aboutMchelper;
+class mchelperPrefs;
 
 class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public MessageInterface
 {
@@ -90,6 +93,9 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		#ifdef Q_WS_WIN // Windows-only
 		void usbRemoved( HANDLE deviceHandle );
 		#endif
+		
+		int appUdpListenPort;
+		int appXmlListenPort;
 	
 	protected:
 		void closeEvent( QCloseEvent *qcloseevent );
@@ -103,7 +109,8 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		QTimer* monitorTimer;
 		QTimer summaryTimer;
 		QTimer outputWindowTimer;
-    	QDialog* aboutMchelper;
+    	aboutMchelper* aboutDialog;
+			mchelperPrefs* prefsDialog;
     	QHash<QString, Board*> connectedBoards;
 			TableEntry* createOutputWindowEntry( QString string, MessageEvent::Types type, QString from );
 			QList<TableEntry*> outputWindowQueue;
@@ -122,6 +129,9 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		int lastTabIndex;
   
 	public slots:
+		void restoreDefaultPrefs( );
+		void udpPortPrefsChanged( );
+		void xmlPortPrefsChanged( );
     
 	private slots:
         // Uploader functions
@@ -131,16 +141,13 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 
 		void commandLineEvent( );
 		void postMessages( );
-    
-		// Menu functions
-        void about( );
         
         // Summary tab editing
         void systemNameChanged( );
         void systemSerialNumberChanged( );
         void ipAddressChanged( );
-        void dhcpChanged( int newState );
-        void webserverChanged( int newState );
+        void dhcpChanged( bool newState );
+        void webserverChanged( bool newState );
         void udpListenChanged( );
         void udpSendChanged( );
         
@@ -165,6 +172,26 @@ class McHelperApp : public QApplication
     McHelperWindow* mchelper;
     #endif // Windows-only
 };
+
+class aboutMchelper : public QDialog, private Ui::aboutMchelper
+ {
+		Q_OBJECT
+		public:
+			aboutMchelper( );
+ };
+ 
+ class mchelperPrefs : public QDialog, public Ui::mchelperPrefs
+ {
+		Q_OBJECT
+		public:
+			mchelperPrefs( McHelperWindow *mainWindow );
+			void setUdpPortDisplay( int port );
+			void setXmlPortDisplay( int port );
+		private slots:
+			
+		private:
+			McHelperWindow *mainWindow;
+ };
 
 
 class BoardEvent : public QEvent

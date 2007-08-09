@@ -19,19 +19,18 @@
 #include "Osc.h"
 #include "BoardArrivalEvent.h"
 
-#define BROADCAST_TX_PORT 10000
-#define BROADCAST_RX_PORT 10000
 #define PING_FREQUENCY 1000
 
-NetworkMonitor::NetworkMonitor( )
+NetworkMonitor::NetworkMonitor( int listenPort )
 {
 	QHostInfo::lookupHost( QHostInfo::localHostName(), this, SLOT(lookedUp(QHostInfo)));
 	socket = new QUdpSocket( );
-	if ( !socket->bind( BROADCAST_RX_PORT ) )
+	rxtxPort = listenPort;
+	if ( !socket->bind( rxtxPort, QUdpSocket::ShareAddress ) )
 	{
 	  socket->close();
 	  socket = 0;
-	  mainWindow->messageThreadSafe( QString( "Udp> Can't listen on port %1 - make sure it's not already in use.").arg( BROADCAST_RX_PORT) );
+	  mainWindow->messageThreadSafe( QString( "Error: Can't listen on port %1 - make sure it's not already in use.").arg( rxtxPort ), MessageEvent::Error, "Ethernet" );
 	}
 	connect( socket, SIGNAL(readyRead()), this, SLOT( processPendingDatagrams() ) );
 	connect( &pingTimer, SIGNAL( timeout() ), this, SLOT( sendPing() ) );
@@ -54,7 +53,22 @@ void NetworkMonitor::start( )
 
 void NetworkMonitor::sendPing( )
 {
-	socket->writeDatagram( broadcastPing.data(), broadcastPing.size(), QHostAddress::Broadcast, BROADCAST_TX_PORT );
+	socket->writeDatagram( broadcastPing.data(), broadcastPing.size(), QHostAddress::Broadcast, rxtxPort );
+}
+
+bool NetworkMonitor::changeListenPort( int port )
+{
+	socket->close( );
+	if( !socket->bind( port, QUdpSocket::ShareAddress ) )
+	{
+		mainWindow->messageThreadSafe( QString( "Error: Can't listen on port %1 - make sure it's not already in use.").arg( rxtxPort ), MessageEvent::Error, "Ethernet" );
+		return false;
+	}
+	else
+	{
+		rxtxPort = port;
+		return true;
+	}
 }
 
 NetworkMonitor::Status NetworkMonitor::scan( QList<PacketUdp*>* arrived )
@@ -84,7 +98,7 @@ void NetworkMonitor::processPendingDatagrams()
     	PacketUdp* device = new PacketUdp( );
     	connectedDevices.insert( socketKey, device );  // stick it in our own list of boards we know about
     	
-    	device->setRemoteHostInfo( sender, BROADCAST_TX_PORT );
+    	device->setRemoteHostInfo( sender, rxtxPort );
     	device->setKey( socketKey );
     	device->setInterfaces( messageInterface, this );
     	device->open( );

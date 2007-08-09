@@ -34,10 +34,9 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 {
 	this->application = application;
 	setupUi(this);
-	
-	aboutMchelper = new QDialog( );
-	Ui::aboutMchelper ui;
-  ui.setupUi(aboutMchelper);
+	readSettings( );
+	aboutDialog = new aboutMchelper( );
+	prefsDialog = new mchelperPrefs( this );
 	
 	#ifdef Q_WS_WIN
 	application->setMainWindow( this );
@@ -50,10 +49,10 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	noUI = false;
 	
 	//listWidget = new BoardListModel( application, this, this );
-	udp = new NetworkMonitor( ); 
+	udp = new NetworkMonitor( appUdpListenPort ); 
 	samba = new SambaMonitor( application, this );
 	usb = new UsbMonitor( );
-	xmlServer = new OscXmlServer( this );
+	xmlServer = new OscXmlServer( this, appXmlListenPort );
 	 
 	udp->setInterfaces( this, this, application );
 	usb->setInterfaces( this, application, this );
@@ -72,8 +71,6 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	
 	progressBar->setRange( 0, 1000 );
 	progressBar->setValue( 0 );
-	
-	readSettings( );
 	lastTabIndex = 0;
 	
 	// if ( udp->open( ) != PacketUdp::OK )
@@ -89,13 +86,14 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	connect( systemName, SIGNAL( editingFinished() ), this, SLOT ( systemNameChanged() ) );
 	connect( systemSerialNumber, SIGNAL( editingFinished() ), this, SLOT ( systemSerialNumberChanged() ) );
 	connect( netAddressLineEdit, SIGNAL( editingFinished() ), this, SLOT ( ipAddressChanged() ) );
-	connect( dhcpCheckBox, SIGNAL( stateChanged(int) ), this, SLOT ( dhcpChanged(int) ) );
-	connect( webserverCheckBox, SIGNAL( stateChanged(int) ), this, SLOT ( webserverChanged(int) ) );
+	connect( dhcpCheckBox, SIGNAL( clicked(bool) ), this, SLOT ( dhcpChanged(bool) ) );
+	connect( webserverCheckBox, SIGNAL( clicked(bool) ), this, SLOT ( webserverChanged(bool) ) );
 	connect( udpListenPort, SIGNAL( editingFinished() ), this, SLOT ( udpListenChanged() ) );
 	connect( udpSendPort, SIGNAL( editingFinished() ), this, SLOT ( udpSendChanged() ) );
     
 	// setup the menu
-	connect( actionAboutMchelper, SIGNAL( triggered() ), this, SLOT( about( ) ) );
+	connect( actionAboutMchelper, SIGNAL( triggered() ), aboutDialog, SLOT( show( ) ) );
+	connect( actionPreferences, SIGNAL( triggered() ), prefsDialog, SLOT( show( ) ) );
 	connect( actionClearOutput, SIGNAL( triggered() ), outputModel, SLOT( clear( ) ) );
 	
 	connect( &summaryTimer, SIGNAL(timeout()), this, SLOT( sendSummaryMessage() ) );
@@ -627,6 +625,9 @@ void McHelperWindow::readSettings()
 	lastDirectory = settings.value("directory", "/home").toString();
 	fileSelectText->setEditText( lastDirectory );
 	
+	appUdpListenPort = settings.value( "appUdpListenPort", 10000 ).toInt( );
+	appXmlListenPort = settings.value( "appXmlListenPort", 11000 ).toInt( );
+	
 	QStringList usbCmdList = settings.value( "usbCmdList", "" ).toStringList();
 	commandLine->addItems( usbCmdList );
 	if( usbCmdList.count() > 0 )
@@ -667,22 +668,65 @@ void McHelperWindow::setNoUI( bool val )
 
 void McHelperWindow::uiLessUpload( char* filename, bool bootFlash )
 {
-	strcpy( fileNameBuffer, filename );
+	(void)filename;
 	(void)bootFlash;
-		//fileNameBuffer = *filename;
-		
-	// uploaderThread->setBinFileName( fileNameBuffer );
-  
-	//if( bootFlash )
-		//uploaderThread->setBootFromFlash( true );
-	
-	//flash( );
 }
 
-
-void McHelperWindow::about( )  // set the version number here.
+aboutMchelper::aboutMchelper( ) : QDialog( )
 {
-  aboutMchelper->show();
+	setupUi(this);
+}
+
+mchelperPrefs::mchelperPrefs( McHelperWindow *mainWindow ) : QDialog( )
+{
+	setupUi(this);
+	this->mainWindow = mainWindow;
+	
+	connect( defaultsButton, SIGNAL( clicked() ), mainWindow, SLOT( restoreDefaultPrefs() ) );
+	connect( udpPortPrefs, SIGNAL( editingFinished() ), mainWindow, SLOT( udpPortPrefsChanged() ) );
+	connect( xmlPortPrefs, SIGNAL( editingFinished() ), mainWindow, SLOT( xmlPortPrefsChanged() ) );
+	
+	setUdpPortDisplay( mainWindow->appUdpListenPort );
+	setXmlPortDisplay( mainWindow->appXmlListenPort );
+}
+
+void mchelperPrefs::setUdpPortDisplay( int port )
+{
+	udpPortPrefs->setText( QString::number( port ) );
+}
+
+void mchelperPrefs::setXmlPortDisplay( int port )
+{
+	xmlPortPrefs->setText( QString::number( port ) );
+}
+
+void McHelperWindow::restoreDefaultPrefs( )
+{
+	appUdpListenPort = 10000;
+	appXmlListenPort = 11000;
+	QSettings settings("MakingThings", "mchelper");
+	settings.setValue("appUdpListenPort", appUdpListenPort );
+	settings.setValue("appXmlListenPort", appXmlListenPort );
+	prefsDialog->setUdpPortDisplay( appUdpListenPort );
+	prefsDialog->setXmlPortDisplay( appXmlListenPort );
+	udp->changeListenPort( appUdpListenPort );
+	xmlServer->changeListenPort( appXmlListenPort );
+}
+
+void McHelperWindow::udpPortPrefsChanged( )
+{
+	appUdpListenPort = prefsDialog->udpPortPrefs->text().toInt( );
+	QSettings settings("MakingThings", "mchelper");
+	settings.setValue("appUdpListenPort", appUdpListenPort );
+	udp->changeListenPort( appUdpListenPort );
+}
+
+void McHelperWindow::xmlPortPrefsChanged( )
+{
+	appXmlListenPort = prefsDialog->xmlPortPrefs->text().toInt( );
+	QSettings settings("MakingThings", "mchelper");
+	settings.setValue("appXmlListenPort", appXmlListenPort );
+	xmlServer->changeListenPort( appXmlListenPort );
 }
 
 void McHelperWindow::systemNameChanged( )
@@ -730,38 +774,38 @@ void McHelperWindow::ipAddressChanged( )
     statusBar()->showMessage( tr("IP address changed to ").append( newAddress ), 2000);
 }
 
-void McHelperWindow::dhcpChanged( int newState )
+void McHelperWindow::dhcpChanged( bool newState )
 {
 	Board* board = (Board*)listWidget->currentItem();
   if( board == NULL )
   	return;
   
-  if( newState == Qt::Checked && !board->dhcp )
+  if( newState == true && !board->dhcp )
   {
   	board->sendMessage( QString( "/network/dhcp 1" ) );
   	statusBar()->showMessage( tr("DHCP has been turned on."), 2000);
   }
   
-  if( newState == Qt::Unchecked && board->dhcp )
+  if( newState == false && board->dhcp )
   {
   	board->sendMessage( QString( "/network/dhcp 0" ) );
   	statusBar()->showMessage( tr("DHCP has been turned off."), 2000);
   }
 }
 
-void McHelperWindow::webserverChanged( int newState )
+void McHelperWindow::webserverChanged( bool newState )
 {
 	Board* board = (Board*)listWidget->currentItem();
   if( board == NULL )
   	return;
   
-  if( newState == Qt::Checked && !board->webserver )
+  if( newState == true && !board->webserver )
   {
   	board->sendMessage( QString( "/network/webserver 1" ) );
   	statusBar()->showMessage( tr("The board's web server has been turned on."), 2000);
   }
   
-  if( newState == Qt::Unchecked && board->webserver )
+  if( newState == false && board->webserver )
   {
   	board->sendMessage( QString( "/network/webserver 0" ) );
   	statusBar()->showMessage( tr("The board's web server has been turned off."), 2000);

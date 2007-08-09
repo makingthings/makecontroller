@@ -50,12 +50,14 @@ class OscXmlServer : public QObject
 	Q_OBJECT
 	
 	public:
-		OscXmlServer( McHelperWindow *mainWindow );
+		OscXmlServer( McHelperWindow *mainWindow, int port );
 		~OscXmlServer( );
 		bool isConnected( );
 		void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort );
 		QList<OscMessage*> oscMessageList;
 		QString fromString;
+		int listenPort;
+		bool changeListenPort( int port );
 		
 	private:
 		QTcpServer *serverSocket;
