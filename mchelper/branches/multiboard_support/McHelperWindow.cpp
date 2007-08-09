@@ -108,6 +108,9 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   //usb->start( );
   udp->start( );
   //samba->start( );
+	
+	connect( &outputWindowTimer, SIGNAL(timeout()), this, SLOT( postMessages( ) ) );
+	outputWindowTimer.start( 10 );
 }
 
 void McHelperWindow::usbBoardsArrived( QList<PacketInterface*>* arrived )
@@ -392,6 +395,12 @@ void McHelperWindow::newXmlPacketReceived( QList<OscMessage*> messageList, QStri
 	}
 }
 
+void McHelperWindow::sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort )
+{
+	if( xmlServer->isConnected( ) )
+		xmlServer->sendXmlPacket( messageList, srcAddress, srcPort );
+}
+
 void McHelperWindow::customEvent( QEvent* event )
 {
 	switch( event->type() )
@@ -478,14 +487,24 @@ void McHelperWindow::messageThreadSafe( QString string, MessageEvent::Types type
 
 void McHelperWindow::messageThreadSafe( QString string, MessageEvent::Types type, QString from )
 { 
-  MessageEvent* messageEvent = new MessageEvent( string, type, from );
-  application->postEvent( this, messageEvent );
+  //MessageEvent* messageEvent = new MessageEvent( string, type, from );
+  //application->postEvent( this, messageEvent );
+	TableEntry *newItem = createOutputWindowEntry( string, type, from );
+	QMutexLocker locker(&outputWindowQueueMutex);
+	outputWindowQueue.append( newItem );
 }
 
 void McHelperWindow::messageThreadSafe( QStringList strings, MessageEvent::Types type, QString from )
 { 
-  MessageEvent* messageEvent = new MessageEvent( strings, type, from );
-  application->postEvent( this, messageEvent );
+  //MessageEvent* messageEvent = new MessageEvent( strings, type, from );
+  //application->postEvent( this, messageEvent );
+	QMutexLocker locker(&outputWindowQueueMutex);
+	for( int i = 0; i < strings.count( ); i ++ )
+	{
+		QString string = strings.at(i);
+		TableEntry *newItem = createOutputWindowEntry( string, type, from );
+		outputWindowQueue.append( newItem );
+	}
 }
 
 void McHelperWindow::progress( int value )
@@ -527,6 +546,7 @@ void McHelperWindow::message( QString string, MessageEvent::Types type, QString 
 		outputModel->newRows( entryList );
 		outputView->resizeColumnToContents( McHelperWindow::TO_FROM );
 		outputView->resizeColumnToContents( McHelperWindow::TIMESTAMP );
+		outputView->resizeRowsToContents( );
 		outputView->scrollToBottom( );
 	}
 }
@@ -550,6 +570,19 @@ void McHelperWindow::message( QStringList strings, MessageEvent::Types type, QSt
 		outputView->resizeColumnToContents( McHelperWindow::TO_FROM );
 		outputView->resizeColumnToContents( McHelperWindow::TIMESTAMP );
 		outputView->scrollToBottom( );
+}
+
+void McHelperWindow::postMessages( )
+{
+	if( outputWindowQueue.count( ) > 0 )
+	{
+		QMutexLocker locker(&outputWindowQueueMutex);
+		outputModel->newRows( outputWindowQueue );
+		outputWindowQueue.clear( );
+		outputView->resizeColumnToContents( McHelperWindow::TO_FROM );
+		outputView->resizeColumnToContents( McHelperWindow::TIMESTAMP );
+		outputView->scrollToBottom( );
+	}
 }
 
 

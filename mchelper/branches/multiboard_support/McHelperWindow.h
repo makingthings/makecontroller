@@ -81,6 +81,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void updateSummaryInfo( );
 		void updateDeviceList( );
 		void newXmlPacketReceived( QList<OscMessage*> messageList, QString address );
+		void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort );
         
 		void setNoUI( bool val );
 		void uiLessUpload( char* filename, bool bootFlash );
@@ -101,9 +102,12 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		OscXmlServer *xmlServer;
 		QTimer* monitorTimer;
 		QTimer summaryTimer;
+		QTimer outputWindowTimer;
     	QDialog* aboutMchelper;
     	QHash<QString, Board*> connectedBoards;
 			TableEntry* createOutputWindowEntry( QString string, MessageEvent::Types type, QString from );
+			QList<TableEntry*> outputWindowQueue;
+			QMutex outputWindowQueueMutex;
 		
 		void readSettings();
 		void writeFileSettings();
@@ -126,6 +130,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
         void checkForNewDevices( );
 
 		void commandLineEvent( );
+		void postMessages( );
     
 		// Menu functions
         void about( );

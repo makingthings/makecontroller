@@ -25,7 +25,7 @@
 class MessageEvent : public QEvent
 {
   public:
-    enum Types{ Warning, Error, Info, Notice, Response, Command };
+    enum Types{ Warning, Error, Info, Notice, Response, Command, XMLMessage };
     
     MessageEvent( QString string, MessageEvent::Types type, QString from );
     ~MessageEvent( ) {}

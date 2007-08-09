@@ -53,13 +53,14 @@ class OscXmlServer : public QObject
 		OscXmlServer( McHelperWindow *mainWindow );
 		~OscXmlServer( );
 		bool isConnected( );
+		void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort );
 		QList<OscMessage*> oscMessageList;
+		QString fromString;
 		
 	private:
 		QTcpServer *serverSocket;
 		QTcpSocket *clientSocket;
 		McHelperWindow *mainWindow;
-		QString fromString;
 		QXmlSimpleReader xml;
 		QXmlInputSource *xmlInput;
 		XmlHandler *handler;

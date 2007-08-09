@@ -16,6 +16,7 @@
 *********************************************************************************/
 
 #include "OscXmlServer.h"
+#include <QDomDocument>
 
 OscXmlServer::OscXmlServer( McHelperWindow *mainWindow )
 {
@@ -81,6 +82,58 @@ bool OscXmlServer::isConnected( )
 	}
 	
 	return false;
+}
+
+void OscXmlServer::sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort )
+{
+	int msgCount = messageList.count( );
+	if( !isConnected( ) || msgCount < 1 )
+		return;
+	
+	QDomDocument doc;
+	QDomElement oscPacket = doc.createElement( "OSCPACKET" );
+	oscPacket.setAttribute( "ADDRESS", srcAddress );
+	oscPacket.setAttribute( "PORT", srcPort );
+	oscPacket.setAttribute( "TIME", 0 );
+	doc.appendChild( oscPacket );
+
+	for( int i = 0; i < msgCount; i++ )
+	{
+		OscMessage *oscMsg = messageList.at( i );
+		int dataCount = oscMsg->data.count( );
+		
+		QDomElement msg = doc.createElement( "MESSAGE" );
+		msg.setAttribute( "NAME", QString( oscMsg->address ) );
+		oscPacket.appendChild( msg );
+		
+		for( int j = 0; j < dataCount; j++ )
+		{
+			OscMessageData *data = oscMsg->data.at( j );
+			QDomElement argument = doc.createElement( "ARGUMENT" );
+			switch( data->omdType )
+			{
+				case OscMessageData::OmdString:
+					argument.setAttribute( "TYPE", "s" );
+					argument.setAttribute( "VALUE", QString( data->s ) );
+					break;
+				case OscMessageData::OmdInt:
+					argument.setAttribute( "TYPE", "i" );
+					argument.setAttribute( "VALUE", QString::number( data->i ) );
+					break;
+				case OscMessageData::OmdFloat:
+					argument.setAttribute( "TYPE", "f" );
+					argument.setAttribute( "VALUE", QString::number( data->f ) );
+					break;
+				case OscMessageData::OmdBlob:
+					argument.setAttribute( "TYPE", "b" );
+					argument.setAttribute( "VALUE", QString( (char*)data->b ) );
+					break;
+			}
+			msg.appendChild( argument );
+		}
+	}
+	clientSocket->write( doc.toByteArray( ) );
+	clientSocket->write( "\0", 1 ); // Flash wants XML followed by a zero byte
 }
 
 XmlHandler::XmlHandler( McHelperWindow *mainWindow, OscXmlServer *xmlServer ) : QXmlDefaultHandler( )
@@ -158,6 +211,10 @@ bool XmlHandler::endElement( const QString & namespaceURI, const QString & local
 	if( localName == "OSCPACKET" )
 	{
 		mainWindow->newXmlPacketReceived( xmlServer->oscMessageList, currentDestination.toString() );
+		QStringList strings;
+		for( int i = 0; i < xmlServer->oscMessageList.count( ); i++ )
+			strings << xmlServer->oscMessageList.at( i )->toString( );
+		mainWindow->messageThreadSafe( strings, MessageEvent::XMLMessage, xmlServer->fromString);
 		qDeleteAll( xmlServer->oscMessageList );
 		xmlServer->oscMessageList.clear( );
 	}
