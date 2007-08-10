@@ -103,12 +103,12 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	monitorTimer = new QTimer(this); // then set up a timer to check for others periodically
   connect(monitorTimer, SIGNAL(timeout()), this, SLOT( checkForNewDevices() ) );
   monitorTimer->start( DEVICE_SCAN_FREQ ); // check for new devices once a second...more often?
-  //usb->start( );
+  usb->start( );
   udp->start( );
-  //samba->start( );
+  samba->start( );
 	
 	connect( &outputWindowTimer, SIGNAL(timeout()), this, SLOT( postMessages( ) ) );
-	outputWindowTimer.start( 10 );
+	outputWindowTimer.start( 50 );
 }
 
 void McHelperWindow::usbBoardsArrived( QList<PacketInterface*>* arrived )
