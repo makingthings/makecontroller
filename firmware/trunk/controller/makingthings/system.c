@@ -392,7 +392,6 @@ int SystemOsc_Poll( )
 
 // Set the index LED, property with the value
 int SystemOsc_PropertySet( int property, char* typedata, int channel )
-//int SystemOsc_PropertySet( int property, int value )
 {
   switch ( property )
   {
@@ -462,11 +461,9 @@ int SystemOsc_PropertySet( int property, char* typedata, int channel )
 
 // Get the property
 int SystemOsc_PropertyGet( int property, int channel )
-//int SystemOsc_PropertyGet( int property )
 {
   int value = 0;
   char address[ OSC_SCRATCH_SIZE ];
-  //char output[ OSC_SCRATCH_SIZE ];
   switch ( property )
   {
     case 0: // active
@@ -503,44 +500,51 @@ int SystemOsc_PropertyGet( int property, int channel )
     case 7: // info-internal
     case 8: // info
     {
-      char ipAddr[25];
-      char gateway[25];
-      char mask[25];
       int a0, a1, a2, a3;
-      int g0, g1, g2, g3;
-      int m0, m1, m2, m3;
-      char* sysName = System_GetName( );
-      int serialnum = System_GetSerialNumber( );
-      int oscUdpListen = NetworkOsc_GetUdpListenPort( );
-      int oscUdpSend = NetworkOsc_GetUdpSendPort( );
-      char sysVersion[50];
-      snprintf( sysVersion, 50, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER );
-      int freemem = System_GetFreeMemory( );
-      int dhcp;
+			{ // put these in their own context so the local variables aren't lying around on the stack for the whole message
+				char ipAddr[25];
+				char* sysName = "Temp name"; // System_GetName( );
+				int serialnum = System_GetSerialNumber( );
+				char sysVersion[25];
+				snprintf( sysVersion, 25, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER );
+				int freemem = System_GetFreeMemory( );
+				#ifdef MAKE_CTRL_NETWORK
+				if( Network_GetAddress( &a0, &a1, &a2, &a3 ) != CONTROLLER_OK )
+					a0 = a1 = a2 = a3 = -1;
+				#else
+				a0 = a1 = a2 = a3 = -1;
+				#endif // MAKE_CTRL_NETWORK
+				snprintf( ipAddr, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
+				snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s-a", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+				Osc_CreateMessage( channel, address, ",sissi", sysName, serialnum, ipAddr, sysVersion, freemem );
+			}
+			{
+			char gateway[25];
+      char mask[25];
+			int dhcp;
       int webserver;
+			int oscUdpListen = NetworkOsc_GetUdpListenPort( );
+			int oscUdpSend = NetworkOsc_GetUdpSendPort( );
       #ifdef MAKE_CTRL_NETWORK
-      if( Network_GetAddress( &a0, &a1, &a2, &a3 ) != CONTROLLER_OK )
+      if( Network_GetGateway( &a0, &a1, &a2, &a3 ) != CONTROLLER_OK )
         a0 = a1 = a2 = a3 = -1;
-      if( Network_GetGateway( &g0, &g1, &g2, &g3 ) != CONTROLLER_OK )
-        g0 = g1 = g2 = g3 = -1;
-      if( Network_GetMask( &m0, &m1, &m2, &m3 ) != CONTROLLER_OK )
-        m0 = m1 = m2 = m3 = -1;
+			snprintf( gateway, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
+      if( Network_GetMask( &a0, &a1, &a2, &a3 ) != CONTROLLER_OK )
+        a0 = a1 = a2 = a3 = -1;
+			snprintf( mask, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
       dhcp = Network_GetDhcpEnabled( );
       webserver = Network_GetWebServerEnabled( );
       #else
       a0 = a1 = a2 = a3 = -1;
-      g0 = g1 = g2 = g3 = -1;
-      m0 = m1 = m2 = m3 = -1;
+			snprintf( gateway, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
+			snprintf( mask, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
       dhcp = 0;
       webserver = 0;
       #endif // MAKE_CTRL_NETWORK
-      snprintf( ipAddr, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
-      snprintf( gateway, 25, "%d.%d.%d.%d", g0, g1, g2, g3 );
-      snprintf( mask, 25, "%d.%d.%d.%d", m0, m1, m2, m3 );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s-a", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",sissi", sysName, serialnum, ipAddr, sysVersion, freemem );
+      
 			snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s-b", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
       Osc_CreateMessage( channel, address, ",iissii", dhcp, webserver, gateway, mask, oscUdpListen, oscUdpSend );
+			}
       break;
     }
     case 9: // stack-audit
