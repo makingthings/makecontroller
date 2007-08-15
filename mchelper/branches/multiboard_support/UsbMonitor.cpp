@@ -349,10 +349,11 @@ void UsbMonitor::deviceRemoved( QString key )
 {
 	if( connectedDevices.contains( key) )
 	{
-		if( connectedDevices.value( key )->isOpen() )
-			connectedDevices.value( key )->close( );
-		mainWindow->removeDeviceThreadSafe( key );
+		PacketUsbCdc* usb = connectedDevices.value( key );
 		connectedDevices.remove( key );
+		if( usb->isOpen() )
+			usb->close( );
+		mainWindow->removeDeviceThreadSafe( key );
 	}
 }
 

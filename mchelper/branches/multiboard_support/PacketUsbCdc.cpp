@@ -85,15 +85,18 @@ PacketUsbCdc::Status PacketUsbCdc::close()
 {
 	exit = true;
 	usbClose( );
-	wait( 1000 );
+	msleep( 50 ); // wait a second before returning, because we'll be deleted right after we're removed form the GUI
 	return PacketInterface::OK;
 }
 
 PacketUsbCdc::Status PacketUsbCdc::sendPacket( char* packet, int length )
 {
-  char buf[ length * 2 ]; // make it twice as long, as worst case scenario is ALL escape characters
+  if( exit == true )
+		return PacketInterface::IO_ERROR;
+		
+	uchar buf[ length * 2 ]; // make it twice as long, as worst case scenario is ALL escape characters
 	buf[0] = END;  // Flush out any spurious data that may have accumulated
-	char* ptr = buf + 1; 
+	uchar* ptr = buf + 1; 
 	int size = length;
 
   while( size-- )
@@ -120,7 +123,7 @@ PacketUsbCdc::Status PacketUsbCdc::sendPacket( char* packet, int length )
 	}
 	// tell the receiver that we're done sending the packet
 	*ptr++ = END;
-	if( UsbSerial::OK != usbWrite( buf, (ptr - buf) ) )
+	if( UsbSerial::OK != usbWrite( (char*)buf, (ptr - buf) ) )
 	{
 		monitor->deviceRemoved( QString(portName) ); // shut ourselves down
 		return PacketInterface::IO_ERROR;
@@ -145,6 +148,12 @@ int PacketUsbCdc::slipReceive( char* buffer, int length )
     if( !slipRxBytesAvailable ) // if there's nothing left over from last time
     {
     	int available = numberOfAvailableBytes( );
+			if( available == UsbSerial::IO_ERROR )
+			{
+				exit = true;
+				monitor->deviceRemoved( QString(portName) ); // shut ourselves down
+					return PacketInterface::IO_ERROR;
+			}
 	    if( available > 0 )
 	    {
 	    	if( available > MAX_SLIP_READ_SIZE )

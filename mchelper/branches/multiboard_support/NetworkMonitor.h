@@ -42,6 +42,7 @@ class NetworkMonitor : public QObject, public MonitorInterface
   	void setInterfaces( MessageInterface* messageInterface, McHelperWindow* mainWindow, QApplication* application );
   	void deviceRemoved( QString key );
 		bool changeListenPort( int port );
+		int getListenPort( );
   	
   private:
   	QHash<QString, PacketUdp*> connectedDevices; // our internal list

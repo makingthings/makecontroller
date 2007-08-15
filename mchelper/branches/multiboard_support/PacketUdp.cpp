@@ -35,7 +35,7 @@ PacketUdp::PacketUdp( )
 
 PacketUdp::~PacketUdp( )
 {
-	// todo - delete all our pointers
+	delete timer;
 }
 
 PacketUdp::Status PacketUdp::open( ) //part of PacketInterface
@@ -46,18 +46,18 @@ PacketUdp::Status PacketUdp::open( ) //part of PacketInterface
 
 PacketUdp::Status PacketUdp::pingTimedOut( )
 {
+	timer->stop( );
 	monitor->deviceRemoved( socketKey );
 	return OK;
 }
 
 PacketUdp::Status PacketUdp::close( )	//part of PacketInterface
 {
-  if ( socket != 0 )
+	if ( socket != 0 )
 	  socket->close( );
 	
-	delete remoteHostAddress;
 	if( lastMessage != NULL )
-  		delete lastMessage;
+		delete lastMessage;
   		
   return OK;
 }
@@ -79,12 +79,12 @@ char* PacketUdp::location( )
 
 PacketUdp::Status PacketUdp::sendPacket( char* packet, int length )	//part of PacketInterface
 {
-	qint64 result = socket->writeDatagram( (const char*)packet, (qint64)length, *remoteHostAddress, remotePort );
+	qint64 result = socket->writeDatagram( (const char*)packet, (qint64)length, remoteHostAddress, remotePort );
 	if( result < 0 )
   {
-      QString msg = QString( "Could not send packet.");
-      messageInterface->messageThreadSafe( msg, MessageEvent::Error, QString("udp") );
-      return IO_ERROR;
+		QString msg = QString( "Error - Could not send packet.");
+		messageInterface->messageThreadSafe( msg, MessageEvent::Error, QString("Ethernet") );
+		return IO_ERROR;
   }
 	return OK;
 }
@@ -110,8 +110,8 @@ int PacketUdp::receivePacket( char* buffer, int size )
 	int length = lastMessage->size( );
 	if( length > size )
 	{
-        QString msg = QString( "error - packet too large.");
-        messageInterface->messageThreadSafe( msg, MessageEvent::Error, QString("udp") );
+		QString msg = QString( "Error - packet too large.");
+		messageInterface->messageThreadSafe( msg, MessageEvent::Error, QString("Ethernet") );
 		return 0;
 	}
 	memcpy( buffer, lastMessage->data( ), length );
@@ -131,8 +131,8 @@ void PacketUdp::setRemoteHostInfo( QHostAddress* address, quint16 port )
 	if( *address == QHostAddress::Null )
 		return;
 		
-	remoteHostAddress = address;
-	remoteHostName = remoteHostAddress->toString( ).toAscii();
+	remoteHostAddress = *address;
+	remoteHostName = remoteHostAddress.toString( ).toAscii();
 	remotePort = port;
 }
 

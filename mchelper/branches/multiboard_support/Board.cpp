@@ -26,6 +26,8 @@ Board::Board( MessageInterface* messageInterface, McHelperWindow* mainWindow, QA
   this->mainWindow = mainWindow;
   this->application = application;
   packetInterface = NULL;
+	//connect( &messagePostTimer, SIGNAL(timeout()), this, SLOT( postMessagesToUI() ) );
+	//messagePostTimer.start( 25 );
 }
 
 Board::~Board( )
@@ -116,19 +118,18 @@ void Board::packetWaiting( )
       sysInfoReceived = true;
 		}
 		else if( QString(oscMessageList.at(i)->address).contains( "error", Qt::CaseInsensitive ) )
-			messageInterface->messageThreadSafe( msg, MessageEvent::Warning, QString( locationString( ) ) );
+			messageInterface->messageThreadSafe( msg, MessageEvent::Warning, locationString( ) );
 		else
 			messageList.append( msg );
 	}
 	if( messageList.count( ) > 0 )
 	{
-		messageInterface->messageThreadSafe( messageList, MessageEvent::Response, QString( locationString( ) ) );
-		mainWindow->sendXmlPacket( oscMessageList, locationString( ), 10000 );
+		mainWindow->sendXmlPacket( oscMessageList, locationString( ) );
+		messageInterface->messageThreadSafe( messageList, MessageEvent::Response, locationString( ) );
 	}
 		
 	if( sysInfoReceived )
 	{
-		
 		if( this == mainWindow->getCurrentBoard( ) )
 		{
 			this->setText( QString( "%1 : %2" ).arg(name).arg(locationString()) );
@@ -137,6 +138,18 @@ void Board::packetWaiting( )
 	}
 	qDeleteAll( oscMessageList );
 }
+
+/*
+void Board::postMessagesToUI( )
+{
+	int msgCount = messagesToPost.count( );
+	if( msgCount > 0 )
+	{
+		messageInterface->messageThreadSafe( messagesToPost, MessageEvent::Response, QString( locationString( ) ) );
+		messagesToPost.clear( );
+	}
+}
+*/
 
 void Board::extractSystemInfoA( OscMessage* msg )
 {

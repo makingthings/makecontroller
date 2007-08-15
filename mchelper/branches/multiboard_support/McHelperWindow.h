@@ -84,7 +84,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void updateSummaryInfo( );
 		void updateDeviceList( );
 		void newXmlPacketReceived( QList<OscMessage*> messageList, QString address );
-		void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort );
+		void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress );
         
 		void setNoUI( bool val );
 		void uiLessUpload( char* filename, bool bootFlash );
@@ -155,6 +155,9 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
         void deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous );
         void tabIndexChanged(int index);
         void sendSummaryMessage( );
+				
+				void openMchelperHelp( );
+				void openOSCTuorial( );
 };
 
 class McHelperApp : public QApplication

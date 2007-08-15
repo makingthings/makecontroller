@@ -23,6 +23,7 @@
 #include "UploaderThread.h"
 #include "PacketInterface.h"
 #include "Osc.h"
+#include "OutputWindow.h"
 
 class UploaderThread;
 class PacketInterface;
@@ -31,10 +32,10 @@ class OscMessage;
 
 #include <QString>
 
-class Board : public QListWidgetItem, public PacketReadyInterface
+class Board : public QObject, public QListWidgetItem, public PacketReadyInterface
 {
-  public:
-  
+  Q_OBJECT
+	public:
     enum Types{ UsbSerial, UsbSamba, Udp };
     
     Board( MessageInterface* messageInterface, McHelperWindow* mainWindow, QApplication* application );
@@ -65,9 +66,15 @@ class Board : public QListWidgetItem, public PacketReadyInterface
     PacketInterface* packetInterface;
     Osc* osc;
     UploaderThread* uploaderThread;
+		QStringList messagesToPost;
+		QTimer messagePostTimer;
+		
 		
 		void extractSystemInfoA( OscMessage* msg );
 		void extractSystemInfoB( OscMessage* msg );
+		
+	//private slots:
+		//void postMessagesToUI( );
 };
 
 #endif /*BOARD_H_*/

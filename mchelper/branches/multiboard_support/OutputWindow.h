@@ -15,12 +15,13 @@
 
 *********************************************************************************/
 
+#ifndef OUTPUTWINDOW_H
+#define OUTPUTWINDOW_H
+
 #include <QAbstractTableModel>
-#include <QWidget>
-#include <QPalette>
 #include "MessageEvent.h"
 
-class TableEntry // : public QWidget
+class TableEntry
 {
 	public:
 		TableEntry( ) { }
@@ -50,6 +51,8 @@ class OutputWindow : public QAbstractTableModel
 	public slots:
 		void clear( );
 };
+
+#endif // OUTPUTWINDOW_H
 
 
 

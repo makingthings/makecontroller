@@ -72,6 +72,9 @@ const char* Osc::getPreamble( )
 Osc::Status Osc::receive( QList<OscMessage*>* oscMessageList )
 {
   char buffer[ 1024 ];
+	
+	if( !packetInterface || !packetInterface->isOpen( ) )
+		return ERROR_NO_PACKET;
   
 	if ( packetInterface->isPacketWaiting() )
   {
@@ -636,6 +639,9 @@ char* Osc::createMessageInternal( char* bp, int* length, char* address, char* fo
 
 Osc::Status Osc::sendPacket( )
 {
+	if( !packetInterface || !packetInterface->isOpen( ) )
+		return ERROR_NO_PACKET;
+	
 	if ( outMessageCount > 0 )
 	{
 	  // set the buffer and length up
@@ -717,7 +723,7 @@ char* Osc::createMessageInternal( char* bp, int* remaining, char* inputString )
 	char typetag[ 32 ];				//intermediate buffer for typetag
 	char argumentData[ 256 ];	//intermediate buffer for args/data
 	char* ap = argumentData;	// pointer into the argument buffer
-	bool nullified, firstChar, gotCharacter, gotString, inQuotes;
+	bool nullified, gotCharacter, gotString, gotNegative;
 
 	strcpy( typetag, "," );	//always needs to start with a comma
 	
@@ -746,36 +752,30 @@ char* Osc::createMessageInternal( char* bp, int* remaining, char* inputString )
   	do
   	{
   		int gotDecimals = 0;
-			gotCharacter = gotString = nullified = inQuotes = false;
-			firstChar = true; // flag to keep track of whether we're looking at the first character in an argument.
+			gotCharacter = gotString = gotNegative = nullified = false;
   		
   		// look through each character of the argument, and set the appropriate flags to tell us what kind of argument it is
   		startpoint = ip;
+			if( *ip == '"' )
+			{
+				gotString = true;
+				gotCharacter = true;
+				ip++;
+			}
+			if( *ip == '-' )
+				gotNegative = true;
+				
   		while( *ip != 0 )
   		{
   			if( *ip == '.' )
   				gotDecimals++;
-  			else if( firstChar && *ip == '-' )
+  			else if( gotNegative )
 					{ } // do nothing, but don't register it as a character
-				else
-  			{
-  				if( !isdigit( *ip ) )
-  					gotCharacter = true;
-  				if( *ip == '"' )
-  				{
-  					if( firstChar )
-  					{
-  						gotString = true;
-  						inQuotes = true;
-  					}
-  					else
-  						inQuotes = false;
-  				}
-  			}
-  			if( *ip == ' ' && inQuotes == false )
+				else if( !isdigit( *ip ) )
+					gotCharacter = true;
+
+  			if( *ip == ' ' && !gotString )
   				break;
-  			if( firstChar )
-  				firstChar = false;
   			ip++;
   		}
   		// if we're not at the end of the string, we need to grab just this argument
@@ -831,10 +831,6 @@ char* Osc::createMessageInternal( char* bp, int* remaining, char* inputString )
   			*((int*)ap) = intArgument;
   			ap += 4;		
   		}
-  		else
-  		{ 
-  		} //do nothing
-  		firstChar = true;
   	} while( *ip != 0 || nullified );
     
     // now write the type tag and the arguments into the outgoing message buffer to create the full Osc message
