@@ -23,6 +23,7 @@
 #include <QMessageBox> 
 #include <QHeaderView>
 #include <QCheckBox>
+#include <QDesktopServices>
 #include "Osc.h"
 #include "BoardArrivalEvent.h"
 
@@ -95,6 +96,8 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	connect( actionAboutMchelper, SIGNAL( triggered() ), aboutDialog, SLOT( show( ) ) );
 	connect( actionPreferences, SIGNAL( triggered() ), prefsDialog, SLOT( show( ) ) );
 	connect( actionClearOutput, SIGNAL( triggered() ), outputModel, SLOT( clear( ) ) );
+	connect( actionMchelper_Help, SIGNAL( triggered() ), this, SLOT( openMchelperHelp( ) ) );
+	connect( actionOSC_Tutorial, SIGNAL( triggered() ), this, SLOT( openOSCTuorial( ) ) );
 	
 	connect( &summaryTimer, SIGNAL(timeout()), this, SLOT( sendSummaryMessage() ) );
 	
@@ -200,7 +203,6 @@ void McHelperWindow::removeDevice( QString key )
 	{
 		int row = listWidget->row( connectedBoards.value(key) );
 		Board* removed = (Board*)listWidget->takeItem( row );
-		connectedBoards.remove( key );
 		delete removed;
 	}
 }
@@ -393,10 +395,10 @@ void McHelperWindow::newXmlPacketReceived( QList<OscMessage*> messageList, QStri
 	}
 }
 
-void McHelperWindow::sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort )
+void McHelperWindow::sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress )
 {
 	if( xmlServer->isConnected( ) )
-		xmlServer->sendXmlPacket( messageList, srcAddress, srcPort );
+		xmlServer->sendXmlPacket( messageList, srcAddress, udp->getListenPort( ) );
 }
 
 void McHelperWindow::customEvent( QEvent* event )
@@ -670,6 +672,18 @@ void McHelperWindow::uiLessUpload( char* filename, bool bootFlash )
 {
 	(void)filename;
 	(void)bootFlash;
+}
+
+void McHelperWindow::openMchelperHelp( )
+{
+	if( !QDesktopServices::openUrl( QString( "http://www.makingthings.com/resources/tutorials/mchelper" ) ) )
+		statusBar()->showMessage( "Help is online and requires an internet connection.", 3000 );
+}
+
+void McHelperWindow::openOSCTuorial( )
+{
+	if( !QDesktopServices::openUrl( QString( "http://www.makingthings.com/resources/tutorials/osc" ) ) )
+		statusBar()->showMessage( "Help is online and requires an internet connection.", 3000 );
 }
 
 aboutMchelper::aboutMchelper( ) : QDialog( )

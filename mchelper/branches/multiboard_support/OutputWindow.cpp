@@ -16,6 +16,7 @@
 *********************************************************************************/
 
 #include "OutputWindow.h"
+#include <QColor>
 
 OutputWindow::OutputWindow(QObject *parent) : QAbstractTableModel( parent )
 { 

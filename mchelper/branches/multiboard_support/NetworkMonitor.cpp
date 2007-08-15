@@ -71,6 +71,11 @@ bool NetworkMonitor::changeListenPort( int port )
 	}
 }
 
+int NetworkMonitor::getListenPort( )
+{
+	return rxtxPort;
+}
+
 NetworkMonitor::Status NetworkMonitor::scan( QList<PacketUdp*>* arrived )
 {
 	// not used
@@ -129,9 +134,10 @@ void NetworkMonitor::deviceRemoved( QString key )
 {
 	if( connectedDevices.contains( key ) )
 	{
+		PacketUdp* udp = connectedDevices.take( key );
+		if( udp->isOpen() )
+			udp->close( );
 		mainWindow->removeDeviceThreadSafe( key );
-		if( !connectedDevices.remove( key ) )
-			return;  // TODO - return an error here
 	}
 }
 

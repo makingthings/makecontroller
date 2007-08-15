@@ -62,7 +62,7 @@ class PacketUdp : public QObject, public PacketInterface
 	  MessageInterface* messageInterface;
 		PacketReadyInterface* packetReadyInterface;
 	  QUdpSocket* socket;
-	  QHostAddress* remoteHostAddress;
+	  QHostAddress remoteHostAddress;
 	  QByteArray remoteHostName;
 	  QTimer* timer;
 	  MonitorInterface* monitor;
