@@ -24,10 +24,12 @@
 #include <QXmlDefaultHandler>
 #include "McHelperWindow.h"
 #include "MessageEvent.h"
+#include "Board.h"
 #include "Osc.h"
 
 class OscXmlServer;
 class Osc;
+class Board;
 
 class XmlHandler : public QXmlDefaultHandler
 {
@@ -58,6 +60,7 @@ class OscXmlServer : public QObject
 		QString fromString;
 		int listenPort;
 		bool changeListenPort( int port );
+		void boardListUpdate( QList<Board*> boardList, bool arrived );
 		
 	private:
 		QTcpServer *serverSocket;

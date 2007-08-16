@@ -80,6 +80,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void udpBoardsArrived( QList<PacketUdp*>* arrived );
 		void sambaBoardsArrived( QList<UploaderThread*>* arrived );
 		Board* getCurrentBoard( );
+		QList<Board*> getConnectedBoards( );
 		bool summaryTabIsActive( );
 		void updateSummaryInfo( );
 		void updateDeviceList( );

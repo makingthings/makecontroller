@@ -117,6 +117,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 void McHelperWindow::usbBoardsArrived( QList<PacketInterface*>* arrived )
 {
 	Board* board;
+	QList<Board*> boardList;
 	int i;
 	for( i=0; i<arrived->count( ); i++ )
 	{
@@ -127,13 +128,16 @@ void McHelperWindow::usbBoardsArrived( QList<PacketInterface*>* arrived )
     board->location = QString( arrived->at(i)->location( ) );
     board->setText( QString( board->locationString() ) );
     connectedBoards.insert( board->key, board );
-    listWidget->addItem( board ); 
+    listWidget->addItem( board );
+		boardList.append( board );
 	}
+	xmlServer->boardListUpdate( boardList, true );
 }
 
 void McHelperWindow::udpBoardsArrived( QList<PacketUdp*>* arrived )
 {
 	Board* board;
+	QList<Board*> boardList;
 	int i;
 	for( i=0; i<arrived->count( ); i++ )
 	{
@@ -146,7 +150,9 @@ void McHelperWindow::udpBoardsArrived( QList<PacketUdp*>* arrived )
     board->setText( QString( board->locationString() ) );
     listWidget->addItem( board );
     board->sendMessage( "/system/info-internal" );
+		boardList.append( board );
 	}
+	xmlServer->boardListUpdate( boardList, true );
 }
 
 void McHelperWindow::sambaBoardsArrived( QList<UploaderThread*>* arrived )
@@ -170,6 +176,15 @@ Board* McHelperWindow::getCurrentBoard( )
 {
 	Board* board = (Board*)listWidget->currentItem( );
 	return board;
+}
+
+QList<Board*> McHelperWindow::getConnectedBoards( )
+{
+	QList<Board*> boardList;
+	for( int i = 0; i < listWidget->count( ); i++ )
+		boardList.append( (Board*)listWidget->item( i ) );
+
+	return boardList;
 }
 
 bool McHelperWindow::summaryTabIsActive( )
@@ -203,6 +218,9 @@ void McHelperWindow::removeDevice( QString key )
 	{
 		int row = listWidget->row( connectedBoards.value(key) );
 		Board* removed = (Board*)listWidget->takeItem( row );
+		QList<Board*> boardList;
+		boardList.append( removed );
+		xmlServer->boardListUpdate( boardList, false );
 		delete removed;
 	}
 }
