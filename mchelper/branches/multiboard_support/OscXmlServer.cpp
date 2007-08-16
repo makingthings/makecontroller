@@ -53,13 +53,21 @@ void OscXmlServer::openNewConnection( )
 	connect( clientSocket, SIGNAL( disconnected() ), this, SLOT( clientDisconnected() ) );
 	connect( clientSocket, SIGNAL( error(  QAbstractSocket::SocketError ) ), this, SLOT( clientError( QAbstractSocket::SocketError) ) );
 	xmlInput = new QXmlInputSource( clientSocket );
+	
+	// tell Flash about the boards we have connected
+	QList<Board*> boardList = mainWindow->getConnectedBoards( );
+	boardListUpdate( boardList, true );
 }
 
 bool OscXmlServer::changeListenPort( int port )
 {
 	serverSocket->close( );
 	if( !serverSocket->listen( QHostAddress::Any, port ) )
+	{
+		mainWindow->messageThreadSafe( QString( "Error - can't listen on port %1.  Make sure it's available." ).arg( port ), 
+																		MessageEvent::Error, fromString );
 		return false;
+	}
 	else
 	{
 		listenPort = port;
@@ -93,8 +101,34 @@ bool OscXmlServer::isConnected( )
 		if( clientSocket->state( ) == QAbstractSocket::ConnectedState )
 			return true;
 	}
-	
 	return false;
+}
+
+void OscXmlServer::boardListUpdate( QList<Board*> boardList, bool arrived )
+{
+	if( !isConnected( ) || boardList.isEmpty( ) )
+		return;
+	QDomDocument doc;
+	QDomElement boardUpdate;
+	if( arrived )
+		boardUpdate = doc.createElement( "BOARD_ARRIVAL" );
+	else
+		boardUpdate = doc.createElement( "BOARD_REMOVAL" );
+		
+	doc.appendChild( boardUpdate );
+	for( int i = 0; i < boardList.count( ); i++ )
+	{
+		Board* currentBoard = boardList.at( i );
+		QDomElement board = doc.createElement( "BOARD" );
+		if( currentBoard->type == Board::UsbSerial )
+			board.setAttribute( "TYPE", "USB" );
+		if( currentBoard->type == Board::Udp )
+			board.setAttribute( "TYPE", "Ethernet" );
+		board.setAttribute( "LOCATION", currentBoard->locationString( ) );
+		boardUpdate.appendChild( board );
+	}
+	clientSocket->write( doc.toByteArray( ) );
+	clientSocket->write( "\0", 1 ); // Flash wants XML followed by a zero byte
 }
 
 void OscXmlServer::sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort )
