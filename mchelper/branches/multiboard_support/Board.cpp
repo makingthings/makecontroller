@@ -111,11 +111,14 @@ void Board::packetWaiting( )
 		}
 		else if( strcmp( oscMessageList.at(i)->address, "/network/find" ) == 0 )
 		{
-			ip_address = QString( oscMessageList.at(i)->data.at( 0 )->s ); // IP address
-			udp_listen_port = QString::number( oscMessageList.at(i)->data.at( 1 )->i );
-      udp_send_port = QString::number( oscMessageList.at(i)->data.at( 2 )->i );
-      name = QString( oscMessageList.at(i)->data.at( 3 )->s ); //name
-      sysInfoReceived = true;
+			if( oscMessageList.at(i)->data.count( ) > 0 ) // might be another mchelper sending out pings
+			{
+				ip_address = QString( oscMessageList.at(i)->data.at( 0 )->s ); // IP address
+				udp_listen_port = QString::number( oscMessageList.at(i)->data.at( 1 )->i );
+	      udp_send_port = QString::number( oscMessageList.at(i)->data.at( 2 )->i );
+	      name = QString( oscMessageList.at(i)->data.at( 3 )->s ); //name
+	      sysInfoReceived = true;
+			}
 		}
 		else if( QString(oscMessageList.at(i)->address).contains( "error", Qt::CaseInsensitive ) )
 			messageInterface->messageThreadSafe( msg, MessageEvent::Warning, locationString( ) );
@@ -138,18 +141,6 @@ void Board::packetWaiting( )
 	}
 	qDeleteAll( oscMessageList );
 }
-
-/*
-void Board::postMessagesToUI( )
-{
-	int msgCount = messagesToPost.count( );
-	if( msgCount > 0 )
-	{
-		messageInterface->messageThreadSafe( messagesToPost, MessageEvent::Response, QString( locationString( ) ) );
-		messagesToPost.clear( );
-	}
-}
-*/
 
 void Board::extractSystemInfoA( OscMessage* msg )
 {

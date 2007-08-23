@@ -128,6 +128,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
     
 		bool noUI;
 		int lastTabIndex;
+		bool hideOSCMessages;
   
 	public slots:
 		void restoreDefaultPrefs( );
@@ -159,6 +160,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 				
 				void openMchelperHelp( );
 				void openOSCTuorial( );
+				void outWindowHideOSCMessages( bool hide );
 };
 
 class McHelperApp : public QApplication

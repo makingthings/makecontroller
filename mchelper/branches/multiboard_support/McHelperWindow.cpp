@@ -95,9 +95,10 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	// setup the menu
 	connect( actionAboutMchelper, SIGNAL( triggered() ), aboutDialog, SLOT( show( ) ) );
 	connect( actionPreferences, SIGNAL( triggered() ), prefsDialog, SLOT( show( ) ) );
-	connect( actionClearOutput, SIGNAL( triggered() ), outputModel, SLOT( clear( ) ) );
+	connect( actionClearOutputWindow, SIGNAL( triggered() ), outputModel, SLOT( clear( ) ) );
 	connect( actionMchelper_Help, SIGNAL( triggered() ), this, SLOT( openMchelperHelp( ) ) );
 	connect( actionOSC_Tutorial, SIGNAL( triggered() ), this, SLOT( openOSCTuorial( ) ) );
+	connect( actionHide_OSC_Messages, SIGNAL( triggered(bool) ), this, SLOT( outWindowHideOSCMessages(bool) ) );
 	
 	connect( &summaryTimer, SIGNAL(timeout()), this, SLOT( sendSummaryMessage() ) );
 	
@@ -505,8 +506,12 @@ void McHelperWindow::messageThreadSafe( QString string, MessageEvent::Types type
 
 void McHelperWindow::messageThreadSafe( QString string, MessageEvent::Types type, QString from )
 { 
-  //MessageEvent* messageEvent = new MessageEvent( string, type, from );
-  //application->postEvent( this, messageEvent );
+  if( hideOSCMessages )
+	{
+		if( type == MessageEvent::Response || type == MessageEvent::XMLMessage || type == MessageEvent::Error )
+			return;
+	}
+  
 	TableEntry *newItem = createOutputWindowEntry( string, type, from );
 	QMutexLocker locker(&outputWindowQueueMutex);
 	outputWindowQueue.append( newItem );
@@ -514,9 +519,13 @@ void McHelperWindow::messageThreadSafe( QString string, MessageEvent::Types type
 
 void McHelperWindow::messageThreadSafe( QStringList strings, MessageEvent::Types type, QString from )
 { 
-  //MessageEvent* messageEvent = new MessageEvent( strings, type, from );
-  //application->postEvent( this, messageEvent );
-	QMutexLocker locker(&outputWindowQueueMutex);
+  if( hideOSCMessages )
+	{
+		if( type == MessageEvent::Response || type == MessageEvent::XMLMessage || type == MessageEvent::Error )
+			return;
+	}
+  
+	QMutexLocker locker(&outputWindowQueueMutex); 
 	for( int i = 0; i < strings.count( ); i ++ )
 	{
 		QString string = strings.at(i);
@@ -571,8 +580,8 @@ void McHelperWindow::message( QString string, MessageEvent::Types type, QString 
 
 void McHelperWindow::message( QStringList strings, MessageEvent::Types type, QString from )
 {
-		 if( noUI )
-        return;
+		if( noUI )
+			return;
 
     int msgCount = strings.count( );
 		int i;
@@ -648,6 +657,9 @@ void McHelperWindow::readSettings()
 	appUdpListenPort = settings.value( "appUdpListenPort", 10000 ).toInt( );
 	appXmlListenPort = settings.value( "appXmlListenPort", 11000 ).toInt( );
 	
+	hideOSCMessages = settings.value( "hideOSCMessages", false ).toBool( );
+	actionHide_OSC_Messages->setChecked( hideOSCMessages );
+	
 	QStringList usbCmdList = settings.value( "usbCmdList", "" ).toStringList();
 	commandLine->addItems( usbCmdList );
 	if( usbCmdList.count() > 0 )
@@ -702,6 +714,13 @@ void McHelperWindow::openOSCTuorial( )
 {
 	if( !QDesktopServices::openUrl( QString( "http://www.makingthings.com/resources/tutorials/osc" ) ) )
 		statusBar()->showMessage( "Help is online and requires an internet connection.", 3000 );
+}
+
+void McHelperWindow::outWindowHideOSCMessages( bool hide )
+{
+	hideOSCMessages = hide;
+	QSettings settings("MakingThings", "mchelper");
+	settings.setValue("hideOSCMessages", hideOSCMessages );
 }
 
 aboutMchelper::aboutMchelper( ) : QDialog( )
