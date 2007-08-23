@@ -70,11 +70,9 @@ class Board : public QObject, public QListWidgetItem, public PacketReadyInterfac
 		QTimer messagePostTimer;
 		
 		
-		void extractSystemInfoA( OscMessage* msg );
-		void extractSystemInfoB( OscMessage* msg );
-		
-	//private slots:
-		//void postMessagesToUI( );
+		bool extractSystemInfoA( OscMessage* msg );
+		bool extractSystemInfoB( OscMessage* msg );
+		bool extractNetworkFind( OscMessage* msg );
 };
 
 #endif /*BOARD_H_*/

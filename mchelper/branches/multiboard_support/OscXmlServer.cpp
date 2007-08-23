@@ -104,6 +104,25 @@ bool OscXmlServer::isConnected( )
 	return false;
 }
 
+void OscXmlServer::boardInfoUpdate( Board* board )
+{
+	if( !isConnected( ) || board == NULL )
+		return;
+		
+	QDomDocument doc;
+	QDomElement boardUpdate = doc.createElement( "BOARD_INFO" );
+	doc.appendChild( boardUpdate );
+
+	QDomElement boardElement = doc.createElement( "BOARD" );
+	boardElement.setAttribute( "LOCATION", board->key );
+	boardElement.setAttribute( "NAME", board->name );
+	boardElement.setAttribute( "SERIALNUMBER", board->serialNumber );
+	boardUpdate.appendChild( boardElement );
+		
+	clientSocket->write( doc.toByteArray( ) );
+	clientSocket->write( "\0", 1 ); // Flash wants XML followed by a zero byte
+}
+
 void OscXmlServer::boardListUpdate( QList<Board*> boardList, bool arrived )
 {
 	if( !isConnected( ) || boardList.isEmpty( ) )
