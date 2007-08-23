@@ -43,7 +43,7 @@ class XmlHandler : public QXmlDefaultHandler
 		McHelperWindow *mainWindow;
 		OscXmlServer *xmlServer;
 		OscMessage* currentMessage;
-		QHostAddress currentDestination;
+		QString currentDestination;
 		int currentPort;
 };
 
