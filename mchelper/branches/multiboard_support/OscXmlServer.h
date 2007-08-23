@@ -61,6 +61,7 @@ class OscXmlServer : public QObject
 		int listenPort;
 		bool changeListenPort( int port );
 		void boardListUpdate( QList<Board*> boardList, bool arrived );
+		void boardInfoUpdate( Board* board );
 		
 	private:
 		QTcpServer *serverSocket;

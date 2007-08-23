@@ -420,6 +420,11 @@ void McHelperWindow::sendXmlPacket( QList<OscMessage*> messageList, QString srcA
 		xmlServer->sendXmlPacket( messageList, srcAddress, udp->getListenPort( ) );
 }
 
+void McHelperWindow::xmlServerBoardInfoUpdate( Board* board )
+{
+	xmlServer->boardInfoUpdate( board );
+}
+
 void McHelperWindow::customEvent( QEvent* event )
 {
 	switch( event->type() )
@@ -508,7 +513,7 @@ void McHelperWindow::messageThreadSafe( QString string, MessageEvent::Types type
 { 
   if( hideOSCMessages )
 	{
-		if( type == MessageEvent::Response || type == MessageEvent::XMLMessage || type == MessageEvent::Error )
+		if( type == MessageEvent::Response || type == MessageEvent::XMLMessage || type == MessageEvent::Warning )
 			return;
 	}
   

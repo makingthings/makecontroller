@@ -86,6 +86,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void updateDeviceList( );
 		void newXmlPacketReceived( QList<OscMessage*> messageList, QString address );
 		void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress );
+		void xmlServerBoardInfoUpdate( Board* board );
         
 		void setNoUI( bool val );
 		void uiLessUpload( char* filename, bool bootFlash );
