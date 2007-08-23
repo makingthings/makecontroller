@@ -26,8 +26,6 @@ Board::Board( MessageInterface* messageInterface, McHelperWindow* mainWindow, QA
   this->mainWindow = mainWindow;
   this->application = application;
   packetInterface = NULL;
-	//connect( &messagePostTimer, SIGNAL(timeout()), this, SLOT( postMessagesToUI() ) );
-	//messagePostTimer.start( 25 );
 }
 
 Board::~Board( )
@@ -127,7 +125,7 @@ void Board::packetWaiting( )
 	}
 	if( messageList.count( ) > 0 )
 	{
-		mainWindow->sendXmlPacket( oscMessageList, locationString( ) );
+		mainWindow->sendXmlPacket( oscMessageList, key );
 		messageInterface->messageThreadSafe( messageList, MessageEvent::Response, locationString( ) );
 	}
 		
@@ -177,31 +175,31 @@ void Board::extractSystemInfoB( OscMessage* msg )
 {
 	QList<OscMessageData*> msgData = msg->data;
 	int dataCount = msg->data.count( );
-	int i;
+	int j;
 	
-	for( i = 0; i < dataCount; i++ )
+	for( j = 0; j < dataCount; j++ )
 	{
-		if( msgData.at( i ) == 0 )
+		if( msgData.at( j ) == 0 )
 			break;
-		switch( i ) // we're counting on the board to send the pieces of data in this order
+		switch( j ) // we're counting on the board to send the pieces of data in this order
 		{
 			case 0:
-				dhcp = msgData.at( 0 )->i;
+				dhcp = msgData.at( j )->i;
 				break;
 			case 1:
-				webserver = msgData.at( 1 )->i;
+				webserver = msgData.at( j )->i;
 				break;
 			case 2:
-				gateway = QString( msgData.at( 2 )->s );
+				gateway = QString( msgData.at( j )->s );
 				break;
 			case 3:
-				netMask = QString( msgData.at( 3 )->s );
+				netMask = QString( msgData.at( j )->s );
 				break;
 			case 4:
-				udp_listen_port = QString::number( msgData.at( 4 )->i );
+				udp_listen_port = QString::number( msgData.at( j )->i );
 				break;
 			case 5:
-				udp_send_port = QString::number( msgData.at( 5 )->i );
+				udp_send_port = QString::number( msgData.at( j )->i );
 				break;
 		}
 	}
@@ -222,6 +220,5 @@ void Board::sendMessage( QList<OscMessage*> messageList )
 		osc->createMessage( messageList.at(i) );
 	if( msgCount > 0 )
 		osc->sendPacket( );
-
 }
 

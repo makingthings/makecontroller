@@ -124,7 +124,7 @@ void OscXmlServer::boardListUpdate( QList<Board*> boardList, bool arrived )
 			board.setAttribute( "TYPE", "USB" );
 		if( currentBoard->type == Board::Udp )
 			board.setAttribute( "TYPE", "Ethernet" );
-		board.setAttribute( "LOCATION", currentBoard->locationString( ) );
+		board.setAttribute( "LOCATION", currentBoard->key );
 		boardUpdate.appendChild( board );
 	}
 	clientSocket->write( doc.toByteArray( ) );
@@ -197,12 +197,10 @@ bool XmlHandler::startElement( const QString & namespaceURI, const QString & loc
 	
 	if( localName == "OSCPACKET" )
 	{
-		QString destAddress = atts.value( "ADDRESS" );
-		QString destPort = atts.value( "PORT" );
-		if( destAddress.isEmpty( ) || destPort.isEmpty( ) )
+		currentDestination = atts.value( "ADDRESS" );
+		currentPort = atts.value( "PORT" ).toInt( );
+		if( currentDestination.isEmpty( ) )
 			return false;
-		currentDestination = QHostAddress( destAddress );
-		currentPort = destPort.toInt( );
 	}
 	else if( localName == "MESSAGE" )
 	{
@@ -257,7 +255,7 @@ bool XmlHandler::endElement( const QString & namespaceURI, const QString & local
 	
 	if( localName == "OSCPACKET" )
 	{
-		mainWindow->newXmlPacketReceived( xmlServer->oscMessageList, currentDestination.toString() );
+		mainWindow->newXmlPacketReceived( xmlServer->oscMessageList, currentDestination );
 		QStringList strings;
 		for( int i = 0; i < xmlServer->oscMessageList.count( ); i++ )
 			strings << xmlServer->oscMessageList.at( i )->toString( );
@@ -266,7 +264,7 @@ bool XmlHandler::endElement( const QString & namespaceURI, const QString & local
 		xmlServer->oscMessageList.clear( );
 	}
 	else if( localName == "MESSAGE" )
-		xmlServer->oscMessageList.append( currentMessage );
+		xmlServer->oscMessageList.append( currentMessage ); 
 
 	return true;
 }
