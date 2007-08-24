@@ -37,7 +37,7 @@ typedef struct FastTimerEntryS
   struct FastTimerEntryS* next;
 } FastTimerEntry;
 
-void FastTimer_InitializeEntry( FastTimerEntry* fastTimerEntry, void (*timer_callback)( int id ), int id, int timeMs, bool repeat );
+void FastTimer_InitializeEntry( FastTimerEntry* fastTimerEntry, void (*timer_callback)( int id ), int id, int timeUs, bool repeat );
 void FastTimer_SetTime( FastTimerEntry* timerEntry, int timeUs );
 
 int FastTimer_Set( FastTimerEntry* fastTimerEntry );
