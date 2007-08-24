@@ -27,6 +27,8 @@
 #define SAMBA_H
 
 #include <QtGlobal>
+#include <QString>
+#include <QList>
 
 // Linux-only includes
 #ifdef Q_WS_LINUX
@@ -57,6 +59,9 @@
 
 // Windows-only
 #ifdef Q_WS_WIN
+#if (WINVER != 0x0501) // Hacky business for MinGW
+#define WINVER 0x0501
+#endif
 #include "windows.h"
 #include "SetupAPI.h"
 #endif
@@ -164,23 +169,31 @@ struct sam7_chip_info{
 
 #include <stdint.h>
 
+#include "UploaderThread.h"
 #include "MessageInterface.h"
+#include "SambaMonitor.h"
+
+class SambaMonitor;
+class UploaderThread;
 
 class Samba
 {
 	public:
     enum Status { OK, ERROR_INITIALIZING, ERROR_INCORRECT_CHIP_INFO, 
     	            ERROR_COULDNT_FIND_FILE, ERROR_COULDNT_OPEN_FILE, 
-    	            ERROR_SENDING_FILE, ERROR_SETTING_BOOT_BIT };
+    	            ERROR_SENDING_FILE, ERROR_SETTING_BOOT_BIT, ERROR_RESETTING };
 
-		Samba( );
+		Samba( SambaMonitor* monitor, MessageInterface* messageInterface );
 
-		Status connect();
+		Status connect( QString deviceKey );
 		Status disconnect();		
 
 		Status flashUpload( char* bin_file );
 		Status bootFromFlash( );
-		void setMessageInterface( MessageInterface* messageInterface );
+		Status reset( );
+		void setUploader( UploaderThread* uploader );
+		QString getDeviceKey( );
+		int FindUsbDevices( QList<QString>* arrived );
     
   private:
 		int init( );
@@ -191,7 +204,7 @@ class Samba
 		int sendCommand( char *cmd, void *response, int response_len );
 		const char* at91ArchStr( int id );
 
-    int usbOpen( );
+    int usbOpen( QString deviceKey );
     int usbWrite( char* buffer, int length );
     int usbRead( char* buffer, int length );
     int usbClose( );
@@ -203,7 +216,10 @@ class Samba
     void uSleep( int usecs );
 		int uploadProgress;
     
+    UploaderThread* uploader;
     MessageInterface* messageInterface;
+    SambaMonitor* monitor;
+    QString deviceKey;
 		sam7_chip_info samba_chip_info;
 
 #ifdef Q_WS_LINUX
@@ -230,12 +246,14 @@ class Samba
     HANDLE m_hPipeOut;
     int BulkUSB;
     int usbFlushOut( );
-    int testOpen( );
-    BOOL GetUsbDeviceFileName(LPGUID  pGuid, WCHAR **outNameBuf);
-    HANDLE OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf);
+    int testOpen( QString deviceKey );
+    BOOL GetUsbDeviceFileName(LPGUID  pGuid, WCHAR **outNameBuf, QString deviceKey );
+    HANDLE OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf, QString deviceKey );
     HANDLE OpenOneDevice (HDEVINFO HardwareDeviceInfo,
                           PSP_INTERFACE_DEVICE_DATA DeviceInfoData,
 	                        WCHAR **devName);
+	bool checkDeviceService( HDEVINFO HardwareDeviceInfo, PSP_DEVINFO_DATA deviceSpecificInfo );
+	bool getDeviceObjectName( HDEVINFO HardwareDeviceInfo, PSP_DEVINFO_DATA deviceSpecificInfo );
     #endif
 };
 

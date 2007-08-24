@@ -22,118 +22,133 @@
 #include <QSettings>
 #include <QString>
 
+#define COMM_TIMEOUT 3000
+
 PacketUdp::PacketUdp( )
-{ }
+{ 
+	timer = new QTimer(this);
+	lastMessage = NULL;
+	socket = NULL;
+	packetReadyInterface = NULL;
+	connect( timer, SIGNAL(timeout()), this, SLOT( pingTimedOut( ) ) );
+}
+
+PacketUdp::~PacketUdp( )
+{
+	delete timer;
+}
 
 PacketUdp::Status PacketUdp::open( ) //part of PacketInterface
 {	
-  socket = new QUdpSocket( );
-  if ( !socket->bind( localPort ) )
-  {
-  	socket->close();
-  	socket = 0;
-		messageInterface->message( 1, "udp> Can't listen on port %d - make sure it's not already in use.\n", localPort );
-    return ERROR_CANT_BIND;
-  }
-  QAbstractSocket::SocketState s = socket->state();
-	connect( socket, SIGNAL( readyRead( ) ), this, SLOT( processPacket( ) ) );
-  messageInterface->message( 2, "  PacketUdp Listening on %d - state %d\n", localPort, (int)s );
-  
-  // Make a QString out of the regular char*
-  //QString as( remoteAddress );
-  
-  /*
-  // Turn it into a real address
-  QHostInfo info = QHostInfo::fromName( as );
-  if ( !info.addresses().isEmpty() ) 
-  {
-    remoteHostAddress = new QHostAddress( info.addresses().first() );
-  	messageInterface->message( 2, "PacketUdp %s : %s\n", remoteAddress, remoteHostAddress->toString().toAscii().data() );
-  }
-  else
-  {
-  	messageInterface->message( 2, "PacketUdp %s : Not found\n", remoteAddress );
-  } 
-  */
-  //remoteHostAddress = new QHostAddress( );
-  //if ( !remoteHostAddress->setAddress( as ) )
-    //return ERROR_CANT_GET_ADDRESS;  
-  
+  socket = new QUdpSocket( this );
   return OK;	
+}
+
+PacketUdp::Status PacketUdp::pingTimedOut( )
+{
+	timer->stop( );
+	monitor->deviceRemoved( socketKey );
+	return OK;
 }
 
 PacketUdp::Status PacketUdp::close( )	//part of PacketInterface
 {
-  if ( socket != 0 )
-	  socket->close();
+	if ( socket != 0 )
+	  socket->close( );
+	
+	if( lastMessage != NULL )
+		delete lastMessage;
+  		
   return OK;
 }
 
-int PacketUdp::sendPacket( char* packet, int length )	//part of PacketInterface
+void PacketUdp::resetTimer( void )
 {
-	//printf( "PacketUdp Sending %s:%d\n", *remoteHostAddress.toString().toAscii().toConstData(), remotePort );	
+	timer->start( COMM_TIMEOUT );
+}
 
-	qint64 result = socket->writeDatagram( (const char*)packet, (qint64)length, *remoteHostAddress, remotePort );
+QString PacketUdp::getKey( )
+{
+	return socketKey;
+}
+
+char* PacketUdp::location( )
+{
+	return remoteHostName.data( );
+}
+
+PacketUdp::Status PacketUdp::sendPacket( char* packet, int length )	//part of PacketInterface
+{
+	qint64 result = socket->writeDatagram( (const char*)packet, (qint64)length, remoteHostAddress, remotePort );
 	if( result < 0 )
-		messageInterface->message( 1, "udp> Could not send packet.\n" );
-
-	return 0;
+  {
+		QString msg = QString( "Error - Could not send packet.");
+		messageInterface->messageThreadSafe( msg, MessageEvent::Error, QString("Ethernet") );
+		return IO_ERROR;
+  }
+	return OK;
 }
 
 bool PacketUdp::isPacketWaiting( )	//part of PacketInterface
 {
-  return socket->hasPendingDatagrams();
+  return lastMessage != NULL;
+}
+
+bool PacketUdp::isOpen( )
+{
+	return socket != NULL;
 }
 
 void PacketUdp::processPacket( )	//slot to be called back automatically when datagrams are ready to be read
 {
-  packetReadyInterface->packetWaiting( );
+  if( packetReadyInterface != NULL )
+  	packetReadyInterface->packetWaiting( );
 }
 
-int PacketUdp::receivePacket( char* buffer, int size )	//part of PacketInterface
+int PacketUdp::receivePacket( char* buffer, int size )
 {
-	int length;
-	if ( !( length = socket->readDatagram( buffer, size ) ) )
-  {
-		messageInterface->message( 1, "udp> Error receiving packet.\n" );	
+	int length = lastMessage->size( );
+	if( length > size )
+	{
+		QString msg = QString( "Error - packet too large.");
+		messageInterface->messageThreadSafe( msg, MessageEvent::Error, QString("Ethernet") );
 		return 0;
 	}
+	memcpy( buffer, lastMessage->data( ), length );
+	delete lastMessage;
+	lastMessage = NULL;
+	
 	return length;
 }
 
-void PacketUdp::setLocalPort( int port, bool change )
+void PacketUdp::incomingMessage( QByteArray* message )
 {
-	if( port != 0 && port != localPort )	// this will be zero when nothing has been entered into the text field
-	{	
-		localPort = port;
-		if( change )
-		{
-		  socket->close();
-		  if( !socket->bind( localPort ) )
-				messageInterface->message( 1, "udp> Can't listen on port %d - make sure it's not already in use.\n", localPort );
-			else if( socket->state() == QAbstractSocket::BoundState )
-				messageInterface->message( 1, "udp> New local port: %d\n", localPort );
-		}
-	}
+	lastMessage = message;
 }
 
-void PacketUdp::setRemotePort( int port )
+void PacketUdp::setRemoteHostInfo( QHostAddress* address, quint16 port )
 {
-	if( port != 0 )		// this will be zero when nothing has been entered into the text field
-		remotePort = port;
-}
-
-void PacketUdp::setHostAddress( QHostAddress address )
-{
-	if( address == QHostAddress::Null )
+	if( *address == QHostAddress::Null )
 		return;
-	QHostAddress* hostAddress = new QHostAddress( address );
-	remoteHostAddress = hostAddress;
+		
+	remoteHostAddress = *address;
+	remoteHostName = remoteHostAddress.toString( ).toAscii();
+	remotePort = port;
 }
 
-void PacketUdp::setInterfaces( PacketReadyInterface* packetReadyInterface, MessageInterface* messageInterface )
+void PacketUdp::setKey( QString key )
+{
+	socketKey = key;
+}
+
+void PacketUdp::setPacketReadyInterface( PacketReadyInterface* packetReadyInterface )
+{
+	this->packetReadyInterface = packetReadyInterface;
+}
+
+void PacketUdp::setInterfaces( MessageInterface* messageInterface, MonitorInterface* monitor )
 {
 	this->messageInterface = messageInterface;
-	this->packetReadyInterface = packetReadyInterface;
+	this->monitor = monitor;
 }
 
