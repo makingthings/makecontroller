@@ -91,12 +91,24 @@ void NetworkMonitor::processPendingDatagrams()
     QHostAddress* sender = new QHostAddress( );
     datagram->resize( socket->pendingDatagramSize() );
     socket->readDatagram( datagram->data(), datagram->size(), sender );
-    if( datagram->size() <= 0 || *sender == myAddress )
-    {
-    	delete datagram;
+		bool filterOut = false;
+		
+    if( datagram->size() <= 0 || *sender == myAddress ) // filter out broadcast messages from ourself
+			filterOut = true;
+		else if( QString( datagram->data() ) == QString( broadcastPing.data() ) )
+		{
+			if( datagram->size() == broadcastPing.size() ) // filter out pings from other mchelpers
+				filterOut = true;
+		}
+		
+		if( filterOut )
+		{
+			delete datagram;
     	delete sender;
     	break;
     }
+
+		
     QString socketKey = sender->toString( );
     if( !connectedDevices.contains( socketKey ) )
     {
