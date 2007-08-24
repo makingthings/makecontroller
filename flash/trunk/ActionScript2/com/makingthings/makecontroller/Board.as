@@ -18,6 +18,8 @@ class com.makingthings.makecontroller.Board
 {
 	public var type:String;
 	public var location:String;
+	public var name:String;
+	public var serialnumber:Number;
 	
 	function Board( type:String, location:String )
 	{

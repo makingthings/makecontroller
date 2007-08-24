@@ -43,23 +43,19 @@ class com.makingthings.makecontroller.McFlashConnect
 {
 	private var mchelperAddress; // whatever the IP address of your machine is most likely to be
 	private var mchelperPort;  //Make Controller default
-	private var remoteAddress;  //Make Controller default
-	private var remotePort;  //Make Controller default
+	/** The board that Flash will send messages to if no board is specified in the send function.*/
+	private var defaultBoard:Board;
 	private var registeredAddresses:Array; // list of registered addresses and functions to call if a message with that address shows up
 	private var connectedBoards:Array;
-	
-	
 	private var mySocket:XMLSocket;
 	public var connected:Boolean; 
 	
   //Constructor - initialize a bit of state.
-  function McFlashConnect( remoteAddress:String, remotePort:Number )
+  function McFlashConnect( )
   {
 		connected = false;
-		mchelperAddress = "localhost"
+		mchelperAddress = "localhost";
 		mchelperPort = 11000;
-		this.remoteAddress = remoteAddress;
-		this.remotePort = remotePort;
 		registeredAddresses = new Array( );
 		connectedBoards = new Array( );
   }
@@ -121,71 +117,6 @@ class com.makingthings.makecontroller.McFlashConnect
 	}
 	
 	/**
-	* Query the IP address that the local computer has been told to send messages to.
-	* The default address of the Make Controller is 192.168.0.200
-	* \return A string specifying the IP address of the device you're sending to
-	
-	<h3>Example</h3>
-	\code
-	var myRemoteAddress:String;
-	myRemoteAddress = flosc.getRemoteAddress( );
-	\endcode
- 	*/
-	public function getRemoteAddress( ):String
-	{
-		return remoteAddress;
-	}
-	
-	/**
-	* Set the address of the device you're sending to.
-	* The default address of the Make Controller is 192.168.0.200.  This will be the address used by defult when sending messages
-	unless you use a method that allows you to specify an address explicitly.
-	* \param addr A string specifying the address.
-	
-	<h3>Example</h3>
-	\code
-	flosc.setRemoteAddress( "192.168.0.210" );
-	// now the normal send() method will send to 192.168.0.210
-	flosc.send( "/appled/0/state", "1" );
-	\endcode
- 	*/
-	public function setRemoteAddress( addr:String ):Void
-	{
-		remoteAddress = addr;
-	}
-	
-	/**
-	* Query the port that the local machine has been told to send messages on.
-	* \return A number specifying the current port.
-	
-	<h3>Example</h3>
-	\code
-	var myRemotePort:Number;
-	myRemotePort = flosc.getRemotePort( );
-	\endcode
- 	*/
-	public function getRemotePort( ):Number
-	{
-		return remotePort;
-	}
-	
-	/**
-	* Set the port to send messages on.
-	* The default port that the Make Controller is listening on is 10000
-	* \param port A number specifying the port.
-	
-	<h3>Example</h3>
-	\code
-	// send messages on port 10101
-	flosc.setRemotePort( 10101 );
-	\endcode
- 	*/
-	public function setRemotePort( port:Number ):Void
-	{
-		remotePort = port;
-	}
-	
-	/**
 	Register a handler for messages coming from a given OSC address.
 	You can create a function of your own that will get called whenever an incoming OSC message matches
 	a particular address.  This saves you from checking the address of all incoming OSC messages.
@@ -210,6 +141,57 @@ class com.makingthings.makecontroller.McFlashConnect
 	{
 		var handler = new AddressHandler( addr, callback );
 		registeredAddresses.push( handler );
+	}
+	
+	public function setDefaultBoard( board:Board ) : Void
+	{
+		defaultBoard = board;
+	}
+	
+	public function getBoardByIPAddress( address:String ) : Board
+	{
+		var boardCount:Number = connectedBoards.length;
+		for( var i = 0; i < boardCount; i++ )
+		{
+			if( connectedBoards[ i ].location == address )
+				return connectedBoards[ i ];
+		}
+		return null;
+	}
+	
+	public function getBoardByUsbLocation( location:String ) : Board
+	{
+		var boardCount:Number = connectedBoards.length;
+		for( var i = 0; i < boardCount; i++ )
+		{
+			if( connectedBoards[ i ].location == location )
+				return connectedBoards[ i ];
+		}
+		return null;
+	}
+	
+	public function getBoardsByName( name:String ) : Array
+	{
+		var boardCount:Number = connectedBoards.length;
+		var boardArray:Array= [];
+		for( var i = 0; i < boardCount; i++ )
+		{
+			if( connectedBoards[ i ].name == name )
+				boardArray.push( connectedBoards[ i ] );
+		}
+		return boardArray;
+	}
+	
+	public function getBoardsBySerialNumber( serialnum:Number ) : Array
+	{
+		var boardCount:Number = connectedBoards.length;
+		var boardArray:Array= [];
+		for( var i = 0; i < boardCount; i++ )
+		{
+			if( connectedBoards[ i ].serialNumber == serialnum )
+				boardArray.push( connectedBoards[ i ] );
+		}
+		return boardArray;
 	}
 	
 	
@@ -362,12 +344,15 @@ class com.makingthings.makecontroller.McFlashConnect
 		xmlDoc.ignoreWhite = true;
 		xmlDoc.parseXML( xmlIn );
 		var n:XMLNode = xmlDoc.firstChild;
+		//trace( xmlDoc );
 		if( n != null )
 		{
 			if( n.nodeName == "OSCPACKET" )
 				parseMessages( n );
 			else if( n.nodeName == "BOARD_ARRIVAL" || n.nodeName == "BOARD_REMOVAL" )
 				updateBoardList( n );
+			else if( n.nodeName == "BOARD_INFO" )
+				updateBoardInfo( n );
 		}
 	}
 	
@@ -379,6 +364,10 @@ class com.makingthings.makecontroller.McFlashConnect
 			while( boardMessage != null )
 			{
 				var newBoard:Board = new Board( boardMessage.attributes.TYPE, boardMessage.attributes.LOCATION );
+				if( boardMessage.attributes.NAME )
+					newBoard.name = boardMessage.attributes.NAME;
+				if( boardMessage.attributes.SERIALNUMBER )
+					newBoard.serialnumber = int( boardMessage.attributes.SERIALNUMBER );
 				connectedBoards.push( newBoard );
 				onBoardArrived( newBoard );
 				boardMessage = boardMessage.nextSibling;
@@ -402,6 +391,28 @@ class com.makingthings.makecontroller.McFlashConnect
 		}
 	}
 	
+	private function updateBoardInfo( xml:XMLNode ) : Void
+	{
+		var boardMessage:XMLNode = xml.firstChild;
+		while( boardMessage != null )
+		{
+			if( boardMessage.nodeName == "BOARD" )
+			{
+				for( var i = 0; i < connectedBoards.length; i++ )
+				{
+					var board:Board = connectedBoards[i];
+					if( board.location == boardMessage.attributes.LOCATION )
+					{
+						board.name = boardMessage.attributes.NAME;
+						board.serialnumber = int( boardMessage.attributes.SERIALNUMBER );
+						trace( "new board info: " + board.name + ", " + board.serialnumber );
+					}
+				}
+			}
+			boardMessage = boardMessage.nextSibling;
+		}
+	}
+	
 	// *** event handler to respond to successful connection attempt
 	private function handleConnect (succeeded)
 	{
@@ -410,7 +421,7 @@ class com.makingthings.makecontroller.McFlashConnect
 		else
 		{
 			trace( "Connection to Mchelper did not succeed." );
-			trace( "** Make sure it's running, and that nothing else is listening on your mchelperPort." );
+			trace( "** Make sure it's running, and that nothing else is listening on port " + mchelperPort );
 		}
 	}
 	
@@ -429,7 +440,7 @@ class com.makingthings.makecontroller.McFlashConnect
  	*/
 	public function send( address:String, args:Array )
 	{
-		sendToAddress( address, args, remoteAddress, remotePort );
+		sendToBoard( address, args, defaultBoard );
 	}
 	
 	/**
@@ -446,10 +457,13 @@ class com.makingthings.makecontroller.McFlashConnect
 	flosc.sendToAddress( "/appled/1/state", "1", "192.168.0.235", 11001 );
 	\endcode
  	*/
-	public function sendToAddress( address:String, args:Array, destAddr:String, destPort:Number )
+	public function sendToBoard( address:String, args:Array, board:Board )
 	{
+		if( board == null )
+			return;
+		
 		var xmlOut:XML = new XML();
-		var packetOut = createPacketOut( xmlOut, 0, destAddr, destPort );
+		var packetOut = createPacketOut( xmlOut, 0, board.location );
 		var xmlMessage = createMessage( xmlOut, packetOut, address );
 		parseArguments( xmlOut, xmlMessage, args );
 		
@@ -460,12 +474,12 @@ class com.makingthings.makecontroller.McFlashConnect
 	}
 	
 	// used internally to prep an XML object to be sent out.
-	private function createPacketOut( xmlOut:XML, time:Number, destAddr:String, destPort:Number ):XMLNode
+	private function createPacketOut( xmlOut:XML, time:Number, destination:String ):XMLNode
 	{
 		var packetOut = xmlOut.createElement("OSCPACKET");
 		packetOut.attributes.TIME = 0;
-		packetOut.attributes.PORT = destPort;
-		packetOut.attributes.ADDRESS = destAddr;
+		packetOut.attributes.PORT = 0;
+		packetOut.attributes.ADDRESS = destination;
 		
 		return packetOut;
 	}
@@ -535,7 +549,7 @@ class com.makingthings.makecontroller.McFlashConnect
  	*/
 	public function sendMessage( oscM:OscMessage )
 	{
-		sendMessageToAddress( oscM, remoteAddress, remotePort );
+		sendMessageToBoard( oscM, defaultBoard );
 	}
 	
 	/**
@@ -552,10 +566,13 @@ class com.makingthings.makecontroller.McFlashConnect
 	flosc.sendMessageToAddress( turnOffLed, "192.168.0.222", 10000 );
 	\endcode
  	*/
-	public function sendMessageToAddress( oscM:OscMessage, destAddr:String, destPort:Number )
+	public function sendMessageToBoard( oscM:OscMessage, board:Board )
 	{
+		if( board == null )
+			return;	
+
 		var xmlOut:XML = new XML();
-		var packetOut = createPacketOut( xmlOut, 0, destAddr, destPort );
+		var packetOut = createPacketOut( xmlOut, 0, board.location );
 		var xmlMessage = createMessage( xmlOut, packetOut, oscM.address );
 		for( var i = 0; i < oscM.args.length; i++ )
 			parseArguments( xmlOut, xmlMessage, oscM.args );
@@ -587,7 +604,7 @@ class com.makingthings.makecontroller.McFlashConnect
  	*/
 	public function sendBundle( oscB:Array )
 	{
-		sendBundleToAddress( oscB, remoteAddress, remotePort );
+		sendBundleToBoard( oscB, defaultBoard );
 	}
 	
 	/**
@@ -609,10 +626,13 @@ class com.makingthings.makecontroller.McFlashConnect
 	flosc.sendBundleToAddress( myOscBundle, "192.168.0.213", 10000 );
 	\endcode
  	*/
-	public function sendBundleToAddress( oscB:Array, destAddr:String, destPort:Number )
+	public function sendBundleToBoard( oscB:Array, board:Board )
 	{
+		if( board == null )
+			return;
+				
 		var xmlOut:XML = new XML();
-		var packetOut = createPacketOut( xmlOut, 0, destAddr, destPort );
+		var packetOut = createPacketOut( xmlOut, 0, board.location );
 		for( var i = 0; i < oscB.length; i++ )
 		{
 			if( oscB[i] instanceof OscMessage == false )
