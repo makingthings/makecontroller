@@ -121,7 +121,7 @@ extern volatile unsigned portLONG ulCriticalNesting;					\
 																		\
 	/* Restore the return address. */									\
 	"LDR		LR, [LR, #+60]									\n\t"	\
-																		\
+                                    \
 	/* And return - correcting the offset in the LR to obtain the */	\
 	/* correct address. */												\
 	"SUBS	PC, LR, #4											\n\t"	\
@@ -146,7 +146,10 @@ extern volatile unsigned portLONG ulCriticalNesting;					\
 	"SUB	SP, SP, #4											\n\t"	\
 	"LDMIA	SP!,{R0}											\n\t"	\
 																		\
-	/* Push the return address onto the stack. */						\
+  /* Fix for GCC bug */ \
+  "SUB	R0, R0, #0x8		 \n\t"  \
+                                                            \
+  /* Push the return address onto the stack. */						\
 	"STMDB	R0!, {LR}											\n\t"	\
 																		\
 	/* Now we have saved LR we can use it instead of R0. */				\
@@ -261,15 +264,39 @@ extern void vPortExitCritical( void );
 #define portTASK_FUNCTION( vFunction, pvParameters ) void vFunction( void *pvParameters )
 
 // MakingThings
-#define portENTER_FIQ( ) \
+#define portENTER_FIQ_orig( ) \
   asm volatile (     \
     "STMDB SP!, {R0-R7, LR}" ); /* Save the user environment */ \
     {
 
+#define portENTER_FIQ_stack_from_sys( ) \
+  asm volatile (     \
+    "STMDB SP!, {R0-R7, LR}  \n\t" /* Save the user environment */ \
+    "MRS	R0, CPSR		       \n\t"	/* Get CPSR.					*/	\
+    "ORR	R0, R0, #0x1F      \n\t"	/* Switch to sys mode for a sec */	\
+    "MSR	CPSR, R0		       \n\t"	/* Write back modified value.	*/	\
+  	"MOV	R1, SP				     \n\t"	/* Grab the old stack pointer */ \
+    "MRS	R0, CPSR		       \n\t"	/* Get CPSR.					*/	\
+    "BIC  R0, R0, #0x0E      \n\t"	/* Switch back to FIQ mode */	\
+    "MSR	CPSR, R0		       \n\t"	/* Write back modified value.	*/	\
+	  "SUB	R11, R1, #0x08		 \n\t"	); \
+      {
+
+#define portENTER_FIQ( ) \
+  asm volatile (     \
+    "STMDB SP!, {R0-R7, LR}  \n\t" /* Save the user environment */ \
+    "NOP                      \n\t"  \
+  	"MOV	R11, SP				     \n\t"	/* Grab the old stack pointer */ \
+	  "SUB	SP, SP, #0x10		 \n\t"	); /* Leave room for modest locals */\
+      {
+
+
 #define portEXIT_FIQ( ) \
   } \
   asm volatile ( \
+	  "ADD	SP, SP, #0x10		 \n\t" /* take  room for modest locals */\
     "LDMFD SP!, {R0-R7, LR}   \n\t"   /*Restore the user environment */ \
+    "NOP                      \n\t"  \
     "SUBS PC, LR, #4" );               /* Return from the interrupt */
 
 #endif /* PORTMACRO_H */
