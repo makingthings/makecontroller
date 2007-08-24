@@ -132,7 +132,7 @@ int XBee_GetPacket( XBeePacket* packet )
           packet->rxState = XBEE_PACKET_RX_LENGTH_1;
         break;
       case XBEE_PACKET_RX_LENGTH_1:
-        packet->length = newChar << 1;
+        packet->length = newChar << 8;
         packet->rxState = XBEE_PACKET_RX_LENGTH_2;
         break;
       case XBEE_PACKET_RX_LENGTH_2:
@@ -147,6 +147,7 @@ int XBee_GetPacket( XBeePacket* packet )
         packet->crc += newChar;
         break;
       case XBEE_PACKET_RX_CRC:
+        // TODO: read the CRC here, not in the previous state
         packet->rxState = XBEE_PACKET_RX_START;
         return (packet->crc == 0xFF) ? 1 : 0;
     }
