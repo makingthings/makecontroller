@@ -18,32 +18,54 @@
 
 TEMPLATE = app
 
-FORMS = mchelper.ui
+FORMS = layouts/mchelper.ui \
+				layouts/aboutMchelper.ui \
+				layouts/mchelperPrefs.ui
 
-CONFIG += qt release
+#CONFIG += qt release
+CONFIG += qt debug
 
-HEADERS = McHelperWindow.h \
-				UploaderThread.h \
-				PacketInterface.h \
-				PacketReadyInterface.h \
-				PacketUdp.h \
-				Osc.h \
-				Samba.h \
-				UsbSerial.h \
-				PacketUsbCdc.h
+HEADERS = 	McHelperWindow.h \
+			UploaderThread.h \
+			PacketInterface.h \
+			PacketReadyInterface.h \
+			MonitorInterface.h \
+			PacketUdp.h \
+			Osc.h \
+			Samba.h \
+			UsbSerial.h \
+			PacketUsbCdc.h \
+			UsbMonitor.h \
+			NetworkMonitor.h \
+			SambaMonitor.h \
+			Board.h \
+			MessageEvent.h \
+			BoardArrivalEvent.h \
+			OutputWindow.h \
+			OscXmlServer.h
+				
             
-SOURCES	= main.cpp \
-				McHelperWindow.cpp \
-				UploaderThread.cpp \
-				PacketUdp.cpp \
-				Osc.cpp \
-				Samba.cpp \
-				UsbSerial.cpp \
-				PacketUsbCdc.cpp 
+SOURCES	= 	main.cpp \
+			McHelperWindow.cpp \
+			UploaderThread.cpp \
+			PacketUdp.cpp \
+			Osc.cpp \
+			Samba.cpp \
+			UsbSerial.cpp \
+			PacketUsbCdc.cpp \
+			UsbMonitor.cpp \
+			NetworkMonitor.cpp \
+			SambaMonitor.cpp \
+			Board.cpp \
+			MessageEvent.cpp \
+			OutputWindow.cpp \
+			OscXmlServer.cpp
+				
 				
 TARGET = mchelper
             
-QT += network
+QT += network xml
+RESOURCES     = mchelper.qrc
 
 QTDIR_build:REQUIRES="contains(QT_CONFIG, small-config)"
 
@@ -54,7 +76,7 @@ macx{
   message("This project is being built on a Mac.")
 	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
 	QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
-	CONFIG += x86 ppc
+	!debug{ CONFIG += x86 ppc }
   LIBS += -framework IOKit #-dead_strip
   ICON = IconPackageOSX.icns
   #QMAKE_POST_LINK = strip mchelper.app/Contents/MacOS/mchelper
@@ -63,17 +85,20 @@ macx{
 
 win32{
   message("This project is being built on Windows.")
-  DEFINES += __LITTLE_ENDIAN__
   LIBS += -lSetupapi
   RC_FILE = mchelper.rc # for application icon
+  DEFINES += WINVER=0x0501
+  
+  # If in debug mode, let's show the output of any
+  # q[Debug|Warning|Critical|Fatal]() calls to the console
+  debug {
+    CONFIG += console
+  }
 }
 
 
 unix{
-  !macx{
-    message("This project is being built on Linux.")
-    DEFINES += Q_WS_LINUX __LITTLE_ENDIAN__
-  }
+
 }
 
 

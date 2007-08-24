@@ -39,11 +39,6 @@
 #include <windows.h>
 #include <tchar.h>
 
-//DEFINE_GUID( GUID_MAKE_CTRL_KIT, 0x4D36E978, 0xE325, 0x11CE, 
-//								0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18 );
-
-#define DEFAULT_COMM_FLAGS EV_BREAK | EV_CTS   | EV_DSR | EV_ERR | EV_RING | EV_RLSD
-                 //| EV_RXCHAR | EV_RXFLAG | EV_TXEMPTY ;
 #define OVERLAPPED_HANDLES 2
 
 #endif  //Windows defines/includes 
@@ -52,7 +47,6 @@
 #ifdef Q_WS_MAC
 
 #include <fcntl.h>
-#include <termios.h>
 #include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -77,70 +71,54 @@ typedef const char cchar;
 class UsbSerial
 {									
 	public:
-	  enum UsbStatus { OK, ALREADY_OPEN, NOT_OPEN, NOTHING_AVAILABLE, IO_ERROR, UNKNOWN_ERROR, GOT_CHAR, ALLOC_ERROR, ERROR_CLOSE };
+	  enum UsbStatus { OK, ALREADY_OPEN=-1, NOT_OPEN=-2, NOTHING_AVAILABLE=-3, IO_ERROR=-4, UNKNOWN_ERROR=-5, 
+											GOT_CHAR=-6, ALLOC_ERROR=-7, ERROR_CLOSE=-8 };
 		UsbSerial( );
 		
 		UsbStatus usbOpen( );
 		void usbClose( );
-		UsbStatus usbRead( char* buffer, int length );
+		int usbRead( char* buffer, int length );
 		UsbStatus usbWrite( char* buffer, int length );
 		UsbStatus usbWriteChar( char c );
-		bool usbIsOpen( );
-		
+		int numberOfAvailableBytes( );
+		#ifdef Q_WS_WIN
+		HANDLE deviceHandle;
+		#endif
+		UsbStatus setportName( char* filePath );
 		
 	protected:
-	  //Mac-only
-		#ifdef Q_WS_MAC
-		int sleepMs( long ms );
-		#endif
+		bool deviceOpen;
+		bool readInProgress;
+		QMutex usbOpenMutex;
+	  char portName[1024];
 		
 	  MessageInterface* messageInterface;
 	  QMainWindow* mainWindow;		
 		
 	private:
-		bool deviceOpen;
-		bool readInProgress;
-		bool blocking;               // whether it's blocking or not
-		QMutex usbOpenMutex;
-				
 		//Windows only
 		#ifdef Q_WS_WIN
-		int ScanEnumTree( LPCTSTR lpEnumPath, TCHAR** pname );
-		LONG OpenSubKeyByIndex(HKEY hKey,DWORD dwIndex,REGSAM samDesired,PHKEY phkResult);
-		LONG QueryStringValue(HKEY hKey,LPCTSTR lpValueName,LPTSTR* lppStringValue);
-		int testOpen( TCHAR* deviceName );
-		int openDevice( TCHAR* deviceName );
-		bool DoRegisterForNotification( HDEVNOTIFY *hDevNotify );
+		UsbStatus openDevice( TCHAR* deviceName );
+		bool DoRegisterForNotification( );
 		
-		// the device handle
 		OVERLAPPED overlappedRead;
 		char readBuffer[512];
 		OVERLAPPED overlappedWrite;
 		OVERLAPPED overlappedStatus;
 		DWORD dwStoredFlags;
-		HWND hWnd;
-		HDEVNOTIFY deviceNotificationHandle;
+		HDEVNOTIFY notificationHandle;
 		#endif
 		
 		//Mac only
 		#ifdef Q_WS_MAC
-		char deviceFilePath[MAXPATHLEN];
 		int deviceHandle;
-		struct termios terminalSettings;
-		struct termios terminalSettingsOld;
 		mach_port_t masterPort;
 		bool foundMakeController;
-		CFMutableDictionaryRef matchingDictionary;
 		io_object_t usbDeviceReference;
 		
-		kern_return_t getDevicePath(io_iterator_t serialPortIterator, char *path, CFIndex maxPathSize);
-		void createMatchingDictionary( );
-		#endif
 		
-	protected:
-	#ifdef Q_WS_WIN
-	HANDLE deviceHandle;
-	#endif
+		void createMatchingDictionary( );
+		#endif	
 };
 
 #endif // USBSERIAL_H

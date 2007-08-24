@@ -24,20 +24,40 @@
 #include "MessageInterface.h"
 #include "PacketReadyInterface.h"
 #include "McHelperWindow.h"
+#include <QHostAddress>
 
-#include <QObject>
+class McHelperWindow;
 
-#include <stdarg.h>
-#include <stdlib.h>
 
+class OscMessageData
+{
+	public:
+		enum { OmdString, OmdInt, OmdFloat, OmdBlob } omdType;
+	  char* s;
+	  void* b;
+	  int   i;
+	  float f;
+	  
+	  OscMessageData()
+	  {
+	  	s = 0;
+	  	b = 0;
+	  }
+	  
+	  ~OscMessageData()
+	  {
+	  	if ( s != 0 )
+	  	  free( s );
+	  	if( b!= 0 )
+	  		free( b );
+	  }
+};
 
 class OscMessage
 {
 	public:
 	  char* address;
-	  char* s;
-	  int   i;
-	  float f;
+		QList<OscMessageData*> data;
 	  
 	  OscMessage()
 	  {
@@ -48,51 +68,52 @@ class OscMessage
 	  {
 	  	if ( address != 0 )
 	  	  free( address );
+	  	qDeleteAll( data );
+	  	data.clear( );
 	  }
+	  QString toString( );
+		QHostAddress destAddress;
+		int destPort;
 };
 
-class Osc : public QObject, public PacketReadyInterface, public MessageInterface
+class Osc : public QObject
 {	
 	Q_OBJECT
 		
 	public:
 		enum Status { OK, ERROR_SENDING_TEXT_MESSAGE, ERROR_SENDING_COMPLEX_MESSAGE, 
-			            ERROR_NO_PACKET, ERROR_CREATING_BUNDLE, ERROR_PACKET_LENGTH_0 };				
+			            ERROR_NO_PACKET, ERROR_CREATING_REQUEST, ERROR_CREATING_BUNDLE, ERROR_PACKET_LENGTH_0 };				
 
 		Osc( );
+		~Osc( );
 
 		Status createMessage( char* textMessage ); 
 		Status createMessage( char* address, char* format, ... );
+		Status createOneRequest( char* buffer, int *length, char* message );
+		Status createMessage( OscMessage* message );
 		Status sendPacket( );
 		bool isMessageWaiting();
-		Status receive( OscMessage* message = 0 );
-		void packetWaiting( );	//from PacketReadyInterface
+		Status receive( QList<OscMessage*>* oscMessageList = 0 );
 		void setInterfaces( PacketInterface* packetInterface, MessageInterface* messageInterface, QApplication* application );
-    void setPreamble( const char* preamble ) { this->preamble = preamble; }
-
-	  void message( int level, char* format, ... );
-	  void sleepMs( int ms );
-	  void progress( int value );
+    	void setPreamble( const char* preamble ) { this->preamble = preamble; }
+    	const char* getPreamble( );
 		
 	public slots:
 		void uiSendPacket( QString rawString );
 	  		
 	private:
 		char* findDataTag( char* message, int length );
-		void receivePacket( char* packet, int length,  OscMessage* message );
-		void receiveMessage( char* message, int length, OscMessage* message );
+		void receivePacket( char* packet, int length,  QList<OscMessage*>* oscMessageList );
+		void receiveMessage( char* message, int length, QList<OscMessage*>* oscMessageList );
 		int extractData( char* buffer, OscMessage* message );
 	 
 		char* createBundle( char* buffer, int* length, int a, int b );
 		char* createMessageInternal( char* bp, int* length, char* inputString );
 		char* createMessageInternal( char* bp, int* length, char* address, char* format, va_list args );
+		char* createMessageInternal( char* bp, int* length, char* address, char* format, QList<OscMessageData*> msgData );
 		char* writePaddedString( char* buffer, int* length, char* string );
 		char* writeTimetag( char* buffer, int* length, int a, int b );
 		void resetOutBuffer( );
-		void customEvent( QEvent* event );
-
-		// utility
-		unsigned int endianSwap( unsigned int a );
 				
 		PacketInterface* packetInterface;
 		MessageInterface* messageInterface;
@@ -103,16 +124,6 @@ class Osc : public QObject, public PacketReadyInterface, public MessageInterface
 	  char* outBufferPointer;
 	  int outBufferRemaining;
 	  int outMessageCount;
-};
-
-class OscMessageEvent : public QEvent
-{
-  public:
-	  OscMessageEvent( int level, char* message );
-	  ~OscMessageEvent( );
-	  
-	int level;
-	char* message;
 };
 
 #endif	

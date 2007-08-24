@@ -44,18 +44,18 @@
 #endif
 
 // from sam7utils/samba.c
-
+/*
 static const char *eprocs[] = {
-  /* 000 */ "",
-  /* 001 */ "ARM946E-S",
-  /* 010 */ "ARM7TDMI",
-  /* 011 */ "",
-  /* 100 */ "ARM920T",
-  /* 101 */ "ARM926EJ-S",
-  /* 110 */ "",
-  /* 111 */ ""
+		"", // 000 
+    "ARM946E-S", // 001
+    "ARM7TDMI", // 010
+    "", // 011
+    "ARM920T", // 100
+    "ARM926EJ-S", // 101
+    "", // 110
+    "" // 111
 };
-
+*/
 
 #define K 1024
 
@@ -116,25 +116,25 @@ const struct { unsigned id; const char *name; } archs[] = {
 
 // Other stuff
 
-Samba::Samba( )
+Samba::Samba( SambaMonitor* monitor, MessageInterface* messageInterface )
 {	
 	#ifdef Q_WS_WIN
 	BulkUSB = 0;
 	#endif
+	this->monitor = monitor;
+	this->messageInterface = messageInterface;
 }
 
 
-Samba::Status Samba::connect()
+Samba::Status Samba::connect( QString deviceKey )
 {
-	if ( usbOpen( ) < 0 )
+	if ( usbOpen( deviceKey ) < 0 )
 	  return ERROR_INITIALIZING;
 	return OK;
 }
 
-Samba::Status Samba::disconnect()
+Samba::Status Samba::disconnect( )
 {
-	// messageInterface->message( 3, "  Disconnecting.\n" );
-  // messageInterface->sleepMs( 100 );
   usbClose( );
   return OK;
 }
@@ -153,7 +153,7 @@ Samba::Status Samba::flashUpload( char* bin_file )
   int block = 0;
 	uploadProgress = 0;
 	
-	messageInterface->message( 1, "usb> Starting upload...don't disconnect board.\n" );
+	uploader->showStatus( QString( "Starting upload...don't disconnect board."), 3000 );
 	
   if( ps == 256 ) 
   {
@@ -186,7 +186,7 @@ Samba::Status Samba::flashUpload( char* bin_file )
     return ERROR_COULDNT_OPEN_FILE ;
   }
 
-  messageInterface->message( 3, "    " );
+  // messageInterface->message( 3, "    " );
 
   for( i=0 ; i<file_len ; i+=ps ) {
     /* set page # */
@@ -218,7 +218,7 @@ Samba::Status Samba::flashUpload( char* bin_file )
 		{
       //messageInterface->message( 1, "." );
 			uploadProgress = int(1000 * i / file_len);
-			messageInterface->progress( uploadProgress );
+			uploader->progress( uploadProgress );
 		}
   }
   
@@ -226,7 +226,7 @@ Samba::Status Samba::flashUpload( char* bin_file )
   fileClose( file_fd );
  
   
-  messageInterface->message( 3, "\n" );
+  //messageInterface->message( 3, "\n" );
 
   return OK;
 
@@ -259,12 +259,48 @@ Samba::Status Samba::bootFromFlash( )
     printf( "Couldn't flip the bit to boot from Flash.\n" );
     return ERROR_SETTING_BOOT_BIT;
   }
+  
+  /* wait for EFC to finish command */
+  do {
+    if( readWord( 0xffffff68, &val ) < 0 ) {
+      return ERROR_SETTING_BOOT_BIT;
+    }
+  } while( !val & 0x1 );
+  
   return OK;
 }
 
-void Samba::setMessageInterface( MessageInterface* messageInterface )
+Samba::Status Samba::reset( )
 {
-	this->messageInterface = messageInterface;
+  /* reset controller at 0xfffffd00
+   *
+   * RSTC_CR[31..24] = KEY = 0xa5
+   * RSTC_CR[3]      = EXTRST
+   * RSTC_CR[2]      = PERRST
+   * RSTC_CR[0]      = PROCRST
+   *
+   * EXTRST, PERRST, and PROCRST are all aserted.  A possible
+   * feature would be to add an argument to reset to specify 
+   * the type of reset wanted.
+   *  
+   */
+
+  if( writeWord( 0xFFFFFD00, 0xA500000D ) < 0 ) {
+    printf( "Couldn't reset target.\n" );
+    return ERROR_RESETTING;
+  }
+
+  return OK;
+}
+
+void Samba::setUploader( UploaderThread* uploader )
+{
+	this->uploader = uploader;
+}
+
+QString Samba::getDeviceKey( )
+{
+	return deviceKey;
 }
 
 int Samba::init( )
@@ -346,7 +382,7 @@ int Samba::init( )
 	    at91ArchStr( samba_chip_info.arch ) );
     return -1;
   }
-
+/*
   printf("Chip Version: %d\n", samba_chip_info.version );
   printf("Embedded Processor: %s\n", eprocs[samba_chip_info.eproc] );
   printf("NVRAM Region 1 Size: %d K\n", samba_chip_info.nvpsiz / K );
@@ -355,7 +391,7 @@ int Samba::init( )
   printf("Series: %s\n", at91ArchStr( samba_chip_info.arch ) );
   printf("Page Size: %d bytes\n", samba_chip_info.page_size );
   printf("Lock Regions: %d\n", samba_chip_info.lock_bits );
-
+*/
   return 0;
 }
 
@@ -537,7 +573,7 @@ void Samba::fileClose( void* file_fd )
 
 #define SAM7_TTY "/dev/at91_0"
 
-int Samba::usbOpen( )
+int Samba::usbOpen( QString key )
 {
   // Linux-only
   #if (defined(Q_WS_LINUX))
@@ -571,22 +607,22 @@ int Samba::usbOpen( )
 	
 	if( ( err = IOMasterPort( MACH_PORT_NULL, &masterPort ) ) ) 
 	{
-	  messageInterface->message( 2, "could not create master port, err = %08x\n", err );
-    //printf( "could not create master port, err = %08x\n", err );
+	  //messageInterface->message( 2, "could not create master port, err = %08x\n", err );
+    printf( "could not create master port, err = %08x\n", err );
 		return -1;
   }
 	
 	if( !(matchingDictionary = IOServiceMatching(kIOUSBDeviceClassName)) )
 	{
-		messageInterface->message( 1, "usb> could not create matching dictionary.\n" );
-    //printf( "could not create matching dictionary\n" );
+		//messageInterface->message( 1, "usb> could not create matching dictionary.\n" );
+    printf( "could not create matching dictionary\n" );
 		return -1;
   }
 	
 	if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idVendor)) )
 	{
-		messageInterface->message( 1, "usb> could not create CFNumberRef for vendor.\n" );
-    //printf( "could not create CFNumberRef for vendor\n" );
+		//messageInterface->message( 1, "usb> could not create CFNumberRef for vendor.\n" );
+    printf( "could not create CFNumberRef for vendor\n" );
 		return -1;
   }
 	CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBVendorID), numberRef);
@@ -595,8 +631,8 @@ int Samba::usbOpen( )
 	
 	if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idProduct)) )
 	{
-		messageInterface->message( 1, "usb> could not create CFNumberRef for product.\n" );
-    //printf( "could not create CFNumberRef for product\n" );
+		//messageInterface->message( 1, "usb> could not create CFNumberRef for product.\n" );
+    printf( "could not create CFNumberRef for product\n" );
 		return -1;
   }
   CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBProductID), numberRef);
@@ -606,79 +642,57 @@ int Samba::usbOpen( )
 	err = IOServiceGetMatchingServices( masterPort, matchingDictionary, &iterator );
   matchingDictionary = 0;  // consumed by the above call
 
-  if( (usbDeviceRef = IOIteratorNext( iterator ) ) )
+  while( (usbDeviceRef = IOIteratorNext( iterator ) ) )
 	{
-		messageInterface->message( 2, "usb> Found boot agent.\n" );
-    //printf( "usb> Found boot agent\n" );
-
-    do_dev( usbDeviceRef );
-		
-		IOObjectRelease(usbDeviceRef);
-		IOObjectRelease(iterator);
-		return init();
-		
-  } else
-	{
-		//messageInterface->message( 1, "usb> Cannot find boot agent.\n" );
-		//messageInterface->message( 1, "  **Make sure you have erased and reset the power.\n" );
-    //printf( "cannot find boot agent\n" );
-		usbClose( );
-		IOObjectRelease(usbDeviceRef);
-		IOObjectRelease(iterator);
-		return -1;
+		//printf( "usb> Found boot agent\n" );
+		char path[1024];
+		IORegistryEntryGetPath( usbDeviceRef, kIOServicePlane, path );
+		if( key == QString(path) )
+		{
+			do_dev( usbDeviceRef );
+			IOObjectRelease(usbDeviceRef);
+			IOObjectRelease(iterator);
+			return init();
+		}
   }
-	#endif /* Mac-only UsbConnection::init( ) */
+	//printf( "cannot find boot agent\n" );
+	usbClose( );
+	IOObjectRelease(usbDeviceRef);
+	IOObjectRelease(iterator);
+	return -1;
+	#endif /* Mac-only UsbConnection::init( ) */ 
     
   // Windows-only
   #ifdef Q_WS_WIN
   
   char /*message[100], */buffer[2], temp[2];
 
-  // messageInterface->message( 3, "  Opening.\n" );
-  // messageInterface->sleepMs( 100 );
-
-  int result = testOpen();
+  int result = testOpen( deviceKey );
   
   if (result == FC_DRIVER_NOT_FOUND ) {
-    messageInterface->message( 1, "usb> Cannot find boot agent.\n" );
-		messageInterface->message( 1, "  **Make sure you have erased and reset the power.\n" );
     disconnect();
     return -1;
   } else if (result != FC_OK) {
-  	messageInterface->message( 1, "usb> Error - cannot open USB.\n" );
+  	messageInterface->messageThreadSafe( QString( "Usb> Error - cannot open USB.") );
     disconnect();
     return -1;
   }
   
-  // messageInterface->message( 3, "  Flushing.\n" );
-  // messageInterface->sleepMs( 100 );
-  
   // Flush buffer
   usbFlushOut();
-
-
-  // messageInterface->message( 3, "  Writing useless command.\n" );
-  // messageInterface->sleepMs( 100 );
 
   // Put Normal PutData mode for the target
   buffer[0] = 'N';
   buffer[1] = '#';
   if (usbWrite( (char*)buffer, 2 ) != FC_OK ) {
-  	messageInterface->message( 1, "usb> Error initializing - could not write to USB.\n" );
+  	messageInterface->messageThreadSafe( QString( "Usb> Error initializing - could not write to USB.") );
     return -1;
   }
 
   // No errors test because 2 case possible : 0 byte or 2 bytes to flush... (depends if the board reset or not)
-  //messageInterface->message( 3, "  Reading useless command.\n" );
-  //messageInterface->sleepMs( 100 );
   usbRead((char*)temp,2);
 
-  // messageInterface->message( 2, "usb> Found boot agent.\n" );
-  // messageInterface->sleepMs( 100 );
   BulkUSB = 1; // BulkUSB Mode
-
-  messageInterface->message( 3, "  Initializing\n" );
-  // messageInterface->sleepMs( 100 );
 
   return init();
   
@@ -706,7 +720,7 @@ int Samba::usbWrite( char* buffer, int length )
   // Mac-only...
   #ifdef Q_WS_MAC
   if( (*intf)->WritePipe( intf, outPipeRef, buffer, (UInt32) length ) != kIOReturnSuccess )
-    messageInterface->message( 1, "usb> Write error.\n" );
+    messageInterface->messageThreadSafe( QString( "Usb> Write error." ) );
 
   return length;
   #endif /* Mac-only usbWrite( ) */
@@ -747,7 +761,7 @@ int Samba::usbRead( char* buffer, int length )
   UInt32 size = length;
 
   if( (*intf)->ReadPipe( intf, inPipeRef, buffer, &size ) != kIOReturnSuccess )
-    messageInterface->message( 1, "usb> Read error.\n" );
+    messageInterface->messageThreadSafe( QString( "Usb> Read error.") );
   
   return (int)size;
   #endif  /* Mac-only usbWrite( ) */
@@ -833,9 +847,9 @@ int Samba::usbClose( )
 // Windows-only...
 #ifdef Q_WS_WIN
 
-BOOL Samba::GetUsbDeviceFileName(LPGUID  pGuid, WCHAR **outNameBuf)
+BOOL Samba::GetUsbDeviceFileName(LPGUID  pGuid, WCHAR **outNameBuf, QString deviceKey)
 {
-  HANDLE hDev = OpenUsbDevice(pGuid, outNameBuf);
+  HANDLE hDev = OpenUsbDevice(pGuid, outNameBuf, deviceKey );
 
   if(hDev != INVALID_HANDLE_VALUE)
   {
@@ -846,17 +860,19 @@ BOOL Samba::GetUsbDeviceFileName(LPGUID  pGuid, WCHAR **outNameBuf)
 }
 
 
-int Samba::testOpen( )
+int Samba::testOpen( QString deviceKey )
 {
   WCHAR *sDeviceName;
 
   WCHAR *sPipeNameIn;
   WCHAR *sPipeNameOut;
+  m_hPipeIn = INVALID_HANDLE_VALUE;
+  m_hPipeOut = INVALID_HANDLE_VALUE;
 
   // messageInterface->message( 3, "  Getting usb device name\n" );
   // messageInterface->sleepMs( 100 );
   
-  if(! GetUsbDeviceFileName( (LPGUID) &GUID_CLASS_I82930_BULK, &sDeviceName))
+  if(! GetUsbDeviceFileName( (LPGUID) &GUID_CLASS_I82930_BULK, &sDeviceName, deviceKey ))
     return FC_DRIVER_NOT_FOUND;
 
   // messageInterface->message( 3, "  Got usb device name\n" );
@@ -909,16 +925,141 @@ int Samba::usbFlushOut( )
   ::FlushFileBuffers(m_hPipeOut);
   return FC_OK;	
 }
+#endif // Windows-only stuff
 
-HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf)
+int Samba::FindUsbDevices( QList<QString>* arrived )
 {
-  HANDLE hOut = INVALID_HANDLE_VALUE;
+  #ifdef Q_WS_MAC
+	masterPort = 0;
+	int count = 0;
 
-  ULONG                    NumberDevices;
+  // from io_iokit.c
+  kern_return_t err;
+  CFMutableDictionaryRef matchingDictionary = 0;
+  CFNumberRef numberRef;
+  SInt32 idVendor = 0x03eb;
+  SInt32 idProduct = 0x6124;
+  io_iterator_t iterator = 0;
+  io_registry_entry_t usbDeviceRef;
+	
+	if( ( err = IOMasterPort( MACH_PORT_NULL, &masterPort ) ) ) 
+	{
+	  //messageInterface->message( 2, "could not create master port, err = %08x\n", err );
+		printf( "could not create master port, err = %08x\n", err );
+		return -1;
+  }
+	
+	if( !(matchingDictionary = IOServiceMatching(kIOUSBDeviceClassName)) )
+	{
+		//messageInterface->message( 1, "usb> could not create matching dictionary.\n" );
+		printf( "usb> could not create matching dictionary.\n" );
+		return -1;
+  }
+	
+	if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idVendor)) )
+	{
+		//messageInterface->message( 1, "usb> could not create CFNumberRef for vendor.\n" );
+		printf( "usb> could not create CFNumberRef for vendor.\n" );
+		return -1;
+  }
+	CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBVendorID), numberRef);
+  CFRelease( numberRef );
+  numberRef = 0;
+	
+	if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idProduct)) )
+	{
+		//messageInterface->message( 1, "usb> could not create CFNumberRef for product.\n" );
+		printf( "usb> could not create CFNumberRef for product.\n" );
+		return -1;
+  }
+  CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBProductID), numberRef);
+  CFRelease( numberRef );
+  numberRef = 0;
+	
+	err = IOServiceGetMatchingServices( masterPort, matchingDictionary, &iterator );
+  matchingDictionary = 0;  // consumed by the above call
+
+  while( (usbDeviceRef = IOIteratorNext( iterator ) ) )
+	{
+		char path[1024];
+		IORegistryEntryGetPath(usbDeviceRef, kIOServicePlane, path );
+		deviceKey = QString( path );
+		arrived->append( deviceKey );
+		IOObjectRelease(usbDeviceRef);
+		count++;
+  }
+	IOObjectRelease(iterator);
+	return count;
+	#endif // Mac-only FindUsbDevices( )
+	
+	#ifdef Q_WS_WIN
+	HANDLE hOut = INVALID_HANDLE_VALUE;
   HDEVINFO                 hardwareDeviceInfo;
   SP_INTERFACE_DEVICE_DATA deviceInfoData;
-  ULONG                    i;
-  BOOLEAN                  done;
+  ULONG                    i = 0;
+  BOOLEAN					done = FALSE;
+  int count = 0;
+
+  //
+  // Open a handle to the plug and play dev node.
+  // SetupDiGetClassDevs() returns a device information set that contains info on all
+  // installed devices of a specified class.
+  //
+  hardwareDeviceInfo = SetupDiGetClassDevs (
+                         (LPGUID) &GUID_CLASS_I82930_BULK,
+                         NULL,            // Define no enumerator (global)
+                         NULL,            // Define no
+                         (DIGCF_PRESENT | // Only Devices present
+                         DIGCF_INTERFACEDEVICE)); // Function class devices.
+
+  deviceInfoData.cbSize = sizeof(SP_INTERFACE_DEVICE_DATA);
+
+  while( !done ) 
+  {
+      // SetupDiEnumDeviceInterfaces() returns information about device interfaces
+      // exposed by one or more devices. Each call returns information about one interface;
+      // the routine can be called repeatedly to get information about several interfaces
+      // exposed by one or more devices.
+      if(SetupDiEnumDeviceInterfaces (hardwareDeviceInfo,
+                                      0, // We don't care about specific PDOs
+                                      (LPGUID) &GUID_CLASS_I82930_BULK,
+                                      i++,
+                                      &deviceInfoData)) 
+      {
+        WCHAR *outNameBuf; // dummy
+        hOut = OpenOneDevice (hardwareDeviceInfo, &deviceInfoData, &outNameBuf);
+        if(hOut != INVALID_HANDLE_VALUE)
+        {
+			arrived->append( deviceKey );
+			count++;
+        }
+      } 
+      else 
+      {
+        if(ERROR_NO_MORE_ITEMS == GetLastError()) 
+        {
+           done = TRUE;
+           break;
+        }
+      }
+  }
+
+  // SetupDiDestroyDeviceInfoList() destroys a device information set
+  // and frees all associated memory.
+  SetupDiDestroyDeviceInfoList(hardwareDeviceInfo);
+
+  return count;
+	#endif // Windows-only FindUsbDevices( )
+}
+
+#ifdef Q_WS_WIN
+HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf, QString deviceKey )
+{
+  HANDLE hOut = INVALID_HANDLE_VALUE;
+  HDEVINFO                 hardwareDeviceInfo;
+  SP_INTERFACE_DEVICE_DATA deviceInfoData;
+  ULONG                    i = 0;
+  BOOLEAN					done = FALSE;
 
   //
   // Open a handle to the plug and play dev node.
@@ -932,21 +1073,10 @@ HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf)
                          (DIGCF_PRESENT | // Only Devices present
                          DIGCF_INTERFACEDEVICE)); // Function class devices.
 
-  //
-  // Take a wild guess at the number of devices we have;
-  // Be prepared to realloc and retry if there are more than we guessed
-  //
-  NumberDevices = 4;
-  done = FALSE;
   deviceInfoData.cbSize = sizeof(SP_INTERFACE_DEVICE_DATA);
 
-  i=0;
-  while(!done) 
+  while( !done ) 
   {
-    NumberDevices *= 2;
-
-    for(; i < NumberDevices; i++) 
-    {
       // SetupDiEnumDeviceInterfaces() returns information about device interfaces
       // exposed by one or more devices. Each call returns information about one interface;
       // the routine can be called repeatedly to get information about several interfaces
@@ -954,14 +1084,14 @@ HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf)
       if(SetupDiEnumDeviceInterfaces (hardwareDeviceInfo,
                                       0, // We don't care about specific PDOs
                                       pGuid,
-                                      i,
+                                      i++,
                                       &deviceInfoData)) 
       {
         hOut = OpenOneDevice (hardwareDeviceInfo, &deviceInfoData, outNameBuf);
-        if(hOut != INVALID_HANDLE_VALUE) 
+        if(hOut != INVALID_HANDLE_VALUE && deviceKey == this->deviceKey ) 
         {
-          done = TRUE;
-          break;
+          	done = TRUE;
+          	break;
         }
       } 
       else 
@@ -969,10 +1099,10 @@ HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf)
         if(ERROR_NO_MORE_ITEMS == GetLastError()) 
         {
            done = TRUE;
+           hOut = INVALID_HANDLE_VALUE;
            break;
         }
       }
-    }
   }
 
   // SetupDiDestroyDeviceInfoList() destroys a device information set
@@ -980,6 +1110,90 @@ HANDLE Samba::OpenUsbDevice(LPGUID  pGuid, WCHAR **outNameBuf)
   SetupDiDestroyDeviceInfoList(hardwareDeviceInfo);
 
   return hOut;
+}
+
+//-----------------------------------------------------------------
+//                  Windows-only checkFriendlyName( )
+//-----------------------------------------------------------------
+bool Samba::checkDeviceService( HDEVINFO HardwareDeviceInfo, PSP_DEVINFO_DATA deviceSpecificInfo )
+{
+	DWORD DataT;
+    LPTSTR buffer = NULL;
+    DWORD buffersize = 0;
+    
+    while (!SetupDiGetDeviceRegistryProperty(
+               HardwareDeviceInfo,
+               deviceSpecificInfo,
+               SPDRP_SERVICE, 
+               &DataT,
+               (PBYTE)buffer,
+               buffersize,
+               &buffersize))
+   {
+       if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) // then change the buffer size.
+       {
+           if (buffer) LocalFree(buffer); 
+           // Double the size to avoid problems on W2k MBCS systems per KB 888609.
+           buffer = (TCHAR*)LocalAlloc(LPTR, buffersize * 2);
+       }
+       else
+           break;
+   }  
+	if (buffer)
+	{	// if it's using the atm6124 driver, then that's us.
+		if(!_tcsncmp(TEXT("atm6124"), buffer, 7))
+		{
+			LocalFree(buffer);
+			return true;
+		}
+			
+		LocalFree(buffer);
+	}
+		
+	return false;
+}
+
+//-----------------------------------------------------------------
+//                  Windows-only getDeviceObjectName( )
+//-----------------------------------------------------------------
+bool Samba::getDeviceObjectName( HDEVINFO HardwareDeviceInfo, PSP_DEVINFO_DATA deviceSpecificInfo )
+{
+	DWORD DataT;
+    LPTSTR buffer = NULL;
+    DWORD buffersize = 0;
+    
+    while (!SetupDiGetDeviceRegistryProperty(
+               HardwareDeviceInfo,
+               deviceSpecificInfo,
+               SPDRP_PHYSICAL_DEVICE_OBJECT_NAME, 
+               &DataT,
+               (PBYTE)buffer,
+               buffersize,
+               &buffersize))
+   {
+       if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) // then change the buffer size.
+       {
+           if (buffer) LocalFree(buffer); 
+           // Double the size to avoid problems on W2k MBCS systems per KB 888609.
+           buffer = (TCHAR*)LocalAlloc(LPTR, buffersize * 2);
+       }
+       else
+           break;
+   }  
+	if (buffer)
+	{	// this is a unique value for each instance of a SAMBA board in the system
+		char name[buffersize], *ptr;
+		TCHAR* tptr = buffer;
+		ptr = name;
+		while( buffersize-- )
+			*ptr++ = *tptr++;
+
+		deviceKey = QString( name );
+		LocalFree(buffer);
+		return true;
+	}
+		
+	return false;
 }
 
 HANDLE Samba::OpenOneDevice (HDEVINFO HardwareDeviceInfo,
@@ -1004,6 +1218,9 @@ HANDLE Samba::OpenOneDevice (HDEVINFO HardwareDeviceInfo,
                                   NULL); // not interested in the specific dev-node
 
   predictedLength = requiredLength;
+  
+  SP_DEVINFO_DATA deviceSpecificInfo;
+  deviceSpecificInfo.cbSize = sizeof(SP_DEVINFO_DATA);
 
   functionClassDeviceData = (PSP_INTERFACE_DEVICE_DETAIL_DATA) malloc (predictedLength);
   functionClassDeviceData->cbSize = sizeof (SP_INTERFACE_DEVICE_DETAIL_DATA);
@@ -1016,11 +1233,17 @@ HANDLE Samba::OpenOneDevice (HDEVINFO HardwareDeviceInfo,
                                         functionClassDeviceData,
                                         predictedLength,
                                         &requiredLength,
-                                        NULL))
+                                        &deviceSpecificInfo))
   {
     free(functionClassDeviceData);
     return INVALID_HANDLE_VALUE;
   }
+  
+  if( !checkDeviceService( HardwareDeviceInfo, &deviceSpecificInfo ) )
+  	return INVALID_HANDLE_VALUE;
+  	
+  if( !getDeviceObjectName( HardwareDeviceInfo, &deviceSpecificInfo ) )
+  	return INVALID_HANDLE_VALUE;
 
   *devName = wcsdup(functionClassDeviceData->DevicePath);
   //strcpy(devName, functionClassDeviceData->DevicePath) ;
@@ -1037,7 +1260,7 @@ HANDLE Samba::OpenOneDevice (HDEVINFO HardwareDeviceInfo,
   return hOut;
 }
 
-#endif
+#endif // Windows-only stuff
 
 // Mac-only...
 #ifdef Q_WS_MAC
@@ -1117,8 +1340,9 @@ int Samba::do_dev( io_service_t usbDeviceRef )
 	
   //printf( "doing device thing\n" );
    
-  while( (usbInterfaceRef = IOIteratorNext(iterator)) ) {
-    if( do_intf( usbInterfaceRef ) == 0 ) {
+  while( (usbInterfaceRef = IOIteratorNext(iterator)) )
+	{
+		if( do_intf( usbInterfaceRef ) == 0 ) {
       IOObjectRelease(iterator);
       iterator = 0;
       return 0;

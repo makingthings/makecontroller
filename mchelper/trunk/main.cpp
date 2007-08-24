@@ -22,18 +22,23 @@
 #include <QMessageBox> 
 
 #ifdef Q_WS_WIN
+#include "dbt.h"
 #define DBT_DEVICEREMOVECOMPLETE 0x8004
 
 bool McHelperApp::winEventFilter( MSG* msg, long* retVal )
 {	
 	if ( msg->message == WM_DEVICECHANGE )
 	{
-		//printf( "Device Change Parameter: %X\n", msg->wParam );
 		if( msg->wParam == DBT_DEVICEREMOVECOMPLETE )
 		{
-			mchelper->usbRemoved( );  // call back to get the usb port shut down.
-			*retVal = false;
-			return true;
+			PDEV_BROADCAST_HDR lpdb = (PDEV_BROADCAST_HDR)msg->lParam;
+			if( lpdb->dbch_devicetype == DBT_DEVTYP_HANDLE )
+			{
+				PDEV_BROADCAST_HANDLE lpdbv = (PDEV_BROADCAST_HANDLE)lpdb;
+				mchelper->usbRemoved( lpdbv->dbch_handle );  // call back to get the usb port shut down.
+				*retVal = false;
+				return true;
+			}
 		}
 	}
 	return false;
@@ -52,11 +57,11 @@ int main(int argc, char *argv[])
 	McHelperWindow mcHelperWindow( &app );
 	
 	if( argc < 2 )
-	{
+	{        
 		mcHelperWindow.show();
 		mcHelperWindow.setNoUI( false );
 	} else
-	{
+	{	
 		char* argv1 = argv[1];
 		mcHelperWindow.setNoUI( true );
 		mcHelperWindow.uiLessUpload( argv1, true );

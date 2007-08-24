@@ -22,6 +22,7 @@ class PacketReadyInterface
 {		
 	public:
 	  virtual void packetWaiting( ) = 0;
+	  virtual ~PacketReadyInterface( ) {}
 
 };
 
