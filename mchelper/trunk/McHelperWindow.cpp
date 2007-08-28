@@ -24,6 +24,7 @@
 #include <QHeaderView>
 #include <QCheckBox>
 #include <QDesktopServices>
+#include <QSizePolicy>
 #include "Osc.h"
 #include "BoardArrivalEvent.h"
 
@@ -730,13 +731,9 @@ void McHelperWindow::outWindowHideOSCMessages( bool hide )
 
 aboutMchelper::aboutMchelper( ) : QDialog( )
 {
+	setModal( true );
 	setWindowTitle( "About mchelper" );
-	QSize *dialogSize = new QSize( 450, 525 );
-	setMaximumSize( *dialogSize );
-	setMinimumSize( *dialogSize );
-	
 	topLevelLayout = new QVBoxLayout( this );
-	
 
 	okButton = new QPushButton( this );
 	okButton->setText( tr("OK") );
@@ -755,14 +752,14 @@ aboutMchelper::aboutMchelper( ) : QDialog( )
 	title.setAlignment( Qt::AlignHCenter );
 	version.setText( "<font size=4>Version 2.0.0</font>" );
 	version.setAlignment( Qt::AlignHCenter );
-	description = new QLabel( "<b>mchelper</b> (Make Controller Helper) is part of the Make Controller Kit project - an \
+	description = new QLabel( "<br><b>mchelper</b> (Make Controller Helper) is part of the Make Controller Kit project - an \
 	open source hardware platform for everybody.  mchelper can upload new firmware to your Make \
 	Controller, and allow you to easily manage it. \
 	<br><br> \
 	mchelper is released under the <a href=\"http://www.apache.org/licenses/LICENSE-2.0.html\">Apache 2.0 license</a>, \
 	and uses code from Erik Gilling's <a href=\"http://oss.tekno.us/sam7utils\"> sam7utils project</a>. \
 	<br><br> \
-	Copyright (C) 2006-2007 MakingThings LLC.  <a href=\"http://www.makingthings.com\">http://www.makingthings.com</a> \
+	Copyright (C) 2006-2007 MakingThings LLC.  <a href=\"http://www.makingthings.com\">www.makingthings.com</a> \
 	<br><br> \
 	This program is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE WARRANTY OF DESIGN, \
 	MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.", this );
@@ -773,7 +770,6 @@ aboutMchelper::aboutMchelper( ) : QDialog( )
 	topLevelLayout->addWidget( &icon );
 	topLevelLayout->addWidget( &title );
 	topLevelLayout->addWidget( &version );
-	topLevelLayout->addStretch( );
 	topLevelLayout->addWidget( description );
 	topLevelLayout->addLayout( buttonLayout );
 	topLevelLayout->setAlignment( Qt::AlignHCenter );
