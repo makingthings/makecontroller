@@ -19,7 +19,6 @@
 TEMPLATE = app
 
 FORMS = layouts/mchelper.ui \
-				layouts/aboutMchelper.ui \
 				layouts/mchelperPrefs.ui
 
 #CONFIG += qt release
@@ -79,7 +78,7 @@ macx{
 	!debug{ CONFIG += x86 ppc }
   LIBS += -framework IOKit #-dead_strip
   ICON = IconPackageOSX.icns
-  #QMAKE_POST_LINK = strip mchelper.app/Contents/MacOS/mchelper
+  QMAKE_POST_LINK = strip mchelper.app/Contents/MacOS/mchelper
 }
 
 

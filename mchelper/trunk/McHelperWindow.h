@@ -180,11 +180,20 @@ class McHelperApp : public QApplication
     #endif // Windows-only
 };
 
-class aboutMchelper : public QDialog, private Ui::aboutMchelper
+class aboutMchelper : public QDialog
  {
 		Q_OBJECT
 		public:
 			aboutMchelper( );
+		
+		private:
+			QPushButton *okButton;
+			QLabel title, version, icon;
+			QLabel *description;
+			QPixmap *mchelperIcon;
+			QVBoxLayout *topLevelLayout;
+			QHBoxLayout *buttonLayout;
+			
  };
  
  class mchelperPrefs : public QDialog, public Ui::mchelperPrefs
