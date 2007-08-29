@@ -19,7 +19,6 @@
 #define MCHELPERWINDOW_H
 
 #include "ui_mchelper.h"
-#include "ui_aboutMchelper.h"
 #include "ui_mchelperPrefs.h"
 
 //Qt includes
