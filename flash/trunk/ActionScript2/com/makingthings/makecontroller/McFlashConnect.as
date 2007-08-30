@@ -41,9 +41,8 @@ import mx.utils.Delegate;
 
 class com.makingthings.makecontroller.McFlashConnect 
 {
-	private var mchelperAddress; // whatever the IP address of your machine is most likely to be
-	private var mchelperPort;  //Make Controller default
-	/** The board that Flash will send messages to if no board is specified in the send function.*/
+	public var mchelperAddress; // whatever the IP address of your machine is most likely to be
+	public var mchelperPort;  //Make Controller default
 	private var defaultBoard:Board;
 	private var registeredAddresses:Array; // list of registered addresses and functions to call if a message with that address shows up
 	private var connectedBoards:Array;
@@ -59,62 +58,6 @@ class com.makingthings.makecontroller.McFlashConnect
 		registeredAddresses = new Array( );
 		connectedBoards = new Array( );
   }
-	
-	/**
-	* Query the local address that has been set.
-	* \return A string specifying the current address.
-	
-	<h3>Example</h3>
-	\code
-	var myMchelperAddress:String;
-	myAddress = flosc.getMchelperAddress( );
-	\endcode
- 	*/
-	public function getMchelperAddress( ):String
-	{
-		return mchelperAddress;
-	}
-	/**
-	* Set the address of the computer that is connecting to FLOSC.
-	* \param addr A string specifying the address.
-	
-	<h3>Example</h3>
-	\code
-	flosc.setMchelperAddress( "192.168.0.215" );
-	\endcode
- 	*/
-	public function setMchelperAddress( addr:String ):Void
-	{
-		mchelperAddress = addr;
-	}
-	/**
-	* Query the port that has been set.
-	* \return A number specifying the current port.
-	
-	<h3>Example</h3>
-	\code
-	var myMchelperPort:Number;
-	myMchelperPort = flosc.getMchelperPort( );
-	\endcode
- 	*/
-	public function getMchelperPort( ):Number
-	{
-		return mchelperPort;
-	}
-	/**
-	* Set the port that the local computer should listen on.
-	* By default, this should be \b 10000 for use with the Make Controller.
-	* \param port A number specifying the port.
-	<h3>Example</h3>
-	\code
-	// listen on port 10101
-	flosc.setMchelperPort( 10101 );
-	\endcode
- 	*/
-	public function setMchelperPort( port:Number ):Void
-	{
-		mchelperPort = port;
-	}
 	
 	/**
 	Register a handler for messages coming from a given OSC address.
@@ -293,6 +236,16 @@ class com.makingthings.makecontroller.McFlashConnect
 		//trace( "Board removed: " + board.location );
 	}
 	
+	public function onConnectError( )
+	{
+		
+	}
+	
+	public function onConnect( )
+	{
+		
+	}
+	
 	/**
 	* Make a connection to the FLOSC server.
 	* This will connect using the current values of <b>mchelperAddress</b> and <b>mchelperPort</b>.
@@ -313,7 +266,7 @@ class com.makingthings.makecontroller.McFlashConnect
 		mySocket.onXML = Delegate.create( this, handleIncoming );
 	
 		if (!mySocket.connect(mchelperAddress, mchelperPort))
-			trace( "Can't create XML connection to FLOSC." );
+			onConnectError( );
 	}
 	
 	/**
@@ -405,7 +358,6 @@ class com.makingthings.makecontroller.McFlashConnect
 					{
 						board.name = boardMessage.attributes.NAME;
 						board.serialnumber = int( boardMessage.attributes.SERIALNUMBER );
-						trace( "new board info: " + board.name + ", " + board.serialnumber );
 					}
 				}
 			}
@@ -416,13 +368,13 @@ class com.makingthings.makecontroller.McFlashConnect
 	// *** event handler to respond to successful connection attempt
 	private function handleConnect (succeeded)
 	{
-		if(succeeded)
-			this.connected = true;
-		else
+		if( succeeded == true )
 		{
-			trace( "Connection to Mchelper did not succeed." );
-			trace( "** Make sure it's running, and that nothing else is listening on port " + mchelperPort );
+			this.connected = true;
+			onConnect( );
 		}
+		else
+			onConnectError( );
 	}
 	
 	/**
@@ -574,8 +526,7 @@ class com.makingthings.makecontroller.McFlashConnect
 		var xmlOut:XML = new XML();
 		var packetOut = createPacketOut( xmlOut, 0, board.location );
 		var xmlMessage = createMessage( xmlOut, packetOut, oscM.address );
-		for( var i = 0; i < oscM.args.length; i++ )
-			parseArguments( xmlOut, xmlMessage, oscM.args );
+		parseArguments( xmlOut, xmlMessage, oscM.args );
 
 		xmlOut.appendChild(packetOut);
 	
@@ -644,8 +595,7 @@ class com.makingthings.makecontroller.McFlashConnect
 			var oscM:OscMessage = oscB[i];
 			//trace( "Message " + i + ", address " + oscM.address + ", arg: " + oscM.args[0] );
 			var xmlMessage = createMessage( xmlOut, packetOut, oscM.address );
-			for( var j = 0; j < oscM.args.length; j++ )
-				parseArguments( xmlOut, xmlMessage, oscM.args );
+			parseArguments( xmlOut, xmlMessage, oscM.args );
 		}
 
 		xmlOut.appendChild(packetOut);
