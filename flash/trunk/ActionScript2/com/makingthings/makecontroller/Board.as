@@ -1,29 +1,1 @@
-﻿/*********************************************************************************
- Copyright 2006 MakingThings
-
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
- with the License. You may obtain a copy of the License at
-
- http://www.apache.org/licenses/LICENSE-2.0 
-
- Unless required by applicable law or agreed to in writing, software distributed
- under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
- CONDITIONS OF ANY KIND, either express or implied. See the License for
- the specific language governing permissions and limitations under the License.
- 
-*********************************************************************************/
-
-class com.makingthings.makecontroller.Board
-{
-	public var type:String;
-	public var location:String;
-	public var name:String;
-	public var serialnumber:Number;
-	
-	function Board( type:String, location:String )
-	{
-		this.type = type;
-		this.location = location;
-	}
-}
+﻿/********************************************************************************* Copyright 2006 MakingThings Licensed under the Apache License,  Version 2.0 (the "License"); you may not use this file except in compliance  with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License. *********************************************************************************//** <p><b>Board</b> is a representation of a Make Controller connected to mchelper. You'll never need to create your own Board objects, as mchelper is the source of this information,and it will create and notify you when a new board is connected, or a board is disconnected. </p><p>A <b>Board</b> has a few relevant properties.  The type tells you whether it's USB or Ethernet, and the locationis a unique value - an IP address for Ethernet boards, and a device location for USB boards.  You can always count on thesetwo values being in place for a baord, while the <b>name</b> and <b>serialnumber</b> values will only be availableonce mchelper has had a chance to probe the connected boards.</p><p>If you're only working with one Make Controller Kit, it can be useful to use the <b>setDefaultBoard</b> on McFlashConnect.This way, once you set the board's information once, you can simply use the <b>send()</b> method, instead of<b>sendToBoard()</b> which requires that you specify each time which board you want to send to.  The most convenienttime to do this is when mchelper tells you a new board is connected - simply pass this new board into setDefaultBoard().</p><h3>Example</h3><pre>function onBoardArrived( event:McEvent ){	var newBoard:Board == event.data;	mcFlash.setDefaultBoard( newBoard );}</pre><p>There are also a few helper methods to find connected boards:<ul>	<li>getBoardByIPAddress( )</li>	<li>getBoardByUsbLocation( )</li>	<li>getBoardsByName( )</li>	<li>getBoardsBySerialNumber( )</li></ul>See <a href="McFlashConnect.html">McFlashConnect</a> for more info. </p>*/class com.makingthings.makecontroller.Board{	/** The type of board - this can be either "Ethernet" or "USB". */	public var type:String;	/** The location of the board - for boards connected via Ethernet, this will be their IP address.  	For boards connected via USB, this will be a unique ID. */	public var location:String;	/** This is the name of the board, as specified by the <b>/system/name</b> OSC message. */	public var name:String;	/** This is the serial number of the board, as specified by the <b>/system/serialnumber</b> OSC message. */	public var serialnumber:Number;		function Board( type:String, location:String )	{		this.type = type;		this.location = location;	}}

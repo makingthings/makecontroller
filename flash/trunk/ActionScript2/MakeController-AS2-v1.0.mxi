@@ -1,6 +1,6 @@
 <macromedia-extension
 	name="Make Controller Kit - Flash Interface"
-	version="0.1"
+	version="1.0"
 	type="ActionScript" >
 
 	<!-- List the required/compatible products -->
@@ -18,7 +18,7 @@
 	<description>
 
 	<![CDATA[
-	An interface to the Make Controller Kit in Flash, using FLOSC.
+	An interface to the Make Controller Kit in Flash.
 	]]>
 	</description>
 
@@ -27,7 +27,7 @@
 	<license-agreement>
 
 	<![CDATA[
-	Copyright 2006 MakingThings
+	Copyright 2007 MakingThings
 
  	Licensed under the Apache License, 
  	Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -51,18 +51,17 @@
 	and other interactive devices into their projects.  This extension allows Flash
 	applications to communicate with the Make Controller Kit.<br><br>
 	
-	This extension is not Make Controller Kit specific, and can be used in any 
-	Flosc setting.<br><br>
-	
-	Classes can be found in com.makingthings.flosc.*
+	Classes can be found in com.makingthings.makecontroller.*
 	]]>
 	</ui-access>
 
 	<!-- Describe the files that comprise the extension -->
 
 	<files>
-		<file name="com/makingthings/flosc/Flosc.as" destination="$flash/Classes/com/makingthings/flosc/" />
-		<file name="com/makingthings/flosc/OscMessage.as" destination="$flash/Classes/com/makingthings/flosc/" />
-		<file name="com/makingthings/flosc/ReadMe.as" destination="$flash/Classes/com/makingthings/flosc/" />
+		<file name="com/makingthings/makecontroller/McFlashConnect.as" destination="$flash/Classes/com/makingthings/makecontroller/" />
+		<file name="com/makingthings/makecontroller/OscMessage.as" destination="$flash/Classes/com/makingthings/makecontroller/" />
+		<file name="com/makingthings/makecontroller/Board.as" destination="$flash/Classes/com/makingthings/makecontroller/" />
+		<file name="com/makingthings/makecontroller/AddressHandler.as" destination="$flash/Classes/com/makingthings/makecontroller/" />
 	</files>
+	
 </macromedia-extension>
