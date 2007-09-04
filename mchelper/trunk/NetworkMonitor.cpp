@@ -53,7 +53,8 @@ void NetworkMonitor::start( )
 
 void NetworkMonitor::sendPing( )
 {
-	socket->writeDatagram( broadcastPing.data(), broadcastPing.size(), QHostAddress::Broadcast, rxtxPort );
+	if( mainWindow->findNetBoardsEnabled( ) )
+		socket->writeDatagram( broadcastPing.data(), broadcastPing.size(), QHostAddress::Broadcast, rxtxPort );
 }
 
 bool NetworkMonitor::changeListenPort( int port )

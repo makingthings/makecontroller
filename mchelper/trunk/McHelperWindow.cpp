@@ -94,7 +94,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	connect( udpSendPort, SIGNAL( editingFinished() ), this, SLOT ( udpSendChanged() ) );
     
 	// setup the menu
-	connect( actionAboutMchelper, SIGNAL( triggered() ), aboutDialog, SLOT( show( ) ) );
+	//connect( actionAboutMchelper, SIGNAL( triggered() ), aboutDialog, SLOT( show( ) ) );
 	connect( actionPreferences, SIGNAL( triggered() ), prefsDialog, SLOT( show( ) ) );
 	connect( actionClearOutputWindow, SIGNAL( triggered() ), outputModel, SLOT( clear( ) ) );
 	connect( actionMchelper_Help, SIGNAL( triggered() ), this, SLOT( openMchelperHelp( ) ) );
@@ -662,6 +662,7 @@ void McHelperWindow::readSettings()
 	
 	appUdpListenPort = settings.value( "appUdpListenPort", 10000 ).toInt( );
 	appXmlListenPort = settings.value( "appXmlListenPort", 11000 ).toInt( );
+	findEthernetBoardsAuto = settings.value( "findEthernetBoardsAuto", true ).toBool( );
 	
 	hideOSCMessages = settings.value( "hideOSCMessages", false ).toBool( );
 	actionHide_OSC_Messages->setChecked( hideOSCMessages );
@@ -783,9 +784,11 @@ mchelperPrefs::mchelperPrefs( McHelperWindow *mainWindow ) : QDialog( )
 	connect( defaultsButton, SIGNAL( clicked() ), mainWindow, SLOT( restoreDefaultPrefs() ) );
 	connect( udpPortPrefs, SIGNAL( editingFinished() ), mainWindow, SLOT( udpPortPrefsChanged() ) );
 	connect( xmlPortPrefs, SIGNAL( editingFinished() ), mainWindow, SLOT( xmlPortPrefsChanged() ) );
+	connect( networkPingCheckBox, SIGNAL( clicked(bool) ), mainWindow, SLOT( findNetBoardsPrefsChanged(bool) ) );
 	
 	setUdpPortDisplay( mainWindow->appUdpListenPort );
 	setXmlPortDisplay( mainWindow->appXmlListenPort );
+	setFindNetBoardsDisplay( mainWindow->findEthernetBoardsAuto );
 }
 
 void mchelperPrefs::setUdpPortDisplay( int port )
@@ -798,15 +801,26 @@ void mchelperPrefs::setXmlPortDisplay( int port )
 	xmlPortPrefs->setText( QString::number( port ) );
 }
 
+void mchelperPrefs::setFindNetBoardsDisplay( bool state )
+{
+	if( state )
+		networkPingCheckBox->setCheckState( Qt::Checked );
+	else
+		networkPingCheckBox->setCheckState( Qt::Unchecked );
+}
+
 void McHelperWindow::restoreDefaultPrefs( )
 {
 	appUdpListenPort = 10000;
 	appXmlListenPort = 11000;
+	findEthernetBoardsAuto = true;
 	QSettings settings("MakingThings", "mchelper");
 	settings.setValue("appUdpListenPort", appUdpListenPort );
 	settings.setValue("appXmlListenPort", appXmlListenPort );
+	settings.setValue("findEthernetBoardsAuto", findEthernetBoardsAuto );
 	prefsDialog->setUdpPortDisplay( appUdpListenPort );
 	prefsDialog->setXmlPortDisplay( appXmlListenPort );
+	prefsDialog->setFindNetBoardsDisplay( findEthernetBoardsAuto );
 	udp->changeListenPort( appUdpListenPort );
 	xmlServer->changeListenPort( appXmlListenPort );
 }
@@ -825,6 +839,18 @@ void McHelperWindow::xmlPortPrefsChanged( )
 	QSettings settings("MakingThings", "mchelper");
 	settings.setValue("appXmlListenPort", appXmlListenPort );
 	xmlServer->changeListenPort( appXmlListenPort );
+}
+
+void McHelperWindow::findNetBoardsPrefsChanged( bool state )
+{
+	QSettings settings("MakingThings", "mchelper");
+	settings.setValue("findEthernetBoardsAuto", state );
+	findEthernetBoardsAuto = state;
+}
+
+bool McHelperWindow::findNetBoardsEnabled( )
+{
+	return findEthernetBoardsAuto;
 }
 
 void McHelperWindow::systemNameChanged( )
