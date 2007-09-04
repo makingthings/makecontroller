@@ -86,6 +86,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void newXmlPacketReceived( QList<OscMessage*> messageList, QString address );
 		void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress );
 		void xmlServerBoardInfoUpdate( Board* board );
+		bool findNetBoardsEnabled( );
         
 		void setNoUI( bool val );
 		void uiLessUpload( char* filename, bool bootFlash );
@@ -97,6 +98,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		
 		int appUdpListenPort;
 		int appXmlListenPort;
+		bool findEthernetBoardsAuto;
 	
 	protected:
 		void closeEvent( QCloseEvent *qcloseevent );
@@ -134,6 +136,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void restoreDefaultPrefs( );
 		void udpPortPrefsChanged( );
 		void xmlPortPrefsChanged( );
+		void findNetBoardsPrefsChanged( bool state );
     
 	private slots:
         // Uploader functions
@@ -202,6 +205,7 @@ class aboutMchelper : public QDialog
 			mchelperPrefs( McHelperWindow *mainWindow );
 			void setUdpPortDisplay( int port );
 			void setXmlPortDisplay( int port );
+			void setFindNetBoardsDisplay( bool state );
 		private slots:
 			
 		private:
