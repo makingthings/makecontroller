@@ -94,7 +94,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	connect( udpSendPort, SIGNAL( editingFinished() ), this, SLOT ( udpSendChanged() ) );
     
 	// setup the menu
-	//connect( actionAboutMchelper, SIGNAL( triggered() ), aboutDialog, SLOT( show( ) ) );
+	connect( actionAboutMchelper, SIGNAL( triggered() ), aboutDialog, SLOT( show( ) ) );
 	connect( actionPreferences, SIGNAL( triggered() ), prefsDialog, SLOT( show( ) ) );
 	connect( actionClearOutputWindow, SIGNAL( triggered() ), outputModel, SLOT( clear( ) ) );
 	connect( actionMchelper_Help, SIGNAL( triggered() ), this, SLOT( openMchelperHelp( ) ) );
@@ -338,6 +338,8 @@ void McHelperWindow::closeEvent( QCloseEvent *qcloseevent )
 {
 	(void)qcloseevent;
 	usb->closeAll( );
+	QSettings settings("MakingThings", "mchelper");
+	settings.setValue("mainWindowSize", size() );
 	// samba->closeAll( );
 }
 
@@ -666,6 +668,10 @@ void McHelperWindow::readSettings()
 	
 	hideOSCMessages = settings.value( "hideOSCMessages", false ).toBool( );
 	actionHide_OSC_Messages->setChecked( hideOSCMessages );
+	
+	QSize mainWindowSize = settings.value( "mainWindowSize" ).toSize( );
+	if( mainWindowSize.isValid( ) )
+		resize( mainWindowSize );
 	
 	QStringList usbCmdList = settings.value( "usbCmdList", "" ).toStringList();
 	commandLine->addItems( usbCmdList );
