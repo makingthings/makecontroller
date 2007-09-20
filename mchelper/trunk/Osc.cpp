@@ -310,12 +310,12 @@ char* Osc::createBundle( char* buffer, int* length, int a, int b )
 Osc::Status Osc::createOneRequest( char* buffer, int *length, char* message )
 {
 	char* packet = buffer;
-	int size = 128; // dummy
-	packet = writePaddedString( packet, &size, message );
+	int dummy = 1024;
+	packet = writePaddedString( packet, &dummy, message );
 	if( packet == NULL )
 		return ERROR_CREATING_REQUEST;
 		
-	packet = writePaddedString( packet, &size, "," );
+	packet = writePaddedString( packet, &dummy, "," );
 	if( packet == NULL )
 		return ERROR_CREATING_REQUEST;
 	
