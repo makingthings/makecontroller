@@ -98,7 +98,7 @@ int AnalogIn_SetActive( int index, int state )
   {
     if( AnalogIn == NULL )
     {
-      AnalogIn = Malloc( sizeof( struct AnalogIn_ ) );
+      AnalogIn = MallocWait( sizeof( struct AnalogIn_ ), 100 );
       AnalogIn->users = 0;
       int i;
       for( i = 0; i < ANALOGIN_CHANNELS; i++ )

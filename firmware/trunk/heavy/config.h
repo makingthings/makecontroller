@@ -16,7 +16,7 @@
 #define FIRMWARE_BUILD_NUMBER  0
 
 
-#define CONTROLLER_HEAPSIZE 23000
+#define CONTROLLER_HEAPSIZE 18000
 
 //----------------------------------------------------------------
 //  Comment out the systems that you don't want to include in your build.

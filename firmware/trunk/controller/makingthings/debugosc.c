@@ -79,7 +79,7 @@ int Debug_SetActive( int state )
 {
   if( state && DebugData == NULL )
   {
-    DebugData = Malloc( sizeof( struct Debug_ ) );
+		DebugData = MallocWait( sizeof( struct Debug_ ), 100 );
     DebugData->usb = 1;
     DebugData->udp = 1;
     DebugData->level = DEBUG_MESSAGE;

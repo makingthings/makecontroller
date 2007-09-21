@@ -26,12 +26,12 @@
 
 #define SYSTEM_MAX_NAME 99 
 
-struct System_
+typedef struct System_
 {
   char name[ SYSTEM_MAX_NAME + 1 ]; // allotted EEPROM space is 100, but leave room for \0!
   int users;
   void* StackAuditPtr;
-};
+} SystemS;
 
 /* System Interface */
 

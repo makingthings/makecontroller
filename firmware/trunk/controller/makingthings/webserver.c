@@ -117,13 +117,11 @@ int WebServer_SetActive( int active )
   {
     if ( WebServer == NULL )
     {
-      WebServer = Malloc( sizeof( WebServer_ ) );    
-      if ( WebServer == NULL )
-        return CONTROLLER_ERROR_INSUFFICIENT_MEMORY;
+      WebServer = MallocWait( sizeof( WebServer_ ), 100 );    
       WebServer->hits = 0;
       WebServer->serverSocket = NULL;
       WebServer->requestSocket = NULL;
-      WebServer->serverTask = TaskCreate( WebServerTask, "WebServ", 800, NULL, 4 );
+      WebServer->serverTask = TaskCreate( WebServerTask, "WebServ", 1800, NULL, 4 );
       if ( WebServer->serverTask == NULL )
       {
         Free( WebServer );
@@ -397,6 +395,7 @@ void WebServer_OldSchool( char* address, void *requestSocket, char* buffer, int 
   strcat( buffer, "<p><pre>Task          State  Priority  StackRem	#<br>-------------------------------------------" );
   // ... Then the list of tasks and their status... 
   vTaskList( (signed portCHAR*)buffer + strlen( buffer ) );	
+  
   int i;
   strcat( buffer, "<p><pre>Analog Inputs<br>--------------<br>" );
   
@@ -410,6 +409,7 @@ void WebServer_OldSchool( char* address, void *requestSocket, char* buffer, int 
     strcat( buffer, b );
   }
   strcat( buffer, "</pre>" );
+  
   
   // Write out the dynamically generated page.
   SocketWrite( requestSocket, buffer, strlen( buffer ) );
