@@ -540,9 +540,14 @@ int Network_SetActive( int state )
   {
     if( Network == NULL )
     {
-      Network = Malloc( sizeof( struct Network_ ) );
-
-      Network->pending = 0;
+      while( Network == NULL )
+      {
+      	Network = Malloc( sizeof( struct Network_ ) );
+      	if( Network )
+      		Network->pending = 1; // don't wait for 100 ms before setting this flag
+      	Sleep( 100 );
+      }
+      
       Network->TcpRequested = 0;
       Network->WebServerTaskPtr = NULL;
 
@@ -580,7 +585,10 @@ int Network_SetActive( int state )
 */
 int Network_GetActive( void )
 {
-  return Network != NULL;
+  if( Network == NULL || Network_GetPending( ) )
+  	return 0;
+  else
+  	return 1;
 }
 
 /**
@@ -1158,6 +1166,7 @@ int Network_AddressConvert( char* address, int* a0, int* a1, int* a2, int* a3 )
 int Network_Init( )
 {
   // Start and Lock all the bits to do with the Ethernet Phy - can do this immediately, since there's no undoing this
+  Network_SetPending( 1 );
   Io_StartBits( NETWORK_BITS, true );
 
   // Attempt to get a serial number and set it into the mac address low bytes to make a unique MAC address
@@ -1206,7 +1215,6 @@ int Network_Init( )
   EMAC_if.name[0] = 'e';
   EMAC_if.name[1] = 'n';
   EMAC_if.num = 0;
-  Network_SetPending( 0 ); // all done for now
   
   #ifdef OSC
   if( NetworkOsc_GetTcpAutoConnect( ) )
@@ -1222,6 +1230,7 @@ int Network_Init( )
   if( dhcp )
     Network_DhcpStart( &EMAC_if );
 
+  Network_SetPending( 0 );
   return CONTROLLER_OK;
 }
 
@@ -1665,15 +1674,18 @@ int NetworkOsc_PropertyGet( int property, int channel )
       Osc_CreateMessage( channel, address, ",i", value );      
       break;
     case 13: // find
+    {
       if ( Network_GetAddress( &a0, &a1, &a2, &a3 ) == CONTROLLER_ERROR_NO_NETWORK )
         return Osc_SubsystemError( channel, NetworkOsc_Name, "No network address available - try plugging in an Ethernet cable." );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
       int listen = NetworkOsc_GetUdpListenPort( );
       int send = NetworkOsc_GetUdpSendPort( );
-      char* sysName = System_GetName( );
+      char* sysName = System_GetName( ); //[OSC_SCRATCH_SIZE];
+      //snprintf( sysName, OSC_SCRATCH_SIZE, "%s", System_GetName( ) );
       Osc_CreateMessage( channel, address, ",siis", output, listen, send, sysName );      
       break;
+    }
     case 14: // osc_udp_send_port
       value = NetworkOsc_GetUdpSendPort( );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 

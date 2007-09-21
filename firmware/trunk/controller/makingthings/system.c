@@ -34,7 +34,7 @@ int PortFreeMemory( void );
 void StackAuditTask( void* p );
 void kill( void );
 
-struct System_* System;
+SystemS* System;
 
 /** \defgroup System
     The System subsystem monitors and controls several aspects of the system. 
@@ -54,7 +54,7 @@ int System_SetActive( int state )
   {
     if( System == NULL )
     {
-      System = Malloc( sizeof( struct System_ ) );
+      System = MallocWait( sizeof( SystemS ), 100 );
       System->name[0] = 0;
       System->StackAuditPtr = NULL;
     }
@@ -362,7 +362,7 @@ void StackAuditTask( void* p )
 static char* SystemOsc_Name = "system";
 static char* SystemOsc_PropertyNames[] = { "active", "freememory", "samba", "reset", 
                                             "serialnumber", "version",
-                                            "name", "info-internal", "info", "stack-audit", 0 }; // must have a trailing 0
+                                            "name", "info-internal", "info", "stack-audit", "task-report", 0 }; // must have a trailing 0
 
 int SystemOsc_PropertySet( int property, char* typedata, int channel );
 int SystemOsc_PropertyGet( int property, int channel );
@@ -503,7 +503,7 @@ int SystemOsc_PropertyGet( int property, int channel )
       int a0, a1, a2, a3;
 			{ // put these in their own context so the local variables aren't lying around on the stack for the whole message
 				char ipAddr[25];
-				char* sysName = "Temp name"; // System_GetName( );
+				char* sysName = System_GetName( );
 				int serialnum = System_GetSerialNumber( );
 				char sysVersion[25];
 				snprintf( sysVersion, 25, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER );
@@ -555,6 +555,23 @@ int SystemOsc_PropertyGet( int property, int channel )
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
       Osc_CreateMessage( channel, address, ",i", value ); 
       break;
+    case 10: // task-report
+    {
+      int numOfTasks = GetNumberOfTasks( ) - 1;  // don't count the IDLE task
+      int i;
+      void* task = NULL;
+      char* taskName = "";
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      
+      for( i = 0; i < numOfTasks; i++ )
+      {
+      	task = TaskGetNext( task );
+      	value = TaskGetRemainingStack( task );
+      	taskName = TaskGetName( task );
+      	Osc_CreateMessage( channel, address, ",si", taskName, value ); 
+      }
+      break;
+    }
   }
   
   return CONTROLLER_OK;

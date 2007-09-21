@@ -187,7 +187,39 @@ char *bufferPtr = Malloc( bufferSize );
 */
 void* Malloc( int size )
 {
-  return pvPortMalloc( size ); 
+  return pvPortMalloc( size );
+}
+
+/**	
+	Same as Malloc, but keeps trying until it succeeds.
+	This is a convenience function that will continue to call Malloc( ) at a given interval until
+	it returns successfully.  Once this function returns, you know you have been allocated the memory
+	you asked for.
+	
+	@param size An integer specifying the amount of memory, in bytes, you want to allocate.
+	@param interval An integer specifying the number of milliseconds to wait between successive attempts to allocate memory.  
+	It's best to not set this too low, as it will be a bit taxing on the system.
+	@return A pointer to the allocated memory, or NULL if the memory was not available.
+  @see Free(), System_GetFreeMemory( )
+	
+\par Example
+\code
+char *bufferPtr = MallocWait( 1024, 100 );
+// now you have a 1024 character buffer
+\endcode
+*/
+void* MallocWait( int size, int interval )
+{
+	void* retval = NULL;
+	while( retval == NULL )
+	{
+		retval = Malloc( size );
+		if( retval )
+			return retval;
+		else
+			Sleep( interval );
+	}
+	return NULL; // should never get here
 }
 
 /**	

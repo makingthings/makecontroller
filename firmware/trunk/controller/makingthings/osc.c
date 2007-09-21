@@ -194,9 +194,10 @@ void Osc_SetActive( int state )
 {
   if ( state && Osc == NULL )
   {
-    Osc = Malloc( sizeof( OscStruct ) );
+		Osc = MallocWait( sizeof( OscStruct ), 100 );
     Osc->subsystemHighest = 0;
     Osc->registeredSubsystems = 0;
+    Osc->sendSocket = NULL;
     int i;
     for( i = 0; i < OSC_CHANNEL_COUNT; i++ )
       Osc->channel[ i ] = NULL;
@@ -204,11 +205,11 @@ void Osc_SetActive( int state )
       Osc->subsystem[ i ] = NULL;
 
     #ifdef MAKE_CTRL_NETWORK
-    Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 1000, (void*)OSC_CHANNEL_UDP, 3 );
+    Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 2800, (void*)OSC_CHANNEL_UDP, 3 );
     Osc->TcpTaskPtr = NULL;
     #endif
     #ifdef MAKE_CTRL_USB
-    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1000, (void*)OSC_CHANNEL_USB, 3 );
+    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1200, (void*)OSC_CHANNEL_USB, 3 );
     #endif
 
     vSemaphoreCreateBinary( Osc->scratch1Semaphore );
@@ -258,11 +259,7 @@ int Osc_GetRunning( )
 void Osc_UdpTask( void* parameters )
 {
   int channel = (int)parameters;
-  while( Osc->channel[ channel ] == NULL )
-  {
-    Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
-    Sleep( 10 );
-  }
+  Osc->channel[ channel ] = MallocWait( sizeof( OscChannel ), 100 );
   OscChannel *ch = Osc->channel[ channel ];
   ch->running = false;
   Osc_SetReplyPort( channel, NetworkOsc_GetUdpSendPort() );
@@ -273,10 +270,19 @@ void Osc_UdpTask( void* parameters )
   while ( !Network_GetActive() )
     Sleep( 100 );
 
+  void* ds = NULL;
+  while( ds == NULL )
+  {
+  	ds = DatagramSocket( NetworkOsc_GetUdpListenPort() );
+  	Sleep( 100 );
+  }
+  while( Osc->sendSocket == NULL )
+  {
+  	Osc->sendSocket = DatagramSocket( 0 );
+  	Sleep( 100 );
+  }
+  
   ch->running = true;
-  void* ds = DatagramSocket( NetworkOsc_GetUdpListenPort() );
-  Osc->sendSocket = DatagramSocket( 0 );
-
   while ( true )
   {
     int address;
@@ -313,7 +319,7 @@ int Osc_TcpPacketSend( char* packet, int length, int replyAddress, int replyPort
   (void)replyPort;
   char len[ 4 ];
   //int endian = Osc_EndianSwap(length);
-  sprintf( len, "%ld", length );
+  sprintf( len, "%d", length );
       
   int result = SocketWrite( Osc->tcpSocket, len, 4 );
   result = SocketWrite( Osc->tcpSocket, packet, length );
@@ -328,12 +334,7 @@ int Osc_TcpPacketSend( char* packet, int length, int replyAddress, int replyPort
 void Osc_TcpTask( void* parameters )
 {
   (void)parameters;
-  Osc->channel[ OSC_CHANNEL_TCP ] = Malloc( sizeof( OscChannel ) );
-  while( Osc->channel[ OSC_CHANNEL_TCP ] == NULL )
-  {
-    Sleep( 100 );
-    Osc->channel[ OSC_CHANNEL_TCP ] = Malloc( sizeof( OscChannel ) );
-  }
+  Osc->channel[ OSC_CHANNEL_TCP ] = MallocWait( sizeof( OscChannel ), 100 );
   OscChannel *ch = Osc->channel[ OSC_CHANNEL_TCP ];
   ch->sendMessage = Osc_TcpPacketSend;
   Osc_ResetChannel( ch );
@@ -387,12 +388,7 @@ void Osc_TcpTask( void* parameters )
 void Osc_UsbTask( void* parameters )
 {
   int channel = (int)parameters;
-  Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
-  while( Osc->channel[ channel ] == NULL )
-  {
-    Sleep( 100 );
-    Osc->channel[ channel ] = Malloc( sizeof( OscChannel ) );
-  }
+  Osc->channel[ channel ] = MallocWait( sizeof( OscChannel ), 100 );
   OscChannel *ch = Osc->channel[ channel ];
   ch->sendMessage = Osc_UsbPacketSend;
   Osc_ResetChannel( ch );
@@ -457,7 +453,7 @@ int Osc_RegisterSubsystem( const char *name, int (*subsystem_ReceiveMessage)( in
   if ( Osc->registeredSubsystems++ > OSC_SUBSYSTEM_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX; 
 
-  Osc->subsystem[ subsystem ] = Malloc( sizeof( OscSubsystem ) );
+  Osc->subsystem[ subsystem ] = MallocWait( sizeof( OscSubsystem ), 100 );
   OscSubsystem* sub = Osc->subsystem[ subsystem ];
   sub->name = name;
   sub->receiveMessage = subsystem_ReceiveMessage;

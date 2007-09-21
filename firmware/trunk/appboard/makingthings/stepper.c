@@ -132,9 +132,7 @@ int Stepper_SetActive( int index, int state )
 
     if( Stepper->control[ index ] == NULL ) // if this particular stepper has not been fired up
     {
-      Stepper->control[ index ] = Malloc( sizeof( StepperControl ) );
-      if( Stepper->control[ index ] == NULL )
-        return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
+      Stepper->control[ index ] = MallocWait( sizeof( StepperControl ), 100 );
       Stepper->control[ index ]->users = 0;
       if( Stepper_Start( index ) != CONTROLLER_OK )
         return CONTROLLER_ERROR_SYSTEM_NOT_ACTIVE;
@@ -623,9 +621,7 @@ int Stepper_Init()
 {
   if( Stepper == NULL )
   {
-    Stepper = Malloc( sizeof( Stepper_ ) );
-    if( Stepper == NULL )
-      return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
+    Stepper = MallocWait( sizeof( Stepper_ ), 100 );
     Stepper->users = 0;
     int i;
     for( i = 0; i < STEPPER_COUNT; i++ )

@@ -335,18 +335,14 @@ int Servo_GetIo( int index )
 
 int Servo_Init()
 {
-  Servo = Malloc( sizeof( Servo_ ) );
-  if( Servo == NULL )
-    return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
+  Servo = MallocWait( sizeof( Servo_ ), 100 );
 
   Servo->users = 0;
   int i;
   for( i = 0; i < SERVO_COUNT; i++ )
   {
     Servo->control[ i ] = NULL;
-    Servo->control[ i ] = Malloc( sizeof( ServoControl ) );
-    if( Servo->control[ i ] == NULL )
-      return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
+    Servo->control[ i ] = MallocWait( sizeof( ServoControl ), 100 );
 
     ServoControl* s = Servo->control[ i ];
     s->users = 0;

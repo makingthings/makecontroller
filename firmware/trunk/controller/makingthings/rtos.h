@@ -45,6 +45,7 @@ int TaskGetTopPriorityUsed( void );
 int TaskGetTickCount( void );
 
 void* Malloc( int size );
+void* MallocWait( int size, int interval );
 void Free( void* memory );
 
 #endif

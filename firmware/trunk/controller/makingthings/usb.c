@@ -80,13 +80,7 @@ int Usb_SetActive( int state )
     if ( Usb_Users++ == 0 )
     {
       // Create the USB task.
-      
-      while( Usb == NULL )
-      {
-        Usb = Malloc( sizeof( Usb_ ) );
-        Sleep( 10 );
-      }
-      
+      Usb = MallocWait( sizeof( Usb_ ), 100 );
       TaskCreate(  vUSBCDCTask, "USB", mainUSB_TASK_STACK, NULL, mainUSB_PRIORITY );
 
       while ( !Usb_Running )
