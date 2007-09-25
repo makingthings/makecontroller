@@ -10,13 +10,13 @@
 #include "appboard.h"     // ...if you're using the MAKE Application Board
 #include "error.h"
 
-#define FIRMWARE_NAME          "Heavy"
+#define FIRMWARE_NAME          "Heavy-svn"
 #define FIRMWARE_MAJOR_VERSION 1
 #define FIRMWARE_MINOR_VERSION 2
 #define FIRMWARE_BUILD_NUMBER  0
 
 
-#define CONTROLLER_HEAPSIZE 18000
+#define CONTROLLER_HEAPSIZE 20000
 
 //----------------------------------------------------------------
 //  Comment out the systems that you don't want to include in your build.

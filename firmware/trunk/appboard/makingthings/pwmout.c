@@ -565,7 +565,7 @@ int PwmOutOsc_PropertySet( int index, int property, int value )
 // Get the index LED, property
 int PwmOutOsc_PropertyGet( int index, int property )
 {
-  int value;
+  int value = 0;
   switch ( property )
   {
     case 0:

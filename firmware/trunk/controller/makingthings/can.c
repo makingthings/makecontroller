@@ -120,7 +120,7 @@ int Can_SendMessage( int id, char* message, int count )
       return status;
   }
 
-  int value;
+  int value = 0;
 
   int i;
   int j;
@@ -192,7 +192,7 @@ int Can_GetMessage( int* id, char* message, int* count )
       return status;
   }
 
-  int value;
+  int value = 0;
 
   // This is the semaphore that lets only one instance get messages at a time
   if ( !xSemaphoreTake( Can.semaphore, 1000 ) )
@@ -380,7 +380,7 @@ int CanOsc_PropertySet( int property, int value )
 // Get the property
 int CanOsc_PropertyGet( int property )
 {
-  int value;
+  int value = 0;
   switch ( property )
   {
     case 0:

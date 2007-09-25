@@ -51,8 +51,26 @@ char emacETHADDR5 = 0x0;
 #include "network.h"
 #include "webserver.h"
 
+typedef struct Network_
+{
+  int pending; // if somebody has started the process of getting an IP address, don't start another process
+  int TempIpAddress; // hold onto the values that will ultimately get set for the network
+  int TempGateway; // once it's all set as valid
+  int TempMask;
+  int OscUdpListenPort;
+  int OscUdpSendPort;
+  int TcpOutAddress;
+  int TcpOutPort;
+  bool TcpRequested;
+  void* WebServerTaskPtr;
+  #ifdef OSC
+  char scratch1[ OSC_SCRATCH_SIZE ];
+  char scratch2[ OSC_SCRATCH_SIZE ];
+  #endif // OSC
+} NetworkStruct;
+
 // a few globals
-struct Network_* Network;
+NetworkStruct* Network;
 
 enum { NET_UNCHECKED, NET_INVALID, NET_VALID } Network_Valid;
 
@@ -540,14 +558,8 @@ int Network_SetActive( int state )
   {
     if( Network == NULL )
     {
-      while( Network == NULL )
-      {
-      	Network = Malloc( sizeof( struct Network_ ) );
-      	if( Network )
-      		Network->pending = 1; // don't wait for 100 ms before setting this flag
-      	Sleep( 100 );
-      }
-      
+      Network = MallocWait( sizeof( NetworkStruct ), 100 );
+      Network->pending = 1;
       Network->TcpRequested = 0;
       Network->WebServerTaskPtr = NULL;
 
@@ -1586,8 +1598,6 @@ int NetworkOsc_PropertyGet( int property, int channel )
 {
   int value;
   int result = CONTROLLER_OK;
-  char address[ OSC_SCRATCH_SIZE ];
-  char output[ OSC_SCRATCH_SIZE ];
   int a0;
   int a1; 
   int a2;
@@ -1597,45 +1607,45 @@ int NetworkOsc_PropertyGet( int property, int channel )
   {
     case 0:
       value = Network_GetActive( );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value );      
+      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, Network->scratch1, ",i", value );      
       break;
     case 1:
       if ( Network_GetAddress( &a0, &a1, &a2, &a3 ) == CONTROLLER_ERROR_NO_NETWORK )
         return Osc_SubsystemError( channel, NetworkOsc_Name, "No network address available - try plugging in an Ethernet cable." );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
-      Osc_CreateMessage( channel, address, ",s", output );      
+      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      snprintf( Network->scratch2, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
+      Osc_CreateMessage( channel, Network->scratch1, ",s", Network->scratch2 );      
       break;
     case 2:
       if ( Network_GetMask( &a0, &a1, &a2, &a3 ) == CONTROLLER_ERROR_NO_NETWORK )
         return Osc_SubsystemError( channel, NetworkOsc_Name, "No mask available - try plugging in an Ethernet cable." );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
-      Osc_CreateMessage( channel, address, ",s", output );      
+      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      snprintf( Network->scratch2, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
+      Osc_CreateMessage( channel, Network->scratch1, ",s", Network->scratch2 );      
       break;
     case 3:
       if ( Network_GetGateway( &a0, &a1, &a2, &a3 ) == CONTROLLER_ERROR_NO_NETWORK )
         return Osc_SubsystemError( channel, NetworkOsc_Name, "No gateway available - try plugging in an Ethernet cable." );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
-      Osc_CreateMessage( channel, address, ",s", output );      
+      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      snprintf( Network->scratch2, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
+      Osc_CreateMessage( channel, Network->scratch1, ",s", Network->scratch2 );      
       break;
     case 4:
       value = Network_GetValid( );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value );      
+      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, Network->scratch1, ",i", value );      
       break;
     case 5:
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      snprintf( output, OSC_SCRATCH_SIZE, "%02X:%02X:%02X:%02X:%02X:%02X", 
+      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      snprintf( Network->scratch2, OSC_SCRATCH_SIZE, "%02X:%02X:%02X:%02X:%02X:%02X", 
                 emacETHADDR0, emacETHADDR1, emacETHADDR2, emacETHADDR3, emacETHADDR4, emacETHADDR5 );
-      Osc_CreateMessage( channel, address, ",s", output );      
+      Osc_CreateMessage( channel, Network->scratch1, ",s", Network->scratch2 );      
       break;
     case 6: // osc_udp_listen_port
       value = NetworkOsc_GetUdpListenPort( );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value );      
+      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, Network->scratch1, ",i", value );      
       break;
     case 7: // osc_tcpout_address
       value = NetworkOsc_GetTcpOutAddress( );
@@ -1643,53 +1653,52 @@ int NetworkOsc_PropertyGet( int property, int channel )
       a1 = IP_ADDRESS_B( value );
       a2 = IP_ADDRESS_C( value );
       a3 = IP_ADDRESS_D( value );
-      Network_AddressConvert( address, &a0, &a1, &a2, &a3 );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
-      Osc_CreateMessage( channel, address, ",s", output );    
+      Network_AddressConvert( Network->scratch1, &a0, &a1, &a2, &a3 );
+      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      snprintf( Network->scratch2, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
+      Osc_CreateMessage( channel, Network->scratch1, ",s", Network->scratch2 );    
       break;
     case 8: // osc_tcpout_port
       value = NetworkOsc_GetTcpOutPort( );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value );
+      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, Network->scratch1, ",i", value );
       break;
     case 9: // osc_tcpout_connect
       value = NetworkOsc_GetTcpRequested( );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value );
+      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, Network->scratch1, ",i", value );
       break;
     case 10: // osc_tcpout_auto
       value = NetworkOsc_GetTcpAutoConnect( );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value );
+      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, Network->scratch1, ",i", value );
       break;
     case 11: // dhcp
       value = Network_GetDhcpEnabled( );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value );      
+      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, Network->scratch1, ",i", value );      
       break;
     case 12: // webserver
       value = Network_GetWebServerEnabled( );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value );      
+      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, Network->scratch1, ",i", value );      
       break;
     case 13: // find
     {
       if ( Network_GetAddress( &a0, &a1, &a2, &a3 ) == CONTROLLER_ERROR_NO_NETWORK )
         return Osc_SubsystemError( channel, NetworkOsc_Name, "No network address available - try plugging in an Ethernet cable." );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      snprintf( output, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
+      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      snprintf( Network->scratch2, OSC_SCRATCH_SIZE, "%d.%d.%d.%d", a0, a1, a2, a3 );
       int listen = NetworkOsc_GetUdpListenPort( );
       int send = NetworkOsc_GetUdpSendPort( );
-      char* sysName = System_GetName( ); //[OSC_SCRATCH_SIZE];
-      //snprintf( sysName, OSC_SCRATCH_SIZE, "%s", System_GetName( ) );
-      Osc_CreateMessage( channel, address, ",siis", output, listen, send, sysName );      
+      char* sysName = System_GetName( );
+      Osc_CreateMessage( channel, Network->scratch1, ",siis", Network->scratch2, listen, send, sysName );      
       break;
     }
     case 14: // osc_udp_send_port
       value = NetworkOsc_GetUdpSendPort( );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value );         
+      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, Network->scratch1, ",i", value );         
       break;
   }
   

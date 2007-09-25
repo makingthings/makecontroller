@@ -34,6 +34,16 @@ int PortFreeMemory( void );
 void StackAuditTask( void* p );
 void kill( void );
 
+typedef struct System_
+{
+  char name[ SYSTEM_MAX_NAME + 1 ]; // allotted EEPROM space is 100, but leave room for \0!
+  int users;
+  void* StackAuditPtr;
+  #ifdef OSC
+  char scratch1[ OSC_SCRATCH_SIZE ];
+  #endif // OSC
+} SystemS;
+
 SystemS* System;
 
 /** \defgroup System
@@ -287,6 +297,7 @@ void StackAuditTask( void* p )
     - serialnumber
     - version
     - stack-audit
+    - task-report
     - active
 
     \par Name
@@ -330,6 +341,7 @@ void StackAuditTask( void* p )
     \par Version
     The \b version property corresponds to the of the firmware currently running on the board.
     This is read-only.
+    \par
     To read the board's version, send the message
     \verbatim /system/version \endverbatim
 
@@ -346,6 +358,13 @@ void StackAuditTask( void* p )
     \par
     and turn it off by sending 
     \verbatim /system/stack-audit 0 \endverbatim
+    
+    \par Task Report
+    The \b task-report property is a read-only property that will generate a list of all the tasks running 
+    on your Make Controller, first giving the name of the task followed by the task's remaining stack.
+    \par
+    To see the tasks running on your board, send the message
+    \verbatim /system/task-report \endverbatim
    
     \par Active
     The \b active property corresponds to the active state of System.
@@ -463,38 +482,38 @@ int SystemOsc_PropertySet( int property, char* typedata, int channel )
 int SystemOsc_PropertyGet( int property, int channel )
 {
   int value = 0;
-  char address[ OSC_SCRATCH_SIZE ];
+  //char address[ OSC_SCRATCH_SIZE ];
   switch ( property )
   {
     case 0: // active
       value = System_GetActive( );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value ); 
+      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, System->scratch1, ",i", value ); 
       break;
     case 1: // freememory
       value = System_GetFreeMemory( );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value ); 
+      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, System->scratch1, ",i", value ); 
       break;
     case 4: // serialnumber
       value = System_GetSerialNumber( );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value ); 
+      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, System->scratch1, ",i", value ); 
       break;  
     case 5: // version
     {
       char versionString[50];
       snprintf( versionString, 50, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",s", versionString ); 
+      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, System->scratch1, ",s", versionString ); 
       break;
     }
     case 6: // name
     {
       char* name;
       name = System_GetName( );
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",s", name ); 
+      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, System->scratch1, ",s", name ); 
       break;
     }
     case 7: // info-internal
@@ -515,16 +534,16 @@ int SystemOsc_PropertyGet( int property, int channel )
 				a0 = a1 = a2 = a3 = -1;
 				#endif // MAKE_CTRL_NETWORK
 				snprintf( ipAddr, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
-				snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s-a", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-				Osc_CreateMessage( channel, address, ",sissi", sysName, serialnum, ipAddr, sysVersion, freemem );
+				snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s-a", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+				Osc_CreateMessage( channel, System->scratch1, ",sissi", sysName, serialnum, ipAddr, sysVersion, freemem );
 			}
 			{
 			char gateway[25];
       char mask[25];
 			int dhcp;
       int webserver;
-			int oscUdpListen = NetworkOsc_GetUdpListenPort( );
-			int oscUdpSend = NetworkOsc_GetUdpSendPort( );
+			int oscUdpListen;
+			int oscUdpSend; 
       #ifdef MAKE_CTRL_NETWORK
       if( Network_GetGateway( &a0, &a1, &a2, &a3 ) != CONTROLLER_OK )
         a0 = a1 = a2 = a3 = -1;
@@ -534,16 +553,20 @@ int SystemOsc_PropertyGet( int property, int channel )
 			snprintf( mask, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
       dhcp = Network_GetDhcpEnabled( );
       webserver = Network_GetWebServerEnabled( );
+      oscUdpListen = NetworkOsc_GetUdpListenPort( );
+      oscUdpSend = NetworkOsc_GetUdpSendPort( );
       #else
       a0 = a1 = a2 = a3 = -1;
 			snprintf( gateway, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
 			snprintf( mask, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
       dhcp = 0;
       webserver = 0;
+      oscUdpListen = 0;
+      oscUdpSend = 0;
       #endif // MAKE_CTRL_NETWORK
       
-			snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s-b", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",iissii", dhcp, webserver, gateway, mask, oscUdpListen, oscUdpSend );
+			snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s-b", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, System->scratch1, ",iissii", dhcp, webserver, gateway, mask, oscUdpListen, oscUdpSend );
 			}
       break;
     }
@@ -552,8 +575,8 @@ int SystemOsc_PropertyGet( int property, int channel )
         value = 0;
       else
         value = 1;
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value ); 
+      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, System->scratch1, ",i", value ); 
       break;
     case 10: // task-report
     {
@@ -561,14 +584,14 @@ int SystemOsc_PropertyGet( int property, int channel )
       int i;
       void* task = NULL;
       char* taskName = "";
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
       
       for( i = 0; i < numOfTasks; i++ )
       {
       	task = TaskGetNext( task );
       	value = TaskGetRemainingStack( task );
       	taskName = TaskGetName( task );
-      	Osc_CreateMessage( channel, address, ",si", taskName, value ); 
+      	Osc_CreateMessage( channel, System->scratch1, ",si", taskName, value ); 
       }
       break;
     }

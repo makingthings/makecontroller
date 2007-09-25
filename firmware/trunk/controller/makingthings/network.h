@@ -38,20 +38,6 @@
 #define NETIF_IP_ADDRESS_A( address )  ( ( (int)address       ) & 0xFF )
 
 
-struct Network_
-{
-  int pending; // if somebody has started the process of getting an IP address, don't start another process
-  int TempIpAddress; // hold onto the values that will ultimately get set for the network
-  int TempGateway; // once it's all set as valid
-  int TempMask;
-  int OscUdpListenPort;
-  int OscUdpSendPort;
-  int TcpOutAddress;
-  int TcpOutPort;
-  bool TcpRequested;
-  void* WebServerTaskPtr;
-};
-
 // Network API stuff
 int Network_SetActive( int active );
 int Network_GetActive( void );

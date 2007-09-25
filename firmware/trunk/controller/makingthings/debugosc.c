@@ -29,16 +29,16 @@
 
 #define DEBUG_MAX_MESSAGE 100
 
-struct Debug_
+typedef struct Debug_
 {
   int users;
   int level;
   int usb;
   int udp;
   char message[ DEBUG_MAX_MESSAGE ];
-};
+} DebugStruct;
 
-struct Debug_* DebugData;
+DebugStruct* DebugData;
 
 /** \defgroup Debug
 	The Debug subsystem offers a simple way to send debug messages back from the MAKE Controller via OSC.

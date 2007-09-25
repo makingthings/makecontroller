@@ -205,11 +205,11 @@ void Osc_SetActive( int state )
       Osc->subsystem[ i ] = NULL;
 
     #ifdef MAKE_CTRL_NETWORK
-    Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 2800, (void*)OSC_CHANNEL_UDP, 3 );
+    Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 2600, (void*)OSC_CHANNEL_UDP, 3 );
     Osc->TcpTaskPtr = NULL;
     #endif
     #ifdef MAKE_CTRL_USB
-    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1200, (void*)OSC_CHANNEL_USB, 3 );
+    Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1000, (void*)OSC_CHANNEL_USB, 3 );
     #endif
 
     vSemaphoreCreateBinary( Osc->scratch1Semaphore );

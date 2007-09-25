@@ -513,6 +513,7 @@ int Serial_SetDefault()
   - hardwarehandshake
   - readable
   - char
+  - block
 
 	\par Block
 	To read a block of 128 characters at once, send the message
@@ -557,7 +558,17 @@ int Serial_SetDefault()
 	\verbatim /serial/char\endverbatim
   In this case the reply will be an unsigned value between 0 and 255 or -1 if there is 
   no character available.
-
+  
+  \par Block
+  This property allows for reading or writing a block of characters to/from the serial port.  If you're
+  writing a block, you must send the block you want to write as an OSC blob.
+  
+  For example, to send a block:
+	\verbatim /serial/block blockofchars\endverbatim
+	To get a block, send the message
+	\verbatim /serial/block\endverbatim
+  In this case the reply will be a block of up to 100 unsigned chars, or the chars currently available to read
+  from the serial port.
 */
 
 #include "osc.h"
@@ -636,7 +647,7 @@ int SerialOsc_IntPropertySet( int property, int value )
 // Get the index LED, property
 int SerialOsc_IntPropertyGet( int property )
 {
-  int value;
+  int value = 0;
   switch ( property )
   {
     case 0:

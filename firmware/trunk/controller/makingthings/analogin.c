@@ -247,7 +247,7 @@ int AnalogIn_GetValueWait( int index )
       return status;
   }
 
-  int value;
+  int value = 0;
 
   // Third Step: Select the active channel
   int mask = 1 << index; 
@@ -489,7 +489,7 @@ int AnalogInOsc_PropertySet( int index, int property, int value )
 // Get the index LED, property
 int AnalogInOsc_PropertyGet( int index, int property )
 {
-  int value;
+  int value = 0;
   switch ( property )
   {
     case 0:

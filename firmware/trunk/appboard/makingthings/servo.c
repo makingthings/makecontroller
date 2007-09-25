@@ -554,7 +554,7 @@ int ServoOsc_PropertySet( int index, int property, int value )
 // Get the index LED, property
 int ServoOsc_PropertyGet( int index, int property )
 {
-  int value;
+  int value = 0;
   switch ( property )
   {
     case 0:
