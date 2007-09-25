@@ -6,8 +6,8 @@
 	Furthermore, only register the OSC subsystems you need - by default, we register all of them.
 */
 
-#include "stdlib.h"
 #include "config.h"
+#include "stdlib.h"
 #include "string.h"
 
 void BlinkTask( void* parameters );
@@ -18,7 +18,7 @@ void Run( ) // this task gets called as soon as we boot up.
 
   // Do this right quick after booting up - otherwise we won't be recognised
   Usb_SetActive( 1 );
-  
+
   // Fire up the OSC system and register the subsystems you want to use
   Osc_SetActive( true );
   // make sure OSC_SUBSYSTEM_COUNT (osc.h) is large enough to accomodate them all
@@ -42,6 +42,9 @@ void Run( ) // this task gets called as soon as we boot up.
   Network_SetActive( true );
 }
 
+// A very simple task...a good starting point for programming experiments.
+// If you do anything more exciting than blink the LED in this task, however,
+// you may need to increase the stack allocated to it above.
 void BlinkTask( void* p )
 {
  (void)p;

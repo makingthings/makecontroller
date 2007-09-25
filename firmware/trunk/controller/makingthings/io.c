@@ -706,7 +706,7 @@ int IoOsc_IndexIntPropertySet( int index, int property, int value )
 // Get the indexed property
 int IoOsc_IndexIntPropertyGet( int index, int property )
 {
-  int value;
+  int value = 0;
   switch ( property )
   {
     case 0:
@@ -754,7 +754,7 @@ int IoOsc_IntPropertySet( int property, int value )
 // Get the indexed property
 int IoOsc_IntPropertyGet( int property )
 {
-  int value;
+  int value = 0;
   switch ( property )
   {
     case 0: 
