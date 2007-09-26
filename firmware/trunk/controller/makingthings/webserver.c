@@ -61,8 +61,8 @@ typedef struct WebServerS
 {
   int hits;
   void* serverTask;
-  void* serverSocket;
-  void* requestSocket;
+  void *serverSocket;
+  void *requestSocket;
 
   char request[ REQUEST_SIZE_MAX ];
   char response[ RESPONSE_SIZE_MAX ];
@@ -79,7 +79,7 @@ WebServer_* WebServer = NULL;
 
 int TestHandler( char* requestType, char* address, char* requestBuffer, int requestMaxSize, void* socket, char* buffer, int len );
 
-static void WebServer_WriteResponseOk_( char* content, void* socket );
+static int WebServer_WriteResponseOk_( char* content, void* socket );
 
 
 /** \defgroup webserver Web Server
@@ -121,7 +121,11 @@ int WebServer_SetActive( int active )
       WebServer->hits = 0;
       WebServer->serverSocket = NULL;
       WebServer->requestSocket = NULL;
+      #ifdef CROSSWORKS_BUILD
+      WebServer->serverTask = TaskCreate( WebServerTask, "WebServ", 800, NULL, 4 );
+      #else
       WebServer->serverTask = TaskCreate( WebServerTask, "WebServ", 1800, NULL, 4 );
+      #endif // CROSSWORKS_BUILD
       if ( WebServer->serverTask == NULL )
       {
         Free( WebServer );
@@ -214,7 +218,7 @@ int WebServer_Route( char* address, int (*handler)( char* requestType, char* add
 {
   if ( WebServerHandlers == NULL )
   {
-    WebServerHandlers = Malloc( sizeof( WebServerHandlers_ ) );    
+    WebServerHandlers = MallocWait( sizeof( WebServerHandlers_ ), 100 );    
     if ( WebServerHandlers != NULL )
       WebServerHandlers->count = 0;
   }
@@ -238,18 +242,33 @@ int WebServer_Route( char* address, int (*handler)( char* requestType, char* add
 	Writes the HTTP OK message and sets the content type to HTML.
 	@param socket The socket to write to
 */
-void WebServer_WriteResponseOkHTML( void* socket )
+int WebServer_WriteResponseOkHTML( void* socket )
 {
-  WebServer_WriteResponseOk_( socket, HTTP_CONTENT_HTML );
+  //return WebServer_WriteResponseOk_( socket, HTTP_CONTENT_HTML );
+  int written = 0;
+  int ret = 0;
+  ret = SocketWrite( socket, HTTP_OK, strlen( HTTP_OK ) );
+  if( !ret )
+    return 0;
+  else
+    written += ret;
+
+  ret = SocketWrite( socket, HTTP_CONTENT_HTML, strlen( HTTP_CONTENT_HTML ) );
+  if( !ret )
+    return 0;
+  else
+    written += ret;
+
+  return written;
 }
   
 /**
 	Writes the HTTP OK message and sets the content type to HTML.
 	@param socket The socket to write to
 */
-void WebServer_WriteResponseOkPlain( void* socket )
+int WebServer_WriteResponseOkPlain( void* socket )
 {
-  WebServer_WriteResponseOk_( socket, HTTP_CONTENT_PLAIN );
+  return WebServer_WriteResponseOk_( socket, HTTP_CONTENT_PLAIN );
 }
 
 /**
@@ -261,7 +280,7 @@ void WebServer_WriteResponseOkPlain( void* socket )
 	@param len Helper buffer length
   \todo more parameterization
 */
-void WebServer_WriteHeader( int includeCSS, void* socket, char* buffer, int len )
+int WebServer_WriteHeader( int includeCSS, void* socket, char* buffer, int len )
 {
   (void)buffer;
   (void)len;
@@ -276,7 +295,7 @@ h1 { font-family: Arial, Helvetica, sans-serif; font-weight: bold; }\
   if ( includeCSS )
     strcat( buffer, style );
   strcat( buffer, headerEnd );
-  SocketWrite( socket, buffer, strlen( buffer ) );
+  return SocketWrite( socket, buffer, strlen( buffer ) );
 }
 
 /**
@@ -288,7 +307,7 @@ h1 { font-family: Arial, Helvetica, sans-serif; font-weight: bold; }\
 	@param len Helper buffer length
   \todo more parameterization of the tag
 */
-void WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, int len )
+int WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, int len )
 {
   (void)buffer;
   (void)len;
@@ -305,7 +324,7 @@ void WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, 
     strcat( buffer, reloadEnd  );
   }
   strcat( buffer, bodyEnd  );
-  SocketWrite( socket, buffer, strlen( buffer ) );
+  return SocketWrite( socket, buffer, strlen( buffer ) );
 }
 
 /**
@@ -313,11 +332,11 @@ void WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, 
   Should be preceded writes to the socket with the content of the page.
 	@param socket The socket to write to
 */
-void WebServer_WriteBodyEnd( void* socket )
+int WebServer_WriteBodyEnd( void* socket )
 {
   char* bodyEnd = "\r\n</BODY>\r\n</HTML>";
 
-  SocketWrite( socket, bodyEnd, strlen( bodyEnd ) );
+  return SocketWrite( socket, bodyEnd, strlen( bodyEnd ) );
 }
 
 /** @}
@@ -327,6 +346,8 @@ int TestHandler( char* requestType, char* address, char* requestBuffer, int requ
 {
   (void)requestType;
   (void)address;
+  (void)requestBuffer;
+  (void)requestMaxSize;
   WebServer_WriteResponseOkHTML( socket );
   WebServer_WriteHeader( true, socket, buffer, len );
   WebServer_WriteBodyStart( address, socket, buffer, len );
@@ -366,9 +387,7 @@ void WebServer_ProcessRequest( void* requestSocket )
   }
 
   if( !responded ) 
-  {
     WebServer_OldSchool( address, requestSocket, WebServer->response, RESPONSE_SIZE_MAX ); 
-  }
 
   SocketClose( requestSocket );
 }
@@ -381,10 +400,14 @@ void WebServer_OldSchool( char* address, void *requestSocket, char* buffer, int 
   memset( temp, 0, 50 );
   #endif
 
-  WebServer_WriteResponseOkHTML( requestSocket );
+  if( !WebServer_WriteResponseOkHTML( requestSocket ) )
+    return;
 
-  WebServer_WriteHeader( true, requestSocket, buffer, len );
-  WebServer_WriteBodyStart( "/info", requestSocket, buffer, len );
+  if( !WebServer_WriteHeader( true, requestSocket, buffer, len ) )
+    return;
+
+  if( !WebServer_WriteBodyStart( "/info", requestSocket, buffer, len ) )
+    return;
 
   // Generate the dynamic page...
   strcpy( buffer, HTML_OS_START );  // ... First the page header.
@@ -419,7 +442,8 @@ void WebServer_OldSchool( char* address, void *requestSocket, char* buffer, int 
   
   
   // Write out the dynamically generated page.
-  SocketWrite( requestSocket, buffer, strlen( buffer ) );
+  if( !SocketWrite( requestSocket, buffer, strlen( buffer ) ) )
+    return;
   
   WebServer_WriteBodyEnd( requestSocket );
 }
@@ -454,10 +478,12 @@ void WebServerTask( void *p )
 	}
 }
 
-static void WebServer_WriteResponseOk_( char* contentType, void* socket )
+static int WebServer_WriteResponseOk_( char* contentType, void* socket )
 {
-  SocketWrite( socket, HTTP_OK, strlen( HTTP_OK ) );
-  SocketWrite( socket, contentType, strlen( contentType ) );
+  int written = 0;
+  written += SocketWrite( socket, HTTP_OK, strlen( HTTP_OK ) );
+  written += SocketWrite( socket, contentType, strlen( contentType ) );
+  return written;
 }
 
 char* WebServer_GetRequestAddress( char* request, int length, char** requestType  )
