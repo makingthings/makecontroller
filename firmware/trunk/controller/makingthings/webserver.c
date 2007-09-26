@@ -46,7 +46,7 @@ void WebServerTask( void *p );
 typedef struct WebServerHandlerS
 {
   char* address;
-  int (*handler)( char* requestType, char* address, void* socket, char* buffer, int len ); 
+  int (*handler)( char* requestType, char* address,  char* requestBuffer, int requestMaxSize, void* socket, char* buffer, int len ); 
 } WebServerHandler;
 
 typedef struct WebServerHandlersS
@@ -77,7 +77,7 @@ WebServer_* WebServer = NULL;
 #include "FreeRTOS.h"
 #include "task.h"
 
-int TestHandler( char* requestType, char* address, void* socket, char* buffer, int len );
+int TestHandler( char* requestType, char* address, char* requestBuffer, int requestMaxSize, void* socket, char* buffer, int len );
 
 static void WebServer_WriteResponseOk_( char* content, void* socket );
 
@@ -174,9 +174,16 @@ int  WebServer_GetActive( void )
   will match the entire "/images" space.
 
   The handler will be called with the request type specified (usually "GET" or  "PUT"), 
-  the incoming address ( "/device/0", "/images/logo.png", etc.).  Then there will be 
+  the incoming address ( "/device/0", "/images/logo.png", etc.) A buffer (and max length) is passed in that
+  can be used to receive the rest of the message if necessary. Then there will be 
   the socket which will take the response and a helpful large buffer or specified length
   which can be used to build strings.
+
+  At the time the handler is called, only the first line of the request has been read.  It is used
+  to determing the request type and the address.  If you need to process the request further
+  its contents may be read into a buffer (the request buffer passed in might be good once the request type 
+  address have been used since they're in there initially).  It is suggested that you use the 
+  SocketReadLine( ) function to read a line of the request at a time.
 
   The handler itself must first write the response using one of WebServer_WriteResponseOkHTML for
   sending HTML or WebServer_WriteResponseOkPlain for returning plain text.  
@@ -186,7 +193,7 @@ int  WebServer_GetActive( void )
 
   Here is an example handler which is installed when the server is started if there are no handlers already present.
   \code
-int TestHandler( char* requestType, char* address, void* socket, char* buffer, int len )
+int TestHandler( char* requestType, char* address, char* requestBuffer, int requestMaxSize, void* socket, char* buffer, int len )
 {
   (void)requestType;
   (void)address;
@@ -203,7 +210,7 @@ int TestHandler( char* requestType, char* address, void* socket, char* buffer, i
 	@param handler pointer to a handler function that will be called when the address is matched.
   @return CONTROLLER_OK (=0) on success or the appropriate error if not
 */
-int WebServer_Route( char* address, int (*handler)( char* requestType, char* address, void* socket, char* buffer, int len )  )
+int WebServer_Route( char* address, int (*handler)( char* requestType, char* address, char* requestBuffer, int requestMaxSize, void* socket, char* buffer, int len )  )
 {
   if ( WebServerHandlers == NULL )
   {
@@ -316,7 +323,7 @@ void WebServer_WriteBodyEnd( void* socket )
 /** @}
 */
 
-int TestHandler( char* requestType, char* address, void* socket, char* buffer, int len )
+int TestHandler( char* requestType, char* address, char* requestBuffer, int requestMaxSize, void* socket, char* buffer, int len )
 {
   (void)requestType;
   (void)address;
@@ -340,7 +347,7 @@ void WebServer_ProcessRequest( void* requestSocket )
   int i;
   int responded;
 
-  SocketRead( requestSocket, WebServer->request, REQUEST_SIZE_MAX ); 
+  SocketReadLine( requestSocket, WebServer->request, REQUEST_SIZE_MAX ); 
   address = WebServer_GetRequestAddress( WebServer->request, REQUEST_SIZE_MAX, &requestType );
 
   responded = false;
@@ -351,7 +358,7 @@ void WebServer_ProcessRequest( void* requestSocket )
       WebServerHandler* hp = &WebServerHandlers->handlers[ i ];
       if ( strncmp( hp->address, address, strlen( hp->address ) ) == 0 )
       {
-        responded = (*hp->handler)( requestType, address, requestSocket, WebServer->response, RESPONSE_SIZE_MAX );
+        responded = (*hp->handler)( requestType, address, WebServer->request, REQUEST_SIZE_MAX, requestSocket, WebServer->response, RESPONSE_SIZE_MAX );
         if ( responded )
           break;
       }

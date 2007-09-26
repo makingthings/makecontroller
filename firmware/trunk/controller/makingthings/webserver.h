@@ -41,7 +41,7 @@
 int WebServer_SetActive( int active );
 int WebServer_GetActive( void );
 
-int WebServer_Route( char* address, int (*handler)( char* requestType, char* address, void* socket, char* buffer, int len )  );
+int WebServer_Route( char* address, int (*handler)( char* requestType, char* request, char* requestBuffer, int request_maxsize, void* socket, char* responseBuffer, int len )  );
 
 // HTTP Helpers
 void WebServer_WriteResponseOkHTML( void* socket );
