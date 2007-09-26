@@ -32,6 +32,8 @@
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
 
+#include "config.h"
+
 #define LWIP_NOASSERT 1 // To suppress some errors for now (no debug output)
 #define SYS_LIGHTWEIGHT_PROT            1
 
@@ -45,7 +47,7 @@
 
 /* MEM_SIZE: the size of the heap memory. If the application will send
 a lot of data that needs to be copied, this should be set high. */
-#define MEM_SIZE                4000
+#define MEM_SIZE                NETWORK_MEM_POOL //3000
 
 /* MEMP_NUM_PBUF: the number of memp struct pbufs. If the application
    sends a lot of data out of ROM (or other static memory), this
@@ -53,16 +55,16 @@ a lot of data that needs to be copied, this should be set high. */
 #define MEMP_NUM_PBUF           20
 /* MEMP_NUM_UDP_PCB: the number of UDP protocol control blocks. One
    per active UDP "connection". */
-#define MEMP_NUM_UDP_PCB        4 //8
+#define MEMP_NUM_UDP_PCB        NETWORK_UDP_CONNS //8
 /* MEMP_NUM_TCP_PCB: the number of simulatenously active TCP
    connections. */
-#define MEMP_NUM_TCP_PCB        2 //10
+#define MEMP_NUM_TCP_PCB        NETWORK_TCP_CONNS //10
 /* MEMP_NUM_TCP_PCB_LISTEN: the number of listening TCP
    connections. */
-#define MEMP_NUM_TCP_PCB_LISTEN 2 //8
+#define MEMP_NUM_TCP_PCB_LISTEN NETWORK_TCP_LISTEN_CONNS //8
 /* MEMP_NUM_TCP_SEG: the number of simultaneously queued TCP
    segments. */
-#define MEMP_NUM_TCP_SEG        2 //8
+#define MEMP_NUM_TCP_SEG        8
 /* MEMP_NUM_SYS_TIMEOUT: the number of simulateously active
    timeouts. */
 #define MEMP_NUM_SYS_TIMEOUT    8
