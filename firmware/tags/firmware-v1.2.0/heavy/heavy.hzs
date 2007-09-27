@@ -73,12 +73,12 @@
  </TraceWindow>
  <Watch1>
   <Watches active="1" >
-   <Watchpoint evalMode="1" linenumber="251" evalType="1" radix="16" name="pbp" expression="pbp" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.c" />
-   <Watchpoint evalMode="3" linenumber="196" evalType="1" radix="1" name="buffer" expression="buffer" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.c" />
-   <Watchpoint linenumber="256" radix="10" name="started" expression="started" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.c" />
-   <Watchpoint linenumber="259" radix="10" name="count" expression="count" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.c" />
-   <Watchpoint linenumber="246" radix="10" name="bufRemaining" expression="bufRemaining" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.c" />
    <Watchpoint evalMode="3" linenumber="237" evalType="0" radix="16" name="parseBuf" expression="parseBuf" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.c" />
+   <Watchpoint linenumber="246" radix="10" name="bufRemaining" expression="bufRemaining" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.c" />
+   <Watchpoint linenumber="259" radix="10" name="count" expression="count" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.c" />
+   <Watchpoint linenumber="256" radix="10" name="started" expression="started" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.c" />
+   <Watchpoint evalMode="3" linenumber="196" evalType="1" radix="1" name="buffer" expression="buffer" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.c" />
+   <Watchpoint evalMode="1" linenumber="251" evalType="1" radix="16" name="pbp" expression="pbp" filename="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.c" />
   </Watches>
  </Watch1>
  <Watch2>
@@ -90,14 +90,6 @@
  <Watch4>
   <Watches active="0" />
  </Watch4>
- <Files>
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="12" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\appboard\makingthings\stepper.c" y="71" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\appboard\makingthings\stepper.c" left="0" selected="0" name="unnamed" top="65" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="21" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.c" y="271" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\usb.c" left="0" selected="0" name="unnamed" top="246" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="2" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\heavy\config.h" y="18" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\heavy\config.h" left="0" selected="0" name="unnamed" top="0" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" y="407" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\osc.c" left="0" selected="0" name="unnamed" top="384" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="2" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\system.c" y="139" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\system.c" left="0" selected="0" name="unnamed" top="127" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\eeprom.c" y="256" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\eeprom.c" left="0" selected="0" name="unnamed" top="224" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="41" debugPath="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\webserver.c" y="133" useHTMLEdit="0" path="C:\Documents and Settings\Liam\My Documents\testing-firmware\controller\makingthings\webserver.c" left="0" selected="1" name="unnamed" top="110" />
- </Files>
+ <Files/>
  <ARMCrossStudioWindow activeProject="heavy" autoConnectTarget="/USB CrossConnect for ARM-RTCK" debugSearchFileMap="" fileDialogInitialDirectory="" fileDialogDefaultFilter="*.cpp;*.cxx;*.cc;*.c;*.h" autoConnectCapabilities="1407" debugSearchPath="" buildConfiguration="THUMB Flash Debug" />
 </session>

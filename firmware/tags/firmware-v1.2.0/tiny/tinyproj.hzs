@@ -75,12 +75,11 @@
   <Watches active="0" />
  </Watch4>
  <Files>
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="7" debugPath="C:\mtcode\make\v1.0\tiny\main.c" y="31" useHTMLEdit="0" path="C:\mtcode\make\v1.0\tiny\main.c" left="0" selected="0" name="unnamed" top="0" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="19" debugPath="C:\mtcode\make\firmware_102\controller\makingthings\led.c" y="148" useHTMLEdit="0" path="C:\mtcode\make\firmware_102\controller\makingthings\led.c" left="0" selected="0" name="unnamed" top="136" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware_102\tiny\config.h" y="17" useHTMLEdit="0" path="C:\mtcode\make\firmware_102\tiny\config.h" left="0" selected="0" name="unnamed" top="0" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\makingthings\io.h" y="0" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\io.h" left="0" selected="0" name="unnamed" top="20" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\makingthings\io.h" y="0" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\io.h" left="0" selected="0" name="unnamed" top="0" />
   <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\tiny\config.h" y="0" useHTMLEdit="0" path="C:\mtcode\make\firmware\tiny\config.h" left="0" selected="0" name="unnamed" top="0" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="16" debugPath="C:\mtcode\make\firmware\controller\makingthings\controller.h" y="33" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\controller.h" left="0" selected="1" name="unnamed" top="24" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="16" debugPath="C:\mtcode\make\firmware\controller\makingthings\controller.h" y="33" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\controller.h" left="0" selected="0" name="unnamed" top="24" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="25" debugPath="C:\Documents and Settings\Liam\Desktop\firmware-1.2.0\tiny\main.c" y="9" useHTMLEdit="0" path="C:\Documents and Settings\Liam\Desktop\firmware-1.2.0\tiny\main.c" left="0" selected="1" name="unnamed" top="8" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="27" debugPath="C:\Documents and Settings\Liam\Desktop\firmware-1.2.0\controller\startup\AT91SAM7_Startup.s" y="19" useHTMLEdit="0" path="C:\Documents and Settings\Liam\Desktop\firmware-1.2.0\controller\startup\AT91SAM7_Startup.s" left="0" selected="0" name="unnamed" top="152" />
  </Files>
  <ARMCrossStudioWindow activeProject="tiny" autoConnectTarget="/Macraigor Wiggler (20 Pin)" debugSearchFileMap="" fileDialogInitialDirectory="C:\mtcode\make\firmware\controller\makingthings" fileDialogDefaultFilter="*" autoConnectCapabilities="1407" debugSearchPath="" buildConfiguration="THUMB Flash Debug" />
 </session>

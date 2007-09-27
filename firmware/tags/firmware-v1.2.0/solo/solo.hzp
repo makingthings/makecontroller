@@ -17,7 +17,6 @@
             <configuration arm_instruction_set="ARM" Name="Common" />
           </file>
           <file file_name="../controller/makingthings/USB-CDC.c" Name="USB-CDC.c" />
-          <file file_name="../controller/makingthings/BasicWEB.c" Name="BasicWEB.c" />
           <file file_name="../controller/makingthings/main.c" Name="main.c" />
           <file file_name="../controller/makingthings/eeprom.c" Name="eeprom.c" />
           <file file_name="../controller/makingthings/osc.h" Name="osc.h" />
@@ -71,6 +70,8 @@
           <file file_name="../controller/makingthings/serial_isr.c" Name="serial_isr.c" >
             <configuration arm_instruction_set="ARM" Name="Common" />
           </file>
+          <file file_name="../../../../../mtcode/make/firmware/controller/makingthings/webserver.c" Name="webserver.c" />
+          <file file_name="../../../../../mtcode/make/firmware/controller/makingthings/xbee.c" Name="xbee.c" />
         </folder>
         <folder Name="FreeRTOS" >
           <file file_name="../controller/freertos/tasks.c" Name="tasks.c" />
@@ -118,6 +119,7 @@
           <file file_name="../controller/lwip/src/include/lwip/api.h" Name="api.h" />
           <file file_name="../controller/lwip/src/include/lwip/sys.h" Name="sys.h" />
           <file file_name="../controller/makingthings/Emac.h" Name="Emac.h" />
+          <file file_name="../../../../../mtcode/make/firmware/controller/lwip/src/core/dhcp.c" Name="dhcp.c" />
         </folder>
         <folder Name="Startup" >
           <file file_name="../controller/startup/AT91SAM7_Startup.s" Name="AT91SAM7_Startup.s" >
@@ -133,8 +135,8 @@
         </folder>
       </folder>
     </folder>
-    <configuration arm_target_loader_reset_after_download="Yes" arm_library_instruction_set="Thumb" Target="AT91SAM7X256" build_intermediate_directory="intermediate" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" target_reset_script="FLASHReset()" build_output_directory="output" arm_target_flash_loader_type="Comms Channel Loader" Name="THUMB Flash Debug" />
-    <configuration gcc_optimization_level="Level 1" build_debug_information="Yes" Name="THUMB Flash Release" />
+    <configuration arm_target_loader_reset_after_download="Yes" arm_library_instruction_set="Thumb" Target="AT91SAM7X256" build_intermediate_directory="intermediate" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" c_user_include_directories=".;../controller/makingthings;../controller/makingthings/testing;../appboard/makingthings;../controller/freertos/include;../controller/lwip/src/include;../controller/lwip/contrib/port/FreeRTOS/AT91SAM7X;../controller/freertos/portable/GCC/ARM7_AT91SAM7S;../controller/lwip/src/include/ipv4" target_reset_script="FLASHReset()" build_output_directory="output" gcc_optimization_level="Level 2" arm_target_flash_loader_type="Comms Channel Loader" c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />
+    <configuration c_user_include_directories=".;../controller/makingthings;../controller/makingthings/testing;../appboard/makingthings;../controller/freertos/include;../controller/lwip/src/include;../controller/lwip/contrib/port/FreeRTOS/AT91SAM7X;../controller/freertos/portable/GCC/ARM7_AT91SAM7S;../controller/lwip/src/include/ipv4" gcc_optimization_level="Level 1" c_additional_options="-D CROSSWORKS_BUILD" build_debug_information="Yes" Name="THUMB Flash Release" />
     <configuration Target="AT91SAM7X256" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" c_user_include_directories=".;../controller/makingthings;../appboard/makingthings;../controller/freertos/include;../controller/lwip/src/include;../controller/lwip/contrib/port/FreeRTOS/AT91SAM7X;../controller/freertos/portable/GCC/ARM7_AT91SAM7S;../controller/lwip/src/include/ipv4" Name="Debug" />
   </project>
   <configuration build_intermediate_directory="intermediate" build_quietly="Yes" inherited_configurations="THUMB;Flash;Debug" build_output_directory="output" Name="THUMB Flash Debug" />
