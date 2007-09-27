@@ -72,7 +72,12 @@
  <Watch4>
   <Watches active="0" />
  </Watch4>
- <Files/>
+ <Files>
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="1" debugPath="C:\Documents and Settings\Liam\Desktop\firmware-1.2.0\solo\make.c" y="32" useHTMLEdit="0" path="C:\Documents and Settings\Liam\Desktop\firmware-1.2.0\solo\make.c" left="0" selected="0" name="unnamed" top="8" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="86" debugPath="C:\Documents and Settings\Liam\Desktop\firmware-1.2.0\solo\config.h" y="39" useHTMLEdit="0" path="C:\Documents and Settings\Liam\Desktop\firmware-1.2.0\solo\config.h" left="0" selected="0" name="unnamed" top="2" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="2" debugPath="C:\Documents and Settings\Liam\Desktop\firmware-1.2.0\controller\makingthings\eeprom.c" y="247" useHTMLEdit="0" path="C:\Documents and Settings\Liam\Desktop\firmware-1.2.0\controller\makingthings\eeprom.c" left="0" selected="1" name="unnamed" top="220" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\Documents and Settings\Liam\Desktop\firmware-1.2.0\controller\makingthings\network.c" y="52" useHTMLEdit="0" path="C:\Documents and Settings\Liam\Desktop\firmware-1.2.0\controller\makingthings\network.c" left="0" selected="0" name="unnamed" top="40" />
+ </Files>
  <ARMCrossStudioWindow activeProject="solo" autoConnectTarget="/Macraigor Wiggler (20 Pin)" debugSearchFileMap="..\..\gcc-4.1.1\gcc\config\arm\ieee754-df.S
 
 ..\..\gcc-4.1.1\gcc\config\arm\ieee754-sf.S
@@ -180,5 +185,5 @@ C:\mtcode\make\beta\controller\startup\boot.s
 ..\gcc-4.0.2\gcc\config\arm\ieee754-sf.S
 \ieee754-sf.S
 ..\gcc-4.0.2\gcc\config\arm\lib1funcs.asm
-" fileDialogInitialDirectory="C:\mtcode\make\firmware\solo" fileDialogDefaultFilter="*" autoConnectCapabilities="1407" debugSearchPath="" buildConfiguration="THUMB Flash Debug" />
+" fileDialogInitialDirectory="C:\mtcode\make\firmware\controller\lwip\src\core" fileDialogDefaultFilter="*" autoConnectCapabilities="1407" debugSearchPath="" buildConfiguration="THUMB Flash Debug" />
 </session>
