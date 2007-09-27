@@ -1,22 +1,40 @@
 BODY,H1,H2,H3,H4,H5,H6,P,CENTER,TD,TH,UL,DL,DIV {
-	font-family: Geneva, Arial, Helvetica, sans-serif;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 13px;
 }
-BODY,TD {
-       font-size: 90%;
+
+HTML {
+	background-color: #DDDDDD;
 }
+
+BODY { 
+	width: 800px;
+	margin: 10px auto;
+	background-color:white;
+	padding: 15px;
+}
+
+hr { 
+		text-align: left;
+		 margin: 0 auto 0 0;
+ }
+ 
 H1 {
+	font-size: 140%;
 	text-align: center;
-       font-size: 160%;
+	color: #555555;
 }
 H2 {
        font-size: 120%;
+			 color: #555555;
 }
 H3 {
-       font-size: 100%;
+	font-size: 100%;
+	color: #555555;
 }
+
 CAPTION { font-weight: bold }
 DIV.qindex {
-	width: 100%;
 	background-color: #e8eef2;
 	border: 1px solid #84b0c7;
 	text-align: center;
@@ -25,7 +43,6 @@ DIV.qindex {
 	line-height: 140%;
 }
 DIV.nav {
-	width: 100%;
 	background-color: #e8eef2;
 	border: 1px solid #84b0c7;
 	text-align: center;
@@ -70,6 +87,15 @@ A.qindexHL:hover {
 	background-color: #6666cc;
 	color: #ffffff;
 }
+
+.anchor {
+	color: #555555;
+}
+
+.anchor:hover {
+	background-color: #ffffff;
+}
+
 A.qindexHL:visited { text-decoration: none; background-color: #6666cc; color: #ffffff }
 A.el { text-decoration: none; font-weight: bold }
 A.elRef { font-weight: bold }
@@ -111,12 +137,7 @@ DIV.groupHeader {
        font-weight: bold;
 }
 DIV.groupText { margin-left: 16px; font-style: italic; font-size: 90% }
-BODY {
-	background: white;
-	color: black;
-	margin-right: 20px;
-	margin-left: 20px;
-}
+
 TD.indexkey {
 	background-color: #e8eef2;
 	font-weight: bold;
@@ -176,7 +197,7 @@ SPAN.charliteral   { color: #008080 }
 }
 .mdescRight {
        padding: 0px 8px 4px 8px;
-	font-size: 80%;
+	font-size: 90%;
 	font-style: italic;
 	background-color: #FAFAFA;
 	border-top: 1px none #E0E0E0;
@@ -219,7 +240,7 @@ SPAN.charliteral   { color: #008080 }
 	border-bottom-style: none;
 	border-left-style: none;
 	background-color: #FAFAFA;
-	font-size: 80%;
+	font-size: 90%;
 }
 .memTemplItemLeft {
 	padding: 1px 0px 0px 8px;
@@ -308,3 +329,54 @@ HR { height: 1px;
      border-top: 1px solid black;
 }
 
+/* Style for detailed member documentation */
+.memtemplate {
+  font-size: 80%;
+  color: #606060;
+  font-weight: normal;
+} 
+.memnav { 
+  background-color: #e8eef2;
+  border: 1px solid #84b0c7;
+  text-align: center;
+  margin: 2px;
+  margin-right: 15px;
+  padding: 2px;
+}
+.memitem {
+  padding: 4px;
+	/*width: 800px; */
+  background-color: #FFFFFF;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #AAAAAA;
+  -moz-border-radius: 8px 8px 8px 8px;
+}
+.memname {
+  white-space: nowrap;
+	font-size: 115%;
+}
+.memdoc{
+  padding-left: 10px;
+}
+.memproto {
+  background-color: #EEEEEE;
+  width: 100%;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #AAAAAA;
+  font-weight: bold;
+  -moz-border-radius: 8px 8px 8px 8px;
+}
+.paramkey {
+  text-align: right;
+}
+.paramtype {
+  white-space: nowrap;
+	color: #000000;
+}
+.paramname {
+  color: #000000;
+  font-style: italic;
+}
+/* End Styling for detailed member documentation */
