@@ -44,13 +44,13 @@ int WebServer_GetActive( void );
 int WebServer_Route( char* address, int (*handler)( char* requestType, char* request, char* requestBuffer, int request_maxsize, void* socket, char* responseBuffer, int len )  );
 
 // HTTP Helpers
-void WebServer_WriteResponseOkHTML( void* socket );
-void WebServer_WriteResponseOkPlain( void* socket );
+int WebServer_WriteResponseOkHTML( void* socket );
+int WebServer_WriteResponseOkPlain( void* socket );
 
 // HTML Helpers
-void WebServer_WriteHeader( int includeCSS, void* socket, char* buffer, int len );
-void WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, int len );
-void WebServer_WriteBodyEnd( void* socket );
+int WebServer_WriteHeader( int includeCSS, void* socket, char* buffer, int len );
+int WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, int len );
+int WebServer_WriteBodyEnd( void* socket );
 
 #endif  // BASIC_WEB_SERVER_H
 
