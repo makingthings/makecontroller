@@ -43,7 +43,6 @@
 #include "system.h"
 #include "usb.h"
 #include "network.h"
-#include "stepper.h"
 #include "serial.h"
 #ifdef FACTORY_TESTING
 #include "ctestee.h"
