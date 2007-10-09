@@ -32,9 +32,9 @@ void* iterateByID( int id, xList* pxList );
 void* iterateByName( char* taskName, xList* pxList );
 void* TaskGetNext_internal( void* task );
 
-/** \defgroup FreeRTOS
-	The FreeRTOS subsystem provides a real-time operating system (RTOS) for the MAKE Controller.
-	FreeRTOS is an open source Real-Time Operating System.  It implements a scheduler that 
+/** \defgroup RTOS
+	The RTOS subsystem provides a real-time operating system (RTOS) for the MAKE Controller.
+	It implements a scheduler that 
 	gives time to "concurrent" tasks according to their given priority.  It allows programmers to 
 	focus on programming each process on the board separately, letting the RTOS 
 	determine when each of those tasks should be given processor time.
@@ -44,7 +44,7 @@ void* TaskGetNext_internal( void* task );
 	other tasks will have a chance to run - otherwise the Controller will lock up. The easiest way to
 	do this is with a call to Sleep( ) when the task is not urgent.
 	
-	More info at http://www.freertos.org
+	The RTOS used on the Make Controller is \b FreeRTOS - more info at http://www.freertos.org
 * \ingroup Controller
 * @{
 */
