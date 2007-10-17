@@ -15,14 +15,14 @@
 #
 # ------------------------------------------------------------------------------
 
-
+MCHELPER_VERSION = "2.0.1"
 TEMPLATE = app
-
 FORMS = layouts/mchelper.ui \
-				layouts/mchelperPrefs.ui
-
+	layouts/mchelperPrefs.ui
 #CONFIG += qt release
 CONFIG += qt debug
+
+INCLUDEPATH += util
 
 HEADERS = 	McHelperWindow.h \
 			UploaderThread.h \
@@ -64,8 +64,12 @@ SOURCES	= 	main.cpp \
 TARGET = mchelper
             
 QT += network xml
-RESOURCES     = mchelper.qrc
-
+RESOURCES     = resources/mchelper.qrc
+#DEFINES     += MCHELPER_VERSION =\\\"$${MCHELPER_VERSION}\\\"
+UI_DIR   = tmp
+OBJECTS_DIR  = tmp
+MOC_DIR      = tmp
+DESTDIR      = bin
 QTDIR_build:REQUIRES="contains(QT_CONFIG, small-config)"
 
 # ------------------------------------------------------------------
@@ -75,10 +79,21 @@ macx{
   message("This project is being built on a Mac.")
 	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
 	QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
-	!debug{ CONFIG += x86 ppc }
-  LIBS += -framework IOKit #-dead_strip
-  ICON = IconPackageOSX.icns
+	
+	# add sources for Sparkle
+	HEADERS += util/CocoaUtil.h
+	SOURCES += util/CocoaUtil.mm
+    
+	# add the Sparkle and the Carbon framework
+	QMAKE_LFLAGS += -framework Sparkle
+	
+	#CONFIG += x86 ppc
+  LIBS += -framework IOKit
+  ICON = resources/IconPackageOSX.icns
   QMAKE_POST_LINK = strip mchelper.app/Contents/MacOS/mchelper
+	# put the current version number into Info.plist
+    QMAKE_POST_LINK += sed -e s/@@version@@/$${MCHELPER_VERSION}/g \
+        < res/osx/Info.plist.in  > bin/mchelper.app/Contents/Info.plist
 }
 
 

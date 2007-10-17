@@ -28,6 +28,9 @@
 #include "Osc.h"
 #include "BoardArrivalEvent.h"
 
+#ifdef Q_WS_MAC
+#include "CocoaUtil.h"
+#endif
 
 #define DEVICE_SCAN_FREQ 1000
 #define SUMMARY_MESSAGE_FREQ 2000
@@ -49,6 +52,8 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	#endif
 	
 	noUI = false;
+	
+	update( );
 	
 	//listWidget = new BoardListModel( application, this, this );
 	udp = new NetworkMonitor( appUdpListenPort ); 
@@ -100,6 +105,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	connect( actionMchelper_Help, SIGNAL( triggered() ), this, SLOT( openMchelperHelp( ) ) );
 	connect( actionOSC_Tutorial, SIGNAL( triggered() ), this, SLOT( openOSCTuorial( ) ) );
 	connect( actionHide_OSC_Messages, SIGNAL( triggered(bool) ), this, SLOT( outWindowHideOSCMessages(bool) ) );
+	connect( actionCheckForUpdates, SIGNAL( triggered() ), this, SLOT( on_actionCheckForUpdates( ) ) );
 	
 	connect( &summaryTimer, SIGNAL(timeout()), this, SLOT( sendSummaryMessage() ) );
 	
@@ -857,6 +863,44 @@ void McHelperWindow::findNetBoardsPrefsChanged( bool state )
 bool McHelperWindow::findNetBoardsEnabled( )
 {
 	return findEthernetBoardsAuto;
+}
+
+void McHelperWindow::initUpdate( )
+{
+    //if (Settings::getBool("CheckForUpdates", true))
+    //{
+#ifdef Q_WS_MACX
+        CocoaUtil::initialize();
+#else
+        updateDialog = new ApplicationUpdate(NULL);
+        if (updateDialog->updateAvailable())
+        {
+            updateDialog->setStayOnTop();
+            updateDialog->show();
+        }
+#endif
+    //}
+}
+
+void McHelperWindow::on_actionCheckForUpdates()
+{
+#ifdef Q_WS_MACX
+    CocoaUtil::checkForUpdates();
+#else
+    ApplicationUpdate dlg(this);
+    if (!dlg.updateAvailable())
+    {
+        QMessageBox::information(
+            this,
+            tr("No updates available"),
+            tr("Your version of guitone (%1) is already up-to-date.")
+                .arg(GUITONE_VERSION),
+            QMessageBox::Ok
+        );
+        return;
+    }
+    dlg.exec();
+#endif
 }
 
 void McHelperWindow::systemNameChanged( )
