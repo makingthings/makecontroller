@@ -15,14 +15,11 @@
 #
 # ------------------------------------------------------------------------------
 
-MCHELPER_VERSION = "2.0.1"
+MCHELPER_VERSION = "2.0.0"
 TEMPLATE = app
-FORMS = layouts/mchelper.ui \
-	layouts/mchelperPrefs.ui
+FORMS = layouts/mchelper.ui layouts/mchelperPrefs.ui
 #CONFIG += qt release
 CONFIG += qt debug
-
-INCLUDEPATH += util
 
 HEADERS = 	McHelperWindow.h \
 			UploaderThread.h \
@@ -41,7 +38,8 @@ HEADERS = 	McHelperWindow.h \
 			MessageEvent.h \
 			BoardArrivalEvent.h \
 			OutputWindow.h \
-			OscXmlServer.h
+			OscXmlServer.h \
+			AppUpdater.h
 				
             
 SOURCES	= 	main.cpp \
@@ -58,47 +56,39 @@ SOURCES	= 	main.cpp \
 			Board.cpp \
 			MessageEvent.cpp \
 			OutputWindow.cpp \
-			OscXmlServer.cpp
+			OscXmlServer.cpp \
+			AppUpdater.cpp
 				
 				
 TARGET = mchelper
             
 QT += network xml
-RESOURCES     = resources/mchelper.qrc
-#DEFINES     += MCHELPER_VERSION =\\\"$${MCHELPER_VERSION}\\\"
-UI_DIR   = tmp
+RESOURCES     += resources/mchelper.qrc
+DEFINES     += MCHELPER_VERSION=\"$${MCHELPER_VERSION}\"
 OBJECTS_DIR  = tmp
 MOC_DIR      = tmp
 DESTDIR      = bin
+
 QTDIR_build:REQUIRES="contains(QT_CONFIG, small-config)"
 
 # ------------------------------------------------------------------
 # ------------------------------------------------------------------
 
 macx{
-  message("This project is being built on a Mac.")
 	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
 	QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
 	
-	# add sources for Sparkle
-	HEADERS += util/CocoaUtil.h
-	SOURCES += util/CocoaUtil.mm
-    
-	# add the Sparkle and the Carbon framework
-	QMAKE_LFLAGS += -framework Sparkle
-	
 	#CONFIG += x86 ppc
   LIBS += -framework IOKit
-  ICON = resources/IconPackageOSX.icns
-  QMAKE_POST_LINK = strip mchelper.app/Contents/MacOS/mchelper
-	# put the current version number into Info.plist
-    QMAKE_POST_LINK += sed -e s/@@version@@/$${MCHELPER_VERSION}/g \
-        < res/osx/Info.plist.in  > bin/mchelper.app/Contents/Info.plist
+  ICON = resources/mchelper.icns
+  QMAKE_POST_LINK = strip bin/mchelper.app/Contents/MacOS/mchelper && \
+    # put the current version number into Info.plist
+    sed -e s/@@version@@/$${MCHELPER_VERSION}/g \
+    < resources/osx/Info.plist.in  > bin/mchelper.app/Contents/Info.plist
 }
 
 
 win32{
-  message("This project is being built on Windows.")
   LIBS += -lSetupapi
   RC_FILE = mchelper.rc # for application icon
   DEFINES += WINVER=0x0501

@@ -33,6 +33,7 @@ the specific language governing permissions and limitations under the License.
 #include "PacketUdp.h"
 #include "OutputWindow.h"
 #include "OscXmlServer.h"
+#include "AppUpdater.h"
 
 class Board;
 class BoardListModel;
@@ -114,6 +115,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		QTimer outputWindowTimer;
 		aboutMchelper* aboutDialog;
 		mchelperPrefs* prefsDialog;
+		AppUpdater* appUpdater;
 		QHash<QString, Board*> connectedBoards;
 		TableEntry* createOutputWindowEntry( QString string, MessageEvent::Types type, QString from );
 		QList<TableEntry*> outputWindowQueue;
@@ -165,7 +167,6 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 			void openMchelperHelp( );
 			void openOSCTuorial( );
 			void outWindowHideOSCMessages( bool hide );
-			void on_actionCheckForUpdates( );
 }; 
 
 class McHelperApp : public QApplication

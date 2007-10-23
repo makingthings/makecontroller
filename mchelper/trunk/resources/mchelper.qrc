@@ -1,5 +1,6 @@
 <!DOCTYPE RCC><RCC version="1.0">
  <qresource>
      <file>mticon128.png</file>
+     <file>mticon64.png</file>
  </qresource>
  </RCC>

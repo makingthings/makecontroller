@@ -28,10 +28,6 @@
 #include "Osc.h"
 #include "BoardArrivalEvent.h"
 
-#ifdef Q_WS_MAC
-#include "CocoaUtil.h"
-#endif
-
 #define DEVICE_SCAN_FREQ 1000
 #define SUMMARY_MESSAGE_FREQ 2000
 
@@ -42,6 +38,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	readSettings( );
 	aboutDialog = new aboutMchelper( );
 	prefsDialog = new mchelperPrefs( this );
+	appUpdater = new AppUpdater( );
 	
 	#ifdef Q_WS_WIN
 	application->setMainWindow( this );
@@ -53,7 +50,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	
 	noUI = false;
 	
-	update( );
+	initUpdate( );
 	
 	//listWidget = new BoardListModel( application, this, this );
 	udp = new NetworkMonitor( appUdpListenPort ); 
@@ -100,12 +97,12 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
     
 	// setup the menu
 	connect( actionAboutMchelper, SIGNAL( triggered() ), aboutDialog, SLOT( show( ) ) );
+	connect( actionCheckForUpdates, SIGNAL( triggered() ), appUpdater, SLOT( on_actionCheckForUpdates( ) ) );
 	connect( actionPreferences, SIGNAL( triggered() ), prefsDialog, SLOT( show( ) ) );
 	connect( actionClearOutputWindow, SIGNAL( triggered() ), outputModel, SLOT( clear( ) ) );
 	connect( actionMchelper_Help, SIGNAL( triggered() ), this, SLOT( openMchelperHelp( ) ) );
 	connect( actionOSC_Tutorial, SIGNAL( triggered() ), this, SLOT( openOSCTuorial( ) ) );
 	connect( actionHide_OSC_Messages, SIGNAL( triggered(bool) ), this, SLOT( outWindowHideOSCMessages(bool) ) );
-	connect( actionCheckForUpdates, SIGNAL( triggered() ), this, SLOT( on_actionCheckForUpdates( ) ) );
 	
 	connect( &summaryTimer, SIGNAL(timeout()), this, SLOT( sendSummaryMessage() ) );
 	
@@ -725,13 +722,13 @@ void McHelperWindow::uiLessUpload( char* filename, bool bootFlash )
 
 void McHelperWindow::openMchelperHelp( )
 {
-	if( !QDesktopServices::openUrl( QString( "http://www.makingthings.com/resources/tutorials/mchelper" ) ) )
+	if( !QDesktopServices::openUrl( QString( "http://www.makingthings.com/documentation/tutorial/mchelper" ) ) )
 		statusBar()->showMessage( "Help is online and requires an internet connection.", 3000 );
 }
 
 void McHelperWindow::openOSCTuorial( )
 {
-	if( !QDesktopServices::openUrl( QString( "http://www.makingthings.com/resources/tutorials/osc" ) ) )
+	if( !QDesktopServices::openUrl( QString( "http://www.makingthings.com/documentation/tutorial/osc" ) ) )
 		statusBar()->showMessage( "Help is online and requires an internet connection.", 3000 );
 }
 
@@ -763,7 +760,7 @@ aboutMchelper::aboutMchelper( ) : QDialog( )
 	
 	title.setText( "<font size=5>Make Controller Helper</font>" );
 	title.setAlignment( Qt::AlignHCenter );
-	version.setText( "<font size=4>Version 2.0.0</font>" );
+	version.setText( QString( "<font size=4>Version %1</font>" ).arg( "2.0.0" ) );
 	version.setAlignment( Qt::AlignHCenter );
 	description = new QLabel( "<br><b>mchelper</b> (Make Controller Helper) is part of the Make Controller Kit project - an \
 	open source hardware platform for everybody.  mchelper can upload new firmware to your Make \
@@ -869,38 +866,13 @@ void McHelperWindow::initUpdate( )
 {
     //if (Settings::getBool("CheckForUpdates", true))
     //{
-#ifdef Q_WS_MACX
-        CocoaUtil::initialize();
-#else
-        updateDialog = new ApplicationUpdate(NULL);
-        if (updateDialog->updateAvailable())
-        {
-            updateDialog->setStayOnTop();
-            updateDialog->show();
-        }
-#endif
+//        updateDialog = new ApplicationUpdate(NULL);
+//        if (updateDialog->updateAvailable())
+//        {
+//            updateDialog->setStayOnTop();
+//            updateDialog->show();
+//        }
     //}
-}
-
-void McHelperWindow::on_actionCheckForUpdates()
-{
-#ifdef Q_WS_MACX
-    CocoaUtil::checkForUpdates();
-#else
-    ApplicationUpdate dlg(this);
-    if (!dlg.updateAvailable())
-    {
-        QMessageBox::information(
-            this,
-            tr("No updates available"),
-            tr("Your version of guitone (%1) is already up-to-date.")
-                .arg(GUITONE_VERSION),
-            QMessageBox::Ok
-        );
-        return;
-    }
-    dlg.exec();
-#endif
 }
 
 void McHelperWindow::systemNameChanged( )
