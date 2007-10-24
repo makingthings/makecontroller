@@ -31,8 +31,31 @@ QString OscMessage::toString( )
 		switch( data.at( j )->omdType )
 		{
 			case OscMessageData::OmdBlob:
-				ret.append( (char*)data.at( j )->b );
+			{
+				unsigned char* blob = (unsigned char*)data.at( j )->b;
+				if( blob )
+				{
+					int blob_len = *(int*)blob;  // the first int should give us the length of the blob
+					
+					char c[6];
+					blob_len = qFromBigEndian( blob_len ); 
+					char buff[blob_len*6+10];
+	        
+	        buff[0] = '[';
+	        buff[1] = '\0';
+	
+	        while( blob_len-- )
+	        {
+						sprintf( c, "%.2x ", *blob++ );
+						strcat( buff, c );
+	        }
+	        strcat( buff, "]" );
+	        ret.append( buff );
+				}
+				else
+					ret.append( "[ ]" );
 				break;
+			}
 			case OscMessageData::OmdString:
 				ret.append( data.at( j )->s );
 				break;
@@ -273,7 +296,13 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
         		if ( oscMessage)
 				{
 				  OscMessageData* omdata = new OscMessageData( );
-				  memcpy( omdata->b, data, blob_len );
+				  if( blob_len > 0 )
+				  {
+				  	omdata->b = malloc( blob_len );
+				  	memcpy( omdata->b, data, blob_len );
+				  }
+				  else
+				  	omdata->b = NULL;
 				  omdata->omdType = OscMessageData::OmdBlob;
 				  oscMessage->data.append( omdata );
 				}		  
@@ -565,7 +594,7 @@ char* Osc::createMessageInternal( char* bp, int* length, char* address, char* fo
 			else 
 				cont = false;
      }
-		if( data->omdType == OscMessageData::OmdFloat )
+		if( data->omdType == OscMessageData::OmdString )
 		{
 			bp = this->writePaddedString( bp, length, data->s );
 			if ( bp == NULL )
