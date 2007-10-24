@@ -140,6 +140,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 			void udpPortPrefsChanged( );
 			void xmlPortPrefsChanged( );
 			void findNetBoardsPrefsChanged( bool state );
+			void updaterPrefsChanged( bool state );
     
 		private slots:
 			// Uploader functions

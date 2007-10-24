@@ -33,12 +33,13 @@ class AppUpdater : public QDialog
 		AppUpdater( );
 		~AppUpdater( ){ };
 		void checkForUpdates( );
+		bool checkingOnStartup;
 	
 	public slots:
 		void on_actionCheckForUpdates( );
 			
 	private:
-		QPushButton *downloadButton, *ignoreButton;
+		QPushButton *acceptButton, *ignoreButton;
 		QLabel icon;
 		QLabel *headline, *details;
 		QPixmap *mchelperIcon;
@@ -51,6 +52,7 @@ class AppUpdater : public QDialog
 	
 	private slots:
 		void finishedRead( int id, bool errors );
+		void visitDownloadsPage( );
 };
 
 #endif // APP_UPDATER_H
