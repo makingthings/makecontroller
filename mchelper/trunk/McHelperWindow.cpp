@@ -794,10 +794,16 @@ mchelperPrefs::mchelperPrefs( McHelperWindow *mainWindow ) : QDialog( )
 	connect( udpPortPrefs, SIGNAL( editingFinished() ), mainWindow, SLOT( udpPortPrefsChanged() ) );
 	connect( xmlPortPrefs, SIGNAL( editingFinished() ), mainWindow, SLOT( xmlPortPrefsChanged() ) );
 	connect( networkPingCheckBox, SIGNAL( clicked(bool) ), mainWindow, SLOT( findNetBoardsPrefsChanged(bool) ) );
+	connect( updatesCheckBox, SIGNAL( clicked(bool) ), mainWindow, SLOT( updaterPrefsChanged(bool) ) );
 	
 	setUdpPortDisplay( mainWindow->appUdpListenPort );
 	setXmlPortDisplay( mainWindow->appXmlListenPort );
 	setFindNetBoardsDisplay( mainWindow->findEthernetBoardsAuto );
+	QSettings settings("MakingThings", "mchelper");
+	if( settings.value( "checkForUpdatesOnStartup", true ).toBool( ) )
+		updatesCheckBox->setCheckState( Qt::Checked );
+	else
+		updatesCheckBox->setCheckState( Qt::Unchecked );
 }
 
 void mchelperPrefs::setUdpPortDisplay( int port )
@@ -862,17 +868,20 @@ bool McHelperWindow::findNetBoardsEnabled( )
 	return findEthernetBoardsAuto;
 }
 
+void McHelperWindow::updaterPrefsChanged( bool state )
+{
+	QSettings settings("MakingThings", "mchelper");
+	settings.setValue("checkForUpdatesOnStartup", state );
+}
+
 void McHelperWindow::initUpdate( )
 {
-    //if (Settings::getBool("CheckForUpdates", true))
-    //{
-//        updateDialog = new ApplicationUpdate(NULL);
-//        if (updateDialog->updateAvailable())
-//        {
-//            updateDialog->setStayOnTop();
-//            updateDialog->show();
-//        }
-    //}
+	QSettings settings("MakingThings", "mchelper");
+	if( settings.value( "checkForUpdatesOnStartup", true ).toBool( ) )
+	{
+		appUpdater->checkingOnStartup = true;
+		appUpdater->checkForUpdates( );
+	}
 }
 
 void McHelperWindow::systemNameChanged( )

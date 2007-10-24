@@ -24,23 +24,25 @@
 #include "AppUpdater.h"
 
 #include <QDomDocument>
+#include <QFile>
+#include <QDesktopServices>
+#include <QUrl>
 
 AppUpdater::AppUpdater( ) : QDialog( )
 {
 	setModal( true );
 	setWindowTitle( "Software Update" );
 	topLevelLayout = new QHBoxLayout( this );
-	textLayout = new QVBoxLayout( this );
+	textLayout = new QVBoxLayout( );
 	
-	downloadButton = new QPushButton( this );
-	downloadButton->setText( tr("Visit Download Page") );
-	ignoreButton = new QPushButton( this );
+	acceptButton = new QPushButton( );
+	acceptButton->setDefault( true );
+	ignoreButton = new QPushButton( );
 	ignoreButton->setText( tr("Not Right Now") );
-	connect( downloadButton, SIGNAL( clicked() ), this, SLOT( accept() ) );
+	
 	buttonLayout = new QHBoxLayout( );
-	buttonLayout->addWidget( ignoreButton );
 	buttonLayout->addStretch( );
-	buttonLayout->addWidget( downloadButton );
+	buttonLayout->addWidget( acceptButton );
 	
 	mchelperIcon = new QPixmap( ":mticon64.png" );
 	icon.setPixmap( *mchelperIcon );
@@ -57,17 +59,19 @@ AppUpdater::AppUpdater( ) : QDialog( )
 	
 	textLayout->addWidget( headline );
 	textLayout->addWidget( details );
-	textLayout->addWidget( browser );
 	textLayout->addLayout( buttonLayout );
 	topLevelLayout->addWidget( &icon );
 	topLevelLayout->addLayout( textLayout );
 	topLevelLayout->setAlignment( Qt::AlignHCenter );
+	
+	checkingOnStartup = true; // hide the dialog by default
 	
 	connect( &http, SIGNAL( requestFinished( int, bool ) ), this, SLOT( finishedRead( int, bool ) ) );
 }
 
 void AppUpdater::on_actionCheckForUpdates( )
 {
+	checkingOnStartup = false;
 	checkForUpdates( );
 }
 
@@ -127,7 +131,8 @@ void AppUpdater::finishedRead( int id, bool errors )
 			}
 		}
 	}
-	
+	// add the appropriate elements/info depending on whether an update is available
+	// FIXME - the layout can go wonky if an update is introduced while the app is open...
 	if( updateAvailable )
 	{
 		headline->setText( "<font size=4>A new version of mchelper is available!</font>" );
@@ -135,13 +140,26 @@ void AppUpdater::finishedRead( int id, bool errors )
 													.arg(latest.first).arg( MCHELPER_VERSION );
 		details->setText( d );
 		browser->setHtml( latest.second );
+		acceptButton->setText( tr("Visit Download Page") );
+		connect( acceptButton, SIGNAL( clicked() ), this, SLOT( visitDownloadsPage() ) );
+		connect( ignoreButton, SIGNAL( clicked() ), this, SLOT( accept() ) );
+		if( textLayout->indexOf( browser ) < 0 ) // if the browser's not in the layout, then insert it after the details line
+			textLayout->insertWidget( textLayout->indexOf( details ) + 1, browser );
+		if( buttonLayout->indexOf( ignoreButton ) < 0 ) // put the ignore button on the left
+			buttonLayout->insertWidget( 0, ignoreButton );
+			
+		this->show( );
 	}
 	else
 	{
 		headline->setText( "<font size=4>You're up to date!</font>" );
 		details->setText( QString( "You're running the latest version of mchelper, version %1." ).arg( MCHELPER_VERSION ) );
+		acceptButton->setText( tr("OK") );
+		connect( acceptButton, SIGNAL( clicked() ), this, SLOT( accept() ) );
+		
+		if(!checkingOnStartup)
+			this->show( );
 	}
-	this->show( );
 }
 
 int AppUpdater::versionCompare(const QString & left, const QString & right)
@@ -166,6 +184,12 @@ int AppUpdater::versionCompare(const QString & left, const QString & right)
     }
     
     return 0;
+}
+
+void AppUpdater::visitDownloadsPage( )
+{
+	QDesktopServices::openUrl( QUrl( "http://www.makingthings.com/resources/downloads" ) );
+	accept( );
 }
 
 
