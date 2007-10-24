@@ -59,12 +59,11 @@ SOURCES	= 	main.cpp \
 			OscXmlServer.cpp \
 			AppUpdater.cpp
 				
-				
 TARGET = mchelper
             
 QT += network xml
 RESOURCES     += resources/mchelper.qrc
-DEFINES     += MCHELPER_VERSION=\"$${MCHELPER_VERSION}\"
+DEFINES     += MCHELPER_VERSION=\\\"$${MCHELPER_VERSION}\\\"
 OBJECTS_DIR  = tmp
 MOC_DIR      = tmp
 DESTDIR      = bin
@@ -90,14 +89,14 @@ macx{
 
 win32{
   LIBS += -lSetupapi
-  RC_FILE = mchelper.rc # for application icon
+  RC_FILE = resources/mchelper.rc # for application icon
   DEFINES += WINVER=0x0501
   
   # If in debug mode, let's show the output of any
   # q[Debug|Warning|Critical|Fatal]() calls to the console
-  debug {
-    CONFIG += console
-  }
+  #debug {
+    #CONFIG += console
+  #}
 }
 
 
