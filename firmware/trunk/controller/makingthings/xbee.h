@@ -197,16 +197,16 @@ typedef struct
 
 typedef enum 
 { 
-  XBEE_COMM_TX64 = 0x00,
-  XBEE_COMM_TX16 = 0x01,
-  XBEE_COMM_TXSTATUS = 0x89,
-  XBEE_COMM_RX64 = 0x80,
-  XBEE_COMM_RX16 = 0x81,
-  XBEE_COMM_ATCOMMAND = 0x08,
-  XBEE_COMM_ATCOMMANDQ = 0x09,
-  XBEE_COMM_ATCOMMANDRESPONSE = 0x88,
-  XBEE_COMM_IO64 = 0x82,
-  XBEE_COMM_IO16 = 0x83
+  XBEE_TX64 = 0x00,
+  XBEE_TX16 = 0x01,
+  XBEE_TXSTATUS = 0x89,
+  XBEE_RX64 = 0x80,
+  XBEE_RX16 = 0x81,
+  XBEE_ATCOMMAND = 0x08,
+  XBEE_ATCOMMANDQ = 0x09,
+  XBEE_ATCOMMANDRESPONSE = 0x88,
+  XBEE_IO64 = 0x82,
+  XBEE_IO16 = 0x83
 } XBeeApiId;
 
 /** @}
@@ -241,26 +241,29 @@ int XBee_SetActive( int state );
 int XBee_GetActive( void );
 int XBee_GetPacket( XBeePacket* packet );
 int XBee_SendPacket( XBeePacket* packet, int datalength );
-void XBee_SetPacketApiMode( void );
-void XBee_InitPacket( XBeePacket* packet );
-void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, uint8* params, int datalength );
-int XBee_GetIOValues( XBeePacket* packet, int *inputs );
-void XBee_SetIOConfig( int ioconfig[], int samplerate );
-bool  XBee_GetTX16( XBeePacket* xbp );
-uint8  XBee_GetTX16Length( XBeePacket* xbp );
-uint8* XBee_GetTX16Data( XBeePacket* xbp );
-uint8  XBee_GetRX16Length( XBeePacket* xbp );
-uint8* XBee_GetRX16Data( XBeePacket* xbp );
-uint8  XBee_GetSignalStrength( XBeePacket* xbp );
-int  XBee_GetSourceAddress( XBeePacket* xbp );
+void XBee_ResetPacket( XBeePacket* packet );
 
+// packet creators and unpackers
+bool XBee_CreateTX16Packet( XBeePacket* xbp, uint8 frameID, uint16 destination, uint8 options, uint8* data, uint8 datalength );
+bool XBee_CreateTX64Packet( XBeePacket* xbp, uint8 frameID, uint64 destination, uint8 options, uint8* data, uint8 datalength );
+bool XBee_ReadRX16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrength, uint8* options, uint8** data, uint8* datalength );
+bool XBee_ReadRX64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrength, uint8* options, uint8** data, uint8* datalength  );
+bool XBee_ReadIO16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrength, uint8* options, int* samples );
+bool XBee_ReadIO64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrength, uint8* options, int* samples );
+void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, uint8* params, uint8 datalength );
+bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char* command, uint8* status, uint8** data );
+bool XBee_ReadTXStatusPacket( XBeePacket* xbp, uint8* frameID, uint8* status );
+
+// XBee Config stuff
+void XBeeConfig_SetPacketApiMode( void );
 void XBeeConfig_WriteStateToMemory( void );
 void XBeeConfig_SetAddress( int address );
-//void XBeeConfig_SetDestinationAddress64( uint64 address );
-void XBeeConfig_SetDestinationAddress16( uint16 address );
 void XBeeConfig_SetPanID( uint16 id );
 void XBeeConfig_SetChannel( uint8 channel );
 void XBeeConfig_SetSampleRate( uint16 rate );
+void XBeeConfig_SetIOs( int ioconfig[] );
+void XBeeConfig_EnableEncryption( bool state );
+void XBeeConfig_SetEncryptionKey( void );
 
 
 // XBee OSC stuff

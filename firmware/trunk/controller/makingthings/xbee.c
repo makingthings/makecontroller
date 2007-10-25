@@ -20,6 +20,8 @@
 #include "string.h"
 #include "xbee.h"
 
+static bool XBee_GetIOValues( XBeePacket* packet, int *inputs );
+
 /** \defgroup XBee
 	Communicate with XBee (Zigbee) wireless modules via the Make Controller's serial port.
   
@@ -31,7 +33,7 @@
   the data go straight through via serial mode.
   - Packet (API) mode.  Lower level communication that doesn't have to wait for the module to be in
   AT command mode.  Check the \ref XBeePacketTypes for a description of how these packets are laid out.  
-  Be sure to call XBee_SetPacketApiMode before trying to do anything in this mode.
+  Be sure to call XBeeConfig_SetPacketApiMode before trying to do anything in this mode.
 
   The general idea is that you have one XBee module connected directly to your Make Controller Kit, and then
   any number of other XBee modules that can communicate with it in order to get information to and from the
@@ -79,22 +81,22 @@ int XBee_GetActive( )
   the packet is fully received.  If the packet was not fully received, call the function repeatedly
   until it is.
 
-  Clear out a packet before reading into it with a call to XBee_InitPacket( )
+  Clear out a packet before reading into it with a call to XBee_ResetPacket( )
   @param packet The XBeePacket to receive into.
 	@return 1 if a complete packet has been received, 0 if not.
-  @see XBee_SetPacketApiMode( )
+  @see XBeeConfig_SetPacketApiMode( )
 
   \par Example
   \code
   // we're inside a task here...
   XBeePacket myPacket;
-  XBee_InitPacket( &myPacket );
+  XBee_ResetPacket( &myPacket );
   while( 1 )
   {
     if( XBee_GetPacket( &myPacket ) )
     {
       // process the new packet
-      XBee_InitPacket( &myPacket ); // then clear it out before reading again
+      XBee_ResetPacket( &myPacket ); // then clear it out before reading again
     }
     Sleep( 10 );
   }
@@ -148,12 +150,12 @@ int XBee_GetPacket( XBeePacket* packet )
   @param packet The XBeePacket to send.
   @param datalength The length of the actual data being sent (not including headers, options, etc.)
 	@return Zero on success.
-  @see XBee_SetPacketApiMode( )
+  @see XBeeConfig_SetPacketApiMode( )
 
   \par Example
   \code
   XBeePacket myPacket;
-  packet->apiId = XBEE_COMM_TX16; // we're going to send a packet with a 16-bit address
+  packet->apiId = XBEE_TX16; // we're going to send a packet with a 16-bit address
   packet->tx16.frameID = 0x00;
   packet->tx16.destination[0] = 0xFF; // 0xFFFF is the broadcast address
   packet->tx16.destination[1] = 0xFF;
@@ -174,20 +176,20 @@ int XBee_SendPacket( XBeePacket* packet, int datalength )
   int size = datalength;
   switch( packet->apiId )
   {
-    case XBEE_COMM_RX64: //account for apiId, 8 bytes source address, signal strength, and options
-    case XBEE_COMM_TX64: //account for apiId, frameId, 8 bytes destination, and options
+    case XBEE_RX64: //account for apiId, 8 bytes source address, signal strength, and options
+    case XBEE_TX64: //account for apiId, frameId, 8 bytes destination, and options
       size += 11;
       break;
-    case XBEE_COMM_RX16: //account for apiId, 2 bytes source address, signal strength, and options
-    case XBEE_COMM_TX16: //account for apiId, frameId, 2 bytes destination, and options
-    case XBEE_COMM_ATCOMMANDRESPONSE: // account for apiId, frameID, 2 bytes AT cmd, 1 byte status
+    case XBEE_RX16: //account for apiId, 2 bytes source address, signal strength, and options
+    case XBEE_TX16: //account for apiId, frameId, 2 bytes destination, and options
+    case XBEE_ATCOMMANDRESPONSE: // account for apiId, frameID, 2 bytes AT cmd, 1 byte status
       size += 5; 
       break;
-    case XBEE_COMM_TXSTATUS:
+    case XBEE_TXSTATUS:
       size = 3; // explicitly set this, since there's no data afterwards
       break;
-    case XBEE_COMM_ATCOMMAND: // account for apiId, frameID, 2 bytes AT command
-    case XBEE_COMM_ATCOMMANDQ: // same
+    case XBEE_ATCOMMAND: // account for apiId, frameID, 2 bytes AT command
+    case XBEE_ATCOMMANDQ: // same
       size += 4;
       break;
     default:
@@ -213,7 +215,7 @@ int XBee_SendPacket( XBeePacket* packet, int datalength )
   @param packet The XBeePacket to initialize.
   @see XBee_GetPacket( )
 */
-void XBee_InitPacket( XBeePacket* packet )
+void XBee_ResetPacket( XBeePacket* packet )
 {
   packet->dataPtr = (uint8*)packet;
   packet->crc = 0;
@@ -227,7 +229,7 @@ void XBee_InitPacket( XBeePacket* packet )
   Because XBee modules need to wait 1 second after sending the command sequence before they're 
   ready to receive any AT commands, this function will block for about a second.
 */
-void XBee_SetPacketApiMode( )
+void XBeeConfig_SetPacketApiMode( )
 {
   if( CONTROLLER_OK != XBee_SetActive( 1 ) )
     return;
@@ -261,9 +263,9 @@ void XBee_SetPacketApiMode( )
   XBee_SendPacket( &txPacket, 1 );
   \endcode
 */
-void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, uint8* params, int datalength )
+void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, uint8* params, uint8 datalength )
 {
-  packet->apiId = XBEE_COMM_ATCOMMAND;
+  packet->apiId = XBEE_ATCOMMAND;
   packet->atCommand.frameID = frameID;
   uint8* p = packet->atCommand.command;
   *p++ = *cmd++;
@@ -271,80 +273,6 @@ void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, u
   p = packet->atCommand.parameters;
   while( datalength-- )
     *p++ = *params++;
-}
-
-/**	
-  Unpack IO values from an incoming packet.
-  @param packet The XBeePacket to read from.
-  @param inputs An array of at least 9 integers, which will be populated with the values of the 9 input lines on the XBee module.
-	@return 1 if IO values were successfully retrieved, otherwise zero.
-  
-  \par Example
-  \code
-  XBeePacket rxPacket;
-  if( XBee_GetPacket( &rxPacket ) )
-  {
-    int inputs[9];
-    if( XBee_GetIOValues( &rxPacket, inputs ) )
-    {
-      // process new input values here
-    }
-  }
-  \endcode
-*/
-int XBee_GetIOValues( XBeePacket* packet, int *inputs )
-{
-  if( packet->apiId == XBEE_COMM_IO16 || packet->apiId == XBEE_COMM_IO64 )
-  {
-    int i;
-    static bool enabled;
-    int digitalins = 0;
-    uint8* p;
-    int channelIndicators;
-    if( packet->apiId == XBEE_COMM_IO16 )
-    {
-      p = packet->io16.data;
-      channelIndicators = (packet->io16.channelIndicators[0] << 0x08) | packet->io16.channelIndicators[1];
-    }
-    else // packet->apiId == XBEE_COMM_IO64
-    {
-      p = packet->io64.data;
-      channelIndicators = (packet->io64.channelIndicators[0] << 0x08) | packet->io64.channelIndicators[1];
-    }
-    
-    for( i = 0; i < XBEE_INPUTS; i++ )
-    {
-      enabled = channelIndicators & 1;
-      channelIndicators >>= 1;
-      if( i < 9 ) // digital ins
-      {
-        if( enabled )
-        {
-          if( !digitalins )
-          {
-            int dig0 = *p++ << 0x08;
-            digitalins = dig0 | *p++;
-          }
-          inputs[i] = ((digitalins >> i) & 1) * 1023;
-        }
-        else
-          inputs[i] = 0;
-      }
-      else // analog ins
-      {
-        if( enabled )
-        {
-          int ain_msb = *p++ << 0x08;
-          inputs[i-9] = ain_msb | *p++;
-        }
-        else
-          inputs[i] = 0;
-      }
-    }
-    return 1;
-  }
-  else
-    return 0;
 }
 
 /**	
@@ -356,9 +284,8 @@ int XBee_GetIOValues( XBeePacket* packet, int *inputs )
   - XBEE_IO_DIGOUT_HIGH - Digital out high
   - XBEE_IO_DIGOUT_LOW - Digital out low
 
-  Only channels 0-5 can be analog inputs - cannels 6-8 can only operate as digital ins or outs.
+  Only channels 0-5 can be analog inputs - channels 6-8 can only operate as digital ins or outs.
   @param ioconfig An array of 9 int values specifying the behavior of that pin.
-  @param samplerate An integer specifying how often to sample the inputs.
 	@return 1 if IO values were successfully retrieved, otherwise zero.
   
   \par Example
@@ -374,13 +301,13 @@ int XBee_GetIOValues( XBeePacket* packet, int *inputs )
   ioChannels[7] = XBEE_IO_DISABLED;
   ioChannels[8] = XBEE_IO_DISABLED;
 
-  XBee_SetIOConfig( ioChannels, 100 ); // set to sample the inputs 10 times a second
+  XBee_SetIOConfig( ioChannels );
   \endcode
 */
-void XBee_SetIOConfig( int ioconfig[], int samplerate )
+void XBeeConfig_SetIOs( int ioconfig[] )
 {
   XBeePacket packet;
-  XBee_InitPacket( &packet );
+  XBee_ResetPacket( &packet );
   uint8 params[1];
   char cmd[2];
   int i;
@@ -390,93 +317,124 @@ void XBee_SetIOConfig( int ioconfig[], int samplerate )
     sprintf( cmd, "D%d", i );
     XBee_CreateATCommandPacket( &packet, 0, cmd, params, 1 );
     XBee_SendPacket( &packet, 1 );
-    XBee_InitPacket( &packet );
-  }
-  sprintf( (char*)params, "%x", samplerate );
-  XBee_CreateATCommandPacket( &packet, 0, "IR", params, 1 );
-  XBee_SendPacket( &packet, 1 );
-}
-
-/**	
-  Check if a packet is a TX16 packet.
-
-*/
-bool XBee_GetTX16( XBeePacket* xbp )
-{
-  return ( xbp->apiId == XBEE_COMM_TX16 );
-}
-  
-uint8 XBee_GetTX16Length( XBeePacket* xbp )
-{
-  return xbp->length - 5;
-}
-    
-uint8* XBee_GetTX16Data( XBeePacket* xbp )
-{
-  return xbp->tx16.data;
-}  
-
-uint8 XBee_GetRX16Length( XBeePacket* xbp )
-{
-  return xbp->length - 5;
-}
-  
-uint8* XBee_GetRX16Data( XBeePacket* xbp )
-{
-  return xbp->rx16.data;
-}  
-
-uint8 XBee_GetSignalStrength( XBeePacket* xbp )
-{
-  switch( xbp->apiId )   
-  {
-    case XBEE_COMM_IO16: 
-      return xbp->io16.rssi;
-    case XBEE_COMM_RX64: 
-      return xbp->rx64.rssi;
-    case XBEE_COMM_RX16: 
-      return xbp->rx16.rssi;
-    case XBEE_COMM_IO64: 
-      return xbp->io64.rssi;
-    default:
-      return -1;
+    XBee_ResetPacket( &packet );
   }
 }
 
-int XBee_GetSourceAddress( XBeePacket* xbp )
+bool XBee_CreateTX16Packet( XBeePacket* xbp, uint8 frameID, uint16 destination, uint8 options, uint8* data, uint8 datalength )
 {
-  int srcAddress = 0;
+  xbp->apiId = XBEE_TX16;
+  xbp->tx16.frameID = frameID;
+  xbp->tx16.destination[0] = destination >> 8;
+  xbp->tx16.destination[1] = destination & 0xFF;
+  xbp->tx16.options = options;
+  xbp->length = datalength + 5;
+  uint8* p = xbp->tx16.data;
+  while( datalength-- )
+    *p++ = *data++;
+  return true;
+}
+
+bool XBee_CreateTX64Packet( XBeePacket* xbp, uint8 frameID, uint64 destination, uint8 options, uint8* data, uint8 datalength )
+{
+  uint8* p;
   int i;
-  switch( xbp->apiId )   
+  xbp->apiId = XBEE_TX64;
+  xbp->tx64.frameID = frameID;
+  for( i = 0; i < 8; i++ )
+    xbp->tx64.destination[i] = (destination >> 8*i) & (0xFF * i); // ????????
+  xbp->tx64.options = options;
+  xbp->length = datalength + 5;
+  p = xbp->tx64.data;
+  while( datalength-- )
+    *p++ = *data++;
+  return true;
+}
+
+bool XBee_ReadRX16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrength, uint8* options, uint8** data, uint8* datalength )
+{
+  if( xbp->apiId != XBEE_RX16 )
+    return false;
+
+  *srcAddress = xbp->rx16.source[0];
+  *srcAddress <<= 8;
+  *srcAddress += xbp->rx16.source[1];
+  *sigstrength = xbp->rx16.rssi;
+  *options = xbp->rx16.options;
+  *data = xbp->rx16.data;
+  *datalength = xbp->length - 5;
+  return true;
+}
+
+bool XBee_ReadRX64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrength, uint8* options, uint8** data, uint8* datalength )
+{
+  if( xbp->apiId != XBEE_RX64 )
+    return false;
+
+  int i;
+  for( i = 0; i < 8; i++ )
   {
-    case XBEE_COMM_IO16:
-      srcAddress = xbp->io16.source[0];
-      srcAddress <<= 8;
-      srcAddress += xbp->io16.source[1];
-      break;
-    case XBEE_COMM_RX64:
-      for( i = 0; i < 8; i++ )
-      {
-        srcAddress <<= i*8;
-        srcAddress += xbp->rx64.source[i];
-      }
-      break;
-    case XBEE_COMM_RX16: 
-      srcAddress = xbp->rx16.source[0];
-      srcAddress <<= 8;
-      srcAddress += xbp->rx16.source[1];
-      break;
-    case XBEE_COMM_IO64: 
-      for( i = 0; i < 8; i++ )
-      {
-        srcAddress <<= i*8;
-        srcAddress += xbp->io64.source[i];
-      }
-      break;
-    default:
-      srcAddress = -1;
+    *srcAddress <<= i*8;
+    *srcAddress += xbp->rx64.source[i];
   }
-  return srcAddress;
+  *sigstrength = xbp->rx64.rssi;
+  *options = xbp->rx64.options;
+  *data = xbp->rx64.data;
+  *datalength = xbp->length - 11;
+  return true;
+}
+
+bool XBee_ReadIO16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrength, uint8* options, int* samples )
+{
+  if( xbp->apiId != XBEE_IO16 )
+    return false;
+
+  *srcAddress = xbp->io16.source[0];
+  *srcAddress <<= 8;
+  *srcAddress += xbp->io16.source[1];
+  *sigstrength = xbp->io16.rssi;
+  *options = xbp->io16.options;
+  if( !XBee_GetIOValues( xbp, samples ) )
+    return false;
+  return true;
+}
+
+bool XBee_ReadIO64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrength, uint8* options, int* samples )
+{
+  if( xbp->apiId != XBEE_RX64 )
+    return false;
+
+  int i;
+  for( i = 0; i < 8; i++ )
+  {
+    *srcAddress <<= i*8;
+    *srcAddress += xbp->io64.source[i];
+  }
+  *sigstrength = xbp->io64.rssi;
+  *options = xbp->io64.options;
+  if( !XBee_GetIOValues( xbp, samples ) )
+    return false;
+  return true;
+}
+
+bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char* command, uint8* status, uint8** data )
+{
+  if( xbp->apiId != XBEE_ATCOMMANDRESPONSE )
+    return false;
+  *frameID = xbp->atResponse.frameID;
+  command = (char*)xbp->atResponse.command;
+  *status = xbp->atResponse.status;
+  *data = xbp->atResponse.value;
+  return true;
+}
+
+bool XBee_ReadTXStatusPacket( XBeePacket* xbp, uint8* frameID, uint8* status )
+{
+  if( xbp->apiId != XBEE_TXSTATUS )
+    return false;
+  *frameID = xbp->txStatus.frameID;
+  *status = xbp->txStatus.status;
+  return true;
 }
 
 void XBeeConfig_WriteStateToMemory( void )
@@ -491,17 +449,12 @@ void XBeeConfig_SetAddress( int address )
   XBeePacket xbp;
   uint8 params[4];
   params[0] = address & 0xFF;
-  params[1] = (address >> 8) & 0xFF;
-  params[2] = address >> 16;
-  params[3] = address >> 24;
+  params[1] = (address >> 8) & 0xFFFFFF;
+  params[2] = (address >> 16) & 0xFFFF;
+  params[3] = (address >> 24) & 0xFF;
   XBee_CreateATCommandPacket( &xbp, 0, "IR", params, 4 );
   XBee_SendPacket( &xbp, 4 );
 }
-//void XBeeConfig_SetDestinationAddress64( uint64 address );
-//void XBeeConfig_SetDestinationAddress16( uint16 address )
-//{
-//
-//}
 
 void XBeeConfig_SetPanID( uint16 id )
 {
@@ -534,6 +487,80 @@ void XBeeConfig_SetSampleRate( uint16 rate )
 
 /** @}
 */
+
+/**	
+  Unpack IO values from an incoming packet.
+  @param packet The XBeePacket to read from.
+  @param inputs An array of at least 9 integers, which will be populated with the values of the 9 input lines on the XBee module.
+	@return 1 if IO values were successfully retrieved, otherwise zero.
+  
+  \par Example
+  \code
+  XBeePacket rxPacket;
+  if( XBee_GetPacket( &rxPacket ) )
+  {
+    int inputs[9];
+    if( XBee_GetIOValues( &rxPacket, inputs ) )
+    {
+      // process new input values here
+    }
+  }
+  \endcode
+*/
+static bool XBee_GetIOValues( XBeePacket* packet, int *inputs )
+{
+  if( packet->apiId == XBEE_IO16 || packet->apiId == XBEE_IO64 )
+  {
+    int i;
+    static bool enabled;
+    int digitalins = 0;
+    uint8* p;
+    int channelIndicators;
+    if( packet->apiId == XBEE_IO16 )
+    {
+      p = packet->io16.data;
+      channelIndicators = (packet->io16.channelIndicators[0] << 0x08) | packet->io16.channelIndicators[1];
+    }
+    else // packet->apiId == XBEE_IO64
+    {
+      p = packet->io64.data;
+      channelIndicators = (packet->io64.channelIndicators[0] << 0x08) | packet->io64.channelIndicators[1];
+    }
+    
+    for( i = 0; i < XBEE_INPUTS; i++ )
+    {
+      enabled = channelIndicators & 1;
+      channelIndicators >>= 1;
+      if( i < 9 ) // digital ins
+      {
+        if( enabled )
+        {
+          if( !digitalins )
+          {
+            int dig0 = *p++ << 0x08;
+            digitalins = dig0 | *p++;
+          }
+          inputs[i] = ((digitalins >> i) & 1) * 1023;
+        }
+        else
+          inputs[i] = 0;
+      }
+      else // analog ins
+      {
+        if( enabled )
+        {
+          int ain_msb = *p++ << 0x08;
+          inputs[i-9] = ain_msb | *p++;
+        }
+        else
+          inputs[i-9] = 0;
+      }
+    }
+    return true;
+  }
+  else
+    return false;
+}
 
 
 #ifdef OSC
