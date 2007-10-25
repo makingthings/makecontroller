@@ -760,7 +760,7 @@ aboutMchelper::aboutMchelper( ) : QDialog( )
 	
 	title.setText( "<font size=5>Make Controller Helper</font>" );
 	title.setAlignment( Qt::AlignHCenter );
-	version.setText( QString( "<font size=4>Version %1</font>" ).arg( "2.0.0" ) );
+	version.setText( QString( "<font size=4>Version %1</font>" ).arg( MCHELPER_VERSION ) );
 	version.setAlignment( Qt::AlignHCenter );
 	description = new QLabel( "<br><b>mchelper</b> (Make Controller Helper) is part of the Make Controller Kit project - an \
 	open source hardware platform for everybody.  mchelper can upload new firmware to your Make \

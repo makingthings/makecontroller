@@ -140,6 +140,8 @@ void AppUpdater::finishedRead( int id, bool errors )
 													.arg(latest.first).arg( MCHELPER_VERSION );
 		details->setText( d );
 		browser->setHtml( latest.second );
+		acceptButton->disconnect( );
+		ignoreButton->disconnect( );
 		acceptButton->setText( tr("Visit Download Page") );
 		connect( acceptButton, SIGNAL( clicked() ), this, SLOT( visitDownloadsPage() ) );
 		connect( ignoreButton, SIGNAL( clicked() ), this, SLOT( accept() ) );
@@ -154,6 +156,8 @@ void AppUpdater::finishedRead( int id, bool errors )
 	{
 		headline->setText( "<font size=4>You're up to date!</font>" );
 		details->setText( QString( "You're running the latest version of mchelper, version %1." ).arg( MCHELPER_VERSION ) );
+		acceptButton->disconnect( );
+		ignoreButton->disconnect( );
 		acceptButton->setText( tr("OK") );
 		connect( acceptButton, SIGNAL( clicked() ), this, SLOT( accept() ) );
 		

@@ -15,11 +15,11 @@
 #
 # ------------------------------------------------------------------------------
 
-MCHELPER_VERSION = "2.0.0"
+MCHELPER_VERSION = "2.0.1"
 TEMPLATE = app
 FORMS = layouts/mchelper.ui layouts/mchelperPrefs.ui
-#CONFIG += qt release
-CONFIG += qt debug
+CONFIG += qt release
+#CONFIG += qt debug
 
 HEADERS = 	McHelperWindow.h \
 			UploaderThread.h \
