@@ -29,6 +29,7 @@ typedef unsigned char bool;
 typedef unsigned char uchar;
 typedef unsigned char uint8;
 typedef unsigned int uint;
+typedef unsigned long long int uint16;
 typedef long long int llong;
 typedef long long int longlong;
 typedef unsigned long long int ullong;

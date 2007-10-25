@@ -37,6 +37,13 @@
 #define XBEE_PACKET_ESCAPE 0x7D
 #define XBEE_INPUTS 15 // counts analog and digital ins separately
 
+// xbee io options
+#define XBEE_IO_DISABLED 0
+#define XBEE_IO_ANALOGIN 2
+#define XBEE_IO_DIGITALIN 3
+#define XBEE_IO_DIGOUT_HIGH 4
+#define XBEE_IO_DIGOUT_LOW 5
+
 /** \defgroup XBeePacketTypes XBee Packet Types
 	The different types of packet that can be used with the \ref XBee subsystem.
 
@@ -205,12 +212,6 @@ typedef enum
 /** @}
 */
 
-
-typedef struct
-{
-  enum { XB_IDLE, XB_SLEEP, XB_RECEIVE, XB_TRANSMIT, XB_COMMAND } mode;
-} XBee_;
-
 typedef struct
 {
   uint8 apiId;
@@ -244,5 +245,26 @@ void XBee_SetPacketApiMode( void );
 void XBee_InitPacket( XBeePacket* packet );
 void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, uint8* params, int datalength );
 int XBee_GetIOValues( XBeePacket* packet, int *inputs );
+void XBee_SetIOConfig( int ioconfig[], int samplerate );
+bool  XBee_GetTX16( XBeePacket* xbp );
+uint8  XBee_GetTX16Length( XBeePacket* xbp );
+uint8* XBee_GetTX16Data( XBeePacket* xbp );
+uint8  XBee_GetRX16Length( XBeePacket* xbp );
+uint8* XBee_GetRX16Data( XBeePacket* xbp );
+uint8  XBee_GetSignalStrength( XBeePacket* xbp );
+int  XBee_GetSourceAddress( XBeePacket* xbp );
+
+void XBeeConfig_WriteStateToMemory( void );
+void XBeeConfig_SetAddress( int address );
+//void XBeeConfig_SetDestinationAddress64( uint64 address );
+void XBeeConfig_SetDestinationAddress16( uint16 address );
+void XBeeConfig_SetPanID( uint16 id );
+void XBeeConfig_SetChannel( uint8 channel );
+void XBeeConfig_SetSampleRate( uint16 rate );
+
+
+// XBee OSC stuff
+const char* XBeeOsc_GetName( void );
+int XBeeOsc_ReceiveMessage( int channel, char* message, int length );
 
 #endif // XBEE_H

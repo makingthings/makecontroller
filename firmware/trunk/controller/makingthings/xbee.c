@@ -20,8 +20,6 @@
 #include "string.h"
 #include "xbee.h"
 
-XBee_* XBee;
-
 /** \defgroup XBee
 	Communicate with XBee (Zigbee) wireless modules via the Make Controller's serial port.
   
@@ -32,11 +30,13 @@ XBee_* XBee;
   - AT command mode.  Send traditional AT commands to configure the module itself (as opposed to having
   the data go straight through via serial mode.
   - Packet (API) mode.  Lower level communication that doesn't have to wait for the module to be in
-  AT command mode.  Check the \ref XBeePacketTypes for a description of how these packets are laid out.
+  AT command mode.  Check the \ref XBeePacketTypes for a description of how these packets are laid out.  
+  Be sure to call XBee_SetPacketApiMode before trying to do anything in this mode.
 
   The general idea is that you have one XBee module connected directly to your Make Controller Kit, and then
   any number of other XBee modules that can communicate with it in order to get information to and from the
-  Make Controller.
+  Make Controller.  Or, several Make Controllers can each have an XBee module connected in order to
+  communicate wirelessly among themselves.
 
   XBee modules also have some digital and analog I/O right on them, which means you can directly connect
   sensors to the XBee modules which will both read the values and send them wirelessly.  Check the XBee doc
@@ -51,30 +51,16 @@ XBee_* XBee;
   @param state Whether this subsystem is active or not
 	@return Zero on success.
 */
-int XBee_SetActive( int state )
+int XBee_SetActive( int activestate )
 {
-  if ( state != 0 && XBee == NULL ) 
+  if( activestate && !Serial_GetActive( ) ) 
   {
-    XBee = Malloc( sizeof( XBee_ ) );
-    if( XBee == NULL )
-      return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
-    
-    XBee->mode = XB_IDLE;
     if( CONTROLLER_OK != Serial_SetActive( 1 ) )
-    {
-      if( XBee != NULL )
-      {
-        Free( XBee );
-        XBee = 0;
-      }
       return CONTROLLER_ERROR_SUBSYSTEM_INACTIVE;
-    }
   }
-  if ( state == 0 && XBee != NULL ) 
-  {
-    Free( XBee );
-    XBee = 0;
-  }
+  if ( activestate == 0 && Serial_GetActive( ) ) 
+    Serial_SetActive( 0 );
+
   return CONTROLLER_OK;
 }
 
@@ -84,7 +70,7 @@ int XBee_SetActive( int state )
 */
 int XBee_GetActive( )
 {
-  return ( XBee != NULL );
+  return Serial_GetActive( );
 }
 
 /**	
@@ -140,14 +126,13 @@ int XBee_GetPacket( XBeePacket* packet )
         packet->rxState = XBEE_PACKET_RX_PAYLOAD;
         break;
       case XBEE_PACKET_RX_PAYLOAD:
-        if( packet->index++ < packet->length )
-          *packet->dataPtr++ = newChar;
-        else
+        *packet->dataPtr++ = newChar;
+        if( ++packet->index >= packet->length )
           packet->rxState = XBEE_PACKET_RX_CRC;
         packet->crc += newChar;
         break;
       case XBEE_PACKET_RX_CRC:
-        // TODO: read the CRC here, not in the previous state
+        packet->crc += newChar;
         packet->rxState = XBEE_PACKET_RX_START;
         return (packet->crc == 0xFF) ? 1 : 0;
     }
@@ -226,7 +211,6 @@ int XBee_SendPacket( XBeePacket* packet, int datalength )
 /**	
   Initialize a packet before reading into it.
   @param packet The XBeePacket to initialize.
-	@return An integer specifying the active state - 1 (active) or 0 (inactive).
   @see XBee_GetPacket( )
 */
 void XBee_InitPacket( XBeePacket* packet )
@@ -242,7 +226,6 @@ void XBee_InitPacket( XBeePacket* packet )
   Set a module into AT command mode.  
   Because XBee modules need to wait 1 second after sending the command sequence before they're 
   ready to receive any AT commands, this function will block for about a second.
-	@return An integer specifying the active state - 1 (active) or 0 (inactive).
 */
 void XBee_SetPacketApiMode( )
 {
@@ -290,15 +273,45 @@ void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, u
     *p++ = *params++;
 }
 
+/**	
+  Unpack IO values from an incoming packet.
+  @param packet The XBeePacket to read from.
+  @param inputs An array of at least 9 integers, which will be populated with the values of the 9 input lines on the XBee module.
+	@return 1 if IO values were successfully retrieved, otherwise zero.
+  
+  \par Example
+  \code
+  XBeePacket rxPacket;
+  if( XBee_GetPacket( &rxPacket ) )
+  {
+    int inputs[9];
+    if( XBee_GetIOValues( &rxPacket, inputs ) )
+    {
+      // process new input values here
+    }
+  }
+  \endcode
+*/
 int XBee_GetIOValues( XBeePacket* packet, int *inputs )
 {
-  if( packet->apiId == XBEE_COMM_IO16 )
+  if( packet->apiId == XBEE_COMM_IO16 || packet->apiId == XBEE_COMM_IO64 )
   {
     int i;
     static bool enabled;
     int digitalins = 0;
-    uint8* p = packet->io16.data;
-    int channelIndicators = (packet->io16.channelIndicators[0] << 0x08) | packet->io16.channelIndicators[1];
+    uint8* p;
+    int channelIndicators;
+    if( packet->apiId == XBEE_COMM_IO16 )
+    {
+      p = packet->io16.data;
+      channelIndicators = (packet->io16.channelIndicators[0] << 0x08) | packet->io16.channelIndicators[1];
+    }
+    else // packet->apiId == XBEE_COMM_IO64
+    {
+      p = packet->io64.data;
+      channelIndicators = (packet->io64.channelIndicators[0] << 0x08) | packet->io64.channelIndicators[1];
+    }
+    
     for( i = 0; i < XBEE_INPUTS; i++ )
     {
       enabled = channelIndicators & 1;
@@ -328,11 +341,261 @@ int XBee_GetIOValues( XBeePacket* packet, int *inputs )
           inputs[i] = 0;
       }
     }
+    return 1;
   }
-  return 0;
+  else
+    return 0;
+}
+
+/**	
+  Configure the IO settings on an XBee module.
+  IO pins can have one of 5 values:
+  - XBEE_IO_DISABLED
+  - XBEE_IO_ANALOGIN - Analog input (10-bit)
+  - XBEE_IO_DIGITALIN - Digital input
+  - XBEE_IO_DIGOUT_HIGH - Digital out high
+  - XBEE_IO_DIGOUT_LOW - Digital out low
+
+  Only channels 0-5 can be analog inputs - cannels 6-8 can only operate as digital ins or outs.
+  @param ioconfig An array of 9 int values specifying the behavior of that pin.
+  @param samplerate An integer specifying how often to sample the inputs.
+	@return 1 if IO values were successfully retrieved, otherwise zero.
+  
+  \par Example
+  \code
+  int ioChannels[9];
+  ioChannels[0] = XBEE_IO_ANALOGIN;
+  ioChannels[1] = XBEE_IO_ANALOGIN;
+  ioChannels[2] = XBEE_IO_ANALOGIN;
+  ioChannels[3] = XBEE_IO_DIGITALIN;
+  ioChannels[4] = XBEE_IO_DIGITALIN;
+  ioChannels[5] = XBEE_IO_DISABLED;
+  ioChannels[6] = XBEE_IO_DISABLED;
+  ioChannels[7] = XBEE_IO_DISABLED;
+  ioChannels[8] = XBEE_IO_DISABLED;
+
+  XBee_SetIOConfig( ioChannels, 100 ); // set to sample the inputs 10 times a second
+  \endcode
+*/
+void XBee_SetIOConfig( int ioconfig[], int samplerate )
+{
+  XBeePacket packet;
+  XBee_InitPacket( &packet );
+  uint8 params[1];
+  char cmd[2];
+  int i;
+  for( i=0; i < 9; i++ )
+  {
+    sprintf( (char*)params, "%x", ioconfig[i] );
+    sprintf( cmd, "D%d", i );
+    XBee_CreateATCommandPacket( &packet, 0, cmd, params, 1 );
+    XBee_SendPacket( &packet, 1 );
+    XBee_InitPacket( &packet );
+  }
+  sprintf( (char*)params, "%x", samplerate );
+  XBee_CreateATCommandPacket( &packet, 0, "IR", params, 1 );
+  XBee_SendPacket( &packet, 1 );
+}
+
+/**	
+  Check if a packet is a TX16 packet.
+
+*/
+bool XBee_GetTX16( XBeePacket* xbp )
+{
+  return ( xbp->apiId == XBEE_COMM_TX16 );
+}
+  
+uint8 XBee_GetTX16Length( XBeePacket* xbp )
+{
+  return xbp->length - 5;
+}
+    
+uint8* XBee_GetTX16Data( XBeePacket* xbp )
+{
+  return xbp->tx16.data;
+}  
+
+uint8 XBee_GetRX16Length( XBeePacket* xbp )
+{
+  return xbp->length - 5;
+}
+  
+uint8* XBee_GetRX16Data( XBeePacket* xbp )
+{
+  return xbp->rx16.data;
+}  
+
+uint8 XBee_GetSignalStrength( XBeePacket* xbp )
+{
+  switch( xbp->apiId )   
+  {
+    case XBEE_COMM_IO16: 
+      return xbp->io16.rssi;
+    case XBEE_COMM_RX64: 
+      return xbp->rx64.rssi;
+    case XBEE_COMM_RX16: 
+      return xbp->rx16.rssi;
+    case XBEE_COMM_IO64: 
+      return xbp->io64.rssi;
+    default:
+      return -1;
+  }
+}
+
+int XBee_GetSourceAddress( XBeePacket* xbp )
+{
+  int srcAddress = 0;
+  int i;
+  switch( xbp->apiId )   
+  {
+    case XBEE_COMM_IO16:
+      srcAddress = xbp->io16.source[0];
+      srcAddress <<= 8;
+      srcAddress += xbp->io16.source[1];
+      break;
+    case XBEE_COMM_RX64:
+      for( i = 0; i < 8; i++ )
+      {
+        srcAddress <<= i*8;
+        srcAddress += xbp->rx64.source[i];
+      }
+      break;
+    case XBEE_COMM_RX16: 
+      srcAddress = xbp->rx16.source[0];
+      srcAddress <<= 8;
+      srcAddress += xbp->rx16.source[1];
+      break;
+    case XBEE_COMM_IO64: 
+      for( i = 0; i < 8; i++ )
+      {
+        srcAddress <<= i*8;
+        srcAddress += xbp->io64.source[i];
+      }
+      break;
+    default:
+      srcAddress = -1;
+  }
+  return srcAddress;
+}
+
+void XBeeConfig_WriteStateToMemory( void )
+{
+  XBeePacket xbp;
+  XBee_CreateATCommandPacket( &xbp, 0, "WR", NULL, 0 );
+  XBee_SendPacket( &xbp, 0 );
+}
+
+void XBeeConfig_SetAddress( int address )
+{
+  XBeePacket xbp;
+  uint8 params[4];
+  params[0] = address & 0xFF;
+  params[1] = (address >> 8) & 0xFF;
+  params[2] = address >> 16;
+  params[3] = address >> 24;
+  XBee_CreateATCommandPacket( &xbp, 0, "IR", params, 4 );
+  XBee_SendPacket( &xbp, 4 );
+}
+//void XBeeConfig_SetDestinationAddress64( uint64 address );
+//void XBeeConfig_SetDestinationAddress16( uint16 address )
+//{
+//
+//}
+
+void XBeeConfig_SetPanID( uint16 id )
+{
+  XBeePacket xbp;
+  uint8 params[2];
+  params[0] = (id >> 8) & 0xFF;
+  params[1] = id & 0xFF;
+  XBee_CreateATCommandPacket( &xbp, 0, "ID", params, 2 );
+  XBee_SendPacket( &xbp, 2 );
+}
+
+void XBeeConfig_SetChannel( uint8 channel )
+{
+  XBeePacket xbp;
+  uint8 params[1];
+  params[0] = channel;
+  XBee_CreateATCommandPacket( &xbp, 0, "CH", params, 1 );
+  XBee_SendPacket( &xbp, 1 );
+}
+
+void XBeeConfig_SetSampleRate( uint16 rate )
+{
+  XBeePacket xbp;
+  uint8 params[2];
+  params[0] = (rate >> 8) & 0xFF;
+  params[1] = rate & 0xFF;
+  XBee_CreateATCommandPacket( &xbp, 0, "IR", params, 2 );
+  XBee_SendPacket( &xbp, 2 );
 }
 
 /** @}
 */
+
+
+#ifdef OSC
+#include "osc.h"
+
+static char* XBeeOsc_Name = "xbee";
+static char* XBeeOsc_PropertyNames[] = { "active", 0 }; // must have a trailing 0
+
+int XBeeOsc_PropertySet( int property, char* typedata, int channel );
+int XBeeOsc_PropertyGet( int property, int channel );
+
+const char* XBeeOsc_GetName( void )
+{
+  return XBeeOsc_Name;
+}
+
+int XBeeOsc_ReceiveMessage( int channel, char* message, int length )
+{
+  int status = Osc_GeneralReceiverHelper( channel, message, length, 
+                                XBeeOsc_Name,
+                                XBeeOsc_PropertySet, XBeeOsc_PropertyGet, 
+                                XBeeOsc_PropertyNames );
+
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, XBeeOsc_Name, status );
+
+  return CONTROLLER_OK;
+}
+
+int XBeeOsc_PropertySet( int property, char* typedata, int channel )
+{
+  switch ( property )
+  {
+    case 0: // active
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, XBeeOsc_Name, "Incorrect data - need an int" );
+
+      XBee_SetActive( value );
+      break;
+    }
+  }
+  return CONTROLLER_OK;
+}
+
+int XBeeOsc_PropertyGet( int property, int channel )
+{
+  int value = 0;
+  char address[ OSC_SCRATCH_SIZE ];
+  switch ( property )
+  {
+    case 0: // active
+      value = XBee_GetActive( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeOsc_Name, XBeeOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value ); 
+      break;
+  }
+  return CONTROLLER_OK;
+}
+
+#endif // OSC
 
 
