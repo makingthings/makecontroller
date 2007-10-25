@@ -505,7 +505,6 @@ int Serial_SetDefault()
 	
 	\section properties Properties
 	The Serial Subsystem has eight properties:
-  - block
   - baud
   - bits
   - stopbits
@@ -514,11 +513,6 @@ int Serial_SetDefault()
   - readable
   - char
   - block
-
-	\par Block
-	To read a block of 128 characters at once, send the message
-	\verbatim /serial/block 128\endverbatim
-  and the board will return an OSC message with a blob of 128 characters.
   
   \par Baud
 	The Baud rate of the device. Valid from 110 baud to >2M baud\n
