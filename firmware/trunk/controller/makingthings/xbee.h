@@ -36,6 +36,7 @@
 #define XBEE_PACKET_STARTBYTE 0x7E
 #define XBEE_PACKET_ESCAPE 0x7D
 #define XBEE_INPUTS 15 // counts analog and digital ins separately
+#define XBEE_MAX_PACKET_SIZE 100
 
 // xbee io options
 #define XBEE_IO_DISABLED 0
