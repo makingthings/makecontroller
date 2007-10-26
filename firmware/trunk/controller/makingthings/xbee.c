@@ -21,14 +21,26 @@
 #include "xbee.h"
 
 static bool XBee_GetIOValues( XBeePacket* packet, int *inputs );
+void XBeeTask( void* p );
+
+typedef struct
+{
+  void* XBeeTaskPtr;
+} XBee_;
+
+XBee_* XBee;
 
 /** \defgroup XBee
 	Communicate with XBee (Zigbee) wireless modules via the Make Controller's serial port.
   
   XBee modules from \b MaxStream are small, cheap ($19 each), wireless \b RF (radio frequency) modules that
-  can easily be used with the Make Controller Kit to create projects that require wireless communication.
+  can easily be used with the Make Controller Kit to create projects that require wireless communication.  Check
+  http://www.maxstream.net/products/xbee/xbee-oem-rf-module-zigbee.php for more info.
+  
+  \section Overview
   XBee modules are <b>ZigBee/IEEE 802.15.4</b> compliant and can operate in several modes:
-  - Transparent serial port.  Messages in one side magically end up at the other endpoint.
+  - Transparent serial port.  Messages in one side magically end up at the other endpoint.  Great for enabling wireless
+  communication between 2 Make Controllers.
   - AT command mode.  Send traditional AT commands to configure the module itself (as opposed to having
   the data go straight through via serial mode.
   - Packet (API) mode.  Lower level communication that doesn't have to wait for the module to be in
@@ -44,6 +56,15 @@ static bool XBee_GetIOValues( XBeePacket* packet, int *inputs );
   sensors to the XBee modules which will both read the values and send them wirelessly.  Check the XBee doc
   for the appropriate commands to send in order to set this up.
 
+  \section API
+  The Make Controller API for working with the XBee modules makes use of the XBee Packet API.  If you simply want to make use
+  of the transparent serial port functionality, you don't need to deal with any of this - simply hook up the module to
+  your Make Controller and start reading and writing over the serial port.
+
+  The XBee Packet API allows for much more flexible and powerful communication with the modules.  It uses AT commands to 
+  configure the XBee module itself, and then a handful of Zigbee specified packet types can be sent and received.  
+  See \ref XBeePacketTypes for details on these packet types.  
+
   \ingroup Controller
   @{
 */
@@ -53,16 +74,37 @@ static bool XBee_GetIOValues( XBeePacket* packet, int *inputs );
   @param state Whether this subsystem is active or not
 	@return Zero on success.
 */
-int XBee_SetActive( int activestate )
+int XBee_SetActive( int state )
 {
-  if( activestate && !Serial_GetActive( ) ) 
-  {
-    if( CONTROLLER_OK != Serial_SetActive( 1 ) )
-      return CONTROLLER_ERROR_SUBSYSTEM_INACTIVE;
-  }
-  if ( activestate == 0 && Serial_GetActive( ) ) 
-    Serial_SetActive( 0 );
+  if( state ) 
+  { 
+    if( XBee == NULL )
+    {
+      if( CONTROLLER_OK != Serial_SetActive( 1 ) )
+        return CONTROLLER_ERROR_SUBSYSTEM_INACTIVE;
 
+      XBee = MallocWait( sizeof( XBee_ ), 100 );
+      #ifdef CROSSWORKS_BUILD
+      XBee->XBeeTaskPtr = TaskCreate( XBeeTask, "XBee", 800, 0, 3 );
+      #else
+      XBee->XBeeTaskPtr = TaskCreate( XBeeTask, "XBee", 1000, 0, 3 );
+      #endif // CROSSWORKS_BUILD
+    }
+  }
+  else
+  {
+    Serial_SetActive( 0 );
+    if( XBee->XBeeTaskPtr != NULL )
+    {
+      TaskDelete( XBee->XBeeTaskPtr );
+      XBee->XBeeTaskPtr = NULL;
+    }
+    if( XBee )
+    {
+      Free( XBee );
+      XBee = NULL;
+    }
+  }
   return CONTROLLER_OK;
 }
 
@@ -114,10 +156,7 @@ int XBee_GetPacket( XBeePacket* packet )
       break;
 
     if( newChar == XBEE_PACKET_STARTBYTE && packet->rxState != XBEE_PACKET_RX_START )
-    { // in case we get into a weird state
-      XBee_ResetPacket( packet );
-      return 0;
-    }
+      XBee_ResetPacket( packet ); // in case we get into a weird state
 
     switch( packet->rxState )
     {
@@ -337,6 +376,25 @@ void XBeeConfig_SetIOs( int ioconfig[] )
   }
 }
 
+/**	
+  Create a packet to be transmitted with a 16-bit address.
+
+  @param xbp The XBeePacket to create.
+  @param frameID The frame ID for this packet that subsequent response/status messages can refer to.
+  @param destination The destination address for this packet.
+  @param options The XBee options for this packet (0 if none).
+  @param data A pointer to the data to be sent in this packet.
+  @param datalength The number of bytes of data to be sent.
+	@return True on success, false on failure.
+  
+  \par Example
+  \code
+  XBeePacket txPacket;
+  uint8 data[] = "ABC";
+  XBee_CreateTX16Packet( &txPacket, 0, 0, 0, data, 3 );
+  XBee_SendPacket( &txPacket, 3 );
+  \endcode
+*/
 bool XBee_CreateTX16Packet( XBeePacket* xbp, uint8 frameID, uint16 destination, uint8 options, uint8* data, uint8 datalength )
 {
   xbp->apiId = XBEE_TX16;
@@ -351,6 +409,25 @@ bool XBee_CreateTX16Packet( XBeePacket* xbp, uint8 frameID, uint16 destination, 
   return true;
 }
 
+/**	
+  Create a packet to be transmitted with a 64-bit address.
+
+  @param xbp The XBeePacket to create.
+  @param frameID The frame ID for this packet that subsequent response/status messages can refer to.
+  @param destination The destination address for this packet.
+  @param options The XBee options for this packet (0 if none).
+  @param data A pointer to the data to be sent in this packet.
+  @param datalength The number of bytes of data to be sent.
+	@return True on success, false on failure.
+  
+  \par Example
+  \code
+  XBeePacket txPacket;
+  uint8 data[] = "ABCDE";
+  XBee_CreateTX16Packet( &txPacket, 0, 0, 0, data, 5 );
+  XBee_SendPacket( &txPacket, 5 );
+  \endcode
+*/
 bool XBee_CreateTX64Packet( XBeePacket* xbp, uint8 frameID, uint64 destination, uint8 options, uint8* data, uint8 datalength )
 {
   uint8* p;
@@ -367,6 +444,34 @@ bool XBee_CreateTX64Packet( XBeePacket* xbp, uint8 frameID, uint64 destination, 
   return true;
 }
 
+/**	
+  Unpack the info from an incoming packet with a 16-bit address.
+  Pass \b NULL into any of the parameters you don't care about.
+  @param xbp The XBeePacket to read from.
+  @param srcAddress The 16-bit address of this packet.
+  @param sigstrength The signal strength of this packet.
+  @param options The XBee options for this packet.
+  @param data A pointer that will be set to the data of this packet.
+  @param datalength The length of data in this packet.
+	@return True on success, false on failure.
+  
+  \par Example
+  \code
+  XBeePacket rxPacket;
+  if( XBee_GetPacket( &rxPacket ) )
+  {
+    uint16 src;
+    uint8 sigstrength;
+    uint8* data;
+    uint8 datalength;
+    if( XBee_ReadRX16Packet( &rxPacket, &src, &sigstrength, NULL, &data, &datalength ) )
+    {
+      // then process the new packet here
+      XBee_ResetPacket( &rxPacket ); // and clear it out before reading again
+    }
+  }
+  \endcode
+*/
 bool XBee_ReadRX16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrength, uint8* options, uint8** data, uint8* datalength )
 {
   if( xbp->apiId != XBEE_RX16 )
@@ -389,6 +494,34 @@ bool XBee_ReadRX16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrengt
   return true;
 }
 
+/**	
+  Unpack the info from an incoming packet with a 64-bit address.
+  Pass \b NULL into any of the parameters you don't care about.
+  @param xbp The XBeePacket to read from.
+  @param srcAddress The 64-bit address of this packet.
+  @param sigstrength The signal strength of this packet.
+  @param options The XBee options for this packet.
+  @param data A pointer that will be set to the data of this packet.
+  @param datalength The length of data in this packet.
+	@return True on success, false on failure.
+  
+  \par Example
+  \code
+  XBeePacket rxPacket;
+  if( XBee_GetPacket( &rxPacket ) )
+  {
+    uint64 src;
+    uint8 sigstrength;
+    uint8* data;
+    uint8 datalength;
+    if( XBee_ReadRX64Packet( &rxPacket, &src, &sigstrength, NULL, &data, &datalength ) )
+    {
+      // then process the new packet here
+      XBee_ResetPacket( &rxPacket ); // and clear it out before reading again
+    }
+  }
+  \endcode
+*/
 bool XBee_ReadRX64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrength, uint8* options, uint8** data, uint8* datalength )
 {
   if( xbp->apiId != XBEE_RX64 )
@@ -414,6 +547,37 @@ bool XBee_ReadRX64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrengt
   return true;
 }
 
+/**	
+  Unpack the info from an incoming IO packet with a 16-bit address.
+  When an XBee module has been given a sample rate, it will sample its IO pins according to their current configuration
+  and send an IO packet with the sample data.  This function will extract the sample info into an array of ints for you.
+  There are 9 IO pins on the XBee modules, so be sure that the array you pass in has room for 9 ints.
+
+  Pass \b NULL into any of the parameters you don't care about.
+  @param xbp The XBeePacket to read from.
+  @param srcAddress A pointer to a uint16 that will be filled up with the 16-bit address of this packet.
+  @param sigstrength A pointer to a uint8 that will be filled up with the signal strength of this packet.
+  @param options A pointer to a uint8 that will be filled up with the XBee options for this packet.
+  @param samples A pointer to an array of ints that will be filled up with the sample values from this packet.
+	@return True on success, false on failure.
+  @see XBeeConfig_SetSampleRate( ), XBeeConfig_SetIOs( )
+  
+  \par Example
+  \code
+  XBeePacket rxPacket;
+  if( XBee_GetPacket( &rxPacket ) )
+  {
+    uint16 src;
+    uint8 sigstrength;
+    int samples[9];
+    if( XBee_ReadIO16Packet( &rxPacket, &src, &sigstrength, NULL, samples ) )
+    {
+      // then process the new packet here
+      XBee_ResetPacket( &rxPacket ); // and clear it out before reading again
+    }
+  }
+  \endcode
+*/
 bool XBee_ReadIO16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrength, uint8* options, int* samples )
 {
   if( xbp->apiId != XBEE_IO16 )
@@ -436,6 +600,37 @@ bool XBee_ReadIO16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrengt
   return true;
 }
 
+/**	
+  Unpack the info from an incoming IO packet with a 64-bit address.
+  When an XBee module has been given a sample rate, it will sample its IO pins according to their current configuration
+  and send an IO packet with the sample data.  This function will extract the sample info into an array of ints for you.
+  There are 9 IO pins on the XBee modules, so be sure that the array you pass in has room for 9 ints.
+
+  Pass \b NULL into any of the parameters you don't care about.
+  @param xbp The XBeePacket to read from.
+  @param srcAddress A pointer to a uint64 that will be filled up with the 16-bit address of this packet.
+  @param sigstrength A pointer to a uint8 that will be filled up with the signal strength of this packet.
+  @param options A pointer to a uint8 that will be filled up with the XBee options for this packet.
+  @param samples A pointer to an array of ints that will be filled up with the sample values from this packet.
+	@return True on success, false on failure.
+  @see XBeeConfig_SetSampleRate( ), XBeeConfig_SetIOs( )
+  
+  \par Example
+  \code
+  XBeePacket rxPacket;
+  if( XBee_GetPacket( &rxPacket ) )
+  {
+    uint64 src;
+    uint8 sigstrength;
+    int samples[9];
+    if( XBee_ReadIO16Packet( &rxPacket, &src, &sigstrength, NULL, samples ) )
+    {
+      // then process the new packet here
+      XBee_ResetPacket( &rxPacket ); // and clear it out before reading again
+    }
+  }
+  \endcode
+*/
 bool XBee_ReadIO64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrength, uint8* options, int* samples )
 {
   if( xbp->apiId != XBEE_RX64 )
@@ -461,6 +656,35 @@ bool XBee_ReadIO64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrengt
   return true;
 }
 
+/**	
+  Unpack the info from an incoming AT Command Response packet.
+  In response to a previous AT Command message, the module will send an AT Command Response message.
+
+  Pass \b NULL into any of the parameters you don't care about.
+  @param xbp The XBeePacket to read from.
+  @param frameID A pointer to a uint64 that will be filled up with the 16-bit address of this packet.
+  @param command A pointer to a uint8 that will be filled up with the signal strength of this packet.
+  @param status A pointer to a uint8 that will be filled up with the XBee options for this packet.
+  @param data A pointer that will be set to the data of this packet.
+	@return True on success, false on failure.
+  
+  \par Example
+  \code
+  XBeePacket rxPacket;
+  if( XBee_GetPacket( &rxPacket ) )
+  {
+    uint8 frameID;
+    char* command;
+    uint8 status;
+    uint8* data;
+    if( XBee_ReadAtResponsePacket( &rxPacket, &frameID, command, &status, &data ) )
+    {
+      // then process the new packet here
+      XBee_ResetPacket( &rxPacket ); // and clear it out before reading again
+    }
+  }
+  \endcode
+*/
 bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char* command, uint8* status, uint8** data )
 {
   if( xbp->apiId != XBEE_ATCOMMANDRESPONSE )
@@ -476,6 +700,36 @@ bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char* command, 
   return true;
 }
 
+/**	
+  Unpack the info from an incoming AT Command Response packet.
+  When a TX is completed, the modules esnds a TX Status message.  This indicates whether the packet was transmitted
+  successfully or not.
+
+  Pass \b NULL into any of the parameters you don't care about.
+  @param xbp The XBeePacket to read from.
+  @param frameID A pointer to a uint64 that will be filled up with the 16-bit address of this packet.
+  @param command A pointer to a uint8 that will be filled up with the signal strength of this packet.
+  @param status A pointer to a uint8 that will be filled up with the XBee options for this packet.
+  @param data A pointer that will be set to the data of this packet.
+	@return True on success, false on failure.
+  
+  \par Example
+  \code
+  XBeePacket rxPacket;
+  if( XBee_GetPacket( &rxPacket ) )
+  {
+    uint8 frameID;
+    char* command;
+    uint8 status;
+    uint8* data;
+    if( XBee_ReadAtResponsePacket( &rxPacket, &frameID, command, &status, &data ) )
+    {
+      // then process the new packet here
+      XBee_ResetPacket( &rxPacket ); // and clear it out before reading again
+    }
+  }
+  \endcode
+*/
 bool XBee_ReadTXStatusPacket( XBeePacket* xbp, uint8* frameID, uint8* status )
 {
   if( xbp->apiId != XBEE_TXSTATUS )
@@ -487,6 +741,22 @@ bool XBee_ReadTXStatusPacket( XBeePacket* xbp, uint8* frameID, uint8* status )
   return true;
 }
 
+/**	
+  Save the configuration changes you've made on the module to memory.
+  When you make configuration changes - setting the module to API mode, or configuring the sample rate, for example - 
+  those changes will be lost when the module restarts.  Call this function to save the current state to non-volatile memory.
+
+  As with the other \b XBeeConfig functions, make sure you're in API mode before trying to use this function.
+	@return True on success, false on failure.
+  @see XBeeConfig_SetPacketApiMode( )
+  
+  \par Example
+  \code
+  XBeeConfig_SetPacketApiMode( );
+  XBeeConfig_SetSampleRate( 100 );
+  XBeeConfig_WriteStateToMemory( );
+  \endcode
+*/
 void XBeeConfig_WriteStateToMemory( void )
 {
   XBeePacket xbp;
@@ -494,6 +764,23 @@ void XBeeConfig_WriteStateToMemory( void )
   XBee_SendPacket( &xbp, 0 );
 }
 
+/**	
+  Set this module's address.
+  When you make configuration changes - setting the module to API mode, or configuring the sample rate, for example - 
+  those changes will be lost when the module restarts.  Call this function to save the current state to non-volatile memory.
+
+  As with the other \b XBeeConfig functions, make sure you're in API mode before trying to use this function.
+  @param address An integer specifying the module's address.
+	@return True on success, false on failure.
+  @see XBeeConfig_SetPacketApiMode( )
+  
+  \par Example
+  \code
+  XBeeConfig_SetPacketApiMode( );
+  XBeeConfig_SetSampleRate( 100 );
+  XBeeConfig_WriteStateToMemory( );
+  \endcode
+*/
 void XBeeConfig_SetAddress( int address )
 {
   XBeePacket xbp;
@@ -506,6 +793,22 @@ void XBeeConfig_SetAddress( int address )
   XBee_SendPacket( &xbp, 4 );
 }
 
+/**	
+  Set this PAN (Personal Area Network) ID.
+  Only modules with matching PAN IDs can communicate with each other.  Unique PAN IDs enable control of which
+  RF packets are received by a module.  Default is \b 0x3332.
+
+  As with the other \b XBeeConfig functions, make sure you're in API mode before trying to use this function.
+  @param id A uint16 specifying the PAN ID.
+	@return True on success, false on failure.
+  @see XBeeConfig_SetPacketApiMode( )
+  
+  \par Example
+  \code
+  XBeeConfig_SetPacketApiMode( );
+  XBeeConfig_SetPanID( 0x1234 );
+  \endcode
+*/
 void XBeeConfig_SetPanID( uint16 id )
 {
   XBeePacket xbp;
@@ -516,6 +819,25 @@ void XBeeConfig_SetPanID( uint16 id )
   XBee_SendPacket( &xbp, 2 );
 }
 
+/**	
+  Set the module's channel.
+  The channel is one of 3 addressing options available to the module - the others are the PAN ID and the
+  destination address.  In order for modules to communicate with each other, the modules must share the same
+  channel number.  Default is \b 0x0C.
+
+  This value can have the range \b 0x0B - \b 0x1A for XBee modules, and \b 0x0C - \b 0x17 for XBee-Pro modules.
+
+  As with the other \b XBeeConfig functions, make sure you're in API mode before trying to use this function.
+  @param channel A uint8 specifying the channel.
+	@return True on success, false on failure.
+  @see XBeeConfig_SetPacketApiMode( )
+  
+  \par Example
+  \code
+  XBeeConfig_SetPacketApiMode( );
+  XBeeConfig_SetChannel( 0x0D );
+  \endcode
+*/
 void XBeeConfig_SetChannel( uint8 channel )
 {
   XBeePacket xbp;
@@ -525,6 +847,23 @@ void XBeeConfig_SetChannel( uint8 channel )
   XBee_SendPacket( &xbp, 1 );
 }
 
+/**	
+  Set the rate at which the module will sample its IO pins.
+  When the sample rate is set, the module will sample all its IO pins according to its current IO configuration and send
+  a packet with the sample data.  If this is set too low and the IO configuration is sampling too many channels, 
+  the RF module won't be able to keep up.  You can also adjust how many samples are gathered before a packet is sent.
+
+  As with the other \b XBeeConfig functions, make sure you're in API mode before trying to use this function.
+  @param rate A uint16 specifying the sample rate in milliseconds.
+	@return True on success, false on failure.
+  @see XBeeConfig_SetIOs( ), XBeeConfig_SetPacketApiMode( )
+  
+  \par Example
+  \code
+  XBeeConfig_SetPacketApiMode( );
+  XBeeConfig_SetPanID( 0x1234 );
+  \endcode
+*/
 void XBeeConfig_SetSampleRate( uint16 rate )
 {
   XBeePacket xbp;
@@ -667,10 +1006,30 @@ int XBeeOsc_PropertyGet( int property, int channel )
     case 0: // active
       value = XBee_GetActive( );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeOsc_Name, XBeeOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, address, ",i", value ); 
+      Osc_CreateMessage( channel, address, ",i", value );
       break;
   }
   return CONTROLLER_OK;
+}
+
+void XBeeTask( void* p )
+{
+ (void)p;
+  XBeePacket myPacket;
+  XBee_ResetPacket( &myPacket );
+  XBeeConfig_SetPacketApiMode( );
+
+  int in[9];
+
+  while( 1 )
+  {
+    if( XBee_GetPacket( &myPacket ) )
+    {
+      XBee_ReadIO16Packet( &myPacket, NULL, NULL, NULL, in );
+      XBee_ResetPacket( &myPacket ); // then clear it out before reading again
+    }
+    Sleep( 5 );
+  }
 }
 
 #endif // OSC
