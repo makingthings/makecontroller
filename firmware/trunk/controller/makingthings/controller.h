@@ -44,6 +44,7 @@
 #include "usb.h"
 #include "network.h"
 #include "serial.h"
+#include "xbee.h"
 #ifdef FACTORY_TESTING
 #include "ctestee.h"
 #include "atestee.h"
