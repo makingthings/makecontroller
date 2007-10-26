@@ -113,6 +113,12 @@ int XBee_GetPacket( XBeePacket* packet )
     if( newChar == -1 )
       break;
 
+    if( newChar == XBEE_PACKET_STARTBYTE && packet->rxState != XBEE_PACKET_RX_START )
+    { // in case we get into a weird state
+      XBee_ResetPacket( packet );
+      return 0;
+    }
+
     switch( packet->rxState )
     {
       case XBEE_PACKET_RX_START:
@@ -120,11 +126,14 @@ int XBee_GetPacket( XBeePacket* packet )
           packet->rxState = XBEE_PACKET_RX_LENGTH_1;
         break;
       case XBEE_PACKET_RX_LENGTH_1:
-        packet->length = newChar << 8;
+        packet->length = newChar;
+        packet->length <<= 8;
         packet->rxState = XBEE_PACKET_RX_LENGTH_2;
         break;
       case XBEE_PACKET_RX_LENGTH_2:
         packet->length += newChar;
+        if( packet->length > XBEE_MAX_PACKET_SIZE ) // in case we somehow get some garbage
+          packet->length = XBEE_MAX_PACKET_SIZE;
         packet->rxState = XBEE_PACKET_RX_PAYLOAD;
         break;
       case XBEE_PACKET_RX_PAYLOAD:
@@ -136,7 +145,13 @@ int XBee_GetPacket( XBeePacket* packet )
       case XBEE_PACKET_RX_CRC:
         packet->crc += newChar;
         packet->rxState = XBEE_PACKET_RX_START;
-        return (packet->crc == 0xFF) ? 1 : 0;
+        if( packet->crc == 0xFF )
+          return 1;
+        else
+        {
+          XBee_ResetPacket( packet );
+          return 0;
+        }
     }
   }
   return 0;
@@ -222,6 +237,7 @@ void XBee_ResetPacket( XBeePacket* packet )
   packet->rxState = XBEE_PACKET_RX_START;
   packet->length = 0;
   packet->index = 0;
+  packet->apiId = 0;
 }
 
 /**	
@@ -301,7 +317,7 @@ void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, u
   ioChannels[7] = XBEE_IO_DISABLED;
   ioChannels[8] = XBEE_IO_DISABLED;
 
-  XBee_SetIOConfig( ioChannels );
+  XBeeConfig_SetIOs( ioChannels );
   \endcode
 */
 void XBeeConfig_SetIOs( int ioconfig[] )
@@ -356,13 +372,20 @@ bool XBee_ReadRX16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrengt
   if( xbp->apiId != XBEE_RX16 )
     return false;
 
-  *srcAddress = xbp->rx16.source[0];
-  *srcAddress <<= 8;
-  *srcAddress += xbp->rx16.source[1];
-  *sigstrength = xbp->rx16.rssi;
-  *options = xbp->rx16.options;
-  *data = xbp->rx16.data;
-  *datalength = xbp->length - 5;
+  if( srcAddress )
+  {
+    *srcAddress = xbp->rx16.source[0];
+    *srcAddress <<= 8;
+    *srcAddress += xbp->rx16.source[1];
+  }
+  if( sigstrength )
+    *sigstrength = xbp->rx16.rssi;
+  if( options )
+    *options = xbp->rx16.options;
+  if( data )
+    *data = xbp->rx16.data;
+  if( datalength )
+    *datalength = xbp->length - 5;
   return true;
 }
 
@@ -372,15 +395,22 @@ bool XBee_ReadRX64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrengt
     return false;
 
   int i;
-  for( i = 0; i < 8; i++ )
+  if( srcAddress )
   {
-    *srcAddress <<= i*8;
-    *srcAddress += xbp->rx64.source[i];
+    for( i = 0; i < 8; i++ )
+    {
+      *srcAddress <<= i*8;
+      *srcAddress += xbp->rx64.source[i];
+    }
   }
-  *sigstrength = xbp->rx64.rssi;
-  *options = xbp->rx64.options;
-  *data = xbp->rx64.data;
-  *datalength = xbp->length - 11;
+  if( sigstrength )
+    *sigstrength = xbp->rx64.rssi;
+  if( options )
+    *options = xbp->rx64.options;
+  if( data )
+    *data = xbp->rx64.data;
+  if( datalength )
+    *datalength = xbp->length - 11;
   return true;
 }
 
@@ -388,14 +418,21 @@ bool XBee_ReadIO16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrengt
 {
   if( xbp->apiId != XBEE_IO16 )
     return false;
-
-  *srcAddress = xbp->io16.source[0];
-  *srcAddress <<= 8;
-  *srcAddress += xbp->io16.source[1];
-  *sigstrength = xbp->io16.rssi;
-  *options = xbp->io16.options;
-  if( !XBee_GetIOValues( xbp, samples ) )
-    return false;
+  if( srcAddress )
+  {
+    *srcAddress = xbp->io16.source[0];
+    *srcAddress <<= 8;
+    *srcAddress += xbp->io16.source[1];
+  }
+  if( sigstrength )
+    *sigstrength = xbp->io16.rssi;
+  if( options )
+    *options = xbp->io16.options;
+  if( samples )
+  {
+    if( !XBee_GetIOValues( xbp, samples ) )
+      return false;
+  }
   return true;
 }
 
@@ -403,17 +440,24 @@ bool XBee_ReadIO64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrengt
 {
   if( xbp->apiId != XBEE_RX64 )
     return false;
-
-  int i;
-  for( i = 0; i < 8; i++ )
+  if( srcAddress )
   {
-    *srcAddress <<= i*8;
-    *srcAddress += xbp->io64.source[i];
+    int i;
+    for( i = 0; i < 8; i++ )
+    {
+      *srcAddress <<= i*8;
+      *srcAddress += xbp->io64.source[i];
+    }
   }
-  *sigstrength = xbp->io64.rssi;
-  *options = xbp->io64.options;
-  if( !XBee_GetIOValues( xbp, samples ) )
-    return false;
+  if( sigstrength )
+    *sigstrength = xbp->io64.rssi;
+  if( options )
+    *options = xbp->io64.options;
+  if( samples )
+  {
+    if( !XBee_GetIOValues( xbp, samples ) )
+      return false;
+  }
   return true;
 }
 
@@ -421,10 +465,14 @@ bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char* command, 
 {
   if( xbp->apiId != XBEE_ATCOMMANDRESPONSE )
     return false;
-  *frameID = xbp->atResponse.frameID;
-  command = (char*)xbp->atResponse.command;
-  *status = xbp->atResponse.status;
-  *data = xbp->atResponse.value;
+  if( frameID )
+    *frameID = xbp->atResponse.frameID;
+  if( command )
+    command = (char*)xbp->atResponse.command;
+  if( status )
+    *status = xbp->atResponse.status;
+  if( data )
+    *data = xbp->atResponse.value;
   return true;
 }
 
@@ -432,8 +480,10 @@ bool XBee_ReadTXStatusPacket( XBeePacket* xbp, uint8* frameID, uint8* status )
 {
   if( xbp->apiId != XBEE_TXSTATUS )
     return false;
-  *frameID = xbp->txStatus.frameID;
-  *status = xbp->txStatus.status;
+  if( frameID )
+    *frameID = xbp->txStatus.frameID;
+  if( status )
+    *status = xbp->txStatus.status;
   return true;
 }
 
