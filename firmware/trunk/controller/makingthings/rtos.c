@@ -25,6 +25,7 @@
 #include "task.h"
 #include "rtos.h"
 #include "string.h"
+#include "queue.h"
 
 void* findTask( char *taskName, int taskID );
 void* iterateForNextTask( void** lowTask, int* lowID, void** highTask, int* highID, int currentID, xList* pxList );
@@ -34,7 +35,7 @@ void* TaskGetNext_internal( void* task );
 
 /** \defgroup RTOS
 	The RTOS subsystem provides a real-time operating system (RTOS) for the MAKE Controller.
-	It implements a scheduler that 
+	Currently, the Make Controller uses FreeRTOS, an open source Real-Time Operating System.  It implements a scheduler that 
 	gives time to "concurrent" tasks according to their given priority.  It allows programmers to 
 	focus on programming each process on the board separately, letting the RTOS 
 	determine when each of those tasks should be given processor time.
@@ -44,7 +45,7 @@ void* TaskGetNext_internal( void* task );
 	other tasks will have a chance to run - otherwise the Controller will lock up. The easiest way to
 	do this is with a call to Sleep( ) when the task is not urgent.
 	
-	The RTOS used on the Make Controller is \b FreeRTOS - more info at http://www.freertos.org
+	More info at http://www.freertos.org - some documentation here used from the FreeRTOS doc by Richard Barry.
 * \ingroup Controller
 * @{
 */
@@ -466,10 +467,99 @@ void TaskSetPriority( void* task, int priority )
   Returns the number of ticks since the scheduler started.
   @return the number of ticks
 */
-
 int TaskGetTickCount( void )
 {
   return xTaskGetTickCount( );
+}
+
+/**	
+	Create a new queue.
+  This allocates storage for the queue.  It's usually a good idea to pass around pointers on queues
+  as opposed to whole data structures, as that's quite resource intensive.
+  @param length The maximum number of items that the queue can contain.
+  @param itemSize The number of bytes each item in the queue will require.  Items are queued by copy, not by reference, 
+  so this is the number of bytes that will be copied for each posted item.  Each item on the queue must be the same size.
+  @return A pointer to the queue on success, 0 if the queue couldn't be created.
+	
+  \par Example
+  \code
+  struct myData
+  {
+    int count;
+    char buffer[100];
+  };
+
+  // create a queue that can hold 5 pointers to myData structures
+  void* myQueue = QueueCreate( 5, sizeof( myData* ) );
+  if( myQueue == 0 )
+    // then the queue can't be used.
+  else
+    // continue processing...
+  \endcode
+*/
+void* QueueCreate( uint length, uint itemSize )
+{
+  return xQueueCreate( length, itemSize );
+}
+
+/**	
+	Post an item onto a queue.
+  The item is queued by copy, not by reference.  This function must not be called from an interrupt service routine.
+  See xQueueSendFromISR () for an alternative which may be used in an ISR.
+  @param queue The queue to send to.
+  @param itemToQueue A pointer to the item to send on the queue.  
+  @param msToWait The maximum number of milliseconds the task should block waiting for space to become available on the queue, 
+  should it already be full.  The call will return immediately if this is set to 0.
+  @return 1 on success, 0 on failure.
+	
+  \par Example
+  \code
+  struct MyData_
+  {
+    int count;
+    char buffer[100];
+  };
+
+  // create a queue that can hold 5 pointers to myData structures
+  void* myQueue = QueueCreate( 5, sizeof( myData* ) );
+  struct MyData_* myData;
+  if( myQueue )
+  {
+    if( QueueSend( myQueue, (void*)&myData, 10 ) ) // wait 10 ms to send if queue is full
+      // then we're all set
+    else
+      // deal with an unsuccessful send
+  }
+  \endcode
+*/
+int QueueSend( void* queue, void* itemToQueue, int msToWait )
+{
+  return xQueueSend( queue, itemToQueue, msToWait );
+}
+
+int QueueReceive( void* queue, void* buffer, int msToWait )
+{
+  return xQueueReceive( queue, buffer, msToWait );
+}
+
+int QueueMessagesWaiting( void* queue )
+{
+  return uxQueueMessagesWaiting( queue );
+}
+
+void QueueDelete( void* queue )
+{
+  vQueueDelete( queue );
+}
+
+int QueueSendFromISR( void* queue, void* itemToSend, int taskPreviouslyWoken )
+{
+  return xQueueSendFromISR( queue, itemToSend, taskPreviouslyWoken );
+}
+
+int QueueReceiveFromISR( void* queue, void* buffer, long* taskWoken )
+{
+  return xQueueReceiveFromISR( queue, buffer, taskWoken );
 }
 
 /** @}

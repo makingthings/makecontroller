@@ -48,4 +48,12 @@ void* Malloc( int size );
 void* MallocWait( int size, int interval );
 void Free( void* memory );
 
+void* QueueCreate( uint length, uint itemSize );
+int QueueSend( void* queue, void* itemToQueue, int msToWait );
+int QueueReceive( void* queue, void* buffer, int msToWait );
+int QueueMessagesWaiting( void* queue );
+void QueueDelete( void* queue );
+int QueueSendFromISR( void* queue, void* itemToSend, int taskPreviouslyWoken );
+int QueueReceiveFromISR( void* queue, void* buffer, long* taskWoken );
+
 #endif
