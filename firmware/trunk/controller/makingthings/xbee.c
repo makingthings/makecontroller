@@ -22,13 +22,16 @@
 
 static bool XBee_GetIOValues( XBeePacket* packet, int *inputs );
 void XBeeTask( void* p );
+#define XBEEPACKET_Q_SIZE 5
 
 typedef struct
 {
   void* XBeeTaskPtr;
-} XBee_;
+  XBeePacket* packets[XBEEPACKET_Q_SIZE];
+  int packetIndex;
+} XBeeSubsystem;
 
-XBee_* XBee;
+XBeeSubsystem* XBee;
 
 /** \defgroup XBee
 	Communicate with XBee (Zigbee) wireless modules via the Make Controller's serial port.
@@ -83,12 +86,19 @@ int XBee_SetActive( int state )
       if( CONTROLLER_OK != Serial_SetActive( 1 ) )
         return CONTROLLER_ERROR_SUBSYSTEM_INACTIVE;
 
-      XBee = MallocWait( sizeof( XBee_ ), 100 );
+      XBee = MallocWait( sizeof( XBeeSubsystem ), 100 );
       #ifdef CROSSWORKS_BUILD
-      XBee->XBeeTaskPtr = TaskCreate( XBeeTask, "XBee", 800, 0, 3 );
+      XBee->XBeeTaskPtr = TaskCreate( XBeeTask, "XBee", 1500, 0, 3 );
       #else
       XBee->XBeeTaskPtr = TaskCreate( XBeeTask, "XBee", 1000, 0, 3 );
       #endif // CROSSWORKS_BUILD
+      XBee->packetIndex = 0;
+      int i;
+      for( i = 0; i < XBEEPACKET_Q_SIZE; i ++ )
+      {
+        XBee->packets[i] = MallocWait( sizeof( XBeePacket ), 100 );
+        XBee_ResetPacket( XBee->packets[i] );
+      }
     }
   }
   else
@@ -99,6 +109,7 @@ int XBee_SetActive( int state )
       TaskDelete( XBee->XBeeTaskPtr );
       XBee->XBeeTaskPtr = NULL;
     }
+
     if( XBee )
     {
       Free( XBee );
@@ -956,7 +967,7 @@ static bool XBee_GetIOValues( XBeePacket* packet, int *inputs )
 #include "osc.h"
 
 static char* XBeeOsc_Name = "xbee";
-static char* XBeeOsc_PropertyNames[] = { "active", 0 }; // must have a trailing 0
+static char* XBeeOsc_PropertyNames[] = { "active", "io16", "rx16", 0 }; // must have a trailing 0
 
 int XBeeOsc_PropertySet( int property, char* typedata, int channel );
 int XBeeOsc_PropertyGet( int property, int channel );
@@ -999,15 +1010,58 @@ int XBeeOsc_PropertySet( int property, char* typedata, int channel )
 
 int XBeeOsc_PropertyGet( int property, int channel )
 {
-  int value = 0;
   char address[ OSC_SCRATCH_SIZE ];
   switch ( property )
   {
     case 0: // active
-      value = XBee_GetActive( );
+    {
+      int value = XBee_GetActive( );
       snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeOsc_Name, XBeeOsc_PropertyNames[ property ] ); 
       Osc_CreateMessage( channel, address, ",i", value );
       break;
+    }
+    case 1: // io16
+    {
+      int in[9];
+      XBeePacket* pkt;
+      int i;
+      for( i = 0; i < XBEEPACKET_Q_SIZE; i++ )
+      {
+        pkt = XBee->packets[i];
+        if( pkt->apiId == XBEE_IO16 )
+        {
+          if( XBee_ReadIO16Packet( pkt, NULL, NULL, NULL, in ) )
+          {
+            snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeOsc_Name, XBeeOsc_PropertyNames[ property ] ); 
+            Osc_CreateMessage( channel, address, ",iiiiiiiii", in[0], in[1], in[2], in[3], in[4], in[5], in[6], in[7], in[8] );
+          }
+        }
+      }
+      break;
+    }
+    case 2: // rx16
+    {
+      XBeePacket* pkt;
+      uint16 srcAddr;
+      uint8 sigStrength;
+      uint8 opts;
+      uint8* data;
+      uint8 datalen;
+      int i;
+      for( i = 0; i < XBEEPACKET_Q_SIZE; i++ )
+      {
+        pkt = XBee->packets[i];
+        if( pkt->apiId == XBEE_RX16 )
+        {
+          if( XBee_ReadRX16Packet( pkt, &srcAddr, &sigStrength, &opts, &data, &datalen ) )
+          {
+            snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeOsc_Name, XBeeOsc_PropertyNames[ property ] ); 
+            Osc_CreateMessage( channel, address, ",iiib", srcAddr, sigStrength, opts, data, datalen );
+          }
+        }
+      }
+      break;
+    }
   }
   return CONTROLLER_OK;
 }
@@ -1015,20 +1069,22 @@ int XBeeOsc_PropertyGet( int property, int channel )
 void XBeeTask( void* p )
 {
  (void)p;
-  XBeePacket myPacket;
-  XBee_ResetPacket( &myPacket );
   XBeeConfig_SetPacketApiMode( );
-
-  int in[9];
+  XBeePacket* pkt;
 
   while( 1 )
   {
-    if( XBee_GetPacket( &myPacket ) )
+    pkt = XBee->packets[XBee->packetIndex];
+    if( XBee_GetPacket( pkt ) )
     {
-      XBee_ReadIO16Packet( &myPacket, NULL, NULL, NULL, in );
-      XBee_ResetPacket( &myPacket ); // then clear it out before reading again
+      if( ++XBee->packetIndex >= XBEEPACKET_Q_SIZE )
+        XBee->packetIndex = 0;
+      
+      pkt = XBee->packets[XBee->packetIndex];
+      if( pkt->index != 0 )
+        XBee_ResetPacket( pkt );
     }
-    Sleep( 5 );
+    Sleep( 1 );
   }
 }
 
