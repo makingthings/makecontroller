@@ -28,6 +28,7 @@
 
 #define OSC_SCRATCH_SIZE    100
 
+#define OSC_CHANNEL_COUNT    3
 #define OSC_CHANNEL_UDP 0
 #define OSC_CHANNEL_USB 1
 #define OSC_CHANNEL_TCP 2

@@ -34,5 +34,6 @@ int AnalogIn_GetValueWait( int index );
 /* OSC Interface */
 const char* AnalogInOsc_GetName( void );
 int AnalogInOsc_ReceiveMessage( int channel, char* message, int length );
+int AnalogInOsc_Async( int channel );
 
 #endif

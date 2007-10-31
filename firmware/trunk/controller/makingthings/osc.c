@@ -91,7 +91,6 @@
 #include <ctype.h>
 #include <stdarg.h>
 
-#define OSC_CHANNEL_COUNT    3
 #define OSC_MAX_MESSAGE_IN   200
 #define OSC_MAX_MESSAGE_OUT  600
 
@@ -113,7 +112,7 @@ typedef struct OscSubsystem_
 {
   const char* name;
   int (*receiveMessage)( int channel, char* buffer, int length );  
-  int (*poll)( int channel );
+  int (*async)( int channel );
 }OscSubsystem;
 
 typedef struct Osc_
@@ -126,6 +125,7 @@ typedef struct Osc_
   void* UsbTaskPtr;
   void* UdpTaskPtr;
   void* TcpTaskPtr;
+  void* AsyncTaskPtr;
   OscChannel* channel[ OSC_CHANNEL_COUNT ];
   OscSubsystem* subsystem[ OSC_SUBSYSTEM_COUNT ];
   int registeredSubsystems;
@@ -154,6 +154,7 @@ float Osc_ReadFloat( char* buffer );
 void Osc_UdpTask( void* parameters );
 void Osc_UsbTask( void* parameters );
 void Osc_TcpTask( void* parameters );
+void Osc_AsyncTask( void* p );
 int Osc_UdpPacketSend( char* packet, int length, int replyAddress, int replyPort );
 int Osc_UsbPacketSend( char* packet, int length, int replyAddress, int replyPort );
 int Osc_TcpPacketSend( char* packet, int length, int replyAddress, int replyPort );
@@ -220,6 +221,12 @@ void Osc_SetActive( int state )
     	Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1000, (void*)OSC_CHANNEL_USB, 3 );
     	#endif // CROSSWORKS_BUILD
     #endif // MAKE_CTRL_USB
+
+      #ifdef CROSSWORKS_BUILD
+    	Osc->AsyncTaskPtr = TaskCreate( Osc_AsyncTask, "OSC-ASYNC", 600, 0, 3 );
+    	#else
+    	Osc->AsyncTaskPtr = TaskCreate( Osc_AsyncTask, "OSC-ASYNC", 800, 0, 3 );
+    	#endif // CROSSWORKS_BUILD
 
     vSemaphoreCreateBinary( Osc->scratch1Semaphore );
     vSemaphoreCreateBinary( Osc->scratch2Semaphore );
@@ -425,6 +432,36 @@ int Osc_UsbPacketSend( char* packet, int length, int replyAddress, int replyPort
 }
 #endif // MAKE_CTRL_USB
 
+void Osc_AsyncTask( void* p )
+{
+  (void)p;
+  int channel;
+  int i;
+  OscSubsystem* sub;
+  int newMsgs = 0;
+  while( 1 )
+  {
+    channel = System_GetAsyncDestination( );
+    if( channel >= 0 )
+    {
+      for( i = 0; i < Osc->registeredSubsystems; i++ )
+      {
+        sub = Osc->subsystem[ i ];
+        if( sub->async != NULL )
+          newMsgs += (sub->async)( channel );   
+      }
+      if( newMsgs > 0 )
+      {
+        Osc_SendPacket( channel );
+        newMsgs = 0;
+      }
+      Sleep( 1 );
+    }
+    else
+      Sleep( 500 );
+  }
+}
+
 int Osc_SetReplyAddress( int channel, int replyAddress )
 {
   if ( channel < 0 || channel >= OSC_CHANNEL_COUNT )
@@ -456,7 +493,7 @@ void Osc_ResetChannel( OscChannel* ch )
   ch->messages = 0;
 }
 
-int Osc_RegisterSubsystem( const char *name, int (*subsystem_ReceiveMessage)( int channel, char* buffer, int length ), int (*subsystem_Poll)( int channel ) )
+int Osc_RegisterSubsystem( const char *name, int (*subsystem_ReceiveMessage)( int channel, char* buffer, int length ), int (*subsystem_Async)( int channel ) )
 {
   int subsystem = Osc->registeredSubsystems;
   if ( Osc->registeredSubsystems++ > OSC_SUBSYSTEM_COUNT )
@@ -466,7 +503,7 @@ int Osc_RegisterSubsystem( const char *name, int (*subsystem_ReceiveMessage)( in
   OscSubsystem* sub = Osc->subsystem[ subsystem ];
   sub->name = name;
   sub->receiveMessage = subsystem_ReceiveMessage;
-  sub->poll = subsystem_Poll;
+  sub->async = subsystem_Async;
   return CONTROLLER_OK;
 }
 

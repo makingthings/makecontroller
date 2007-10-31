@@ -24,6 +24,8 @@
 #ifndef ANALOGIN_INTERNAL_H
 #define ANALOGIN_INTERNAL_H
 
+#include "config.h"
+
 #define ANALOGIN_CHANNELS 8
 
 struct AnalogIn_
@@ -32,6 +34,9 @@ struct AnalogIn_
   xSemaphoreHandle semaphore;
   xSemaphoreHandle doneSemaphore;
   int channelUsers[ ANALOGIN_CHANNELS ];
+  #ifdef OSC
+  int lastValues[ ANALOGIN_CHANNELS ];
+  #endif
 };
 
 #endif

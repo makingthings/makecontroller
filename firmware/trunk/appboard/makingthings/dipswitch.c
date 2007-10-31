@@ -26,6 +26,7 @@
 #include "dipswitch.h"
 #include "spi.h"
 #include "config.h"
+#include "stdio.h"
 
 #define DIPSWITCH_DEVICE 2
 
@@ -33,6 +34,7 @@ int DipSwitch_Start( void );
 int DipSwitch_Stop( void );
 
 int DipSwitch_users;
+int DipSwitch_lastValue;
 
 /** \defgroup DipSwitch DIP Switch
 * The DIP Switch subsystem reads values in from the 8 position DIP Switch (0 - 255) on the Application Board.
@@ -197,11 +199,6 @@ int DipSwitchOsc_ReceiveMessage( int channel, char* message, int length )
   return CONTROLLER_OK;
 }
 
-int DipSwitchOsc_Poll( )
-{
-  return CONTROLLER_OK;
-}
-
 // Set the index LED, property with the value
 int DipSwitchOsc_PropertySet( int property, int value )
 {
@@ -229,6 +226,23 @@ int DipSwitchOsc_PropertyGet( int property )
   }
   
   return value;
+}
+
+int DipSwitchOsc_Async( int channel )
+{
+  int newMsgs = 0;
+  char address[ OSC_SCRATCH_SIZE ];
+  int value = DipSwitch_GetValue( );
+  
+  if( value != DipSwitch_lastValue )
+  {
+    DipSwitch_lastValue = value;
+    snprintf( address, OSC_SCRATCH_SIZE, "/%s/value", DipSwitchOsc_Name );
+    Osc_CreateMessage( channel, address, ",i", value );
+    newMsgs++;
+  }
+
+  return newMsgs;
 }
 
 #endif
