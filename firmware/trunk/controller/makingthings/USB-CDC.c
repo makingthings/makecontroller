@@ -1,5 +1,5 @@
 /*
-	FreeRTOS.org V4.1.0 - copyright (C) 2003-2006 Richard Barry.
+	FreeRTOS.org V4.6.0 - Copyright (C) 2003-2007 Richard Barry.
 
 	This file is part of the FreeRTOS.org distribution.
 
@@ -27,6 +27,9 @@
 	See http://www.FreeRTOS.org for documentation, latest information, license
 	and contact details.  Please ensure to read the configuration and relevant
 	port sections of the online documentation.
+
+	Also see http://www.SafeRTOS.com for an IEC 61508 compliant version along
+	with commercial development and support options.
 	***************************************************************************
 */
 
@@ -53,7 +56,6 @@
 #include "queue.h"
 #include "USB-CDC.h"
 #include "descriptors.h"
-
 
 #define usbNO_BLOCK ( ( portTickType ) 0 )
 
@@ -754,7 +756,7 @@ static void vDetachUSBInterface( void)
 
 static void vInitUSBInterface( void )
 {
-extern void ( vUSB_ISR )( void );
+extern void ( vUSB_ISR_Wrapper )( void );
 
 	/* Create the queue used to communicate between the USB ISR and task. */
 	xUSBInterruptQueue = xQueueCreate( usbQUEUE_LENGTH + 1, sizeof( xISRStatus * ) );
@@ -829,7 +831,7 @@ extern void ( vUSB_ISR )( void );
 
 	/* Enable the USB interrupts - other interrupts get enabled as the 
 	enumeration process progresses. */
-	AT91F_AIC_ConfigureIt( AT91C_ID_UDP, usbINTERRUPT_PRIORITY, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL, ( void (*)( void ) ) vUSB_ISR );
+	AT91F_AIC_ConfigureIt( AT91C_ID_UDP, usbINTERRUPT_PRIORITY, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL, ( void (*)( void ) ) vUSB_ISR_Wrapper );
 	AT91C_BASE_AIC->AIC_IECR = 0x1 << AT91C_ID_UDP;
 
 

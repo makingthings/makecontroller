@@ -40,7 +40,7 @@
 Serial2_ Serial2[ 2 ];
 int Serial2_Users;
 
-void Serial2_Isr( void ) __attribute__ ((naked));
+extern void ( Serial2Isr_Wrapper )( void );
 
 static int Serial2_Init( int index );
 static int Serial2_Deinit( int index );
@@ -529,7 +529,7 @@ int Serial2_Init( int index )
   /* Disable the interrupt on the interrupt controller */					
   AT91C_BASE_AIC->AIC_IDCR = mask ;										
   /* Save the interrupt handler routine pointer and the interrupt priority */	
-  AT91C_BASE_AIC->AIC_SVR[ id ] = (unsigned int)Serial2_Isr;			
+  AT91C_BASE_AIC->AIC_SVR[ id ] = (unsigned int)Serial2Isr_Wrapper;			
   /* Store the Source Mode Register */									
   AT91C_BASE_AIC->AIC_SMR[ id ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;				
   /* Clear the interrupt on the interrupt controller */					
@@ -545,6 +545,7 @@ int Serial2_Init( int index )
 
 int Serial2_Deinit( int index )
 {
+  (void)index;
   return CONTROLLER_OK;
 }
 
@@ -732,7 +733,7 @@ int Serial2Osc_IntPropertySet( int index, int property, int value )
 // Get the index, property
 int Serial2Osc_IntPropertyGet( int index, int property )
 {
-  int value;
+  int value = 0;
   switch ( property )
   {
     case 0:

@@ -1,5 +1,5 @@
 /*
-	FreeRTOS.org V4.1.0 - Copyright (C) 2003-2006 Richard Barry.
+	FreeRTOS.org V4.6.0 - Copyright (C) 2003-2007 Richard Barry.
 
 	This file is part of the FreeRTOS.org distribution.
 
@@ -27,7 +27,16 @@
 	See http://www.FreeRTOS.org for documentation, latest information, license
 	and contact details.  Please ensure to read the configuration and relevant
 	port sections of the online documentation.
+
+	Also see http://www.SafeRTOS.com for an IEC 61508 compliant version along
+	with commercial development and support options.
 	***************************************************************************
+*/
+
+/*
+Changes since V4.3.1:
+
+	+ Added xTaskGetSchedulerState() function.
 */
 
 #ifndef TASK_H
@@ -40,7 +49,7 @@
  * MACROS AND DEFINITIONS
  *----------------------------------------------------------*/
 
-#define tskKERNEL_VERSION_NUMBER "V4.1.0"
+#define tskKERNEL_VERSION_NUMBER "V4.4.0"
 
 /**
  * task. h
@@ -128,6 +137,10 @@ typedef struct xTIME_OUT
  */
 #define taskENABLE_INTERRUPTS()		portENABLE_INTERRUPTS()
 
+/* Definitions returned by xTaskGetSchedulerState(). */
+#define taskSCHEDULER_NOT_STARTED	0
+#define taskSCHEDULER_RUNNING		1
+#define taskSCHEDULER_SUSPENDED		2
 
 /*-----------------------------------------------------------
  * TASK CREATION API
@@ -351,7 +364,7 @@ void vTaskDelay( portTickType xTicksToDelay );
  * \defgroup vTaskDelayUntil vTaskDelayUntil
  * \ingroup TaskCtrl
  */
-void vTaskDelayUntil( portTickType *pxPreviousWakeTime, portTickType xTimeIncrement );
+void vTaskDelayUntil( portTickType * const pxPreviousWakeTime, portTickType xTimeIncrement );
 
 /**
  * task. h
@@ -881,7 +894,7 @@ inline void vTaskIncrementTick( void );
  * portTICK_RATE_MS can be used to convert kernel ticks into a real time
  * period.
  */
-void vTaskPlaceOnEventList( xList *pxEventList, portTickType xTicksToWait );
+void vTaskPlaceOnEventList( const xList * const pxEventList, portTickType xTicksToWait );
 
 /*
  * THIS FUNCTION MUST NOT BE USED FROM APPLICATION CODE.  IT IS AN
@@ -898,7 +911,7 @@ void vTaskPlaceOnEventList( xList *pxEventList, portTickType xTicksToWait );
  * @return pdTRUE if the task being removed has a higher priority than the task
  * making the call, otherwise pdFALSE.
  */
-signed portBASE_TYPE xTaskRemoveFromEventList( const xList *pxEventList );
+signed portBASE_TYPE xTaskRemoveFromEventList( const xList * const pxEventList );
 
 /*
  * THIS FUNCTION MUST NOT BE USED FROM APPLICATION CODE.  IT IS AN
@@ -931,19 +944,31 @@ xTaskHandle xTaskGetCurrentTaskHandle( void );
 /*
  * Capture the current time status for future reference.
  */
-void vTaskSetTimeOutState( xTimeOutType *pxTimeOut );
+void vTaskSetTimeOutState( xTimeOutType * const pxTimeOut );
 
 /*
  * Compare the time status now with that previously captured to see if the
  * timeout has expired.
  */
-portBASE_TYPE xTaskCheckForTimeOut( xTimeOutType *pxTimeOut, portTickType *pxTicksToWait );
+portBASE_TYPE xTaskCheckForTimeOut( xTimeOutType * const pxTimeOut, portTickType * const pxTicksToWait );
 
 /*
  * Shortcut used by the queue implementation to prevent unnecessary call to
  * taskYIELD();
  */
 void vTaskMissedYield( void );
+
+/*
+ * Returns the scheduler state as taskSCHEDULER_RUNNING,
+ * taskSCHEDULER_NOT_STARTED or taskSCHEDULER_SUSPENDED.
+ */
+portBASE_TYPE xTaskGetSchedulerState( void );
+
+/*
+ * Raises the priority of the mutex holder to that of the calling task should
+ * the mutex holder have a priority less than the calling task.
+ */
+void vTaskPriorityInherit( xTaskHandle * const pxMutexHolder );
 
 /*
  * Added by MakingThings
@@ -968,6 +993,11 @@ xList* GetOverflowDelayedTaskList( void );
 xList* GetListOfTasksWaitingTermination( void );
 xList* GetSuspendedTaskList( void );
 
+/*
+ * Set the priority of a task back to its proper priority in the case that it
+ * inherited a higher priority while it was holding a semaphore.
+ */
+void vTaskPriorityDisinherit( xTaskHandle * const pxMutexHolder );
 
 #endif /* TASK_H */
 

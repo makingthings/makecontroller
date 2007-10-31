@@ -1,5 +1,5 @@
 /*
-	FreeRTOS.org V4.1.0 - Copyright (C) 2003-2006 Richard Barry.
+	FreeRTOS.org V4.6.0 - Copyright (C) 2003-2007 Richard Barry.
 
 	This file is part of the FreeRTOS.org distribution.
 
@@ -27,6 +27,9 @@
 	See http://www.FreeRTOS.org for documentation, latest information, license 
 	and contact details.  Please ensure to read the configuration and relevant 
 	port sections of the online documentation.
+
+	Also see http://www.SafeRTOS.com for an IEC 61508 compliant version along
+	with commercial development and support options.
 	***************************************************************************
 */
 
@@ -50,6 +53,13 @@ typedef xQueueHandle xSemaphoreHandle;
  * The queue length is 1 as this is a binary semaphore.  The data size is 0
  * as we don't want to actually store any data - we just want to know if the
  * queue is empty or full.
+ *
+ * This type of semaphore can be used for pure synchronisation between tasks or
+ * between an interrupt and a task.  The semaphore need not be given back once
+ * obtained, so one task/interrupt can continuously 'give' the semaphore while
+ * another continuously 'takes' the semaphore.  For this reason this type of
+ * semaphore does not use a priority inheritance mechanism.  For an alternative
+ * that does use priority inheritance see xSemaphoreCreateMutex().
  *
  * @param xSemaphore Handle to the created semaphore.  Should be of type xSemaphoreHandle.
  *
@@ -202,7 +212,7 @@ typedef xQueueHandle xSemaphoreHandle;
  * \defgroup xSemaphoreGive xSemaphoreGive
  * \ingroup Semaphores
  */
-#define xSemaphoreGive( xSemaphore )				xQueueSend( ( xQueueHandle ) xSemaphore, NULL, semGIVE_BLOCK_TIME )
+#define xSemaphoreGive( xSemaphore )				xQueueGenericSend( ( xQueueHandle ) xSemaphore, NULL, semGIVE_BLOCK_TIME, queueSEND_TO_BACK )
 
 /**
  * semphr. h
@@ -214,6 +224,9 @@ typedef xQueueHandle xSemaphoreHandle;
  *
  * <i>Macro</i> to  release a semaphore.  The semaphore must of been created using 
  * vSemaphoreCreateBinary (), and obtained using xSemaphoreTake ().
+ *
+ * Mutex type semaphores (those created using a call to xSemaphoreCreateMutex())
+ * must not be used with this macro.
  *
  * This macro can be used from an ISR.
  *
@@ -282,8 +295,52 @@ typedef xQueueHandle xSemaphoreHandle;
  * \defgroup xSemaphoreGiveFromISR xSemaphoreGiveFromISR
  * \ingroup Semaphores
  */
-#define xSemaphoreGiveFromISR( xSemaphore, xTaskPreviouslyWoken )			xQueueSendFromISR( ( xQueueHandle ) xSemaphore, NULL, xTaskPreviouslyWoken )
+#define xSemaphoreGiveFromISR( xSemaphore, xTaskPreviouslyWoken )			xQueueGenericSendFromISR( ( xQueueHandle ) xSemaphore, NULL, xTaskPreviouslyWoken, queueSEND_TO_BACK )
+
+/**
+ * semphr. h
+ * <pre>xSemaphoreCreateMutex( xSemaphoreHandle xSemaphore )</pre>
+ *
+ * <i>Macro</i> that implements a mutex semaphore by using the existing queue 
+ * mechanism.
+ *
+ * This type of semaphore uses a priority inheritance mechanism so a task 
+ * 'taking' a semaphore MUST ALWAYS 'give' the semaphore back once the 
+ * semaphore it is no longer required.  
+ *
+ * Mutex type semaphores cannot be used from within interrupt service routines.  
+ *
+ * See xSemaphoreCreateBinary() for an alternative implemnetation that can be 
+ * used for pure synchronisation (where one task or interrupt always 'gives' the 
+ * semaphore and another always 'takes' the semaphore) and from within interrupt 
+ * service routines.
+ *
+ * @param xSemaphore Handle to the created mutex semaphore.  Should be of type 
+ *		xSemaphoreHandle.
+ *
+ * Example usage:
+ <pre>
+ xSemaphoreHandle xSemaphore;
+
+ void vATask( void * pvParameters )
+ {
+    // Semaphore cannot be used before a call to vSemaphoreCreateBinary ().
+    // This is a macro so pass the variable in directly.
+    vSemaphoreCreateMutex( xSemaphore );
+
+    if( xSemaphore != NULL )
+    {
+        // The semaphore was created successfully.
+        // The semaphore can now be used.  
+    }
+ }
+ </pre>
+ * \defgroup vSemaphoreCreateMutex vSemaphoreCreateMutex
+ * \ingroup Semaphores
+ */
+#define xSemaphoreCreateMutex() xQueueCreateMutex()
 
 
-#endif
+#endif /* SEMAPHORE_H */
+
 

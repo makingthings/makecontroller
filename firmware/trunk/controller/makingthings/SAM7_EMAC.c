@@ -1,5 +1,5 @@
 /*
-	FreeRTOS.org V4.1.0 - Copyright (C) 2003-2006 Richard Barry.
+	FreeRTOS.org V4.6.0 - Copyright (C) 2003-2007 Richard Barry.
 
 	This file is part of the FreeRTOS.org distribution.
 
@@ -27,6 +27,9 @@
 	See http://www.FreeRTOS.org for documentation, latest information, license
 	and contact details.  Please ensure to read the configuration and relevant
 	port sections of the online documentation.
+
+	Also see http://www.SafeRTOS.com for an IEC 61508 compliant version along
+	with commercial development and support options.
 	***************************************************************************
 */
 
@@ -165,7 +168,6 @@ one not be immediately available when trying to transmit a frame. */
 /* The Atmel header file only defines the TX frame length mask. */
 #define emacRX_LENGTH_FRAME			( 0xfff )
 
-
 /*-----------------------------------------------------------*/
 
 /* Buffer written to by the EMAC DMA.  Must be aligned as described by the
@@ -191,9 +193,9 @@ static volatile AT91S_RxTdDescriptor xRxDescriptors[ NB_RX_BUFFERS ];
 /* See the header file for descriptions of public functions. */
 
 /*
- * Prototype for the EMAC interrupt function - called by the asm wrapper.
+ * Prototype for the EMAC interrupt function.
  */
-void vEMACISR( void ) __attribute__ ((naked));
+void vEMACISR_Wrapper( void ) __attribute__ ((naked));
 
 /*
  * Initialise both the Tx and Rx descriptors used by the EMAC.
@@ -704,7 +706,7 @@ static void prvSetupEMACInterrupt( void )
 			AT91C_BASE_EMAC->EMAC_IER = AT91C_EMAC_RCOMP | AT91C_EMAC_TCOMP;
 
 			/* Enable the interrupts in the AIC. */
-			AT91F_AIC_ConfigureIt( AT91C_ID_EMAC, emacINTERRUPT_LEVEL, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL, ( void (*)( void ) ) vEMACISR );
+			AT91F_AIC_ConfigureIt( AT91C_ID_EMAC, emacINTERRUPT_LEVEL, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL, ( void (*)( void ) ) vEMACISR_Wrapper );
             AT91C_BASE_AIC->AIC_IECR = 0x1 << AT91C_ID_EMAC;
 		}
 		portEXIT_CRITICAL();

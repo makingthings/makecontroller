@@ -1,5 +1,5 @@
 /*
-	FreeRTOS.org V4.1.0 - Copyright (C) 2003-2006 Richard Barry.
+	FreeRTOS.org V4.6.0 - Copyright (C) 2003-2007 Richard Barry.
 
 	This file is part of the FreeRTOS.org distribution.
 
@@ -27,6 +27,9 @@
 	See http://www.FreeRTOS.org for documentation, latest information, license 
 	and contact details.  Please ensure to read the configuration and relevant 
 	port sections of the online documentation.
+
+	Also see http://www.SafeRTOS.com for an IEC 61508 compliant version along
+	with commercial development and support options.
 	***************************************************************************
 */
 
@@ -44,6 +47,13 @@
 
 	+ The assembler statements are now included in a single asm block rather
 	  than each line having its own asm block.
+
+	Changes from V4.5.0
+
+	+ Removed the portENTER_SWITCHING_ISR() and portEXIT_SWITCHING_ISR() macros
+	  and replaced them with portYIELD_FROM_ISR() macro.  Application code 
+	  should now make use of the portSAVE_CONTEXT() and portRESTORE_CONTEXT()
+	  macros as per the V4.5.1 demo code.
 */
 
 #ifndef PORTMACRO_H
@@ -121,7 +131,7 @@ extern volatile unsigned portLONG ulCriticalNesting;					\
 																		\
 	/* Restore the return address. */									\
 	"LDR		LR, [LR, #+60]									\n\t"	\
-                                    \
+																		\
 	/* And return - correcting the offset in the LR to obtain the */	\
 	/* correct address. */												\
 	"SUBS	PC, LR, #4											\n\t"	\
@@ -146,10 +156,7 @@ extern volatile unsigned portLONG ulCriticalNesting;					\
 	"SUB	SP, SP, #4											\n\t"	\
 	"LDMIA	SP!,{R0}											\n\t"	\
 																		\
-  /* Fix for GCC bug */ \
-  "SUB	R0, R0, #0x8		 \n\t"  \
-                                                            \
-  /* Push the return address onto the stack. */						\
+	/* Push the return address onto the stack. */						\
 	"STMDB	R0!, {LR}											\n\t"	\
 																		\
 	/* Now we have saved LR we can use it instead of R0. */				\
@@ -181,37 +188,8 @@ extern volatile unsigned portLONG ulCriticalNesting;					\
 }
 
 
-/*-----------------------------------------------------------
- * ISR entry and exit macros.  These are only required if a task switch
- * is required from the ISR.
- *----------------------------------------------------------*/
-
-
-#define portENTER_SWITCHING_ISR()										\
-	/* Save the context of the interrupted task. */						\
-	portSAVE_CONTEXT();													\
-																		\
-	/* We don't know the stack requirements for the ISR, so the frame */\
-	/* pointer will be set to the top of the task stack, and the stack*/\
-	/* pointer left where it is.  The IRQ stack will get used for any */\
-	/* functions calls made by this ISR. */								\
-	asm volatile ( "SUB		R11, LR, #4" );							\
-	{
-
-#define portEXIT_SWITCHING_ISR( SwitchRequired )						\
-		/* If a switch is required then we just need to call */			\
-		/* vTaskSwitchContext() as the context has already been */		\
-		/* saved. */													\
-		if( SwitchRequired )											\
-		{																\
-			vTaskSwitchContext();										\
-		}																\
-	}																	\
-	/* Restore the context of which ever task is now the highest */		\
-	/* priority that is ready to run. */								\
-	portRESTORE_CONTEXT();
-
-#define portYIELD()					asm volatile ( "SWI" );	
+#define portYIELD_FROM_ISR()		vTaskSwitchContext()
+#define portYIELD()					asm volatile ( "SWI" )
 /*-----------------------------------------------------------*/
 
 

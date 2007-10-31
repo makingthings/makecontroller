@@ -41,19 +41,18 @@ extern struct AnalogIn_* AnalogIn;
 
 /*-----------------------------------------------------------*/
 
-/* The ISR can cause a context switch so is declared naked. */
-void AnalogInIsr( void ) __attribute__ ((naked));
+/* The interrupt entry point is naked so we can control the context saving. */
+void AnalogInIsr_Wrapper( void ) __attribute__ ((naked));
+
+/* The interrupt handler function must be separate from the entry function
+to ensure the correct stack frame is set up. */
+void AnalogInIsr_Handler( void );
 
 /*-----------------------------------------------------------*/
 
 
-void AnalogInIsr( void )
+void AnalogInIsr_Handler( void )
 {
-	/* This ISR can cause a context switch.  Therefore a call to the 
-	portENTER_SWITCHING_ISR() macro is made.  This must come BEFORE any 
-	stack variable declarations. */
-	portENTER_SWITCHING_ISR();
-
   portCHAR cTaskWokenByPost = pdFALSE; 
 
   int status = AT91C_BASE_ADC->ADC_SR;
@@ -66,7 +65,26 @@ void AnalogInIsr( void )
 	/* Clear AIC to complete ISR processing */
 	AT91C_BASE_AIC->AIC_EOICR = 0;
 
-	/* Do a task switch if needed */
-	portEXIT_SWITCHING_ISR( cTaskWokenByPost );
+	/* If a task was woken by either a frame being received then we may need to 
+	switch to another task.  If the unblocked task was of higher priority then
+	the interrupted task it will then execute immediately that the ISR
+	completes. */
+	if( cTaskWokenByPost )
+	{
+		portYIELD_FROM_ISR();
+	}
+}
+
+void  AnalogInIsr_Wrapper( void )
+{
+	/* Save the context of the interrupted task. */
+	portSAVE_CONTEXT();
+
+	/* Call the handler to do the work.  This must be a separate
+	function to ensure the stack frame is set up correctly. */
+	AnalogInIsr_Handler();
+
+	/* Restore the context of whichever task will execute next. */
+	portRESTORE_CONTEXT();
 }
 
