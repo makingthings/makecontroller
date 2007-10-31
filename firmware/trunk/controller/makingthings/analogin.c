@@ -54,7 +54,7 @@ static int AnalogIn_Deinit( void );
 
 static int AnalogIn_GetIo( int index );
 
-extern void ( AnalogInIsr )( void );
+extern void ( AnalogInIsr_Wrapper )( void );
 
 struct AnalogIn_* AnalogIn;
 
@@ -359,7 +359,7 @@ int AnalogIn_Init()
   xSemaphoreTake( AnalogIn->doneSemaphore, 0 );
 
   // Initialize the interrupts
-  // WAS AT91F_AIC_ConfigureIt( AT91C_ID_ADC, 3, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL, ( void (*)( void ) ) AnalogInIsr );
+  // WAS AT91F_AIC_ConfigureIt( AT91C_ID_ADC, 3, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL, ( void (*)( void ) ) AnalogInIsr_Wrapper );
   // Which is defined at the bottom of the AT91SAM7X256.h file
   unsigned int mask ;													
 																			
@@ -368,7 +368,7 @@ int AnalogIn_Init()
   /* Disable the interrupt on the interrupt controller */					
   AT91C_BASE_AIC->AIC_IDCR = mask ;										
   /* Save the interrupt handler routine pointer and the interrupt priority */	
-  AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_ADC ] = (unsigned int)AnalogInIsr;			
+  AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_ADC ] = (unsigned int)AnalogInIsr_Wrapper;			
   /* Store the Source Mode Register */									
   AT91C_BASE_AIC->AIC_SMR[ AT91C_ID_ADC ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;				
   /* Clear the interrupt on the interrupt controller */					

@@ -33,7 +33,7 @@
 
 Serial_ Serial;
 
-void Serial_Isr( void ) __attribute__ ((naked));
+extern void ( SerialIsr_Wrapper )( void );
 
 static int Serial_Init( void );
 static int Serial_Deinit( void );
@@ -431,7 +431,7 @@ int Serial_Init()
   /* Disable the interrupt on the interrupt controller */					
   AT91C_BASE_AIC->AIC_IDCR = mask ;										
   /* Save the interrupt handler routine pointer and the interrupt priority */	
-  AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_US0 ] = (unsigned int)Serial_Isr;			
+  AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_US0 ] = (unsigned int)SerialIsr_Wrapper;			
   /* Store the Source Mode Register */									
   AT91C_BASE_AIC->AIC_SMR[ AT91C_ID_US0 ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;				
   /* Clear the interrupt on the interrupt controller */					

@@ -1,5 +1,5 @@
 /*
-	FreeRTOS.org V4.1.0 - Copyright (C) 2003-2006 Richard Barry.
+	FreeRTOS.org V4.6.0 - Copyright (C) 2003-2007 Richard Barry.
 
 	This file is part of the FreeRTOS.org distribution.
 
@@ -27,6 +27,9 @@
 	See http://www.FreeRTOS.org for documentation, latest information, license
 	and contact details.  Please ensure to read the configuration and relevant
 	port sections of the online documentation.
+
+	Also see http://www.SafeRTOS.com for an IEC 61508 compliant version along
+	with commercial development and support options.
 	***************************************************************************
 */
 
@@ -38,13 +41,17 @@
  * See heap_1.c and heap_3.c for alternative implementations, and the memory
  * management pages of http://www.FreeRTOS.org for more information.
  */
-
 #include <stdlib.h>
 
 #include "FreeRTOS.h"
 #include "task.h"
 
 /* Setup the correct byte alignment mask for the defined byte alignment. */
+
+#if portBYTE_ALIGNMENT == 8
+	#define heapBYTE_ALIGNMENT_MASK ( ( size_t ) 0x0007 )
+#endif
+
 #if portBYTE_ALIGNMENT == 4
 	#define heapBYTE_ALIGNMENT_MASK	( ( size_t ) 0x0003 )
 #endif
@@ -52,7 +59,6 @@
 #if portBYTE_ALIGNMENT == 2
 	#define heapBYTE_ALIGNMENT_MASK	( ( size_t ) 0x0001 )
 #endif
-
 
 #if portBYTE_ALIGNMENT == 1
 	#define heapBYTE_ALIGNMENT_MASK	( ( size_t ) 0x0000 )
@@ -204,12 +210,6 @@ void *pvReturn = NULL;
 					prvInsertBlockIntoFreeList( ( pxNewBlockLink ) );
 				}
 			}
-
-      if ( pvReturn == 0 )
-      {
-        pvReturn++;
-        pvReturn--;
-      }
 		}
 	}
 	xTaskResumeAll();

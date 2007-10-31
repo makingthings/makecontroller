@@ -1,5 +1,5 @@
 /*
-	FreeRTOS.org V4.1.0 - Copyright (C) 2003-2006 Richard Barry.
+	FreeRTOS.org V4.6.0 - Copyright (C) 2003-2007 Richard Barry.
 
 	This file is part of the FreeRTOS.org distribution.
 
@@ -19,14 +19,17 @@
 
 	A special exception to the GPL can be applied should you wish to distribute
 	a combined work that includes FreeRTOS.org, without being obliged to provide
-	the source code for any proprietary components.  See the licensing section 
+	the source code for any proprietary components.  See the licensing section
 	of http://www.FreeRTOS.org for full details of how and when the exception
 	can be applied.
 
 	***************************************************************************
-	See http://www.FreeRTOS.org for documentation, latest information, license 
-	and contact details.  Please ensure to read the configuration and relevant 
+	See http://www.FreeRTOS.org for documentation, latest information, license
+	and contact details.  Please ensure to read the configuration and relevant
 	port sections of the online documentation.
+
+	Also see http://www.SafeRTOS.com for an IEC 61508 compliant version along
+	with commercial development and support options.
 	***************************************************************************
 */
 
@@ -34,8 +37,8 @@
 #define INC_FREERTOS_H
 
 
-/* 
- * Include the generic headers required for the FreeRTOS port being used. 
+/*
+ * Include the generic headers required for the FreeRTOS port being used.
  */
 #include <stddef.h>
 
@@ -55,7 +58,7 @@
 
 
 /*
- * Check all the required application specific macros have been defined. 
+ * Check all the required application specific macros have been defined.
  * These macros are application specific and (as downloaded) are defined
  * within FreeRTOSConfig.h.
  */
@@ -108,4 +111,19 @@
 	#error Missing definition:  configUSE_16_BIT_TICKS should be defined in FreeRTOSConfig.h as either 1 or 0.  See the Configuration section of the FreeRTOS API documentation for details.
 #endif
 
+#ifndef configUSE_MUTEXES
+	#define configUSE_MUTEXES 0
 #endif
+
+#if ( configUSE_MUTEXES == 1 )
+	/* xTaskGetCurrentTaskHandle is used by the priority inheritance mechanism
+	within the mutex implementation so must be available if mutexes are used. */
+	#undef INCLUDE_xTaskGetCurrentTaskHandle
+	#define INCLUDE_xTaskGetCurrentTaskHandle 1
+#else
+	#ifndef INCLUDE_xTaskGetCurrentTaskHandle
+		#define INCLUDE_xTaskGetCurrentTaskHandle 0
+	#endif
+#endif
+
+#endif /* INC_FREERTOS_H */

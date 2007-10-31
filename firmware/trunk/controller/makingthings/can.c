@@ -66,9 +66,8 @@ static int Can_Start( void );
 static int Can_Stop( void );
 
 static int Can_Init( void );
-static int Can_Deinit( void );
 
-extern void ( CanIsr )( void );
+extern void ( CanIsr_Wrapper )( void );
 
 struct Can_ Can;
 
@@ -297,7 +296,7 @@ int Can_Init()
 
   // Initialize the interrupts
 
-  // WAS AT91F_AIC_ConfigureIt( AT91C_ID_ADC, 3, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL, ( void (*)( void ) ) CanIsr );
+  // WAS AT91F_AIC_ConfigureIt( AT91C_ID_ADC, 3, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL, ( void (*)( void ) ) CanIsr_Wrapper );
   // Which is defined at the bottom of the AT91SAM7X256.h file
   unsigned int mask ;													
 																			
@@ -306,7 +305,7 @@ int Can_Init()
   // Disable the interrupt on the interrupt controller					
   AT91C_BASE_AIC->AIC_IDCR = mask ;										
   // Save the interrupt handler routine pointer and the interrupt priority
-  AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_CAN ] = (unsigned int)CanIsr;			
+  AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_CAN ] = (unsigned int)CanIsr_Wrapper;			
   // Store the Source Mode Register		
   AT91C_BASE_AIC->AIC_SMR[ AT91C_ID_CAN ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;				
   // Clear the interrupt on the interrupt controller
@@ -317,11 +316,6 @@ int Can_Init()
 	AT91C_BASE_AIC->AIC_IECR = mask;
 */
 
-  return CONTROLLER_OK;
-}
-
-int Can_Deinit( )
-{
   return CONTROLLER_OK;
 }
 
