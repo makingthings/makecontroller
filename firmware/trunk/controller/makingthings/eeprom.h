@@ -63,4 +63,5 @@ int Eeprom_Read( int address, uchar* buffer, int count );
 #define EEPROM_SYSTEM_NAME            EEPROM_SYSTEM_BASE + 96 // this is 100 bytes long
 #define EEPROM_WEBSERVER_ENABLED      EEPROM_SYSTEM_BASE + 196
 #define EEPROM_OSC_UDP_SEND_PORT      EEPROM_SYSTEM_BASE + 200
+#define EEPROM_OSC_ASYNC_DEST      EEPROM_SYSTEM_BASE + 204
 #endif

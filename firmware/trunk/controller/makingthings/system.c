@@ -33,6 +33,8 @@
 int PortFreeMemory( void );
 void StackAuditTask( void* p );
 void kill( void );
+#define ASYNC_INIT -10
+#define ASYNC_INACTIVE -1
 
 typedef struct System_
 {
@@ -41,6 +43,7 @@ typedef struct System_
   void* StackAuditPtr;
   #ifdef OSC
   char scratch1[ OSC_SCRATCH_SIZE ];
+  int asyncDestination;
   #endif // OSC
 } SystemS;
 
@@ -67,6 +70,8 @@ int System_SetActive( int state )
       System = MallocWait( sizeof( SystemS ), 100 );
       System->name[0] = 0;
       System->StackAuditPtr = NULL;
+      System->asyncDestination = ASYNC_INIT;
+      System->asyncDestination = System_GetAsyncDestination( );
     }
     return CONTROLLER_OK;
   }
@@ -232,6 +237,7 @@ int System_SetReset( int sure )
 
   return 1;
 }
+
 /** @}
 */
 
@@ -279,6 +285,36 @@ void StackAuditTask( void* p )
     
     Sleep( 5 );
   }
+}
+
+void System_SetAsyncDestination( int dest )
+{
+  System_SetActive( 1 );
+  if( dest < ASYNC_INACTIVE || dest > (OSC_CHANNEL_COUNT-1) )
+    return;
+  else
+  {
+    if( System->asyncDestination != dest )
+    {
+      System->asyncDestination = dest;
+      Eeprom_Write( EEPROM_OSC_ASYNC_DEST, (uchar*)&dest, 4 );
+    }
+  }
+}
+
+int System_GetAsyncDestination( )
+{
+  System_SetActive( 1 );
+  if( System->asyncDestination == ASYNC_INIT )
+  {
+    int async;
+    Eeprom_Read( EEPROM_OSC_ASYNC_DEST, (uchar*)&async, 4 );
+    if( async >= 0 && async <= (OSC_CHANNEL_COUNT-1) )
+      System->asyncDestination = async;
+    else
+      System->asyncDestination = OSC_CHANNEL_USB;
+  }
+  return System->asyncDestination;
 }
 
 /** \defgroup SystemOSC System - OSC
@@ -381,7 +417,8 @@ void StackAuditTask( void* p )
 static char* SystemOsc_Name = "system";
 static char* SystemOsc_PropertyNames[] = { "active", "freememory", "samba", "reset", 
                                             "serialnumber", "version",
-                                            "name", "info-internal", "info", "stack-audit", "task-report", 0 }; // must have a trailing 0
+                                            "name", "info-internal", "info", "stack-audit", 
+                                            "task-report", "autosend-usb", "autosend-udp", 0 }; // must have a trailing 0
 
 int SystemOsc_PropertySet( int property, char* typedata, int channel );
 int SystemOsc_PropertyGet( int property, int channel );
@@ -412,11 +449,11 @@ int SystemOsc_Poll( )
 // Set the index LED, property with the value
 int SystemOsc_PropertySet( int property, char* typedata, int channel )
 {
+  int value = 0;
   switch ( property )
   {
     case 0: // active
     {
-      int value;
       int count = Osc_ExtractData( typedata, "i", &value );
       if ( count != 1 )
         return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
@@ -426,7 +463,6 @@ int SystemOsc_PropertySet( int property, char* typedata, int channel )
     }
     case 2: // samba
     {
-      int value;
       int count = Osc_ExtractData( typedata, "i", &value );
       if ( count != 1 )
         return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
@@ -436,7 +472,6 @@ int SystemOsc_PropertySet( int property, char* typedata, int channel )
     }
     case 3: // reset
     {
-      int value;
       int count = Osc_ExtractData( typedata, "i", &value );
       if ( count != 1 )
         return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
@@ -446,7 +481,6 @@ int SystemOsc_PropertySet( int property, char* typedata, int channel )
     }
     case 4: // serialnumber
     {
-      int value;
       int count = Osc_ExtractData( typedata, "i", &value );
       if ( count != 1 )
         return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
@@ -466,12 +500,39 @@ int SystemOsc_PropertySet( int property, char* typedata, int channel )
     }
     case 9: // stack-audit
     {
-      int value;
       int count = Osc_ExtractData( typedata, "i", &value );
       if ( count != 1 )
         return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
 
       System_StackAudit( value );
+      break;
+    }
+    case 11: // autosend-usb
+    {
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
+      if( value )
+        System_SetAsyncDestination( OSC_CHANNEL_USB );
+      else
+      {
+        if( System_GetAsyncDestination( ) == OSC_CHANNEL_USB )
+          System_SetAsyncDestination( ASYNC_INACTIVE );
+      }
+      break;
+    }
+    case 12: // autosend-udp
+    {
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
+      if( value )
+        System_SetAsyncDestination( OSC_CHANNEL_UDP );
+      else
+      {
+        if( System_GetAsyncDestination( ) == OSC_CHANNEL_UDP )
+          System_SetAsyncDestination( ASYNC_INACTIVE );
+      }
       break;
     }
   }
@@ -595,6 +656,16 @@ int SystemOsc_PropertyGet( int property, int channel )
       }
       break;
     }
+    case 11: // autosend-usb
+      value = ( System_GetAsyncDestination( ) == OSC_CHANNEL_USB ) ? 1 : 0;
+      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, System->scratch1, ",i", value ); 
+      break;
+    case 12: // autosend-udp
+      value = ( System_GetAsyncDestination( ) == OSC_CHANNEL_UDP ) ? 1 : 0;
+      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, System->scratch1, ",i", value ); 
+      break;
   }
   
   return CONTROLLER_OK;

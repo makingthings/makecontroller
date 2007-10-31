@@ -270,5 +270,6 @@ void XBeeConfig_SetEncryptionKey( void );
 // XBee OSC stuff
 const char* XBeeOsc_GetName( void );
 int XBeeOsc_ReceiveMessage( int channel, char* message, int length );
+int XBeeOsc_Async( int channel );
 
 #endif // XBEE_H

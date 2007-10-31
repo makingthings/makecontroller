@@ -38,6 +38,8 @@ int System_SetReset( int sure );
 int System_SetSerialNumber( int serial );
 int System_SetName( char* name );
 char* System_GetName( void );
+void System_SetAsyncDestination( int dest );
+int System_GetAsyncDestination( void );
 
 void System_StackAudit( int on_off );
 

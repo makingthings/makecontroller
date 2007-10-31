@@ -35,6 +35,6 @@ int DipSwitch_GetValue( void );
 
 const char* DipSwitchOsc_GetName( void );
 int DipSwitchOsc_ReceiveMessage( int channel, char* message, int length );
-int DipSwitchOsc_Poll( void );
+int DipSwitchOsc_Async( int channel );
 
 #endif

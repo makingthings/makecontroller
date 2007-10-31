@@ -503,4 +503,25 @@ int AnalogInOsc_PropertyGet( int index, int property )
   return value;
 }
 
+int AnalogInOsc_Async( int channel )
+{
+  int newMsgs = 0;
+  char address[ OSC_SCRATCH_SIZE ];
+  int i;
+  int value;
+  for( i = 0; i < ANALOGIN_CHANNELS; i ++ )
+  {
+    value = AnalogIn_GetValue( i );
+    if( value != AnalogIn->lastValues[i] )
+    {
+      AnalogIn->lastValues[i] = value;
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%d/value", AnalogInOsc_Name, i );
+      Osc_CreateMessage( channel, address, ",i", value );
+      newMsgs++;
+    }
+  }
+
+  return newMsgs;
+}
+
 #endif // OSC
