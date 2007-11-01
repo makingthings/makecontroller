@@ -36,6 +36,7 @@ struct AnalogIn_
   int channelUsers[ ANALOGIN_CHANNELS ];
   #ifdef OSC
   int lastValues[ ANALOGIN_CHANNELS ];
+  uint autosend;
   #endif
 };
 

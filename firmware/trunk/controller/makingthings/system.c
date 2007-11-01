@@ -44,6 +44,7 @@ typedef struct System_
   #ifdef OSC
   char scratch1[ OSC_SCRATCH_SIZE ];
   int asyncDestination;
+  int autoInterval;
   #endif // OSC
 } SystemS;
 
@@ -72,6 +73,8 @@ int System_SetActive( int state )
       System->StackAuditPtr = NULL;
       System->asyncDestination = ASYNC_INIT;
       System->asyncDestination = System_GetAsyncDestination( );
+      System->autoInterval = ASYNC_INIT;
+      System->autoInterval = System_GetAutoSendInterval( );
     }
     return CONTROLLER_OK;
   }
@@ -317,6 +320,36 @@ int System_GetAsyncDestination( )
   return System->asyncDestination;
 }
 
+void System_SetAutoSendInterval( int interval )
+{
+  System_SetActive( 1 );
+  if( interval < 0 || interval > 5000 )
+    return;
+  else
+  {
+    if( System->autoInterval != interval )
+    {
+      System->autoInterval = interval;
+      Eeprom_Write( EEPROM_OSC_ASYNC_INTERVAL, (uchar*)&interval, 4 );
+    }
+  }
+}
+
+int System_GetAutoSendInterval( )
+{
+  System_SetActive( 1 );
+  if( System->autoInterval == ASYNC_INIT )
+  {
+    int interval;
+    Eeprom_Read( EEPROM_OSC_ASYNC_INTERVAL, (uchar*)&interval, 4 );
+    if( interval >= 0 && interval <= 5000 )
+      System->autoInterval = interval;
+    else
+      System->autoInterval = 10;
+  }
+  return System->autoInterval;
+}
+
 /** \defgroup SystemOSC System - OSC
   System controls many of the logistics of the Controller Board via OSC.
   \ingroup OSC
@@ -418,7 +451,7 @@ static char* SystemOsc_Name = "system";
 static char* SystemOsc_PropertyNames[] = { "active", "freememory", "samba", "reset", 
                                             "serialnumber", "version",
                                             "name", "info-internal", "info", "stack-audit", 
-                                            "task-report", "autosend-usb", "autosend-udp", 0 }; // must have a trailing 0
+                                            "task-report", "autosend-usb", "autosend-udp", "autosend-interval", 0 }; // must have a trailing 0
 
 int SystemOsc_PropertySet( int property, char* typedata, int channel );
 int SystemOsc_PropertyGet( int property, int channel );
@@ -533,6 +566,15 @@ int SystemOsc_PropertySet( int property, char* typedata, int channel )
         if( System_GetAsyncDestination( ) == OSC_CHANNEL_UDP )
           System_SetAsyncDestination( ASYNC_INACTIVE );
       }
+      break;
+    }
+    case 13: // autosend-interval
+    {
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
+
+      System_SetAutoSendInterval( value );
       break;
     }
   }
@@ -666,6 +708,11 @@ int SystemOsc_PropertyGet( int property, int channel )
       snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
       Osc_CreateMessage( channel, System->scratch1, ",i", value ); 
       break;
+    case 13: // autosend-interval
+      value = System_GetAutoSendInterval( );
+      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, System->scratch1, ",i", value ); 
+      break; 
   }
   
   return CONTROLLER_OK;

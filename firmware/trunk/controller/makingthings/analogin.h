@@ -31,6 +31,10 @@ int AnalogIn_GetValue( int index );
 int AnalogIn_GetValueMulti( int mask, int values[] );
 int AnalogIn_GetValueWait( int index );
 
+void AnalogIn_AutoSendInit( void );
+bool AnalogIn_GetAutoSend( int index );
+void AnalogIn_SetAutoSend( int index, bool onoff );
+
 /* OSC Interface */
 const char* AnalogInOsc_GetName( void );
 int AnalogInOsc_ReceiveMessage( int channel, char* message, int length );

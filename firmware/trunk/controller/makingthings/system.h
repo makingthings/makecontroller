@@ -40,6 +40,8 @@ int System_SetName( char* name );
 char* System_GetName( void );
 void System_SetAsyncDestination( int dest );
 int System_GetAsyncDestination( void );
+void System_SetAutoSendInterval( int interval );
+int System_GetAutoSendInterval( void );
 
 void System_StackAudit( int on_off );
 
