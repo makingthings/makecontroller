@@ -533,7 +533,7 @@ int AnalogInOsc_PropertyGet( int index, int property )
       value = AnalogIn_GetValue( index );
       break;
     case 2: // autosend
-      AnalogIn_GetAutoSend( index );
+      value = AnalogIn_GetAutoSend( index );
       break;
   }
   
