@@ -223,9 +223,9 @@ void Osc_SetActive( int state )
     #endif // MAKE_CTRL_USB
 
       #ifdef CROSSWORKS_BUILD
-    	Osc->AsyncTaskPtr = TaskCreate( Osc_AsyncTask, "OSC-ASYNC", 600, 0, 3 );
+    	Osc->AsyncTaskPtr = TaskCreate( Osc_AsyncTask, "OSC-ASYNC", 600, 0, 2 );
     	#else
-    	Osc->AsyncTaskPtr = TaskCreate( Osc_AsyncTask, "OSC-ASYNC", 800, 0, 3 );
+    	Osc->AsyncTaskPtr = TaskCreate( Osc_AsyncTask, "OSC-ASYNC", 800, 0, 2 );
     	#endif // CROSSWORKS_BUILD
 
     vSemaphoreCreateBinary( Osc->scratch1Semaphore );
@@ -455,10 +455,10 @@ void Osc_AsyncTask( void* p )
         Osc_SendPacket( channel );
         newMsgs = 0;
       }
-      Sleep( 1 );
+      Sleep( System_GetAutoSendInterval( ) );
     }
     else
-      Sleep( 500 );
+      Sleep( 1000 );
   }
 }
 

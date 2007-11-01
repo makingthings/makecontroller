@@ -28,6 +28,7 @@ typedef struct
 {
   XBeePacket* packets[XBEEPACKET_Q_SIZE];
   int packetIndex;
+  bool autosend;
 } XBeeSubsystem;
 
 XBeeSubsystem* XBee;
@@ -87,6 +88,7 @@ int XBee_SetActive( int state )
 
       XBee = MallocWait( sizeof( XBeeSubsystem ), 100 );
       XBee->packetIndex = 0;
+      XBee->autosend = XBee_GetAutoSend( true );
       int i;
       for( i = 0; i < XBEEPACKET_Q_SIZE; i ++ )
       {
@@ -872,6 +874,28 @@ void XBeeConfig_SetSampleRate( uint16 rate )
   XBee_SendPacket( &xbp, 2 );
 }
 
+bool XBee_GetAutoSend( bool init )
+{
+  XBee_SetActive( 1 );
+  if( init )
+  {
+    int autosend;
+    Eeprom_Read( EEPROM_XBEE_AUTOSEND, (uchar*)&autosend, 4 );
+    XBee->autosend = (autosend == 1 ) ? 1 : 0;
+  }
+  return XBee->autosend;
+}
+
+void XBee_SetAutoSend( bool onoff )
+{
+  XBee_SetActive( 1 );  
+  if( XBee->autosend != onoff )
+  {
+    XBee->autosend = onoff;
+    Eeprom_Write( EEPROM_XBEE_AUTOSEND, (uchar*)&onoff, 4 );
+  }
+}
+
 /** @}
 */
 
@@ -954,7 +978,7 @@ static bool XBee_GetIOValues( XBeePacket* packet, int *inputs )
 #include "osc.h"
 
 static char* XBeeOsc_Name = "xbee";
-static char* XBeeOsc_PropertyNames[] = { "active", "io16", "rx16", 0 }; // must have a trailing 0
+static char* XBeeOsc_PropertyNames[] = { "active", "io16", "rx16", "autosend", 0 }; // must have a trailing 0
 
 int XBeeOsc_PropertySet( int property, char* typedata, int channel );
 int XBeeOsc_PropertyGet( int property, int channel );
@@ -989,6 +1013,16 @@ int XBeeOsc_PropertySet( int property, char* typedata, int channel )
         return Osc_SubsystemError( channel, XBeeOsc_Name, "Incorrect data - need an int" );
 
       XBee_SetActive( value );
+      break;
+    }
+    case 3: // autosend
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, XBeeOsc_Name, "Incorrect data - need an int" );
+
+      XBee_SetAutoSend( value );
       break;
     }
   }
@@ -1049,6 +1083,13 @@ int XBeeOsc_PropertyGet( int property, int channel )
       }
       break;
     }
+    case 3: // autosend
+    {
+      int value = XBee_GetAutoSend( false );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeOsc_Name, XBeeOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );
+      break;
+    }
   }
   return CONTROLLER_OK;
 }
@@ -1059,6 +1100,9 @@ int XBeeOsc_Async( int channel )
   char address[ OSC_SCRATCH_SIZE ];
   XBeePacket* pkt;
   int newMsgs = 0;
+
+  if( !XBee_GetAutoSend( false ) )
+    return newMsgs;
 
   pkt = XBee->packets[XBee->packetIndex];
   if( XBee_GetPacket( pkt ) )

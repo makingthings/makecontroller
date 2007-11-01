@@ -46,6 +46,8 @@
 #define ANALOGIN_2_IO IO_PB29
 #define ANALOGIN_3_IO IO_PB30
 
+#define AUTOSENDSAVE 0xDF
+
 static int AnalogIn_Start( int index );
 static int AnalogIn_Stop( int index );
 
@@ -103,6 +105,7 @@ int AnalogIn_SetActive( int index, int state )
       int i;
       for( i = 0; i < ANALOGIN_CHANNELS; i++ )
         AnalogIn->channelUsers[ i ] = 0;
+      AnalogIn_AutoSendInit( );
     }
 
     return AnalogIn_Start( index );
@@ -273,6 +276,34 @@ int AnalogIn_GetValueWait( int index )
   return value;
 }
 
+void AnalogIn_AutoSendInit( )
+{
+  int autosend;
+  Eeprom_Read( EEPROM_ANALOGIN_AUTOSEND, (uchar*)&autosend, 4 );
+  if( !((autosend >> 16) & 0xFF) == AUTOSENDSAVE )
+    AnalogIn->autosend = AUTOSENDSAVE << 16;
+  else
+    AnalogIn->autosend = autosend;
+}
+
+bool AnalogIn_GetAutoSend( int index )
+{
+  return (AnalogIn->autosend >> index) & 0x01;
+}
+
+void AnalogIn_SetAutoSend( int index, bool onoff )
+{
+  if( ((AnalogIn->autosend >> index) & 0x01) != onoff )
+  {
+    int mask = (1 << index);
+    if( onoff )
+      AnalogIn->autosend |= mask;
+    else
+      AnalogIn->autosend &= ~mask;
+    
+    Eeprom_Write( EEPROM_ANALOGIN_AUTOSEND, (uchar*)&AnalogIn->autosend, 4 );
+  }
+}
 
 /** @}
 */
@@ -449,7 +480,7 @@ int AnalogIn_GetIo( int index )
 // Need a list of property names
 // MUST end in zero
 static char* AnalogInOsc_Name = "analogin";
-static char* AnalogInOsc_PropertyNames[] = { "active", "value", 0 }; // must have a trailing 0
+static char* AnalogInOsc_PropertyNames[] = { "active", "value", "autosend", 0 }; // must have a trailing 0
 
 int AnalogInOsc_PropertySet( int index, int property, int value );
 int AnalogInOsc_PropertyGet( int index, int property );
@@ -481,7 +512,10 @@ int AnalogInOsc_PropertySet( int index, int property, int value )
   {
     case 0: 
       AnalogIn_SetActive( index, value );
-      break;      
+      break;
+    case 2: // autosend 
+      AnalogIn_SetAutoSend( index, value );
+      break;    
   }
   return CONTROLLER_OK;
 }
@@ -498,6 +532,9 @@ int AnalogInOsc_PropertyGet( int index, int property )
     case 1:
       value = AnalogIn_GetValue( index );
       break;
+    case 2: // autosend
+      AnalogIn_GetAutoSend( index );
+      break;
   }
   
   return value;
@@ -511,6 +548,8 @@ int AnalogInOsc_Async( int channel )
   int value;
   for( i = 0; i < ANALOGIN_CHANNELS; i ++ )
   {
+    if( !AnalogIn_GetAutoSend( i ) )
+      continue;
     value = AnalogIn_GetValue( i );
     if( value != AnalogIn->lastValues[i] )
     {

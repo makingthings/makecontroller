@@ -266,6 +266,9 @@ void XBeeConfig_SetIOs( int ioconfig[] );
 void XBeeConfig_EnableEncryption( bool state );
 void XBeeConfig_SetEncryptionKey( void );
 
+bool XBee_GetAutoSend( bool init );
+void XBee_SetAutoSend( bool onoff );
+
 
 // XBee OSC stuff
 const char* XBeeOsc_GetName( void );
