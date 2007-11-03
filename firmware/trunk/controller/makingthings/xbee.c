@@ -67,6 +67,11 @@ XBeeSubsystem* XBee;
   The XBee Packet API allows for much more flexible and powerful communication with the modules.  It uses AT commands to 
   configure the XBee module itself, and then a handful of Zigbee specified packet types can be sent and received.  
   See \ref XBeePacketTypes for details on these packet types.  
+	
+	The \b XBeeConfig_ functions are convenient wrappers around some of the most common AT commands you might want to send.  For
+	any of the other AT commands, check the XBee documentation and create them using XBee_CreateATCommandPacket( ).  These will always 
+	be send to the XBee module attached to the Make Controller.  The \b XBee_ functions deal with sending and receiving 
+	messages to other XBee modules not connected to the Make Controller.
 
   \ingroup Controller
   @{
@@ -200,9 +205,10 @@ int XBee_GetPacket( XBeePacket* packet )
 
 /**	
   Send an XBee packet.
-
-  Check the possible \ref XBeePacketTypes that can be sent, and populate the packet structures
-  appropriately before sending them.
+	Use the following functions to create packets to be sent:
+	- XBee_CreateTX16Packet( ) - create a data packet to be sent out wirelessly with a 16-bit address
+	- XBee_CreateTX64Packet( ) - create a data packet to be sent out wirelessly with a 64-bit address
+	- XBee_CreateATCommandPacket( ) - create an AT command to configure an attached XBee module
   @param packet The XBeePacket to send.
   @param datalength The length of the actual data being sent (not including headers, options, etc.)
 	@return Zero on success.
@@ -210,17 +216,10 @@ int XBee_GetPacket( XBeePacket* packet )
 
   \par Example
   \code
-  XBeePacket myPacket;
-  packet->apiId = XBEE_TX16; // we're going to send a packet with a 16-bit address
-  packet->tx16.frameID = 0x00;
-  packet->tx16.destination[0] = 0xFF; // 0xFFFF is the broadcast address
-  packet->tx16.destination[1] = 0xFF;
-  packet->tx16.options = 0x00; // no options
-  packet->tx16.data[0] = 'A'; // now pack in the data
-  packet->tx16.data[1] = 'B';
-  packet->tx16.data[2] = 'C';
-  // finally, send the packet indicating that we're sending 3 bytes of data - "ABC"
-  XBee_SendPacket( &myPacket, 3 ); 
+  XBeePacket txPacket;
+  uint8 data[] = "ABC"; // 3 bytes of data
+  XBee_CreateTX16Packet( &txPacket, 0, 0, 0, data, 3 );
+  XBee_SendPacket( &txPacket, 3 );
   \endcode
 */
 int XBee_SendPacket( XBeePacket* packet, int datalength )
@@ -284,7 +283,21 @@ void XBee_ResetPacket( XBeePacket* packet )
 /**	
   Set a module into AT command mode.  
   Because XBee modules need to wait 1 second after sending the command sequence before they're 
-  ready to receive any AT commands, this function will block for about a second.
+  ready to receive any AT commands, this function will block for about a second.  When it's restarted, 
+	the XBee module will revert to transparent serial port mode, 
+	unless you make a call to XBeeConfig_WriteStateToMemory( ).
+	
+  \par Example
+  \code
+	MyTask( void * p )
+	{
+		XBeeConfig_SetPacketApiMode( ); // initialize the module to be in API mode
+		while( 1 )
+		{
+			// your task here.
+		}
+	}
+  \endcode
 */
 void XBeeConfig_SetPacketApiMode( )
 {
@@ -302,8 +315,8 @@ void XBeeConfig_SetPacketApiMode( )
 
 /**	
   A convenience function for creating an AT command packet.
-  Because XBee modules need to wait 1 second after sending the command sequence before they're 
-  ready to receive any AT commands, this function will block for about a second.
+  Make sure you're in API mode before creating & sending packets - see XBeeConfig_SetPacketApiMode( ).
+	See the XBee documentation for the official list of AT commands that the XBee modules understand.
   @param packet The XBeePacket to create.
   @param frameID The frame ID for this packet that subsequent response/status messages can refer to.
   @param cmd The 2-character AT command.
@@ -315,8 +328,8 @@ void XBeeConfig_SetPacketApiMode( )
   \code
   XBeePacket txPacket;
   uint8 params[5];
-  params[0] = 0x14; // only 1 byte of data in this case
-  XBee_CreateATCommandPacket( &txPacket, 0, "IR", params, 1 );
+  params = 0x14; // only 1 byte of data in this case
+  XBee_CreateATCommandPacket( &txPacket, 0, "IR", &params, 1 ); // set the sampling rate of the IO pins
   XBee_SendPacket( &txPacket, 1 );
   \endcode
 */
@@ -335,13 +348,14 @@ void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, u
 /**	
   Configure the IO settings on an XBee module.
   IO pins can have one of 5 values:
-  - XBEE_IO_DISABLED
-  - XBEE_IO_ANALOGIN - Analog input (10-bit)
-  - XBEE_IO_DIGITALIN - Digital input
-  - XBEE_IO_DIGOUT_HIGH - Digital out high
-  - XBEE_IO_DIGOUT_LOW - Digital out low
+  - \b XBEE_IO_DISABLED
+  - \b XBEE_IO_ANALOGIN - Analog input (10-bit)
+  - \b XBEE_IO_DIGITALIN - Digital input
+  - \b XBEE_IO_DIGOUT_HIGH - Digital out high
+  - \b XBEE_IO_DIGOUT_LOW - Digital out low
 
-  Only channels 0-5 can be analog inputs - channels 6-8 can only operate as digital ins or outs.
+  There are 9 IO pins on the XBee modules.  Only channels 0-5 can be analog inputs - 
+	channels 6-8 can only operate as digital ins or outs.
   @param ioconfig An array of 9 int values specifying the behavior of that pin.
 	@return 1 if IO values were successfully retrieved, otherwise zero.
   
@@ -874,28 +888,6 @@ void XBeeConfig_SetSampleRate( uint16 rate )
   XBee_SendPacket( &xbp, 2 );
 }
 
-bool XBee_GetAutoSend( bool init )
-{
-  XBee_SetActive( 1 );
-  if( init )
-  {
-    int autosend;
-    Eeprom_Read( EEPROM_XBEE_AUTOSEND, (uchar*)&autosend, 4 );
-    XBee->autosend = (autosend == 1 ) ? 1 : 0;
-  }
-  return XBee->autosend;
-}
-
-void XBee_SetAutoSend( bool onoff )
-{
-  XBee_SetActive( 1 );  
-  if( XBee->autosend != onoff )
-  {
-    XBee->autosend = onoff;
-    Eeprom_Write( EEPROM_XBEE_AUTOSEND, (uchar*)&onoff, 4 );
-  }
-}
-
 /** @}
 */
 
@@ -976,6 +968,28 @@ static bool XBee_GetIOValues( XBeePacket* packet, int *inputs )
 
 #ifdef OSC
 #include "osc.h"
+
+bool XBee_GetAutoSend( bool init )
+{
+  XBee_SetActive( 1 );
+  if( init )
+  {
+    int autosend;
+    Eeprom_Read( EEPROM_XBEE_AUTOSEND, (uchar*)&autosend, 4 );
+    XBee->autosend = (autosend == 1 ) ? 1 : 0;
+  }
+  return XBee->autosend;
+}
+
+void XBee_SetAutoSend( bool onoff )
+{
+  XBee_SetActive( 1 );  
+  if( XBee->autosend != onoff )
+  {
+    XBee->autosend = onoff;
+    Eeprom_Write( EEPROM_XBEE_AUTOSEND, (uchar*)&onoff, 4 );
+  }
+}
 
 static char* XBeeOsc_Name = "xbee";
 static char* XBeeOsc_PropertyNames[] = { "active", "io16", "rx16", "autosend", 0 }; // must have a trailing 0

@@ -33,6 +33,7 @@ THUMB_SRC= \
   ../controller/makingthings/usb.c \
   ../controller/makingthings/network.c \
   ../controller/makingthings/system.c \
+	../controller/makingthings/xbee.c \
   ../appboard/makingthings/servo.c \
   ../appboard/makingthings/stepper.c \
   ../appboard/makingthings/dipswitch.c \

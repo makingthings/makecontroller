@@ -67,13 +67,13 @@ struct AnalogIn_* AnalogIn;
   above 3.3V.\n
 	
   Converting the 0 - 1023 reading of the AnalogIn channel into a voltage is performed as follows:
-    v = 3.3 * ( a / 1023.0 )
+   \verbatim v = 3.3 * ( a / 1023.0 ) \endverbatim
     where a is the AnalogIn value
 
   This is of course a floating point operation (slowish) using a division (slowish).  Fixed point 
   versions may be more suitable for some applications.  Where reduced accuracy is acceptable, the following 
   can be used to get the input as a percentage of 3.3V:
-    p = ( 100 * a ) / 1023
+  \verbatim  p = ( 100 * a ) / 1023 \endverbatim
 
   Initializing the controller's AnalogIn system is pretty involved (see AnalogIn_Init() in AnalogIn->c).  There are a lot of 
   different options - different converter speeds, DMA access, etc.  We've chosen something pretty simple here.
@@ -87,9 +87,19 @@ struct AnalogIn_* AnalogIn;
 
 /**
 	Sets whether the specified channel is active.
+	This initializes the AnalogIn system and gets a lock on its IO lines.  It only needs to be called once.
 	@param index An integer specifying the channel (0 - 7).
 	@param state An integer specifying the active state - 1 (active) or 0 (inactive).
 	@return Zero on success.
+	
+	
+  \par Example
+  \code
+  if( AnalogIn_SetActive( 0, 1 )  == CONTROLLER_OK ) // set analogin 0 to active
+		// then continue processing
+	else
+		// some error occurred
+  \endcode
 */
 int AnalogIn_SetActive( int index, int state )
 {
@@ -121,6 +131,11 @@ int AnalogIn_SetActive( int index, int state )
 	Returns the active state of a channel.
 	@param index An integer specifying the ANALOGIN channel (0 - 7).
 	@return State - 1/non-zero (active) or 0 (inactive).
+	
+	\par Example
+  \code
+  int active = AnalogIn_GetActive( 0 ) // check whether analogin 0 is active
+  \endcode
 */
 int AnalogIn_GetActive( int index )
 {
@@ -136,6 +151,11 @@ int AnalogIn_GetActive( int index )
 	Read the value of an analog input.
 	@param index An integer specifying which input (0-7).
 	@return The value as an integer (0 - 1023).
+	
+	\par Example
+  \code
+  int analogin1 = AnalogIn_GetValue( 1 );
+  \endcode
 */
 int AnalogIn_GetValue( int index )
 {
@@ -178,11 +198,18 @@ int AnalogIn_GetValue( int index )
 
 /**	
   Read the value of several of the analog inputs.
-  Pass in a mask that specifies the channels you would like to read, 
-  as well as an array into which the values will be placed.
+  Due to the current ISR handling, this isn't too much quicker than making
+	calls to each of the channels individually.
   @param mask A bit mask specifying which channels to read.
   @param values A pointer to an int array to be filled with the values.
   @return 0 on success, otherwise non-zero.
+	
+	\par Example
+  \code
+  int mask = 0xFF;
+	int samples[8];
+	AnalogIn_GetValueMulti( mask, samples ); // now samples is filled with all the analogin values
+  \endcode
 */
 int AnalogIn_GetValueMulti( int mask, int values[] )
 {
@@ -236,6 +263,11 @@ int AnalogIn_GetValueMulti( int mask, int values[] )
   part of the code might be using it or the thread safe versions.
 	@param index An integer specifying which input (0-7).
 	@return The value as an integer (0 - 1023).
+	
+	\par Example
+  \code
+  int analogin1 = AnalogIn_GetValueWait( 1 );
+  \endcode
 */
 int AnalogIn_GetValueWait( int index )
 {
@@ -276,6 +308,9 @@ int AnalogIn_GetValueWait( int index )
   return value;
 }
 
+/** @}
+*/
+
 void AnalogIn_AutoSendInit( )
 {
   int autosend;
@@ -285,28 +320,6 @@ void AnalogIn_AutoSendInit( )
   else
     AnalogIn->autosend = autosend;
 }
-
-bool AnalogIn_GetAutoSend( int index )
-{
-  return (AnalogIn->autosend >> index) & 0x01;
-}
-
-void AnalogIn_SetAutoSend( int index, bool onoff )
-{
-  if( ((AnalogIn->autosend >> index) & 0x01) != onoff )
-  {
-    int mask = (1 << index);
-    if( onoff )
-      AnalogIn->autosend |= mask;
-    else
-      AnalogIn->autosend &= ~mask;
-    
-    Eeprom_Write( EEPROM_ANALOGIN_AUTOSEND, (uchar*)&AnalogIn->autosend, 4 );
-  }
-}
-
-/** @}
-*/
 
 int AnalogIn_Start( int index )
 {
@@ -440,6 +453,35 @@ int AnalogIn_GetIo( int index )
 
 #ifdef OSC
 
+/**	
+	Read whether a particular channel is enabled to check for and send new values automatically.
+	@param index An integer specifying which input (0-7).
+	@return True if enabled, false if disabled.
+*/
+bool AnalogIn_GetAutoSend( int index )
+{
+  return (AnalogIn->autosend >> index) & 0x01;
+}
+
+/**	
+	Set whether a particular channel is enabled to check for and send new values automatically.
+	@param index An integer specifying which input (0-7).
+	@param onoff A boolean specifying whether to turn atuosending on or off.
+*/
+void AnalogIn_SetAutoSend( int index, bool onoff )
+{
+  if( ((AnalogIn->autosend >> index) & 0x01) != onoff )
+  {
+    int mask = (1 << index);
+    if( onoff )
+      AnalogIn->autosend |= mask;
+    else
+      AnalogIn->autosend &= ~mask;
+    
+    Eeprom_Write( EEPROM_ANALOGIN_AUTOSEND, (uchar*)&AnalogIn->autosend, 4 );
+  }
+}
+
 /** \defgroup AnalogInOSC Analog In - OSC
   Read the Application Board's Analog Inputs via OSC.
   \ingroup OSC
@@ -448,9 +490,10 @@ int AnalogIn_GetIo( int index )
 	There are 8 Analog Inputs on the Make Application Board, numbered 0 - 7.
 	
 	\section properties Properties
-	The Analog Ins have two properties:
+	The Analog Ins have three properties:
   - value
   - active
+	- autosend
 
 	\par Value
 	The \b value property corresponds to the incoming signal of an Analog In.
@@ -460,6 +503,18 @@ int AnalogIn_GetIo( int index )
 	To read the sixth Analog In, send the message
 	\verbatim /analogin/5/value \endverbatim
 	The board will then respond by sending back an OSC message with the Analog In value.
+	
+	\par Autosend
+	The \b autosend property corresponds to whether an analogin will automatically send a message
+	when its incoming value changes.
+	To tell the Controller to automatically send messages from analogin 4, send the message
+	\verbatim /analogin/5/autosend 1 \endverbatim
+	To have the Controller stop sending messages from analogin 4, send the message
+	\verbatim /analogin/5/autosend 0 \endverbatim
+	All autosend messages send at the same interval.  You can set this interval, in 
+	milliseconds, by sending the message
+	\verbatim /system/autosend-interval 10 \endverbatim
+	so that messages will be sent every 10 milliseconds.  This can be anywhere from 1 to 5000 milliseconds.
 	
 	\par Active
 	The \b active property corresponds to the active state of an Analog In.
