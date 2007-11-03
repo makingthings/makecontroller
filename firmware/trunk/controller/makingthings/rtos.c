@@ -33,20 +33,53 @@ void* iterateByID( int id, xList* pxList );
 void* iterateByName( char* taskName, xList* pxList );
 void* TaskGetNext_internal( void* task );
 
-/** \defgroup RTOS
+/** \defgroup RTOS RTOS
 	The RTOS subsystem provides a real-time operating system (RTOS) for the MAKE Controller.
 	Currently, the Make Controller uses FreeRTOS, an open source Real-Time Operating System.  It implements a scheduler that 
 	gives time to "concurrent" tasks according to their given priority.  It allows programmers to 
 	focus on programming each process on the board separately, letting the RTOS 
 	determine when each of those tasks should be given processor time.
-
-	Each process on the board is known as a \b task, and each task is generally implemented as a 
-	continuous loop.  It is important to ensure that each task will block at some point so that
-	other tasks will have a chance to run - otherwise the Controller will lock up. The easiest way to
-	do this is with a call to Sleep( ) when the task is not urgent.
 	
-	More info at http://www.freertos.org - some documentation here used from the FreeRTOS doc by Richard Barry.
+	More info at http://www.freertos.org
 * \ingroup Controller
+*/
+
+/** \defgroup Tasks Tasks
+	The individual processes that make up your application.
+	Tasks can all be written separately and the RTOS will take of switching between them, 
+	making sure they all get the processing time they need.  Each task is implemented as a continuous loop, and
+	all tasks have the same signature:
+	\code void MyTask( void* parameters) \endcode
+	The void* parameters is a value that can be passed in at the time the task is created.  Make sure that you put your task
+	to sleep when it's not doing anything so that other tasks can get time as well.  Otherwise, the Controller will lock up
+	and none of the other tasks will run.
+	
+	\par Example
+	\code
+	void MyTask( void* p )
+	{
+		// some initialization here
+		int newVal = 0;
+		
+		// then just sit in our loop
+		// we're going to turn an LED on whenever an AnalogIn is over a certain value 
+		while( 1 )
+		{
+			newVal = AnalogIn_GetValue( 1 );
+			if( newVal < 512 )
+				AppLed_SetState( 0, 1 );
+			else
+				AppLed_SetState( 0, 0 );
+			Sleep( 100 ); // wait for 100 milliseconds, allowing other tasks to do their thing
+		}
+	}
+	\endcode
+	
+	Notice we don't need to include anything about Ethernet or USB communication, or anything else that might
+	be going on.  These are taken care of elsewhere by the RTOS, allowing us to focus on our LED blinking.
+	
+	More info at http://www.freertos.org
+* \ingroup RTOS
 * @{
 */
 
@@ -89,9 +122,6 @@ void TaskYield( )
 
 /**	
 	Create a new task.
-	All tasks have the same signature:
-	
-	\code void TaskName( void *parameters ); \endcode
 	
 	When creating a new task, be sure that you allocate it enough stack space.  A task must have enough stack space 
 	to load any of the potential data structures it will be working with, otherwise it will die and the Controller will crash.
@@ -171,68 +201,6 @@ void  TaskEnterCritical( )
 void  TaskExitCritical( )
 {
   taskEXIT_CRITICAL();
-}
-
-/**	
-	Dynamically allocate memory from the heap.
-	This is pretty much the same as a normal malloc(), but for the SAM7X. 
-	@return A pointer to the allocated memory, or NULL if the memory was not available.
-  @see Free(), System_GetFreeMemory( )
-	
-\par Example
-\code
-int bufferSize = 1024;
-char *bufferPtr = Malloc( bufferSize );
-// now you have a 1024 character buffer
-\endcode
-*/
-void* Malloc( int size )
-{
-  return pvPortMalloc( size );
-}
-
-/**	
-	Same as Malloc, but keeps trying until it succeeds.
-	This is a convenience function that will continue to call Malloc( ) at a given interval until
-	it returns successfully.  Once this function returns, you know you have been allocated the memory
-	you asked for.
-	
-	@param size An integer specifying the amount of memory, in bytes, you want to allocate.
-	@param interval An integer specifying the number of milliseconds to wait between successive attempts to allocate memory.  
-	It's best to not set this too low, as it will be a bit taxing on the system.
-	@return A pointer to the allocated memory, or NULL if the memory was not available.
-  @see Free(), System_GetFreeMemory( )
-	
-\par Example
-\code
-char *bufferPtr = MallocWait( 1024, 100 );
-// now you have a 1024 character buffer
-\endcode
-*/
-void* MallocWait( int size, int interval )
-{
-	void* retval = NULL;
-	while( retval == NULL )
-	{
-		retval = Malloc( size );
-		if( retval )
-			return retval;
-		else
-			Sleep( interval );
-	}
-	return NULL; // should never get here
-}
-
-/**	
-	Free memory from the heap.
-	Once you've allocated memory using Malloc(), free it when you're done with it.
-  It's usually a good idea to set the pointer the freed memory to NULL after you've freed it.
-	@param memory A pointer to the memory created by Malloc( )
-  @see Malloc(), System_GetFreeMemory( )
-*/
-void Free( void* memory )
-{
-  vPortFree( memory ); 
 }
 
 /**	
@@ -472,6 +440,105 @@ int TaskGetTickCount( void )
   return xTaskGetTickCount( );
 }
 
+/** @}
+*/
+
+/** \defgroup Utils Utilities
+	General utilities provided by the RTOS.
+	
+	FreeRTOS has several options for memory management - we've chosen a default one here which
+	is pretty sensible in most cases, but you're of course welcome to use whatever makes most 
+	sense for your application.  See http://www.freertos.org/a00111.html for
+	the available options.
+
+* \ingroup RTOS
+* @{
+*/
+
+/**	
+	Dynamically allocate memory from the heap.
+	This is pretty much the same as a normal malloc(), but for the SAM7X. 
+	@return A pointer to the allocated memory, or NULL if the memory was not available.
+  @see Free(), System_GetFreeMemory( )
+	
+	\par Example
+	\code
+	int bufferSize = 1024;
+	char *bufferPtr = Malloc( bufferSize );
+	// now you have a 1024 character buffer
+	\endcode
+*/
+void* Malloc( int size )
+{
+  return pvPortMalloc( size );
+}
+
+/**	
+	Same as Malloc, but keeps trying until it succeeds.
+	This is a convenience function that will continue to call Malloc( ) at a given interval until
+	it returns successfully.  Once this function returns, you know you have been allocated the memory
+	you asked for.
+	
+	@param size An integer specifying the amount of memory, in bytes, you want to allocate.
+	@param interval An integer specifying the number of milliseconds to wait between successive attempts to allocate memory.  
+	It's best to not set this too low, as it will be a bit taxing on the system.
+	@return A pointer to the allocated memory, or NULL if the memory was not available.
+  @see Free(), System_GetFreeMemory( )
+	
+	\par Example
+	\code
+	char *bufferPtr = MallocWait( 1024, 100 );
+	// now you have a 1024 character buffer
+	\endcode
+*/
+void* MallocWait( int size, int interval )
+{
+	void* retval = NULL;
+	while( retval == NULL )
+	{
+		retval = Malloc( size );
+		if( retval )
+			return retval;
+		else
+			Sleep( interval );
+	}
+	return NULL; // should never get here
+}
+
+/**	
+	Free memory from the heap.
+	Once you've allocated memory using Malloc(), free it when you're done with it.
+  It's usually a good idea to set the pointer the freed memory to NULL after you've freed it.
+	@param memory A pointer to the memory created by Malloc( )
+  @see Malloc(), System_GetFreeMemory( )
+	
+	\par Example
+	\code
+	char *bufferPtr = Malloc( 1024 ); // allocate 1024 bytes of memory
+	// ...your processing here...
+	Free( bufferPtr ); // then free the memory when you're done with it
+	\endcode
+*/
+void Free( void* memory )
+{
+  vPortFree( memory ); 
+}
+
+/** @}
+*/
+
+/** \defgroup Queues Queues
+	Queues allow for thread-safe inter-process communication.
+	A queue is a list of items that can be passed from one task to another.
+	Items are placed in a queue by copy - not by reference. It is therefore preferable, 
+	when queuing large items, to only queue a pointer to the item.  Tasks can block on a 
+	queue to wait for either data to become available on the queue, or space to become available to write to the queue.
+	
+	More info at http://www.freertos.org - some documentation here used from the FreeRTOS doc by Richard Barry.
+* \ingroup RTOS
+* @{
+*/
+
 /**	
 	Create a new queue.
   This allocates storage for the queue.  It's usually a good idea to pass around pointers on queues
@@ -532,7 +599,12 @@ void* QueueCreate( uint length, uint itemSize )
   }
   \endcode
 */
-int QueueSend( void* queue, void* itemToQueue, int msToWait )
+int QueueSendToFront( void* queue, void* itemToQueue, int msToWait )
+{
+  return xQueueSend( queue, itemToQueue, msToWait );
+}
+
+int QueueSendToBack( void* queue, void* itemToQueue, int msToWait )
 {
   return xQueueSend( queue, itemToQueue, msToWait );
 }

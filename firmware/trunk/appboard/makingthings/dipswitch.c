@@ -147,8 +147,9 @@ int DipSwitch_Stop()
 	DIP Switch.
 	
 	\section properties Properties
-	The DIP Switch has two properties
+	The DIP Switch has three properties
   - value
+	- autosend
   - active
 
 	\par Value
@@ -161,6 +162,18 @@ int DipSwitch_Stop()
 	want to include an argument at the end of your OSC message to read the value.\n
 	To read from the DIP Switch, send the message
 	\verbatim /dipswitch/value \endverbatim
+	
+	\par Autosend
+	The \b autosend property corresponds to whether the DIP Switch will automatically send a message
+	when its value changes.
+	To tell the Controller to automatically send messages from the DIP Switch, send the message
+	\verbatim /dipswitch/autosend 1 \endverbatim
+	To have the Controller stop sending messages from the DIP Switch, send the message
+	\verbatim /dipswitch/autosend 0 \endverbatim
+	All autosend messages send at the same interval.  You can set this interval, in 
+	milliseconds, by sending the message
+	\verbatim /system/autosend-interval 10 \endverbatim
+	so that messages will be sent every 10 milliseconds.  This can be anywhere from 1 to 5000 milliseconds.
 	
 	\par Active
 	The \b active property corresponds to the active state of the DIP Switch.
