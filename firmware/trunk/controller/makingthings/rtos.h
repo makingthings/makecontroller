@@ -54,7 +54,14 @@ int QueueSendToBack( void* queue, void* itemToQueue, int msToWait );
 int QueueReceive( void* queue, void* buffer, int msToWait );
 int QueueMessagesWaiting( void* queue );
 void QueueDelete( void* queue );
-int QueueSendFromISR( void* queue, void* itemToSend, int taskPreviouslyWoken );
+int QueueSendToFrontFromISR( void* queue, void* itemToSend, int taskPreviouslyWoken );
+int QueueSendToBackFromISR( void* queue, void* itemToSend, int taskPreviouslyWoken );
 int QueueReceiveFromISR( void* queue, void* buffer, long* taskWoken );
+
+void SemaphoreCreate( void* semaphore );
+void* MutexCreate( void );
+int SemaphoreTake( void* semaphore, int blockTime );
+int SemaphoreGive( void* semaphore );
+int SemaphoreGiveFromISR( void* semaphore, int taskPreviouslyWoken );
 
 #endif

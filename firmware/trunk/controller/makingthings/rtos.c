@@ -26,6 +26,7 @@
 #include "rtos.h"
 #include "string.h"
 #include "queue.h"
+#include "semphr.h"
 
 void* findTask( char *taskName, int taskID );
 void* iterateForNextTask( void** lowTask, int* lowID, void** highTask, int* highID, int currentID, xList* pxList );
@@ -45,7 +46,7 @@ void* TaskGetNext_internal( void* task );
 */
 
 /** \defgroup Tasks Tasks
-	The individual processes that make up your application.
+	The individual "programs" that make up your application.
 	Tasks can all be written separately and the RTOS will take of switching between them, 
 	making sure they all get the processing time they need.  Each task is implemented as a continuous loop, and
 	all tasks have the same signature:
@@ -550,13 +551,14 @@ void Free( void* memory )
 	
   \par Example
   \code
-  struct myData
+  struct myData_
   {
     int count;
     char buffer[100];
   };
 
   // create a queue that can hold 5 pointers to myData structures
+	struct MyData_* myData;
   void* myQueue = QueueCreate( 5, sizeof( myData* ) );
   if( myQueue == 0 )
     // then the queue can't be used.
@@ -570,7 +572,7 @@ void* QueueCreate( uint length, uint itemSize )
 }
 
 /**	
-	Post an item onto a queue.
+	Post an item onto the front of a queue.
   The item is queued by copy, not by reference.  This function must not be called from an interrupt service routine.
   See xQueueSendFromISR () for an alternative which may be used in an ISR.
   @param queue The queue to send to.
@@ -588,11 +590,11 @@ void* QueueCreate( uint length, uint itemSize )
   };
 
   // create a queue that can hold 5 pointers to myData structures
+	struct MyData_* myData;
   void* myQueue = QueueCreate( 5, sizeof( myData* ) );
-  struct MyData_* myData;
   if( myQueue )
   {
-    if( QueueSend( myQueue, (void*)&myData, 10 ) ) // wait 10 ms to send if queue is full
+    if( QueueSendToFront( myQueue, (void*)&myData, 10 ) ) // wait 10 ms to send if queue is full
       // then we're all set
     else
       // deal with an unsuccessful send
@@ -601,37 +603,381 @@ void* QueueCreate( uint length, uint itemSize )
 */
 int QueueSendToFront( void* queue, void* itemToQueue, int msToWait )
 {
-  return xQueueSend( queue, itemToQueue, msToWait );
+  return xQueueSend( queue, itemToQueue, msToWait / portTICK_RATE_MS );
 }
 
+/**	
+	Post an item onto the back of a queue.
+  The item is queued by copy, not by reference.  This function must not be called from an interrupt service routine.
+  See xQueueSendFromISR () for an alternative which may be used in an ISR.
+  @param queue The queue to send to.
+  @param itemToQueue A pointer to the item to send on the queue.  
+  @param msToWait The maximum number of milliseconds the task should block waiting for space to become available on the queue, 
+  should it already be full.  The call will return immediately if this is set to 0.
+  @return 1 on success, 0 on failure.
+	
+  \par Example
+  \code
+  struct MyData_
+  {
+    int count;
+    char buffer[100];
+  };
+
+  // create a queue that can hold 5 pointers to myData structures
+	struct MyData_* myData;
+  void* myQueue = QueueCreate( 5, sizeof( myData* ) );
+  if( myQueue )
+  {
+    if( QueueSendToBack( myQueue, (void*)&myData, 10 ) ) // wait 10 ms to send if queue is full
+      // then we're all set
+    else
+      // deal with an unsuccessful send
+  }
+  \endcode
+*/
 int QueueSendToBack( void* queue, void* itemToQueue, int msToWait )
 {
-  return xQueueSend( queue, itemToQueue, msToWait );
+  return xQueueSend( queue, itemToQueue, msToWait / portTICK_RATE_MS );
 }
 
+/**	
+	Read an item off of a queue.
+  The item is received by copy so a buffer of adequate size must be provided. 
+	The number of bytes copied into the buffer was defined when the queue was created.
+	The item will be removed from the queue once it is read.
+	
+	This function must not be used in an interrupt service routine. See QueueReceiveFromISR( ) for an alternative that can.
+  @param queue The queue to receive from.
+  @param buffer A pointer to the buffer the item will be read into.  
+  @param msToWait The maximum number of milliseconds the task should block waiting for an item to show up on the queue, 
+  should it be empty.
+  @return 1 on success, 0 on failure.
+	
+  \par Example
+  \code
+  struct MyData_
+  {
+    int count;
+    char buffer[100];
+  };
+	
+	void* myQueue;
+	
+	void SomeTask( void* p )
+	{
+		// create a queue that can hold 5 pointers to myData structures
+		myQueue = QueueCreate( 5, sizeof( myData* ) );
+		struct MyData_ myData; // the data we'll be sending
+		myData.count = 12;
+		myData.buffer = "ABCDEF";
+		
+		QueueSendToFront( myQueue, &myData, 0 );
+	}
+	
+	void AnotherTask( void* p )
+	{
+		int dataSize = sizeof( struct MyData_ );
+		struct MyData_* rxData; // a pointer to some data
+		if( myQueue )
+		{
+			if( QueueReceive( myQueue, rxData, 100 ) ) // wait up to 100 milliseconds for data
+			{
+				// now rxData points to the data posted in SomeTask
+			}
+		}
+	}
+  \endcode
+*/
 int QueueReceive( void* queue, void* buffer, int msToWait )
 {
-  return xQueueReceive( queue, buffer, msToWait );
+  return xQueueReceive( queue, buffer, msToWait / portTICK_RATE_MS );
 }
 
+/**	
+	Return the number of messages waiting in a queue.
+
+  @param queue The queue to look at.
+  @return The number of messages waiting.
+	
+  \par Example
+  \code
+	int msgs = QueueMessagesWaiting( myQueue );
+  \endcode
+*/
 int QueueMessagesWaiting( void* queue )
 {
   return uxQueueMessagesWaiting( queue );
 }
 
+/**	
+	Delete a queue - freeing all the memory allocated for storing of items placed on the queue.
+  @param queue The queue to delete.
+	
+  \par Example
+  \code
+	QueueDelete( myQueue );
+  \endcode
+*/
 void QueueDelete( void* queue )
 {
   vQueueDelete( queue );
 }
 
-int QueueSendFromISR( void* queue, void* itemToSend, int taskPreviouslyWoken )
+/**	
+	Post an item to the front of a queue from within an interrupt service routine.
+	Items are queued by copy not reference so it is preferable to only queue small items, especially when called from an ISR. 
+	In most cases it would be preferable to store a pointer to the item being queued.
+  @param queue The queue to send to.
+  @param itemToSend A pointer to the item to send on the queue.  The size of the items the queue will hold was defined 
+	when the queue was created, so this many bytes will be copied from itemToSend into the queue storage area.
+  @param taskPreviouslyWoken This is included so an ISR can post onto the same queue multiple times from a single interrupt. 
+	The first call should always pass in 0. Subsequent calls should pass in the value returned from the previous call.
+  @return 1 if a task was woken by posting onto the queue. This is used by the ISR to determine if a context 
+	switch may be required following the ISR.
+	
+  \par Example
+  \code
+  struct MyData_
+  {
+    int count;
+    char buffer[100];
+  };
+	
+	int taskWokenByPost = 0; // be sure to initialize to 0
+
+  // create a queue that can hold 5 pointers to myData structures
+	struct MyData_ myData;
+  void* myQueue = QueueCreate( 5, sizeof( myData* ) );
+  if( myQueue )
+  {
+    taskWokenByPost = QueueSendToFrontFromISR( myQueue, (void*)&myData, taskWokenByPost )
+		if( taskWokenByPost )
+    {
+        // We should switch context so the ISR returns to a different task.    
+        portYIELD_FROM_ISR( );
+    }
+  }
+  \endcode
+*/
+int QueueSendToFrontFromISR( void* queue, void* itemToSend, int taskPreviouslyWoken )
 {
-  return xQueueSendFromISR( queue, itemToSend, taskPreviouslyWoken );
+  return xQueueSendToFrontFromISR( queue, itemToSend, taskPreviouslyWoken );
 }
 
+/**	
+	Post an item to the back of a queue from within an interrupt service routine.
+	Items are queued by copy not reference so it is preferable to only queue small items, especially when called from an ISR. 
+	In most cases it would be preferable to store a pointer to the item being queued.
+  @param queue The queue to send to.
+  @param itemToSend A pointer to the item to send on the queue.  The size of the items the queue will hold was defined 
+	when the queue was created, so this many bytes will be copied from itemToSend into the queue storage area.
+  @param taskPreviouslyWoken This is included so an ISR can post onto the same queue multiple times from a single interrupt. 
+	The first call should always pass in 0. Subsequent calls should pass in the value returned from the previous call.
+  @return 1 if a task was woken by posting onto the queue. This is used by the ISR to determine if a context 
+	switch may be required following the ISR.
+	
+  \par Example
+  \code
+  struct MyData_
+  {
+    int count;
+    char buffer[100];
+  };
+	
+	int taskWokenByPost = 0; // be sure to initialize to 0
+
+  // create a queue that can hold 5 pointers to myData structures
+	struct MyData_ myData;
+  void* myQueue = QueueCreate( 5, sizeof( myData* ) );
+  if( myQueue )
+  {
+    taskWokenByPost = QueueSendToBackFromISR( myQueue, (void*)&myData, taskWokenByPost )
+		if( taskWokenByPost )
+    {
+        // We should switch context so the ISR returns to a different task.    
+        portYIELD_FROM_ISR( );
+    }
+  }
+  \endcode
+*/
+int QueueSendToBackFromISR( void* queue, void* itemToSend, int taskPreviouslyWoken )
+{
+  return xQueueSendToBackFromISR( queue, itemToSend, taskPreviouslyWoken );
+}
+
+/**	
+	Receive an item from a queue from within an interrupt service routine.
+	You'll need to have enough storage for the queue to copy the item into.  Receiving from a queue takes the item off the queue.
+  @param queue The queue to receive from.
+  @param buffer A pointer to the buffer into which the received item will be copied - ensure that there's enough room.
+  @param taskWoken A task may be blocked waiting for an item to be read from the queue, freeing up space. If QueueReceiveFromISR 
+	causes such a task to unblock *taskWoken will get set to 1, otherwise *taskWoken will remain unchanged.
+  @return 1 if an item was successfully received from the queue, otherwise 0.
+	switch may be required following the ISR.
+	
+  \par Example
+  \code
+	
+	int taskWokenByReceive = 0; // be sure to initialize to 0
+	void* myQueue = QueueCreate( 5, sizeof( char ) );
+  if( myQueue == 0 )
+		// queue couldn't be created...
+	
+	char data;
+
+	while( QueueReceiveFromISR( myQueue, (void*)&data, taskWokenByReceive ) )
+	{
+		// process new items from queue here
+		
+		// If removing an item from the queue woke the task that was 
+		// posting onto the queue, taskWokenByReceive will have been set to
+		// 1.  No matter how many times this loop iterates only one
+		// task will be woken.
+	}
+	if( taskWokenByReceive )
+	{
+			// We should switch context so the ISR returns to a different task.    
+			taskYIELD ();
+	}
+  \endcode
+*/
 int QueueReceiveFromISR( void* queue, void* buffer, long* taskWoken )
 {
   return xQueueReceiveFromISR( queue, buffer, taskWoken );
+}
+
+/** @}
+*/
+
+/** \defgroup SemaphoresMutexes Semaphores & Mutexes
+	Thread-safe methods to protect access to shared resources.
+	
+	Quite often you'll have more than one task trying to get access to the same resources.  To ensure that the resource
+	is not in some intermediate state between reading and writing, it's necessary to serialize access to it.  Semaphores
+	and mutexes provide a way to do this.
+	
+	Binary semaphores and mutexes are very similar but have some subtle differences: 
+	Mutexes include a priority inheritance mechanism, binary semaphores do not. This makes binary semaphores the 
+	better choice for implementing synchronisation (between tasks or between tasks and an interrupt), and mutexes 
+	the better choice for implementing simple mutual exclusion.
+
+	A binary semaphore need not be given back once obtained, so task synchronisation can be implemented by one task/interrupt 
+	continuously 'giving' the semaphore while another continuously 'takes' the semaphore.
+
+	The priority of a task that 'takes' a mutex can potentially be raised if another task of higher priority attempts 
+	to obtain the same mutex. The task that owns the mutex 'inherits' the priority of the task attempting to 'take' the same mutex. 
+	This means the mutex must always be 'given' back - otherwise the higher priority task will never be able to obtain the mutex, 
+	and the lower priority task will never 'disinherit' the priority.
+	
+	More info at http://www.freertos.org - much documentation here used from the FreeRTOS doc by Richard Barry.
+* \ingroup RTOS
+* @{
+*/
+
+/**	
+	Create a semaphore. 
+	Create a semaphore by using the existing queue mechanism. The queue length is 1 as this is a binary semaphore. 
+	The data size is 0 as we don't want to actually store any data - we just want to know if the queue is empty or full.
+  @param semaphore The semaphore to be created.
+	
+  \par Example
+  \code
+	void* mySemaphore;
+	SemaphoreCreate( mySemaphore );
+	if( mySemaphore != NULL )
+	{
+		// The semaphore was created successfully and can now be used.
+	}
+  \endcode
+*/
+void SemaphoreCreate( void* semaphore )
+{
+	vSemaphoreCreateBinary( semaphore );
+}
+
+#if ( configUSE_MUTEXES == 1 )
+void* MutexCreate( )
+{
+	return xQueueCreateMutex( );
+}
+#endif
+
+/**	
+	Obtain a semaphore. 
+	The semaphore must have first been created with SemaphoreCreate( ).
+  @param semaphore The semaphore to take.
+	@param blockTime The time, in milliseconds, to wait for the semaphore to become available.
+	@return 1 if the semaphore was obtained. 0 if blockTime expired without the semaphore becoming available.
+	@see SemaphoreCreate( ), SemaphoreGive( )
+	
+  \par Example
+  \code
+	void* mySemaphore;
+	SemaphoreCreate( mySemaphore );
+	if( SemaphoreTake( mySemaphore, 100 ) ) // wait 100 milliseconds on this semaphore
+	{
+		// now access the protected resources
+	}
+  \endcode
+*/
+int SemaphoreTake( void* semaphore, int blockTime )
+{
+	return xSemaphoreTake( semaphore, blockTime / portTICK_RATE_MS );
+}
+
+/**	
+	Release a semaphore. 
+	This must not be used from an ISR. See SemaphoreGiveFromISR( ) for an alternative which can be used from an ISR.
+  @param semaphore The semaphore to release.
+	@return 1 if the semaphore was released. 0 if an error occurred. Semaphores are implemented using queues. 
+	An error can occur if there is no space on the queue to post a message - indicating that the semaphore was not first obtained correctly.
+	@see SemaphoreCreate( ), SemaphoreTake( )
+	
+  \par Example
+  \code
+	void* mySemaphore;
+	SemaphoreCreate( mySemaphore );
+	if( SemaphoreTake( mySemaphore, 1000 ) ) // wait 1000 milliseconds on this semaphore
+	{
+		// access the protected resources
+		
+		// then release the semaphore
+		if( !SemaphoreGive( mySemaphore ) )
+			// then handle the error here
+	}
+  \endcode
+*/
+int SemaphoreGive( void* semaphore )
+{
+	return xSemaphoreGive( semaphore );
+}
+
+/**	
+	Release a semaphore from within an ISR. 
+	This must not be used from an ISR. See SemaphoreGiveFromISR( ) for an alternative which can be used from an ISR.
+  @param semaphore The semaphore to release.
+	@param taskWoken This is included so an ISR can make multiple calls to SemaphoreGiveFromISR() from a single interrupt. 
+	The first call should always pass in 0. Subsequent calls should pass in the value returned from the previous call. 	
+	@return 1 if the semaphore was released. 0 if an error occurred. Semaphores are implemented using queues. 
+	An error can occur if there is no space on the queue to post a message - indicating that the semaphore was not first obtained correctly.
+	
+  \par Example
+  \code
+	void* mySemaphore;
+	SemaphoreCreate( mySemaphore );
+	void TimerISR( )
+	{
+		static int taskWoken = 0;
+		taskWoken = SemaphoreGiveFromISR( mySemaphore, taskWoken );
+		// If taskWoken was set to true you may want to yield (force a switch)
+    // here.
+	}
+  \endcode
+*/
+int SemaphoreGiveFromISR( void* semaphore, int taskWoken )
+{
+	return xSemaphoreGiveFromISR( semaphore, taskWoken );
 }
 
 /** @}
