@@ -243,9 +243,8 @@ int XBee_SendPacket( XBeePacket* packet, int datalength )
     case XBEE_TXSTATUS:
       size = 3; // explicitly set this, since there's no data afterwards
       break;
-    case XBEE_ATCOMMAND: // account for apiId, frameID, 2 bytes AT command
-    case XBEE_ATCOMMANDQ: // same
-      size += 4;
+    case XBEE_ATCOMMAND: // length = API ID + Frame ID, + AT Command + Parameter Value
+      size = (datalength > 0) ? 8 : 4;
       break;
     default:
       size = 0;
@@ -339,7 +338,7 @@ void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, u
   packet->atCommand.frameID = frameID;
   uint8* p = packet->atCommand.command;
   *p++ = *cmd++;
-  *p++ = *cmd++;
+  *p++ = *cmd;
   p = packet->atCommand.parameters;
   while( datalength-- )
     *p++ = *params++;
@@ -717,7 +716,7 @@ bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char* command, 
 }
 
 /**	
-  Unpack the info from an incoming AT Command Response packet.
+  Unpack the info from TX Status packet.
   When a TX is completed, the modules esnds a TX Status message.  This indicates whether the packet was transmitted
   successfully or not.
 
@@ -736,7 +735,7 @@ bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char* command, 
     char* command;
     uint8 status;
     uint8* data;
-    if( XBee_ReadAtResponsePacket( &rxPacket, &frameID, command, &status, &data ) )
+    if( XBee_ReadTXStatusPacket( &rxPacket, &frameID, &status ) )
     {
       // then process the new packet here
       XBee_ResetPacket( &rxPacket ); // and clear it out before reading again
@@ -774,14 +773,14 @@ bool XBee_ReadTXStatusPacket( XBeePacket* xbp, uint8* frameID, uint8* status )
 void XBeeConfig_WriteStateToMemory( void )
 {
   XBeePacket xbp;
-  XBee_CreateATCommandPacket( &xbp, 0, "WR", NULL, 0 );
-  XBee_SendPacket( &xbp, 0 );
+  uint8 params[4];
+  memset( params, 0, 4 );
+  XBee_CreateATCommandPacket( &xbp, 0, "WR", params, 4 );
+  XBee_SendPacket( &xbp, 4 );
 }
 
 /**	
   Set this module's address.
-  When you make configuration changes - setting the module to API mode, or configuring the sample rate, for example - 
-  those changes will be lost when the module restarts.  Call this function to save the current state to non-volatile memory.
 
   As with the other \b XBeeConfig functions, make sure you're in API mode before trying to use this function.
   @param address An integer specifying the module's address.
@@ -791,19 +790,19 @@ void XBeeConfig_WriteStateToMemory( void )
   \par Example
   \code
   XBeeConfig_SetPacketApiMode( );
-  XBeeConfig_SetSampleRate( 100 );
+  XBeeConfig_SetAddress( 100 );
   XBeeConfig_WriteStateToMemory( );
   \endcode
 */
-void XBeeConfig_SetAddress( int address )
+void XBeeConfig_SetAddress( uint16 address )
 {
   XBeePacket xbp;
-  uint8 params[4];
-  params[0] = address & 0xFF;
-  params[1] = (address >> 8) & 0xFFFFFF;
-  params[2] = (address >> 16) & 0xFFFF;
-  params[3] = (address >> 24) & 0xFF;
-  XBee_CreateATCommandPacket( &xbp, 0, "IR", params, 4 );
+  uint8 params[4]; // big endian - most significant bit first
+  params[0] = 0;
+  params[1] = 0;
+  params[2] = (address >> 8) & 0xFF;
+  params[3] = address & 0xFF;
+  XBee_CreateATCommandPacket( &xbp, 0, "MY", params, 4 );
   XBee_SendPacket( &xbp, 4 );
 }
 
@@ -826,11 +825,13 @@ void XBeeConfig_SetAddress( int address )
 void XBeeConfig_SetPanID( uint16 id )
 {
   XBeePacket xbp;
-  uint8 params[2];
-  params[0] = (id >> 8) & 0xFF;
-  params[1] = id & 0xFF;
-  XBee_CreateATCommandPacket( &xbp, 0, "ID", params, 2 );
-  XBee_SendPacket( &xbp, 2 );
+  uint8 params[4]; // big endian - most significant bit first
+  params[0] = 0;
+  params[1] = 0;
+  params[2] = (id >> 8) & 0xFF;
+  params[3] = id & 0xFF;
+  XBee_CreateATCommandPacket( &xbp, 0, "ID", params, 4 );
+  XBee_SendPacket( &xbp, 4 );
 }
 
 /**	
@@ -855,10 +856,11 @@ void XBeeConfig_SetPanID( uint16 id )
 void XBeeConfig_SetChannel( uint8 channel )
 {
   XBeePacket xbp;
-  uint8 params[1];
-  params[0] = channel;
-  XBee_CreateATCommandPacket( &xbp, 0, "CH", params, 1 );
-  XBee_SendPacket( &xbp, 1 );
+  uint8 params[4];
+  memset( params, 0, 4 );
+  params[3] = channel;
+  XBee_CreateATCommandPacket( &xbp, 0, "CH", params, 4 );
+  XBee_SendPacket( &xbp, 4 );
 }
 
 /**	
@@ -875,17 +877,19 @@ void XBeeConfig_SetChannel( uint8 channel )
   \par Example
   \code
   XBeeConfig_SetPacketApiMode( );
-  XBeeConfig_SetPanID( 0x1234 );
+  XBeeConfig_SetSampleRate( 0x14 );
   \endcode
 */
 void XBeeConfig_SetSampleRate( uint16 rate )
 {
   XBeePacket xbp;
-  uint8 params[2];
-  params[0] = (rate >> 8) & 0xFF;
-  params[1] = rate & 0xFF;
-  XBee_CreateATCommandPacket( &xbp, 0, "IR", params, 2 );
-  XBee_SendPacket( &xbp, 2 );
+  uint8 params[4]; // big endian - most significant bit first
+  params[0] = 0;
+  params[1] = 0;
+  params[2] = (rate >> 8) & 0xFF;
+  params[3] = rate & 0xFF;
+  XBee_CreateATCommandPacket( &xbp, 0, "IR", params, 4 );
+  XBee_SendPacket( &xbp, 4 );
 }
 
 /** @}
@@ -968,6 +972,53 @@ static bool XBee_GetIOValues( XBeePacket* packet, int *inputs )
 
 #ifdef OSC
 #include "osc.h"
+
+/** \defgroup XBeeOSC XBee - OSC
+  Communicate with XBee modules with the Make Controller Kit via OSC.
+  \ingroup OSC
+	
+	\section devices Devices
+	There can only be one XBee board connected to the Make Controller Kit's serial port at a time,
+  so there is not a device index in XBee OSC messages.
+	
+	\section properties Properties
+	The XBee system has the following properties:
+  - autosend
+  - io16
+  - io64
+  - rx16
+  - rx64
+  - tx16
+  - tx64
+  - active
+  
+  \par Autosend
+	The \b autosend property corresponds to whether the Make Controller will automatically send out 
+  messages it receives from a connected XBee module.  By default, this is turned off.
+  To turn this on, send the message
+	\verbatim /xbee/autosend 1 \endverbatim
+  and to turn it off, send
+	\verbatim /xbee/autosend 0 \endverbatim
+	
+  \par io16
+	The \b io16 property corresponds to an incoming message from an XBee module with samples
+  from its IO pins.  The best way to use this is to turn the XBee system's autosend property
+  on - then the Make Controller can relay io16 messages as soon as they're received.
+	Once you've turned on autosend, if there are boards on your network that are sending IO packets, 
+  you'll receive messages like
+	\verbatim /xbee/io16 12 0 0 1023 1023 0 512 0 1023 \endverbatim
+	The XBee modules have 9 IO pins - the numbers in the message correspond to the values on those pins.
+	
+	\par Active
+	The \b active property corresponds to the active state of the XBee system.
+	If you're not seeing appropriate responses to your messages to the XBee system, 
+  check whether it's active by sending the message
+	\verbatim /xbee/active \endverbatim
+	\par
+	You can set the active flag by sending
+	\verbatim /xbee/active 1 \endverbatim
+*/
+
 
 bool XBee_GetAutoSend( bool init )
 {
@@ -1105,6 +1156,98 @@ int XBeeOsc_PropertyGet( int property, int channel )
       break;
     }
   }
+  return CONTROLLER_OK;
+}
+
+static char* XBeeConfigOsc_Name = "xbeeconfig";
+static char* XBeeConfigOsc_PropertyNames[] = { "active", "address", "panid", "ios", 
+                                                "samplerate", "write", 0 }; // must have a trailing 0
+
+int XBeeConfigOsc_PropertySet( int property, char* typedata, int channel );
+int XBeeConfigOsc_PropertyGet( int property, int channel );
+
+const char* XBeeConfigOsc_GetName( void )
+{
+  return XBeeConfigOsc_Name;
+}
+
+int XBeeConfigOsc_PropertySet( int property, char* typedata, int channel )
+{
+  switch ( property )
+  {
+    case 0: // active
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, XBeeOsc_Name, "Incorrect data - need an int" );
+
+      if( value )
+        XBeeConfig_SetPacketApiMode( );
+      XBee_SetActive( value );
+      break;
+    }
+    case 1: // address
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, XBeeConfigOsc_Name, "Incorrect data - need an int" );
+      XBeeConfig_SetAddress( value );
+      break;
+    }
+    case 4: // samplerate
+    {
+      int value;
+      int count = Osc_ExtractData( typedata, "i", &value );
+      if ( count != 1 )
+        return Osc_SubsystemError( channel, XBeeConfigOsc_Name, "Incorrect data - need an int" );
+      XBeeConfig_SetSampleRate( value );
+      break;
+    }
+    case 5: // write
+    {
+      XBeeConfig_WriteStateToMemory( );
+      break;
+    }
+  }
+  
+  return CONTROLLER_OK;
+}
+
+int XBeeConfigOsc_PropertyGet( int property, int channel )
+{
+  char address[ OSC_SCRATCH_SIZE ];
+  switch ( property )
+  {
+    case 0: // active
+    {
+      int value = XBee_GetActive( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeConfigOsc_Name, XBeeConfigOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );
+      break;
+    }
+    case 1: // address
+    {
+      int value = XBee_GetActive( );
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeConfigOsc_Name, XBeeConfigOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", value );
+      break;
+    }
+  }
+  return CONTROLLER_OK;
+}
+
+int XBeeConfigOsc_ReceiveMessage( int channel, char* message, int length )
+{
+  int status = Osc_GeneralReceiverHelper( channel, message, length, 
+                                XBeeConfigOsc_Name,
+                                XBeeConfigOsc_PropertySet, XBeeConfigOsc_PropertyGet, 
+                                XBeeConfigOsc_PropertyNames );
+
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, XBeeConfigOsc_Name, status );
+
   return CONTROLLER_OK;
 }
 

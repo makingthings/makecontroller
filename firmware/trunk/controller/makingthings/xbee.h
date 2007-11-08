@@ -258,7 +258,7 @@ bool XBee_ReadTXStatusPacket( XBeePacket* xbp, uint8* frameID, uint8* status );
 // XBee Config stuff
 void XBeeConfig_SetPacketApiMode( void );
 void XBeeConfig_WriteStateToMemory( void );
-void XBeeConfig_SetAddress( int address );
+void XBeeConfig_SetAddress( uint16 address );
 void XBeeConfig_SetPanID( uint16 id );
 void XBeeConfig_SetChannel( uint8 channel );
 void XBeeConfig_SetSampleRate( uint16 rate );
@@ -274,5 +274,8 @@ void XBee_SetAutoSend( bool onoff );
 const char* XBeeOsc_GetName( void );
 int XBeeOsc_ReceiveMessage( int channel, char* message, int length );
 int XBeeOsc_Async( int channel );
+
+const char* XBeeConfigOsc_GetName( void );
+int XBeeConfigOsc_ReceiveMessage( int channel, char* message, int length );
 
 #endif // XBEE_H
