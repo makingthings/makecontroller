@@ -1,19 +1,19 @@
-# Doxyfile 1.5.4
+# Doxyfile 1.5.3
 
 #---------------------------------------------------------------------------
 # Project related configuration options
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING      = UTF-8
-PROJECT_NAME           = "Make Controller Kit - Firmware API  "
+PROJECT_NAME           = "Make Controller Kit - Firmware API   "
 PROJECT_NUMBER         = 
 OUTPUT_DIRECTORY       = .
 CREATE_SUBDIRS         = NO
 OUTPUT_LANGUAGE        = English
 BRIEF_MEMBER_DESC      = YES
 REPEAT_BRIEF           = YES
-ABBREVIATE_BRIEF       = "The $name class  " \
-                         "The $name widget  " \
-                         "The $name file  " \
+ABBREVIATE_BRIEF       = "The $name class   " \
+                         "The $name widget   " \
+                         "The $name file   " \
                          is \
                          provides \
                          specifies \
@@ -40,10 +40,8 @@ OPTIMIZE_OUTPUT_FOR_C  = YES
 OPTIMIZE_OUTPUT_JAVA   = NO
 BUILTIN_STL_SUPPORT    = NO
 CPP_CLI_SUPPORT        = NO
-SIP_SUPPORT            = NO
 DISTRIBUTE_GROUP_DOC   = NO
 SUBGROUPING            = YES
-TYPEDEF_HIDES_STRUCT   = NO
 #---------------------------------------------------------------------------
 # Build related configuration options
 #---------------------------------------------------------------------------
@@ -82,7 +80,7 @@ WARNINGS               = YES
 WARN_IF_UNDOCUMENTED   = NO
 WARN_IF_DOC_ERROR      = YES
 WARN_NO_PARAMDOC       = NO
-WARN_FORMAT            = "$file:$line: $text  "
+WARN_FORMAT            = "$file:$line: $text   "
 WARN_LOGFILE           = 
 #---------------------------------------------------------------------------
 # configuration options related to the input files
@@ -203,7 +201,8 @@ INCLUDE_PATH           =
 INCLUDE_FILE_PATTERNS  = 
 PREDEFINED             = MAKE_CTRL_NETWORK \
                          OSC \
-                         MAKE_CTRL_USB
+                         MAKE_CTRL_USB \
+                         XBEE
 EXPAND_AS_DEFINED      = 
 SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------

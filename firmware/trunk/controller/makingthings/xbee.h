@@ -267,7 +267,9 @@ void XBeeConfig_EnableEncryption( bool state );
 void XBeeConfig_SetEncryptionKey( void );
 
 bool XBee_GetAutoSend( bool init );
-void XBee_SetAutoSend( bool onoff );
+void XBee_SetAutoSend( int onoff );
+
+void XBee_IntToBigEndianArray( int value, uint8* array );
 
 
 // XBee OSC stuff

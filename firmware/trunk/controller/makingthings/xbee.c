@@ -15,6 +15,8 @@
 
 *********************************************************************************/
 #include "config.h"
+#ifdef XBEE
+
 #include "stdlib.h"
 #include <stdio.h>
 #include "string.h"
@@ -243,8 +245,8 @@ int XBee_SendPacket( XBeePacket* packet, int datalength )
     case XBEE_TXSTATUS:
       size = 3; // explicitly set this, since there's no data afterwards
       break;
-    case XBEE_ATCOMMAND: // length = API ID + Frame ID, + AT Command + Parameter Value
-      size = (datalength > 0) ? 8 : 4;
+    case XBEE_ATCOMMAND: // length = API ID + Frame ID, + AT Command (+ Parameter Value)
+      size = (datalength > 0) ? 8 : 4; // if we're writing, there are 4 bytes of data, otherwise, just the length above
       break;
     default:
       size = 0;
@@ -314,6 +316,10 @@ void XBeeConfig_SetPacketApiMode( )
 
 /**	
   A convenience function for creating an AT command packet.
+  As per the XBee spec, AT Command packets that want to set/write a value must have 4 bytes of data.  
+  Packets that query the value of an AT parameter send 0 bytes of data.  Note that multi-byte
+  data must be sent \b big-endian (most significant byte first) - see XBee_IntToBigEndianArray( ).
+  
   Make sure you're in API mode before creating & sending packets - see XBeeConfig_SetPacketApiMode( ).
 	See the XBee documentation for the official list of AT commands that the XBee modules understand.
   @param packet The XBeePacket to create.
@@ -323,13 +329,21 @@ void XBeeConfig_SetPacketApiMode( )
   @param datalength The number of bytes to send from the params buffer.
 	@return An integer specifying the active state - 1 (active) or 0 (inactive).
   
-  \par Example
+  \par Example - Writing
   \code
   XBeePacket txPacket;
-  uint8 params[5];
-  params = 0x14; // only 1 byte of data in this case
-  XBee_CreateATCommandPacket( &txPacket, 0, "IR", &params, 1 ); // set the sampling rate of the IO pins
-  XBee_SendPacket( &txPacket, 1 );
+  uint8 params[4];
+  XBee_IntToBigEndianArray( 1000, params ); // set our sampling rate to 1000
+  XBee_CreateATCommandPacket( &txPacket, 0, "IR", &params, 4 ); // set the sampling rate of the IO pins
+  XBee_SendPacket( &txPacket, 4 );
+  \endcode
+
+  \par Example - Reading
+  \code
+  XBeePacket txPacket;
+  XBee_CreateATCommandPacket( &txPacket, 0, "IR", NULL, 0 ); // query the sampling rate of the IO pins
+  XBee_SendPacket( &txPacket, 0 );
+  // then we'll receive a response packet
   \endcode
 */
 void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, uint8* params, uint8 datalength )
@@ -798,10 +812,7 @@ void XBeeConfig_SetAddress( uint16 address )
 {
   XBeePacket xbp;
   uint8 params[4]; // big endian - most significant bit first
-  params[0] = 0;
-  params[1] = 0;
-  params[2] = (address >> 8) & 0xFF;
-  params[3] = address & 0xFF;
+  XBee_IntToBigEndianArray( address, params );
   XBee_CreateATCommandPacket( &xbp, 0, "MY", params, 4 );
   XBee_SendPacket( &xbp, 4 );
 }
@@ -826,10 +837,7 @@ void XBeeConfig_SetPanID( uint16 id )
 {
   XBeePacket xbp;
   uint8 params[4]; // big endian - most significant bit first
-  params[0] = 0;
-  params[1] = 0;
-  params[2] = (id >> 8) & 0xFF;
-  params[3] = id & 0xFF;
+  XBee_IntToBigEndianArray( id, params );
   XBee_CreateATCommandPacket( &xbp, 0, "ID", params, 4 );
   XBee_SendPacket( &xbp, 4 );
 }
@@ -857,8 +865,7 @@ void XBeeConfig_SetChannel( uint8 channel )
 {
   XBeePacket xbp;
   uint8 params[4];
-  memset( params, 0, 4 );
-  params[3] = channel;
+  XBee_IntToBigEndianArray( channel, params );
   XBee_CreateATCommandPacket( &xbp, 0, "CH", params, 4 );
   XBee_SendPacket( &xbp, 4 );
 }
@@ -884,12 +891,26 @@ void XBeeConfig_SetSampleRate( uint16 rate )
 {
   XBeePacket xbp;
   uint8 params[4]; // big endian - most significant bit first
-  params[0] = 0;
-  params[1] = 0;
-  params[2] = (rate >> 8) & 0xFF;
-  params[3] = rate & 0xFF;
+  XBee_IntToBigEndianArray( rate, params );
   XBee_CreateATCommandPacket( &xbp, 0, "IR", params, 4 );
   XBee_SendPacket( &xbp, 4 );
+}
+
+/**	
+  Convert a 32-bit integer into a big endian array of 4 unsigned 8-bit integers.
+  This is mostly useful for sending AT Command packets.
+  @param value The value to convert.
+  @param array An array of 4 unsigned 8-bit integers (uint8).  Be sure you have 4.
+  \par Example
+  see XBee_CreateATCommandPacket( ) for an example.
+  \endcode
+*/
+void XBee_IntToBigEndianArray( int value, uint8* array )
+{
+  array[0] = (value >> 24) & 0xFF;
+  array[1] = (value >> 16) & 0xFF;
+  array[2] = (value >> 8) & 0xFF;
+  array[3] = value & 0xFF;
 }
 
 /** @}
@@ -1006,8 +1027,10 @@ static bool XBee_GetIOValues( XBeePacket* packet, int *inputs )
   on - then the Make Controller can relay io16 messages as soon as they're received.
 	Once you've turned on autosend, if there are boards on your network that are sending IO packets, 
   you'll receive messages like
-	\verbatim /xbee/io16 12 0 0 1023 1023 0 512 0 1023 \endverbatim
-	The XBee modules have 9 IO pins - the numbers in the message correspond to the values on those pins.
+	\verbatim /xbee/io16 1234 28 12 0 0 1023 1023 0 512 0 1023 \endverbatim
+	The first two numbers are the address of the module that sent the message (1234 in the example above), 
+  and the signal strength (28 above), respectively. The next 9 numbers are the values from the 9 IO pins 
+  on the XBee module.
 	
 	\par Active
 	The \b active property corresponds to the active state of the XBee system.
@@ -1032,7 +1055,7 @@ bool XBee_GetAutoSend( bool init )
   return XBee->autosend;
 }
 
-void XBee_SetAutoSend( bool onoff )
+void XBee_SetAutoSend( int onoff )
 {
   XBee_SetActive( 1 );  
   if( XBee->autosend != onoff )
@@ -1108,7 +1131,6 @@ int XBeeOsc_PropertyGet( int property, int channel )
     }
     case 1: // io16
     {
-      int in[9];
       XBeePacket* pkt;
       int i;
       for( i = 0; i < XBEEPACKET_Q_SIZE; i++ )
@@ -1116,10 +1138,14 @@ int XBeeOsc_PropertyGet( int property, int channel )
         pkt = XBee->packets[i];
         if( pkt != NULL )
         {
-          if( XBee_ReadIO16Packet( pkt, NULL, NULL, NULL, in ) )
+          int in[9];
+          uint16 src;
+          uint8 sigstrength;
+          if( XBee_ReadIO16Packet( pkt, &src, &sigstrength, NULL, in ) )
           {
             snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeOsc_Name, XBeeOsc_PropertyNames[ property ] ); 
-            Osc_CreateMessage( channel, address, ",iiiiiiiii", in[0], in[1], in[2], in[3], in[4], in[5], in[6], in[7], in[8] );
+            Osc_CreateMessage( channel, address, ",iiiiiiiiiii", src, sigstrength, 
+                                in[0], in[1], in[2], in[3], in[4], in[5], in[6], in[7], in[8] );
           }
         }
       }
@@ -1158,6 +1184,74 @@ int XBeeOsc_PropertyGet( int property, int channel )
   }
   return CONTROLLER_OK;
 }
+
+/** \defgroup XBeeConfigOSC XBee Configuration - OSC
+  Configure an XBee module connected to your Make Controller Kit via OSC.
+  \ingroup OSC
+	
+	\section devices Devices
+	There can only be one XBee board connected to the Make Controller Kit's serial port at a time,
+  so there is not a device index in XBee Config OSC messages.
+	
+	\section properties Properties
+	The XBee Config system has the following properties:
+  - write
+  - samplerate
+  - address
+  - panid
+  - channel
+  - ios
+  - active
+  
+  \par Write
+	When you change any of the paramters of your XBee module, it will by default revert back to its previous settings
+  when it gets powered down.  The \b write property sets the current values (all of them) into memory.
+
+  For example, to set the sample rate to 100 milliseconds, and save it permanently, send the messages
+	\verbatim 
+  /xbee/samplerate 100
+  /xbee/write 1
+  \endverbatim
+	
+  \par Sample Rate
+	The \b samplerate property corresponds to how often the XBee module will sample its IO pins and send a message
+  with those values.  If it's set to 0, the module will not sample its IO pins.  The maximum sample rate is 65535.
+  When the sample rate is set very low, the XBee module cannot guarantee that it will be able to keep up with all
+  the samples requested of it.
+
+  To set the sample rate to once a second (every 1000 milliseconds), send the message
+	\verbatim /xbeeconfig/samplerate 1000\endverbatim
+
+  \par Address
+	The \b address property corresponds to the address of the XBee module.  Valid ranges for the address are
+  from 0 - 65535.
+
+  To set the address to 1234, send the message
+	\verbatim /xbeeconfig/address 1234\endverbatim
+
+  \par Channel
+	The \b channel property corresponds to the channel of the XBee module.  Valid ranges for the address are
+  from 11 - 26 for XBee modules and 12 - 23 for XBee Pro modules.
+
+  To set the address to 15, send the message
+	\verbatim /xbeeconfig/channel 15\endverbatim
+
+  \par PAN ID
+	The \b panid property corresponds to the Personal Area Network ID of the XBee module.  Valid ranges for the address are
+  from 0 - 65535.  The default value is 13106.
+
+  To set the PAN ID to 512, send the message
+	\verbatim /xbeeconfig/panid 512\endverbatim
+	
+	\par Active
+	The \b active property corresponds to the active state of the XBee system.
+	If you're not seeing appropriate responses to your messages to the XBee system, 
+  check whether it's active by sending the message
+	\verbatim /xbee/active \endverbatim
+	\par
+	You can set the active flag by sending
+	\verbatim /xbee/active 1 \endverbatim
+*/
 
 static char* XBeeConfigOsc_Name = "xbeeconfig";
 static char* XBeeConfigOsc_PropertyNames[] = { "active", "address", "panid", "ios", 
@@ -1305,5 +1399,7 @@ int XBeeOsc_Async( int channel )
 }
 
 #endif // OSC
+
+#endif // XBEE
 
 
