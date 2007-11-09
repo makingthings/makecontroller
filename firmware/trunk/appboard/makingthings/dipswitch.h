@@ -31,6 +31,9 @@ int DipSwitch_GetActive( void );
 
 int DipSwitch_GetValue( void );
 
+bool DipSwitch_GetAutoSend( bool init );
+void DipSwitch_SetAutoSend( bool onoff );
+
 /* DipSwitchOsc Interface */
 
 const char* DipSwitchOsc_GetName( void );

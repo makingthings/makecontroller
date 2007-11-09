@@ -33,8 +33,14 @@
 int DipSwitch_Start( void );
 int DipSwitch_Stop( void );
 
-int DipSwitch_users;
-int DipSwitch_lastValue;
+typedef struct
+{
+  int users;
+  int lastValue;
+  int autosend;
+} DipSwitchSubsystem;
+
+DipSwitchSubsystem* DipSwitch;
 
 /** \defgroup DipSwitch DIP Switch
 * The DIP Switch subsystem reads values in from the 8 position DIP Switch (0 - 255) on the Application Board.
@@ -51,9 +57,23 @@ int DipSwitch_lastValue;
 int DipSwitch_SetActive( int state )
 {
   if ( state )
-    return DipSwitch_Start(  );
+  {
+    if( DipSwitch == NULL )
+    {
+      DipSwitch = MallocWait( sizeof( DipSwitchSubsystem ), 100 );
+      DipSwitch->users = 0;
+      DipSwitch->lastValue = 0;
+      DipSwitch->autosend = DipSwitch_GetAutoSend( true );
+      return DipSwitch_Start(  );
+    }
+  }
   else
+  {
+    if( DipSwitch )
+      Free( DipSwitch );
     return DipSwitch_Stop(  );
+  }
+  return CONTROLLER_OK;
 }
 
 /**
@@ -62,7 +82,7 @@ int DipSwitch_SetActive( int state )
 */
 int DipSwitch_GetActive( )
 {
-  return DipSwitch_users > 0;
+  return DipSwitch->users > 0;
 }
 
 /**	
@@ -71,7 +91,8 @@ int DipSwitch_GetActive( )
 */
 int DipSwitch_GetValue( )
 {
-  if ( DipSwitch_users == 0 )
+  DipSwitch_SetActive( 1 );
+  if ( DipSwitch->users == 0 )
   {
     int status = DipSwitch_Start();
     if ( status != CONTROLLER_OK )
@@ -96,19 +117,41 @@ int DipSwitch_GetValue( )
   return r;
 }
 
+bool DipSwitch_GetAutoSend( bool init )
+{
+  DipSwitch_SetActive( 1 );
+  if( init )
+  {
+    int autosend;
+    Eeprom_Read( EEPROM_DIPSWITCH_AUTOSEND, (uchar*)&autosend, 4 );
+    DipSwitch->autosend = (autosend == 1 ) ? 1 : 0;
+  }
+  return DipSwitch->autosend;
+}
+
+void DipSwitch_SetAutoSend( bool onoff )
+{
+  DipSwitch_SetActive( 1 );
+  if( DipSwitch->autosend != onoff )
+  {
+    DipSwitch->autosend = onoff;
+    Eeprom_Write( EEPROM_DIPSWITCH_AUTOSEND, (uchar*)&onoff, 4 );
+  }
+}
+
 /** @}
 */
 
 int DipSwitch_Start()
 {
   int status;
-  if ( DipSwitch_users++ == 0 )
+  if ( DipSwitch->users++ == 0 )
   {
     // Start the SPI
     status = Spi_Start( DIPSWITCH_DEVICE );
     if ( status != CONTROLLER_OK )
     {
-      DipSwitch_users--;
+      DipSwitch->users--;
       return status;
     }
     
@@ -126,10 +169,10 @@ int DipSwitch_Start()
 
 int DipSwitch_Stop()
 {
-  if ( DipSwitch_users <= 0 )
+  if ( DipSwitch->users <= 0 )
     return CONTROLLER_ERROR_TOO_MANY_STOPS;
   
-  if ( --DipSwitch_users == 0 )
+  if ( --DipSwitch->users == 0 )
     Spi_Stop( DIPSWITCH_DEVICE );
 
   return CONTROLLER_OK;
@@ -147,9 +190,9 @@ int DipSwitch_Stop()
 	DIP Switch.
 	
 	\section properties Properties
-	The DIP Switch has three properties
+	The DIP Switch has the following properties
   - value
-	- autosend
+  - autosend
   - active
 
 	\par Value
@@ -162,13 +205,13 @@ int DipSwitch_Stop()
 	want to include an argument at the end of your OSC message to read the value.\n
 	To read from the DIP Switch, send the message
 	\verbatim /dipswitch/value \endverbatim
-	
-	\par Autosend
+
+  \par Autosend
 	The \b autosend property corresponds to whether the DIP Switch will automatically send a message
 	when its value changes.
-	To tell the Controller to automatically send messages from the DIP Switch, send the message
+	To tell the DIP Swtich to automatically send messages, send the message
 	\verbatim /dipswitch/autosend 1 \endverbatim
-	To have the Controller stop sending messages from the DIP Switch, send the message
+	To have the DIP Switch stop sending messages automatically, send the message
 	\verbatim /dipswitch/autosend 0 \endverbatim
 	All autosend messages send at the same interval.  You can set this interval, in 
 	milliseconds, by sending the message
@@ -190,7 +233,7 @@ int DipSwitch_Stop()
 #include "osc.h"
 
 static char* DipSwitchOsc_Name = "dipswitch";
-static char* DipSwitchOsc_PropertyNames[] = { "active", "value", 0 }; // must have a trailing 0
+static char* DipSwitchOsc_PropertyNames[] = { "active", "value", "autosend",  0 }; // must have a trailing 0
 
 int DipSwitchOsc_PropertySet( int property, int value );
 int DipSwitchOsc_PropertyGet( int property );
@@ -220,6 +263,9 @@ int DipSwitchOsc_PropertySet( int property, int value )
     case 0: 
       DipSwitch_SetActive( value );
       break;      
+    case 2: 
+      DipSwitch_SetAutoSend( value );
+      break;  
   }
   return CONTROLLER_OK;
 }
@@ -236,6 +282,9 @@ int DipSwitchOsc_PropertyGet( int property )
     case 1:
       value = DipSwitch_GetValue( );
       break;
+    case 2:
+      value = DipSwitch_GetAutoSend( false );
+      break;
   }
   
   return value;
@@ -244,12 +293,14 @@ int DipSwitchOsc_PropertyGet( int property )
 int DipSwitchOsc_Async( int channel )
 {
   int newMsgs = 0;
+  if( !DipSwitch_GetAutoSend( false ) )
+    return newMsgs;
   char address[ OSC_SCRATCH_SIZE ];
   int value = DipSwitch_GetValue( );
   
-  if( value != DipSwitch_lastValue )
+  if( value != DipSwitch->lastValue )
   {
-    DipSwitch_lastValue = value;
+    DipSwitch->lastValue = value;
     snprintf( address, OSC_SCRATCH_SIZE, "/%s/value", DipSwitchOsc_Name );
     Osc_CreateMessage( channel, address, ",i", value );
     newMsgs++;

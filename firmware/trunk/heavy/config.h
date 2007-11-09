@@ -12,11 +12,11 @@
 
 #define FIRMWARE_NAME          "Heavy-svn"
 #define FIRMWARE_MAJOR_VERSION 1
-#define FIRMWARE_MINOR_VERSION 2
+#define FIRMWARE_MINOR_VERSION 3
 #define FIRMWARE_BUILD_NUMBER  1
 
 
-#define CONTROLLER_HEAPSIZE 18200
+#define CONTROLLER_HEAPSIZE 18000
 
 //----------------------------------------------------------------
 //  Comment out the systems that you don't want to include in your build.
@@ -24,11 +24,12 @@
 #define MAKE_CTRL_USB     // enable the USB system
 #define MAKE_CTRL_NETWORK // enable the Ethernet system
 #define OSC               // enable the OSC system
+#define XBEE              // enable the XBee/ZigBee system
 
 // ---------------------------------------------------------------
 // Network options
 // ---------------------------------------------------------------
-#define NETWORK_MEM_POOL         3000 // the network system's memory pool
+#define NETWORK_MEM_POOL         2000 // the network system's memory pool
 #define NETWORK_UDP_CONNS        4    // the number of possible DatagramSocket instances
 #define NETWORK_TCP_CONNS        4    // the number of possible Socket instances
 #define NETWORK_TCP_LISTEN_CONNS 2    // the number of possible ServerSocket instances
