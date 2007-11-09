@@ -262,7 +262,7 @@ void XBeeConfig_SetAddress( uint16 address );
 void XBeeConfig_SetPanID( uint16 id );
 void XBeeConfig_SetChannel( uint8 channel );
 void XBeeConfig_SetSampleRate( uint16 rate );
-void XBeeConfig_SetIOs( int ioconfig[] );
+void XBeeConfig_SetIO( int index, int value );
 void XBeeConfig_EnableEncryption( bool state );
 void XBeeConfig_SetEncryptionKey( void );
 
