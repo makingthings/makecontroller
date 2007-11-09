@@ -366,43 +366,25 @@ void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, u
   - \b XBEE_IO_DIGITALIN - Digital input
   - \b XBEE_IO_DIGOUT_HIGH - Digital out high
   - \b XBEE_IO_DIGOUT_LOW - Digital out low
-
-  There are 9 IO pins on the XBee modules.  Only channels 0-5 can be analog inputs - 
-	channels 6-8 can only operate as digital ins or outs.
-  @param ioconfig An array of 9 int values specifying the behavior of that pin.
-	@return 1 if IO values were successfully retrieved, otherwise zero.
-  
+  @param pin An integer specifying which pin to configure. There are 9 IO pins (numbered 0-8) on the XBee modules.  
+	Only channels 0-5 can be analog inputs - channels 6-8 can only operate as digital ins or outs.
+	@param value An int specifying the behavior of this pin (options shown above).
   \par Example
   \code
-  int ioChannels[9];
-  ioChannels[0] = XBEE_IO_ANALOGIN;
-  ioChannels[1] = XBEE_IO_ANALOGIN;
-  ioChannels[2] = XBEE_IO_ANALOGIN;
-  ioChannels[3] = XBEE_IO_DIGITALIN;
-  ioChannels[4] = XBEE_IO_DIGITALIN;
-  ioChannels[5] = XBEE_IO_DISABLED;
-  ioChannels[6] = XBEE_IO_DISABLED;
-  ioChannels[7] = XBEE_IO_DISABLED;
-  ioChannels[8] = XBEE_IO_DISABLED;
-
-  XBeeConfig_SetIOs( ioChannels );
+  // set channel 0 to analog in
+  XBeeConfig_SetIO( 0, XBEE_IO_ANALOGIN );
   \endcode
 */
-void XBeeConfig_SetIOs( int ioconfig[] )
+void XBeeConfig_SetIO( int pin, int value )
 {
   XBeePacket packet;
   XBee_ResetPacket( &packet );
-  uint8 params[1];
+  uint8 params[4];
   char cmd[2];
-  int i;
-  for( i=0; i < 9; i++ )
-  {
-    sprintf( (char*)params, "%x", ioconfig[i] );
-    sprintf( cmd, "D%d", i );
-    XBee_CreateATCommandPacket( &packet, 0, cmd, params, 1 );
-    XBee_SendPacket( &packet, 1 );
-    XBee_ResetPacket( &packet );
-  }
+	sprintf( cmd, "D%d", index );
+	XBee_IntToBigEndianArray( value, params );
+	XBee_CreateATCommandPacket( &packet, 0, cmd, params, 4 );
+	XBee_SendPacket( &packet, 4 );
 }
 
 /**	
@@ -1025,12 +1007,40 @@ static bool XBee_GetIOValues( XBeePacket* packet, int *inputs )
 	The \b io16 property corresponds to an incoming message from an XBee module with samples
   from its IO pins.  The best way to use this is to turn the XBee system's autosend property
   on - then the Make Controller can relay io16 messages as soon as they're received.
+	\par
 	Once you've turned on autosend, if there are boards on your network that are sending IO packets, 
   you'll receive messages like
 	\verbatim /xbee/io16 1234 28 12 0 0 1023 1023 0 512 0 1023 \endverbatim
-	The first two numbers are the address of the module that sent the message (1234 in the example above), 
-  and the signal strength (28 above), respectively. The next 9 numbers are the values from the 9 IO pins 
-  on the XBee module.
+	The first two numbers are:
+	-# the address of the module that sent the message (1234 in the example above)
+  -# signal strength (28 above) 
+	\par
+	The next 9 numbers are the values from the 9 IO pins on the XBee module.
+	
+	\par io64
+	The \b io64 property corresponds to an incoming message from an XBee module with samples from its IO
+	pins.  This message is just like the \b io16 message, excecpt it's coming from a board with a 64-bit
+	address, rather than a 16-bit address.  The structure of the message is the same (see above).
+	
+	\par rx16
+	The \b rx16 property corresponds to an incoming message from a 16-bit address XBee module with arbitrary data.  
+	The best way to use this is to turn the XBee system's autosend property
+  on - then the Make Controller can relay rx16 messages as soon as they're received.
+	\par
+	Once you've turned on autosend, if there are boards on your network that are sending IO packets, 
+  you'll receive messages like
+	\verbatim /xbee/rx16 1234 28 0 [43 44 45 32 46 47 48] \endverbatim
+	The first three numbers are:
+	-# the address of the module that sent the message (1234 in the example above)
+  -# signal strength (28 above)
+	-# the options byte (0 above), respectively. 
+	\par
+	Following those is an OSC blob with the data (enclosed in square brackets above).  These are the hex values for each byte of data.
+	
+	\par rx64
+	The \b rx64 property corresponds to an incoming message from an XBee module with samples from its IO
+	pins.  This message is just like the \b io16 message, excecpt it's coming from a board with a 64-bit
+	address, rather than a 16-bit address.  The structure of the message is the same (see above).
 	
 	\par Active
 	The \b active property corresponds to the active state of the XBee system.
@@ -1200,7 +1210,7 @@ int XBeeOsc_PropertyGet( int property, int channel )
   - address
   - panid
   - channel
-  - ios
+  - io
   - active
   
   \par Write
@@ -1209,9 +1219,8 @@ int XBeeOsc_PropertyGet( int property, int channel )
 
   For example, to set the sample rate to 100 milliseconds, and save it permanently, send the messages
 	\verbatim 
-  /xbee/samplerate 100
-  /xbee/write 1
-  \endverbatim
+  /xbeeconfig/samplerate 100
+  /xbeeconfig/write 1 \endverbatim
 	
   \par Sample Rate
 	The \b samplerate property corresponds to how often the XBee module will sample its IO pins and send a message
@@ -1233,7 +1242,7 @@ int XBeeOsc_PropertyGet( int property, int channel )
 	The \b channel property corresponds to the channel of the XBee module.  Valid ranges for the address are
   from 11 - 26 for XBee modules and 12 - 23 for XBee Pro modules.
 
-  To set the address to 15, send the message
+  To set the channel to 15, send the message
 	\verbatim /xbeeconfig/channel 15\endverbatim
 
   \par PAN ID
@@ -1242,6 +1251,21 @@ int XBeeOsc_PropertyGet( int property, int channel )
 
   To set the PAN ID to 512, send the message
 	\verbatim /xbeeconfig/panid 512\endverbatim
+	
+	\par Input/Output Pins
+	There are several \b io properties that allow you to configure each of the 9 IO pins on the XBee module.  
+	Pins can be set to one of 5 values:
+  - \b 0 - disabled
+  - \b 2 - analogin
+  - \b 3 - digital in
+  - \b 4 - digital out high
+  - \b 5 - digital out low
+	
+	There are 9 IO pins on the XBee module, numbered 0 - 8. Send messages to them by specifying \b io + their number.  
+	For example,	to set IO 0 to analogin, send the message
+	\verbatim /xbeeconfig/io0 2\endverbatim
+	To set IO 6 to a digital in, send the message
+	\verbatim /xbeeconfig/io6 3\endverbatim
 	
 	\par Active
 	The \b active property corresponds to the active state of the XBee system.
@@ -1255,7 +1279,8 @@ int XBeeOsc_PropertyGet( int property, int channel )
 
 static char* XBeeConfigOsc_Name = "xbeeconfig";
 static char* XBeeConfigOsc_PropertyNames[] = { "active", "address", "panid", "ios", 
-                                                "samplerate", "write", 0 }; // must have a trailing 0
+                                                "samplerate", "write", "io0", "io1", "io2", 
+																								"io3", "io4", "io5", "io6", "io7", "io8", 0 }; // must have a trailing 0
 
 int XBeeConfigOsc_PropertySet( int property, char* typedata, int channel );
 int XBeeConfigOsc_PropertyGet( int property, int channel );
