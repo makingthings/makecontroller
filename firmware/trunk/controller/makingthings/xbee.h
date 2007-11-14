@@ -259,6 +259,7 @@ bool XBee_ReadTXStatusPacket( XBeePacket* xbp, uint8* frameID, uint8* status );
 void XBeeConfig_SetPacketApiMode( void );
 void XBeeConfig_WriteStateToMemory( void );
 void XBeeConfig_SetAddress( uint16 address );
+void XBeeConfig_GetAddress( void );
 void XBeeConfig_SetPanID( uint16 id );
 void XBeeConfig_SetChannel( uint8 channel );
 void XBeeConfig_SetSampleRate( uint16 rate );
