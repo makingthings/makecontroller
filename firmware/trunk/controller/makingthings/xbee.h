@@ -256,14 +256,19 @@ bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char* command, 
 bool XBee_ReadTXStatusPacket( XBeePacket* xbp, uint8* frameID, uint8* status );
 
 // XBee Config stuff
-void XBeeConfig_SetPacketApiMode( void );
+void XBeeConfig_SetPacketApiMode( int value );
+int XBeeConfig_RequestPacketApiMode( void );
 void XBeeConfig_WriteStateToMemory( void );
 void XBeeConfig_SetAddress( uint16 address );
-void XBeeConfig_GetAddress( void );
+int XBeeConfig_RequestAddress( void );
 void XBeeConfig_SetPanID( uint16 id );
+int XBeeConfig_RequestPanID( void );
 void XBeeConfig_SetChannel( uint8 channel );
+int XBeeConfig_RequestChannel( void );
 void XBeeConfig_SetSampleRate( uint16 rate );
+int XBeeConfig_RequestSampleRate( void );
 void XBeeConfig_SetIO( int index, int value );
+int XBeeConfig_RequestIO( int pin );
 void XBeeConfig_EnableEncryption( bool state );
 void XBeeConfig_SetEncryptionKey( void );
 
