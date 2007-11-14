@@ -23,13 +23,14 @@
 #include "xbee.h"
 
 static bool XBee_GetIOValues( XBeePacket* packet, int *inputs );
+static bool XBee_GetWholePacket( XBeePacket *packet );
 void XBeeTask( void* p );
 #define XBEEPACKET_Q_SIZE 5
 #define XBEE_OSC_RX_TIMEOUT 500
 
 typedef struct
 {
-  XBeePacket* packets[XBEEPACKET_Q_SIZE];
+  XBeePacket* currentPkt;
   int packetIndex;
   bool autosend;
 } XBeeSubsystem;
@@ -97,12 +98,8 @@ int XBee_SetActive( int state )
       XBee = MallocWait( sizeof( XBeeSubsystem ), 100 );
       XBee->packetIndex = 0;
       XBee->autosend = XBee_GetAutoSend( true );
-      int i;
-      for( i = 0; i < XBEEPACKET_Q_SIZE; i ++ )
-      {
-        XBee->packets[i] = MallocWait( sizeof( XBeePacket ), 100 );
-        XBee_ResetPacket( XBee->packets[i] );
-      }
+      XBee->currentPkt = MallocWait( sizeof( XBeePacket ), 100 );
+      XBee_ResetPacket( XBee->currentPkt );
     }
   }
   else
@@ -260,6 +257,7 @@ int XBee_SendPacket( XBeePacket* packet, int datalength )
     Serial_SetChar( *p );
     packet->crc += *p++;
   }
+  //uint8 test = 0xFF - packet->crc;
   Serial_SetChar( 0xFF - packet->crc );
   return CONTROLLER_OK;
 }
@@ -280,17 +278,20 @@ void XBee_ResetPacket( XBeePacket* packet )
 }
 
 /**	
-  Set a module into AT command mode.  
-  Because XBee modules need to wait 1 second after sending the command sequence before they're 
-  ready to receive any AT commands, this function will block for about a second.  When it's restarted, 
-	the XBee module will revert to transparent serial port mode, 
-	unless you make a call to XBeeConfig_WriteStateToMemory( ).
+  Set a module into packet API mode.  
+  XBee modules are in transparent serial port mode by default.  This allows you to work with them
+  via the packet API.
+
+  When setting this on, the XBee module needs to wait 1 second after sending the command sequence before it's 
+  ready to receive any AT commands - this function will block for that amount of time.  Once you turn it off,
+  you won't get any responses to packets you send the module until you turn packet mode on again.
+  @param value 1 to turn packet mode on, 0 to turn it off.
 	
   \par Example
   \code
 	MyTask( void * p )
 	{
-		XBeeConfig_SetPacketApiMode( ); // initialize the module to be in API mode
+		XBeeConfig_SetPacketApiMode( 1 ); // initialize the module to be in API mode
 		while( 1 )
 		{
 			// your task here.
@@ -298,18 +299,56 @@ void XBee_ResetPacket( XBeePacket* packet )
 	}
   \endcode
 */
-void XBeeConfig_SetPacketApiMode( )
+void XBeeConfig_SetPacketApiMode( int value )
 {
   if( CONTROLLER_OK != XBee_SetActive( 1 ) )
     return;
   
-  char buf[50];
-  snprintf( buf, 50, "+++" ); // enter command mode
-  Serial_Write( (uchar*)buf, strlen(buf), 0 );
-  Sleep( 1025 ); // have to wait one second after +++ to actually get set to receive in AT mode
-  
-  snprintf( buf, 50, "ATAP %x,CN\r", 1 ); // turn API mode on, and leave command mode
-  Serial_Write( (uchar*)buf, strlen(buf), 0 );
+  if( value )
+  {
+    char buf[50];
+    snprintf( buf, 50, "+++" ); // enter command mode
+    Serial_Write( (uchar*)buf, strlen(buf), 0 );
+    Sleep( 1025 ); // have to wait one second after +++ to actually get set to receive in AT mode
+    snprintf( buf, 50, "ATAP %x,CN\r", 1 ); // turn API mode on, and leave command mode
+    Serial_Write( (uchar*)buf, strlen(buf), 0 );
+  }
+  else
+  {
+    XBeePacket xbp;
+    uint8 params[4];
+    memset( params, 0, 4 );
+    XBee_CreateATCommandPacket( &xbp, 0, "AP", params, 4 );
+    XBee_SendPacket( &xbp, 4 );
+  }
+}
+
+/**	
+  Query whether the module is in API mode.
+  This will block for up to a 1/2 second waiting for a response from the XBee module.
+  @return 0 if off, 1 if enabled, 2 if enabled with escape characters.
+	
+  \par Example
+  \code
+  int mode = XBeeConfig_RequestPacketApiMode( );
+  if( mode >= 0 )
+  {
+    // then we have our mode
+  }
+  \endcode
+*/
+int XBeeConfig_RequestPacketApiMode( )
+{
+  XBeePacket xbp;
+  XBee_CreateATCommandPacket( &xbp, 0x52, "AP", NULL, 0 );
+  XBee_SendPacket( &xbp, 0 );
+  if( XBee_GetWholePacket( &xbp ) )
+  {
+    uint8* dataPtr;
+    if( XBee_ReadAtResponsePacket( &xbp, NULL, NULL, NULL, &dataPtr ) )
+      return *dataPtr;
+  }
+  return CONTROLLER_ERROR_BAD_DATA;
 }
 
 /**	
@@ -383,6 +422,37 @@ void XBeeConfig_SetIO( int pin, int value )
 	XBee_IntToBigEndianArray( value, params );
 	XBee_CreateATCommandPacket( &packet, 0, cmd, params, 4 );
 	XBee_SendPacket( &packet, 4 );
+}
+
+/**	
+  Query the configuration of an IO pin.
+  See XBeeConfig_SetIO( ) for the possible return values.
+  This will block for up to a 1/2 second waiting for a response from the XBee module.
+  @return An integer corresponding to the config of the requested pin, or negative number on failure.
+	
+  \par Example
+  \code
+  int pin = XBeeConfig_RequestIO( 0 ); // request the configuration of pin 0
+  if( pin >= 0 )
+  {
+    // then we have our pin config
+  }
+  \endcode
+*/
+int XBeeConfig_RequestIO( int pin )
+{
+  XBeePacket xbp;
+  char cmd[2];
+	sprintf( cmd, "D%d", pin );
+  XBee_CreateATCommandPacket( &xbp, 0x52, cmd, NULL, 0 );
+  XBee_SendPacket( &xbp, 0 );
+  if( XBee_GetWholePacket( &xbp ) )
+  {
+    uint8* dataPtr;
+    if( XBee_ReadAtResponsePacket( &xbp, NULL, NULL, NULL, &dataPtr ) )
+      return *dataPtr;
+  }
+  return CONTROLLER_ERROR_BAD_DATA;
 }
 
 /**	
@@ -797,11 +867,37 @@ void XBeeConfig_SetAddress( uint16 address )
   XBee_SendPacket( &xbp, 4 );
 }
 
-void XBeeConfig_GetAddress( )
+/**	
+  Query the address of the module.
+  This will block for up to a 1/2 second waiting for a response from the XBee module.
+  @return An integer corresponding to the address of the module, or negative number on failure.
+	
+  \par Example
+  \code
+  int address = XBeeConfig_RequestAddress( );
+  if( address >= 0 )
+  {
+    // then we have our address
+  }
+  \endcode
+*/
+int XBeeConfig_RequestAddress( )
 {
   XBeePacket xbp;
   XBee_CreateATCommandPacket( &xbp, 0x52, "MY", NULL, 0 );
   XBee_SendPacket( &xbp, 0 );
+  if( XBee_GetWholePacket( &xbp ) )
+  {
+    uint8* dataPtr;
+    if( XBee_ReadAtResponsePacket( &xbp, NULL, NULL, NULL, &dataPtr ) )
+    { // grab 16-bit address
+      int addr = *dataPtr++;
+      addr <<= 8;
+      addr += *dataPtr;
+      return addr;
+    }
+  }
+  return CONTROLLER_ERROR_BAD_DATA;
 }
 
 /**	
@@ -827,6 +923,39 @@ void XBeeConfig_SetPanID( uint16 id )
   XBee_IntToBigEndianArray( id, params );
   XBee_CreateATCommandPacket( &xbp, 0, "ID", params, 4 );
   XBee_SendPacket( &xbp, 4 );
+}
+
+/**	
+  Query the PAN ID of the module.
+  This will block for up to a 1/2 second waiting for a response from the XBee module.
+  @return An integer corresponding to the PAN ID of the module, or negative number on failure.
+	
+  \par Example
+  \code
+  int panid = XBeeConfig_RequestPanID( );
+  if( panid >= 0 )
+  {
+    // then we have our pan id
+  }
+  \endcode
+*/
+int XBeeConfig_RequestPanID( )
+{
+  XBeePacket xbp;
+  XBee_CreateATCommandPacket( &xbp, 0x52, "ID", NULL, 0 );
+  XBee_SendPacket( &xbp, 0 );
+  if( XBee_GetWholePacket( &xbp ) )
+  {
+    uint8* dataPtr;
+    if( XBee_ReadAtResponsePacket( &xbp, NULL, NULL, NULL, &dataPtr ) )
+    { // grab 16-bit panid
+      int panid = *dataPtr++;
+      panid <<= 8;
+      panid += *dataPtr;
+      return panid;
+    }
+  }
+  return CONTROLLER_ERROR_BAD_DATA;
 }
 
 /**	
@@ -858,6 +987,34 @@ void XBeeConfig_SetChannel( uint8 channel )
 }
 
 /**	
+  Query the channel of the module.
+  This will block for up to a 1/2 second waiting for a response from the XBee module.
+  @return An integer corresponding to the channel of the module, or negative number on failure.
+	
+  \par Example
+  \code
+  int chan = XBeeConfig_RequestChannel( );
+  if( chan >= 0 )
+  {
+    // then we have our channel
+  }
+  \endcode
+*/
+int XBeeConfig_RequestChannel( )
+{
+  XBeePacket xbp;
+  XBee_CreateATCommandPacket( &xbp, 0x52, "CH", NULL, 0 );
+  XBee_SendPacket( &xbp, 0 );
+  if( XBee_GetWholePacket( &xbp ) )
+  {
+    uint8* dataPtr;
+    if( XBee_ReadAtResponsePacket( &xbp, NULL, NULL, NULL, &dataPtr ) )
+      return *dataPtr;
+  }
+  return CONTROLLER_ERROR_BAD_DATA;
+}
+
+/**	
   Set the rate at which the module will sample its IO pins.
   When the sample rate is set, the module will sample all its IO pins according to its current IO configuration and send
   a packet with the sample data.  If this is set too low and the IO configuration is sampling too many channels, 
@@ -881,6 +1038,34 @@ void XBeeConfig_SetSampleRate( uint16 rate )
   XBee_IntToBigEndianArray( rate, params );
   XBee_CreateATCommandPacket( &xbp, 0, "IR", params, 4 );
   XBee_SendPacket( &xbp, 4 );
+}
+
+/**	
+  Query the sample rate of the module.
+  This will block for up to a 1/2 second waiting for a response from the XBee module.
+  @return An integer corresponding to the sample rate of the module, or negative number on failure.
+	
+  \par Example
+  \code
+  int rate = XBeeConfig_RequestSampleRate( );
+  if( rate >= 0 )
+  {
+    // then we have our rate
+  }
+  \endcode
+*/
+int XBeeConfig_RequestSampleRate( )
+{
+  XBeePacket xbp;
+  XBee_CreateATCommandPacket( &xbp, 0x52, "IR", NULL, 0 );
+  XBee_SendPacket( &xbp, 0 );
+  if( XBee_GetWholePacket( &xbp ) )
+  {
+    uint8* dataPtr;
+    if( XBee_ReadAtResponsePacket( &xbp, NULL, NULL, NULL, &dataPtr ) )
+      return *dataPtr;
+  }
+  return CONTROLLER_ERROR_BAD_DATA;
 }
 
 /**	
@@ -977,6 +1162,20 @@ static bool XBee_GetIOValues( XBeePacket* packet, int *inputs )
     return false;
 }
 
+// a halfway async way of waiting for responses from the XBee module
+bool XBee_GetWholePacket( XBeePacket *xbp )
+{
+  int tickCount = TaskGetTickCount( );
+  XBee_ResetPacket( xbp );
+  while( 1 )
+  {
+    if( XBee_GetPacket( xbp ) )
+      return true;
+    if( (TaskGetTickCount( ) - tickCount) > XBEE_OSC_RX_TIMEOUT )
+      return false;
+    Sleep( 1 );
+  }
+}
 
 #ifdef OSC
 #include "osc.h"
@@ -1093,6 +1292,7 @@ const char* XBeeOsc_GetName( void )
 
 int XBeeOsc_ReceiveMessage( int channel, char* message, int length )
 {
+  XBee_SetActive( 1 );
   int status = Osc_GeneralReceiverHelper( channel, message, length, 
                                 XBeeOsc_Name,
                                 XBeeOsc_PropertySet, XBeeOsc_PropertyGet, 
@@ -1146,45 +1346,35 @@ int XBeeOsc_PropertyGet( int property, int channel )
     }
     case 1: // io16
     {
-      XBeePacket* pkt;
-      int i;
-      for( i = 0; i < XBEEPACKET_Q_SIZE; i++ )
+      XBeePacket pkt;
+      if( XBee_GetWholePacket( &pkt ) )
       {
-        pkt = XBee->packets[i];
-        if( pkt != NULL )
+        int in[9];
+        uint16 src;
+        uint8 sigstrength;
+        if( XBee_ReadIO16Packet( &pkt, &src, &sigstrength, NULL, in ) )
         {
-          int in[9];
-          uint16 src;
-          uint8 sigstrength;
-          if( XBee_ReadIO16Packet( pkt, &src, &sigstrength, NULL, in ) )
-          {
-            snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeOsc_Name, XBeeOsc_PropertyNames[ property ] ); 
-            Osc_CreateMessage( channel, address, ",iiiiiiiiiii", src, sigstrength, 
-                                in[0], in[1], in[2], in[3], in[4], in[5], in[6], in[7], in[8] );
-          }
+          snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeOsc_Name, XBeeOsc_PropertyNames[ property ] ); 
+          Osc_CreateMessage( channel, address, ",iiiiiiiiiii", src, sigstrength, 
+                              in[0], in[1], in[2], in[3], in[4], in[5], in[6], in[7], in[8] );
         }
       }
       break;
     }
     case 2: // rx16
     {
-      XBeePacket* pkt;
-      uint16 srcAddr;
-      uint8 sigStrength;
-      uint8 opts;
-      uint8* data;
-      uint8 datalen;
-      int i;
-      for( i = 0; i < XBEEPACKET_Q_SIZE; i++ )
+      XBeePacket pkt;
+      if( XBee_GetWholePacket( &pkt ) )
       {
-        pkt = XBee->packets[i];
-        if( pkt != NULL )
+        uint16 srcAddr;
+        uint8 sigStrength;
+        uint8 opts;
+        uint8* data;
+        uint8 datalen;
+        if( XBee_ReadRX16Packet( &pkt, &srcAddr, &sigStrength, &opts, &data, &datalen ) )
         {
-          if( XBee_ReadRX16Packet( pkt, &srcAddr, &sigStrength, &opts, &data, &datalen ) )
-          {
-            snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeOsc_Name, XBeeOsc_PropertyNames[ property ] ); 
-            Osc_CreateMessage( channel, address, ",iiib", srcAddr, sigStrength, opts, data, datalen );
-          }
+          snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeOsc_Name, XBeeOsc_PropertyNames[ property ] ); 
+          Osc_CreateMessage( channel, address, ",iiib", srcAddr, sigStrength, opts, data, datalen );
         }
       }
       break;
@@ -1236,6 +1426,8 @@ int XBeeOsc_PropertyGet( int property, int channel )
   \par
   To set the sample rate to once a second (every 1000 milliseconds), send the message
 	\verbatim /xbeeconfig/samplerate 1000\endverbatim
+  To read the sample rate, send the message
+	\verbatim /xbeeconfig/samplerate \endverbatim
 
   \par Address
 	The \b address property corresponds to the address of the XBee module.  Valid ranges for the address are
@@ -1243,6 +1435,8 @@ int XBeeOsc_PropertyGet( int property, int channel )
   \par
   To set the address to 1234, send the message
 	\verbatim /xbeeconfig/address 1234\endverbatim
+  To read the address, send the message
+	\verbatim /xbeeconfig/address \endverbatim
 
   \par Channel
 	The \b channel property corresponds to the channel of the XBee module.  Valid ranges for the address are
@@ -1250,6 +1444,9 @@ int XBeeOsc_PropertyGet( int property, int channel )
   \par
   To set the channel to 15, send the message
 	\verbatim /xbeeconfig/channel 15\endverbatim
+  To read the channel, send the message
+	\verbatim /xbeeconfig/channel \endverbatim
+
 
   \par PAN ID
 	The \b panid property corresponds to the Personal Area Network ID of the XBee module.  Valid ranges for the address are
@@ -1257,6 +1454,8 @@ int XBeeOsc_PropertyGet( int property, int channel )
   \par
   To set the PAN ID to 512, send the message
 	\verbatim /xbeeconfig/panid 512\endverbatim
+  To read the PAN ID, send the message
+	\verbatim /xbeeconfig/panid \endverbatim
 	
 	\par Input/Output Pins
 	There are several \b io properties that allow you to configure each of the 9 IO pins on the XBee module.  
@@ -1274,6 +1473,8 @@ int XBeeOsc_PropertyGet( int property, int channel )
 	\verbatim /xbeeconfig/io0 2\endverbatim
 	To set IO 6 to a digital in, send the message
 	\verbatim /xbeeconfig/io6 3\endverbatim
+  To read the configuration of pin 5, send the message
+	\verbatim /xbeeconfig/io5 \endverbatim
 	
 	\par Active
 	The \b active property corresponds to the active state of the XBee system.
@@ -1286,13 +1487,12 @@ int XBeeOsc_PropertyGet( int property, int channel )
 */
 
 static char* XBeeConfigOsc_Name = "xbeeconfig";
-static char* XBeeConfigOsc_PropertyNames[] = { "active", "address", "panid", "ios", 
-                                                "samplerate", "write", "io0", "io1", "io2", 
-																								"io3", "io4", "io5", "io6", "io7", "io8", "packet-mode", 0 }; // must have a trailing 0
+static char* XBeeConfigOsc_PropertyNames[] = { "active", "address", "panid", "channel", "samplerate", 
+                                                "write", "io0", "io1", "io2", "io3", "io4", 
+                                                "io5", "io6", "io7", "io8", "packet-mode", 0 }; // must have a trailing 0
 
 int XBeeConfigOsc_PropertySet( int property, char* typedata, int channel );
 int XBeeConfigOsc_PropertyGet( int property, int channel );
-bool XBeeConfigOsc_ReceivePacket( XBeePacket *packet );
 
 const char* XBeeConfigOsc_GetName( void )
 {
@@ -1314,6 +1514,12 @@ int XBeeConfigOsc_PropertySet( int property, char* typedata, int channel )
     case 1: // address
       XBeeConfig_SetAddress( value );
       break;
+    case 2: // panid
+      XBeeConfig_SetPanID( value );
+      break;
+    case 3: // channel
+      XBeeConfig_SetChannel( value );
+      break;
     case 4: // samplerate
       XBeeConfig_SetSampleRate( value );
       break;
@@ -1321,35 +1527,18 @@ int XBeeConfigOsc_PropertySet( int property, char* typedata, int channel )
       XBeeConfig_WriteStateToMemory( );
       break;
     case 6: // io0
-      XBeeConfig_SetIO( 0, value );
-      break;
     case 7: // io1
-      XBeeConfig_SetIO( 1, value );
-      break;
     case 8: // io2
-      XBeeConfig_SetIO( 2, value );
-      break;
     case 9: // io3
-      XBeeConfig_SetIO( 3, value );
-      break;
     case 10: // io4
-      XBeeConfig_SetIO( 4, value );
-      break;
     case 11: // io5
-      XBeeConfig_SetIO( 5, value );
-      break;
     case 12: // io6
-      XBeeConfig_SetIO( 6, value );
-      break;
     case 13: // io7
-      XBeeConfig_SetIO( 7, value );
-      break;
     case 14: // io8
-      XBeeConfig_SetIO( 8, value );
+      XBeeConfig_SetIO( property - 6, value );
       break;
     case 15: // packet-mode
-      if( value )
-        XBeeConfig_SetPacketApiMode( );
+      XBeeConfig_SetPacketApiMode( value );
       break;
   }
   
@@ -1370,42 +1559,79 @@ int XBeeConfigOsc_PropertyGet( int property, int channel )
     }
     case 1: // address
     {
-      XBeeConfig_GetAddress( ); // send the query
-      XBeePacket xbp;
-      if( !XBeeConfigOsc_ReceivePacket( &xbp ) )
+      int addr = XBeeConfig_RequestAddress( );
+      if( addr < 0 )
         return Osc_SubsystemError( channel, XBeeConfigOsc_Name, "Couldn't get requested value." );
-      uint8* dataPtr;
-      if( XBee_ReadAtResponsePacket( &xbp, NULL, NULL, NULL, &dataPtr ) )
-      { // grab 16-bit address
-        int addr = *dataPtr++;
-        addr <<= 8;
-        addr += *dataPtr;
-        snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeConfigOsc_Name, XBeeConfigOsc_PropertyNames[ property ] ); 
-        Osc_CreateMessage( channel, address, ",i", addr );
-      }
+
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeConfigOsc_Name, XBeeConfigOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", addr );
+      break;
+    }
+    case 2: // panid
+    {
+      int panid = XBeeConfig_RequestPanID( );
+      if( panid < 0 )
+        return Osc_SubsystemError( channel, XBeeConfigOsc_Name, "Couldn't get requested value." );
+
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeConfigOsc_Name, XBeeConfigOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", panid );
+      break;
+    }
+    case 3: // channel
+    {
+      int chan = XBeeConfig_RequestChannel( );
+      if( chan < 0 )
+        return Osc_SubsystemError( channel, XBeeConfigOsc_Name, "Couldn't get requested value." );
+
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeConfigOsc_Name, XBeeConfigOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", chan );
+      break;
+    }
+    case 4: // samplerate
+    {
+      int rate = XBeeConfig_RequestSampleRate( );
+      if( rate < 0 )
+        return Osc_SubsystemError( channel, XBeeConfigOsc_Name, "Couldn't get requested value." );
+
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeConfigOsc_Name, XBeeConfigOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", rate );
+      break;
+    }
+    case 6: // ios
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    {
+      int io = XBeeConfig_RequestIO( property - 6 ); // send the query
+      if( io < 0  )
+        return Osc_SubsystemError( channel, XBeeConfigOsc_Name, "Couldn't get requested value." );
+
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeConfigOsc_Name, XBeeConfigOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", io );
+      break;
+    }
+    case 15: // packet-mode
+    {
+      int mode = XBeeConfig_RequestPacketApiMode( ); // send the query
+      if( mode < 0 )
+        return Osc_SubsystemError( channel, XBeeConfigOsc_Name, "Couldn't get requested value." );
+
+      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%s", XBeeConfigOsc_Name, XBeeConfigOsc_PropertyNames[ property ] ); 
+      Osc_CreateMessage( channel, address, ",i", mode );
       break;
     }
   }
   return CONTROLLER_OK;
 }
 
-// a halfway async way of waiting for responses from the XBee module
-bool XBeeConfigOsc_ReceivePacket( XBeePacket *xbp )
-{
-  int tickCount = TaskGetTickCount( );
-  XBee_ResetPacket( xbp );
-  while( 1 )
-  {
-    if( XBee_GetPacket( xbp ) )
-      return true;
-    if( (TaskGetTickCount( ) - tickCount) > XBEE_OSC_RX_TIMEOUT )
-      return false;
-    Sleep( 1 );
-  }
-}
-
 int XBeeConfigOsc_ReceiveMessage( int channel, char* message, int length )
 {
+  XBee_SetActive( 1 );
   int status = Osc_GeneralReceiverHelper( channel, message, length, 
                                 XBeeConfigOsc_Name,
                                 XBeeConfigOsc_PropertySet, XBeeConfigOsc_PropertyGet, 
@@ -1421,16 +1647,14 @@ int XBeeOsc_Async( int channel )
 {
   XBee_SetActive( 1 );
   char address[ OSC_SCRATCH_SIZE ];
-  XBeePacket* pkt;
   int newMsgs = 0;
 
   if( !XBee_GetAutoSend( false ) )
     return newMsgs;
 
-  pkt = XBee->packets[XBee->packetIndex];
-  if( XBee_GetPacket( pkt ) )
+  while( XBee_GetPacket( XBee->currentPkt ) )
   {
-    switch( pkt->apiId )
+    switch( XBee->currentPkt->apiId )
     {
       case XBEE_RX16:
       {
@@ -1439,7 +1663,7 @@ int XBeeOsc_Async( int channel )
         uint8 opts;
         uint8* data;
         uint8 datalen;
-        if( XBee_ReadRX16Packet( pkt, &srcAddr, &sigStrength, &opts, &data, &datalen ) )
+        if( XBee_ReadRX16Packet( XBee->currentPkt, &srcAddr, &sigStrength, &opts, &data, &datalen ) )
         {
           snprintf( address, OSC_SCRATCH_SIZE, "/%s/rx16", XBeeOsc_Name ); 
           Osc_CreateMessage( channel, address, ",iiib", srcAddr, sigStrength, opts, data, datalen );
@@ -1450,22 +1674,18 @@ int XBeeOsc_Async( int channel )
       case XBEE_IO16:
       {
         int in[9];
-        if( XBee_ReadIO16Packet( pkt, NULL, NULL, NULL, in ) )
+        uint16 src;
+        uint8 sigstrength;
+        if( XBee_ReadIO16Packet( XBee->currentPkt, &src, &sigstrength, NULL, in ) )
         {
           snprintf( address, OSC_SCRATCH_SIZE, "/%s/io16", XBeeOsc_Name ); 
-          Osc_CreateMessage( channel, address, ",iiiiiiiii", in[0], in[1], in[2], in[3], in[4], in[5], in[6], in[7], in[8] );
-          newMsgs++;
+          Osc_CreateMessage( channel, address, ",iiiiiiiiiii", src, sigstrength, 
+                              in[0], in[1], in[2], in[3], in[4], in[5], in[6], in[7], in[8] );
         }
         break;
       }
     }
-
-    if( ++XBee->packetIndex >= XBEEPACKET_Q_SIZE )
-      XBee->packetIndex = 0;
-    
-    pkt = XBee->packets[XBee->packetIndex];
-    if( pkt->index != 0 )
-      XBee_ResetPacket( pkt );
+    XBee_ResetPacket( XBee->currentPkt );
   }
   return newMsgs;
 }

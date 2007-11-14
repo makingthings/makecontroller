@@ -207,7 +207,7 @@ void Osc_SetActive( int state )
 
     #ifdef MAKE_CTRL_NETWORK
     	#ifdef CROSSWORKS_BUILD
-    	Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 1000, (void*)OSC_CHANNEL_UDP, 3 );
+    	Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 1200, (void*)OSC_CHANNEL_UDP, 3 );
     	#else // GnuArm, WinArm, YAGARTO, etc.
     	Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 2600, (void*)OSC_CHANNEL_UDP, 3 );
     	#endif // CROSSWORKS_BUILD
