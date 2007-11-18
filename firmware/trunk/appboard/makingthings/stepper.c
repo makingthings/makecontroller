@@ -297,7 +297,7 @@ int Stepper_GetPositionRequested( int index )
 	Simply take a number of steps from wherever the motor is currently positioned.
   This function will move the motor a given number of steps from the current position.
 	@param index An integer specifying which stepper (0 or 1).
-	@param duty An integer specifying the number of steps.  Can be negative to go in reverse.
+	@param steps An integer specifying the number of steps.  Can be negative to go in reverse.
   @return status (0 = OK).
 */
 int Stepper_Step( int index, int steps )

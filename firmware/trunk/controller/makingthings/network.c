@@ -1042,17 +1042,6 @@ void NetworkOsc_SetTcpOutAddress( int a0, int a1, int a2, int a3 )
   }
 }
 
-/**
-	Read the IP address stored in EEPROM that the board will use when told to
-  make a connection to a remote TCP server.
-	Pass in pointers to integers where the address should be stored.
-
-	@param a0 A pointer to an integer where the first of 4 numbers of the address is to be stored.
-	@param a1 A pointer to an integer where the second of 4 numbers of the address is to be stored.
-	@param a2 A pointer to an integer where the third of 4 numbers of the address is to be stored.
-	@param a3 A pointer to an integer where the fourth of 4 numbers of the address is to be stored.
-	@return 0 on success.
-*/
 int NetworkOsc_GetTcpOutAddress( )
 {
   return Network->TcpOutAddress;

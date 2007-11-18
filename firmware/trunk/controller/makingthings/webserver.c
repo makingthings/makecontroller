@@ -108,8 +108,8 @@ static int WebServer_WriteResponseOk_( char* content, void* socket );
   by the Network Subsystem as it activates if the /network/webserver property is 
   set to true.  If there are no specifed handlers at the time of initialization,
   the default test handler is installed.
-	@param state An integer specifying the active state - 1 (on) or 0 (off).
-	@return CONTROLLER_OK (=0) on success or the appropriate error if not
+	@param active An integer specifying the active state - 1 (on) or 0 (off).
+	@return CONTROLLER_OK (0) on success or the appropriate error if not
 */
 int WebServer_SetActive( int active )
 {
