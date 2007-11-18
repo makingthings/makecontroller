@@ -51,7 +51,7 @@ void FastTimer_Isr( void );
   There are currently one main limitation to the Fast Timer system:
   - In your callback function, you must not sleep or make any FreeRTOS-related calls.
 
-  \todo Allow the fast timer callbacks to cooperate with \ref FreeRTOS
+  \todo Allow the fast timer callbacks to cooperate with the \ref RTOS
 * \ingroup Controller
 * @{
 */

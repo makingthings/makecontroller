@@ -53,7 +53,7 @@ void Timer_Isr( void );
   - In your callback function, you must not sleep or make any FreeRTOS-related calls.
   - To modify an existing TimerEntry, you must cancel the timer with Timer_Cancel( ), and reinitialize the TimerEntry.
 
-  \todo Allow the timer callbacks to cooperate with \ref FreeRTOS
+  \todo Allow the timer callbacks to cooperate with the \ref RTOS
   \todo Allow existing timer entries to be modified (repeat or not, modify the period, etc.)
 * \ingroup Controller
 * @{

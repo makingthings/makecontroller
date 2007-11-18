@@ -493,20 +493,6 @@ void Osc_ResetChannel( OscChannel* ch )
   ch->messages = 0;
 }
 
-int Osc_RegisterSubsystem( const char *name, int (*subsystem_ReceiveMessage)( int channel, char* buffer, int length ), int (*subsystem_Async)( int channel ) )
-{
-  int subsystem = Osc->registeredSubsystems;
-  if ( Osc->registeredSubsystems++ > OSC_SUBSYSTEM_COUNT )
-    return CONTROLLER_ERROR_ILLEGAL_INDEX; 
-
-  Osc->subsystem[ subsystem ] = MallocWait( sizeof( OscSubsystem ), 100 );
-  OscSubsystem* sub = Osc->subsystem[ subsystem ];
-  sub->name = name;
-  sub->receiveMessage = subsystem_ReceiveMessage;
-  sub->async = subsystem_Async;
-  return CONTROLLER_OK;
-}
-
 int Osc_SendMessage( int channel, char* message, int length )
 {
   (void)channel;
@@ -667,6 +653,141 @@ int Osc_Quicky( int channel, char* preamble, char* string )
   return Osc_CreateMessage( channel, "/debug", ",ss", preamble, string );
 }
 
+/** @defgroup OSCAPI OSC API
+	Make use of the OSC infrastructure for your own subsystems.
+	You can use the existing OSC infrastructure to create your own OSC subsystems.  It's expected that you'll have
+	a few things lined up to use this API:
+	-# The name of your subsystem
+	-# The properties that your subsystem will support.  This must be in an array with '0' as the last element.
+	-# Getters and setters for each of those properties and functions to call them by property index.
+	-# A function to call the correct helper when Osc calls you. 
+	-# Finally, once you've done all this, you'll need to add your subsystem to the list that Osc knows about.
+	
+	\par Example
+	So this might look something like:
+	\code
+	// our system name and a function to get it
+	static char* MySubsystemOsc_Name = "my-system";
+	const char* MySubsystemOsc_GetName( void )
+	{
+		return MySubsystemOsc_Name;
+	}
+	
+	// our property names
+	static char* MySubsystemOsc_PropertyNames[] = { "prop0", "prop1", 0 }; // must end with a zero
+	
+	// A getter and setter, each dealing with the property given to us by the OSC system
+	int MyGPSOsc_PropertySet( int index, int property, int value )   
+  {
+    switch ( property )     
+    {       
+      case 0:         
+        MySubsystem_SetProperty0( index, value );
+        break;
+      case 1:
+        MySubsystem_SetProperty1( index, value );
+        break;
+     }
+    return CONTROLLER_OK;
+  }
+
+  int MySubsystemOsc_PropertyGet( int index, int property )
+  {
+    int value;
+     switch ( property )
+     {
+      case 0:
+        value = MySubsystem_GetProperty0( index );
+        break;
+      case 1:
+        value = MySubsystem_GetProperty1( index );
+        break;
+    }
+    return value;
+  }
+	
+	// this is called when the OSC system determines an incoming message is for you.
+	int MySubsystemOsc_ReceiveMessage( int channel, char* message, int length )
+	{  
+     // depending on your subsystem, use one of the OSC helpers to parse the incoming message
+		 return Osc_IndexGeneralReceiverHelper( channel, message, length,
+                                        MySubsystemOsc_Name,
+                                        MySubsystemOsc_PropertySet,
+                                        MySubsystemOsc_PropertyGet,
+                                        MySubsystemOsc_PropertyNames );
+	}
+	 
+	// lastly, we'll need to register our system with OSC
+	Run( ) // this is our startup task in make.c
+	{
+		// other startup stuff
+		Osc_RegisterSubsystem( MySubsystemOsc_GetName(), MySubsystemOsc_ReceiveMessage, NULL );
+	}
+	\endcode
+	
+	Check the how-to at http://www.makingthings.com/documentation/how-to/create-your-own-osc-subsystem for details.
+	
+	\ingroup Controller	
+*/
+
+/**	
+	Register your subsystem with the OSC system.
+	You'll usually want to do this on startup.
+	@param name The name of your subsystem.
+	@param subsystem_ReceiveMessage The function to call when an OSC message for this subsystem has arrived.
+	@param subsystem_Async The function to be called by the OSC Async system.  This is a task that will call you at regular intervals,
+	if enabled, so you can check for status changes and send a message out automatically if you like.  See the analog in source for 
+	an example.  Pass in NULL if you don't want to use the Async system.
+	\ingroup OSCAPI
+
+  \par Example
+  \code
+	Run( ) // this is our startup task in make.c
+	{
+		// other startup stuff
+		Osc_RegisterSubsystem( MySubsystemOsc_GetName(), MySubsystemOsc_ReceiveMessage, NULL );
+	}
+  \endcode
+*/
+int Osc_RegisterSubsystem( const char *name, int (*subsystem_ReceiveMessage)( int channel, char* buffer, int length ), int (*subsystem_Async)( int channel ) )
+{
+  int subsystem = Osc->registeredSubsystems;
+  if ( Osc->registeredSubsystems++ > OSC_SUBSYSTEM_COUNT )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX; 
+
+  Osc->subsystem[ subsystem ] = MallocWait( sizeof( OscSubsystem ), 100 );
+  OscSubsystem* sub = Osc->subsystem[ subsystem ];
+  sub->name = name;
+  sub->receiveMessage = subsystem_ReceiveMessage;
+  sub->async = subsystem_Async;
+  return CONTROLLER_OK;
+}
+
+/**	
+	Send an error back via OSC from your subsystem.
+	You'll usually want to call this when the OSC system calls you with a new message, you've tried to
+	parse it, and you've gotten an error.
+	@param channel An index for which OSC channel is being used (usually USB or Ethernet).  Usually provided for you 
+	by the OSC system.
+	@param subsystem The name of the subsystem sending the error.
+	@param string The actual contents of the error message.
+	\ingroup OSCAPI
+
+  \par Example
+  \code
+	// this is where OSC calls us when an incoming message for us has arrived
+	int MySubsystemOsc_ReceiveMessage( int channel, char* message, int length )
+	{
+		int status = Osc_IntReceiverHelper( channel, message, length,
+																				MySubsystemOsc_Name,
+																				MySubsystemOsc_PropertySet, MySubsystemOsc_PropertyGet, 
+																				MySubsystemOsc_PropertyNames );
+
+		if ( status != CONTROLLER_OK )
+			Osc_SubsystemError( channel, MySubsystemOsc_Name, "Oh no. Bad data." );
+	}
+  \endcode
+*/
 int Osc_SubsystemError( int channel, char* subsystem, char* string )
 {
   int retval;
@@ -677,16 +798,36 @@ int Osc_SubsystemError( int channel, char* subsystem, char* string )
   return retval;
 }
 
-// An OSC message has arrived, check it out... although, don't change it - others need
-// to use it.  If the original OSC packet was a BUNDLE - i.e. had many 
-// messages in it, they will be unpacked elsewhere.  We'll only get 
-// individual messages here.
-// What is passed is the part after the first subsystem address.
-// So "/dipswitch/active 1" would be passed to this routine as "active 1"
-// Not literally like this, of course, but as OSC messages
-// In order to do anything, we need some extra information from 
-// the subsystem like what the names of its properties are, what 
-// the getters and setters are, etc.
+
+/**	
+	Receive an OSC blob for a subsystem with no indexes.
+	You'll usually want to call this when the OSC system calls you with a new message. 
+	@param channel An index for which OSC channel is being used (usually USB or Ethernet).  Usually provided for you 
+	by the OSC system.
+	@param message The OSC message being received.  Usually provided for you by the OSC system.
+	@param length The length of the incoming message.  Usually provided for you by the OSC system.
+	@param subsystemName The name of your subsystem.
+	@param blobPropertySet A pointer to the function to be called in order to write a property of your subsystem.
+	@param blobPropertyGet A pointer to the function to be called in order to read a property of your subsystem.
+	@param blobPropertyNames An array of all the property names in your subsystem.
+	\ingroup OSCAPI
+
+  \par Example
+  \code
+	// this is where OSC calls us when an incoming message for us has arrived
+	int MySubsystemOsc_ReceiveMessage( int channel, char* message, int length )
+	{
+		int status = Osc_BlobReceiverHelper( channel, message, length, 
+																			MySubsystemOsc_Name,
+																			MySubsystemOsc_BlobPropertySet, MySubsystemOsc_BlobPropertyGet, 
+																			MySubsystemOsc_BlobPropertyNames );                        
+
+		if ( status != CONTROLLER_OK )
+			return Osc_SendError( channel, MySubsystemOsc_Name, status );
+		return CONTROLLER_OK;
+	}
+  \endcode
+*/
 int Osc_BlobReceiverHelper( int channel, char* message, int length, 
                            char* subsystemName, 
                            int (*blobPropertySet)( int property, uchar* buffer, int length ),
@@ -755,18 +896,36 @@ int Osc_BlobReceiverHelper( int channel, char* message, int length,
   return CONTROLLER_OK;
 }
 
-// An OSC message has arrived, check it out... although, don't change it - others need
-// to use it.  If the original OSC packet was a BUNDLE - i.e. had many 
-// messages in it, they will be unpacked elsewhere.  We'll only get 
-// individual messages here.
-// What is passed is the part after the first subsystem address.
-// So "/appled/0/on 1" would be passed to this routine as "0/on 1"
-// Not literally like this, of course, but as OSC messages
-// In order to do anything, we need some extra information from 
-// the subsystem like what the names of its properties are, what 
-// the getters and setters are, etc.
-// It's great to have this code in one central place.  It will be easier 
-// to effect change from here.o
+/**	
+	Receive an OSC blob for a subsystem with indexes.
+	You'll usually want to call this when the OSC system calls you with a new message. 
+	@param channel An index for which OSC channel is being used (usually USB or Ethernet).  Usually provided for you 
+	by the OSC system.
+	@param message The OSC message being received.  Usually provided for you by the OSC system.
+	@param length The length of the incoming message.  Usually provided for you by the OSC system.
+	@param indexCount The number of indexes in your subsystem.
+	@param subsystemName The name of your subsystem.
+	@param blobPropertySet A pointer to the function to be called in order to write a property of your subsystem.
+	@param blobPropertyGet A pointer to the function to be called in order to read a property of your subsystem.
+	@param blobPropertyNames An array of all the property names in your subsystem.
+	\ingroup OSCAPI
+
+  \par Example
+  \code
+	// this is where OSC calls us when an incoming message for us has arrived
+	int MySubsystemOsc_ReceiveMessage( int channel, char* message, int length )
+	{
+		int status = Osc_IndexBlobReceiverHelper( channel, message, length, 2,
+																				MySubsystemOsc_Name,
+																				MySubsystemOsc_BlobPropertySet, MySubsystemOsc_BlobPropertyGet, 
+																				MySubsystemOsc_BlobPropertyNames );
+
+		if ( status != CONTROLLER_OK )
+			return Osc_SendError( channel, MySubsystemOsc_Name, status );
+		return CONTROLLER_OK;
+	}
+  \endcode
+*/
 int Osc_IndexBlobReceiverHelper( int channel, char* message, int length, 
                                 int indexCount, char* subsystemName, 
                                 int (*blobPropertySet)( int index, int property, uchar* buffer, int length ),
@@ -892,17 +1051,35 @@ int Osc_IndexBlobReceiverHelper( int channel, char* message, int length,
   return CONTROLLER_OK;
 }
 
+/**	
+	Receive an integer for a subsystem with no indexes.
+	You'll usually want to call this when the OSC system calls you with a new message. 
+	@param channel An index for which OSC channel is being used (usually USB or Ethernet).  Usually provided for you 
+	by the OSC system.
+	@param message The OSC message being received.  Usually provided for you by the OSC system.
+	@param length The length of the incoming message.  Usually provided for you by the OSC system.
+	@param subsystemName The name of your subsystem.
+	@param propertySet A pointer to the function to be called in order to write a property of your subsystem.
+	@param propertyGet A pointer to the function to be called in order to read a property of your subsystem.
+	@param propertyNames An array of all the property names in your subsystem.
+	\ingroup OSCAPI
 
-// An OSC message has arrived, check it out... although, don't change it - others need
-// to use it.  If the original OSC packet was a BUNDLE - i.e. had many 
-// messages in it, they will be unpacked elsewhere.  We'll only get 
-// individual messages here.
-// What is passed is the part after the first subsystem address.
-// So "/dipswitch/active 1" would be passed to this routine as "active 1"
-// Not literally like this, of course, but as OSC messages
-// In order to do anything, we need some extra information from 
-// the subsystem like what the names of its properties are, what 
-// the getters and setters are, etc.
+  \par Example
+  \code
+	// this is where OSC calls us when an incoming message for us has arrived
+	int MySubsystemOsc_ReceiveMessage( int channel, char* message, int length )
+	{
+		int status = Osc_IntReceiverHelper( channel, message, length,
+																				MySubsystemOsc_Name,
+																				MySubsystemOsc_PropertySet, MySubsystemOsc_PropertyGet, 
+																				MySubsystemOsc_PropertyNames );
+
+		if ( status != CONTROLLER_OK )
+			return Osc_SendError( channel, MySubsystemOsc_Name, status );
+		return CONTROLLER_OK;
+	}
+  \endcode
+*/
 int Osc_IntReceiverHelper( int channel, char* message, int length, 
                            char* subsystemName, 
                            int (*propertySet)( int property, int value ),
@@ -979,24 +1156,38 @@ int Osc_IntReceiverHelper( int channel, char* message, int length,
   return CONTROLLER_OK;
 }
 
-/* Osc_GeneralReceiverHelper
- *
- * The General Helper passes the whole type/data string to the getters
- * and a channel to the setters so they can do their own message creation
- *
- * This is provided to for subsystems that have heterogenious data types
- *
- * This helper is called by the subsystem when an OSC message has arrived. 
- *
- * What is passed is the part after the first subsystem address.
- * So "/dipswitch/active 1" would be passed to this routine as "active 1"
- *
- * In order to do anything, we need some extra information from 
- * the subsystem like what the names of its properties are, what 
- * the getters and setters are, etc. so these are passed in by the
- * subsystem
- *
- */
+/**	
+	Receive data for a subsystem that receives a variety of different data types.
+	An example of this kind of situation is the network system - you have a variety of different properties, 
+	several of which are both ints and strings.
+	
+	You'll usually want to call this when the OSC system calls you with a new message. 
+	@param channel An index for which OSC channel is being used (usually USB or Ethernet).  Usually provided for you 
+	by the OSC system.
+	@param message The OSC message being received.  Usually provided for you by the OSC system.
+	@param length The length of the incoming message.  Usually provided for you by the OSC system.
+	@param subsystemName The name of your subsystem.
+	@param propertySet A pointer to the function to be called in order to write a property of your subsystem.
+	@param propertyGet A pointer to the function to be called in order to read a property of your subsystem.
+	@param propertyNames An array of all the property names in your subsystem.
+	\ingroup OSCAPI
+
+  \par Example
+  \code
+	// this is where OSC calls us when an incoming message for us has arrived
+	int MySubsystemOsc_ReceiveMessage( int channel, char* message, int length )
+	{
+		int status = Osc_GeneralReceiverHelper( channel, message, length,
+																				MySubsystemOsc_Name,
+																				MySubsystemOsc_PropertySet, MySubsystemOsc_PropertyGet, 
+																				MySubsystemOsc_PropertyNames );
+
+		if ( status != CONTROLLER_OK )
+			return Osc_SendError( channel, MySubsystemOsc_Name, status );
+		return CONTROLLER_OK;
+	}
+  \endcode
+*/
 int Osc_GeneralReceiverHelper( int channel, char* message, int length, 
                            char* subsystemName, 
                            int (*propertySet)( int property, char* typedata, int channel ),
@@ -1067,18 +1258,40 @@ int Osc_GeneralReceiverHelper( int channel, char* message, int length,
   return CONTROLLER_OK;
 }
 
-// An OSC message has arrived, check it out... although, don't change it - others need
-// to use it.  If the original OSC packet was a BUNDLE - i.e. had many 
-// messages in it, they will be unpacked elsewhere.  We'll only get 
-// individual messages here.
-// What is passed is the part after the first subsystem address.
-// So "/appled/0/on 1" would be passed to this routine as "0/on 1"
-// Not literally like this, of course, but as OSC messages
-// In order to do anything, we need some extra information from 
-// the subsystem like what the names of its properties are, what 
-// the getters and setters are, etc.
-// It's great to have this code in one central place.  It will be easier 
-// to effect change from here.o
+/**	
+	Receive integers for a subsystem with multiple indexes.
+	An example of this kind of situation is the analog in system - you have 8 channels (indexes) and you're only 
+	going to be receiving integers.  
+	
+	You'll usually want to call this when the OSC system calls you with a new message. 
+	@param channel An index for which OSC channel is being used (usually USB or Ethernet).  Usually provided for you 
+	by the OSC system.
+	@param message The OSC message being received.  Usually provided for you by the OSC system.
+	@param length The length of the incoming message.  Usually provided for you by the OSC system.
+	@param indexCount The number of indexes in your subsystem.
+	@param subsystemName The name of your subsystem.
+	@param propertySet A pointer to the function to be called in order to write a property of your subsystem.
+	@param propertyGet A pointer to the function to be called in order to read a property of your subsystem.
+	@param propertyNames An array of all the property names in your subsystem.
+	\ingroup OSCAPI
+
+  \par Example
+  \code
+	// this is where OSC calls us when an incoming message for us has arrived
+	int MySubsystemOsc_ReceiveMessage( int channel, char* message, int length )
+	{
+		int status = Osc_GeneralReceiverHelper( channel, message, length,
+																				5, // our index count
+																				MySubsystemOsc_Name,
+																				MySubsystemOsc_PropertySet, MySubsystemOsc_PropertyGet, 
+																				MySubsystemOsc_PropertyNames );
+
+		if ( status != CONTROLLER_OK )
+			return Osc_SendError( channel, MySubsystemOsc_Name, status );
+		return CONTROLLER_OK;
+	}
+  \endcode
+*/
 int Osc_IndexIntReceiverHelper( int channel, char* message, int length, 
                                 int indexCount, char* subsystemName, 
                                 int (*propertySet)( int index, int property, int value ),
