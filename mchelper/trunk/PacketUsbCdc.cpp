@@ -54,7 +54,7 @@ void PacketUsbCdc::run()
 		{
 			currentPacket = new OscUsbPacket( );
 			int packetLength = slipReceive( currentPacket->packetBuf, MAX_MESSAGE );
-			if( packetLength > 0 )
+			if( packetLength > 0 && packetReadyInterface )
 			{
 				currentPacket->length = packetLength;
 				{
@@ -65,7 +65,10 @@ void PacketUsbCdc::run()
 				packetReadyInterface->packetWaiting( );
 			}
 			else
+			{
+				delete currentPacket;
 				msleep( 1 ); // usb is still open, but we didn't receive anything last time
+			}
 		}
 		else // usb isn't open...chill out.
 			msleep( 50 );
