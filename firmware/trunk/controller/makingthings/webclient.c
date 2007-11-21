@@ -15,22 +15,49 @@
 
 *********************************************************************************/
 
-#include "stdlib.h"
-#include "config.h"
+#include "config.h" // MakingThings.
+#ifdef MAKE_CTRL_NETWORK
 
+#include "stdlib.h"
 #include "string.h"
 #include <stdio.h>
-
 #include "webclient.h"
 
 #define WEBCLIENT_INTERNAL_BUFFER_SIZE 200
 
+/** \defgroup webclient Web Client
+  A very simple web client for HTTP operations.
+
+  The web client system allows the Make Controller to get/post data to a webserver.  This
+  makes it straightforward to use the Make Controller as a source of data for your web apps.
+
+  There's currently not a method provided for name resolution - you can always ping the 
+  server you want to communicate with to see its IP address, and just use that.
+
+  \todo Get a DNS solution together.
+
+	\ingroup Controller
+	@{
+*/
+
 /**	
-	Performs an HTTP GET operation to the path at the address / port specified.  The result 
-  is returned in the specified buffer.
-	@param buffer A pointer to the buffer read back into.  
+	Performs an HTTP GET operation to the path at the address / port specified.  
+  The result is returned in the specified buffer.
+	@param address The IP address of the server to get from.  Usually created using the IP_ADDRESS( ) macro.
+  @param port The port to connect on.  Usually 80 for HTTP.
+  @param path The path on the server to connect to.
+  @param buffer A pointer to the buffer read back into.  
 	@param buffer_size An integer specifying the actual size of the buffer.
-  @return status.
+  @return the number of bytes read, or < 0 on error.
+
+  \par Example
+  \code
+  int addr = IP_ADDRESS( 72, 249, 53, 185); // makingthings.com is 72.249.53.185
+  int bufLength = 100;
+  char myBuffer[bufLength];
+  int getSize = WebClient_Get( addr, 80, "/test/path", myBuffer, bufLength );
+  \endcode
+  Now we should have the results of the HTTP GET from \b www.makingthings.com/test/path in \b myBuffer.
 */
 int WebClient_Get( int address, int port, char* path, char* buffer, int buffer_size )
 {
@@ -46,11 +73,9 @@ int WebClient_Get( int address, int port, char* path, char* buffer, int buffer_s
       return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
     }
 
-    AppLed_SetState( 1, 1 );
     SocketWrite( s, b, send_len );
     int content_length = 0;
     
-    AppLed_SetState( 2, 1 );
     int buffer_length;
     while ( ( buffer_length = SocketReadLine( s, b, WEBCLIENT_INTERNAL_BUFFER_SIZE ) ) )
     {
@@ -62,7 +87,6 @@ int WebClient_Get( int address, int port, char* path, char* buffer, int buffer_s
     
     if ( content_length > 0 && buffer_length > 0 )
     {
-      AppLed_SetState( 3, 1 );
       char* bp = buffer;
       while ( ( buffer_length = SocketRead( s, bp, buffer_size - buffer_read ) ) )
       {
@@ -74,11 +98,6 @@ int WebClient_Get( int address, int port, char* path, char* buffer, int buffer_s
     }
           
     SocketClose( s );
-
-    AppLed_SetState( 1, 0 );
-    AppLed_SetState( 2, 0 );
-    AppLed_SetState( 3, 0 );
-   
     return buffer_read;
   }
   else
@@ -87,13 +106,27 @@ int WebClient_Get( int address, int port, char* path, char* buffer, int buffer_s
 
 /**	
 	Performs an HTTP POST operation to the path at the address / port specified.  The actual post contents 
-  are found in buffer and the result is returned in buffer.
+  are found read from a given buffer and the result is returned in the same buffer.
+  @param address The IP address of the server to post to.
+  @param port The port on the server you're connecting to. Usually 80 for HTTP.
+  @param path The path on the server to post to.
 	@param buffer A pointer to the buffer to write from and read back into.  
-	@param buffer_length An integer specifying the number of bytes to write.
+	@param data_length An integer specifying the number of bytes to write.
 	@param buffer_size An integer specifying the actual size of the buffer.
   @return status.
+
+  \par Example
+  \code
+  // we'll post a test message to www.makingthings.com/post/path
+  int addr = IP_ADDRESS( 72, 249, 53, 185); // makingthings.com is 72.249.53.185
+  int bufLength = 100;
+  char myBuffer[bufLength];
+  sprintf( myBuffer, "A test message to post" );
+  int result = WebClient_Post( addr, 80, "/post/path", myBuffer, 
+                                strlen("A test message to post"), bufLength );
+  \endcode
 */
-int WebClient_Post( int address, int port, char* path, char* buffer, int buffer_length, int buffer_size )
+int WebClient_Post( int address, int port, char* path, char* buffer, int data_length, int buffer_size )
 {
   char b[ WEBCLIENT_INTERNAL_BUFFER_SIZE ];
   int buffer_read = 0;
@@ -103,14 +136,12 @@ int WebClient_Post( int address, int port, char* path, char* buffer, int buffer_
   { 
     int send_len = snprintf( b, WEBCLIENT_INTERNAL_BUFFER_SIZE, 
                                 "POST %s HTTP/1.1\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n", 
-                                path, buffer_length );
+                                path, data_length );
     if ( send_len > WEBCLIENT_INTERNAL_BUFFER_SIZE )
     {
       SocketClose( s );
       return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
     }
-
-    AppLed_SetState( 1, 1 );
 
     wrote = SocketWrite( s, b, send_len );
     if ( wrote == 0 )
@@ -119,11 +150,9 @@ int WebClient_Post( int address, int port, char* path, char* buffer, int buffer_
       return CONTROLLER_ERROR_WRITE_FAILED;
     }
 
-    SocketWrite( s, buffer, buffer_length );
+    SocketWrite( s, buffer, data_length );
     
     int content_length = 0;
-    
-    AppLed_SetState( 2, 1 );
     int b_len;
     while ( ( b_len = SocketReadLine( s, b, WEBCLIENT_INTERNAL_BUFFER_SIZE ) ) )
     {
@@ -136,7 +165,6 @@ int WebClient_Post( int address, int port, char* path, char* buffer, int buffer_
     if ( content_length > 0 && b_len > 0 )
     {
       char* bp = buffer;
-      AppLed_SetState( 3, 1 );
       while ( ( b_len = SocketRead( s, bp, buffer_size - buffer_read ) ) )
       {
         buffer_read += b_len;
@@ -147,15 +175,13 @@ int WebClient_Post( int address, int port, char* path, char* buffer, int buffer_
     }          
 
     SocketClose( s );
-
-    
-    AppLed_SetState( 1, 0 );
-    AppLed_SetState( 2, 0 );
-    AppLed_SetState( 3, 0 );
-    
     return buffer_read;
   }
   else
     return CONTROLLER_ERROR_BAD_ADDRESS;
 }
+
+#endif // MAKE_CTRL_NETWORK
+
+
 

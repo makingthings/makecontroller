@@ -24,6 +24,6 @@
 #define WEBCLIENT_H
 
 int WebClient_Get( int address, int port, char* path, char* buffer, int buffer_size );
-int WebClient_Post( int address, int port, char* path, char* buffer, int buffer_length, int buffer_size );
+int WebClient_Post( int address, int port, char* path, char* buffer, int data_length, int buffer_size );
 
 #endif // WEBCLIENT_H
