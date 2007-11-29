@@ -240,7 +240,7 @@ typedef struct
 
 int XBee_SetActive( int state );
 int XBee_GetActive( void );
-int XBee_GetPacket( XBeePacket* packet );
+int XBee_GetPacket( XBeePacket* packet, int timeout );
 int XBee_SendPacket( XBeePacket* packet, int datalength );
 void XBee_ResetPacket( XBeePacket* packet );
 
@@ -252,7 +252,7 @@ bool XBee_ReadRX64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrengt
 bool XBee_ReadIO16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrength, uint8* options, int* samples );
 bool XBee_ReadIO64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrength, uint8* options, int* samples );
 void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, uint8* params, uint8 datalength );
-bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char* command, uint8* status, uint8** data );
+bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char** command, uint8* status, uint8** data );
 bool XBee_ReadTXStatusPacket( XBeePacket* xbp, uint8* frameID, uint8* status );
 
 // XBee Config stuff
@@ -269,8 +269,7 @@ void XBeeConfig_SetSampleRate( uint16 rate );
 int XBeeConfig_RequestSampleRate( void );
 void XBeeConfig_SetIO( int index, int value );
 int XBeeConfig_RequestIO( int pin );
-void XBeeConfig_EnableEncryption( bool state );
-void XBeeConfig_SetEncryptionKey( void );
+int XBeeConfig_RequestATResponse( char* cmd );
 
 bool XBee_GetAutoSend( bool init );
 void XBee_SetAutoSend( int onoff );
@@ -282,6 +281,7 @@ void XBee_IntToBigEndianArray( int value, uint8* array );
 const char* XBeeOsc_GetName( void );
 int XBeeOsc_ReceiveMessage( int channel, char* message, int length );
 int XBeeOsc_Async( int channel );
+int XBeeOsc_HandleNewPacket( XBeePacket* xbp, int channel );
 
 const char* XBeeConfigOsc_GetName( void );
 int XBeeConfigOsc_ReceiveMessage( int channel, char* message, int length );

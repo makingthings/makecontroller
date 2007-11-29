@@ -136,16 +136,16 @@ int Spi_Configure( int channel, int bits, int clockDivider, int delayBeforeSPCK,
 
 /**	
 	Read/Write a block of data via SPI.
-	@param device An integer specifying the device to communicate with.
+	@param channel An integer specifying the device to communicate with.
 	@param buffer A pointer to the buffer to read to, or write from.
 	@param count An integer specifying the length in bytes of the buffer to read/write.
 	@return 0 on success.
 */
-int Spi_ReadWriteBlock( int device, unsigned char* buffer, int count )
+int Spi_ReadWriteBlock( int channel, unsigned char* buffer, int count )
 {
   int r;
 
-  int address = ~( 1 << device );
+  int address = ~( 1 << channel );
 
   // Make sure the unit is at rest before we re-begin
   if ( !( AT91C_BASE_SPI0->SPI_SR & AT91C_SPI_TXEMPTY ) )
@@ -161,7 +161,7 @@ int Spi_ReadWriteBlock( int device, unsigned char* buffer, int count )
     r = AT91C_BASE_SPI0->SPI_RDR;
 
   // Make the CS line hang around
-  AT91C_BASE_SPI0->SPI_CSR[ device ] |= AT91C_SPI_CSAAT;
+  AT91C_BASE_SPI0->SPI_CSR[ channel ] |= AT91C_SPI_CSAAT;
 
   int writeIndex = 0;
 
@@ -182,7 +182,7 @@ int Spi_ReadWriteBlock( int device, unsigned char* buffer, int count )
     *readP++ = (unsigned char)( AT91C_BASE_SPI0->SPI_RDR & 0xFF );
   }
 
-  AT91C_BASE_SPI0->SPI_CSR[ device ] &= ~AT91C_SPI_CSAAT;
+  AT91C_BASE_SPI0->SPI_CSR[ channel ] &= ~AT91C_SPI_CSAAT;
 
   return 0;
 }
