@@ -34,6 +34,6 @@ int  Spi_Configure( int channel, int bits, int clockDivider, int delayBeforeSPCK
 int  Spi_Lock( void );
 void Spi_Unlock( void );
 
-int  Spi_ReadWriteBlock( int device, unsigned char* buffer, int count );
+int  Spi_ReadWriteBlock( int channel, unsigned char* buffer, int count );
 
 #endif

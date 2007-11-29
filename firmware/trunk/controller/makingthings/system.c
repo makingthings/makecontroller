@@ -315,7 +315,7 @@ int System_GetAsyncDestination( )
     if( async >= 0 && async <= (OSC_CHANNEL_COUNT-1) )
       System->asyncDestination = async;
     else
-      System->asyncDestination = OSC_CHANNEL_USB;
+      System->asyncDestination = ASYNC_INACTIVE;
   }
   return System->asyncDestination;
 }
