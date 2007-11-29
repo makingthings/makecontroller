@@ -40,9 +40,11 @@ QString OscMessage::toString( )
 					char c[6];
 					blob_len = qFromBigEndian( blob_len ); 
 					char buff[blob_len*6+10];
+					blob += 4; // step past the blob_len
 	        
 	        buff[0] = '[';
-	        buff[1] = '\0';
+	        buff[1] = ' ';
+	        buff[2] = '\0';
 	
 	        while( blob_len-- )
 	        {
@@ -292,7 +294,7 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
 			case 'b':
 			{
 			  	int blob_len = *(int*)data;  // the first int should give us the length of the blob
-        		blob_len = qFromBigEndian( blob_len );	
+        		blob_len = qFromBigEndian( blob_len ) + 4; // account for the blob_len itself
         		if ( oscMessage)
 				{
 				  OscMessageData* omdata = new OscMessageData( );
@@ -306,10 +308,7 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
 				  omdata->omdType = OscMessageData::OmdBlob;
 				  oscMessage->data.append( omdata );
 				}		  
-				data += sizeof( int );  // step to the blob contents
-				int i;
-				for( i = 0; i < blob_len; i++ )
-					data++;
+				data += blob_len;
 				count++;
 				cont = true;
 				break;
