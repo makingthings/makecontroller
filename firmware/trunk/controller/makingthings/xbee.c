@@ -471,6 +471,7 @@ int XBeeConfig_RequestIO( int pin )
 
 /**	
   Create a packet to be transmitted with a 16-bit address.
+  If the \b frameID is 0, you won't receive a TX Status message in response.
 
   @param xbp The XBeePacket to create.
   @param frameID The frame ID for this packet that subsequent response/status messages can refer to.
@@ -484,7 +485,7 @@ int XBeeConfig_RequestIO( int pin )
   \code
   XBeePacket txPacket;
   uint8 data[] = "ABC";
-  XBee_CreateTX16Packet( &txPacket, 0, 0, 0, data, 3 );
+  XBee_CreateTX16Packet( &txPacket, 0x52, 0, 0, data, 3 );
   XBee_SendPacket( &txPacket, 3 );
   \endcode
 */
@@ -551,7 +552,7 @@ bool XBee_CreateTX64Packet( XBeePacket* xbp, uint8 frameID, uint64 destination, 
   \par Example
   \code
   XBeePacket rxPacket;
-  if( XBee_GetPacket( &rxPacket ) )
+  if( XBee_GetPacket( &rxPacket, 0 ) )
   {
     uint16 src;
     uint8 sigstrength;
@@ -601,7 +602,7 @@ bool XBee_ReadRX16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrengt
   \par Example
   \code
   XBeePacket rxPacket;
-  if( XBee_GetPacket( &rxPacket ) )
+  if( XBee_GetPacket( &rxPacket, 0 ) )
   {
     uint64 src;
     uint8 sigstrength;
@@ -658,7 +659,7 @@ bool XBee_ReadRX64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrengt
   \par Example
   \code
   XBeePacket rxPacket;
-  if( XBee_GetPacket( &rxPacket ) )
+  if( XBee_GetPacket( &rxPacket, 0 ) )
   {
     uint16 src;
     uint8 sigstrength;
@@ -711,7 +712,7 @@ bool XBee_ReadIO16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrengt
   \par Example
   \code
   XBeePacket rxPacket;
-  if( XBee_GetPacket( &rxPacket ) )
+  if( XBee_GetPacket( &rxPacket, 0 ) )
   {
     uint64 src;
     uint8 sigstrength;
@@ -764,7 +765,7 @@ bool XBee_ReadIO64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrengt
   \par Example
   \code
   XBeePacket rxPacket;
-  if( XBee_GetPacket( &rxPacket ) )
+  if( XBee_GetPacket( &rxPacket, 0 ) )
   {
     uint8 frameID;
     char* command;
@@ -796,7 +797,7 @@ bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char** command,
 /**	
   Unpack the info from TX Status packet.
   When a TX is completed, the modules esnds a TX Status message.  This indicates whether the packet was transmitted
-  successfully or not.
+  successfully or not.  If the message you sent had a frameID of 0, a TX status message will not be generated.
 
   Pass \b NULL into any of the parameters you don't care about.
   @param xbp The XBeePacket to read from.
@@ -807,12 +808,10 @@ bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char** command,
   \par Example
   \code
   XBeePacket rxPacket;
-  if( XBee_GetPacket( &rxPacket ) )
+  if( XBee_GetPacket( &rxPacket, 0 ) )
   {
     uint8 frameID;
-    char* command;
     uint8 status;
-    uint8* data;
     if( XBee_ReadTXStatusPacket( &rxPacket, &frameID, &status ) )
     {
       // then process the new packet here
@@ -1077,7 +1076,7 @@ void XBee_IntToBigEndianArray( int value, uint8* array )
   \par Example
   \code
   XBeePacket rxPacket;
-  if( XBee_GetPacket( &rxPacket ) )
+  if( XBee_GetPacket( &rxPacket, 0 ) )
   {
     int inputs[9];
     if( XBee_GetIOValues( &rxPacket, inputs ) )
@@ -1728,9 +1727,33 @@ int XBeeOsc_HandleNewPacket( XBeePacket* xbp, int channel )
         cmd[0] = *command;
         cmd[1] = *(command+1);
         cmd[2] = '\0';
-        snprintf( address, OSC_SCRATCH_SIZE, "/%s/at-command", XBeeConfigOsc_Name );
-        Osc_CreateMessage( channel, address, ",si", cmd, value );
+        if( strcmp( cmd, "IR" ) == 0 )
+        {
+          snprintf( address, OSC_SCRATCH_SIZE, "/%s/samplerate", XBeeConfigOsc_Name );
+          Osc_CreateMessage( channel, address, ",i", value );
+        }
+        else if( strcmp( cmd, "MY" ) == 0 )
+        {
+          snprintf( address, OSC_SCRATCH_SIZE, "/%s/address", XBeeConfigOsc_Name );
+          Osc_CreateMessage( channel, address, ",i", value );
+        }
+        else if( strcmp( cmd, "CH" ) == 0 )
+        {
+          snprintf( address, OSC_SCRATCH_SIZE, "/%s/channel", XBeeConfigOsc_Name );
+          Osc_CreateMessage( channel, address, ",i", value );
+        }
+        else if( strcmp( cmd, "ID" ) == 0 )
+        {
+          snprintf( address, OSC_SCRATCH_SIZE, "/%s/panid", XBeeConfigOsc_Name );
+          Osc_CreateMessage( channel, address, ",i", value );
+        }
+        else
+        {
+          snprintf( address, OSC_SCRATCH_SIZE, "/%s/at-command", XBeeConfigOsc_Name );
+          Osc_CreateMessage( channel, address, ",si", cmd, value );
+        }
       }
+      break;
     }
   }
   XBee_ResetPacket( xbp );
