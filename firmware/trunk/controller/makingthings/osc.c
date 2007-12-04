@@ -209,7 +209,7 @@ void Osc_SetActive( int state )
     	#ifdef CROSSWORKS_BUILD
     	Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 1200, (void*)OSC_CHANNEL_UDP, 3 );
     	#else // GnuArm, WinArm, YAGARTO, etc.
-    	Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 2600, (void*)OSC_CHANNEL_UDP, 3 );
+    	Osc->UdpTaskPtr = TaskCreate( Osc_UdpTask, "OSC-UDP", 2500, (void*)OSC_CHANNEL_UDP, 3 );
     	#endif // CROSSWORKS_BUILD
     Osc->TcpTaskPtr = NULL;
     #endif // MAKE_CTRL_NETWORK
@@ -218,15 +218,15 @@ void Osc_SetActive( int state )
     	#ifdef CROSSWORKS_BUILD
     	Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1000, (void*)OSC_CHANNEL_USB, 3 );
     	#else
-    	Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1000, (void*)OSC_CHANNEL_USB, 3 );
+    	Osc->UsbTaskPtr = TaskCreate( Osc_UsbTask, "OSC-USB", 1300, (void*)OSC_CHANNEL_USB, 3 );
     	#endif // CROSSWORKS_BUILD
     #endif // MAKE_CTRL_USB
 
-      #ifdef CROSSWORKS_BUILD
-    	Osc->AsyncTaskPtr = TaskCreate( Osc_AsyncTask, "OSC-ASYNC", 600, 0, 2 );
-    	#else
-    	Osc->AsyncTaskPtr = TaskCreate( Osc_AsyncTask, "OSC-ASYNC", 1100, 0, 2 );
-    	#endif // CROSSWORKS_BUILD
+		#ifdef CROSSWORKS_BUILD
+		Osc->AsyncTaskPtr = TaskCreate( Osc_AsyncTask, "OSC-ASYNC", 600, 0, 2 );
+		#else
+		Osc->AsyncTaskPtr = TaskCreate( Osc_AsyncTask, "OSC-ASYNC", 1100, 0, 2 );
+		#endif // CROSSWORKS_BUILD
 
     vSemaphoreCreateBinary( Osc->scratch1Semaphore );
     vSemaphoreCreateBinary( Osc->scratch2Semaphore );
