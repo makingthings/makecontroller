@@ -225,7 +225,7 @@ void Osc_SetActive( int state )
       #ifdef CROSSWORKS_BUILD
     	Osc->AsyncTaskPtr = TaskCreate( Osc_AsyncTask, "OSC-ASYNC", 600, 0, 2 );
     	#else
-    	Osc->AsyncTaskPtr = TaskCreate( Osc_AsyncTask, "OSC-ASYNC", 800, 0, 2 );
+    	Osc->AsyncTaskPtr = TaskCreate( Osc_AsyncTask, "OSC-ASYNC", 1100, 0, 2 );
     	#endif // CROSSWORKS_BUILD
 
     vSemaphoreCreateBinary( Osc->scratch1Semaphore );

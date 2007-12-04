@@ -460,6 +460,7 @@ int AnalogIn_GetIo( int index )
 */
 bool AnalogIn_GetAutoSend( int index )
 {
+  AnalogIn_SetActive( index, 1 );
   return (AnalogIn->autosend >> index) & 0x01;
 }
 
@@ -470,6 +471,7 @@ bool AnalogIn_GetAutoSend( int index )
 */
 void AnalogIn_SetAutoSend( int index, bool onoff )
 {
+  AnalogIn_SetActive( index, 1 );
   if( ((AnalogIn->autosend >> index) & 0x01) != onoff )
   {
     int mask = (1 << index);

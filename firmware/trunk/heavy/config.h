@@ -10,13 +10,13 @@
 #include "appboard.h"     // ...if you're using the MAKE Application Board
 #include "error.h"
 
-#define FIRMWARE_NAME          "Heavy-svn"
+#define FIRMWARE_NAME          "Heavy svn"
 #define FIRMWARE_MAJOR_VERSION 1
 #define FIRMWARE_MINOR_VERSION 3
-#define FIRMWARE_BUILD_NUMBER  1
+#define FIRMWARE_BUILD_NUMBER  0
 
 
-#define CONTROLLER_HEAPSIZE 18000
+#define CONTROLLER_HEAPSIZE 21000
 
 //----------------------------------------------------------------
 //  Comment out the systems that you don't want to include in your build.
@@ -24,7 +24,7 @@
 #define MAKE_CTRL_USB     // enable the USB system
 #define MAKE_CTRL_NETWORK // enable the Ethernet system
 #define OSC               // enable the OSC system
-#define XBEE              // enable the XBee/ZigBee system
+#define XBEE              // enable the XBee (ZigBee) system
 
 // ---------------------------------------------------------------
 // Network options
