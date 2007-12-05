@@ -517,6 +517,12 @@ void AnalogIn_SetAutoSend( int index, bool onoff )
 	milliseconds, by sending the message
 	\verbatim /system/autosend-interval 10 \endverbatim
 	so that messages will be sent every 10 milliseconds.  This can be anywhere from 1 to 5000 milliseconds.
+  \par
+  You also need to select whether the board should send to you over USB or Ethernet.  Send
+  \verbatim /system/autosend-usb 1 \endverbatim
+  to send via USB, and 
+  \verbatim /system/autosend-udp 1 \endverbatim
+  to send via Ethernet.  Via Ethernet, the board will send messages to the last address it received a message from.
 	
 	\par Active
 	The \b active property corresponds to the active state of an Analog In.
