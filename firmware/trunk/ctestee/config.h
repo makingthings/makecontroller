@@ -34,6 +34,14 @@
 #define MAKE_CTRL_NETWORK // enable the Ethernet system
 #define OSC               // enable the OSC system
 
+// ---------------------------------------------------------------
+// Network options
+// ---------------------------------------------------------------
+#define NETWORK_MEM_POOL         2000 // the network system's memory pool
+#define NETWORK_UDP_CONNS        4    // the number of possible DatagramSocket instances
+#define NETWORK_TCP_CONNS        4    // the number of possible Socket instances
+#define NETWORK_TCP_LISTEN_CONNS 2    // the number of possible ServerSocket instances
+
 //----------------------------------------------------------------
 //  Uncomment the revision of the MAKE Controller Board you're using.
 //----------------------------------------------------------------
