@@ -42,6 +42,8 @@ struct IoPin_
 
 #define IO_PIN_COUNT 64
 #define IO_USERS_MAX 127
+#define IO_OUTPUT 1
+#define IO_INPUT 0
 
 typedef struct IoPin_ IoPin ;
 
@@ -86,8 +88,6 @@ static int Io_TestPins( short users, bool lock );
   return value indicates if the start operation was successful.  After this, call any 
   of the other Io functions.
 
-  \todo Consider changing the api slightly to permit the immediate use of the io
-        without starting it.
   \todo Add glitch filter control
   \todo Implement more bits-style functions
   \ingroup Controller
@@ -219,6 +219,25 @@ int  Io_StopBits( longlong bits )
   return CONTROLLER_OK;
 }
 
+/**
+  Lock or release an IO line.
+  When you set an IO line active, you're locking it so it can't be used by anything else.
+  When you're done with it, you should always set it to inactive so it can be used by
+  other things if needed.
+  @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
+  @param value Specify \b true to set it active, or \b false to set it to inactive.
+  
+  \par Example
+  \code
+  // we want to use IO 18
+  if( Io_SetActive( IO_PA18, true ) == CONTROLLER_OK )
+  {
+		DoThingsWithIO18( );
+		// now we're done - unlock it
+		Io_SetActive( IO_PA18, false );
+  }
+  \endcode
+*/
 int Io_SetActive( int index, int value )
 {
   if ( value )
@@ -236,6 +255,22 @@ int Io_GetActive( int index )
   return p->users > 0;
 }
 
+/**
+  Set whether an IO line is an output or an input.
+  Use the IO_INPUT and IO_OUTPUT symbols to avoid confusion.
+  @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
+  @param output Specify 1 for an output, or 0 for an input.
+  @return CONTROLLER_OK (0) on success, non-zero otherwise.
+  
+  \par Example
+  \code
+  // Set io23 to an input
+  if( Io_SetDirection( IO_PA23, IO_INPUT ) == CONTROLLER_OK )
+  {
+		// success
+  }
+  \endcode
+*/
 int Io_SetDirection( int index, int output )
 {
   if ( output )
@@ -244,6 +279,24 @@ int Io_SetDirection( int index, int output )
     return Io_SetInput( index );
 }
 
+/**
+  Read whether an IO line is an output or an input.
+  @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
+  @return Non-zero if the pin is an output, 0 if it's an input.
+  
+  \par Example
+  \code
+  // Check whether IO 23 is an output or input
+  if( Io_GetDirection( IO_PA23 ) )
+  {
+		// then we're an output
+  }
+  else
+  {
+		// we're an input
+  }
+  \endcode
+*/
 int Io_GetDirection( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
@@ -313,6 +366,19 @@ int Io_SetFalse( int index )
   return CONTROLLER_OK;
 }
 
+ /**
+  Turn an IO line on or off.
+	This IO should have already been set to be an output via Io_SetDirection( )
+  @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
+	@param value Non-zero for on, 0 for off.
+  @return CONTROLLER_OK (0) on success, otherwise non-zero.
+  
+  \par Example
+  \code
+  // Turn on IO 17
+  Io_SetValue( IO_PA17, 1 );
+  \endcode
+*/
 int Io_SetValue( int index, char value )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
@@ -338,6 +404,18 @@ int Io_SetValue( int index, char value )
   return CONTROLLER_OK;
 }
 
+ /**
+  Read whether an IO line, presumably set as an output, is on or off.
+  @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
+	@param value Non-zero for on, 0 for off.
+  @return CONTROLLER_OK (0) on success, otherwise non-zero.
+  
+  \par Example
+  \code
+  // Turn on IO 17
+  Io_SetValue( IO_PA17, 1 );
+  \endcode
+*/
 char Io_GetValue( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
@@ -425,6 +503,18 @@ int  Io_PioDisable( int index )
   return CONTROLLER_OK;
 }
 
+ /**
+  Set the pullup resistor for an IO line on or off.
+  @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
+	@param value Non-zero for on, 0 for off.
+  @return CONTROLLER_OK (0) on success, otherwise non-zero.
+  
+  \par Example
+  \code
+  // Turn on the pullup for IO 17
+  Io_SetPullup( IO_PA17, 1 );
+  \endcode
+*/
 int Io_SetPullup( int index, int enable )
 {
   if ( enable )
@@ -433,6 +523,18 @@ int Io_SetPullup( int index, int enable )
     return Io_PullupDisable( index );
 }
 
+ /**
+  Read whether the pullup resistor for an IO line on or off.
+  @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
+	@param value Non-zero for on, 0 for off.
+  @return CONTROLLER_OK (0) on success, otherwise non-zero.
+  
+  \par Example
+  \code
+  // Turn on the pullup for IO 17
+  Io_GetPullup( IO_PA17 );
+  \endcode
+*/
 int Io_GetPullup( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
