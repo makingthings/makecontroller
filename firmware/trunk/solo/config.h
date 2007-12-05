@@ -7,7 +7,7 @@
 #define CONFIG_H
 
 #include "controller.h"   // ...everybody uses the MAKE Controller Board
-#include "appboard.h"     // ...if you're using the MAKE Application Board
+//#include "appboard.h"     // ...if you're using the MAKE Application Board
 #include "error.h"
 
 #define FIRMWARE_NAME          "Solo-svn"
@@ -16,7 +16,7 @@
 #define FIRMWARE_BUILD_NUMBER  1
 
 
-#define CONTROLLER_HEAPSIZE 18200
+#define CONTROLLER_HEAPSIZE 20000
 
 //----------------------------------------------------------------
 //  Comment out the systems that you don't want to include in your build.
