@@ -1161,6 +1161,7 @@ static bool XBee_GetIOValues( XBeePacket* packet, int *inputs )
   - rx64
   - tx16
   - tx64
+  - tx-status
   - active
   
   \par Autosend
@@ -1170,6 +1171,16 @@ static bool XBee_GetIOValues( XBeePacket* packet, int *inputs )
 	\verbatim /xbee/autosend 1 \endverbatim
   and to turn it off, send
 	\verbatim /xbee/autosend 0 \endverbatim
+  All autosend messages send at the same interval.  You can set this interval, in 
+	milliseconds, by sending the message
+	\verbatim /system/autosend-interval 10 \endverbatim
+	so that messages will be sent every 10 milliseconds.  This can be anywhere from 1 to 5000 milliseconds.
+  \par
+  You also need to select whether the board should send to you over USB or Ethernet.  Send
+  \verbatim /system/autosend-usb 1 \endverbatim
+  to send via USB, and 
+  \verbatim /system/autosend-udp 1 \endverbatim
+  to send via Ethernet.  Via Ethernet, the board will send messages to the last address it received a message from.
 	
   \par io16
 	The \b io16 property corresponds to an incoming message from an XBee module with samples
@@ -1209,6 +1220,19 @@ static bool XBee_GetIOValues( XBeePacket* packet, int *inputs )
 	The \b rx64 property corresponds to an incoming message from an XBee module with samples from its IO
 	pins.  This message is just like the \b io16 message, except it's coming from a board with a 64-bit
 	address, rather than a 16-bit address.  The structure of the message is the same (see above).
+
+  \par Transmit Status
+  The \b tx-status property gives you the status of a previously sent message.  It tells you the frameID of the message
+  that was sent and its status, which can be one of:
+  - \b Success.  Message was successfully transmitted and received.
+  - <b> No acknowledgement received</b>.  The message was successfully sent, but not successfully received on the other end.
+  - <b> CCA Failure</b>.
+  - \b Purged.
+  \par
+  If you don't include a frameID for the message that you sent, a tx-status message will not be generated.  An example
+  tx-status message will look like
+	\verbatim /xbee/tx-status 52 Success \endverbatim
+	where 52 is the frameID and "Success" is the status.
 	
 	\par Active
 	The \b active property corresponds to the active state of the XBee system.
@@ -1688,7 +1712,7 @@ int XBeeOsc_HandleNewPacket( XBeePacket* xbp, int channel )
       if( XBee_ReadTXStatusPacket( xbp, &frameID, &status ) )
       {
         snprintf( address, OSC_SCRATCH_SIZE, "/%s/tx-status", XBeeOsc_Name );
-        char* statusText;
+        char* statusText = "No status received";
         switch( status )
         {
           case 0:

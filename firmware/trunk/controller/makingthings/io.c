@@ -407,7 +407,6 @@ int Io_SetValue( int index, char value )
  /**
   Read whether an IO line, presumably set as an output, is on or off.
   @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
-	@param value Non-zero for on, 0 for off.
   @return CONTROLLER_OK (0) on success, otherwise non-zero.
   
   \par Example
@@ -506,7 +505,7 @@ int  Io_PioDisable( int index )
  /**
   Set the pullup resistor for an IO line on or off.
   @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
-	@param value Non-zero for on, 0 for off.
+	@param enable Non-zero for on, 0 for off.
   @return CONTROLLER_OK (0) on success, otherwise non-zero.
   
   \par Example
@@ -526,7 +525,6 @@ int Io_SetPullup( int index, int enable )
  /**
   Read whether the pullup resistor for an IO line on or off.
   @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
-	@param value Non-zero for on, 0 for off.
   @return CONTROLLER_OK (0) on success, otherwise non-zero.
   
   \par Example
