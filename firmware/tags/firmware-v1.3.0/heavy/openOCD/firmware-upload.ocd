@@ -1,0 +1,14 @@
+wait_halt
+armv4_5 core_state arm
+mww 0xffffff60 0x00320100
+mww 0xfffffd44 0xa0008000
+mww 0xfffffc20 0x00000601
+wait 100
+mww 0xfffffc2c 0x00480a0e
+wait 200
+mww 0xfffffc30 0x7
+wait 100
+mww 0xfffffd08 0xa5000401
+flash write 0 ../output/heavy.bin 0x0
+reset
+shutdown
