@@ -130,10 +130,11 @@ void UsbMonitor::FindUsbDevices( QList<PacketInterface*>* arrived )
 			
 			if( productNameAsCFString )
 			{
-			result = CFStringGetCString( (CFStringRef)productNameAsCFString,
+				result = CFStringGetCString( (CFStringRef)productNameAsCFString,
 																	productName,
 																	maxPathSize, 
 																	kCFStringEncodingUTF8);
+				CFRelease( productNameAsCFString );
 			}
 			if (result)
 			{
@@ -156,13 +157,13 @@ void UsbMonitor::FindUsbDevices( QList<PacketInterface*>* arrived )
 							delete device;
 					}
 					productName[0] = 0; // clear this out for the next time around
-					CFRelease(bsdPathAsCFString);
 					IOObjectRelease(parent);
 				}
 				else
 					*path = '\0';  // clear this, since this is checked above.
 			}
 			(void) IOObjectRelease(modemService);
+			CFRelease(bsdPathAsCFString);
 		}
 	}
 	return;
