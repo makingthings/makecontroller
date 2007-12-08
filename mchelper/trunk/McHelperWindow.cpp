@@ -137,6 +137,7 @@ void McHelperWindow::usbBoardsArrived( QList<PacketInterface*>* arrived )
 		boardList.append( board );
 	}
 	xmlServer->boardListUpdate( boardList, true );
+	delete arrived;
 }
 
 void McHelperWindow::udpBoardsArrived( QList<PacketUdp*>* arrived )
@@ -158,6 +159,7 @@ void McHelperWindow::udpBoardsArrived( QList<PacketUdp*>* arrived )
 		boardList.append( board );
 	}
 	xmlServer->boardListUpdate( boardList, true );
+	delete arrived;
 }
 
 void McHelperWindow::sambaBoardsArrived( QList<UploaderThread*>* arrived )
@@ -175,6 +177,7 @@ void McHelperWindow::sambaBoardsArrived( QList<UploaderThread*>* arrived )
     board->setText( board->name );
     listWidget->addItem( board );
 	}
+	delete arrived;
 }
 
 Board* McHelperWindow::getCurrentBoard( )
