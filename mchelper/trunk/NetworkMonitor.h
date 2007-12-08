@@ -53,14 +53,12 @@ class NetworkMonitor : public QObject, public MonitorInterface
 	QApplication* application;
 	QTimer* timer;
 	QTimer pingTimer;
-	QUdpSocket* socket;
+	QUdpSocket socket;
 	QByteArray broadcastPing;
-	QHostAddress myAddress;
 	int rxtxPort;
 	
   private slots:
 	void processPendingDatagrams( );
-	void lookedUp(const QHostInfo &host);
 	void sendPing( );
 };
 

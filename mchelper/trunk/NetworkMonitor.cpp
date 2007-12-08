@@ -23,31 +23,27 @@
 
 NetworkMonitor::NetworkMonitor( int listenPort )
 {
-	QHostInfo::lookupHost( QHostInfo::localHostName(), this, SLOT(lookedUp(QHostInfo)));
-	socket = new QUdpSocket( );
 	rxtxPort = listenPort;
-	if ( !socket->bind( rxtxPort, QUdpSocket::ShareAddress ) )
+	if ( !socket.bind( rxtxPort ) )
 	{
-	  socket->close();
-	  socket = 0;
+	  socket.close();
 	  mainWindow->messageThreadSafe( QString( "Error: Can't listen on port %1 - make sure it's not already in use.").arg( rxtxPort ), MessageEvent::Error, "Ethernet" );
 	}
-	connect( socket, SIGNAL(readyRead()), this, SLOT( processPendingDatagrams() ) );
+	connect( &socket, SIGNAL(readyRead()), this, SLOT( processPendingDatagrams() ) );
 	connect( &pingTimer, SIGNAL( timeout() ), this, SLOT( sendPing() ) );
 	createPing( );
 }
 
 void NetworkMonitor::createPing( )
 {
-	Osc* osc = new Osc();
+	Osc osc;
 	int length, i;
 	char packet[1024], *ptr;
-	osc->createOneRequest( packet, &length, "/network/find" ); // our constant OSC ping
+	osc.createOneRequest( packet, &length, "/network/find" ); // our constant OSC ping
 	ptr = packet;
 	for( i=0; i < length; i++ )
 		broadcastPing.insert( i, *ptr++ );
 	broadcastPing.resize( length );
-	delete osc;
 }
 
 void NetworkMonitor::start( )
@@ -58,13 +54,22 @@ void NetworkMonitor::start( )
 void NetworkMonitor::sendPing( )
 {
 	if( mainWindow->findNetBoardsEnabled( ) )
-		socket->writeDatagram( broadcastPing.data(), broadcastPing.size(), QHostAddress::Broadcast, rxtxPort );
+	{
+		if( socket.state( ) != QAbstractSocket::BoundState )
+			socket.bind( rxtxPort, QUdpSocket::ShareAddress );
+			
+		if( socket.state( ) == QAbstractSocket::BoundState ) // if we succeeded or we're already open
+		{
+			if( socket.writeDatagram( broadcastPing, QHostAddress::Broadcast, rxtxPort ) < 0 )
+				printf( "UDP error: %d\n", socket.error( ) );
+		}
+	}
 }
 
 bool NetworkMonitor::changeListenPort( int port )
 {
-	socket->close( );
-	if( !socket->bind( port, QUdpSocket::ShareAddress ) )
+	socket.close( );
+	if( !socket.bind( port, QUdpSocket::ShareAddress ) )
 	{
 		mainWindow->messageThreadSafe( QString( "Error: Can't listen on port %1 - make sure it's not already in use.").arg( rxtxPort ), MessageEvent::Error, "Ethernet" );
 		return false;
@@ -90,37 +95,29 @@ NetworkMonitor::Status NetworkMonitor::scan( QList<PacketUdp*>* arrived )
 
 void NetworkMonitor::processPendingDatagrams()
 {
-  while (socket->hasPendingDatagrams())
+  while (socket.hasPendingDatagrams())
   {
-    QByteArray* datagram = new QByteArray( );
-    QHostAddress* sender = new QHostAddress( );
-    datagram->resize( socket->pendingDatagramSize() );
-    socket->readDatagram( datagram->data(), datagram->size(), sender );
-		bool filterOut = false;
+    QByteArray datagram;
+    QHostAddress sender;
+    datagram.resize( socket.pendingDatagramSize() );
+    socket.readDatagram( datagram.data(), datagram.size(), &sender );
 		
-    if( datagram->size() <= 0 || *sender == myAddress ) // filter out broadcast messages from ourself
-			filterOut = true;
-		else if( QString( datagram->data() ) == QString( broadcastPing.data() ) )
-		{
-			if( datagram->size() == broadcastPing.size() ) // filter out pings from other mchelpers
-				filterOut = true;
-		}
+		printf( "Sender: %s\n", sender.toString( ).toLatin1( ).data( ) );
 		
-		if( filterOut )
-		{
-			delete datagram;
-    	delete sender;
-    	break;
-    }
-
+    if( datagram.size() <= 0 ) // filter out garbage packets
+			break; // and filter out pings from other mchelpers
+		else if( QString( datagram.data() ) == QString( broadcastPing.data() ) && datagram.size() == broadcastPing.size() )
+			break;
 		
-    QString socketKey = sender->toString( );
+		//printf( "Sender: %s", sender->toString( ).toLatin1( ).data( ) );
+		
+    QString socketKey = sender.toString( );
     if( !connectedDevices.contains( socketKey ) )
     {
     	PacketUdp* device = new PacketUdp( );
     	connectedDevices.insert( socketKey, device );  // stick it in our own list of boards we know about
     	
-    	device->setRemoteHostInfo( sender, rxtxPort );
+    	device->setRemoteHostInfo( &sender, rxtxPort );
     	device->setKey( socketKey );
     	device->setInterfaces( messageInterface, this );
     	device->open( );
@@ -137,14 +134,6 @@ void NetworkMonitor::processPendingDatagrams()
     	connectedDevices.value( socketKey )->resetTimer( );
     }
   }
-}
-
-void NetworkMonitor::lookedUp(const QHostInfo &host)
-{
-	if (host.error() != QHostInfo::NoError) // lookup failed
-		return;
-
-    myAddress = host.addresses().first();
 }
 
 void NetworkMonitor::deviceRemoved( QString key )
