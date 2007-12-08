@@ -49,7 +49,7 @@ class PacketUdp : public QObject, public PacketInterface
 	  bool isOpen( );
 	  QString getKey( void );
 	  char* location( );
-	  void incomingMessage( QByteArray* message );
+	  void incomingMessage( QByteArray message );
 	  void setRemoteHostInfo( QHostAddress* address, quint16 port );
 	  void setKey( QString key );
 		
@@ -66,7 +66,7 @@ class PacketUdp : public QObject, public PacketInterface
 	  QByteArray remoteHostName;
 	  QTimer* timer;
 	  MonitorInterface* monitor;
-	  QByteArray* lastMessage;
+	  QByteArray lastMessage;
 	  QString socketKey;
 	
     char* remoteAddress;

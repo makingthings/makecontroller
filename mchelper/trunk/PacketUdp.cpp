@@ -27,8 +27,8 @@
 PacketUdp::PacketUdp( )
 { 
 	timer = new QTimer(this);
-	lastMessage = NULL;
 	socket = NULL;
+	lastMessage.clear( );
 	packetReadyInterface = NULL;
 	connect( timer, SIGNAL(timeout()), this, SLOT( pingTimedOut( ) ) );
 }
@@ -55,10 +55,6 @@ PacketUdp::Status PacketUdp::close( )	//part of PacketInterface
 {
 	if ( socket != 0 )
 	  socket->close( );
-	
-	if( lastMessage != NULL )
-		delete lastMessage;
-  		
   return OK;
 }
 
@@ -91,7 +87,7 @@ PacketUdp::Status PacketUdp::sendPacket( char* packet, int length )	//part of Pa
 
 bool PacketUdp::isPacketWaiting( )	//part of PacketInterface
 {
-  return lastMessage != NULL;
+  return lastMessage.size( ) > 0;
 }
 
 bool PacketUdp::isOpen( )
@@ -107,21 +103,19 @@ void PacketUdp::processPacket( )	//slot to be called back automatically when dat
 
 int PacketUdp::receivePacket( char* buffer, int size )
 {
-	int length = lastMessage->size( );
+	int length = lastMessage.size( );
 	if( length > size )
 	{
 		QString msg = QString( "Error - packet too large.");
 		messageInterface->messageThreadSafe( msg, MessageEvent::Error, QString("Ethernet") );
 		return 0;
 	}
-	memcpy( buffer, lastMessage->data( ), length );
-	delete lastMessage;
-	lastMessage = NULL;
-	
+	memcpy( buffer, lastMessage.data( ), length );
+	lastMessage.clear( );
 	return length;
 }
 
-void PacketUdp::incomingMessage( QByteArray* message )
+void PacketUdp::incomingMessage( QByteArray message )
 {
 	lastMessage = message;
 }
