@@ -61,7 +61,7 @@ void NetworkMonitor::sendPing( )
 		if( socket.state( ) == QAbstractSocket::BoundState ) // if we succeeded or we're already open
 		{
 			if( socket.writeDatagram( broadcastPing, QHostAddress::Broadcast, rxtxPort ) < 0 )
-				printf( "UDP error: %d\n", socket.error( ) );
+				printf( "UDP send error: %d\n", socket.error( ) );
 		}
 	}
 }
@@ -95,21 +95,15 @@ NetworkMonitor::Status NetworkMonitor::scan( QList<PacketUdp*>* arrived )
 
 void NetworkMonitor::processPendingDatagrams()
 {
-  while (socket.hasPendingDatagrams())
+  while( socket.hasPendingDatagrams() )
   {
     QByteArray datagram;
     QHostAddress sender;
     datagram.resize( socket.pendingDatagramSize() );
     socket.readDatagram( datagram.data(), datagram.size(), &sender );
 		
-		printf( "Sender: %s\n", sender.toString( ).toLatin1( ).data( ) );
-		
-    if( datagram.size() <= 0 ) // filter out garbage packets
-			break; // and filter out pings from other mchelpers
-		else if( QString( datagram.data() ) == QString( broadcastPing.data() ) && datagram.size() == broadcastPing.size() )
+		if( QString( datagram.data() ) == QString( broadcastPing.data() ) && datagram.size() == broadcastPing.size() )
 			break;
-		
-		//printf( "Sender: %s", sender->toString( ).toLatin1( ).data( ) );
 		
     QString socketKey = sender.toString( );
     if( !connectedDevices.contains( socketKey ) )
