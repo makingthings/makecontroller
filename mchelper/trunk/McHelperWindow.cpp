@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006 MakingThings
+ Copyright 2006-2007 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -253,6 +253,7 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   			board->sendMessage( "/system/info-internal" );
   			
   		updateSummaryInfo( );
+			tabWidget->setTabToolTip( 2, "Short the ERASE jumper on your board to enable the uploader." );
   		break;
         
   	case Board::UsbSamba:
@@ -260,6 +261,7 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   		tabWidget->setTabEnabled( 0, 0 );
   		tabWidget->setTabEnabled( 1, 0 );
   		tabWidget->setTabEnabled( 2, 1 );
+			tabWidget->setTabToolTip( 2, NULL );
   		break;
   }
 }
