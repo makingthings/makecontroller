@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006 MakingThings
+ Copyright 2006-2007 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -39,16 +39,17 @@ class AppUpdater : public QDialog
 		void on_actionCheckForUpdates( );
 			
 	private:
-		QPushButton *acceptButton, *ignoreButton;
+		QPushButton acceptButton, ignoreButton;
 		QLabel icon;
-		QLabel *headline, *details;
-		QPixmap *mchelperIcon;
-		QVBoxLayout *textLayout;
-		QHBoxLayout *buttonLayout, *topLevelLayout;
-		QTextEdit *browser;
+		QLabel headline, details;
+		QPixmap mchelperIcon;
+		QVBoxLayout textLayout;
+		QHBoxLayout buttonLayout, topLevelLayout;
+		QTextEdit browser;
 		QHttp http;
 		int GETid;
 		int versionCompare(const QString & left, const QString & right);
+		void removeBrowserAndIgnoreButton( );
 	
 	private slots:
 		void finishedRead( int id, bool errors );
