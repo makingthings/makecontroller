@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>749</width>
-    <height>560</height>
+    <width>964</width>
+    <height>548</height>
    </rect>
   </property>
   <property name="sizePolicy" >
@@ -17,6 +17,9 @@
   </property>
   <property name="windowTitle" >
    <string>Make Controller Helper</string>
+  </property>
+  <property name="unifiedTitleAndToolBarOnMac" >
+   <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralwidget" >
    <layout class="QVBoxLayout" >
@@ -651,256 +654,271 @@
          <attribute name="title" >
           <string>Summary</string>
          </attribute>
-         <layout class="QVBoxLayout" >
+         <layout class="QHBoxLayout" >
           <item>
-           <widget class="QGroupBox" name="groupBox" >
-            <property name="minimumSize" >
-             <size>
-              <width>440</width>
-              <height>175</height>
-             </size>
-            </property>
-            <property name="maximumSize" >
-             <size>
-              <width>450</width>
-              <height>175</height>
-             </size>
-            </property>
-            <property name="title" >
-             <string>System</string>
-            </property>
-            <widget class="QWidget" name="gridLayout" >
-             <property name="geometry" >
-              <rect>
-               <x>30</x>
-               <y>20</y>
-               <width>401</width>
-               <height>151</height>
-              </rect>
-             </property>
-             <layout class="QGridLayout" >
-              <property name="leftMargin" >
-               <number>0</number>
+           <layout class="QGridLayout" >
+            <item row="0" column="0" >
+             <widget class="QLabel" name="systemNameLabel" >
+              <property name="toolTip" >
+               <string>This board's name - edit to give this board a new name.</string>
               </property>
-              <property name="topMargin" >
-               <number>0</number>
+              <property name="text" >
+               <string>Name:</string>
               </property>
-              <property name="rightMargin" >
-               <number>0</number>
+              <property name="alignment" >
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
               </property>
-              <property name="bottomMargin" >
-               <number>0</number>
+              <property name="buddy" >
+               <cstring>systemName</cstring>
               </property>
-              <property name="horizontalSpacing" >
-               <number>6</number>
+             </widget>
+            </item>
+            <item row="0" column="1" colspan="3" >
+             <widget class="QLineEdit" name="systemName" />
+            </item>
+            <item row="1" column="0" >
+             <widget class="QLabel" name="seriaNumberLabel" >
+              <property name="toolTip" >
+               <string>This board's serial number to uniquely identify it.</string>
               </property>
-              <property name="verticalSpacing" >
-               <number>6</number>
+              <property name="text" >
+               <string>Serial Number:</string>
               </property>
-              <item row="3" column="1" >
-               <widget class="QLineEdit" name="systemFreeMemory" >
-                <property name="focusPolicy" >
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="readOnly" >
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1" >
-               <widget class="QLineEdit" name="systemSerialNumber" />
-              </item>
-              <item row="0" column="1" >
-               <widget class="QLineEdit" name="systemName" />
-              </item>
-              <item row="2" column="1" >
-               <widget class="QLineEdit" name="systemFirmwareVersion" >
-                <property name="focusPolicy" >
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="readOnly" >
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0" >
-               <widget class="QLabel" name="label" >
-                <property name="toolTip" >
-                 <string>This board's name - edit to give this board a new name.</string>
-                </property>
-                <property name="text" >
-                 <string>Name:</string>
-                </property>
-                <property name="buddy" >
-                 <cstring>systemName</cstring>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0" >
-               <widget class="QLabel" name="label_2" >
-                <property name="toolTip" >
-                 <string>This board's serial number to uniquely identify it.</string>
-                </property>
-                <property name="text" >
-                 <string>Serial Number:</string>
-                </property>
-                <property name="buddy" >
-                 <cstring>systemSerialNumber</cstring>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0" >
-               <widget class="QLabel" name="label_3" >
-                <property name="toolTip" >
-                 <string>The version of the program running on the Make Controller.</string>
-                </property>
-                <property name="text" >
-                 <string>Firmware Version:</string>
-                </property>
-                <property name="buddy" >
-                 <cstring>systemFirmwareVersion</cstring>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="0" >
-               <widget class="QLabel" name="label_4" >
-                <property name="toolTip" >
-                 <string>The available memory for this board, in bytes.</string>
-                </property>
-                <property name="text" >
-                 <string>Free Memory:</string>
-                </property>
-                <property name="buddy" >
-                 <cstring>systemFreeMemory</cstring>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </widget>
-          </item>
-          <item>
-           <widget class="QGroupBox" name="groupBox_2" >
-            <property name="minimumSize" >
-             <size>
-              <width>440</width>
-              <height>210</height>
-             </size>
-            </property>
-            <property name="maximumSize" >
-             <size>
-              <width>450</width>
-              <height>210</height>
-             </size>
-            </property>
-            <property name="title" >
-             <string>Network</string>
-            </property>
-            <layout class="QGridLayout" >
-             <item row="0" column="0" >
-              <widget class="QLabel" name="label_5" >
-               <property name="text" >
-                <string>IP Address:</string>
-               </property>
-               <property name="buddy" >
-                <cstring>netAddressLineEdit</cstring>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1" colspan="4" >
-              <widget class="QLineEdit" name="netAddressLineEdit" />
-             </item>
-             <item row="1" column="0" >
-              <widget class="QLabel" name="label_6" >
-               <property name="text" >
-                <string>Network Mask:</string>
-               </property>
-               <property name="buddy" >
-                <cstring>netMaskLineEdit</cstring>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1" colspan="4" >
-              <widget class="QLineEdit" name="netMaskLineEdit" />
-             </item>
-             <item row="2" column="0" >
-              <widget class="QLabel" name="label_7" >
-               <property name="text" >
-                <string>Gateway/Router:</string>
-               </property>
-               <property name="buddy" >
-                <cstring>netGatewayLineEdit</cstring>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="1" colspan="4" >
-              <widget class="QLineEdit" name="netGatewayLineEdit" />
-             </item>
-             <item row="4" column="0" >
-              <widget class="QLabel" name="label_10" >
-               <property name="toolTip" >
-                <string>The port this board is listening on for OSC messages.</string>
-               </property>
-               <property name="text" >
-                <string>UDP Port (Listening):</string>
-               </property>
-               <property name="buddy" >
-                <cstring>udpListenPort</cstring>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="1" colspan="2" >
-              <widget class="QLineEdit" name="udpListenPort" >
-               <property name="readOnly" >
-                <bool>false</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="3" >
-              <widget class="QLabel" name="label_11" >
-               <property name="toolTip" >
-                <string>The port this board will send OSC messages back on.</string>
-               </property>
-               <property name="text" >
-                <string>UDP Port (Sending):</string>
-               </property>
-               <property name="buddy" >
-                <cstring>udpSendPort</cstring>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="4" >
-              <widget class="QLineEdit" name="udpSendPort" >
-               <property name="readOnly" >
-                <bool>false</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="1" >
-              <widget class="QCheckBox" name="dhcpCheckBox" >
-               <property name="toolTip" >
-                <string>DHCP allows the Make Controller to automatically get an IP address when connected to a network.</string>
-               </property>
-               <property name="layoutDirection" >
-                <enum>Qt::LeftToRight</enum>
-               </property>
-               <property name="text" >
-                <string>DHCP</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="2" colspan="2" >
-              <widget class="QCheckBox" name="webserverCheckBox" >
-               <property name="toolTip" >
-                <string>Controls the demo web server on the Make Controller.</string>
-               </property>
-               <property name="text" >
-                <string>Webserver</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
+              <property name="alignment" >
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy" >
+               <cstring>systemSerialNumber</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1" colspan="3" >
+             <widget class="QLineEdit" name="systemSerialNumber" />
+            </item>
+            <item row="2" column="0" >
+             <widget class="QLabel" name="firmwareVersionLabel" >
+              <property name="toolTip" >
+               <string>The version of the program running on the Make Controller.</string>
+              </property>
+              <property name="text" >
+               <string>Firmware Version:</string>
+              </property>
+              <property name="alignment" >
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy" >
+               <cstring>systemFirmwareVersion</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1" colspan="3" >
+             <widget class="QLineEdit" name="systemFirmwareVersion" >
+              <property name="focusPolicy" >
+               <enum>Qt::NoFocus</enum>
+              </property>
+              <property name="readOnly" >
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0" >
+             <widget class="QLabel" name="freeMemoryLabel" >
+              <property name="toolTip" >
+               <string>The available memory for this board, in bytes.</string>
+              </property>
+              <property name="text" >
+               <string>Free Memory:</string>
+              </property>
+              <property name="alignment" >
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy" >
+               <cstring>systemFreeMemory</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1" colspan="3" >
+             <widget class="QLineEdit" name="systemFreeMemory" >
+              <property name="focusPolicy" >
+               <enum>Qt::NoFocus</enum>
+              </property>
+              <property name="readOnly" >
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0" colspan="4" >
+             <widget class="Line" name="line_2" >
+              <property name="orientation" >
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="0" >
+             <widget class="QLabel" name="ipAddressLabel" >
+              <property name="text" >
+               <string>IP Address:</string>
+              </property>
+              <property name="alignment" >
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy" >
+               <cstring>netAddressLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1" colspan="3" >
+             <widget class="QLineEdit" name="netAddressLineEdit" />
+            </item>
+            <item row="6" column="0" >
+             <widget class="QLabel" name="netMaskLabel" >
+              <property name="toolTip" >
+               <string>The port this board is listening on for OSC messages.</string>
+              </property>
+              <property name="text" >
+               <string>Network Mask:</string>
+              </property>
+              <property name="alignment" >
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1" colspan="3" >
+             <widget class="QLineEdit" name="netMaskLineEdit" />
+            </item>
+            <item row="7" column="0" >
+             <widget class="QLabel" name="gatewayLabel" >
+              <property name="text" >
+               <string>Gateway/Router:</string>
+              </property>
+              <property name="alignment" >
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy" >
+               <cstring>netGatewayLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="1" colspan="3" >
+             <widget class="QLineEdit" name="netGatewayLineEdit" />
+            </item>
+            <item row="8" column="0" >
+             <widget class="QLabel" name="udpListenLabel" >
+              <property name="text" >
+               <string>UDP Port (Listening):</string>
+              </property>
+              <property name="alignment" >
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy" >
+               <cstring>netMaskLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="1" >
+             <widget class="QLineEdit" name="udpListenPort" >
+              <property name="readOnly" >
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="9" column="0" >
+             <spacer>
+              <property name="orientation" >
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" >
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="9" column="1" >
+             <widget class="QCheckBox" name="dhcpCheckBox" >
+              <property name="toolTip" >
+               <string>DHCP allows the Make Controller to automatically get an IP address when connected to a network.</string>
+              </property>
+              <property name="layoutDirection" >
+               <enum>Qt::LeftToRight</enum>
+              </property>
+              <property name="text" >
+               <string>DHCP</string>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="2" >
+             <widget class="QLabel" name="udpSendLabel" >
+              <property name="toolTip" >
+               <string>The port this board will send OSC messages back on.</string>
+              </property>
+              <property name="text" >
+               <string>UDP Port (Sending):</string>
+              </property>
+              <property name="buddy" >
+               <cstring>udpSendPort</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="3" >
+             <widget class="QLineEdit" name="udpSendPort" >
+              <property name="readOnly" >
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="9" column="2" >
+             <widget class="QCheckBox" name="webserverCheckBox" >
+              <property name="toolTip" >
+               <string>Controls the demo web server on the Make Controller.</string>
+              </property>
+              <property name="text" >
+               <string>Webserver</string>
+              </property>
+             </widget>
+            </item>
+            <item row="10" column="3" >
+             <widget class="QPushButton" name="applyChangesButton" >
+              <property name="text" >
+               <string>Apply</string>
+              </property>
+             </widget>
+            </item>
+            <item row="9" column="3" >
+             <spacer>
+              <property name="orientation" >
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" >
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="10" column="0" colspan="2" >
+             <spacer>
+              <property name="orientation" >
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" >
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="10" column="2" >
+             <widget class="QPushButton" name="revertChangesButton" >
+              <property name="text" >
+               <string>Revert</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>
@@ -1074,7 +1092,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>749</width>
+     <width>964</width>
      <height>22</height>
     </rect>
    </property>
@@ -1162,6 +1180,7 @@
    </property>
   </action>
  </widget>
+ <layoutdefault spacing="6" margin="9" />
  <tabstops>
   <tabstop>commandLine</tabstop>
   <tabstop>systemName</tabstop>
@@ -1175,4 +1194,21 @@
  </tabstops>
  <resources/>
  <connections/>
+ <designerdata>
+  <property name="gridDeltaX" >
+   <number>10</number>
+  </property>
+  <property name="gridDeltaY" >
+   <number>10</number>
+  </property>
+  <property name="gridSnapX" >
+   <bool>true</bool>
+  </property>
+  <property name="gridSnapY" >
+   <bool>true</bool>
+  </property>
+  <property name="gridVisible" >
+   <bool>true</bool>
+  </property>
+ </designerdata>
 </ui>

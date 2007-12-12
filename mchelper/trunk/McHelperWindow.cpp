@@ -87,13 +87,21 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	//setup the pushbuttons
 	connect( fileSelectButton, SIGNAL( clicked() ), this, SLOT( fileSelectButtonClicked() ) );
 	connect( uploadButton, SIGNAL( clicked() ), this, SLOT( uploadButtonClicked() ) );
-	connect( systemName, SIGNAL( editingFinished() ), this, SLOT ( systemNameChanged() ) );
-	connect( systemSerialNumber, SIGNAL( editingFinished() ), this, SLOT ( systemSerialNumberChanged() ) );
-	connect( netAddressLineEdit, SIGNAL( editingFinished() ), this, SLOT ( ipAddressChanged() ) );
-	connect( dhcpCheckBox, SIGNAL( clicked(bool) ), this, SLOT ( dhcpChanged(bool) ) );
-	connect( webserverCheckBox, SIGNAL( clicked(bool) ), this, SLOT ( webserverChanged(bool) ) );
-	connect( udpListenPort, SIGNAL( editingFinished() ), this, SLOT ( udpListenChanged() ) );
-	connect( udpSendPort, SIGNAL( editingFinished() ), this, SLOT ( udpSendChanged() ) );
+	
+	// setup the Summary tab
+	connect( systemName, SIGNAL( textEdited( QString ) ), this, SLOT( onAnySummaryValueEdited( QString ) ) );
+	connect( systemSerialNumber, SIGNAL( textEdited( QString ) ), this, SLOT( onAnySummaryValueEdited( QString ) ) );
+	connect( netAddressLineEdit, SIGNAL( textEdited( QString ) ), this, SLOT( onAnySummaryValueEdited( QString ) ) );
+	connect( netMaskLineEdit, SIGNAL( textEdited( QString ) ), this, SLOT( onAnySummaryValueEdited( QString ) ) );
+	connect( netGatewayLineEdit, SIGNAL( textEdited( QString ) ), this, SLOT( onAnySummaryValueEdited( QString ) ) );
+	connect( udpListenPort, SIGNAL( textEdited( QString ) ), this, SLOT( onAnySummaryValueEdited( QString ) ) );
+	connect( udpSendPort, SIGNAL( textEdited( QString ) ), this, SLOT( onAnySummaryValueEdited( QString ) ) );
+	connect( dhcpCheckBox, SIGNAL( clicked( bool ) ), this, SLOT( onAnySummaryValueEdited( bool ) ) );
+	connect( webserverCheckBox, SIGNAL( clicked( bool ) ), this, SLOT( onAnySummaryValueEdited( bool ) ) );
+	connect( applyChangesButton, SIGNAL( clicked() ), this, SLOT( onApplyChanges() ) );
+	connect( revertChangesButton, SIGNAL( clicked() ), this, SLOT( onRevertChanges() ) );
+	
+	summaryValuesBeingEdited = false;
     
 	// setup the menu
 	connect( actionAboutMchelper, SIGNAL( triggered() ), aboutDialog, SLOT( show( ) ) );
@@ -889,117 +897,108 @@ void McHelperWindow::initUpdate( )
 	}
 }
 
-void McHelperWindow::systemNameChanged( )
+void McHelperWindow::onAnySummaryValueEdited( bool state )
 {
-    Board* board = (Board*)listWidget->currentItem();
-    if( board == NULL )
-    	return;
-    
-    QString newName = systemName->text();
-    if( newName.isEmpty() || board->name == newName )
-    	return;
-    
-    QString cmd = QString( "/system/name %1" ).arg( QString("\"%1\"").arg(newName) );
-    board->sendMessage( cmd );
-    statusBar()->showMessage( tr("Name changed to ").append(newName), 2000);
+	(void)state;
+	onAnySummaryValueEdited( QString( "this is not used" ) );
 }
 
-void McHelperWindow::systemSerialNumberChanged( )
+void McHelperWindow::onAnySummaryValueEdited( QString text )
 {
-    Board* board = (Board*)listWidget->currentItem();
-    if( board == NULL )
-    	return;
-    	
-    QString newNumber = systemSerialNumber->text();
-    if( newNumber.isEmpty() || board->serialNumber == newNumber )
-    	return;
-
-    QString cmd = QString( "/system/serialnumber %1" ).arg( newNumber );
-    board->sendMessage( cmd );
-    statusBar()->showMessage( tr("Serial number changed to ").append( newNumber ), 2000);
+	(void)text;
+	//	Board* board = (Board*)listWidget->currentItem();
+//	if( board == NULL )
+//		return;
+	setSummaryTabLabelsForegroundRole( QPalette::BrightText );
+	summaryValuesBeingEdited = true;
 }
 
-void McHelperWindow::ipAddressChanged( )
+void McHelperWindow::setSummaryTabLabelsForegroundRole( QPalette::ColorRole role )
 {
-    Board* board = (Board*)listWidget->currentItem();
-    if( board == NULL )
-    	return;
-    	
-    QString newAddress = netAddressLineEdit->text();
-    if( newAddress.isEmpty() || board->ip_address == newAddress )
-    	return;
-
-    QString cmd = QString( "/network/address %1" ).arg( newAddress );
-    board->sendMessage( cmd );
-    statusBar()->showMessage( tr("IP address changed to ").append( newAddress ), 2000);
+	systemNameLabel->setForegroundRole( role );
+	seriaNumberLabel->setForegroundRole( role );
+	firmwareVersionLabel->setForegroundRole( role );
+	freeMemoryLabel->setForegroundRole( role );
+	ipAddressLabel->setForegroundRole( role );
+	netMaskLabel->setForegroundRole( role );
+	gatewayLabel->setForegroundRole( role );
+	udpListenLabel->setForegroundRole( role );
+	udpSendLabel->setForegroundRole( role );
+	dhcpCheckBox->setForegroundRole( role ); // how to actually get at the text?
+	webserverCheckBox->setForegroundRole( role ); // same...
 }
 
-void McHelperWindow::dhcpChanged( bool newState )
+void McHelperWindow::onRevertChanges( )
 {
-	Board* board = (Board*)listWidget->currentItem();
-  if( board == NULL )
-  	return;
-  
-  if( newState == true && !board->dhcp )
-  {
-  	board->sendMessage( QString( "/network/dhcp 1" ) );
-  	statusBar()->showMessage( tr("DHCP has been turned on."), 2000);
-  }
-  
-  if( newState == false && board->dhcp )
-  {
-  	board->sendMessage( QString( "/network/dhcp 0" ) );
-  	statusBar()->showMessage( tr("DHCP has been turned off."), 2000);
-  }
+	setSummaryTabLabelsForegroundRole( QPalette::WindowText );
+	summaryValuesBeingEdited = false;
 }
 
-void McHelperWindow::webserverChanged( bool newState )
-{
-	Board* board = (Board*)listWidget->currentItem();
-  if( board == NULL )
-  	return;
-  
-  if( newState == true && !board->webserver )
-  {
-  	board->sendMessage( QString( "/network/webserver 1" ) );
-  	statusBar()->showMessage( tr("The board's web server has been turned on."), 2000);
-  }
-  
-  if( newState == false && board->webserver )
-  {
-  	board->sendMessage( QString( "/network/webserver 0" ) );
-  	statusBar()->showMessage( tr("The board's web server has been turned off."), 2000);
-  }
-}
-
-void McHelperWindow::udpListenChanged( )
+void McHelperWindow::onApplyChanges( )
 {
 	Board* board = (Board*)listWidget->currentItem();
 	if( board == NULL )
 		return;
-		
+	
+	bool changesMade = true;
+	
+	QString newName = systemName->text();
+	if( !newName.isEmpty() && board->name != newName )
+	{
+		board->sendMessage( QString( "/system/name %1" ).arg( QString("\"%1\"").arg(newName) ) );
+		changesMade = true;
+	}
+	// serial number
+	QString newNumber = systemSerialNumber->text();
+	if( !newNumber.isEmpty() && board->serialNumber != newNumber )
+	{
+		board->sendMessage( QString( "/system/serialnumber %1" ).arg( newNumber ) );
+		changesMade = true;
+	}
+	// IP address
+	QString newAddress = netAddressLineEdit->text();
+	if( !newAddress.isEmpty() && board->ip_address != newAddress )
+	{
+		board->sendMessage( QString( "/network/address %1" ).arg( newAddress ) );
+		changesMade = true;
+	}
+	// dhcp
+	bool newState = dhcpCheckBox->checkState( );
+	if( newState == true && !board->dhcp )
+	{
+		board->sendMessage( QString( "/network/dhcp 1" ) );
+		changesMade = true;
+	}
+	if( newState == false && board->dhcp )
+	{
+		board->sendMessage( QString( "/network/dhcp 0" ) );
+		changesMade = true;
+	}
+	// webserver
+	newState = webserverCheckBox->checkState( );
+	if( newState == true && !board->webserver )
+	{
+		board->sendMessage( QString( "/network/webserver 1" ) );
+		changesMade = true;
+	}
+	if( newState == false && board->webserver )
+	{
+		board->sendMessage( QString( "/network/webserver 0" ) );
+		changesMade = true;
+	}
+	// udp listen port
 	QString newPort = udpListenPort->text();
-	if( newPort.isEmpty() || board->udp_listen_port == newPort )
-		return;
-	
-	QString cmd = QString( "/network/osc_udp_listen_port %1" ).arg( newPort );
-	board->sendMessage( cmd );
-	statusBar()->showMessage( tr("UDP (listening) port changed to ").append( newPort ), 2000);
-}
-
-void McHelperWindow::udpSendChanged( )
-{
-	Board* board = (Board*)listWidget->currentItem();
-	if( board == NULL )
-		return;
+	if( !newPort.isEmpty() && board->udp_listen_port != newPort )
+		board->sendMessage( QString( "/network/osc_udp_listen_port %1" ).arg( newPort ) );
+	// udp send port
+	newPort = udpSendPort->text();
+	if( !newPort.isEmpty() && board->udp_send_port != newPort )
+		board->sendMessage( QString( "/network/osc_udp_send_port %1" ).arg( newPort ) );
 		
-	QString newPort = udpSendPort->text();
-	if( newPort.isEmpty() || board->udp_send_port == newPort )
-		return;
-	
-	QString cmd = QString( "/network/osc_udp_send_port %1" ).arg( newPort );
-	board->sendMessage( cmd );
-	statusBar()->showMessage( tr("UDP (send) port changed to ").append( newPort ), 2000);
+	setSummaryTabLabelsForegroundRole( QPalette::WindowText );
+	summaryValuesBeingEdited = false;
+	if( changesMade )
+		statusBar()->showMessage( tr("Changes have been applied."), 2000);
 }
 
 #ifdef Q_WS_WIN

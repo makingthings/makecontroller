@@ -93,6 +93,8 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void uiLessUpload( char* filename, bool bootFlash );
 		OutputWindow* outputModel;
 		
+		bool getSummaryValuesBeingEdited( ) { return summaryValuesBeingEdited; }
+		
 #ifdef Q_WS_WIN // Windows-only
 		void usbRemoved( HANDLE deviceHandle );
 #endif
@@ -120,6 +122,9 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		TableEntry* createOutputWindowEntry( QString string, MessageEvent::Types type, QString from );
 		QList<TableEntry*> outputWindowQueue;
 		QMutex outputWindowQueueMutex;
+
+		bool summaryValuesBeingEdited;
+		void setSummaryTabLabelsForegroundRole( QPalette::ColorRole role );
 		
 		void readSettings();
 		void writeFileSettings();
@@ -152,13 +157,10 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 			void postMessages( );
 			
 			// Summary tab editing
-			void systemNameChanged( );
-			void systemSerialNumberChanged( );
-			void ipAddressChanged( );
-			void dhcpChanged( bool newState );
-			void webserverChanged( bool newState );
-			void udpListenChanged( );
-			void udpSendChanged( );
+			void onAnySummaryValueEdited( QString text );
+			void onAnySummaryValueEdited( bool state );
+			void onApplyChanges( );
+			void onRevertChanges( );
 			
 			// Devices list view functions
 			void deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous );
