@@ -127,38 +127,37 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	outputWindowTimer.start( 50 );
 }
 
-void McHelperWindow::usbBoardsArrived( QList<PacketInterface*>* arrived )
+void McHelperWindow::usbBoardsArrived( QList<PacketInterface*> arrived )
 {
 	Board* board;
 	QList<Board*> boardList;
 	int i;
-	for( i=0; i<arrived->count( ); i++ )
+	for( i=0; i<arrived.count( ); i++ )
 	{
 	  board = new Board( this, this, application );
-    board->key = arrived->at(i)->getKey();
+    board->key = arrived.at(i)->getKey();
     board->type = Board::UsbSerial;
-    board->setPacketInterface( arrived->at(i) );
-    board->location = QString( arrived->at(i)->location( ) );
+    board->setPacketInterface( arrived.at(i) );
+    board->location = QString( arrived.at(i)->location( ) );
     board->setText( QString( board->locationString() ) );
     connectedBoards.insert( board->key, board );
     listWidget->addItem( board );
 		boardList.append( board );
 	}
 	xmlServer->boardListUpdate( boardList, true );
-	delete arrived;
 }
 
-void McHelperWindow::udpBoardsArrived( QList<PacketUdp*>* arrived )
+void McHelperWindow::udpBoardsArrived( QList<PacketUdp*> arrived )
 {
 	Board* board;
 	QList<Board*> boardList;
 	int i;
-	for( i=0; i<arrived->count( ); i++ )
+	for( i=0; i<arrived.count( ); i++ )
 	{
 	  board = new Board( this, this, application );
-	  board->setPacketInterface( arrived->at(i) );
-	  board->key = arrived->at(i)->getKey();
-		board->location = QString( arrived->at(i)->location( ) );
+	  board->setPacketInterface( arrived.at(i) );
+	  board->key = arrived.at(i)->getKey();
+		board->location = QString( arrived.at(i)->location( ) );
     board->type = Board::Udp;
     connectedBoards.insert( board->key, board );
     board->setText( QString( board->locationString() ) );
@@ -167,25 +166,23 @@ void McHelperWindow::udpBoardsArrived( QList<PacketUdp*>* arrived )
 		boardList.append( board );
 	}
 	xmlServer->boardListUpdate( boardList, true );
-	delete arrived;
 }
 
-void McHelperWindow::sambaBoardsArrived( QList<UploaderThread*>* arrived )
+void McHelperWindow::sambaBoardsArrived( QList<UploaderThread*> arrived )
 {
 	Board* board;
 	int i;
-	for( i=0; i<arrived->count( ); i++ )
+	for( i=0; i<arrived.count( ); i++ )
 	{
 	  board = new Board( this, this, application );
-  	board->key = arrived->at(i)->getDeviceKey();
+  	board->key = arrived.at(i)->getDeviceKey();
     board->name = "Samba Board";
     board->type = Board::UsbSamba;
-    board->setUploaderThread( arrived->at(i) );
+    board->setUploaderThread( arrived.at(i) );
     connectedBoards.insert( board->key, board );
     board->setText( board->name );
     listWidget->addItem( board );
 	}
-	delete arrived;
 }
 
 Board* McHelperWindow::getCurrentBoard( )
@@ -501,7 +498,7 @@ void McHelperWindow::customEvent( QEvent* event )
         		usbBoardsArrived( arrivalEvent->pInt );
         		break;
         	case Board::Udp:
-        		udpBoardsArrived( &arrivalEvent->pUdp );
+        		udpBoardsArrived( arrivalEvent->pUdp );
         		break;
         	case Board::UsbSamba:
         		sambaBoardsArrived( arrivalEvent->uThread );
@@ -536,7 +533,7 @@ void McHelperWindow::messageThreadSafe( QString string, MessageEvent::Types type
 			return;
 	}
   
-	TableEntry *newItem = createOutputWindowEntry( string, type, from );
+	TableEntry newItem = createOutputWindowEntry( string, type, from );
 	QMutexLocker locker(&outputWindowQueueMutex);
 	outputWindowQueue.append( newItem );
 }
@@ -553,7 +550,7 @@ void McHelperWindow::messageThreadSafe( QStringList strings, MessageEvent::Types
 	for( int i = 0; i < strings.count( ); i ++ )
 	{
 		QString string = strings.at(i);
-		TableEntry *newItem = createOutputWindowEntry( string, type, from );
+		TableEntry newItem = createOutputWindowEntry( string, type, from );
 		outputWindowQueue.append( newItem );
 	}
 }
@@ -589,10 +586,9 @@ void McHelperWindow::message( QString string, MessageEvent::Types type, QString 
 
 	if ( !string.isEmpty( ) && !string.isNull( ) )
 	{
-		QList<TableEntry*> entryList;
-		TableEntry* newItem = createOutputWindowEntry( string, type, from );
-		if( newItem != NULL )
-			entryList.append( newItem );
+		QList<TableEntry> entryList;
+		TableEntry newItem = createOutputWindowEntry( string, type, from );
+		entryList.append( newItem );
 		
 		outputModel->newRows( entryList );
 		outputView->resizeColumnToContents( McHelperWindow::TO_FROM );
@@ -609,12 +605,11 @@ void McHelperWindow::message( QStringList strings, MessageEvent::Types type, QSt
 
     int msgCount = strings.count( );
 		int i;
-		QList<TableEntry*> entryList;
+		QList<TableEntry> entryList;
 		for( i = 0; i < msgCount; i++ )
 		{
-			TableEntry* newItem = createOutputWindowEntry( strings.at(i), type, from );
-			if( newItem != NULL )
-				entryList.append( newItem );
+			TableEntry newItem = createOutputWindowEntry( strings.at(i), type, from );
+			entryList.append( newItem );
 		}
 		
 		outputModel->newRows( entryList );
@@ -637,20 +632,15 @@ void McHelperWindow::postMessages( )
 }
 
 
-TableEntry* McHelperWindow::createOutputWindowEntry( QString string, MessageEvent::Types type, QString from )
+TableEntry McHelperWindow::createOutputWindowEntry( QString string, MessageEvent::Types type, QString from )
 {
-	if ( !string.isEmpty( ) && !string.isNull( ) )
-	{		
-		// create the to/from, message, and timestamp columns for the new message
-		TableEntry *newItem = new TableEntry( );
-		newItem->column0 = from;
-		newItem->column1 = string;
-		newItem->column2 = QTime::currentTime().toString();
-		newItem->type = type;
-		return newItem;
-	}
-	else
-		return NULL;
+	// create the to/from, message, and timestamp columns for the new message
+	TableEntry newItem;
+	newItem.column0 = from;
+	newItem.column1 = string;
+	newItem.column2 = QTime::currentTime().toString();
+	newItem.type = type;
+	return newItem;
 }
 
 void McHelperWindow::setupOutputWindow( )
@@ -932,6 +922,7 @@ void McHelperWindow::onRevertChanges( )
 {
 	setSummaryTabLabelsForegroundRole( QPalette::WindowText );
 	summaryValuesBeingEdited = false;
+	updateSummaryInfo( );
 }
 
 void McHelperWindow::onApplyChanges( )
@@ -940,65 +931,47 @@ void McHelperWindow::onApplyChanges( )
 	if( board == NULL )
 		return;
 	
-	bool changesMade = true;
+	QStringList msgs;
 	
 	QString newName = systemName->text();
 	if( !newName.isEmpty() && board->name != newName )
-	{
-		board->sendMessage( QString( "/system/name %1" ).arg( QString("\"%1\"").arg(newName) ) );
-		changesMade = true;
-	}
+		msgs << QString( "/system/name %1" ).arg( QString("\"%1\"").arg(newName) );
 	// serial number
 	QString newNumber = systemSerialNumber->text();
 	if( !newNumber.isEmpty() && board->serialNumber != newNumber )
-	{
-		board->sendMessage( QString( "/system/serialnumber %1" ).arg( newNumber ) );
-		changesMade = true;
-	}
+		msgs << QString( "/system/serialnumber %1" ).arg( newNumber );
 	// IP address
 	QString newAddress = netAddressLineEdit->text();
 	if( !newAddress.isEmpty() && board->ip_address != newAddress )
-	{
-		board->sendMessage( QString( "/network/address %1" ).arg( newAddress ) );
-		changesMade = true;
-	}
+		msgs << QString( "/network/address %1" ).arg( newAddress );
 	// dhcp
 	bool newState = dhcpCheckBox->checkState( );
 	if( newState == true && !board->dhcp )
-	{
-		board->sendMessage( QString( "/network/dhcp 1" ) );
-		changesMade = true;
-	}
+		msgs << QString( "/network/dhcp 1" );
 	if( newState == false && board->dhcp )
-	{
-		board->sendMessage( QString( "/network/dhcp 0" ) );
-		changesMade = true;
-	}
+		msgs << QString( "/network/dhcp 0" );
 	// webserver
 	newState = webserverCheckBox->checkState( );
 	if( newState == true && !board->webserver )
-	{
-		board->sendMessage( QString( "/network/webserver 1" ) );
-		changesMade = true;
-	}
+		msgs << QString( "/network/webserver 1" );
 	if( newState == false && board->webserver )
-	{
-		board->sendMessage( QString( "/network/webserver 0" ) );
-		changesMade = true;
-	}
+		msgs << QString( "/network/webserver 0" );
 	// udp listen port
 	QString newPort = udpListenPort->text();
 	if( !newPort.isEmpty() && board->udp_listen_port != newPort )
-		board->sendMessage( QString( "/network/osc_udp_listen_port %1" ).arg( newPort ) );
+		msgs << QString( "/network/osc_udp_listen_port %1" ).arg( newPort );
 	// udp send port
 	newPort = udpSendPort->text();
 	if( !newPort.isEmpty() && board->udp_send_port != newPort )
-		board->sendMessage( QString( "/network/osc_udp_send_port %1" ).arg( newPort ) );
+		msgs << QString( "/network/osc_udp_send_port %1" ).arg( newPort );
 		
 	setSummaryTabLabelsForegroundRole( QPalette::WindowText );
 	summaryValuesBeingEdited = false;
-	if( changesMade )
+	if( msgs.size( ) > 0 )
+	{
+		board->sendMessage( msgs );
 		statusBar()->showMessage( tr("Changes have been applied."), 2000);
+	}
 }
 
 #ifdef Q_WS_WIN

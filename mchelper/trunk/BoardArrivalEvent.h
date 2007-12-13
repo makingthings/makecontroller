@@ -34,9 +34,9 @@ class BoardArrivalEvent : public QEvent
     }
     ~BoardArrivalEvent( ) {}
     
-    QList<PacketInterface*>* pInt;
+    QList<PacketInterface*> pInt;
     QList<PacketUdp*> pUdp;
-    QList<UploaderThread*>* uThread;
+    QList<UploaderThread*> uThread;
     Board::Types type;
 };
 

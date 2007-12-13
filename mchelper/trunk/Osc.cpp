@@ -697,9 +697,23 @@ void Osc::uiSendPacket( QString rawString )
 {
 	if( !rawString.isEmpty() )
 	{
-		char stringBuffer[ 256 ];
+		char stringBuffer[ 125 ];
 		strcpy( stringBuffer, rawString.toAscii().constData() );
 		createMessage( stringBuffer );
+		sendPacket( );
+	}
+}
+
+void Osc::uiSendPackets( QStringList msgs )
+{
+	char stringBuffer[ 512 ];
+	if( !msgs.isEmpty() )
+	{
+		for( int i = 0; i < msgs.size( ); i++ )
+		{
+			strcpy( stringBuffer, msgs.at(i).toAscii().constData() );
+			createMessage( stringBuffer );
+		}
 		sendPacket( );
 	}
 }

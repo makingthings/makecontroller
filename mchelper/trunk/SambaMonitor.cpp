@@ -33,16 +33,14 @@ void SambaMonitor::run( )
 {
 	while( 1 )
 	{
-		QList<UploaderThread*>* newBoards = new QList<UploaderThread*>;
-		scan( newBoards );
-		if( newBoards->count( ) > 0 )
+		QList<UploaderThread*> newBoards;
+		scan( &newBoards );
+		if( newBoards.count( ) > 0 )
 		{
 			BoardArrivalEvent* event = new BoardArrivalEvent( Board::UsbSamba );
-			event->uThread = newBoards;
+			event->uThread += newBoards;
 			application->postEvent( mainWindow, event );
 		}
-		else
-			delete newBoards;
 		sleep( 1 ); // check once a second
 	}
 }

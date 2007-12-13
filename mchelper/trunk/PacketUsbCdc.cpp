@@ -26,7 +26,6 @@
 
 PacketUsbCdc::PacketUsbCdc( ) : QThread( )
 {
-	packetCount = 0;
 	packetReadyInterface = NULL;
 	currentPacket = NULL;
 	exit = false;
@@ -60,7 +59,6 @@ void PacketUsbCdc::run()
 				{
 					QMutexLocker locker( &packetListMutex );
 					packetList.append( currentPacket );
-					packetCount++;
 				}
 				packetReadyInterface->packetWaiting( );
 			}
@@ -221,9 +219,8 @@ bool PacketUsbCdc::isOpen( )
 int PacketUsbCdc::receivePacket( char* buffer, int size )
 {
 	// Need to protect the packetList structure from multithreaded diddling
-	QMutexLocker locker( &packetListMutex );
 	int length;
-	int retval;
+	int retval = 0;
 	
 	if( !packetList.size() )
 	{
@@ -233,23 +230,27 @@ int PacketUsbCdc::receivePacket( char* buffer, int size )
 	} 
 	else
 	{
-  	OscUsbPacket* packet = packetList.takeAt( 0 );
-	  packetCount--;
-	  length = packet->length;
-		if ( length <= size )
-		{
-	    buffer = (char*)memcpy( buffer, packet->packetBuf, length );
-  	  delete packet;
-  	  retval = length;
-		}
-		else
-		{
-			delete packet;
-			retval = 0; 
-		}
-		qDeleteAll( packetList );
-		return retval;
+  	int listSize = packetList.size( );
+  	if( listSize > 0 )
+  	{
+  		QMutexLocker locker( &packetListMutex );
+  		for( int i = 0; i < listSize; i++ )
+  		{
+  			OscUsbPacket* packet = packetList.at( i );
+	  		length = packet->length;
+	  		if ( length <= size )
+				{
+			    buffer = (char*)memcpy( buffer, packet->packetBuf, length );
+		  	  retval = length;
+				}
+				else
+					retval = 0;
+  		}
+  		qDeleteAll( packetList );
+			packetList.clear( );
+  	}
 	}
+	return retval;
 }
 
 char* PacketUsbCdc::location( )
