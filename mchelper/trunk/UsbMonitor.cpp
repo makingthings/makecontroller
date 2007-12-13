@@ -32,16 +32,14 @@ void UsbMonitor::run( )
 {
 	while( 1 )
 	{
-		QList<PacketInterface*>* newBoards = new QList<PacketInterface*>;
-		scan( newBoards );
-		if( newBoards->count( ) > 0 )
+		QList<PacketInterface*> newBoards;
+		scan( &newBoards );
+		if( newBoards.count( ) > 0 )
 		{
 			BoardArrivalEvent* event = new BoardArrivalEvent( Board::UsbSerial );
-			event->pInt = newBoards;
+			event->pInt += newBoards;
 			application->postEvent( mainWindow, event );
 		}
-		else
-			delete newBoards;
 		sleep( 1 ); // check once a second
 	}
 }
@@ -275,7 +273,10 @@ HANDLE UsbMonitor::GetDeviceInfo(HDEVINFO HardwareDeviceInfo,
   if( checkFriendlyName( HardwareDeviceInfo, &deviceSpecificInfo, portName ) )
   	return functionClassDeviceData->DevicePath;
   else
-	return INVALID_HANDLE_VALUE; 
+  {
+		free( functionClassDeviceData );
+		return INVALID_HANDLE_VALUE;
+  }
 }
 
 //-----------------------------------------------------------------

@@ -95,8 +95,9 @@ class Osc : public QObject
 		bool isMessageWaiting();
 		Status receive( QList<OscMessage*>* oscMessageList = 0 );
 		void setInterfaces( PacketInterface* packetInterface, MessageInterface* messageInterface, QApplication* application );
-    	void setPreamble( const char* preamble ) { this->preamble = preamble; }
-    	const char* getPreamble( );
+    void setPreamble( const char* preamble ) { this->preamble = preamble; }
+    const char* getPreamble( );
+    void uiSendPackets( QStringList msgs );
 		
 	public slots:
 		void uiSendPacket( QString rawString );

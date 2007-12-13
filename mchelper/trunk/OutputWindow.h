@@ -43,10 +43,10 @@ class OutputWindow : public QAbstractTableModel
 		int rowCount( const QModelIndex & parent = QModelIndex() ) const;
 		int columnCount( const QModelIndex & parent = QModelIndex() ) const;
 		
-		void newRows( QList<TableEntry*> entries );
+		void newRows( QList<TableEntry> entries );
 		
 	private:
-		QList<TableEntry*> tableEntries;
+		QList<TableEntry> tableEntries;
 		
 	public slots:
 		void clear( );

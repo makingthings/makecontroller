@@ -45,6 +45,7 @@ class Board : public QObject, public QListWidgetItem, public PacketReadyInterfac
     void packetWaiting( ); // from PacketReadyInterface
     void sendMessage( QString rawMessage );
 		void sendMessage( QList<OscMessage*> messageList );
+		void sendMessage( QStringList messageList );
     bool setBinFileName( char* filename );
     void flash( );
     QString locationString( );

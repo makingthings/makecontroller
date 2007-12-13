@@ -18,6 +18,8 @@
 #include "OutputWindow.h"
 #include <QColor>
 
+#define MAX_NUMBER_OF_MSGS 10
+
 OutputWindow::OutputWindow(QObject *parent) : QAbstractTableModel( parent )
 { 
 
@@ -39,17 +41,17 @@ QVariant OutputWindow::data( const QModelIndex & index, int role ) const
 		switch( index.column( ) )
 		{
 			case 0:
-				return tableEntries.at( index.row() )->column0;
+				return tableEntries.at( index.row() ).column0;
 			case 1:
-				return tableEntries.at( index.row() )->column1;
+				return tableEntries.at( index.row() ).column1;
 			case 2:
-				return tableEntries.at( index.row() )->column2;
+				return tableEntries.at( index.row() ).column2;
 		}
 	}
 	
 	if( role == Qt::BackgroundRole ) // the background color
 	{
-		switch( tableEntries.at( index.row() )->type )
+		switch( tableEntries.at( index.row() ).type )
 		{
 			case MessageEvent::Info:
 			case MessageEvent::Notice:
@@ -76,11 +78,11 @@ QVariant OutputWindow::data( const QModelIndex & index, int role ) const
 	return QVariant( );
 }
 
-void OutputWindow::newRows( QList<TableEntry*> entries )
+void OutputWindow::newRows( QList<TableEntry> entries )
 {
 	int newRows = entries.count( );
-	int currentRows = tableEntries.count( );
-	beginInsertRows( QModelIndex(), currentRows, currentRows + newRows - 1 );
+	int existingRows = tableEntries.count( );
+	beginInsertRows( QModelIndex(), existingRows, existingRows + newRows - 1 );
 	for( int i = 0; i < newRows; i++ )
 		tableEntries.append( entries.at(i) );
 	endInsertRows( );
@@ -88,8 +90,10 @@ void OutputWindow::newRows( QList<TableEntry*> entries )
 
 void OutputWindow::clear( )
 {
+	if( !tableEntries.count( ) > 0 )
+		return;
 	beginRemoveRows( QModelIndex(), 0, tableEntries.count( ) - 1 );
-	qDeleteAll( tableEntries );
+	//qDeleteAll( tableEntries );
 	tableEntries.clear( );
 	endRemoveRows( );
 }

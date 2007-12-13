@@ -150,7 +150,7 @@ bool Board::extractSystemInfoA( OscMessage* msg )
 				if( serialNumber != QString::number( msgData.at( i )->i ) )
 				{
 					serialNumber = QString::number( msgData.at( i )->i ); // serial number
-					newInfo = true;
+					newInfo = true; 
 				}
 				break;
 			case 2:
@@ -299,5 +299,11 @@ void Board::sendMessage( QList<OscMessage*> messageList )
 		osc->createMessage( messageList.at(i) );
 	if( msgCount > 0 )
 		osc->sendPacket( );
+}
+
+void Board::sendMessage( QStringList messageList )
+{
+	if( messageList.count( ) > 0 )
+		osc->uiSendPackets( messageList );
 }
 

@@ -65,7 +65,6 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
 		  OscUsbPacket* currentPacket;
 		  QMutex packetListMutex;
 		  void sleepMs( int ms );
-			int packetCount;
 			
 		  PacketReadyInterface* packetReadyInterface;
 		  QApplication* application;

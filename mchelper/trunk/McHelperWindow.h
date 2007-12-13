@@ -61,10 +61,6 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		enum OutputColumn { TO_FROM, MESSAGE, TIMESTAMP };
 		
 		McHelperWindow( McHelperApp* application );
-			
-		void message( int level, char *format, ... );
-		void message( QString string );
-		void message( QStringList strings, MessageEvent::Types type, QString from );
 		
 		void messageThreadSafe( QString string );
 		void messageThreadSafe( QString string, MessageEvent::Types type );
@@ -76,9 +72,9 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void removeDevice( QString key );
 		void removeDeviceThreadSafe( QString key );
 		
-		void usbBoardsArrived( QList<PacketInterface*>* arrived );
-		void udpBoardsArrived( QList<PacketUdp*>* arrived );
-		void sambaBoardsArrived( QList<UploaderThread*>* arrived );
+		void usbBoardsArrived( QList<PacketInterface*> arrived );
+		void udpBoardsArrived( QList<PacketUdp*> arrived );
+		void sambaBoardsArrived( QList<UploaderThread*> arrived );
 		Board* getCurrentBoard( );
 		QList<Board*> getConnectedBoards( );
 		bool summaryTabIsActive( );
@@ -119,8 +115,8 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		mchelperPrefs* prefsDialog;
 		AppUpdater* appUpdater;
 		QHash<QString, Board*> connectedBoards;
-		TableEntry* createOutputWindowEntry( QString string, MessageEvent::Types type, QString from );
-		QList<TableEntry*> outputWindowQueue;
+		TableEntry createOutputWindowEntry( QString string, MessageEvent::Types type, QString from );
+		QList<TableEntry> outputWindowQueue;
 		QMutex outputWindowQueueMutex;
 
 		bool summaryValuesBeingEdited;
@@ -132,6 +128,9 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void writeUsbSettings();
 		void initUpdate( );
 		
+		void message( int level, char *format, ... );
+		void message( QString string );
+		void message( QStringList strings, MessageEvent::Types type, QString from );
 		void message( QString string, MessageEvent::Types type, QString from );
 		
     void setupOutputWindow();
