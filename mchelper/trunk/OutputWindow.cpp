@@ -18,8 +18,6 @@
 #include "OutputWindow.h"
 #include <QColor>
 
-#define MAX_NUMBER_OF_MSGS 10
-
 OutputWindow::OutputWindow( int maxMsgs, QObject *parent ) : QAbstractTableModel( parent )
 { 
 	this->maxMsgs = maxMsgs;
@@ -122,7 +120,6 @@ void OutputWindow::clear( )
 	if( !tableEntries.count( ) > 0 )
 		return;
 	beginRemoveRows( QModelIndex(), 0, tableEntries.count( ) - 1 );
-	//qDeleteAll( tableEntries );
 	tableEntries.clear( );
 	endRemoveRows( );
 }
