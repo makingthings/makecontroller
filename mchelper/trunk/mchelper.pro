@@ -1,6 +1,6 @@
 # ------------------------------------------------------------------------------
 #
-# Copyright 2006 MakingThings
+# Copyright 2006-2007 MakingThings
 #
 # Licensed under the Apache License, 
 # Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -18,8 +18,8 @@
 MCHELPER_VERSION = "2.0.1"
 TEMPLATE = app
 FORMS = layouts/mchelper.ui layouts/mchelperPrefs.ui
-CONFIG += qt release
-#CONFIG += qt debug
+#CONFIG += qt release
+CONFIG += qt debug
 
 HEADERS = 	McHelperWindow.h \
 			UploaderThread.h \
@@ -39,7 +39,8 @@ HEADERS = 	McHelperWindow.h \
 			BoardArrivalEvent.h \
 			OutputWindow.h \
 			OscXmlServer.h \
-			AppUpdater.h
+			AppUpdater.h \
+			McHelperPrefs.h
 				
             
 SOURCES	= 	main.cpp \
@@ -57,13 +58,14 @@ SOURCES	= 	main.cpp \
 			MessageEvent.cpp \
 			OutputWindow.cpp \
 			OscXmlServer.cpp \
-			AppUpdater.cpp
+			AppUpdater.cpp \
+			McHelperPrefs.cpp
 				
 TARGET = mchelper
             
 QT += network xml
 RESOURCES     += resources/mchelper.qrc
-DEFINES     += MCHELPER_VERSION=\\\"$${MCHELPER_VERSION}\\\"
+DEFINES     += MCHELPER_VERSION=\"$${MCHELPER_VERSION}\"
 OBJECTS_DIR  = tmp
 MOC_DIR      = tmp
 DESTDIR      = bin

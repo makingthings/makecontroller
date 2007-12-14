@@ -51,7 +51,6 @@ class NetworkMonitor : public QObject, public MonitorInterface
 	MessageInterface* messageInterface;
 	McHelperWindow* mainWindow;
 	QApplication* application;
-	QTimer* timer;
 	QTimer pingTimer;
 	QUdpSocket socket;
 	QByteArray broadcastPing;

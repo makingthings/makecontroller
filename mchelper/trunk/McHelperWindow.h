@@ -19,7 +19,6 @@ the specific language governing permissions and limitations under the License.
 #define MCHELPERWINDOW_H
 
 #include "ui_mchelper.h"
-#include "ui_mchelperPrefs.h"
 
 //Qt includes
 #include <QMainWindow>
@@ -34,6 +33,7 @@ the specific language governing permissions and limitations under the License.
 #include "OutputWindow.h"
 #include "OscXmlServer.h"
 #include "AppUpdater.h"
+#include "McHelperPrefs.h"
 
 class Board;
 class BoardListModel;
@@ -44,6 +44,7 @@ class McHelperApp;
 class OscXmlServer;
 class aboutMchelper;
 class mchelperPrefs;
+
 
 class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public MessageInterface
 {
@@ -89,15 +90,15 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void uiLessUpload( char* filename, bool bootFlash );
 		OutputWindow* outputModel;
 		
-		bool getSummaryValuesBeingEdited( ) { return summaryValuesBeingEdited; }
-		
 #ifdef Q_WS_WIN // Windows-only
 		void usbRemoved( HANDLE deviceHandle );
 #endif
 		
+		// preferences window stuff
 		int appUdpListenPort;
 		int appXmlListenPort;
 		bool findEthernetBoardsAuto;
+		int maxOutputWindowMessages;
 		
 	protected:
 		void closeEvent( QCloseEvent *qcloseevent );
@@ -119,7 +120,6 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		QList<TableEntry> outputWindowQueue;
 		QMutex outputWindowQueueMutex;
 
-		bool summaryValuesBeingEdited;
 		void setSummaryTabLabelsForegroundRole( QPalette::ColorRole role );
 		
 		void readSettings();
@@ -141,10 +141,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		
 		public slots:
 			void restoreDefaultPrefs( );
-			void udpPortPrefsChanged( );
-			void xmlPortPrefsChanged( );
-			void findNetBoardsPrefsChanged( bool state );
-			void updaterPrefsChanged( bool state );
+			void setNewPrefs( );
     
 		private slots:
 			// Uploader functions
@@ -202,21 +199,6 @@ class aboutMchelper : public QDialog
 		QHBoxLayout *buttonLayout;
 	
 };
-
-class mchelperPrefs : public QDialog, public Ui::mchelperPrefs
-{
-		Q_OBJECT
-	public:
-		mchelperPrefs( McHelperWindow *mainWindow );
-		void setUdpPortDisplay( int port );
-		void setXmlPortDisplay( int port );
-		void setFindNetBoardsDisplay( bool state );
-	private slots:
-			
-	private:
-		McHelperWindow *mainWindow;
-};
-
 
 class BoardEvent : public QEvent
 {

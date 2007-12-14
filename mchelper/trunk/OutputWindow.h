@@ -35,7 +35,7 @@ class OutputWindow : public QAbstractTableModel
 {
 	Q_OBJECT
 	public:
-		OutputWindow( QObject *parent = 0 );
+		OutputWindow( int maxMsgs, QObject *parent = 0 );
 		// pure virtuals for QAbstractTableModel
 		Qt::ItemFlags flags( const QModelIndex index );
 		QVariant data( const QModelIndex & index, int role = Qt::DisplayRole ) const;
@@ -44,9 +44,11 @@ class OutputWindow : public QAbstractTableModel
 		int columnCount( const QModelIndex & parent = QModelIndex() ) const;
 		
 		void newRows( QList<TableEntry> entries );
+		void setMaxMsgs( int newMaxMsgs );
 		
 	private:
 		QList<TableEntry> tableEntries;
+		int maxMsgs;
 		
 	public slots:
 		void clear( );
