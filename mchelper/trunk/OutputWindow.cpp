@@ -20,9 +20,9 @@
 
 #define MAX_NUMBER_OF_MSGS 10
 
-OutputWindow::OutputWindow(QObject *parent) : QAbstractTableModel( parent )
+OutputWindow::OutputWindow( int maxMsgs, QObject *parent ) : QAbstractTableModel( parent )
 { 
-
+	this->maxMsgs = maxMsgs;
 }
 
 Qt::ItemFlags OutputWindow::flags( const QModelIndex index )
@@ -78,14 +78,43 @@ QVariant OutputWindow::data( const QModelIndex & index, int role ) const
 	return QVariant( );
 }
 
+// add some new rows, but make sure we don't allow more than the specified number of rows
 void OutputWindow::newRows( QList<TableEntry> entries )
 {
 	int newRows = entries.count( );
 	int existingRows = tableEntries.count( );
-	beginInsertRows( QModelIndex(), existingRows, existingRows + newRows - 1 );
+	int requestedRows = newRows + existingRows;
+	
+	if( requestedRows > maxMsgs )
+	{
+		// make sure we only remove as many as we need to
+		int extraRows = requestedRows - maxMsgs;
+		beginRemoveRows( QModelIndex(), 0, extraRows - 1 );
+		for( int i = 0; i < extraRows; i++ )
+			tableEntries.removeFirst( );
+		endRemoveRows( );
+	}
+	
+	beginInsertRows( QModelIndex(), tableEntries.count( ), tableEntries.count( ) + newRows - 1 );
 	for( int i = 0; i < newRows; i++ )
 		tableEntries.append( entries.at(i) );
 	endInsertRows( );
+}
+
+void OutputWindow::setMaxMsgs( int newMaxMsgs )
+{
+	if( newMaxMsgs < maxMsgs )
+	{
+		if( tableEntries.count( ) > newMaxMsgs )
+		{
+			int extraRows = tableEntries.count( ) - newMaxMsgs;
+			beginRemoveRows( QModelIndex(), 0, extraRows - 1 );
+			for( int i = 0; i < extraRows; i++ )
+				tableEntries.removeFirst( );
+			endRemoveRows( );
+		}
+	}
+	this->maxMsgs = newMaxMsgs;
 }
 
 void OutputWindow::clear( )

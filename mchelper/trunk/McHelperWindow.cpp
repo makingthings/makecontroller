@@ -61,7 +61,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	udp->setInterfaces( this, this, application );
 	usb->setInterfaces( this, application, this );
 	
-	outputModel = new OutputWindow( );
+	outputModel = new OutputWindow( maxOutputWindowMessages );
 	outputView->setModel( outputModel );
   
   setupOutputWindow();
@@ -100,8 +100,6 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	connect( webserverCheckBox, SIGNAL( clicked( bool ) ), this, SLOT( onAnySummaryValueEdited( bool ) ) );
 	connect( applyChangesButton, SIGNAL( clicked() ), this, SLOT( onApplyChanges() ) );
 	connect( revertChangesButton, SIGNAL( clicked() ), this, SLOT( onRevertChanges() ) );
-	
-	summaryValuesBeingEdited = false;
     
 	// setup the menu
 	connect( actionAboutMchelper, SIGNAL( triggered() ), aboutDialog, SLOT( show( ) ) );
@@ -675,6 +673,8 @@ void McHelperWindow::readSettings()
 	hideOSCMessages = settings.value( "hideOSCMessages", false ).toBool( );
 	actionHide_OSC_Messages->setChecked( hideOSCMessages );
 	
+	maxOutputWindowMessages = settings.value( "maxOutputWindowMessages", 1000 ).toInt( );
+	
 	QSize mainWindowSize = settings.value( "mainWindowSize" ).toSize( );
 	if( mainWindowSize.isValid( ) )
 		resize( mainWindowSize );
@@ -788,93 +788,51 @@ aboutMchelper::aboutMchelper( ) : QDialog( )
 	topLevelLayout->setAlignment( Qt::AlignHCenter );
 }
 
-mchelperPrefs::mchelperPrefs( McHelperWindow *mainWindow ) : QDialog( )
-{
-	setupUi(this);
-	this->mainWindow = mainWindow;
-	
-	connect( defaultsButton, SIGNAL( clicked() ), mainWindow, SLOT( restoreDefaultPrefs() ) );
-	connect( udpPortPrefs, SIGNAL( editingFinished() ), mainWindow, SLOT( udpPortPrefsChanged() ) );
-	connect( xmlPortPrefs, SIGNAL( editingFinished() ), mainWindow, SLOT( xmlPortPrefsChanged() ) );
-	connect( networkPingCheckBox, SIGNAL( clicked(bool) ), mainWindow, SLOT( findNetBoardsPrefsChanged(bool) ) );
-	connect( updatesCheckBox, SIGNAL( clicked(bool) ), mainWindow, SLOT( updaterPrefsChanged(bool) ) );
-	
-	setUdpPortDisplay( mainWindow->appUdpListenPort );
-	setXmlPortDisplay( mainWindow->appXmlListenPort );
-	setFindNetBoardsDisplay( mainWindow->findEthernetBoardsAuto );
-	QSettings settings("MakingThings", "mchelper");
-	if( settings.value( "checkForUpdatesOnStartup", true ).toBool( ) )
-		updatesCheckBox->setCheckState( Qt::Checked );
-	else
-		updatesCheckBox->setCheckState( Qt::Unchecked );
-}
-
-void mchelperPrefs::setUdpPortDisplay( int port )
-{
-	udpPortPrefs->setText( QString::number( port ) );
-}
-
-void mchelperPrefs::setXmlPortDisplay( int port )
-{
-	xmlPortPrefs->setText( QString::number( port ) );
-}
-
-void mchelperPrefs::setFindNetBoardsDisplay( bool state )
-{
-	if( state )
-		networkPingCheckBox->setCheckState( Qt::Checked );
-	else
-		networkPingCheckBox->setCheckState( Qt::Unchecked );
-}
-
 void McHelperWindow::restoreDefaultPrefs( )
 {
-	appUdpListenPort = 10000;
-	appXmlListenPort = 11000;
-	findEthernetBoardsAuto = true;
-	QSettings settings("MakingThings", "mchelper");
-	settings.setValue("appUdpListenPort", appUdpListenPort );
-	settings.setValue("appXmlListenPort", appXmlListenPort );
-	settings.setValue("findEthernetBoardsAuto", findEthernetBoardsAuto );
-	prefsDialog->setUdpPortDisplay( appUdpListenPort );
-	prefsDialog->setXmlPortDisplay( appXmlListenPort );
-	prefsDialog->setFindNetBoardsDisplay( findEthernetBoardsAuto );
-	udp->changeListenPort( appUdpListenPort );
-	xmlServer->changeListenPort( appXmlListenPort );
+	prefsDialog->setUdpPortDisplay( 10000 );
+	prefsDialog->setXmlPortDisplay( 11000 );
+	prefsDialog->setFindNetBoardsDisplay( true );
+	prefsDialog->setMaxMsgsDisplay( 1000 );
 }
 
-void McHelperWindow::udpPortPrefsChanged( )
-{
-	appUdpListenPort = prefsDialog->udpPortPrefs->text().toInt( );
-	QSettings settings("MakingThings", "mchelper");
-	settings.setValue("appUdpListenPort", appUdpListenPort );
-	udp->changeListenPort( appUdpListenPort );
-}
-
-void McHelperWindow::xmlPortPrefsChanged( )
-{
-	appXmlListenPort = prefsDialog->xmlPortPrefs->text().toInt( );
-	QSettings settings("MakingThings", "mchelper");
-	settings.setValue("appXmlListenPort", appXmlListenPort );
-	xmlServer->changeListenPort( appXmlListenPort );
-}
-
-void McHelperWindow::findNetBoardsPrefsChanged( bool state )
+void McHelperWindow::setNewPrefs( )
 {
 	QSettings settings("MakingThings", "mchelper");
-	settings.setValue("findEthernetBoardsAuto", state );
-	findEthernetBoardsAuto = state;
+	if( appUdpListenPort != prefsDialog->udpPortPrefs->text().toInt( ) )
+	{
+		appUdpListenPort = prefsDialog->udpPortPrefs->text().toInt( );
+		settings.setValue("appUdpListenPort", appUdpListenPort );
+		udp->changeListenPort( appUdpListenPort );
+	}
+	
+	if( appXmlListenPort != prefsDialog->xmlPortPrefs->text().toInt( ) )
+	{
+		appXmlListenPort = prefsDialog->xmlPortPrefs->text().toInt( );
+		settings.setValue("appXmlListenPort", appXmlListenPort );
+		xmlServer->changeListenPort( appXmlListenPort );	
+	}
+	
+	if( findEthernetBoardsAuto != prefsDialog->getFindNetBoardsDisplay( ) )
+	{
+		findEthernetBoardsAuto = prefsDialog->getFindNetBoardsDisplay( );
+		settings.setValue("findEthernetBoardsAuto", findEthernetBoardsAuto );
+	}
+	
+	if( settings.value( "checkForUpdatesOnStartup" ).toBool( ) != prefsDialog->getUpdateCheckBoxDisplay( ) )
+		settings.setValue( "checkForUpdatesOnStartup", prefsDialog->getUpdateCheckBoxDisplay( ) );
+	
+	if( maxOutputWindowMessages != prefsDialog->maxOutputMsgsLineEdit->text().toInt( ) )
+	{
+		maxOutputWindowMessages = prefsDialog->maxOutputMsgsLineEdit->text().toInt( );
+		outputModel->setMaxMsgs( maxOutputWindowMessages );
+		settings.setValue( "maxOutputWindowMessages", maxOutputWindowMessages );
+	}
 }
 
 bool McHelperWindow::findNetBoardsEnabled( )
 {
 	return findEthernetBoardsAuto;
-}
-
-void McHelperWindow::updaterPrefsChanged( bool state )
-{
-	QSettings settings("MakingThings", "mchelper");
-	settings.setValue("checkForUpdatesOnStartup", state );
 }
 
 void McHelperWindow::initUpdate( )
@@ -896,11 +854,8 @@ void McHelperWindow::onAnySummaryValueEdited( bool state )
 void McHelperWindow::onAnySummaryValueEdited( QString text )
 {
 	(void)text;
-	//	Board* board = (Board*)listWidget->currentItem();
-//	if( board == NULL )
-//		return;
-	setSummaryTabLabelsForegroundRole( QPalette::BrightText );
-	summaryValuesBeingEdited = true;
+	if( listWidget->currentItem() == NULL ) return;
+	setSummaryTabLabelsForegroundRole( QPalette::Mid );
 }
 
 void McHelperWindow::setSummaryTabLabelsForegroundRole( QPalette::ColorRole role )
@@ -921,7 +876,6 @@ void McHelperWindow::setSummaryTabLabelsForegroundRole( QPalette::ColorRole role
 void McHelperWindow::onRevertChanges( )
 {
 	setSummaryTabLabelsForegroundRole( QPalette::WindowText );
-	summaryValuesBeingEdited = false;
 	updateSummaryInfo( );
 }
 
@@ -936,37 +890,42 @@ void McHelperWindow::onApplyChanges( )
 	QString newName = systemName->text();
 	if( !newName.isEmpty() && board->name != newName )
 		msgs << QString( "/system/name %1" ).arg( QString("\"%1\"").arg(newName) );
+		
 	// serial number
 	QString newNumber = systemSerialNumber->text();
 	if( !newNumber.isEmpty() && board->serialNumber != newNumber )
 		msgs << QString( "/system/serialnumber %1" ).arg( newNumber );
+		
 	// IP address
 	QString newAddress = netAddressLineEdit->text();
 	if( !newAddress.isEmpty() && board->ip_address != newAddress )
 		msgs << QString( "/network/address %1" ).arg( newAddress );
+		
 	// dhcp
 	bool newState = dhcpCheckBox->checkState( );
 	if( newState == true && !board->dhcp )
 		msgs << QString( "/network/dhcp 1" );
 	if( newState == false && board->dhcp )
 		msgs << QString( "/network/dhcp 0" );
+		
 	// webserver
 	newState = webserverCheckBox->checkState( );
 	if( newState == true && !board->webserver )
 		msgs << QString( "/network/webserver 1" );
 	if( newState == false && board->webserver )
 		msgs << QString( "/network/webserver 0" );
+		
 	// udp listen port
 	QString newPort = udpListenPort->text();
 	if( !newPort.isEmpty() && board->udp_listen_port != newPort )
 		msgs << QString( "/network/osc_udp_listen_port %1" ).arg( newPort );
+		
 	// udp send port
 	newPort = udpSendPort->text();
 	if( !newPort.isEmpty() && board->udp_send_port != newPort )
 		msgs << QString( "/network/osc_udp_send_port %1" ).arg( newPort );
 		
 	setSummaryTabLabelsForegroundRole( QPalette::WindowText );
-	summaryValuesBeingEdited = false;
 	if( msgs.size( ) > 0 )
 	{
 		board->sendMessage( msgs );

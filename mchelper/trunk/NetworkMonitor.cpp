@@ -24,11 +24,6 @@
 NetworkMonitor::NetworkMonitor( int listenPort )
 {
 	rxtxPort = listenPort;
-	if ( !socket.bind( rxtxPort ) )
-	{
-	  socket.close();
-	  mainWindow->messageThreadSafe( QString( "Error: Can't listen on port %1 - make sure it's not already in use.").arg( rxtxPort ), MessageEvent::Error, "Ethernet" );
-	}
 	connect( &socket, SIGNAL(readyRead()), this, SLOT( processPendingDatagrams() ) );
 	connect( &pingTimer, SIGNAL( timeout() ), this, SLOT( sendPing() ) );
 	createPing( );
@@ -48,6 +43,11 @@ void NetworkMonitor::createPing( )
 
 void NetworkMonitor::start( )
 {
+	if ( !socket.bind( rxtxPort ) )
+	{
+	  socket.close();
+	  mainWindow->messageThreadSafe( QString( "Error: Can't listen on port %1 - make sure it's not already in use.").arg( rxtxPort ), MessageEvent::Error, "Ethernet" );
+	}
 	pingTimer.start( PING_FREQUENCY );
 }
 
@@ -60,8 +60,8 @@ void NetworkMonitor::sendPing( )
 			
 		if( socket.state( ) == QAbstractSocket::BoundState ) // if we succeeded or we're already open
 		{
-			if( socket.writeDatagram( broadcastPing, QHostAddress::Broadcast, rxtxPort ) < 0 )
-				printf( "UDP send error: %d\n", socket.error( ) );
+			if( socket.writeDatagram( broadcastPing.data(), broadcastPing.size(), QHostAddress::Broadcast, rxtxPort ) < 0 )
+				printf( "UDP send error: %s\n", socket.errorString( ).toLatin1( ).data( ) );
 		}
 	}
 }
@@ -71,12 +71,13 @@ bool NetworkMonitor::changeListenPort( int port )
 	socket.close( );
 	if( !socket.bind( port, QUdpSocket::ShareAddress ) )
 	{
-		mainWindow->messageThreadSafe( QString( "Error: Can't listen on port %1 - make sure it's not already in use.").arg( rxtxPort ), MessageEvent::Error, "Ethernet" );
+		mainWindow->messageThreadSafe( QString( "Error: Can't listen on port %1 - make sure it's not already in use.").arg( port ), MessageEvent::Error, "Ethernet" );
 		return false;
 	}
 	else
 	{
 		rxtxPort = port;
+		mainWindow->messageThreadSafe( QString( "Now listening on port %1 for messages.").arg( rxtxPort ), MessageEvent::Info, "Ethernet" );
 		return true;
 	}
 }
