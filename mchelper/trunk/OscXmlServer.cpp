@@ -71,6 +71,8 @@ bool OscXmlServer::changeListenPort( int port )
 	else
 	{
 		listenPort = port;
+		mainWindow->messageThreadSafe( QString( "Now listening on port %1 for XML connections." ).arg( port ), 
+																		MessageEvent::Error, fromString );
 		return true;
 	}
 }
@@ -85,8 +87,11 @@ void OscXmlServer::clientDisconnected( )
 {
 	mainWindow->messageThreadSafe( "XML peer disconnected.", MessageEvent::Info, fromString );
 	clientSocket->abort( ); // close the socket and flush it
-	delete xmlInput;
-	xmlInput = NULL;
+	if( xmlInput )
+	{
+		delete xmlInput;
+		xmlInput = NULL;
+	}
 }
 
 void OscXmlServer::clientError( QAbstractSocket::SocketError error )
@@ -119,8 +124,9 @@ void OscXmlServer::boardInfoUpdate( Board* board )
 	boardElement.setAttribute( "SERIALNUMBER", board->serialNumber );
 	boardUpdate.appendChild( boardElement );
 		
-	clientSocket->write( doc.toByteArray( ) );
-	clientSocket->write( "\0", 1 ); // Flash wants XML followed by a zero byte
+	QByteArray update = doc.toByteArray( );
+	update.append( "\0" ); // Flash wants XML followed by a zero byte
+	clientSocket->write( update );
 }
 
 void OscXmlServer::boardListUpdate( QList<Board*> boardList, bool arrived )
@@ -146,8 +152,10 @@ void OscXmlServer::boardListUpdate( QList<Board*> boardList, bool arrived )
 		board.setAttribute( "LOCATION", currentBoard->key );
 		boardUpdate.appendChild( board );
 	}
-	clientSocket->write( doc.toByteArray( ) );
-	clientSocket->write( "\0", 1 ); // Flash wants XML followed by a zero byte
+	
+	QByteArray update = doc.toByteArray( );
+	update.append( "\0" ); // Flash wants XML followed by a zero byte
+	clientSocket->write( update );
 }
 
 void OscXmlServer::sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort )
@@ -198,8 +206,9 @@ void OscXmlServer::sendXmlPacket( QList<OscMessage*> messageList, QString srcAdd
 			msg.appendChild( argument );
 		}
 	}
-	clientSocket->write( doc.toByteArray( ) );
-	clientSocket->write( "\0", 1 ); // Flash wants XML followed by a zero byte
+	QByteArray packet = doc.toByteArray( );
+	packet.append( "\0" ); // Flash wants XML followed by a zero byte
+	clientSocket->write( packet );
 }
 
 XmlHandler::XmlHandler( McHelperWindow *mainWindow, OscXmlServer *xmlServer ) : QXmlDefaultHandler( )
@@ -253,13 +262,12 @@ bool XmlHandler::startElement( const QString & namespaceURI, const QString & loc
 				msgData->s = (char*)malloc( 256 );
 				snprintf( msgData->s, 256, val.toLatin1( ).data( ) );
 			}
-			/*
 			else if( type == "b" )
 			{
 				msgData->omdType = OscMessageData::OmdBlob;
-				msgData->i = val.toInt( );
+				msgData->b = malloc( 256 );
+				snprintf( (char*)msgData->b, 256, val.toLatin1( ).data( ) );
 			}
-			*/
 			currentMessage->data.append( msgData );
 		}
 	}

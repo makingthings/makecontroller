@@ -879,6 +879,8 @@ void McHelperWindow::onRevertChanges( )
 	updateSummaryInfo( );
 }
 
+// zip through the list of fields in the Summary tab and if any have changed, send
+// the appropriate message to the board and notify the user of what has been changed in the output window
 void McHelperWindow::onApplyChanges( )
 {
 	Board* board = (Board*)listWidget->currentItem();
@@ -886,49 +888,78 @@ void McHelperWindow::onApplyChanges( )
 		return;
 	
 	QStringList msgs;
+	QStringList displayMsgs;
 	
 	QString newName = systemName->text();
 	if( !newName.isEmpty() && board->name != newName )
-		msgs << QString( "/system/name %1" ).arg( QString("\"%1\"").arg(newName) );
+	{
+		msgs << QString( "/system/name %1" ).arg( newName);
+		displayMsgs << QString( "Changed name to %1" ).arg( newName );
+	}
 		
 	// serial number
 	QString newNumber = systemSerialNumber->text();
 	if( !newNumber.isEmpty() && board->serialNumber != newNumber )
+	{
 		msgs << QString( "/system/serialnumber %1" ).arg( newNumber );
+		displayMsgs << QString( "Changed serial number to %1" ).arg( newNumber );
+	}
 		
 	// IP address
 	QString newAddress = netAddressLineEdit->text();
 	if( !newAddress.isEmpty() && board->ip_address != newAddress )
+	{
 		msgs << QString( "/network/address %1" ).arg( newAddress );
+		displayMsgs << QString( "Changed IP address to %1" ).arg( newAddress );
+	}
 		
 	// dhcp
 	bool newState = dhcpCheckBox->checkState( );
 	if( newState == true && !board->dhcp )
+	{
 		msgs << QString( "/network/dhcp 1" );
+		displayMsgs << QString( "Turned DHCP on" );
+	}
 	if( newState == false && board->dhcp )
+	{
 		msgs << QString( "/network/dhcp 0" );
+		displayMsgs << QString( "Turned DHCP off" );
+	}
 		
 	// webserver
 	newState = webserverCheckBox->checkState( );
 	if( newState == true && !board->webserver )
+	{
 		msgs << QString( "/network/webserver 1" );
+		displayMsgs << QString( "Turned the webserver on" );
+	}
 	if( newState == false && board->webserver )
+	{
 		msgs << QString( "/network/webserver 0" );
+		displayMsgs << QString( "Turned the webserver off" );
+	}
 		
 	// udp listen port
 	QString newPort = udpListenPort->text();
 	if( !newPort.isEmpty() && board->udp_listen_port != newPort )
+	{
 		msgs << QString( "/network/osc_udp_listen_port %1" ).arg( newPort );
+		displayMsgs << QString( "Changed the board to listen on port %1 for messages" ).arg( newPort );
+	}
 		
 	// udp send port
 	newPort = udpSendPort->text();
 	if( !newPort.isEmpty() && board->udp_send_port != newPort )
+	{
 		msgs << QString( "/network/osc_udp_send_port %1" ).arg( newPort );
+		displayMsgs << QString( "Changed the board to send messages on port %1" ).arg( newPort );
+	}
 		
 	setSummaryTabLabelsForegroundRole( QPalette::WindowText );
 	if( msgs.size( ) > 0 )
 	{
 		board->sendMessage( msgs );
+		messageThreadSafe( displayMsgs, MessageEvent::Info, QString( "mchelper" ) );
 		statusBar()->showMessage( tr("Changes have been applied."), 2000);
 	}
 }

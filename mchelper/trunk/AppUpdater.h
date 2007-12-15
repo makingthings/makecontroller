@@ -47,10 +47,9 @@ class AppUpdater : public QDialog
 		QHBoxLayout buttonLayout, topLevelLayout;
 		QTextEdit browser;
 		QHttp http;
-		int requestID;
+		int httpGetID;
 		int versionCompare(const QString & left, const QString & right);
 		void removeBrowserAndIgnoreButton( );
-		bool getID;
 	
 	private slots:
 		void finishedRead( int id, bool errors );
