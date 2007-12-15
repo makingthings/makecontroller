@@ -55,10 +55,7 @@ AppUpdater::AppUpdater( ) : QDialog( )
 	topLevelLayout.setAlignment( Qt::AlignHCenter );
 	
 	this->setLayout( &topLevelLayout );
-	
 	checkingOnStartup = true; // hide the dialog by default
-	getID = false;
-	
 	connect( &http, SIGNAL( requestFinished( int, bool ) ), this, SLOT( finishedRead( int, bool ) ) );
 }
 
@@ -71,23 +68,23 @@ void AppUpdater::on_actionCheckForUpdates( )
 void AppUpdater::checkForUpdates( )
 {
 	http.setHost("www.makingthings.com");
-	requestID = http.get("/updates/mchelper.xml");
+	httpGetID = http.get("/updates/mchelper.xml");
 }
+
 
 void AppUpdater::finishedRead( int id, bool errors )
 {
 	(void)errors;
 	// we'll get called here alternately by the setHost( ) request and the actual GET request
 	// we don't care about setHost, so just return and wait for the GET response
-	if( !getID )
-	{
-		getID = true;
+	if( id != httpGetID )
 		return;
-	}
-	else
-		getID = false;
 	
-	if( id != requestID ) // there was a problem...
+	QDomDocument doc;
+	QString err;
+	int line, col;
+	
+	if (!doc.setContent(http.readAll(), true, &err, &line, &col))
 	{
 		headline.setText( "<font size=4>Couldn't contact the update server...</font>" );
 		details.setText( QString( "Make sure you're connected to the internet." ) );
@@ -100,13 +97,6 @@ void AppUpdater::finishedRead( int id, bool errors )
 			this->show( );
 		return;
 	}
-	
-	QDomDocument doc;
-	QString err;
-	int line, col;
-	
-	if (!doc.setContent(http.readAll(), true, &err, &line, &col))
-		return;
 	
 	QDomElement channel = doc.documentElement().firstChild().toElement();
 	QDomNodeList items = channel.elementsByTagName("item");
