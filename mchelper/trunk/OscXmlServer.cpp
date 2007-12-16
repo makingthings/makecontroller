@@ -72,7 +72,7 @@ bool OscXmlServer::changeListenPort( int port )
 	{
 		listenPort = port;
 		mainWindow->messageThreadSafe( QString( "Now listening on port %1 for XML connections." ).arg( port ), 
-																		MessageEvent::Error, fromString );
+																		MessageEvent::Info, fromString );
 		return true;
 	}
 }
