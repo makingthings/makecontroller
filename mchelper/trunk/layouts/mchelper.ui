@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>965</width>
-    <height>501</height>
+    <width>987</width>
+    <height>555</height>
    </rect>
   </property>
   <property name="sizePolicy" >
@@ -747,12 +747,25 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="0" colspan="6" >
+            <item row="4" column="1" colspan="5" >
              <widget class="Line" name="line_2" >
               <property name="orientation" >
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
+            </item>
+            <item row="4" column="0" >
+             <spacer>
+              <property name="orientation" >
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" >
+               <size>
+                <width>129</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
             </item>
             <item row="5" column="0" >
              <widget class="QLabel" name="ipAddressLabel" >
@@ -814,7 +827,7 @@
                <string>The port that this board listens on for OSC messages.</string>
               </property>
               <property name="text" >
-               <string>UDP Port (Listening):</string>
+               <string> UDP Port (Listening):</string>
               </property>
               <property name="alignment" >
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -887,6 +900,19 @@
               </property>
              </widget>
             </item>
+            <item row="9" column="3" colspan="3" >
+             <spacer>
+              <property name="orientation" >
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" >
+               <size>
+                <width>241</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
             <item row="10" column="0" colspan="4" >
              <spacer>
               <property name="orientation" >
@@ -916,6 +942,19 @@
             </item>
            </layout>
           </item>
+          <item>
+           <spacer>
+            <property name="orientation" >
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" >
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
          </layout>
         </widget>
         <widget class="QWidget" name="uploaderTab" >
@@ -938,97 +977,25 @@
              </size>
             </property>
             <property name="title" >
-             <string>Firmware Uploader</string>
+             <string/>
             </property>
             <property name="alignment" >
              <set>Qt::AlignHCenter|Qt::AlignTop</set>
             </property>
             <layout class="QVBoxLayout" >
              <item>
-              <widget class="QLabel" name="label_9" >
-               <property name="text" >
-                <string>Select a .bin file to upload to your Make Controller.</string>
-               </property>
-               <property name="alignment" >
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
               <layout class="QGridLayout" >
-               <property name="leftMargin" >
-                <number>0</number>
-               </property>
-               <property name="topMargin" >
-                <number>0</number>
-               </property>
-               <property name="rightMargin" >
-                <number>0</number>
-               </property>
-               <property name="bottomMargin" >
-                <number>0</number>
-               </property>
-               <property name="horizontalSpacing" >
-                <number>6</number>
-               </property>
-               <property name="verticalSpacing" >
-                <number>6</number>
-               </property>
-               <item row="2" column="1" >
-                <widget class="QProgressBar" name="progressBar" >
-                 <property name="value" >
-                  <number>24</number>
-                 </property>
-                 <property name="orientation" >
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="2" >
-                <widget class="QPushButton" name="uploadButton" >
-                 <property name="minimumSize" >
-                  <size>
-                   <width>80</width>
-                   <height>32</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize" >
-                  <size>
-                   <width>80</width>
-                   <height>32</height>
-                  </size>
-                 </property>
-                 <property name="focusPolicy" >
-                  <enum>Qt::NoFocus</enum>
-                 </property>
+               <item row="0" column="0" colspan="2" >
+                <widget class="QLabel" name="label_9" >
                  <property name="text" >
-                  <string>Upload</string>
+                  <string>Select a .bin file to upload to your Make Controller.</string>
+                 </property>
+                 <property name="alignment" >
+                  <set>Qt::AlignCenter</set>
                  </property>
                 </widget>
                </item>
-               <item row="0" column="2" >
-                <widget class="QPushButton" name="fileSelectButton" >
-                 <property name="minimumSize" >
-                  <size>
-                   <width>80</width>
-                   <height>32</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize" >
-                  <size>
-                   <width>80</width>
-                   <height>32</height>
-                  </size>
-                 </property>
-                 <property name="focusPolicy" >
-                  <enum>Qt::NoFocus</enum>
-                 </property>
-                 <property name="text" >
-                  <string>Browse</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="1" >
+               <item row="1" column="0" >
                 <widget class="QComboBox" name="fileSelectText" >
                  <property name="editable" >
                   <bool>true</bool>
@@ -1042,6 +1009,36 @@
                 </widget>
                </item>
                <item row="1" column="1" >
+                <widget class="QPushButton" name="fileSelectButton" >
+                 <property name="focusPolicy" >
+                  <enum>Qt::NoFocus</enum>
+                 </property>
+                 <property name="text" >
+                  <string>Browse...</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0" >
+                <widget class="QProgressBar" name="progressBar" >
+                 <property name="value" >
+                  <number>24</number>
+                 </property>
+                 <property name="orientation" >
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1" >
+                <widget class="QPushButton" name="uploadButton" >
+                 <property name="focusPolicy" >
+                  <enum>Qt::NoFocus</enum>
+                 </property>
+                 <property name="text" >
+                  <string>Upload</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0" colspan="2" >
                 <spacer>
                  <property name="orientation" >
                   <enum>Qt::Vertical</enum>
@@ -1052,7 +1049,7 @@
                  <property name="sizeHint" >
                   <size>
                    <width>20</width>
-                   <height>8</height>
+                   <height>5</height>
                   </size>
                  </property>
                 </spacer>
@@ -1088,7 +1085,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>965</width>
+     <width>987</width>
      <height>22</height>
     </rect>
    </property>
