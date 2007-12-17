@@ -16,7 +16,6 @@
 *********************************************************************************/
 
 #include "OscXmlServer.h"
-#include <QDomDocument>
 
 OscXmlServer::OscXmlServer( McHelperWindow *mainWindow, int port )
 {
@@ -124,9 +123,7 @@ void OscXmlServer::boardInfoUpdate( Board* board )
 	boardElement.setAttribute( "SERIALNUMBER", board->serialNumber );
 	boardUpdate.appendChild( boardElement );
 		
-	QByteArray update = doc.toByteArray( );
-	update.append( "\0" ); // Flash wants XML followed by a zero byte
-	clientSocket->write( update );
+	writeXmlDoc( doc );
 }
 
 void OscXmlServer::boardListUpdate( QList<Board*> boardList, bool arrived )
@@ -153,9 +150,15 @@ void OscXmlServer::boardListUpdate( QList<Board*> boardList, bool arrived )
 		boardUpdate.appendChild( board );
 	}
 	
-	QByteArray update = doc.toByteArray( );
-	update.append( "\0" ); // Flash wants XML followed by a zero byte
-	clientSocket->write( update );
+	writeXmlDoc( doc );
+}
+
+void OscXmlServer::writeXmlDoc( QDomDocument doc )
+{
+	QByteArray msg = doc.toByteArray( );
+	msg.append( '\0' ); // Flash wants XML followed by a zero byte
+	clientSocket->write( msg );
+	//printf( "XML sent, size: %d written: %d\n", msg.size( ), sent );
 }
 
 void OscXmlServer::sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort )
@@ -206,9 +209,7 @@ void OscXmlServer::sendXmlPacket( QList<OscMessage*> messageList, QString srcAdd
 			msg.appendChild( argument );
 		}
 	}
-	QByteArray packet = doc.toByteArray( );
-	packet.append( "\0" ); // Flash wants XML followed by a zero byte
-	clientSocket->write( packet );
+	writeXmlDoc( doc );
 }
 
 XmlHandler::XmlHandler( McHelperWindow *mainWindow, OscXmlServer *xmlServer ) : QXmlDefaultHandler( )

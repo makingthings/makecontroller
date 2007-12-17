@@ -28,7 +28,8 @@ class mchelperPrefs : public QDialog, public Ui::mchelperPrefs
 	Q_OBJECT
 	public:
 		mchelperPrefs( McHelperWindow *mainWindow );
-		void setUdpPortDisplay( int port );
+		void setUdpListenPortDisplay( int port );
+		void setUdpSendPortDisplay( int port );
 		void setXmlPortDisplay( int port );
 		void setMaxMsgsDisplay( int max );
 		void setFindNetBoardsDisplay( bool state );

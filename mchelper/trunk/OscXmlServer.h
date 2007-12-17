@@ -22,6 +22,7 @@
 #include <QTcpSocket>
 #include <QXmlSimpleReader>
 #include <QXmlDefaultHandler>
+#include <QDomDocument>
 #include "McHelperWindow.h"
 #include "MessageEvent.h"
 #include "Board.h"
@@ -70,6 +71,7 @@ class OscXmlServer : public QObject
 		QXmlSimpleReader xml;
 		QXmlInputSource *xmlInput;
 		XmlHandler *handler;
+		void writeXmlDoc( QDomDocument doc );
 	
 	private slots:
 		void openNewConnection( );

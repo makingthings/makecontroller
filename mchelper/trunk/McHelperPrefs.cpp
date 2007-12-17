@@ -25,7 +25,8 @@ mchelperPrefs::mchelperPrefs( McHelperWindow *mainWindow ) : QDialog( )
 	connect( defaultsButton, SIGNAL( clicked() ), mainWindow, SLOT( restoreDefaultPrefs() ) );
 	connect( okButton, SIGNAL( accepted( ) ), mainWindow, SLOT( setNewPrefs( ) ) );
 	
-	setUdpPortDisplay( mainWindow->appUdpListenPort );
+	setUdpListenPortDisplay( mainWindow->appUdpListenPort );
+	setUdpSendPortDisplay( mainWindow->appUdpSendPort );
 	setXmlPortDisplay( mainWindow->appXmlListenPort );
 	setFindNetBoardsDisplay( mainWindow->findEthernetBoardsAuto );
 	setMaxMsgsDisplay( mainWindow->maxOutputWindowMessages );
@@ -37,9 +38,14 @@ mchelperPrefs::mchelperPrefs( McHelperWindow *mainWindow ) : QDialog( )
 	setFindNetBoardsDisplay( settings.value("findEthernetBoardsAuto", true ).toBool( ) );
 }
 
-void mchelperPrefs::setUdpPortDisplay( int port )
+void mchelperPrefs::setUdpListenPortDisplay( int port )
 {
-	udpPortPrefs->setText( QString::number( port ) );
+	udpListenPortPrefs->setText( QString::number( port ) );
+}
+
+void mchelperPrefs::setUdpSendPortDisplay( int port )
+{
+	udpSendPortPrefs->setText( QString::number( port ) );
 }
 
 void mchelperPrefs::setXmlPortDisplay( int port )
