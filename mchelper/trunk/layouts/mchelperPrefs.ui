@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>647</width>
-    <height>285</height>
+    <width>489</width>
+    <height>223</height>
    </rect>
   </property>
   <property name="sizePolicy" >
@@ -167,6 +167,16 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>udpListenPortPrefs</tabstop>
+  <tabstop>udpSendPortPrefs</tabstop>
+  <tabstop>xmlPortPrefs</tabstop>
+  <tabstop>maxOutputMsgsLineEdit</tabstop>
+  <tabstop>networkPingCheckBox</tabstop>
+  <tabstop>updatesCheckBox</tabstop>
+  <tabstop>defaultsButton</tabstop>
+  <tabstop>okButton</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
