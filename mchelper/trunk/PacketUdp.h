@@ -27,8 +27,9 @@
 #include "PacketInterface.h"
 #include "MessageInterface.h"
 #include "PacketReadyInterface.h"
-#include "MonitorInterface.h"
+#include "NetworkMonitor.h"
 
+class NetworkMonitor;
 
 class PacketUdp : public QObject, public PacketInterface
 {	
@@ -38,7 +39,7 @@ class PacketUdp : public QObject, public PacketInterface
 	  PacketUdp( );
 	  ~PacketUdp( );
 	  Status open( );
-		void setInterfaces( MessageInterface* messageInterface , MonitorInterface* monitor );
+		void setInterfaces( MessageInterface* messageInterface , NetworkMonitor* monitor );
 		void setPacketReadyInterface( PacketReadyInterface* packetReadyInterface );
 		void resetTimer( void );
 		
@@ -65,7 +66,7 @@ class PacketUdp : public QObject, public PacketInterface
 	  QHostAddress remoteHostAddress;
 	  QByteArray remoteHostName;
 	  QTimer* timer;
-	  MonitorInterface* monitor;
+	  NetworkMonitor* monitor;
 	  QByteArray lastMessage;
 	  QString socketKey;
 	

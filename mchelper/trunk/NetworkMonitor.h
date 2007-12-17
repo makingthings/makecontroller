@@ -35,14 +35,16 @@ class NetworkMonitor : public QObject, public MonitorInterface
 {
   Q_OBJECT
   public:
-  	NetworkMonitor( int listenPort );
+  	NetworkMonitor( int listenPort, int sendPort );
   	~NetworkMonitor( ) {}
   	void start( );
   	Status scan( QList<PacketUdp*>* arrived );
   	void setInterfaces( MessageInterface* messageInterface, McHelperWindow* mainWindow, QApplication* application );
   	void deviceRemoved( QString key );
 		bool changeListenPort( int port );
-		int getListenPort( );
+		void changeSendPort( int port );
+		int getSendPort( ) { return sendPort; }
+		int getListenPort( ) { return listenPort; }
   	
   private:
   	QHash<QString, PacketUdp*> connectedDevices; // our internal list
@@ -54,7 +56,8 @@ class NetworkMonitor : public QObject, public MonitorInterface
 	QTimer pingTimer;
 	QUdpSocket socket;
 	QByteArray broadcastPing;
-	int rxtxPort;
+	int listenPort;
+	int sendPort;
 	
   private slots:
 	void processPendingDatagrams( );

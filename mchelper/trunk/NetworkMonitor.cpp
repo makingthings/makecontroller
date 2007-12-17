@@ -21,9 +21,10 @@
 
 #define PING_FREQUENCY 1000
 
-NetworkMonitor::NetworkMonitor( int listenPort )
+NetworkMonitor::NetworkMonitor( int listenPort, int sendPort )
 {
-	rxtxPort = listenPort;
+	this->listenPort = listenPort;
+	this->sendPort = sendPort;
 	connect( &socket, SIGNAL(readyRead()), this, SLOT( processPendingDatagrams() ) );
 	connect( &pingTimer, SIGNAL( timeout() ), this, SLOT( sendPing() ) );
 	createPing( );
@@ -43,10 +44,10 @@ void NetworkMonitor::createPing( )
 
 void NetworkMonitor::start( )
 {
-	if ( !socket.bind( rxtxPort ) )
+	if ( !socket.bind( listenPort ) )
 	{
 	  socket.close();
-	  mainWindow->messageThreadSafe( QString( "Error: Can't listen on port %1 - make sure it's not already in use.").arg( rxtxPort ), MessageEvent::Error, "Ethernet" );
+	  mainWindow->messageThreadSafe( QString( "Error: Can't listen on port %1 - make sure it's not already in use.").arg( listenPort ), MessageEvent::Error, "Ethernet" );
 	}
 	pingTimer.start( PING_FREQUENCY );
 }
@@ -56,11 +57,11 @@ void NetworkMonitor::sendPing( )
 	if( mainWindow->findNetBoardsEnabled( ) )
 	{
 		if( socket.state( ) != QAbstractSocket::BoundState )
-			socket.bind( rxtxPort, QUdpSocket::ShareAddress );
+			socket.bind( listenPort, QUdpSocket::ShareAddress );
 			
 		if( socket.state( ) == QAbstractSocket::BoundState ) // if we succeeded or we're already open
 		{
-			if( socket.writeDatagram( broadcastPing.data(), broadcastPing.size(), QHostAddress::Broadcast, rxtxPort ) < 0 )
+			if( socket.writeDatagram( broadcastPing.data(), broadcastPing.size(), QHostAddress::Broadcast, sendPort ) < 0 )
 				printf( "UDP send error: %s\n", socket.errorString( ).toLatin1( ).data( ) );
 		}
 	}
@@ -76,15 +77,16 @@ bool NetworkMonitor::changeListenPort( int port )
 	}
 	else
 	{
-		rxtxPort = port;
-		mainWindow->messageThreadSafe( QString( "Now listening on port %1 for messages.").arg( rxtxPort ), MessageEvent::Info, "Ethernet" );
+		listenPort = port;
+		mainWindow->messageThreadSafe( QString( "Now listening on port %1 for messages.").arg( listenPort ), MessageEvent::Info, "Ethernet" );
 		return true;
 	}
 }
 
-int NetworkMonitor::getListenPort( )
+void NetworkMonitor::changeSendPort( int port )
 {
-	return rxtxPort;
+	sendPort = port;
+	mainWindow->messageThreadSafe( QString( "Now sending messages on port %1.").arg( sendPort ), MessageEvent::Info, "Ethernet" );
 }
 
 NetworkMonitor::Status NetworkMonitor::scan( QList<PacketUdp*>* arrived )
@@ -112,7 +114,7 @@ void NetworkMonitor::processPendingDatagrams()
     	PacketUdp* device = new PacketUdp( );
     	connectedDevices.insert( socketKey, device );  // stick it in our own list of boards we know about
     	
-    	device->setRemoteHostInfo( &sender, rxtxPort );
+    	device->setRemoteHostInfo( &sender, listenPort );
     	device->setKey( socketKey );
     	device->setInterfaces( messageInterface, this );
     	device->open( );

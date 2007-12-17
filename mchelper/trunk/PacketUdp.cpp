@@ -75,7 +75,7 @@ char* PacketUdp::location( )
 
 PacketUdp::Status PacketUdp::sendPacket( char* packet, int length )	//part of PacketInterface
 {
-	qint64 result = socket->writeDatagram( (const char*)packet, (qint64)length, remoteHostAddress, remotePort );
+	qint64 result = socket->writeDatagram( (const char*)packet, (qint64)length, remoteHostAddress, monitor->getSendPort( ) );
 	if( result < 0 )
   {
 		QString msg = QString( "Error - Could not send packet.");
@@ -140,7 +140,7 @@ void PacketUdp::setPacketReadyInterface( PacketReadyInterface* packetReadyInterf
 	this->packetReadyInterface = packetReadyInterface;
 }
 
-void PacketUdp::setInterfaces( MessageInterface* messageInterface, MonitorInterface* monitor )
+void PacketUdp::setInterfaces( MessageInterface* messageInterface, NetworkMonitor* monitor )
 {
 	this->messageInterface = messageInterface;
 	this->monitor = monitor;

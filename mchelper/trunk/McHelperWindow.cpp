@@ -53,7 +53,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	initUpdate( );
 	
 	//listWidget = new BoardListModel( application, this, this );
-	udp = new NetworkMonitor( appUdpListenPort ); 
+	udp = new NetworkMonitor( appUdpListenPort, appUdpSendPort ); 
 	samba = new SambaMonitor( application, this );
 	usb = new UsbMonitor( );
 	xmlServer = new OscXmlServer( this, appXmlListenPort );
@@ -667,6 +667,7 @@ void McHelperWindow::readSettings()
 	fileSelectText->setEditText( lastDirectory );
 	
 	appUdpListenPort = settings.value( "appUdpListenPort", 10000 ).toInt( );
+	appUdpSendPort = settings.value( "appUdpSendPort", 10000 ).toInt( );
 	appXmlListenPort = settings.value( "appXmlListenPort", 11000 ).toInt( );
 	findEthernetBoardsAuto = settings.value( "findEthernetBoardsAuto", true ).toBool( );
 	
@@ -790,7 +791,8 @@ aboutMchelper::aboutMchelper( ) : QDialog( )
 
 void McHelperWindow::restoreDefaultPrefs( )
 {
-	prefsDialog->setUdpPortDisplay( 10000 );
+	prefsDialog->setUdpListenPortDisplay( 10000 );
+	prefsDialog->setUdpSendPortDisplay( 10000 );
 	prefsDialog->setXmlPortDisplay( 11000 );
 	prefsDialog->setFindNetBoardsDisplay( true );
 	prefsDialog->setMaxMsgsDisplay( 1000 );
@@ -799,11 +801,18 @@ void McHelperWindow::restoreDefaultPrefs( )
 void McHelperWindow::setNewPrefs( )
 {
 	QSettings settings("MakingThings", "mchelper");
-	if( appUdpListenPort != prefsDialog->udpPortPrefs->text().toInt( ) )
+	if( appUdpListenPort != prefsDialog->udpListenPortPrefs->text().toInt( ) )
 	{
-		appUdpListenPort = prefsDialog->udpPortPrefs->text().toInt( );
+		appUdpListenPort = prefsDialog->udpListenPortPrefs->text().toInt( );
 		settings.setValue("appUdpListenPort", appUdpListenPort );
 		udp->changeListenPort( appUdpListenPort );
+	}
+	
+	if( appUdpSendPort != prefsDialog->udpSendPortPrefs->text().toInt( ) )
+	{
+		appUdpSendPort = prefsDialog->udpSendPortPrefs->text().toInt( );
+		settings.setValue("appUdpSendPort", appUdpSendPort );
+		udp->changeSendPort( appUdpSendPort );
 	}
 	
 	if( appXmlListenPort != prefsDialog->xmlPortPrefs->text().toInt( ) )

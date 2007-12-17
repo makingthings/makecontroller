@@ -44,6 +44,7 @@ class McHelperApp;
 class OscXmlServer;
 class aboutMchelper;
 class mchelperPrefs;
+class PacketUdp;
 
 
 class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public MessageInterface
@@ -96,6 +97,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		
 		// preferences window stuff
 		int appUdpListenPort;
+		int appUdpSendPort;
 		int appXmlListenPort;
 		bool findEthernetBoardsAuto;
 		int maxOutputWindowMessages;
