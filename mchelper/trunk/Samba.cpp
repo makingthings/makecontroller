@@ -303,6 +303,11 @@ QString Samba::getDeviceKey( )
 	return deviceKey;
 }
 
+void Samba::setDeviceKey( QString key )
+{
+	this->deviceKey = key;
+}
+
 int Samba::init( )
 {
   

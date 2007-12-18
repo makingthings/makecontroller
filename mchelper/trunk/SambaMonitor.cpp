@@ -61,6 +61,7 @@ int SambaMonitor::scan( QList<UploaderThread*>* arrived )
 			Samba* samba = new Samba( this, mainWindow );
 			UploaderThread* uploaderThread = new UploaderThread( application, mainWindow, samba, this );
 			samba->setUploader( uploaderThread );
+			samba->setDeviceKey( sambaDevices.at(i) );
 			uploaderThread->setDeviceKey( sambaDevices.at(i) );
 			arrived->append( uploaderThread );
 			connectedDevices.insert( sambaDevices.at(i), uploaderThread );
