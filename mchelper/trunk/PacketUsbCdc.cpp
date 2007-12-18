@@ -236,7 +236,7 @@ int PacketUsbCdc::receivePacket( char* buffer, int size )
   		QMutexLocker locker( &packetListMutex );
   		for( int i = 0; i < listSize; i++ )
   		{
-  			OscUsbPacket* packet = packetList.at( i );
+  			OscUsbPacket* packet = packetList.takeAt( i );
 	  		length = packet->length;
 	  		if ( length <= size )
 				{
@@ -245,9 +245,8 @@ int PacketUsbCdc::receivePacket( char* buffer, int size )
 				}
 				else
 					retval = 0;
+				delete packet;
   		}
-  		qDeleteAll( packetList );
-			packetList.clear( );
   	}
 	}
 	return retval;

@@ -89,7 +89,10 @@ void OutputWindow::newRows( QList<TableEntry> entries )
 		int extraRows = requestedRows - maxMsgs;
 		beginRemoveRows( QModelIndex(), 0, extraRows - 1 );
 		for( int i = 0; i < extraRows; i++ )
-			tableEntries.removeFirst( );
+		{
+			if( !tableEntries.isEmpty( ) )
+				tableEntries.removeFirst( );
+		}
 		endRemoveRows( );
 	}
 	
@@ -108,7 +111,10 @@ void OutputWindow::setMaxMsgs( int newMaxMsgs )
 			int extraRows = tableEntries.count( ) - newMaxMsgs;
 			beginRemoveRows( QModelIndex(), 0, extraRows - 1 );
 			for( int i = 0; i < extraRows; i++ )
-				tableEntries.removeFirst( );
+			{
+				if( !tableEntries.isEmpty( ) )
+					tableEntries.removeFirst( );
+			}
 			endRemoveRows( );
 		}
 	}
