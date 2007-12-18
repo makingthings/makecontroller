@@ -129,7 +129,17 @@ Samba::Samba( SambaMonitor* monitor, MessageInterface* messageInterface )
 Samba::Status Samba::connect( QString deviceKey )
 {
 	if ( usbOpen( deviceKey ) < 0 )
-	  return ERROR_INITIALIZING;
+	{
+	  #ifdef Q_WS_MAC
+		if( QSysInfo::MacintoshVersion == QSysInfo::MV_10_5 )
+		{
+			messageInterface->messageThreadSafe( 
+					QString( "Uploading is not supported in Leopard - sorry."), MessageEvent::Error, QString("USB") );
+			messageInterface->statusMessage( QString("Uploading is not supported in Leopard - sorry."), 3000 );
+		}
+		#endif
+		return ERROR_INITIALIZING;
+	}
 	return OK;
 }
 
@@ -654,10 +664,13 @@ int Samba::usbOpen( QString key )
 		IORegistryEntryGetPath( usbDeviceRef, kIOServicePlane, path );
 		if( key == QString(path) )
 		{
-			do_dev( usbDeviceRef );
+			int result = do_dev( usbDeviceRef );
 			IOObjectRelease(usbDeviceRef);
 			IOObjectRelease(iterator);
-			return init();
+			if( result != 0 )
+				return -1;
+			else
+				return init();
 		}
   }
 	//printf( "cannot find boot agent\n" );

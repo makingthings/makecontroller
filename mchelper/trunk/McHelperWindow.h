@@ -68,6 +68,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void messageThreadSafe( QString string, MessageEvent::Types type );
 		void messageThreadSafe( QString string, MessageEvent::Types type, QString from );
 		void messageThreadSafe( QStringList strings, MessageEvent::Types type, QString from );
+		void statusMessage( const QString & msg, int duration );
 	
 		void customEvent( QEvent* event );
 		void progress( int value );
@@ -129,12 +130,6 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		void writeUdpSettings();
 		void writeUsbSettings();
 		void initUpdate( );
-		
-		void message( int level, char *format, ... );
-		void message( QString string );
-		void message( QStringList strings, MessageEvent::Types type, QString from );
-		void message( QString string, MessageEvent::Types type, QString from );
-		
     void setupOutputWindow();
     
 		bool noUI;

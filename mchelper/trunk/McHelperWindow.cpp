@@ -447,7 +447,7 @@ void McHelperWindow::customEvent( QEvent* event )
 		{
 			McHelperEvent* mcHelperEvent = (McHelperEvent*)event;
 			if ( !mcHelperEvent->statusBound )
-				message( mcHelperEvent->message );
+				messageThreadSafe( mcHelperEvent->message );
 			break;
 		}
 		case 10001: //to get progress bar info back from the uploader thread
@@ -459,14 +459,14 @@ void McHelperWindow::customEvent( QEvent* event )
 		case 10003:
 		{
 			MessageEvent* messageEvent = (MessageEvent*)event;
-			message( messageEvent->message, messageEvent->type, messageEvent->from );
+			messageThreadSafe( messageEvent->message, messageEvent->type, messageEvent->from );
 			
 			break;
 		}
 		case 10004:
 		{
 			MessageEvent* messageEvent = (MessageEvent*)event;
-			message( messageEvent->messages, messageEvent->type, messageEvent->from );
+			messageThreadSafe( messageEvent->messages, messageEvent->type, messageEvent->from );
 			break;
 		}
 		case 10005: // a board was uploaded/removed
@@ -509,6 +509,11 @@ void McHelperWindow::customEvent( QEvent* event )
 		default:
 			break;
 	}
+}
+
+void McHelperWindow::statusMessage( const QString & msg, int duration )
+{
+	statusBar()->showMessage( msg, duration );
 }
 
 void McHelperWindow::messageThreadSafe( QString string  )
@@ -564,56 +569,6 @@ void McHelperWindow::progress( int value )
 	}
 	else
 		progressBar->setValue( value );
-}
-
-// Deprecated...
-// Use one of the messageThreadSafe methods
-void McHelperWindow::message( QString string )
-{
-	if( noUI )
-		return;
-        
-	if ( !string.isEmpty( ) && !string.isNull( ) )
-        message( string, MessageEvent::Info, QString("App") );
-}
-
-void McHelperWindow::message( QString string, MessageEvent::Types type, QString from )
-{
-	if( noUI )
-		return;
-
-	if ( !string.isEmpty( ) && !string.isNull( ) )
-	{
-		QList<TableEntry> entryList;
-		TableEntry newItem = createOutputWindowEntry( string, type, from );
-		entryList.append( newItem );
-		
-		outputModel->newRows( entryList );
-		outputView->resizeColumnToContents( McHelperWindow::TO_FROM );
-		outputView->resizeColumnToContents( McHelperWindow::TIMESTAMP );
-		outputView->resizeRowsToContents( );
-		outputView->scrollToBottom( );
-	}
-}
-
-void McHelperWindow::message( QStringList strings, MessageEvent::Types type, QString from )
-{
-		if( noUI )
-			return;
-
-    int msgCount = strings.count( );
-		int i;
-		QList<TableEntry> entryList;
-		for( i = 0; i < msgCount; i++ )
-		{
-			TableEntry newItem = createOutputWindowEntry( strings.at(i), type, from );
-			entryList.append( newItem );
-		}
-		
-		outputModel->newRows( entryList );
-		outputView->resizeColumnToContents( McHelperWindow::TO_FROM );
-		outputView->resizeColumnToContents( McHelperWindow::TIMESTAMP );
-		outputView->scrollToBottom( );
 }
 
 void McHelperWindow::postMessages( )
