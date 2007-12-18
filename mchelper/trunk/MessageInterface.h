@@ -22,18 +22,14 @@
 
 class MessageInterface
 {		
-    public:
-        virtual void message( QString string ) = 0;
-        
-        virtual void messageThreadSafe( QString string ) = 0;
-        virtual void messageThreadSafe( QString string, MessageEvent::Types type ) = 0;
-        virtual void messageThreadSafe( QString string, MessageEvent::Types type, QString from ) = 0;
-        virtual void messageThreadSafe( QStringList strings, MessageEvent::Types type, QString from ) = 0;
-        virtual void progress( int value ) = 0;
+	public:        
+		virtual void messageThreadSafe( QString string ) = 0;
+		virtual void messageThreadSafe( QString string, MessageEvent::Types type ) = 0;
+		virtual void messageThreadSafe( QString string, MessageEvent::Types type, QString from ) = 0;
+		virtual void messageThreadSafe( QStringList strings, MessageEvent::Types type, QString from ) = 0;
+		virtual void progress( int value ) = 0;
+		virtual void statusMessage( const QString & msg, int value ) = 0;
 		virtual ~MessageInterface( ) {}
-        
-    private:
-        virtual void message( QString string, MessageEvent::Types type, QString from ) = 0;
 };
 
 #endif
