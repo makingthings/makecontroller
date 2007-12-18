@@ -87,6 +87,18 @@ void OutputWindow::newRows( QList<TableEntry> entries )
 	{
 		// make sure we only remove as many as we need to
 		int extraRows = requestedRows - maxMsgs;
+		// the message itself might have more messages than we can hold
+		// so just keep the most recent (last) ones
+		if( extraRows > maxMsgs )
+		{
+			int tooManyEntries = extraRows - maxMsgs;
+			for( int i = 0; i < tooManyEntries; i++ )
+			{
+				if( !entries.isEmpty( ) )
+					entries.removeFirst( );
+			}
+			extraRows = maxMsgs;
+		}
 		beginRemoveRows( QModelIndex(), 0, extraRows - 1 );
 		for( int i = 0; i < extraRows; i++ )
 		{
@@ -96,8 +108,8 @@ void OutputWindow::newRows( QList<TableEntry> entries )
 		endRemoveRows( );
 	}
 	
-	beginInsertRows( QModelIndex(), tableEntries.count( ), tableEntries.count( ) + newRows - 1 );
-	for( int i = 0; i < newRows; i++ )
+	beginInsertRows( QModelIndex(), tableEntries.count( ), tableEntries.count( ) + entries.count( ) - 1 );
+	for( int i = 0; i < entries.count( ); i++ )
 		tableEntries.append( entries.at(i) );
 	endInsertRows( );
 }
