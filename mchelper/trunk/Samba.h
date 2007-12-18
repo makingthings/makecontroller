@@ -193,6 +193,7 @@ class Samba
 		Status reset( );
 		void setUploader( UploaderThread* uploader );
 		QString getDeviceKey( );
+		void setDeviceKey( QString key );
 		int FindUsbDevices( QList<QString>* arrived );
     
   private:
