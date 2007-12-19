@@ -148,7 +148,7 @@ void mcUsb_tick( t_mcUsb *x )
 void mc_SLIP_receive( t_mcUsb *x )
 {
   int started = 0, i;
-  char *bufferPtr = x->osc_packet->packetBuf, *tempPtr;
+  char *bufferPtr = x->osc_packet->packetBuf;
 	x->osc_packet->length = 0;
 
   if( !x->mc_usbInt->deviceOpen )
@@ -162,19 +162,31 @@ void mc_SLIP_receive( t_mcUsb *x )
 		if( x->usbReadBufLength < 1 ) // if we don't have any unprocessed chars in our buffer, go read some more
 		{
 			int available = usb_numBytesAvailable( x->mc_usbInt );
+			if( available == MC_ERROR_CLOSE )
+			{
+				usb_close( x->mc_usbInt );
+				return;
+			}
 			if( available > 0 )
 			{
 				int justGot = 0;
 				if( available > MAX_READ_LENGTH )
 					available = MAX_READ_LENGTH;
 				justGot = usb_read( x->mc_usbInt, x->usbReadBuffer, available );
+				if( justGot < 1 )
+				{
+					if( justGot == MC_IO_ERROR || justGot == MC_ERROR_CLOSE )
+					{
+						usb_close( x->mc_usbInt );
+						return;
+					}
+					if( justGot == MC_NOTHING_AVAILABLE )
+						return;
+				}
     		x->usbReadBufPtr = x->usbReadBuffer;
 				x->usbReadBufLength += justGot;
     		if( x->usbReadBufLength < 0 )
-				{
-					post( "breaking..." );
 					break;
-				}
 			}
 		}
 
@@ -214,9 +226,8 @@ void mc_SLIP_receive( t_mcUsb *x )
 		}
 		if( x->usbReadBufLength == 0 ) // if we didn't get anything, sleep...otherwise just rip through again
 			break;
-		//justGot = 0; // reset our count for the next run through
 	}
-	return; //IO_ERROR; // should never get here
+	return;
 }
 
 

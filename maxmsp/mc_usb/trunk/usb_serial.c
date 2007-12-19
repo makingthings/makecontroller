@@ -130,42 +130,26 @@ int usb_read( t_usbInterface* usbInt, char* buffer, int length )
     //post( "Didn't think the port was open." );
 		int portIsOpen = usb_open( usbInt );
 		if( portIsOpen != MC_OK )
-	  return MC_NOT_OPEN;
+			return MC_NOT_OPEN;
   }
-		
   count = read( usbInt->deviceHandle, buffer, length );
-  //post( "Reading..." );
-  switch ( count )
-  {
-    case 0:
-      // EOF; possibly file was closed
-			//post( "End of file." );
-			return MC_ERROR_CLOSE;
-      break;
-
-    case 1:
-      // got a character
-			//post( "Got a character: %s", buffer );
-      return MC_GOT_CHAR;
-      break;
-
-    case -1:
-      if ( errno == EAGAIN )
-			{
-	      // non-blocking but no data available
-				//post( "No data available." );
-	      return MC_NOTHING_AVAILABLE;
-			}
+	if( count < 1 )
+	{
+		int retval = MC_IO_ERROR;
+		if( count == 0 )
+			retval = MC_ERROR_CLOSE;
+		else if( count == -1 )
+		{
+			if ( errno == EAGAIN )
+	      retval = MC_NOTHING_AVAILABLE; // non-blocking but no data available
       else
 			  //post( "Some other error...errno = %d", errno );
-	      return MC_IO_ERROR;
-      break;
-
-    default:
-		  //post( "Unknown error.\n" );
-      return MC_UNKNOWN_ERROR;
-      break;
-  }
+	      retval = MC_IO_ERROR;
+		}
+		return retval;
+	}
+	else
+		return count;
 	#endif
 	
   //--------------------------------------- Windows-only -------------------------------
@@ -346,20 +330,20 @@ int usb_numBytesAvailable( t_usbInterface* usbInt )
 	if( ioctl( usbInt->deviceHandle, FIONREAD, &n ) < 0 )
 	{
 		// ioctl error
-		return 0;
+		return MC_ERROR_CLOSE;
 	}
 	#endif // Mac-only usb_numBytesAvailable( )
 
 	#ifdef WIN32
 	COMSTAT status;
-    unsigned long   state;
+	unsigned long   state;
 
-    if (usbInt->deviceHandle != INVALID_HANDLE_VALUE)
-    {
-        bool success = false;
-        success = ClearCommError( usbInt->deviceHandle, &state, &status);
-        n = status.cbInQue;
-    }
+	if (usbInt->deviceHandle != INVALID_HANDLE_VALUE)
+	{
+			bool success = false;
+			success = ClearCommError( usbInt->deviceHandle, &state, &status);
+			n = status.cbInQue;
+	}
 	#endif // Windows-only usb_numBytesAvailable( )
 
 	return n;
