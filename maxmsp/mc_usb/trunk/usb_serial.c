@@ -19,7 +19,7 @@
 #include "usb_serial.h"
 #include "usb_enum.h"
 #include "ext.h" //for calling post() to the Max window.
-
+#include <sys/ioctl.h>
 
 t_usbInterface* usb_init( cchar* name, t_usbInterface** uip )
 {
@@ -343,7 +343,7 @@ int usb_numBytesAvailable( t_usbInterface* usbInt )
 	int n = 0;
 
 	#ifndef WIN32
-	if( ::ioctl( deviceHandle, FIONREAD, &n ) < 0 )
+	if( ioctl( usbInt->deviceHandle, FIONREAD, &n ) < 0 )
 	{
 		// ioctl error
 		return 0;
