@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006 MakingThings
+ Copyright 2006-2007 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -187,7 +187,7 @@ int Osc_extract_data( t_osc* o, char* buffer, t_osc_message* osc_message )
 // When we receive a packet, check to see whether it is a message or a bundle.
 void Osc_receive_packet( void* out, t_osc* o, char* packet, int length, t_osc_message* osc_message )
 {
-	//printf( "Raw: %s, Length: %d\n", packet, length );
+	//post( "Raw: %s, Length: %d\n", packet, length );
 	switch( *packet )
 	{
 		case '/':		// the '/' in front tells us this is an Osc message.
@@ -230,7 +230,7 @@ void Osc_receive_message( t_osc* o, char* packet, int length, t_osc_message* osc
 {
   char* type;
   // We can print the address by just trying to print message, since it's null-terminated after the address.
-  //message( 1, "%s> %s ", preamble, in );
+	//post( "New message: address - %s ", packet );
   if ( osc_message != 0 )
     osc_message->address = gensym( packet );
 	

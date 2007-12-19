@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006 MakingThings
+ Copyright 2006-2007 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -19,10 +19,11 @@
 #define MC_OSC_H
 
 #define OSC_MAX_MESSAGE 2048
-#define OSC_MAX_ARG_COUNT 10
+#define OSC_MAX_ARG_COUNT 20
 
 #include "mcError.h"
 #include "ext.h"
+#include "usb_serial.h"
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -48,8 +49,6 @@ typedef struct
   int outMessageCount;
 } t_osc;
 
-#include "usb_serial.h"
-
 char* writePaddedString( char* buffer, int* length, char* string );
 unsigned int endianSwap( unsigned int a );
 char* Osc_writeTimetag( t_osc* o, char* buffer, int* length, int a, int b );
@@ -60,7 +59,6 @@ void Osc_receive_packet( void* out, t_osc* o, char* packet, int length, t_osc_me
 void Osc_receive_message( t_osc* o, char* in, int length, t_osc_message* osc_message );
 char* Osc_find_data_tag( t_osc* o, char* message, int length );
 char* Osc_create_message_internal( t_osc* o, char* bp, int* length, char* address, int ac, t_atom* av );
-mcError Osc_send_packet( t_osc* o, t_usbInterface* x, char* packet, int length );
 void Osc_resetOutBuffer( t_osc* o );
 void Osc_reset_message( t_osc_message* msg );
 

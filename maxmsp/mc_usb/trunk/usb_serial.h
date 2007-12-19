@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006 MakingThings
+ Copyright 2006-2007 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -47,6 +47,7 @@ typedef unsigned char bool;
 #include <windows.h>
 #include <tchar.h>
 #include <ctype.h>
+#include <dbt.h>
 #endif // Win-only includes
 
 //mcUsb structure
@@ -54,18 +55,19 @@ typedef struct
 {
   bool deviceOpen;
   bool readInProgress;
+  char deviceLocation[ 512 ];
   
   #ifdef WIN32
   HANDLE deviceHandle;
   OVERLAPPED overlappedRead;
   char readBuffer[512];
   OVERLAPPED overlappedWrite;
+  HDEVNOTIFY deviceNotificationHandle;
   #endif
 	
   #ifndef WIN32
   bool blocking;
   int deviceHandle;
-  char deviceFilePath[ 512 ];
   #endif
 	
 } t_usbInterface;
@@ -77,22 +79,19 @@ void usb_close( t_usbInterface* usbInt );
 int usb_read( t_usbInterface* usbInt, char* buffer, int length );
 int usb_write( t_usbInterface* usbInt, char* buffer, int length );
 int usb_writeChar( t_usbInterface* usbInt, char c );
+int usb_numBytesAvailable( t_usbInterface* usbInt );
 
 // Mac-only
 #ifndef WIN32
 // usb function prototypes
-int FindUsbSerialDevice( cchar** dest, int index );
-//static int matchUsbSerialDevice( struct dirent * tryThis );
 kern_return_t getDevicePath(io_iterator_t serialPortIterator, char *path, CFIndex maxPathSize);
 #endif
 
 //Windows only
 #ifdef WIN32
-LONG QueryStringValue(HKEY hKey,LPCTSTR lpValueName,LPTSTR* lppStringValue);
-LONG OpenSubKeyByIndex(HKEY hKey,DWORD dwIndex,REGSAM samDesired,PHKEY phkResult);
-int ScanEnumTree( t_usbInterface* usbInt, LPCTSTR lpEnumPath, TCHAR** openPorts );
 int testOpen( t_usbInterface* usbInt, TCHAR* deviceName );
-int openDevice( t_usbInterface* usbInt, TCHAR* deviceName );
+int openDevice( t_usbInterface* usbInt );
+bool DoRegisterForNotification( t_usbInterface* usbInt );
 #endif
 
 #endif // USB_SERIAL_H
