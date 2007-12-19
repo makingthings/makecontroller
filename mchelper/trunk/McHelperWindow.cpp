@@ -351,6 +351,11 @@ void McHelperWindow::closeEvent( QCloseEvent *qcloseevent )
 	usb->closeAll( );
 	QSettings settings("MakingThings", "mchelper");
 	settings.setValue("mainWindowSize", size() );
+	QList<QVariant> splitterSettings;
+	QList<int> splitterSizes = splitter->sizes();
+	for( int i = 0; i < splitterSizes.count( ); i++ )
+		splitterSettings.append( splitterSizes.at(i) );
+	settings.setValue("splitterSizes", splitterSettings );
 	// samba->closeAll( );
 }
 
@@ -634,6 +639,15 @@ void McHelperWindow::readSettings()
 	QSize mainWindowSize = settings.value( "mainWindowSize" ).toSize( );
 	if( mainWindowSize.isValid( ) )
 		resize( mainWindowSize );
+		
+	QList<QVariant> splitterSettings = settings.value( "splitterSizes" ).toList( );
+	QList<int> splitterSizes;
+	if( !splitterSettings.isEmpty( ) )
+	{
+		for( int i = 0; i < splitterSettings.count( ); i++ )
+			splitterSizes.append( splitterSettings.at(i).toInt( ) );
+		splitter->setSizes( splitterSizes );
+	}
 	
 	QStringList usbCmdList = settings.value( "usbCmdList", "" ).toStringList();
 	commandLine->addItems( usbCmdList );
