@@ -27,13 +27,12 @@ typedef unsigned char bool;
 #include <ctype.h>
 #include <dbt.h>
 #include <setupapi.h>
-#endif // Win-only includes
 
 bool findUsbDevice( t_usbInterface* usbInt );
 HANDLE GetDeviceInfo( HDEVINFO HardwareDeviceInfo, PSP_INTERFACE_DEVICE_DATA DeviceInfoData, char* portName );
 bool checkFriendlyName( HDEVINFO HardwareDeviceInfo, PSP_DEVINFO_DATA deviceSpecificInfo, char* portName );
 
-//#endif // WIN32
+#endif // WIN32
 
 #endif // usb_enum_H_
 
