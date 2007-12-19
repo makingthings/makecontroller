@@ -20,18 +20,17 @@
 
 typedef enum 
 {
-  MC_OK = 0,		     	  ///<  0: All OK
-  MC_NOTHING_AVAILABLE,	   	  ///<  1: No Usb data is available
-  MC_ALREADY_OPEN,		      ///<  2: Port is already open
-  MC_NOT_OPEN,		    ///<  3: Port is not open
-  MC_ERROR_CLOSE,		  ///<  4: There was an error closing
-  MC_GOT_CHAR,		      ///<  5: Successfully read a character from the USB port
-  MC_IO_ERROR,        ///<  6: Usb error
-  MC_UNKNOWN_ERROR,	  ///<  7: Unknown error
-  MC_PACKET_LENGTH_0, ////< 8: 
-  MC_ERROR_CREATING_BUNDLE,
-  MC_ERROR_SENDING_TEXT_MESSAGE
-
+  MC_OK                         = 0,   // All OK
+  MC_NOTHING_AVAILABLE          = -1,  // No Usb data is available
+  MC_ALREADY_OPEN               = -2,  // Port is already open
+  MC_NOT_OPEN                   = -3,  // Port is not open
+  MC_ERROR_CLOSE                = -4,  // There was an error closing
+  MC_GOT_CHAR                   = -5,  // Successfully read a character from the USB port
+  MC_IO_ERROR                   = -6,  // Usb error
+  MC_UNKNOWN_ERROR              = -7,	 // Unknown error
+  MC_PACKET_LENGTH_0            = -8,
+  MC_ERROR_CREATING_BUNDLE      = -9,
+  MC_ERROR_SENDING_TEXT_MESSAGE = -10
 } mcError;
 
 #endif
