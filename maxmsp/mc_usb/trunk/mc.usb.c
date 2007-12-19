@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006 MakingThings
+ Copyright 2006-2007 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -24,11 +24,13 @@
 #include "ext_common.h"
 #include "ext_obex.h"
 
+#include "mc_osc.h"
 #include "mcError.h"
 #include "usb_serial.h"
-#include "mc_osc.h"
+
 
 #define MAXSIZE 512
+#define MAX_READ_LENGTH 16384
 
 // SLIP codes
 #define END             0300    // indicates end of packet 
@@ -54,27 +56,22 @@ typedef struct _mcUsb
   int packetStarted;
   // USB things
   t_usbInterface* mc_usbInt;  // the USB interface
-  char* usbIncomingBuf;  // the 
-  char singleChar;
+  char* usbReadBufPtr;
+  char usbReadBuffer[ MAX_READ_LENGTH ];
+	int usbReadBufLength;
 } t_mcUsb;
 
 void *mcUsb_class;  // global variable pointing to the class
 
 void *mcUsb_new( t_symbol *s, long ac, t_atom *av );
 void mcUsb_free(t_mcUsb *x);
-void mcUsb_bang(t_mcUsb *x);
-void mcUsb_int(t_mcUsb *x, long c);
 void mcUsb_anything(t_mcUsb *x, t_symbol *s, short ac, t_atom *av);
 void mcUsb_assist(t_mcUsb *x, void *b, long m, long a, char *s);
 void mcUsb_tick( t_mcUsb *x );
 mcError mc_send_packet( t_mcUsb *x, t_usbInterface* u, char* packet, int length );
-void mc_build_packet( t_mcUsb *x, char c );
+void mc_SLIP_receive( t_mcUsb *x );
 void mcUsb_sampleperiod( t_mcUsb *x, long i );
 void mcUsb_devicepath( t_mcUsb *x );
-
-// pattr support function prototypes
-//t_max_err mcUsb_getvalueof(t_mcUsb *x, long *ac, t_atom **av);
-//t_max_err mcUsb_setvalueof(t_mcUsb *x, long ac, t_atom *av);
 
 // define the object so Max knows all about it, and define which messages it will implement and respond to
 int main( )
@@ -84,9 +81,6 @@ int main( )
 	long	attrflags = 0;
 	
 	c = class_new("mcUsb", (method)mcUsb_new, (method)mcUsb_free, (short)sizeof(t_mcUsb), 0L, A_GIMME, 0);
-	
-	//common_symbols_init( );  // initialize the common symbols, since we want to use them
-	
 	class_obexoffset_set(c, calcoffset(t_mcUsb, obex));  // register the byte offset of obex with the class
 	
 	//add some attributes
@@ -94,16 +88,10 @@ int main( )
 		(method)0L, (method)0L, calcoffset(t_mcUsb, sampleperiod));
 	class_addattr(c, attr);
 
-	class_addmethod(c, (method)mcUsb_bang, "bang", 0);
-	class_addmethod(c, (method)mcUsb_int, "int", A_LONG, 0);
 	class_addmethod(c, (method)mcUsb_anything, "anything", A_GIMME, 0);
 	class_addmethod(c, (method)mcUsb_assist, "assist", A_CANT, 0);
 	class_addmethod(c, (method)mcUsb_sampleperiod, "sampleperiod", A_LONG, 0);
 	class_addmethod(c, (method)mcUsb_devicepath, "devicepath", A_GIMME, 0);
-	
-	// these methods support the pattr set of objects
-	//class_addmethod(c, (method)mcUsb_getvalueof, "getvalueof", A_CANT, 0);  
-	//class_addmethod(c, (method)mcUsb_setvalueof, "setvalueof", A_CANT, 0);
 
 	// add methods for dumpout and quickref	
 	class_addmethod(c, (method)object_obex_dumpout, "dumpout", A_CANT, 0); 
@@ -113,17 +101,6 @@ int main( )
 	class_register(CLASS_BOX, c);
 	mcUsb_class = c;
 	return 0;
-}
-
-void mcUsb_bang(t_mcUsb *x)
-{
-	;
-}
-
-void mcUsb_int(t_mcUsb *x, long c)
-{
-	post( "mcUsb got an int: %d", c );
-	object_notify( (void*)x, gensym( "int" ), (void*)c );
 }
 
 // gets called by Max when the object receives a "message" in its left inlet
@@ -160,79 +137,88 @@ void mcUsb_assist(t_mcUsb *x, void *b, long msg, long arg, char *s)
 // function that gets called back by the clock.
 void mcUsb_tick( t_mcUsb *x )
 {
-	int readResult;
-	//post( "tick." );
-
-	while( 1 )
-	{
-	  readResult = usb_read( x->mc_usbInt, &x->singleChar, 1 );  //we're only ever going to read 1 character at a time
-		if( readResult == MC_ERROR_CLOSE || readResult == MC_IO_ERROR )
-		{
-				usb_close( x->mc_usbInt );
-				break;
-		}
-	  else if( readResult != MC_GOT_CHAR ) //we got a character
-	    break;
-	  mc_build_packet( x, x->singleChar );
-	}
+	mc_SLIP_receive( x );
+	
 	if( x->mc_usbInt->deviceOpen )
-	  clock_delay( x->mc_clock, x->sampleperiod ); //set the delay interval for the next tick
+	  clock_delay( x->mc_clock, 1 ); //set the delay interval for the next tick
 	else
 	  clock_delay( x->mc_clock, 100 );
-	  
 }
 
-void mc_build_packet( t_mcUsb *x, char c )
+void mc_SLIP_receive( t_mcUsb *x )
 {
-  int readResult;
-	char d;
-	switch( (unsigned char)c )
+  int started = 0, i;
+  char *bufferPtr = x->osc_packet->packetBuf, *tempPtr;
+	x->osc_packet->length = 0;
+
+  if( !x->mc_usbInt->deviceOpen )
+    usb_open( x->mc_usbInt );
+  
+  if( !x->mc_usbInt->deviceOpen ) // if we're still not open, bail
+     return;
+	
+	while( 1 )
 	{
-		case END:
-			if( x->packetStarted && x->osc_packet->length ) // it was the END byte
-			{ 
-				*x->packetP = '\0';
-				Osc_receive_packet( x->out0, x->Osc, x->osc_packet->packetBuf, x->osc_packet->length, x->osc_message );
-				x->packetStarted = 0;
-			} 
-			else // it was the START byte
+		if( x->usbReadBufLength < 1 ) // if we don't have any unprocessed chars in our buffer, go read some more
+		{
+			int available = usb_numBytesAvailable( x->mc_usbInt );
+			if( available > 0 )
 			{
-				x->packetP = x->osc_packet->packetBuf;
-				x->osc_packet->length = 0;
-				x->packetStarted = 1;
-			}
-			break;
-			// if it's the same code as an ESC character, get another character,
-			// then figure out what to store in the packet based on that.
-		case ESC:
-			readResult = usb_read( x->mc_usbInt, &d, 1 );
-			if( readResult == MC_GOT_CHAR )
-			{
-				switch( (unsigned char)c )
+				int justGot = 0;
+				if( available > MAX_READ_LENGTH )
+					available = MAX_READ_LENGTH;
+				justGot = usb_read( x->mc_usbInt, x->usbReadBuffer, available );
+    		x->usbReadBufPtr = x->usbReadBuffer;
+				x->usbReadBufLength += justGot;
+    		if( x->usbReadBufLength < 0 )
 				{
-					case ESC_END:
-						c = END;
-						break;
-					case ESC_ESC:
-						c = ESC;
-						break;
+					post( "breaking..." );
+					break;
 				}
 			}
-			else
-				break;
-			// otherwise, just stick it in the packet		
-		default:
-			if( x->packetP == NULL )
-				break;
-			*x->packetP = c;
-		  //post( "Just read this: %c", c );
-			x->packetP++;
-			x->osc_packet->length++;
-			//*x->packetP = 0;
-			//post( "packet length: %d", x->osc_packet->length );
-			//post( "Packet: %s", x->osc_packet->packetBuf );
+		}
+
+		for( i = 0; i < x->usbReadBufLength; i++ )
+		{
+			switch( (unsigned char)*x->usbReadBufPtr )
+			{
+				case END:
+					if( started && x->osc_packet->length > 0 ) // it was the END byte
+					{
+						*bufferPtr = '\0';
+						Osc_receive_packet( x->out0, x->Osc, x->osc_packet->packetBuf, x->osc_packet->length, x->osc_message );
+						x->packetStarted = 0;
+						return; // We're done now if we had received any characters
+					}
+					else // skipping all starting END bytes
+					{
+						started = true;
+						x->osc_packet->length = 0;
+					}
+					break;					
+				case ESC:
+					// if it's the same code as an ESC character, we just want to skip it and 
+					// stick the next byte in the packet
+					x->usbReadBufPtr++;
+					x->usbReadBufLength--;
+					// no break here, just stick it in the packet		
+				default:
+					if( started )
+					{
+						*bufferPtr++ = *x->usbReadBufPtr;
+						x->osc_packet->length++;
+					}
+			}
+			x->usbReadBufPtr++;
+			x->usbReadBufLength--;
+		}
+		if( x->usbReadBufLength == 0 ) // if we didn't get anything, sleep...otherwise just rip through again
+			break;
+		//justGot = 0; // reset our count for the next run through
 	}
+	return; //IO_ERROR; // should never get here
 }
+
 
 mcError mc_send_packet( t_mcUsb *x, t_usbInterface* u, char* packet, int length )
 {
@@ -340,6 +326,9 @@ void *mcUsb_new( t_symbol *s, long ac, t_atom *av )
 	
 	new_mcUsb->osc_message = ( t_osc_message* )malloc( sizeof( t_osc_message ) );
 	Osc_reset_message( new_mcUsb->osc_message );
+
+	new_mcUsb->usbReadBufPtr = new_mcUsb->usbReadBuffer;
+	new_mcUsb->usbReadBufLength = 0;
 	
 	new_mcUsb->mc_usbInt = usb_init( usbConn, &new_mcUsb->mc_usbInt );
 	usb_open( new_mcUsb->mc_usbInt );
