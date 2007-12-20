@@ -281,31 +281,31 @@ void McHelperWindow::updateSummaryInfo( )
   if( board == NULL )
   	return;
 	
-	if( systemName->text() != board->name && !systemName->hasFocus() )
+	if( systemName->text() != board->name )
 		systemName->setText( board->name );
 		
-	if( systemSerialNumber->text() != board->serialNumber && !systemSerialNumber->hasFocus() )
+	if( systemSerialNumber->text() != board->serialNumber )
 		systemSerialNumber->setText( board->serialNumber );
 		
-	if( systemFirmwareVersion->text() != board->firmwareVersion && !systemFirmwareVersion->hasFocus() )
+	if( systemFirmwareVersion->text() != board->firmwareVersion )
 		systemFirmwareVersion->setText( board->firmwareVersion );
 		
-	if( systemFreeMemory->text() != board->freeMemory && !systemFreeMemory->hasFocus() )
+	if( systemFreeMemory->text() != board->freeMemory )
 		systemFreeMemory->setText( board->freeMemory );
 		
-	if( netAddressLineEdit->text() != board->ip_address && !netAddressLineEdit->hasFocus() )
+	if( netAddressLineEdit->text() != board->ip_address )
 		netAddressLineEdit->setText( board->ip_address );
 		
-	if( netMaskLineEdit->text() != board->netMask && !netMaskLineEdit->hasFocus() )
+	if( netMaskLineEdit->text() != board->netMask )
 		netMaskLineEdit->setText( board->netMask );
 		
-	if( netGatewayLineEdit->text() != board->gateway && !netGatewayLineEdit->hasFocus() )
+	if( netGatewayLineEdit->text() != board->gateway )
 		netGatewayLineEdit->setText( board->gateway );
 		
-	if( udpListenPort->text() != board->udp_listen_port && !udpListenPort->hasFocus() )
+	if( udpListenPort->text() != board->udp_listen_port )
 		udpListenPort->setText( board->udp_listen_port );
 	
-	if( udpSendPort->text() != board->udp_send_port && !udpSendPort->hasFocus() )
+	if( udpSendPort->text() != board->udp_send_port )
 		udpSendPort->setText( board->udp_send_port );
 	
 	Qt::CheckState boardDhcpState = (board->dhcp) ? Qt::Checked : Qt::Unchecked;
@@ -871,7 +871,7 @@ void McHelperWindow::onApplyChanges( )
 	QString newName = systemName->text();
 	if( !newName.isEmpty() && board->name != newName )
 	{
-		msgs << QString( "/system/name %1" ).arg( newName);
+		msgs << QString( "/system/name %1" ).arg( QString( "\"%1\"" ).arg( newName ) );
 		displayMsgs << QString( "Changed name to %1" ).arg( newName );
 	}
 		
