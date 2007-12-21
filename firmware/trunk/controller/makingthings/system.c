@@ -71,10 +71,12 @@ int System_SetActive( int state )
       System = MallocWait( sizeof( SystemS ), 100 );
       System->name[0] = 0;
       System->StackAuditPtr = NULL;
+      #ifdef OSC
       System->asyncDestination = ASYNC_INIT;
       System->asyncDestination = System_GetAsyncDestination( );
       System->autoInterval = ASYNC_INIT;
       System->autoInterval = System_GetAutoSendInterval( );
+      #endif
     }
     return CONTROLLER_OK;
   }
