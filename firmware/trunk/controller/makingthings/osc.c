@@ -317,7 +317,7 @@ int Osc_UdpPacketSend( char* packet, int length, int replyAddress, int replyPort
 {
   if ( replyAddress != 0 && replyPort != 0 )
   {
-    int retval = DatagramSocketSend( Osc->sendSocket, replyAddress, replyPort, packet, length );
+    int retval = DatagramSocketSend( Osc->sendSocket, replyAddress, NetworkOsc_GetUdpSendPort(), packet, length );
     return retval;
   }
   else

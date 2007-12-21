@@ -59,14 +59,18 @@
   \endcode
   Now we should have the results of the HTTP GET from \b www.makingthings.com/test/path in \b myBuffer.
 */
-int WebClient_Get( int address, int port, char* path, char* buffer, int buffer_size )
+int WebClient_Get( int address, int port, char* hostname, char* path, char* buffer, int buffer_size )
 {
   char b[ WEBCLIENT_INTERNAL_BUFFER_SIZE ];
   int buffer_read = 0;
   void* s = Socket( address, port );  
   if ( s != NULL )
   {
-    int send_len = snprintf( b, WEBCLIENT_INTERNAL_BUFFER_SIZE, "GET %s HTTP/1.1\r\n\r\n", path );
+    int send_len = snprintf( b, WEBCLIENT_INTERNAL_BUFFER_SIZE, "GET %s HTTP/1.1\r\n%s%s%s\r\n", 
+                                path,
+                                ( hostname != NULL ) ? "Host: " : "",
+                                ( hostname != NULL ) ? hostname : "",
+                                ( hostname != NULL ) ? "\r\n" : ""  );
     if ( send_len > WEBCLIENT_INTERNAL_BUFFER_SIZE )
     {
       SocketClose( s );
@@ -91,7 +95,7 @@ int WebClient_Get( int address, int port, char* path, char* buffer, int buffer_s
       while ( ( buffer_length = SocketRead( s, bp, buffer_size - buffer_read ) ) )
       {
         buffer_read += buffer_length;
-        bp += buffer_read;
+        bp += buffer_length;
         if ( buffer_read >= content_length )
           break;
       }
@@ -126,7 +130,7 @@ int WebClient_Get( int address, int port, char* path, char* buffer, int buffer_s
                                 strlen("A test message to post"), bufLength );
   \endcode
 */
-int WebClient_Post( int address, int port, char* path, char* buffer, int data_length, int buffer_size )
+int WebClient_Post( int address, int port, char* path, char* hostname, char* buffer, int buffer_length, int buffer_size )
 {
   char b[ WEBCLIENT_INTERNAL_BUFFER_SIZE ];
   int buffer_read = 0;
@@ -135,8 +139,12 @@ int WebClient_Post( int address, int port, char* path, char* buffer, int data_le
   if ( s != NULL )
   { 
     int send_len = snprintf( b, WEBCLIENT_INTERNAL_BUFFER_SIZE, 
-                                "POST %s HTTP/1.1\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n", 
-                                path, data_length );
+                                "POST %s HTTP/1.1\r\n%s%s%sContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n", 
+                                path, 
+                                ( hostname != NULL ) ? "Host: " : "",
+                                ( hostname != NULL ) ? hostname : "",
+                                ( hostname != NULL ) ? "\r\n" : "",
+                                buffer_length );
     if ( send_len > WEBCLIENT_INTERNAL_BUFFER_SIZE )
     {
       SocketClose( s );
@@ -150,7 +158,7 @@ int WebClient_Post( int address, int port, char* path, char* buffer, int data_le
       return CONTROLLER_ERROR_WRITE_FAILED;
     }
 
-    SocketWrite( s, buffer, data_length );
+    SocketWrite( s, buffer, buffer_length );
     
     int content_length = 0;
     int b_len;

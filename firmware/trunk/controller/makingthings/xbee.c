@@ -31,7 +31,9 @@ typedef struct
 {
   XBeePacket* currentPkt;
   int packetIndex;
+  #ifdef OSC
   bool autosend;
+  #endif
 } XBeeSubsystem;
 
 XBeeSubsystem* XBee;
@@ -96,7 +98,9 @@ int XBee_SetActive( int state )
 
       XBee = MallocWait( sizeof( XBeeSubsystem ), 100 );
       XBee->packetIndex = 0;
+      #ifdef OSC
       XBee->autosend = XBee_GetAutoSend( true );
+      #endif
       XBee->currentPkt = MallocWait( sizeof( XBeePacket ), 100 );
       XBee_ResetPacket( XBee->currentPkt );
     }

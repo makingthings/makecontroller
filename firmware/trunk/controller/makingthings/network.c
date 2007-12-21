@@ -157,38 +157,41 @@ int SocketRead( void* socket, char* data, int length )
 {
   struct netconn *conn = socket;
   struct netbuf *buf;
-  int buflen;
+  int bytesRead;
 
   if ( conn->readingbuf == NULL )
   {
     buf = netconn_recv( conn );
     if ( buf == NULL )
       return 0;
-
-    buflen = netbuf_len( buf );
-    /* copy the contents of the received buffer into
-    the supplied memory pointer mem */
-    netbuf_copy( buf, data, length );
-
-    // Test to see if the buffer is done, or needs to be saved
-    if ( buflen <= length )
+    
+    /* 
+    Now deal appropriately with what we got.  If we got more than we asked for,
+    keep the extras in the conn->readingbuf and set the conn->readingoffset.
+    Otherwise, copy everything we got back into the calling buffer.
+    */
+    bytesRead = netbuf_len( buf );
+    if( bytesRead <= length ) 
     {
+      netbuf_copy( buf, data, bytesRead );
       netbuf_delete( buf );
+      // conn->readingbuf remains NULL
     }
-    else
+    else // if we got more than we asked for
     {
+      netbuf_copy( buf, data, length );
       conn->readingbuf = buf;
       conn->readingoffset = length;
-      buflen = length;
+      bytesRead = length;
     }
   }
   else
   {
     buf = conn->readingbuf;
-    buflen = netbuf_len( buf ) - conn->readingoffset;
+    bytesRead = netbuf_len( buf ) - conn->readingoffset;
     netbuf_copy_partial( buf, data, length, conn->readingoffset );
 
-    if ( buflen <= length )
+    if ( bytesRead <= length )
     {
       netbuf_delete( buf );
       conn->readingbuf = NULL;
@@ -196,11 +199,11 @@ int SocketRead( void* socket, char* data, int length )
     else
     {
       conn->readingoffset += length;
-      buflen = length;
+      bytesRead = length;
     }
   }
 
-  return buflen;
+  return bytesRead;
 }
 
 /**	

@@ -115,7 +115,9 @@ int AnalogIn_SetActive( int index, int state )
       int i;
       for( i = 0; i < ANALOGIN_CHANNELS; i++ )
         AnalogIn->channelUsers[ i ] = 0;
+      #ifdef OSC
       AnalogIn_AutoSendInit( );
+      #endif
     }
 
     return AnalogIn_Start( index );
@@ -311,6 +313,7 @@ int AnalogIn_GetValueWait( int index )
 /** @}
 */
 
+#ifdef OSC
 void AnalogIn_AutoSendInit( )
 {
   int autosend;
@@ -320,6 +323,7 @@ void AnalogIn_AutoSendInit( )
   else
     AnalogIn->autosend = autosend;
 }
+#endif
 
 int AnalogIn_Start( int index )
 {
