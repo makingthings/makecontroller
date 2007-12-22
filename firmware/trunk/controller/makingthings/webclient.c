@@ -30,6 +30,9 @@
 
   The web client system allows the Make Controller to get/post data to a webserver.  This
   makes it straightforward to use the Make Controller as a source of data for your web apps.
+  
+  Note that these functions make liberal use of printf-style functions, which can require 
+  lots of memory to be allocated to the task calling them.
 
   There's currently not a method provided for name resolution - you can always ping the 
   server you want to communicate with to see its IP address, and just use that.
@@ -41,10 +44,14 @@
 */
 
 /**	
-	Performs an HTTP GET operation to the path at the address / port specified.  
+	Performs an HTTP GET operation to the path at the address / port specified.  Note that this
+  uses lots of printf style functions and may require a fair amount of memory to be allocated
+  to the task calling it.
   The result is returned in the specified buffer.
 	@param address The IP address of the server to get from.  Usually created using the IP_ADDRESS( ) macro.
   @param port The port to connect on.  Usually 80 for HTTP.
+  @param hostname A string specifying the name of the host to connect to.  When connecting to a server
+  that does shared hosting, this will specify who to connect with.
   @param path The path on the server to connect to.
   @param buffer A pointer to the buffer read back into.  
 	@param buffer_size An integer specifying the actual size of the buffer.
@@ -55,7 +62,7 @@
   int addr = IP_ADDRESS( 72, 249, 53, 185); // makingthings.com is 72.249.53.185
   int bufLength = 100;
   char myBuffer[bufLength];
-  int getSize = WebClient_Get( addr, 80, "/test/path", myBuffer, bufLength );
+  int getSize = WebClient_Get( addr, 80, "www.makingthings.com", "/test/path", myBuffer, bufLength );
   \endcode
   Now we should have the results of the HTTP GET from \b www.makingthings.com/test/path in \b myBuffer.
 */
@@ -113,9 +120,11 @@ int WebClient_Get( int address, int port, char* hostname, char* path, char* buff
   are found read from a given buffer and the result is returned in the same buffer.
   @param address The IP address of the server to post to.
   @param port The port on the server you're connecting to. Usually 80 for HTTP.
+  @param hostname A string specifying the name of the host to connect to.  When connecting to a server
+  that does shared hosting, this will specify who to connect with.
   @param path The path on the server to post to.
 	@param buffer A pointer to the buffer to write from and read back into.  
-	@param data_length An integer specifying the number of bytes to write.
+	@param buffer_length An integer specifying the number of bytes to write.
 	@param buffer_size An integer specifying the actual size of the buffer.
   @return status.
 
@@ -126,8 +135,8 @@ int WebClient_Get( int address, int port, char* hostname, char* path, char* buff
   int bufLength = 100;
   char myBuffer[bufLength];
   sprintf( myBuffer, "A test message to post" );
-  int result = WebClient_Post( addr, 80, "/post/path", myBuffer, 
-                                strlen("A test message to post"), bufLength );
+  int result = WebClient_Post( addr, 80, "www.makingthings.com", "/post/path", 
+                                    myBuffer, strlen("A test message to post"), bufLength );
   \endcode
 */
 int WebClient_Post( int address, int port, char* path, char* hostname, char* buffer, int buffer_length, int buffer_size )
@@ -176,7 +185,7 @@ int WebClient_Post( int address, int port, char* path, char* hostname, char* buf
       while ( ( b_len = SocketRead( s, bp, buffer_size - buffer_read ) ) )
       {
         buffer_read += b_len;
-        bp += buffer_read;
+        bp += b_len;
         if ( buffer_read >= content_length )
           break;
       }
