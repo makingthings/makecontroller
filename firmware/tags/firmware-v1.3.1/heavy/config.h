@@ -10,7 +10,7 @@
 #include "appboard.h"     // ...if you're using the MAKE Application Board
 #include "error.h"
 
-#define FIRMWARE_NAME          "Heavy svn"
+#define FIRMWARE_NAME          "Heavy"
 #define FIRMWARE_MAJOR_VERSION 1
 #define FIRMWARE_MINOR_VERSION 3
 #define FIRMWARE_BUILD_NUMBER  1
