@@ -22,6 +22,7 @@ THUMB_SRC= \
   ../controller/freertos/portable/MemMang/heap_2.c \
   ../controller/makingthings/main.c \
   ../controller/makingthings/webserver.c \
+	../controller/makingthings/webclient.c \
   make.c \
   ../controller/makingthings/eeprom.c \
   ../controller/makingthings/analogin.c \
