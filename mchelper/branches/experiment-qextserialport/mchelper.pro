@@ -19,7 +19,7 @@ MCHELPER_VERSION = "2.1.0"
 TEMPLATE = app
 FORMS = layouts/mchelper.ui layouts/mchelperPrefs.ui
 #CONFIG += qt release
-CONFIG += qt debug
+CONFIG += qt debug warn_on
 
 HEADERS = 	McHelperWindow.h \
 			UploaderThread.h \
@@ -65,15 +65,19 @@ TARGET = mchelper
             
 QT += network xml
 RESOURCES     += resources/mchelper.qrc
-DEFINES     += MCHELPER_VERSION=\\\"$${MCHELPER_VERSION}\\\"
+DEFINES     += MCHELPER_VERSION=\"$${MCHELPER_VERSION}\"
 OBJECTS_DIR  = tmp
 MOC_DIR      = tmp
 DESTDIR      = bin
+INCLUDEPATH += qextserialport
+QMAKE_LIBDIR += qextserialport/build
+LIBS += -lqextserialport
 
 QTDIR_build:REQUIRES="contains(QT_CONFIG, small-config)"
 
 # ------------------------------------------------------------------
 # ------------------------------------------------------------------
+unix:DEFINES += _TTY_POSIX_
 
 macx{
 	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
@@ -92,18 +96,13 @@ macx{
 win32{
   LIBS += -lSetupapi
   RC_FILE = resources/mchelper.rc # for application icon
-  DEFINES += WINVER=0x0501
+  DEFINES += WINVER=0x0501 _TTY_WIN_ QWT_DLL QT_DLL
   
   # If in debug mode, let's show the output of any
   # q[Debug|Warning|Critical|Fatal]() calls to the console
   #debug {
     #CONFIG += console
   #}
-}
-
-
-unix{
-
 }
 
 

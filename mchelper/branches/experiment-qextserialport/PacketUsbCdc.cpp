@@ -24,8 +24,10 @@
 #define ESC_END         0334    // ESC ESC_END means END data byte 
 #define ESC_ESC         0335    // ESC ESC_ESC means ESC data byte 
 
-PacketUsbCdc::PacketUsbCdc( ) : QThread( )
+PacketUsbCdc::PacketUsbCdc( QString portName ) : QThread( )
 {
+	port = new QextSerialPort( portName );
+	this->portName = portName;
 	packetReadyInterface = NULL;
 	currentPacket = NULL;
 	exit = false;
@@ -46,10 +48,10 @@ void PacketUsbCdc::run()
 	  if( exit == true )
 	  	return;
 	  	
-	  if( !deviceOpen ) // if it's not open, try to open it
-			usbOpen( );
+	  if( !port->isOpen( ) ) // if it's not open, try to open it
+			port->open( );
 
-		if( deviceOpen ) // then, if open() succeeded, try to read
+		if( port->isOpen( ) ) // then, if open() succeeded, try to read
 		{
 			currentPacket = new OscUsbPacket( );
 			int packetLength = slipReceive( currentPacket->packetBuf, MAX_MESSAGE );
@@ -76,7 +78,7 @@ void PacketUsbCdc::run()
 
 PacketUsbCdc::Status PacketUsbCdc::open()
 {
-	if( UsbSerial::OK == usbOpen( ) )
+	if( port->open( ) )
 		return PacketInterface::OK;
 	else
 		return PacketInterface::ERROR_NOT_OPEN;
@@ -85,8 +87,7 @@ PacketUsbCdc::Status PacketUsbCdc::open()
 PacketUsbCdc::Status PacketUsbCdc::close()
 {
 	exit = true;
-	usbClose( );
-	msleep( 50 ); // wait a second before returning, because we'll be deleted right after we're removed form the GUI
+	port->close( );
 	return PacketInterface::OK;
 }
 
@@ -95,9 +96,8 @@ PacketUsbCdc::Status PacketUsbCdc::sendPacket( char* packet, int length )
   if( exit == true )
 		return PacketInterface::IO_ERROR;
 		
-	uchar buf[ length * 2 ]; // make it twice as long, as worst case scenario is ALL escape characters
-	buf[0] = END;  // Flush out any spurious data that may have accumulated
-	uchar* ptr = buf + 1; 
+	QByteArray outgoingPacket;
+	outgoingPacket.append( END ); // Flush out any spurious data that may have accumulated
 	int size = length;
 
   while( size-- )
@@ -107,26 +107,26 @@ PacketUsbCdc::Status PacketUsbCdc::sendPacket( char* packet, int length )
 			// if it's the same code as an END character, we send a special 
 			//two character code so as not to make the receiver think we sent an END
 			case END:
-				*ptr++ = ESC;
-				*ptr++ = ESC_END;
+				outgoingPacket.append( ESC );
+				outgoingPacket.append( ESC_END );
 				break;
 				// if it's the same code as an ESC character, we send a special 
 				//two character code so as not to make the receiver think we sent an ESC
 			case ESC:
-				*ptr++ = ESC;
-				*ptr++ = ESC_ESC;
+				outgoingPacket.append( ESC );
+				outgoingPacket.append( ESC_ESC );
 				break;
 				//otherwise, just send the character
 			default:
-				*ptr++ = *packet;
+				outgoingPacket.append( *packet );
 		}
 		packet++;
 	}
 	// tell the receiver that we're done sending the packet
-	*ptr++ = END;
-	if( UsbSerial::OK != usbWrite( (char*)buf, (ptr - buf) ) )
+	outgoingPacket.append( END );
+	if( port->write( outgoingPacket ) < 0 )
 	{
-		monitor->deviceRemoved( QString(portName) ); // shut ourselves down
+		monitor->deviceRemoved( portName ); // shut ourselves down
 		return PacketInterface::IO_ERROR;
 	}
 	else
@@ -148,28 +148,29 @@ int PacketUsbCdc::slipReceive( char* buffer, int length )
     	
     if( !slipRxBytesAvailable ) // if there's nothing left over from last time
     {
-    	int available = numberOfAvailableBytes( );
-			if( available == UsbSerial::IO_ERROR )
+    	int available = port->bytesAvailable( );
+			if( available < 0 )
 			{
 				exit = true;
-				monitor->deviceRemoved( QString(portName) ); // shut ourselves down
-					return PacketInterface::IO_ERROR;
+				monitor->deviceRemoved( portName ); // shut ourselves down
+				return PacketInterface::IO_ERROR;
 			}
 	    if( available > 0 )
 	    {
 	    	if( available > MAX_SLIP_READ_SIZE )
 	    		available = MAX_SLIP_READ_SIZE;
-	    	slipRxBytesAvailable = usbRead( slipRxBuffer, available );
+	    	slipRxBytesAvailable = port->read( slipRxBuffer, available );
 	    	slipRxPtr = slipRxBuffer;
 	    }
-			if( slipRxBytesAvailable < 0 && slipRxBytesAvailable != NOTHING_AVAILABLE )
+			if( slipRxBytesAvailable < 0 )
 			{
-				monitor->deviceRemoved( QString(portName) ); // shut ourselves down
+				monitor->deviceRemoved( portName ); // shut ourselves down
 				return -1;
 			}
     }
 	
-    for( i = 0; i < slipRxBytesAvailable; i++ )
+    int size = slipRxBytesAvailable;
+		for( i = 0; i < size; i++ )
     {
       switch( *slipRxPtr )
       {
@@ -213,7 +214,7 @@ bool PacketUsbCdc::isPacketWaiting( )
 
 bool PacketUsbCdc::isOpen( )
 {
-  return deviceOpen;
+  return port->isOpen( );
 }
 
 int PacketUsbCdc::receivePacket( char* buffer, int size )
@@ -259,11 +260,6 @@ char* PacketUsbCdc::location( )
 	#else
 	return "USB";
 	#endif
-}
-
-QString PacketUsbCdc::getKey( )
-{
-	return QString( portName );
 }
 
 void PacketUsbCdc::setInterfaces( MessageInterface* messageInterface, QApplication* application, MonitorInterface* monitor )
