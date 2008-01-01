@@ -68,6 +68,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 
   // Wire up the selection changed signal from the
   // model to be handled here
+	qRegisterMetaType<QModelIndex>("QModelIndex");
   connect( listWidget->selectionModel(), SIGNAL(currentChanged(const QModelIndex &, const QModelIndex &)),
            this,                                SLOT(deviceSelectionChanged(const QModelIndex &, const QModelIndex &)));
   
@@ -111,17 +112,12 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	connect( actionHide_OSC_Messages, SIGNAL( triggered(bool) ), this, SLOT( outWindowHideOSCMessages(bool) ) );
 	
 	connect( &summaryTimer, SIGNAL(timeout()), this, SLOT( sendSummaryMessage() ) );
+	connect( &outputWindowTimer, SIGNAL(timeout()), this, SLOT( postMessages( ) ) );
 	
-	// after all is set up, fire up the mechanism that looks for new boards
-	checkForNewDevices( ); // initially check for any devices out there
-	monitorTimer = new QTimer(this); // then set up a timer to check for others periodically
-  connect(monitorTimer, SIGNAL(timeout()), this, SLOT( checkForNewDevices() ) );
-  monitorTimer->start( DEVICE_SCAN_FREQ ); // check for new devices once a second...more often?
+	// after all is set up, fire up the mechanisms that look for new boards
   usb->start( );
   udp->start( );
   samba->start( );
-	
-	connect( &outputWindowTimer, SIGNAL(timeout()), this, SLOT( postMessages( ) ) );
 	outputWindowTimer.start( 50 );
 }
 
@@ -204,17 +200,6 @@ bool McHelperWindow::summaryTabIsActive( )
 		return true;
 	else
 		return false;
-}
-
-void McHelperWindow::checkForNewDevices( )
-{
-	if( listWidget->currentRow( ) < 0 && listWidget->count( ) > 0 )
-		listWidget->setCurrentRow( 0 ); // if nothing is selected, just select the first item
-		
-	if( systemName->text().isEmpty() && listWidget->count( ) > 0 )
-	{ // if we haven't filled up the summary tab, do it now
-		updateSummaryInfo( );
-	}
 }
 
 void McHelperWindow::removeDeviceThreadSafe( QString key )
