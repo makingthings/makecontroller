@@ -112,7 +112,6 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		UsbMonitor* usb;
 		NetworkMonitor* udp;
 		OscXmlServer *xmlServer;
-		QTimer* monitorTimer;
 		QTimer summaryTimer;
 		QTimer outputWindowTimer;
 		aboutMchelper* aboutDialog;
@@ -144,7 +143,6 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 			// Uploader functions
 			void fileSelectButtonClicked();
 			void uploadButtonClicked();
-			void checkForNewDevices( );
 			
 			void commandLineEvent( );
 			void postMessages( );

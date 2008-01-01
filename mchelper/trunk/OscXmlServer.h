@@ -46,6 +46,7 @@ class XmlHandler : public QXmlDefaultHandler
 		OscMessage* currentMessage;
 		QString currentDestination;
 		int currentPort;
+		QList<OscMessage*> oscMessageList;
 };
 
 class OscXmlServer : public QObject
@@ -57,9 +58,7 @@ class OscXmlServer : public QObject
 		~OscXmlServer( );
 		bool isConnected( );
 		void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort );
-		QList<OscMessage*> oscMessageList;
 		QString fromString;
-		int listenPort;
 		bool changeListenPort( int port );
 		void boardListUpdate( QList<Board*> boardList, bool arrived );
 		void boardInfoUpdate( Board* board );
@@ -72,6 +71,7 @@ class OscXmlServer : public QObject
 		QXmlInputSource *xmlInput;
 		XmlHandler *handler;
 		void writeXmlDoc( QDomDocument doc );
+		int listenPort;
 	
 	private slots:
 		void openNewConnection( );

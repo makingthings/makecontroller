@@ -27,7 +27,7 @@ OscXmlServer::OscXmlServer( McHelperWindow *mainWindow, int port )
 	connect( serverSocket, SIGNAL( newConnection() ), this, SLOT( openNewConnection() ) );
 	clientSocket = NULL;
 
-	handler = new XmlHandler( mainWindow, this );
+	handler = new XmlHandler( mainWindow, this );	
 	xml.setContentHandler( handler );
 	
 	fromString = QString( "XML server" ); // what our messages to the UI will show as having come from
@@ -283,16 +283,16 @@ bool XmlHandler::endElement( const QString & namespaceURI, const QString & local
 	
 	if( localName == "OSCPACKET" )
 	{
-		mainWindow->newXmlPacketReceived( xmlServer->oscMessageList, currentDestination );
+		mainWindow->newXmlPacketReceived( oscMessageList, currentDestination );
 		QStringList strings;
-		for( int i = 0; i < xmlServer->oscMessageList.count( ); i++ )
-			strings << xmlServer->oscMessageList.at( i )->toString( );
+		for( int i = 0; i < oscMessageList.count( ); i++ )
+			strings << oscMessageList.at( i )->toString( );
 		mainWindow->messageThreadSafe( strings, MessageEvent::XMLMessage, xmlServer->fromString);
-		qDeleteAll( xmlServer->oscMessageList );
-		xmlServer->oscMessageList.clear( );
+		qDeleteAll( oscMessageList );
+		oscMessageList.clear( );
 	}
 	else if( localName == "MESSAGE" )
-		xmlServer->oscMessageList.append( currentMessage ); 
+		oscMessageList.append( currentMessage ); 
 
 	return true;
 }
