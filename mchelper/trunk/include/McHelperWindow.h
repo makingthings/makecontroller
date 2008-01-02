@@ -161,6 +161,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 			void openMchelperHelp( );
 			void openOSCTuorial( );
 			void outWindowHideOSCMessages( bool hide );
+			void onActionCheckForUpdates( );
 }; 
 
 class McHelperApp : public QApplication

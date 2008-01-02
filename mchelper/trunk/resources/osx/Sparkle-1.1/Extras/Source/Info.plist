@@ -5,26 +5,22 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>mchelper</string>
-	<key>CFBundleGetInfoString</key>
-	<string>mchelper - Make Controller Helper - (c) MakingThings 2006-2007</string>
+	<string>${EXECUTABLE_NAME}</string>
+	<key>CFBundleName</key>
+	<string>${PRODUCT_NAME}</string>
 	<key>CFBundleIconFile</key>
-	<string>mchelper.icns</string>
+	<string></string>
 	<key>CFBundleIdentifier</key>
-	<string>com.makingthings.mchelper</string>
+	<string>org.andymatuschak.Sparkle</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
-	<key>CFBundleName</key>
-	<string>mchelper</string>
 	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleShortVersionString</key>
-	<string>@@version@@</string>
+	<string>FMWK</string>
 	<key>CFBundleSignature</key>
-	<string>MQAC</string>
+	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>@@version@@</string>
-	<key>LSMinimumSystemVersion</key>
-	<string>10.3.9</string>
+	<string>1.1</string>
+	<key>NSPrincipalClass</key>
+	<string></string>
 </dict>
 </plist>

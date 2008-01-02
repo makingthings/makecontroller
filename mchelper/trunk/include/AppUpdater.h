@@ -26,17 +26,17 @@
 #include <QHttp>
 #include <QTextEdit>
 
+#define APPUPDATE_BACKGROUND true
+#define APPUPDATE_FOREGROUND false
+
 class AppUpdater : public QDialog
 {
 	Q_OBJECT
 	public:
 		AppUpdater( );
 		~AppUpdater( ){ };
-		void checkForUpdates( );
+		void checkForUpdates( bool inBackground );
 		bool checkingOnStartup;
-	
-	public slots:
-		void on_actionCheckForUpdates( );
 			
 	private:
 		QPushButton acceptButton, ignoreButton;
