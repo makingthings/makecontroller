@@ -21,49 +21,50 @@ FORMS = layouts/mchelper.ui layouts/mchelperPrefs.ui
 #CONFIG += qt release
 CONFIG += qt debug
 
-HEADERS = 	McHelperWindow.h \
-			UploaderThread.h \
-			PacketInterface.h \
-			PacketReadyInterface.h \
-			MonitorInterface.h \
-			PacketUdp.h \
-			Osc.h \
-			Samba.h \
-			UsbSerial.h \
-			PacketUsbCdc.h \
-			UsbMonitor.h \
-			NetworkMonitor.h \
-			SambaMonitor.h \
-			Board.h \
-			MessageEvent.h \
-			BoardArrivalEvent.h \
-			OutputWindow.h \
-			OscXmlServer.h \
-			AppUpdater.h \
-			McHelperPrefs.h
+HEADERS = 	include/McHelperWindow.h \
+			include/UploaderThread.h \
+			include/PacketInterface.h \
+			include/PacketReadyInterface.h \
+			include/MonitorInterface.h \
+			include/PacketUdp.h \
+			include/Osc.h \
+			include/Samba.h \
+			include/UsbSerial.h \
+			include/PacketUsbCdc.h \
+			include/UsbMonitor.h \
+			include/NetworkMonitor.h \
+			include/SambaMonitor.h \
+			include/Board.h \
+			include/MessageEvent.h \
+			include/BoardArrivalEvent.h \
+			include/OutputWindow.h \
+			include/OscXmlServer.h \
+			include/AppUpdater.h \
+			include/McHelperPrefs.h
 				
             
-SOURCES	= 	main.cpp \
-			McHelperWindow.cpp \
-			UploaderThread.cpp \
-			PacketUdp.cpp \
-			Osc.cpp \
-			Samba.cpp \
-			UsbSerial.cpp \
-			PacketUsbCdc.cpp \
-			UsbMonitor.cpp \
-			NetworkMonitor.cpp \
-			SambaMonitor.cpp \
-			Board.cpp \
-			MessageEvent.cpp \
-			OutputWindow.cpp \
-			OscXmlServer.cpp \
-			AppUpdater.cpp \
-			McHelperPrefs.cpp
+SOURCES	= 	source/main.cpp \
+			source/McHelperWindow.cpp \
+			source/UploaderThread.cpp \
+			source/PacketUdp.cpp \
+			source/Osc.cpp \
+			source/Samba.cpp \
+			source/UsbSerial.cpp \
+			source/PacketUsbCdc.cpp \
+			source/UsbMonitor.cpp \
+			source/NetworkMonitor.cpp \
+			source/SambaMonitor.cpp \
+			source/Board.cpp \
+			source/MessageEvent.cpp \
+			source/OutputWindow.cpp \
+			source/OscXmlServer.cpp \
+			source/AppUpdater.cpp \
+			source/McHelperPrefs.cpp
 				
 TARGET = mchelper
             
 QT += network xml
+INCLUDEPATH += include
 RESOURCES     += resources/mchelper.qrc
 DEFINES     += MCHELPER_VERSION=\\\"$${MCHELPER_VERSION}\\\"
 OBJECTS_DIR  = tmp
@@ -79,13 +80,17 @@ macx{
 	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
 	QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
 	
+	# Carbon-Cocoa interface for Sparkle
+	HEADERS += include/carbon_cocoa.h
+	SOURCES += source/carbon_cocoa.mm
+	
 	#CONFIG += x86 ppc
-  LIBS += -framework IOKit
+  LIBS += -framework IOKit -framework CoreServices
+	LIBS += -framework Sparkle -framework Carbon
   ICON = resources/mchelper.icns
-  QMAKE_POST_LINK = strip bin/mchelper.app/Contents/MacOS/mchelper && \
-    # put the current version number into Info.plist
-    sed -e s/@@version@@/$${MCHELPER_VERSION}/g \
-    < resources/osx/Info.plist.in  > bin/mchelper.app/Contents/Info.plist
+	QMAKE_INFO_PLIST = resources/osx/Info.plist
+	QMAKE_POST_LINK = "sed -e s/@@version@@/$${MCHELPER_VERSION}/g -i '' bin/mchelper.app/Contents/Info.plist" && \
+                      strip bin/mchelper.app/Contents/MacOS/mchelper
 }
 
 

@@ -19,7 +19,6 @@
 
 #include <QFileDialog>
 #include <QSettings>
-#include <QHostAddress>
 #include <QMessageBox> 
 #include <QHeaderView>
 #include <QCheckBox>
@@ -27,6 +26,10 @@
 #include <QSizePolicy>
 #include "Osc.h"
 #include "BoardArrivalEvent.h"
+
+#ifdef Q_WS_MAC
+#include "carbon_cocoa.h"
+#endif // Q_WS_MAC
 
 #define DEVICE_SCAN_FREQ 1000
 #define SUMMARY_MESSAGE_FREQ 2000
@@ -104,7 +107,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
     
 	// setup the menu
 	connect( actionAboutMchelper, SIGNAL( triggered() ), aboutDialog, SLOT( show( ) ) );
-	connect( actionCheckForUpdates, SIGNAL( triggered() ), appUpdater, SLOT( on_actionCheckForUpdates( ) ) );
+	connect( actionCheckForUpdates, SIGNAL( triggered() ), this, SLOT( onActionCheckForUpdates( ) ) );
 	connect( actionPreferences, SIGNAL( triggered() ), prefsDialog, SLOT( show( ) ) );
 	connect( actionClearOutputWindow, SIGNAL( triggered() ), outputModel, SLOT( clear( ) ) );
 	connect( actionMchelper_Help, SIGNAL( triggered() ), this, SLOT( openMchelperHelp( ) ) );
@@ -800,12 +803,22 @@ bool McHelperWindow::findNetBoardsEnabled( )
 
 void McHelperWindow::initUpdate( )
 {
+	#ifdef Q_WS_MAC
+	Cocoa::initialize(); // check for updates in background with Sparkle
+	#else
 	QSettings settings("MakingThings", "mchelper");
 	if( settings.value( "checkForUpdatesOnStartup", true ).toBool( ) )
-	{
-		appUpdater->checkingOnStartup = true;
-		appUpdater->checkForUpdates( );
-	}
+		appUpdater->checkForUpdates( APPUPDATE_BACKGROUND );
+	#endif // Q_WS_MAC
+}
+
+void McHelperWindow::onActionCheckForUpdates( )
+{
+	#ifdef Q_WS_MAC
+	Cocoa::checkForUpdates();
+	#else
+	appUpdater->checkForUpdates( APPUPDATE_FOREGROUND );
+	#endif // Q_WS_MAC
 }
 
 void McHelperWindow::onAnySummaryValueEdited( bool state )

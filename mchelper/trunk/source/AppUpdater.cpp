@@ -59,14 +59,9 @@ AppUpdater::AppUpdater( ) : QDialog( )
 	connect( &http, SIGNAL( requestFinished( int, bool ) ), this, SLOT( finishedRead( int, bool ) ) );
 }
 
-void AppUpdater::on_actionCheckForUpdates( )
+void AppUpdater::checkForUpdates( bool inBackground )
 {
-	checkingOnStartup = false;
-	checkForUpdates( );
-}
-
-void AppUpdater::checkForUpdates( )
-{
+	checkingOnStartup = inBackground;
 	http.setHost("www.makingthings.com");
 	httpGetID = http.get("/updates/mchelper.xml");
 }
