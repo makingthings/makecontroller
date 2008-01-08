@@ -34,7 +34,7 @@
 #include "carbon_cocoa.h"
 
 // Initialize Cocoa and Sparkle
-void Cocoa::initialize()
+void Sparkle::initialize()
 {	
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	
@@ -45,13 +45,13 @@ void Cocoa::initialize()
 	[pool release];
 }
 
-void Cocoa::checkForUpdates()
+void Sparkle::checkForUpdates()
 {
 	SUUpdater* updater = [SUUpdater alloc];
 	[updater checkForUpdates:nil];
 }
 
-QString Cocoa::FSRefToPath(FSRef fsref)
+QString Sparkle::FSRefToPath(FSRef fsref)
 {
 	CFURLRef url = CFURLCreateFromFSRef(kCFAllocatorDefault, &fsref);
 	if( !url )

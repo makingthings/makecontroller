@@ -52,7 +52,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	#endif
 	
 	noUI = false;
-	
+	splitter->setChildrenCollapsible( false );
 	initUpdate( );
 	
 	//listWidget = new BoardListModel( application, this, this );
@@ -81,7 +81,6 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	progressBar->setValue( 0 );
 	lastTabIndex = 0;
 	
-	// if ( udp->open( ) != PacketUdp::OK )
 	connect( tabWidget, SIGNAL( currentChanged(int) ), this, SLOT( tabIndexChanged(int) ) );
 	
 	//USB signals/slots
@@ -803,19 +802,21 @@ bool McHelperWindow::findNetBoardsEnabled( )
 
 void McHelperWindow::initUpdate( )
 {
-	#ifdef Q_WS_MAC
-	Cocoa::initialize(); // check for updates in background with Sparkle
-	#else
 	QSettings settings("MakingThings", "mchelper");
 	if( settings.value( "checkForUpdatesOnStartup", true ).toBool( ) )
+	{
+		#ifdef Q_WS_MAC
+		Sparkle::initialize(); // check for updates in background with Sparkle
+		#else
 		appUpdater->checkForUpdates( APPUPDATE_BACKGROUND );
-	#endif // Q_WS_MAC
+		#endif // Q_WS_MAC
+	}
 }
 
 void McHelperWindow::onActionCheckForUpdates( )
 {
 	#ifdef Q_WS_MAC
-	Cocoa::checkForUpdates();
+	Sparkle::checkForUpdates();
 	#else
 	appUpdater->checkForUpdates( APPUPDATE_FOREGROUND );
 	#endif // Q_WS_MAC
