@@ -69,27 +69,39 @@ DEFINES     += MCHELPER_VERSION=\"$${MCHELPER_VERSION}\"
 OBJECTS_DIR  = tmp
 MOC_DIR      = tmp
 DESTDIR      = bin
-INCLUDEPATH += qextserialport
-QMAKE_LIBDIR += qextserialport/build
-LIBS += -lqextserialport
 
 QTDIR_build:REQUIRES="contains(QT_CONFIG, small-config)"
 
 # ------------------------------------------------------------------
+# qextserialport stuff
 # ------------------------------------------------------------------
-unix:DEFINES += _TTY_POSIX_
+
+INCLUDEPATH += qextserialport
+HEADERS	+= qextserialport/qextserialbase.h qextserialport/qextserialport.h
+SOURCES	+= qextserialport/qextserialbase.cpp qextserialport/qextserialport.cpp
+
+unix:HEADERS	+= qextserialport/posix_qextserialport.h
+unix:SOURCES	+= qextserialport/posix_qextserialport.cpp
+unix:DEFINES	+= _TTY_POSIX_
+
+win32:HEADERS	+= qextserialport/win_qextserialport.h
+win32:SOURCES	+= qextserialport/win_qextserialport.cpp
+win32:DEFINES	+= _TTY_WIN_
+
+# ------------------------------------------------------------------
+# platform specific stuff
+# ------------------------------------------------------------------
 
 macx{
 	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
 	QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
-	
+
+	LIBS += -framework IOKit
 	#CONFIG += x86 ppc
-  LIBS += -framework IOKit
   ICON = resources/mchelper.icns
-  QMAKE_POST_LINK = strip bin/mchelper.app/Contents/MacOS/mchelper && \
-    # put the current version number into Info.plist
-    sed -e s/@@version@@/$${MCHELPER_VERSION}/g \
-    < resources/osx/Info.plist.in  > bin/mchelper.app/Contents/Info.plist
+  QMAKE_INFO_PLIST = resources/osx/Info.plist
+	QMAKE_POST_LINK = "sed -e s/@@version@@/$${MCHELPER_VERSION}/g -i '' bin/mchelper.app/Contents/Info.plist" && \
+                      strip bin/mchelper.app/Contents/MacOS/mchelper
 }
 
 

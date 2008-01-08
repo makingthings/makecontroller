@@ -14,11 +14,11 @@
 class Posix_QextSerialPort:public QextSerialBase {
 public:
     Posix_QextSerialPort();
-    Posix_QextSerialPort(const Posix_QextSerialPort& s);
+    Posix_QextSerialPort(const Posix_QextSerialPort&);
     Posix_QextSerialPort(const QString & name);
     Posix_QextSerialPort(const PortSettings& settings);
     Posix_QextSerialPort(const QString & name, const PortSettings& settings);
-    Posix_QextSerialPort& operator=(const Posix_QextSerialPort& s);
+    Posix_QextSerialPort& operator=(const Posix_QextSerialPort&);
     virtual ~Posix_QextSerialPort();
 
     virtual void setBaudRate(BaudRateType);
@@ -46,6 +46,7 @@ public:
 protected:
     QFile* Posix_File;
     struct termios Posix_CommConfig;
+    struct termios save_termios;
     struct timeval Posix_Timeout;
     struct timeval Posix_Copy_Timeout;
 

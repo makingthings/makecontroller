@@ -11,6 +11,7 @@ defining _TTY_NOWARN_ (to turn off all warnings) or _TTY_NOWARN_PORT_ (to turn o
 warnings) in the project.  Note that _TTY_NOWARN_ will also turn off portability warnings.
 */
 
+//#include <fcntl.h>
 #include <stdio.h>
 #include "posix_qextserialport.h"
 
@@ -40,7 +41,7 @@ See the other constructors if you need to open a different port.
 Posix_QextSerialPort::Posix_QextSerialPort()
 : QextSerialBase()
 {
-    Posix_File=new QFile();
+    //Posix_File=new QFile();
 }
 
 /*!
@@ -59,7 +60,7 @@ Posix_QextSerialPort::Posix_QextSerialPort(const Posix_QextSerialPort& s)
     Settings.FlowControl=s.Settings.FlowControl;
     lastErr=s.lastErr;
 
-    Posix_File=new QFile();
+    //Posix_File=new QFile();
     Posix_File=s.Posix_File;
     memcpy(&Posix_Timeout, &s.Posix_Timeout, sizeof(struct timeval));
     memcpy(&Posix_Copy_Timeout, &s.Posix_Copy_Timeout, sizeof(struct timeval));
@@ -75,7 +76,7 @@ e.g."COM1" or "/dev/ttyS0".
 Posix_QextSerialPort::Posix_QextSerialPort(const QString & name)
  : QextSerialBase(name)
 {
-    Posix_File=new QFile();
+    //Posix_File=new QFile();
 }
 
 /*!
@@ -91,7 +92,7 @@ Posix_QextSerialPort::Posix_QextSerialPort(const PortSettings& settings)
     setStopBits(settings.StopBits);
     setFlowControl(settings.FlowControl);
 
-    Posix_File=new QFile();
+    //Posix_File=new QFile();
     setTimeout(settings.Timeout_Sec, settings.Timeout_Millisec);
 }
 
@@ -108,7 +109,7 @@ Posix_QextSerialPort::Posix_QextSerialPort(const QString & name, const PortSetti
     setStopBits(settings.StopBits);
     setFlowControl(settings.FlowControl);
 
-    Posix_File=new QFile();
+    //Posix_File=new QFile();
     setTimeout(settings.Timeout_Sec, settings.Timeout_Millisec);
 }
 
@@ -143,8 +144,7 @@ Posix_QextSerialPort::~Posix_QextSerialPort()
     if (isOpen()) {
         close();
     }
-    Posix_File->close();
-    delete Posix_File;
+    Posix_File->close( );
 }
 
 /*!
@@ -807,6 +807,50 @@ void Posix_QextSerialPort::setTimeout(ulong sec, ulong millisec)
     UNLOCK_MUTEX();
 }
 
+void display_termios(termios buff)
+{
+	//printf("c_cflag = %X (", buff.c_cflag);
+	if(buff.c_cflag & CIGNORE)
+		printf(" CIGNORE");
+	switch( buff.c_cflag & CSIZE)
+	{
+		case CS5: printf(" CS5"); break;
+		case CS6: printf(" CS6"); break;
+		case CS7: printf(" CS7"); break;
+		case CS8: printf(" CS8"); break;
+	}		
+	if(buff.c_cflag & CSTOPB)
+		printf(" CSTOPB");
+	if(buff.c_cflag & CREAD)
+		printf(" CREAD");
+	if(buff.c_cflag & PARENB)      // parity enable
+		printf(" PARENB");
+	if(buff.c_cflag & PARODD)      // odd parity, else even
+		printf(" PARODD");
+	if(buff.c_cflag & HUPCL)      // hang up on last close
+		printf(" HUPCL");
+	if(buff.c_cflag & CLOCAL)      // ignore modem status lines
+		printf(" CLOCAL");
+	printf(" )\n");
+	//printf("c_iflag = %X", buff.c_iflag);
+	printf("\n");
+	//printf("c_lflag = %X", buff.c_lflag);
+	printf("\n");
+	//printf("c_oflag = %X", buff.c_oflag);
+	printf("\n");
+	//printf("c_ispeed = %d", buff.c_ispeed);
+	printf("\n");
+	//printf("c_ospeed = %d", buff.c_ospeed);
+	printf("\n");
+	printf("c_cc[VMIN] = %d\n", buff.c_cc[VMIN] );
+	printf("c_cc[VTIME] = %d\n", buff.c_cc[VTIME] );
+	printf("c_cc[VINTR] = %d\n", buff.c_cc[VINTR] );
+	printf("c_cc[VQUIT] = %d\n", buff.c_cc[VQUIT] );
+	printf("c_cc[VSUSP] = %d\n", buff.c_cc[VSUSP] );
+	printf("c_cc[VSTART] = %d\n", buff.c_cc[VSTART] );
+	printf("c_cc[VSTOP] = %d\n", buff.c_cc[VSTOP] );
+}
+
 /*!
 \fn bool Posix_QextSerialPort::open(OpenMode mode)
 Opens the serial port associated to this class.
@@ -827,26 +871,31 @@ bool Posix_QextSerialPort::open(OpenMode mode)
             /*set open mode*/
             QIODevice::open(mode);
 
+				tcgetattr(Posix_File->handle(), &save_termios);	//Save the old termios
+				Posix_CommConfig = save_termios;
+
             /*configure port settings*/
             tcgetattr(Posix_File->handle(), &Posix_CommConfig);
 
+//				display_termios(Posix_CommConfig);
+				cfmakeraw(&Posix_CommConfig);	//Set for raw access to the port
+//				display_termios(Posix_CommConfig);
+
             /*set up other port settings*/
-            Posix_CommConfig.c_cflag|=CREAD|CLOCAL;
-            Posix_CommConfig.c_lflag&=(~(ICANON|ECHO|ECHOE|ECHOK|ECHONL|ISIG));
-            Posix_CommConfig.c_iflag&=(~(INPCK|IGNPAR|PARMRK|ISTRIP|ICRNL|IXANY));
-            Posix_CommConfig.c_oflag&=(~OPOST);
-            Posix_CommConfig.c_cc[VMIN]=0;
-            Posix_CommConfig.c_cc[VINTR] = _POSIX_VDISABLE;
-            Posix_CommConfig.c_cc[VQUIT] = _POSIX_VDISABLE;
-            Posix_CommConfig.c_cc[VSTART] = _POSIX_VDISABLE;
-            Posix_CommConfig.c_cc[VSTOP] = _POSIX_VDISABLE;
-            Posix_CommConfig.c_cc[VSUSP] = _POSIX_VDISABLE;
-            setBaudRate(Settings.BaudRate);
-            setDataBits(Settings.DataBits);
-            setParity(Settings.Parity);
-            setStopBits(Settings.StopBits);
-            setFlowControl(Settings.FlowControl);
+            Posix_CommConfig.c_cflag |= CREAD | CLOCAL;	//Enable RX and disable control signals
+            Posix_CommConfig.c_lflag = 0;
+            Posix_CommConfig.c_iflag = IGNBRK;	//Ignore break signals
+            Posix_CommConfig.c_oflag = 0;
+            Posix_CommConfig.c_cc[VMIN]=1;	//Non-blocking read
+//            Posix_CommConfig.c_cc[VTIME]=5;
+            setBaudRate(Settings.BaudRate);	// !! This updates Posix_CommConfig
+//            setDataBits(Settings.DataBits);
+//            setParity(Settings.Parity);
+//            setStopBits(Settings.StopBits);
+//            setFlowControl(Settings.FlowControl);
             setTimeout(Settings.Timeout_Sec, Settings.Timeout_Millisec);
+//				display_termios(Posix_CommConfig);
+				tcflush(Posix_File->handle(), TCIOFLUSH);
             tcsetattr(Posix_File->handle(), TCSAFLUSH, &Posix_CommConfig);
         } else {
             qDebug("Could not open File! Error code : %d", Posix_File->error());
@@ -864,7 +913,8 @@ is not currently open.
 void Posix_QextSerialPort::close()
 {
     LOCK_MUTEX();
-    Posix_File->close();
+	 tcsetattr(Posix_File->handle(), TCSAFLUSH | TCSANOW, &save_termios);	//Restore old termios
+//    Posix_File->close();
     QIODevice::close();
     UNLOCK_MUTEX();
 }
@@ -918,13 +968,13 @@ qint64 Posix_QextSerialPort::bytesAvailable()
           Make sure we use the right timeout values*/
         //memcpy(&Posix_Timeout, &Posix_Copy_Timeout, sizeof(struct timeval));
         Posix_Timeout = Posix_Copy_Timeout;
-        int n=select(Posix_File->handle()+1, &fileSet, NULL, &fileSet, &Posix_Timeout);
-        if (!n) {
-            lastErr=E_PORT_TIMEOUT;
-            UNLOCK_MUTEX();
-            return -1;
-        }
-        if (n==-1 || ioctl(Posix_File->handle(), FIONREAD, &bytesQueued)==-1) {
+//        int n=select(Posix_File->handle()+1, &fileSet, NULL, &fileSet, &Posix_Timeout);
+//        if (!n) {
+//            lastErr=E_PORT_TIMEOUT;
+//            UNLOCK_MUTEX();
+//            return -1;
+//        }
+        if (/*n==-1 ||*/ ioctl(Posix_File->handle(), FIONREAD, &bytesQueued)==-1) {
             translateError(errno);
             UNLOCK_MUTEX();
             return -1;

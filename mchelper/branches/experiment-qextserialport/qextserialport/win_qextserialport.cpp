@@ -293,10 +293,9 @@ qint64 Win_QextSerialPort::readData(char *data, qint64 maxSize)
     DWORD Win_BytesRead=0;
     DWORD Win_ErrorMask=0;
     ClearCommError(Win_Handle, &Win_ErrorMask, &Win_ComStat);
-    if (Win_ComStat.cbInQue &&
-        (!ReadFile(Win_Handle, (void*)data, (DWORD)maxSize, &Win_BytesRead, NULL)
-        || Win_BytesRead==0)) {
-        lastErr=E_READ_FAILED;
+    if( (ReadFile(Win_Handle, (void*)data, (DWORD)maxSize, &Win_BytesRead, NULL)==0) || (Win_BytesRead==0) ) 
+	{
+		lastErr=GetLastError();
         retVal=-1;
     }
     else {

@@ -55,6 +55,9 @@ void UsbMonitor::closeAll( )
 	QHash<QString, PacketUsbCdc*>::iterator i  = connectedDevices.begin( );
 	while( i != connectedDevices.end( ) )
 	{
+		i.value( )->quit( );
+		while( i.value( )->isRunning( ) )
+			msleep( 5 );
 		i.value( )->close( );
 		++i;
 	}
@@ -336,6 +339,8 @@ void UsbMonitor::removalNotification( HANDLE handle )
 		if( i.value( )->deviceHandle == handle )
 		{
 			i.value( )->close( );
+			while( i.value( )->isRunning( ) )
+				msleep( 5 );
 			mainWindow->removeDeviceThreadSafe( i.key() );
 			i = connectedDevices.erase( i );
 		}
@@ -351,9 +356,9 @@ void UsbMonitor::deviceRemoved( QString key )
 	if( connectedDevices.contains( key) )
 	{
 		PacketUsbCdc* usb = connectedDevices.value( key );
+		while( usb->isRunning( ) )
+			msleep( 5 );
 		connectedDevices.remove( key );
-		if( usb->isOpen() )
-			usb->close( );
 		mainWindow->removeDeviceThreadSafe( key );
 	}
 }

@@ -79,16 +79,6 @@ Osc::Osc( )
 	packetInterface = NULL;
 }
 
-Osc::~Osc( )
-{
-	if( packetInterface != NULL )
-	{
-		if( packetInterface->isOpen( ) )
-			packetInterface->close( );
-		delete packetInterface;
-	}
-}
-
 const char* Osc::getPreamble( )
 { 
 	return preamble;

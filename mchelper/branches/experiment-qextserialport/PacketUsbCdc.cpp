@@ -27,12 +27,12 @@
 PacketUsbCdc::PacketUsbCdc( QString portName ) : QThread( )
 {
 	port = new QextSerialPort( portName );
-	this->portName = portName;
+	port->setBaudRate(BAUD9600);
+	port->setParity(  PAR_NONE); 
+	port->setDataBits(DATA_8);
+	port->setStopBits(STOP_1);
 	packetReadyInterface = NULL;
 	currentPacket = NULL;
-	exit = false;
-	slipRxBytesAvailable = 0;
-	slipRxPtr = slipRxBuffer;
 }
 
 PacketUsbCdc::~PacketUsbCdc( )
@@ -45,11 +45,8 @@ void PacketUsbCdc::run()
 {
 	while( 1 )
 	{
-	  if( exit == true )
-	  	return;
-	  	
 	  if( !port->isOpen( ) ) // if it's not open, try to open it
-			port->open( );
+			port->open( QIODevice::ReadWrite );
 
 		if( port->isOpen( ) ) // then, if open() succeeded, try to read
 		{
@@ -64,6 +61,8 @@ void PacketUsbCdc::run()
 				}
 				packetReadyInterface->packetWaiting( );
 			}
+			else if( packetLength < 0 )
+				return; // this will kill the thread
 			else
 			{
 				delete currentPacket;
@@ -73,12 +72,11 @@ void PacketUsbCdc::run()
 		else // usb isn't open...chill out.
 			msleep( 50 );
 	}
-	close( ); // should never get here...
 }
 
 PacketUsbCdc::Status PacketUsbCdc::open()
 {
-	if( port->open( ) )
+	if( port->open( QIODevice::ReadWrite ) )
 		return PacketInterface::OK;
 	else
 		return PacketInterface::ERROR_NOT_OPEN;
@@ -86,14 +84,16 @@ PacketUsbCdc::Status PacketUsbCdc::open()
 
 PacketUsbCdc::Status PacketUsbCdc::close()
 {
-	exit = true;
 	port->close( );
 	return PacketInterface::OK;
 }
 
 PacketUsbCdc::Status PacketUsbCdc::sendPacket( char* packet, int length )
 {
-  if( exit == true )
+  if( !port->isOpen( ) )
+		port->open( QIODevice::ReadWrite );
+	
+	if( !port->isOpen( ) )
 		return PacketInterface::IO_ERROR;
 		
 	QByteArray outgoingPacket;
@@ -126,79 +126,75 @@ PacketUsbCdc::Status PacketUsbCdc::sendPacket( char* packet, int length )
 	outgoingPacket.append( END );
 	if( port->write( outgoingPacket ) < 0 )
 	{
-		monitor->deviceRemoved( portName ); // shut ourselves down
+		quit( );
+		monitor->deviceRemoved( port->portName( ) ); // shut ourselves down
 		return PacketInterface::IO_ERROR;
 	}
 	else
 		return PacketInterface::OK;
 }
 
+int PacketUsbCdc::getMoreBytes( )
+{
+	if( slipRxPacket.size( ) < 1 ) // if there's nothing left over from last time
+	{
+		int available = port->bytesAvailable( );
+		if( available < 0 )
+			return -1;
+		if( available > 0 )
+		{
+			slipRxPacket.resize( available );
+			int read = port->read( slipRxPacket.data( ), slipRxPacket.size( ) );
+			if( read < 0 )
+				return -1;
+		}
+	}
+	return PacketInterface::OK;
+}
+
 int PacketUsbCdc::slipReceive( char* buffer, int length )
-{  
-  if( length > MAX_SLIP_READ_SIZE )
-  	return PacketInterface::IO_ERROR;
-  
+{
   int started = 0, count = 0, finished = 0, i;
   char *bufferPtr = buffer;
 
   while ( true )
   {
-    if( exit == true )
-    	return -1;
-    	
-    if( !slipRxBytesAvailable ) // if there's nothing left over from last time
-    {
-    	int available = port->bytesAvailable( );
-			if( available < 0 )
+		int status = getMoreBytes( );
+		if( status != PacketInterface::OK )
+			return -1;
+			
+		if( slipRxPacket.size( ) )
+		{
+			int size = (slipRxPacket.size( ) > length) ? length : slipRxPacket.size( );
+			for( i = 0; i < size; i++ )
 			{
-				exit = true;
-				monitor->deviceRemoved( portName ); // shut ourselves down
-				return PacketInterface::IO_ERROR;
+				switch( *slipRxPacket.data( ) )
+				{
+					case END:
+						if( started && count ) // it was the END byte
+							finished = true; // We're done now if we had received any characters
+						else // skipping all starting END bytes
+							started = true;
+						break;					
+					case ESC:
+						// if it's the same code as an ESC character, we just want to skip it and 
+						// stick the next byte in the packet
+						slipRxPacket.remove( 0, 1 );
+						// no break here, just stick it in the packet		
+					default:
+						if( started )
+						{
+							*bufferPtr++ = *slipRxPacket.data( );
+							count++;
+						}
+						break;
+				}
+				slipRxPacket.remove( 0, 1 );
+				if( finished )
+					return count;
 			}
-	    if( available > 0 )
-	    {
-	    	if( available > MAX_SLIP_READ_SIZE )
-	    		available = MAX_SLIP_READ_SIZE;
-	    	slipRxBytesAvailable = port->read( slipRxBuffer, available );
-	    	slipRxPtr = slipRxBuffer;
-	    }
-			if( slipRxBytesAvailable < 0 )
-			{
-				monitor->deviceRemoved( portName ); // shut ourselves down
-				return -1;
-			}
-    }
-	
-    int size = slipRxBytesAvailable;
-		for( i = 0; i < size; i++ )
-    {
-      switch( *slipRxPtr )
-      {
-        case END:
-          if( started && count ) // it was the END byte
-						finished = true; // We're done now if we had received any characters
-          else // skipping all starting END bytes
-            started = true;
-          break;					
-        case ESC:
-          // if it's the same code as an ESC character, we just want to skip it and 
-          // stick the next byte in the packet
-          slipRxPtr++;
-          // no break here, just stick it in the packet		
-        default:
-        	if( started )
-        	{
-          	*bufferPtr++ = *slipRxPtr;
-          	count++;
-        	}
-        	break;
-      }
-      slipRxPtr++;
-      slipRxBytesAvailable--;
-      if( finished )
-        return count;
-    }
-    if( slipRxBytesAvailable == 0 ) // if we didn't get anything, sleep...otherwise just rip through again
+		}
+    else // if we didn't get anything, sleep...otherwise just rip through again
     	msleep( 1 );
   }
   return PacketInterface::IO_ERROR; // should never get here
@@ -256,7 +252,7 @@ int PacketUsbCdc::receivePacket( char* buffer, int size )
 char* PacketUsbCdc::location( )
 {
 	#ifdef Q_WS_WIN
-	return portName;
+	return port->portName;
 	#else
 	return "USB";
 	#endif
