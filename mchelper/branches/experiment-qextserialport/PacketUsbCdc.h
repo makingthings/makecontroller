@@ -21,6 +21,7 @@
 #include <QThread>
 #include <QList>
 #include <QMutex>
+#include <QByteArray>
 
 #include "UsbSerial.h"
 #include "PacketInterface.h"
@@ -52,7 +53,7 @@ class PacketUsbCdc : public QThread, public PacketInterface
 			bool isPacketWaiting( );
 			bool isOpen( );
 			int receivePacket( char* buffer, int size );
-			QString getKey( void ){ return portName; }
+			QString getKey( void ){ return port->portName( ); }
 			char* location( void );
 			void setInterfaces( MessageInterface* messageInterface, QApplication* application, MonitorInterface* monitor );
 			void setPacketReadyInterface( PacketReadyInterface* packetReadyInterface);
@@ -65,7 +66,7 @@ class PacketUsbCdc : public QThread, public PacketInterface
 		  QList<OscUsbPacket*> packetList;
 		  OscUsbPacket* currentPacket;
 			QextSerialPort *port;
-			QString portName;
+			QByteArray slipRxPacket;
 		  QMutex packetListMutex;
 		  void sleepMs( int ms );
 			
@@ -74,11 +75,7 @@ class PacketUsbCdc : public QThread, public PacketInterface
 		  QApplication* application;
 		  MonitorInterface* monitor;
 		  int slipReceive( char* buffer, int length );
-		  bool exit;
-		  char slipRxBuffer[MAX_SLIP_READ_SIZE];
-		  int slipRxBytesAvailable;
-		  char *slipRxPtr;
-
+			int PacketUsbCdc::getMoreBytes( );
 };
 
 #endif // PACKETUSBCDC_H

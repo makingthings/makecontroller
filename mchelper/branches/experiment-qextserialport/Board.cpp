@@ -30,7 +30,12 @@ Board::Board( MessageInterface* messageInterface, McHelperWindow* mainWindow, QA
 
 Board::~Board( )
 {
-  delete osc; 
+  delete osc;
+	if( packetInterface != NULL )
+	{
+		packetInterface->close( );
+		delete packetInterface;
+	}
 }
 
 void Board::setPacketInterface( PacketInterface* packetInterface )
