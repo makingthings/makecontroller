@@ -96,6 +96,7 @@ class UsbSerial
 	  QMainWindow* mainWindow;		
 		
 	private:
+		QMutex usbMutex;
 		//Windows only
 		#ifdef Q_WS_WIN
 		UsbStatus openDevice( TCHAR* deviceName );
@@ -115,8 +116,6 @@ class UsbSerial
 		mach_port_t masterPort;
 		bool foundMakeController;
 		io_object_t usbDeviceReference;
-		
-		
 		void createMatchingDictionary( );
 		#endif	
 };

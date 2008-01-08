@@ -49,7 +49,7 @@ UsbSerial::UsbStatus UsbSerial::setportName( char* filePath )
 
 UsbSerial::UsbStatus UsbSerial::usbOpen( )
 {
-  QMutexLocker locker( &usbOpenMutex );
+  QMutexLocker locker( &usbMutex );
   
   	if( deviceOpen )  //if it's already open, do nothing.
 	  return ALREADY_OPEN;
@@ -99,7 +99,8 @@ void UsbSerial::usbClose( )
 {
   if( deviceOpen )
 	{
-    // Linux Only
+    QMutexLocker locker( &usbMutex );
+		// Linux Only
     #if (defined(Q_WS_LINUX))
     #endif
   	  //Mac-only
@@ -133,6 +134,8 @@ int UsbSerial::usbRead( char* buffer, int length )
 			return NOT_OPEN;
 		}
   }
+	
+	QMutexLocker locker( &usbMutex );
   
   // Linux Only
   #if (defined(Q_WS_LINUX))
@@ -250,6 +253,8 @@ UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
 		}
   }
   
+	QMutexLocker locker( &usbMutex );
+	
   // Linux Only
   #if (defined(Q_WS_LINUX))
     return NOT_OPEN;
@@ -323,7 +328,7 @@ UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
 int UsbSerial::numberOfAvailableBytes( )
 {
     int n;
-		
+		QMutexLocker locker( &usbMutex );
 		#ifdef Q_WS_MAC
 		if( ::ioctl( deviceHandle, FIONREAD, &n ) < 0 )
 			return IO_ERROR;
