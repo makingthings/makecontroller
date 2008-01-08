@@ -33,7 +33,7 @@
 
 class SUUpdater;
 
-namespace Cocoa
+namespace Sparkle
 {
 	void initialize();
 	void checkForUpdates();
