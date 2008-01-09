@@ -570,8 +570,6 @@ void McHelperWindow::postMessages( )
 		QMutexLocker locker(&outputWindowQueueMutex);
 		outputModel->newRows( outputWindowQueue );
 		outputWindowQueue.clear( );
-		outputView->resizeColumnToContents( McHelperWindow::TO_FROM );
-		outputView->resizeColumnToContents( McHelperWindow::TIMESTAMP );
 		outputView->scrollToBottom( );
 	}
 }
@@ -591,17 +589,13 @@ TableEntry McHelperWindow::createOutputWindowEntry( QString string, MessageEvent
 void McHelperWindow::setupOutputWindow( )
 {
 	QHeaderView *headerHView = outputView->horizontalHeader();
-	headerHView->setDefaultAlignment( Qt::AlignHCenter );
-	headerHView->setClickable( false );
-	headerHView->setMovable( false );
-	headerHView->setStretchLastSection( false ); // we want the middle message section to be the one that does the stretching
 	headerHView->setResizeMode( McHelperWindow::MESSAGE, QHeaderView::Stretch);
-	headerHView->setResizeMode( McHelperWindow::TO_FROM, QHeaderView::Fixed);
+	headerHView->setResizeMode( McHelperWindow::TO_FROM, QHeaderView::ResizeToContents);
+	headerHView->setResizeMode( McHelperWindow::TIMESTAMP, QHeaderView::ResizeToContents);
 	headerHView->hide( );
 	
 	QHeaderView *headerV = outputView->verticalHeader();
-	headerV->setResizeMode(QHeaderView::Fixed);
-	headerV->setDefaultSectionSize( 18 );
+	headerV->setResizeMode(QHeaderView::ResizeToContents);
 	headerV->hide();
 }
 
