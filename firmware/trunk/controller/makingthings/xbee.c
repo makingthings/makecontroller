@@ -66,16 +66,29 @@ XBeeSubsystem* XBee;
 
   \section API
   The Make Controller API for working with the XBee modules makes use of the XBee Packet API.  If you simply want to make use
-  of the transparent serial port functionality, you don't need to deal with any of this - simply hook up the module to
-  your Make Controller and start reading and writing over the serial port.
+  of the transparent serial port functionality, you can use the following functions:
+    XBee_SetActive( )
+    XBee_Write(  );
+    XBee_Read( );
+    XBee_GetReadable( );
 
-  The XBee Packet API allows for much more flexible and powerful communication with the modules.  It uses AT commands to 
-  configure the XBee module itself, and then a handful of Zigbee specified packet types can be sent and received.  
+  Or if you want to handle setup etc. yourself, you don't need to deal with these - just hook up the module to your 
+  Make Controller and start reading and writing over the serial port.
+
+  Bytes sent in this way are broadcast to all XBee modules on the same chanel and with the same PAN ID.  All similarly
+  configured modules will receive all bytes sent.  However, because these bytes are broadcast, there is no message
+  reliability, so there's no guarantee that the messages will actually get there.
+
+  The XBee Packet API allows for much more flexible and powerful communication with the modules.  With the Packet API
+  you can send messages to a specific module, detect where messages came from, check signal strength, and most importantly
+  packets are sent with a send / acknowledges / retry scheme which greatly increases message reliability.
+  
+  Packet API uses commands to configure the XBee module itself, and then a handful of Zigbee specified packet types can be sent and received.  
   See \ref XBeePacketTypes for details on these packet types.  
 	
 	The \b XBeeConfig_ functions are convenient wrappers around some of the most common AT commands you might want to send.  For
 	any of the other AT commands, check the XBee documentation and create them using XBee_CreateATCommandPacket( ).  These will always 
-	be send to the XBee module attached to the Make Controller.  The \b XBee_ functions deal with sending and receiving 
+	be sent to the XBee module attached to the Make Controller.  The \b XBee_ functions deal with sending and receiving 
 	messages to other XBee modules not connected to the Make Controller.
 
   \ingroup Controller
@@ -95,11 +108,17 @@ int XBee_SetActive( int state )
     {
       if( CONTROLLER_OK != Serial_SetActive( 1 ) )
         return CONTROLLER_ERROR_SUBSYSTEM_INACTIVE;
+      
+      // Configure the serial port
+      Serial_SetBaud( 9600 );
+      Serial_SetBits( 8 );
+      Serial_SetParity( 0 );
+      Serial_SetStopBits( 1 );
 
       XBee = MallocWait( sizeof( XBeeSubsystem ), 100 );
       XBee->packetIndex = 0;
       #ifdef OSC
-      XBee->autosend = XBee_GetAutoSend( true );
+        XBee->autosend = XBee_GetAutoSend( true );
       #endif
       XBee->currentPkt = MallocWait( sizeof( XBeePacket ), 100 );
       XBee_ResetPacket( XBee->currentPkt );
@@ -127,6 +146,44 @@ int XBee_GetActive( )
   return Serial_GetActive( );
 }
 
+
+/**	
+  Write the specified number of bytes into the XBee unit.  It is
+  assumed that the unit is in TRANSPARENT, not in PACKET API mode.  To write to the 
+  unit using packets first set packet mode (using XBeeConfig_SetPacketApiMode) then use
+  XBee_CreateXXXPacket() followed by XBee_SendPacket().
+	@param buffer The block of bytes to write
+  @param count The number of bytes to write
+  @param timeout The time in ms to linger waiting to succeed (0 for no wait)
+  @return status
+*/
+int XBee_Write( uchar *buffer, int count, int timeout )
+{
+  return Serial_Write( buffer, count, timeout );
+}
+
+/**	
+	Read data from the Xbee unit waiting for the specified time. Use XBee_GetReadable() to 
+  determine how many bytes are waiting to avoid waiting.    It is
+  assumed that the unit is in TRANSPARENT, not in PACKET API mode.  To write to the 
+  unit using packets first set packet mode (using XBeeConfig_SetPacketApiMode) then use
+  XBee_CreateXXXPacket() followed by XBee_SendPacket().
+	@param buffer A pointer to the buffer to read into.
+	@param count An integer specifying the maximum number of bytes to read.
+  @param timeout Time in milliseconds to block waiting for the specified number of bytes. 0 means don't wait.
+  @return number of bytes read (>=0) or error <0 .
+*/
+int XBee_Read( uchar* buffer, int count, int timeout )
+{
+  return Serial_Read( buffer, count, timeout );
+}
+
+/**	
+	Returns the number of bytes in the queue waiting to be read.
+  @return bytes in the receive queue.
+*/
+int XBee_GetReadable( void );
+
 /**	
   Receive an incoming XBee packet.
   A single call to this will continue to read from the serial port as long as there are characters 
@@ -139,6 +196,7 @@ int XBee_GetActive( )
   soon as there are no characters left to process.
 	@return 1 if a complete packet has been received, 0 if not.
   @see XBeeConfig_SetPacketApiMode( )
+  @todo Probably need some way to reset the parser if there are no bytes for a while
 
   \par Example
   \code
@@ -171,8 +229,7 @@ int XBee_GetPacket( XBeePacket* packet, int timeout )
       if( newChar == -1 )
         break;
   
-      if( newChar == XBEE_PACKET_STARTBYTE && packet->rxState != XBEE_PACKET_RX_START )
-        XBee_ResetPacket( packet ); // in case we get into a weird state
+      // should really have a watchdog to reset the parser if it goes haywire
   
       switch( packet->rxState )
       {
@@ -209,8 +266,9 @@ int XBee_GetPacket( XBeePacket* packet, int timeout )
           }
       }
     }
-    Sleep( 1 );
-  } while( TaskGetTickCount( ) - time < timeout );
+    if ( timeout > 0 )
+      Sleep( 1 );
+  } while( ( TaskGetTickCount( ) - time ) < timeout );
   return 0;
 }
 
@@ -283,6 +341,16 @@ void XBee_ResetPacket( XBeePacket* packet )
   packet->length = 0;
   packet->index = 0;
   packet->apiId = 0;
+}
+
+/** 
+  Checks to see if a packet is receiving a message
+  @param packet The XBeePacket to check
+  @returns true if the packet is busy, false if it's free
+*/
+int XBee_IsBusyPacket( XBeePacket* packet )
+{
+  return ( packet->rxState != XBEE_PACKET_RX_START );
 }
 
 /**	
@@ -478,11 +546,11 @@ int XBeeConfig_RequestIO( int pin )
   If the \b frameID is 0, you won't receive a TX Status message in response.
 
   @param xbp The XBeePacket to create.
-  @param frameID The frame ID for this packet that subsequent response/status messages can refer to.
-  @param destination The destination address for this packet.
+  @param frameID The frame ID for this packet that subsequent response/status messages can refer to.  Set to 0 for no response.
+  @param destination The destination address for this packet.  Broadcast Address: 0xFFFF.
   @param options The XBee options for this packet (0 if none).
-  @param data A pointer to the data to be sent in this packet.
-  @param datalength The number of bytes of data to be sent.
+  @param data A pointer to the data to be sent in this packet.  Up to 100 bytes.
+  @param datalength The number of bytes of data to be sent. Maximum 100 bytes.
 	@return True on success, false on failure.
   
   \par Example
@@ -511,11 +579,11 @@ bool XBee_CreateTX16Packet( XBeePacket* xbp, uint8 frameID, uint16 destination, 
   Create a packet to be transmitted with a 64-bit address.
 
   @param xbp The XBeePacket to create.
-  @param frameID The frame ID for this packet that subsequent response/status messages can refer to.
-  @param destination The destination address for this packet.
+  @param frameID The frame ID for this packet that subsequent response/status messages can refer to.  Set to 0 for no response.
+  @param destination The destination address for this packet.  Broadcast Address: 0xFFFF (same as 16b broadcast address)
   @param options The XBee options for this packet (0 if none).
-  @param data A pointer to the data to be sent in this packet.
-  @param datalength The number of bytes of data to be sent.
+  @param data A pointer to the data to be sent in this packet.  Up to 100 bytes.
+  @param datalength The number of bytes of data to be sent. Maximum 100 bytes.
 	@return True on success, false on failure.
   
   \par Example
@@ -1058,7 +1126,6 @@ int XBeeConfig_RequestSampleRate( )
   @param array An array of 4 unsigned 8-bit integers (uint8).  Be sure you have 4.
   \par Example
   see XBee_CreateATCommandPacket( ) for an example.
-  \endcode
 */
 void XBee_IntToBigEndianArray( int value, uint8* array )
 {
@@ -1807,5 +1874,4 @@ int XBeeOsc_Async( int channel )
 #endif // OSC
 
 #endif // XBEE
-
 
