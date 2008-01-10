@@ -23,6 +23,7 @@
 #include <QHash>
 #include <QTimer>
 #include <QtNetwork>
+#include <QHostInfo>
 #include <QMutex>
 #include "McHelperWindow.h"
 #include "PacketUdp.h"
@@ -47,21 +48,23 @@ class NetworkMonitor : public QObject, public MonitorInterface
 		int getListenPort( ) { return listenPort; }
   	
   private:
-  	QHash<QString, PacketUdp*> connectedDevices; // our internal list
-  	void createPing( );
-	
-	MessageInterface* messageInterface;
-	McHelperWindow* mainWindow;
-	QApplication* application;
-	QTimer pingTimer;
-	QUdpSocket socket;
-	QByteArray broadcastPing;
-	int listenPort;
-	int sendPort;
+		QHash<QString, PacketUdp*> connectedDevices; // our internal list
+		void createPing( );
+		MessageInterface* messageInterface;
+		McHelperWindow* mainWindow;
+		QApplication* application;
+		QTimer pingTimer;
+		QUdpSocket socket;
+		QByteArray broadcastPing;
+		QHostAddress localBroadcastAddress;
+		int listenPort;
+		int sendPort;
+		bool sendLocal;
 	
   private slots:
-	void processPendingDatagrams( );
-	void sendPing( );
+		void processPendingDatagrams( );
+		void sendPing( );
+		void lookedUp( const QHostInfo &host );
 };
 
 #endif // NETWORK_MONITOR_H_

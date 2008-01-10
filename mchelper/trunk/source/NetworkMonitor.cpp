@@ -25,6 +25,8 @@ NetworkMonitor::NetworkMonitor( int listenPort, int sendPort )
 {
 	this->listenPort = listenPort;
 	this->sendPort = sendPort;
+	sendLocal = false;
+	QHostInfo::lookupHost( QHostInfo::localHostName(), this, SLOT(lookedUp(QHostInfo))); 
 	connect( &socket, SIGNAL(readyRead()), this, SLOT( processPendingDatagrams() ) );
 	connect( &pingTimer, SIGNAL( timeout() ), this, SLOT( sendPing() ) );
 	createPing( );
@@ -59,10 +61,13 @@ void NetworkMonitor::sendPing( )
 		if( socket.state( ) != QAbstractSocket::BoundState )
 			socket.bind( listenPort, QUdpSocket::ShareAddress );
 			
-		if( socket.state( ) == QAbstractSocket::BoundState ) // if we succeeded or we're already open
+		// normally we'll be set to send on QHostAddress::Broadcast, but if that fails, just try
+		// to send on the local broadcast address
+		QHostAddress dest = ( sendLocal ) ? localBroadcastAddress : QHostAddress::Broadcast;
+		if( socket.writeDatagram( broadcastPing.data(), broadcastPing.size(), dest, sendPort ) < 0 && !sendLocal )
 		{
-			if( socket.writeDatagram( broadcastPing.data(), broadcastPing.size(), QHostAddress::Broadcast, sendPort ) < 0 )
-				printf( "UDP send error: %s\n", socket.errorString( ).toLatin1( ).data( ) );
+			socket.writeDatagram( broadcastPing.data(), broadcastPing.size(), localBroadcastAddress, sendPort );
+			sendLocal = true;
 		}
 	}
 }
@@ -132,6 +137,18 @@ void NetworkMonitor::processPendingDatagrams()
     }
   }
 }
+
+void NetworkMonitor::lookedUp(const QHostInfo &host) 
+{ 
+	if (host.error() != QHostInfo::NoError) // lookup failed 
+		return; 
+		
+		// find out our address, and then replace the last byte with 0xFF
+		// this will be a local broadcast address
+		QStringList addrlist = host.addresses().first().toString( ).split( "." );
+		addrlist.replace( 3, "255" );
+		localBroadcastAddress = addrlist.join( "." );
+} 
 
 void NetworkMonitor::deviceRemoved( QString key )
 {
