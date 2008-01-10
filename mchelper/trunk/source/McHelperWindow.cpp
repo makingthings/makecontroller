@@ -505,7 +505,9 @@ void McHelperWindow::customEvent( QEvent* event )
 
 void McHelperWindow::statusMessage( const QString & msg, int duration )
 {
-	statusBar()->showMessage( msg, duration );
+	
+	StatusEvent* statusEvent = new StatusEvent( msg, duration );
+	application->postEvent( this, statusEvent );
 }
 
 void McHelperWindow::messageThreadSafe( QString string  )
