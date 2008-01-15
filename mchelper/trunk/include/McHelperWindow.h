@@ -83,6 +83,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		bool summaryTabIsActive( );
 		void updateSummaryInfo( );
 		void updateDeviceList( );
+		void setBoardName( QString key, QString name );
 		void newXmlPacketReceived( QList<OscMessage*> messageList, QString address );
 		void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress );
 		void xmlServerBoardInfoUpdate( Board* board );
@@ -200,8 +201,18 @@ class BoardEvent : public QEvent
 {
 	public:
 		BoardEvent( QString string );
-		~BoardEvent( ) { }
 		QString message;
+};
+
+class BoardNameEvent : public QEvent
+{
+	public:
+		BoardNameEvent( QString key, QString name ) : QEvent( (Type)11112 )
+		{
+			this->key = key;
+			this->name = name;
+		}
+		QString key, name;
 };
 
 class UpdateEvent : public QEvent

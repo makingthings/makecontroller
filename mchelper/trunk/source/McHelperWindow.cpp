@@ -181,6 +181,12 @@ void McHelperWindow::sambaBoardsArrived( QList<UploaderThread*> arrived )
 	}
 }
 
+void McHelperWindow::setBoardName( QString key, QString name )
+{
+	BoardNameEvent *evt = new  BoardNameEvent( key, name );
+	application->postEvent( this, evt );
+}
+
 Board* McHelperWindow::getCurrentBoard( )
 {
 	Board* board = (Board*)listWidget->currentItem( );
@@ -471,6 +477,22 @@ void McHelperWindow::customEvent( QEvent* event )
 		{
 			updateSummaryInfo( );
 			listWidget->update( );
+			break;
+		}
+		case 11112: // a board's display name has changed
+		{
+			BoardNameEvent* evt = (BoardNameEvent*)event;
+			int boardCount = listWidget->count( );
+			Board *board;
+			for( int i = 0; i < boardCount; i++ )
+			{
+				board = (Board*)listWidget->item( i );
+				if( board-> key == evt->key )
+				{
+					listWidget->item( i )->setText( evt->name );
+					break;
+				}
+			}
 			break;
 		}
 		case 10010: // put a status message in the window
@@ -868,6 +890,7 @@ void McHelperWindow::onApplyChanges( )
 	{
 		msgs << QString( "/system/name %1" ).arg( QString( "\"%1\"" ).arg( newName ) );
 		displayMsgs << QString( "Changed name to %1" ).arg( newName );
+		setBoardName( board->key, QString( "%1 : %2" ).arg(newName).arg(board->locationString()) );
 	}
 		
 	// serial number
