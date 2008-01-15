@@ -202,9 +202,23 @@ void OscXmlServer::sendXmlPacket( QList<OscMessage*> messageList, QString srcAdd
 					argument.setAttribute( "VALUE", QString::number( data->f ) );
 					break;
 				case OscMessageData::OmdBlob:
+				{
+					QString blobstring;
+					unsigned char* blob = (unsigned char*)data->b;
+					int blob_len = *(int*)blob;  // the first int should give us the length of the blob
+					blob_len = qFromBigEndian( blob_len );
+					blob += sizeof(int); // step past the length
+					while( blob_len-- )
+					{
+						// break each byte into 4-bit chunks so they don't get misinterpreted
+						// by any casts to ASCII, etc. and send a string composed of single chars from 0-f
+						blobstring.append( QString::number( (*blob >> 4) & 0x0f, 16 ) );
+						blobstring.append( QString::number(*blob++ & 0x0f, 16 ) );
+					}
 					argument.setAttribute( "TYPE", "b" );
-					argument.setAttribute( "VALUE", QString( (char*)data->b ) );
+					argument.setAttribute( "VALUE", blobstring );
 					break;
+				}
 			}
 			msg.appendChild( argument );
 		}
