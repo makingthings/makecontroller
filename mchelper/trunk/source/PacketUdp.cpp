@@ -21,6 +21,7 @@
 #include <QHostAddress>
 #include <QSettings>
 #include <QString>
+#include <QMutexLocker>
 
 #define COMM_TIMEOUT 3000
 
@@ -87,6 +88,7 @@ PacketUdp::Status PacketUdp::sendPacket( char* packet, int length )	//part of Pa
 
 bool PacketUdp::isPacketWaiting( )	//part of PacketInterface
 {
+  QMutexLocker locker( &msgMutex );
   return lastMessage.size( ) > 0;
 }
 
@@ -103,6 +105,7 @@ void PacketUdp::processPacket( )	//slot to be called back automatically when dat
 
 int PacketUdp::receivePacket( char* buffer, int size )
 {
+	QMutexLocker locker( &msgMutex );
 	int length = lastMessage.size( );
 	if( length > size )
 	{
@@ -117,6 +120,7 @@ int PacketUdp::receivePacket( char* buffer, int size )
 
 void PacketUdp::incomingMessage( QByteArray message )
 {
+	QMutexLocker locker( &msgMutex );
 	lastMessage = message;
 }
 
