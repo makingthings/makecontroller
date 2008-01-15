@@ -23,6 +23,7 @@
 #include <QHostInfo>
 #include <QTimer>
 #include <QList>
+#include <QMutex>
 
 #include "PacketInterface.h"
 #include "MessageInterface.h"
@@ -69,6 +70,7 @@ class PacketUdp : public QObject, public PacketInterface
 	  NetworkMonitor* monitor;
 	  QByteArray lastMessage;
 	  QString socketKey;
+	  QMutex msgMutex;
 	
     char* remoteAddress;
     int localPort;

@@ -80,11 +80,12 @@ PacketUsbCdc::Status PacketUsbCdc::open()
 		return PacketInterface::ERROR_NOT_OPEN;
 }
 
-PacketUsbCdc::Status PacketUsbCdc::close()
+PacketUsbCdc::Status PacketUsbCdc::close( )
 {
 	exit = true;
+	while( isRunning( ) )
+		msleep( 5 ); // wait a second before returning, because we'll be deleted right after we're removed form the GUI
 	usbClose( );
-	msleep( 50 ); // wait a second before returning, because we'll be deleted right after we're removed form the GUI
 	return PacketInterface::OK;
 }
 
@@ -155,6 +156,9 @@ int PacketUsbCdc::slipReceive( char* buffer, int length )
 
   while ( true )
   {
+		if( exit == true )
+	  	return -1;
+	  	
 		int status = getMoreBytes( );
 		if( status != PacketInterface::OK )
 			return -1;
