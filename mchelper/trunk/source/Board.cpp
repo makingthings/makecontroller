@@ -119,7 +119,7 @@ void Board::packetWaiting( )
 		
 	if( newSysInfo )
 	{
-		this->setText( QString( "%1 : %2" ).arg(name).arg(locationString()) );
+		mainWindow->setBoardName( key, QString( "%1 : %2" ).arg(name).arg(locationString()) );
 		mainWindow->updateDeviceList( );
 		mainWindow->xmlServerBoardInfoUpdate( this );
 	}
@@ -140,6 +140,7 @@ bool Board::extractSystemInfoA( OscMessage* msg )
 		switch( i ) // we're counting on the board to send the pieces of data in this order
 		{
 			case 0:
+				if( msgData.at( i )->s == 0 ) break;
 				if( name != QString( msgData.at( i )->s ) )
 				{
 					name = QString( msgData.at( i )->s ); //name
@@ -154,6 +155,7 @@ bool Board::extractSystemInfoA( OscMessage* msg )
 				}
 				break;
 			case 2:
+				if( msgData.at( i )->s == 0 ) break;
 				if( ip_address != QString( msgData.at( i )->s ) )
 				{
 					ip_address = QString( msgData.at( i )->s ); // IP address
@@ -161,6 +163,7 @@ bool Board::extractSystemInfoA( OscMessage* msg )
 				}
 				break;
 			case 3:
+				if( msgData.at( i )->s == 0 ) break;
 				if( firmwareVersion != QString( msgData.at( i )->s ) )
 				{
 					firmwareVersion = QString( msgData.at( i )->s );
@@ -207,6 +210,7 @@ bool Board::extractSystemInfoB( OscMessage* msg )
 				}
 				break;
 			case 2:
+				if( msgData.at( j )->s == 0 ) break;
 				if( gateway != QString( msgData.at( j )->s ) )
 				{
 					gateway = QString( msgData.at( j )->s );
@@ -214,6 +218,7 @@ bool Board::extractSystemInfoB( OscMessage* msg )
 				}
 				break;
 			case 3:
+				if( msgData.at( j )->s == 0 ) break;
 				if( netMask != QString( msgData.at( j )->s ) )
 				{
 					netMask = QString( msgData.at( j )->s );
@@ -252,6 +257,7 @@ bool Board::extractNetworkFind( OscMessage* msg )
 		switch( j ) // we're counting on the board to send the pieces of data in this order
 		{
 			case 0:
+				if( msgData.at( j )->s == 0 ) break;
 				if( ip_address != QString( msgData.at( j )->s ) )
 				{
 					ip_address = QString( msgData.at( j )->s ); // IP address
@@ -273,6 +279,7 @@ bool Board::extractNetworkFind( OscMessage* msg )
 				}
 				break;
 			case 3:
+				if( msgData.at( j )->s == 0 ) break;
 				if( name != QString( msgData.at( j )->s ) )
 				{
 					name = QString( msgData.at( j )->s );
