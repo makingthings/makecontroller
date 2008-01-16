@@ -82,7 +82,6 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		QList<Board*> getConnectedBoards( );
 		bool summaryTabIsActive( );
 		void updateSummaryInfo( );
-		void updateDeviceList( );
 		void setBoardName( QString key, QString name );
 		void newXmlPacketReceived( QList<OscMessage*> messageList, QString address );
 		void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress );
@@ -158,6 +157,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 			void deviceSelectionChanged ( const QModelIndex & current, const QModelIndex & previous );
 			void tabIndexChanged(int index);
 			void sendSummaryMessage( );
+			void updateSummaryInfoInternal( );
 					
 			void openMchelperHelp( );
 			void openOSCTuorial( );

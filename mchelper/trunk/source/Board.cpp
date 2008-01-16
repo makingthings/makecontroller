@@ -120,7 +120,7 @@ void Board::packetWaiting( )
 	if( newSysInfo )
 	{
 		mainWindow->setBoardName( key, QString( "%1 : %2" ).arg(name).arg(locationString()) );
-		mainWindow->updateDeviceList( );
+		mainWindow->updateSummaryInfo( );
 		mainWindow->xmlServerBoardInfoUpdate( this );
 	}
 	qDeleteAll( oscMessageList );

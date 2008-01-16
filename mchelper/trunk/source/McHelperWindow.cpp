@@ -262,13 +262,13 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
   }
 }
 
-void McHelperWindow::updateDeviceList( )
+void McHelperWindow::updateSummaryInfo( )
 {
 	UpdateEvent* event = new UpdateEvent( );
   application->postEvent( this, event );
 }
 
-void McHelperWindow::updateSummaryInfo( )
+void McHelperWindow::updateSummaryInfoInternal( )
 {
 	Board* board = (Board*)listWidget->currentItem();
   if( board == NULL )
@@ -475,7 +475,7 @@ void McHelperWindow::customEvent( QEvent* event )
 		}
 		case 11111: // there's new info about the board to shove into the UI
 		{
-			updateSummaryInfo( );
+			updateSummaryInfoInternal( );
 			listWidget->update( );
 			break;
 		}
