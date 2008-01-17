@@ -341,6 +341,7 @@ void XBee_ResetPacket( XBeePacket* packet )
   packet->length = 0;
   packet->index = 0;
   packet->apiId = 0;
+  memset( packet->payload, 0, 100 );
 }
 
 /** 
@@ -831,7 +832,7 @@ bool XBee_ReadIO64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrengt
   @param frameID A pointer to a uint64 that will be filled up with the 16-bit address of this packet.
   @param command A pointer to a uint8 that will be filled up with the signal strength of this packet.
   @param status A pointer to a uint8 that will be filled up with the XBee options for this packet.
-  @param data A pointer that will be set to the data of this packet.
+  @param datavalue The value of the requested command.
 	@return True on success, false on failure.
   
   \par Example
@@ -842,8 +843,8 @@ bool XBee_ReadIO64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrengt
     uint8 frameID;
     char* command;
     uint8 status;
-    uint8* data;
-    if( XBee_ReadAtResponsePacket( &rxPacket, &frameID, command, &status, &data ) )
+    int value = -1;
+    if( XBee_ReadAtResponsePacket( &rxPacket, &frameID, command, &status, &value ) )
     {
       // then process the new packet here
       XBee_ResetPacket( &rxPacket ); // and clear it out before reading again
@@ -851,7 +852,7 @@ bool XBee_ReadIO64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrengt
   }
   \endcode
 */
-bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char** command, uint8* status, uint8** data )
+bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char** command, uint8* status, int* datavalue )
 {
   if( xbp->apiId != XBEE_ATCOMMANDRESPONSE )
     return false;
@@ -861,8 +862,17 @@ bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char** command,
     *command = (char*)xbp->atResponse.command;
   if( status )
     *status = xbp->atResponse.status;
-  if( data )
-    *data = xbp->atResponse.value;
+  if( datavalue )
+  {
+    uint8 *dataPtr = xbp->atResponse.value;
+    int i;
+    int datalength = xbp->length - 5; // data comes after apiID, frameID, 2-bytes of cmd, and 1-byte status
+    for( i = 0; i < datalength; i++ )
+    {
+      *datavalue <<= 8;
+      *datavalue += *dataPtr++;
+    }
+  }
   return true;
 }
 
@@ -1636,14 +1646,13 @@ int XBeeConfigOsc_PropertySet( int property, char* typedata, int channel )
       if ( count != 2 && count != 1 )
         return Osc_SubsystemError( channel, XBeeConfigOsc_Name, "Incorrect data - need a string, optionally followed by an int" );
       
-      int length = 0;
       if( count == 2 )
       {
         XBeePacket xbp;
         uint8 params[4]; // big endian - most significant bit first
         XBee_IntToBigEndianArray( value, params );
-        XBee_CreateATCommandPacket( &xbp, 0, cmd, params, length );
-        XBee_SendPacket( &xbp, length );
+        XBee_CreateATCommandPacket( &xbp, 0, cmd, params, 4 );
+        XBee_SendPacket( &xbp, 4 );
       }
       if( count == 1 ) // this is a little wonky, but this is actually a read.
         value = XBeeConfig_RequestATResponse( cmd );
@@ -1808,16 +1817,9 @@ int XBeeOsc_HandleNewPacket( XBeePacket* xbp, int channel )
       uint8 frameID;
       char* command;
       uint8 status;
-      uint8* dataPtr;
-      int value = 0;
-      if( XBee_ReadAtResponsePacket( xbp, &frameID, &command, &status, &dataPtr ) )
-      { // grab 16-bit value
-        int i;
-        for( i = 0; i < 2; i++ )
-        {
-          value <<= 8;
-          value += *dataPtr++;
-        }
+      int value = -1;
+      if( XBee_ReadAtResponsePacket( xbp, &frameID, &command, &status, &value ) )
+      {
         char cmd[3];
         cmd[0] = *command;
         cmd[1] = *(command+1);
