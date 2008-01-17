@@ -243,6 +243,9 @@ int XBee_GetActive( void );
 int XBee_GetPacket( XBeePacket* packet, int timeout );
 int XBee_SendPacket( XBeePacket* packet, int datalength );
 void XBee_ResetPacket( XBeePacket* packet );
+int XBee_Write( uchar *buffer, int count, int timeout );
+int XBee_Read( uchar* buffer, int count, int timeout );
+int XBee_IsBusyPacket( XBeePacket* packet );
 
 // packet creators and unpackers
 bool XBee_CreateTX16Packet( XBeePacket* xbp, uint8 frameID, uint16 destination, uint8 options, uint8* data, uint8 datalength );
@@ -252,7 +255,7 @@ bool XBee_ReadRX64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrengt
 bool XBee_ReadIO16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrength, uint8* options, int* samples );
 bool XBee_ReadIO64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrength, uint8* options, int* samples );
 void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, uint8* params, uint8 datalength );
-bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char** command, uint8* status, uint8** data );
+bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char** command, uint8* status, int* datavalue );
 bool XBee_ReadTXStatusPacket( XBeePacket* xbp, uint8* frameID, uint8* status );
 
 // XBee Config stuff
