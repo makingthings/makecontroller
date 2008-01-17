@@ -867,6 +867,7 @@ bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char** command,
     uint8 *dataPtr = xbp->atResponse.value;
     int i;
     int datalength = xbp->length - 5; // data comes after apiID, frameID, 2-bytes of cmd, and 1-byte status
+    *datavalue = 0;
     for( i = 0; i < datalength; i++ )
     {
       *datavalue <<= 8;
@@ -1817,7 +1818,7 @@ int XBeeOsc_HandleNewPacket( XBeePacket* xbp, int channel )
       uint8 frameID;
       char* command;
       uint8 status;
-      int value = -1;
+      int value;
       if( XBee_ReadAtResponsePacket( xbp, &frameID, &command, &status, &value ) )
       {
         char cmd[3];
