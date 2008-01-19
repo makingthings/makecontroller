@@ -26,6 +26,7 @@
 /* Standard includes. */
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <ctype.h>
 
 #include "network.h"
@@ -39,8 +40,24 @@
 #define HTTP_PORT		( 80 )
 
 #define HTML_OS_START \
-"<BR>Make Magazine - MakingThings<BR><H1>MAKE Controller Kit</H1>Page Hits "
+"<BR>Make Magazine - MakingThings<BR><H1>MAKE Controller Kit</H1>"
 
+#define MAX_FORM_ELEMENT_LENGTH 50
+#define MAX_FORM_ELEMENTS 10
+
+typedef struct
+{
+  char key[MAX_FORM_ELEMENT_LENGTH];
+  char value[MAX_FORM_ELEMENT_LENGTH];
+} HttpFormElement;
+
+typedef struct
+{
+  HttpFormElement* elements[MAX_FORM_ELEMENTS];
+  int count;
+} HttpFormData;
+
+int WebServer_ParseFormElements( char *request, HttpFormData *formdata );
 void WebServerTask( void *p );
 
 typedef struct WebServerHandlerS
@@ -395,10 +412,7 @@ void WebServer_ProcessRequest( void* requestSocket )
 void WebServer_OldSchool( char* address, void *requestSocket, char* buffer, int len )
 {
   (void)address;
-  char temp[ 100 ];
-  #ifdef AUTOCHECK
-  memset( temp, 0, 50 );
-  #endif
+  char temp[100];
 
   if( !WebServer_WriteResponseOkHTML( requestSocket ) )
     return;
@@ -406,46 +420,95 @@ void WebServer_OldSchool( char* address, void *requestSocket, char* buffer, int 
   if( !WebServer_WriteHeader( true, requestSocket, buffer, len ) )
     return;
 
-  if( !WebServer_WriteBodyStart( "/info", requestSocket, buffer, len ) )
+  if( !WebServer_WriteBodyStart( 0, requestSocket, buffer, len ) )
     return;
-
+  
+  int formcount = 0;
   // Generate the dynamic page...
-  strcpy( buffer, HTML_OS_START );  // ... First the page header.
-  // ... Then the hit count...
-  snprintf( temp, 100, "%d", WebServer->hits );
-  strcat( buffer, temp );
-  strcat( buffer, "<p>Version: " );
-  snprintf( temp, 100, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER ); 
-  strcat( buffer, temp );
-  strcat( buffer, "<p>Free Memory " );
-  sprintf( temp, "%d", System_GetFreeMemory() ); 
-  strcat( buffer, temp );
-  strcat( buffer, "</p>" );
-  strcat( buffer, "<p>Tasks Currently Running" );
-  strcat( buffer, "<p><pre>Task          State  Priority  StackRem	#<br>-------------------------------------------" );
-  // ... Then the list of tasks and their status... 
-  vTaskList( (signed portCHAR*)buffer + strlen( buffer ) );	
-  
-  int i;
-  strcat( buffer, "<p><pre>Analog Inputs<br>--------------<br>" );
-  
-  for ( i = 0; i < 8; i++ )
+  HttpFormData form;
+  if( strncmp( WebServer->request, "GET", 3 ) == 0 )
   {
-    char b[ 20 ];
-    #ifdef AUTOCHECK
-    memset( b, 0, 20 );
-    #endif
-    snprintf( b, 20, "%d: %d<br>", i, AnalogIn_GetValue( i ) );
-    strcat( buffer, b );
+    form.count = 0;
+    formcount = WebServer_ParseFormElements( WebServer->request, &form );
   }
-  strcat( buffer, "</pre>" );
+
+  strcpy( buffer, "<table border=\"0\">" );
+  strcat( buffer, "<tr><th>Analog Inputs</th></tr>" );
+  int i;
+  for( i = 0; i < 8; i++ )
+  {
+    sprintf( temp, "<tr><td>Analog In %d: %d</td></tr>", i, AnalogIn_GetValue( i ) );
+    strcat( buffer, temp );
+  }
+  strcat( buffer, "</table>" );
   
+  strcat( buffer, "<form>" );
+  strcat( buffer, "Tester: <input type=\"text\" name=\"test\"><br>" );
+  strcat( buffer, "Testeroo: <input type=\"text\" name=\"test2\"><br>" );
+  strcat( buffer, "<p></p>" );
+  strcat( buffer, "<input type=\"submit\" value=\"Submit / Refresh\">" );
+  strcat( buffer, "</form>" );
+  
+  if( formcount )
+  {
+    for( i = 0; i < formcount; i++ )
+    {
+      char msg[100];
+      snprintf( msg, 100, "<p>%s was %s</p>", form.elements[i]->key, form.elements[i]->value );
+      strcat( buffer, msg );
+      Free( form.elements[i] );
+    }
+  }
   
   // Write out the dynamically generated page.
   if( !SocketWrite( requestSocket, buffer, strlen( buffer ) ) )
     return;
   
   WebServer_WriteBodyEnd( requestSocket );
+}
+
+int WebServer_ParseFormElements( char *request, HttpFormData *form )
+{
+  int count = 0;
+  bool cont = true;
+  char *p = request;
+  char *endp = strstr( request, "HTTP1.1");
+  *endp = 0; // terminate
+
+  p = strchr( p, '?' );
+  if( p == NULL ) // there were no form elements
+    return 0;
+  endp = p++; // step past the ?
+
+  do
+  {
+    HttpFormElement *elmnt = Malloc( sizeof( HttpFormElement ) );
+
+    endp = strchr( p, '=' );
+    *endp = 0;
+    snprintf( elmnt->key, MAX_FORM_ELEMENT_LENGTH, p );
+    
+    p = ++endp;
+    endp = strchr( p, '&' ); // look for the next element
+    if( endp == NULL ) // there is no next element, do this one and then be done
+    {
+      endp = strchr( p, 0 );
+      cont = false;
+    }
+    *endp = 0;
+
+    // if the value was empty, we'll either get the & if there are more elements, or 0 if we're at the end
+    if( *(p+1) == '&' || *(p+1) == 0 )
+      elmnt->value[0] = 0;
+    else
+      snprintf( elmnt->value, MAX_FORM_ELEMENT_LENGTH, p );
+    p = ++endp;
+  
+    form->elements[form->count++] = elmnt;
+    count++;
+  } while( cont == true );
+
+  return count;
 }
 
 
