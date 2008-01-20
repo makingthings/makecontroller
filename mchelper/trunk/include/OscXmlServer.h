@@ -62,16 +62,18 @@ class OscXmlServer : public QObject
 		bool changeListenPort( int port );
 		void boardListUpdate( QList<Board*> boardList, bool arrived );
 		void boardInfoUpdate( Board* board );
-		
+		void resetParser( ) { lastParseComplete = true; }
+				
 	private:
 		QTcpServer *serverSocket;
 		QTcpSocket *clientSocket;
 		McHelperWindow *mainWindow;
 		QXmlSimpleReader xml;
-		QXmlInputSource *xmlInput;
+		QXmlInputSource xmlInput;
 		XmlHandler *handler;
 		void writeXmlDoc( QDomDocument doc );
 		int listenPort;
+		bool lastParseComplete;
 	
 	private slots:
 		void openNewConnection( );

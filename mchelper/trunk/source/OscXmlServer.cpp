@@ -29,6 +29,7 @@ OscXmlServer::OscXmlServer( McHelperWindow *mainWindow, int port )
 
 	handler = new XmlHandler( mainWindow, this );	
 	xml.setContentHandler( handler );
+	lastParseComplete = true;
 	
 	fromString = QString( "XML server" ); // what our messages to the UI will show as having come from
 }
@@ -51,7 +52,6 @@ void OscXmlServer::openNewConnection( )
 	connect( clientSocket, SIGNAL( readyRead() ), this, SLOT( processClientData() ) );
 	connect( clientSocket, SIGNAL( disconnected() ), this, SLOT( clientDisconnected() ) );
 	connect( clientSocket, SIGNAL( error(  QAbstractSocket::SocketError ) ), this, SLOT( clientError( QAbstractSocket::SocketError) ) );
-	xmlInput = new QXmlInputSource( clientSocket );
 	
 	// tell Flash about the boards we have connected
 	QList<Board*> boardList = mainWindow->getConnectedBoards( );
@@ -78,19 +78,26 @@ bool OscXmlServer::changeListenPort( int port )
 
 void OscXmlServer::processClientData( )
 {
-	// normally we'd read out of the clientSocket here, but because we've set it up as an xmlInputSource, we just parse from that
-	xml.parse( xmlInput, false );
+	xmlInput.setData( clientSocket->readAll( ) );
+	bool status;
+
+	if( lastParseComplete )
+	{
+		lastParseComplete = false; // this will get reset in the parsing process if we get a complete message
+		status = xml.parse( &xmlInput, true );
+	}
+	else
+		status = xml.parseContinue( );
+	
+	if( !status )
+		qDebug( "XML parse error: %s", handler->errorString().toAscii().data() );
 }
 
 void OscXmlServer::clientDisconnected( )
 {
 	mainWindow->messageThreadSafe( "XML peer disconnected.", MessageEvent::Info, fromString );
 	clientSocket->abort( ); // close the socket and flush it
-	if( xmlInput )
-	{
-		delete xmlInput;
-		xmlInput = NULL;
-	}
+	lastParseComplete = true;
 }
 
 void OscXmlServer::clientError( QAbstractSocket::SocketError error )
@@ -205,8 +212,7 @@ void OscXmlServer::sendXmlPacket( QList<OscMessage*> messageList, QString srcAdd
 				{
 					QString blobstring;
 					unsigned char* blob = (unsigned char*)data->b;
-					int blob_len = *(int*)blob;  // the first int should give us the length of the blob
-					blob_len = qFromBigEndian( blob_len );
+					int blob_len = qFromBigEndian( *(int*)blob );  // the first int should give us the length of the blob
 					blob += sizeof(int); // step past the length
 					while( blob_len-- )
 					{
@@ -304,9 +310,11 @@ bool XmlHandler::endElement( const QString & namespaceURI, const QString & local
 		mainWindow->messageThreadSafe( strings, MessageEvent::XMLMessage, xmlServer->fromString);
 		qDeleteAll( oscMessageList );
 		oscMessageList.clear( );
+		xmlServer->resetParser( );
 	}
 	else if( localName == "MESSAGE" )
-		oscMessageList.append( currentMessage ); 
+		oscMessageList.append( currentMessage );
+	
 
 	return true;
 }
