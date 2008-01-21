@@ -116,6 +116,12 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	connect( &summaryTimer, SIGNAL(timeout()), this, SLOT( sendSummaryMessage() ) );
 	connect( &outputWindowTimer, SIGNAL(timeout()), this, SLOT( postMessages( ) ) );
 	
+	// add an item to the list as a UI cue that no boards were found.
+	// remove when boards have been discovered
+	listWidgetPlaceholder = QListWidgetItem( "No Make Controllers found..." );
+	listWidgetPlaceholder.setData( Qt::ForegroundRole, Qt::gray );
+	listWidget->addItem( &listWidgetPlaceholder );
+	
 	// after all is set up, fire up the mechanisms that look for new boards
   usb->start( );
   udp->start( );
@@ -189,15 +195,20 @@ void McHelperWindow::setBoardName( QString key, QString name )
 
 Board* McHelperWindow::getCurrentBoard( )
 {
-	Board* board = (Board*)listWidget->currentItem( );
-	return board;
+	if( listWidget->currentItem( ) == &listWidgetPlaceholder )
+		return NULL;
+	else
+		return (Board*)listWidget->currentItem( );
 }
 
 QList<Board*> McHelperWindow::getConnectedBoards( )
 {
 	QList<Board*> boardList;
 	for( int i = 0; i < listWidget->count( ); i++ )
-		boardList.append( (Board*)listWidget->item( i ) );
+	{
+		if( listWidget->item( i ) != &listWidgetPlaceholder )
+			boardList.append( (Board*)listWidget->item( i ) );
+	}
 
 	return boardList;
 }
@@ -226,6 +237,10 @@ void McHelperWindow::removeDevice( QString key )
 		boardList.append( removed );
 		xmlServer->boardListUpdate( boardList, false );
 		delete removed;
+		
+		// if no boards are left, put the placeholder back in
+		if( !listWidget->count( ) )
+			listWidget->addItem( &listWidgetPlaceholder );
 	}
 }
 
@@ -233,7 +248,7 @@ void McHelperWindow::deviceSelectionChanged ( const QModelIndex & current, const
 {
   (void)current;
 	(void)previous;
-	Board* board = (Board*)listWidget->currentItem();
+	Board* board = getCurrentBoard( );
   if( board == NULL )
   	return;
   	
@@ -270,7 +285,7 @@ void McHelperWindow::updateSummaryInfo( )
 
 void McHelperWindow::updateSummaryInfoInternal( )
 {
-	Board* board = (Board*)listWidget->currentItem();
+	Board* board = getCurrentBoard( );
   if( board == NULL )
   	return;
 	
@@ -317,7 +332,7 @@ void McHelperWindow::tabIndexChanged(int index)
 	
 	if( index == 1 )
 	{
-		Board* board = (Board*)listWidget->currentItem();
+		Board* board = getCurrentBoard( );
   	if( board != NULL )
   		board->sendMessage( "/system/info-internal" );
   		
@@ -333,7 +348,7 @@ void McHelperWindow::tabIndexChanged(int index)
 
 void McHelperWindow::sendSummaryMessage( )
 {
-	Board* board = (Board*)listWidget->currentItem();
+	Board* board = getCurrentBoard( );
 	if( board != NULL )
 		board->sendMessage( "/system/info-internal" );
 }
@@ -373,7 +388,7 @@ void McHelperWindow::uploadButtonClicked( )
 	else
 		strcpy( fileNameBuffer, fileSelectText->currentText().toAscii().constData() );
 	
-	Board* board = (Board*)listWidget->currentItem();
+	Board* board = getCurrentBoard( );
 	if( board == NULL )
 		return;
 		
@@ -388,7 +403,7 @@ void McHelperWindow::uploadButtonClicked( )
 
 void McHelperWindow::commandLineEvent( )
 {
-  Board* board = (Board*)listWidget->currentItem();
+  Board* board = getCurrentBoard( );
   if( board == NULL )
   	return;
   
@@ -503,7 +518,12 @@ void McHelperWindow::customEvent( QEvent* event )
 		}
     case 10020: // a new board has been connected
     {
-        BoardArrivalEvent* arrivalEvent = (BoardArrivalEvent*)event;
+        // if the placeholder is in there, get rid of it
+				int placeholderRow = listWidget->row( &listWidgetPlaceholder );
+				if( placeholderRow >= 0 )
+					listWidget->takeItem( placeholderRow );
+
+				BoardArrivalEvent* arrivalEvent = (BoardArrivalEvent*)event;
         switch( arrivalEvent->type )
         {
         	case Board::UsbSerial:
@@ -849,7 +869,7 @@ void McHelperWindow::onAnySummaryValueEdited( bool state )
 void McHelperWindow::onAnySummaryValueEdited( QString text )
 {
 	(void)text;
-	if( listWidget->currentItem() == NULL ) return;
+	if( getCurrentBoard( ) == NULL ) return;
 	setSummaryTabLabelsForegroundRole( QPalette::Mid );
 }
 
@@ -878,7 +898,7 @@ void McHelperWindow::onRevertChanges( )
 // the appropriate message to the board and notify the user of what has been changed in the output window
 void McHelperWindow::onApplyChanges( )
 {
-	Board* board = (Board*)listWidget->currentItem();
+	Board* board = getCurrentBoard( );
 	if( board == NULL )
 		return;
 	

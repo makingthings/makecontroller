@@ -121,6 +121,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		TableEntry createOutputWindowEntry( QString string, MessageEvent::Types type, QString from );
 		QList<TableEntry> outputWindowQueue;
 		QMutex outputWindowQueueMutex;
+		QListWidgetItem listWidgetPlaceholder;
 
 		void setSummaryTabLabelsForegroundRole( QPalette::ColorRole role );
 		
