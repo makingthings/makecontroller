@@ -33,9 +33,19 @@
 #ifndef BASIC_WEB_SERVER_H
 #define BASIC_WEB_SERVER_H
 
-// void WebServer( void *p );
+#define MAX_FORM_ELEMENTS 10
 
-// NEW WEB SERVER
+typedef struct
+{
+  char *key;
+  char *value;
+} HttpFormElement;
+
+typedef struct
+{
+  HttpFormElement elements[MAX_FORM_ELEMENTS];
+  int count;
+} HttpForm;
 
 // Web Server Task
 int WebServer_SetActive( int active );
@@ -51,6 +61,9 @@ int WebServer_WriteResponseOkPlain( void* socket );
 int WebServer_WriteHeader( int includeCSS, void* socket, char* buffer, int len );
 int WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, int len );
 int WebServer_WriteBodyEnd( void* socket );
+
+bool WebServer_GetPostData( void *socket, char *requestBuffer, int maxSize );
+int WebServer_ParseFormElements( char *request, HttpForm *form );
 
 #endif  // BASIC_WEB_SERVER_H
 

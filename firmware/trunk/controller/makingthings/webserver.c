@@ -42,22 +42,6 @@
 #define HTML_OS_START \
 "<BR>Make Magazine - MakingThings<BR><H1>MAKE Controller Kit</H1>"
 
-#define MAX_FORM_ELEMENT_LENGTH 50
-#define MAX_FORM_ELEMENTS 10
-
-typedef struct
-{
-  char key[MAX_FORM_ELEMENT_LENGTH];
-  char value[MAX_FORM_ELEMENT_LENGTH];
-} HttpFormElement;
-
-typedef struct
-{
-  HttpFormElement* elements[MAX_FORM_ELEMENTS];
-  int count;
-} HttpFormData;
-
-int WebServer_ParseFormElements( char *request, HttpFormData *formdata );
 void WebServerTask( void *p );
 
 typedef struct WebServerHandlerS
@@ -102,19 +86,21 @@ static int WebServer_WriteResponseOk_( char* content, void* socket );
 /** \defgroup webserver Web Server
   Very simple Web Server
 
-  This Web Server implementation is based on the ServerSocket and Socket functions defined
+  This Web Server implementation is based on the \ref ServerSocket and \ref Socket functions defined
   in \ref Sockets.  When started (usually by the Network subsystem), a ServerSocket is opened
   and set to listen on port 80.
 
   When the server receives a request, it checks the incoming address against a list of handlers.
-  If the address matches, the handler is invoked and checking stops.  Users can add their own
+  If the request address matches, the handler is invoked and checking stops.  Users can add their own
   handlers to return custom information.  Handlers persist even when the server is deactivated.
 
   There are two default handlers.  One is mounted at "/test" and will reply with the message "Test"
   and a current hit count.  This handler will only be mounted if no other handlers are present when
-  the server is started up.  The other handler is a default handler which will match any address not 
-  already matched.  This is the standard information page showing free memory, running tasks, etc.  This
-  page will reload every second from "/info".
+  the server is started up.  To see this handler, type the IP address of your board into a web browser, 
+  followed by \b /test, ie \b 192.168.1.200/test. The other handler is a default handler which will match any address not 
+  already matched.  This will show some info about the board and allow you to control the digital outputs.  
+  This handler can be adapted/customized to provide access to other parts of the Make Controller if desired.
+  Give a quick search for \b WebServer_Demo in webserver.c to see its source.
 
 	\ingroup Controller
 	@{
@@ -122,7 +108,7 @@ static int WebServer_WriteResponseOk_( char* content, void* socket );
 
 /**
 	Set the active state of the WebServer subsystem.  This is automatically set to true
-  by the Network Subsystem as it activates if the /network/webserver property is 
+  by the Network Subsystem as it activates if the \b /network/webserver property is 
   set to true.  If there are no specifed handlers at the time of initialization,
   the default test handler is installed.
 	@param active An integer specifying the active state - 1 (on) or 0 (off).
@@ -134,7 +120,7 @@ int WebServer_SetActive( int active )
   {
     if ( WebServer == NULL )
     {
-      WebServer = MallocWait( sizeof( WebServer_ ), 100 );    
+      WebServer = MallocWait( sizeof( WebServer_ ), 100 );
       WebServer->hits = 0;
       WebServer->serverSocket = NULL;
       WebServer->requestSocket = NULL;
@@ -194,15 +180,15 @@ int  WebServer_GetActive( void )
   set to match "/images/diagram" it will never be called since the prior handler
   will match the entire "/images" space.
 
-  The handler will be called with the request type specified (usually "GET" or  "PUT"), 
+  The handler will be called with the request type specified (usually "GET" or  "POST"), 
   the incoming address ( "/device/0", "/images/logo.png", etc.) A buffer (and max length) is passed in that
   can be used to receive the rest of the message if necessary. Then there will be 
   the socket which will take the response and a helpful large buffer or specified length
   which can be used to build strings.
 
   At the time the handler is called, only the first line of the request has been read.  It is used
-  to determing the request type and the address.  If you need to process the request further
-  its contents may be read into a buffer (the request buffer passed in might be good once the request type 
+  to determine the request type and the address requested.  If you need to process the request further
+  its contents may be read into a buffer (the request buffer passed in is good once the request type 
   address have been used since they're in there initially).  It is suggested that you use the 
   SocketReadLine( ) function to read a line of the request at a time.
 
@@ -227,11 +213,18 @@ int TestHandler( char* requestType, char* address, char* requestBuffer, int requ
   return true;
 }
   \endcode
+  And here is a quick example of how to register a handle:
+  \code
+  // now requests at MyBoardsIPAddress/my/handler will be handled by MyHandler
+  WebServer_Route( "/my/handler", MyHandler );
+  \endcode
 	@param address An string specify the addresses to match.
 	@param handler pointer to a handler function that will be called when the address is matched.
   @return CONTROLLER_OK (=0) on success or the appropriate error if not
 */
-int WebServer_Route( char* address, int (*handler)( char* requestType, char* address, char* requestBuffer, int requestMaxSize, void* socket, char* buffer, int len )  )
+int WebServer_Route( char* address, 
+                    int (*handler)( char* requestType, char* address, char* requestBuffer, 
+                    int requestMaxSize, void* socket, char* buffer, int len ) )
 {
   if ( WebServerHandlers == NULL )
   {
@@ -356,6 +349,155 @@ int WebServer_WriteBodyEnd( void* socket )
   return SocketWrite( socket, bodyEnd, strlen( bodyEnd ) );
 }
 
+/**
+  Set the data of an incoming HTTP POST request to the given buffer.
+  This is designed to be used from within a custom handler.  An incoming HTTP request will have some number of
+  lines of header information, and this function will read through them until getting to the body of the message.
+  It will then store the contents of the body in the given buffer, null-terminating the end of the data.
+  \par Example
+  \code
+int MyRequestHandler( char* requestType, char* address, char* requestBuffer, 
+                      int requestMaxSize, void* socket, char* buffer, int len )
+{
+  // ... other setup here ...
+
+  if ( strncmp( requestType, "POST", 4 ) == 0 ) // if the request is indeed a POST
+  {
+    if( WebServer_GetPostData( socket, requestBuffer, requestMaxSize ) ) // set the POST data in the requestBuffer
+    {
+      // process the data in any way you like.
+      // here, we're expecting a form and we want to grab the info out of it
+      formElements = WebServer_ParseFormElements( requestBuffer, &form );
+    }
+  }
+
+  // ... write out the response here ...
+}
+  \endcode
+	@param socket The socket from the incoming request
+	@param requestBuffer A pointer to the buffer to store the data in.  Usually, just storing it in the requestBuffer
+  is convenient since it's already allocated.
+  @param maxSize The maximum amount of data to be placed in the buffer.
+  @return true on success, false on failure
+*/
+bool WebServer_GetPostData( void *socket, char *requestBuffer, int maxSize )
+{
+  bool retval = false;
+  // keep reading lines of the HTTP header until we get CRLF which signifies the end of the
+  // header and the start of the body data.  If we see the contentlength along the way, keep that.
+  int contentLength = 0;
+  int bufferLength = 0;
+  while ( ( bufferLength = SocketReadLine( socket, requestBuffer, maxSize ) ) )
+  {
+    if ( strncmp( requestBuffer, "\r\n", 2 ) == 0 )
+      break;
+    if ( strncmp( requestBuffer, "Content-Length", 14 ) == 0 )
+      contentLength = atoi( &requestBuffer[ 15 ] );
+  }
+  
+  // now we should be down to the HTTP POST data
+  // if there's any data, get up into it
+  if ( contentLength > 0 && bufferLength > 0 )
+  {  
+    int bufferRead = 0;
+    int lengthToRead = maxSize - 1;
+    char *rbp = requestBuffer;
+    // read all that the socket has to offer...may come in chunks, so keep going until there's none left
+    while ( ( bufferLength = SocketRead( socket, rbp, lengthToRead ) ) )
+    {
+      bufferRead += bufferLength;
+      rbp += bufferLength;
+      lengthToRead -= bufferLength;
+      if ( bufferRead >= contentLength )
+        break;
+    }
+    requestBuffer[ bufferRead ] = 0; // null-terminate the request
+    retval = true;
+  }
+  return retval;
+}
+
+/**
+  Extract the elements of an HTML form into key/value pairs.
+  This is designed to be used from within a custom handler.  HTML forms can be sent via either the HTTP GET 
+  or POST methods.  The \b request parameter must be set to the start of the form data, which is 
+  located in a different place for each method.  In the GET case, the form data is simply in the URL 
+  after a ? character.  In the POST case, the WebServer_GetPostData( ) function will conveniently zip through 
+  the incoming request and set up the pointer for you.
+
+  Note that the HttpForm structure will simply point to the elements in the request buffer, so as soon as
+  the buffer is deleted or out of scope, the form data is no longer valid.
+  \par Example
+  \code
+int MyRequestHandler( char* requestType, char* address, char* requestBuffer, 
+                      int requestMaxSize, void* socket, char* buffer, int len )
+{
+  // ... other setup here ...
+  
+  int formElements = 0;
+  HttpForm form;
+  form.count = 0;
+  
+  // if this request is an HTTP GET
+  if ( strncmp( requestType, "GET", 3 ) == 0 )
+  {
+    char *p = strchr( requestBuffer, '?' );
+    if( p != NULL ) // if we didn't find a ?, then there were no form elements
+      formElements = WebServer_ParseFormElements( p+1, &form );
+    // we have to send "p + 1" since the form data starts right after the ?
+  }
+  
+  // if this request is an HTTP POST
+  if ( strncmp( requestType, "POST", 4 ) == 0 )
+  {
+    // make sure we're pointing at the POST data and if it looks good, process it
+    if( WebServer_GetPostData( socket, requestBuffer, requestMaxSize ) )
+      formElements = WebServer_ParseFormElements( requestBuffer, &form );
+  }
+
+  // ... write out the response here ...
+}
+  \endcode
+	@param request A pointer to the form data
+  @param form The HttpForm structure to populate with elements
+  @return The number of form elements found
+*/
+int WebServer_ParseFormElements( char *request, HttpForm *form )
+{
+  int count = 0;
+  bool cont = true;
+  char *p = request;
+  char* endp;
+
+  do
+  {
+    endp = strchr( p, '=' );
+    *endp = 0;
+    form->elements[form->count].key = p;
+    
+    p = ++endp;
+    endp = strchr( p, '&' ); // look for the next element
+    if( endp == NULL ) // there is no next element, do this one and then be done
+    {
+      endp = strchr( p, 0 );
+      cont = false;
+    }
+    *endp = 0;
+
+    // if the value was empty, we'll either get the & if there are more elements, or 0 if we're at the end
+    if( *(p+1) == '&' || *(p+1) == 0 )
+      form->elements[form->count].value = 0;
+    else
+      form->elements[form->count].value = p;
+    p = ++endp;
+  
+    form->count++;
+    count++;
+  } while( cont == true );
+
+  return count;
+}
+
 /** @}
 */
 
@@ -374,7 +516,7 @@ int TestHandler( char* requestType, char* address, char* requestBuffer, int requ
   return true;
 }
 
-void WebServer_OldSchool( char* address, void *requestSocket, char* buffer, int len );
+void WebServer_Demo( char* requestType, char* address, char* requestBuffer, int requestMaxSize, void* socket, char* buffer, int len );
 void WebServer_ProcessRequest( void* requestSocket );
 char* WebServer_GetRequestAddress( char* request, int length, char** requestType );
 
@@ -404,114 +546,73 @@ void WebServer_ProcessRequest( void* requestSocket )
   }
 
   if( !responded ) 
-    WebServer_OldSchool( address, requestSocket, WebServer->response, RESPONSE_SIZE_MAX ); 
+    WebServer_Demo( requestType, address, WebServer->request, REQUEST_SIZE_MAX, requestSocket, WebServer->response, RESPONSE_SIZE_MAX ); 
 
   SocketClose( requestSocket );
 }
 
-void WebServer_OldSchool( char* address, void *requestSocket, char* buffer, int len )
+void WebServer_Demo( char* requestType, char* address, char* requestBuffer, int requestMaxSize, void* socket, char* buffer, int len )
 {
   (void)address;
   char temp[100];
 
-  if( !WebServer_WriteResponseOkHTML( requestSocket ) )
+  if( !WebServer_WriteResponseOkHTML( socket ) )
     return;
 
-  if( !WebServer_WriteHeader( true, requestSocket, buffer, len ) )
+  if( !WebServer_WriteHeader( true, socket, buffer, len ) )
     return;
 
-  if( !WebServer_WriteBodyStart( 0, requestSocket, buffer, len ) )
+  if( !WebServer_WriteBodyStart( 0, socket, buffer, len ) )
     return;
   
-  int formcount = 0;
-  // Generate the dynamic page...
-  HttpFormData form;
-  if( strncmp( WebServer->request, "GET", 3 ) == 0 )
-  {
-    form.count = 0;
-    formcount = WebServer_ParseFormElements( WebServer->request, &form );
-  }
-
-  strcpy( buffer, "<table border=\"0\">" );
-  strcat( buffer, "<tr><th>Analog Inputs</th></tr>" );
-  int i;
-  for( i = 0; i < 8; i++ )
-  {
-    sprintf( temp, "<tr><td>Analog In %d: %d</td></tr>", i, AnalogIn_GetValue( i ) );
-    strcat( buffer, temp );
-  }
-  strcat( buffer, "</table>" );
+  int formElements = 0;
+  HttpForm form;
+  form.count = 0;
   
-  strcat( buffer, "<form>" );
-  strcat( buffer, "Tester: <input type=\"text\" name=\"test\"><br>" );
-  strcat( buffer, "Testeroo: <input type=\"text\" name=\"test2\"><br>" );
-  strcat( buffer, "<p></p>" );
-  strcat( buffer, "<input type=\"submit\" value=\"Submit / Refresh\">" );
+  // if this request is an HTTP GET
+  if ( strncmp( requestType, "GET", 3 ) == 0 )
+  {
+    char *p = strchr( requestBuffer, '?' );
+    if( p != NULL ) // if we didn't find a ?, then there were no form elements
+      formElements = WebServer_ParseFormElements( p+1, &form );
+  }
+  
+  // if this request is an HTTP POST
+  if ( strncmp( requestType, "POST", 4 ) == 0 )
+  {
+    // make sure we're pointing at the POST data and if it looks good, process it
+    if( WebServer_GetPostData( socket, requestBuffer, requestMaxSize ) )
+      formElements = WebServer_ParseFormElements( requestBuffer, &form ); // grab the data out of the form
+  }
+  
+  strcat( buffer, "<form method=\"POST\">" );
+  strcat( buffer, "App LED 0: <input type=\"checkbox\" name=\"appled0\"><br>" );
+  strcat( buffer, "App LED 1: <input type=\"checkbox\" name=\"appled1\"><br>" );
+  strcat( buffer, "App LED 2: <input type=\"checkbox\" name=\"appled2\"><br>" );
+  strcat( buffer, "App LED 3: <input type=\"checkbox\" name=\"appled3\"><br>" );
+  strcat( buffer, "<p></p>" ); 
+  strcat( buffer, "<input type=\"submit\" value=\"Submit\">" );
   strcat( buffer, "</form>" );
   
-  if( formcount )
+  int i, j;
+  for( j = 0; j < 4; j++ )
   {
-    for( i = 0; i < formcount; i++ )
+    int value = 0;
+    snprintf( temp, 100, "appled%d", j );
+    for( i = 0; i < formElements; i++ )
     {
-      char msg[100];
-      snprintf( msg, 100, "<p>%s was %s</p>", form.elements[i]->key, form.elements[i]->value );
-      strcat( buffer, msg );
-      Free( form.elements[i] );
+      if( strcmp( temp, form.elements[i].key ) == 0 )
+        value = 1;
     }
+    AppLed_SetState( j, value );
   }
   
   // Write out the dynamically generated page.
-  if( !SocketWrite( requestSocket, buffer, strlen( buffer ) ) )
+  if( !SocketWrite( socket, buffer, strlen( buffer ) ) )
     return;
   
-  WebServer_WriteBodyEnd( requestSocket );
+  WebServer_WriteBodyEnd( socket );
 }
-
-int WebServer_ParseFormElements( char *request, HttpFormData *form )
-{
-  int count = 0;
-  bool cont = true;
-  char *p = request;
-  char *endp = strstr( request, "HTTP1.1");
-  *endp = 0; // terminate
-
-  p = strchr( p, '?' );
-  if( p == NULL ) // there were no form elements
-    return 0;
-  endp = p++; // step past the ?
-
-  do
-  {
-    HttpFormElement *elmnt = Malloc( sizeof( HttpFormElement ) );
-
-    endp = strchr( p, '=' );
-    *endp = 0;
-    snprintf( elmnt->key, MAX_FORM_ELEMENT_LENGTH, p );
-    
-    p = ++endp;
-    endp = strchr( p, '&' ); // look for the next element
-    if( endp == NULL ) // there is no next element, do this one and then be done
-    {
-      endp = strchr( p, 0 );
-      cont = false;
-    }
-    *endp = 0;
-
-    // if the value was empty, we'll either get the & if there are more elements, or 0 if we're at the end
-    if( *(p+1) == '&' || *(p+1) == 0 )
-      elmnt->value[0] = 0;
-    else
-      snprintf( elmnt->value, MAX_FORM_ELEMENT_LENGTH, p );
-    p = ++endp;
-  
-    form->elements[form->count++] = elmnt;
-    count++;
-  } while( cont == true );
-
-  return count;
-}
-
-
 
 void WebServerTask( void *p )
 {
