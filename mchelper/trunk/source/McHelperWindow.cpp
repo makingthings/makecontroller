@@ -34,6 +34,12 @@
 #define DEVICE_SCAN_FREQ 1000
 #define SUMMARY_MESSAGE_FREQ 2000
 
+// default preferences
+#define DEFAULT_DIALOG_WINDOW_MESSAGES 100
+#define DEFAULT_UDP_LISTEN_PORT 10000
+#define DEFAULT_UDP_SEND_PORT 10000
+#define DEFAULT_XML_LISTEN_PORT 11000
+
 McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 {
 	this->application = application;
@@ -650,16 +656,16 @@ void McHelperWindow::readSettings()
 	
 	lastDirectory = settings.value("directory", "/home").toString();
 	fileSelectText->setEditText( lastDirectory );
-	
-	appUdpListenPort = settings.value( "appUdpListenPort", 10000 ).toInt( );
-	appUdpSendPort = settings.value( "appUdpSendPort", 10000 ).toInt( );
-	appXmlListenPort = settings.value( "appXmlListenPort", 11000 ).toInt( );
+
+	appUdpListenPort = settings.value( "appUdpListenPort", DEFAULT_UDP_LISTEN_PORT ).toInt( );
+	appUdpSendPort = settings.value( "appUdpSendPort", DEFAULT_UDP_SEND_PORT ).toInt( );
+	appXmlListenPort = settings.value( "appXmlListenPort", DEFAULT_XML_LISTEN_PORT ).toInt( );
 	findEthernetBoardsAuto = settings.value( "findEthernetBoardsAuto", true ).toBool( );
 	
 	hideOSCMessages = settings.value( "hideOSCMessages", false ).toBool( );
 	actionHide_OSC_Messages->setChecked( hideOSCMessages );
 	
-	maxOutputWindowMessages = settings.value( "maxOutputWindowMessages", 1000 ).toInt( );
+	maxOutputWindowMessages = settings.value( "maxOutputWindowMessages", DEFAULT_DIALOG_WINDOW_MESSAGES ).toInt( );
 	
 	QSize mainWindowSize = settings.value( "mainWindowSize" ).toSize( );
 	if( mainWindowSize.isValid( ) )
@@ -785,11 +791,11 @@ aboutMchelper::aboutMchelper( ) : QDialog( )
 
 void McHelperWindow::restoreDefaultPrefs( )
 {
-	prefsDialog->setUdpListenPortDisplay( 10000 );
-	prefsDialog->setUdpSendPortDisplay( 10000 );
-	prefsDialog->setXmlPortDisplay( 11000 );
+	prefsDialog->setUdpListenPortDisplay( DEFAULT_UDP_LISTEN_PORT );
+	prefsDialog->setUdpSendPortDisplay( DEFAULT_UDP_SEND_PORT );
+	prefsDialog->setXmlPortDisplay( DEFAULT_XML_LISTEN_PORT );
 	prefsDialog->setFindNetBoardsDisplay( true );
-	prefsDialog->setMaxMsgsDisplay( 1000 );
+	prefsDialog->setMaxMsgsDisplay( DEFAULT_DIALOG_WINDOW_MESSAGES );
 }
 
 void McHelperWindow::setNewPrefs( )

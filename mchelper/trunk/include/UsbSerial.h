@@ -101,12 +101,6 @@ class UsbSerial
 		#ifdef Q_WS_WIN
 		UsbStatus openDevice( TCHAR* deviceName );
 		bool DoRegisterForNotification( );
-		
-		OVERLAPPED overlappedRead;
-		char readBuffer[512];
-		OVERLAPPED overlappedWrite;
-		OVERLAPPED overlappedStatus;
-		DWORD dwStoredFlags;
 		HDEVNOTIFY notificationHandle;
 		#endif
 		
