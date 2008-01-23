@@ -21,15 +21,17 @@ OscXmlServer::OscXmlServer( McHelperWindow *mainWindow, int port )
 {
 	this->mainWindow = mainWindow;
 	listenPort = port;
+	
+	handler = new XmlHandler( mainWindow, this );	
+	xml.setContentHandler( handler );
+	xml.setErrorHandler( handler );
+	resetParser( );
+	
 	serverSocket = new QTcpServer( );
 	serverSocket->setMaxPendingConnections( 1 ); // just listen for 1 for now
 	serverSocket->listen( QHostAddress::Any, listenPort );
 	connect( serverSocket, SIGNAL( newConnection() ), this, SLOT( openNewConnection() ) );
 	clientSocket = NULL;
-
-	handler = new XmlHandler( mainWindow, this );	
-	xml.setContentHandler( handler );
-	lastParseComplete = true;
 	
 	fromString = QString( "XML server" ); // what our messages to the UI will show as having come from
 }
@@ -78,20 +80,64 @@ bool OscXmlServer::changeListenPort( int port )
 
 void OscXmlServer::processClientData( )
 {
-	xmlInput.setData( clientSocket->readAll( ) );
+	// if there's more than one XML document, we expect them to be delimited by \0
+	QList<QByteArray> newDocuments = clientSocket->readAll( ).split( '\0' );
 	bool status;
-
-	if( lastParseComplete )
+	for( int i = 0; i < newDocuments.size( ); i++ )
 	{
-		lastParseComplete = false; // this will get reset in the parsing process if we get a complete message
-		status = xml.parse( &xmlInput, true );
+		if( newDocuments.at( i ).size( ) )
+		{
+			//printf( "string: %s\n", newDocuments.at( i ).data() );
+			xmlInput.setData( newDocuments.at( i ) );
+		
+			if( lastParseComplete )
+			{
+				lastParseComplete = false; // this will get reset in the parsing process if we get a complete message
+				status = xml.parse( &xmlInput, true );
+			}
+			else
+				status = xml.parseContinue( );
+			
+			if( !status ) 
+			{
+				// there was a problem parsing.  now the next time we come through, it will start
+				// a new parse, discarding anything that was left from the last socket read
+				resetParser( );
+				printf( "XML parse error: %s\n", handler->errorString().toAscii().data() );
+			}
+		}
 	}
-	else
-		status = xml.parseContinue( );
-	
-	if( !status )
-		qDebug( "XML parse error: %s", handler->errorString().toAscii().data() );
 }
+
+void OscXmlServer::resetParser( )
+{
+	lastParseComplete = true;
+}
+
+bool XmlHandler::startDocument( )
+{
+	//printf( "start of document...\n" );
+	return true;
+}
+
+bool XmlHandler::endDocument( )
+{
+	//printf( "end of document...\n" );
+	return true;
+}
+
+bool XmlHandler::fatalError (const QXmlParseException & exception)
+{
+	error( exception );
+	return true;
+}
+
+bool XmlHandler::error (const QXmlParseException & exception)
+{
+	 printf( "Error on line, %d, column %d : %s\n",
+	 					exception.lineNumber(), exception.columnNumber(), exception.message().toAscii().data() );
+	 return false;
+} 
 
 void OscXmlServer::clientDisconnected( )
 {
@@ -264,6 +310,7 @@ bool XmlHandler::startElement( const QString & namespaceURI, const QString & loc
 		QString val = atts.value( "VALUE" );
 		if( type.isEmpty( ) || val.isEmpty( ) )
 			return false;
+
 		if( type == "i" || type == "f" || type == "s" || type == "b" )
 		{
 			OscMessageData *msgData = new OscMessageData( );
@@ -314,7 +361,6 @@ bool XmlHandler::endElement( const QString & namespaceURI, const QString & local
 	}
 	else if( localName == "MESSAGE" )
 		oscMessageList.append( currentMessage );
-	
 
 	return true;
 }

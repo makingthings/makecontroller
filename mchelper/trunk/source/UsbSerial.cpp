@@ -118,7 +118,6 @@ void UsbSerial::usbClose( )
 	  deviceOpen = false;
 	  UnregisterDeviceNotification( notificationHandle );
 		#endif //Windows-only UsbSerial::close( )
-		//messageInterface->messageThreadSafe( "Usb> Make Controller disconnected." );
 	}
 }
 
@@ -172,71 +171,21 @@ int UsbSerial::usbRead( char* buffer, int length )
 	
   //Windows-only///////////////////////////////////////////////////////////////////////
   #ifdef Q_WS_WIN
-  DWORD count;
-  int retval = -1;
-  DWORD numTransferred;
-    
-  retval = OK;  
-  readInProgress = false;
-  overlappedRead.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+  int retVal=0;
+    COMSTAT Win_ComStat;
+    DWORD Win_BytesRead=0;
+    DWORD Win_ErrorMask=0;
+    ClearCommError(deviceHandle, &Win_ErrorMask, &Win_ComStat);
+    if( (ReadFile(deviceHandle, buffer, (DWORD)length, &Win_BytesRead, NULL)==0) || (Win_BytesRead==0) ) 
+	{
+		//lastErr=GetLastError();
+        retVal=-1;
+    }
+    else {
+        retVal=((int)Win_BytesRead);
+    }
 
-  // reset the read overlapped structure
-  overlappedRead.Offset = overlappedRead.OffsetHigh = 0;
-  
-  if ( !ReadFile( deviceHandle, buffer, length, &count, &overlappedRead ) )
-  {
-  	DWORD lastError = GetLastError();
-		// messageInterface->message( 1, "USB Read Error: %d \n", lastError );
-	  if ( lastError != ERROR_IO_PENDING)     // read not delayed?
-	  {
-	    usbClose( );
-	    //messageInterface->message( 1, "Closed trying to read the file\n" );
-	    retval = -1; //UNKNOWN_ERROR;
-	  }
-	  else
-	    readInProgress = true;
-  }
-  else          	
-  	retval = count;
-
-
-  if( readInProgress )
-  {
-  	DWORD r;
-	  do
-	  {
-	    r = WaitForSingleObject( overlappedRead.hEvent, 1000 );	 
-	  } while ( r == WAIT_TIMEOUT );
-	  switch( r )
-		{
-		  case WAIT_FAILED:
-		    usbClose( );
-		    retval = -1; //UNKNOWN_ERROR;
-	      break;
-		  case WAIT_TIMEOUT:
-		    retval = -1; // NOTHING_AVAILABLE;
-		    break;
-		  case WAIT_OBJECT_0:
-	  		// check to see if the pending operation completed
-        	if( !GetOverlappedResult( deviceHandle, &overlappedRead, &numTransferred, FALSE )  ) // don't wait
-			{
-		      usbClose( );
-		      SetEvent( overlappedRead.hEvent );
-		      retval = -1; //IO_ERROR;
-		      break;
-			}
-  			retval = numTransferred;
-			  break; 
-		  case WAIT_ABANDONED:
-		  default:
-		    usbClose( );
-		    retval = -1; //IO_ERROR;
-			  break;
-		} // end of switch
-  }
-  
-  CloseHandle( overlappedRead.hEvent );
-  return retval;
+    return retVal;
   	
   #endif //Windows-only UsbSerial::read( )//////////////////////////////////////////////////////////////
 }
@@ -275,52 +224,18 @@ UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
 
   //Windows-only
   #ifdef Q_WS_WIN
-  DWORD cout, ret, numWritten;
-  bool success;
-  UsbSerial::UsbStatus retval = OK;
-  
-  overlappedWrite.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-  
-	// reset the write overlapped structure
-  overlappedWrite.Offset = overlappedWrite.OffsetHigh = 0;
-  
-  success = WriteFile( deviceHandle, buffer, length, &cout, &overlappedWrite );
-  if( !success )
-  {
-  	if ( GetLastError() == ERROR_IO_PENDING)
-	  {
-	  	int waitCount = 0;
-		  do
-		  {
-	  		if( waitCount++ > 5 )
-	  			break;
-		  	ret = WaitForSingleObject( overlappedWrite.hEvent, 100 );
-		  }  while ( ret == WAIT_TIMEOUT );
-	
-	    if ( ret == WAIT_OBJECT_0 )
-	    {			
-				//do
-				//{
-					GetOverlappedResult( deviceHandle, &overlappedWrite, &numWritten, TRUE);
-					//read = numWritten;
-				//} while( read != length );
-				if( numWritten == (DWORD)length )
-					retval = OK;
-				else
-				  retval = IO_ERROR;
-	    }
-	    else
-	      retval = IO_ERROR;
-	  }
-	  else
-	  {
-	    //usbClose( );
-	    retval = IO_ERROR;
-	  }
-  }
-  
-  CloseHandle( overlappedWrite.hEvent );
-  return retval;
+  int retVal=0;
+    DWORD Win_BytesWritten;
+    if (!WriteFile(deviceHandle, (void*)buffer, (DWORD)length, &Win_BytesWritten, NULL)) {
+        //lastErr=E_WRITE_FAILED;
+        retVal=-1;
+    }
+    else {
+        retVal=((int)Win_BytesWritten);
+    }
+
+    //flush();
+    return OK;
   
   #endif //Windows-only UsbSerial::write( )
 }
@@ -361,28 +276,24 @@ UsbSerial::UsbStatus UsbSerial::openDevice( TCHAR* deviceName )
     return ALREADY_OPEN;
 
   // Open the port
-  deviceHandle = CreateFile( deviceName, 
-			GENERIC_READ | GENERIC_WRITE, 
-			0, 
-			0, 
-			OPEN_EXISTING, 
-			FILE_FLAG_OVERLAPPED, 
-			0 );
+  deviceHandle = CreateFile( deviceName, GENERIC_READ|GENERIC_WRITE,
+                              FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, 
+                              OPEN_EXISTING, 0, NULL);
   
   if ( deviceHandle == INVALID_HANDLE_VALUE )
     return ERROR_CLOSE; 
 
   // initialize the overlapped structures
-  overlappedRead.Offset  = overlappedWrite.Offset = 0; 
-  overlappedRead.OffsetHigh = overlappedWrite.OffsetHigh = 0; 
-  overlappedRead.hEvent  = CreateEvent(0, TRUE, FALSE, 0);
-  overlappedWrite.hEvent  = CreateEvent(0, TRUE, FALSE, 0);
-
-  if (!overlappedRead.hEvent || !overlappedWrite.hEvent )
-  {
-  	deviceHandle = INVALID_HANDLE_VALUE;
-    return ERROR_CLOSE;
-  }
+//  overlappedRead.Offset  = overlappedWrite.Offset = 0; 
+//  overlappedRead.OffsetHigh = overlappedWrite.OffsetHigh = 0; 
+//  overlappedRead.hEvent  = CreateEvent(0, TRUE, FALSE, 0);
+//  overlappedWrite.hEvent  = CreateEvent(0, TRUE, FALSE, 0);
+//
+//  if (!overlappedRead.hEvent || !overlappedWrite.hEvent )
+//  {
+//  	deviceHandle = INVALID_HANDLE_VALUE;
+//    return ERROR_CLOSE;
+//  }
 
   GetCommState( deviceHandle, &dcb );
   dcb.BaudRate = CBR_115200;

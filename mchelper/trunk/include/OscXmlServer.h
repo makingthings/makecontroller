@@ -39,6 +39,10 @@ class XmlHandler : public QXmlDefaultHandler
 		bool endElement( const QString & namespaceURI, const QString & localName, const QString & qName );
 		bool startElement( const QString & namespaceURI, const QString & localName, 
 												const QString & qName, const QXmlAttributes & atts );
+		bool error (const QXmlParseException & exception);
+		bool fatalError (const QXmlParseException & exception);
+		bool startDocument( );
+		bool endDocument( );
 												
 	private:
 		McHelperWindow *mainWindow;
@@ -62,7 +66,7 @@ class OscXmlServer : public QObject
 		bool changeListenPort( int port );
 		void boardListUpdate( QList<Board*> boardList, bool arrived );
 		void boardInfoUpdate( Board* board );
-		void resetParser( ) { lastParseComplete = true; }
+		void resetParser( );
 				
 	private:
 		QTcpServer *serverSocket;
