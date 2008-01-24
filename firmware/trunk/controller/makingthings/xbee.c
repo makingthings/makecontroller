@@ -34,6 +34,7 @@ typedef struct
   #ifdef OSC
   bool autosend;
   #endif
+  bool waitingForConfirm;
 } XBeeSubsystem;
 
 XBeeSubsystem* XBee;
@@ -122,6 +123,7 @@ int XBee_SetActive( int state )
       #endif
       XBee->currentPkt = MallocWait( sizeof( XBeePacket ), 100 );
       XBee_ResetPacket( XBee->currentPkt );
+      XBee->waitingForConfirm = false;
     }
   }
   else
@@ -1568,7 +1570,7 @@ static char* XBeeConfigOsc_Name = "xbeeconfig";
 static char* XBeeConfigOsc_PropertyNames[] = { "active", "address", "panid", "channel", "samplerate", 
                                                 "write", "io0", "io1", "io2", "io3", "io4", 
                                                 "io5", "io6", "io7", "io8", "packet-mode", "at-command", 
-                                                "get-message", 0 }; // must have a trailing 0
+                                                "get-message", "write-command", "confirm", 0 }; // must have a trailing 0
 
 int XBeeConfigOsc_PropertySet( int property, char* typedata, int channel );
 int XBeeConfigOsc_PropertyGet( int property, int channel );
@@ -1657,6 +1659,56 @@ int XBeeConfigOsc_PropertySet( int property, char* typedata, int channel )
       }
       if( count == 1 ) // this is a little wonky, but this is actually a read.
         value = XBeeConfig_RequestATResponse( cmd );
+      break;
+    }
+    case 18: // write-command
+    {
+      char* cmd;
+      count = Osc_ExtractData( typedata, "si", &cmd, &value );
+      if ( count != 2 )
+        return Osc_SubsystemError( channel, XBeeConfigOsc_Name, "Incorrect data - need a string and an int" );
+      XBeePacket xbp;
+      uint8 params[4]; // big endian - most significant bit first
+      XBee_IntToBigEndianArray( value, params );
+      XBee_CreateATCommandPacket( &xbp, 0, cmd, params, 4 );
+      XBee_SendPacket( &xbp, 4 );
+      XBee_ResetPacket( &xbp );
+      XBee_CreateATCommandPacket( &xbp, 0, "WR", NULL, 0 );
+      XBee_SendPacket( &xbp, 0 ); 
+      break;
+    }
+    case 19: // confirm
+    {
+      char* cmd;
+      count = Osc_ExtractData( typedata, "si", &cmd, &value );
+      if ( count != 2 )
+        return Osc_SubsystemError( channel, XBeeConfigOsc_Name, "Incorrect data - need a string and an int" );
+      XBeePacket xbp;
+      uint8 params[4]; // big endian - most significant bit first
+      XBee_IntToBigEndianArray( value, params );
+
+      XBee->waitingForConfirm = true;
+      Sleep( System_GetAutoSendInterval( ) + 1 ); // make sure autosend isn't grabbing packets if it's on
+      XBee_ResetPacket( XBee->currentPkt );
+      while( true )
+      {
+        // send the setter
+        XBee_CreateATCommandPacket( &xbp, 0x53, cmd, params, 4 );
+        XBee_SendPacket( &xbp, 4 );
+        XBee_ResetPacket( &xbp );
+        // then the getter
+        XBee_CreateATCommandPacket( &xbp, 0x52, cmd, NULL, 0 );
+        XBee_SendPacket( &xbp, 0 );
+        XBee_ResetPacket( &xbp );
+        // and try to get it
+        if( XBee_GetPacket( XBee->currentPkt, 5 ) )
+        {
+          XBeeOsc_HandleNewPacket( XBee->currentPkt, channel );
+          break;
+        }
+        Sleep( 1 );
+      }
+      XBee->waitingForConfirm = false;
       break;
     }
   }
@@ -1863,7 +1915,7 @@ int XBeeOsc_Async( int channel )
   XBee_SetActive( 1 );
   int newMsgs = 0;
 
-  if( !XBee_GetAutoSend( false ) )
+  if( !XBee_GetAutoSend( false ) || XBee->waitingForConfirm )
     return newMsgs;
 
   while( XBee_GetPacket( XBee->currentPkt, 0 ) )
