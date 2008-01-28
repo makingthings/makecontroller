@@ -242,7 +242,7 @@ UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
 
 int UsbSerial::numberOfAvailableBytes( )
 {
-    int n;
+    int n = 0;
 		QMutexLocker locker( &usbMutex );
 		#ifdef Q_WS_MAC
 		if( ::ioctl( deviceHandle, FIONREAD, &n ) < 0 )

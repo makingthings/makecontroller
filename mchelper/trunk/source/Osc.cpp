@@ -91,7 +91,7 @@ QByteArray OscMessage::toByteArray( )
 				typetag.append( 'f' );
 				QByteArray floatarg;
 				floatarg.resize( sizeof( int ) );
-				*(int*)floatarg.data() = qToBigEndian( data.at(i)->f );
+				*(int*)floatarg.data() = qToBigEndian( (int)data.at(i)->f );
 				args.append( floatarg );
 				break;
 			}
