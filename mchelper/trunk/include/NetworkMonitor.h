@@ -49,7 +49,6 @@ class NetworkMonitor : public QObject, public MonitorInterface
   	
   private:
 		QHash<QString, PacketUdp*> connectedDevices; // our internal list
-		void createPing( );
 		MessageInterface* messageInterface;
 		McHelperWindow* mainWindow;
 		QApplication* application;

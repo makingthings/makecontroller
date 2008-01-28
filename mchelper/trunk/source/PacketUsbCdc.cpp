@@ -27,14 +27,8 @@
 PacketUsbCdc::PacketUsbCdc( ) : QThread( )
 {
 	packetReadyInterface = NULL;
-	currentPacket = NULL;
 	exit = false;
-}
-
-PacketUsbCdc::~PacketUsbCdc( )
-{
-	if( currentPacket != NULL )
-		delete currentPacket;
+	currentPacket.clear( );
 }
 
 void PacketUsbCdc::run()
@@ -49,20 +43,12 @@ void PacketUsbCdc::run()
 
 		if( deviceOpen ) // then, if open() succeeded, try to read
 		{
-			currentPacket = new OscUsbPacket( );
-			int packetLength = slipReceive( currentPacket->packetBuf, MAX_MESSAGE );
+			int packetLength = slipReceive( &currentPacket );
 			if( packetLength > 0 && packetReadyInterface )
-			{
-				currentPacket->length = packetLength;
-				{
-					QMutexLocker locker( &packetListMutex );
-					packetList.append( currentPacket );
-				}
 				packetReadyInterface->packetWaiting( );
-			}
 			else
 			{
-				delete currentPacket;
+				currentPacket.clear( );
 				msleep( 1 ); // usb is still open, but we didn't receive anything last time
 			}
 		}
@@ -70,6 +56,12 @@ void PacketUsbCdc::run()
 			msleep( 50 );
 	}
 	close( ); // should never get here...
+}
+
+int PacketUsbCdc::pendingPacketSize( )
+{
+	QMutexLocker locker( &packetMutex );
+	return currentPacket.size( );
 }
 
 PacketUsbCdc::Status PacketUsbCdc::open()
@@ -149,10 +141,9 @@ int PacketUsbCdc::getMoreBytes( )
 	return PacketInterface::OK;
 }
 
-int PacketUsbCdc::slipReceive( char* buffer, int length )
+int PacketUsbCdc::slipReceive( QByteArray *packet )
 {
   int started = 0, count = 0, finished = 0, i;
-  char *bufferPtr = buffer;
 
   while ( true )
   {
@@ -162,10 +153,11 @@ int PacketUsbCdc::slipReceive( char* buffer, int length )
 		int status = getMoreBytes( );
 		if( status != PacketInterface::OK )
 			return -1;
-			
-		if( slipRxPacket.size( ) )
+		
+		int size = slipRxPacket.size( );
+		if( size > 0 )
 		{
-			int size = (slipRxPacket.size( ) > length) ? length : slipRxPacket.size( );
+			QMutexLocker locker( &packetMutex );
 			for( i = 0; i < size; i++ )
 			{
 				char c = *slipRxPacket.data( );
@@ -186,7 +178,7 @@ int PacketUsbCdc::slipReceive( char* buffer, int length )
 					default:
 						if( started )
 						{
-							*bufferPtr++ = c;
+							packet->append( c );
 							count++;
 						}
 						break;
@@ -204,10 +196,8 @@ int PacketUsbCdc::slipReceive( char* buffer, int length )
 
 bool PacketUsbCdc::isPacketWaiting( )
 {
-  if( packetList.isEmpty() )
-	  return false;
-	else
-	  return true;
+  QMutexLocker locker( &packetMutex );
+	  return currentPacket.size( ) > 0;
 }
 
 bool PacketUsbCdc::isOpen( )
@@ -217,11 +207,10 @@ bool PacketUsbCdc::isOpen( )
 
 int PacketUsbCdc::receivePacket( char* buffer, int size )
 {
-	// Need to protect the packetList structure from multithreaded diddling
-	int length;
 	int retval = 0;
+	QMutexLocker locker( &packetMutex );
 	
-	if( !packetList.size() )
+	if( !currentPacket.size() || currentPacket.size( ) > size )
 	{
 		QString msg = QString( "Error receiving packet.");
 		messageInterface->messageThreadSafe( msg, MessageEvent::Error);
@@ -229,24 +218,9 @@ int PacketUsbCdc::receivePacket( char* buffer, int size )
 	} 
 	else
 	{
-  	int listSize = packetList.size( );
-  	if( listSize > 0 )
-  	{
-  		QMutexLocker locker( &packetListMutex );
-  		for( int i = 0; i < listSize; i++ )
-  		{
-  			OscUsbPacket* packet = packetList.takeAt( i );
-	  		length = packet->length;
-	  		if ( length <= size )
-				{
-			    buffer = (char*)memcpy( buffer, packet->packetBuf, length );
-		  	  retval = length;
-				}
-				else
-					retval = 0;
-				delete packet;
-  		}
-  	}
+  	memcpy( buffer, currentPacket.data( ), currentPacket.size( ) );
+		retval = currentPacket.size( );
+		currentPacket.clear( );
 	}
 	return retval;
 }

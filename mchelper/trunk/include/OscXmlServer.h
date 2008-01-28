@@ -23,6 +23,7 @@
 #include <QXmlSimpleReader>
 #include <QXmlDefaultHandler>
 #include <QDomDocument>
+
 #include "McHelperWindow.h"
 #include "MessageEvent.h"
 #include "Board.h"
@@ -59,7 +60,6 @@ class OscXmlServer : public QObject
 	
 	public:
 		OscXmlServer( McHelperWindow *mainWindow, int port );
-		~OscXmlServer( );
 		bool isConnected( );
 		void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort );
 		QString fromString;

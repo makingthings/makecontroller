@@ -92,6 +92,12 @@ bool PacketUdp::isPacketWaiting( )	//part of PacketInterface
   return lastMessage.size( ) > 0;
 }
 
+int PacketUdp::pendingPacketSize( )
+{
+	QMutexLocker locker( &msgMutex );
+  return lastMessage.size( );
+}
+
 bool PacketUdp::isOpen( )
 {
 	return socket != NULL;

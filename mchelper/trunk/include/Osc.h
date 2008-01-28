@@ -18,113 +18,67 @@
 #ifndef OSC_H
 #define OSC_H
 
-#define OSC_MAX_MESSAGE 2048
-
-#include "PacketInterface.h"
 #include "MessageInterface.h"
-#include "PacketReadyInterface.h"
 #include "McHelperWindow.h"
-#include <QHostAddress>
 
 class McHelperWindow;
-
 
 class OscMessageData
 {
 	public:
-		enum { OmdString, OmdInt, OmdFloat, OmdBlob } omdType;
-	  char* s;
-	  void* b;
-	  int   i;
+		enum { OmdString, OmdInt, OmdFloat, OmdBlob } type;
+		OscMessageData( ) { };
+		OscMessageData( int i );
+		OscMessageData( float f );
+		OscMessageData( QString s );
+		OscMessageData( QByteArray b );
+	  QString s;
+	  QByteArray b;
+	  int i;
 	  float f;
-	  
-	  OscMessageData()
-	  {
-	  	s = 0;
-	  	b = 0;
-	  }
-	  
-	  ~OscMessageData()
-	  {
-	  	if ( s != 0 )
-	  	  free( s );
-	  	if( b!= 0 )
-	  		free( b );
-	  }
 };
 
 class OscMessage
 {
 	public:
-	  char* address;
+	  QString addressPattern;
 		QList<OscMessageData*> data;
-	  
-	  OscMessage()
-	  {
-	  	address = 0;
-	  }
-	  
-	  ~OscMessage()
-	  {
-	  	if ( address != 0 )
-	  	  free( address );
-	  	qDeleteAll( data );
-	  	data.clear( );
-	  }
 	  QString toString( );
-		QHostAddress destAddress;
-		int destPort;
+		QByteArray toByteArray( );
+		~OscMessage( ) { qDeleteAll( data ); }
 };
 
-class Osc : public QObject
+class Osc
 {	
-	Q_OBJECT
-		
 	public:
 		enum Status { OK, ERROR_SENDING_TEXT_MESSAGE, ERROR_SENDING_COMPLEX_MESSAGE, 
 			            ERROR_NO_PACKET, ERROR_CREATING_REQUEST, ERROR_CREATING_BUNDLE, ERROR_PACKET_LENGTH_0 };				
 
-		Osc( );
-		~Osc( );
-
-		Status createMessage( char* textMessage ); 
-		Status createMessage( char* address, char* format, ... );
-		Status createOneRequest( char* buffer, int *length, char* message );
-		Status createMessage( OscMessage* message );
-		Status sendPacket( );
-		bool isMessageWaiting();
-		Status receive( QList<OscMessage*>* oscMessageList = 0 );
-		void setInterfaces( PacketInterface* packetInterface, MessageInterface* messageInterface, QApplication* application );
-    void setPreamble( const char* preamble ) { this->preamble = preamble; }
-    const char* getPreamble( );
-    void uiSendPackets( QStringList msgs );
+		Osc( ) { };
+		static QByteArray writePaddedString( char *string );
+		static QByteArray writePaddedString( QString str );
+		static QByteArray writeTimetag( int a, int b );
+		static QByteArray createOneRequest( char* message );
+		QList<OscMessage*> processPacket( char* data, int size );
+		QByteArray createPacket( QStringList strings );
+		QByteArray createPacket( QList<OscMessage*> msgs );
+		QByteArray createPacket( QString msg );
 		
-	public slots:
-		void uiSendPacket( QString rawString );
+		Status createMessage( OscMessage* message );
+		void setInterfaces( MessageInterface* messageInterface );
+    void setPreamble( QString preamble ) { this->preamble = preamble; }
+    QString getPreamble( );
+		bool createMessage( QString msg, OscMessage *msg );
 	  		
 	private:
 		char* findDataTag( char* message, int length );
+		QString getTypeTag( char* message );
 		void receivePacket( char* packet, int length,  QList<OscMessage*>* oscMessageList );
 		void receiveMessage( char* message, int length, QList<OscMessage*>* oscMessageList );
 		int extractData( char* buffer, OscMessage* message );
-	 
-		char* createBundle( char* buffer, int* length, int a, int b );
-		char* createMessageInternal( char* bp, int* length, char* inputString );
-		char* createMessageInternal( char* bp, int* length, char* address, char* format, va_list args );
-		char* createMessageInternal( char* bp, int* length, char* address, char* format, QList<OscMessageData*> msgData );
-		char* writePaddedString( char* buffer, int* length, char* string );
-		char* writeTimetag( char* buffer, int* length, int a, int b );
-		void resetOutBuffer( );
-				
-		PacketInterface* packetInterface;
+
 		MessageInterface* messageInterface;
-		QApplication* application;
-		
-		const char* preamble;
-		char outBuffer[ OSC_MAX_MESSAGE ];
-	  char* outBufferPointer;
-	  int outBufferRemaining;
-	  int outMessageCount;
+		QString preamble;
 };
 
 #endif	

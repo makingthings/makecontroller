@@ -29,27 +29,17 @@
 #include "PacketReadyInterface.h"
 #include "MonitorInterface.h"
 
-#define MAX_MESSAGE 2048
-#define MAX_SLIP_READ_SIZE 16384
-
-class OscUsbPacket
-{
-  public:
-	  char packetBuf[MAX_MESSAGE];
-		int length;
-};
-
 class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
 {
     public:
 			PacketUsbCdc( );
-			~PacketUsbCdc( );
 			void run( );
 			// from PacketInterface
 			Status open( );	
 		  Status close( );
 			Status sendPacket( char* packet, int length );
 			bool isPacketWaiting( );
+			int pendingPacketSize( );
 			bool isOpen( );
 			int receivePacket( char* buffer, int size );
 			QString getKey( void );
@@ -62,9 +52,8 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
 								
                 
     private:
-		  QList<OscUsbPacket*> packetList;
-		  OscUsbPacket* currentPacket;
-		  QMutex packetListMutex;
+		  QByteArray currentPacket;
+		  QMutex packetMutex;
 			QByteArray slipRxPacket;
 		  void sleepMs( int ms );
 			
@@ -72,7 +61,7 @@ class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
 			MessageInterface *messageInterface;
 		  QApplication* application;
 		  MonitorInterface* monitor;
-		  int slipReceive( char* buffer, int length );
+		  int slipReceive( QByteArray *packet );
 			int getMoreBytes( void );
 		  bool exit;
 };
