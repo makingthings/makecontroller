@@ -36,7 +36,7 @@ Board::~Board( )
 void Board::setPacketInterface( PacketInterface* packetInterface )
 {
 	this->packetInterface = packetInterface;
-	osc->setInterfaces( packetInterface, messageInterface, application );
+	osc->setInterfaces( messageInterface );
 	osc->setPreamble( packetInterface->location( ) );
 	packetInterface->setPacketReadyInterface( this );
 	packetInterface->open( );
@@ -87,29 +87,33 @@ void Board::flash( )
 
 void Board::packetWaiting( )
 {
-	QList<OscMessage*> oscMessageList;
+	//QList<OscMessage*> oscMessageList;
 	QStringList messageList;
-	osc->receive( &oscMessageList );
+	//osc->receive( &oscMessageList );
+	QByteArray packet;
+	packet.resize( packetInterface->pendingPacketSize( ) );
+	packetInterface->receivePacket( packet.data( ), packet.size( ) );
+	QList<OscMessage*> oscMessageList = osc->processPacket( packet.data(), packet.size() );
 	
 	int messageCount = oscMessageList.size( ), i;
 	bool newSysInfo = false;
 	
 	for( i = 0; i < messageCount; i++ )
 	{
-		QString msg = oscMessageList.at(i)->toString( );
-		if( strcmp( oscMessageList.at(i)->address, "/system/info-internal-a" ) == 0 )
+		OscMessage *msg = oscMessageList.at(i);
+		if( msg->addressPattern == QString( "/system/info-internal-a" ) )
       newSysInfo = extractSystemInfoA( oscMessageList.at(i) );
 			
-		else if( strcmp( oscMessageList.at(i)->address, "/system/info-internal-b" ) == 0 )
+		else if( msg->addressPattern == QString( "/system/info-internal-b" ) )
 			newSysInfo = extractSystemInfoB( oscMessageList.at(i) );
 			
-		else if( strcmp( oscMessageList.at(i)->address, "/network/find" ) == 0 )
+		else if( msg->addressPattern == QString( "/network/find" ) )
 			newSysInfo = extractNetworkFind( oscMessageList.at(i) );
 			
-		else if( QString(oscMessageList.at(i)->address).contains( "error", Qt::CaseInsensitive ) )
-			messageInterface->messageThreadSafe( msg, MessageEvent::Warning, locationString( ) );
+		else if( msg->addressPattern.contains( "error", Qt::CaseInsensitive ) )
+			messageInterface->messageThreadSafe( msg->toString( ), MessageEvent::Warning, locationString( ) );
 		else
-			messageList.append( msg );
+			messageList.append( msg->toString( ) );
 	}
 	if( messageList.count( ) > 0 )
 	{
@@ -296,21 +300,34 @@ void Board::sendMessage( QString rawMessage )
 	if( packetInterface == NULL || !packetInterface->isOpen( ) )
 		return;
 	else
-		osc->uiSendPacket( rawMessage );
+	{		
+		QByteArray packet = osc->createPacket( rawMessage );
+		if( !packet.isEmpty( ) )
+			packetInterface->sendPacket( packet.data( ), packet.size( ) );
+	}
 }
 
 void Board::sendMessage( QList<OscMessage*> messageList )
-{
-	int msgCount = messageList.count( );
-	for( int i = 0; i < msgCount; i++ )
-		osc->createMessage( messageList.at(i) );
-	if( msgCount > 0 )
-		osc->sendPacket( );
+{	
+	if( packetInterface == NULL || !packetInterface->isOpen( ) )
+		return;
+	if( messageList.count( ) > 0 )
+	{		
+		QByteArray packet = osc->createPacket( messageList );
+		if( !packet.isEmpty( ) )
+			packetInterface->sendPacket( packet.data( ), packet.size( ) );
+	}
 }
 
 void Board::sendMessage( QStringList messageList )
 {
+	if( packetInterface == NULL || !packetInterface->isOpen( ) )
+		return;
 	if( messageList.count( ) > 0 )
-		osc->uiSendPackets( messageList );
+	{		
+		QByteArray packet = osc->createPacket( messageList );
+		if( !packet.isEmpty( ) )
+			packetInterface->sendPacket( packet.data( ), packet.size( ) );
+	}
 }
 

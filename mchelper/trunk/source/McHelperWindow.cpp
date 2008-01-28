@@ -439,9 +439,10 @@ void McHelperWindow::commandLineEvent( )
 void McHelperWindow::newXmlPacketReceived( QList<OscMessage*> messageList, QString address )
 {
 	Board *board;
-	for( int i = 0; i < listWidget->count( ); i++ )
+	QList<Board*> boardList = getConnectedBoards( );
+	for( int i = 0; i < boardList.count( ); i++ )
 	{
-		board = (Board*)listWidget->item( i );
+		board = boardList.at( i );
 		if( board->key == address )
 			board->sendMessage( messageList );
 	}
@@ -503,11 +504,12 @@ void McHelperWindow::customEvent( QEvent* event )
 		case 11112: // a board's display name has changed
 		{
 			BoardNameEvent* evt = (BoardNameEvent*)event;
-			int boardCount = listWidget->count( );
+			QList<Board*> boardList = getConnectedBoards( );
+			int boardCount = boardList.count( );
 			Board *board;
 			for( int i = 0; i < boardCount; i++ )
 			{
-				board = (Board*)listWidget->item( i );
+				board = boardList.at( i );
 				if( board-> key == evt->key )
 				{
 					listWidget->item( i )->setText( evt->name );

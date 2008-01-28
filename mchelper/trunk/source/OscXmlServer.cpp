@@ -28,7 +28,6 @@ OscXmlServer::OscXmlServer( McHelperWindow *mainWindow, int port )
 	resetParser( );
 	
 	serverSocket = new QTcpServer( );
-	serverSocket->setMaxPendingConnections( 1 ); // just listen for 1 for now
 	serverSocket->listen( QHostAddress::Any, listenPort );
 	connect( serverSocket, SIGNAL( newConnection() ), this, SLOT( openNewConnection() ) );
 	clientSocket = NULL;
@@ -36,13 +35,10 @@ OscXmlServer::OscXmlServer( McHelperWindow *mainWindow, int port )
 	fromString = QString( "XML server" ); // what our messages to the UI will show as having come from
 }
 
-OscXmlServer::~OscXmlServer( )
-{
-	
-}
-
 void OscXmlServer::openNewConnection( )
 {
+	if( isConnected( ) ) // if we're already connected, ignore any additional connections
+		return;
 	clientSocket = serverSocket->nextPendingConnection( );
 	if( !clientSocket )
 	{
@@ -134,7 +130,7 @@ bool XmlHandler::fatalError (const QXmlParseException & exception)
 
 bool XmlHandler::error (const QXmlParseException & exception)
 {
-	 printf( "Error on line, %d, column %d : %s\n",
+	 printf( "incoming XML error on line, %d, column %d : %s\n",
 	 					exception.lineNumber(), exception.columnNumber(), exception.message().toAscii().data() );
 	 return false;
 } 
@@ -148,7 +144,8 @@ void OscXmlServer::clientDisconnected( )
 
 void OscXmlServer::clientError( QAbstractSocket::SocketError error )
 {
-	(void) error;
+	(void)error;
+	printf("Network error: %d, %s\n", error, clientSocket->errorString().toAscii().data() );
 }
 
 bool OscXmlServer::isConnected( )
@@ -162,10 +159,7 @@ bool OscXmlServer::isConnected( )
 }
 
 void OscXmlServer::boardInfoUpdate( Board* board )
-{
-	if( !isConnected( ) || board == NULL )
-		return;
-		
+{		
 	QDomDocument doc;
 	QDomElement boardUpdate = doc.createElement( "BOARD_INFO" );
 	doc.appendChild( boardUpdate );
@@ -181,8 +175,6 @@ void OscXmlServer::boardInfoUpdate( Board* board )
 
 void OscXmlServer::boardListUpdate( QList<Board*> boardList, bool arrived )
 {
-	if( !isConnected( ) || boardList.isEmpty( ) )
-		return;
 	QDomDocument doc;
 	QDomElement boardUpdate;
 	if( arrived )
@@ -208,6 +200,8 @@ void OscXmlServer::boardListUpdate( QList<Board*> boardList, bool arrived )
 
 void OscXmlServer::writeXmlDoc( QDomDocument doc )
 {
+	if( !isConnected( ) )
+		return;
 	QByteArray msg = doc.toByteArray( );
 	msg.append( '\0' ); // Flash wants XML followed by a zero byte
 	clientSocket->write( msg );
@@ -233,14 +227,14 @@ void OscXmlServer::sendXmlPacket( QList<OscMessage*> messageList, QString srcAdd
 		int dataCount = oscMsg->data.count( );
 		
 		QDomElement msg = doc.createElement( "MESSAGE" );
-		msg.setAttribute( "NAME", QString( oscMsg->address ) );
+		msg.setAttribute( "NAME", oscMsg->addressPattern );
 		oscPacket.appendChild( msg );
 		
 		for( int j = 0; j < dataCount; j++ )
 		{
 			OscMessageData *data = oscMsg->data.at( j );
 			QDomElement argument = doc.createElement( "ARGUMENT" );
-			switch( data->omdType )
+			switch( data->type )
 			{
 				case OscMessageData::OmdString:
 					argument.setAttribute( "TYPE", "s" );
@@ -257,7 +251,7 @@ void OscXmlServer::sendXmlPacket( QList<OscMessage*> messageList, QString srcAdd
 				case OscMessageData::OmdBlob:
 				{
 					QString blobstring;
-					unsigned char* blob = (unsigned char*)data->b;
+					unsigned char* blob = (unsigned char*)data->b.data( );
 					int blob_len = qFromBigEndian( *(int*)blob );  // the first int should give us the length of the blob
 					blob += sizeof(int); // step past the length
 					while( blob_len-- )
@@ -282,6 +276,7 @@ XmlHandler::XmlHandler( McHelperWindow *mainWindow, OscXmlServer *xmlServer ) : 
 {
 	this->mainWindow = mainWindow;
 	this->xmlServer = xmlServer;
+	currentMessage = NULL;
 }
 
 bool XmlHandler::startElement( const QString & namespaceURI, const QString & localName, 
@@ -300,9 +295,7 @@ bool XmlHandler::startElement( const QString & namespaceURI, const QString & loc
 	else if( localName == "MESSAGE" )
 	{
 		currentMessage = new OscMessage( );
-		QString addr = atts.value( "NAME" );
-		currentMessage->address = (char*)malloc( 256 );
-		snprintf( currentMessage->address, 256, addr.toLatin1( ).data( ) );
+		currentMessage->addressPattern = atts.value( "NAME" );
 	}
 	else if( localName == "ARGUMENT" )
 	{
@@ -316,25 +309,23 @@ bool XmlHandler::startElement( const QString & namespaceURI, const QString & loc
 			OscMessageData *msgData = new OscMessageData( );
 			if( type == "i" )
 			{
-				msgData->omdType = OscMessageData::OmdInt;
+				msgData->type = OscMessageData::OmdInt;
 				msgData->i = val.toInt( );
 			}
 			else if( type == "f" )
 			{
-				msgData->omdType = OscMessageData::OmdFloat;
+				msgData->type = OscMessageData::OmdFloat;
 				msgData->f = val.toFloat( );
 			}
 			else if( type == "s" )
 			{
-				msgData->omdType = OscMessageData::OmdString;
-				msgData->s = (char*)malloc( 256 );
-				snprintf( msgData->s, 256, val.toLatin1( ).data( ) );
+				msgData->type = OscMessageData::OmdString;
+				msgData->s = val;
 			}
 			else if( type == "b" )
 			{
-				msgData->omdType = OscMessageData::OmdBlob;
-				msgData->b = malloc( 256 );
-				snprintf( (char*)msgData->b, 256, val.toLatin1( ).data( ) );
+				msgData->type = OscMessageData::OmdBlob;
+				msgData->b = val.toAscii( );
 			}
 			currentMessage->data.append( msgData );
 		}

@@ -29,19 +29,7 @@ NetworkMonitor::NetworkMonitor( int listenPort, int sendPort )
 	QHostInfo::lookupHost( QHostInfo::localHostName(), this, SLOT(lookedUp(QHostInfo))); 
 	connect( &socket, SIGNAL(readyRead()), this, SLOT( processPendingDatagrams() ) );
 	connect( &pingTimer, SIGNAL( timeout() ), this, SLOT( sendPing() ) );
-	createPing( );
-}
-
-void NetworkMonitor::createPing( )
-{
-	Osc osc;
-	int length, i;
-	char packet[1024], *ptr;
-	osc.createOneRequest( packet, &length, "/network/find" ); // our constant OSC ping
-	ptr = packet;
-	for( i=0; i < length; i++ )
-		broadcastPing.insert( i, *ptr++ );
-	broadcastPing.resize( length );
+	broadcastPing = Osc::createOneRequest( "/network/find" ); // our constant OSC ping
 }
 
 void NetworkMonitor::start( )

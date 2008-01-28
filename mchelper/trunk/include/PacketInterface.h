@@ -30,6 +30,7 @@ class PacketInterface
 	  virtual Status close( ) = 0;
 	  virtual Status sendPacket( char* packet, int length ) = 0;
 	  virtual bool isPacketWaiting( ) = 0;
+		virtual int pendingPacketSize( ) = 0;
 	  virtual bool isOpen( ) = 0;
 	  virtual int receivePacket( char* buffer, int length ) = 0;
 	  virtual char* location( ) = 0;
