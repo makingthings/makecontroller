@@ -271,8 +271,27 @@ int Usb_SlipReceive( char* buffer, int length )
           else // skipping all starting END bytes
             started = true;
           break;
-        case ESC: // if it's an ESC character, we just want to skip it and stick the next byte in the packet
-          pbp++;  // no break here
+        case ESC:
+          // get the next byte.  if it's not an ESC_END or ESC_ESC, it's a
+          // malformed packet.  http://tools.ietf.org/html/rfc1055 says just
+          // drop it in the packet in this case
+          pbp++; 
+          if( started )
+          {
+            if( *pbp == ESC_END )
+            {
+              *bp++ = END;
+              count++;
+              break;
+            }
+            else if( *pbp == ESC_ESC )
+            {
+              *bp++ = ESC;
+              count++;
+              break;
+            }
+          }
+          // no break here
         default:
           if( started )
           {
