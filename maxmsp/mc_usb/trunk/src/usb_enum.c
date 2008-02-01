@@ -27,8 +27,8 @@ DEFINE_GUID( GUID_MAKE_CTRL_KIT, 0x4D36E978, 0xE325, 0x11CE, 0xBF, 0xC1, 0x08, 0
 
 bool findUsbDevice( t_usbInterface* usbInt )
 {
-	#ifdef WIN32 // Windows only
 	bool retval = false;
+	#ifdef WIN32 // Windows only
 	HANDLE hOut;
   HDEVINFO                 hardwareDeviceInfo;
   SP_INTERFACE_DEVICE_DATA deviceInfoData;
@@ -72,10 +72,10 @@ bool findUsbDevice( t_usbInterface* usbInt )
   }
   // destroy the device information set and free all associated memory.
   SetupDiDestroyDeviceInfoList(hardwareDeviceInfo);
-  return retval;
 	#endif // Windows-only FindUsbDevices( )
+  return retval;
 }
-
+#ifdef WIN32
 HANDLE GetDeviceInfo(HDEVINFO HardwareDeviceInfo, PSP_INTERFACE_DEVICE_DATA DeviceInfoData, char* portName  )
 {
   PSP_INTERFACE_DEVICE_DETAIL_DATA functionClassDeviceData = NULL;
@@ -168,5 +168,7 @@ bool checkFriendlyName( HDEVINFO HardwareDeviceInfo, PSP_DEVINFO_DATA deviceSpec
 		
 	return false;
 }
+
+#endif // WIN32
 
 
