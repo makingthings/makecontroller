@@ -7,14 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0CDA130F0D52A5E400908ECD /* mc.usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 0CDA130B0D52A5E400908ECD /* mc.usb.c */; };
+		0CDA13100D52A5E400908ECD /* mc_osc.c in Sources */ = {isa = PBXBuildFile; fileRef = 0CDA130C0D52A5E400908ECD /* mc_osc.c */; };
+		0CDA13110D52A5E400908ECD /* usb_enum.c in Sources */ = {isa = PBXBuildFile; fileRef = 0CDA130D0D52A5E400908ECD /* usb_enum.c */; };
+		0CDA13120D52A5E400908ECD /* usb_serial.c in Sources */ = {isa = PBXBuildFile; fileRef = 0CDA130E0D52A5E400908ECD /* usb_serial.c */; };
+		0CDA13190D52A60F00908ECD /* mc_osc.h in Headers */ = {isa = PBXBuildFile; fileRef = 0CDA13150D52A60F00908ECD /* mc_osc.h */; };
+		0CDA131A0D52A60F00908ECD /* mcError.h in Headers */ = {isa = PBXBuildFile; fileRef = 0CDA13160D52A60F00908ECD /* mcError.h */; };
+		0CDA131B0D52A60F00908ECD /* usb_enum.h in Headers */ = {isa = PBXBuildFile; fileRef = 0CDA13170D52A60F00908ECD /* usb_enum.h */; };
+		0CDA131C0D52A60F00908ECD /* usb_serial.h in Headers */ = {isa = PBXBuildFile; fileRef = 0CDA13180D52A60F00908ECD /* usb_serial.h */; };
 		0F5B62030919440900A62EB9 /* MaxAPI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0F5B62020919440900A62EB9 /* MaxAPI.framework */; };
 		6E28A2620AC2074E0052923C /* mc.usb.mxo in CopyFiles */ = {isa = PBXBuildFile; fileRef = 8D01CCD20486CAD60068D4B7 /* mc.usb.mxo */; };
-		6E539CAC0B795E730080A433 /* mc_osc.c in Sources */ = {isa = PBXBuildFile; fileRef = 6E539CA90B795E730080A433 /* mc_osc.c */; };
-		6E539CAD0B795E730080A433 /* mc.usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 6E539CAA0B795E730080A433 /* mc.usb.c */; };
-		6E539CAE0B795E730080A433 /* usb_serial.c in Sources */ = {isa = PBXBuildFile; fileRef = 6E539CAB0B795E730080A433 /* usb_serial.c */; };
-		6E539CB20B795E8B0080A433 /* mc_osc.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E539CAF0B795E8B0080A433 /* mc_osc.h */; };
-		6E539CB30B795E8B0080A433 /* mcError.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E539CB00B795E8B0080A433 /* mcError.h */; };
-		6E539CB40B795E8B0080A433 /* usb_serial.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E539CB10B795E8B0080A433 /* usb_serial.h */; };
 		6ED43D320AD2D91E00436DB0 /* commonsyms.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ED43D310AD2D91E00436DB0 /* commonsyms.c */; };
 		6ED8482E0B7AB86100C2586C /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6ED8482D0B7AB86100C2586C /* IOKit.framework */; };
 		8D01CCCE0486CAD60068D4B7 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08EA7FFBFE8413EDC02AAC07 /* Carbon.framework */; };
@@ -35,13 +37,15 @@
 
 /* Begin PBXFileReference section */
 		08EA7FFBFE8413EDC02AAC07 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
+		0CDA130B0D52A5E400908ECD /* mc.usb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mc.usb.c; path = src/mc.usb.c; sourceTree = "<group>"; };
+		0CDA130C0D52A5E400908ECD /* mc_osc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mc_osc.c; path = src/mc_osc.c; sourceTree = "<group>"; };
+		0CDA130D0D52A5E400908ECD /* usb_enum.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = usb_enum.c; path = src/usb_enum.c; sourceTree = "<group>"; };
+		0CDA130E0D52A5E400908ECD /* usb_serial.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = usb_serial.c; path = src/usb_serial.c; sourceTree = "<group>"; };
+		0CDA13150D52A60F00908ECD /* mc_osc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mc_osc.h; path = src/mc_osc.h; sourceTree = "<group>"; };
+		0CDA13160D52A60F00908ECD /* mcError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mcError.h; path = src/mcError.h; sourceTree = "<group>"; };
+		0CDA13170D52A60F00908ECD /* usb_enum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = usb_enum.h; path = src/usb_enum.h; sourceTree = "<group>"; };
+		0CDA13180D52A60F00908ECD /* usb_serial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = usb_serial.h; path = src/usb_serial.h; sourceTree = "<group>"; };
 		0F5B62020919440900A62EB9 /* MaxAPI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MaxAPI.framework; path = /Library/Frameworks/MaxAPI.framework; sourceTree = "<absolute>"; };
-		6E539CA90B795E730080A433 /* mc_osc.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = mc_osc.c; sourceTree = "<group>"; };
-		6E539CAA0B795E730080A433 /* mc.usb.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = mc.usb.c; sourceTree = "<group>"; };
-		6E539CAB0B795E730080A433 /* usb_serial.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = usb_serial.c; sourceTree = "<group>"; };
-		6E539CAF0B795E8B0080A433 /* mc_osc.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = mc_osc.h; sourceTree = "<group>"; };
-		6E539CB00B795E8B0080A433 /* mcError.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = mcError.h; sourceTree = "<group>"; };
-		6E539CB10B795E8B0080A433 /* usb_serial.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = usb_serial.h; sourceTree = "<group>"; };
 		6ED43D310AD2D91E00436DB0 /* commonsyms.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = commonsyms.c; path = "../../c74support/max-includes/common/commonsyms.c"; sourceTree = SOURCE_ROOT; };
 		6ED8482D0B7AB86100C2586C /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
 		8D01CCD20486CAD60068D4B7 /* mc.usb.mxo */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = mc.usb.mxo; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -93,9 +97,10 @@
 		08FB77ADFE841716C02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				6E539CA90B795E730080A433 /* mc_osc.c */,
-				6E539CAA0B795E730080A433 /* mc.usb.c */,
-				6E539CAB0B795E730080A433 /* usb_serial.c */,
+				0CDA130B0D52A5E400908ECD /* mc.usb.c */,
+				0CDA130C0D52A5E400908ECD /* mc_osc.c */,
+				0CDA130D0D52A5E400908ECD /* usb_enum.c */,
+				0CDA130E0D52A5E400908ECD /* usb_serial.c */,
 				6ED43D310AD2D91E00436DB0 /* commonsyms.c */,
 			);
 			name = Source;
@@ -112,9 +117,10 @@
 		6E28A27A0AC2084A0052923C /* Headers */ = {
 			isa = PBXGroup;
 			children = (
-				6E539CAF0B795E8B0080A433 /* mc_osc.h */,
-				6E539CB00B795E8B0080A433 /* mcError.h */,
-				6E539CB10B795E8B0080A433 /* usb_serial.h */,
+				0CDA13150D52A60F00908ECD /* mc_osc.h */,
+				0CDA13160D52A60F00908ECD /* mcError.h */,
+				0CDA13170D52A60F00908ECD /* usb_enum.h */,
+				0CDA13180D52A60F00908ECD /* usb_serial.h */,
 			);
 			name = Headers;
 			sourceTree = "<group>";
@@ -126,9 +132,10 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6E539CB20B795E8B0080A433 /* mc_osc.h in Headers */,
-				6E539CB30B795E8B0080A433 /* mcError.h in Headers */,
-				6E539CB40B795E8B0080A433 /* usb_serial.h in Headers */,
+				0CDA13190D52A60F00908ECD /* mc_osc.h in Headers */,
+				0CDA131A0D52A60F00908ECD /* mcError.h in Headers */,
+				0CDA131B0D52A60F00908ECD /* usb_enum.h in Headers */,
+				0CDA131C0D52A60F00908ECD /* usb_serial.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -162,9 +169,11 @@
 		089C1669FE841209C02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 0FF6670E096B494E00E9E0B4 /* Build configuration list for PBXProject "mc.usb" */;
+			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 089C166AFE841209C02AAC07 /* maximum */;
 			projectDirPath = "";
+			projectRoot = "";
 			targets = (
 				8D01CCC60486CAD60068D4B7 /* mc.usb */,
 			);
@@ -197,9 +206,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				6ED43D320AD2D91E00436DB0 /* commonsyms.c in Sources */,
-				6E539CAC0B795E730080A433 /* mc_osc.c in Sources */,
-				6E539CAD0B795E730080A433 /* mc.usb.c in Sources */,
-				6E539CAE0B795E730080A433 /* usb_serial.c in Sources */,
+				0CDA130F0D52A5E400908ECD /* mc.usb.c in Sources */,
+				0CDA13100D52A5E400908ECD /* mc_osc.c in Sources */,
+				0CDA13110D52A5E400908ECD /* usb_enum.c in Sources */,
+				0CDA13120D52A5E400908ECD /* usb_serial.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -227,7 +237,7 @@
 				GCC_WARN_UNKNOWN_PRAGMAS = NO;
 				GENERATE_PKGINFO_FILE = YES;
 				HEADER_SEARCH_PATHS = "../../c74support/max-includes";
-				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_FILE = "";
 				INSTALL_PATH = "/../../../sysbuild/$(CONFIGURATION)/Cycling '74/externals";
 				LIBRARY_SEARCH_PATHS = "";
 				LIBRARY_STYLE = Bundle;
@@ -253,8 +263,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = (
-					ppc,
 					i386,
+					ppc,
 				);
 				COPY_PHASE_STRIP = YES;
 				DEPLOYMENT_LOCATION = NO;
@@ -270,7 +280,7 @@
 				GCC_WARN_UNKNOWN_PRAGMAS = NO;
 				GENERATE_PKGINFO_FILE = YES;
 				HEADER_SEARCH_PATHS = "../../c74support/max-includes";
-				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_FILE = "";
 				INSTALL_PATH = "/../../../sysbuild/$(CONFIGURATION)/Cycling '74/externals";
 				LIBRARY_SEARCH_PATHS = "";
 				LIBRARY_STYLE = Bundle;
