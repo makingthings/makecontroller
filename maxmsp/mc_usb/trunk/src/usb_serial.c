@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006-2007 MakingThings
+ Copyright 2006-2008 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -19,7 +19,10 @@
 #include "usb_serial.h"
 #include "usb_enum.h"
 #include "ext.h" //for calling post() to the Max window.
+
+#ifndef WIN32
 #include <sys/ioctl.h>
+#endif
 
 t_usbInterface* usb_init( cchar* name, t_usbInterface** uip )
 {
@@ -155,76 +158,21 @@ int usb_read( t_usbInterface* usbInt, char* buffer, int length )
   //--------------------------------------- Windows-only -------------------------------
   #ifdef WIN32
   //Windows-only
-  DWORD count;
-  int retval = -1;
-  DWORD numTransferred;
-  DWORD lastError;
-
-  DWORD waitState;
-  
-  // make sure we're open
-  if( !usbInt->deviceOpen )
-  {
-    //post( "Didn't think the port was open." );
-	int portIsOpen = usb_open( usbInt );
-	if( portIsOpen != MC_OK )
-	  return MC_NOT_OPEN;
-  }
-
-  usbInt->readInProgress = false;
-  usbInt->overlappedRead.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-  // reset the read overlapped structure
-  usbInt->overlappedRead.Offset = usbInt->overlappedRead.OffsetHigh = 0;
-  
-  if( !usbInt->readInProgress )
-  {
-	if ( !ReadFile( usbInt->deviceHandle, buffer, length, &count, &usbInt->overlappedRead ) )
-    {	  
-	  lastError = GetLastError();
-	  if ( GetLastError() != ERROR_IO_PENDING)     // read not delayed?
-	  {
-	    //post( "USB Read Error: %d", lastError );
-			retval = MC_UNKNOWN_ERROR;
-	  }
-	  else
-	    return usbInt->readInProgress = true;
-    }
-    else          	
-    {
-      //post( "USB read %d chars", count );
-  	  retval = count;
-    }
-  }
-
-  if( usbInt->readInProgress )
-  {
-    if( HasOverlappedIoCompleted( &usbInt->overlappedRead ) )
+    int retVal=0;
+    COMSTAT Win_ComStat;
+    DWORD Win_BytesRead=0;
+    DWORD Win_ErrorMask=0;
+    ClearCommError( usbInt->deviceHandle, &Win_ErrorMask, &Win_ComStat);
+    if( (ReadFile( usbInt->deviceHandle, buffer, (DWORD)length, &Win_BytesRead, NULL)==0) || (Win_BytesRead==0) ) 
 	{
-      if(!GetOverlappedResult( usbInt->deviceHandle, &usbInt->overlappedRead, &numTransferred, FALSE ) ) // don't wait
-	  {
-          ///FIXME is there anything else i need to clean up?
-	      // reset events? terminate anything?
-		  post( "USB GetOverlappedResult failed" );
-          usbInt->readInProgress = false;
-	      usb_close( usbInt );
-	      return MC_IO_ERROR;
-	  }
-		// read completed, no errors
-      usbInt->readInProgress = false;
-	  //post( "USB read %d chars", numTransferred );
-	  return numTransferred;
-	}
-	else
-	{
-	  post( "Nothing Available." );
-	  return MC_NOTHING_AVAILABLE;
-	}
-  }
+		//lastErr=GetLastError();
+        retVal=-1;
+    }
+    else {
+        retVal=((int)Win_BytesRead);
+    }
 
-  CloseHandle( usbInt->overlappedRead.hEvent );
-  return retval;
-  	
+    return retVal;
   #endif //Windows-only usbRead( )	
 }
 
@@ -256,64 +204,14 @@ int usb_write( t_usbInterface* usbInt, char* buffer, int length )
 	
   //--------------------------------------- Windows-only -------------------------------
   #ifdef WIN32
-  DWORD cout;
-  int read = 0;
-  bool success;
-  DWORD ret;
-  int retval = MC_OK;
-  DWORD numWritten;
-  int portIsOpen;
+  int retVal=0;
+  DWORD Win_BytesWritten;
+  if (!WriteFile( usbInt->deviceHandle, (void*)buffer, (DWORD)length, &Win_BytesWritten, NULL))
+    retVal=-1;
+  else
+    retVal=((int)Win_BytesWritten);
 
-  if( !usbInt->deviceOpen )  //then try to open it
-	{
-	  portIsOpen = usb_open( usbInt );
-      if( portIsOpen != MC_OK )
-	    return MC_NOT_OPEN;
-	}
-  
-  usbInt->overlappedWrite.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-  
-	// reset the write overlapped structure
-  usbInt->overlappedWrite.Offset = usbInt->overlappedWrite.OffsetHigh = 0; 
-  // messageInterface->message( 1, "Writing...\n" );
-  success = WriteFile( usbInt->deviceHandle, buffer, length, &cout, &usbInt->overlappedWrite ) ;
-  
-  if( !success )
-  {
-  	if ( GetLastError() == ERROR_IO_PENDING)
-	  {
-	  	//post( 1, "Write: IO PENDING.\n" );
-		  do
-		  {
-	  		//if( debug > 4 )TRACE_MESSAGE("TI_put(): Waiting for overlapped write to complete");
-		  	ret = WaitForSingleObject( usbInt->overlappedWrite.hEvent, 1000 );
-		  }  while ( ret == WAIT_TIMEOUT );
-	
-	    if ( ret == WAIT_OBJECT_0 )
-	    {
-			do
-			{
-				GetOverlappedResult( usbInt->deviceHandle, &usbInt->overlappedWrite, &numWritten, TRUE);
-				read += numWritten;
-			} while( read != length );
-
-			if( read == length )
-				retval = MC_OK;
-			else
-			  retval = MC_IO_ERROR;
-	    }
-	    else
-	    {
-	    	retval = MC_IO_ERROR;
-	    }
-	  }
-	  else
-	    retval = MC_IO_ERROR;
-  }
-  
-  CloseHandle( usbInt->overlappedWrite.hEvent );
-  return retval;
-  
+  return retVal;
   #endif //Windows-only usb_write( )
 }
 
