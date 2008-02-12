@@ -230,7 +230,7 @@ int PacketUsbCdc::receivePacket( char* buffer, int size )
 	if( !currentPacket.size() || currentPacket.size( ) > size )
 	{
 		QString msg = QString( "Error receiving packet.");
-		messageInterface->messageThreadSafe( msg, MessageEvent::Error);
+		mainWindow->messageThreadSafe( msg, MessageEvent::Error);
 		return 0;
 	} 
 	else
@@ -245,7 +245,7 @@ int PacketUsbCdc::receivePacket( char* buffer, int size )
 char* PacketUsbCdc::location( )
 {
 	#ifdef Q_WS_WIN
-	return portName;
+	return port->name( ).toAscii( ).data( );
 	#else
 	return "USB";
 	#endif
@@ -256,9 +256,9 @@ QString PacketUsbCdc::getKey( )
 	return port->name( );
 }
 
-void PacketUsbCdc::setInterfaces( MessageInterface* messageInterface, QApplication* application, MonitorInterface* monitor )
+void PacketUsbCdc::setInterfaces( McHelperWindow* mainWindow, QApplication* application, MonitorInterface* monitor )
 {
-	this->messageInterface = messageInterface;
+	this->mainWindow = mainWindow;
 	this->application = application;
 	this->monitor = monitor;
 }
@@ -268,12 +268,6 @@ void PacketUsbCdc::setPacketReadyInterface( PacketReadyInterface* packetReadyInt
 	this->packetReadyInterface = packetReadyInterface;
 }
 
-#ifdef Q_WS_WIN
-void PacketUsbCdc::setWidget( QMainWindow* window )
-{
-	this->mainWindow = window;
-}
-#endif
 
 
 
