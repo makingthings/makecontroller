@@ -36,7 +36,6 @@ the specific language governing permissions and limitations under the License.
 #include "McHelperPrefs.h"
 
 class Board;
-class BoardListModel;
 class UsbMonitor;
 class NetworkMonitor;
 class SambaMonitor;
@@ -105,8 +104,13 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		
 	protected:
 		void closeEvent( QCloseEvent *qcloseevent );
+	
+	signals:
+		void boardInfoUpdate( Board* board );
+		void boardListUpdate( QList<Board*> boardList, bool added );
+		void xmlPacket( QList<OscMessage*> messageList, QString srcAddress, int destPort );
 		
-	private:
+	private:		
 		QApplication* application;
 		SambaMonitor* samba;
 		UsbMonitor* usb;
@@ -118,7 +122,6 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 		mchelperPrefs* prefsDialog;
 		AppUpdater* appUpdater;
 		QHash<QString, Board*> connectedBoards;
-		TableEntry createOutputWindowEntry( QString string, MessageEvent::Types type, QString from );
 		QList<TableEntry> outputWindowQueue;
 		QMutex outputWindowQueueMutex;
 		QListWidgetItem listWidgetPlaceholder;

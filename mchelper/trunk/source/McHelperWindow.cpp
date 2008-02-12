@@ -61,7 +61,6 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	splitter->setChildrenCollapsible( false );
 	initUpdate( );
 	
-	//listWidget = new BoardListModel( application, this, this );
 	udp = new NetworkMonitor( appUdpListenPort, appUdpSendPort ); 
 	samba = new SambaMonitor( application, this );
 	usb = new UsbMonitor( );
@@ -71,15 +70,14 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
 	usb->setInterfaces( this, application, this );
 	
 	outputModel = new OutputWindow( maxOutputWindowMessages );
-	outputView->setModel( outputModel );
+	treeView->setModel( outputModel );
   
   setupOutputWindow();
 
-  // Wire up the selection changed signal from the
-  // model to be handled here
+  // Wire up the selection changed signal from the model to be handled here
 	qRegisterMetaType<QModelIndex>("QModelIndex");
   connect( listWidget->selectionModel(), SIGNAL(currentChanged(const QModelIndex &, const QModelIndex &)),
-           this,                                SLOT(deviceSelectionChanged(const QModelIndex &, const QModelIndex &)));
+           this, SLOT(deviceSelectionChanged(const QModelIndex &, const QModelIndex &)));
   
   ////////////////////////////////////////////////////////////////////////////
 	
@@ -132,6 +130,7 @@ McHelperWindow::McHelperWindow( McHelperApp* application ) : QMainWindow( 0 )
   usb->start( );
   udp->start( );
   samba->start( );
+	xmlServer->listen( QHostAddress::Any, appXmlListenPort );
 	outputWindowTimer.start( 50 );
 }
 
@@ -152,7 +151,7 @@ void McHelperWindow::usbBoardsArrived( QList<PacketInterface*> arrived )
     listWidget->addItem( board );
 		boardList.append( board );
 	}
-	xmlServer->boardListUpdate( boardList, true );
+	emit boardListUpdate( boardList, true );
 }
 
 void McHelperWindow::udpBoardsArrived( QList<PacketUdp*> arrived )
@@ -173,7 +172,7 @@ void McHelperWindow::udpBoardsArrived( QList<PacketUdp*> arrived )
     board->sendMessage( "/system/info-internal" );
 		boardList.append( board );
 	}
-	xmlServer->boardListUpdate( boardList, true );
+	emit boardListUpdate( boardList, true );
 }
 
 void McHelperWindow::sambaBoardsArrived( QList<UploaderThread*> arrived )
@@ -241,7 +240,7 @@ void McHelperWindow::removeDevice( QString key )
 		Board* removed = (Board*)listWidget->takeItem( row );
 		QList<Board*> boardList;
 		boardList.append( removed );
-		xmlServer->boardListUpdate( boardList, false );
+		emit boardListUpdate( boardList, false );
 		delete removed;
 		
 		// if no boards are left, put the placeholder back in
@@ -450,13 +449,13 @@ void McHelperWindow::newXmlPacketReceived( QList<OscMessage*> messageList, QStri
 
 void McHelperWindow::sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress )
 {
-	if( xmlServer->isConnected( ) )
-		xmlServer->sendXmlPacket( messageList, srcAddress, udp->getListenPort( ) );
+	emit xmlPacket( messageList, srcAddress, udp->getListenPort( ) );
+	//qDeleteAll( messageList );
 }
 
 void McHelperWindow::xmlServerBoardInfoUpdate( Board* board )
 {
-	xmlServer->boardInfoUpdate( board );
+	emit boardInfoUpdate( board );
 }
 
 void McHelperWindow::customEvent( QEvent* event )
@@ -555,34 +554,23 @@ void McHelperWindow::customEvent( QEvent* event )
 
 void McHelperWindow::statusMessage( const QString & msg, int duration )
 {
-	
 	StatusEvent* statusEvent = new StatusEvent( msg, duration );
 	application->postEvent( this, statusEvent );
 }
 
 void McHelperWindow::messageThreadSafe( QString string  )
 { 
-  // Default to an "Info" message if we don't know otherwise
-  messageThreadSafe( string, MessageEvent::Info );
+  messageThreadSafe( QStringList(string), MessageEvent::Info, QString("mchelper") );
 }
 
 void McHelperWindow::messageThreadSafe( QString string, MessageEvent::Types type  )
 {	
-  // Default to coming from the "App" itself if we don't know otherwise
-  messageThreadSafe( string, type, QString("mchelper") );
+  messageThreadSafe( QStringList(string), type, QString("mchelper") );
 }
 
 void McHelperWindow::messageThreadSafe( QString string, MessageEvent::Types type, QString from )
 { 
-  if( hideOSCMessages )
-	{
-		if( type == MessageEvent::Response || type == MessageEvent::XMLMessage || type == MessageEvent::Warning )
-			return;
-	}
-  
-	TableEntry newItem = createOutputWindowEntry( string, type, from );
-	QMutexLocker locker(&outputWindowQueueMutex);
-	outputWindowQueue.append( newItem );
+  messageThreadSafe( QStringList(string), type, from );
 }
 
 void McHelperWindow::messageThreadSafe( QStringList strings, MessageEvent::Types type, QString from )
@@ -593,14 +581,11 @@ void McHelperWindow::messageThreadSafe( QStringList strings, MessageEvent::Types
 			return;
 	}
   
-	QMutexLocker locker(&outputWindowQueueMutex); 
-	for( int i = 0; i < strings.count( ); i ++ )
-	{
-		QString string = strings.at(i);
-		TableEntry newItem = createOutputWindowEntry( string, type, from );
-		outputWindowQueue.append( newItem );
-	}
-}
+	QMutexLocker locker(&outputWindowQueueMutex);
+	QString time = QTime::currentTime().toString();
+	for( int i = 0; i < strings.size(); i++ )
+		outputWindowQueue.append( TableEntry( strings.at(i), type, from, time ) );
+}	
 
 void McHelperWindow::progress( int value )
 {
@@ -617,38 +602,23 @@ void McHelperWindow::progress( int value )
 
 void McHelperWindow::postMessages( )
 {
-	if( outputWindowQueue.count( ) > 0 )
+	QMutexLocker locker(&outputWindowQueueMutex);
+	if( outputWindowQueue.size( ) )
 	{
-		QMutexLocker locker(&outputWindowQueueMutex);
 		outputModel->newRows( outputWindowQueue );
+		treeView->scrollToBottom( );
 		outputWindowQueue.clear( );
-		outputView->scrollToBottom( );
 	}
 }
 
-
-TableEntry McHelperWindow::createOutputWindowEntry( QString string, MessageEvent::Types type, QString from )
-{
-	// create the to/from, message, and timestamp columns for the new message
-	TableEntry newItem;
-	newItem.column0 = from;
-	newItem.column1 = string;
-	newItem.column2 = QTime::currentTime().toString();
-	newItem.type = type;
-	return newItem;
-}
-
 void McHelperWindow::setupOutputWindow( )
-{
-	QHeaderView *headerHView = outputView->horizontalHeader();
-	headerHView->setResizeMode( McHelperWindow::MESSAGE, QHeaderView::Stretch);
-	headerHView->setResizeMode( McHelperWindow::TO_FROM, QHeaderView::ResizeToContents);
-	headerHView->setResizeMode( McHelperWindow::TIMESTAMP, QHeaderView::ResizeToContents);
-	headerHView->hide( );
-	
-	QHeaderView *headerV = outputView->verticalHeader();
-	headerV->setResizeMode(QHeaderView::ResizeToContents);
-	headerV->hide();
+{	
+	QHeaderView *header = treeView->header( );
+	header->setStretchLastSection( false );
+	header->setResizeMode( McHelperWindow::MESSAGE, QHeaderView::Stretch);
+	header->setResizeMode( McHelperWindow::TO_FROM, QHeaderView::ResizeToContents);
+	header->setResizeMode( McHelperWindow::TIMESTAMP, QHeaderView::ResizeToContents);
+	header->hide( );
 }
 
 // Read and write the last values used - address, ports, directory searched etc...

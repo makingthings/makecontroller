@@ -29,6 +29,18 @@ PacketUsbCdc::PacketUsbCdc( ) : QThread( )
 	packetReadyInterface = NULL;
 	exit = false;
 	currentPacket.clear( );
+	port = new UsbSerial( );
+}
+
+PacketUsbCdc::~PacketUsbCdc( )
+{
+	port->close( );
+	delete port;
+}
+
+void PacketUsbCdc::readyRead( )
+{
+
 }
 
 void PacketUsbCdc::run()
@@ -38,10 +50,10 @@ void PacketUsbCdc::run()
 	  if( exit == true )
 	  	return;
 	  	
-	  if( !deviceOpen ) // if it's not open, try to open it
-			usbOpen( );
+	  if( !port->isOpen() ) // if it's not open, try to open it
+			port->open( );
 
-		if( deviceOpen ) // then, if open() succeeded, try to read
+		if( port->isOpen() ) // then, if open() succeeded, try to read
 		{
 			int packetLength = slipReceive( &currentPacket );
 			if( packetLength > 0 && packetReadyInterface )
@@ -66,10 +78,15 @@ int PacketUsbCdc::pendingPacketSize( )
 
 PacketUsbCdc::Status PacketUsbCdc::open()
 {
-	if( UsbSerial::OK == usbOpen( ) )
+	if( UsbSerial::OK == port->open( ) )
 		return PacketInterface::OK;
 	else
 		return PacketInterface::ERROR_NOT_OPEN;
+}
+
+void PacketUsbCdc::setPortName( QString name )
+{
+	port->setPortName( name );
 }
 
 PacketUsbCdc::Status PacketUsbCdc::close( )
@@ -77,7 +94,7 @@ PacketUsbCdc::Status PacketUsbCdc::close( )
 	exit = true;
 	while( isRunning( ) )
 		msleep( 5 ); // wait a second before returning, because we'll be deleted right after we're removed form the GUI
-	usbClose( );
+	port->close( );
 	return PacketInterface::OK;
 }
 
@@ -114,9 +131,9 @@ PacketUsbCdc::Status PacketUsbCdc::sendPacket( char* packet, int length )
 	}
 	// tell the receiver that we're done sending the packet
 	outgoingPacket.append( END );
-	if( UsbSerial::OK != usbWrite( outgoingPacket.data( ), outgoingPacket.size( ) ) )
+	if( UsbSerial::OK != port->write( outgoingPacket.data( ), outgoingPacket.size( ) ) )
 	{
-		monitor->deviceRemoved( QString(portName) ); // shut ourselves down
+		monitor->deviceRemoved( port->name() ); // shut ourselves down
 		return PacketInterface::IO_ERROR;
 	}
 	else
@@ -127,13 +144,13 @@ int PacketUsbCdc::getMoreBytes( )
 {
 	if( slipRxPacket.size( ) < 1 ) // if there's nothing left over from last time
 	{
-		int available = numberOfAvailableBytes( );
+		int available = port->bytesAvailable( );
 		if( available < 0 )
 			return -1;
 		if( available > 0 )
 		{
 			slipRxPacket.resize( available );
-			int read = usbRead( slipRxPacket.data( ), slipRxPacket.size( ) );
+			int read = port->read( slipRxPacket.data( ), slipRxPacket.size( ) );
 			if( read < 0 )
 				return -1;
 		}
@@ -202,7 +219,7 @@ bool PacketUsbCdc::isPacketWaiting( )
 
 bool PacketUsbCdc::isOpen( )
 {
-  return deviceOpen;
+  return port->isOpen();
 }
 
 int PacketUsbCdc::receivePacket( char* buffer, int size )
@@ -236,7 +253,7 @@ char* PacketUsbCdc::location( )
 
 QString PacketUsbCdc::getKey( )
 {
-	return QString( portName );
+	return port->name( );
 }
 
 void PacketUsbCdc::setInterfaces( MessageInterface* messageInterface, QApplication* application, MonitorInterface* monitor )

@@ -16,68 +16,87 @@
 *********************************************************************************/
 
 #include "OscXmlServer.h"
+#include <QMutexLocker>
 
-OscXmlServer::OscXmlServer( McHelperWindow *mainWindow, int port )
+#define FROM_STRING "XML Server"
+
+OscXmlServer::OscXmlServer( McHelperWindow *mainWindow, int port, QObject *parent ) : QTcpServer( parent )
 {
 	this->mainWindow = mainWindow;
 	listenPort = port;
-	
-	handler = new XmlHandler( mainWindow, this );	
-	xml.setContentHandler( handler );
-	xml.setErrorHandler( handler );
-	resetParser( );
-	
-	serverSocket = new QTcpServer( );
-	serverSocket->listen( QHostAddress::Any, listenPort );
-	connect( serverSocket, SIGNAL( newConnection() ), this, SLOT( openNewConnection() ) );
-	clientSocket = NULL;
-	
-	fromString = QString( "XML server" ); // what our messages to the UI will show as having come from
 }
 
-void OscXmlServer::openNewConnection( )
+void OscXmlServer::incomingConnection( int socketDescriptor )
 {
-	if( isConnected( ) ) // if we're already connected, ignore any additional connections
-		return;
-	clientSocket = serverSocket->nextPendingConnection( );
-	if( !clientSocket )
-	{
-		mainWindow->messageThreadSafe( "Couldn't make connection to socket", MessageEvent::Error, fromString );
-		return;
-	}
-	else
-		mainWindow->messageThreadSafe( "New XML connection", MessageEvent::Info, fromString );
-	connect( clientSocket, SIGNAL( readyRead() ), this, SLOT( processClientData() ) );
-	connect( clientSocket, SIGNAL( disconnected() ), this, SLOT( clientDisconnected() ) );
-	connect( clientSocket, SIGNAL( error(  QAbstractSocket::SocketError ) ), this, SLOT( clientError( QAbstractSocket::SocketError) ) );
-	
-	// tell Flash about the boards we have connected
-	QList<Board*> boardList = mainWindow->getConnectedBoards( );
-	boardListUpdate( boardList, true );
+	OscXmlClient *client = new OscXmlClient( socketDescriptor, mainWindow );
+	connect( client, SIGNAL(finished()), client, SLOT(deleteLater()));
+	connect( mainWindow, SIGNAL(boardInfoUpdate(Board*)), client, SLOT(boardInfoUpdate(Board*)));
+	qRegisterMetaType< QList<OscMessage*> >("QList<OscMessage*>");
+	connect( mainWindow, SIGNAL(boardListUpdate(QList<Board*>, bool)), client, SLOT(boardListUpdate(QList<Board*>, bool)));
+	connect( mainWindow, SIGNAL(xmlPacket(QList<OscMessage*>, QString, int)), 
+						client, SLOT(sendXmlPacket(QList<OscMessage*>, QString, int)));
+	client->start( );
 }
 
 bool OscXmlServer::changeListenPort( int port )
 {
-	serverSocket->close( );
-	if( !serverSocket->listen( QHostAddress::Any, port ) )
+	close( );
+	if( !listen( QHostAddress::Any, port ) )
 	{
 		mainWindow->messageThreadSafe( QString( "Error - can't listen on port %1.  Make sure it's available." ).arg( port ), 
-																		MessageEvent::Error, fromString );
+																		MessageEvent::Error, FROM_STRING );
 		return false;
 	}
 	else
 	{
 		listenPort = port;
 		mainWindow->messageThreadSafe( QString( "Now listening on port %1 for XML connections." ).arg( port ), 
-																		MessageEvent::Info, fromString );
+																		MessageEvent::Info, FROM_STRING );
 		return true;
 	}
 }
 
-void OscXmlServer::processClientData( )
+/************************************************************************************
+																		
+																		OscXmlClient
+																		
+************************************************************************************/
+
+OscXmlClient::OscXmlClient( int socketDescriptor, McHelperWindow *mainWindow, QObject *parent )
+	: QThread(parent), socketDescriptor( socketDescriptor )
+{	
+	this->mainWindow = mainWindow;
+	handler = new XmlHandler( mainWindow, this );	
+	xml.setContentHandler( handler );
+	xml.setErrorHandler( handler );
+	resetParser( );
+}
+
+void OscXmlClient::run( )
+{
+	socket = new QTcpSocket( );
+	// these connections need to be direct since we have a pointer to the tcpsocket in our class
+	// which means that it will live in the server thread, which is the main GUI thread, 
+	// and we want to process in our own thread
+	connect( socket, SIGNAL(readyRead()), this, SLOT(processData()), Qt::DirectConnection);
+	connect( socket, SIGNAL(disconnected()), this, SLOT(disconnected()), Qt::DirectConnection);
+	if( !socket->setSocketDescriptor( socketDescriptor ) )
+	{
+		mainWindow->messageThreadSafe( "Error opening connection to client", MessageEvent::Error, FROM_STRING );
+		return;
+	}
+	peerAddress = socket->peerAddress( ).toString( );
+	QString msg = QString( "New connection from XML peer at %1").arg( peerAddress );
+	mainWindow->messageThreadSafe( msg, MessageEvent::Info, FROM_STRING );
+	// tell Flash about the boards we have connected
+	boardListUpdate( mainWindow->getConnectedBoards( ), true );
+	exec( ); // run the thread, listening for and sending messages, until we call exit( )
+}
+
+void OscXmlClient::processData( )
 {
 	// if there's more than one XML document, we expect them to be delimited by \0
-	QList<QByteArray> newDocuments = clientSocket->readAll( ).split( '\0' );
+	QList<QByteArray> newDocuments = socket->readAll( ).split( '\0' );
 	bool status;
 	for( int i = 0; i < newDocuments.size( ); i++ )
 	{
@@ -105,60 +124,33 @@ void OscXmlServer::processClientData( )
 	}
 }
 
-void OscXmlServer::resetParser( )
+void OscXmlClient::resetParser( )
 {
 	lastParseComplete = true;
 }
 
-bool XmlHandler::startDocument( )
+void OscXmlClient::disconnected( )
 {
-	//printf( "start of document...\n" );
-	return true;
+	disconnect( ); // don't want to respond to any more signals
+	socket->abort( );
+	socket->deleteLater( ); // these will get deleted when control returns to the main event loop
+	handler->deleteLater( );
+	QString msg = QString( "XML peer at %1 disconnected." ).arg( peerAddress );
+	mainWindow->messageThreadSafe( msg, MessageEvent::Info, FROM_STRING );
+	exit( ); // shut this thread down
 }
 
-bool XmlHandler::endDocument( )
+bool OscXmlClient::isConnected( )
 {
-	//printf( "end of document...\n" );
-	return true;
-}
-
-bool XmlHandler::fatalError (const QXmlParseException & exception)
-{
-	error( exception );
-	return true;
-}
-
-bool XmlHandler::error (const QXmlParseException & exception)
-{
-	 printf( "incoming XML error on line, %d, column %d : %s\n",
-	 					exception.lineNumber(), exception.columnNumber(), exception.message().toAscii().data() );
-	 return false;
-} 
-
-void OscXmlServer::clientDisconnected( )
-{
-	mainWindow->messageThreadSafe( "XML peer disconnected.", MessageEvent::Info, fromString );
-	clientSocket->abort( ); // close the socket and flush it
-	lastParseComplete = true;
-}
-
-void OscXmlServer::clientError( QAbstractSocket::SocketError error )
-{
-	(void)error;
-	printf("Network error: %d, %s\n", error, clientSocket->errorString().toAscii().data() );
-}
-
-bool OscXmlServer::isConnected( )
-{
-	if( clientSocket != NULL )
+	if( socket != NULL )
 	{
-		if( clientSocket->state( ) == QAbstractSocket::ConnectedState )
+		if( socket->state( ) == QAbstractSocket::ConnectedState )
 			return true;
 	}
 	return false;
 }
 
-void OscXmlServer::boardInfoUpdate( Board* board )
+void OscXmlClient::boardInfoUpdate( Board* board )
 {		
 	QDomDocument doc;
 	QDomElement boardUpdate = doc.createElement( "BOARD_INFO" );
@@ -173,7 +165,7 @@ void OscXmlServer::boardInfoUpdate( Board* board )
 	writeXmlDoc( doc );
 }
 
-void OscXmlServer::boardListUpdate( QList<Board*> boardList, bool arrived )
+void OscXmlClient::boardListUpdate( QList<Board*> boardList, bool arrived )
 {
 	QDomDocument doc;
 	QDomElement boardUpdate;
@@ -198,17 +190,17 @@ void OscXmlServer::boardListUpdate( QList<Board*> boardList, bool arrived )
 	writeXmlDoc( doc );
 }
 
-void OscXmlServer::writeXmlDoc( QDomDocument doc )
+void OscXmlClient::writeXmlDoc( QDomDocument doc )
 {
 	if( !isConnected( ) )
 		return;
 	QByteArray msg = doc.toByteArray( );
 	msg.append( '\0' ); // Flash wants XML followed by a zero byte
-	clientSocket->write( msg );
-	//printf( "XML sent, size: %d written: %d\n", msg.size( ), sent );
+	socket->write( msg );
+	//printf( "XML sent, size: %d written: %d to %s\n", msg.size( ), sent, peerAddress.toAscii().data() );
 }
 
-void OscXmlServer::sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort )
+void OscXmlClient::sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort )
 {
 	int msgCount = messageList.count( );
 	if( !isConnected( ) || msgCount < 1 )
@@ -272,12 +264,31 @@ void OscXmlServer::sendXmlPacket( QList<OscMessage*> messageList, QString srcAdd
 	writeXmlDoc( doc );
 }
 
-XmlHandler::XmlHandler( McHelperWindow *mainWindow, OscXmlServer *xmlServer ) : QXmlDefaultHandler( )
+/************************************************************************************
+																		
+																		XmlHandler
+																		
+************************************************************************************/
+
+XmlHandler::XmlHandler( McHelperWindow *mainWindow, OscXmlClient *xmlClient ) : QXmlDefaultHandler( )
 {
 	this->mainWindow = mainWindow;
-	this->xmlServer = xmlServer;
+	this->xmlClient = xmlClient;
 	currentMessage = NULL;
 }
+
+bool XmlHandler::fatalError (const QXmlParseException & exception)
+{
+	error( exception );
+	return true;
+}
+
+bool XmlHandler::error (const QXmlParseException & exception)
+{
+	 printf( "incoming XML error on line, %d, column %d : %s\n",
+	 					exception.lineNumber(), exception.columnNumber(), exception.message().toAscii().data() );
+	 return false;
+} 
 
 bool XmlHandler::startElement( const QString & namespaceURI, const QString & localName, 
 												const QString & qName, const QXmlAttributes & atts )
@@ -345,10 +356,10 @@ bool XmlHandler::endElement( const QString & namespaceURI, const QString & local
 		QStringList strings;
 		for( int i = 0; i < oscMessageList.count( ); i++ )
 			strings << oscMessageList.at( i )->toString( );
-		mainWindow->messageThreadSafe( strings, MessageEvent::XMLMessage, xmlServer->fromString);
+		mainWindow->messageThreadSafe( strings, MessageEvent::XMLMessage, FROM_STRING);
 		qDeleteAll( oscMessageList );
 		oscMessageList.clear( );
-		xmlServer->resetParser( );
+		xmlClient->resetParser( );
 	}
 	else if( localName == "MESSAGE" )
 		oscMessageList.append( currentMessage );
