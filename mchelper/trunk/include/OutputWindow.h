@@ -18,40 +18,48 @@
 #ifndef OUTPUTWINDOW_H
 #define OUTPUTWINDOW_H
 
-#include <QAbstractTableModel>
+#include <QAbstractItemModel>
 #include "MessageEvent.h"
 
 class TableEntry
 {
 	public:
-		TableEntry( ) { }
+		TableEntry( QString msg, MessageEvent::Types type, QString tofrom, QString time )
+		{
+			this->msg = msg;
+			this->type = type;
+			this->tofrom = tofrom;
+			this->timestamp = time;
+		}
 		~TableEntry( ) { }
 
-		QString column0, column1, column2;
+		QString msg, tofrom, timestamp;
 		MessageEvent::Types type;
 };
 
-class OutputWindow : public QAbstractTableModel
+class OutputWindow : public QAbstractItemModel
 {
-	Q_OBJECT
+    Q_OBJECT
+
 	public:
-		OutputWindow( int maxMsgs, QObject *parent = 0 );
-		// pure virtuals for QAbstractTableModel
-		Qt::ItemFlags flags( const QModelIndex index );
-		QVariant data( const QModelIndex & index, int role = Qt::DisplayRole ) const;
-		QVariant headerData( int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const;
-		int rowCount( const QModelIndex & parent = QModelIndex() ) const;
-		int columnCount( const QModelIndex & parent = QModelIndex() ) const;
-		
+    OutputWindow( int maxMsgs );
+
+    QVariant data(const QModelIndex &index, int role) const;
+    QModelIndex index(int row, int column,
+                      const QModelIndex &parent = QModelIndex()) const;
+    QModelIndex parent(const QModelIndex &index) const;
+    int rowCount(const QModelIndex &parent = QModelIndex()) const;
+    int columnCount(const QModelIndex &parent = QModelIndex()) const;
 		void newRows( QList<TableEntry> entries );
+		bool hasChildren( const QModelIndex & parent = QModelIndex() );
 		void setMaxMsgs( int newMaxMsgs );
-		
-	private:
-		QList<TableEntry> tableEntries;
-		int maxMsgs;
 		
 	public slots:
 		void clear( );
+
+	private:
+    int maxMsgs;
+		QList<TableEntry> tableEntries;
 };
 
 #endif // OUTPUTWINDOW_H

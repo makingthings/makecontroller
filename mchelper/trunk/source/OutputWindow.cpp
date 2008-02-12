@@ -18,18 +18,12 @@
 #include "OutputWindow.h"
 #include <QColor>
 
-OutputWindow::OutputWindow( int maxMsgs, QObject *parent ) : QAbstractTableModel( parent )
-{ 
+OutputWindow::OutputWindow( int maxMsgs ) : QAbstractItemModel( )
+{
 	this->maxMsgs = maxMsgs;
 }
 
-Qt::ItemFlags OutputWindow::flags( const QModelIndex index )
-{
-	(void) index;
-	return Qt::ItemIsSelectable | Qt::ItemIsEnabled;
-}
-
-QVariant OutputWindow::data( const QModelIndex & index, int role ) const
+QVariant OutputWindow::data(const QModelIndex &index, int role) const
 {
 	if (!index.isValid() || index.row() > tableEntries.count( ) )
 		return QVariant();
@@ -39,11 +33,11 @@ QVariant OutputWindow::data( const QModelIndex & index, int role ) const
 		switch( index.column( ) )
 		{
 			case 0:
-				return tableEntries.at( index.row() ).column0;
+				return tableEntries.at( index.row() ).tofrom;
 			case 1:
-				return tableEntries.at( index.row() ).column1;
+				return tableEntries.at( index.row() ).msg;
 			case 2:
-				return tableEntries.at( index.row() ).column2;
+				return tableEntries.at( index.row() ).timestamp;
 		}
 	}
 	
@@ -82,23 +76,23 @@ void OutputWindow::newRows( QList<TableEntry> entries )
 	int newRows = entries.count( );
 	int existingRows = tableEntries.count( );
 	int requestedRows = newRows + existingRows;
+	int extraRows = requestedRows - maxMsgs;
 	
-	if( requestedRows > maxMsgs )
+	if( newRows > maxMsgs  ) // if we have more new messages than will fit
 	{
-		// make sure we only remove as many as we need to
-		int extraRows = requestedRows - maxMsgs;
-		// the message itself might have more messages than we can hold
-		// so just keep the most recent (last) ones
-		if( extraRows > maxMsgs )
-		{
-			int tooManyEntries = extraRows - maxMsgs;
-			for( int i = 0; i < tooManyEntries; i++ )
-			{
-				if( !entries.isEmpty( ) )
-					entries.removeFirst( );
-			}
-			extraRows = maxMsgs;
-		}
+		// get rid of everything, and only keep as many of the most recent messages as will fit
+		clear( );		
+		for( int i = 0; i < newRows - maxMsgs; i++ )
+			entries.removeFirst( );
+	}
+	else if( extraRows > maxMsgs )
+	{
+		clear( );		
+		for( int i = 0; i < extraRows; i++ )
+			entries.removeFirst( );
+	}
+	else if( requestedRows > maxMsgs ) // just remove as many as we need from the front
+	{
 		beginRemoveRows( QModelIndex(), 0, extraRows - 1 );
 		for( int i = 0; i < extraRows; i++ )
 		{
@@ -108,6 +102,7 @@ void OutputWindow::newRows( QList<TableEntry> entries )
 		endRemoveRows( );
 	}
 	
+	// now add the new rows in 
 	beginInsertRows( QModelIndex(), tableEntries.count( ), tableEntries.count( ) + entries.count( ) - 1 );
 	for( int i = 0; i < entries.count( ); i++ )
 		tableEntries.append( entries.at(i) );
@@ -133,21 +128,25 @@ void OutputWindow::setMaxMsgs( int newMaxMsgs )
 	this->maxMsgs = newMaxMsgs;
 }
 
-void OutputWindow::clear( )
+QModelIndex OutputWindow::index(int row, int column, const QModelIndex &parent)
+            const
 {
-	if( !tableEntries.count( ) > 0 )
-		return;
-	beginRemoveRows( QModelIndex(), 0, tableEntries.count( ) - 1 );
-	tableEntries.clear( );
-	endRemoveRows( );
+	if (!hasIndex(row, column, parent))
+		return QModelIndex();
+	else
+		return createIndex( row, column );
 }
 
-QVariant OutputWindow::headerData( int section, Qt::Orientation orientation, int role ) const
+QModelIndex OutputWindow::parent(const QModelIndex &index) const
 {
-	(void) section;
-	(void) orientation;
-	(void) role;
-	return QVariant( );
+	(void)index;
+	return QModelIndex( );
+}
+
+bool OutputWindow::hasChildren( const QModelIndex & parent )
+{
+	(void)parent;
+	return false;
 }
 
 int OutputWindow::rowCount( const QModelIndex & parent ) const
@@ -156,15 +155,20 @@ int OutputWindow::rowCount( const QModelIndex & parent ) const
 	return tableEntries.count( );
 }
 
-int OutputWindow::columnCount( const QModelIndex & parent ) const
+int OutputWindow::columnCount(const QModelIndex &parent) const
 {
 	(void) parent;
 	return 3;
 }
 
-
-
-
-
+void OutputWindow::clear( )
+{
+	if( !tableEntries.count( ) > 0 )
+		return;
+	int rowCount = ( tableEntries.count( ) > 0 ) ? (tableEntries.count( ) - 1) : 0;
+	beginRemoveRows( QModelIndex(), 0, rowCount );
+	tableEntries.clear( );
+	endRemoveRows( );
+}
 
 

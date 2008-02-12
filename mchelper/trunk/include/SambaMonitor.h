@@ -29,7 +29,6 @@
 class Samba;
 class McHelperWindow;
 class UploaderThread;
-class BoardListModel;
 
 class SambaMonitor : public QThread
 {

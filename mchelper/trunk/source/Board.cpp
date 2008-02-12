@@ -127,7 +127,7 @@ void Board::packetWaiting( )
 		mainWindow->updateSummaryInfo( );
 		mainWindow->xmlServerBoardInfoUpdate( this );
 	}
-	qDeleteAll( oscMessageList );
+	//qDeleteAll( oscMessageList );
 }
 
 bool Board::extractSystemInfoA( OscMessage* msg )

@@ -29,41 +29,49 @@
 #include "PacketReadyInterface.h"
 #include "MonitorInterface.h"
 
-class PacketUsbCdc : public QThread, public UsbSerial, public PacketInterface
+class UsbSerial;
+
+class PacketUsbCdc : public QThread, public PacketInterface
 {
-    public:
-			PacketUsbCdc( );
-			void run( );
-			// from PacketInterface
-			Status open( );	
-		  Status close( );
-			Status sendPacket( char* packet, int length );
-			bool isPacketWaiting( );
-			int pendingPacketSize( );
-			bool isOpen( );
-			int receivePacket( char* buffer, int size );
-			QString getKey( void );
-			char* location( void );
-			void setInterfaces( MessageInterface* messageInterface, QApplication* application, MonitorInterface* monitor );
-			void setPacketReadyInterface( PacketReadyInterface* packetReadyInterface);
-			#ifdef Q_WS_WIN
-			void setWidget( QMainWindow* window );
-			#endif
-								
-                
-    private:
-		  QByteArray currentPacket;
-		  QMutex packetMutex;
-			QByteArray slipRxPacket;
-		  void sleepMs( int ms );
+	Q_OBJECT
+	public:
+		PacketUsbCdc( );
+		~PacketUsbCdc( );
+		void run( );
+		// from PacketInterface
+		Status open( );	
+		Status close( );
+		Status sendPacket( char* packet, int length );
+		bool isPacketWaiting( void );
+		int pendingPacketSize( void );
+		bool isOpen( void );
+		int receivePacket( char* buffer, int size );
+		QString getKey( void );
+		char* location( void );
+		void setPortName( QString name );
+		void setInterfaces( MessageInterface* messageInterface, QApplication* application, MonitorInterface* monitor );
+		void setPacketReadyInterface( PacketReadyInterface* packetReadyInterface);
+		#ifdef Q_WS_WIN
+		void setWidget( QMainWindow* window );
+		#endif
 			
-		  PacketReadyInterface* packetReadyInterface;
-			MessageInterface *messageInterface;
-		  QApplication* application;
-		  MonitorInterface* monitor;
-		  int slipReceive( QByteArray *packet );
-			int getMoreBytes( void );
-		  bool exit;
+	public slots:
+		void readyRead( );
+								
+	private:
+		QByteArray currentPacket;
+		QMutex packetMutex;
+		QByteArray slipRxPacket;
+		UsbSerial *port;
+		void sleepMs( int ms );
+
+		PacketReadyInterface* packetReadyInterface;
+		MessageInterface *messageInterface;
+		QApplication* application;
+		MonitorInterface* monitor;
+		int slipReceive( QByteArray *packet );
+		int getMoreBytes( void );
+		bool exit;
 };
 
 #endif // PACKETUSBCDC_H

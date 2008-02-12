@@ -16,7 +16,7 @@
 *********************************************************************************/
 
 #include "UsbSerial.h"
-#include <QMutexLocker> 
+#include <QMutexLocker>
 
 #ifdef Q_WS_WIN
 #include <dbt.h>
@@ -25,29 +25,36 @@
 UsbSerial::UsbSerial( )
 {
 	deviceOpen = false;
-	readInProgress = false;
-	#ifdef Q_WS_MAC
-	kern_return_t err;
-	masterPort = 0;
-	if( ( err = IOMasterPort( MACH_PORT_NULL, &masterPort ) ) ) 
-		printf( "could not create master port, err = %08x\n", err );
-	#endif
+
 	#ifdef Q_WS_WIN
 	deviceHandle = INVALID_HANDLE_VALUE;
 	#endif
 }
 
-UsbSerial::UsbStatus UsbSerial::setportName( char* filePath )
+bool UsbSerial::isOpen( )
 {
-	char *result = NULL;
-	result = strncpy( portName, filePath, strlen( filePath )+1 );
-	if( result != NULL )
-		return OK;
-	else
-		return ALLOC_ERROR;
+	return deviceOpen;
 }
 
-UsbSerial::UsbStatus UsbSerial::usbOpen( )
+void UsbSerial::setPortName( QString name )
+{
+	portName = name;
+}
+
+void UsbSerial::startReadNotifier( PacketUsbCdc *pckt )
+{
+	readNotifier = new QSocketNotifier( deviceHandle, QSocketNotifier::Read, this);
+	connect( readNotifier, SIGNAL( activated(int) ), pckt, SIGNAL( readyRead() ) );
+}
+
+void UsbSerial::stopNotifier()
+{
+	disconnect( this, SIGNAL( readyRead() ) );
+	delete readNotifier;
+	readNotifier = 0;
+}
+
+UsbSerial::UsbStatus UsbSerial::open( )
 {
   QMutexLocker locker( &usbMutex );
   
@@ -62,7 +69,7 @@ UsbSerial::UsbStatus UsbSerial::usbOpen( )
 
   //Mac-only
 	#ifdef Q_WS_MAC
-		deviceHandle = ::open( portName, O_RDWR | O_NOCTTY | O_NDELAY ); 
+		deviceHandle = ::open( portName.toAscii().data(), O_RDWR | O_NOCTTY | O_NDELAY ); 
 		if ( deviceHandle < 0 )
 	    return NOT_OPEN;
 	  else
@@ -95,7 +102,7 @@ UsbSerial::UsbStatus UsbSerial::usbOpen( )
 	#endif //Windows-only UsbSerial::open( )
 }
 
-void UsbSerial::usbClose( )
+void UsbSerial::close( )
 {
   if( deviceOpen )
 	{
@@ -121,15 +128,15 @@ void UsbSerial::usbClose( )
 	}
 }
 
-int UsbSerial::usbRead( char* buffer, int length )
+int UsbSerial::read( char* buffer, int length )
 {
   // make sure we're open
   if( !deviceOpen )
   {
-    UsbStatus portIsOpen = usbOpen( );
+    UsbStatus portIsOpen = open( );
     if( portIsOpen != OK )
 		{
-			usbClose( );
+			close( );
 			return NOT_OPEN;
 		}
   }
@@ -190,14 +197,14 @@ int UsbSerial::usbRead( char* buffer, int length )
   #endif //Windows-only UsbSerial::read( )//////////////////////////////////////////////////////////////
 }
 
-UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
+UsbSerial::UsbStatus UsbSerial::write( char* buffer, int length )
 {
   if( !deviceOpen )
   {
-    UsbStatus portIsOpen = usbOpen( );
+    UsbStatus portIsOpen = open( );
     if( portIsOpen != OK )
 		{
-				usbClose( );
+				close( );
 			return NOT_OPEN;
 		}
   }
@@ -240,7 +247,7 @@ UsbSerial::UsbStatus UsbSerial::usbWrite( char* buffer, int length )
   #endif //Windows-only UsbSerial::write( )
 }
 
-int UsbSerial::numberOfAvailableBytes( )
+int UsbSerial::bytesAvailable( )
 {
     int n = 0;
 		QMutexLocker locker( &usbMutex );
@@ -261,6 +268,11 @@ int UsbSerial::numberOfAvailableBytes( )
     }
 		#endif // Windows-only numberOfAvailableBytes( )
     return(n);
+}
+
+QString UsbSerial::name( )
+{
+	return portName;
 }
 
 // do the real opening of the device

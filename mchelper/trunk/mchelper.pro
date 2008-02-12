@@ -15,7 +15,7 @@
 #
 # ------------------------------------------------------------------------------
 
-MCHELPER_VERSION = "2.1.0"
+DEFINES += MCHELPER_VERSION=\"2.1.0\"
 TEMPLATE = app
 FORMS = layouts/mchelper.ui layouts/mchelperPrefs.ui
 #CONFIG += qt release
@@ -66,7 +66,6 @@ TARGET = mchelper
 QT += network xml
 INCLUDEPATH += include
 RESOURCES     += resources/mchelper.qrc
-DEFINES     += MCHELPER_VERSION=\\\"$${MCHELPER_VERSION}\\\"
 OBJECTS_DIR  = tmp
 MOC_DIR      = tmp
 DESTDIR      = bin
@@ -85,12 +84,9 @@ macx{
 	SOURCES += source/carbon_cocoa.mm
 	
 	#CONFIG += x86 ppc
-  LIBS += -framework IOKit -framework CoreServices
-	LIBS += -framework Sparkle -framework Carbon
+  LIBS += -framework IOKit -framework Sparkle
   ICON = resources/mchelper.icns
 	QMAKE_INFO_PLIST = resources/osx/Info.plist
-	QMAKE_POST_LINK = "sed -e s/@@version@@/$${MCHELPER_VERSION}/g -i '' bin/mchelper.app/Contents/Info.plist" && \
-                      strip bin/mchelper.app/Contents/MacOS/mchelper
 }
 
 

@@ -23,6 +23,7 @@
 #include <QXmlSimpleReader>
 #include <QXmlDefaultHandler>
 #include <QDomDocument>
+#include <QMutex>
 
 #include "McHelperWindow.h"
 #include "MessageEvent.h"
@@ -30,60 +31,81 @@
 #include "Osc.h"
 
 class OscXmlServer;
+class OscXmlClient;
 class Osc;
 class Board;
 
-class XmlHandler : public QXmlDefaultHandler
+class XmlHandler : public QObject, public QXmlDefaultHandler
 {
+	Q_OBJECT
 	public:
-		XmlHandler( McHelperWindow *mainWindow, OscXmlServer *xmlServer );
+		XmlHandler( McHelperWindow *mainWindow, OscXmlClient *xmlClient );
 		bool endElement( const QString & namespaceURI, const QString & localName, const QString & qName );
 		bool startElement( const QString & namespaceURI, const QString & localName, 
 												const QString & qName, const QXmlAttributes & atts );
 		bool error (const QXmlParseException & exception);
 		bool fatalError (const QXmlParseException & exception);
-		bool startDocument( );
-		bool endDocument( );
+	
+	signals:
+		void newMessage( QStringList strings, MessageEvent::Types type, QString from );
 												
 	private:
 		McHelperWindow *mainWindow;
-		OscXmlServer *xmlServer;
+		OscXmlClient *xmlClient;
 		OscMessage* currentMessage;
 		QString currentDestination;
 		int currentPort;
 		QList<OscMessage*> oscMessageList;
 };
 
-class OscXmlServer : public QObject
+class OscXmlClient : public QThread
 {
 	Q_OBJECT
-	
 	public:
-		OscXmlServer( McHelperWindow *mainWindow, int port );
-		bool isConnected( );
-		void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort );
-		QString fromString;
-		bool changeListenPort( int port );
+		OscXmlClient( int socketDescriptor, McHelperWindow *mainWindow, QObject *parent = 0 );
+		~OscXmlClient( ) { }
+    void run();
+		void resetParser( );
+	
+	public slots:
 		void boardListUpdate( QList<Board*> boardList, bool arrived );
 		void boardInfoUpdate( Board* board );
-		void resetParser( );
-				
+		void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort );
+
 	private:
-		QTcpServer *serverSocket;
-		QTcpSocket *clientSocket;
+    int socketDescriptor;
 		McHelperWindow *mainWindow;
+		bool lastParseComplete;
 		QXmlSimpleReader xml;
 		QXmlInputSource xmlInput;
 		XmlHandler *handler;
+		QTcpSocket *socket;
+		QList<QString> uiMessages;
+		QMutex msgMutex;
+		QString peerAddress;
+		
 		void writeXmlDoc( QDomDocument doc );
-		int listenPort;
-		bool lastParseComplete;
+		bool isConnected( );
 	
 	private slots:
-		void openNewConnection( );
-		void processClientData( );
-		void clientDisconnected( );
-		void clientError( QAbstractSocket::SocketError error );
+		void processData( );
+		void disconnected( );
+};
+
+class OscXmlServer : public QTcpServer
+{
+	Q_OBJECT
+	public:
+		OscXmlServer( McHelperWindow *mainWindow, int port, QObject *parent = 0 );
+		void run( );
+		bool changeListenPort( int port );
+	
+	protected:
+		void incomingConnection( int socketDescriptor );
+				
+	private:
+		McHelperWindow *mainWindow;
+		int listenPort;		
 };
 
 #endif // OSC_XML_SERVER_H

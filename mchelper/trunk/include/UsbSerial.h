@@ -27,6 +27,8 @@
 #include "MessageInterface.h"
 #include <QMutex>
 #include <QMainWindow>
+#include <QSocketNotifier>
+#include "PacketUsbCdc.h"
 
 //Windows-only
 #ifdef Q_WS_WIN
@@ -65,52 +67,53 @@
 #include <IOKit/IOBSD.h>
 #include <IOKit/IOMessage.h>
 
-typedef const char cchar;
 #endif
 
-class UsbSerial
+class PacketUsbCdc;
+
+class UsbSerial : public QObject
 {									
+	Q_OBJECT
 	public:
 	  enum UsbStatus { OK, ALREADY_OPEN=-1, NOT_OPEN=-2, NOTHING_AVAILABLE=-3, IO_ERROR=-4, UNKNOWN_ERROR=-5, 
 											GOT_CHAR=-6, ALLOC_ERROR=-7, ERROR_CLOSE=-8 };
 		UsbSerial( );
 		
-		UsbStatus usbOpen( );
-		void usbClose( );
-		int usbRead( char* buffer, int length );
-		UsbStatus usbWrite( char* buffer, int length );
-		UsbStatus usbWriteChar( char c );
-		int numberOfAvailableBytes( );
+		UsbStatus open( );
+		void close( );
+		int read( char* buffer, int length );
+		UsbStatus write( char* buffer, int length );
+		UsbStatus writeChar( char c );
+		int bytesAvailable( );
+		void startReadNotifier( PacketUsbCdc *pckt );
+		bool isOpen( );
+		QString name( void );
+		void setPortName( QString name );
+		
 		#ifdef Q_WS_WIN
 		HANDLE deviceHandle;
 		#endif
-		UsbStatus setportName( char* filePath );
-		
-	protected:
-		bool deviceOpen;
-		bool readInProgress;
-		QMutex usbOpenMutex;
-	  char portName[1024];
-		
-	  MessageInterface* messageInterface;
-	  QMainWindow* mainWindow;		
+	
+	private slots:
+		void stopNotifier();
 		
 	private:
 		QMutex usbMutex;
-		//Windows only
+		bool deviceOpen;
+		QString portName;
+		MessageInterface* messageInterface;
+	  QMainWindow* mainWindow;
+		
 		#ifdef Q_WS_WIN
 		UsbStatus openDevice( TCHAR* deviceName );
 		bool DoRegisterForNotification( );
 		HDEVNOTIFY notificationHandle;
 		#endif
 		
-		//Mac only
 		#ifdef Q_WS_MAC
 		int deviceHandle;
-		mach_port_t masterPort;
-		bool foundMakeController;
-		io_object_t usbDeviceReference;
 		void createMatchingDictionary( );
+		QSocketNotifier *readNotifier;
 		#endif	
 };
 

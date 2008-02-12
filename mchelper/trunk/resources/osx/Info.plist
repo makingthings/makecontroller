@@ -5,7 +5,7 @@
 	<key>CFBundleExecutable</key>
 	<string>mchelper</string>
 	<key>CFBundleGetInfoString</key>
-	<string>some stuff</string>
+	<string>Make Controller Helper</string>
 	<key>CFBundleIconFile</key>
 	<string>mchelper.icns</string>
 	<key>CFBundleName</key>
