@@ -41,19 +41,6 @@ void UsbSerial::setPortName( QString name )
 	portName = name;
 }
 
-void UsbSerial::startReadNotifier( PacketUsbCdc *pckt )
-{
-	readNotifier = new QSocketNotifier( deviceHandle, QSocketNotifier::Read, this);
-	connect( readNotifier, SIGNAL( activated(int) ), pckt, SIGNAL( readyRead() ) );
-}
-
-void UsbSerial::stopNotifier()
-{
-	disconnect( this, SIGNAL( readyRead() ) );
-	delete readNotifier;
-	readNotifier = 0;
-}
-
 UsbSerial::UsbStatus UsbSerial::open( )
 {
   QMutexLocker locker( &usbMutex );

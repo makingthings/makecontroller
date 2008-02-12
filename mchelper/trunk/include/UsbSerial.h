@@ -27,7 +27,6 @@
 #include "MessageInterface.h"
 #include <QMutex>
 #include <QMainWindow>
-#include <QSocketNotifier>
 #include "PacketUsbCdc.h"
 
 //Windows-only
@@ -85,7 +84,6 @@ class UsbSerial : public QObject
 		UsbStatus write( char* buffer, int length );
 		UsbStatus writeChar( char c );
 		int bytesAvailable( );
-		void startReadNotifier( PacketUsbCdc *pckt );
 		bool isOpen( );
 		QString name( void );
 		void setPortName( QString name );
@@ -93,9 +91,6 @@ class UsbSerial : public QObject
 		#ifdef Q_WS_WIN
 		HANDLE deviceHandle;
 		#endif
-	
-	private slots:
-		void stopNotifier();
 		
 	private:
 		QMutex usbMutex;
@@ -113,7 +108,6 @@ class UsbSerial : public QObject
 		#ifdef Q_WS_MAC
 		int deviceHandle;
 		void createMatchingDictionary( );
-		QSocketNotifier *readNotifier;
 		#endif	
 };
 

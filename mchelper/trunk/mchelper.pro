@@ -15,7 +15,7 @@
 #
 # ------------------------------------------------------------------------------
 
-DEFINES += MCHELPER_VERSION=\"2.1.0\"
+MCHELPER_VERSION = "2.1.0"
 TEMPLATE = app
 FORMS = layouts/mchelper.ui layouts/mchelperPrefs.ui
 #CONFIG += qt release
@@ -64,6 +64,7 @@ SOURCES	= 	source/main.cpp \
 TARGET = mchelper
             
 QT += network xml
+DEFINES     += MCHELPER_VERSION=\\\"$${MCHELPER_VERSION}\\\"
 INCLUDEPATH += include
 RESOURCES     += resources/mchelper.qrc
 OBJECTS_DIR  = tmp

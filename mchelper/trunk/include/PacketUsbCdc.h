@@ -25,9 +25,9 @@
 
 #include "UsbSerial.h"
 #include "PacketInterface.h"
-#include "MessageInterface.h"
 #include "PacketReadyInterface.h"
 #include "MonitorInterface.h"
+#include "McHelperWindow.h"
 
 class UsbSerial;
 
@@ -49,10 +49,10 @@ class PacketUsbCdc : public QThread, public PacketInterface
 		QString getKey( void );
 		char* location( void );
 		void setPortName( QString name );
-		void setInterfaces( MessageInterface* messageInterface, QApplication* application, MonitorInterface* monitor );
+		void setInterfaces( McHelperWindow *mainWindow, QApplication* application, MonitorInterface* monitor );
 		void setPacketReadyInterface( PacketReadyInterface* packetReadyInterface);
 		#ifdef Q_WS_WIN
-		void setWidget( QMainWindow* window );
+			HANDLE deviceHandle;
 		#endif
 			
 	public slots:
@@ -66,7 +66,7 @@ class PacketUsbCdc : public QThread, public PacketInterface
 		void sleepMs( int ms );
 
 		PacketReadyInterface* packetReadyInterface;
-		MessageInterface *messageInterface;
+		McHelperWindow *mainWindow;
 		QApplication* application;
 		MonitorInterface* monitor;
 		int slipReceive( QByteArray *packet );
