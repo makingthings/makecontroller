@@ -450,7 +450,6 @@ void McHelperWindow::newXmlPacketReceived( QList<OscMessage*> messageList, QStri
 void McHelperWindow::sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress )
 {
 	emit xmlPacket( messageList, srcAddress, udp->getListenPort( ) );
-	//qDeleteAll( messageList );
 }
 
 void McHelperWindow::xmlServerBoardInfoUpdate( Board* board )

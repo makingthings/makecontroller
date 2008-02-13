@@ -70,7 +70,6 @@ class Board : public QObject, public QListWidgetItem, public PacketReadyInterfac
 		QStringList messagesToPost;
 		QTimer messagePostTimer;
 		
-		
 		bool extractSystemInfoA( OscMessage* msg );
 		bool extractSystemInfoB( OscMessage* msg );
 		bool extractNetworkFind( OscMessage* msg );
