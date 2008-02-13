@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006-2007 MakingThings
+ Copyright 2006-2008 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -24,11 +24,12 @@ OscXmlServer::OscXmlServer( McHelperWindow *mainWindow, int port, QObject *paren
 {
 	this->mainWindow = mainWindow;
 	listenPort = port;
+	connect( this, SIGNAL( newConnection() ), this, SLOT( openNewConnection( ) ) );
 }
 
-void OscXmlServer::incomingConnection( int socketDescriptor )
+void OscXmlServer::openNewConnection( )
 {
-	OscXmlClient *client = new OscXmlClient( socketDescriptor, mainWindow );
+	OscXmlClient *client = new OscXmlClient( nextPendingConnection( ), mainWindow );
 	connect( client, SIGNAL(finished()), client, SLOT(deleteLater()));
 	client->start( );
 	// tell Flash about the boards we have connected
@@ -59,23 +60,23 @@ bool OscXmlServer::changeListenPort( int port )
 																		
 ************************************************************************************/
 
-OscXmlClient::OscXmlClient( int socketDescriptor, McHelperWindow *mainWindow, QObject *parent )
-	: QThread(parent), socketDescriptor( socketDescriptor )
+OscXmlClient::OscXmlClient( QTcpSocket *socket, McHelperWindow *mainWindow, QObject *parent )
+	: QThread(parent)
 {	
 	this->mainWindow = mainWindow;
+	this->socket = socket;
 	handler = new XmlHandler( mainWindow, this );	
 	xml.setContentHandler( handler );
 	xml.setErrorHandler( handler );
 	resetParser( );
 	socket = NULL;
+	shuttingDown = false;
 }
 
 void OscXmlClient::run( )
 {
-	//moveToThread(QThread::currentThread() );
-	socket = new QTcpSocket( );
 	// these connections need to be direct since we have a pointer to the tcpsocket in our class
-	// which means that it will live in the server thread, which is the main GUI thread, 
+	// which means that it will live by default in the server thread (the main GUI thread), 
 	// and we want to process in our own thread
 	connect( socket, SIGNAL(readyRead()), this, SLOT(processData()), Qt::DirectConnection);
 	connect( socket, SIGNAL(disconnected()), this, SLOT(disconnected()), Qt::DirectConnection);
@@ -87,11 +88,6 @@ void OscXmlClient::run( )
 	connect( mainWindow, SIGNAL(xmlPacket(QList<OscMessage*>, QString, int)), 
 						this, SLOT(sendXmlPacket(QList<OscMessage*>, QString, int)), Qt::DirectConnection);
 	
-	if( !socket->setSocketDescriptor( socketDescriptor ) )
-	{
-		mainWindow->messageThreadSafe( "Error opening connection to client", MessageEvent::Error, FROM_STRING );
-		return;
-	}
 	peerAddress = socket->peerAddress( ).toString( );
 	mainWindow->messageThreadSafe( QString( "New connection from XML peer at %1").arg( peerAddress ), 
 																	MessageEvent::Info, FROM_STRING );
@@ -136,12 +132,13 @@ void OscXmlClient::resetParser( )
 
 void OscXmlClient::disconnected( )
 {
+	shuttingDown = true;
 	disconnect( ); // don't want to respond to any more signals
 	socket->abort( );
 	socket->deleteLater( ); // these will get deleted when control returns to the main event loop
 	handler->deleteLater( );
-	QString msg = QString( "XML peer at %1 disconnected." ).arg( peerAddress );
-	mainWindow->messageThreadSafe( msg, MessageEvent::Info, FROM_STRING );
+	mainWindow->messageThreadSafe( QString( "XML peer at %1 disconnected." ).arg( peerAddress ), 
+																	MessageEvent::Info, FROM_STRING );
 	exit( ); // shut this thread down
 }
 
@@ -152,11 +149,8 @@ void OscXmlClient::wroteBytes( qint64 bytes )
 
 bool OscXmlClient::isConnected( )
 {
-	if( socket != NULL )
-	{
-		if( socket->state( ) == QAbstractSocket::ConnectedState )
-			return true;
-	}
+	if( socket != NULL && !shuttingDown )
+		return ( socket->state( ) == QAbstractSocket::ConnectedState );
 	return false;
 }
 

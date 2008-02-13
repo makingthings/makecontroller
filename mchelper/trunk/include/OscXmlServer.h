@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006-2007 MakingThings
+ Copyright 2006-2008 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -62,7 +62,7 @@ class OscXmlClient : public QThread
 {
 	Q_OBJECT
 	public:
-		OscXmlClient( int socketDescriptor, McHelperWindow *mainWindow, QObject *parent = 0 );
+		OscXmlClient( QTcpSocket *socket, McHelperWindow *mainWindow, QObject *parent = 0 );
 		~OscXmlClient( ) { }
     void run();
 		void resetParser( );
@@ -84,6 +84,7 @@ class OscXmlClient : public QThread
 		QList<QString> uiMessages;
 		QMutex msgMutex;
 		QString peerAddress;
+		bool shuttingDown;
 		
 		bool isConnected( );
 		void writeXmlDoc( QDomDocument doc );
@@ -101,8 +102,8 @@ class OscXmlServer : public QTcpServer
 		void run( );
 		bool changeListenPort( int port );
 	
-	protected:
-		void incomingConnection( int socketDescriptor );
+	private slots:
+		void openNewConnection( );
 				
 	private:
 		McHelperWindow *mainWindow;
