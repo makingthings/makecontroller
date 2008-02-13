@@ -141,9 +141,8 @@ void UsbMonitor::FindUsbDevices( QList<PacketInterface*>* arrived )
 					QString portNameKey( path );
 					if( !connectedDevices.contains( portNameKey ) ) // make sure we don't already have this board in our list
 					{
-						PacketUsbCdc* device = new PacketUsbCdc( );
+						PacketUsbCdc* device = new PacketUsbCdc( mainWindow, application, this );
 						device->setPortName( path );
-						device->setInterfaces( mainWindow, application, this );
 						if( PacketInterface::OK == device->open( ) )
 						{
 							connectedDevices.insert( portNameKey, device );  // stick it in our own list of boards we know about
@@ -201,10 +200,9 @@ void UsbMonitor::FindUsbDevices( QList<PacketInterface*>* arrived )
 	      QString portNameKey( portName );
 	      if( !connectedDevices.contains( portNameKey ) ) // make sure we don't already have this board in our list
 	      {
-	      	PacketUsbCdc* device = new PacketUsbCdc( );
-	     		device->deviceHandle = hOut;
+	      	PacketUsbCdc* device = new PacketUsbCdc( mainWindow, application, this );
+	     		device->setDeviceHandle( hOut );
 	     		device->setPortName( portName );
-	     		device->setInterfaces( mainWindow, application, this );
 	     		if( PacketInterface::OK == device->open( ) )
 	     		{
 	     			connectedDevices.insert( portNameKey, device );  // stick it in our own list of boards we know about
@@ -333,7 +331,7 @@ void UsbMonitor::removalNotification( HANDLE handle )
 	QHash<QString, PacketUsbCdc*>::iterator i = connectedDevices.begin( );
 	while( i != connectedDevices.end( ) )
 	{
-		if( i.value( )->deviceHandle == handle )
+		if( i.value( )->getDeviceHandle( ) == handle )
 		{
 			i.value( )->close( );
 			mainWindow->removeDeviceThreadSafe( i.key() );

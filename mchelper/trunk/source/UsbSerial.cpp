@@ -22,9 +22,10 @@
 #include <dbt.h>
 #endif 
 
-UsbSerial::UsbSerial( )
+UsbSerial::UsbSerial( McHelperWindow* mainWindow )
 {
 	deviceOpen = false;
+	this->mainWindow = mainWindow;
 
 	#ifdef Q_WS_WIN
 	deviceHandle = INVALID_HANDLE_VALUE;
@@ -45,7 +46,7 @@ UsbSerial::UsbStatus UsbSerial::open( )
 {
   QMutexLocker locker( &usbMutex );
   
-  	if( deviceOpen )  //if it's already open, do nothing.
+  if( deviceOpen )  //if it's already open, do nothing.
 	  return ALREADY_OPEN;
   
   // Linux Only
@@ -76,7 +77,6 @@ UsbSerial::UsbStatus UsbSerial::open( )
 	UsbStatus result = openDevice( (TCHAR*)deviceHandle );
 	if( result == OK )
 	{
-		// messageInterface->message( 1, "Usb> Make Controller connected at %s\n", portName );
 		Sleep( 10 );  // wait after opening it before trying to read/write
 		deviceOpen = true;
 		DoRegisterForNotification( ); // now set up to get called back when it's unplugged
@@ -281,19 +281,7 @@ UsbSerial::UsbStatus UsbSerial::openDevice( TCHAR* deviceName )
   
   if ( deviceHandle == INVALID_HANDLE_VALUE )
     return ERROR_CLOSE; 
-
-  // initialize the overlapped structures
-//  overlappedRead.Offset  = overlappedWrite.Offset = 0; 
-//  overlappedRead.OffsetHigh = overlappedWrite.OffsetHigh = 0; 
-//  overlappedRead.hEvent  = CreateEvent(0, TRUE, FALSE, 0);
-//  overlappedWrite.hEvent  = CreateEvent(0, TRUE, FALSE, 0);
-//
-//  if (!overlappedRead.hEvent || !overlappedWrite.hEvent )
-//  {
-//  	deviceHandle = INVALID_HANDLE_VALUE;
-//    return ERROR_CLOSE;
-//  }
-
+	
   GetCommState( deviceHandle, &dcb );
   dcb.BaudRate = CBR_115200;
   dcb.ByteSize = 8;

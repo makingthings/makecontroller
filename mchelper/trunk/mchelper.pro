@@ -15,7 +15,7 @@
 #
 # ------------------------------------------------------------------------------
 
-MCHELPER_VERSION = "2.1.0"
+MCHELPER_VERSION = "2.2.0"
 TEMPLATE = app
 FORMS = layouts/mchelper.ui layouts/mchelperPrefs.ui
 #CONFIG += qt release

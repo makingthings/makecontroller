@@ -35,7 +35,7 @@ class PacketUsbCdc : public QThread, public PacketInterface
 {
 	Q_OBJECT
 	public:
-		PacketUsbCdc( );
+		PacketUsbCdc( McHelperWindow* mainWindow, QApplication* application, MonitorInterface* monitor );
 		~PacketUsbCdc( );
 		void run( );
 		// from PacketInterface
@@ -49,10 +49,10 @@ class PacketUsbCdc : public QThread, public PacketInterface
 		QString getKey( void );
 		char* location( void );
 		void setPortName( QString name );
-		void setInterfaces( McHelperWindow *mainWindow, QApplication* application, MonitorInterface* monitor );
 		void setPacketReadyInterface( PacketReadyInterface* packetReadyInterface);
 		#ifdef Q_WS_WIN
-			HANDLE deviceHandle;
+		void setDeviceHandle( HANDLE deviceHandle );
+		HANDLE getDeviceHandle( void );
 		#endif
 			
 	public slots:
