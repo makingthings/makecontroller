@@ -70,6 +70,7 @@ class OscXmlClient : public QThread
 	public slots:
 		void boardListUpdate( QList<Board*> boardList, bool arrived );
 		void boardInfoUpdate( Board* board );
+		void wroteBytes( qint64 bytes );
 		void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort );
 
 	private:
@@ -84,8 +85,8 @@ class OscXmlClient : public QThread
 		QMutex msgMutex;
 		QString peerAddress;
 		
-		void writeXmlDoc( QDomDocument doc );
 		bool isConnected( );
+		void writeXmlDoc( QDomDocument doc );
 	
 	private slots:
 		void processData( );
@@ -105,7 +106,7 @@ class OscXmlServer : public QTcpServer
 				
 	private:
 		McHelperWindow *mainWindow;
-		int listenPort;		
+		int listenPort;
 };
 
 #endif // OSC_XML_SERVER_H

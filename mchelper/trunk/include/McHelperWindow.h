@@ -108,7 +108,7 @@ class McHelperWindow : public QMainWindow, private Ui::McHelperWindow, public Me
 	signals:
 		void boardInfoUpdate( Board* board );
 		void boardListUpdate( QList<Board*> boardList, bool added );
-		void xmlPacket( QList<OscMessage*> messageList, QString srcAddress, int destPort );
+		void xmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort );
 		
 	private:		
 		QApplication* application;

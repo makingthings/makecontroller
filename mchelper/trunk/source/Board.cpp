@@ -87,9 +87,7 @@ void Board::flash( )
 
 void Board::packetWaiting( )
 {
-	//QList<OscMessage*> oscMessageList;
 	QStringList messageList;
-	//osc->receive( &oscMessageList );
 	QByteArray packet;
 	packet.resize( packetInterface->pendingPacketSize( ) );
 	packetInterface->receivePacket( packet.data( ), packet.size( ) );

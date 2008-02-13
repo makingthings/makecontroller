@@ -70,7 +70,7 @@ class UsbMonitor : public QThread, public MonitorInterface
 	#endif
 	
 	#ifdef Q_WS_MAC
-	char portName[MAXPATHLEN];
+	char portName[1024];
 	CFMutableDictionaryRef matchingDictionary;
 	#endif
 	

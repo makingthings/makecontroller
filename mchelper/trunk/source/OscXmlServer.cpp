@@ -30,12 +30,9 @@ void OscXmlServer::incomingConnection( int socketDescriptor )
 {
 	OscXmlClient *client = new OscXmlClient( socketDescriptor, mainWindow );
 	connect( client, SIGNAL(finished()), client, SLOT(deleteLater()));
-	connect( mainWindow, SIGNAL(boardInfoUpdate(Board*)), client, SLOT(boardInfoUpdate(Board*)));
-	qRegisterMetaType< QList<OscMessage*> >("QList<OscMessage*>");
-	connect( mainWindow, SIGNAL(boardListUpdate(QList<Board*>, bool)), client, SLOT(boardListUpdate(QList<Board*>, bool)));
-	connect( mainWindow, SIGNAL(xmlPacket(QList<OscMessage*>, QString, int)), 
-						client, SLOT(sendXmlPacket(QList<OscMessage*>, QString, int)));
 	client->start( );
+	// tell Flash about the boards we have connected
+	client->boardListUpdate( mainWindow->getConnectedBoards( ), true );
 }
 
 bool OscXmlServer::changeListenPort( int port )
@@ -70,26 +67,34 @@ OscXmlClient::OscXmlClient( int socketDescriptor, McHelperWindow *mainWindow, QO
 	xml.setContentHandler( handler );
 	xml.setErrorHandler( handler );
 	resetParser( );
+	socket = NULL;
 }
 
 void OscXmlClient::run( )
 {
+	//moveToThread(QThread::currentThread() );
 	socket = new QTcpSocket( );
 	// these connections need to be direct since we have a pointer to the tcpsocket in our class
 	// which means that it will live in the server thread, which is the main GUI thread, 
 	// and we want to process in our own thread
 	connect( socket, SIGNAL(readyRead()), this, SLOT(processData()), Qt::DirectConnection);
 	connect( socket, SIGNAL(disconnected()), this, SLOT(disconnected()), Qt::DirectConnection);
+	//connect( socket, SIGNAL(bytesWritten(qint64)), this, SLOT(wroteBytes(qint64)), Qt::DirectConnection);
+	connect( mainWindow, SIGNAL(boardInfoUpdate(Board*)), this, SLOT(boardInfoUpdate(Board*)), Qt::DirectConnection);
+	qRegisterMetaType< QList<OscMessage*> >("QList<OscMessage*>");
+	connect( mainWindow, SIGNAL(boardListUpdate(QList<Board*>, bool)), 
+						this, SLOT(boardListUpdate(QList<Board*>, bool)), Qt::DirectConnection);
+	connect( mainWindow, SIGNAL(xmlPacket(QList<OscMessage*>, QString, int)), 
+						this, SLOT(sendXmlPacket(QList<OscMessage*>, QString, int)), Qt::DirectConnection);
+	
 	if( !socket->setSocketDescriptor( socketDescriptor ) )
 	{
 		mainWindow->messageThreadSafe( "Error opening connection to client", MessageEvent::Error, FROM_STRING );
 		return;
 	}
 	peerAddress = socket->peerAddress( ).toString( );
-	QString msg = QString( "New connection from XML peer at %1").arg( peerAddress );
-	mainWindow->messageThreadSafe( msg, MessageEvent::Info, FROM_STRING );
-	// tell Flash about the boards we have connected
-	boardListUpdate( mainWindow->getConnectedBoards( ), true );
+	mainWindow->messageThreadSafe( QString( "New connection from XML peer at %1").arg( peerAddress ), 
+																	MessageEvent::Info, FROM_STRING );
 	exec( ); // run the thread, listening for and sending messages, until we call exit( )
 }
 
@@ -138,6 +143,11 @@ void OscXmlClient::disconnected( )
 	QString msg = QString( "XML peer at %1 disconnected." ).arg( peerAddress );
 	mainWindow->messageThreadSafe( msg, MessageEvent::Info, FROM_STRING );
 	exit( ); // shut this thread down
+}
+
+void OscXmlClient::wroteBytes( qint64 bytes )
+{
+	printf( "XML, wrote %d bytes to %s\n", (int)bytes, peerAddress.toAscii().data() );
 }
 
 bool OscXmlClient::isConnected( )
@@ -192,12 +202,8 @@ void OscXmlClient::boardListUpdate( QList<Board*> boardList, bool arrived )
 
 void OscXmlClient::writeXmlDoc( QDomDocument doc )
 {
-	if( !isConnected( ) )
-		return;
-	QByteArray msg = doc.toByteArray( );
-	msg.append( '\0' ); // Flash wants XML followed by a zero byte
-	socket->write( msg );
-	//printf( "XML sent, size: %d written: %d to %s\n", msg.size( ), sent, peerAddress.toAscii().data() );
+	if( isConnected( ) )
+		socket->write( doc.toByteArray( ).append( '\0' ) ); // Flash wants XML followed by a zero byte
 }
 
 void OscXmlClient::sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress, int srcPort )

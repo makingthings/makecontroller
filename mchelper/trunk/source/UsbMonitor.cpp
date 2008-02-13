@@ -143,7 +143,7 @@ void UsbMonitor::FindUsbDevices( QList<PacketInterface*>* arrived )
 					{
 						PacketUsbCdc* device = new PacketUsbCdc( );
 						device->setPortName( path );
-						device->setInterfaces( messageInterface, application, this );
+						device->setInterfaces( mainWindow, application, this );
 						if( PacketInterface::OK == device->open( ) )
 						{
 							connectedDevices.insert( portNameKey, device );  // stick it in our own list of boards we know about
