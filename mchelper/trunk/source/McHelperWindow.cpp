@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006-2007 MakingThings
+ Copyright 2006-2008 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -744,7 +744,7 @@ aboutMchelper::aboutMchelper( ) : QDialog( )
 	mchelper is released under the <a href=\"http://www.apache.org/licenses/LICENSE-2.0.html\">Apache 2.0 license</a>, \
 	and uses code from Erik Gilling's <a href=\"http://oss.tekno.us/sam7utils\"> sam7utils project</a>. \
 	<br><br> \
-	Copyright (C) 2006-2007 MakingThings LLC.  <a href=\"http://www.makingthings.com\">www.makingthings.com</a> \
+	Copyright (C) 2006-2008 MakingThings LLC.  <a href=\"http://www.makingthings.com\">www.makingthings.com</a> \
 	<br><br> \
 	This program is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE WARRANTY OF DESIGN, \
 	MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.", this );
