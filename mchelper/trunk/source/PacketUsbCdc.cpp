@@ -24,12 +24,15 @@
 #define ESC_END         0334    // ESC ESC_END means END data byte 
 #define ESC_ESC         0335    // ESC ESC_ESC means ESC data byte 
 
-PacketUsbCdc::PacketUsbCdc( ) : QThread( )
+PacketUsbCdc::PacketUsbCdc( McHelperWindow* mainWindow, QApplication* application, MonitorInterface* monitor ) : QThread( )
 {
+	this->mainWindow = mainWindow;
+	this->application = application;
+	this->monitor = monitor;
 	packetReadyInterface = NULL;
 	exit = false;
 	currentPacket.clear( );
-	port = new UsbSerial( );
+	port = new UsbSerial( mainWindow );
 }
 
 PacketUsbCdc::~PacketUsbCdc( )
@@ -76,7 +79,7 @@ int PacketUsbCdc::pendingPacketSize( )
 	return currentPacket.size( );
 }
 
-PacketUsbCdc::Status PacketUsbCdc::open()
+PacketUsbCdc::Status PacketUsbCdc::open( )
 {
 	if( UsbSerial::OK == port->open( ) )
 		return PacketInterface::OK;
@@ -256,17 +259,25 @@ QString PacketUsbCdc::getKey( )
 	return port->name( );
 }
 
-void PacketUsbCdc::setInterfaces( McHelperWindow* mainWindow, QApplication* application, MonitorInterface* monitor )
-{
-	this->mainWindow = mainWindow;
-	this->application = application;
-	this->monitor = monitor;
-}
-
 void PacketUsbCdc::setPacketReadyInterface( PacketReadyInterface* packetReadyInterface)
 {
 	this->packetReadyInterface = packetReadyInterface;
 }
+
+#ifdef Q_WS_WIN
+void PacketUsbCdc::setDeviceHandle( HANDLE deviceHandle )
+{
+	port->deviceHandle = deviceHandle;
+}
+
+HANDLE PacketUsbCdc::getDeviceHandle( )
+{
+	if( port )
+		return port->deviceHandle;
+	else
+		return INVALID_HANDLE_VALUE;
+}
+#endif
 
 
 

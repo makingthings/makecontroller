@@ -2,8 +2,8 @@
 
 [Setup]
 AppName=mchelper
-AppVerName=mchelper v2.1.0
-OutputBaseFilename=mchelper-v2.1.0-setup
+AppVerName=mchelper v2.2.0
+OutputBaseFilename=mchelper-v2.2.0-setup
 AppPublisher=MakingThings
 AppPublisherURL=http://www.makingthings.com
 AppSupportURL=http://www.makingthings.com

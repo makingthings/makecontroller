@@ -24,7 +24,7 @@
 #include <string.h>
 
 #include <QtGlobal>
-#include "MessageInterface.h"
+#include "McHelperWindow.h"
 #include <QMutex>
 #include <QMainWindow>
 #include "PacketUsbCdc.h"
@@ -76,7 +76,7 @@ class UsbSerial : public QObject
 	public:
 	  enum UsbStatus { OK, ALREADY_OPEN=-1, NOT_OPEN=-2, NOTHING_AVAILABLE=-3, IO_ERROR=-4, UNKNOWN_ERROR=-5, 
 											GOT_CHAR=-6, ALLOC_ERROR=-7, ERROR_CLOSE=-8 };
-		UsbSerial( );
+		UsbSerial( McHelperWindow* mainWindow );
 		
 		UsbStatus open( );
 		void close( );
@@ -96,8 +96,7 @@ class UsbSerial : public QObject
 		QMutex usbMutex;
 		bool deviceOpen;
 		QString portName;
-		MessageInterface* messageInterface;
-	  QMainWindow* mainWindow;
+	  McHelperWindow* mainWindow;
 		
 		#ifdef Q_WS_WIN
 		UsbStatus openDevice( TCHAR* deviceName );
