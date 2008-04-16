@@ -18,9 +18,11 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 {
 	setupUi(this);
 	readSettings( );
-	splitter->setChildrenCollapsible( false );
-	prefs = new Preferences( this );
+	splitter->setChildrenCollapsible(false);
+	prefs = new Preferences(this);
+	props = new ProjectProperties(this);
 	uploader = new Uploader(this);
+	builder = new Builder(this);
 	setupEditor( );
 	boardTypeGroup = new QActionGroup(menuBoard_Type);
 	loadBoardProfiles( );
@@ -109,7 +111,7 @@ void MainWindow::highlightLine( )
 void MainWindow::setupEditor( )
 {
 	QSettings settings("MakingThings", "mcbuilder");
-	setTabWidth( settings.value("editor/tabWidth", 2).toInt() );
+	setTabWidth( settings.value("Editor/tabWidth", 2).toInt() );
 	highlighter = new Highlighter( editor->document() );
 }
 
@@ -122,7 +124,7 @@ void MainWindow::setTabWidth( int width )
 void MainWindow::editorLoadFile( QFile *file )
 {
 	Q_ASSERT(!currentProject.isEmpty());
-	if( file->open(QIODevice::ReadOnly) )
+	if(file->open(QIODevice::ReadOnly))
 	{
 		currentFile = file->fileName();
 		editor->setPlainText(file->readAll());
@@ -316,16 +318,26 @@ void MainWindow::onSaveProjectAs( )
 
 void MainWindow::onBuild( )
 {
-	
+	if(currentProject.isEmpty())
+		return statusBar()->showMessage( "Open a project to build, or create a new one from the File menu.", 3500 );
+	builder->build(currentProject);
 }
 
 void MainWindow::onProperties( )
 {
-	
+	if(currentProject.isEmpty())
+		return statusBar()->showMessage( "Open a project first, or create a new one from the File menu.", 3500 );
+	if( !props->loadAndShow() )
+	{
+		QDir dir(currentProject);
+		return statusBar()->showMessage( "Couldn't find/open project properties for " + dir.dirName(), 3500 );
+	}
 }
 
 void MainWindow::onUpload( )
 {
+	if(currentProject.isEmpty())
+		return statusBar()->showMessage( "Open a project to upload, or create a new one from the File menu.", 3500 );
 	uploadFile("temp.bin");
 }
 
@@ -378,7 +390,7 @@ void MainWindow::loadBoardProfiles( )
 				{
 					QAction *boardAction = new QAction(boardName, this);
 					boardAction->setCheckable(true);
-					if(boardName == "Make Controller") // select Make Controller by default
+					if(boardName == Preferences::boardType( ))
 						boardAction->setChecked(true);
 					menuBoard_Type->addAction(boardAction); // add the action to the actual menu
 					boardTypeGroup->addAction(boardAction); // and to the group that maintains an exclusive selection within the menu

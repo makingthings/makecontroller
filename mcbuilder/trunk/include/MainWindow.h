@@ -6,10 +6,14 @@
 #include "ui_mainwindow.h"
 #include "Highlighter.h"
 #include "Preferences.h"
+#include "ProjectProperties.h"
 #include "Uploader.h"
+#include "Builder.h"
 
 class Preferences;
 class Uploader;
+class Builder;
+class ProjectProperties;
 
 class MainWindow : public QMainWindow, private Ui::MainWindow
 {
@@ -19,6 +23,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void setTabWidth( int width );
 		void printOutput(QString text);
 		void printOutputError(QString text);
+		QString currentProjectPath( ) { return currentProject; }
 		
 	private:
 		void openFile( const QString &path );
@@ -32,7 +37,9 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void closeEvent( QCloseEvent *qcloseevent );
 		Highlighter *highlighter;
 		Preferences *prefs;
+		ProjectProperties *props;
 		Uploader *uploader;
+		Builder *builder;
 		QActionGroup *boardTypeGroup;
 		QString currentFile; // path of the file in the editor
 		QString currentProject; // path of the current project directory

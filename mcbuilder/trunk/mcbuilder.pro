@@ -1,14 +1,18 @@
 TEMPLATE = app
-FORMS = layouts/mainwindow.ui layouts/preferences.ui
 # CONFIG += qt release
 CONFIG += qt debug
+
+FORMS = layouts/mainwindow.ui \
+				layouts/preferences.ui \
+				layouts/properties.ui
 
 HEADERS = include/Highlighter.h \
           include/MainWindow.h \
           include/Preferences.h \
           include/Uploader.h \
           include/ProjectProperties.h \
-          include/Compiler.h
+          include/Compiler.h \
+          include/Builder.h
             
 SOURCES =   src/main.cpp \
             src/Highlighter.cpp \
@@ -16,7 +20,8 @@ SOURCES =   src/main.cpp \
             src/Preferences.cpp \
             src/Uploader.cpp \
             src/ProjectProperties.cpp \
-            src/Compiler.cpp
+            src/Compiler.cpp \
+            src/Builder.cpp
 
 TARGET = mcbuilder
             
