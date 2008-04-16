@@ -1,0 +1,165 @@
+<ui version="4.0" >
+ <class>Properties</class>
+ <widget class="QDialog" name="Properties" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>475</width>
+    <height>214</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>Properties</string>
+  </property>
+  <layout class="QGridLayout" >
+   <item row="0" column="0" >
+    <layout class="QVBoxLayout" >
+     <item>
+      <widget class="QGroupBox" name="groupBox" >
+       <property name="title" >
+        <string/>
+       </property>
+       <layout class="QHBoxLayout" >
+        <item>
+         <layout class="QGridLayout" >
+          <item row="0" column="1" >
+           <widget class="QLineEdit" name="versionEdit" />
+          </item>
+          <item row="0" column="0" >
+           <widget class="QLabel" name="label" >
+            <property name="toolTip" >
+             <string>A version number for your project.</string>
+            </property>
+            <property name="text" >
+             <string>Version:</string>
+            </property>
+            <property name="alignment" >
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" >
+           <widget class="QLabel" name="label_2" >
+            <property name="toolTip" >
+             <string>The amount of memory available to your project at run time.
+Generally, make this as high as you can until the project won't build.</string>
+            </property>
+            <property name="text" >
+             <string>Heap Size:</string>
+            </property>
+            <property name="alignment" >
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1" >
+           <widget class="QLineEdit" name="heapSizeEdit" />
+          </item>
+          <item row="3" column="1" >
+           <widget class="QCheckBox" name="debugInfoCheckbox" >
+            <property name="toolTip" >
+             <string>Include debugging info in your build.  Makes your project bigger.</string>
+            </property>
+            <property name="text" >
+             <string>Include Debug Info</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1" >
+           <widget class="QComboBox" name="optLevelBox" >
+            <item>
+             <property name="text" >
+              <string>None</string>
+             </property>
+            </item>
+            <item>
+             <property name="text" >
+              <string>Level 1 (-O1)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text" >
+              <string>Level 2 (-O2)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text" >
+              <string>Optimize For Size (-Os)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text" >
+              <string>Optimize For Speed (-O3)</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="2" column="0" >
+           <widget class="QLabel" name="label_3" >
+            <property name="toolTip" >
+             <string>Optimized code is generally smaller and faster.</string>
+            </property>
+            <property name="text" >
+             <string>Optimization Level:</string>
+            </property>
+            <property name="alignment" >
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDialogButtonBox" name="buttonBox" >
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons" >
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::NoButton|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>Properties</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>Properties</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
