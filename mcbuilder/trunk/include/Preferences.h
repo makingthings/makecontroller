@@ -13,6 +13,7 @@ class Preferences : public QDialog, private Ui::Preferences
 	public:
 		Preferences(MainWindow *mainWindow);
 		static QString workspace( );
+		static QString boardType( );
 		
 	private:
 		MainWindow *mainWindow;

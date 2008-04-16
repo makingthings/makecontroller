@@ -29,6 +29,13 @@ QString Preferences::workspace( )
 	return workspace;
 }
 
+QString Preferences::boardType( )
+{
+	QSettings settings("MakingThings", "mcbuilder");
+	// select Make Controller by default
+	return settings.value("General/boardType", "Make Controller").toString();
+}
+
 // read the current settings, load them into the preferences form and then display it
 void Preferences::loadAndShow( )
 {
