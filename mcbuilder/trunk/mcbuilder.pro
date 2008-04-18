@@ -11,7 +11,6 @@ HEADERS = include/Highlighter.h \
           include/Preferences.h \
           include/Uploader.h \
           include/ProjectProperties.h \
-          include/Compiler.h \
           include/Builder.h
             
 SOURCES =   src/main.cpp \
@@ -20,7 +19,6 @@ SOURCES =   src/main.cpp \
             src/Preferences.cpp \
             src/Uploader.cpp \
             src/ProjectProperties.cpp \
-            src/Compiler.cpp \
             src/Builder.cpp
 
 TARGET = mcbuilder
@@ -29,6 +27,7 @@ QT += xml
 INCLUDEPATH += include
 OBJECTS_DIR  = tmp
 MOC_DIR      = tmp
+UI_DIR       = tmp
 DESTDIR      = bin
 
 # *******************************************
