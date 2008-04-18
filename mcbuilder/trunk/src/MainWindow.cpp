@@ -73,6 +73,10 @@ void MainWindow::readSettings()
 			splitterSizes.append( splitterSettings.at(i).toInt( ) );
 		splitter->setSizes( splitterSizes );
 	}
+  
+  QString lastProject = settings.value("lastOpenProject").toString();
+  if(!lastProject.isEmpty())
+    openProject(lastProject);
 	settings.endGroup();
 }
 
@@ -86,6 +90,7 @@ void MainWindow::writeSettings()
 	for( int i = 0; i < splitterSizes.count( ); i++ )
 		splitterSettings.append( splitterSizes.at(i) );
 	settings.setValue("splitterSizes", splitterSettings );
+  settings.setValue("lastOpenProject", currentProject);
 	settings.endGroup();
 }
 
@@ -119,6 +124,15 @@ void MainWindow::setTabWidth( int width )
 {
 	QFontMetrics fm(editor->currentFont());
 	editor->setTabStopWidth( fm.width(" ") * width );
+}
+
+QString MainWindow::currentBoardProfile( )
+{
+  QAction *board = boardTypeGroup->checkedAction( );
+  if(board)
+    return boardTypes.value(board->text());
+  else
+    return QString();
 }
 
 void MainWindow::editorLoadFile( QFile *file )
@@ -320,7 +334,10 @@ void MainWindow::onBuild( )
 {
 	if(currentProject.isEmpty())
 		return statusBar()->showMessage( "Open a project to build, or create a new one from the File menu.", 3500 );
-	builder->build(currentProject);
+	if(builder->state() == QProcess::NotRunning)
+		builder->build(currentProject);
+	else
+		return statusBar()->showMessage( "Builder is currently busy...give it a second, then try again.", 3500 );
 }
 
 void MainWindow::onProperties( )
