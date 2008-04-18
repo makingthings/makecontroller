@@ -24,6 +24,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void printOutput(QString text);
 		void printOutputError(QString text);
 		QString currentProjectPath( ) { return currentProject; }
+    QString currentBoardProfile( );
 		
 	private:
 		void openFile( const QString &path );
