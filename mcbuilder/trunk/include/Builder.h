@@ -6,21 +6,20 @@
 
 class MainWindow;
 
-class Builder : public QObject
+class Builder : public QProcess
 {
 	Q_OBJECT
 	public:
 		Builder(MainWindow *mainWindow);
 		void build(QString projectName);
-		QProcess::ProcessState state( ) { return builder.state(); }
-		
+  
 	private:
 		MainWindow *mainWindow;
-		QProcess builder;
 		QStringList cSrc, cppSrc; // lists of files to be compiled
     QString ccTool, cppTool, ldTool, asTool, sizeTool; // names of the tools to use
 		enum BuildStep { COMPILE_C, COMPILE_CPP, LINK, ASSEMBLE, SIZER };
 		BuildStep buildStep;
+    int maxsize;
 		void wrapFile(QString filePath);
 		void compileCpp( );
 		void compileCc( );

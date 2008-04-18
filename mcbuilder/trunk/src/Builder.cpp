@@ -8,18 +8,18 @@
 	We need to wrap the project into a class, and generate a Makefile
 	based on the general Preferences and Properties for this project.
 */
-Builder::Builder(MainWindow *mainWindow) : QObject( 0 )
+Builder::Builder(MainWindow *mainWindow) : QProcess( 0 )
 {
 	this->mainWindow = mainWindow;
-	connect(&builder, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
-	connect(&builder, SIGNAL(readyReadStandardError()), this, SLOT(readError()));
-	connect(&builder, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(nextStep(int, QProcess::ExitStatus)));
+	connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
+	connect(this, SIGNAL(readyReadStandardError()), this, SLOT(readError()));
+	connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(nextStep(int, QProcess::ExitStatus)));
 }
 
 /*
 	Prepare the build process:
 	- wrap each project file in a class
-	- generate lists of C, C (ARM), C++, and C++ (ARM) files to be compiled
+	- generate lists of C and C++ files to be compiled
 	Then fire it off.
 */
 void Builder::build(QString projectName)
@@ -72,13 +72,18 @@ bool Builder::loadTools( )
 	{
 		if(doc.setContent(&file))
 		{
-			ccTool = doc.elementsByTagName("cc").at(0).toElement().text();
-      cppTool = doc.elementsByTagName("cpp").at(0).toElement().text();
-      ldTool = doc.elementsByTagName("ld").at(0).toElement().text();
-      asTool = doc.elementsByTagName("as").at(0).toElement().text();
-      sizeTool = doc.elementsByTagName("sizer").at(0).toElement().text();
-      if( !ccTool.isEmpty() && !cppTool.isEmpty() && !ldTool.isEmpty() && !asTool.isEmpty() && !sizeTool.isEmpty() )
-        retval = true;
+			// first get the relative tools path
+      QString toolsrelpath = doc.elementsByTagName("toolspath").at(0).toElement().text();
+      QString s = QDir::separator();
+      QString toolspath = QDir::currentPath() + s + "tools" + s + toolsrelpath + s;
+      // then all the tools
+      ccTool = toolspath + doc.elementsByTagName("cc").at(0).toElement().text();
+      cppTool = toolspath + doc.elementsByTagName("cpp").at(0).toElement().text();
+      ldTool = toolspath + doc.elementsByTagName("ld").at(0).toElement().text();
+      asTool = toolspath + doc.elementsByTagName("as").at(0).toElement().text();
+      sizeTool = toolspath + doc.elementsByTagName("sizer").at(0).toElement().text();
+      maxsize = doc.elementsByTagName("maxsize").at(0).toElement().text().toInt();
+      retval = true;
 		}
 		file.close();
 	}
@@ -129,12 +134,12 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
 
 void Builder::readOutput( )
 {
-	mainWindow->printOutput(builder.readAllStandardOutput());
+	mainWindow->printOutput(readAllStandardOutput());
 }
 
 void Builder::readError( )
 {
-	mainWindow->printOutputError(builder.readAllStandardError());
+	mainWindow->printOutputError(readAllStandardError());
 }
 
 void Builder::compileCc( )
@@ -144,31 +149,39 @@ void Builder::compileCc( )
   QFileInfo fi(file);
   args << file.fileName() << "-c"; // the file name must be first, then specify to only compile, not link
   args << "-o " + fi.fileName() + ".o"; // put the object file where we can get at it
-//  if(arm)
-//    args << "-mthumb";
+  if(fi.fileName().endsWith("_arm") || fi.fileName().endsWith("_isr"))
+    args << "-mthumb"; // build these files as ARM, not THUMB
   if(cSrc.count() == 0) // if this was the last file, move on to the next step
     buildStep = COMPILE_CPP;
-  builder.start(ccTool, args);
+  start(ccTool, args);
 }
 
 void Builder::compileCpp( )
 {
-	
+	QStringList args;
+  QFile file(cppSrc.takeFirst());
+  QFileInfo fi(file);
+  if(cppSrc.count() == 0) // if this was the last file, move on to the next step
+    buildStep = LINK;
+  start(cppTool, args);
 }
 
 void Builder::link( )
 {
-	
+	QStringList args;
+  start(ldTool, args);
 }
 
 void Builder::assemble( )
 {
-	
+	QStringList args;
+  start(asTool, args);
 }
 
 void Builder::sizer( )
 {
-	
+	QStringList args;
+  start(sizeTool, args);
 }
 
 
