@@ -17,21 +17,22 @@
 MainWindow::MainWindow( ) : QMainWindow( 0 )
 {
 	setupUi(this);
-	readSettings( );
-	splitter->setChildrenCollapsible(false);
 	prefs = new Preferences(this);
 	props = new ProjectProperties(this);
 	uploader = new Uploader(this);
 	builder = new Builder(this);
+  serialMonitor = new SerialMonitor();
+  findReplace = new FindReplace(this);
 	setupEditor( );
 	boardTypeGroup = new QActionGroup(menuBoard_Type);
 	loadBoardProfiles( );
 	loadExamples( );
 	loadLibraries( );
 	loadRecentProjects( );
-	connect(editor, SIGNAL(cursorPositionChanged()), this, SLOT(highlightLine()));
-	//connect(editor, SIGNAL(undoAvailable(bool)), this, SLOT(setWindowModified(bool)));
+  readSettings( );
+	connect(editor, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorMoved()));
 	connect(actionPreferences, SIGNAL(triggered()), prefs, SLOT(loadAndShow()));
+  connect(actionSerial_Monitor, SIGNAL(triggered()), serialMonitor, SLOT(loadAndShow()));
 	connect(currentFileDropDown, SIGNAL(currentIndexChanged(QString)), this, SLOT(onFileSelection(QString)));
 	// menu actions
 	connect(actionNew,					SIGNAL(triggered()), this,		SLOT(onNewFile()));
@@ -48,12 +49,15 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 	connect(actionCopy,					SIGNAL(triggered()), editor,	SLOT(copy()));
 	connect(actionPaste,				SIGNAL(triggered()), editor,	SLOT(paste()));
 	connect(actionSelect_All,		SIGNAL(triggered()), editor,	SLOT(selectAll()));
+  connect(actionFind,         SIGNAL(triggered()), findReplace,	SLOT(show()));
 	connect(actionClear_Output_Console,		SIGNAL(triggered()), outputConsole,	SLOT(clear()));
 	connect(actionUpload_File_to_Board,		SIGNAL(triggered()), this,	SLOT(onUploadFile()));
 	connect(actionMake_Controller_Reference, SIGNAL(triggered()), this, SLOT(openMCReference()));
 	connect(menuExamples, SIGNAL(triggered(QAction*)), this, SLOT(onExample(QAction*)));
+  connect(menuLibraries, SIGNAL(triggered(QAction*)), this, SLOT(onLibrary(QAction*)));
 	connect(actionSave_Project_As, SIGNAL(triggered()), this, SLOT(onSaveProjectAs()));
 	connect(menuRecent_Projects, SIGNAL(triggered(QAction*)), this, SLOT(openRecentProject(QAction*)));
+  connect(editor->document(), SIGNAL(contentsChanged()),this, SLOT(onDocumentModified()));
 }
 
 void MainWindow::readSettings()
@@ -101,16 +105,53 @@ void MainWindow::closeEvent( QCloseEvent *qcloseevent )
 }
 
 // when the cursor is moved, this is called to highlight the current line
-void MainWindow::highlightLine( )
+void MainWindow::onCursorMoved( )
 {
-	QTextEdit::ExtraSelection highlight;
-	highlight.cursor = editor->textCursor();
+	QTextCursor c = editor->textCursor();
+  if(c.hasSelection()) // don't highlight the line if text is selected
+    return editor->setExtraSelections(QList<QTextEdit::ExtraSelection>());
+  QTextEdit::ExtraSelection highlight;
+	highlight.cursor = c;
 	highlight.format.setProperty(QTextFormat::FullWidthSelection, true);
-	highlight.format.setBackground( Qt::green );
+	highlight.format.setBackground( QColor::fromRgb(245, 245, 245) ); // light gray
 
 	QList<QTextEdit::ExtraSelection> extras;
 	extras << highlight;
 	editor->setExtraSelections( extras );
+  
+  statusBar()->showMessage( QString("Line: %1  Column: %2").arg(c.blockNumber()).arg(c.columnNumber()));
+}
+
+void MainWindow::onDocumentModified( )
+{
+  setWindowModified(editor->document()->isModified());
+}
+
+void MainWindow::findText(QString text, bool ignoreCase, bool forward, bool wholeword)
+{
+  QTextDocument::FindFlags flags;
+  if(!forward)
+    flags |= QTextDocument::FindBackward;
+  if(!ignoreCase)
+    flags |= QTextDocument::FindCaseSensitively;
+  if(wholeword)
+    flags |= QTextDocument::FindWholeWords;
+  
+  bool success = false;
+  if(!editor->find(text, flags)) // if we didn't find it, try wrapping around
+  {
+    if(forward)
+      editor->moveCursor(QTextCursor::Start);
+    else
+      editor->moveCursor(QTextCursor::End);
+      
+    if(editor->find(text, flags)) // now try again
+      success = true;
+  }
+  else
+    success = true;
+  if(!success)
+    statusBar()->showMessage(QString("Couldn't find %1").arg(text), 3500);
 }
 
 void MainWindow::setupEditor( )
@@ -143,6 +184,8 @@ void MainWindow::editorLoadFile( QFile *file )
 		currentFile = file->fileName();
 		editor->setPlainText(file->readAll());
 		file->close();
+    editor->document()->setModified(false);
+    setWindowModified(false);
 	}
 }
 
@@ -212,26 +255,38 @@ void MainWindow::onNewProject( )
 	workspaceDir.mkdir(newProjPath);
 	QDir newProj(newProjPath);
 	QString newProjName = newProj.dirName().remove(" "); // file names shouldn't have any spaces
-		
-	// create the project file
-	QFile newProjFile(newProj.filePath(newProjName + ".mcbld"));
-	if( newProjFile.open(QIODevice::WriteOnly | QFile::Text) )
-	{
-		newProjFile.write(QString("").toUtf8());
-		newProjFile.close();
-	}
-	
-	// and create the main file
-	QFile mainFile(newProj.filePath(newProjName + ".cpp"));
-	if( mainFile.open(QIODevice::WriteOnly | QFile::Text) )
-	{
-		QTextStream out(&mainFile);
-		out << QString("// %1.cpp").arg(newProjName) << endl;
-		out << QString("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl << endl;
-		out << "setup( )" << endl << "{" << endl << endl << "}" << endl << endl;
-		out << "loop( )" << endl << "{" << endl << endl << "}" << endl;
-		mainFile.close();
-	}
+  
+  // grab the templates for a new project
+  QDir templatesDir = QDir::current();
+  templatesDir.cd("resources/templates");
+  QFile templateFile(templatesDir.filePath("properties_template.xml"));
+  if( templateFile.open(QIODevice::ReadOnly | QFile::Text) )
+  {
+    // create the properties file
+    QFile newProjFile(newProj.filePath(newProjName + ".xml"));
+    if( newProjFile.open(QIODevice::WriteOnly | QFile::Text) )
+    {
+      newProjFile.write(templateFile.readAll());
+      newProjFile.close();
+    }
+    templateFile.close();
+  }
+  
+  templateFile.setFileName(templatesDir.filePath("project_template.txt"));
+	if( templateFile.open(QIODevice::ReadOnly | QFile::Text) )
+  {
+    // and create the main file
+    QFile mainFile(newProj.filePath(newProjName + ".cpp"));
+    if( mainFile.open(QIODevice::WriteOnly | QFile::Text) )
+    {
+      QTextStream out(&mainFile);
+      out << QString("// %1.cpp").arg(newProjName) << endl;
+      out << QString("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl;
+      out << templateFile.readAll();
+      mainFile.close();
+    }
+    templateFile.close();
+  }
 	openProject(newProjPath);
 }
 
@@ -301,7 +356,11 @@ void MainWindow::onSave( )
 	{
 		file.write(editor->toPlainText().toUtf8());
 		file.close();
+    editor->document()->setModified(false);
+    setWindowModified(false);
 	}
+  else
+    return statusBar()->showMessage( "Couldn't save...maybe the current file has been moved or deleted.", 3500 );
 }
 
 void MainWindow::onSaveAs( )
@@ -386,7 +445,7 @@ void MainWindow::uploadFile(QString filename)
 void MainWindow::loadBoardProfiles( )
 {
 	QDir dir = QDir::current();
-	dir.cd("boards");
+	dir.cd("resources/board_profiles");
 	QStringList boardProfiles = dir.entryList(QStringList("*.xml"));
 	QDomDocument doc;
 	// get a list of the names of the actions we already have
@@ -443,14 +502,37 @@ void MainWindow::onExample(QAction *example)
 {
 	QMenu *menu = (QMenu*)example->parent();
 	QString examplePath = QDir::currentPath();
-	QString s = QDir::separator();
-	examplePath += s + "examples" + s + menu->title() + s + example->text();
+	examplePath += "/examples/" + menu->title() + "/" + example->text();
 	openProject(examplePath);
 }
 
+// load the directories in the libraries folder into the UI
 void MainWindow::loadLibraries( )
 {
+  QDir dir = QDir::current();
+	dir.cd("libraries");
+	QStringList libraries = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
+	foreach(QString library, libraries)
+	{
+    // add the library to the "Import Library" menu
+    QAction *a = new QAction(library, menuLibraries);
+    menuLibraries->addAction(a);
+    // add the library's keywords to the syntax highlighter
+    // add the library's examples to the example menu
+	}
+}
 
+// add a #include into the current document for the selected library
+void MainWindow::onLibrary(QAction *example)
+{
+  QString includeString = QString("#include %1.h").arg(example->text());
+  // only add if it isn't already in there
+  // find() moves the cursor and highlights the found text
+  if(!editor->find(includeString) && !editor->find(includeString, QTextDocument::FindBackward))
+  {
+    editor->moveCursor(QTextCursor::Start);
+    editor->insertPlainText(includeString + "\n");
+  }
 }
 
 void MainWindow::loadRecentProjects( )
@@ -477,7 +559,7 @@ void MainWindow::printOutputError(QString text)
 void MainWindow::openMCReference( )
 {
 	QDir dir = QDir::current();
-	dir.cd("ref/makecontroller");
+	dir.cd("reference/makecontroller");
 	QDesktopServices::openUrl(QUrl::fromLocalFile(dir.filePath("index.html")));
 }
 
