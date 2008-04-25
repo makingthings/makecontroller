@@ -76,7 +76,7 @@ QString ProjectProperties::propFilePath( )
 	QDir projectDir(mainWindow->currentProjectPath());
 	QString projectName = projectDir.dirName();
 	// filename should not have spaces
-	return projectDir.filePath(projectName.remove(" ") + ".mcbld"); 
+	return projectDir.filePath(projectName.remove(" ") + ".xml"); 
 }
 
 

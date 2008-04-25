@@ -84,6 +84,9 @@
       <property name="orientation" >
        <enum>Qt::Vertical</enum>
       </property>
+      <property name="childrenCollapsible" >
+       <bool>false</bool>
+      </property>
       <widget class="QTextEdit" name="editor" >
        <property name="readOnly" >
         <bool>false</bool>
@@ -507,7 +510,7 @@
       <string>Examples</string>
      </property>
     </widget>
-    <widget class="QMenu" name="menuImport_Library" >
+    <widget class="QMenu" name="menuLibraries" >
      <property name="title" >
       <string>Import Library</string>
      </property>
@@ -517,7 +520,7 @@
     <addaction name="actionUpload_File_to_Board" />
     <addaction name="separator" />
     <addaction name="actionProperties" />
-    <addaction name="menuImport_Library" />
+    <addaction name="menuLibraries" />
     <addaction name="menuBoard_Type" />
     <addaction name="menuExamples" />
    </widget>
@@ -533,6 +536,8 @@
     <addaction name="actionPaste" />
     <addaction name="actionDelete" />
     <addaction name="actionSelect_All" />
+    <addaction name="separator" />
+    <addaction name="actionFind" />
    </widget>
    <widget class="QMenu" name="menuView" >
     <property name="title" >
@@ -540,10 +545,18 @@
     </property>
     <addaction name="actionClear_Output_Console" />
    </widget>
+   <widget class="QMenu" name="menuMonitor" >
+    <property name="title" >
+     <string>Monitor</string>
+    </property>
+    <addaction name="actionSerial_Monitor" />
+    <addaction name="actionOSC_Monitor" />
+   </widget>
    <addaction name="menuFile" />
    <addaction name="menuEdit" />
    <addaction name="menuView" />
    <addaction name="menuProject" />
+   <addaction name="menuMonitor" />
    <addaction name="menuHelp" />
   </widget>
   <widget class="QStatusBar" name="statusbar" />
@@ -565,7 +578,7 @@
   </action>
   <action name="actionSave_As" >
    <property name="text" >
-    <string>Save As...</string>
+    <string>Save File As...</string>
    </property>
    <property name="shortcut" >
     <string>Ctrl+Shift+S</string>
@@ -694,6 +707,24 @@
   <action name="actionSave_Project_As" >
    <property name="text" >
     <string>Save Project As...</string>
+   </property>
+  </action>
+  <action name="actionSerial_Monitor" >
+   <property name="text" >
+    <string>Serial Monitor...</string>
+   </property>
+  </action>
+  <action name="actionOSC_Monitor" >
+   <property name="text" >
+    <string>OSC Monitor...</string>
+   </property>
+  </action>
+  <action name="actionFind" >
+   <property name="text" >
+    <string>Find</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+F</string>
    </property>
   </action>
  </widget>

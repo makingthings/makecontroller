@@ -9,11 +9,14 @@
 #include "ProjectProperties.h"
 #include "Uploader.h"
 #include "Builder.h"
+#include "SerialMonitor.h"
+#include "FindReplace.h"
 
 class Preferences;
 class Uploader;
 class Builder;
 class ProjectProperties;
+class FindReplace;
 
 class MainWindow : public QMainWindow, private Ui::MainWindow
 {
@@ -25,6 +28,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void printOutputError(QString text);
 		QString currentProjectPath( ) { return currentProject; }
     QString currentBoardProfile( );
+    void findText(QString text, bool ignoreCase, bool forward, bool wholeword);
 		
 	private:
 		void openFile( const QString &path );
@@ -41,6 +45,8 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		ProjectProperties *props;
 		Uploader *uploader;
 		Builder *builder;
+    SerialMonitor *serialMonitor;
+    FindReplace *findReplace;
 		QActionGroup *boardTypeGroup;
 		QString currentFile; // path of the file in the editor
 		QString currentProject; // path of the current project directory
@@ -52,7 +58,8 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		QHash<QString, QString> boardTypes; // board name and config filename
 		
 	private slots:
-		void highlightLine( );
+		void onCursorMoved( );
+    void onDocumentModified( );
 		void onNewFile( );
 		void onNewProject( );
 		void onOpen( );
@@ -65,6 +72,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void onUpload( );
 		void onUploadFile( );
 		void onExample(QAction *example);
+    void onLibrary(QAction *example);
 		void onFileSelection(QString filename);
 		void openMCReference( );
 };

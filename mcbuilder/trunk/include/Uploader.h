@@ -7,17 +7,15 @@
 
 class MainWindow;
 
-class Uploader : public QObject
+class Uploader : public QProcess
 {
 	Q_OBJECT
 	public:
 		Uploader(MainWindow *mainWindow);
 		bool upload(QString boardProfileName, QString filename);
-		QProcess::ProcessState state( ) { return uploader->state(); }
 		
 	private:
 		MainWindow *mainWindow;
-		QProcess *uploader;
 		QProgressDialog *uploaderProgress;
 		QString currentFile;
 		

@@ -28,6 +28,7 @@ class Builder : public QProcess
 		void sizer( );
     bool loadTools( );
     bool loadSourceFiles( QString project );
+    void Builder::finish( int exitCode, QString msg );
 		
 	private slots:
 		void nextStep( int exitCode, QProcess::ExitStatus exitStatus );

@@ -3,26 +3,32 @@ TEMPLATE = app
 CONFIG += qt debug
 
 FORMS = layouts/mainwindow.ui \
-				layouts/preferences.ui \
-				layouts/properties.ui
+        layouts/preferences.ui \
+        layouts/properties.ui \
+        layouts/serialmonitor.ui \
+        layouts/findreplace.ui
 
 HEADERS = include/Highlighter.h \
           include/MainWindow.h \
           include/Preferences.h \
           include/Uploader.h \
           include/ProjectProperties.h \
-          include/Builder.h
-            
-SOURCES =   src/main.cpp \
-            src/Highlighter.cpp \
-            src/MainWindow.cpp \
-            src/Preferences.cpp \
-            src/Uploader.cpp \
-            src/ProjectProperties.cpp \
-            src/Builder.cpp
+          include/Builder.h \
+          include/SerialMonitor.h \
+          include/FindReplace.h
+
+SOURCES = src/main.cpp \
+          src/Highlighter.cpp \
+          src/MainWindow.cpp \
+          src/Preferences.cpp \
+          src/Uploader.cpp \
+          src/ProjectProperties.cpp \
+          src/Builder.cpp \
+          src/SerialMonitor.cpp \
+          src/FindReplace.cpp
 
 TARGET = mcbuilder
-            
+
 QT += xml
 INCLUDEPATH += include
 OBJECTS_DIR  = tmp

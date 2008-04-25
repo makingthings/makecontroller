@@ -29,6 +29,7 @@ void Builder::build(QString projectName)
   //wrapFile(projectName);
   if(!loadSourceFiles(projectName))
     return;
+  buildStep = COMPILE_C;
   compileCc( ); // fire off the first process
 }
 
@@ -63,7 +64,7 @@ bool Builder::loadTools( )
   bool retval = false;
   QDomDocument doc;
   QDir dir = QDir::current();
-  dir.cd("boards");
+  dir.cd("resources/board_profiles");
   QFile file(dir.filePath(mainWindow->currentBoardProfile()));
 	if(!file.exists())
 		return retval;
@@ -74,8 +75,7 @@ bool Builder::loadTools( )
 		{
 			// first get the relative tools path
       QString toolsrelpath = doc.elementsByTagName("toolspath").at(0).toElement().text();
-      QString s = QDir::separator();
-      QString toolspath = QDir::currentPath() + s + "tools" + s + toolsrelpath + s;
+      QString toolspath = QDir::currentPath() + "/resources/tools/" + toolsrelpath + "/";
       // then all the tools
       ccTool = toolspath + doc.elementsByTagName("cc").at(0).toElement().text();
       cppTool = toolspath + doc.elementsByTagName("cpp").at(0).toElement().text();
@@ -149,7 +149,7 @@ void Builder::compileCc( )
   QFileInfo fi(file);
   args << file.fileName() << "-c"; // the file name must be first, then specify to only compile, not link
   args << "-o " + fi.fileName() + ".o"; // put the object file where we can get at it
-  if(fi.fileName().endsWith("_arm") || fi.fileName().endsWith("_isr"))
+  if(!fi.fileName().endsWith("_arm") && !fi.fileName().endsWith("_isr"))
     args << "-mthumb"; // build these files as ARM, not THUMB
   if(cSrc.count() == 0) // if this was the last file, move on to the next step
     buildStep = COMPILE_CPP;
@@ -161,6 +161,10 @@ void Builder::compileCpp( )
 	QStringList args;
   QFile file(cppSrc.takeFirst());
   QFileInfo fi(file);
+  args << file.fileName() << "-c"; // the file name must be first, then specify to only compile, not link
+  args << "-o " + fi.fileName() + ".o"; // put the object file where we can get at it
+  if(!fi.fileName().endsWith("_arm") && !fi.fileName().endsWith("_isr"))
+    args << "-mthumb"; // build these files as ARM, not THUMB
   if(cppSrc.count() == 0) // if this was the last file, move on to the next step
     buildStep = LINK;
   start(cppTool, args);
@@ -183,6 +187,20 @@ void Builder::sizer( )
 	QStringList args;
   start(sizeTool, args);
 }
+
+// reset our build state and print relevant messages to the output console
+void Builder::finish( int exitCode, QString msg )
+{
+  if(exitCode)
+    mainWindow->printOutputError(msg);
+  else
+    mainWindow->printOutput(msg);
+	
+  cSrc.clear();
+  cppSrc.clear();
+  buildStep = COMPILE_C;
+}
+
 
 
 
