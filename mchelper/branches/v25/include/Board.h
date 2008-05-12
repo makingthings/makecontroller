@@ -38,7 +38,7 @@ class Board : public QObject, public QListWidgetItem
   Q_OBJECT
 public:
   enum Type { UsbSerial, UsbSamba, Ethernet };
-  Board(MainWindow* mw, PacketInterface *pi,  OscXmlServer *oxs, BoardType::Type type);
+  Board(MainWindow *mw, PacketInterface *pi,  OscXmlServer *oxs, BoardType::Type type);
   ~Board();
   void sendMessage( QString rawMessage );
   void sendMessage( QList<OscMessage*> messageList );
@@ -63,9 +63,9 @@ signals:
   void newInfo(Board *board);
   
 private:
-  MainWindow* mainWindow;
+  MainWindow *mainWindow;
   PacketInterface* packetInterface;
-  Osc *osc;
+  Osc osc;
   OscXmlServer *oscXmlServer;
   QStringList messagesToPost;
   QTimer messagePostTimer;
@@ -74,6 +74,7 @@ private:
   
   bool extractSystemInfoA( OscMessage* msg );
   bool extractSystemInfoB( OscMessage* msg );
+  bool extractNetworkFind( OscMessage* msg );
 };
 
 #include "PacketInterface.h"

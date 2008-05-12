@@ -166,24 +166,21 @@ void MainWindow::onUpload()
  An Ethernet device has been discovered.
  Create an entry for it in the device list.
 */
-void MainWindow::onEthernetDeviceArrived(QList<PacketInterface*> piList)
+void MainWindow::onEthernetDeviceArrived(PacketInterface* pi)
 {
   QList<Board*> boardList;
-  foreach(PacketInterface *pi, piList)
+  Board *board = new Board(this, pi, oscXmlServer, BoardType::Ethernet);
+  board->setText(pi->key());
+  board->setIcon(QIcon(":icons/network_icon.gif"));
+  board->setToolTip("Ethernet Device: " + pi->key());
+  if(noUi())
   {
-    Board *board = new Board(this, pi, oscXmlServer, BoardType::Ethernet);
-    board->setText(pi->key());
-    board->setIcon(QIcon(":icons/network_icon.gif"));
-    board->setToolTip("Ethernet Device: " + pi->key());
-    if(noUi())
-    {
-      QTextStream out(stdout);
-      out << "network device discovered: " + pi->key() << endl;
-    }
-    deviceList->addItem(board);
-    boardInit(board);
-    boardList.append(board);
+    QTextStream out(stdout);
+    out << "network device discovered: " + pi->key() << endl;
   }
+  deviceList->addItem(board);
+  boardInit(board);
+  boardList.append(board);
   oscXmlServer->sendBoardListUpdate(boardList, true);
 }
 

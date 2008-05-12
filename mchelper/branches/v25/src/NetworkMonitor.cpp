@@ -17,6 +17,8 @@
 
 #include <QSettings>
 #include "NetworkMonitor.h"
+#include "Preferences.h" // for DEFAULT_UDP_LISTEN_PORT and DEFAULT_UDP_SEND_PORT
+#include "Osc.h"
 
 /*
  NetworkMonitor manages the discovery of new devices via Bonjour.
@@ -25,28 +27,26 @@
 NetworkMonitor::NetworkMonitor( MainWindow* mainWindow ) : QUdpSocket( )
 {
 	QSettings settings("MakingThings", "mchelper");
-  listen_port = settings.value("udp_listen_port", 10000).toInt();
+  listen_port = settings.value("udp_listen_port", DEFAULT_UDP_LISTEN_PORT).toInt();
+  send_port = settings.value("udp_listen_port", DEFAULT_UDP_SEND_PORT).toInt();
   this->mainWindow = mainWindow;
+  sendLocal = false;
+	QHostInfo::lookupHost( QHostInfo::localHostName(), this, SLOT(lookedUp(QHostInfo)));
   
-  bonjourBrowser = new BonjourServiceBrowser(this);
-  bonjourResolver = new BonjourServiceResolver(this);
-  connect( bonjourBrowser, SIGNAL(currentBonjourRecordsChanged(const QList<BonjourRecord> &)),
-          this, SLOT(updateRecords(const QList<BonjourRecord> &)));
-  connect( bonjourResolver, SIGNAL(bonjourRecordResolved(const QHostInfo &, int, const BonjourRecord &)),
-          this, SLOT(recordResolved(const QHostInfo &, int, const BonjourRecord &)));
-  
-  connect( this, SIGNAL(deviceArrived(QList<PacketInterface*>)), 
-          mainWindow, SLOT(onEthernetDeviceArrived(QList<PacketInterface*>)));
+  connect( this, SIGNAL(deviceArrived(PacketInterface*)), mainWindow, SLOT(onEthernetDeviceArrived(PacketInterface*)));
   connect( this, SIGNAL(deviceRemoved(QString)), mainWindow, SLOT(onDeviceRemoved(QString)));
 	connect( this, SIGNAL(readyRead()), this, SLOT( processPendingDatagrams() ) );
   connect( this, SIGNAL(msg(QString, MsgType::Type, QString)), mainWindow, SLOT(message(QString, MsgType::Type, QString)));
-  bonjourBrowser->browseForServiceType(QLatin1String("_daap._tcp")); // just browse for itunes for now
+  connect( &pingTimer, SIGNAL( timeout() ), this, SLOT( sendPing() ) );
+	broadcastPing = Osc::createOneRequest( "/network/find" ); // our constant OSC ping
+  
   if (!bind(listen_port))
   {
     abort();
     QString str = QString("Error: Can't listen on port %1 - make sure it's not already in use.").arg( listen_port );
     emit msg( str, MsgType::Error, "Ethernet" );
   }
+  pingTimer.start(1000);
 }
 
 bool NetworkMonitor::setListenPort( int port )
@@ -73,68 +73,75 @@ bool NetworkMonitor::setListenPort( int port )
 
 /*
  New data has arrived.
- Read the data and pass it on to the packet interface, according to where it came from.
+ If this is from an address we don't know about, create a new PacketUdp for it.
+ Otherwise, read the data and pass it on to the appropriate PacketUdp.
 */
 void NetworkMonitor::processPendingDatagrams()
 {
   while( hasPendingDatagrams() )
   {
     QByteArray datagram;
-    QHostAddress sender;
+    QHostAddress remoteClient;
     datagram.resize( pendingDatagramSize() );
-    readDatagram( datagram.data(), datagram.size(), &sender );
-    if( connectedDevices.contains( sender.toString() ) ) // pass the packet through to the packet interface
-    	connectedDevices.value( sender.toString() )->newMessage( datagram );
-  }
-}
-
-/*
- This is called back when the Bonjour register has changed.
- Check to see if records have been added or removed, and update our list accordingly.
- */
-void NetworkMonitor::updateRecords(const QList<BonjourRecord> &list)
-{
-  // first check if any of these records are new
-  foreach (BonjourRecord record, list)
-  {
-    if(!connectedDevices.contains(record.remoteHost().toString()))
-      bonjourResolver->resolveBonjourRecord(record);    
-  }
-  // then check if we have any old records that are no longer in the list
-  foreach(PacketUdp *device, connectedDevices)
-  {
-    if(!list.contains(*device->record()))
+    readDatagram( datagram.data(), datagram.size(), &remoteClient );
+    
+    if(datagram == broadcastPing) // filter out broadcasts from other mchelpers
+      return;
+    
+    QString sender = remoteClient.toString();
+    if( connectedDevices.contains( sender ) ) // pass the packet through to the packet interface
+    	connectedDevices.value( sender )->newMessage( datagram );
+    else
     {
-      connectedDevices.remove(device->key());
-      emit deviceRemoved(device->key()); // device is deleted when board is removed from UI
+      PacketUdp *udp = new PacketUdp(remoteClient, send_port);
+      connectedDevices.insert( sender, udp );
+      connect(udp, SIGNAL(timeout(QString)), this, SLOT(onDeviceRemoved(QString)));
+      emit deviceArrived(udp);
     }
   }
 }
 
-/*
- Called back when a new Bonjour record has been resolved.
- Check to see if we know about this board and if not, create
- a new PacketUdp for it.
-*/
-void NetworkMonitor::recordResolved(const QHostInfo &hostInfo, int port, BonjourRecord record)
+void NetworkMonitor::sendPing( )
 {
-  QList<QHostAddress> a = hostInfo.addresses();
-  if(a.count())
+//	if( mainWindow->findNetBoardsEnabled( ) )
+//	{
+			
+		// normally we'll be set to send on QHostAddress::Broadcast, but if that fails, just try
+		// to send on the local broadcast address
+		QHostAddress dest = ( sendLocal ) ? localBroadcastAddress : QHostAddress::Broadcast;
+		if( writeDatagram( broadcastPing.data(), broadcastPing.size(), dest, send_port ) < 0 && !sendLocal )
+		{
+			writeDatagram( broadcastPing.data(), broadcastPing.size(), localBroadcastAddress, send_port );
+			sendLocal = true;
+		}
+//	}
+}
+
+void NetworkMonitor::lookedUp(const QHostInfo &host) 
+{ 
+	if (host.error() != QHostInfo::NoError) // lookup failed 
+		return; 
+		
+		// find out our address, and then replace the last byte with 0xFF
+		// this will be a local broadcast address
+		QStringList addrlist = host.addresses().first().toString( ).split( "." );
+		addrlist.replace( 3, "255" );
+		localBroadcastAddress = addrlist.join( "." );
+}
+
+/*
+  Called when a board has been removed.
+  Remove it from our internal list, and remove it from the UI.
+*/
+void NetworkMonitor::onDeviceRemoved(QString key)
+{
+  if(connectedDevices.contains(key))
   {
-    if(!connectedDevices.contains(a.first().toString()))
-     {
-       BonjourRecord *br = new BonjourRecord(record);
-       br->hostInfo = hostInfo;
-       br->port = port;
-       PacketUdp *device = new PacketUdp(br);
-       connectedDevices.insert( br->remoteHost().toString(), device );  // stick it in our own list of boards we know about
-       connect(device, SIGNAL(msg(QString, MsgType::Type, QString)), mainWindow, SLOT(message(QString, MsgType::Type, QString)));
-       QList<PacketInterface*> pi;
-       pi << device;
-       emit deviceArrived(pi);
-     }
+    connectedDevices.remove(key);
+    emit deviceRemoved(key);
   }
 }
+
 
 
 

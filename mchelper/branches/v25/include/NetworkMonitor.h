@@ -21,9 +21,6 @@
 
 #include <QUdpSocket>
 #include "MainWindow.h"
-#include "BonjourServiceBrowser.h"
-#include "BonjourServiceResolver.h"
-#include "BonjourRecord.h"
 #include "Board.h"
 #include "PacketUdp.h"
 #include "PacketInterface.h"
@@ -43,19 +40,24 @@ public:
   
 private:
   MainWindow* mainWindow;
-  BonjourServiceBrowser *bonjourBrowser;
-  BonjourServiceResolver *bonjourResolver;
-  QHash<QString, BonjourRecord> bonjourRecordHash;
   QHash<QString, PacketUdp*> connectedDevices;
   int listen_port;
+  int send_port;
+  QTimer pingTimer;
+  QByteArray broadcastPing;
+  QHostAddress localBroadcastAddress;
+  bool sendLocal;
 	
 private slots:
   void processPendingDatagrams( );
-  void updateRecords(const QList<BonjourRecord> &list);
-  void recordResolved(const QHostInfo &hostInfo, int port, BonjourRecord record);
+  void lookedUp( const QHostInfo &host );
+  void sendPing( );
+
+public slots:
+  void onDeviceRemoved(QString key);
   
 signals:
-  void deviceArrived(QList<PacketInterface*> pi);
+  void deviceArrived(PacketInterface* pi);
   void deviceRemoved(QString key);
   void msg(QString msg, MsgType::Type type, QString from);
 };
