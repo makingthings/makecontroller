@@ -1,12 +1,12 @@
 <ui version="4.0" >
- <class>mchelperPrefs</class>
- <widget class="QDialog" name="mchelperPrefs" >
+ <class>PreferencesUi</class>
+ <widget class="QDialog" name="PreferencesUi" >
   <property name="geometry" >
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>489</width>
-    <height>223</height>
+    <width>569</width>
+    <height>321</height>
    </rect>
   </property>
   <property name="sizePolicy" >
@@ -51,12 +51,12 @@
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
           <property name="buddy" >
-           <cstring>udpListenPortPrefs</cstring>
+           <cstring>udpListenEdit</cstring>
           </property>
          </widget>
         </item>
         <item row="0" column="1" >
-         <widget class="QLineEdit" name="udpListenPortPrefs" />
+         <widget class="QLineEdit" name="udpListenEdit" />
         </item>
         <item row="2" column="0" >
          <widget class="QLabel" name="label_2" >
@@ -70,14 +70,14 @@
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
           <property name="buddy" >
-           <cstring>xmlPortPrefs</cstring>
+           <cstring>xmlListenEdit</cstring>
           </property>
          </widget>
         </item>
         <item row="2" column="1" >
-         <widget class="QLineEdit" name="xmlPortPrefs" />
+         <widget class="QLineEdit" name="xmlListenEdit" />
         </item>
-        <item row="3" column="0" >
+        <item row="4" column="0" >
          <widget class="QLabel" name="label_3" >
           <property name="toolTip" >
            <string/>
@@ -89,24 +89,14 @@
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
           <property name="buddy" >
-           <cstring>maxOutputMsgsLineEdit</cstring>
+           <cstring>maxMsgsEdit</cstring>
           </property>
          </widget>
-        </item>
-        <item row="3" column="1" >
-         <widget class="QLineEdit" name="maxOutputMsgsLineEdit" />
         </item>
         <item row="4" column="1" >
-         <widget class="QCheckBox" name="networkPingCheckBox" >
-          <property name="toolTip" >
-           <string>When selected, mchelper sends out broadcast messages on the local network to locate Make Controllers.</string>
-          </property>
-          <property name="text" >
-           <string>Find boards on the network automatically</string>
-          </property>
-         </widget>
+         <widget class="QLineEdit" name="maxMsgsEdit" />
         </item>
-        <item row="5" column="1" >
+        <item row="6" column="1" >
          <widget class="QCheckBox" name="updatesCheckBox" >
           <property name="text" >
            <string>Check for updates on startup</string>
@@ -124,7 +114,27 @@
          </widget>
         </item>
         <item row="1" column="1" >
-         <widget class="QLineEdit" name="udpSendPortPrefs" />
+         <widget class="QLineEdit" name="udpSendEdit" />
+        </item>
+        <item row="5" column="1" >
+         <widget class="QLineEdit" name="uploaderEdit" />
+        </item>
+        <item row="5" column="0" >
+         <widget class="QLabel" name="label_5" >
+          <property name="text" >
+           <string>Path to sam7:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1" >
+         <widget class="Line" name="line" >
+          <property name="orientation" >
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
@@ -168,11 +178,10 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>udpListenPortPrefs</tabstop>
-  <tabstop>udpSendPortPrefs</tabstop>
-  <tabstop>xmlPortPrefs</tabstop>
-  <tabstop>maxOutputMsgsLineEdit</tabstop>
-  <tabstop>networkPingCheckBox</tabstop>
+  <tabstop>udpListenEdit</tabstop>
+  <tabstop>udpSendEdit</tabstop>
+  <tabstop>xmlListenEdit</tabstop>
+  <tabstop>maxMsgsEdit</tabstop>
   <tabstop>updatesCheckBox</tabstop>
   <tabstop>defaultsButton</tabstop>
   <tabstop>okButton</tabstop>
@@ -182,7 +191,7 @@
   <connection>
    <sender>okButton</sender>
    <signal>rejected()</signal>
-   <receiver>mchelperPrefs</receiver>
+   <receiver>PreferencesUi</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel" >
@@ -198,7 +207,7 @@
   <connection>
    <sender>okButton</sender>
    <signal>accepted()</signal>
-   <receiver>mchelperPrefs</receiver>
+   <receiver>PreferencesUi</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel" >
