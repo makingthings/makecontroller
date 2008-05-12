@@ -18,42 +18,39 @@
 #ifndef OSC_H
 #define OSC_H
 
-#include "MessageInterface.h"
-#include "McHelperWindow.h"
+#include <QString>
+#include <QList>
+#include <QByteArray>
+#include <QStringList>
 
-class McHelperWindow;
-
-class OscMessageData
+class OscData
 {
-	public:
-		enum { OmdString, OmdInt, OmdFloat, OmdBlob } type;
-		OscMessageData( ) { };
-		OscMessageData( int i );
-		OscMessageData( float f );
-		OscMessageData( QString s );
-		OscMessageData( QByteArray b );
-	  QString s;
-	  QByteArray b;
-	  int i;
-	  float f;
+public:
+  enum { OscString, OscInt, OscFloat, OscBlob } type;
+  OscData( ) { };
+  OscData( int i );
+  OscData( float f );
+  OscData( QString s );
+  OscData( QByteArray b );
+  QString s;
+  QByteArray b;
+  int i;
+  float f;
 };
 
 class OscMessage
 {
-	public:
-	  QString addressPattern;
-		QList<OscMessageData*> data;
-	  QString toString( );
-		QByteArray toByteArray( );
-		~OscMessage( ) { qDeleteAll( data ); }
+public:
+  QString addressPattern;
+  QList<OscData*> data;
+  QString toString( );
+  QByteArray toByteArray( );
+  ~OscMessage( ) { qDeleteAll( data ); }
 };
 
 class Osc
 {	
 	public:
-		enum Status { OK, ERROR_SENDING_TEXT_MESSAGE, ERROR_SENDING_COMPLEX_MESSAGE, 
-			            ERROR_NO_PACKET, ERROR_CREATING_REQUEST, ERROR_CREATING_BUNDLE, ERROR_PACKET_LENGTH_0 };				
-
 		Osc( ) { };
 		static QByteArray writePaddedString( char *string );
 		static QByteArray writePaddedString( QString str );
@@ -64,8 +61,6 @@ class Osc
 		QByteArray createPacket( QList<OscMessage*> msgs );
 		QByteArray createPacket( QString msg );
 		
-		Status createMessage( OscMessage* message );
-		void setInterfaces( MessageInterface* messageInterface );
     void setPreamble( QString preamble ) { this->preamble = preamble; }
     QString getPreamble( );
 		bool createMessage( QString msg, OscMessage *msg );
@@ -76,8 +71,6 @@ class Osc
 		void receivePacket( char* packet, int length,  QList<OscMessage*>* oscMessageList );
 		void receiveMessage( char* message, int length, QList<OscMessage*>* oscMessageList );
 		int extractData( char* buffer, OscMessage* message );
-
-		MessageInterface* messageInterface;
 		QString preamble;
 };
 

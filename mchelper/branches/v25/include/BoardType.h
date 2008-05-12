@@ -14,16 +14,12 @@
  the specific language governing permissions and limitations under the License.
 
 *********************************************************************************/
-
-#ifndef PACKETREADYINTERFACE_H
-#define PACKETREADYINTERFACE_H
-
-class PacketReadyInterface
-{		
-	public:
-	  virtual void packetWaiting( ) = 0;
-	  virtual ~PacketReadyInterface( ) {}
-
+#ifndef BOARD_TYPE_H
+#define BOARD_TYPE_H
+class BoardType
+{
+public:
+  enum Type { Ethernet, UsbSerial, UsbSamba };
+  BoardType( ) { }
 };
-
-#endif
+#endif //BOARD_TYPE_H
