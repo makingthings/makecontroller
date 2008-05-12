@@ -16,353 +16,75 @@
 *********************************************************************************/
 
 #include "UsbMonitor.h"
-#include "BoardArrivalEvent.h"
+#include "PacketUsbSerial.h"
+#include "qextserialenumerator.h"
 
-#ifdef Q_WS_WIN // Windows-only
-#include <initguid.h>
-DEFINE_GUID( GUID_MAKE_CTRL_KIT, 0x4D36E978, 0xE325, 0x11CE, 0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18 );
-#endif
-
-UsbMonitor::UsbMonitor( ) : QThread( )
+/*
+ Scans the USB system for boards and reports whether boards have been attached/removed.
+*/
+UsbMonitor::UsbMonitor(MainWindow* mw) : QThread()
 {
-	
+	mainWindow = mw;
+  qRegisterMetaType<BoardType::Type>("BoardType::Type"); // silly Qt thing to communicate via signal across a thread
+  connect(this, SIGNAL(newBoards(QStringList, BoardType::Type)), 
+                       mainWindow, SLOT(onUsbDeviceArrived(QStringList, BoardType::Type)));
+  connect(this, SIGNAL(boardsRemoved(QString)), mainWindow, SLOT(onDeviceRemoved(QString)));
 }
 
+/*
+ This is the loop in our separate thread.
+ Scan for boards.  If there are new boards, post them to the UI.
+ If boards have been removed, alert the UI.
+*/
 void UsbMonitor::run( )
 {
-	while( 1 )
-	{
-		QList<PacketInterface*> newBoards;
-		scan( &newBoards );
-		if( newBoards.count( ) > 0 )
-		{
-			BoardArrivalEvent* event = new BoardArrivalEvent( Board::UsbSerial );
-			event->pInt += newBoards;
-			application->postEvent( mainWindow, event );
-		}
-		sleep( 1 ); // check once a second
-	}
-}
-
-UsbMonitor::Status UsbMonitor::scan( QList<PacketInterface*>* arrived )
-{
-	FindUsbDevices( arrived );  // fill up our list of connectedDevices, if there are any out there.
-	return OK;
-}
-
-void UsbMonitor::closeAll( )
-{	// app is shut down - close everything out.
-	QHash<QString, PacketUsbCdc*>::iterator i  = connectedDevices.begin( );
-	while( i != connectedDevices.end( ) )
-	{
-		i.value( )->close( );
-		++i;
-	}
-}
-
-void UsbMonitor::setInterfaces( MessageInterface* messageInterface, QApplication* application, McHelperWindow* mainWindow )
-{
-	this->messageInterface = messageInterface;
-	this->application = application;
-	this->mainWindow = mainWindow;
-}
-
-void UsbMonitor::FindUsbDevices( QList<PacketInterface*>* arrived )
-{
-  #ifdef Q_WS_MAC
-	io_iterator_t serialPortIterator = 0;
-	
-	io_object_t modemService;
-		char productName[50] = "";
-    kern_return_t kernResult = KERN_FAILURE;
-    // Initialize the returned path
-		int maxPathSize = sizeof(portName);
-    char* path = portName;
-		*path = '\0';
-	
-	CFMutableDictionaryRef bsdMatchingDictionary;
-	
-	// create a dictionary that looks for all BSD modems
-	bsdMatchingDictionary = IOServiceMatching( kIOSerialBSDServiceValue );
-	if (bsdMatchingDictionary == NULL)
-		printf("IOServiceMatching returned a NULL dictionary.\n");
-	else
-		CFDictionarySetValue(bsdMatchingDictionary, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDModemType));
-	
-	// then create the iterator with all the matching devices
-	kernResult = IOServiceGetMatchingServices( kIOMasterPortDefault, bsdMatchingDictionary, &serialPortIterator );    
-	if ( KERN_SUCCESS != kernResult )
-	{
-		printf("IOServiceGetMatchingServices returned %d\n", kernResult);
-		return;
-	}
-	
-	// Iterate through all modems found. In this example, we bail after finding the first modem.
-	while( (modemService = IOIteratorNext(serialPortIterator) ) )
-	{
-		CFTypeRef bsdPathAsCFString;
-		CFTypeRef productNameAsCFString;
-		// check the name of the modem's callout device
-		bsdPathAsCFString = IORegistryEntrySearchCFProperty(modemService,
-																													kIOServicePlane,
-																													CFSTR(kIOCalloutDeviceKey),
-																													kCFAllocatorDefault,
-																													0);
-		// then, because the callout device could be any old thing, and because the reference to the modem returned by the
-		// iterator doesn't include much device specific info, look at its parent, and check the product name
-		io_registry_entry_t parent;  
-		kernResult = IORegistryEntryGetParentEntry( modemService,	kIOServicePlane, &parent );																										
-		productNameAsCFString = IORegistryEntrySearchCFProperty(parent,
-																													kIOServicePlane,
-																													CFSTR("Product Name"),
-																													kCFAllocatorDefault,
-																													0);
-		
-		if( bsdPathAsCFString )
-		{
-			Boolean result;      
-			result = CFStringGetCString( (CFStringRef)bsdPathAsCFString,
-																	path,
-																	maxPathSize, 
-																	kCFStringEncodingUTF8);
-			
-			if( productNameAsCFString )
-			{
-				result = CFStringGetCString( (CFStringRef)productNameAsCFString,
-																	productName,
-																	maxPathSize, 
-																	kCFStringEncodingUTF8);
-				CFRelease( productNameAsCFString );
-			}
-			if (result)
-			{
-				if( (strcmp( productName, "Make Controller Ki") == 0) )
-				{
-					QString portNameKey( path );
-					if( !connectedDevices.contains( portNameKey ) ) // make sure we don't already have this board in our list
-					{
-						PacketUsbCdc* device = new PacketUsbCdc( mainWindow, application, this );
-						device->setPortName( path );
-						if( PacketInterface::OK == device->open( ) )
-						{
-							connectedDevices.insert( portNameKey, device );  // stick it in our own list of boards we know about
-							arrived->append( device ); // then stick it on the list of new boards that's been requested
-							msleep( 10 );
-							device->start( );
-						}
-						else
-							delete device;
-					}
-					productName[0] = 0; // clear this out for the next time around
-					IOObjectRelease(parent);
-				}
-				else
-					*path = '\0';  // clear this, since this is checked above.
-			}
-			(void) IOObjectRelease(modemService);
-			CFRelease(bsdPathAsCFString);
-		}
-	}
-	return;
-	#endif // Mac-only FindUsbDevices( )
-	
-	
-	#ifdef Q_WS_WIN // Windows only
-	HANDLE hOut;
-  HDEVINFO                 hardwareDeviceInfo;
-  SP_INTERFACE_DEVICE_DATA deviceInfoData;
-  ULONG                    i = 0;
-  
-  // Open a handle to the plug and play dev node.
-  // SetupDiGetClassDevs() returns a device information set that contains info on all
-  // installed devices of a specified class.
-  hardwareDeviceInfo = SetupDiGetClassDevs (
-                         (LPGUID)&GUID_MAKE_CTRL_KIT,
-                         NULL,            // Define no enumerator (global)
-                         NULL,            // Define no
-                         (DIGCF_PRESENT | // Only Devices present
-                         DIGCF_INTERFACEDEVICE)); // Function class devices.
-
-  deviceInfoData.cbSize = sizeof(SP_INTERFACE_DEVICE_DATA);
-  
-  while( true ) 
+	QextSerialEnumerator enumerator;
+  forever
   {
-	  if(SetupDiEnumDeviceInterfaces (hardwareDeviceInfo,
-	                                      0, // We don't care about specific PDOs
-	                                      (LPGUID)&GUID_MAKE_CTRL_KIT,
-	                                      i++,
-	                                      &deviceInfoData))
-	  {
-	  	char portName[ 8 ];
-	  	hOut = GetDeviceInfo( hardwareDeviceInfo, &deviceInfoData, portName );
-	    if(hOut != INVALID_HANDLE_VALUE && portName != NULL ) 
-	    {
-	      QString portNameKey( portName );
-	      if( !connectedDevices.contains( portNameKey ) ) // make sure we don't already have this board in our list
-	      {
-	      	PacketUsbCdc* device = new PacketUsbCdc( mainWindow, application, this );
-	     		device->setDeviceHandle( hOut );
-	     		device->setPortName( portName );
-	     		if( PacketInterface::OK == device->open( ) )
-	     		{
-	     			connectedDevices.insert( portNameKey, device );  // stick it in our own list of boards we know about
-		      	arrived->append( device ); // then stick it on the list of new boards that's been requested
-		      	device->start( );
-	     		}
-	     		else
-	     			delete device;
-	      }
-	    }
-	  }
-	  else 
-	  {
-	    if(ERROR_NO_MORE_ITEMS == GetLastError()) 
-	       break;
-	  }
-  }
-  // destroy the device information set and free all associated memory.
-  SetupDiDestroyDeviceInfoList(hardwareDeviceInfo);
-  return;
-	#endif // Windows-only FindUsbDevices( )
-}
-
-#ifdef Q_WS_WIN
-//-----------------------------------------------------------------
-//                  Windows-only GetDevicePath( )
-//-----------------------------------------------------------------
-HANDLE UsbMonitor::GetDeviceInfo(HDEVINFO HardwareDeviceInfo, 
-								PSP_INTERFACE_DEVICE_DATA DeviceInfoData, 
-								char* portName  )
-{
-  PSP_INTERFACE_DEVICE_DETAIL_DATA functionClassDeviceData = NULL;
-  ULONG                            predictedLength = 0;
-  ULONG                            requiredLength = 0;
-  
-  // allocate a function class device data structure to receive the
-  // goods about this particular device.
-  SetupDiGetInterfaceDeviceDetail(HardwareDeviceInfo,
-                                  DeviceInfoData,
-                                  NULL,  // probing so no output buffer yet
-                                  0,     // probing so output buffer length of zero
-                                  &requiredLength,
-                                  NULL); // not interested in the specific dev-node
-
-  predictedLength = requiredLength;
-  
-  SP_DEVINFO_DATA deviceSpecificInfo;
-  deviceSpecificInfo.cbSize = sizeof(SP_DEVINFO_DATA);
-
-  functionClassDeviceData = (PSP_INTERFACE_DEVICE_DETAIL_DATA) malloc (predictedLength);
-  functionClassDeviceData->cbSize = sizeof (SP_INTERFACE_DEVICE_DETAIL_DATA);
-
-  // Retrieve the information from Plug and Play.
-  if (! SetupDiGetInterfaceDeviceDetail(HardwareDeviceInfo,
-                                        DeviceInfoData,
-                                        functionClassDeviceData,
-                                        predictedLength,
-                                        &requiredLength,
-                                        &deviceSpecificInfo))
-  {
-    free(functionClassDeviceData);
-    return INVALID_HANDLE_VALUE;
-  }
-  
-  if( checkFriendlyName( HardwareDeviceInfo, &deviceSpecificInfo, portName ) )
-  	return functionClassDeviceData->DevicePath;
-  else
-  {
-		free( functionClassDeviceData );
-		return INVALID_HANDLE_VALUE;
-  }
-}
-
-//-----------------------------------------------------------------
-//                  Windows-only checkFriendlyName( )
-//-----------------------------------------------------------------
-bool UsbMonitor::checkFriendlyName( HDEVINFO HardwareDeviceInfo, 
-									PSP_DEVINFO_DATA deviceSpecificInfo, 
-									char* portName )
-{
-	DWORD DataT;
-    LPTSTR buffer = NULL;
-    DWORD buffersize = 0;
+    QList<QextPortInfo> ports = enumerator.getPorts();
+    QStringList newSerialPorts;
+    QStringList newSambaPorts;
+    QStringList portNames;
     
-    while (!SetupDiGetDeviceRegistryProperty(
-               HardwareDeviceInfo,
-               deviceSpecificInfo,
-               SPDRP_FRIENDLYNAME,
-               &DataT,
-               (PBYTE)buffer,
-               buffersize,
-               &buffersize))
-   {
-       if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) // then change the buffer size.
-       {
-           if (buffer) LocalFree(buffer);
-           // Double the size to avoid problems on W2k MBCS systems per KB 888609.
-           buffer = (TCHAR*)LocalAlloc(LPTR, buffersize * 2);
-       }
-       else
-           break;
-   }  
-	if (buffer)
-	{	// if the friendly name is Make Controller Kit, then that's us.
-		if(!_tcsncmp(TEXT("Make Controller Kit"), buffer, 19))
-		{
-			// zip through the buffer to find the COM port number - between parentheses
-			TCHAR *ptr = buffer;
-			char* namePtr = portName;
-			while( *ptr++ != '(' ) {};
-			while( *ptr != ')' )
-				*namePtr++ = *ptr++;
-			*namePtr = '\0'; // null terminate the string
-			return true;
-		}
-			
-		LocalFree(buffer);
-	}
-		
-	return false;
+    // first check if there are any new boards
+    foreach(QextPortInfo port, ports)
+    {
+      if(!usbSerialList.contains(port.portName) && port.friendName.startsWith("Make Controller Ki"))
+      {
+        usbSerialList.append(port.portName); // keep our internal list, the portName is the unique key
+        newSerialPorts.append(port.portName); // on the list to be posted to the UI
+      }
+      // check for samba boards...
+      portNames << port.portName;
+    }
+    if(newSerialPorts.count())
+      emit newBoards(newSerialPorts, BoardType::UsbSerial);
+    if(newSambaPorts.count())
+      emit newBoards(newSambaPorts, BoardType::UsbSamba);
+      
+    // if any boards we know about are no longer in the list, they've been removed
+    foreach(QString key, usbSerialList)
+    {
+      if(!portNames.contains(key))
+      {
+        usbSerialList.removeAt(usbSerialList.indexOf(key));
+        emit boardsRemoved(key);
+      }
+    }
+    
+    // then check the samba boards
+    foreach(QString key, usbSambaList)
+    {
+      if(!portNames.contains(key))
+      {
+        usbSambaList.removeAt(usbSambaList.indexOf(key));
+        emit boardsRemoved(key);
+      }
+    }
+    
+    sleep(1); // scan once per second
+  }
 }
-
-// zip through our list of devices, and check if the HANDLE from the DEVICEREMOVED broadcast matches any of them
-void UsbMonitor::removalNotification( HANDLE handle )
-{  
-	QHash<QString, PacketUsbCdc*>::iterator i = connectedDevices.begin( );
-	while( i != connectedDevices.end( ) )
-	{
-		if( i.value( )->getDeviceHandle( ) == handle )
-		{
-			i.value( )->close( );
-			mainWindow->removeDeviceThreadSafe( i.key() );
-			i = connectedDevices.erase( i );
-		}
-		else
-			++i;
-	}
-}
-
-#endif // Windows-only stuff
-
-void UsbMonitor::deviceRemoved( QString key )
-{
-	if( connectedDevices.contains( key) )
-	{
-		PacketUsbCdc* usb = connectedDevices.value( key );
-		connectedDevices.remove( key );
-		if( usb->isOpen() )
-			usb->close( );
-		mainWindow->removeDeviceThreadSafe( key );
-	}
-}
-
-
-
-
-
-
-
-
 
 
 
