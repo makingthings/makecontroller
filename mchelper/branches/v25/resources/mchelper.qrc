@@ -1,6 +1,8 @@
 <!DOCTYPE RCC><RCC version="1.0">
- <qresource>
-     <file>mticon128.png</file>
-     <file>mticon64.png</file>
- </qresource>
- </RCC>
+  <qresource>
+    <file>icons/usb_icon.gif</file>
+    <file>icons/usb_1.jpg</file>
+    <file>icons/network_icon.gif</file>
+    <file>icons/mticon128.png</file>
+  </qresource>
+</RCC>
