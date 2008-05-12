@@ -16,6 +16,7 @@
 *********************************************************************************/
 
 #include "Osc.h"
+#include <QtCore/qendian.h>
 
 QString OscMessage::toString( )
 {
@@ -23,17 +24,17 @@ QString OscMessage::toString( )
 	for( int j = 0; j < data.size( ); j++ )
 	{
 		msgString.append( " " );
-		OscMessageData *dataElement = data.at( j );
+		OscData *dataElement = data.at( j );
 		switch( dataElement->type )
 		{
-			case OscMessageData::OmdBlob:
+			case OscData::OscBlob:
 			{
 				unsigned char* blob = (unsigned char*)dataElement->b.data();
 				if( blob == NULL )
 				{
-					int blob_len = qFromBigEndian( *(int*)blob );  // the first int should give us the length of the blob
+          int blob_len = qFromBigEndian( *(int*)blob );  // the first int should give us the length of the blob
 					blob += sizeof( int ); // step past the blob_len
-					
+          
 					QString blobString( "[ " );
 					while( blob_len-- )
 						blobString.append( "%1 " ).arg( QString::number( *blob++, 16  ) );
@@ -45,13 +46,13 @@ QString OscMessage::toString( )
 					msgString.append( "[ ]" );
 				break;
 			}
-			case OscMessageData::OmdString:
+			case OscData::OscString:
 				msgString.append( dataElement->s );
 				break;
-			case OscMessageData::OmdInt:
+			case OscData::OscInt:
 				msgString.append( QString::number( dataElement->i ) );
 				break;
-			case OscMessageData::OmdFloat:
+			case OscData::OscFloat:
 				msgString.append( QString::number( dataElement->f) );
 				break;
 		}
@@ -69,15 +70,15 @@ QByteArray OscMessage::toByteArray( )
 	{
 		switch( data.at(i)->type )
 		{
-			case OscMessageData::OmdString:
+			case OscData::OscString:
 				typetag.append( 's' );
 				args.append( Osc::writePaddedString( data.at(i)->s ) );
 				break;
-			case OscMessageData::OmdBlob: // need to pad the blob
+			case OscData::OscBlob: // need to pad the blob
 				typetag.append( 'b' );
 				args.append( Osc::writePaddedString( data.at(i)->s ) );
 				break;
-			case OscMessageData::OmdInt:
+			case OscData::OscInt:
 			{
 				typetag.append( 'i' );
 				QByteArray intarg;
@@ -86,7 +87,7 @@ QByteArray OscMessage::toByteArray( )
 				args.append( intarg );
 				break;
 			}
-			case OscMessageData::OmdFloat:
+			case OscData::OscFloat:
 			{
 				typetag.append( 'f' );
 				QByteArray floatarg;
@@ -104,24 +105,24 @@ QByteArray OscMessage::toByteArray( )
 	return msg;
 }
 
-OscMessageData::OscMessageData( int i )
+OscData::OscData( int i )
 {
-	type = OmdInt;
+	type = OscInt;
 	this->i = i;
 }
-OscMessageData::OscMessageData( float f )
+OscData::OscData( float f )
 {
-	type = OmdFloat;
+	type = OscFloat;
 	this->f = f;
 }
-OscMessageData::OscMessageData( QString s )
+OscData::OscData( QString s )
 {
-	type = OmdString;
+	type = OscString;
 	this->s = s;
 }
-OscMessageData::OscMessageData( QByteArray b )
+OscData::OscData( QByteArray b )
 {
-	type = OmdBlob;
+	type = OscBlob;
 	this->b = b;
 }
 
@@ -187,10 +188,10 @@ QList<OscMessage*> Osc::processPacket( char* data, int size )
 	return msgList;
 }
 
-void Osc::setInterfaces( MessageInterface* messageInterface )
-{
-  this->messageInterface = messageInterface;
-}
+//void Osc::setInterfaces( MessageInterface* messageInterface )
+//{
+//  this->messageInterface = messageInterface;
+//}
 
 /*
 	An OSC Type Tag String is an OSC-string beginning with the character ',' (comma) followed by a sequence 
@@ -259,7 +260,7 @@ void Osc::receivePacket( char* packet, int length, QList<OscMessage*>* oscMessag
 		default:
 			// something we don't recognize...
 			QString msg = QString( "Error - Osc packets must start with either a '/' (message) or '[' (bundle).");
-			messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
+			//messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
 	}
 }
 
@@ -280,7 +281,7 @@ void Osc::receiveMessage( char* in, int length, QList<OscMessage*>* oscMessageLi
   if ( type == NULL )		//If there was no type tag, say so and stop processing this message.
   {
 		QString msg = QString( "Error - No type tag.");
-		messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
+		//messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
 		delete oscMessage;
   }
 	else		//Otherwise, step through the type tag and print the data out accordingly.
@@ -291,7 +292,7 @@ void Osc::receiveMessage( char* in, int length, QList<OscMessage*>* oscMessageLi
 		if ( count != (int)( strlen(type) - 1 ) )
 		{
 			QString msg = QString( "Error extracting data from packet - type tag doesn't correspond to data included.");
-			messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
+			//messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
 			delete oscMessage;
 		}
 		else
@@ -331,9 +332,9 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
 				count++;
 				if ( oscMessage )
 				{
-					OscMessageData* omdata = new OscMessageData( );
+					OscData* omdata = new OscData( );
 					omdata->i = i;
-					omdata->type = OscMessageData::OmdInt;
+					omdata->type = OscData::OscInt;
 					oscMessage->data.append( omdata );
 				}
 				cont = true;
@@ -345,7 +346,7 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
 				i = qFromBigEndian( i );
 				float f = *(float*)&i;
 				if ( oscMessage)
-					oscMessage->data.append( new OscMessageData( f ) );
+					oscMessage->data.append( new OscData( f ) );
 
 				data += 4;
 				count++;
@@ -355,7 +356,7 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
       case 's':
       {
 				if ( oscMessage)
-					oscMessage->data.append( new OscMessageData( QString( data ) ) );
+					oscMessage->data.append( new OscData( QString( data ) ) );
 
 				int len = strlen( data ) + 1;
 				int pad = len % 4;
@@ -371,7 +372,7 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
 				// the first int should give us the length of the blob, but also account for the blob_len itself
 				int	blob_len = qFromBigEndian( *(int*)data ) + 4; 
 				if ( oscMessage)
-					oscMessage->data.append( new OscMessageData( QByteArray::fromRawData( data, blob_len ) ) );  
+					oscMessage->data.append( new OscData( QByteArray::fromRawData( data, blob_len ) ) );  
 				data += blob_len;
 				count++;
 				cont = true;
@@ -457,7 +458,7 @@ bool Osc::createMessage( QString msg, OscMessage *oscMsg )
 						elmnt += msgElements.at( count++ );
 				}
 			}
-			oscMsg->data.append( new OscMessageData( elmnt.remove( "\"" ) ) );
+			oscMsg->data.append( new OscData( elmnt.remove( "\"" ) ) ); // TODO, only remove first and last quotes
 		}
 		else if( elmnt.startsWith( "-" ) ) // see if it's a negative number
 		{
@@ -466,13 +467,13 @@ bool Osc::createMessage( QString msg, OscMessage *oscMsg )
 			{
 				float f = elmnt.toFloat( &ok );
 				if( ok )
-					oscMsg->data.append( new OscMessageData( f ) );
+					oscMsg->data.append( new OscData( f ) );
 			}
 			else
 			{
 				int i = elmnt.toInt( &ok );
 				if( ok )
-					oscMsg->data.append( new OscMessageData( i ) );
+					oscMsg->data.append( new OscData( i ) );
 			}
 			
 		}
@@ -483,16 +484,16 @@ bool Osc::createMessage( QString msg, OscMessage *oscMsg )
 			{
 				float f = elmnt.toFloat( &ok );
 				if( ok )
-					oscMsg->data.append( new OscMessageData( f ) );
+					oscMsg->data.append( new OscData( f ) );
 			}
 			// it's either an int or a string
 			if( !ok )
 			{
 				int i = elmnt.toInt( &ok );
 				if( ok )
-					oscMsg->data.append( new OscMessageData( i ) );
+					oscMsg->data.append( new OscData( i ) );
 				else
-					oscMsg->data.append( new OscMessageData( elmnt ) ); // a string
+					oscMsg->data.append( new OscData( elmnt ) ); // a string
 			}
 		}
 	}
