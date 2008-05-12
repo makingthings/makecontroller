@@ -1,114 +1,92 @@
-# ------------------------------------------------------------------------------
-#
-# Copyright 2006-2007 MakingThings
-#
-# Licensed under the Apache License, 
-# Version 2.0 (the "License"); you may not use this file except in compliance 
-# with the License. You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0 
-# 
-# Unless required by applicable law or agreed to in writing, software distributed
-# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-# CONDITIONS OF ANY KIND, either express or implied. See the License for
-# the specific language governing permissions and limitations under the License.
-#
-# ------------------------------------------------------------------------------
-
-MCHELPER_VERSION = "2.2.0"
 TEMPLATE = app
-FORMS = layouts/mchelper.ui layouts/mchelperPrefs.ui
-#CONFIG += qt release
-CONFIG += qt debug
-
-HEADERS = 	include/McHelperWindow.h \
-			include/UploaderThread.h \
-			include/PacketInterface.h \
-			include/PacketReadyInterface.h \
-			include/MonitorInterface.h \
-			include/PacketUdp.h \
-			include/Osc.h \
-			include/Samba.h \
-			include/UsbSerial.h \
-			include/PacketUsbCdc.h \
-			include/UsbMonitor.h \
-			include/NetworkMonitor.h \
-			include/SambaMonitor.h \
-			include/Board.h \
-			include/MessageEvent.h \
-			include/BoardArrivalEvent.h \
-			include/OutputWindow.h \
-			include/OscXmlServer.h \
-			include/AppUpdater.h \
-			include/McHelperPrefs.h
-				
-            
-SOURCES	= 	source/main.cpp \
-			source/McHelperWindow.cpp \
-			source/UploaderThread.cpp \
-			source/PacketUdp.cpp \
-			source/Osc.cpp \
-			source/Samba.cpp \
-			source/UsbSerial.cpp \
-			source/PacketUsbCdc.cpp \
-			source/UsbMonitor.cpp \
-			source/NetworkMonitor.cpp \
-			source/SambaMonitor.cpp \
-			source/Board.cpp \
-			source/MessageEvent.cpp \
-			source/OutputWindow.cpp \
-			source/OscXmlServer.cpp \
-			source/AppUpdater.cpp \
-			source/McHelperPrefs.cpp
-				
 TARGET = mchelper
-            
+# CONFIG += qt release
+CONFIG += qt debug
+MCHELPER_VERSION = "2.5.0"
+
+FORMS = layouts/mainwindow.ui \
+        layouts/inspector.ui \
+        layouts/preferences.ui
+
+HEADERS = include/MainWindow.h \
+          src/bonjour/BonjourRecord.h \
+          src/bonjour/BonjourServiceBrowser.h \
+          src/bonjour/BonjourServiceRegister.h \
+          src/bonjour/BonjourServiceResolver.h \
+          include/OscXmlServer.h \
+          include/Osc.h \
+          include/Inspector.h \
+          include/NetworkMonitor.h \
+          include/UsbMonitor.h \
+          include/Preferences.h \
+          include/Uploader.h \
+          include/About.h \
+          include/Board.h \
+          include/PacketInterface.h \
+          include/MsgType.h \
+          include/BoardType.h \
+          include/PacketUdp.h \
+          include/PacketUsbSerial.h
+
+SOURCES = src/main.cpp \
+          src/MainWindow.cpp \
+          src/bonjour/BonjourServiceBrowser.cpp \
+          src/bonjour/BonjourServiceRegister.cpp \
+          src/bonjour/BonjourServiceResolver.cpp \
+          src/OscXmlServer.cpp \
+          src/Osc.cpp \
+          src/Inspector.cpp \
+          src/NetworkMonitor.cpp \
+          src/UsbMonitor.cpp \
+          src/Preferences.cpp \
+          src/Uploader.cpp \
+          src/About.cpp \
+          src/Board.cpp \
+          src/PacketUdp.cpp \
+          src/PacketUsbSerial.cpp
+
 QT += network xml
-DEFINES     += MCHELPER_VERSION=\\\"$${MCHELPER_VERSION}\\\"
+DEFINES     += MCHELPER_VERSION=\"$${MCHELPER_VERSION}\"
+RESOURCES   += resources/mchelper.qrc
 INCLUDEPATH += include
-RESOURCES     += resources/mchelper.qrc
 OBJECTS_DIR  = tmp
 MOC_DIR      = tmp
+RCC_DIR      = tmp
+UI_DIR       = tmp
 DESTDIR      = bin
 
-QTDIR_build:REQUIRES="contains(QT_CONFIG, small-config)"
-
-# ------------------------------------------------------------------
-# ------------------------------------------------------------------
-
+# *******************************************
+#           platform specific stuff
+# *******************************************
 macx{
-	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
-	QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
-	
-	# Carbon-Cocoa interface for Sparkle
-	HEADERS += include/carbon_cocoa.h
-	SOURCES += source/carbon_cocoa.mm
-	
-	#CONFIG += x86 ppc
-  LIBS += -framework IOKit -framework Sparkle
-  ICON = resources/mchelper.icns
-	QMAKE_INFO_PLIST = resources/osx/Info.plist
+  QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
+  QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
 }
 
+# OS X links Bonjour all by itself
+!mac:LIBS += -ldns_sd
 
-win32{
-  LIBS += -lSetupapi
-  RC_FILE = resources/mchelper.rc # for application icon
-  DEFINES += WINVER=0x0501
-  
-  # If in debug mode, let's show the output of any
-  # q[Debug|Warning|Critical|Fatal]() calls to the console
-  #debug {
-    #CONFIG += console
-  #}
-}
+# *******************************************
+#              qextserialport
+# *******************************************
+INCLUDEPATH += src/qextserialport
+HEADERS +=  src/qextserialport/qextserialbase.h \
+            src/qextserialport/qextserialport.h \
+            src/qextserialport/qextserialenumerator.h
+            
+SOURCES +=  src/qextserialport/qextserialbase.cpp \
+            src/qextserialport/qextserialport.cpp \
+            src/qextserialport/qextserialenumerator.cpp
 
+unix:HEADERS  += src/qextserialport/posix_qextserialport.h
+unix:SOURCES  += src/qextserialport/posix_qextserialport.cpp
+unix:DEFINES  += _TTY_POSIX_
+macx: LIBS += -framework IOKit # use IOKit on OS X
+unix{ !macx: LIBS += -lusb } # use libusb on other unices
 
-unix{
-
-}
-
-
+win32:HEADERS += src/qextserialport/win_qextserialport.h
+win32:SOURCES += src/qextserialport/win_qextserialport.cpp
+win32:DEFINES += _TTY_WIN_
 
 
 
