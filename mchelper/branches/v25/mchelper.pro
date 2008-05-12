@@ -9,10 +9,10 @@ FORMS = layouts/mainwindow.ui \
         layouts/preferences.ui
 
 HEADERS = include/MainWindow.h \
-          src/bonjour/BonjourRecord.h \
-          src/bonjour/BonjourServiceBrowser.h \
-          src/bonjour/BonjourServiceRegister.h \
-          src/bonjour/BonjourServiceResolver.h \
+          # src/bonjour/BonjourRecord.h \
+          # src/bonjour/BonjourServiceBrowser.h \
+          # src/bonjour/BonjourServiceRegister.h \
+          # src/bonjour/BonjourServiceResolver.h \
           include/OscXmlServer.h \
           include/Osc.h \
           include/Inspector.h \
@@ -30,9 +30,9 @@ HEADERS = include/MainWindow.h \
 
 SOURCES = src/main.cpp \
           src/MainWindow.cpp \
-          src/bonjour/BonjourServiceBrowser.cpp \
-          src/bonjour/BonjourServiceRegister.cpp \
-          src/bonjour/BonjourServiceResolver.cpp \
+          # src/bonjour/BonjourServiceBrowser.cpp \
+          # src/bonjour/BonjourServiceRegister.cpp \
+          # src/bonjour/BonjourServiceResolver.cpp \
           src/OscXmlServer.cpp \
           src/Osc.cpp \
           src/Inspector.cpp \
@@ -64,7 +64,7 @@ macx{
 }
 
 # OS X links Bonjour all by itself
-!mac:LIBS += -ldns_sd
+# !mac:LIBS += -ldns_sd
 
 # *******************************************
 #              qextserialport

@@ -6,7 +6,6 @@
 #include <QContextMenuEvent>
 
 #include "Board.h"
-#include "BonjourRecord.h"
 #include "Inspector.h"
 #include "OscXmlServer.h"
 #include "Uploader.h"
@@ -52,7 +51,7 @@ public:
   QAction* inspectorAction() { return actionInspector; }
   
 public slots:
-  void onEthernetDeviceArrived(QList<PacketInterface*> piList);
+  void onEthernetDeviceArrived(PacketInterface* pi);
   void onUsbDeviceArrived(QStringList keys, BoardType::Type type);
   void onDeviceRemoved(QString key);
   void message(QString msg, MsgType::Type type, QString from = "mchelper");

@@ -24,31 +24,38 @@
 #include <QList>
 
 #include "Board.h"
-#include "NetworkMonitor.h"
-#include "BonjourRecord.h"
 #include "MsgType.h"
 #include "PacketInterface.h"
+
+#define PING_TIMEOUT 3000
 
 class PacketUdp : public QUdpSocket, public PacketInterface
 {	
 	Q_OBJECT
 	
 public:
-  PacketUdp(BonjourRecord *record);
+  PacketUdp(QHostAddress remoteAddress, int send_port);
   
   // From PacketInterface
   bool sendPacket( char* packet, int length );
   QString key( void );
   void newMessage( QByteArray message );
   void setBoard(Board *b) {this->board = b;}
-  BonjourRecord* record( ) {return bonjourRecord;}
+  
+  void setSendPort(int port) {send_port = port;}
 
 signals:
   void msg(QString message, MsgType::Type type, QString from);
+  void timeout(QString key);
+
+private slots:
+  void onTimeOut( );
   
 private:
   Board* board;
-  BonjourRecord *bonjourRecord;
+  QHostAddress remoteAddress;
+  int send_port;
+  QTimer pingTimer;
 };
 
 #endif

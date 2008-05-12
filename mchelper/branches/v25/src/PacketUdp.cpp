@@ -17,14 +17,18 @@
 
 #include "PacketUdp.h"
 
-PacketUdp::PacketUdp(BonjourRecord *record)
+#define PING_TIMEOUT 3000
+
+PacketUdp::PacketUdp(QHostAddress remoteAddress, int send_port)
 { 
-  bonjourRecord = record;
+  this->remoteAddress = remoteAddress;
+  this->send_port = send_port;
+  connect( &pingTimer, SIGNAL(timeout()), this, SLOT(onTimeOut( )));
 }
 
 QString PacketUdp::key( )
 {
-  return bonjourRecord->remoteHost().toString();
+  return remoteAddress.toString();
 }
 
 /*
@@ -32,7 +36,7 @@ QString PacketUdp::key( )
 */
 bool PacketUdp::sendPacket( char* packet, int length )
 {
-	qint64 result = writeDatagram( (const char*)packet, (qint64)length, bonjourRecord->remoteHost(), bonjourRecord->port);
+	qint64 result = writeDatagram( (const char*)packet, (qint64)length, remoteAddress, send_port);
 	if( result < 0 )
   {
 		emit msg( "Error - Couldn't send packet.", MsgType::Error, "Ethernet" );
@@ -42,13 +46,25 @@ bool PacketUdp::sendPacket( char* packet, int length )
 }
 
 /*
- Called when there's new data to read.
+ Called when new data has been received.
  Send it on to the board.
  */
 void PacketUdp::newMessage( QByteArray message )
 {
-	if(board != NULL);
+	pingTimer.start( PING_TIMEOUT ); // reset our timer
+  if(board != NULL);
     board->msgReceived(message);
 }
+
+/*
+  Our timer has expired...means the board has gone away.
+*/
+void PacketUdp::onTimeOut( )
+{
+  pingTimer.stop();
+  emit timeout(remoteAddress.toString());
+}
+
+
 
 
