@@ -37,7 +37,7 @@ bool ProjectProperties::loadAndShow( )
 	}
 	else
 		return false;
-	this->show();
+	show();
 	return true;
 }
 
@@ -46,7 +46,7 @@ bool ProjectProperties::loadAndShow( )
 void ProjectProperties::applyChanges( )
 {
 	QFile file(propFilePath());
-	if(file.open(QIODevice::WriteOnly))
+	if(file.open(QIODevice::ReadWrite))
 	{
 		// to get at the actual text of an element, you need to grab its child,
 		// which will be a QDomText node
@@ -77,6 +77,14 @@ QString ProjectProperties::propFilePath( )
 	QString projectName = projectDir.dirName();
 	// filename should not have spaces
 	return projectDir.filePath(projectName.remove(" ") + ".xml"); 
+}
+
+/*
+  Return the optimization level, as fit to be passed as an argument
+*/
+QString ProjectProperties::optLevel()
+{
+  return optLevelBox->currentText();
 }
 
 

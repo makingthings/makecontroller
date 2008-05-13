@@ -9,7 +9,7 @@
 #include "ProjectProperties.h"
 #include "Uploader.h"
 #include "Builder.h"
-#include "SerialMonitor.h"
+#include "UsbMonitor.h"
 #include "FindReplace.h"
 
 class Preferences;
@@ -28,7 +28,8 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void printOutputError(QString text);
 		QString currentProjectPath( ) { return currentProject; }
     QString currentBoardProfile( );
-    void findText(QString text, bool ignoreCase, bool forward, bool wholeword);
+    bool findText(QString text, bool ignoreCase, bool forward, bool wholeword);
+    void replaceAll(QString find, QString replace);
 		
 	private:
 		void openFile( const QString &path );
@@ -45,7 +46,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		ProjectProperties *props;
 		Uploader *uploader;
 		Builder *builder;
-    SerialMonitor *serialMonitor;
+    UsbMonitor *usbMonitor;
     FindReplace *findReplace;
 		QActionGroup *boardTypeGroup;
 		QString currentFile; // path of the file in the editor
@@ -55,6 +56,8 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void openProject(QString projectPath);
 		void updateRecentProjects(QString newProject);
 		void uploadFile(QString filename);
+    bool maybeSave( );
+    bool save( );
 		QHash<QString, QString> boardTypes; // board name and config filename
 		
 	private slots:
@@ -68,6 +71,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void onSaveProjectAs( );
 		void openRecentProject(QAction* project);
 		void onBuild( );
+    void onClean( );
 		void onProperties( );
 		void onUpload( );
 		void onUploadFile( );

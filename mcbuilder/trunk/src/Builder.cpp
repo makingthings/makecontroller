@@ -24,13 +24,18 @@ Builder::Builder(MainWindow *mainWindow) : QProcess( 0 )
 */
 void Builder::build(QString projectName)
 {
-	if(!loadTools())
-    return;
-  //wrapFile(projectName);
-  if(!loadSourceFiles(projectName))
-    return;
-  buildStep = COMPILE_C;
-  compileCc( ); // fire off the first process
+  setWorkingDirectory(projectName);
+  start("make");
+}
+
+/*
+  Remove all the object files from the build directory.
+*/
+void Builder::clean(QString projectName)
+{
+  setWorkingDirectory(projectName);
+  QStringList args = QStringList() << "clean";
+  start("make", args);
 }
 
 void Builder::wrapFile(QString filePath)
@@ -58,49 +63,6 @@ void Builder::wrapFile(QString filePath)
 	}
 }
 
-// read the board profile and extract which tools to use to build it
-bool Builder::loadTools( )
-{
-  bool retval = false;
-  QDomDocument doc;
-  QDir dir = QDir::current();
-  dir.cd("resources/board_profiles");
-  QFile file(dir.filePath(mainWindow->currentBoardProfile()));
-	if(!file.exists())
-		return retval;
-  
-  if(file.open(QIODevice::ReadOnly))
-	{
-		if(doc.setContent(&file))
-		{
-			// first get the relative tools path
-      QString toolsrelpath = doc.elementsByTagName("toolspath").at(0).toElement().text();
-      QString toolspath = QDir::currentPath() + "/resources/tools/" + toolsrelpath + "/";
-      // then all the tools
-      ccTool = toolspath + doc.elementsByTagName("cc").at(0).toElement().text();
-      cppTool = toolspath + doc.elementsByTagName("cpp").at(0).toElement().text();
-      ldTool = toolspath + doc.elementsByTagName("ld").at(0).toElement().text();
-      asTool = toolspath + doc.elementsByTagName("as").at(0).toElement().text();
-      sizeTool = toolspath + doc.elementsByTagName("sizer").at(0).toElement().text();
-      maxsize = doc.elementsByTagName("maxsize").at(0).toElement().text().toInt();
-      retval = true;
-		}
-		file.close();
-	}
-  return retval;
-}
-
-bool Builder::loadSourceFiles( QString project )
-{
-  bool retval = false;
-  QDir dir(project);
-  cSrc += dir.entryList(QStringList() << "*.c" << "*.s" << "*.S");
-  cppSrc += dir.entryList(QStringList("*.cpp"));
-  if( cSrc.count() && cppSrc.count())
-    retval = true;
-  return retval;
-}
-
 /*
 	This handles the end of each step of the build process.  Maintain which state we're
 	in and fire off the next process as appropriate.
@@ -108,98 +70,63 @@ bool Builder::loadSourceFiles( QString project )
 void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
 {
 	(void)exitStatus;
-	// if something didn't finish happily, reset and return
-	if( exitCode != 0 )
+	if( exitCode != 0 ) // something didn't finish happily
 	{
-		buildStep = COMPILE_C;
+		resetBuildProcess();
 		return;
 	}
   
-	switch(buildStep)
-	{
-		case COMPILE_C:
-      compileCc( );
-      break;
-		case COMPILE_CPP:
-      compileCpp( );
-			break;
-		case LINK:
-			break;
-		case ASSEMBLE:
-			break;
-		case SIZER:
-			break;
-	}
+}
+
+/*
+  Reset the build process.
+*/
+void Builder::resetBuildProcess()
+{
+  errMsg.clear();
+  outputMsg.clear();
+  currentProjectPath.clear();
+  buildStep = COMPILE_C;
 }
 
 void Builder::readOutput( )
 {
-	mainWindow->printOutput(readAllStandardOutput());
+  QTextStream stream(this);
+  QString line;
+  do
+  {
+    line = stream.readLine();
+    //filterOutput(line);
+    mainWindow->printOutput(line);
+  } while (!line.isNull());
 }
 
+/*
+  This gets called when the currently running program
+  spits out some error info.  The strings can come in chunks, so
+  wait till we get an end-of-line before doing anything.
+*/
 void Builder::readError( )
 {
-	mainWindow->printOutputError(readAllStandardError());
+  QTextStream stream(this);
+  QString line;
+  do
+  {
+    line = stream.readLine();
+    filterErrorOutput(line);
+  } while (!line.isNull());
 }
 
-void Builder::compileCc( )
+void Builder::filterOutput(QString output)
 {
-	QStringList args;
-  QFile file(cSrc.takeFirst());
-  QFileInfo fi(file);
-  args << file.fileName() << "-c"; // the file name must be first, then specify to only compile, not link
-  args << "-o " + fi.fileName() + ".o"; // put the object file where we can get at it
-  if(!fi.fileName().endsWith("_arm") && !fi.fileName().endsWith("_isr"))
-    args << "-mthumb"; // build these files as ARM, not THUMB
-  if(cSrc.count() == 0) // if this was the last file, move on to the next step
-    buildStep = COMPILE_CPP;
-  start(ccTool, args);
+  mainWindow->printOutput(output);
 }
 
-void Builder::compileCpp( )
+void Builder::filterErrorOutput(QString errOutput)
 {
-	QStringList args;
-  QFile file(cppSrc.takeFirst());
-  QFileInfo fi(file);
-  args << file.fileName() << "-c"; // the file name must be first, then specify to only compile, not link
-  args << "-o " + fi.fileName() + ".o"; // put the object file where we can get at it
-  if(!fi.fileName().endsWith("_arm") && !fi.fileName().endsWith("_isr"))
-    args << "-mthumb"; // build these files as ARM, not THUMB
-  if(cppSrc.count() == 0) // if this was the last file, move on to the next step
-    buildStep = LINK;
-  start(cppTool, args);
+  mainWindow->printOutputError(errOutput);
 }
 
-void Builder::link( )
-{
-	QStringList args;
-  start(ldTool, args);
-}
-
-void Builder::assemble( )
-{
-	QStringList args;
-  start(asTool, args);
-}
-
-void Builder::sizer( )
-{
-	QStringList args;
-  start(sizeTool, args);
-}
-
-// reset our build state and print relevant messages to the output console
-void Builder::finish( int exitCode, QString msg )
-{
-  if(exitCode)
-    mainWindow->printOutputError(msg);
-  else
-    mainWindow->printOutput(msg);
-	
-  cSrc.clear();
-  cppSrc.clear();
-  buildStep = COMPILE_C;
-}
 
 
 

@@ -6,6 +6,7 @@
 #include <QDesktopServices>
 #include <QDomDocument>
 #include <QUrl>
+#include <QMessageBox>
 #include "MainWindow.h"
 
 #define RECENT_FILES 5
@@ -17,12 +18,14 @@
 MainWindow::MainWindow( ) : QMainWindow( 0 )
 {
 	setupUi(this);
+  //initialization
 	prefs = new Preferences(this);
 	props = new ProjectProperties(this);
 	uploader = new Uploader(this);
 	builder = new Builder(this);
-  serialMonitor = new SerialMonitor();
+  usbMonitor = new UsbMonitor();
   findReplace = new FindReplace(this);
+  
 	setupEditor( );
 	boardTypeGroup = new QActionGroup(menuBoard_Type);
 	loadBoardProfiles( );
@@ -30,10 +33,14 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 	loadLibraries( );
 	loadRecentProjects( );
   readSettings( );
+  
+  // misc. signals
 	connect(editor, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorMoved()));
 	connect(actionPreferences, SIGNAL(triggered()), prefs, SLOT(loadAndShow()));
-  connect(actionSerial_Monitor, SIGNAL(triggered()), serialMonitor, SLOT(loadAndShow()));
+  connect(actionUsb_Monitor, SIGNAL(triggered()), usbMonitor, SLOT(loadAndShow()));
 	connect(currentFileDropDown, SIGNAL(currentIndexChanged(QString)), this, SLOT(onFileSelection(QString)));
+  connect(editor->document(), SIGNAL(contentsChanged()),this, SLOT(onDocumentModified()));
+  
 	// menu actions
 	connect(actionNew,					SIGNAL(triggered()), this,		SLOT(onNewFile()));
 	connect(actionNew_Project,	SIGNAL(triggered()), this,		SLOT(onNewProject()));
@@ -41,6 +48,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 	connect(actionSave,					SIGNAL(triggered()), this,		SLOT(onSave()));
 	connect(actionSave_As,			SIGNAL(triggered()), this,		SLOT(onSaveAs()));
 	connect(actionBuild,				SIGNAL(triggered()), this,		SLOT(onBuild()));
+  connect(actionClean,				SIGNAL(triggered()), this,		SLOT(onClean()));
 	connect(actionProperties,		SIGNAL(triggered()), this,		SLOT(onProperties()));
 	connect(actionUpload,				SIGNAL(triggered()), this,		SLOT(onUpload()));
 	connect(actionUndo,					SIGNAL(triggered()), editor,	SLOT(undo()));
@@ -57,9 +65,11 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   connect(menuLibraries, SIGNAL(triggered(QAction*)), this, SLOT(onLibrary(QAction*)));
 	connect(actionSave_Project_As, SIGNAL(triggered()), this, SLOT(onSaveProjectAs()));
 	connect(menuRecent_Projects, SIGNAL(triggered(QAction*)), this, SLOT(openRecentProject(QAction*)));
-  connect(editor->document(), SIGNAL(contentsChanged()),this, SLOT(onDocumentModified()));
 }
 
+/*
+  Restore the app to its state before it was shut down.
+*/
 void MainWindow::readSettings()
 {
 	QSettings settings("MakingThings", "mcbuilder");
@@ -84,6 +94,9 @@ void MainWindow::readSettings()
 	settings.endGroup();
 }
 
+/*
+  Save app settings.
+*/
 void MainWindow::writeSettings()
 {
 	QSettings settings("MakingThings", "mcbuilder");
@@ -98,13 +111,21 @@ void MainWindow::writeSettings()
 	settings.endGroup();
 }
 
+/*
+  The app is closing.
+*/
 void MainWindow::closeEvent( QCloseEvent *qcloseevent )
 {
 	(void)qcloseevent;
+  maybeSave( );
 	writeSettings( );
 }
 
-// when the cursor is moved, this is called to highlight the current line
+/*
+  The cursor has moved.
+  Highlight the current line, if appropriate.
+  Update the line/column display in the status bar.
+*/
 void MainWindow::onCursorMoved( )
 {
 	QTextCursor c = editor->textCursor();
@@ -122,12 +143,19 @@ void MainWindow::onCursorMoved( )
   statusBar()->showMessage( QString("Line: %1  Column: %2").arg(c.blockNumber()).arg(c.columnNumber()));
 }
 
+/*
+  The file in the editor has been changed.
+  Set the window 'dirty' state to reflect the state of the file.
+*/
 void MainWindow::onDocumentModified( )
 {
   setWindowModified(editor->document()->isModified());
 }
 
-void MainWindow::findText(QString text, bool ignoreCase, bool forward, bool wholeword)
+/*
+  Find text in the file currently open in the editor.
+*/
+bool MainWindow::findText(QString text, bool ignoreCase, bool forward, bool wholeword)
 {
   QTextDocument::FindFlags flags;
   if(!forward)
@@ -150,8 +178,28 @@ void MainWindow::findText(QString text, bool ignoreCase, bool forward, bool whol
   }
   else
     success = true;
-  if(!success)
-    statusBar()->showMessage(QString("Couldn't find %1").arg(text), 3500);
+  return success;
+}
+
+/*
+  Replace all occurrences of the given text with the given replacement.
+  ...this is not the best way to do this.
+*/
+void MainWindow::replaceAll(QString find, QString replace)
+{
+  bool keepgoing = true;
+  do
+  {
+    if(editor->find(find))
+    {
+      QTextCursor cursor = editor->textCursor();
+      cursor.clearSelection();
+      cursor.movePosition(QTextCursor::NextWord, QTextCursor::KeepAnchor);
+      cursor.insertText(replace);
+    }
+    else
+      keepgoing = false;
+  } while(keepgoing);
 }
 
 void MainWindow::setupEditor( )
@@ -176,6 +224,9 @@ QString MainWindow::currentBoardProfile( )
     return QString();
 }
 
+/*
+  Load a source file into the editor.
+*/
 void MainWindow::editorLoadFile( QFile *file )
 {
 	Q_ASSERT(!currentProject.isEmpty());
@@ -189,8 +240,11 @@ void MainWindow::editorLoadFile( QFile *file )
 	}
 }
 
-// create a new file...within the existing project if one is open
-// otherwise create a new project
+/*
+  Called when the "new file" action is triggered.
+  Prompt for a file name and create it within the
+  currently open project.
+*/
 void MainWindow::onNewFile( )
 {
 	if(currentProject.isEmpty())
@@ -204,6 +258,9 @@ void MainWindow::onNewFile( )
 		createNewFile(newFilePath);
 }
 
+/*
+  Create a new source file.
+*/
 void MainWindow::createNewFile(QString path)
 {
 	QDir dir(path);
@@ -223,7 +280,10 @@ void MainWindow::createNewFile(QString path)
 	}
 }
 
-// a new file has been selected 
+/*
+  A new file has been selected.
+  Load it into the editor.
+*/
 void MainWindow::onFileSelection(QString filename)
 {
 	Q_ASSERT(!currentProject.isEmpty()); // we shouldn't have any files loaded unless a project is open
@@ -241,7 +301,10 @@ void MainWindow::onFileSelection(QString filename)
 	
 }
 
-// create a new project directory and project file within it
+/*
+  Called when the "new project" action is triggered.
+  Create a new project directory and project file within it.
+*/
 void MainWindow::onNewProject( )
 {	
 	QString dummy;
@@ -290,6 +353,10 @@ void MainWindow::onNewProject( )
 	openProject(newProjPath);
 }
 
+/*
+  Called when the "open" action is triggered.
+  Prompt the user for which project they'd like to open.
+*/
 void MainWindow::onOpen( )
 {
 	QString projectPath = QFileDialog::getExistingDirectory(this, tr("Open Project"), 
@@ -298,6 +365,9 @@ void MainWindow::onOpen( )
 		openProject(projectPath);
 }
 
+/*
+  Open an existing project.
+*/
 void MainWindow::openProject(QString projectPath)
 {
 	QDir projectDir(projectPath);
@@ -323,6 +393,10 @@ void MainWindow::openProject(QString projectPath)
 		return statusBar()->showMessage( QString("Couldn't find main file for %1.").arg(projectName), 3500 );
 }
 
+/*
+  A new project has been opened.
+  If this project isn't already in our recent projects list, stick it in there.
+*/
 void MainWindow::updateRecentProjects(QString newProject)
 {
 	QList<QAction*> recentActions = menuRecent_Projects->actions();
@@ -347,22 +421,65 @@ void MainWindow::openRecentProject(QAction* project)
 	openProject(dir.filePath(project->text( )));
 }
 
+/*
+  Called when the "save" action is triggered.
+*/
 void MainWindow::onSave( )
 {
 	if(currentFile.isEmpty())
 		return statusBar()->showMessage( "Need to open a project first.  Open or create a new one from the File menu.", 3500 );
-	QFile file(currentFile);
-	if (file.open(QFile::WriteOnly | QFile::Text))
-	{
-		file.write(editor->toPlainText().toUtf8());
-		file.close();
-    editor->document()->setModified(false);
-    setWindowModified(false);
-	}
-  else
-    return statusBar()->showMessage( "Couldn't save...maybe the current file has been moved or deleted.", 3500 );
+	save( );
 }
 
+/*
+  Save the file currently in the editor.
+*/
+bool MainWindow::save( )
+{
+  QFile file(currentFile);
+	if(file.open(QFile::WriteOnly | QFile::Text))
+	{
+    QTextStream out(&file);
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    out << editor->toPlainText();
+    QApplication::restoreOverrideCursor();
+    editor->document()->setModified(false);
+    setWindowModified(false);
+    return true;
+	}
+  else
+  {
+    statusBar()->showMessage( "Couldn't save...maybe the current file has been moved or deleted.", 3500 );
+    return false;
+  }
+}
+
+/*
+  Prompt the user to save the current file, if necessary.
+  Done before building, or closing, etc.
+*/
+bool MainWindow::maybeSave()
+{
+  if (editor->document()->isModified())
+  {
+    QMessageBox::StandardButton ret;
+    ret = QMessageBox::warning(this, tr("mcbuilder"),
+                               tr("This document has been modified.\n"
+                                  "Do you want to save your changes?"),
+                               QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+    if (ret == QMessageBox::Save)
+      return save();
+    else if (ret == QMessageBox::Cancel)
+      return false;
+  }
+  return true;
+}
+
+/*
+  Called when the "save as" action has been triggered.
+  Create a new file with the contents of the current one, 
+  rename it and load it into the editor.
+*/
 void MainWindow::onSaveAs( )
 {
 	if(currentFile.isEmpty())
@@ -389,16 +506,43 @@ void MainWindow::onSaveProjectAs( )
 	
 }
 
+/*
+  Called when the build action is triggered.
+  Check to see if we need to save the current file,
+  then try to fire off the build process.
+*/
 void MainWindow::onBuild( )
 {
 	if(currentProject.isEmpty())
 		return statusBar()->showMessage( "Open a project to build, or create a new one from the File menu.", 3500 );
+  maybeSave( );
 	if(builder->state() == QProcess::NotRunning)
-		builder->build(currentProject);
+  {
+		outputConsole->clear();
+    builder->build(currentProject);
+  }
 	else
 		return statusBar()->showMessage( "Builder is currently busy...give it a second, then try again.", 3500 );
 }
 
+/*
+  Called when the "clean" action is triggered.
+  Fire off the clean process in the builder.
+*/
+void MainWindow::onClean( )
+{
+  if(currentProject.isEmpty())
+    return;
+  if(builder->state() == QProcess::NotRunning)
+    builder->clean(currentProject);
+	else
+		return statusBar()->showMessage( "Builder is currently busy...give it a second, then try again.", 3500 );
+}
+
+/*
+  Called when the "project properties" action is triggered.
+  Pop up the properties dialog.
+*/
 void MainWindow::onProperties( )
 {
 	if(currentProject.isEmpty())
@@ -410,6 +554,10 @@ void MainWindow::onProperties( )
 	}
 }
 
+/*
+  Called when the "upload" action is triggered.
+  Build the current project and upload the resulting .bin to the board.
+*/
 void MainWindow::onUpload( )
 {
 	if(currentProject.isEmpty())
@@ -417,6 +565,11 @@ void MainWindow::onUpload( )
 	uploadFile("temp.bin");
 }
 
+/*
+  Called when the "upload file" action is triggered.
+  Pop up a file dialog, and try to upload the given file
+  to the board.  This is only for uploading pre-built .bins.
+*/
 void MainWindow::onUploadFile( )
 {
 	QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
@@ -425,7 +578,10 @@ void MainWindow::onUploadFile( )
 		uploadFile(fileName);
 }
 
-// pass in the board config file name to upload a project to that kind of board
+/*
+  Actually upload the file to the board.
+  Pass in the board config file name to upload a project to that kind of board
+*/
 void MainWindow::uploadFile(QString filename)
 {
 	// get the board type so the uploader can check which upload mechanism to use
@@ -478,6 +634,10 @@ void MainWindow::loadBoardProfiles( )
 	}
 }
 
+/*
+  Navigate the examples directory and create menu items
+  for each of the available examples.
+*/
 void MainWindow::loadExamples( )
 {
 	QDir dir = QDir::current();
@@ -498,6 +658,10 @@ void MainWindow::loadExamples( )
 	}
 }
 
+/*
+  Called when an action in the Examples menu is triggered.
+  Find the example's project and try to open it.
+*/
 void MainWindow::onExample(QAction *example)
 {
 	QMenu *menu = (QMenu*)example->parent();
@@ -506,7 +670,11 @@ void MainWindow::onExample(QAction *example)
 	openProject(examplePath);
 }
 
-// load the directories in the libraries folder into the UI
+/*
+  Navigate the libraries directory and load the available ones into the UI.
+  Also add library examples to the examples menu, and example
+  keywords to the syntax highlighter's keyword list.
+*/
 void MainWindow::loadLibraries( )
 {
   QDir dir = QDir::current();
@@ -522,7 +690,10 @@ void MainWindow::loadLibraries( )
 	}
 }
 
-// add a #include into the current document for the selected library
+/*
+  Called when an item in the Libraries menu is triggered.
+  Add a #include into the current document for the selected library
+*/
 void MainWindow::onLibrary(QAction *example)
 {
   QString includeString = QString("#include %1.h").arg(example->text());
@@ -531,10 +702,13 @@ void MainWindow::onLibrary(QAction *example)
   if(!editor->find(includeString) && !editor->find(includeString, QTextDocument::FindBackward))
   {
     editor->moveCursor(QTextCursor::Start);
-    editor->insertPlainText(includeString + "\n");
+    editor->append(includeString);
   }
 }
 
+/*
+  Populate the recent projects menu.
+*/
 void MainWindow::loadRecentProjects( )
 {
 	QSettings settings("MakingThings", "mcbuilder");
@@ -546,14 +720,16 @@ void MainWindow::loadRecentProjects( )
 
 void MainWindow::printOutput(QString text)
 {
-	outputConsole->insertPlainText(text);
-	outputConsole->ensureCursorVisible();
+	outputConsole->moveCursor(QTextCursor::End);
+  outputConsole->insertPlainText(text);
+  //outputConsole->append(text);
 }
 
 void MainWindow::printOutputError(QString text)
 {
-	outputConsole->insertPlainText(text);
-	outputConsole->ensureCursorVisible();
+	outputConsole->moveCursor(QTextCursor::End);
+  outputConsole->insertPlainText(text);
+  //outputConsole->append(text);
 }
 
 void MainWindow::openMCReference( )

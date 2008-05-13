@@ -10,6 +10,7 @@ Preferences::Preferences(MainWindow *mainWindow) : QDialog( 0 )
 	connect(browseWorkspaceButton, SIGNAL(clicked()), this, SLOT(browseWorkspace()));
 }
 
+// static
 QString Preferences::workspace( )
 {
 	QSettings settings("MakingThings", "mcbuilder");
@@ -29,6 +30,7 @@ QString Preferences::workspace( )
 	return workspace;
 }
 
+// static
 QString Preferences::boardType( )
 {
 	QSettings settings("MakingThings", "mcbuilder");
