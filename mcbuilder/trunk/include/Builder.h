@@ -2,6 +2,7 @@
 #define BUILDER_H
 
 #include <QProcess>
+#include <QFileInfo>
 #include "MainWindow.h"
 
 class MainWindow;
@@ -12,23 +13,19 @@ class Builder : public QProcess
 	public:
 		Builder(MainWindow *mainWindow);
 		void build(QString projectName);
+    void clean(QString projectName);
   
 	private:
 		MainWindow *mainWindow;
-		QStringList cSrc, cppSrc; // lists of files to be compiled
-    QString ccTool, cppTool, ldTool, asTool, sizeTool; // names of the tools to use
+    QString errMsg, outputMsg;
+    QString currentProjectPath;
 		enum BuildStep { COMPILE_C, COMPILE_CPP, LINK, ASSEMBLE, SIZER };
 		BuildStep buildStep;
     int maxsize;
 		void wrapFile(QString filePath);
-		void compileCpp( );
-		void compileCc( );
-		void link( );
-		void assemble( );
-		void sizer( );
-    bool loadTools( );
-    bool loadSourceFiles( QString project );
-    void Builder::finish( int exitCode, QString msg );
+    void resetBuildProcess();
+    void filterOutput(QString output);
+    void filterErrorOutput(QString errOutput);
 		
 	private slots:
 		void nextStep( int exitCode, QProcess::ExitStatus exitStatus );

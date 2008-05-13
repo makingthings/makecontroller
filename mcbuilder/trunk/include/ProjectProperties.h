@@ -13,6 +13,7 @@ class ProjectProperties : public QDialog, private Ui::Properties
 	Q_OBJECT
 	public:
 		ProjectProperties(MainWindow *mainWindow);
+    QString optLevel();
 	public slots:
 		bool loadAndShow();
 	private:

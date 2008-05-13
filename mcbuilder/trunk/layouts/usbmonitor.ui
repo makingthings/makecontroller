@@ -1,6 +1,6 @@
 <ui version="4.0" >
- <class>SerialMonitorUi</class>
- <widget class="QDialog" name="SerialMonitorUi" >
+ <class>UsbMonitorUi</class>
+ <widget class="QDialog" name="UsbMonitorUi" >
   <property name="geometry" >
    <rect>
     <x>0</x>
@@ -10,7 +10,7 @@
    </rect>
   </property>
   <property name="windowTitle" >
-   <string>Serial Monitor</string>
+   <string>USB Monitor</string>
   </property>
   <layout class="QVBoxLayout" >
    <item>

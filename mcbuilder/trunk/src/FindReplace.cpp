@@ -9,8 +9,8 @@ FindReplace::FindReplace( MainWindow *mw ) : QDialog( )
   connect( previousButton, SIGNAL(clicked()), this, SLOT(onPrevious()));
   connect( replaceButton, SIGNAL(clicked()), this, SLOT(onReplace()));
   connect( replaceAllButton, SIGNAL(clicked()), this, SLOT(onReplaceAll()));
-  //connect( findBox->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onNext()));
-  //connect( replaceBox->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onReplace()));
+  connect( findBox->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onNext()));
+  connect( replaceBox->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onReplace()));
 }
 
 void FindReplace::onNext( )
@@ -40,6 +40,6 @@ void FindReplace::onReplace( )
 
 void FindReplace::onReplaceAll( )
 {
-  
+  mainWindow->replaceAll(findBox->lineEdit()->text(), replaceBox->lineEdit()->text());
 }
 
