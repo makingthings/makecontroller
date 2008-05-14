@@ -30,6 +30,9 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
     QString currentBoardProfile( );
     bool findText(QString text, bool ignoreCase, bool forward, bool wholeword);
     void replaceAll(QString find, QString replace);
+    void onBuildComplete(bool success);
+    void onCleanComplete();
+    void buildingNow(QString file);
 		
 	private:
 		void openFile( const QString &path );

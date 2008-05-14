@@ -24,6 +24,8 @@ Builder::Builder(MainWindow *mainWindow) : QProcess( 0 )
 */
 void Builder::build(QString projectName)
 {
+  buildStep = BUILD;
+  currentProjectPath = projectName;
   setWorkingDirectory(projectName);
   start("make");
 }
@@ -33,9 +35,19 @@ void Builder::build(QString projectName)
 */
 void Builder::clean(QString projectName)
 {
+  buildStep = CLEAN;
+  currentProjectPath = projectName;
   setWorkingDirectory(projectName);
   QStringList args = QStringList() << "clean";
   start("make", args);
+}
+
+void Builder::sizer()
+{
+  buildStep = SIZER;
+  setWorkingDirectory(currentProjectPath + "/output");
+  QStringList args = QStringList() << "heavy.elf";
+  start("arm-elf-size", args);
 }
 
 void Builder::wrapFile(QString filePath)
@@ -72,10 +84,25 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
 	(void)exitStatus;
 	if( exitCode != 0 ) // something didn't finish happily
 	{
-		resetBuildProcess();
+		mainWindow->onBuildComplete(false);
+    resetBuildProcess();
 		return;
 	}
   
+  switch(buildStep)
+  {
+    case BUILD:
+      sizer();
+      break;
+    case CLEAN:
+      mainWindow->onCleanComplete();
+      resetBuildProcess( );
+      break;
+    case SIZER:
+      mainWindow->onBuildComplete(true);
+      resetBuildProcess( );
+      break;
+  }
 }
 
 /*
@@ -86,19 +113,11 @@ void Builder::resetBuildProcess()
   errMsg.clear();
   outputMsg.clear();
   currentProjectPath.clear();
-  buildStep = COMPILE_C;
 }
 
 void Builder::readOutput( )
 {
-  QTextStream stream(this);
-  QString line;
-  do
-  {
-    line = stream.readLine();
-    //filterOutput(line);
-    mainWindow->printOutput(line);
-  } while (!line.isNull());
+  filterOutput(readAllStandardOutput());
 }
 
 /*
@@ -108,23 +127,93 @@ void Builder::readOutput( )
 */
 void Builder::readError( )
 {
-  QTextStream stream(this);
-  QString line;
-  do
-  {
-    line = stream.readLine();
-    filterErrorOutput(line);
-  } while (!line.isNull());
+  filterErrorOutput(readAllStandardError());
 }
 
+/*
+  Filter the output of the build process
+  and only show the most important parts to the user.
+  
+  Strings can come in chunks, so wait till we get an 
+  end-of-line before doing anything.
+*/
 void Builder::filterOutput(QString output)
 {
-  mainWindow->printOutput(output);
+  // switch based on what part of the build we're performing
+  switch(buildStep)
+  {
+    case BUILD:
+    {
+      outputMsg += output;
+      if(outputMsg.endsWith("\n")) // we have a complete message to deal with
+      {
+        //printf("msg: %s\n", qPrintable(outputMsg));
+        QStringList sl = outputMsg.split(" ");
+        if(sl.at(0) == "arm-elf-gcc" && sl.at(1) == "-c")
+        {
+          QStringList sl2 = sl.last().split("/");
+          mainWindow->buildingNow(sl2.last());
+        }
+        outputMsg.clear();
+      }
+      break;
+    }
+    case CLEAN:
+      break;
+    case SIZER:
+    {
+      QStringList vals = output.split(" ", QString::SkipEmptyParts);
+      if(vals.count())
+      {
+        bool ok = false;
+        vals.at(0).toInt(&ok);
+        if(ok)
+          mainWindow->printOutput(QString(".bin is %1 out of a possible 256000 bytes.").arg(vals.at(3).trimmed()));
+      }
+      break;
+    }
+  }
 }
 
+/*
+  Filter the error messages of the build process
+  and only show the most important parts to the user.
+*/
 void Builder::filterErrorOutput(QString errOutput)
 {
-  mainWindow->printOutputError(errOutput);
+  switch(buildStep)
+  {
+    case BUILD:
+      errMsg += errOutput;
+      if(errMsg.endsWith("\n")) // we have a complete message to deal with
+      {
+        QStringList sl = errMsg.split(":");
+        for(int i = 0; i < sl.count(); i++) // remove any spaces from front and back
+          sl[i] = sl.at(i).trimmed();
+
+        printf("err: %s\n", qPrintable(errMsg));
+        if(sl.contains("warning"))
+        {
+          QString msg;
+          QTextStream(&msg) << "Warning - " << sl.last() << endl;
+          mainWindow->printOutputError(msg);
+        }
+        else if(sl.contains("error"))
+        {
+          QString msg;
+          QTextStream(&msg) << "Error - " << sl.last() << endl;
+          mainWindow->printOutputError(msg);
+        }
+        errMsg.clear();
+      }
+      break;
+    case CLEAN:
+      mainWindow->printOutputError(errOutput);
+      break;
+    case SIZER:
+      mainWindow->printOutputError(errOutput);
+      break;
+  }
 }
 
 
