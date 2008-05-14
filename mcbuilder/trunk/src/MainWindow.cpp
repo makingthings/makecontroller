@@ -230,7 +230,7 @@ QString MainWindow::currentBoardProfile( )
 void MainWindow::editorLoadFile( QFile *file )
 {
 	Q_ASSERT(!currentProject.isEmpty());
-	if(file->open(QIODevice::ReadOnly))
+	if(file->open(QIODevice::ReadOnly|QFile::Text))
 	{
 		currentFile = file->fileName();
 		editor->setPlainText(file->readAll());
@@ -253,7 +253,7 @@ void MainWindow::onNewFile( )
 		return;
 	}
 	QString newFilePath = QFileDialog::getSaveFileName(this, tr("Create New File"), 
-																			currentProject, tr("CPP Files (*.cpp)"));
+																			currentProject, tr("C Files (*.c)"));
 	if(!newFilePath.isNull()) // user cancelled
 		createNewFile(newFilePath);
 }
@@ -264,8 +264,8 @@ void MainWindow::onNewFile( )
 void MainWindow::createNewFile(QString path)
 {
 	QDir dir(path);
-	QString name = dir.dirName() + ".cpp";
-	QFile file(path + ".cpp");
+	QString name = dir.dirName() + ".c";
+	QFile file(path + ".c");
 	if(file.exists())
 		return;
 	if(file.open(QIODevice::WriteOnly | QFile::Text))
@@ -339,11 +339,11 @@ void MainWindow::onNewProject( )
 	if( templateFile.open(QIODevice::ReadOnly | QFile::Text) )
   {
     // and create the main file
-    QFile mainFile(newProj.filePath(newProjName + ".cpp"));
+    QFile mainFile(newProj.filePath(newProjName + ".c"));
     if( mainFile.open(QIODevice::WriteOnly | QFile::Text) )
     {
       QTextStream out(&mainFile);
-      out << QString("// %1.cpp").arg(newProjName) << endl;
+      out << QString("// %1.c").arg(newProjName) << endl;
       out << QString("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl;
       out << templateFile.readAll();
       mainFile.close();
@@ -369,19 +369,19 @@ void MainWindow::onOpen( )
   Open an existing project.
 */
 void MainWindow::openProject(QString projectPath)
-{
-	QDir projectDir(projectPath);
+{  
+  QDir projectDir(projectPath);
 	QString projectName = projectDir.dirName();
 	if(!projectDir.exists())
 		return statusBar()->showMessage( QString("Couldn't find %1.").arg(projectName), 3500 );
-	QString mainFileName(projectName + ".cpp");
+	QString mainFileName(projectName + ".c");
 	mainFileName.remove(" ");
 	QFile mainFile(projectDir.filePath(mainFileName));
 	if(mainFile.exists())
 	{
 		currentProject = projectPath;
 		editorLoadFile(&mainFile);
-		QStringList projectFiles = projectDir.entryList(QStringList("*.cpp"));
+		QStringList projectFiles = projectDir.entryList(QStringList("*.c"));
 		// update the files in the dropdown list
 		currentFileDropDown->clear();
 		currentFileDropDown->insertItems(0, projectFiles);
@@ -513,7 +513,7 @@ void MainWindow::onSaveProjectAs( )
 */
 void MainWindow::onBuild( )
 {
-	if(currentProject.isEmpty())
+  if(currentProject.isEmpty())
 		return statusBar()->showMessage( "Open a project to build, or create a new one from the File menu.", 3500 );
   maybeSave( );
 	if(builder->state() == QProcess::NotRunning)
@@ -523,6 +523,24 @@ void MainWindow::onBuild( )
   }
 	else
 		return statusBar()->showMessage( "Builder is currently busy...give it a second, then try again.", 3500 );
+}
+
+void MainWindow::onBuildComplete(bool success)
+{
+  if(success)
+    statusBar()->showMessage("Build succeeded.");
+  else
+    statusBar()->showMessage("Build failed.");
+}
+
+void MainWindow::onCleanComplete()
+{
+  statusBar()->showMessage("Clean succeeded.");
+}
+
+void MainWindow::buildingNow(QString file)
+{
+  statusBar()->showMessage("Building..." + file);
 }
 
 /*
@@ -722,14 +740,12 @@ void MainWindow::printOutput(QString text)
 {
 	outputConsole->moveCursor(QTextCursor::End);
   outputConsole->insertPlainText(text);
-  //outputConsole->append(text);
 }
 
 void MainWindow::printOutputError(QString text)
 {
 	outputConsole->moveCursor(QTextCursor::End);
   outputConsole->insertPlainText(text);
-  //outputConsole->append(text);
 }
 
 void MainWindow::openMCReference( )

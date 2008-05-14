@@ -19,13 +19,14 @@ class Builder : public QProcess
 		MainWindow *mainWindow;
     QString errMsg, outputMsg;
     QString currentProjectPath;
-		enum BuildStep { COMPILE_C, COMPILE_CPP, LINK, ASSEMBLE, SIZER };
+		enum BuildStep { BUILD, CLEAN, SIZER };
 		BuildStep buildStep;
     int maxsize;
 		void wrapFile(QString filePath);
     void resetBuildProcess();
     void filterOutput(QString output);
     void filterErrorOutput(QString errOutput);
+    void sizer();
 		
 	private slots:
 		void nextStep( int exitCode, QProcess::ExitStatus exitStatus );
