@@ -24,14 +24,17 @@ class Builder : public QProcess
     int maxsize;
 		void wrapFile(QString filePath);
     void resetBuildProcess();
+    void createMakefile(QString projectPath);
     void filterOutput(QString output);
     void filterErrorOutput(QString errOutput);
     void sizer();
+    void ensureBuildDirExists(QString projPath);
 		
 	private slots:
 		void nextStep( int exitCode, QProcess::ExitStatus exitStatus );
 		void readOutput();
 		void readError();
+    void onBuildError(QProcess::ProcessError error);
 };
 
 #endif // BUILDER_H

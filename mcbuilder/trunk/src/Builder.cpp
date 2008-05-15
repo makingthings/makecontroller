@@ -1,6 +1,7 @@
 
 #include <QDir>
 #include <QTextStream>
+#include <QDate>
 #include "Builder.h"
 
 /*
@@ -14,6 +15,7 @@ Builder::Builder(MainWindow *mainWindow) : QProcess( 0 )
 	connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
 	connect(this, SIGNAL(readyReadStandardError()), this, SLOT(readError()));
 	connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(nextStep(int, QProcess::ExitStatus)));
+  connect(this, SIGNAL(error(QProcess::ProcessError)), this, SLOT(onBuildError(QProcess::ProcessError)));
 }
 
 /*
@@ -24,9 +26,11 @@ Builder::Builder(MainWindow *mainWindow) : QProcess( 0 )
 */
 void Builder::build(QString projectName)
 {
+  ensureBuildDirExists(projectName);
+  createMakefile(projectName);
   buildStep = BUILD;
   currentProjectPath = projectName;
-  setWorkingDirectory(projectName);
+  setWorkingDirectory(projectName + "/build");
   start("make");
 }
 
@@ -35,17 +39,25 @@ void Builder::build(QString projectName)
 */
 void Builder::clean(QString projectName)
 {
+  ensureBuildDirExists(projectName);
   buildStep = CLEAN;
   currentProjectPath = projectName;
-  setWorkingDirectory(projectName);
+  setWorkingDirectory(projectName + "/build");
   QStringList args = QStringList() << "clean";
   start("make", args);
+}
+
+void Builder::ensureBuildDirExists(QString projPath)
+{
+  QDir dir(projPath);
+  if(!dir.exists(projPath+"/build"))
+    dir.mkdir("build");
 }
 
 void Builder::sizer()
 {
   buildStep = SIZER;
-  setWorkingDirectory(currentProjectPath + "/output");
+  setWorkingDirectory(currentProjectPath + "/build");
   QStringList args = QStringList() << "heavy.elf";
   start("arm-elf-size", args);
 }
@@ -81,8 +93,7 @@ void Builder::wrapFile(QString filePath)
 */
 void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
 {
-	(void)exitStatus;
-	if( exitCode != 0 ) // something didn't finish happily
+	if( exitCode != 0 || exitStatus != QProcess::NormalExit) // something didn't finish happily
 	{
 		mainWindow->onBuildComplete(false);
     resetBuildProcess();
@@ -113,6 +124,106 @@ void Builder::resetBuildProcess()
   errMsg.clear();
   outputMsg.clear();
   currentProjectPath.clear();
+}
+
+/*
+  Create a Makefile for this project.
+  Assemble the list of source files, set the name,
+  add the template info and we're all set.
+*/
+void Builder::createMakefile(QString projectPath)
+{
+  QDir buildDir(projectPath + "/build");
+  QFile makefile(buildDir.filePath("Makefile_"));
+  if(makefile.open(QIODevice::WriteOnly | QFile::Text))
+  {
+    QDir dir(projectPath);
+    QTextStream tofile(&makefile);
+    tofile << "###############################################################" << endl;
+    tofile << "#" << endl << "# This file generated automatically by mcbuilder, ";
+    tofile << QDate::currentDate().toString("MMM d, yyyy") << endl;
+    tofile << "# Any manual changes made to this file will be overwritten the next time mcbuilder builds." << endl << "#" << endl;
+    tofile << "###############################################################" << endl << endl;
+    
+    tofile << "OUTPUT = " + dir.dirName().toLower() << endl << endl;
+    tofile << "all: $(OUTPUT).bin" << endl << endl;
+    
+    dir = QDir::current();
+    
+    // thumb files here
+    tofile << "THUMB_SRC= \\" << endl;
+    
+    // arm files here
+    tofile << "ARM_SRC= \\" << endl;
+    
+    // include dirs here
+    tofile << "INCLUDEDIRS = \\" << endl;
+    tofile << "-I.. \\" << endl;
+    tofile << "-I" + dir.filePath("resources/cores/makecontroller/appboard/makingthings") + " \\" << endl;
+    tofile << "-I" + dir.filePath("resources/cores/makecontroller/controller/makingthings") + " \\" << endl;
+    tofile << "-I" + dir.filePath("resources/cores/makecontroller/controller/makingthings/testing") + " \\" << endl;
+    tofile << "-I" + dir.filePath("resources/cores/makecontroller/controller/lwip/src/include") + " \\" << endl;
+    tofile << "-I" + dir.filePath("resources/cores/makecontroller/controller/lwip/contrib/port/FreeRTOS/AT91SAM7X") + " \\" << endl;
+    tofile << "-I" + dir.filePath("resources/cores/makecontroller/controller/freertos/include") + " \\" << endl;
+    tofile << "-I" + dir.filePath("resources/cores/makecontroller/controller/freertos/portable/GCC/ARM7_AT91SAM7S") + " \\" << endl;
+    tofile << "-I" + dir.filePath("resources/cores/makecontroller/controller/lwip/src/include/ipv4") << endl << endl;
+    // check for libraries...
+    
+    // tools
+    tofile << "CC=arm-elf-gcc" << endl;
+    tofile << "OBJCOPY=arm-elf-objcopy" << endl;
+    tofile << "ARCH=arm-elf-ar" << endl;
+    tofile << "CRT0=" + dir.filePath("resources/cores/makecontroller/controller/startup/boot.s") << endl;
+    tofile << "DEBUG=" << endl;
+    tofile << "OPTIM=-O2" << endl;
+    tofile << "LDSCRIPT=" + dir.filePath("resources/cores/makecontroller/controller/startup/atmel-rom.ld") << endl << endl;
+    
+    // flags
+    tofile << "CFLAGS= \\" << endl;
+    tofile << "$(INCLUDEDIRS) \\" << endl;
+    tofile << "-Wall \\" << endl;
+    tofile << "-Wextra \\" << endl;
+    tofile << "-Wstrict-prototypes \\" << endl;
+    tofile << "-Wmissing-prototypes \\" << endl;
+    tofile << "-Wmissing-declarations \\" << endl;
+    tofile << "-Wno-strict-aliasing \\" << endl;
+    tofile << "-D SAM7_GCC \\" << endl;
+    tofile << "-D THUMB_INTERWORK \\" << endl;
+    tofile << "-mthumb-interwork \\" << endl;
+    tofile << "-mcpu=arm7tdmi \\" << endl;
+    tofile << "-T$(LDSCRIPT) \\" << endl;
+    tofile << "$(DEBUG) \\" << endl;
+    tofile << "$(OPTIM)" << endl << endl;
+    
+    // rules here
+    tofile << "$(OUTPUT).bin : $(OUTPUT).elf" << endl;
+    tofile << "$(OBJCOPY) $(OUTPUT).elf -O binary $(OUTPUT).bin" << endl << endl;
+    
+    tofile << "$(OUTPUT).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CRT0)" << endl;
+    tofile << "  $(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles $(CRT0) $(LINKER_FLAGS)" << endl << endl;
+
+    tofile << "$(THUMB_OBJ) : %.o : %.c" << endl;
+    tofile << "  $(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@" << endl << endl;
+
+    tofile << "$(ARM_OBJ) : %.o : %.c" << endl;
+    tofile << "  $(CC) -c $(CFLAGS) $< -o $@" << endl << endl;
+            
+    tofile << "clean :" << endl;
+    tofile << "  rm -f $(ARM_OBJ)" << endl;
+    tofile << "  rm -f $(THUMB_OBJ)" << endl;
+    tofile << "  rm -f $(OUTPUT).elf" << endl;
+    tofile << "  rm -f $(OUTPUT).bin" << endl;
+    tofile << "  rm -f $(OUTPUT)_o.map" << endl << endl;
+  }
+}
+
+void Builder::onBuildError(QProcess::ProcessError error)
+{
+  qDebug("Build error: %d", error);
+//  switch(error)
+//  {
+//    
+//  }
 }
 
 void Builder::readOutput( )
@@ -163,12 +274,15 @@ void Builder::filterOutput(QString output)
     case SIZER:
     {
       QStringList vals = output.split(" ", QString::SkipEmptyParts);
-      if(vals.count())
+      if(vals.count() == 10) // we expect 10 values back from arm-elf-size
       {
         bool ok = false;
-        vals.at(0).toInt(&ok);
+        int total_size = vals.at(8).toInt(&ok);
         if(ok)
-          mainWindow->printOutput(QString(".bin is %1 out of a possible 256000 bytes.").arg(vals.at(3).trimmed()));
+        {
+          QDir dir(currentProjectPath);
+          mainWindow->printOutput(QString("%1.bin is %2 out of a possible 256000 bytes.").arg(dir.dirName().toLower()).arg(total_size));
+        }
       }
       break;
     }
@@ -191,7 +305,7 @@ void Builder::filterErrorOutput(QString errOutput)
         for(int i = 0; i < sl.count(); i++) // remove any spaces from front and back
           sl[i] = sl.at(i).trimmed();
 
-        printf("err: %s\n", qPrintable(errMsg));
+        //printf("err: %s\n", qPrintable(errMsg));
         if(sl.contains("warning"))
         {
           QString msg;
