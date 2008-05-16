@@ -1,5 +1,5 @@
-#ifndef PROJECT_PROPERTIES_H
-#define PROJECT_PROPERTIES_H
+#ifndef PROPERTIES_H
+#define PROPERTIES_H
 
 #include <QDialog>
 #include <QDomDocument>
@@ -8,12 +8,13 @@
 
 class MainWindow;
 
-class ProjectProperties : public QDialog, private Ui::Properties
+class Properties : public QDialog, private Ui::Properties
 {
 	Q_OBJECT
 	public:
-		ProjectProperties(MainWindow *mainWindow);
+		Properties(MainWindow *mainWindow);
     QString optLevel();
+    bool debug();
 	public slots:
 		bool loadAndShow();
 	private:
@@ -25,4 +26,4 @@ class ProjectProperties : public QDialog, private Ui::Properties
 
 };
 
-#endif // PROJECT_PROPERTIES_H
+#endif // PROPERTIES_H

@@ -9,9 +9,10 @@
 	We need to wrap the project into a class, and generate a Makefile
 	based on the general Preferences and Properties for this project.
 */
-Builder::Builder(MainWindow *mainWindow) : QProcess( 0 )
+Builder::Builder(MainWindow *mainWindow, Properties *props) : QProcess( 0 )
 {
 	this->mainWindow = mainWindow;
+  this->props = props;
 	connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
 	connect(this, SIGNAL(readyReadStandardError()), this, SLOT(readError()));
 	connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(nextStep(int, QProcess::ExitStatus)));
@@ -58,7 +59,8 @@ void Builder::sizer()
 {
   buildStep = SIZER;
   setWorkingDirectory(currentProjectPath + "/build");
-  QStringList args = QStringList() << "heavy.elf";
+  QDir dir(currentProjectPath);
+  QStringList args = QStringList() << dir.dirName().toLower() + ".elf";
   start("arm-elf-size", args);
 }
 
@@ -129,92 +131,164 @@ void Builder::resetBuildProcess()
 /*
   Create a Makefile for this project.
   Assemble the list of source files, set the name,
-  add the template info and we're all set.
+  stuff in the project properties,
+  add the boilerplate info and we're all set.
 */
-void Builder::createMakefile(QString projectPath)
+bool Builder::createMakefile(QString projectPath)
 {
+  bool retval = true;
   QDir buildDir(projectPath + "/build");
-  QFile makefile(buildDir.filePath("Makefile_"));
+  QFile makefile(buildDir.filePath("Makefile"));
   if(makefile.open(QIODevice::WriteOnly | QFile::Text))
   {
     QDir dir(projectPath);
     QTextStream tofile(&makefile);
-    tofile << "###############################################################" << endl;
-    tofile << "#" << endl << "# This file generated automatically by mcbuilder, ";
+    tofile << "##################################################################################################" << endl;
+    tofile << "#" << endl << "# This file generated automatically by mcbuilder - ";
     tofile << QDate::currentDate().toString("MMM d, yyyy") << endl;
     tofile << "# Any manual changes made to this file will be overwritten the next time mcbuilder builds." << endl << "#" << endl;
-    tofile << "###############################################################" << endl << endl;
-    
+    tofile << "##################################################################################################" << endl << endl;
+
     tofile << "OUTPUT = " + dir.dirName().toLower() << endl << endl;
     tofile << "all: $(OUTPUT).bin" << endl << endl;
-    
-    dir = QDir::current();
-    
-    // thumb files here
-    tofile << "THUMB_SRC= \\" << endl;
-    
-    // arm files here
-    tofile << "ARM_SRC= \\" << endl;
-    
-    // include dirs here
-    tofile << "INCLUDEDIRS = \\" << endl;
-    tofile << "-I.. \\" << endl;
-    tofile << "-I" + dir.filePath("resources/cores/makecontroller/appboard/makingthings") + " \\" << endl;
-    tofile << "-I" + dir.filePath("resources/cores/makecontroller/controller/makingthings") + " \\" << endl;
-    tofile << "-I" + dir.filePath("resources/cores/makecontroller/controller/makingthings/testing") + " \\" << endl;
-    tofile << "-I" + dir.filePath("resources/cores/makecontroller/controller/lwip/src/include") + " \\" << endl;
-    tofile << "-I" + dir.filePath("resources/cores/makecontroller/controller/lwip/contrib/port/FreeRTOS/AT91SAM7X") + " \\" << endl;
-    tofile << "-I" + dir.filePath("resources/cores/makecontroller/controller/freertos/include") + " \\" << endl;
-    tofile << "-I" + dir.filePath("resources/cores/makecontroller/controller/freertos/portable/GCC/ARM7_AT91SAM7S") + " \\" << endl;
-    tofile << "-I" + dir.filePath("resources/cores/makecontroller/controller/lwip/src/include/ipv4") << endl << endl;
-    // check for libraries...
-    
-    // tools
-    tofile << "CC=arm-elf-gcc" << endl;
-    tofile << "OBJCOPY=arm-elf-objcopy" << endl;
-    tofile << "ARCH=arm-elf-ar" << endl;
-    tofile << "CRT0=" + dir.filePath("resources/cores/makecontroller/controller/startup/boot.s") << endl;
-    tofile << "DEBUG=" << endl;
-    tofile << "OPTIM=-O2" << endl;
-    tofile << "LDSCRIPT=" + dir.filePath("resources/cores/makecontroller/controller/startup/atmel-rom.ld") << endl << endl;
-    
-    // flags
-    tofile << "CFLAGS= \\" << endl;
-    tofile << "$(INCLUDEDIRS) \\" << endl;
-    tofile << "-Wall \\" << endl;
-    tofile << "-Wextra \\" << endl;
-    tofile << "-Wstrict-prototypes \\" << endl;
-    tofile << "-Wmissing-prototypes \\" << endl;
-    tofile << "-Wmissing-declarations \\" << endl;
-    tofile << "-Wno-strict-aliasing \\" << endl;
-    tofile << "-D SAM7_GCC \\" << endl;
-    tofile << "-D THUMB_INTERWORK \\" << endl;
-    tofile << "-mthumb-interwork \\" << endl;
-    tofile << "-mcpu=arm7tdmi \\" << endl;
-    tofile << "-T$(LDSCRIPT) \\" << endl;
-    tofile << "$(DEBUG) \\" << endl;
-    tofile << "$(OPTIM)" << endl << endl;
-    
-    // rules here
-    tofile << "$(OUTPUT).bin : $(OUTPUT).elf" << endl;
-    tofile << "$(OBJCOPY) $(OUTPUT).elf -O binary $(OUTPUT).bin" << endl << endl;
-    
-    tofile << "$(OUTPUT).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CRT0)" << endl;
-    tofile << "  $(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles $(CRT0) $(LINKER_FLAGS)" << endl << endl;
 
-    tofile << "$(THUMB_OBJ) : %.o : %.c" << endl;
-    tofile << "  $(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@" << endl << endl;
+    QFile projectFile(dir.filePath(dir.dirName() + ".xml"));
+    if(projectFile.open(QIODevice::ReadOnly))
+    {
+      QDomDocument projectDoc;
+      if(projectDoc.setContent(&projectFile))
+      {
+        if(projectDoc.doctype().name() == "mcbuilder_project_file")
+        {
+          QString projName = dir.dirName();
+          dir = QDir::current();
 
-    tofile << "$(ARM_OBJ) : %.o : %.c" << endl;
-    tofile << "  $(CC) -c $(CFLAGS) $< -o $@" << endl << endl;
-            
-    tofile << "clean :" << endl;
-    tofile << "  rm -f $(ARM_OBJ)" << endl;
-    tofile << "  rm -f $(THUMB_OBJ)" << endl;
-    tofile << "  rm -f $(OUTPUT).elf" << endl;
-    tofile << "  rm -f $(OUTPUT).bin" << endl;
-    tofile << "  rm -f $(OUTPUT)_o.map" << endl << endl;
+          tofile << "THUMB_SRC= \\" << endl;
+          tofile << "../" + projName + ".c \\" << endl;
+          // now extract the source files from the project file
+          QDomNodeList thumb_src = projectDoc.elementsByTagName("thumb_src").at(0).childNodes();
+          for(int i = 0; i < thumb_src.count(); i++)
+          {
+            QString src_file = thumb_src.at(i).toElement().text();
+            tofile << "  " << dir.filePath("resources/cores/makecontroller/") << src_file << " \\" << endl;
+          }
+          tofile << endl;
+
+          tofile << "ARM_SRC= \\" << endl;
+          QDomNodeList arm_src = projectDoc.elementsByTagName("arm_src").at(0).childNodes();
+          for(int i = 0; i < arm_src.count(); i++)
+          {
+            QString src_file = arm_src.at(i).toElement().text();
+            tofile << "  " << dir.filePath("resources/cores/makecontroller/") << src_file << " \\" << endl;
+          }
+          tofile << endl;
+
+          tofile << "INCLUDEDIRS = \\" << endl;
+          tofile << "  -I.. \\" << endl; // always include the project directory
+          QDomNodeList include_dirs = projectDoc.elementsByTagName("include_dirs").at(0).childNodes();
+          for(int i = 0; i < include_dirs.count(); i++)
+          {
+            QString include_dir = include_dirs.at(i).toElement().text();
+            tofile << "  -I" << dir.filePath("resources/cores/makecontroller/") << include_dir << " \\" << endl;
+          }
+          tofile << endl;
+          // check for libraries...
+
+          // tools
+          tofile << "CC=arm-elf-gcc" << endl;
+          tofile << "OBJCOPY=arm-elf-objcopy" << endl;
+          tofile << "ARCH=arm-elf-ar" << endl;
+          tofile << "CRT0=" + dir.filePath("resources/cores/makecontroller/controller/startup/boot.s") << endl;
+          QString debug = (props->debug()) ? "-G" : "";
+          tofile << "DEBUG=" + debug << endl;
+          QString optLevel = props->optLevel();
+          if(optLevel.contains("-O1"))
+            optLevel = "-O1";
+          else if(optLevel.contains("-O2"))
+            optLevel = "-O2";
+          else if(optLevel.contains("-O3"))
+            optLevel = "-O3";
+          else if(optLevel.contains("-Os"))
+            optLevel = "-Os";
+          else
+            optLevel = "-O0";
+          tofile << "OPTIM=" + optLevel << endl;
+          tofile << "LDSCRIPT=" + dir.filePath("resources/cores/makecontroller/controller/startup/atmel-rom.ld") << endl << endl;
+
+          // flags
+          tofile << "CFLAGS= \\" << endl;
+          tofile << "$(INCLUDEDIRS) \\" << endl;
+          tofile << "-Wall \\" << endl;
+          tofile << "-Wextra \\" << endl;
+          tofile << "-Wstrict-prototypes \\" << endl;
+          tofile << "-Wmissing-prototypes \\" << endl;
+          tofile << "-Wmissing-declarations \\" << endl;
+          tofile << "-Wno-strict-aliasing \\" << endl;
+          tofile << "-D SAM7_GCC \\" << endl;
+          tofile << "-D THUMB_INTERWORK \\" << endl;
+          tofile << "-mthumb-interwork \\" << endl;
+          tofile << "-mcpu=arm7tdmi \\" << endl;
+          tofile << "-T$(LDSCRIPT) \\" << endl;
+          tofile << "$(DEBUG) \\" << endl;
+          tofile << "$(OPTIM)" << endl << endl;
+
+          tofile << "THUMB_FLAGS=-mthumb" << endl;
+          tofile << "LINKER_FLAGS=-Xlinker -o$(OUTPUT).elf -Xlinker -M -Xlinker -Map=$(OUTPUT)_o.map" << endl << endl;
+
+          tofile << "ARM_OBJ = $(ARM_SRC:.c=.o)" << endl;
+          tofile << "THUMB_OBJ = $(THUMB_SRC:.c=.o)" << endl << endl;
+
+          // rules
+          tofile << "$(OUTPUT).bin : $(OUTPUT).elf" << endl;
+          tofile << "\t" << "$(OBJCOPY) $(OUTPUT).elf -O binary $(OUTPUT).bin" << endl << endl;
+
+          tofile << "$(OUTPUT).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CRT0)" << endl;
+          tofile << "\t" << "$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles $(CRT0) $(LINKER_FLAGS)" << endl << endl;
+
+          tofile << "$(THUMB_OBJ) : %.o : %.c" << endl;
+          tofile << "\t" << "$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@" << endl << endl;
+
+          tofile << "$(ARM_OBJ) : %.o : %.c" << endl;
+          tofile << "\t" << "$(CC) -c $(CFLAGS) $< -o $@" << endl << endl;
+                  
+          tofile << "clean :" << endl;
+          tofile << "\t" << "rm -f $(ARM_OBJ)" << endl;
+          tofile << "\t" << "rm -f $(THUMB_OBJ)" << endl;
+          tofile << "\t" << "rm -f $(OUTPUT).elf" << endl;
+          tofile << "\t" << "rm -f $(OUTPUT).bin" << endl;
+          tofile << "\t" << "rm -f $(OUTPUT)_o.map" << endl << endl;
+        }
+        else
+          retval = false;
+      }
+      else
+        retval = false;
+      projectFile.close();
+    }
+    else
+      retval = false;
+    makefile.close();
   }
+  else
+    retval = false;
+  return retval;
+}
+
+/*
+  Return a list of all the source files for this build.
+  This should include all the appropriate files in the core,
+  user files in the project workspace, and any libraries.
+*/
+QFileInfoList Builder::getSourceFiles( )
+{
+  QFileInfoList fileList;
+  return fileList;
+}
+
+QList<QDir> Builder::getLibraryDirs( )
+{
+  QList<QDir> libraries;
+  return libraries;
 }
 
 void Builder::onBuildError(QProcess::ProcessError error)
@@ -304,7 +378,7 @@ void Builder::filterErrorOutput(QString errOutput)
         QStringList sl = errMsg.split(":");
         for(int i = 0; i < sl.count(); i++) // remove any spaces from front and back
           sl[i] = sl.at(i).trimmed();
-
+            
         //printf("err: %s\n", qPrintable(errMsg));
         if(sl.contains("warning"))
         {
@@ -318,6 +392,8 @@ void Builder::filterErrorOutput(QString errOutput)
           QTextStream(&msg) << "Error - " << sl.last() << endl;
           mainWindow->printOutputError(msg);
         }
+        else
+          mainWindow->printOutputError(errMsg);
         errMsg.clear();
       }
       break;

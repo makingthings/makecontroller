@@ -1,20 +1,21 @@
 
-#include "ProjectProperties.h"
+#include "Properties.h"
 #include <QDir>
 
 
-ProjectProperties::ProjectProperties(MainWindow *mainWindow) : QDialog( 0 )
+Properties::Properties(MainWindow *mainWindow) : QDialog( 0 )
 {
 	this->mainWindow = mainWindow;
 	setupUi(this);
 	connect(buttonBox, SIGNAL(accepted()), this, SLOT(applyChanges()));
+  applyChanges( ); // initialize
 }
 
 /*
 	Read the project properties from the project profile, load them into
 	the properties dialog and show it.
 */
-bool ProjectProperties::loadAndShow( )
+bool Properties::loadAndShow( )
 {
 	QDir projectDir(mainWindow->currentProjectPath());
 	QString projectName = projectDir.dirName();
@@ -43,7 +44,7 @@ bool ProjectProperties::loadAndShow( )
 
 // rip through the fields and see if any have changed
 // update appropriately if they have
-void ProjectProperties::applyChanges( )
+void Properties::applyChanges( )
 {
 	QFile file(propFilePath());
 	if(file.open(QIODevice::ReadWrite))
@@ -71,7 +72,7 @@ void ProjectProperties::applyChanges( )
 	}
 }
 
-QString ProjectProperties::propFilePath( )
+QString Properties::propFilePath( )
 {
 	QDir projectDir(mainWindow->currentProjectPath());
 	QString projectName = projectDir.dirName();
@@ -82,9 +83,20 @@ QString ProjectProperties::propFilePath( )
 /*
   Return the optimization level, as fit to be passed as an argument
 */
-QString ProjectProperties::optLevel()
+QString Properties::optLevel()
 {
   return optLevelBox->currentText();
+}
+
+/*
+  Return whether or not to include debug info in this project's build.
+*/ 
+bool Properties::debug()
+{
+  if(debugInfoCheckbox->checkState() == Qt::Checked)
+    return true;
+  else
+    return false;
 }
 
 
