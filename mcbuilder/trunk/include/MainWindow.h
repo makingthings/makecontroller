@@ -6,7 +6,7 @@
 #include "ui_mainwindow.h"
 #include "Highlighter.h"
 #include "Preferences.h"
-#include "ProjectProperties.h"
+#include "Properties.h"
 #include "Uploader.h"
 #include "Builder.h"
 #include "UsbMonitor.h"
@@ -15,7 +15,7 @@
 class Preferences;
 class Uploader;
 class Builder;
-class ProjectProperties;
+class Properties;
 class FindReplace;
 
 class MainWindow : public QMainWindow, private Ui::MainWindow
@@ -46,7 +46,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void closeEvent( QCloseEvent *qcloseevent );
 		Highlighter *highlighter;
 		Preferences *prefs;
-		ProjectProperties *props;
+		Properties *props;
 		Uploader *uploader;
 		Builder *builder;
     UsbMonitor *usbMonitor;

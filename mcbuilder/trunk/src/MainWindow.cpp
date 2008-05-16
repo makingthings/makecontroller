@@ -20,9 +20,9 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 	setupUi(this);
   //initialization
 	prefs = new Preferences(this);
-	props = new ProjectProperties(this);
+	props = new Properties(this);
 	uploader = new Uploader(this);
-	builder = new Builder(this);
+	builder = new Builder(this, props);
   usbMonitor = new UsbMonitor();
   findReplace = new FindReplace(this);
   
@@ -322,7 +322,7 @@ void MainWindow::onNewProject( )
   // grab the templates for a new project
   QDir templatesDir = QDir::current();
   templatesDir.cd("resources/templates");
-  QFile templateFile(templatesDir.filePath("properties_template.xml"));
+  QFile templateFile(templatesDir.filePath("project_template.xml"));
   if( templateFile.open(QIODevice::ReadOnly | QFile::Text) )
   {
     // create the properties file
@@ -335,7 +335,7 @@ void MainWindow::onNewProject( )
     templateFile.close();
   }
   
-  templateFile.setFileName(templatesDir.filePath("project_template.txt"));
+  templateFile.setFileName(templatesDir.filePath("source_template.txt"));
 	if( templateFile.open(QIODevice::ReadOnly | QFile::Text) )
   {
     // and create the main file
@@ -528,13 +528,21 @@ void MainWindow::onBuild( )
 void MainWindow::onBuildComplete(bool success)
 {
   if(success)
+  {
+    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), "Build succeeded.", outputConsole));
     statusBar()->showMessage("Build succeeded.");
+  }
   else
+  {
+    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), "Build failed.", outputConsole));
     statusBar()->showMessage("Build failed.");
+  }
 }
 
 void MainWindow::onCleanComplete()
 {
+  outputConsole->clear();
+  outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), "Clean succeeded.", outputConsole));
   statusBar()->showMessage("Clean succeeded.");
 }
 
@@ -738,14 +746,17 @@ void MainWindow::loadRecentProjects( )
 
 void MainWindow::printOutput(QString text)
 {
-	outputConsole->moveCursor(QTextCursor::End);
-  outputConsole->insertPlainText(text);
+  outputConsole->addItem(text);
+  outputConsole->scrollToBottom();
 }
 
 void MainWindow::printOutputError(QString text)
 {
-	outputConsole->moveCursor(QTextCursor::End);
-  outputConsole->insertPlainText(text);
+  if(text.startsWith("Warning"))
+    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/warning.png"), text.trimmed(), outputConsole));
+  else
+    outputConsole->addItem(text);
+  outputConsole->scrollToBottom();
 }
 
 void MainWindow::openMCReference( )
