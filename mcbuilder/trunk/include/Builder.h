@@ -4,19 +4,22 @@
 #include <QProcess>
 #include <QFileInfo>
 #include "MainWindow.h"
+#include "Properties.h"
 
 class MainWindow;
+class Properties;
 
 class Builder : public QProcess
 {
 	Q_OBJECT
 	public:
-		Builder(MainWindow *mainWindow);
+		Builder(MainWindow *mainWindow, Properties *props);
 		void build(QString projectName);
     void clean(QString projectName);
   
 	private:
 		MainWindow *mainWindow;
+    Properties *props;
     QString errMsg, outputMsg;
     QString currentProjectPath;
 		enum BuildStep { BUILD, CLEAN, SIZER };
@@ -24,11 +27,13 @@ class Builder : public QProcess
     int maxsize;
 		void wrapFile(QString filePath);
     void resetBuildProcess();
-    void createMakefile(QString projectPath);
+    bool createMakefile(QString projectPath);
     void filterOutput(QString output);
     void filterErrorOutput(QString errOutput);
     void sizer();
     void ensureBuildDirExists(QString projPath);
+    QFileInfoList getSourceFiles( );
+    QList<QDir> getLibraryDirs( );
 		
 	private slots:
 		void nextStep( int exitCode, QProcess::ExitStatus exitStatus );

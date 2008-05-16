@@ -153,7 +153,7 @@ bool Builder::createMakefile(QString projectPath)
     tofile << "all: $(OUTPUT).bin" << endl << endl;
 
     QFile projectFile(dir.filePath(dir.dirName() + ".xml"));
-    if(projectFile.open(QIODevice::ReadOnly))
+    if(projectFile.open(QIODevice::ReadOnly|QFile::Text))
     {
       QDomDocument projectDoc;
       if(projectDoc.setContent(&projectFile))
@@ -164,7 +164,7 @@ bool Builder::createMakefile(QString projectPath)
           dir = QDir::current();
 
           tofile << "THUMB_SRC= \\" << endl;
-          tofile << "../" + projName + ".c \\" << endl;
+          tofile << "  ../" + projName + ".c \\" << endl;
           // now extract the source files from the project file
           QDomNodeList thumb_src = projectDoc.elementsByTagName("thumb_src").at(0).childNodes();
           for(int i = 0; i < thumb_src.count(); i++)
