@@ -18,13 +18,6 @@
 MainWindow::MainWindow( ) : QMainWindow( 0 )
 {
 	setupUi(this);
-  //initialization
-	prefs = new Preferences(this);
-	props = new Properties(this);
-	uploader = new Uploader(this);
-	builder = new Builder(this, props);
-  usbMonitor = new UsbMonitor();
-  findReplace = new FindReplace(this);
   
 	setupEditor( );
 	boardTypeGroup = new QActionGroup(menuBoard_Type);
@@ -33,6 +26,14 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 	loadLibraries( );
 	loadRecentProjects( );
   readSettings( );
+  
+  //initialization
+	prefs = new Preferences(this);
+	props = new Properties(this);
+	uploader = new Uploader(this);
+	builder = new Builder(this, props);
+  usbMonitor = new UsbMonitor();
+  findReplace = new FindReplace(this);
   
   // misc. signals
 	connect(editor, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorMoved()));
@@ -530,11 +531,13 @@ void MainWindow::onBuildComplete(bool success)
   if(success)
   {
     outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), "Build succeeded.", outputConsole));
+    outputConsole->scrollToBottom();
     statusBar()->showMessage("Build succeeded.");
   }
   else
   {
     outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), "Build failed.", outputConsole));
+    outputConsole->scrollToBottom();
     statusBar()->showMessage("Build failed.");
   }
 }
@@ -746,7 +749,7 @@ void MainWindow::loadRecentProjects( )
 
 void MainWindow::printOutput(QString text)
 {
-  outputConsole->addItem(text);
+  outputConsole->addItem(text.trimmed());
   outputConsole->scrollToBottom();
 }
 
@@ -755,7 +758,7 @@ void MainWindow::printOutputError(QString text)
   if(text.startsWith("Warning"))
     outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/warning.png"), text.trimmed(), outputConsole));
   else
-    outputConsole->addItem(text);
+    outputConsole->addItem(text.trimmed());
   outputConsole->scrollToBottom();
 }
 

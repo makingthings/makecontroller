@@ -8,7 +8,7 @@ Properties::Properties(MainWindow *mainWindow) : QDialog( 0 )
 	this->mainWindow = mainWindow;
 	setupUi(this);
 	connect(buttonBox, SIGNAL(accepted()), this, SLOT(applyChanges()));
-  applyChanges( ); // initialize
+  load( ); // initialize
 }
 
 /*
@@ -17,15 +17,27 @@ Properties::Properties(MainWindow *mainWindow) : QDialog( 0 )
 */
 bool Properties::loadAndShow( )
 {
-	QDir projectDir(mainWindow->currentProjectPath());
+	load();
+	show();
+	return true;
+}
+
+/*
+  Read the project's properties from the project file
+  and load them into the UI.
+*/
+bool Properties::load()
+{
+  QDir projectDir(mainWindow->currentProjectPath());
 	QString projectName = projectDir.dirName();
 	setWindowTitle(projectName + " - Properties");
 	
 	// read the properties file
 	QFile file(propFilePath());
-	if(file.open(QIODevice::ReadOnly))
+	if(file.open(QIODevice::ReadOnly|QFile::Text))
 	{
-		if(propsFile.setContent(&file))
+		QDomDocument propsFile;
+    if(propsFile.setContent(&file))
 		{
 			versionEdit->setText(propsFile.elementsByTagName("version").at(0).toElement().text());
 			heapSizeEdit->setText(propsFile.elementsByTagName("heapsize").at(0).toElement().text());
@@ -38,8 +50,7 @@ bool Properties::loadAndShow( )
 	}
 	else
 		return false;
-	show();
-	return true;
+  return true;
 }
 
 // rip through the fields and see if any have changed
@@ -47,31 +58,39 @@ bool Properties::loadAndShow( )
 void Properties::applyChanges( )
 {
 	QFile file(propFilePath());
-	if(file.open(QIODevice::ReadWrite))
+	if(file.open(QIODevice::ReadWrite|QFile::Text))
 	{
-		// to get at the actual text of an element, you need to grab its child,
-		// which will be a QDomText node
-		if(versionEdit->text() != propsFile.elementsByTagName("version").at(0).toElement().text())
-			propsFile.elementsByTagName("version").at(0).firstChild().setNodeValue(versionEdit->text());
-			
-		if(heapSizeEdit->text() != propsFile.elementsByTagName("heapsize").at(0).toElement().text())
-			propsFile.elementsByTagName("heapsize").at(0).firstChild().setNodeValue(heapSizeEdit->text());
-			
-		if(optLevelBox->currentText() != propsFile.elementsByTagName("optlevel").at(0).toElement().text())
-			propsFile.elementsByTagName("optlevel").at(0).firstChild().setNodeValue(optLevelBox->currentText());
-		
-		Qt::CheckState state = (propsFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
-		if(debugInfoCheckbox->checkState() != state)
-		{
-			QString debugstr = (debugInfoCheckbox->checkState() == Qt::Checked) ? "true" : "false";
-			propsFile.elementsByTagName("debuginfo").at(0).firstChild().setNodeValue(debugstr);
-		}
-		
-		file.write(propsFile.toByteArray());
+		QDomDocument propsFile;
+    if(propsFile.setContent(&file))
+    {
+      // to get at the actual text of an element, you need to grab its child,
+      // which will be a QDomText node
+      if(versionEdit->text() != propsFile.elementsByTagName("version").at(0).toElement().text())
+        propsFile.elementsByTagName("version").at(0).firstChild().setNodeValue(versionEdit->text());
+        
+      if(heapSizeEdit->text() != propsFile.elementsByTagName("heapsize").at(0).toElement().text())
+        propsFile.elementsByTagName("heapsize").at(0).firstChild().setNodeValue(heapSizeEdit->text());
+        
+      if(optLevelBox->currentText() != propsFile.elementsByTagName("optlevel").at(0).toElement().text())
+        propsFile.elementsByTagName("optlevel").at(0).firstChild().setNodeValue(optLevelBox->currentText());
+      
+      Qt::CheckState state = (propsFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
+      if(debugInfoCheckbox->checkState() != state)
+      {
+        QString debugstr = (debugInfoCheckbox->checkState() == Qt::Checked) ? "true" : "false";
+        propsFile.elementsByTagName("debuginfo").at(0).firstChild().setNodeValue(debugstr);
+      }
+      file.resize(0); // clear out the current contents so we can update them
+      file.write(propsFile.toByteArray(2));
+    }
 		file.close();
 	}
 }
 
+/*
+  Return the path of the project file
+  for the current project.
+*/
 QString Properties::propFilePath( )
 {
 	QDir projectDir(mainWindow->currentProjectPath());
@@ -81,7 +100,7 @@ QString Properties::propFilePath( )
 }
 
 /*
-  Return the optimization level, as fit to be passed as an argument
+  Return the optimization level
 */
 QString Properties::optLevel()
 {

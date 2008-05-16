@@ -19,8 +19,8 @@ class Properties : public QDialog, private Ui::Properties
 		bool loadAndShow();
 	private:
 		MainWindow *mainWindow;
-		QDomDocument propsFile;
 		QString propFilePath( );
+    bool load();
 	private slots:
 		void applyChanges( );
 
