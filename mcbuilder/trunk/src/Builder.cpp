@@ -1,7 +1,7 @@
 
 #include <QDir>
 #include <QTextStream>
-#include <QDate>
+#include <QDateTime>
 #include "Builder.h"
 
 /*
@@ -29,6 +29,7 @@ void Builder::build(QString projectName)
 {
   ensureBuildDirExists(projectName);
   createMakefile(projectName);
+  createConfigFile(projectName);
   buildStep = BUILD;
   currentProjectPath = projectName;
   setWorkingDirectory(projectName + "/build");
@@ -145,7 +146,7 @@ bool Builder::createMakefile(QString projectPath)
     QTextStream tofile(&makefile);
     tofile << "##################################################################################################" << endl;
     tofile << "#" << endl << "# This file generated automatically by mcbuilder - ";
-    tofile << QDate::currentDate().toString("MMM d, yyyy") << endl;
+    tofile << QDateTime::currentDateTime().toString("MMM d, yyyy h:m ap") << endl;
     tofile << "# Any manual changes made to this file will be overwritten the next time mcbuilder builds." << endl << "#" << endl;
     tofile << "##################################################################################################" << endl << endl;
 
@@ -275,20 +276,63 @@ bool Builder::createMakefile(QString projectPath)
 }
 
 /*
-  Return a list of all the source files for this build.
-  This should include all the appropriate files in the core,
-  user files in the project workspace, and any libraries.
+  Create config.h.
+  This file specifies several build conditions and is set
+  up in the UI via the project properties.
 */
-QFileInfoList Builder::getSourceFiles( )
+bool Builder::createConfigFile(QString projectPath)
 {
-  QFileInfoList fileList;
-  return fileList;
+  QDir dir(projectPath);
+  QFile configFile(dir.filePath("config_.h"));
+  if(configFile.open(QIODevice::WriteOnly|QFile::Text))
+  {
+    QTextStream tofile(&configFile);
+    tofile << "/****************************************************************" << endl << endl;
+    tofile << "  config.h" << endl;
+    tofile << "  Generated automatically by mcbuilder." << endl << endl;
+    tofile << "****************************************************************/" << endl << endl;
+    
+    tofile << "#ifndef CONFIG_H" << endl << "#define CONFIG_H" << endl << endl;
+    
+    tofile << "#include \"controller.h\"" << endl << "#include \"appboard.h\"" << endl << "#include \"error.h\"" << endl << endl;
+    
+    tofile << "#define CONTROLLER_HEAPSIZE " << props->heapsize() << endl;
+    tofile << "#define FIRMWARE_NAME " << "\"" + dir.dirName() + "\"" << endl;
+    int maj, min, bld;
+    parseVersionNumber( &maj, &min, &bld );
+    tofile << "#define FIRMWARE_MAJOR_VERSION " << maj << endl;
+    tofile << "#define FIRMWARE_MINOR_VERSION " << min << endl;
+    tofile << "#define FIRMWARE_BUILD_NUMBER " << bld << endl << endl;
+    
+    if(props->includeOsc())
+      tofile << "#define OSC" << endl;
+    
+    if(props->includeUsb())
+      tofile << "#define MAKE_CTRL_USB" << endl;
+      
+    if(props->includeNetwork())
+    {
+      tofile << "#define MAKE_CTRL_NETWORK" << endl;
+      tofile << "#define NETWORK_MEM_POOL " << props->networkMempool() << endl;
+      tofile << "#define NETWORK_UDP_CONNS " << props->udpSockets() << endl;
+      tofile << "#define NETWORK_TCP_CONNS " << props->tcpSockets() << endl;
+      tofile << "#define NETWORK_TCP_LISTEN_CONNS " << props->tcpServers() << endl;
+    }
+    tofile << endl;
+      
+    tofile << "#define CONTROLLER_VERSION  100" << endl << "#define APPBOARD_VERSION  100" << endl << endl;
+    
+    tofile << "#endif // CONFIG_H" << endl;
+    configFile.close();
+  }
+  return true;
 }
 
-QList<QDir> Builder::getLibraryDirs( )
+bool Builder::parseVersionNumber( int *maj, int *min, int *bld )
 {
-  QList<QDir> libraries;
-  return libraries;
+  QStringList versions = props->version().split(".");
+  
+  return true;
 }
 
 void Builder::onBuildError(QProcess::ProcessError error)
