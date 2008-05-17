@@ -29,6 +29,8 @@ bool Properties::loadAndShow( )
 bool Properties::load()
 {
   QDir projectDir(mainWindow->currentProjectPath());
+  if(!projectDir.exists())
+    return false;
 	QString projectName = projectDir.dirName();
 	setWindowTitle(projectName + " - Properties");
 	
@@ -45,6 +47,20 @@ bool Properties::load()
 			optLevelBox->setCurrentIndex(optLevelBox->findText(optlevel));
 			Qt::CheckState state = (propsFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
 			debugInfoCheckbox->setCheckState(state);
+      
+      state = (propsFile.elementsByTagName("include_osc").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
+			oscBox->setCheckState(state);
+      
+      state = (propsFile.elementsByTagName("include_usb").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
+			usbBox->setCheckState(state);
+      
+      state = (propsFile.elementsByTagName("include_network").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
+			networkBox->setCheckState(state);
+      
+      networkMempoolEdit->setText(propsFile.elementsByTagName("network_mempool").at(0).toElement().text());
+      udpSocketEdit->setText(propsFile.elementsByTagName("network_udp_sockets").at(0).toElement().text());
+      tcpSocketEdit->setText(propsFile.elementsByTagName("network_tcp_sockets").at(0).toElement().text());
+      tcpServerEdit->setText(propsFile.elementsByTagName("network_tcp_servers").at(0).toElement().text());
 		}
 		file.close();
 	}
@@ -80,7 +96,41 @@ void Properties::applyChanges( )
         QString debugstr = (debugInfoCheckbox->checkState() == Qt::Checked) ? "true" : "false";
         propsFile.elementsByTagName("debuginfo").at(0).firstChild().setNodeValue(debugstr);
       }
-      file.resize(0); // clear out the current contents so we can update them
+      
+      state = (propsFile.elementsByTagName("include_osc").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
+      if(oscBox->checkState() != state)
+      {
+        QString str = (oscBox->checkState() == Qt::Checked) ? "true" : "false";
+        propsFile.elementsByTagName("include_osc").at(0).firstChild().setNodeValue(str);
+      }
+      
+      state = (propsFile.elementsByTagName("include_usb").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
+      if(usbBox->checkState() != state)
+      {
+        QString str = (usbBox->checkState() == Qt::Checked) ? "true" : "false";
+        propsFile.elementsByTagName("include_usb").at(0).firstChild().setNodeValue(str);
+      }
+      
+      state = (propsFile.elementsByTagName("include_network").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
+      if(networkBox->checkState() != state)
+      {
+        QString str = (networkBox->checkState() == Qt::Checked) ? "true" : "false";
+        propsFile.elementsByTagName("include_network").at(0).firstChild().setNodeValue(str);
+      }
+      
+      if(networkMempoolEdit->text() != propsFile.elementsByTagName("network_mempool").at(0).toElement().text())
+        propsFile.elementsByTagName("network_mempool").at(0).firstChild().setNodeValue(networkMempoolEdit->text());
+        
+      if(udpSocketEdit->text() != propsFile.elementsByTagName("network_udp_sockets").at(0).toElement().text())
+        propsFile.elementsByTagName("network_udp_sockets").at(0).firstChild().setNodeValue(udpSocketEdit->text());
+      
+      if(tcpSocketEdit->text() != propsFile.elementsByTagName("network_tcp_sockets").at(0).toElement().text())
+        propsFile.elementsByTagName("network_tcp_sockets").at(0).firstChild().setNodeValue(tcpSocketEdit->text());
+      
+      if(tcpServerEdit->text() != propsFile.elementsByTagName("network_tcp_servers").at(0).toElement().text())
+        propsFile.elementsByTagName("network_tcp_servers").at(0).firstChild().setNodeValue(tcpServerEdit->text());
+      
+      file.resize(0); // clear out the current contents so we can update them, since we opened as read/write
       file.write(propsFile.toByteArray(2));
     }
 		file.close();
@@ -112,11 +162,15 @@ QString Properties::optLevel()
 */ 
 bool Properties::debug()
 {
-  if(debugInfoCheckbox->checkState() == Qt::Checked)
-    return true;
-  else
-    return false;
+  return (debugInfoCheckbox->checkState() == Qt::Checked);
 }
+
+int Properties::heapsize()
+{
+  return heapSizeEdit->text().toInt();
+}
+
+// versionEdit
 
 
 

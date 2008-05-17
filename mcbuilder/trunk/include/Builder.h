@@ -28,12 +28,12 @@ class Builder : public QProcess
 		void wrapFile(QString filePath);
     void resetBuildProcess();
     bool createMakefile(QString projectPath);
+    bool createConfigFile(QString projectPath);
     void filterOutput(QString output);
     void filterErrorOutput(QString errOutput);
     void sizer();
     void ensureBuildDirExists(QString projPath);
-    QFileInfoList getSourceFiles( );
-    QList<QDir> getLibraryDirs( );
+    bool parseVersionNumber( int *maj, int *min, int *bld );
 		
 	private slots:
 		void nextStep( int exitCode, QProcess::ExitStatus exitStatus );
