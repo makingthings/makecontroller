@@ -2,12 +2,25 @@
 #include "Properties.h"
 #include <QDir>
 
+#define DEFAULT_VERSION "0.1.0"
+#define DEFAULT_HEAPSIZE 18000
+#define DEFAULT_OPTLEVEL "Optimize For Size (-Os)"
+#define DEFAULT_INCLUDE_DEBUG Qt::Unchecked
+#define DEFAULT_INCLUDE_OSC Qt::Unchecked
+#define DEFAULT_INCLUDE_USB Qt::Unchecked
+#define DEFAULT_INCLUDE_NETWORK Qt::Unchecked
+#define DEFAULT_NETWORK_MEMPOOL 2000
+#define DEFAULT_UDP_SOCKETS 4
+#define DEFAULT_TCP_SOCKETS 4
+#define DEFAULT_TCP_SERVERS 2
 
 Properties::Properties(MainWindow *mainWindow) : QDialog( 0 )
 {
 	this->mainWindow = mainWindow;
 	setupUi(this);
 	connect(buttonBox, SIGNAL(accepted()), this, SLOT(applyChanges()));
+  connect(defaultsButton, SIGNAL(clicked()), this, SLOT(restoreDefaults()));
+  connect(networkBox, SIGNAL(stateChanged(int)), this, SLOT(onNetworkChanged(int)));
   load( ); // initialize
 }
 
@@ -56,6 +69,7 @@ bool Properties::load()
       
       state = (propsFile.elementsByTagName("include_network").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
 			networkBox->setCheckState(state);
+      setNetworkSectionEnabled(state == Qt::Checked);
       
       networkMempoolEdit->setText(propsFile.elementsByTagName("network_mempool").at(0).toElement().text());
       udpSocketEdit->setText(propsFile.elementsByTagName("network_udp_sockets").at(0).toElement().text());
@@ -149,28 +163,39 @@ QString Properties::propFilePath( )
 	return projectDir.filePath(projectName.remove(" ") + ".xml"); 
 }
 
-/*
-  Return the optimization level
-*/
-QString Properties::optLevel()
+void Properties::restoreDefaults( )
 {
-  return optLevelBox->currentText();
+  versionEdit->setText(DEFAULT_VERSION);
+  heapSizeEdit->setText(QString::number(DEFAULT_HEAPSIZE));
+  optLevelBox->setCurrentIndex(optLevelBox->findText(DEFAULT_OPTLEVEL));
+  debugInfoCheckbox->setCheckState(DEFAULT_INCLUDE_DEBUG);
+  oscBox->setCheckState(DEFAULT_INCLUDE_OSC);
+  usbBox->setCheckState(DEFAULT_INCLUDE_USB);
+  networkBox->setCheckState(DEFAULT_INCLUDE_NETWORK);
+  networkMempoolEdit->setText(QString::number(DEFAULT_NETWORK_MEMPOOL));
+  udpSocketEdit->setText(QString::number(DEFAULT_UDP_SOCKETS));
+  tcpSocketEdit->setText(QString::number(DEFAULT_TCP_SOCKETS));
+  tcpServerEdit->setText(QString::number(DEFAULT_TCP_SERVERS));
 }
 
-/*
-  Return whether or not to include debug info in this project's build.
-*/ 
-bool Properties::debug()
+void Properties::onNetworkChanged(int state)
 {
-  return (debugInfoCheckbox->checkState() == Qt::Checked);
+  setNetworkSectionEnabled(state == Qt::Checked);
 }
 
-int Properties::heapsize()
+void Properties::setNetworkSectionEnabled(bool state)
 {
-  return heapSizeEdit->text().toInt();
+  networkMempoolEdit->setEnabled(state);
+  networkMempoolLabel->setEnabled(state);
+  udpSocketEdit->setEnabled(state);
+  udpSocketLabel->setEnabled(state);
+  tcpSocketEdit->setEnabled(state);
+  tcpSocketLabel->setEnabled(state);
+  tcpServerEdit->setEnabled(state);
+  tcpServerLabel->setEnabled(state);
 }
 
-// versionEdit
+
 
 
 

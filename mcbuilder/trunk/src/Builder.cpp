@@ -200,7 +200,7 @@ bool Builder::createMakefile(QString projectPath)
           tofile << "OBJCOPY=arm-elf-objcopy" << endl;
           tofile << "ARCH=arm-elf-ar" << endl;
           tofile << "CRT0=" + dir.filePath("resources/cores/makecontroller/controller/startup/boot.s") << endl;
-          QString debug = (props->debug()) ? "-G" : "";
+          QString debug = (props->debug()) ? "-g" : "";
           tofile << "DEBUG=" + debug << endl;
           QString optLevel = props->optLevel();
           if(optLevel.contains("-O1"))
@@ -283,7 +283,7 @@ bool Builder::createMakefile(QString projectPath)
 bool Builder::createConfigFile(QString projectPath)
 {
   QDir dir(projectPath);
-  QFile configFile(dir.filePath("config_.h"));
+  QFile configFile(dir.filePath("config.h"));
   if(configFile.open(QIODevice::WriteOnly|QFile::Text))
   {
     QTextStream tofile(&configFile);
@@ -331,7 +331,26 @@ bool Builder::createConfigFile(QString projectPath)
 bool Builder::parseVersionNumber( int *maj, int *min, int *bld )
 {
   QStringList versions = props->version().split(".");
-  
+  if(versions.count() == 3)
+  {
+    bool ok = false;
+    int temp;
+    temp = versions.takeFirst().toInt(&ok);
+    if(ok)
+      *maj = temp;
+    temp = versions.takeFirst().toInt(&ok);
+    if(ok)
+      *min = temp;
+    temp = versions.takeFirst().toInt(&ok);
+    if(ok)
+      *bld = temp;
+  }
+  else // just use the default
+  {
+    *maj = 0;
+    *min = 1;
+    *bld = 0;
+  }
   return true;
 }
 
