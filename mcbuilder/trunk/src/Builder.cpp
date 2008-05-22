@@ -49,6 +49,9 @@ void Builder::clean(QString projectName)
   start("make", args);
 }
 
+/*
+  If there's no build directory within a project, create one.
+*/
 void Builder::ensureBuildDirExists(QString projPath)
 {
   QDir dir(projPath);
@@ -56,6 +59,9 @@ void Builder::ensureBuildDirExists(QString projPath)
     dir.mkdir("build");
 }
 
+/*
+  Run the program that determines the size of a successfully created binary.
+*/
 void Builder::sizer()
 {
   buildStep = SIZER;
@@ -328,9 +334,14 @@ bool Builder::createConfigFile(QString projectPath)
   return true;
 }
 
+/*
+  Convert a version number string to 3 ints.
+  We expect the version string to be in the form X.Y.Z
+*/
 bool Builder::parseVersionNumber( int *maj, int *min, int *bld )
 {
   QStringList versions = props->version().split(".");
+  bool success = true;
   if(versions.count() == 3)
   {
     bool ok = false;
@@ -338,14 +349,20 @@ bool Builder::parseVersionNumber( int *maj, int *min, int *bld )
     temp = versions.takeFirst().toInt(&ok);
     if(ok)
       *maj = temp;
+    else
+      success = false;
     temp = versions.takeFirst().toInt(&ok);
     if(ok)
       *min = temp;
+    else
+      success = false;
     temp = versions.takeFirst().toInt(&ok);
     if(ok)
       *bld = temp;
+    else
+      success = false;
   }
-  else // just use the default
+  if(versions.count() != 3 || !success) // just use the default
   {
     *maj = 0;
     *min = 1;

@@ -278,7 +278,6 @@
      <string>Monitor</string>
     </property>
     <addaction name="actionUsb_Monitor" />
-    <addaction name="actionEthernet_Monitor" />
    </widget>
    <addaction name="menuFile" />
    <addaction name="menuEdit" />
@@ -346,6 +345,9 @@
   <action name="actionProperties" >
    <property name="text" >
     <string>Properties...</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+P</string>
    </property>
   </action>
   <action name="actionUpload" >

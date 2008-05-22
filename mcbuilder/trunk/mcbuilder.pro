@@ -45,3 +45,31 @@ macx{
   QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
   QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
 }
+
+# *******************************************
+#              qextserialport
+# *******************************************
+INCLUDEPATH += src/qextserialport
+HEADERS +=  src/qextserialport/qextserialbase.h \
+            src/qextserialport/qextserialport.h \
+            src/qextserialport/qextserialenumerator.h
+            
+SOURCES +=  src/qextserialport/qextserialbase.cpp \
+            src/qextserialport/qextserialport.cpp \
+            src/qextserialport/qextserialenumerator.cpp
+
+unix:HEADERS  += src/qextserialport/posix_qextserialport.h
+unix:SOURCES  += src/qextserialport/posix_qextserialport.cpp
+unix:DEFINES  += _TTY_POSIX_
+macx: LIBS += -framework IOKit # use IOKit on OS X
+unix{ !macx: LIBS += -lusb } # use libusb on other unices
+
+win32:HEADERS += src/qextserialport/win_qextserialport.h
+win32:SOURCES += src/qextserialport/win_qextserialport.cpp
+win32:DEFINES += _TTY_WIN_
+
+
+
+
+
+
