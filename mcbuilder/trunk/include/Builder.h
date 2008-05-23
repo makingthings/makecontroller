@@ -25,7 +25,6 @@ class Builder : public QProcess
 		enum BuildStep { BUILD, CLEAN, SIZER };
 		BuildStep buildStep;
     int maxsize;
-		void wrapFile(QString filePath);
     void resetBuildProcess();
     bool createMakefile(QString projectPath);
     bool createConfigFile(QString projectPath);

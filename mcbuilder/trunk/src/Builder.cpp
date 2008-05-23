@@ -6,8 +6,8 @@
 
 /*
 	Builder takes a project and turns it into a binary executable.
-	We need to wrap the project into a class, and generate a Makefile
-	based on the general Preferences and Properties for this project.
+	We need to generate a Makefile based on the general Preferences 
+  and Properties for this project.
 */
 Builder::Builder(MainWindow *mainWindow, Properties *props) : QProcess( 0 )
 {
@@ -21,7 +21,6 @@ Builder::Builder(MainWindow *mainWindow, Properties *props) : QProcess( 0 )
 
 /*
 	Prepare the build process:
-	- wrap each project file in a class
 	- generate lists of C and C++ files to be compiled
 	Then fire it off.
 */
@@ -33,7 +32,7 @@ void Builder::build(QString projectName)
   buildStep = BUILD;
   currentProjectPath = projectName;
   setWorkingDirectory(projectName + "/build");
-  start("make");
+  start(Preferences::makePath() + "/make");
 }
 
 /*
@@ -46,7 +45,7 @@ void Builder::clean(QString projectName)
   currentProjectPath = projectName;
   setWorkingDirectory(projectName + "/build");
   QStringList args = QStringList() << "clean";
-  start("make", args);
+  start(Preferences::makePath() + "/make", args);
 }
 
 /*
@@ -68,32 +67,7 @@ void Builder::sizer()
   setWorkingDirectory(currentProjectPath + "/build");
   QDir dir(currentProjectPath);
   QStringList args = QStringList() << dir.dirName().toLower() + ".elf";
-  start("arm-elf-size", args);
-}
-
-void Builder::wrapFile(QString filePath)
-{
-  QDir dir(filePath);
-	QFile project(dir.filePath(dir.dirName() + ".cpp"));
-	QFile file(dir.filePath("temp.cpp"));
-	if(file.open(QIODevice::WriteOnly | QFile::Text) && project.open(QIODevice::ReadOnly | QFile::Text))
-	{
-		QTextStream out(&file);
-		out << QString("class ") + dir.dirName() << endl << "{" << endl;
-		out << "  public:" << endl;
-		
-		QTextStream in(&project);
-		QString line = in.readLine();
-		while (!line.isNull())
-		{
-			line.append("\n");
-			out << line.prepend("  ");
-			line = in.readLine();
-		}
-		
-		out << "};" << endl;
-		file.close();
-	}
+  start(Preferences::toolsPath() + "/arm-elf-size", args);
 }
 
 /*
@@ -202,9 +176,9 @@ bool Builder::createMakefile(QString projectPath)
           // check for libraries...
 
           // tools
-          tofile << "CC=arm-elf-gcc" << endl;
-          tofile << "OBJCOPY=arm-elf-objcopy" << endl;
-          tofile << "ARCH=arm-elf-ar" << endl;
+          tofile << "CC=" << Preferences::toolsPath() << "/arm-elf-gcc" << endl;
+          tofile << "OBJCOPY=" << Preferences::toolsPath() << "/arm-elf-objcopy" << endl;
+          tofile << "ARCH=" << Preferences::toolsPath() << "/arm-elf-ar" << endl;
           tofile << "CRT0=" + dir.filePath("resources/cores/makecontroller/controller/startup/boot.s") << endl;
           QString debug = (props->debug()) ? "-g" : "";
           tofile << "DEBUG=" + debug << endl;
@@ -414,7 +388,7 @@ void Builder::filterOutput(QString output)
       {
         //printf("msg: %s\n", qPrintable(outputMsg));
         QStringList sl = outputMsg.split(" ");
-        if(sl.at(0) == "arm-elf-gcc" && sl.at(1) == "-c")
+        if(sl.first().endsWith("arm-elf-gcc") && sl.at(1) == "-c")
         {
           QStringList sl2 = sl.last().split("/");
           mainWindow->buildingNow(sl2.last());

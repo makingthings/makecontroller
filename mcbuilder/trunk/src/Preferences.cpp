@@ -15,11 +15,11 @@ QString Preferences::workspace( )
 {
 	QSettings settings("MakingThings", "mcbuilder");
 	#ifdef Q_WS_MAC
-	QString workspace = QDir::home().path() + QDir::toNativeSeparators("/Documents/mcbuilder");
+	QString workspace = QDir::home().path() + "/Documents/mcbuilder";
 	#else
-	QString workspace = QDir::home().path() + "mcbuilder";
+	QString workspace = QDir::home().path() + "/mcbuilder";
 	#endif
-	workspace = settings.value("General/workspace", workspace).toString();
+	workspace = settings.value("workspace", workspace).toString();
 	// always make sure the workspace directory exists
 	QDir dir(workspace);
 	if(!dir.exists())
@@ -35,25 +35,55 @@ QString Preferences::boardType( )
 {
 	QSettings settings("MakingThings", "mcbuilder");
 	// select Make Controller by default
-	return settings.value("General/boardType", "Make Controller").toString();
+	return settings.value("boardType", "Make Controller").toString();
+}
+
+QString Preferences::toolsPath( ) // static
+{
+  QSettings settings("MakingThings", "mcbuilder");
+  QString path = settings.value("toolsPath").toString();
+  if(path.isEmpty())
+    return QDir::currentPath() + "/resources/tools";
+  else
+    return path;
+}
+
+QString Preferences::makePath( ) // static
+{
+  QSettings settings("MakingThings", "mcbuilder");
+  QString path = settings.value("makePath").toString();
+  if(path.isEmpty())
+    return QDir::currentPath() + "/resources/tools";
+  else
+    return path;
+}
+
+QString Preferences::sam7Path( ) // static
+{
+  QSettings settings("MakingThings", "mcbuilder");
+  QString path = settings.value("sam7Path").toString();
+  if(path.isEmpty())
+    return QDir::currentPath() + "/resources/tools";
+  else
+    return path;
 }
 
 // read the current settings, load them into the preferences form and then display it
 void Preferences::loadAndShow( )
 {
 	QSettings settings("MakingThings", "mcbuilder");
-	settings.beginGroup("General");
-	workspaceEdit->setText( Preferences::workspace() );
-	settings.endGroup();
-	
-	settings.beginGroup("Editor");
+  workspaceEdit->setText( workspace() );
+  makePathEdit->setText( settings.value("makePath").toString() );
+  toolsPathEdit->setText( settings.value("toolsPath").toString() );
+  sam7PathEdit->setText( settings.value("sam7Path").toString() );
+  
 	tabWidth->setText(QString::number(settings.value("tabWidth", 2).toInt()));
-	settings.endGroup();
-	// finally
-	this->show( );
+	show( );
 }
 
-// when the "browse" button is clicked in the general prefs, this handles it
+/*
+  The browse button has been clicked.
+*/
 void Preferences::browseWorkspace( )
 {
 	QString dummy;
@@ -69,18 +99,17 @@ void Preferences::applyChanges( )
 {
 	QSettings settings("MakingThings", "mcbuilder");
 	
-	settings.beginGroup("General");
 	settings.setValue("workspace", workspaceEdit->text());
-	settings.endGroup();
+  settings.setValue("makePath", makePathEdit->text());
+  settings.setValue("toolsPath", toolsPathEdit->text());
+  settings.setValue("sam7Path", sam7PathEdit->text());
 	
-	settings.beginGroup("Editor");
 	int oldTabWidth = settings.value("tabWidth").toInt();
 	if( oldTabWidth != tabWidth->text().toInt() )
 	{
 		settings.setValue("tabWidth", tabWidth->text().toInt());
 		mainWindow->setTabWidth( tabWidth->text().toInt() );
 	}
-	settings.endGroup();
 }
 
 

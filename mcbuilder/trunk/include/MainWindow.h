@@ -82,6 +82,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
     void onLibrary(QAction *example);
 		void onFileSelection(QString filename);
 		void openMCReference( );
+    void openManual( );
 };
 
 #endif // MAINWINDOW_H

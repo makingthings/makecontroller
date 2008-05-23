@@ -40,7 +40,11 @@ bool UsbMonitor::loadAndShow( )
 */
 void UsbMonitor::onCommandLine( )
 {
-  
+  if(port->isOpen() && !commandLine->currentText().isEmpty())
+  {
+    port->write(commandLine->currentText().toUtf8());
+    commandLine->clear();
+  }
 }
 
 /*
@@ -65,7 +69,8 @@ void UsbMonitor::enumerate()
   // check for new ports...
   foreach(QextPortInfo portInfo, portInfos)
   {
-    if(!ports.contains(portInfo.portName) 
+    if(portInfo.friendName.startsWith("Make Controller Ki")
+        && !ports.contains(portInfo.portName) 
         && !closedPorts.contains(portInfo.portName)) // found a new port
     {
       openDevice(portInfo.portName);
@@ -142,6 +147,7 @@ void UsbMonitor::onFinished()
 {
   enumerateTimer.stop();
   closeDevice();
+  outputConsole->clear();
 }
 
 /*
@@ -150,7 +156,21 @@ void UsbMonitor::onFinished()
 */
 void UsbMonitor::processNewData()
 {
-  
+  QByteArray newData;
+  if(!port->isOpen())
+    return;
+  int avail = port->bytesAvailable();
+  if(avail > 0 )
+  {
+    newData.resize(avail);
+    if(port->read(newData.data(), newData.size()) < 0)
+      return;
+    else
+    {
+      outputConsole->moveCursor(QTextCursor::End);
+      outputConsole->insertPlainText(newData);
+    }
+  }
 }
 
 
