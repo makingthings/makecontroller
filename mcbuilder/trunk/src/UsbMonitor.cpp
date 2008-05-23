@@ -1,3 +1,20 @@
+/*********************************************************************************
+
+ Copyright 2008 MakingThings
+
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
+
+*********************************************************************************/
+
 
 #include "UsbMonitor.h"
 #include "qextserialenumerator.h"
@@ -27,7 +44,8 @@ UsbMonitor::UsbMonitor( ) : QDialog( )
 */
 bool UsbMonitor::loadAndShow( )
 {
-  openDevice(portList->currentText());
+  if(!portList->currentText().isEmpty())
+    openDevice(portList->currentText());
   enumerate();
   enumerateTimer.start(ENUM_FREQUENCY);
   this->show();
@@ -103,9 +121,12 @@ void UsbMonitor::openDevice(QString name)
   port->setPortName(name);
   if(port->open(QIODevice::ReadWrite))
   {
-    ports.append(name);
+    if(!ports.contains(name))
+      ports.append(name);
     if(portList->findText(name) < 0)
       portList->addItem(name);
+    // the port might already be in the list, but we always want to set its icon appropriately
+    portList->setItemIcon( portList->findText(name), QIcon(":/icons/green_dot.png"));
     openCloseButton->setText("Close");
   }
 }
@@ -132,11 +153,17 @@ void UsbMonitor::onOpenClose()
 {
   if(port->isOpen())
   {
+    // put this port name on the list of ports manually closed by the user
+    // so it doesn't get added into the UI multiple times when it's subsequently opened
     closedPorts.append(port->portName());
+    portList->setItemIcon( portList->currentIndex(), QIcon(":/icons/red_dot.png"));
     closeDevice();
   }
   else
+  {
     openDevice(portList->currentText());
+    portList->setItemIcon( portList->currentIndex(), QIcon(":/icons/green_dot.png"));
+  }
 }
 
 /*

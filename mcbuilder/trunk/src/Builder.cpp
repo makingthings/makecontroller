@@ -1,3 +1,20 @@
+/*********************************************************************************
+
+ Copyright 2008 MakingThings
+
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
+
+*********************************************************************************/
+
 
 #include <QDir>
 #include <QTextStream>
@@ -132,7 +149,8 @@ bool Builder::createMakefile(QString projectPath)
 
     tofile << "OUTPUT = " + dir.dirName().toLower() << endl << endl;
     tofile << "all: $(OUTPUT).bin" << endl << endl;
-
+    
+    // read the project file in to get a list of the files we want to build, and include dirs
     QFile projectFile(dir.filePath(dir.dirName() + ".xml"));
     if(projectFile.open(QIODevice::ReadOnly|QFile::Text))
     {
@@ -142,10 +160,13 @@ bool Builder::createMakefile(QString projectPath)
         if(projectDoc.doctype().name() == "mcbuilder_project_file")
         {
           QString projName = dir.dirName();
+          QList<QFileInfo> cFiles = dir.entryInfoList(QStringList("*.c"));
           dir = QDir::current();
 
           tofile << "THUMB_SRC= \\" << endl;
-          tofile << "  ../" + projName + ".c \\" << endl;
+          foreach(QFileInfo filename, cFiles) // add all the C files in the project directory to THUMB source
+            tofile << "  " << filename.filePath() << " \\" << endl; // may eventually change this
+            
           // now extract the source files from the project file
           QDomNodeList thumb_src = projectDoc.elementsByTagName("thumb_src").at(0).childNodes();
           for(int i = 0; i < thumb_src.count(); i++)
@@ -176,9 +197,10 @@ bool Builder::createMakefile(QString projectPath)
           // check for libraries...
 
           // tools
-          tofile << "CC=" << Preferences::toolsPath() << "/arm-elf-gcc" << endl;
-          tofile << "OBJCOPY=" << Preferences::toolsPath() << "/arm-elf-objcopy" << endl;
-          tofile << "ARCH=" << Preferences::toolsPath() << "/arm-elf-ar" << endl;
+          QString toolsPath = Preferences::toolsPath();
+          tofile << "CC=" << toolsPath << "/arm-elf-gcc" << endl;
+          tofile << "OBJCOPY=" << toolsPath << "/arm-elf-objcopy" << endl;
+          tofile << "ARCH=" << toolsPath << "/arm-elf-ar" << endl;
           tofile << "CRT0=" + dir.filePath("resources/cores/makecontroller/controller/startup/boot.s") << endl;
           QString debug = (props->debug()) ? "-g" : "";
           tofile << "DEBUG=" + debug << endl;
@@ -196,7 +218,7 @@ bool Builder::createMakefile(QString projectPath)
           tofile << "OPTIM=" + optLevel << endl;
           tofile << "LDSCRIPT=" + dir.filePath("resources/cores/makecontroller/controller/startup/atmel-rom.ld") << endl << endl;
 
-          // flags
+          // the rest is always the same...
           tofile << "CFLAGS= \\" << endl;
           tofile << "$(INCLUDEDIRS) \\" << endl;
           tofile << "-Wall \\" << endl;
@@ -390,8 +412,8 @@ void Builder::filterOutput(QString output)
         QStringList sl = outputMsg.split(" ");
         if(sl.first().endsWith("arm-elf-gcc") && sl.at(1) == "-c")
         {
-          QStringList sl2 = sl.last().split("/");
-          mainWindow->buildingNow(sl2.last());
+          QFileInfo srcFile(sl.last());
+          mainWindow->buildingNow(srcFile.baseName() + ".c");
         }
         outputMsg.clear();
       }
