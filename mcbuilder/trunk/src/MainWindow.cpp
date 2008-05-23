@@ -62,6 +62,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 	connect(actionClear_Output_Console,		SIGNAL(triggered()), outputConsole,	SLOT(clear()));
 	connect(actionUpload_File_to_Board,		SIGNAL(triggered()), this,	SLOT(onUploadFile()));
 	connect(actionMake_Controller_Reference, SIGNAL(triggered()), this, SLOT(openMCReference()));
+  connect(actionMcbuilder_User_Manual, SIGNAL(triggered()), this, SLOT(openManual()));
 	connect(menuExamples, SIGNAL(triggered(QAction*)), this, SLOT(onExample(QAction*)));
   connect(menuLibraries, SIGNAL(triggered(QAction*)), this, SLOT(onLibrary(QAction*)));
 	connect(actionSave_Project_As, SIGNAL(triggered()), this, SLOT(onSaveProjectAs()));
@@ -308,10 +309,9 @@ void MainWindow::onFileSelection(QString filename)
 */
 void MainWindow::onNewProject( )
 {	
-	QString dummy;
 	QString workspace = Preferences::workspace();
 	QString newProjPath = QFileDialog::getSaveFileName(this, tr("Create Project"), 
-																		workspace, "", &dummy, QFileDialog::ShowDirsOnly);
+																		workspace, "", 0, QFileDialog::ShowDirsOnly);
 	if( newProjPath.isNull() )
 		return;
 	// create a directory for the project
@@ -487,13 +487,13 @@ void MainWindow::onSaveAs( )
 		return statusBar()->showMessage( "Need to open a project first.  Open or create a new one from the File menu.", 3500 );
 		
 	QString newFileName = QFileDialog::getSaveFileName(this, tr("Save As"), 
-																			currentProject, tr("CPP Files (*.cpp)"));
+																			currentProject, tr("C Files (*.c)"));
 	if( newFileName.isNull() ) // user cancelled
 		return;
 		
 	QFile file(currentFile);
-	if(!newFileName.endsWith(".cpp"))
-		newFileName.append(".cpp");
+	if(!newFileName.endsWith(".c"))
+		newFileName.append(".c");
 	file.copy(newFileName);
 	QFile newFile(newFileName);
 	editorLoadFile(&newFile);
@@ -502,9 +502,49 @@ void MainWindow::onSaveAs( )
 	currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
 }
 
+/*
+  The user has triggered the "save project as" action.
+  Pop up a dialog to get the new project's name, then
+  copy over the project file, main project source file and any 
+  other source files in the project directory.
+*/
 void MainWindow::onSaveProjectAs( )
 {
-	
+	if(currentProject.isEmpty())
+    return statusBar()->showMessage( "Need to open a project first.  Open or create a new one from the File menu.", 3500 );
+    
+  QString workspace = Preferences::workspace();
+  QString newProjectPath = QFileDialog::getSaveFileName(this, tr("Save Project As"), workspace, 
+                                                        "", 0, QFileDialog::ShowDirsOnly);
+  if(newProjectPath.isNull()) // user canceled
+    return;
+  QDir currentProjectDir(currentProject);
+  QChar s = QDir::separator();
+  QDir dir(workspace);
+  QString newProjectName = newProjectPath.split(s).last();
+  QString currentProjectName = currentProject.split(s).last();
+  dir.mkdir(newProjectName);
+  dir.cd(newProjectName);
+  
+  QFileInfoList fileList = currentProjectDir.entryInfoList();
+  foreach(QFileInfo fi, fileList)
+  {
+    // give any project-specific files the new project's name
+    if(fi.baseName() == currentProjectName)
+    {
+      if(fi.suffix() != "o")
+      {
+        QFile tocopy(fi.filePath());
+        tocopy.copy(newProjectPath + s + newProjectName + "." + fi.suffix());
+      }
+    }
+    else // just copy the file over
+    {
+      QFile tocopy(fi.filePath());
+      tocopy.copy(newProjectPath + s + fi.fileName());
+    }
+  }
+  openProject(newProjectPath);
 }
 
 /*
@@ -757,17 +797,32 @@ void MainWindow::printOutputError(QString text)
 {
   if(text.startsWith("Warning"))
     outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/warning.png"), text.trimmed(), outputConsole));
+  else if(text.startsWith("Error"))
+    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), text.trimmed(), outputConsole));
   else
     outputConsole->addItem(text.trimmed());
   outputConsole->scrollToBottom();
 }
 
+/*
+  Open the Make Controller firmware API reference.
+*/
 void MainWindow::openMCReference( )
 {
 	QDir dir = QDir::current();
-	dir.cd("reference/makecontroller");
-	QDesktopServices::openUrl(QUrl::fromLocalFile(dir.filePath("index.html")));
+	QDesktopServices::openUrl(QUrl::fromLocalFile(dir.filePath("reference/makecontroller/index.html")));
 }
+
+/*
+  Open the PDF user manual for mcbuilder.
+*/
+void MainWindow::openManual( )
+{
+	QDir dir = QDir::current();
+  QDesktopServices::openUrl(QUrl::fromLocalFile(dir.filePath("reference/manual.pdf")));
+}
+
+
 
 
 

@@ -221,6 +221,7 @@
     <property name="title" >
      <string>Help</string>
     </property>
+    <addaction name="actionMcbuilder_User_Manual" />
     <addaction name="actionMake_Controller_Reference" />
    </widget>
    <widget class="QMenu" name="menuProject" >
@@ -463,6 +464,11 @@
   <action name="actionEthernet_Monitor" >
    <property name="text" >
     <string>Ethernet Monitor...</string>
+   </property>
+  </action>
+  <action name="actionMcbuilder_User_Manual" >
+   <property name="text" >
+    <string>mcbuilder User Manual</string>
    </property>
   </action>
  </widget>

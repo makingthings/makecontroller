@@ -14,6 +14,9 @@ class Preferences : public QDialog, private Ui::Preferences
 		Preferences(MainWindow *mainWindow);
 		static QString workspace( );
 		static QString boardType( );
+    static QString toolsPath( );
+    static QString makePath( );
+    static QString sam7Path( );
 		
 	private:
 		MainWindow *mainWindow;
