@@ -1,3 +1,21 @@
+/*********************************************************************************
+
+ Copyright 2008 MakingThings
+
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
+
+*********************************************************************************/
+
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -28,8 +46,9 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void printOutputError(QString text);
 		QString currentProjectPath( ) { return currentProject; }
     QString currentBoardProfile( );
-    bool findText(QString text, bool ignoreCase, bool forward, bool wholeword);
-    void replaceAll(QString find, QString replace);
+    bool findText(QString text, QTextDocument::FindFlags flags, bool forward); //bool ignoreCase, bool forward, bool wholeword);
+    void replaceAll(QString find, QString replace, QTextDocument::FindFlags flags);
+    void replace(QString rep);
     void onBuildComplete(bool success);
     void onCleanComplete();
     void buildingNow(QString file);

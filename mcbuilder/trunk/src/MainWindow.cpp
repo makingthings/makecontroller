@@ -1,3 +1,21 @@
+/*********************************************************************************
+
+ Copyright 2008 MakingThings
+
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
+
+*********************************************************************************/
+
+
 #include <QFileDialog>
 #include <QSettings>
 #include <QTextStream>
@@ -157,16 +175,8 @@ void MainWindow::onDocumentModified( )
 /*
   Find text in the file currently open in the editor.
 */
-bool MainWindow::findText(QString text, bool ignoreCase, bool forward, bool wholeword)
+bool MainWindow::findText(QString text, QTextDocument::FindFlags flags, bool forward)
 {
-  QTextDocument::FindFlags flags;
-  if(!forward)
-    flags |= QTextDocument::FindBackward;
-  if(!ignoreCase)
-    flags |= QTextDocument::FindCaseSensitively;
-  if(wholeword)
-    flags |= QTextDocument::FindWholeWords;
-  
   bool success = false;
   if(!editor->find(text, flags)) // if we didn't find it, try wrapping around
   {
@@ -185,23 +195,29 @@ bool MainWindow::findText(QString text, bool ignoreCase, bool forward, bool whol
 
 /*
   Replace all occurrences of the given text with the given replacement.
-  ...this is not the best way to do this.
+  This method leaves each replace as an undo step...any way to make them all a single undo operation?
 */
-void MainWindow::replaceAll(QString find, QString replace)
+void MainWindow::replaceAll(QString find, QString replace, QTextDocument::FindFlags flags)
 {
   bool keepgoing = true;
+  editor->moveCursor(QTextCursor::Start);
   do
   {
-    if(editor->find(find))
-    {
-      QTextCursor cursor = editor->textCursor();
-      cursor.clearSelection();
-      cursor.movePosition(QTextCursor::NextWord, QTextCursor::KeepAnchor);
-      cursor.insertText(replace);
-    }
+    if(editor->find(find, flags))
+      editor->textCursor().insertText(replace);
     else
       keepgoing = false;
   } while(keepgoing);
+}
+
+/*
+  Replace the selected text with the replace string.
+  Presumably, text has been selected as the result of a find operation.
+*/
+void MainWindow::replace(QString rep)
+{
+  if(!editor->textCursor().selectedText().isEmpty())
+    editor->textCursor().insertText(rep);
 }
 
 void MainWindow::setupEditor( )
