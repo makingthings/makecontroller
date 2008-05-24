@@ -37,17 +37,15 @@ Builder::Builder(MainWindow *mainWindow, Properties *props) : QProcess( 0 )
 }
 
 /*
-	Prepare the build process:
-	- generate lists of C and C++ files to be compiled
-	Then fire it off.
+	Prepare the build process for the given project, then fire it off.
 */
 void Builder::build(QString projectName)
 {
   currentProjectPath = projectName;
-  getDependecies(projectName);
-  ensureBuildDirExists(projectName);
-  createMakefile(projectName);
-  createConfigFile(projectName);
+  ensureBuildDirExists(projectName);  // make sure we have a build dir
+  loadDependencies(projectName);      // this loads up the list of libraries this project depends on
+  createMakefile(projectName);        // create a Makefile for this project, given the dependencies
+  createConfigFile(projectName);      // create a config file based on the Properties for this project
   buildStep = BUILD;
   setWorkingDirectory(projectName + "/build");
   start(Preferences::makePath() + "/make");
@@ -125,6 +123,7 @@ void Builder::resetBuildProcess()
   errMsg.clear();
   outputMsg.clear();
   currentProjectPath.clear();
+  libraries.clear();
 }
 
 /*
@@ -165,8 +164,17 @@ bool Builder::createMakefile(QString projectPath)
           dir = QDir::current();
 
           tofile << "THUMB_SRC= \\" << endl;
-          foreach(QFileInfo filename, cFiles) // add all the C files in the project directory to THUMB source
-            tofile << "  " << filename.filePath() << " \\" << endl; // may eventually change this
+          // add all the C files in the project directory to THUMB source
+          // may eventually change this to accommodate specifying THUMB or ARM files somehow...
+          foreach(QFileInfo filename, cFiles)
+            tofile << "  " << filename.filePath() << " \\" << endl;
+            
+          // add in all the sources from the required libraries
+          foreach(Library lib, libraries)
+          {
+            foreach(QString file, lib.thumb_src)
+              tofile << "  " << file << " \\" << endl;
+          }
             
           // now extract the source files from the project file
           QDomNodeList thumb_src = projectDoc.elementsByTagName("thumb_src").at(0).childNodes();
@@ -178,6 +186,15 @@ bool Builder::createMakefile(QString projectPath)
           tofile << endl;
 
           tofile << "ARM_SRC= \\" << endl;
+          
+          // add in all the sources from the required libraries
+          foreach(Library lib, libraries)
+          {
+            foreach(QString file, lib.arm_src)
+              tofile << "  " << file << " \\" << endl;
+          }
+          
+          // add the files from the main project file.
           QDomNodeList arm_src = projectDoc.elementsByTagName("arm_src").at(0).childNodes();
           for(int i = 0; i < arm_src.count(); i++)
           {
@@ -188,6 +205,12 @@ bool Builder::createMakefile(QString projectPath)
 
           tofile << "INCLUDEDIRS = \\" << endl;
           tofile << "  -I.. \\" << endl; // always include the project directory
+          
+          // add in the directories for the required libraries
+          QDir libdir(QDir::currentPath() + "/libraries");
+          foreach(Library lib, libraries)
+            tofile << "  -I" << libdir.filePath(lib.name) << " \\" << endl;
+          
           QDomNodeList include_dirs = projectDoc.elementsByTagName("include_dirs").at(0).childNodes();
           for(int i = 0; i < include_dirs.count(); i++)
           {
@@ -493,32 +516,24 @@ void Builder::filterErrorOutput(QString errOutput)
 }
 
 /*
-  Return a list of the names of each of the directories in the libraries directory.
-*/
-QStringList Builder::getLibraryNames( )
-{
-  QDir libDir(QDir::currentPath() + "/libraries");
-  return libDir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
-}
-
-/*
   Get a list of libraries that the source files in the current project depend on.
   Get a list of the project source files, then scan each one for #include "somelib.h"
   directives and see if any of them match the libs in our libraries directory.
+  Create a Library structure for each library and store it in our class member "libraries"
 */
-QStringList Builder::getDependecies(QString project)
+void Builder::loadDependencies(QString project)
 {
-  QStringList dependencies;
   QDir projDir(project);
   QStringList srcFiles = projDir.entryList(QStringList() << "*.c" << "*.h");
-  QStringList libs = getLibraryNames();
+  QDir libDir(QDir::currentPath() + "/libraries");
+  QStringList libDirs = libDir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
   
   foreach(QString filename, srcFiles)
   {
     QFile file(projDir.filePath(filename));
     if(file.open(QIODevice::ReadOnly|QFile::Text))
     {
-      QRegExp rx("#include [\"|<][0-9a-zA-Z\.]*[\"|>]");
+      QRegExp rx("#include [\"|<][0-9a-zA-Z\.]*\.h[\"|>]");
       QString fileContents = file.readAll();
       int pos = 0;
       QStringList matches;
@@ -535,14 +550,43 @@ QStringList Builder::getDependecies(QString project)
       {
         match.remove(QRegExp("#include [\"|<]"));
         match.remove(QRegExp("\.h[\"|>]"));
-        // only list it as a dependency if it's in our list of libraries and we don't already have it
-        if(libs.contains(match) && !dependencies.contains(match))
-          dependencies << match;
+        // only list it as a dependency if it's in our list of libraries
+        if(libDirs.contains(match))
+        {
+          Library lib;
+          lib.name = match;
+          getLibrarySources( libDir.filePath(match), &lib.thumb_src, &lib.arm_src);
+          libraries.append(lib);
+        }
       }
       file.close();
     }
   }
-  return dependencies;
+}
+
+/*
+  Read a library's spec file to determine its source files
+  and append those to the lists of THUMB and ARM files passed in.
+*/
+void Builder::getLibrarySources(QString libdir, QStringList *thmb, QStringList *arm)
+{
+  QDir dir(libdir);
+  QFile libfile(dir.filePath(dir.dirName() + ".xml"));
+  if(libfile.open(QIODevice::ReadOnly|QFile::Text))
+  {
+    QDomDocument libDoc;
+    if(libDoc.setContent(&libfile))
+    {
+      QDomNodeList thumb_src = libDoc.elementsByTagName("thumb_src").at(0).childNodes();
+      for(int i = 0; i < thumb_src.count(); i++)
+        thmb->append(dir.filePath(thumb_src.at(i).toElement().text()));
+      
+      QDomNodeList arm_src = libDoc.elementsByTagName("arm_src").at(0).childNodes();
+      for(int i = 0; i < arm_src.count(); i++)
+        arm->append(dir.filePath(arm_src.at(i).toElement().text()));
+    }
+    libfile.close();
+  }
 }
 
 

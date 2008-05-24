@@ -36,6 +36,12 @@ class Builder : public QProcess
     void clean(QString projectName);
   
 	private:
+    struct Library
+    {
+      QString name;
+      QStringList thumb_src;
+      QStringList arm_src;
+    };
 		MainWindow *mainWindow;
     Properties *props;
     QString errMsg, outputMsg;
@@ -43,6 +49,7 @@ class Builder : public QProcess
 		enum BuildStep { BUILD, CLEAN, SIZER };
 		BuildStep buildStep;
     int maxsize;
+    QList<Library> libraries;
     void resetBuildProcess();
     bool createMakefile(QString projectPath);
     bool createConfigFile(QString projectPath);
@@ -51,8 +58,8 @@ class Builder : public QProcess
     void sizer();
     void ensureBuildDirExists(QString projPath);
     bool parseVersionNumber( int *maj, int *min, int *bld );
-    QStringList getLibraryNames( );
-    QStringList getDependecies(QString project);
+    void loadDependencies(QString project);
+    void getLibrarySources(QString libdir, QStringList *thmb, QStringList *arm);
 		
 	private slots:
 		void nextStep( int exitCode, QProcess::ExitStatus exitStatus );
@@ -62,3 +69,4 @@ class Builder : public QProcess
 };
 
 #endif // BUILDER_H
+
