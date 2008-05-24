@@ -781,13 +781,13 @@ void MainWindow::loadLibraries( )
 */
 void MainWindow::onLibrary(QAction *example)
 {
-  QString includeString = QString("#include %1.h").arg(example->text());
+  QString includeString = QString("#include \"%1.h\"").arg(example->text());
   // only add if it isn't already in there
   // find() moves the cursor and highlights the found text
   if(!editor->find(includeString) && !editor->find(includeString, QTextDocument::FindBackward))
   {
     editor->moveCursor(QTextCursor::Start);
-    editor->append(includeString);
+    editor->insertPlainText(includeString + "\n");
   }
 }
 
