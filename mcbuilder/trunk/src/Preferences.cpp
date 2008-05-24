@@ -18,11 +18,12 @@
 
 #include <QFileDialog>
 #include <QSettings>
-#include <QFontDatabase>
+#include <QFontDialog>
 #include "Preferences.h"
 
 #define DEFAULT_FONT "Monaco"
 #define DEFAULT_FONT_SIZE 12
+#define DEFAULT_TAB_WIDTH 2
 
 /*
   The dialog that pops up when "preferences" is clicked in the menu.
@@ -33,23 +34,16 @@ Preferences::Preferences(MainWindow *mainWindow) : QDialog( 0 )
 	setupUi(this);
 	connect(buttonBox, SIGNAL(accepted()), this, SLOT(applyChanges()));
 	connect(browseWorkspaceButton, SIGNAL(clicked()), this, SLOT(browseWorkspace()));
+  connect(fontButton, SIGNAL(clicked()), this, SLOT(getNewFont()));
   
   QSettings settings("MakingThings", "mcbuilder");
   QString editorFont = settings.value("editorFont", DEFAULT_FONT).toString();
   int editorFontSize = settings.value("editorFontSize", DEFAULT_FONT_SIZE).toInt();
+  currentFont = QFont(editorFont, editorFontSize);
+  tempFont = currentFont;
   mainWindow->setEditorFont(editorFont, editorFontSize);
-  mainWindow->setTabWidth( settings.value("tabWidth", 2).toInt() );
-  
-  // load up the font combo boxes with the appropriate options
-  QFontDatabase fontDb;
-  fontFamiliesBox->addItems(fontDb.families());
-  fontFamiliesBox->setCurrentIndex(fontFamiliesBox->findText(editorFont));
-  QList<int> sizes = fontDb.standardSizes();
-  QStringList sizeStrings;
-  foreach(int size, sizes)
-    sizeStrings << QString::number(size);
-  fontSizesBox->addItems(sizeStrings);
-  fontSizesBox->setCurrentIndex(fontSizesBox->findText(QString::number(editorFontSize)));
+  fontBox->setText(QString("%1, %2pt").arg(editorFont).arg(editorFontSize));
+  mainWindow->setTabWidth( settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt() );
 }
 
 // static
@@ -119,7 +113,8 @@ void Preferences::loadAndShow( )
   toolsPathEdit->setText( settings.value("toolsPath").toString() );
   sam7PathEdit->setText( settings.value("sam7Path").toString() );
   
-	tabWidth->setText(QString::number(settings.value("tabWidth", 2).toInt()));
+  fontBox->setText(QString("%1, %2pt").arg(currentFont.family()).arg(currentFont.pointSize()));
+	tabWidth->setText(QString::number(settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt()));
 	show( );
 }
 
@@ -128,11 +123,26 @@ void Preferences::loadAndShow( )
 */
 void Preferences::browseWorkspace( )
 {
-	QString dummy;
-	QString newProjDir = QFileDialog::getOpenFileName(this, tr("Select Project Directory"), 
-																					Preferences::workspace(), "", &dummy, QFileDialog::ShowDirsOnly);
+	QString newProjDir = QFileDialog::getExistingDirectory(this, tr("Select Workspace Directory"), 
+																					Preferences::workspace(), QFileDialog::ShowDirsOnly);
 	if( !newProjDir.isNull() ) // will be null if user hit cancel
 		workspaceEdit->setText(newProjDir);
+}
+
+/*
+  The user has clicked on the "choose" button to select a new font.
+  Pop up a font dialog and store the selected font in an intermediate spot.
+  Only apply this once the dialog has been accepted (applyChanges()).
+*/
+void Preferences::getNewFont( )
+{
+  bool ok = false;
+  QFont newFont = QFontDialog::getFont(&ok, QFont(currentFont.family(), currentFont.pointSize()), this);
+  if(ok) // the user clicked OK and font is set to the font the user selected
+  {
+    tempFont = newFont;
+    fontBox->setText(QString("%1, %2pt").arg(tempFont.family()).arg(tempFont.pointSize()));
+  }
 }
 
 // rip through the preferences items, see if any have changed 
@@ -146,20 +156,20 @@ void Preferences::applyChanges( )
   settings.setValue("toolsPath", toolsPathEdit->text());
   settings.setValue("sam7Path", sam7PathEdit->text());
 	
-	int oldTabWidth = settings.value("tabWidth").toInt();
+	int oldTabWidth = settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt();
 	if( oldTabWidth != tabWidth->text().toInt() )
 	{
 		settings.setValue("tabWidth", tabWidth->text().toInt());
 		mainWindow->setTabWidth( tabWidth->text().toInt() );
 	}
   
-  QString editorFont = settings.value("editorFont").toString();
-  QString editorFontSize = settings.value("editorFontSize").toString();
-  if(editorFont != fontFamiliesBox->currentText() || editorFontSize != fontSizesBox->currentText())
+  if(tempFont.family() != currentFont.family() || tempFont.pointSize() != currentFont.pointSize())
   {
-    mainWindow->setEditorFont(fontFamiliesBox->currentText(), fontSizesBox->currentText().toInt());
-    settings.setValue("editorFont", fontFamiliesBox->currentText());
-    settings.setValue("editorFontSize", fontSizesBox->currentText());
+    currentFont.setFamily(tempFont.family());
+    currentFont.setPointSize(tempFont.pointSize());
+    mainWindow->setEditorFont(currentFont.family(), currentFont.pointSize());
+    settings.setValue("editorFont", currentFont.family());
+    settings.setValue("editorFontSize", currentFont.pointSize());
   }
 }
 
