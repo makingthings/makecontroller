@@ -38,12 +38,14 @@ class Preferences : public QDialog, private Ui::Preferences
 		
 	private:
 		MainWindow *mainWindow;
+    QFont currentFont, tempFont;
 		
 	public slots:
 		void loadAndShow( );
 	private slots:
 		void applyChanges( );
 		void browseWorkspace( );
+    void getNewFont( );
 };
 
 #endif // PREFERENCES_H
