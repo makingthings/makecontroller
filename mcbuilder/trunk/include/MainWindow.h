@@ -29,6 +29,7 @@
 #include "Builder.h"
 #include "UsbMonitor.h"
 #include "FindReplace.h"
+#include "About.h"
 
 class Preferences;
 class Uploader;
@@ -42,11 +43,12 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 	public:
 		MainWindow( );
 		void setTabWidth( int width );
+    void setEditorFont(QString family, int pointSize);
 		void printOutput(QString text);
 		void printOutputError(QString text);
 		QString currentProjectPath( ) { return currentProject; }
     QString currentBoardProfile( );
-    bool findText(QString text, QTextDocument::FindFlags flags, bool forward); //bool ignoreCase, bool forward, bool wholeword);
+    bool findText(QString text, QTextDocument::FindFlags flags, bool forward);
     void replaceAll(QString find, QString replace, QTextDocument::FindFlags flags);
     void replace(QString rep);
     void onBuildComplete(bool success);
@@ -55,7 +57,6 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		
 	private:
 		void openFile( const QString &path );
-		void setupEditor( );
 		void loadBoardProfiles( );
 		void loadExamples( );
 		void loadLibraries( );
@@ -70,6 +71,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		Builder *builder;
     UsbMonitor *usbMonitor;
     FindReplace *findReplace;
+    About *about;
 		QActionGroup *boardTypeGroup;
 		QString currentFile; // path of the file in the editor
 		QString currentProject; // path of the current project directory

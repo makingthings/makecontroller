@@ -18,14 +18,38 @@
 
 #include <QFileDialog>
 #include <QSettings>
+#include <QFontDatabase>
 #include "Preferences.h"
 
+#define DEFAULT_FONT "Monaco"
+#define DEFAULT_FONT_SIZE 12
+
+/*
+  The dialog that pops up when "preferences" is clicked in the menu.
+*/
 Preferences::Preferences(MainWindow *mainWindow) : QDialog( 0 )
 {
 	this->mainWindow = mainWindow;
 	setupUi(this);
 	connect(buttonBox, SIGNAL(accepted()), this, SLOT(applyChanges()));
 	connect(browseWorkspaceButton, SIGNAL(clicked()), this, SLOT(browseWorkspace()));
+  
+  QSettings settings("MakingThings", "mcbuilder");
+  QString editorFont = settings.value("editorFont", DEFAULT_FONT).toString();
+  int editorFontSize = settings.value("editorFontSize", DEFAULT_FONT_SIZE).toInt();
+  mainWindow->setEditorFont(editorFont, editorFontSize);
+  mainWindow->setTabWidth( settings.value("tabWidth", 2).toInt() );
+  
+  // load up the font combo boxes with the appropriate options
+  QFontDatabase fontDb;
+  fontFamiliesBox->addItems(fontDb.families());
+  fontFamiliesBox->setCurrentIndex(fontFamiliesBox->findText(editorFont));
+  QList<int> sizes = fontDb.standardSizes();
+  QStringList sizeStrings;
+  foreach(int size, sizes)
+    sizeStrings << QString::number(size);
+  fontSizesBox->addItems(sizeStrings);
+  fontSizesBox->setCurrentIndex(fontSizesBox->findText(QString::number(editorFontSize)));
 }
 
 // static
@@ -128,6 +152,15 @@ void Preferences::applyChanges( )
 		settings.setValue("tabWidth", tabWidth->text().toInt());
 		mainWindow->setTabWidth( tabWidth->text().toInt() );
 	}
+  
+  QString editorFont = settings.value("editorFont").toString();
+  QString editorFontSize = settings.value("editorFontSize").toString();
+  if(editorFont != fontFamiliesBox->currentText() || editorFontSize != fontSizesBox->currentText())
+  {
+    mainWindow->setEditorFont(fontFamiliesBox->currentText(), fontSizesBox->currentText().toInt());
+    settings.setValue("editorFont", fontFamiliesBox->currentText());
+    settings.setValue("editorFontSize", fontSizesBox->currentText());
+  }
 }
 
 
