@@ -51,6 +51,8 @@ class Builder : public QProcess
     void sizer();
     void ensureBuildDirExists(QString projPath);
     bool parseVersionNumber( int *maj, int *min, int *bld );
+    QStringList getLibraryNames( );
+    QStringList getDependecies(QString project);
 		
 	private slots:
 		void nextStep( int exitCode, QProcess::ExitStatus exitStatus );

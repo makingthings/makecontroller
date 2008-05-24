@@ -43,11 +43,12 @@ Builder::Builder(MainWindow *mainWindow, Properties *props) : QProcess( 0 )
 */
 void Builder::build(QString projectName)
 {
+  currentProjectPath = projectName;
+  getDependecies(projectName);
   ensureBuildDirExists(projectName);
   createMakefile(projectName);
   createConfigFile(projectName);
   buildStep = BUILD;
-  currentProjectPath = projectName;
   setWorkingDirectory(projectName + "/build");
   start(Preferences::makePath() + "/make");
 }
@@ -431,7 +432,16 @@ void Builder::filterOutput(QString output)
         if(ok)
         {
           QDir dir(currentProjectPath);
-          mainWindow->printOutput(QString("%1.bin is %2 out of a possible 256000 bytes.").arg(dir.dirName().toLower()).arg(total_size));
+          if(total_size <= 256000)
+          {
+            mainWindow->printOutput(QString("%1.bin is %2 out of a possible 256000 bytes.")
+                                    .arg(dir.dirName().toLower()).arg(total_size));
+          }
+          else
+          {
+            mainWindow->printOutputError(QString("Error - %1.bin is too big!  %2 out of a possible 256000 bytes.")
+                                    .arg(dir.dirName().toLower()).arg(total_size));
+          }
         }
       }
       break;
@@ -482,6 +492,58 @@ void Builder::filterErrorOutput(QString errOutput)
   }
 }
 
+/*
+  Return a list of the names of each of the directories in the libraries directory.
+*/
+QStringList Builder::getLibraryNames( )
+{
+  QDir libDir(QDir::currentPath() + "/libraries");
+  return libDir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
+}
+
+/*
+  Get a list of libraries that the source files in the current project depend on.
+  Get a list of the project source files, then scan each one for #include "somelib.h"
+  directives and see if any of them match the libs in our libraries directory.
+*/
+QStringList Builder::getDependecies(QString project)
+{
+  QStringList dependencies;
+  QDir projDir(project);
+  QStringList srcFiles = projDir.entryList(QStringList() << "*.c" << "*.h");
+  QStringList libs = getLibraryNames();
+  
+  foreach(QString filename, srcFiles)
+  {
+    QFile file(projDir.filePath(filename));
+    if(file.open(QIODevice::ReadOnly|QFile::Text))
+    {
+      QRegExp rx("#include [\"|<][0-9a-zA-Z\.]*[\"|>]");
+      QString fileContents = file.readAll();
+      int pos = 0;
+      QStringList matches;
+      
+      // gather all the matching directives
+      while((pos = rx.indexIn(fileContents, pos)) != -1)
+      {
+        matches << rx.cap(0);
+        pos += rx.matchedLength();
+      }
+      
+      // extract the library name from the #include string
+      foreach(QString match, matches)
+      {
+        match.remove(QRegExp("#include [\"|<]"));
+        match.remove(QRegExp("\.h[\"|>]"));
+        // only list it as a dependency if it's in our list of libraries and we don't already have it
+        if(libs.contains(match) && !dependencies.contains(match))
+          dependencies << match;
+      }
+      file.close();
+    }
+  }
+  return dependencies;
+}
 
 
 
