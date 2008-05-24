@@ -21,46 +21,53 @@
 #define IN_COMMENT 1
 #define NOT_IN_COMMENT 0
 
+/*
+  Highlighter provides syntax highliting to the editor via a QSyntaxHighlighter interface.
+  Specify the expressions we want to match via RegEx, and apply some
+  formatting to them.  
+*/
 Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
 {
 	HighlightingRule rule;
 	
-	keywordFormat.setForeground(Qt::darkBlue);
-	keywordFormat.setFontWeight(QFont::Bold);
+	keywordFormat.setForeground(QColor("#C50096"));
 	QStringList keywordPatterns;
-	keywordPatterns << "\\bchar\\b" << "\\bclass\\b" << "\\bconst\\b"
-									<< "\\bdouble\\b" << "\\benum\\b" << "\\bexplicit\\b"
-									<< "\\bfriend\\b" << "\\binline\\b" << "\\bint\\b"
-									<< "\\blong\\b" << "\\bnamespace\\b" << "\\boperator\\b"
+	keywordPatterns << "\\bchar\\b" << "\\bconst\\b" << "\\bwhile\\b"
+									<< "\\bdouble\\b" << "\\benum\\b" << "\\bfor\\b"
+									<< "\\binline\\b" << "\\bint\\b" << "\\btrue\\b"
+									<< "\\blong\\b" << "\\boperator\\b" << "\\bfalse\\b"
 									<< "\\bprivate\\b" << "\\bprotected\\b" << "\\bpublic\\b"
-									<< "\\bshort\\b" << "\\bsignals\\b" << "\\bsigned\\b"
-									<< "\\bslots\\b" << "\\bstatic\\b" << "\\bstruct\\b"
-									<< "\\btemplate\\b" << "\\btypedef\\b" << "\\btypename\\b"
+									<< "\\bshort\\b" << "\\bsigned\\b" << "\\bstatic\\b" 
+									<< "\\btypedef\\b" << "\\btypename\\b" << "\\bif\\b"
 									<< "\\bunion\\b" << "\\bunsigned\\b" << "\\bvirtual\\b"
-									<< "\\bvoid\\b" << "\\bvolatile\\b";
+									<< "\\bvoid\\b" << "\\bvolatile\\b" << "\\bstruct\\b";
 	foreach (QString pattern, keywordPatterns) {
 		rule.pattern = QRegExp(pattern);
 		rule.format = keywordFormat;
 		highlightingRules.append(rule);
 	}
 	
-	singleLineCommentFormat.setForeground(Qt::red);
+  quotationFormat.setForeground(QColor("#E20000"));
+	rule.pattern = QRegExp("\".*\"");
+	rule.format = quotationFormat;
+	highlightingRules.append(rule);
+  
+  preprocFormat.setForeground(QColor("#6E3719"));
+	rule.pattern = QRegExp("^#[^\n]*");
+	rule.format = preprocFormat;
+	highlightingRules.append(rule);
+  
+  digitFormat.setForeground(Qt::blue);
+	rule.pattern = QRegExp("[0-9]");
+	rule.format = digitFormat;
+	highlightingRules.append(rule);
+	
+  singleLineCommentFormat.setForeground(QColor("#007800"));
 	rule.pattern = QRegExp("//[^\n]*");
 	rule.format = singleLineCommentFormat;
 	highlightingRules.append(rule);
 	
-	multiLineCommentFormat.setForeground(Qt::red);
-	
-	quotationFormat.setForeground(Qt::darkGreen);
-	rule.pattern = QRegExp("\".*\"");
-	rule.format = quotationFormat;
-	highlightingRules.append(rule);
-	
-	functionFormat.setFontItalic(true);
-	functionFormat.setForeground(Qt::blue);
-	rule.pattern = QRegExp("\\b[A-Za-z0-9_]+(?=\\()");
-	rule.format = functionFormat;
-	highlightingRules.append(rule);
+	multiLineCommentFormat.setForeground(QColor("#007800"));
 	
 	commentStartExpression = QRegExp("/\\*");
 	commentEndExpression = QRegExp("\\*/");
@@ -72,7 +79,9 @@ Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
 */
 void Highlighter::highlightBlock(const QString &text)
 {
-	foreach (HighlightingRule rule, highlightingRules)
+  // search the block for each of our highlight rules, and if we find a match
+  // apply the format for that rule
+  foreach (HighlightingRule rule, highlightingRules)
 	{
 		QRegExp expression(rule.pattern);
 		int index = text.indexOf(expression);
@@ -83,10 +92,12 @@ void Highlighter::highlightBlock(const QString &text)
 			index = text.indexOf(expression, index + length);
 		}
 	}
+  
+  // now deal with the case of multi-line comments that might span more than one block
 	setCurrentBlockState(NOT_IN_COMMENT);
 	
 	int startIndex = 0;
-	if (previousBlockState() != 1)
+	if (previousBlockState() != IN_COMMENT)
 		startIndex = text.indexOf(commentStartExpression);
 	
 	while (startIndex >= 0)

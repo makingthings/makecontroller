@@ -20,20 +20,19 @@
 #define HIGHLIGHTER_H
 
 #include <QSyntaxHighlighter>
-#include <QHash>
 #include <QTextCharFormat>
 
 class QTextDocument;
 
 class Highlighter : public QSyntaxHighlighter
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    Highlighter(QTextDocument *parent = 0);
+  Highlighter(QTextDocument *parent = 0);
 
 protected:
-    void highlightBlock(const QString &text);
+  void highlightBlock(const QString &text);
 
 private:
   struct HighlightingRule
@@ -47,10 +46,11 @@ private:
   QRegExp commentEndExpression;
 
   QTextCharFormat keywordFormat;
+  QTextCharFormat preprocFormat;
+  QTextCharFormat digitFormat;
   QTextCharFormat singleLineCommentFormat;
   QTextCharFormat multiLineCommentFormat;
   QTextCharFormat quotationFormat;
-  QTextCharFormat functionFormat;
 };
 
 #endif

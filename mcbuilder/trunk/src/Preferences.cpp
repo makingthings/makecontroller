@@ -24,6 +24,7 @@
 #define DEFAULT_FONT "Monaco"
 #define DEFAULT_FONT_SIZE 12
 #define DEFAULT_TAB_WIDTH 2
+#define DEFAULT_BOARDTYPE "Make Controller"
 
 /*
   The dialog that pops up when "preferences" is clicked in the menu.
@@ -36,6 +37,7 @@ Preferences::Preferences(MainWindow *mainWindow) : QDialog( 0 )
 	connect(browseWorkspaceButton, SIGNAL(clicked()), this, SLOT(browseWorkspace()));
   connect(fontButton, SIGNAL(clicked()), this, SLOT(getNewFont()));
   
+  // initialize the parts that the main window needs to know about
   QSettings settings("MakingThings", "mcbuilder");
   QString editorFont = settings.value("editorFont", DEFAULT_FONT).toString();
   int editorFontSize = settings.value("editorFontSize", DEFAULT_FONT_SIZE).toInt();
@@ -70,10 +72,14 @@ QString Preferences::workspace( )
 QString Preferences::boardType( )
 {
 	QSettings settings("MakingThings", "mcbuilder");
-	// select Make Controller by default
-	return settings.value("boardType", "Make Controller").toString();
+	return settings.value("boardType", DEFAULT_BOARDTYPE).toString();
 }
 
+/*
+  Each of the options in the "tools" tab are empty by default.
+  If this is the case, use the tools shipped with mcbuilder.
+  Otherwise, use the tools specified by the user.
+*/
 QString Preferences::toolsPath( ) // static
 {
   QSettings settings("MakingThings", "mcbuilder");
@@ -104,7 +110,9 @@ QString Preferences::sam7Path( ) // static
     return path;
 }
 
-// read the current settings, load them into the preferences form and then display it
+/*
+  Read the current settings, load them into the UI and then display it
+*/
 void Preferences::loadAndShow( )
 {
 	QSettings settings("MakingThings", "mcbuilder");
@@ -120,6 +128,7 @@ void Preferences::loadAndShow( )
 
 /*
   The browse button has been clicked.
+  Pop up a dialog to let the user select a new workspace.
 */
 void Preferences::browseWorkspace( )
 {
@@ -145,8 +154,11 @@ void Preferences::getNewFont( )
   }
 }
 
-// rip through the preferences items, see if any have changed 
-// and call the mainwindow back if it needs to be updated
+/*
+  The "ok" button has been clicked.
+  Rip through the preferences items, see if any have changed 
+  and call the mainwindow back if it needs to be updated.
+*/
 void Preferences::applyChanges( )
 {
 	QSettings settings("MakingThings", "mcbuilder");
