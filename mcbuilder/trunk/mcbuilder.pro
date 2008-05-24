@@ -1,6 +1,7 @@
 TEMPLATE = app
 # CONFIG += qt release
 CONFIG += qt debug
+MCBUILDER_VERSION = "0.1.0"
 
 FORMS = layouts/mainwindow.ui \
         layouts/preferences.ui \
@@ -15,7 +16,8 @@ HEADERS = include/Highlighter.h \
           include/Properties.h \
           include/Builder.h \
           include/UsbMonitor.h \
-          include/FindReplace.h
+          include/FindReplace.h \
+          include/About.h
 
 SOURCES = src/main.cpp \
           src/Highlighter.cpp \
@@ -25,13 +27,15 @@ SOURCES = src/main.cpp \
           src/Properties.cpp \
           src/Builder.cpp \
           src/UsbMonitor.cpp \
-          src/FindReplace.cpp
+          src/FindReplace.cpp \
+          src/About.cpp
 
 TARGET = mcbuilder
 
 QT += xml network
 INCLUDEPATH += include
 RESOURCES   += resources/mcbuilder.qrc
+DEFINES     += MCBUILDER_VERSION=\"$${MCBUILDER_VERSION}\"
 OBJECTS_DIR  = tmp
 MOC_DIR      = tmp
 RCC_DIR      = tmp
