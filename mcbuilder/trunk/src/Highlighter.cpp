@@ -25,6 +25,8 @@
   Highlighter provides syntax highliting to the editor via a QSyntaxHighlighter interface.
   Specify the expressions we want to match via RegEx, and apply some
   formatting to them.  
+  
+  TODO - set up Preferences UI to let user select colors for highlighting
 */
 Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
 {
@@ -36,11 +38,13 @@ Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
 									<< "\\bdouble\\b" << "\\benum\\b" << "\\bfor\\b"
 									<< "\\binline\\b" << "\\bint\\b" << "\\btrue\\b"
 									<< "\\blong\\b" << "\\boperator\\b" << "\\bfalse\\b"
-									<< "\\bprivate\\b" << "\\bprotected\\b" << "\\bpublic\\b"
+                  << "\\belse\\b" << "\\bthis\\b" << "\\breturn\\b"
+									<< "\\bswitch\\b" << "\\bcase\\b" << "\\bbreak\\b"
 									<< "\\bshort\\b" << "\\bsigned\\b" << "\\bstatic\\b" 
 									<< "\\btypedef\\b" << "\\btypename\\b" << "\\bif\\b"
-									<< "\\bunion\\b" << "\\bunsigned\\b" << "\\bvirtual\\b"
+									<< "\\bunion\\b" << "\\bunsigned\\b"
 									<< "\\bvoid\\b" << "\\bvolatile\\b" << "\\bstruct\\b";
+                  
 	foreach (QString pattern, keywordPatterns) {
 		rule.pattern = QRegExp(pattern);
 		rule.format = keywordFormat;
@@ -75,7 +79,6 @@ Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
 
 /*
   This is called back by the rich text engine when a line of text has changed.
-  
 */
 void Highlighter::highlightBlock(const QString &text)
 {
