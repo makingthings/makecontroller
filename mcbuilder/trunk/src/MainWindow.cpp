@@ -37,7 +37,6 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 {
 	setupUi(this);
   
-	setupEditor( );
 	boardTypeGroup = new QActionGroup(menuBoard_Type);
 	loadBoardProfiles( );
 	loadExamples( );
@@ -46,12 +45,14 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   readSettings( );
   
   //initialization
+  highlighter = new Highlighter( editor->document() );
 	prefs = new Preferences(this);
 	props = new Properties(this);
 	uploader = new Uploader(this);
 	builder = new Builder(this, props);
   usbMonitor = new UsbMonitor();
   findReplace = new FindReplace(this);
+  about = new About();
   
   // misc. signals
 	connect(editor, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorMoved()));
@@ -77,7 +78,8 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 	connect(actionPaste,				SIGNAL(triggered()), editor,	SLOT(paste()));
 	connect(actionSelect_All,		SIGNAL(triggered()), editor,	SLOT(selectAll()));
   connect(actionFind,         SIGNAL(triggered()), findReplace,	SLOT(show()));
-	connect(actionClear_Output_Console,		SIGNAL(triggered()), outputConsole,	SLOT(clear()));
+  connect(actionAbout,        SIGNAL(triggered()), about,   SLOT(show()));
+  connect(actionClear_Output_Console,		SIGNAL(triggered()), outputConsole,	SLOT(clear()));
 	connect(actionUpload_File_to_Board,		SIGNAL(triggered()), this,	SLOT(onUploadFile()));
 	connect(actionMake_Controller_Reference, SIGNAL(triggered()), this, SLOT(openMCReference()));
   connect(actionMcbuilder_User_Manual, SIGNAL(triggered()), this, SLOT(openManual()));
@@ -220,11 +222,9 @@ void MainWindow::replace(QString rep)
     editor->textCursor().insertText(rep);
 }
 
-void MainWindow::setupEditor( )
+void MainWindow::setEditorFont(QString family, int pointSize)
 {
-	QSettings settings("MakingThings", "mcbuilder");
-	setTabWidth( settings.value("Editor/tabWidth", 2).toInt() );
-	highlighter = new Highlighter( editor->document() );
+  editor->setFont(QFont(family, pointSize));
 }
 
 void MainWindow::setTabWidth( int width )

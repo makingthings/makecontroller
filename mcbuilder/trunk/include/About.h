@@ -16,41 +16,27 @@
 *********************************************************************************/
 
 
-#ifndef HIGHLIGHTER_H
-#define HIGHLIGHTER_H
+#ifndef ABOUT_H
+#define ABOUT_H
 
-#include <QSyntaxHighlighter>
-#include <QHash>
-#include <QTextCharFormat>
+#include <QDialog>
+#include <QVBoxLayout>
+#include <QPushButton>
+#include <QHBoxLayout>
+#include <QLabel>
 
-class QTextDocument;
-
-class Highlighter : public QSyntaxHighlighter
+class About : public QDialog
 {
-    Q_OBJECT
-
+	Q_OBJECT
 public:
-    Highlighter(QTextDocument *parent = 0);
-
-protected:
-    void highlightBlock(const QString &text);
-
+  About();
 private:
-  struct HighlightingRule
-  {
-    QRegExp pattern;
-    QTextCharFormat format;
-  };
-  QVector<HighlightingRule> highlightingRules;
-
-  QRegExp commentStartExpression;
-  QRegExp commentEndExpression;
-
-  QTextCharFormat keywordFormat;
-  QTextCharFormat singleLineCommentFormat;
-  QTextCharFormat multiLineCommentFormat;
-  QTextCharFormat quotationFormat;
-  QTextCharFormat functionFormat;
+  QPushButton *okButton;
+  QLabel title, version, icon;
+  QLabel *description;
+  QPixmap *mcbuilderIcon;
+  QVBoxLayout *topLevelLayout;
+  QHBoxLayout *buttonLayout;
 };
 
-#endif
+#endif // ABOUT_H

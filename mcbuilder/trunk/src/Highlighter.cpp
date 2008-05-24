@@ -18,6 +18,9 @@
 
 #include "Highlighter.h"
 
+#define IN_COMMENT 1
+#define NOT_IN_COMMENT 0
+
 Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
 {
 	HighlightingRule rule;
@@ -41,12 +44,6 @@ Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
 		highlightingRules.append(rule);
 	}
 	
-	classFormat.setFontWeight(QFont::Bold);
-	classFormat.setForeground(Qt::darkMagenta);
-	rule.pattern = QRegExp("\\bQ[A-Za-z]+\\b");
-	rule.format = classFormat;
-	highlightingRules.append(rule);
-	
 	singleLineCommentFormat.setForeground(Qt::red);
 	rule.pattern = QRegExp("//[^\n]*");
 	rule.format = singleLineCommentFormat;
@@ -69,6 +66,10 @@ Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
 	commentEndExpression = QRegExp("\\*/");
 }
 
+/*
+  This is called back by the rich text engine when a line of text has changed.
+  
+*/
 void Highlighter::highlightBlock(const QString &text)
 {
 	foreach (HighlightingRule rule, highlightingRules)
@@ -82,7 +83,7 @@ void Highlighter::highlightBlock(const QString &text)
 			index = text.indexOf(expression, index + length);
 		}
 	}
-	setCurrentBlockState(0);
+	setCurrentBlockState(NOT_IN_COMMENT);
 	
 	int startIndex = 0;
 	if (previousBlockState() != 1)
@@ -94,7 +95,7 @@ void Highlighter::highlightBlock(const QString &text)
 		int commentLength;
 		if (endIndex == -1)
 		{
-			setCurrentBlockState(1);
+			setCurrentBlockState(IN_COMMENT);
 			commentLength = text.length() - startIndex;
 		}
 		else
