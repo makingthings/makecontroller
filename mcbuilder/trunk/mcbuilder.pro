@@ -17,7 +17,8 @@ HEADERS = include/Highlighter.h \
           include/Builder.h \
           include/UsbMonitor.h \
           include/FindReplace.h \
-          include/About.h
+          include/About.h \
+          include/ConsoleItem.h
 
 SOURCES = src/main.cpp \
           src/Highlighter.cpp \

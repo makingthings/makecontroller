@@ -30,6 +30,7 @@
 #include "UsbMonitor.h"
 #include "FindReplace.h"
 #include "About.h"
+#include "ConsoleItem.h"
 
 class Preferences;
 class Uploader;
@@ -46,7 +47,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
     void setEditorFont(QString family, int pointSize);
 		void printOutput(QString text);
 		void printOutputError(QString text);
-    void printOutputError(QListWidgetItem *item);
+    void printOutputError(ConsoleItem *item);
 		QString currentProjectPath( ) { return currentProject; }
     QString currentBoardProfile( );
     bool findText(QString text, QTextDocument::FindFlags flags, bool forward);
@@ -105,6 +106,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void onFileSelection(QString filename);
 		void openMCReference( );
     void openManual( );
+    void onConsoleDoubleClick(QListWidgetItem *item);
 };
 
 #endif // MAINWINDOW_H

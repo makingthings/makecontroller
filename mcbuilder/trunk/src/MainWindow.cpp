@@ -60,6 +60,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   connect(actionUsb_Monitor, SIGNAL(triggered()), usbMonitor, SLOT(loadAndShow()));
 	connect(currentFileDropDown, SIGNAL(currentIndexChanged(QString)), this, SLOT(onFileSelection(QString)));
   connect(editor->document(), SIGNAL(contentsChanged()),this, SLOT(onDocumentModified()));
+  connect(outputConsole, SIGNAL(itemDoubleClicked(QListWidgetItem*)),this, SLOT(onConsoleDoubleClick(QListWidgetItem*)));
   
 	// menu actions
 	connect(actionNew,					SIGNAL(triggered()), this,		SLOT(onNewFile()));
@@ -820,9 +821,37 @@ void MainWindow::printOutputError(QString text)
   outputConsole->scrollToBottom();
 }
 
-void MainWindow::printOutputError(QListWidgetItem *item)
+void MainWindow::printOutputError(ConsoleItem *item)
 {
   outputConsole->addItem(item);
+}
+
+/*
+  An item in the output console has been double clicked.
+  See if it's an error/warning message, and jump to it in the editor if we can.
+*/
+void MainWindow::onConsoleDoubleClick(QListWidgetItem *item)
+{
+  ConsoleItem *citem =  (ConsoleItem*)item;
+  if(citem->messageType() == ConsoleItem::Error || citem->messageType() == ConsoleItem::Warning)
+  {
+    QList<QTextEdit::ExtraSelection> extras = editor->extraSelections();
+    QTextCursor c(editor->document());
+    c.movePosition(QTextCursor::Start);
+    while(c.blockNumber() < citem->lineNumber()-1) // blockNumber is 0 based, lineNumber starts at 1
+      c.movePosition(QTextCursor::NextBlock);
+    
+    QTextEdit::ExtraSelection es;
+    es.cursor = c;
+    es.format.setProperty(QTextFormat::FullWidthSelection, true);
+    if(citem->messageType() == ConsoleItem::Error)
+      es.format.setBackground(QColor("#ED575D")); // light red
+    else
+      es.format.setBackground(QColor("#FFDE49")); // light yellow
+
+    extras << es;
+    editor->setExtraSelections( extras );
+  }
 }
 
 /*

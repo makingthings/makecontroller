@@ -20,6 +20,7 @@
 #include <QTextStream>
 #include <QDateTime>
 #include "Builder.h"
+#include "ConsoleItem.h"
 
 /*
 	Builder takes a project and turns it into a binary executable.
@@ -497,13 +498,19 @@ void Builder::filterErrorOutput(QString errOutput)
           
           //qDebug("cap! %s: %s, %d - %s", qPrintable(severity), qPrintable(filepath), linenumber, qPrintable(msg));
           QFileInfo fi(filepath);
-          QListWidgetItem *item;
+          ConsoleItem *item;
           QString fullmsg = QString("%1 (line %2): %3").arg(fi.fileName()).arg(linenumber).arg(msg);
           if(severity == "error")
-            item = new QListWidgetItem(QIcon(":/icons/error.png"), fullmsg);
+          {
+            item = new ConsoleItem(filepath, linenumber, ConsoleItem::Error);
+            item->setIcon(QIcon(":/icons/error.png"));
+          }
           else
-            item = new QListWidgetItem(QIcon(":/icons/warning.png"), fullmsg);
-          item->setToolTip(filepath);
+          {
+            item = new ConsoleItem(filepath, linenumber, ConsoleItem::Warning);
+            item->setIcon(QIcon(":/icons/warning.png"));
+          }
+          item->setText(fullmsg);
           mainWindow->printOutputError(item);
           pos += errExp.matchedLength(); // step the index past the match so we can continue looking
           matched = true;
