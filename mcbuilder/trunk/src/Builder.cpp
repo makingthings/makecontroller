@@ -484,6 +484,7 @@ void Builder::filterErrorOutput(QString errOutput)
       errMsg += errOutput;
       if(errMsg.endsWith("\n")) // we have a complete message to deal with
       {
+        bool matched = false;
         // match output in the form of "filepath:linenumber: error|warning: errormessage"
         QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+):(\\d+): (error|warning): ([^\n]*)");
         int pos = 0;
@@ -493,29 +494,42 @@ void Builder::filterErrorOutput(QString errOutput)
           int linenumber = errExp.cap(2).toInt();
           QString severity(errExp.cap(3));
           QString msg(errExp.cap(4));
-          qDebug("cap! %s: %s, %d - %s", qPrintable(severity), qPrintable(filepath), linenumber, qPrintable(msg));
+          
+          //qDebug("cap! %s: %s, %d - %s", qPrintable(severity), qPrintable(filepath), linenumber, qPrintable(msg));
+          QFileInfo fi(filepath);
+          QListWidgetItem *item;
+          QString fullmsg = QString("%1 (line %2): %3").arg(fi.fileName()).arg(linenumber).arg(msg);
+          if(severity == "error")
+            item = new QListWidgetItem(QIcon(":/icons/error.png"), fullmsg);
+          else
+            item = new QListWidgetItem(QIcon(":/icons/warning.png"), fullmsg);
+          item->setToolTip(filepath);
+          mainWindow->printOutputError(item);
           pos += errExp.matchedLength(); // step the index past the match so we can continue looking
+          matched = true;
         }
         
-        QStringList sl = errMsg.split(":");
-        for(int i = 0; i < sl.count(); i++) // remove any spaces from front and back
-          sl[i] = sl.at(i).trimmed();
+        // look for "in function" style messages
+        if(!matched)
+        {
+          QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+): In function ([^\n]*)");
+          int pos = 0;
+          while((pos = errExp.indexIn(errMsg, pos)) != -1)
+          {
+            QString filepath(errExp.cap(1));
+            QString func(errExp.cap(2));
             
-        printf("err: %s\n", qPrintable(errMsg));
-        if(sl.contains("warning"))
-        {
-          QString msg;
-          QTextStream(&msg) << "Warning - " << sl.last() << endl;
-          mainWindow->printOutputError(msg);
+            //qDebug("cap! %s: In function %s", qPrintable(filepath), qPrintable(func));
+            QFileInfo fi(filepath);
+            QString fullmsg = QString("%1: In function %2").arg(fi.fileName()).arg(func);
+            mainWindow->printOutputError(fullmsg);
+            pos += errExp.matchedLength(); // step the index past the match so we can continue looking
+            matched = true;
+          }
         }
-        else if(sl.contains("error"))
-        {
-          QString msg;
-          QTextStream(&msg) << "Error - " << sl.last() << endl;
-          mainWindow->printOutputError(msg);
-        }
-        else
-          mainWindow->printOutputError(errMsg);
+        
+//        if(!matched)
+//          mainWindow->printOutputError(errMsg);
         errMsg.clear();
       }
       break;
