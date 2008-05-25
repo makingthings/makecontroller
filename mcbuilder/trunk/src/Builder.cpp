@@ -70,7 +70,7 @@ void Builder::clean(QString projectName)
 void Builder::ensureBuildDirExists(QString projPath)
 {
   QDir dir(projPath);
-  if(!dir.exists(projPath+"/build"))
+  if(!dir.exists("build"))
     dir.mkdir("build");
 }
 
@@ -172,8 +172,8 @@ bool Builder::createMakefile(QString projectPath)
           // add in all the sources from the required libraries
           foreach(Library lib, libraries)
           {
-            foreach(QString file, lib.thumb_src)
-              tofile << "  " << file << " \\" << endl;
+            foreach(QString filepath, lib.thumb_src)
+              tofile << "  " << filepath << " \\" << endl;
           }
             
           // now extract the source files from the project file
@@ -190,8 +190,8 @@ bool Builder::createMakefile(QString projectPath)
           // add in all the sources from the required libraries
           foreach(Library lib, libraries)
           {
-            foreach(QString file, lib.arm_src)
-              tofile << "  " << file << " \\" << endl;
+            foreach(QString filepath, lib.arm_src)
+              tofile << "  " << filepath << " \\" << endl;
           }
           
           // add the files from the main project file.
@@ -207,7 +207,7 @@ bool Builder::createMakefile(QString projectPath)
           tofile << "  -I.. \\" << endl; // always include the project directory
           
           // add in the directories for the required libraries
-          QDir libdir(QDir::currentPath() + "/libraries");
+          QDir libdir(QDir::current().filePath("libraries"));
           foreach(Library lib, libraries)
             tofile << "  -I" << libdir.filePath(lib.name) << " \\" << endl;
           
@@ -484,11 +484,24 @@ void Builder::filterErrorOutput(QString errOutput)
       errMsg += errOutput;
       if(errMsg.endsWith("\n")) // we have a complete message to deal with
       {
+        // match output in the form of "filepath:linenumber: error|warning: errormessage"
+        QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+):(\\d+): (error|warning): ([^\n]*)");
+        int pos = 0;
+        while((pos = errExp.indexIn(errMsg, pos)) != -1)
+        {
+          QString filepath(errExp.cap(1));
+          int linenumber = errExp.cap(2).toInt();
+          QString severity(errExp.cap(3));
+          QString msg(errExp.cap(4));
+          qDebug("cap! %s: %s, %d - %s", qPrintable(severity), qPrintable(filepath), linenumber, qPrintable(msg));
+          pos += errExp.matchedLength(); // step the index past the match so we can continue looking
+        }
+        
         QStringList sl = errMsg.split(":");
         for(int i = 0; i < sl.count(); i++) // remove any spaces from front and back
           sl[i] = sl.at(i).trimmed();
             
-        //printf("err: %s\n", qPrintable(errMsg));
+        printf("err: %s\n", qPrintable(errMsg));
         if(sl.contains("warning"))
         {
           QString msg;
@@ -525,7 +538,7 @@ void Builder::loadDependencies(QString project)
 {
   QDir projDir(project);
   QStringList srcFiles = projDir.entryList(QStringList() << "*.c" << "*.h");
-  QDir libDir(QDir::currentPath() + "/libraries");
+  QDir libDir(QDir::current().filePath("libraries"));
   QStringList libDirs = libDir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
   
   foreach(QString filename, srcFiles)
@@ -533,31 +546,25 @@ void Builder::loadDependencies(QString project)
     QFile file(projDir.filePath(filename));
     if(file.open(QIODevice::ReadOnly|QFile::Text))
     {
-      QRegExp rx("#include [\"|<][0-9a-zA-Z\.]*\.h[\"|>]");
+      QRegExp rx("#include [\"|<]([a-zA-Z0-9]*)\\.h[\"|>]"); // match anything in the form of #include "*.h" or <*.h>
       QString fileContents = file.readAll();
       int pos = 0;
-      QStringList matches;
       
       // gather all the matching directives
       while((pos = rx.indexIn(fileContents, pos)) != -1)
       {
-        matches << rx.cap(0);
-        pos += rx.matchedLength();
-      }
-      
-      // extract the library name from the #include string
-      foreach(QString match, matches)
-      {
-        match.remove(QRegExp("#include [\"|<]"));
-        match.remove(QRegExp("\.h[\"|>]"));
+        QString match(rx.cap(1));
+        //qDebug("match: %s", qPrintable(match));
         // only list it as a dependency if it's in our list of libraries
         if(libDirs.contains(match))
         {
           Library lib;
           lib.name = match;
+          // extract the lists of source files specified in the library's spec file
           getLibrarySources( libDir.filePath(match), &lib.thumb_src, &lib.arm_src);
           libraries.append(lib);
         }
+        pos += rx.matchedLength(); // step the index past the match so we can continue looking
       }
       file.close();
     }
