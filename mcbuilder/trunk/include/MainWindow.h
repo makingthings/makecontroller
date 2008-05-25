@@ -46,6 +46,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
     void setEditorFont(QString family, int pointSize);
 		void printOutput(QString text);
 		void printOutputError(QString text);
+    void printOutputError(QListWidgetItem *item);
 		QString currentProjectPath( ) { return currentProject; }
     QString currentBoardProfile( );
     bool findText(QString text, QTextDocument::FindFlags flags, bool forward);

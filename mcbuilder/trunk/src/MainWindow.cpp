@@ -162,7 +162,7 @@ void MainWindow::onCursorMoved( )
 	extras << highlight;
 	editor->setExtraSelections( extras );
   
-  statusBar()->showMessage( QString("Line: %1  Column: %2").arg(c.blockNumber()).arg(c.columnNumber()));
+  statusBar()->showMessage( QString("Line: %1  Column: %2").arg(c.blockNumber()+1).arg(c.columnNumber()));
 }
 
 /*
@@ -818,6 +818,11 @@ void MainWindow::printOutputError(QString text)
   else
     outputConsole->addItem(text.trimmed());
   outputConsole->scrollToBottom();
+}
+
+void MainWindow::printOutputError(QListWidgetItem *item)
+{
+  outputConsole->addItem(item);
 }
 
 /*
