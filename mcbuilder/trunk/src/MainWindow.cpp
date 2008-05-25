@@ -832,10 +832,11 @@ void MainWindow::printOutputError(ConsoleItem *item)
 */
 void MainWindow::onConsoleDoubleClick(QListWidgetItem *item)
 {
-  ConsoleItem *citem =  (ConsoleItem*)item;
-  if(citem->messageType() == ConsoleItem::Error || citem->messageType() == ConsoleItem::Warning)
+  ConsoleItem *citem =  dynamic_cast<ConsoleItem*>(item);
+  if(citem)
   {
-    QList<QTextEdit::ExtraSelection> extras = editor->extraSelections();
+    if(citem->filePath() != currentFile) // only deal with the current file, for now...
+      return;
     QTextCursor c(editor->document());
     c.movePosition(QTextCursor::Start);
     while(c.blockNumber() < citem->lineNumber()-1) // blockNumber is 0 based, lineNumber starts at 1
@@ -849,8 +850,7 @@ void MainWindow::onConsoleDoubleClick(QListWidgetItem *item)
     else
       es.format.setBackground(QColor("#FFDE49")); // light yellow
 
-    extras << es;
-    editor->setExtraSelections( extras );
+    editor->setExtraSelections( editor->extraSelections() << es );
   }
 }
 

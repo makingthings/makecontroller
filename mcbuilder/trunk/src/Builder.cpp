@@ -535,8 +535,8 @@ void Builder::filterErrorOutput(QString errOutput)
           }
         }
         
-//        if(!matched)
-//          mainWindow->printOutputError(errMsg);
+        if(!matched)
+          qDebug("unmatched err msg: %s", qPrintable(errMsg));
         errMsg.clear();
       }
       break;
