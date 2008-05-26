@@ -25,6 +25,7 @@
 #include <QDomDocument>
 #include <QUrl>
 #include <QMessageBox>
+#include <QCloseEvent>
 #include "MainWindow.h"
 
 #define RECENT_FILES 5
@@ -139,9 +140,13 @@ void MainWindow::writeSettings()
 */
 void MainWindow::closeEvent( QCloseEvent *qcloseevent )
 {
-	(void)qcloseevent;
-  maybeSave( );
-	writeSettings( );
+  if(!maybeSave( ))
+    qcloseevent->ignore();
+  else
+  {
+    writeSettings( );
+    qcloseevent->accept();
+  }
 }
 
 /*
@@ -478,7 +483,7 @@ bool MainWindow::save( )
 */
 bool MainWindow::maybeSave()
 {
-  if (editor->document()->isModified())
+  if(editor->document()->isModified())
   {
     QMessageBox::StandardButton ret;
     ret = QMessageBox::warning(this, tr("mcbuilder"),
@@ -573,7 +578,8 @@ void MainWindow::onBuild( )
 {
   if(currentProject.isEmpty())
 		return statusBar()->showMessage( "Open a project to build, or create a new one from the File menu.", 3500 );
-  maybeSave( );
+  if(!maybeSave( ))
+    return;
 	if(builder->state() == QProcess::NotRunning)
   {
 		outputConsole->clear();
@@ -686,8 +692,7 @@ void MainWindow::uploadFile(QString filename)
 // read the available board files and load them into the UI
 void MainWindow::loadBoardProfiles( )
 {
-	QDir dir = QDir::current();
-	dir.cd("resources/board_profiles");
+	QDir dir = QDir::current().filePath("resources/board_profiles");
 	QStringList boardProfiles = dir.entryList(QStringList("*.xml"));
 	QDomDocument doc;
 	// get a list of the names of the actions we already have
@@ -726,15 +731,13 @@ void MainWindow::loadBoardProfiles( )
 */
 void MainWindow::loadExamples( )
 {
-	QDir dir = QDir::current();
-	dir.cd("examples");
+	QDir dir = QDir::current().filePath("examples");
 	QStringList exampleCategories = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
 	foreach(QString category, exampleCategories)
 	{
 		QMenu *exampleMenu = new QMenu(category, this);
 		menuExamples->addMenu(exampleMenu);
-		QDir exampleDir(dir.path());
-		exampleDir.cd(category);
+		QDir exampleDir(dir.filePath(category));
 		QStringList examples = exampleDir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
 		foreach(QString example, examples)
 		{
@@ -771,7 +774,6 @@ void MainWindow::loadLibraries( )
     // add the library to the "Import Library" menu
     QAction *a = new QAction(library, menuLibraries);
     menuLibraries->addAction(a);
-    // add the library's keywords to the syntax highlighter
     // add the library's examples to the example menu
 	}
 }
@@ -832,7 +834,7 @@ void MainWindow::printOutputError(ConsoleItem *item)
 */
 void MainWindow::onConsoleDoubleClick(QListWidgetItem *item)
 {
-  ConsoleItem *citem =  dynamic_cast<ConsoleItem*>(item);
+  ConsoleItem *citem = dynamic_cast<ConsoleItem*>(item);
   if(citem)
   {
     if(citem->filePath() != currentFile) // only deal with the current file, for now...
