@@ -219,7 +219,6 @@ bool Builder::createMakefile(QString projectPath)
             tofile << "  -I" << dir.filePath("resources/cores/makecontroller/") << include_dir << " \\" << endl;
           }
           tofile << endl;
-          // check for libraries...
 
           // tools
           QString toolsPath = Preferences::toolsPath();
@@ -519,6 +518,7 @@ void Builder::filterErrorOutput(QString errOutput)
         // look for "in function" style messages
         if(!matched)
         {
+          // match output in the form of "filepath: In function: msg"
           QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+): In function ([^\n]*)");
           int pos = 0;
           while((pos = errExp.indexIn(errMsg, pos)) != -1)
@@ -567,7 +567,8 @@ void Builder::loadDependencies(QString project)
     QFile file(projDir.filePath(filename));
     if(file.open(QIODevice::ReadOnly|QFile::Text))
     {
-      QRegExp rx("#include [\"|<]([a-zA-Z0-9]*)\\.h[\"|>]"); // match anything in the form of #include "*.h" or <*.h>
+      // match anything in the form of #include "*.h" or <*.h>
+      QRegExp rx("#include [\"|<]([a-zA-Z0-9]*)\\.h[\"|>]");
       QString fileContents = file.readAll();
       int pos = 0;
       
