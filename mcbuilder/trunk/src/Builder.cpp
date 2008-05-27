@@ -49,6 +49,7 @@ void Builder::build(QString projectName)
   createConfigFile(projectName);      // create a config file based on the Properties for this project
   buildStep = BUILD;
   setWorkingDirectory(projectName + "/build");
+  currentProcess = "make";
   start(Preferences::makePath() + "/make");
 }
 
@@ -62,6 +63,7 @@ void Builder::clean(QString projectName)
   currentProjectPath = projectName;
   setWorkingDirectory(projectName + "/build");
   QStringList args = QStringList() << "clean";
+  currentProcess = "make clean";
   start(Preferences::makePath() + "/make", args);
 }
 
@@ -84,6 +86,7 @@ void Builder::sizer()
   setWorkingDirectory(currentProjectPath + "/build");
   QDir dir(currentProjectPath);
   QStringList args = QStringList() << dir.dirName().toLower() + ".elf";
+  currentProcess = "arm-elf-size";
   start(Preferences::toolsPath() + "/arm-elf-size", args);
 }
 
@@ -393,11 +396,29 @@ bool Builder::parseVersionNumber( int *maj, int *min, int *bld )
 
 void Builder::onBuildError(QProcess::ProcessError error)
 {
-  qDebug("Build error: %d", error);
-//  switch(error)
-//  {
-//    
-//  }
+  QString msg;
+  switch(error)
+  {
+    case QProcess::FailedToStart:
+      msg = QString("'%1' failed to start.  It's either missing, or doesn't have the correct permissions").arg(currentProcess);
+      break;
+    case QProcess::Crashed:
+      msg = QString("'%1' crashed.").arg(currentProcess);
+      break;
+    case QProcess::Timedout:
+      msg = QString("'%1' timed out.").arg(currentProcess);
+      break;
+    case QProcess::WriteError:
+      msg = QString("'%1' reported a write error.").arg(currentProcess);
+      break;
+    case QProcess::ReadError:
+      msg = QString("'%1' reported a read error.").arg(currentProcess);
+      break;
+    case QProcess::UnknownError:
+      msg = QString("'%1' - unknown error type.").arg(currentProcess);
+      break;
+  }
+  mainWindow->printOutputError("Error: " + msg);
 }
 
 void Builder::readOutput( )
@@ -536,7 +557,7 @@ void Builder::filterErrorOutput(QString errOutput)
         }
         
         if(!matched)
-          qDebug("unmatched err msg: %s", qPrintable(errMsg));
+          mainWindow->printOutputError(errMsg);
         errMsg.clear();
       }
       break;
