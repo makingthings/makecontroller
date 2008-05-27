@@ -766,16 +766,18 @@ void MainWindow::onExample(QAction *example)
 */
 void MainWindow::loadLibraries( )
 {
-  QDir dir = QDir::current();
-	dir.cd("libraries");
-	QStringList libraries = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
-	foreach(QString library, libraries)
-	{
-    // add the library to the "Import Library" menu
-    QAction *a = new QAction(library, menuLibraries);
-    menuLibraries->addAction(a);
-    // add the library's examples to the example menu
-	}
+  QDir dir = QDir::current().filePath("libraries");
+	if(dir.exists())
+  {
+    QStringList libraries = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
+    foreach(QString library, libraries)
+    {
+      // add the library to the "Import Library" menu
+      QAction *a = new QAction(library, menuLibraries);
+      menuLibraries->addAction(a);
+      // add the library's examples to the example menu
+    }
+  }
 }
 
 /*

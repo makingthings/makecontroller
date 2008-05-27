@@ -49,6 +49,7 @@ class Builder : public QProcess
 		enum BuildStep { BUILD, CLEAN, SIZER };
 		BuildStep buildStep;
     int maxsize;
+    QString currentProcess;
     QList<Library> libraries;
     void resetBuildProcess();
     bool createMakefile(QString projectPath);
