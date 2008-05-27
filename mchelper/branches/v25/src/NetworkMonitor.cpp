@@ -124,9 +124,15 @@ void NetworkMonitor::lookedUp(const QHostInfo &host)
 		
 		// find out our address, and then replace the last byte with 0xFF
 		// this will be a local broadcast address
-		QStringList addrlist = host.addresses().first().toString( ).split( "." );
-		addrlist.replace( 3, "255" );
-		localBroadcastAddress = addrlist.join( "." );
+    foreach(QHostAddress addr, host.addresses())
+    {
+      QStringList addrlist = addr.toString( ).split( "." );
+      if(addrlist.count() == 4) // expecting an address string in the form of xxx.xxx.xxx.xxx
+      {
+        addrlist.replace( 3, "255" );
+        localBroadcastAddress = addrlist.join( "." );
+      }
+    }
 }
 
 /*
