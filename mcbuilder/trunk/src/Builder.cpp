@@ -67,6 +67,11 @@ void Builder::clean(QString projectName)
   start(Preferences::makePath() + "/make", args);
 }
 
+void Builder::stop()
+{
+  terminate();
+}
+
 /*
   If there's no build directory within a project, create one.
 */
@@ -403,7 +408,7 @@ void Builder::onBuildError(QProcess::ProcessError error)
       msg = QString("'%1' failed to start.  It's either missing, or doesn't have the correct permissions").arg(currentProcess);
       break;
     case QProcess::Crashed:
-      msg = QString("'%1' crashed.").arg(currentProcess);
+      msg = QString("'%1' was canceled or crashed.").arg(currentProcess);
       break;
     case QProcess::Timedout:
       msg = QString("'%1' timed out.").arg(currentProcess);

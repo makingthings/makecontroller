@@ -34,6 +34,7 @@ class Builder : public QProcess
 		Builder(MainWindow *mainWindow, Properties *props);
 		void build(QString projectName);
     void clean(QString projectName);
+    void stop();
   
 	private:
     struct Library

@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icons" >
+    <file>clean.png</file>
     <file>error.png</file>
     <file>green_dot.png</file>
     <file>info.png</file>
