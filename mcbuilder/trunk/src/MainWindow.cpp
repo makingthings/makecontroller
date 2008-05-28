@@ -71,6 +71,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 	connect(actionSave,					SIGNAL(triggered()), this,		SLOT(onSave()));
 	connect(actionSave_As,			SIGNAL(triggered()), this,		SLOT(onSaveAs()));
 	connect(actionBuild,				SIGNAL(triggered()), this,		SLOT(onBuild()));
+  connect(actionStop,         SIGNAL(triggered()), this,		SLOT(onStop()));
   connect(actionClean,				SIGNAL(triggered()), this,		SLOT(onClean()));
 	connect(actionProperties,		SIGNAL(triggered()), this,		SLOT(onProperties()));
 	connect(actionUpload,				SIGNAL(triggered()), this,		SLOT(onUpload()));
@@ -581,15 +582,30 @@ void MainWindow::onBuild( )
 		return statusBar()->showMessage( "Open a project to build, or create a new one from the File menu.", 3500 );
   if(!maybeSave( ))
     return;
-	if(builder->state() == QProcess::NotRunning)
+	if(builder->state() == QProcess::NotRunning) 
   {
 		outputConsole->clear();
+    actionStop->setEnabled(true);
     builder->build(currentProject);
   }
 	else
 		return statusBar()->showMessage( "Builder is currently busy...give it a second, then try again.", 3500 );
 }
 
+/*
+  The 'stop' action has been triggered.
+  Cancel the build process.
+*/
+void MainWindow::onStop( )
+{
+  builder->stop();
+}
+
+/*
+  The build has completed.
+  Add a line to the output console indicating success or failure, 
+  and set the status bar as well.
+*/
 void MainWindow::onBuildComplete(bool success)
 {
   if(success)
@@ -604,6 +620,7 @@ void MainWindow::onBuildComplete(bool success)
     outputConsole->scrollToBottom();
     statusBar()->showMessage("Build failed.");
   }
+  actionStop->setEnabled(false);
 }
 
 void MainWindow::onCleanComplete()
@@ -839,18 +856,22 @@ void MainWindow::onConsoleDoubleClick(QListWidgetItem *item)
 {
   ConsoleItem *citem = dynamic_cast<ConsoleItem*>(item);
   if(citem)
+    highlightLine(citem->filePath(), citem->lineNumber(), citem->messageType());
+}
+
+void MainWindow::highlightLine(QString filepath, int linenumber, ConsoleItem::Type type)
+{
+  if(filepath == currentFile)
   {
-    if(citem->filePath() != currentFile) // only deal with the current file, for now...
-      return;
     QTextCursor c(editor->document());
     c.movePosition(QTextCursor::Start);
-    while(c.blockNumber() < citem->lineNumber()-1) // blockNumber is 0 based, lineNumber starts at 1
+    while(c.blockNumber() < linenumber-1) // blockNumber is 0 based, lineNumber starts at 1
       c.movePosition(QTextCursor::NextBlock);
     
     QTextEdit::ExtraSelection es;
     es.cursor = c;
     es.format.setProperty(QTextFormat::FullWidthSelection, true);
-    if(citem->messageType() == ConsoleItem::Error)
+    if(type == ConsoleItem::Error)
       es.format.setBackground(QColor("#ED575D")); // light red
     else
       es.format.setBackground(QColor("#FFDE49")); // light yellow

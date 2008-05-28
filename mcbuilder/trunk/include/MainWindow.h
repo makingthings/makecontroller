@@ -56,6 +56,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
     void onBuildComplete(bool success);
     void onCleanComplete();
     void buildingNow(QString file);
+    void highlightLine(QString filepath, int linenumber, ConsoleItem::Type type);
 		
 	private:
 		void openFile( const QString &path );
@@ -97,6 +98,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void onSaveProjectAs( );
 		void openRecentProject(QAction* project);
 		void onBuild( );
+    void onStop( );
     void onClean( );
 		void onProperties( );
 		void onUpload( );
