@@ -60,3 +60,4 @@ class Properties : public QDialog, private Ui::Properties
 };
 
 #endif // PROPERTIES_H
+

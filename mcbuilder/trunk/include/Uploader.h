@@ -45,3 +45,4 @@ class Uploader : public QProcess
 };
 
 #endif // UPLOADER_H
+
