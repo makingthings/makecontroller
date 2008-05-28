@@ -1,6 +1,5 @@
 TEMPLATE = app
-# CONFIG += qt release
-CONFIG += qt debug
+
 MCBUILDER_VERSION = "0.1.0"
 
 FORMS = layouts/mainwindow.ui \
@@ -36,7 +35,7 @@ TARGET = mcbuilder
 QT += xml network
 INCLUDEPATH += include
 RESOURCES   += resources/icons/icons_rsrc.qrc
-DEFINES     += MCBUILDER_VERSION=\"$${MCBUILDER_VERSION}\"
+DEFINES     += MCBUILDER_VERSION=\\\"$${MCBUILDER_VERSION}\\\"
 OBJECTS_DIR  = tmp
 MOC_DIR      = tmp
 RCC_DIR      = tmp
@@ -69,9 +68,12 @@ unix:DEFINES  += _TTY_POSIX_
 macx: LIBS += -framework IOKit # use IOKit on OS X
 unix{ !macx: LIBS += -lusb } # use libusb on other unices
 
-win32:HEADERS += src/qextserialport/win_qextserialport.h
-win32:SOURCES += src/qextserialport/win_qextserialport.cpp
-win32:DEFINES += _TTY_WIN_
+win32{
+	HEADERS += src/qextserialport/win_qextserialport.h
+	SOURCES += src/qextserialport/win_qextserialport.cpp
+	DEFINES += _TTY_WIN_
+	LIBS += -lSetupapi	
+}
 
 
 

@@ -223,7 +223,7 @@ class QextSerialBase : public QIODevice
 	    virtual void flush()=0;
 	
 	    virtual qint64 size() const=0;
-	    virtual qint64 bytesAvailable() const=0;
+	    virtual qint64 bytesAvailable() =0;
 	    virtual bool atEnd() const;
 	
 	    virtual void ungetChar(char c)=0;

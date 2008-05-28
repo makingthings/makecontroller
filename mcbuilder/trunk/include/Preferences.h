@@ -49,3 +49,4 @@ class Preferences : public QDialog, private Ui::Preferences
 };
 
 #endif // PREFERENCES_H
+
