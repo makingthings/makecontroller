@@ -35,7 +35,7 @@ TARGET = mcbuilder
 
 QT += xml network
 INCLUDEPATH += include
-RESOURCES   += resources/mcbuilder.qrc
+RESOURCES   += resources/icons/icons_rsrc.qrc
 DEFINES     += MCBUILDER_VERSION=\"$${MCBUILDER_VERSION}\"
 OBJECTS_DIR  = tmp
 MOC_DIR      = tmp

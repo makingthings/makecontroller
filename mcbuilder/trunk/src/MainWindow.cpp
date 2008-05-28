@@ -37,6 +37,7 @@
 MainWindow::MainWindow( ) : QMainWindow( 0 )
 {
 	setupUi(this);
+  setUnifiedTitleAndToolBarOnMac(true);
   
 	boardTypeGroup = new QActionGroup(menuBoard_Type);
 	loadBoardProfiles( );
@@ -59,7 +60,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 	connect(editor, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorMoved()));
 	connect(actionPreferences, SIGNAL(triggered()), prefs, SLOT(loadAndShow()));
   connect(actionUsb_Monitor, SIGNAL(triggered()), usbMonitor, SLOT(loadAndShow()));
-	connect(currentFileDropDown, SIGNAL(currentIndexChanged(QString)), this, SLOT(onFileSelection(QString)));
+	//connect(currentFileDropDown, SIGNAL(currentIndexChanged(QString)), this, SLOT(onFileSelection(QString)));
   connect(editor->document(), SIGNAL(contentsChanged()),this, SLOT(onDocumentModified()));
   connect(outputConsole, SIGNAL(itemDoubleClicked(QListWidgetItem*)),this, SLOT(onConsoleDoubleClick(QListWidgetItem*)));
   
@@ -299,8 +300,8 @@ void MainWindow::createNewFile(QString path)
 		out << QString("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl << endl;
 		file.close();
 		editorLoadFile(&file);
-		currentFileDropDown->addItem(name);
-		currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(name));
+		//currentFileDropDown->addItem(name);
+		//currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(name));
 	}
 }
 
@@ -406,9 +407,9 @@ void MainWindow::openProject(QString projectPath)
 		editorLoadFile(&mainFile);
 		QStringList projectFiles = projectDir.entryList(QStringList("*.c"));
 		// update the files in the dropdown list
-		currentFileDropDown->clear();
-		currentFileDropDown->insertItems(0, projectFiles);
-		currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(mainFileName));
+		//currentFileDropDown->clear();
+		//currentFileDropDown->insertItems(0, projectFiles);
+		//currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(mainFileName));
 		setWindowTitle( projectName + "[*] - mcbuilder");
 		updateRecentProjects(projectName);			
 	}
@@ -520,8 +521,8 @@ void MainWindow::onSaveAs( )
 	QFile newFile(newFileName);
 	editorLoadFile(&newFile);
 	QFileInfo fi(newFile);
-	currentFileDropDown->addItem(fi.fileName());
-	currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
+	//currentFileDropDown->addItem(fi.fileName());
+	//currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
 }
 
 /*

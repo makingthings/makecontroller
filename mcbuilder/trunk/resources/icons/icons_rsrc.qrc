@@ -1,0 +1,13 @@
+<RCC>
+  <qresource prefix="icons" >
+    <file>error.png</file>
+    <file>green_dot.png</file>
+    <file>info.png</file>
+    <file>monitor.tiff</file>
+    <file>red_dot.png</file>
+    <file>stop.tiff</file>
+    <file>success.png</file>
+    <file>upload.tiff</file>
+    <file>warning.png</file>
+  </qresource>
+</RCC>
