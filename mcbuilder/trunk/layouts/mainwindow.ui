@@ -270,11 +270,11 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionBuild" />
-   <addaction name="actionClean" />
    <addaction name="actionStop" />
+   <addaction name="actionClean" />
+   <addaction name="actionProperties" />
    <addaction name="actionUpload" />
    <addaction name="actionUsb_Monitor" />
-   <addaction name="actionProperties" />
   </widget>
   <action name="actionNew" >
    <property name="text" >
@@ -454,6 +454,10 @@
    </property>
   </action>
   <action name="actionClean" >
+   <property name="icon" >
+    <iconset resource="../resources/icons/icons_rsrc.qrc" >
+     <normaloff>:/icons/clean.png</normaloff>:/icons/clean.png</iconset>
+   </property>
    <property name="text" >
     <string>Clean</string>
    </property>
