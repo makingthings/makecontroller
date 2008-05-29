@@ -531,10 +531,12 @@ void Builder::filterErrorOutput(QString errOutput)
           {
             item = new ConsoleItem(filepath, linenumber, ConsoleItem::Error);
             item->setIcon(QIcon(":/icons/error.png"));
+            mainWindow->highlightLine(filepath, linenumber, ConsoleItem::Error);
           }
           else
           {
             item = new ConsoleItem(filepath, linenumber, ConsoleItem::Warning);
+            mainWindow->highlightLine(filepath, linenumber, ConsoleItem::Warning);
             item->setIcon(QIcon(":/icons/warning.png"));
           }
           item->setText(fullmsg);

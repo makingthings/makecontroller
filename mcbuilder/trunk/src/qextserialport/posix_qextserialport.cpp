@@ -950,7 +950,7 @@ qint64 Posix_QextSerialPort::size() const
 Returns the number of bytes waiting in the port's receive queue.  This function will return 0 if
 the port is not currently open, or -1 on error.
 */
-qint64 Posix_QextSerialPort::bytesAvailable() const
+qint64 Posix_QextSerialPort::bytesAvailable()
 {
     LOCK_MUTEX();
     if (isOpen()) {
