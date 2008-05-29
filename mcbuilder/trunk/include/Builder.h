@@ -62,6 +62,7 @@ class Builder : public QProcess
     bool parseVersionNumber( int *maj, int *min, int *bld );
     void loadDependencies(QString project);
     void getLibrarySources(QString libdir, QStringList *thmb, QStringList *arm);
+    QString filteredPath(QString path);
 		
 	private slots:
 		void nextStep( int exitCode, QProcess::ExitStatus exitStatus );

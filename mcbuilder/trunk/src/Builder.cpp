@@ -176,13 +176,13 @@ bool Builder::createMakefile(QString projectPath)
           // add all the C files in the project directory to THUMB source
           // may eventually change this to accommodate specifying THUMB or ARM files somehow...
           foreach(QFileInfo filename, cFiles)
-            tofile << "  " << filename.filePath() << " \\" << endl;
+            tofile << "  " << filteredPath(filename.filePath()) << " \\" << endl;
             
           // add in all the sources from the required libraries
           foreach(Library lib, libraries)
           {
             foreach(QString filepath, lib.thumb_src)
-              tofile << "  " << filepath << " \\" << endl;
+              tofile << "  " << filteredPath(filepath) << " \\" << endl;
           }
             
           // now extract the source files from the project file
@@ -190,7 +190,7 @@ bool Builder::createMakefile(QString projectPath)
           for(int i = 0; i < thumb_src.count(); i++)
           {
             QString src_file = thumb_src.at(i).toElement().text();
-            tofile << "  " << dir.filePath("resources/cores/makecontroller/") << src_file << " \\" << endl;
+            tofile << "  " << filteredPath(dir.filePath("resources/cores/makecontroller/")) << src_file << " \\" << endl;
           }
           tofile << endl;
 
@@ -200,7 +200,7 @@ bool Builder::createMakefile(QString projectPath)
           foreach(Library lib, libraries)
           {
             foreach(QString filepath, lib.arm_src)
-              tofile << "  " << filepath << " \\" << endl;
+              tofile << "  " << QDir::toNativeSeparators(filepath) << " \\" << endl;
           }
           
           // add the files from the main project file.
@@ -208,7 +208,7 @@ bool Builder::createMakefile(QString projectPath)
           for(int i = 0; i < arm_src.count(); i++)
           {
             QString src_file = arm_src.at(i).toElement().text();
-            tofile << "  " << dir.filePath("resources/cores/makecontroller/") << src_file << " \\" << endl;
+            tofile << "  " << filteredPath(dir.filePath("resources/cores/makecontroller/")) << src_file << " \\" << endl;
           }
           tofile << endl;
 
@@ -218,22 +218,22 @@ bool Builder::createMakefile(QString projectPath)
           // add in the directories for the required libraries
           QDir libdir(QDir::current().filePath("libraries"));
           foreach(Library lib, libraries)
-            tofile << "  -I" << libdir.filePath(lib.name) << " \\" << endl;
+            tofile << "  -I" << filteredPath(libdir.filePath(lib.name)) << " \\" << endl;
           
           QDomNodeList include_dirs = projectDoc.elementsByTagName("include_dirs").at(0).childNodes();
           for(int i = 0; i < include_dirs.count(); i++)
           {
             QString include_dir = include_dirs.at(i).toElement().text();
-            tofile << "  -I" << dir.filePath("resources/cores/makecontroller/") << include_dir << " \\" << endl;
+            tofile << "  -I" << filteredPath(dir.filePath("resources/cores/makecontroller/") + include_dir) << " \\" << endl;
           }
           tofile << endl;
 
           // tools
           QString toolsPath = Preferences::toolsPath();
-          tofile << "CC=" << toolsPath << "/arm-elf-gcc" << endl;
-          tofile << "OBJCOPY=" << toolsPath << "/arm-elf-objcopy" << endl;
-          tofile << "ARCH=" << toolsPath << "/arm-elf-ar" << endl;
-          tofile << "CRT0=" + dir.filePath("resources/cores/makecontroller/controller/startup/boot.s") << endl;
+          tofile << "CC=" << filteredPath(toolsPath + "/arm-elf-gcc") << endl;
+          tofile << "OBJCOPY=" << filteredPath(toolsPath + "/arm-elf-objcopy") << endl;
+          tofile << "ARCH=" << filteredPath(toolsPath + "/arm-elf-ar") << endl;
+          tofile << "CRT0=" + filteredPath(dir.filePath("resources/cores/makecontroller/controller/startup/boot.s")) << endl;
           QString debug = (props->debug()) ? "-g" : "";
           tofile << "DEBUG=" + debug << endl;
           QString optLevel = props->optLevel();
@@ -248,7 +248,7 @@ bool Builder::createMakefile(QString projectPath)
           else
             optLevel = "-O0";
           tofile << "OPTIM=" + optLevel << endl;
-          tofile << "LDSCRIPT=" + dir.filePath("resources/cores/makecontroller/controller/startup/atmel-rom.ld") << endl << endl;
+          tofile << "LDSCRIPT=" + filteredPath(dir.filePath("resources/cores/makecontroller/controller/startup/atmel-rom.ld")) << endl << endl;
 
           // the rest is always the same...
           tofile << "CFLAGS= \\" << endl;
@@ -424,6 +424,8 @@ void Builder::onBuildError(QProcess::ProcessError error)
       break;
   }
   mainWindow->printOutputError("Error: " + msg);
+  resetBuildProcess();
+  mainWindow->onBuildComplete(false);
 }
 
 void Builder::readOutput( )
@@ -642,6 +644,17 @@ void Builder::getLibrarySources(QString libdir, QStringList *thmb, QStringList *
     }
     libfile.close();
   }
+}
+
+/*
+  Filter a path for inclusion in a Makefile.
+  Make sure the directory separators are system appropriate.
+*/
+QString Builder::filteredPath(QString path)
+{
+	// would be good to be able to do something about file paths with spaces
+	// but not quite sure how to deal at the moment
+	return QDir::toNativeSeparators(path);
 }
 
 

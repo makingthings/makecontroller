@@ -19,9 +19,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>66</y>
+     <y>55</y>
      <width>806</width>
-     <height>573</height>
+     <height>587</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" >
@@ -141,7 +141,7 @@
      <x>0</x>
      <y>0</y>
      <width>806</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile" >
@@ -161,8 +161,6 @@
     <addaction name="actionSave" />
     <addaction name="actionSave_As" />
     <addaction name="actionSave_Project_As" />
-    <addaction name="actionPreferences" />
-    <addaction name="actionAbout" />
    </widget>
    <widget class="QMenu" name="menuHelp" >
     <property name="title" >
@@ -170,6 +168,9 @@
     </property>
     <addaction name="actionMcbuilder_User_Manual" />
     <addaction name="actionMake_Controller_Reference" />
+    <addaction name="separator" />
+    <addaction name="actionPreferences" />
+    <addaction name="actionAbout" />
    </widget>
    <widget class="QMenu" name="menuProject" >
     <property name="title" >
@@ -239,9 +240,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>639</y>
+     <y>642</y>
      <width>806</width>
-     <height>22</height>
+     <height>19</height>
     </rect>
    </property>
   </widget>
@@ -249,9 +250,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>22</y>
+     <y>21</y>
      <width>806</width>
-     <height>44</height>
+     <height>34</height>
     </rect>
    </property>
    <property name="windowTitle" >
