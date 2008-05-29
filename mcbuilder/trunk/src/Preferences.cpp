@@ -21,8 +21,13 @@
 #include <QFontDialog>
 #include "Preferences.h"
 
+#ifdef Q_WS_MAC
 #define DEFAULT_FONT "Monaco"
 #define DEFAULT_FONT_SIZE 12
+#else
+#define DEFAULT_FONT "Courier"
+#define DEFAULT_FONT_SIZE 10
+#endif
 #define DEFAULT_TAB_WIDTH 2
 #define DEFAULT_BOARDTYPE "Make Controller"
 
@@ -54,9 +59,12 @@ QString Preferences::workspace( )
 	QSettings settings("MakingThings", "mcbuilder");
 	#ifdef Q_WS_MAC
 	QString workspace = QDir::home().path() + "/Documents/mcbuilder";
+	#elif #defined Q_WS_WIN
+	// would be nice to use home dir, but can't have spaces in file path
+	QString workspace = QDir::toNativeSeparators("C:/mcbuilder");
 	#else
 	QString workspace = QDir::home().path() + "/mcbuilder";
-	#endif
+	#endif // Q_WS_MAC
 	workspace = settings.value("workspace", workspace).toString();
 	// always make sure the workspace directory exists
 	QDir dir(workspace);
@@ -65,7 +73,7 @@ QString Preferences::workspace( )
 		dir.cdUp();
 		dir.mkdir("mcbuilder");
 	}
-	return workspace;
+	return QDir::toNativeSeparators(workspace);
 }
 
 // static
@@ -85,7 +93,7 @@ QString Preferences::toolsPath( ) // static
   QSettings settings("MakingThings", "mcbuilder");
   QString path = settings.value("toolsPath").toString();
   if(path.isEmpty())
-    return QDir::currentPath() + "/resources/tools";
+    return QDir::currentPath() + "/resources/tools/arm-elf/bin";
   else
     return path;
 }

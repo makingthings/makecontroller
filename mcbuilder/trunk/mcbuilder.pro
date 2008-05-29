@@ -1,4 +1,5 @@
 TEMPLATE = app
+CONFIG += qt release
 
 MCBUILDER_VERSION = "0.1.0"
 
