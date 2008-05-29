@@ -37,7 +37,17 @@
 MainWindow::MainWindow( ) : QMainWindow( 0 )
 {
 	setupUi(this);
-  setUnifiedTitleAndToolBarOnMac(true);
+  
+  // add the file dropdown to the toolbar...can't do this in Designer for some reason
+  QWidget *stretch = new QWidget(toolBar);
+  stretch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  toolBar->addWidget(stretch);
+  currentFileDropDown = new QComboBox(toolBar);
+  currentFileDropDown->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+  toolBar->addWidget(currentFileDropDown);
+  QWidget *pad = new QWidget(toolBar);
+  pad->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  toolBar->addWidget(pad);
   
 	boardTypeGroup = new QActionGroup(menuBoard_Type);
 	loadBoardProfiles( );
@@ -60,7 +70,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 	connect(editor, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorMoved()));
 	connect(actionPreferences, SIGNAL(triggered()), prefs, SLOT(loadAndShow()));
   connect(actionUsb_Monitor, SIGNAL(triggered()), usbMonitor, SLOT(loadAndShow()));
-	//connect(currentFileDropDown, SIGNAL(currentIndexChanged(QString)), this, SLOT(onFileSelection(QString)));
+	connect(currentFileDropDown, SIGNAL(currentIndexChanged(QString)), this, SLOT(onFileSelection(QString)));
   connect(editor->document(), SIGNAL(contentsChanged()),this, SLOT(onDocumentModified()));
   connect(outputConsole, SIGNAL(itemDoubleClicked(QListWidgetItem*)),this, SLOT(onConsoleDoubleClick(QListWidgetItem*)));
   
@@ -301,8 +311,8 @@ void MainWindow::createNewFile(QString path)
 		out << QString("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl << endl;
 		file.close();
 		editorLoadFile(&file);
-		//currentFileDropDown->addItem(name);
-		//currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(name));
+		currentFileDropDown->addItem(name);
+		currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(name));
 	}
 }
 
@@ -321,7 +331,7 @@ void MainWindow::onFileSelection(QString filename)
 	{
 		// TODO: remove this from the file dropdown...
 		QString message = QString("Couldn't find %1 in %2.").arg(filename).arg(dir.dirName());
-		//currentFileDropDown->removeItem(currentFileDropDown->findText(name));
+		currentFileDropDown->removeItem(currentFileDropDown->findText(filename));
 		statusBar()->showMessage(message, 3000);
 	}
 	
@@ -408,9 +418,9 @@ void MainWindow::openProject(QString projectPath)
 		editorLoadFile(&mainFile);
 		QStringList projectFiles = projectDir.entryList(QStringList("*.c"));
 		// update the files in the dropdown list
-		//currentFileDropDown->clear();
-		//currentFileDropDown->insertItems(0, projectFiles);
-		//currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(mainFileName));
+		currentFileDropDown->clear();
+		currentFileDropDown->insertItems(0, projectFiles);
+		currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(mainFileName));
 		setWindowTitle( projectName + "[*] - mcbuilder");
 		updateRecentProjects(projectName);			
 	}
@@ -522,8 +532,8 @@ void MainWindow::onSaveAs( )
 	QFile newFile(newFileName);
 	editorLoadFile(&newFile);
 	QFileInfo fi(newFile);
-	//currentFileDropDown->addItem(fi.fileName());
-	//currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
+	currentFileDropDown->addItem(fi.fileName());
+	currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
 }
 
 /*
