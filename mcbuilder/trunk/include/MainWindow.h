@@ -75,6 +75,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
     UsbMonitor *usbMonitor;
     FindReplace *findReplace;
     About *about;
+    QComboBox *currentFileDropDown;
 		QActionGroup *boardTypeGroup;
 		QString currentFile; // path of the file in the editor
 		QString currentProject; // path of the current project directory
