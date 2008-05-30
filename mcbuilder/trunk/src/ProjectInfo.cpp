@@ -16,7 +16,7 @@
 *********************************************************************************/
 
 
-#include "Properties.h"
+#include "ProjectInfo.h"
 #include <QDir>
 
 #define DEFAULT_VERSION "0.1.0"
@@ -31,7 +31,7 @@
 #define DEFAULT_TCP_SOCKETS 4
 #define DEFAULT_TCP_SERVERS 2
 
-Properties::Properties(MainWindow *mainWindow) : QDialog( 0 )
+ProjectInfo::ProjectInfo(MainWindow *mainWindow) : QDialog( 0 )
 {
 	this->mainWindow = mainWindow;
 	setupUi(this);
@@ -43,10 +43,10 @@ Properties::Properties(MainWindow *mainWindow) : QDialog( 0 )
 }
 
 /*
-	Read the project properties from the project profile, load them into
-	the properties dialog and show it.
+	Read the project ProjectInfo from the project profile, load them into
+	the ProjectInfo dialog and show it.
 */
-bool Properties::loadAndShow( )
+bool ProjectInfo::loadAndShow( )
 {
 	load();
 	show();
@@ -54,18 +54,18 @@ bool Properties::loadAndShow( )
 }
 
 /*
-  Read the project's properties from the project file
+  Read the project's ProjectInfo from the project file
   and load them into the UI.
 */
-bool Properties::load()
+bool ProjectInfo::load()
 {
   QDir projectDir(mainWindow->currentProjectPath());
   if(!projectDir.exists())
     return false;
 	QString projectName = projectDir.dirName();
-	setWindowTitle(projectName + " - Properties");
+	setWindowTitle(projectName + " - Project Info");
 	
-	// read the properties file
+	// read the ProjectInfo file
 	QFile file(propFilePath());
 	if(file.open(QIODevice::ReadOnly|QFile::Text))
 	{
@@ -103,7 +103,7 @@ bool Properties::load()
 
 // rip through the fields and see if any have changed
 // update appropriately if they have
-void Properties::applyChanges( )
+void ProjectInfo::applyChanges( )
 {
 	QFile file(propFilePath());
 	if(file.open(QIODevice::ReadWrite|QFile::Text))
@@ -174,7 +174,7 @@ void Properties::applyChanges( )
   Return the path of the project file
   for the current project.
 */
-QString Properties::propFilePath( )
+QString ProjectInfo::propFilePath( )
 {
 	QDir projectDir(mainWindow->currentProjectPath());
 	QString projectName = projectDir.dirName();
@@ -182,7 +182,7 @@ QString Properties::propFilePath( )
 	return projectDir.filePath(projectName.remove(" ") + ".xml"); 
 }
 
-void Properties::restoreDefaults( )
+void ProjectInfo::restoreDefaults( )
 {
   versionEdit->setText(DEFAULT_VERSION);
   heapSizeEdit->setText(QString::number(DEFAULT_HEAPSIZE));
@@ -197,12 +197,12 @@ void Properties::restoreDefaults( )
   tcpServerEdit->setText(QString::number(DEFAULT_TCP_SERVERS));
 }
 
-void Properties::onNetworkChanged(int state)
+void ProjectInfo::onNetworkChanged(int state)
 {
   setNetworkSectionEnabled(state == Qt::Checked);
 }
 
-void Properties::setNetworkSectionEnabled(bool state)
+void ProjectInfo::setNetworkSectionEnabled(bool state)
 {
   networkMempoolEdit->setEnabled(state);
   networkMempoolLabel->setEnabled(state);

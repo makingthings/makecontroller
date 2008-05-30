@@ -52,9 +52,9 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   //initialization
   highlighter = new Highlighter( editor->document() );
 	prefs = new Preferences(this);
-	props = new Properties(this);
+	projInfo = new ProjectInfo(this);
 	uploader = new Uploader(this);
-	builder = new Builder(this, props);
+	builder = new Builder(this, projInfo);
   usbMonitor = new UsbMonitor();
   findReplace = new FindReplace(this);
   about = new About();
@@ -673,7 +673,7 @@ void MainWindow::onProperties( )
 {
 	if(currentProject.isEmpty())
 		return statusBar()->showMessage( "Open a project first, or create a new one from the File menu.", 3500 );
-	if( !props->loadAndShow() )
+	if( !projInfo->loadAndShow() )
 	{
 		QDir dir(currentProject);
 		return statusBar()->showMessage( "Couldn't find/open project properties for " + dir.dirName(), 3500 );

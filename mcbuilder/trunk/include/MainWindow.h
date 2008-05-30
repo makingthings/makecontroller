@@ -24,7 +24,7 @@
 #include "ui_mainwindow.h"
 #include "Highlighter.h"
 #include "Preferences.h"
-#include "Properties.h"
+#include "ProjectInfo.h"
 #include "Uploader.h"
 #include "Builder.h"
 #include "UsbMonitor.h"
@@ -70,7 +70,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void closeEvent( QCloseEvent *qcloseevent );
 		Highlighter *highlighter;
 		Preferences *prefs;
-		Properties *props;
+		ProjectInfo *projInfo;
 		Uploader *uploader;
 		Builder *builder;
     UsbMonitor *usbMonitor;

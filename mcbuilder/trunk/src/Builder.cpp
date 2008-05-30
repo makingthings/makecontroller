@@ -27,10 +27,10 @@
 	We need to generate a Makefile based on the general Preferences 
   and Properties for this project.
 */
-Builder::Builder(MainWindow *mainWindow, Properties *props) : QProcess( 0 )
+Builder::Builder(MainWindow *mainWindow, ProjectInfo *projInfo) : QProcess( 0 )
 {
 	this->mainWindow = mainWindow;
-  this->props = props;
+  this->projInfo = projInfo;
 	connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
 	connect(this, SIGNAL(readyReadStandardError()), this, SLOT(readError()));
 	connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(nextStep(int, QProcess::ExitStatus)));
@@ -230,9 +230,9 @@ bool Builder::createMakefile(QString projectPath)
           tofile << "OBJCOPY=" << filteredPath(toolsPath + "arm-elf-objcopy") << endl;
           tofile << "ARCH=" << filteredPath(toolsPath + "arm-elf-ar") << endl;
           tofile << "CRT0=" + filteredPath(dir.filePath("resources/cores/makecontroller/controller/startup/boot.s")) << endl;
-          QString debug = (props->debug()) ? "-g" : "";
+          QString debug = (projInfo->debug()) ? "-g" : "";
           tofile << "DEBUG=" + debug << endl;
-          QString optLevel = props->optLevel();
+          QString optLevel = projInfo->optLevel();
           if(optLevel.contains("-O1"))
             optLevel = "-O1";	
           else if(optLevel.contains("-O2"))
@@ -326,7 +326,7 @@ bool Builder::createConfigFile(QString projectPath)
     
     tofile << "#include \"controller.h\"" << endl << "#include \"appboard.h\"" << endl << "#include \"error.h\"" << endl << endl;
     
-    tofile << "#define CONTROLLER_HEAPSIZE " << props->heapsize() << endl;
+    tofile << "#define CONTROLLER_HEAPSIZE " << projInfo->heapsize() << endl;
     tofile << "#define FIRMWARE_NAME " << "\"" + dir.dirName() + "\"" << endl;
     int maj, min, bld;
     parseVersionNumber( &maj, &min, &bld );
@@ -334,19 +334,19 @@ bool Builder::createConfigFile(QString projectPath)
     tofile << "#define FIRMWARE_MINOR_VERSION " << min << endl;
     tofile << "#define FIRMWARE_BUILD_NUMBER " << bld << endl << endl;
     
-    if(props->includeOsc())
+    if(projInfo->includeOsc())
       tofile << "#define OSC" << endl;
     
-    if(props->includeUsb())
+    if(projInfo->includeUsb())
       tofile << "#define MAKE_CTRL_USB" << endl;
       
-    if(props->includeNetwork())
+    if(projInfo->includeNetwork())
     {
       tofile << "#define MAKE_CTRL_NETWORK" << endl;
-      tofile << "#define NETWORK_MEM_POOL " << props->networkMempool() << endl;
-      tofile << "#define NETWORK_UDP_CONNS " << props->udpSockets() << endl;
-      tofile << "#define NETWORK_TCP_CONNS " << props->tcpSockets() << endl;
-      tofile << "#define NETWORK_TCP_LISTEN_CONNS " << props->tcpServers() << endl;
+      tofile << "#define NETWORK_MEM_POOL " << projInfo->networkMempool() << endl;
+      tofile << "#define NETWORK_UDP_CONNS " << projInfo->udpSockets() << endl;
+      tofile << "#define NETWORK_TCP_CONNS " << projInfo->tcpSockets() << endl;
+      tofile << "#define NETWORK_TCP_LISTEN_CONNS " << projInfo->tcpServers() << endl;
     }
     tofile << endl;
       
@@ -364,7 +364,7 @@ bool Builder::createConfigFile(QString projectPath)
 */
 bool Builder::parseVersionNumber( int *maj, int *min, int *bld )
 {
-  QStringList versions = props->version().split(".");
+  QStringList versions = projInfo->version().split(".");
   bool success = true;
   if(versions.count() == 3)
   {
