@@ -5,21 +5,21 @@ MCBUILDER_VERSION = "0.1.0"
 
 FORMS = layouts/mainwindow.ui \
         layouts/preferences.ui \
-        layouts/properties.ui \
+        layouts/projectinfo.ui \
         layouts/usbmonitor.ui \
         layouts/findreplace.ui \
-		layouts/about.ui
+        layouts/about.ui
 
 HEADERS = include/Highlighter.h \
           include/MainWindow.h \
           include/Preferences.h \
           include/Uploader.h \
-          include/Properties.h \
+          include/ProjectInfo.h \
           include/Builder.h \
           include/UsbMonitor.h \
           include/FindReplace.h \
           include/About.h \
-		  include/AppUpdater.h \
+          include/AppUpdater.h \
           include/ConsoleItem.h
 
 SOURCES = src/main.cpp \
@@ -27,11 +27,11 @@ SOURCES = src/main.cpp \
           src/MainWindow.cpp \
           src/Preferences.cpp \
           src/Uploader.cpp \
-          src/Properties.cpp \
+          src/ProjectInfo.cpp \
           src/Builder.cpp \
           src/UsbMonitor.cpp \
           src/FindReplace.cpp \
-		  src/AppUpdater.cpp \
+          src/AppUpdater.cpp \
           src/About.cpp
 
 TARGET = mcbuilder
