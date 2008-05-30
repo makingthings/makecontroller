@@ -22,16 +22,16 @@
 #include <QProcess>
 #include <QFileInfo>
 #include "MainWindow.h"
-#include "Properties.h"
+#include "ProjectInfo.h"
 
 class MainWindow;
-class Properties;
+class ProjectInfo;
 
 class Builder : public QProcess
 {
 	Q_OBJECT
 	public:
-		Builder(MainWindow *mainWindow, Properties *props);
+		Builder(MainWindow *mainWindow, ProjectInfo *projInfo);
 		void build(QString projectName);
     void clean(QString projectName);
     void stop();
@@ -44,7 +44,7 @@ class Builder : public QProcess
       QStringList arm_src;
     };
 		MainWindow *mainWindow;
-    Properties *props;
+    ProjectInfo *projInfo;
     QString errMsg, outputMsg;
     QString currentProjectPath;
 		enum BuildStep { BUILD, CLEAN, SIZER };
