@@ -129,6 +129,9 @@ void Preferences::loadAndShow( )
   toolsPathEdit->setText( settings.value("toolsPath").toString() );
   sam7PathEdit->setText( settings.value("sam7Path").toString() );
   
+  Qt::CheckState state = (settings.value("checkForUpdates", true).toBool()) ? Qt::Checked : Qt::Unchecked;
+  updaterBox->setCheckState(state);
+  
   fontBox->setText(QString("%1, %2pt").arg(currentFont.family()).arg(currentFont.pointSize()));
 	tabWidth->setText(QString::number(settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt()));
 	show( );
@@ -175,6 +178,7 @@ void Preferences::applyChanges( )
   settings.setValue("makePath", makePathEdit->text());
   settings.setValue("toolsPath", toolsPathEdit->text());
   settings.setValue("sam7Path", sam7PathEdit->text());
+  settings.setValue("checkForUpdates", (updaterBox->checkState() == Qt::Checked));
 	
 	int oldTabWidth = settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt();
 	if( oldTabWidth != tabWidth->text().toInt() )
@@ -192,6 +196,8 @@ void Preferences::applyChanges( )
     settings.setValue("editorFontSize", currentFont.pointSize());
   }
 }
+
+
 
 
 

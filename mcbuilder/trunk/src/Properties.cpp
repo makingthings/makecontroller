@@ -36,6 +36,7 @@ Properties::Properties(MainWindow *mainWindow) : QDialog( 0 )
 	this->mainWindow = mainWindow;
 	setupUi(this);
 	connect(buttonBox, SIGNAL(accepted()), this, SLOT(applyChanges()));
+  connect(buttonBox, SIGNAL(rejected()), this, SLOT(accept()));
   connect(defaultsButton, SIGNAL(clicked()), this, SLOT(restoreDefaults()));
   connect(networkBox, SIGNAL(stateChanged(int)), this, SLOT(onNetworkChanged(int)));
   load( ); // initialize
@@ -166,6 +167,7 @@ void Properties::applyChanges( )
     }
 		file.close();
 	}
+  accept();
 }
 
 /*
@@ -210,6 +212,12 @@ void Properties::setNetworkSectionEnabled(bool state)
   tcpSocketLabel->setEnabled(state);
   tcpServerEdit->setEnabled(state);
   tcpServerLabel->setEnabled(state);
+}
+
+void FileBrowser::contextMenuEvent(QContextMenuEvent *event)
+{
+  qDebug("got context event");
+  (void)event;
 }
 
 

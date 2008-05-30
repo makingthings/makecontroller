@@ -15,82 +15,78 @@
   are assumed to be relative to the cores/makecontroller directory within the mcbuilder install -->
   <files>
     <!-- Source files to be built in THUMB mode...these are most normal files -->
-    <thumb_src>
-      <file>controller/freertos/tasks.c</file>
-      <file>controller/freertos/queue.c</file>
-      <file>controller/freertos/list.c</file>
-      <file>controller/freertos/portable/GCC/ARM7_AT91SAM7S/port.c</file>
-      <file>controller/startup/extras.c</file>
-      <file>controller/freertos/portable/MemMang/heap_2.c</file>
-      <file>controller/makingthings/main.c</file>
-      <file>controller/makingthings/webserver.c</file>
-      <file>controller/makingthings/webclient.c</file>
-      <file>controller/makingthings/eeprom.c</file>
-      <file>controller/makingthings/analogin.c</file>
-      <file>controller/makingthings/serial.c</file>
-      <file>controller/makingthings/pwm.c</file>
-      <file>controller/makingthings/spi.c</file>
-      <file>controller/makingthings/USB-CDC.c</file>
-      <file>controller/makingthings/rtos.c</file>
-      <file>controller/makingthings/usb.c</file>
-      <file>controller/makingthings/network.c</file>
-      <file>controller/makingthings/system.c</file>
-      <file>controller/makingthings/xbee.c</file>
-      <file>appboard/makingthings/servo.c</file>
-      <file>appboard/makingthings/stepper.c</file>
-      <file>appboard/makingthings/dipswitch.c</file>
-      <file>appboard/makingthings/motor.c</file>
-      <file>appboard/makingthings/appboard.c</file>
-      <file>appboard/makingthings/appled.c</file>
-      <file>appboard/makingthings/pwmout.c</file>
-      <file>appboard/makingthings/digitalin.c</file>
-      <file>appboard/makingthings/digitalout.c</file>
-      <file>controller/makingthings/io.c</file>
-      <file>controller/makingthings/led.c</file>
-      <file>controller/makingthings/timer.c</file>
-      <file>controller/makingthings/fasttimer.c</file>
-      <file>controller/makingthings/debugosc.c</file>
-      <file>controller/makingthings/can.c</file>
-      <file>controller/lwip/src/core/tcp_out.c</file>
-      <file>controller/lwip/src/core/inet.c</file>
-      <file>controller/lwip/src/core/mem.c</file>
-      <file>controller/lwip/src/core/memp.c</file>
-      <file>controller/lwip/src/core/netif.c</file>
-      <file>controller/lwip/src/core/pbuf.c</file>
-      <file>controller/lwip/src/core/raw.c</file>
-      <file>controller/lwip/src/core/stats.c</file>
-      <file>controller/lwip/src/core/sys.c</file>
-      <file>controller/lwip/src/core/tcp.c</file>
-      <file>controller/lwip/src/core/tcp_in.c</file>
-      <file>controller/lwip/src/core/ipv4/ip.c</file>
-      <file>controller/lwip/src/core/ipv4/ip_addr.c</file>
-      <file>controller/lwip/src/core/ipv4/icmp.c</file>
-      <file>controller/lwip/src/core/dhcp.c</file>
-      <file>controller/lwip/src/api/tcpip.c</file>
-      <file>controller/lwip/src/api/api_msg.c</file>
-      <file>controller/lwip/src/api/err.c</file>
-      <file>controller/lwip/src/api/api_lib.c</file>
-      <file>controller/lwip/src/netif/etharp.c</file>
-      <file>controller/lwip/contrib/port/FreeRTOS/AT91SAM7X/sys_arch.c</file>
-      <file>controller/lwip/src/netif/ethernetif.c</file>
-      <file>controller/makingthings/SAM7_EMAC.c</file>
-      <file>controller/lwip/src/core/udp.c</file>
-      <file>controller/lwip/src/core/ipv4/ip_frag.c</file>
-      <file>controller/makingthings/osc.c</file>
-      <file>controller/makingthings/osc_patternmatch.c</file>
-    </thumb_src>
+    <file type="thumb">controller/freertos/tasks.c</file>
+    <file type="thumb">controller/freertos/queue.c</file>
+    <file type="thumb">controller/freertos/list.c</file>
+    <file type="thumb">controller/freertos/portable/GCC/ARM7_AT91SAM7S/port.c</file>
+    <file type="thumb">controller/startup/extras.c</file>
+    <file type="thumb">controller/freertos/portable/MemMang/heap_2.c</file>
+    <file type="thumb">controller/makingthings/main.c</file>
+    <file type="thumb">controller/makingthings/webserver.c</file>
+    <file type="thumb">controller/makingthings/webclient.c</file>
+    <file type="thumb">controller/makingthings/eeprom.c</file>
+    <file type="thumb">controller/makingthings/analogin.c</file>
+    <file type="thumb">controller/makingthings/serial.c</file>
+    <file type="thumb">controller/makingthings/pwm.c</file>
+    <file type="thumb">controller/makingthings/spi.c</file>
+    <file type="thumb">controller/makingthings/USB-CDC.c</file>
+    <file type="thumb">controller/makingthings/rtos.c</file>
+    <file type="thumb">controller/makingthings/usb.c</file>
+    <file type="thumb">controller/makingthings/network.c</file>
+    <file type="thumb">controller/makingthings/system.c</file>
+    <file type="thumb">controller/makingthings/xbee.c</file>
+    <file type="thumb">appboard/makingthings/servo.c</file>
+    <file type="thumb">appboard/makingthings/stepper.c</file>
+    <file type="thumb">appboard/makingthings/dipswitch.c</file>
+    <file type="thumb">appboard/makingthings/motor.c</file>
+    <file type="thumb">appboard/makingthings/appboard.c</file>
+    <file type="thumb">appboard/makingthings/appled.c</file>
+    <file type="thumb">appboard/makingthings/pwmout.c</file>
+    <file type="thumb">appboard/makingthings/digitalin.c</file>
+    <file type="thumb">appboard/makingthings/digitalout.c</file>
+    <file type="thumb">controller/makingthings/io.c</file>
+    <file type="thumb">controller/makingthings/led.c</file>
+    <file type="thumb">controller/makingthings/timer.c</file>
+    <file type="thumb">controller/makingthings/fasttimer.c</file>
+    <file type="thumb">controller/makingthings/debugosc.c</file>
+    <file type="thumb">controller/makingthings/can.c</file>
+    <file type="thumb">controller/lwip/src/core/tcp_out.c</file>
+    <file type="thumb">controller/lwip/src/core/inet.c</file>
+    <file type="thumb">controller/lwip/src/core/mem.c</file>
+    <file type="thumb">controller/lwip/src/core/memp.c</file>
+    <file type="thumb">controller/lwip/src/core/netif.c</file>
+    <file type="thumb">controller/lwip/src/core/pbuf.c</file>
+    <file type="thumb">controller/lwip/src/core/raw.c</file>
+    <file type="thumb">controller/lwip/src/core/stats.c</file>
+    <file type="thumb">controller/lwip/src/core/sys.c</file>
+    <file type="thumb">controller/lwip/src/core/tcp.c</file>
+    <file type="thumb">controller/lwip/src/core/tcp_in.c</file>
+    <file type="thumb">controller/lwip/src/core/ipv4/ip.c</file>
+    <file type="thumb">controller/lwip/src/core/ipv4/ip_addr.c</file>
+    <file type="thumb">controller/lwip/src/core/ipv4/icmp.c</file>
+    <file type="thumb">controller/lwip/src/core/dhcp.c</file>
+    <file type="thumb">controller/lwip/src/api/tcpip.c</file>
+    <file type="thumb">controller/lwip/src/api/api_msg.c</file>
+    <file type="thumb">controller/lwip/src/api/err.c</file>
+    <file type="thumb">controller/lwip/src/api/api_lib.c</file>
+    <file type="thumb">controller/lwip/src/netif/etharp.c</file>
+    <file type="thumb">controller/lwip/contrib/port/FreeRTOS/AT91SAM7X/sys_arch.c</file>
+    <file type="thumb">controller/lwip/src/netif/ethernetif.c</file>
+    <file type="thumb">controller/makingthings/SAM7_EMAC.c</file>
+    <file type="thumb">controller/lwip/src/core/udp.c</file>
+    <file type="thumb">controller/lwip/src/core/ipv4/ip_frag.c</file>
+    <file type="thumb">controller/makingthings/osc.c</file>
+    <file type="thumb">controller/makingthings/osc_patternmatch.c</file>
     <!-- Source files to be built in ARM mode...these are mostly interrupt handlers and startup code -->
-    <arm_src>
-      <file>controller/freertos/portable/GCC/ARM7_AT91SAM7S/portISR.c</file>
-      <file>controller/makingthings/SAM7_EMAC_ISR.c</file>
-      <file>controller/makingthings/USBIsr.c</file>
-      <file>controller/startup/Cstartup_SAM7.c</file>
-      <file>controller/makingthings/analogin_isr.c</file>
-      <file>controller/makingthings/fasttimer_isr.c</file>
-      <file>controller/makingthings/serial_isr.c</file>
-      <file>controller/makingthings/timer_isr.c</file>
-      <file>controller/makingthings/can_isr.c</file>
-    </arm_src>
+    <file type="arm">controller/freertos/portable/GCC/ARM7_AT91SAM7S/portISR.c</file>
+    <file type="arm">controller/makingthings/SAM7_EMAC_ISR.c</file>
+    <file type="arm">controller/makingthings/USBIsr.c</file>
+    <file type="arm">controller/startup/Cstartup_SAM7.c</file>
+    <file type="arm">controller/makingthings/analogin_isr.c</file>
+    <file type="arm">controller/makingthings/fasttimer_isr.c</file>
+    <file type="arm">controller/makingthings/serial_isr.c</file>
+    <file type="arm">controller/makingthings/timer_isr.c</file>
+    <file type="arm">controller/makingthings/can_isr.c</file>
   </files>
   <!-- Directories to include in the build process -->
   <include_dirs>

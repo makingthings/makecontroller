@@ -20,8 +20,21 @@
 
 *********************************************************************************/
 
-
+#include <QTreeWidget>
 #include "MainWindow.h"
+
+// subclassed so we have access to the context menu events
+class FileBrowser : public QTreeWidget
+{
+  Q_OBJECT
+public: 
+  FileBrowser(QWidget *parent = 0) : QTreeWidget(0)
+  {
+    setParent(parent);
+  }
+  void contextMenuEvent(QContextMenuEvent *event);
+};
+
 #include "ui_properties.h"
 
 class MainWindow;

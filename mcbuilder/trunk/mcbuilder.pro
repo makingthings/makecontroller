@@ -7,7 +7,8 @@ FORMS = layouts/mainwindow.ui \
         layouts/preferences.ui \
         layouts/properties.ui \
         layouts/usbmonitor.ui \
-        layouts/findreplace.ui
+        layouts/findreplace.ui \
+		layouts/about.ui
 
 HEADERS = include/Highlighter.h \
           include/MainWindow.h \
@@ -18,6 +19,7 @@ HEADERS = include/Highlighter.h \
           include/UsbMonitor.h \
           include/FindReplace.h \
           include/About.h \
+		  include/AppUpdater.h \
           include/ConsoleItem.h
 
 SOURCES = src/main.cpp \
@@ -29,6 +31,7 @@ SOURCES = src/main.cpp \
           src/Builder.cpp \
           src/UsbMonitor.cpp \
           src/FindReplace.cpp \
+		  src/AppUpdater.cpp \
           src/About.cpp
 
 TARGET = mcbuilder
@@ -36,7 +39,7 @@ TARGET = mcbuilder
 QT += xml network
 INCLUDEPATH += include
 RESOURCES   += resources/icons/icons_rsrc.qrc
-DEFINES     += MCBUILDER_VERSION=\\\"$${MCBUILDER_VERSION}\\\"
+DEFINES     += MCBUILDER_VERSION=\"$${MCBUILDER_VERSION}\"
 OBJECTS_DIR  = tmp
 MOC_DIR      = tmp
 RCC_DIR      = tmp
