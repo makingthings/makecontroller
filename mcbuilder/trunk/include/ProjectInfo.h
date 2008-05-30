@@ -20,6 +20,7 @@
 
 #include <QDialog>
 #include <QDomDocument>
+#include <QDir>
 
 #include <QTreeWidget>
 #include "MainWindow.h"
@@ -62,10 +63,11 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
     
 	private:
 		MainWindow *mainWindow;
-		QString propFilePath( );
+		QString projectFilePath( );
     bool load();
     bool configChanged;
     void setNetworkSectionEnabled(bool state);
+    void loadFileBrowser(QDir *projectDir, QDomDocument *projectFile);
     
 	private slots:
 		void applyChanges( );
