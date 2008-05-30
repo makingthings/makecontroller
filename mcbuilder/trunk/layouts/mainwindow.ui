@@ -19,9 +19,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>55</y>
+     <y>66</y>
      <width>806</width>
-     <height>587</height>
+     <height>573</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" >
@@ -141,7 +141,7 @@
      <x>0</x>
      <y>0</y>
      <width>806</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile" >
@@ -171,6 +171,7 @@
     <addaction name="separator" />
     <addaction name="actionPreferences" />
     <addaction name="actionAbout" />
+    <addaction name="actionUpdate" />
    </widget>
    <widget class="QMenu" name="menuProject" >
     <property name="title" >
@@ -240,9 +241,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>642</y>
+     <y>639</y>
      <width>806</width>
-     <height>19</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
@@ -250,9 +251,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>21</y>
+     <y>22</y>
      <width>806</width>
-     <height>34</height>
+     <height>44</height>
     </rect>
    </property>
    <property name="windowTitle" >
@@ -491,6 +492,11 @@
    </property>
    <property name="text" >
     <string>Stop</string>
+   </property>
+  </action>
+  <action name="actionUpdate" >
+   <property name="text" >
+    <string>Check for updates</string>
    </property>
   </action>
  </widget>

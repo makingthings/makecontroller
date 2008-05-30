@@ -31,6 +31,7 @@
 #include "FindReplace.h"
 #include "About.h"
 #include "ConsoleItem.h"
+#include "AppUpdater.h"
 
 class Preferences;
 class Uploader;
@@ -75,6 +76,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
     UsbMonitor *usbMonitor;
     FindReplace *findReplace;
     About *about;
+    AppUpdater *updater;
     QComboBox *currentFileDropDown;
 		QActionGroup *boardTypeGroup;
 		QString currentFile; // path of the file in the editor
@@ -110,6 +112,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void openMCReference( );
     void openManual( );
     void onConsoleDoubleClick(QListWidgetItem *item);
+    void onUpdate();
 };
 
 #endif // MAINWINDOW_H

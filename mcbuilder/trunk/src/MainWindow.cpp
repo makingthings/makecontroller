@@ -49,13 +49,6 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   pad->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   toolBar->addWidget(pad);
   
-	boardTypeGroup = new QActionGroup(menuBoard_Type);
-	loadBoardProfiles( );
-	loadExamples( );
-	loadLibraries( );
-	loadRecentProjects( );
-  readSettings( );
-  
   //initialization
   highlighter = new Highlighter( editor->document() );
 	prefs = new Preferences(this);
@@ -65,6 +58,15 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   usbMonitor = new UsbMonitor();
   findReplace = new FindReplace(this);
   about = new About();
+  updater = new AppUpdater();
+  
+  // load
+  boardTypeGroup = new QActionGroup(menuBoard_Type);
+	loadBoardProfiles( );
+	loadExamples( );
+	loadLibraries( );
+	loadRecentProjects( );
+  readSettings( );
   
   // misc. signals
 	connect(editor, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorMoved()));
@@ -93,6 +95,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 	connect(actionSelect_All,		SIGNAL(triggered()), editor,	SLOT(selectAll()));
   connect(actionFind,         SIGNAL(triggered()), findReplace,	SLOT(show()));
   connect(actionAbout,        SIGNAL(triggered()), about,   SLOT(show()));
+  connect(actionUpdate,        SIGNAL(triggered()), this,   SLOT(onUpdate()));
   connect(actionClear_Output_Console,		SIGNAL(triggered()), outputConsole,	SLOT(clear()));
 	connect(actionUpload_File_to_Board,		SIGNAL(triggered()), this,	SLOT(onUploadFile()));
 	connect(actionMake_Controller_Reference, SIGNAL(triggered()), this, SLOT(openMCReference()));
@@ -123,6 +126,9 @@ void MainWindow::readSettings()
 			splitterSizes.append( splitterSettings.at(i).toInt( ) );
 		splitter->setSizes( splitterSizes );
 	}
+  
+  if(settings.value("checkForUpdates", true).toBool())
+    updater->checkForUpdates(true);
   
   QString lastProject = settings.value("lastOpenProject").toString();
   if(!lastProject.isEmpty())
@@ -906,6 +912,14 @@ void MainWindow::openManual( )
 {
 	QDir dir = QDir::current();
   QDesktopServices::openUrl(QUrl::fromLocalFile(dir.filePath("reference/manual.pdf")));
+}
+
+/*
+  The user has clicked "check for updates".
+*/
+void MainWindow::onUpdate()
+{
+  updater->checkForUpdates(false);
 }
 
 

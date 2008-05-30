@@ -19,6 +19,14 @@
       <number>0</number>
      </property>
      <widget class="QWidget" name="generalTab" >
+      <property name="geometry" >
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>516</width>
+        <height>182</height>
+       </rect>
+      </property>
       <attribute name="title" >
        <string>General</string>
       </attribute>
@@ -100,7 +108,7 @@
         <widget class="QLineEdit" name="tabWidth" />
        </item>
        <item row="3" column="1" colspan="2" >
-        <widget class="QCheckBox" name="checkBox" >
+        <widget class="QCheckBox" name="updaterBox" >
          <property name="text" >
           <string>Check for updates on startup</string>
          </property>
@@ -109,6 +117,14 @@
       </layout>
      </widget>
      <widget class="QWidget" name="toolsTab" >
+      <property name="geometry" >
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>516</width>
+        <height>182</height>
+       </rect>
+      </property>
       <attribute name="title" >
        <string>Tools</string>
       </attribute>
@@ -184,7 +200,7 @@
            <property name="sizeType" >
             <enum>QSizePolicy::MinimumExpanding</enum>
            </property>
-           <property name="sizeHint" >
+           <property name="sizeHint" stdset="0" >
             <size>
              <width>20</width>
              <height>15</height>
@@ -199,7 +215,7 @@
          <property name="orientation" >
           <enum>Qt::Vertical</enum>
          </property>
-         <property name="sizeHint" >
+         <property name="sizeHint" stdset="0" >
           <size>
            <width>478</width>
            <height>16</height>
@@ -217,7 +233,7 @@
       <enum>Qt::Horizontal</enum>
      </property>
      <property name="standardButtons" >
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::NoButton|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>
@@ -229,7 +245,7 @@
   <tabstop>fontBox</tabstop>
   <tabstop>fontButton</tabstop>
   <tabstop>tabWidth</tabstop>
-  <tabstop>checkBox</tabstop>
+  <tabstop>updaterBox</tabstop>
   <tabstop>makePathEdit</tabstop>
   <tabstop>toolsPathEdit</tabstop>
   <tabstop>sam7PathEdit</tabstop>

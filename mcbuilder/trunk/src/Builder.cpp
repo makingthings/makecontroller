@@ -169,47 +169,41 @@ bool Builder::createMakefile(QString projectPath)
         if(projectDoc.doctype().name() == "mcbuilder_project_file")
         {
           QString projName = dir.dirName();
-          QList<QFileInfo> cFiles = dir.entryInfoList(QStringList("*.c"));
           dir = QDir::current();
+          
+          // extract all the files for this project from the project file
+          QStringList thmbFiles, armFiles;
+          QDomNodeList allFiles = projectDoc.elementsByTagName("files").at(0).childNodes();
+          for(int i = 0; i < allFiles.count(); i++)
+          {
+            if(allFiles.at(i).toElement().attribute("type") == "thumb")
+              thmbFiles << allFiles.at(i).toElement().text();
+            else if(allFiles.at(i).toElement().attribute("type") == "arm")
+              armFiles << allFiles.at(i).toElement().text();
+          }
 
           tofile << "THUMB_SRC= \\" << endl;
-          // add all the C files in the project directory to THUMB source
-          // may eventually change this to accommodate specifying THUMB or ARM files somehow...
-          foreach(QFileInfo filename, cFiles)
-            tofile << "  " << filteredPath(filename.filePath()) << " \\" << endl;
-            
           // add in all the sources from the required libraries
           foreach(Library lib, libraries)
           {
             foreach(QString filepath, lib.thumb_src)
               tofile << "  " << filteredPath(filepath) << " \\" << endl;
           }
-            
           // now extract the source files from the project file
-          QDomNodeList thumb_src = projectDoc.elementsByTagName("thumb_src").at(0).childNodes();
-          for(int i = 0; i < thumb_src.count(); i++)
-          {
-            QString src_file = thumb_src.at(i).toElement().text();
-            tofile << "  " << filteredPath(dir.filePath("resources/cores/makecontroller/")) << src_file << " \\" << endl;
-          }
+          foreach(QString filepath, thmbFiles)
+            tofile << "  " << filteredPath(filepath) << " \\" << endl;
           tofile << endl;
 
           tofile << "ARM_SRC= \\" << endl;
-          
           // add in all the sources from the required libraries
           foreach(Library lib, libraries)
           {
             foreach(QString filepath, lib.arm_src)
-              tofile << "  " << QDir::toNativeSeparators(filepath) << " \\" << endl;
+              tofile << "  " << filteredPath(filepath) << " \\" << endl;
           }
-          
           // add the files from the main project file.
-          QDomNodeList arm_src = projectDoc.elementsByTagName("arm_src").at(0).childNodes();
-          for(int i = 0; i < arm_src.count(); i++)
-          {
-            QString src_file = arm_src.at(i).toElement().text();
-            tofile << "  " << filteredPath(dir.filePath("resources/cores/makecontroller/")) << src_file << " \\" << endl;
-          }
+          foreach(QString filepath, armFiles)
+            tofile << "  " << filteredPath(filepath) << " \\" << endl;
           tofile << endl;
 
           tofile << "INCLUDEDIRS = \\" << endl;
@@ -230,15 +224,17 @@ bool Builder::createMakefile(QString projectPath)
 
           // tools
           QString toolsPath = Preferences::toolsPath();
-          tofile << "CC=" << filteredPath(toolsPath + "/arm-elf-gcc") << endl;
-          tofile << "OBJCOPY=" << filteredPath(toolsPath + "/arm-elf-objcopy") << endl;
-          tofile << "ARCH=" << filteredPath(toolsPath + "/arm-elf-ar") << endl;
+          if(!toolsPath.isEmpty())  // if this is empty, just leave it so the system versions are used
+            toolsPath += "/";
+          tofile << "CC=" << filteredPath(toolsPath + "arm-elf-gcc") << endl;
+          tofile << "OBJCOPY=" << filteredPath(toolsPath + "arm-elf-objcopy") << endl;
+          tofile << "ARCH=" << filteredPath(toolsPath + "arm-elf-ar") << endl;
           tofile << "CRT0=" + filteredPath(dir.filePath("resources/cores/makecontroller/controller/startup/boot.s")) << endl;
           QString debug = (props->debug()) ? "-g" : "";
           tofile << "DEBUG=" + debug << endl;
           QString optLevel = props->optLevel();
           if(optLevel.contains("-O1"))
-            optLevel = "-O1";
+            optLevel = "-O1";	
           else if(optLevel.contains("-O2"))
             optLevel = "-O2";
           else if(optLevel.contains("-O3"))
