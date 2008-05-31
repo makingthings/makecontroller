@@ -33,8 +33,24 @@ public:
   FileBrowser(QWidget *parent = 0) : QTreeWidget(0)
   {
     setParent(parent);
+    actionRemoveFromProject = new QAction("Remove from project...", this);
+    actionSetBuildType = new QAction("Change build type to thumb", this);
+    connect(actionRemoveFromProject, SIGNAL(triggered()), this, SLOT(onRemoveRequest()));
+    connect(actionSetBuildType, SIGNAL(triggered()), this, SLOT(onSetBuildType()));
   }
   void contextMenuEvent(QContextMenuEvent *event);
+
+private:
+  QAction *actionRemoveFromProject;
+  QAction *actionSetBuildType;
+  
+private slots:
+  void onRemoveRequest();
+  void onSetBuildType();
+  
+signals:
+  void removeFileRequest(QString filename);
+  void changeBuildType(QString filename);
 };
 
 #include "ui_projectinfo.h"
@@ -63,8 +79,6 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
     
 	private:
 		MainWindow *mainWindow;
-    QAction *actionRemoveFromProject;
-    QAction *actionSetBuildType;
 		QString projectFilePath( );
     bool load();
     bool configChanged;
@@ -75,6 +89,8 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
 		void applyChanges( );
     void restoreDefaults( );
     void onNetworkChanged(int state);
+    void onRemoveFileRequest(QString filename);
+    void onChangeBuildType(QString filename);
 };
 
 #endif // PROJECT_INFO_H

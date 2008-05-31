@@ -48,11 +48,15 @@ ProjectInfo::ProjectInfo(MainWindow *mainWindow) : QDialog( 0 )
   connect(buttonBox, SIGNAL(rejected()), this, SLOT(accept()));
   connect(defaultsButton, SIGNAL(clicked()), this, SLOT(restoreDefaults()));
   connect(networkBox, SIGNAL(stateChanged(int)), this, SLOT(onNetworkChanged(int)));
+  connect(fileBrowser, SIGNAL(removeFileRequest(QString)), this, SLOT(onRemoveFileRequest(QString)));
+  connect(fileBrowser, SIGNAL(changeBuildType(QString)), this, SLOT(onChangeBuildType(QString)));
   
   QHeaderView *header = fileBrowser->header();
   header->setResizeMode(FILENAME_COLUMN, QHeaderView::Stretch);
   header->setResizeMode(BUILDTYPE_COLUMN, QHeaderView::ResizeToContents);
   header->setStretchLastSection(false);
+  
+  qDebug("parent: %s", qPrintable(fileBrowser->parent()->parent()->parent()->parent()->objectName()));
   
   load( ); // initialize
 }
@@ -270,15 +274,49 @@ void FileBrowser::contextMenuEvent(QContextMenuEvent *event)
   if(item)
   {
     QMenu menu(this);
-    menu.addAction(new QAction("Remove from project...", this));
-    QString newtype;
-    if(item->text(BUILDTYPE_COLUMN) == "arm")
-      newtype = "thumb";
-    else if(item->text(BUILDTYPE_COLUMN) == "thumb")
-      newtype = "arm";
-    menu.addAction(new QAction(QString("Change build type to ") + newtype, this));
+    menu.addAction(actionRemoveFromProject);
+    actionSetBuildType->setText("Change build type to thumb");
+    if(item->text(BUILDTYPE_COLUMN) == "thumb")
+      actionSetBuildType->setText("Change build type to arm");
+    menu.addAction(actionSetBuildType);
     menu.exec(event->globalPos());
   }
+}
+
+/*
+  The user has triggered the action to remove a file from the project.
+  Grab the file name and signal ProjectInfo to make the change.
+*/
+void FileBrowser::onRemoveRequest()
+{
+  emit removeFileRequest(currentItem()->text(FILENAME_COLUMN));
+}
+
+/*
+  The user has triggered the action to change a file's build type.
+  Grab the file name and signal ProjectInfo to make the change.
+*/
+void FileBrowser::onSetBuildType()
+{
+  emit changeBuildType(currentItem()->text(FILENAME_COLUMN));
+}
+
+/*
+  Remove the file in the current project's project file
+  and from the file browser.
+*/
+void ProjectInfo::onRemoveFileRequest(QString filename)
+{
+  qDebug("remove: %s", qPrintable(filename));
+}
+
+/*
+  Toggle the file's build type in the project file and
+  update the file browser accordingly.
+*/
+void ProjectInfo::onChangeBuildType(QString filename)
+{
+  qDebug("change: %s", qPrintable(filename));
 }
 
 
