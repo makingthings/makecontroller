@@ -275,6 +275,9 @@ void FileBrowser::contextMenuEvent(QContextMenuEvent *event)
   QTreeWidgetItem *item = itemAt(event->pos());
   if(item)
   {
+    if(item->childCount()) // files shouldn't have any children
+      return;
+    setCurrentItem(item); // make sure we have the right item selected
     QMenu menu(this);
     menu.addAction(actionRemoveFromProject);
     actionSetBuildType->setText("Change build type to thumb");
@@ -316,8 +319,8 @@ void FileBrowser::onSetBuildType()
 }
 
 /*
-  Remove the file in the current project's project file
-  and from the file browser.
+  Remove the file in the current project's project file.
+  The file has already been removed from the filebrowser UI.
 */
 void ProjectInfo::onRemoveFileRequest(QString filename)
 {
@@ -342,8 +345,8 @@ void ProjectInfo::onRemoveFileRequest(QString filename)
 }
 
 /*
-  Toggle the file's build type in the project file and
-  update the file browser accordingly.
+  Toggle the file's build type in the project file.
+  The filebrowser UI has already been updated.
 */
 void ProjectInfo::onChangeBuildType(QString filename, QString newtype)
 {

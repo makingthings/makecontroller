@@ -218,18 +218,18 @@ bool Builder::createMakefile(QString projectPath)
           for(int i = 0; i < include_dirs.count(); i++)
           {
             QString include_dir = include_dirs.at(i).toElement().text();
-            tofile << "  -I" << filteredPath(dir.filePath("resources/cores/makecontroller/") + include_dir) << " \\" << endl;
+            tofile << "  -I" << filteredPath(include_dir) << " \\" << endl;
           }
           tofile << endl;
 
           // tools
           QString toolsPath = Preferences::toolsPath();
-          if(!toolsPath.isEmpty())  // if this is empty, just leave it so the system versions are used
+          if(!toolsPath.isEmpty() && !toolsPath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
             toolsPath += "/";
           tofile << "CC=" << filteredPath(toolsPath + "arm-elf-gcc") << endl;
           tofile << "OBJCOPY=" << filteredPath(toolsPath + "arm-elf-objcopy") << endl;
           tofile << "ARCH=" << filteredPath(toolsPath + "arm-elf-ar") << endl;
-          tofile << "CRT0=" + filteredPath(dir.filePath("resources/cores/makecontroller/controller/startup/boot.s")) << endl;
+          tofile << "CRT0=" + filteredPath("controller/startup/boot.s") << endl;
           QString debug = (projInfo->debug()) ? "-g" : "";
           tofile << "DEBUG=" + debug << endl;
           QString optLevel = projInfo->optLevel();
@@ -244,7 +244,7 @@ bool Builder::createMakefile(QString projectPath)
           else
             optLevel = "-O0";
           tofile << "OPTIM=" + optLevel << endl;
-          tofile << "LDSCRIPT=" + filteredPath(dir.filePath("resources/cores/makecontroller/controller/startup/atmel-rom.ld")) << endl << endl;
+          tofile << "LDSCRIPT=" + filteredPath("controller/startup/atmel-rom.ld") << endl << endl;
 
           // the rest is always the same...
           tofile << "CFLAGS= \\" << endl;
@@ -647,12 +647,19 @@ void Builder::getLibrarySources(QString libdir, QStringList *thmb, QStringList *
 /*
   Filter a path for inclusion in a Makefile.
   Make sure the directory separators are system appropriate.
+  If a file path is not absolute, assume it's in resources/cores/makecontroller
 */
 QString Builder::filteredPath(QString path)
 {
 	// would be good to be able to do something about file paths with spaces
-	// but not quite sure how to deal at the moment
-	return QDir::toNativeSeparators(path);
+	// but not quite sure how to deal at the moment...
+  QString filtered = path;
+  if(!QDir::isAbsolutePath(path))
+  {
+    QDir dir = QDir::current().filePath("resources/cores/makecontroller");
+    filtered = dir.filePath(path);
+  }
+	return QDir::toNativeSeparators(filtered);
 }
 
 
