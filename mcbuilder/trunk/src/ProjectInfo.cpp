@@ -17,7 +17,9 @@
 
 
 #include "ProjectInfo.h"
-#include <QDir>
+#include <QFileIconProvider>
+#include <QHeaderView>
+#include <QContextMenuEvent>
 
 #define DEFAULT_VERSION "0.1.0"
 #define DEFAULT_HEAPSIZE 18000
@@ -31,6 +33,13 @@
 #define DEFAULT_TCP_SOCKETS 4
 #define DEFAULT_TCP_SERVERS 2
 
+#define FILENAME_COLUMN 0
+#define BUILDTYPE_COLUMN 1
+
+/*
+  ProjectInfo is a dialog box that pops up to manage per-project
+  properties.  This includes build configuration and the file list.
+*/
 ProjectInfo::ProjectInfo(MainWindow *mainWindow) : QDialog( 0 )
 {
 	this->mainWindow = mainWindow;
@@ -39,6 +48,12 @@ ProjectInfo::ProjectInfo(MainWindow *mainWindow) : QDialog( 0 )
   connect(buttonBox, SIGNAL(rejected()), this, SLOT(accept()));
   connect(defaultsButton, SIGNAL(clicked()), this, SLOT(restoreDefaults()));
   connect(networkBox, SIGNAL(stateChanged(int)), this, SLOT(onNetworkChanged(int)));
+  
+  QHeaderView *header = fileBrowser->header();
+  header->setResizeMode(FILENAME_COLUMN, QHeaderView::Stretch);
+  header->setResizeMode(BUILDTYPE_COLUMN, QHeaderView::ResizeToContents);
+  header->setStretchLastSection(false);
+  
   load( ); // initialize
 }
 
@@ -113,6 +128,7 @@ void ProjectInfo::loadFileBrowser(QDir *projectDir, QDomDocument *projectFile)
   fileBrowser->addTopLevelItem(top);
   
   // only deals with files in the top level directory at the moment
+  QFileIconProvider ip;
   for(int i = 0; i < allFiles.count(); i++)
   {
     QFileInfo fi(allFiles.at(i).toElement().text());
@@ -122,7 +138,7 @@ void ProjectInfo::loadFileBrowser(QDir *projectDir, QDomDocument *projectFile)
       {
         QString buildtype = allFiles.at(i).toElement().attribute("type");
         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << fi.fileName() << buildtype);
-        child->setIcon(0, QApplication::style()->standardIcon(QStyle::SP_FileIcon));
+        child->setIcon(FILENAME_COLUMN, ip.icon(fi));
         top->addChild(child);
       }
     }
@@ -243,10 +259,26 @@ void ProjectInfo::setNetworkSectionEnabled(bool state)
   tcpServerLabel->setEnabled(state);
 }
 
+/*
+  We've gotten a right click in the file browser.
+  Pop up a menu that offers to remove the file that was clicked
+  or change its build type.
+*/
 void FileBrowser::contextMenuEvent(QContextMenuEvent *event)
 {
-  qDebug("got context event");
-  (void)event;
+  QTreeWidgetItem *item = itemAt(event->pos());
+  if(item)
+  {
+    QMenu menu(this);
+    menu.addAction(new QAction("Remove from project...", this));
+    QString newtype;
+    if(item->text(BUILDTYPE_COLUMN) == "arm")
+      newtype = "thumb";
+    else if(item->text(BUILDTYPE_COLUMN) == "thumb")
+      newtype = "arm";
+    menu.addAction(new QAction(QString("Change build type to ") + newtype, this));
+    menu.exec(event->globalPos());
+  }
 }
 
 

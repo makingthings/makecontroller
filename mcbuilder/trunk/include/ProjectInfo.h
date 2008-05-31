@@ -63,6 +63,8 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
     
 	private:
 		MainWindow *mainWindow;
+    QAction *actionRemoveFromProject;
+    QAction *actionSetBuildType;
 		QString projectFilePath( );
     bool load();
     bool configChanged;
