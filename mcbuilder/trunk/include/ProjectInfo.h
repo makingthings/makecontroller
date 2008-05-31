@@ -50,7 +50,7 @@ private slots:
   
 signals:
   void removeFileRequest(QString filename);
-  void changeBuildType(QString filename);
+  void changeBuildType(QString filename, QString newtype);
 };
 
 #include "ui_projectinfo.h"
@@ -90,7 +90,7 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
     void restoreDefaults( );
     void onNetworkChanged(int state);
     void onRemoveFileRequest(QString filename);
-    void onChangeBuildType(QString filename);
+    void onChangeBuildType(QString filename, QString newtype);
 };
 
 #endif // PROJECT_INFO_H
