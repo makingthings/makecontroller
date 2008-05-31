@@ -319,6 +319,8 @@ void MainWindow::createNewFile(QString path)
 		editorLoadFile(&file);
 		currentFileDropDown->addItem(name);
 		currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(name));
+    QFileInfo fi(file);
+    addToProjectFile(currentProject, fi.filePath(), "thumb");
 	}
 }
 
@@ -357,30 +359,23 @@ void MainWindow::onNewProject( )
 	// create a directory for the project
 	QDir workspaceDir(workspace);
 	workspaceDir.mkdir(newProjPath);
-	QDir newProj(newProjPath);
-	QString newProjName = newProj.dirName().remove(" "); // file names shouldn't have any spaces
+	QDir newProjectDir(newProjPath);
+	QString newProjName = newProjectDir.dirName().remove(" "); // file names shouldn't have any spaces
   
   // grab the templates for a new project
   QDir templatesDir = QDir::current();
   templatesDir.cd("resources/templates");
+  
+  // create the project file from our template
   QFile templateFile(templatesDir.filePath("project_template.xml"));
-  if( templateFile.open(QIODevice::ReadOnly | QFile::Text) )
-  {
-    // create the properties file
-    QFile newProjFile(newProj.filePath(newProjName + ".xml"));
-    if( newProjFile.open(QIODevice::WriteOnly | QFile::Text) )
-    {
-      newProjFile.write(templateFile.readAll());
-      newProjFile.close();
-    }
-    templateFile.close();
-  }
+  templateFile.copy(newProjectDir.filePath(newProjName + ".xml"));
+  templateFile.close();
   
   templateFile.setFileName(templatesDir.filePath("source_template.txt"));
 	if( templateFile.open(QIODevice::ReadOnly | QFile::Text) )
   {
     // and create the main file
-    QFile mainFile(newProj.filePath(newProjName + ".c"));
+    QFile mainFile(newProjectDir.filePath(newProjName + ".c"));
     if( mainFile.open(QIODevice::WriteOnly | QFile::Text) )
     {
       QTextStream out(&mainFile);
@@ -389,9 +384,42 @@ void MainWindow::onNewProject( )
       out << templateFile.readAll();
       mainFile.close();
     }
+    QFileInfo fi(mainFile);
+    addToProjectFile(newProjPath, fi.filePath(), "thumb");
     templateFile.close();
   }
 	openProject(newProjPath);
+}
+
+/*
+  Add a filepath to this project's file list.
+*/
+bool MainWindow::addToProjectFile(QString projectPath, QString newFilePath, QString buildtype)
+{
+  bool retval = false;
+  QDomDocument newProjectDoc;
+  QDir projectDir(projectPath);
+  QFile projectFile(projectDir.filePath(projectDir.dirName() + ".xml"));
+  QFileInfo newFile(newFilePath);
+  // read in the existing file, and add a node to the "files" section
+  if(newProjectDoc.setContent(&projectFile))
+  {
+    QDomElement newFileElement = newProjectDoc.createElement("file");
+    newFileElement.setAttribute("type", buildtype);
+    QDomText newFilePathElement = newProjectDoc.createTextNode(newFile.filePath());
+    newFileElement.appendChild(newFilePathElement);
+    newProjectDoc.elementsByTagName("files").at(0).toElement().appendChild(newFileElement);
+    projectFile.close();
+    
+    // write our newly manipulated file
+    if(projectFile.open(QIODevice::WriteOnly | QFile::Text))
+    {
+      projectFile.write(newProjectDoc.toByteArray());
+      projectFile.close();
+      retval = true;
+    }
+  }
+  return retval;
 }
 
 /*

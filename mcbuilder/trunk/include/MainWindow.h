@@ -83,6 +83,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		QString currentProject; // path of the current project directory
 		void editorLoadFile( QFile *file );
 		void createNewFile(QString path);
+    bool addToProjectFile(QString projectPath, QString newFilePath, QString buildtype);
 		void openProject(QString projectPath);
 		void updateRecentProjects(QString newProject);
 		void uploadFile(QString filename);
