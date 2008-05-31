@@ -1,6 +1,6 @@
 <ui version="4.0" >
- <class>Properties</class>
- <widget class="QDialog" name="Properties" >
+ <class>ProjectInfoUi</class>
+ <widget class="QDialog" name="ProjectInfoUi" >
   <property name="geometry" >
    <rect>
     <x>0</x>
@@ -254,6 +254,9 @@ Generally, make this as high as you can until the project won't build.</string>
          <property name="uniformRowHeights" >
           <bool>true</bool>
          </property>
+         <property name="animated" >
+          <bool>false</bool>
+         </property>
          <column>
           <property name="text" >
            <string>File</string>
@@ -261,7 +264,7 @@ Generally, make this as high as you can until the project won't build.</string>
          </column>
          <column>
           <property name="text" >
-           <string>Type</string>
+           <string>Build Type</string>
           </property>
          </column>
         </widget>
@@ -286,7 +289,7 @@ Generally, make this as high as you can until the project won't build.</string>
   <customwidget>
    <class>FileBrowser</class>
    <extends>QTreeWidget</extends>
-   <header>Properties.h</header>
+   <header>ProjectInfo.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
