@@ -95,6 +95,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void onCursorMoved( );
     void onDocumentModified( );
 		void onNewFile( );
+    void onAddExistingFile( );
 		void onNewProject( );
 		void onOpen( );
 		void onSave( );

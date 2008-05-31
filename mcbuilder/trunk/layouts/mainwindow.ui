@@ -153,8 +153,9 @@
       <string>Recent Projects</string>
      </property>
     </widget>
-    <addaction name="actionNew" />
     <addaction name="actionNew_Project" />
+    <addaction name="actionNew" />
+    <addaction name="actionAdd_Existing_File" />
     <addaction name="actionOpen" />
     <addaction name="menuRecent_Projects" />
     <addaction name="separator" />
@@ -280,7 +281,7 @@
   </widget>
   <action name="actionNew" >
    <property name="text" >
-    <string>New File</string>
+    <string>New File...</string>
    </property>
    <property name="shortcut" >
     <string>Ctrl+N</string>
@@ -309,7 +310,7 @@
   </action>
   <action name="actionNew_Project" >
    <property name="text" >
-    <string>New Project</string>
+    <string>New Project...</string>
    </property>
    <property name="shortcut" >
     <string>Ctrl+Shift+N</string>
@@ -317,7 +318,7 @@
   </action>
   <action name="actionOpen" >
    <property name="text" >
-    <string>Open Project</string>
+    <string>Open Project...</string>
    </property>
    <property name="shortcut" >
     <string>Ctrl+O</string>
@@ -497,6 +498,11 @@
   <action name="actionUpdate" >
    <property name="text" >
     <string>Check for updates</string>
+   </property>
+  </action>
+  <action name="actionAdd_Existing_File" >
+   <property name="text" >
+    <string>Add Existing File...</string>
    </property>
   </action>
  </widget>

@@ -76,8 +76,9 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   connect(editor->document(), SIGNAL(contentsChanged()),this, SLOT(onDocumentModified()));
   connect(outputConsole, SIGNAL(itemDoubleClicked(QListWidgetItem*)),this, SLOT(onConsoleDoubleClick(QListWidgetItem*)));
   
-	// menu actions
+	// menu actions 
 	connect(actionNew,					SIGNAL(triggered()), this,		SLOT(onNewFile()));
+  connect(actionAdd_Existing_File, SIGNAL(triggered()), this,		SLOT(onAddExistingFile()));
 	connect(actionNew_Project,	SIGNAL(triggered()), this,		SLOT(onNewProject()));
 	connect(actionOpen,					SIGNAL(triggered()), this,		SLOT(onOpen()));
 	connect(actionSave,					SIGNAL(triggered()), this,		SLOT(onSave()));
@@ -298,6 +299,27 @@ void MainWindow::onNewFile( )
 																			currentProject, tr("C Files (*.c)"));
 	if(!newFilePath.isNull()) // user cancelled
 		createNewFile(newFilePath);
+}
+
+/*
+  Called when the "add existing file" action is triggered.
+  Pop up a dialog to select the file to add.
+*/
+void MainWindow::onAddExistingFile( )
+{
+  if(currentProject.isEmpty())
+	{
+		statusBar()->showMessage( "Need to open a project first.  Open or create a new one from the File menu.", 3500 );
+		return;
+	}
+  QString newFilePath = QFileDialog::getOpenFileName(this, tr("Add Existing File"), 
+																			currentProject, tr("C Files (*.c)"));
+  if(!newFilePath.isNull()) // user cancelled
+  {
+    QFile file(newFilePath);
+    editorLoadFile(&file);
+    addToProjectFile(currentProject, newFilePath, "thumb");
+  }
 }
 
 /*
