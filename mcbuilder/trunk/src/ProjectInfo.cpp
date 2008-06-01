@@ -57,8 +57,6 @@ ProjectInfo::ProjectInfo(MainWindow *mainWindow) : QDialog( 0 )
   header->setResizeMode(FILENAME_COLUMN, QHeaderView::Stretch);
   header->setResizeMode(BUILDTYPE_COLUMN, QHeaderView::ResizeToContents);
   header->setStretchLastSection(false);
-    
-  load( ); // initialize
 }
 
 /*
@@ -78,9 +76,10 @@ bool ProjectInfo::loadAndShow( )
 */  
 bool ProjectInfo::load()
 {
-  QDir projectDir(mainWindow->currentProjectPath());
-  if(!projectDir.exists())
+  QString proj = mainWindow->currentProjectPath();
+  if(proj.isEmpty())
     return false;
+  QDir projectDir(proj);
 	QString projectName = projectDir.dirName();
 	setWindowTitle(projectName + " - Project Info");
 	
@@ -122,6 +121,10 @@ bool ProjectInfo::load()
   return true;
 }
 
+/*
+  Update the file browser to show files in the project.
+  Read these from the project's project file.
+*/
 void ProjectInfo::loadFileBrowser(QDir *projectDir, QDomDocument *projectFile)
 {
   // setup the file browser
@@ -338,6 +341,7 @@ void ProjectInfo::onRemoveFileRequest(QString filename)
         parent.removeChild(files.at(i));
         if(projectFile.open(QIODevice::WriteOnly|QFile::Text))
           projectFile.write(doc.toByteArray());
+        mainWindow->removeFileFromProject(filename);
         return;
       }
     }
