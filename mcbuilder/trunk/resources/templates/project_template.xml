@@ -35,15 +35,6 @@
     <file type="thumb">controller/makingthings/network.c</file>
     <file type="thumb">controller/makingthings/system.c</file>
     <file type="thumb">controller/makingthings/xbee.c</file>
-    <file type="thumb">appboard/makingthings/servo.c</file>
-    <file type="thumb">appboard/makingthings/stepper.c</file>
-    <file type="thumb">appboard/makingthings/dipswitch.c</file>
-    <file type="thumb">appboard/makingthings/motor.c</file>
-    <file type="thumb">appboard/makingthings/appboard.c</file>
-    <file type="thumb">appboard/makingthings/appled.c</file>
-    <file type="thumb">appboard/makingthings/pwmout.c</file>
-    <file type="thumb">appboard/makingthings/digitalin.c</file>
-    <file type="thumb">appboard/makingthings/digitalout.c</file>
     <file type="thumb">controller/makingthings/io.c</file>
     <file type="thumb">controller/makingthings/led.c</file>
     <file type="thumb">controller/makingthings/timer.c</file>
@@ -90,7 +81,6 @@
   </files>
   <!-- Directories to include in the build process -->
   <include_dirs>
-    <dir>appboard/makingthings</dir>
     <dir>controller/makingthings</dir>
     <dir>controller/makingthings/testing</dir>
     <dir>controller/lwip/src/include</dir>

@@ -223,19 +223,14 @@
     <property name="title" >
      <string>View</string>
     </property>
-    <addaction name="actionClear_Output_Console" />
-   </widget>
-   <widget class="QMenu" name="menuMonitor" >
-    <property name="title" >
-     <string>Monitor</string>
-    </property>
     <addaction name="actionUsb_Monitor" />
+    <addaction name="separator" />
+    <addaction name="actionClear_Output_Console" />
    </widget>
    <addaction name="menuFile" />
    <addaction name="menuEdit" />
-   <addaction name="menuView" />
    <addaction name="menuProject" />
-   <addaction name="menuMonitor" />
+   <addaction name="menuView" />
    <addaction name="menuHelp" />
   </widget>
   <widget class="QStatusBar" name="statusbar" >
@@ -492,7 +487,7 @@
      <normaloff>:/icons/stop.tiff</normaloff>:/icons/stop.tiff</iconset>
    </property>
    <property name="text" >
-    <string>Stop</string>
+    <string>Stop Build</string>
    </property>
   </action>
   <action name="actionUpdate" >

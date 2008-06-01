@@ -90,7 +90,6 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void uploadFile(QString filename);
     bool maybeSave( );
     bool save( );
-		QHash<QString, QString> boardTypes; // board name and config filename
 		
 	private slots:
 		void onCursorMoved( );

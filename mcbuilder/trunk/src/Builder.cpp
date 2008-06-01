@@ -148,7 +148,7 @@ bool Builder::createMakefile(QString projectPath)
   QFile makefile(buildDir.filePath("Makefile"));
   if(makefile.open(QIODevice::WriteOnly | QFile::Text))
   {
-    QDir dir(projectPath);
+    QDir projectDir(projectPath);
     QTextStream tofile(&makefile);
     tofile << "##################################################################################################" << endl;
     tofile << "#" << endl << "# This file generated automatically by mcbuilder - ";
@@ -156,11 +156,11 @@ bool Builder::createMakefile(QString projectPath)
     tofile << "# Any manual changes made to this file will be overwritten the next time mcbuilder builds." << endl << "#" << endl;
     tofile << "##################################################################################################" << endl << endl;
 
-    tofile << "OUTPUT = " + dir.dirName().toLower() << endl << endl;
+    tofile << "OUTPUT = " + projectDir.dirName().toLower() << endl << endl;
     tofile << "all: $(OUTPUT).bin" << endl << endl;
     
     // read the project file in to get a list of the files we want to build, and include dirs
-    QFile projectFile(dir.filePath(dir.dirName() + ".xml"));
+    QFile projectFile(projectDir.filePath(projectDir.dirName() + ".xml"));
     if(projectFile.open(QIODevice::ReadOnly|QFile::Text))
     {
       QDomDocument projectDoc;
@@ -168,8 +168,8 @@ bool Builder::createMakefile(QString projectPath)
       {
         if(projectDoc.doctype().name() == "mcbuilder_project_file")
         {
-          QString projName = dir.dirName();
-          dir = QDir::current();
+          QString projName = projectDir.dirName();
+          QDir currentDir = QDir::current();
           
           // extract all the files for this project from the project file
           QStringList thmbFiles, armFiles;
@@ -207,7 +207,7 @@ bool Builder::createMakefile(QString projectPath)
           tofile << endl;
 
           tofile << "INCLUDEDIRS = \\" << endl;
-          tofile << "  -I.. \\" << endl; // always include the project directory
+          tofile << "  -I" << projectDir.path() << " \\" << endl; // always include the project directory
           
           // add in the directories for the required libraries
           QDir libdir(QDir::current().filePath("libraries"));
@@ -324,7 +324,7 @@ bool Builder::createConfigFile(QString projectPath)
     
     tofile << "#ifndef CONFIG_H" << endl << "#define CONFIG_H" << endl << endl;
     
-    tofile << "#include \"controller.h\"" << endl << "#include \"appboard.h\"" << endl << "#include \"error.h\"" << endl << endl;
+    tofile << "#include \"controller.h\"" << endl << "#include \"error.h\"" << endl << endl;
     
     tofile << "#define CONTROLLER_HEAPSIZE " << projInfo->heapsize() << endl;
     tofile << "#define FIRMWARE_NAME " << "\"" + dir.dirName() + "\"" << endl;
@@ -508,6 +508,7 @@ void Builder::filterErrorOutput(QString errOutput)
       errMsg += errOutput;
       if(errMsg.endsWith("\n")) // we have a complete message to deal with
       {
+        qDebug("err: %s", qPrintable(errMsg));
         bool matched = false;
         // match output in the form of "filepath:linenumber: error|warning: errormessage"
         QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+):(\\d+): (error|warning): ([^\n]*)");
@@ -627,18 +628,16 @@ void Builder::getLibrarySources(QString libdir, QStringList *thmb, QStringList *
 {
   QDir dir(libdir);
   QFile libfile(dir.filePath(dir.dirName() + ".xml"));
-  if(libfile.open(QIODevice::ReadOnly|QFile::Text))
+  QDomDocument libDoc;
+  if(libDoc.setContent(&libfile))
   {
-    QDomDocument libDoc;
-    if(libDoc.setContent(&libfile))
+    QDomNodeList files = libDoc.elementsByTagName("files").at(0).childNodes();
+    for(int i = 0; i < files.count(); i++)
     {
-      QDomNodeList thumb_src = libDoc.elementsByTagName("thumb_src").at(0).childNodes();
-      for(int i = 0; i < thumb_src.count(); i++)
-        thmb->append(dir.filePath(thumb_src.at(i).toElement().text()));
-      
-      QDomNodeList arm_src = libDoc.elementsByTagName("arm_src").at(0).childNodes();
-      for(int i = 0; i < arm_src.count(); i++)
-        arm->append(dir.filePath(arm_src.at(i).toElement().text()));
+      if(files.at(i).toElement().attribute("type") == "thumb")
+        thmb->append(dir.filePath(files.at(i).toElement().text()));
+      else if(files.at(i).toElement().attribute("type") == "arm")
+        arm->append(dir.filePath(files.at(i).toElement().text()));
     }
     libfile.close();
   }

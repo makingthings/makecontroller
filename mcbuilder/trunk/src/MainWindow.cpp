@@ -129,7 +129,7 @@ void MainWindow::readSettings()
 	}
   
   if(settings.value("checkForUpdates", true).toBool())
-    updater->checkForUpdates(true);
+    updater->checkForUpdates(APPUPDATE_BACKGROUND);
   
   QString lastProject = settings.value("lastOpenProject").toString();
   if(!lastProject.isEmpty())
@@ -258,11 +258,15 @@ void MainWindow::setTabWidth( int width )
 	editor->setTabStopWidth( fm.width(" ") * width );
 }
 
+/*
+  Return the path to the file that contains the currently selected board's profile.
+  This is stored in the data item of the actions in the "Board Type" menu
+*/
 QString MainWindow::currentBoardProfile( )
 {
   QAction *board = boardTypeGroup->checkedAction( );
   if(board)
-    return boardTypes.value(board->text());
+    return board->data().toString();
   else
     return QString();
 }
@@ -806,7 +810,7 @@ void MainWindow::uploadFile(QString filename)
 	if(board)
 	{
 		if(uploader->state() == QProcess::NotRunning)
-			uploader->upload(boardTypes.value(board->text()), filename);
+			uploader->upload(board->data().toString(), filename);
 		else
 			return statusBar()->showMessage( "Uploader is currently busy...give it a second, then try again.", 3500 );
 	}
@@ -840,9 +844,9 @@ void MainWindow::loadBoardProfiles( )
 					boardAction->setCheckable(true);
 					if(boardName == Preferences::boardType( ))
 						boardAction->setChecked(true);
+          boardAction->setData(filename);         // hang onto the filename so we don't have to look it up again later
 					menuBoard_Type->addAction(boardAction); // add the action to the actual menu
 					boardTypeGroup->addAction(boardAction); // and to the group that maintains an exclusive selection within the menu
-					boardTypes.insert(boardName, filename); // hang onto the filename so we don't have to look it up again later
 				}
 			}
 			file.close();
@@ -886,8 +890,8 @@ void MainWindow::onExample(QAction *example)
 
 /*
   Navigate the libraries directory and load the available ones into the UI.
-  Also add library examples to the examples menu, and example
-  keywords to the syntax highlighter's keyword list.
+  If the library provides a "friendly name", use that in the dropdown of libraries
+  in the UI, and always store the actual library dir name in the action's data
 */
 void MainWindow::loadLibraries( )
 {
@@ -897,10 +901,22 @@ void MainWindow::loadLibraries( )
     QStringList libraries = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
     foreach(QString library, libraries)
     {
-      // add the library to the "Import Library" menu
-      QAction *a = new QAction(library, menuLibraries);
-      menuLibraries->addAction(a);
-      // add the library's examples to the example menu
+      QDir libdir = dir.filePath(library);
+      QFile libfile(libdir.filePath(library + ".xml"));
+      QDomDocument doc;
+      if(doc.setContent(&libfile))
+      {
+        libfile.close();
+        // add the library to the "Import Library" menu
+        QString libname = library;
+        QDomNodeList nodes = doc.elementsByTagName("display_name");
+        if(nodes.count())
+          libname = nodes.at(0).toElement().text();
+        QAction *a = new QAction(libname, menuLibraries);
+        a->setData(library);
+        menuLibraries->addAction(a);
+        // add the library's examples to the example menu
+      }
     }
   }
 }
@@ -911,7 +927,7 @@ void MainWindow::loadLibraries( )
 */
 void MainWindow::onLibrary(QAction *example)
 {
-  QString includeString = QString("#include \"%1.h\"").arg(example->text());
+  QString includeString = QString("#include \"%1.h\"").arg(example->data().toString());
   // only add if it isn't already in there
   // find() moves the cursor and highlights the found text
   if(!editor->find(includeString) && !editor->find(includeString, QTextDocument::FindBackward))
@@ -966,6 +982,9 @@ void MainWindow::onConsoleDoubleClick(QListWidgetItem *item)
     highlightLine(citem->filePath(), citem->lineNumber(), citem->messageType());
 }
 
+/*
+  Highlight a line in the editor to indicate either an error or warning.
+*/
 void MainWindow::highlightLine(QString filepath, int linenumber, ConsoleItem::Type type)
 {
   if(filepath == currentFile)
@@ -1010,7 +1029,7 @@ void MainWindow::openManual( )
 */
 void MainWindow::onUpdate()
 {
-  updater->checkForUpdates(false);
+  updater->checkForUpdates(APPUPDATE_FOREGROUND);
 }
 
 
