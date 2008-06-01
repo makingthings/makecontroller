@@ -58,6 +58,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
     void onCleanComplete();
     void buildingNow(QString file);
     void highlightLine(QString filepath, int linenumber, ConsoleItem::Type type);
+    void removeFileFromProject(QString file);
 		
 	private:
 		void openFile( const QString &path );
@@ -81,7 +82,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		QActionGroup *boardTypeGroup;
 		QString currentFile; // path of the file in the editor
 		QString currentProject; // path of the current project directory
-		void editorLoadFile( QFile *file );
+		void editorLoadFile( QString filepath );
 		void createNewFile(QString path);
     bool addToProjectFile(QString projectPath, QString newFilePath, QString buildtype);
 		void openProject(QString projectPath);
@@ -110,7 +111,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		void onUploadFile( );
 		void onExample(QAction *example);
     void onLibrary(QAction *example);
-		void onFileSelection(QString filename);
+		void onFileSelection(int index);
 		void openMCReference( );
     void openManual( );
     void onConsoleDoubleClick(QListWidgetItem *item);

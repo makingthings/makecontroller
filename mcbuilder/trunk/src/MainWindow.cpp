@@ -72,7 +72,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 	connect(editor, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorMoved()));
 	connect(actionPreferences, SIGNAL(triggered()), prefs, SLOT(loadAndShow()));
   connect(actionUsb_Monitor, SIGNAL(triggered()), usbMonitor, SLOT(loadAndShow()));
-	connect(currentFileDropDown, SIGNAL(currentIndexChanged(QString)), this, SLOT(onFileSelection(QString)));
+	connect(currentFileDropDown, SIGNAL(currentIndexChanged(int)), this, SLOT(onFileSelection(int)));
   connect(editor->document(), SIGNAL(contentsChanged()),this, SLOT(onDocumentModified()));
   connect(outputConsole, SIGNAL(itemDoubleClicked(QListWidgetItem*)),this, SLOT(onConsoleDoubleClick(QListWidgetItem*)));
   
@@ -270,14 +270,15 @@ QString MainWindow::currentBoardProfile( )
 /*
   Load a source file into the editor.
 */
-void MainWindow::editorLoadFile( QFile *file )
+void MainWindow::editorLoadFile( QString filepath )
 {
 	Q_ASSERT(!currentProject.isEmpty());
-	if(file->open(QIODevice::ReadOnly|QFile::Text))
+  QFile file(filepath);
+	if(file.open(QIODevice::ReadOnly|QFile::Text))
 	{
-		currentFile = file->fileName();
-		editor->setPlainText(file->readAll());
-		file->close();
+		currentFile = file.fileName();
+		editor->setPlainText(file.readAll());
+		file.close();
     editor->document()->setModified(false);
     setWindowModified(false);
 	}
@@ -316,32 +317,63 @@ void MainWindow::onAddExistingFile( )
 																			currentProject, tr("C Files (*.c)"));
   if(!newFilePath.isNull()) // user cancelled
   {
-    QFile file(newFilePath);
-    editorLoadFile(&file);
+    editorLoadFile(newFilePath);
     addToProjectFile(currentProject, newFilePath, "thumb");
+    QFileInfo fi(newFilePath);
+    currentFileDropDown->addItem(fi.fileName(), fi.filePath());
+    currentFileDropDown->setCurrentIndex(currentFileDropDown->count()-1);
+  }
+}
+
+/*
+  A file has been removed from the project.
+  Close it if it's open in the editor, and remove it from the list
+  of project files in the dropdown.
+*/
+void MainWindow::removeFileFromProject(QString file)
+{
+  QFileInfo fi(file);
+  int idx = currentFileDropDown->findData(fi.filePath());
+  // remove the file from the dropdown
+  if(idx > -1)
+    currentFileDropDown->removeItem(idx);
+  // if it's currently loaded in the editor, get it out
+  if(file == currentFile)
+  {
+    QString newfile = currentFileDropDown->itemData(currentFileDropDown->currentIndex()).toString();
+    if(!newfile.isEmpty())
+      editorLoadFile(newfile);
+    else
+    {
+      currentFile = "";
+      editor->clear();
+      setWindowModified(false);
+    }
   }
 }
 
 /*
   Create a new source file.
+  Fill it with some default text,
+  add it to the file dropdown and load it into the editor.
 */
 void MainWindow::createNewFile(QString path)
 {
-	QDir dir(path);
-	QString name = dir.dirName() + ".c";
-	QFile file(path + ".c");
-	if(file.exists())
+  QFileInfo fi(path);
+  if(fi.suffix().isEmpty())
+    fi.setFile(fi.filePath() + ".c");
+	QFile file(fi.filePath());
+	if(file.exists()) // don't do anything if this file's already there
 		return;
 	if(file.open(QIODevice::WriteOnly | QFile::Text))
 	{
 		QTextStream out(&file);
-		out << QString("// %1").arg(name) << endl;
+		out << QString("// %1").arg(fi.fileName()) << endl;
 		out << QString("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl << endl;
 		file.close();
-		editorLoadFile(&file);
-		currentFileDropDown->addItem(name);
-		currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(name));
-    QFileInfo fi(file);
+		editorLoadFile(fi.filePath());
+		currentFileDropDown->addItem(fi.fileName(), fi.filePath()); // store the filepath on the combo box item 
+		currentFileDropDown->setCurrentIndex(currentFileDropDown->count()-1);
     addToProjectFile(currentProject, fi.filePath(), "thumb");
 	}
 }
@@ -350,21 +382,18 @@ void MainWindow::createNewFile(QString path)
   A new file has been selected.
   Load it into the editor.
 */
-void MainWindow::onFileSelection(QString filename)
+void MainWindow::onFileSelection(int index)
 {
 	Q_ASSERT(!currentProject.isEmpty()); // we shouldn't have any files loaded unless a project is open
-	QDir dir(currentProject);
-	QFile file(dir.filePath(filename));
+	QFileInfo file(currentFileDropDown->itemData(index).toString());
 	if(file.exists())
-		editorLoadFile(&file);
+		editorLoadFile(file.filePath());
 	else
 	{
-		// TODO: remove this from the file dropdown...
-		QString message = QString("Couldn't find %1 in %2.").arg(filename).arg(dir.dirName());
-		currentFileDropDown->removeItem(currentFileDropDown->findText(filename));
+		QString message = QString("Couldn't find %1.").arg(file.fileName());
+		currentFileDropDown->removeItem(currentFileDropDown->findText(file.fileName()));
 		statusBar()->showMessage(message, 3000);
 	}
-	
 }
 
 /*
@@ -385,9 +414,8 @@ void MainWindow::onNewProject( )
 	QString newProjName = newProjectDir.dirName().remove(" "); // file names shouldn't have any spaces
   
   // grab the templates for a new project
-  QDir templatesDir = QDir::current();
-  templatesDir.cd("resources/templates");
-  
+  QDir templatesDir = QDir::current().filePath("resources/templates");
+    
   // create the project file from our template
   QFile templateFile(templatesDir.filePath("project_template.xml"));
   templateFile.copy(newProjectDir.filePath(newProjName + ".xml"));
@@ -458,27 +486,41 @@ void MainWindow::onOpen( )
 
 /*
   Open an existing project.
+  Read the project file and load the appropriate files into the UI.
 */
 void MainWindow::openProject(QString projectPath)
-{  
+{
   QDir projectDir(projectPath);
 	QString projectName = projectDir.dirName();
 	if(!projectDir.exists())
 		return statusBar()->showMessage( QString("Couldn't find %1.").arg(projectName), 3500 );
-	QString mainFileName(projectName + ".c");
-	mainFileName.remove(" ");
-	QFile mainFile(projectDir.filePath(mainFileName));
-	if(mainFile.exists())
+
+  QString pathname = projectName; // filename should not have spaces
+	QFile projFile(projectDir.filePath(pathname.remove(" ") + ".xml"));
+  QDomDocument doc;
+	if(doc.setContent(&projFile))
 	{
 		currentProject = projectPath;
-		editorLoadFile(&mainFile);
-		QStringList projectFiles = projectDir.entryList(QStringList("*.c"));
-		// update the files in the dropdown list
-		currentFileDropDown->clear();
-		currentFileDropDown->insertItems(0, projectFiles);
-		currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(mainFileName));
+    currentFileDropDown->clear();
+		QDomNodeList allFiles = doc.elementsByTagName("files").at(0).childNodes();
+    for(int i = 0; i < allFiles.count(); i++)
+    {
+      QFileInfo fi(allFiles.at(i).toElement().text());
+      if(fi.fileName().isEmpty())
+        continue;
+      // load the file name into the file dropdown
+      if(projectDir.exists(fi.fileName()))
+        currentFileDropDown->addItem(fi.fileName(), fi.filePath());
+      // if this is the main project file, load it into the editor
+      if(fi.baseName() == pathname)
+      {
+        editorLoadFile(fi.filePath());
+        currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
+      }
+    }
 		setWindowTitle( projectName + "[*] - mcbuilder");
-		updateRecentProjects(projectName);			
+		updateRecentProjects(projectName);
+    projInfo->load();	
 	}
 	else
 		return statusBar()->showMessage( QString("Couldn't find main file for %1.").arg(projectName), 3500 );
@@ -518,7 +560,7 @@ void MainWindow::openRecentProject(QAction* project)
 void MainWindow::onSave( )
 {
 	if(currentFile.isEmpty())
-		return statusBar()->showMessage( "Need to open a project first.  Open or create a new one from the File menu.", 3500 );
+		return statusBar()->showMessage( "Need to open a file or project first.  Open or create a new one from the File menu.", 3500 );
 	save( );
 }
 
@@ -585,9 +627,8 @@ void MainWindow::onSaveAs( )
 	if(!newFileName.endsWith(".c"))
 		newFileName.append(".c");
 	file.copy(newFileName);
-	QFile newFile(newFileName);
-	editorLoadFile(&newFile);
-	QFileInfo fi(newFile);
+	editorLoadFile(newFileName);
+	QFileInfo fi(newFileName);
 	currentFileDropDown->addItem(fi.fileName());
 	currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
 }
