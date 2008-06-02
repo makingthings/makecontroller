@@ -190,7 +190,7 @@
     </widget>
     <widget class="QMenu" name="menuLibraries" >
      <property name="title" >
-      <string>Import Library</string>
+      <string>Libraries</string>
      </property>
     </widget>
     <addaction name="actionBuild" />
@@ -426,7 +426,7 @@
   </action>
   <action name="actionMake_Controller_Reference" >
    <property name="text" >
-    <string>Make Controller Reference</string>
+    <string>Make Controller API Reference</string>
    </property>
   </action>
   <action name="actionSave_Project_As" >
