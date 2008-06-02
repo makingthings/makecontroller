@@ -912,9 +912,26 @@ void MainWindow::loadLibraries( )
         QDomNodeList nodes = doc.elementsByTagName("display_name");
         if(nodes.count())
           libname = nodes.at(0).toElement().text();
-        QAction *a = new QAction(libname, menuLibraries);
+        
+        // create a menu that allows us to import the library, view its documentation, etc
+        QMenu *menu = new QMenu(libname, menuLibraries);
+        menuLibraries->addMenu(menu);
+        QAction *a = new QAction("Import to Current Project", menu);
         a->setData(library);
-        menuLibraries->addAction(a);
+        menu->addAction(a);
+        
+        nodes = doc.elementsByTagName("reference");
+        if(nodes.count())
+        {
+          a = new QAction("View Documentation", menu);
+          QString doclink = nodes.at(0).toElement().text();
+          QUrl url(doclink);
+          if(url.isRelative()) // if it's relative, we need to store the path for context
+            a->setData(libdir.filePath(doclink));
+          else
+            a->setData(doclink); // otherwise just store the link
+          menu->addAction(a);
+        }
         // add the library's examples to the example menu
       }
     }
@@ -927,14 +944,19 @@ void MainWindow::loadLibraries( )
 */
 void MainWindow::onLibrary(QAction *example)
 {
-  QString includeString = QString("#include \"%1.h\"").arg(example->data().toString());
-  // only add if it isn't already in there
-  // find() moves the cursor and highlights the found text
-  if(!editor->find(includeString) && !editor->find(includeString, QTextDocument::FindBackward))
+  if(example->text() == "Import to Current Project")
   {
-    editor->moveCursor(QTextCursor::Start);
-    editor->insertPlainText(includeString + "\n");
+    QString includeString = QString("#include \"%1.h\"").arg(example->data().toString());
+    // only add if it isn't already in there
+    // find() moves the cursor and highlights the found text
+    if(!editor->find(includeString) && !editor->find(includeString, QTextDocument::FindBackward))
+    {
+      editor->moveCursor(QTextCursor::Start);
+      editor->insertPlainText(includeString + "\n");
+    }
   }
+  else if(example->text() == "View Documentation")
+    QDesktopServices::openUrl(QUrl::fromLocalFile(example->data().toString()));
 }
 
 /*
