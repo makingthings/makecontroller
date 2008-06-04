@@ -19,6 +19,8 @@
 #include "UsbMonitor.h"
 #include "qextserialenumerator.h"
 #include <QLineEdit>
+#include <QTextBlock>
+#include <QBuffer>
 
 #define ENUM_FREQUENCY 1000 // check once a second for new USB connections
 
@@ -32,6 +34,7 @@ UsbMonitor::UsbMonitor( ) : QDialog( )
   connect( portList, SIGNAL(activated(QString)), this, SLOT(openDevice(QString)));
   connect( &enumerateTimer, SIGNAL(timeout()), this, SLOT(enumerate()));
   connect(this, SIGNAL(finished(int)), this, SLOT(onFinished()));
+  currentView = viewList->currentText();
   
   port = new QextSerialPort("", QextSerialPort::EventDriven);
   connect(port, SIGNAL(readyRead()), this, SLOT(processNewData()));
@@ -60,7 +63,22 @@ void UsbMonitor::onCommandLine( )
 {
   if(port->isOpen() && !commandLine->currentText().isEmpty())
   {
-    port->write(commandLine->currentText().toUtf8());
+    if(port->write(commandLine->currentText().toUtf8()) < 0)
+      closeDevice();
+    else
+    {
+      QTextBlockFormat format;
+      format.setBackground(QColor(229, 237, 247, 255)); // light blue
+      if(currentView == "Characters")
+        outputConsole->append(commandLine->currentText()); // insert the message
+      else if(currentView == "Hex")
+        outputConsole->append(strToHex(commandLine->currentText()));
+      outputConsole->moveCursor(QTextCursor::End); // move the cursor to the end
+      outputConsole->textCursor().setBlockFormat(format);
+      outputConsole->insertPlainText("\n");
+      format.setBackground(Qt::white); // reset the format to white for any subsequent messages received
+      outputConsole->textCursor().setBlockFormat(format);
+    }
     commandLine->clear();
   }
 }
@@ -71,7 +89,71 @@ void UsbMonitor::onCommandLine( )
 */
 void UsbMonitor::onView(QString view)
 {
-  (void)view;
+  if(view == currentView) // we haven't changed
+    return;
+  currentView = view;
+  if(!outputConsole->document()->blockCount()) // the console is empty
+    return;
+
+  QTextCursor c = outputConsole->textCursor();
+  c.movePosition(QTextCursor::Start);
+  bool keepgoing = true;
+  while(keepgoing)
+  {
+    if(view == "Characters")
+      hexToChar(&c);
+    else if(view == "Hex")
+      charToHex(&c);
+    keepgoing = c.movePosition(QTextCursor::NextBlock);
+  }
+}
+
+/*
+  Change the text in a given block from hex to characters.
+*/
+void UsbMonitor::hexToChar(QTextCursor *c)
+{
+  QStringList hexes = c->block().text().split(" ");
+  QString chars;
+  foreach(QString hex, hexes)
+  {
+    if(!hex.isEmpty())
+      chars += QChar::fromAscii(hex.toInt(0, 0));
+  }
+  while(!c->atBlockEnd())
+    c->deleteChar();
+  c->insertText(chars);
+}
+
+/*
+  Change the text in a given block to hex.
+*/
+void UsbMonitor::charToHex(QTextCursor *c)
+{
+  QString str = c->block().text();
+  QString hexes;
+  int len = str.length();
+  for(int i = 0; i < len; i++)
+  {
+    c->deleteChar();
+    hexes += strToHex(str.left(1));
+    str.remove(0,1);
+  }
+  while(!c->atBlockEnd()) // remove 
+    c->deleteChar();
+  c->insertText(hexes);
+}
+
+QString UsbMonitor::strToHex(QString str)
+{
+  QString hex;
+  int len = str.size();
+  for(int i = 0; i < len; i++)
+  {
+    hex += QString("0x%1 ").arg(QString::number(*(str.toUtf8().data()), 16));
+    str.remove(0,1);
+  }
+  return hex;
 }
 
 /*
@@ -140,6 +222,7 @@ void UsbMonitor::closeDevice()
   if(port->isOpen())
   {
     port->close();
+    portList->setItemIcon( portList->currentIndex(), QIcon(":/icons/red_dot.png"));
     openCloseButton->setText("Open");
   }
 }
@@ -161,8 +244,11 @@ void UsbMonitor::onOpenClose()
   }
   else
   {
-    openDevice(portList->currentText());
-    portList->setItemIcon( portList->currentIndex(), QIcon(":/icons/green_dot.png"));
+    if(!portList->currentText().isEmpty())
+    {
+      openDevice(portList->currentText());
+      portList->setItemIcon( portList->currentIndex(), QIcon(":/icons/green_dot.png"));
+    }
   }
 }
 
@@ -195,7 +281,10 @@ void UsbMonitor::processNewData()
     else
     {
       outputConsole->moveCursor(QTextCursor::End);
-      outputConsole->insertPlainText(newData);
+      if(currentView == "Characters") // just pop it in there
+        outputConsole->insertPlainText(newData);
+      else if(currentView == "Hex")
+        outputConsole->insertPlainText(strToHex(newData));
     }
   }
 }

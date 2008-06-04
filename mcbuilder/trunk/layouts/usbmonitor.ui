@@ -50,7 +50,7 @@
        <property name="orientation" >
         <enum>Qt::Horizontal</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0" >
         <size>
          <width>40</width>
          <height>20</height>
@@ -97,6 +97,9 @@
      </property>
      <property name="readOnly" >
       <bool>true</bool>
+     </property>
+     <property name="acceptRichText" >
+      <bool>false</bool>
      </property>
     </widget>
    </item>

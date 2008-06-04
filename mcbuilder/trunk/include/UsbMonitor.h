@@ -48,7 +48,11 @@ class UsbMonitor : public QDialog, private Ui::UsbMonitorUi
     QTimer enumerateTimer;
     QStringList ports;
     QStringList closedPorts;
+    QString currentView;
     void closeDevice();
+    void hexToChar(QTextCursor *c);
+    void charToHex(QTextCursor *c);
+    QString strToHex(QString str);
 };
 
 #endif // USB_MONITOR_H

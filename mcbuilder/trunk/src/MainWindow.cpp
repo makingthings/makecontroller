@@ -30,6 +30,7 @@
 
 #define RECENT_FILES 5
 
+
 /**
 	MainWindow represents, not surprisingly, the main window of the application.
 	It handles all the menu items and the UI.
@@ -45,8 +46,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   currentFileDropDown = new QComboBox(toolBar);
   currentFileDropDown->setSizeAdjustPolicy(QComboBox::AdjustToContents);
   toolBar->addWidget(currentFileDropDown);
-  QWidget *pad = new QWidget(toolBar);
-  pad->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  QWidget *pad = new QWidget(toolBar); // this doesn't pad as much as it should...to be fixed...
   toolBar->addWidget(pad);
   
   //initialization
