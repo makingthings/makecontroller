@@ -21,15 +21,15 @@
 
 #include <QDialog>
 #include <QTimer>
-#include "ui_usbmonitor.h"
+#include "ui_usbconsole.h"
 #include "qextserialport.h"
 
-class UsbMonitor : public QDialog, private Ui::UsbMonitorUi
+class UsbConsole : public QDialog, private Ui::UsbConsoleUi
 {
 	Q_OBJECT
   
 	public:
-		UsbMonitor( );
+		UsbConsole( );
     
 	public slots:
 		bool loadAndShow();

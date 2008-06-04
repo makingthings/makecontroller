@@ -16,7 +16,7 @@
 *********************************************************************************/
 
 
-#include "UsbMonitor.h"
+#include "UsbConsole.h"
 #include "qextserialenumerator.h"
 #include <QLineEdit>
 #include <QTextBlock>
@@ -24,7 +24,7 @@
 
 #define ENUM_FREQUENCY 1000 // check once a second for new USB connections
 
-UsbMonitor::UsbMonitor( ) : QDialog( )
+UsbConsole::UsbConsole( ) : QDialog( )
 {
 	setupUi(this);
   connect( sendButton, SIGNAL(clicked()), this, SLOT(onCommandLine()));
@@ -45,7 +45,7 @@ UsbMonitor::UsbMonitor( ) : QDialog( )
  If one of the ports is the one that was last open, open it up.
  Otherwise, wait for the user to select one then open that one.
 */
-bool UsbMonitor::loadAndShow( )
+bool UsbConsole::loadAndShow( )
 {
   if(!portList->currentText().isEmpty())
     openDevice(portList->currentText());
@@ -59,7 +59,7 @@ bool UsbMonitor::loadAndShow( )
  Send the contents of the commandLine to the serial port,
  and add them to the output console
 */
-void UsbMonitor::onCommandLine( )
+void UsbConsole::onCommandLine( )
 {
   if(port->isOpen() && !commandLine->currentText().isEmpty())
   {
@@ -87,7 +87,7 @@ void UsbMonitor::onCommandLine( )
  If the view has changed, update the contents of the 
  output console accordingly.
 */
-void UsbMonitor::onView(QString view)
+void UsbConsole::onView(QString view)
 {
   if(view == currentView) // we haven't changed
     return;
@@ -111,7 +111,7 @@ void UsbMonitor::onView(QString view)
 /*
   Change the text in a given block from hex to characters.
 */
-void UsbMonitor::hexToChar(QTextCursor *c)
+void UsbConsole::hexToChar(QTextCursor *c)
 {
   QStringList hexes = c->block().text().split(" ");
   QString chars;
@@ -128,7 +128,7 @@ void UsbMonitor::hexToChar(QTextCursor *c)
 /*
   Change the text in a given block to hex.
 */
-void UsbMonitor::charToHex(QTextCursor *c)
+void UsbConsole::charToHex(QTextCursor *c)
 {
   QString str = c->block().text();
   QString hexes;
@@ -144,7 +144,7 @@ void UsbMonitor::charToHex(QTextCursor *c)
   c->insertText(hexes);
 }
 
-QString UsbMonitor::strToHex(QString str)
+QString UsbConsole::strToHex(QString str)
 {
   QString hex;
   int len = str.size();
@@ -161,7 +161,7 @@ QString UsbMonitor::strToHex(QString str)
   If we find a new one, pop it into the UI and save its name.
   If one has gone away, remove it from the UI.
 */
-void UsbMonitor::enumerate()
+void UsbConsole::enumerate()
 {
   QextSerialEnumerator enumerator;
   QList<QextPortInfo> portInfos = enumerator.getPorts();
@@ -196,7 +196,7 @@ void UsbMonitor::enumerate()
   Open the USB port with the given name
   Update the UI accordingly.
 */
-void UsbMonitor::openDevice(QString name)
+void UsbConsole::openDevice(QString name)
 {
   if(port->isOpen())
     port->close();
@@ -217,7 +217,7 @@ void UsbMonitor::openDevice(QString name)
   Close the USB port.
   Update the UI accordingly.
 */
-void UsbMonitor::closeDevice()
+void UsbConsole::closeDevice()
 {
   if(port->isOpen())
   {
@@ -232,7 +232,7 @@ void UsbMonitor::closeDevice()
   If the port is currently closed, try to open it and set our state
   to close it the next time it's clicked, and vice versa.
 */
-void UsbMonitor::onOpenClose()
+void UsbConsole::onOpenClose()
 {
   if(port->isOpen())
   {
@@ -256,7 +256,7 @@ void UsbMonitor::onOpenClose()
   The dialog has been closed.
   Close the USB connection if it's open, and stop the enumerator.
 */
-void UsbMonitor::onFinished()
+void UsbConsole::onFinished()
 {
   enumerateTimer.stop();
   closeDevice();
@@ -267,7 +267,7 @@ void UsbMonitor::onFinished()
   New data is available at the USB port.
   Read it and stuff it into the UI.
 */
-void UsbMonitor::processNewData()
+void UsbConsole::processNewData()
 {
   QByteArray newData;
   if(!port->isOpen())

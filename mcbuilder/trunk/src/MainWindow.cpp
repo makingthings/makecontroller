@@ -55,7 +55,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 	projInfo = new ProjectInfo(this);
 	uploader = new Uploader(this);
 	builder = new Builder(this, projInfo);
-  usbMonitor = new UsbMonitor();
+  usbConsole = new UsbConsole();
   findReplace = new FindReplace(this);
   about = new About();
   updater = new AppUpdater();
@@ -71,7 +71,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   // misc. signals
 	connect(editor, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorMoved()));
 	connect(actionPreferences, SIGNAL(triggered()), prefs, SLOT(loadAndShow()));
-  connect(actionUsb_Monitor, SIGNAL(triggered()), usbMonitor, SLOT(loadAndShow()));
+  connect(actionUsb_Monitor, SIGNAL(triggered()), usbConsole, SLOT(loadAndShow()));
 	connect(currentFileDropDown, SIGNAL(currentIndexChanged(int)), this, SLOT(onFileSelection(int)));
   connect(editor->document(), SIGNAL(contentsChanged()),this, SLOT(onDocumentModified()));
   connect(outputConsole, SIGNAL(itemDoubleClicked(QListWidgetItem*)),this, SLOT(onConsoleDoubleClick(QListWidgetItem*)));
