@@ -91,31 +91,19 @@ QString Preferences::boardType( )
 QString Preferences::toolsPath( ) // static
 {
   QSettings settings("MakingThings", "mcbuilder");
-  QString path = settings.value("toolsPath").toString();
-  if(path.isEmpty())
-    return QDir::currentPath() + "/resources/tools/arm-elf/bin";
-  else
-    return path;
+  return settings.value("toolsPath", QDir::currentPath() + "/resources/tools/arm-elf/bin").toString();
 }
 
 QString Preferences::makePath( ) // static
 {
   QSettings settings("MakingThings", "mcbuilder");
-  QString path = settings.value("makePath").toString();
-  if(path.isEmpty())
-    return QDir::currentPath() + "/resources/tools";
-  else
-    return path;
+  return settings.value("makePath", QDir::currentPath() + "/resources/tools").toString();
 }
 
 QString Preferences::sam7Path( ) // static
 {
   QSettings settings("MakingThings", "mcbuilder");
-  QString path = settings.value("sam7Path").toString();
-  if(path.isEmpty())
-    return QDir::currentPath() + "/resources/tools";
-  else
-    return path;
+  return settings.value("sam7Path", QDir::currentPath() + "/resources/tools").toString();
 }
 
 /*
@@ -124,10 +112,10 @@ QString Preferences::sam7Path( ) // static
 void Preferences::loadAndShow( )
 {
 	QSettings settings("MakingThings", "mcbuilder");
-  workspaceEdit->setText( workspace() );
-  makePathEdit->setText( settings.value("makePath").toString() );
-  toolsPathEdit->setText( settings.value("toolsPath").toString() );
-  sam7PathEdit->setText( settings.value("sam7Path").toString() );
+  workspaceEdit->setText(workspace());
+  makePathEdit->setText(toolsPath());
+  toolsPathEdit->setText(makePath());
+  sam7PathEdit->setText(sam7Path());
   
   Qt::CheckState state = (settings.value("checkForUpdates", true).toBool()) ? Qt::Checked : Qt::Unchecked;
   updaterBox->setCheckState(state);
