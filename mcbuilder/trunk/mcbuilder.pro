@@ -1,12 +1,13 @@
 TEMPLATE = app
-CONFIG += qt release
+#CONFIG += qt release
+CONFIG += qt debug
 
 MCBUILDER_VERSION = "0.1.0"
 
 FORMS = layouts/mainwindow.ui \
         layouts/preferences.ui \
         layouts/projectinfo.ui \
-        layouts/usbmonitor.ui \
+        layouts/usbconsole.ui \
         layouts/findreplace.ui \
         layouts/about.ui
 
@@ -16,7 +17,7 @@ HEADERS = include/Highlighter.h \
           include/Uploader.h \
           include/ProjectInfo.h \
           include/Builder.h \
-          include/UsbMonitor.h \
+          include/UsbConsole.h \
           include/FindReplace.h \
           include/About.h \
           include/AppUpdater.h \
@@ -29,7 +30,7 @@ SOURCES = src/main.cpp \
           src/Uploader.cpp \
           src/ProjectInfo.cpp \
           src/Builder.cpp \
-          src/UsbMonitor.cpp \
+          src/UsbConsole.cpp \
           src/FindReplace.cpp \
           src/AppUpdater.cpp \
           src/About.cpp
@@ -39,7 +40,7 @@ TARGET = mcbuilder
 QT += xml network
 INCLUDEPATH += include
 RESOURCES   += resources/icons/icons_rsrc.qrc
-DEFINES     += MCBUILDER_VERSION=\"$${MCBUILDER_VERSION}\"
+DEFINES     += MCBUILDER_VERSION=\\\"$${MCBUILDER_VERSION}\\\"
 OBJECTS_DIR  = tmp
 MOC_DIR      = tmp
 RCC_DIR      = tmp
