@@ -27,7 +27,7 @@
 #include "ProjectInfo.h"
 #include "Uploader.h"
 #include "Builder.h"
-#include "UsbMonitor.h"
+#include "UsbConsole.h"
 #include "FindReplace.h"
 #include "About.h"
 #include "ConsoleItem.h"
@@ -74,7 +74,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 		ProjectInfo *projInfo;
 		Uploader *uploader;
 		Builder *builder;
-    UsbMonitor *usbMonitor;
+    UsbConsole *usbConsole;
     FindReplace *findReplace;
     About *about;
     AppUpdater *updater;
