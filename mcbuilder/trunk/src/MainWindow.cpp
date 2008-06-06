@@ -142,16 +142,16 @@ void MainWindow::readSettings()
 */
 void MainWindow::writeSettings()
 {
-	QSettings settings("MakingThings", "mcbuilder");
-	settings.beginGroup("MainWindow");
-	settings.setValue("size", size() );
-	QList<QVariant> splitterSettings;
-	QList<int> splitterSizes = splitter->sizes();
-	for( int i = 0; i < splitterSizes.count( ); i++ )
-		splitterSettings.append( splitterSizes.at(i) );
-	settings.setValue("splitterSizes", splitterSettings );
+  QSettings settings("MakingThings", "mcbuilder");
+  settings.beginGroup("MainWindow");
+  settings.setValue("size", size() );
+  QList<QVariant> splitterSettings;
+  QList<int> splitterSizes = splitter->sizes();
+  for( int i = 0; i < splitterSizes.count( ); i++ )
+    splitterSettings.append( splitterSizes.at(i) );
+  settings.setValue("splitterSizes", splitterSettings );
   settings.setValue("lastOpenProject", currentProject);
-	settings.endGroup();
+  settings.endGroup();
 }
 
 /*
@@ -175,17 +175,17 @@ void MainWindow::closeEvent( QCloseEvent *qcloseevent )
 */
 void MainWindow::onCursorMoved( )
 {
-	QTextCursor c = editor->textCursor();
+  QTextCursor c = editor->textCursor();
   if(c.hasSelection()) // don't highlight the line if text is selected
     return editor->setExtraSelections(QList<QTextEdit::ExtraSelection>());
   QTextEdit::ExtraSelection highlight;
-	highlight.cursor = c;
-	highlight.format.setProperty(QTextFormat::FullWidthSelection, true);
-	highlight.format.setBackground( QColor::fromRgb(245, 245, 245) ); // light gray
+  highlight.cursor = c;
+  highlight.format.setProperty(QTextFormat::FullWidthSelection, true);
+  highlight.format.setBackground( QColor::fromRgb(245, 245, 245) ); // light gray
 
-	QList<QTextEdit::ExtraSelection> extras;
-	extras << highlight;
-	editor->setExtraSelections( extras );
+  QList<QTextEdit::ExtraSelection> extras;
+  extras << highlight;
+  editor->setExtraSelections( extras );
   
   statusBar()->showMessage( QString("Line: %1  Column: %2").arg(c.blockNumber()+1).arg(c.columnNumber()));
 }
@@ -276,16 +276,16 @@ QString MainWindow::currentBoardProfile( )
 */
 void MainWindow::editorLoadFile( QString filepath )
 {
-	Q_ASSERT(!currentProject.isEmpty());
+  Q_ASSERT(!currentProject.isEmpty());
   QFile file(filepath);
-	if(file.open(QIODevice::ReadOnly|QFile::Text))
-	{
-		currentFile = file.fileName();
-		editor->setPlainText(file.readAll());
-		file.close();
+  if(file.open(QIODevice::ReadOnly|QFile::Text))
+  {
+    currentFile = file.fileName();
+    editor->setPlainText(file.readAll());
+    file.close();
     editor->document()->setModified(false);
     setWindowModified(false);
-	}
+  }
 }
 
 /*
@@ -295,15 +295,14 @@ void MainWindow::editorLoadFile( QString filepath )
 */
 void MainWindow::onNewFile( )
 {
-	if(currentProject.isEmpty())
-	{
-		statusBar()->showMessage( "Need to open a project first.  Open or create a new one from the File menu.", 3500 );
-		return;
-	}
-	QString newFilePath = QFileDialog::getSaveFileName(this, tr("Create New File"), 
-																			currentProject, tr("C Files (*.c)"));
-	if(!newFilePath.isNull()) // user cancelled
-		createNewFile(newFilePath);
+  if(currentProject.isEmpty())
+  {
+    statusBar()->showMessage( "Need to open a project first.  Open or create a new one from the File menu.", 3500 );
+    return;
+  }
+  QString newFilePath = QFileDialog::getSaveFileName(this, tr("Create New File"), currentProject, tr("C Files (*.c)"));
+  if(!newFilePath.isNull()) // user cancelled
+    createNewFile(newFilePath);
 }
 
 /*
@@ -313,12 +312,11 @@ void MainWindow::onNewFile( )
 void MainWindow::onAddExistingFile( )
 {
   if(currentProject.isEmpty())
-	{
-		statusBar()->showMessage( "Need to open a project first.  Open or create a new one from the File menu.", 3500 );
-		return;
-	}
-  QString newFilePath = QFileDialog::getOpenFileName(this, tr("Add Existing File"), 
-																			currentProject, tr("C Files (*.c)"));
+  {
+    statusBar()->showMessage( "Need to open a project first.  Open or create a new one from the File menu.", 3500 );
+    return;
+  }
+  QString newFilePath = QFileDialog::getOpenFileName(this, tr("Add Existing File"), currentProject, tr("C Files (*.c)"));
   if(!newFilePath.isNull()) // user cancelled
   {
     editorLoadFile(newFilePath);
@@ -365,21 +363,21 @@ void MainWindow::createNewFile(QString path)
 {
   QFileInfo fi(path);
   if(fi.suffix().isEmpty())
-    fi.setFile(fi.filePath() + ".c");
-	QFile file(fi.filePath());
-	if(file.exists()) // don't do anything if this file's already there
-		return;
-	if(file.open(QIODevice::WriteOnly | QFile::Text))
-	{
-		QTextStream out(&file);
-		out << QString("// %1").arg(fi.fileName()) << endl;
-		out << QString("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl << endl;
-		file.close();
-		editorLoadFile(fi.filePath());
-		currentFileDropDown->addItem(fi.fileName(), fi.filePath()); // store the filepath on the combo box item 
-		currentFileDropDown->setCurrentIndex(currentFileDropDown->count()-1);
+  fi.setFile(fi.filePath() + ".c");
+  QFile file(fi.filePath());
+  if(file.exists()) // don't do anything if this file's already there
+    return;
+  if(file.open(QIODevice::WriteOnly | QFile::Text))
+  {
+    QTextStream out(&file);
+    out << QString("// %1").arg(fi.fileName()) << endl;
+    out << QString("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl << endl;
+    file.close();
+    editorLoadFile(fi.filePath());
+    currentFileDropDown->addItem(fi.fileName(), fi.filePath()); // store the filepath on the combo box item 
+    currentFileDropDown->setCurrentIndex(currentFileDropDown->count()-1);
     addToProjectFile(currentProject, fi.filePath(), "thumb");
-	}
+  }
 }
 
 /*
