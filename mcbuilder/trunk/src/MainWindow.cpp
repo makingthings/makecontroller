@@ -37,7 +37,7 @@
 */
 MainWindow::MainWindow( ) : QMainWindow( 0 )
 {
-	setupUi(this);
+  setupUi(this);
   
   // add the file dropdown to the toolbar...can't do this in Designer for some reason
   QWidget *stretch = new QWidget(toolBar);
@@ -51,10 +51,10 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   
   //initialization
   highlighter = new Highlighter( editor->document() );
-	prefs = new Preferences(this);
-	projInfo = new ProjectInfo(this);
-	uploader = new Uploader(this);
-	builder = new Builder(this, projInfo);
+  prefs = new Preferences(this);
+  projInfo = new ProjectInfo(this);
+  uploader = new Uploader(this);
+  builder = new Builder(this, projInfo);
   usbConsole = new UsbConsole();
   findReplace = new FindReplace(this);
   about = new About();
@@ -62,49 +62,49 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   
   // load
   boardTypeGroup = new QActionGroup(menuBoard_Type);
-	loadBoardProfiles( );
-	loadExamples( );
-	loadLibraries( );
-	loadRecentProjects( );
+  loadBoardProfiles( );
+  loadExamples( );
+  loadLibraries( );
+  loadRecentProjects( );
   readSettings( );
   
   // misc. signals
-	connect(editor, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorMoved()));
-	connect(actionPreferences, SIGNAL(triggered()), prefs, SLOT(loadAndShow()));
+  connect(editor, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorMoved()));
+  connect(actionPreferences, SIGNAL(triggered()), prefs, SLOT(loadAndShow()));
   connect(actionUsb_Monitor, SIGNAL(triggered()), usbConsole, SLOT(loadAndShow()));
-	connect(currentFileDropDown, SIGNAL(currentIndexChanged(int)), this, SLOT(onFileSelection(int)));
+  connect(currentFileDropDown, SIGNAL(currentIndexChanged(int)), this, SLOT(onFileSelection(int)));
   connect(editor->document(), SIGNAL(contentsChanged()),this, SLOT(onDocumentModified()));
   connect(outputConsole, SIGNAL(itemDoubleClicked(QListWidgetItem*)),this, SLOT(onConsoleDoubleClick(QListWidgetItem*)));
   
-	// menu actions 
-	connect(actionNew,					SIGNAL(triggered()), this,		SLOT(onNewFile()));
+  // menu actions 
+  connect(actionNew,					SIGNAL(triggered()), this,		SLOT(onNewFile()));
   connect(actionAdd_Existing_File, SIGNAL(triggered()), this,		SLOT(onAddExistingFile()));
-	connect(actionNew_Project,	SIGNAL(triggered()), this,		SLOT(onNewProject()));
-	connect(actionOpen,					SIGNAL(triggered()), this,		SLOT(onOpen()));
-	connect(actionSave,					SIGNAL(triggered()), this,		SLOT(onSave()));
-	connect(actionSave_As,			SIGNAL(triggered()), this,		SLOT(onSaveAs()));
-	connect(actionBuild,				SIGNAL(triggered()), this,		SLOT(onBuild()));
+  connect(actionNew_Project,	SIGNAL(triggered()), this,		SLOT(onNewProject()));
+  connect(actionOpen,					SIGNAL(triggered()), this,		SLOT(onOpen()));
+  connect(actionSave,					SIGNAL(triggered()), this,		SLOT(onSave()));
+  connect(actionSave_As,			SIGNAL(triggered()), this,		SLOT(onSaveAs()));
+  connect(actionBuild,				SIGNAL(triggered()), this,		SLOT(onBuild()));
   connect(actionStop,         SIGNAL(triggered()), this,		SLOT(onStop()));
   connect(actionClean,				SIGNAL(triggered()), this,		SLOT(onClean()));
-	connect(actionProperties,		SIGNAL(triggered()), this,		SLOT(onProperties()));
-	connect(actionUpload,				SIGNAL(triggered()), this,		SLOT(onUpload()));
-	connect(actionUndo,					SIGNAL(triggered()), editor,	SLOT(undo()));
-	connect(actionRedo,					SIGNAL(triggered()), editor,	SLOT(redo()));
-	connect(actionCut,					SIGNAL(triggered()), editor,	SLOT(cut()));
-	connect(actionCopy,					SIGNAL(triggered()), editor,	SLOT(copy()));
-	connect(actionPaste,				SIGNAL(triggered()), editor,	SLOT(paste()));
-	connect(actionSelect_All,		SIGNAL(triggered()), editor,	SLOT(selectAll()));
+  connect(actionProperties,		SIGNAL(triggered()), this,		SLOT(onProperties()));
+  connect(actionUpload,				SIGNAL(triggered()), this,		SLOT(onUpload()));
+  connect(actionUndo,					SIGNAL(triggered()), editor,	SLOT(undo()));
+  connect(actionRedo,					SIGNAL(triggered()), editor,	SLOT(redo()));
+  connect(actionCut,					SIGNAL(triggered()), editor,	SLOT(cut()));
+  connect(actionCopy,					SIGNAL(triggered()), editor,	SLOT(copy()));
+  connect(actionPaste,				SIGNAL(triggered()), editor,	SLOT(paste()));
+  connect(actionSelect_All,		SIGNAL(triggered()), editor,	SLOT(selectAll()));
   connect(actionFind,         SIGNAL(triggered()), findReplace,	SLOT(show()));
   connect(actionAbout,        SIGNAL(triggered()), about,   SLOT(show()));
   connect(actionUpdate,        SIGNAL(triggered()), this,   SLOT(onUpdate()));
   connect(actionClear_Output_Console,		SIGNAL(triggered()), outputConsole,	SLOT(clear()));
-	connect(actionUpload_File_to_Board,		SIGNAL(triggered()), this,	SLOT(onUploadFile()));
-	connect(actionMake_Controller_Reference, SIGNAL(triggered()), this, SLOT(openMCReference()));
+  connect(actionUpload_File_to_Board,		SIGNAL(triggered()), this,	SLOT(onUploadFile()));
+  connect(actionMake_Controller_Reference, SIGNAL(triggered()), this, SLOT(openMCReference()));
   connect(actionMcbuilder_User_Manual, SIGNAL(triggered()), this, SLOT(openManual()));
-	connect(menuExamples, SIGNAL(triggered(QAction*)), this, SLOT(onExample(QAction*)));
+  connect(menuExamples, SIGNAL(triggered(QAction*)), this, SLOT(onExample(QAction*)));
   connect(menuLibraries, SIGNAL(triggered(QAction*)), this, SLOT(onLibrary(QAction*)));
-	connect(actionSave_Project_As, SIGNAL(triggered()), this, SLOT(onSaveProjectAs()));
-	connect(menuRecent_Projects, SIGNAL(triggered(QAction*)), this, SLOT(openRecentProject(QAction*)));
+  connect(actionSave_Project_As, SIGNAL(triggered()), this, SLOT(onSaveProjectAs()));
+  connect(menuRecent_Projects, SIGNAL(triggered(QAction*)), this, SLOT(openRecentProject(QAction*)));
 }
 
 /*
@@ -495,18 +495,24 @@ void MainWindow::onOpen( )
 void MainWindow::openProject(QString projectPath)
 {
   QDir projectDir(projectPath);
-	QString projectName = projectDir.dirName();
-	if(!projectDir.exists())
-		return statusBar()->showMessage( QString("Couldn't find %1.").arg(projectName), 3500 );
+  QString projectName = projectDir.dirName();
+  if(!projectDir.exists())
+    return statusBar()->showMessage( QString("Couldn't find %1.").arg(projectName), 3500 );
 
   QString pathname = projectName; // filename should not have spaces
-	QFile projFile(projectDir.filePath(pathname.remove(" ") + ".xml"));
+  QFile projFile(projectDir.filePath(pathname.remove(" ") + ".xml"));
   QDomDocument doc;
-	if(doc.setContent(&projFile))
-	{
-		currentProject = projectPath;
-    currentFileDropDown->clear();
-		QDomNodeList allFiles = doc.elementsByTagName("files").at(0).childNodes();
+  if(doc.setContent(&projFile))
+  {
+    currentProject = projectPath;\
+    qDebug("current index: %d", currentFileDropDown->currentIndex());
+//    currentFileDropDown->setCurrentIndex(0);
+////    if(currentFileDropDown->count())
+//      currentFileDropDown->clear();
+    int count = currentFileDropDown->count();
+    for(int i = 0; i < count; i++)
+      currentFileDropDown->removeItem(i);
+    QDomNodeList allFiles = doc.elementsByTagName("files").at(0).childNodes();
     for(int i = 0; i < allFiles.count(); i++)
     {
       QFileInfo fi(allFiles.at(i).toElement().text());
@@ -522,12 +528,13 @@ void MainWindow::openProject(QString projectPath)
         currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
       }
     }
-		setWindowTitle( projectName + "[*] - mcbuilder");
-		updateRecentProjects(projectName);
-    projInfo->load();	
+    setWindowTitle( projectName + "[*] - mcbuilder");
+    updateRecentProjects(projectName);
+    projInfo->load();
+    qDebug("current index after: %d", currentFileDropDown->currentIndex());
 	}
 	else
-		return statusBar()->showMessage( QString("Couldn't find main file for %1.").arg(projectName), 3500 );
+      return statusBar()->showMessage( QString("Couldn't find main file for %1.").arg(projectName), 3500 );
 }
 
 /*
@@ -781,9 +788,12 @@ void MainWindow::onProperties( )
 */
 void MainWindow::onUpload( )
 {
-	if(currentProject.isEmpty())
-		return statusBar()->showMessage( "Open a project to upload, or create a new one from the File menu.", 3500 );
-	uploadFile("temp.bin");
+  if(currentProject.isEmpty())
+    return statusBar()->showMessage( "Open a project to upload, or create a new one from the File menu.", 3500 );
+  QDir projectDir(currentProject);
+  QString binName = projectDir.dirName().remove(" ").toLower();
+  projectDir.cd("build");
+  uploadFile(projectDir.filePath(binName + ".bin"));
 }
 
 /*
@@ -964,11 +974,11 @@ void MainWindow::onLibrary(QAction *example)
 */
 void MainWindow::loadRecentProjects( )
 {
-	QSettings settings("MakingThings", "mcbuilder");
-	QStringList projects = settings.value("MainWindow/recentProjects").toStringList();
-	projects = projects.mid(0,RECENT_FILES); // just in case there are extras
-	foreach(QString project, projects)
-		menuRecent_Projects->addAction(project);
+  QSettings settings("MakingThings", "mcbuilder");
+  QStringList projects = settings.value("MainWindow/recentProjects").toStringList();
+  projects = projects.mid(0,RECENT_FILES); // just in case there are extras
+  foreach(QString project, projects)
+    menuRecent_Projects->addAction(project);
 }
 
 void MainWindow::printOutput(QString text)

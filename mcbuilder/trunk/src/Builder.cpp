@@ -69,7 +69,7 @@ void Builder::clean(QString projectName)
 
 void Builder::stop()
 {
-  terminate();
+  kill();
 }
 
 /*
