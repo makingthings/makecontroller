@@ -70,12 +70,13 @@ bool Uploader::upload(QString boardProfileName, QString filename)
 
 void Uploader::readOutput( )
 {
-  mainWindow->printOutput(readAllStandardOutput());
+  qDebug("sam7: %s", qPrintable(QString(readAllStandardOutput())));
+	//mainWindow->printOutput(readAllStandardOutput());
 }
 
 void Uploader::readError( )
 {
-  mainWindow->printOutputError(readAllStandardError());
+  //mainWindow->printOutputError(readAllStandardError());
 }
 
 void Uploader::uploadStarted( )
@@ -99,25 +100,25 @@ void Uploader::onError(QProcess::ProcessError error)
   switch(error)
   {
     case QProcess::FailedToStart:
-      msg = QString("'%1' failed to start.  It's either missing, or doesn't have the correct permissions").arg(uploaderName);
+      msg = QString("uploader failed to start.  '%1' is either missing, or doesn't have the correct permissions").arg(uploaderName);
       break;
     case QProcess::Crashed:
-      msg = QString("'%1' was canceled or crashed.").arg(uploaderName);
+      msg = QString("uploader (%1) was canceled or crashed.").arg(uploaderName);
       break;
     case QProcess::Timedout:
-      msg = QString("'%1' timed out.").arg(uploaderName);
+      msg = QString("uploader (%1) timed out.").arg(uploaderName);
       break;
     case QProcess::WriteError:
-      msg = QString("'%1' reported a write error.").arg(uploaderName);
+      msg = QString("'uploader (%1) reported a write error.").arg(uploaderName);
       break;
     case QProcess::ReadError:
-      msg = QString("'%1' reported a read error.").arg(uploaderName);
+      msg = QString("uploader (%1) reported a read error.").arg(uploaderName);
       break;
     case QProcess::UnknownError:
-      msg = QString("'%1' - unknown error type.").arg(uploaderName);
+      msg = QString("uploader (%1) - unknown error type.").arg(uploaderName);
       break;
   }
-  mainWindow->printOutputError("Error - uploader: " + msg);
+  mainWindow->printOutputError("Error - " + msg);
 }
 
 void Uploader::onProgressDialogFinished(int result)
