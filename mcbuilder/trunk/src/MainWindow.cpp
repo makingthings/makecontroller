@@ -386,16 +386,18 @@ void MainWindow::createNewFile(QString path)
 */
 void MainWindow::onFileSelection(int index)
 {
-	Q_ASSERT(!currentProject.isEmpty()); // we shouldn't have any files loaded unless a project is open
-	QFileInfo file(currentFileDropDown->itemData(index).toString());
-	if(file.exists())
-		editorLoadFile(file.filePath());
-	else
-	{
-		QString message = QString("Couldn't find %1.").arg(file.fileName());
-		currentFileDropDown->removeItem(currentFileDropDown->findText(file.fileName()));
-		statusBar()->showMessage(message, 3000);
-	}
+  if(index < 0) // the list has just been cleared...no use grabbing anything
+    return;
+  Q_ASSERT(!currentProject.isEmpty()); // we shouldn't have any files loaded unless a project is open
+  QFileInfo file(currentFileDropDown->itemData(index).toString());
+  if(file.exists())
+    editorLoadFile(file.filePath());
+  else
+  {
+    QString message = QString("Couldn't find %1.").arg(file.fileName());
+    currentFileDropDown->removeItem(currentFileDropDown->findText(file.fileName()));
+    statusBar()->showMessage(message, 3000);
+  }
 }
 
 /*
@@ -404,16 +406,15 @@ void MainWindow::onFileSelection(int index)
 */
 void MainWindow::onNewProject( )
 {	
-	QString workspace = Preferences::workspace();
-	QString newProjPath = QFileDialog::getSaveFileName(this, tr("Create Project"), 
-																		workspace, "", 0, QFileDialog::ShowDirsOnly);
-	if( newProjPath.isNull() )
-		return;
-	// create a directory for the project
-	QDir workspaceDir(workspace);
-	workspaceDir.mkdir(newProjPath);
-	QDir newProjectDir(newProjPath);
-	QString newProjName = newProjectDir.dirName().remove(" "); // file names shouldn't have any spaces
+  QString workspace = Preferences::workspace();
+  QString newProjPath = QFileDialog::getSaveFileName(this, tr("Create Project"), workspace, "", 0, QFileDialog::ShowDirsOnly);
+  if( newProjPath.isNull() )
+    return;
+  // create a directory for the project
+  QDir workspaceDir(workspace);
+  workspaceDir.mkdir(newProjPath);
+  QDir newProjectDir(newProjPath);
+  QString newProjName = newProjectDir.dirName().remove(" "); // file names shouldn't have any spaces
   
   // grab the templates for a new project
   QDir templatesDir = QDir::current().filePath("resources/templates");
@@ -424,7 +425,7 @@ void MainWindow::onNewProject( )
   templateFile.close();
   
   templateFile.setFileName(templatesDir.filePath("source_template.txt"));
-	if( templateFile.open(QIODevice::ReadOnly | QFile::Text) )
+  if( templateFile.open(QIODevice::ReadOnly | QFile::Text) )
   {
     // and create the main file
     QFile mainFile(newProjectDir.filePath(newProjName + ".c"));
@@ -440,7 +441,7 @@ void MainWindow::onNewProject( )
     addToProjectFile(newProjPath, fi.filePath(), "thumb");
     templateFile.close();
   }
-	openProject(newProjPath);
+  openProject(newProjPath);
 }
 
 /*
@@ -502,14 +503,8 @@ void MainWindow::openProject(QString projectPath)
   QDomDocument doc;
   if(doc.setContent(&projFile))
   {
-    currentProject = projectPath;\
-    qDebug("current index: %d", currentFileDropDown->currentIndex());
-//    currentFileDropDown->setCurrentIndex(0);
-////    if(currentFileDropDown->count())
-//      currentFileDropDown->clear();
-    int count = currentFileDropDown->count();
-    for(int i = 0; i < count; i++)
-      currentFileDropDown->removeItem(i);
+    currentProject = projectPath;
+    currentFileDropDown->clear();
     QDomNodeList allFiles = doc.elementsByTagName("files").at(0).childNodes();
     for(int i = 0; i < allFiles.count(); i++)
     {
