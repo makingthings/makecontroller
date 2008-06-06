@@ -36,12 +36,15 @@ class Uploader : public QProcess
 		MainWindow *mainWindow;
 		QProgressDialog *uploaderProgress;
 		QString currentFile;
+		QString uploaderName;
 		
 	private slots:
 		void readOutput();
 		void readError();
 		void uploadStarted();
 		void uploadFinished(int exitCode, QProcess::ExitStatus exitStatus);
+		void onError(QProcess::ProcessError error);
+		void onProgressDialogFinished(int result);
 };
 
 #endif // UPLOADER_H

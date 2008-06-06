@@ -29,78 +29,103 @@
 */
 Uploader::Uploader(MainWindow *mainWindow) : QProcess( )
 {
-	this->mainWindow = mainWindow;
-	uploaderProgress = new QProgressDialog("Uploading...", "Cancel", 0, 100);
-	connect(uploaderProgress, SIGNAL(canceled()), this, SLOT(terminate()));
-	connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
-	connect(this, SIGNAL(readyReadStandardError()), this, SLOT(readError()));
-	connect(this, SIGNAL(started()), this, SLOT(uploadStarted()));
-	connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(uploadFinished(int, QProcess::ExitStatus)));
+  this->mainWindow = mainWindow;
+  uploaderProgress = new QProgressDialog("Uploading...", "Cancel", 0, 100);
+  connect(uploaderProgress, SIGNAL(canceled()), this, SLOT(kill()));
+  connect(uploaderProgress, SIGNAL(finished(int)), this, SLOT(onProgressDialogFinished(int)));
+  connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
+  connect(this, SIGNAL(readyReadStandardError()), this, SLOT(readError()));
+  connect(this, SIGNAL(started()), this, SLOT(uploadStarted()));
+  connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(uploadFinished(int, QProcess::ExitStatus)));
+  connect(this, SIGNAL(error(QProcess::ProcessError)), this, SLOT(onError(QProcess::ProcessError)));
 }
 
 bool Uploader::upload(QString boardProfileName, QString filename)
 {
-	bool retval = false;
-	// read the board profile and find which uploader we should use
-	QDir dir = QDir::current();
-	dir.cd("resources/board_profiles");
-	QDomDocument doc;
-	QFile file(dir.filePath(boardProfileName));
-	if(!file.exists())
-		return false;
-	if(file.open(QIODevice::ReadOnly))
-	{
-		if(doc.setContent(&file))
-		{
-			QString uploaderName = doc.elementsByTagName("uploader").at(0).toElement().text();
-			QStringList uploaderArgs;
-			uploaderArgs << filename;
-			dir.cd("../uploaders"); // we're still in "boards" from above
-			setWorkingDirectory(dir.path());
-			uploaderName.prepend(dir.path() + QDir::separator());
-			start(uploaderName, uploaderArgs);
-			retval = true;
-		}
-		file.close();
-	}
-	else
-		retval = false;
-	return retval;
+  bool retval = false;
+  // read the board profile and find which uploader we should use
+  QDir dir = QDir::current().filePath("resources/board_profiles");
+  QDomDocument doc;
+  QFile file(dir.filePath(boardProfileName));
+  currentFile = QDir::toNativeSeparators(filename);
+  if(doc.setContent(&file))
+  {
+	QDomNodeList nodes = doc.elementsByTagName("uploader");
+    if(nodes.count())
+      uploaderName = QDir::toNativeSeparators(nodes.at(0).toElement().text());
+    QStringList uploaderArgs;
+    uploaderArgs << "-e" << "set_clock";
+    uploaderArgs << "-e" << "unlock_regions";
+    uploaderArgs << "-e" << QString("flash %1").arg(currentFile);
+    uploaderArgs << "-e" << "boot_from_flash";
+    QDir sam7dir(Preferences::sam7Path());
+    start(sam7dir.filePath(uploaderName), uploaderArgs);
+    retval = true;
+    file.close();
+  }
+  else
+    retval = false;
+  return retval;
 }
 
 void Uploader::readOutput( )
 {
-	mainWindow->printOutput(readAll());
-//	QTextStream in(uploader);
-//	QString line = in.readLine();
-//	while (!line.isNull())
-//	{
-//		mainWindow->printOutput(line.append("\n"));
-//		line = in.readLine();
-//	} 
+  mainWindow->printOutput(readAllStandardOutput());
 }
 
 void Uploader::readError( )
 {
-	mainWindow->printOutputError(readAll());
-//	QTextStream in(uploader);
-//	QString line = in.readLine();
-//	while (!line.isNull())
-//	{
-//		mainWindow->printOutputError(line.append("\n"));
-//		line = in.readLine();
-//	} 
+  mainWindow->printOutputError(readAllStandardError());
 }
 
 void Uploader::uploadStarted( )
 {
-	uploaderProgress->show();
+  QFileInfo fi(currentFile);
+  uploaderProgress->setLabelText(QString("Uploading %1...").arg(fi.fileName()));
+  uploaderProgress->show();
 }
 
 void Uploader::uploadFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
-	(void)exitCode;
-	(void)exitStatus;
-	uploaderProgress->hide();
-	uploaderProgress->setValue(0);
+  (void)exitCode;
+  (void)exitStatus;
+  uploaderProgress->hide();
+  uploaderProgress->setValue(0);
 }
+
+void Uploader::onError(QProcess::ProcessError error)
+{
+  QString msg;
+  switch(error)
+  {
+    case QProcess::FailedToStart:
+      msg = QString("'%1' failed to start.  It's either missing, or doesn't have the correct permissions").arg(uploaderName);
+      break;
+    case QProcess::Crashed:
+      msg = QString("'%1' was canceled or crashed.").arg(uploaderName);
+      break;
+    case QProcess::Timedout:
+      msg = QString("'%1' timed out.").arg(uploaderName);
+      break;
+    case QProcess::WriteError:
+      msg = QString("'%1' reported a write error.").arg(uploaderName);
+      break;
+    case QProcess::ReadError:
+      msg = QString("'%1' reported a read error.").arg(uploaderName);
+      break;
+    case QProcess::UnknownError:
+      msg = QString("'%1' - unknown error type.").arg(uploaderName);
+      break;
+  }
+  mainWindow->printOutputError("Error - uploader: " + msg);
+}
+
+void Uploader::onProgressDialogFinished(int result)
+{
+  if(result == QDialog::Rejected)
+    kill();
+}
+
+
+
+
