@@ -27,24 +27,24 @@ class MainWindow;
 
 class Uploader : public QProcess
 {
-	Q_OBJECT
-	public:
-		Uploader(MainWindow *mainWindow);
-		bool upload(QString boardProfileName, QString filename);
-		
-	private:
-		MainWindow *mainWindow;
-		QProgressDialog *uploaderProgress;
-		QString currentFile;
-		QString uploaderName;
-		
-	private slots:
-		void readOutput();
-		void readError();
-		void uploadStarted();
-		void uploadFinished(int exitCode, QProcess::ExitStatus exitStatus);
-		void onError(QProcess::ProcessError error);
-		void onProgressDialogFinished(int result);
+  Q_OBJECT
+  public:
+    Uploader(MainWindow *mainWindow);
+    bool upload(QString boardProfileName, QString filename);
+
+  private:
+    MainWindow *mainWindow;
+    QProgressDialog *uploaderProgress;
+    QString currentFile;
+    QString uploaderName;
+
+  private slots:
+    void filterOutput();
+    void filterError();
+    void uploadStarted();
+    void uploadFinished(int exitCode, QProcess::ExitStatus exitStatus);
+    void onError(QProcess::ProcessError error);
+    void onProgressDialogFinished(int result);
 };
 
 #endif // UPLOADER_H

@@ -21,11 +21,11 @@
 #include <QTextStream>
 #include "Uploader.h"
 
-/**
-	Uploader handles uploading a binary image to a board.  It reads the board profile for the 
-	currently selected board to determine which uploader to use.  Then it fires up a QProcess
-	and runs the uploader with flags determined by settings in Preferences.  It prints output
-	from the upload process back to the console output in the MainWindow.
+/*
+  Uploader handles uploading a binary image to a board.  It reads the board profile for the 
+  currently selected board to determine which uploader to use.  Then it fires up a QProcess
+  and runs the uploader with flags determined by settings in Preferences.  It prints output
+  from the upload process back to the console output in the MainWindow.
 */
 Uploader::Uploader(MainWindow *mainWindow) : QProcess( )
 {
@@ -33,13 +33,18 @@ Uploader::Uploader(MainWindow *mainWindow) : QProcess( )
   uploaderProgress = new QProgressDialog("Uploading...", "Cancel", 0, 100);
   connect(uploaderProgress, SIGNAL(canceled()), this, SLOT(kill()));
   connect(uploaderProgress, SIGNAL(finished(int)), this, SLOT(onProgressDialogFinished(int)));
-  connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
-  connect(this, SIGNAL(readyReadStandardError()), this, SLOT(readError()));
+  connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(filterOutput()));
+  connect(this, SIGNAL(readyReadStandardError()), this, SLOT(filterError()));
   connect(this, SIGNAL(started()), this, SLOT(uploadStarted()));
   connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(uploadFinished(int, QProcess::ExitStatus)));
   connect(this, SIGNAL(error(QProcess::ProcessError)), this, SLOT(onError(QProcess::ProcessError)));
 }
 
+/*
+  Upload a file to a board based on the given boardProfile.
+  Extract the name of the uploader to use, then fire it off in a 
+  separate process with the appropriate arguments.
+*/
 bool Uploader::upload(QString boardProfileName, QString filename)
 {
   bool retval = false;
@@ -68,17 +73,41 @@ bool Uploader::upload(QString boardProfileName, QString filename)
   return retval;
 }
 
-void Uploader::readOutput( )
+/*
+  Filter the output from the uploader to make it more
+  meaningful/useful for the user.  Check for upload progress
+  And pass it to the upload dialog.
+*/
+void Uploader::filterOutput( )
 {
-  qDebug("sam7: %s", qPrintable(QString(readAllStandardOutput())));
-	//mainWindow->printOutput(readAllStandardOutput());
+  bool matched = false;
+  QString output(readAllStandardOutput());
+  QRegExp re("upload progress: (\\d+)%");
+  int pos = 0;
+  while((pos = re.indexIn(output, pos)) != -1)
+  {
+    int progress = re.cap(1).toInt();
+    uploaderProgress->setValue(progress);
+	pos += re.matchedLength();
+	matched = true;
+  }
+  if(!matched)
+    mainWindow->printOutput(output);
 }
 
-void Uploader::readError( )
+/*
+  Filter the error output from the uploader to make it
+  more useful to the user.
+*/
+void Uploader::filterError( )
 {
   //mainWindow->printOutputError(readAllStandardError());
 }
 
+/*
+  The upload has started.
+  Pop up the upload progress dialog.
+*/
 void Uploader::uploadStarted( )
 {
   QFileInfo fi(currentFile);
@@ -86,6 +115,10 @@ void Uploader::uploadStarted( )
   uploaderProgress->show();
 }
 
+/*
+  The upload process has finished.
+  Hide the progress dialog and reset its value.
+*/
 void Uploader::uploadFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
   (void)exitCode;
@@ -94,6 +127,10 @@ void Uploader::uploadFinished(int exitCode, QProcess::ExitStatus exitStatus)
   uploaderProgress->setValue(0);
 }
 
+/*
+  The uploader has reported an error.
+  Check what kind it was and print out a message to the user.
+*/
 void Uploader::onError(QProcess::ProcessError error)
 {
   QString msg;
@@ -121,6 +158,10 @@ void Uploader::onError(QProcess::ProcessError error)
   mainWindow->printOutputError("Error - " + msg);
 }
 
+/*
+  The progress dialog was clicked out of, instead of the the cancel button being hit.
+  Cancel it just the same.
+*/
 void Uploader::onProgressDialogFinished(int result)
 {
   if(result == QDialog::Rejected)
