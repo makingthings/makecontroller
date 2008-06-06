@@ -30,7 +30,7 @@
 Uploader::Uploader(MainWindow *mainWindow) : QProcess( )
 {
   this->mainWindow = mainWindow;
-  uploaderProgress = new QProgressDialog("Uploading...", "Cancel", 0, 100);
+  uploaderProgress = new QProgressDialog( );
   connect(uploaderProgress, SIGNAL(canceled()), this, SLOT(kill()));
   connect(uploaderProgress, SIGNAL(finished(int)), this, SLOT(onProgressDialogFinished(int)));
   connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(filterOutput()));
@@ -123,8 +123,7 @@ void Uploader::uploadFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
   (void)exitCode;
   (void)exitStatus;
-  uploaderProgress->hide();
-  uploaderProgress->setValue(0);
+  uploaderProgress->reset();
 }
 
 /*
