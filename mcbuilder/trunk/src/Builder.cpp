@@ -83,19 +83,6 @@ void Builder::ensureBuildDirExists(QString projPath)
 }
 
 /*
-  Run the program that determines the size of a successfully created binary.
-*/
-void Builder::sizer()
-{
-  buildStep = SIZER;
-  setWorkingDirectory(currentProjectPath + "/build");
-  QDir dir(currentProjectPath);
-  QStringList args = QStringList() << dir.dirName().toLower() + ".elf";
-  currentProcess = "arm-elf-size";
-  start(Preferences::toolsPath() + "/arm-elf-size", args);
-}
-
-/*
 	This handles the end of each step of the build process.  Maintain which state we're
 	in and fire off the next process as appropriate.
 */
@@ -110,18 +97,32 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
   
   switch(buildStep)
   {
-    case BUILD:
-      sizer();
+    case BUILD: // the build has just completed.  check the size of the .bin
+    {
+      QDir dir(currentProjectPath);
+      QString projectName = dir.dirName().remove(" ").toLower();
+      dir.cd("build");
+      dir.setNameFilters(QStringList() << "*.bin");
+      QFileInfoList bins = dir.entryInfoList();
+      if(bins.count())
+      {
+        int filesize = bins.first().size();
+        if(filesize <= 256000)
+        {
+          mainWindow->printOutput(QString("%1.bin is %2 out of a possible 256000 bytes.").arg(projectName).arg(filesize));
+          return mainWindow->onBuildComplete(true);
+        }
+        else
+          mainWindow->printOutputError(QString("Error - %1.bin is too big!  %2 out of a possible 256000 bytes.").arg(projectName).arg(filesize));
+      }
+      mainWindow->onBuildComplete(false);
       break;
+    }
     case CLEAN:
       mainWindow->onCleanComplete();
-      resetBuildProcess( );
-      break;
-    case SIZER:
-      mainWindow->onBuildComplete(true);
-      resetBuildProcess( );
       break;
   }
+  resetBuildProcess();
 }
 
 /*
@@ -469,30 +470,6 @@ void Builder::filterOutput(QString output)
     }
     case CLEAN:
       break;
-    case SIZER:
-    {
-      QStringList vals = output.split(" ", QString::SkipEmptyParts);
-      if(vals.count() == 10) // we expect 10 values back from arm-elf-size
-      {
-        bool ok = false;
-        int total_size = vals.at(8).toInt(&ok);
-        if(ok)
-        {
-          QDir dir(currentProjectPath);
-          if(total_size <= 256000)
-          {
-            mainWindow->printOutput(QString("%1.bin is %2 out of a possible 256000 bytes.")
-                                    .arg(dir.dirName().toLower()).arg(total_size));
-          }
-          else
-          {
-            mainWindow->printOutputError(QString("Error - %1.bin is too big!  %2 out of a possible 256000 bytes.")
-                                    .arg(dir.dirName().toLower()).arg(total_size));
-          }
-        }
-      }
-      break;
-    }
   }
 }
 
@@ -568,9 +545,6 @@ void Builder::filterErrorOutput(QString errOutput)
       }
       break;
     case CLEAN:
-      mainWindow->printOutputError(errOutput);
-      break;
-    case SIZER:
       mainWindow->printOutputError(errOutput);
       break;
   }

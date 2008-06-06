@@ -115,8 +115,8 @@ void Preferences::loadAndShow( )
 {
   QSettings settings("MakingThings", "mcbuilder");
   workspaceEdit->setText(QDir::toNativeSeparators(workspace()));
-  makePathEdit->setText(QDir::toNativeSeparators(toolsPath()));
-  toolsPathEdit->setText(QDir::toNativeSeparators(makePath()));
+    makePathEdit->setText(QDir::toNativeSeparators(makePath()));
+  toolsPathEdit->setText(QDir::toNativeSeparators(toolsPath()));
   sam7PathEdit->setText(QDir::toNativeSeparators(sam7Path()));
   
   Qt::CheckState state = (settings.value("checkForUpdates", true).toBool()) ? Qt::Checked : Qt::Unchecked;
