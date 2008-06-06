@@ -47,7 +47,7 @@ class Builder : public QProcess
     ProjectInfo *projInfo;
     QString errMsg, outputMsg;
     QString currentProjectPath;
-		enum BuildStep { BUILD, CLEAN, SIZER };
+		enum BuildStep { BUILD, CLEAN };
 		BuildStep buildStep;
     int maxsize;
     QString currentProcess;
@@ -57,7 +57,7 @@ class Builder : public QProcess
     bool createConfigFile(QString projectPath);
     void filterOutput(QString output);
     void filterErrorOutput(QString errOutput);
-    void sizer();
+    //void sizer();
     void ensureBuildDirExists(QString projPath);
     bool parseVersionNumber( int *maj, int *min, int *bld );
     void loadDependencies(QString project);
