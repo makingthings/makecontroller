@@ -29,11 +29,11 @@
 */
 Builder::Builder(MainWindow *mainWindow, ProjectInfo *projInfo) : QProcess( 0 )
 {
-	this->mainWindow = mainWindow;
+  this->mainWindow = mainWindow;
   this->projInfo = projInfo;
-	connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
-	connect(this, SIGNAL(readyReadStandardError()), this, SLOT(readError()));
-	connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(nextStep(int, QProcess::ExitStatus)));
+  connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
+  connect(this, SIGNAL(readyReadStandardError()), this, SLOT(readError()));
+  connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(nextStep(int, QProcess::ExitStatus)));
   connect(this, SIGNAL(error(QProcess::ProcessError)), this, SLOT(onBuildError(QProcess::ProcessError)));
 }
 
@@ -207,7 +207,7 @@ bool Builder::createMakefile(QString projectPath)
           tofile << endl;
 
           tofile << "INCLUDEDIRS = \\" << endl;
-          tofile << "  -I" << projectDir.path() << " \\" << endl; // always include the project directory
+          tofile << "  -I" << filteredPath(projectDir.path()) << " \\" << endl; // always include the project directory
           
           // add in the directories for the required libraries
           QDir libdir(QDir::current().filePath("libraries"));
@@ -658,7 +658,7 @@ QString Builder::filteredPath(QString path)
     QDir dir = QDir::current().filePath("resources/cores/makecontroller");
     filtered = dir.filePath(path);
   }
-	return QDir::toNativeSeparators(filtered);
+  return QDir::toNativeSeparators(filtered);
 }
 
 

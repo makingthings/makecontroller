@@ -59,11 +59,13 @@ QString Preferences::workspace( )
 	QSettings settings("MakingThings", "mcbuilder");
 	#ifdef Q_WS_MAC
 	QString workspace = QDir::home().path() + "/Documents/mcbuilder";
-	#elif #defined Q_WS_WIN
-	// would be nice to use home dir, but can't have spaces in file path
-	QString workspace = QDir::toNativeSeparators("C:/mcbuilder");
 	#else
-	QString workspace = QDir::home().path() + "/mcbuilder";
+      #ifdef Q_WS_WIN
+	  // would be nice to use home dir, but can't have spaces in file path
+	  QString workspace = QDir::toNativeSeparators("C:/mcbuilder");
+	  #else
+	  QString workspace = QDir::home().path() + "/mcbuilder";
+      #endif // Q_WS_WIN
 	#endif // Q_WS_MAC
 	workspace = settings.value("workspace", workspace).toString();
 	// always make sure the workspace directory exists
@@ -111,18 +113,18 @@ QString Preferences::sam7Path( ) // static
 */
 void Preferences::loadAndShow( )
 {
-	QSettings settings("MakingThings", "mcbuilder");
-  workspaceEdit->setText(workspace());
-  makePathEdit->setText(toolsPath());
-  toolsPathEdit->setText(makePath());
-  sam7PathEdit->setText(sam7Path());
+  QSettings settings("MakingThings", "mcbuilder");
+  workspaceEdit->setText(QDir::toNativeSeparators(workspace()));
+  makePathEdit->setText(QDir::toNativeSeparators(toolsPath()));
+  toolsPathEdit->setText(QDir::toNativeSeparators(makePath()));
+  sam7PathEdit->setText(QDir::toNativeSeparators(sam7Path()));
   
   Qt::CheckState state = (settings.value("checkForUpdates", true).toBool()) ? Qt::Checked : Qt::Unchecked;
   updaterBox->setCheckState(state);
   
   fontBox->setText(QString("%1, %2pt").arg(currentFont.family()).arg(currentFont.pointSize()));
-	tabWidth->setText(QString::number(settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt()));
-	show( );
+  tabWidth->setText(QString::number(settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt()));
+  show( );
 }
 
 /*
