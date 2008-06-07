@@ -22,8 +22,6 @@
     <file type="thumb">controller/startup/extras.c</file>
     <file type="thumb">controller/freertos/portable/MemMang/heap_2.c</file>
     <file type="thumb">controller/makingthings/main.c</file>
-    <file type="thumb">controller/makingthings/webserver.c</file>
-    <file type="thumb">controller/makingthings/webclient.c</file>
     <file type="thumb">controller/makingthings/eeprom.c</file>
     <file type="thumb">controller/makingthings/analogin.c</file>
     <file type="thumb">controller/makingthings/serial.c</file>
@@ -34,7 +32,6 @@
     <file type="thumb">controller/makingthings/usb.c</file>
     <file type="thumb">controller/makingthings/network.c</file>
     <file type="thumb">controller/makingthings/system.c</file>
-    <file type="thumb">controller/makingthings/xbee.c</file>
     <file type="thumb">controller/makingthings/io.c</file>
     <file type="thumb">controller/makingthings/led.c</file>
     <file type="thumb">controller/makingthings/timer.c</file>
