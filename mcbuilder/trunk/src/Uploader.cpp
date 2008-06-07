@@ -101,6 +101,14 @@ void Uploader::filterOutput( )
 */
 void Uploader::filterError( )
 {
+  QString err(readAllStandardError());
+  if(err.startsWith("can't find boot agent"))
+  {
+    mainWindow->printOutputError("Error - couldn't find an unprogrammed board to upload to.");
+    mainWindow->printOutputError("  Make sure you've erased and unplugged/replugged your board.");
+  }
+  else
+    qDebug("upload err: %s", qPrintable(err));
   //mainWindow->printOutputError(readAllStandardError());
 }
 
