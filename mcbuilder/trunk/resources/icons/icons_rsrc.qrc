@@ -10,5 +10,6 @@
     <file>success.png</file>
     <file>upload.tiff</file>
     <file>warning.png</file>
+    <file>build.tiff</file>
   </qresource>
 </RCC>

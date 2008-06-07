@@ -269,10 +269,8 @@
    </attribute>
    <addaction name="actionBuild" />
    <addaction name="actionStop" />
-   <addaction name="actionClean" />
-   <addaction name="actionProperties" />
    <addaction name="actionUpload" />
-   <addaction name="actionUsb_Monitor" />
+   <addaction name="actionProperties" />
   </widget>
   <action name="actionNew" >
    <property name="text" >
@@ -354,6 +352,10 @@
    </property>
   </action>
   <action name="actionBuild" >
+   <property name="icon" >
+    <iconset resource="../resources/icons/icons_rsrc.qrc" >
+     <normaloff>:/icons/build.tiff</normaloff>:/icons/build.tiff</iconset>
+   </property>
    <property name="text" >
     <string>Build</string>
    </property>
@@ -440,7 +442,7 @@
      <normaloff>:/icons/monitor.tiff</normaloff>:/icons/monitor.tiff</iconset>
    </property>
    <property name="text" >
-    <string>USB Monitor...</string>
+    <string>USB Console...</string>
    </property>
   </action>
   <action name="actionFind" >
