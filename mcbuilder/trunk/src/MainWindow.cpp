@@ -524,7 +524,6 @@ void MainWindow::openProject(QString projectPath)
     setWindowTitle( projectName + "[*] - mcbuilder");
     updateRecentProjects(projectName);
     projInfo->load();
-    qDebug("current index after: %d", currentFileDropDown->currentIndex());
 	}
 	else
       return statusBar()->showMessage( QString("Couldn't find main file for %1.").arg(projectName), 3500 );
