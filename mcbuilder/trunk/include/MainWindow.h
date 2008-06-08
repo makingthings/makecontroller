@@ -55,6 +55,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
     void replaceAll(QString find, QString replace, QTextDocument::FindFlags flags);
     void replace(QString rep);
     void onBuildComplete(bool success);
+    void onUploadComplete(bool success);
     void onCleanComplete();
     void buildingNow(QString file);
     void highlightLine(QString filepath, int linenumber, ConsoleItem::Type type);

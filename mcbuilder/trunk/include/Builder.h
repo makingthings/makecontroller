@@ -57,7 +57,6 @@ class Builder : public QProcess
     bool createConfigFile(QString projectPath);
     void filterOutput(QString output);
     void filterErrorOutput(QString errOutput);
-    //void sizer();
     void ensureBuildDirExists(QString projPath);
     bool parseVersionNumber( int *maj, int *min, int *bld );
     void loadDependencies(QString project);

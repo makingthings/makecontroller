@@ -61,8 +61,9 @@ bool Uploader::upload(QString boardProfileName, QString filename)
     QStringList uploaderArgs;
     uploaderArgs << "-e" << "set_clock";
     uploaderArgs << "-e" << "unlock_regions";
-    uploaderArgs << "-e" << QString("flash %1").arg(currentFile);
+    uploaderArgs << "-e" << QString("flash -show_progress %1").arg(currentFile);
     uploaderArgs << "-e" << "boot_from_flash";
+    uploaderArgs << "-e" << "reset";
     QDir sam7dir(Preferences::sam7Path());
     start(sam7dir.filePath(uploaderName), uploaderArgs);
     retval = true;
@@ -80,19 +81,16 @@ bool Uploader::upload(QString boardProfileName, QString filename)
 */
 void Uploader::filterOutput( )
 {
-  bool matched = false;
   QString output(readAllStandardOutput());
   QRegExp re("upload progress: (\\d+)%");
   int pos = 0;
   while((pos = re.indexIn(output, pos)) != -1)
   {
     int progress = re.cap(1).toInt();
-    uploaderProgress->setValue(progress);
-	pos += re.matchedLength();
-	matched = true;
+    if(progress != uploaderProgress->value())
+      uploaderProgress->setValue(progress);
+	  pos += re.matchedLength();
   }
-  if(!matched)
-    mainWindow->printOutput(output);
 }
 
 /*
@@ -129,8 +127,10 @@ void Uploader::uploadStarted( )
 */
 void Uploader::uploadFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
-  (void)exitCode;
-  (void)exitStatus;
+  if( exitCode == 0 && exitStatus == QProcess::NormalExit)
+    mainWindow->onUploadComplete(true);
+  else
+    mainWindow->onUploadComplete(false);
   uploaderProgress->reset();
 }
 

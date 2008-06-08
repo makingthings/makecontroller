@@ -733,6 +733,22 @@ void MainWindow::onBuildComplete(bool success)
   actionStop->setEnabled(false);
 }
 
+void MainWindow::onUploadComplete(bool success)
+{
+  if(success)
+  {
+    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), "Upload succeeded.", outputConsole));
+    outputConsole->scrollToBottom();
+    statusBar()->showMessage("Upload succeeded.");
+  }
+  else
+  {
+    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), "Upload failed.", outputConsole));
+    outputConsole->scrollToBottom();
+    statusBar()->showMessage("Upload failed.");
+  }
+}
+
 void MainWindow::onCleanComplete()
 {
   outputConsole->clear();
