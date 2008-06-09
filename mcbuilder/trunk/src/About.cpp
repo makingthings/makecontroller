@@ -25,12 +25,13 @@
 About::About( ) : QDialog( )
 {
 	setupUi(this);
-  //textEdit->setOpenExternalLinks(true);
+  verticalLayout->addWidget(&body);
+  body.setOpenExternalLinks(true);
   versionLabel->setText(QString("<font size=4>mcbuilder</font><br>Version %1").arg(MCBUILDER_VERSION));
-  textEdit->append(QString("mcbuilder by <a href=\"http://www.apache.org/licenses/LICENSE-2.0.html\">MakingThings</a>, %1<br>").arg(QDate::currentDate().toString("yyyy")));
-  textEdit->append("Thanks to Erik Gilling for the use of <a href=\"http://www.apache.org/licenses/LICENSE-2.0.html\">sam7utils</a><br>");
-  textEdit->append("Thanks to Michael Fischer for the use of <a href=\"http://www.apache.org/licenses/LICENSE-2.0.html\">Yagarto</a><br>");
-  textEdit->append("Icons by Matt Ball, etc.\n");
+  body.append(QString("By <a href=\"http://www.makingthings.com\">MakingThings</a>, %1.<br>").arg(QDate::currentDate().toString("yyyy")));
+  body.append("Thanks to Erik Gilling for <a href=\"http://oss.tekno.us/sam7utils\">sam7utils</a>.<br>");
+  body.append("Thanks to Michael Fischer for <a href=\"http://www.yagarto.de\">Yagarto</a>.<br>");
+  body.append("Toolbar icons by <a href=\"http://www.mattballdesign.com\">Matt Ball</a>.");
 }
 
 

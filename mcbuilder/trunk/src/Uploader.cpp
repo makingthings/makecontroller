@@ -55,9 +55,9 @@ bool Uploader::upload(QString boardProfileName, QString filename)
   currentFile = QDir::toNativeSeparators(filename);
   if(doc.setContent(&file))
   {
-	QDomNodeList nodes = doc.elementsByTagName("uploader");
+	  QDomNodeList nodes = doc.elementsByTagName("uploader");
     if(nodes.count())
-      uploaderName = QDir::toNativeSeparators(nodes.at(0).toElement().text());
+      uploaderName = nodes.at(0).toElement().text();
     QStringList uploaderArgs;
     uploaderArgs << "-e" << "set_clock";
     uploaderArgs << "-e" << "unlock_regions";

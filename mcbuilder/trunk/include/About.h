@@ -20,6 +20,7 @@
 #define ABOUT_H
 
 #include <QDialog>
+#include <QTextBrowser>
 #include "ui_about.h"
 
 class About : public QDialog, private Ui::AboutUi
@@ -27,6 +28,8 @@ class About : public QDialog, private Ui::AboutUi
 	Q_OBJECT
 public:
   About();
+private:
+  QTextBrowser body;
 };
 
 #endif // ABOUT_H
