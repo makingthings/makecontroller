@@ -8,8 +8,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>273</width>
-    <height>304</height>
+    <width>296</width>
+    <height>298</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -33,13 +33,6 @@
      </property>
      <property name="alignment" >
       <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QTextEdit" name="textEdit" >
-     <property name="readOnly" >
-      <bool>true</bool>
      </property>
     </widget>
    </item>

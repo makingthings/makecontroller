@@ -19,9 +19,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>66</y>
+     <y>84</y>
      <width>806</width>
-     <height>573</height>
+     <height>555</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" >
@@ -249,7 +249,7 @@
      <x>0</x>
      <y>22</y>
      <width>806</width>
-     <height>44</height>
+     <height>62</height>
     </rect>
    </property>
    <property name="windowTitle" >
@@ -257,6 +257,9 @@
    </property>
    <property name="movable" >
     <bool>false</bool>
+   </property>
+   <property name="toolButtonStyle" >
+    <enum>Qt::ToolButtonTextUnderIcon</enum>
    </property>
    <property name="floatable" >
     <bool>false</bool>
@@ -333,7 +336,7 @@
      <normaloff>:/icons/info.png</normaloff>:/icons/info.png</iconset>
    </property>
    <property name="text" >
-    <string>Project Info</string>
+    <string>Info</string>
    </property>
    <property name="shortcut" >
     <string>Ctrl+I</string>
@@ -345,7 +348,7 @@
      <normaloff>:/icons/upload.tiff</normaloff>:/icons/upload.tiff</iconset>
    </property>
    <property name="text" >
-    <string>Upload Project to Board</string>
+    <string>Upload</string>
    </property>
    <property name="shortcut" >
     <string>Ctrl+U</string>
