@@ -13,6 +13,14 @@
    <string>mchelper</string>
   </property>
   <widget class="QWidget" name="centralwidget" >
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>22</y>
+     <width>801</width>
+     <height>521</height>
+    </rect>
+   </property>
    <layout class="QGridLayout" >
     <item row="0" column="0" >
      <widget class="QSplitter" name="splitter" >
@@ -44,7 +52,10 @@
         <item row="0" column="0" >
          <layout class="QVBoxLayout" >
           <item>
-           <widget class="QTextEdit" name="outputConsole" >
+           <widget class="QPlainTextEdit" name="outputConsole" >
+            <property name="undoRedoEnabled" >
+             <bool>false</bool>
+            </property>
             <property name="readOnly" >
              <bool>true</bool>
             </property>
@@ -128,7 +139,16 @@
    <addaction name="menuDevice" />
    <addaction name="menuHelp" />
   </widget>
-  <widget class="QStatusBar" name="statusbar" />
+  <widget class="QStatusBar" name="statusbar" >
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>543</y>
+     <width>801</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
   <action name="actionPreferences" >
    <property name="text" >
     <string>Preferences...</string>
