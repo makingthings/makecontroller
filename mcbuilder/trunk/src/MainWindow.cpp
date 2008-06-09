@@ -254,7 +254,7 @@ void MainWindow::setEditorFont(QString family, int pointSize)
 
 void MainWindow::setTabWidth( int width )
 {
-	QFontMetrics fm(editor->currentFont());
+	QFontMetrics fm(editor->font());
 	editor->setTabStopWidth( fm.width(" ") * width );
 }
 

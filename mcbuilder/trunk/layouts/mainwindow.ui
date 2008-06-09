@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>806</width>
-    <height>661</height>
+    <width>681</width>
+    <height>647</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -20,11 +20,11 @@
     <rect>
      <x>0</x>
      <y>84</y>
-     <width>806</width>
-     <height>555</height>
+     <width>681</width>
+     <height>541</height>
     </rect>
    </property>
-   <layout class="QVBoxLayout" >
+   <layout class="QVBoxLayout" name="verticalLayout" >
     <item>
      <widget class="QSplitter" name="splitter" >
       <property name="orientation" >
@@ -33,11 +33,7 @@
       <property name="childrenCollapsible" >
        <bool>false</bool>
       </property>
-      <widget class="QTextEdit" name="editor" >
-       <property name="readOnly" >
-        <bool>false</bool>
-       </property>
-      </widget>
+      <widget class="QPlainTextEdit" name="editor" />
       <widget class="QListWidget" name="outputConsole" >
        <property name="palette" >
         <palette>
@@ -140,7 +136,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>806</width>
+     <width>681</width>
      <height>22</height>
     </rect>
    </property>
@@ -237,8 +233,8 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>639</y>
-     <width>806</width>
+     <y>625</y>
+     <width>681</width>
      <height>22</height>
     </rect>
    </property>
@@ -248,7 +244,7 @@
     <rect>
      <x>0</x>
      <y>22</y>
-     <width>806</width>
+     <width>681</width>
      <height>62</height>
     </rect>
    </property>
