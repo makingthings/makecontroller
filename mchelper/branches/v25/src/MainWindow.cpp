@@ -70,12 +70,12 @@ void MainWindow::readSettings()
 		splitter->setSizes( splitterSizes );
 	}
   
-  setMaxMessages(settings.value("max_messages").toInt( ));
+  setMaxMessages(settings.value("max_messages", DEFAULT_ACTIVITY_MESSAGES).toInt( ));
 }
 
 void MainWindow::setMaxMessages(int msgs)
 {
-  outputConsole->document()->setMaximumBlockCount(msgs);
+  outputConsole->setMaximumBlockCount(msgs);
 }
 
 void MainWindow::writeSettings()
@@ -285,10 +285,11 @@ void MainWindow::message(QStringList msgs, MsgType::Type type, QString from)
   // because the format will be the same for all lines added via insertPlainText()
   // we need to add a blank line to set our format, then insert the message
   outputConsole->moveCursor(QTextCursor::End);
-  //if(!outputConsole->readAll().isEmpty())
-  outputConsole->insertPlainText("\n");
+  if(outputConsole->blockCount())
+    outputConsole->insertPlainText("\n");
   outputConsole->textCursor().setBlockFormat(format);
   outputConsole->insertPlainText(post.join("\n"));
+  outputConsole->ensureCursorVisible();
 }
 
 void MainWindow::message(QString msg, MsgType::Type type, QString from)
@@ -308,9 +309,10 @@ void MainWindow::message(QString msg, MsgType::Type type, QString from)
     
     msg.prepend(QTime::currentTime().toString() + "    "); // todo - maybe make the time text gray
     msg += QString(" %1 %2").arg(tofrom).arg(from);
-    outputConsole->append(msg); // insert the message
+    outputConsole->appendPlainText(msg); // insert the message
     outputConsole->moveCursor(QTextCursor::End); // move the cursor to the end
     outputConsole->textCursor().setBlockFormat(format); // so that when we set the color, it colors the right block
+    outputConsole->ensureCursorVisible();
   }
 }
 
