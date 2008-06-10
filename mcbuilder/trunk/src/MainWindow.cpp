@@ -811,10 +811,10 @@ void MainWindow::onUpload( )
 */
 void MainWindow::onUploadFile( )
 {
-	QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
+  QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
                                                  QDir::homePath(), tr("Binaries (*.bin)"));
-	if(!fileName.isNull())
-		uploadFile(fileName);
+  if(!fileName.isNull())
+    uploadFile(fileName);
 }
 
 /*
@@ -823,20 +823,20 @@ void MainWindow::onUploadFile( )
 */
 void MainWindow::uploadFile(QString filename)
 {
-	// get the board type so the uploader can check which upload mechanism to use
+  // get the board type so the uploader can check which upload mechanism to use
   QFileInfo fi(filename);
   if(!fi.exists())
     return statusBar()->showMessage( QString("Couldn't find %1.").arg(fi.fileName()), 3500 );
-	QAction *board = boardTypeGroup->checkedAction( );
-	if(board)
-	{
-		if(uploader->state() == QProcess::NotRunning)
-			uploader->upload(board->data().toString(), filename);
-		else
-			return statusBar()->showMessage( "Uploader is currently busy...give it a second, then try again.", 3500 );
-	}
-	else
-		return statusBar()->showMessage( "Please select a board type from the Project menu first.", 3500 );
+  QAction *board = boardTypeGroup->checkedAction( );
+  if(board)
+  {
+    if(uploader->state() == QProcess::NotRunning)
+      uploader->upload(board->data().toString(), filename);
+    else
+      return statusBar()->showMessage( "Uploader is currently busy...give it a second, then try again.", 3500 );
+  }
+  else
+    return statusBar()->showMessage( "Please select a board type from the Project menu first.", 3500 );
 }
 
 // read the available board files and load them into the UI
