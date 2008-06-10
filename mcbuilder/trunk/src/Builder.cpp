@@ -43,14 +43,18 @@ Builder::Builder(MainWindow *mainWindow, ProjectInfo *projInfo) : QProcess( 0 )
 void Builder::build(QString projectName)
 {
   currentProjectPath = projectName;
+  ensureBuildDirExists(currentProjectPath);  // make sure we have a build dir
   setWorkingDirectory(QDir(currentProjectPath).filePath("build"));
-  ensureBuildDirExists(projectName);  // make sure we have a build dir
-  loadDependencies(projectName);      // this loads up the list of libraries this project depends on
-  createMakefile(projectName);        // create a Makefile for this project, given the dependencies
-  createConfigFile(projectName);      // create a config file based on the Properties for this project
+  loadDependencies(currentProjectPath);      // this loads up the list of libraries this project depends on
+  createMakefile(currentProjectPath);        // create a Makefile for this project, given the dependencies
+  createConfigFile(currentProjectPath);      // create a config file based on the Properties for this project
   buildStep = BUILD;
   currentProcess = "make";
-  start(QDir(Preferences::makePath()).filePath("make"));
+  setEnvironment(QProcess::systemEnvironment());
+  QString makePath = Preferences::makePath();
+  if(!makePath.isEmpty() && !makePath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
+    makePath += "/";
+  start(makePath + "make.exe");
 }
 
 /*
@@ -58,13 +62,17 @@ void Builder::build(QString projectName)
 */
 void Builder::clean(QString projectName)
 {
-  ensureBuildDirExists(projectName);
+  currentProjectPath = projectName;
+  ensureBuildDirExists(currentProjectPath);
   setWorkingDirectory(QDir(currentProjectPath).filePath("build"));
   buildStep = CLEAN;
-  currentProjectPath = projectName;
   QStringList args = QStringList() << "clean";
   currentProcess = "make clean";
-  start(QDir(Preferences::makePath()).filePath("make"), args);
+  setEnvironment(QProcess::systemEnvironment());
+  QString makePath = Preferences::makePath();
+  if(!makePath.isEmpty() && !makePath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
+    makePath += "/";
+  start(QDir::toNativeSeparators(makePath + "make"), args);
 }
 
 void Builder::stop()
@@ -230,7 +238,7 @@ bool Builder::createMakefile(QString projectPath)
           tofile << "CC=" << QDir::toNativeSeparators(toolsPath + "arm-elf-gcc") << endl;
           tofile << "OBJCOPY=" << QDir::toNativeSeparators(toolsPath + "arm-elf-objcopy") << endl;
           tofile << "ARCH=" << QDir::toNativeSeparators(toolsPath + "arm-elf-ar") << endl;
-          tofile << "CRT0=" + filteredPath("startup/boot.s") << endl;
+          tofile << "CRT0=" + filteredPath("resources/cores/makecontroller/startup/boot.s") << endl;
           QString debug = (projInfo->debug()) ? "-g" : "";
           tofile << "DEBUG=" + debug << endl;
           QString optLevel = projInfo->optLevel();
@@ -245,7 +253,7 @@ bool Builder::createMakefile(QString projectPath)
           else
             optLevel = "-O0";
           tofile << "OPTIM=" + optLevel << endl;
-          tofile << "LDSCRIPT=" + filteredPath("startup/atmel-rom.ld") << endl << endl;
+          tofile << "LDSCRIPT=" + filteredPath("resources/cores/makecontroller/startup/atmel-rom.ld") << endl << endl;
 
           // the rest is always the same...
           tofile << "CFLAGS= \\" << endl;
@@ -457,7 +465,7 @@ void Builder::filterOutput(QString output)
       outputMsg += output;
       if(outputMsg.endsWith("\n")) // we have a complete message to deal with
       {
-        //printf("msg: %s\n", qPrintable(outputMsg));
+        qDebug("msg: %s\n", qPrintable(outputMsg));
         QStringList sl = outputMsg.split(" ");
         if(sl.first().endsWith("arm-elf-gcc") && sl.at(1) == "-c")
         {
@@ -620,7 +628,7 @@ void Builder::getLibrarySources(QString libdir, QStringList *thmb, QStringList *
 /*
   Filter a path for inclusion in a Makefile.
   Make sure the directory separators are system appropriate.
-  If a file path is not absolute, assume it's in resources/cores/makecontroller
+  If a file path is not absolute, assume it's relative to our current directory
 */
 QString Builder::filteredPath(QString path)
 {
@@ -628,7 +636,7 @@ QString Builder::filteredPath(QString path)
 	// but not quite sure how to deal at the moment...
   QString filtered = path;
   if(!QDir::isAbsolutePath(path))
-	filtered = QDir::current().filePath("resources/cores/makecontroller/" + path);
+	filtered = QDir::current().filePath(path);
   return QDir::toNativeSeparators(filtered);
 }
 
