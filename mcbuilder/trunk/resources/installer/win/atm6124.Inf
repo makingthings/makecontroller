@@ -1,0 +1,73 @@
+; Installation inf for the ATMEL AT91xxxxx Test Board
+;
+; (c) Copyright 2004 ATMEL
+;
+
+[Version]
+Signature="$CHICAGO$"
+Class=USB
+ClassGUID={36FC9E60-C465-11CF-8056-444553540000}
+provider=%ATMEL%
+DriverVer=21/02/2005
+
+[SourceDisksNames]
+1="atm6124 Installation Disk",,,
+
+[SourceDisksFiles]
+atm6124.sys = 1
+atm6124.inf = 1
+
+[Manufacturer]
+%ATMEL%=ATMEL
+
+[ATMEL]
+%USB\VID_045E&PID_930A.DeviceDesc%=atm6124.Dev, USB\VID_03EB&PID_6124
+
+;[PreCopySection]
+;HKR,,NoSetupUI,,1
+
+[DestinationDirs]
+atm6124.Files.Ext = 10,System32\Drivers
+atm6124.Files.Inf = 10,INF
+
+[atm6124.Dev]
+;CopyFiles=atm6124.Files.Ext, atm6124.Files.Inf
+AddReg=atm6124.AddReg
+
+[atm6124.Dev.NT]
+;CopyFiles=atm6124.Files.Ext, atm6124.Files.Inf
+AddReg=atm6124.AddReg
+
+[atm6124.Dev.NT.Services]
+Addservice = atm6124, 0x00000002, atm6124.AddService
+
+[atm6124.AddService]
+DisplayName    = %atm6124.SvcDesc%
+ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
+StartType      = 3                  ; SERVICE_DEMAND_START
+ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %10%\System32\Drivers\atm6124.sys
+LoadOrderGroup = Base
+
+[atm6124.AddReg]
+HKR,,DevLoader,,*ntkern
+HKR,,NTMPDriver,,atm6124.sys
+HKLM,"System\Currentcontrolset\Services\atm6124\Parameters","MaximumTransferSize",0x10001,4096
+HKLM,"System\Currentcontrolset\Services\atm6124\Parameters","DebugLevel",0x10001,2
+
+
+[atm6124.Files.Ext]
+atm6124.sys
+
+[atm6124.Files.Inf]
+atm6124.Inf
+
+
+;---------------------------------------------------------------;
+
+[Strings]
+ATMEL="ATMEL, Inc."
+MfgName="ATMEL"
+USB\VID_045E&PID_930A.DeviceDesc="atm6124.Sys ATMEL AT91xxxxx Test Board"
+atm6124.SvcDesc="atm6124.Sys ATMEL USB SAMBA Driver"
+
