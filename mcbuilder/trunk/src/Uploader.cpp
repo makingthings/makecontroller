@@ -84,13 +84,17 @@ void Uploader::filterOutput( )
   QString output(readAllStandardOutput());
   QRegExp re("upload progress: (\\d+)%");
   int pos = 0;
+  bool matched = false;
   while((pos = re.indexIn(output, pos)) != -1)
   {
     int progress = re.cap(1).toInt();
     if(progress != uploaderProgress->value())
       uploaderProgress->setValue(progress);
 	  pos += re.matchedLength();
+    matched = true;
   }
+  if(!matched)
+    qDebug("upload output: %s", qPrintable(output));
 }
 
 /*
@@ -153,7 +157,7 @@ void Uploader::onError(QProcess::ProcessError error)
       msg = QString("uploader (%1) timed out.").arg(uploaderName);
       break;
     case QProcess::WriteError:
-      msg = QString("'uploader (%1) reported a write error.").arg(uploaderName);
+      msg = QString("uploader (%1) reported a write error.").arg(uploaderName);
       break;
     case QProcess::ReadError:
       msg = QString("uploader (%1) reported a read error.").arg(uploaderName);
@@ -171,7 +175,7 @@ void Uploader::onError(QProcess::ProcessError error)
 */
 void Uploader::onProgressDialogFinished(int result)
 {
-  if(result == QDialog::Rejected)
+  if(result == QDialog::Rejected && state() == QProcess::Running)
     kill();
 }
 

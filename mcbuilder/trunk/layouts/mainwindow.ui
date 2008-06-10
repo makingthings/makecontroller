@@ -268,8 +268,10 @@
    </attribute>
    <addaction name="actionBuild" />
    <addaction name="actionStop" />
+   <addaction name="actionClean" />
    <addaction name="actionUpload" />
    <addaction name="actionProperties" />
+   <addaction name="actionUsb_Monitor" />
   </widget>
   <action name="actionNew" >
    <property name="text" >
