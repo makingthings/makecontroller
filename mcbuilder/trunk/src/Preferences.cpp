@@ -36,10 +36,10 @@
 */
 Preferences::Preferences(MainWindow *mainWindow) : QDialog( 0 )
 {
-	this->mainWindow = mainWindow;
-	setupUi(this);
-	connect(buttonBox, SIGNAL(accepted()), this, SLOT(applyChanges()));
-	connect(browseWorkspaceButton, SIGNAL(clicked()), this, SLOT(browseWorkspace()));
+  this->mainWindow = mainWindow;
+  setupUi(this);
+  connect(buttonBox, SIGNAL(accepted()), this, SLOT(applyChanges()));
+  connect(browseWorkspaceButton, SIGNAL(clicked()), this, SLOT(browseWorkspace()));
   connect(fontButton, SIGNAL(clicked()), this, SLOT(getNewFont()));
   
   // initialize the parts that the main window needs to know about
@@ -56,33 +56,37 @@ Preferences::Preferences(MainWindow *mainWindow) : QDialog( 0 )
 // static
 QString Preferences::workspace( )
 {
-	QSettings settings("MakingThings", "mcbuilder");
-	#ifdef Q_WS_MAC
-	QString workspace = QDir::home().path() + "/Documents/mcbuilder";
-	#else
-      #ifdef Q_WS_WIN
-	  // would be nice to use home dir, but can't have spaces in file path
-	  QString workspace = QDir::toNativeSeparators("C:/mcbuilder");
-	  #else
-	  QString workspace = QDir::home().path() + "/mcbuilder";
-      #endif // Q_WS_WIN
-	#endif // Q_WS_MAC
-	workspace = settings.value("workspace", workspace).toString();
-	// always make sure the workspace directory exists
-	QDir dir(workspace);
-	if(!dir.exists())
-	{
-		dir.cdUp();
-		dir.mkdir("mcbuilder");
-	}
-	return QDir::toNativeSeparators(workspace);
+  QSettings settings("MakingThings", "mcbuilder");
+  #ifdef Q_WS_MAC
+  QString workspace = QDir::home().relativeFilePath("Documents/mcbuilder");
+  #else
+    #ifdef Q_WS_WIN
+    // would be nice to use home dir, but can't have spaces in file path
+    QString workspace = QDir::current().relativeFilePath("workspace");
+    #else
+    QString workspace = QDir::home().path() + "/mcbuilder";
+    #endif // Q_WS_WIN
+  #endif // Q_WS_MAC
+  workspace = settings.value("workspace", workspace).toString();
+  // always make sure the workspace directory exists
+  QDir dir(workspace);
+  if(!dir.exists())
+  {
+    dir.cdUp();
+    #ifdef Q_WS_WIN
+    dir.mkdir("workspace");
+    #else
+    dir.mkdir("mcbuilder");
+    #endif // Q_WS_WIN
+  }
+  return QDir::toNativeSeparators(workspace);
 }
 
 // static
 QString Preferences::boardType( )
 {
-	QSettings settings("MakingThings", "mcbuilder");
-	return settings.value("boardType", DEFAULT_BOARDTYPE).toString();
+  QSettings settings("MakingThings", "mcbuilder");
+  return settings.value("boardType", DEFAULT_BOARDTYPE).toString();
 }
 
 /*
@@ -93,19 +97,19 @@ QString Preferences::boardType( )
 QString Preferences::toolsPath( ) // static
 {
   QSettings settings("MakingThings", "mcbuilder");
-  return settings.value("toolsPath", QDir::currentPath() + "/resources/tools/arm-elf/bin").toString();
+  return settings.value("toolsPath", QDir::current().filePath("resources/tools/arm-elf/bin")).toString();
 }
 
 QString Preferences::makePath( ) // static
 {
   QSettings settings("MakingThings", "mcbuilder");
-  return settings.value("makePath", QDir::currentPath() + "/resources/tools").toString();
+  return settings.value("makePath", QDir::current().filePath("resources/tools")).toString();
 }
 
 QString Preferences::sam7Path( ) // static
 {
   QSettings settings("MakingThings", "mcbuilder");
-  return settings.value("sam7Path", QDir::currentPath() + "/resources/tools").toString();
+  return settings.value("sam7Path", QDir::current().filePath("resources/tools")).toString();
 }
 
 /*
@@ -115,7 +119,7 @@ void Preferences::loadAndShow( )
 {
   QSettings settings("MakingThings", "mcbuilder");
   workspaceEdit->setText(QDir::toNativeSeparators(workspace()));
-    makePathEdit->setText(QDir::toNativeSeparators(makePath()));
+  makePathEdit->setText(QDir::toNativeSeparators(makePath()));
   toolsPathEdit->setText(QDir::toNativeSeparators(toolsPath()));
   sam7PathEdit->setText(QDir::toNativeSeparators(sam7Path()));
   
@@ -133,10 +137,10 @@ void Preferences::loadAndShow( )
 */
 void Preferences::browseWorkspace( )
 {
-	QString newProjDir = QFileDialog::getExistingDirectory(this, tr("Select Workspace Directory"), 
-																					Preferences::workspace(), QFileDialog::ShowDirsOnly);
-	if( !newProjDir.isNull() ) // will be null if user hit cancel
-		workspaceEdit->setText(newProjDir);
+  QString newProjDir = QFileDialog::getExistingDirectory(this, tr("Select Workspace Directory"), 
+                                                           Preferences::workspace(), QFileDialog::ShowDirsOnly);
+  if( !newProjDir.isNull() ) // will be null if user hit cancel
+    workspaceEdit->setText(newProjDir);
 }
 
 /*
@@ -162,20 +166,20 @@ void Preferences::getNewFont( )
 */
 void Preferences::applyChanges( )
 {
-	QSettings settings("MakingThings", "mcbuilder");
-	
-	settings.setValue("workspace", workspaceEdit->text());
+  QSettings settings("MakingThings", "mcbuilder");
+  
+  settings.setValue("workspace", workspaceEdit->text());
   settings.setValue("makePath", makePathEdit->text());
   settings.setValue("toolsPath", toolsPathEdit->text());
   settings.setValue("sam7Path", sam7PathEdit->text());
   settings.setValue("checkForUpdates", (updaterBox->checkState() == Qt::Checked));
 	
-	int oldTabWidth = settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt();
-	if( oldTabWidth != tabWidth->text().toInt() )
-	{
-		settings.setValue("tabWidth", tabWidth->text().toInt());
-		mainWindow->setTabWidth( tabWidth->text().toInt() );
-	}
+  int oldTabWidth = settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt();
+  if( oldTabWidth != tabWidth->text().toInt() )
+  {
+    settings.setValue("tabWidth", tabWidth->text().toInt());
+    mainWindow->setTabWidth( tabWidth->text().toInt() );
+  }
   
   if(tempFont.family() != currentFont.family() || tempFont.pointSize() != currentFont.pointSize())
   {
