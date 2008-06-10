@@ -112,18 +112,21 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
       dir.cd("build");
       dir.setNameFilters(QStringList() << "*.bin");
       QFileInfoList bins = dir.entryInfoList();
+      bool success = false;
       if(bins.count())
       {
         int filesize = bins.first().size();
         if(filesize <= 256000)
         {
           mainWindow->printOutput(QString("%1.bin is %2 out of a possible 256000 bytes.").arg(projectName).arg(filesize));
-          return mainWindow->onBuildComplete(true);
+          mainWindow->onBuildComplete(true);
+          success = true;
         }
         else
           mainWindow->printOutputError(QString("Error - %1.bin is too big!  %2 out of a possible 256000 bytes.").arg(projectName).arg(filesize));
       }
-      mainWindow->onBuildComplete(false);
+      if(!success)
+        mainWindow->onBuildComplete(false);
       break;
     }
     case CLEAN:
