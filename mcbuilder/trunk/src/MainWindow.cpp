@@ -824,6 +824,9 @@ void MainWindow::onUploadFile( )
 void MainWindow::uploadFile(QString filename)
 {
 	// get the board type so the uploader can check which upload mechanism to use
+  QFileInfo fi(filename);
+  if(!fi.exists())
+    return statusBar()->showMessage( QString("Couldn't find %1.").arg(fi.fileName()), 3500 );
 	QAction *board = boardTypeGroup->checkedAction( );
 	if(board)
 	{
