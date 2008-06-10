@@ -878,7 +878,7 @@ void MainWindow::loadBoardProfiles( )
 */
 void MainWindow::loadExamples( )
 {
-	QDir dir = QDir::current().filePath("examples");
+	QDir dir = QDir::current().filePath("resources/examples");
 	QStringList exampleCategories = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
 	foreach(QString category, exampleCategories)
 	{
@@ -1051,8 +1051,8 @@ void MainWindow::highlightLine(QString filepath, int linenumber, ConsoleItem::Ty
 */
 void MainWindow::openMCReference( )
 {
-	QDir dir = QDir::current();
-	QDesktopServices::openUrl(QUrl::fromLocalFile(dir.filePath("reference/makecontroller/index.html")));
+  QString ref = QDir::current().filePath("resources/reference/makecontroller/html/index.html");
+  QDesktopServices::openUrl(QUrl::fromLocalFile(ref));
 }
 
 /*
@@ -1060,8 +1060,8 @@ void MainWindow::openMCReference( )
 */
 void MainWindow::openManual( )
 {
-	QDir dir = QDir::current();
-  QDesktopServices::openUrl(QUrl::fromLocalFile(dir.filePath("reference/manual.pdf")));
+  QString manual = QDir::current().filePath("resources/reference/manual.pdf");
+  QDesktopServices::openUrl(QUrl::fromLocalFile(manual));
 }
 
 /*

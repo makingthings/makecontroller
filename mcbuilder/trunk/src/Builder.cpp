@@ -43,14 +43,14 @@ Builder::Builder(MainWindow *mainWindow, ProjectInfo *projInfo) : QProcess( 0 )
 void Builder::build(QString projectName)
 {
   currentProjectPath = projectName;
+  setWorkingDirectory(QDir(currentProjectPath).filePath("build"));
   ensureBuildDirExists(projectName);  // make sure we have a build dir
   loadDependencies(projectName);      // this loads up the list of libraries this project depends on
   createMakefile(projectName);        // create a Makefile for this project, given the dependencies
   createConfigFile(projectName);      // create a config file based on the Properties for this project
   buildStep = BUILD;
-  setWorkingDirectory(projectName + "/build");
   currentProcess = "make";
-  start(Preferences::makePath() + "/make");
+  start(QDir(Preferences::makePath()).filePath("make"));
 }
 
 /*
@@ -59,12 +59,12 @@ void Builder::build(QString projectName)
 void Builder::clean(QString projectName)
 {
   ensureBuildDirExists(projectName);
+  setWorkingDirectory(QDir(currentProjectPath).filePath("build"));
   buildStep = CLEAN;
   currentProjectPath = projectName;
-  setWorkingDirectory(projectName + "/build");
   QStringList args = QStringList() << "clean";
   currentProcess = "make clean";
-  start(Preferences::makePath() + "/make", args);
+  start(QDir(Preferences::makePath()).filePath("make"), args);
 }
 
 void Builder::stop()
@@ -88,12 +88,12 @@ void Builder::ensureBuildDirExists(QString projPath)
 */
 void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
 {
-	if( exitCode != 0 || exitStatus != QProcess::NormalExit) // something didn't finish happily
-	{
-		mainWindow->onBuildComplete(false);
+  if( exitCode != 0 || exitStatus != QProcess::NormalExit) // something didn't finish happily
+  {
+    mainWindow->onBuildComplete(false);
     resetBuildProcess();
-		return;
-	}
+      return;
+  }
   
   switch(buildStep)
   {
@@ -227,10 +227,10 @@ bool Builder::createMakefile(QString projectPath)
           QString toolsPath = Preferences::toolsPath();
           if(!toolsPath.isEmpty() && !toolsPath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
             toolsPath += "/";
-          tofile << "CC=" << filteredPath(toolsPath + "arm-elf-gcc") << endl;
-          tofile << "OBJCOPY=" << filteredPath(toolsPath + "arm-elf-objcopy") << endl;
-          tofile << "ARCH=" << filteredPath(toolsPath + "arm-elf-ar") << endl;
-          tofile << "CRT0=" + filteredPath("controller/startup/boot.s") << endl;
+          tofile << "CC=" << QDir::toNativeSeparators(toolsPath + "arm-elf-gcc") << endl;
+          tofile << "OBJCOPY=" << QDir::toNativeSeparators(toolsPath + "arm-elf-objcopy") << endl;
+          tofile << "ARCH=" << QDir::toNativeSeparators(toolsPath + "arm-elf-ar") << endl;
+          tofile << "CRT0=" + filteredPath("startup/boot.s") << endl;
           QString debug = (projInfo->debug()) ? "-g" : "";
           tofile << "DEBUG=" + debug << endl;
           QString optLevel = projInfo->optLevel();
@@ -245,7 +245,7 @@ bool Builder::createMakefile(QString projectPath)
           else
             optLevel = "-O0";
           tofile << "OPTIM=" + optLevel << endl;
-          tofile << "LDSCRIPT=" + filteredPath("controller/startup/atmel-rom.ld") << endl << endl;
+          tofile << "LDSCRIPT=" + filteredPath("startup/atmel-rom.ld") << endl << endl;
 
           // the rest is always the same...
           tofile << "CFLAGS= \\" << endl;
@@ -628,10 +628,7 @@ QString Builder::filteredPath(QString path)
 	// but not quite sure how to deal at the moment...
   QString filtered = path;
   if(!QDir::isAbsolutePath(path))
-  {
-    QDir dir = QDir::current().filePath("resources/cores/makecontroller");
-    filtered = dir.filePath(path);
-  }
+	filtered = QDir::current().filePath("resources/cores/makecontroller/" + path);
   return QDir::toNativeSeparators(filtered);
 }
 
