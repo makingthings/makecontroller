@@ -19,6 +19,7 @@ strip ../../../bin/mcbuilder.app/Contents/MacOS/mcbuilder
 
 # put it in the right spot and create the appropriate directories
 mkdir mcbuilder
+cp ../ReadMe.rtf mcbuilder/ReadMe.rtf
 mkdir mcbuilder/resources
 cp -r ../../../bin/mcbuilder.app mcbuilder
 cp -r ../../examples mcbuilder/resources
@@ -44,7 +45,7 @@ mv tmp/osx-intel/* mcbuilder/resources/tools
 rm -Rf tmp
 
 # add the core libraries
-mkdir mcbuilder/libraries
+cp -r libraries mcbuilder
 
 # remove any crap
 find mcbuilder -name "*~" -exec rm -f {} ';'
@@ -56,16 +57,18 @@ find mcbuilder -name ".svn" -exec rm -rf {} ';' 2> /dev/null
 mkdir mcbuilder-v$REVISION
 mv mcbuilder mcbuilder-v$REVISION/mcbuilder
 ln -s /Applications mcbuilder-v$REVISION # add a link to the Applications directory
-cp ../../../ReadMe.rtf mcbuilder-v$REVISION
 
 echo creating intel .dmg...
-#hdiutil create -fs HFS+ -srcfolder "./mcbuilder-v$REVISION/" -volname "mcbuilder-v$REVISION" "mcbuilder-intel-v$REVISION.dmg"
+hdiutil create -fs HFS+ -srcfolder "./mcbuilder-v$REVISION/" -volname "mcbuilder-v$REVISION" "mcbuilder-intel-v$REVISION.dmg"
 
-#rm -Rf mcbuilder-v$REVISION/mcbuilder/resources/tools/*
-#cp -r ../../tools/osx-intel mcbuilder-v$REVISION/mcbuilder/resources/tools
+# now stuff the ppc tools in
+rm -Rf mcbuilder-v$REVISION/mcbuilder/resources/tools/*
+unzip -q ../../tools/osx-ppc.zip -d tmp
+mv tmp/osx-ppc/* mcbuilder-v$REVISION/mcbuilder/resources/tools
+rm -Rf tmp
 echo creating ppc .dmg...
-#hdiutil create -fs HFS+ -srcfolder "./mcbuilder-v$REVISION/" -volname "mcbuilder-v$REVISION" "mcbuilder-ppc-v$REVISION.dmg"
+hdiutil create -fs HFS+ -srcfolder "./mcbuilder-v$REVISION/" -volname "mcbuilder-v$REVISION" "mcbuilder-ppc-v$REVISION.dmg"
 
-#rm -Rf mcbuilder-v$REVISION
+rm -Rf mcbuilder-v$REVISION
 
 echo Done.

@@ -54,7 +54,7 @@ void Builder::build(QString projectName)
   QString makePath = Preferences::makePath();
   if(!makePath.isEmpty() && !makePath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
     makePath += "/";
-  start(makePath + "make.exe");
+  start(makePath + "make");
 }
 
 /*
@@ -639,7 +639,7 @@ QString Builder::filteredPath(QString path)
 	// but not quite sure how to deal at the moment...
   QString filtered = path;
   if(!QDir::isAbsolutePath(path))
-	filtered = QDir::current().filePath(path);
+    filtered = QDir::current().filePath(path);
   return QDir::toNativeSeparators(filtered);
 }
 
