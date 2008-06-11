@@ -181,7 +181,7 @@ void MainWindow::onCursorMoved( )
   QTextEdit::ExtraSelection highlight;
   highlight.cursor = c;
   highlight.format.setProperty(QTextFormat::FullWidthSelection, true);
-  highlight.format.setBackground( QColor::fromRgb(245, 245, 245) ); // light gray
+  highlight.format.setBackground( QColor::fromRgb(235, 235, 235) ); // light gray
 
   QList<QTextEdit::ExtraSelection> extras;
   extras << highlight;
