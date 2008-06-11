@@ -4,9 +4,10 @@
 # - the app itself is universal but the toolchains are not, so we need 2 separate distrbutions
 # - include all the firmware source (export from last stable tag in svn)
 
-REVISION=`head -1 ../../../version.txt`
+#grab the version from the .pro file
+REVISION=`sed -e '2,$ d' -e 's/MCBUILDER_VERSION = \"\([0-9].[0-9].[0-9]\)\"/\1/' ../../../mcbuilder.pro`
 
-echo Creating mcbuilder v$REVISION OS X distribution...
+echo Creating mcbuilder $REVISION OS X distribution...
 
 # remove any previous copies
 rm -Rf mcbuilder
@@ -54,21 +55,22 @@ find mcbuilder -name "Thumbs.db" -exec rm -f {} ';'
 find mcbuilder -name ".svn" -exec rm -rf {} ';' 2> /dev/null
 
 # create the .dmg
-mkdir mcbuilder-v$REVISION
-mv mcbuilder mcbuilder-v$REVISION/mcbuilder
-ln -s /Applications mcbuilder-v$REVISION # add a link to the Applications directory
+mkdir mcbuilder-$REVISION
+mv mcbuilder mcbuilder-$REVISION/mcbuilder
+ln -s /Applications mcbuilder-$REVISION # add a link to the Applications directory
 
 echo creating intel .dmg...
-hdiutil create -fs HFS+ -srcfolder "./mcbuilder-v$REVISION/" -volname "mcbuilder-v$REVISION" "mcbuilder-intel-v$REVISION.dmg"
+hdiutil create -fs HFS+ -srcfolder "./mcbuilder-$REVISION/" -volname "mcbuilder-$REVISION" "mcbuilder-intel-$REVISION.dmg"
 
 # now stuff the ppc tools in
-rm -Rf mcbuilder-v$REVISION/mcbuilder/resources/tools/*
+rm -Rf mcbuilder-$REVISION/mcbuilder/resources/tools/*
+echo unzipping ppc tools...
 unzip -q ../../tools/osx-ppc.zip -d tmp
-mv tmp/osx-ppc/* mcbuilder-v$REVISION/mcbuilder/resources/tools
+mv tmp/osx-ppc/* mcbuilder-$REVISION/mcbuilder/resources/tools
 rm -Rf tmp
 echo creating ppc .dmg...
-hdiutil create -fs HFS+ -srcfolder "./mcbuilder-v$REVISION/" -volname "mcbuilder-v$REVISION" "mcbuilder-ppc-v$REVISION.dmg"
+hdiutil create -fs HFS+ -srcfolder "./mcbuilder-$REVISION/" -volname "mcbuilder-$REVISION" "mcbuilder-ppc-$REVISION.dmg"
 
-rm -Rf mcbuilder-v$REVISION
+rm -Rf mcbuilder-$REVISION
 
 echo Done.
