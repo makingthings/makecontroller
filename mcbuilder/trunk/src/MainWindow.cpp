@@ -948,7 +948,7 @@ void MainWindow::loadLibraries( )
           QString doclink = nodes.at(0).toElement().text();
           QUrl url(doclink);
           if(url.isRelative()) // if it's relative, we need to store the path for context
-            a->setData(libdir.filePath(doclink));
+            a->setData(QDir::cleanPath(libdir.filePath(doclink)));
           else
             a->setData(doclink); // otherwise just store the link
           menu->addAction(a);
