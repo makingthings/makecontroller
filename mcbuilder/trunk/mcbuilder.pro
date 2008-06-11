@@ -1,8 +1,7 @@
+MCBUILDER_VERSION = "0.1.0"
 TEMPLATE = app
 #CONFIG += qt release
 CONFIG += qt debug
-
-MCBUILDER_VERSION = "0.1.0"
 
 FORMS = layouts/mainwindow.ui \
         layouts/preferences.ui \
