@@ -97,6 +97,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   connect(actionFind,         SIGNAL(triggered()), findReplace,	SLOT(show()));
   connect(actionAbout,        SIGNAL(triggered()), about,   SLOT(show()));
   connect(actionUpdate,        SIGNAL(triggered()), this,   SLOT(onUpdate()));
+  connect(actionVisitForum,        SIGNAL(triggered()), this,   SLOT(onVisitForum()));
   connect(actionClear_Output_Console,		SIGNAL(triggered()), outputConsole,	SLOT(clear()));
   connect(actionUpload_File_to_Board,		SIGNAL(triggered()), this,	SLOT(onUploadFile()));
   connect(actionMake_Controller_Reference, SIGNAL(triggered()), this, SLOT(openMCReference()));
@@ -1073,6 +1074,11 @@ void MainWindow::openManual( )
 void MainWindow::onUpdate()
 {
   updater->checkForUpdates(APPUPDATE_FOREGROUND);
+}
+
+void MainWindow::onVisitForum()
+{
+  QDesktopServices::openUrl(QUrl("http://www.makingthings.com/forum"));
 }
 
 
