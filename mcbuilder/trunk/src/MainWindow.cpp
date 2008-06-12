@@ -223,10 +223,10 @@ bool MainWindow::findText(QString text, QTextDocument::FindFlags flags, bool for
 
 /*
   Replace all occurrences of the given text with the given replacement.
-  This method leaves each replace as an undo step...any way to make them all a single undo operation?
 */
 void MainWindow::replaceAll(QString find, QString replace, QTextDocument::FindFlags flags)
 {
+  editor->textCursor().beginEditBlock(); // make sure all replaces are performed as a single edit step, for undos etc.
   bool keepgoing = true;
   editor->moveCursor(QTextCursor::Start);
   do
@@ -236,6 +236,7 @@ void MainWindow::replaceAll(QString find, QString replace, QTextDocument::FindFl
     else
       keepgoing = false;
   } while(keepgoing);
+  editor->textCursor().endEditBlock();
 }
 
 /*
