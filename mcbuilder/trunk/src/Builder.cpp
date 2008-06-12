@@ -497,59 +497,18 @@ void Builder::filterErrorOutput(QString errOutput)
       if(errMsg.endsWith("\n")) // we have a complete message to deal with
       {
         qDebug("err: %s", qPrintable(errMsg));
+        QTextStream errStream(&errMsg, QIODevice::ReadOnly);
+        QString errLine = errStream.readLine();
         bool matched = false;
-        // match output in the form of "filepath:linenumber: error|warning: errormessage"
-        QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+):(\\d+): (error|warning): ([^\n]*)");
-        int pos = 0;
-        while((pos = errExp.indexIn(errMsg, pos)) != -1)
+        while(!errLine.isNull())
         {
-          QString filepath(errExp.cap(1));
-          int linenumber = errExp.cap(2).toInt();
-          QString severity(errExp.cap(3));
-          QString msg(errExp.cap(4));
-          
-          //qDebug("cap! %s: %s, %d - %s", qPrintable(severity), qPrintable(filepath), linenumber, qPrintable(msg));
-          QFileInfo fi(filepath);
-          ConsoleItem *item;
-          QString fullmsg = QString("%1 (line %2): %3").arg(fi.fileName()).arg(linenumber).arg(msg);
-          if(severity == "error")
-          {
-            item = new ConsoleItem(filepath, linenumber, ConsoleItem::Error);
-            item->setIcon(QIcon(":/icons/error.png"));
-            mainWindow->highlightLine(filepath, linenumber, ConsoleItem::Error);
-          }
-          else
-          {
-            item = new ConsoleItem(filepath, linenumber, ConsoleItem::Warning);
-            mainWindow->highlightLine(filepath, linenumber, ConsoleItem::Warning);
-            item->setIcon(QIcon(":/icons/warning.png"));
-          }
-          item->setText(fullmsg);
-          mainWindow->printOutputError(item);
-          pos += errExp.matchedLength(); // step the index past the match so we can continue looking
-          matched = true;
+          QString line = errLine;
+          errLine = errStream.readLine();
+          if(matched = matchErrorOrWarning(line))
+            continue;
+          if(matched = matchInFunction(line))
+            continue;
         }
-        
-        // look for "in function" style messages
-        if(!matched)
-        {
-          // match output in the form of "filepath: In function: msg"
-          QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+): In function ([^\n]*)");
-          int pos = 0;
-          while((pos = errExp.indexIn(errMsg, pos)) != -1)
-          {
-            QString filepath(errExp.cap(1));
-            QString func(errExp.cap(2));
-            
-            //qDebug("cap! %s: In function %s", qPrintable(filepath), qPrintable(func));
-            QFileInfo fi(filepath);
-            QString fullmsg = QString("%1: In function %2").arg(fi.fileName()).arg(func);
-            mainWindow->printOutputError(fullmsg);
-            pos += errExp.matchedLength(); // step the index past the match so we can continue looking
-            matched = true;
-          }
-        }
-        
         if(!matched)
           mainWindow->printOutputError(errMsg);
         errMsg.clear();
@@ -559,6 +518,64 @@ void Builder::filterErrorOutput(QString errOutput)
       mainWindow->printOutputError(errOutput);
       break;
   }
+}
+
+bool Builder::matchErrorOrWarning(QString error)
+{
+  // match output in the form of "filepath:linenumber: error|warning: errormessage"
+  bool matched = false;
+  QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+):(\\d+): (error|warning): (.+)");
+  int pos = 0;
+  while((pos = errExp.indexIn(error, pos)) != -1)
+  {
+    QString filepath(errExp.cap(1));
+    int linenumber = errExp.cap(2).toInt();
+    QString severity(errExp.cap(3));
+    QString msg(errExp.cap(4));
+    
+    //qDebug("cap! %s: %s, %d - %s", qPrintable(severity), qPrintable(filepath), linenumber, qPrintable(msg));
+    QFileInfo fi(filepath);
+    ConsoleItem *item;
+    QString fullmsg = QString("%1 (line %2): %3").arg(fi.fileName()).arg(linenumber).arg(msg);
+    if(severity == "error")
+    {
+      item = new ConsoleItem(filepath, linenumber, ConsoleItem::Error);
+      item->setIcon(QIcon(":/icons/error.png"));
+      mainWindow->highlightLine(filepath, linenumber, ConsoleItem::Error);
+    }
+    else
+    {
+      item = new ConsoleItem(filepath, linenumber, ConsoleItem::Warning);
+      mainWindow->highlightLine(filepath, linenumber, ConsoleItem::Warning);
+      item->setIcon(QIcon(":/icons/warning.png"));
+    }
+    item->setText(fullmsg);
+    mainWindow->printOutputError(item);
+    pos += errExp.matchedLength(); // step the index past the match so we can continue looking
+    matched = true;
+  }
+  return matched;
+}
+
+bool Builder::matchInFunction(QString error)
+{
+  // match output in the form of "filepath: In function: msg"
+  bool matched = false;
+  QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+): In function (.+)");
+  int pos = 0;
+  while((pos = errExp.indexIn(error, pos)) != -1)
+  {
+    QString filepath(errExp.cap(1));
+    QString func(errExp.cap(2));
+    
+    //qDebug("cap! %s: In function %s", qPrintable(filepath), qPrintable(func));
+    QFileInfo fi(filepath);
+    QString fullmsg = QString("%1: In function %2").arg(fi.fileName()).arg(func);
+    mainWindow->printOutputError(fullmsg);
+    pos += errExp.matchedLength(); // step the index past the match so we can continue looking
+    matched = true;
+  }
+  return matched;
 }
 
 /*
