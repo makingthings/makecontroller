@@ -19,9 +19,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>84</y>
+     <y>73</y>
      <width>681</width>
-     <height>541</height>
+     <height>555</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout" >
@@ -137,7 +137,7 @@
      <x>0</x>
      <y>0</y>
      <width>681</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile" >
@@ -165,10 +165,11 @@
     </property>
     <addaction name="actionMcbuilder_User_Manual" />
     <addaction name="actionMake_Controller_Reference" />
+    <addaction name="actionVisitForum" />
     <addaction name="separator" />
     <addaction name="actionPreferences" />
-    <addaction name="actionAbout" />
     <addaction name="actionUpdate" />
+    <addaction name="actionAbout" />
    </widget>
    <widget class="QMenu" name="menuProject" >
     <property name="title" >
@@ -233,9 +234,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>625</y>
+     <y>628</y>
      <width>681</width>
-     <height>22</height>
+     <height>19</height>
     </rect>
    </property>
   </widget>
@@ -243,9 +244,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>22</y>
+     <y>21</y>
      <width>681</width>
-     <height>62</height>
+     <height>52</height>
     </rect>
    </property>
    <property name="windowTitle" >
@@ -501,6 +502,11 @@
   <action name="actionAdd_Existing_File" >
    <property name="text" >
     <string>Add Existing File...</string>
+   </property>
+  </action>
+  <action name="actionVisitForum" >
+   <property name="text" >
+    <string>Visit MakingThings Forum</string>
    </property>
   </action>
  </widget>

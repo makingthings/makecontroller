@@ -26,7 +26,7 @@ OutFile ${APPNAME}-${VERSION}-setup.exe
 InstallDir C:\${APPNAME}
 
 ; Request application privileges for Windows Vista
-RequestExecutionLevel user
+RequestExecutionLevel admin
 
 ;--------------------------------
 ; Modern UI pages
@@ -100,10 +100,10 @@ Section "" ;No components page, name is not important
   File /nonfatal /r /x .svn /x *.zip "..\..\tools\*"
   
   SetOutPath $INSTDIR\resources\reference
-  File /nonfatal /r /x .svn "..\..\reference\*"
+  File /nonfatal /r /x .svn /x diagrams "..\..\reference\*"
   
   SetOutPath $INSTDIR\libraries
-  File /nonfatal /r /x .svn "..\..\libraries\*"
+  File /nonfatal /r /x .svn "..\..\..\libraries\*"
   
   WriteUninstaller "$INSTDIR\uninstall.exe"
   
