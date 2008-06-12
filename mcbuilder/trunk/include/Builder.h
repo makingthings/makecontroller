@@ -57,6 +57,8 @@ private:
   bool createConfigFile(QString projectPath);
   void filterOutput(QString output);
   void filterErrorOutput(QString errOutput);
+  bool matchErrorOrWarning(QString msg);
+  bool matchInFunction(QString msg);
   void ensureBuildDirExists(QString projPath);
   bool parseVersionNumber( int *maj, int *min, int *bld );
   void loadDependencies(QString project);
