@@ -4,12 +4,12 @@
     <file>error.png</file>
     <file>green_dot.png</file>
     <file>info.png</file>
-    <file>monitor.tiff</file>
+    <file>monitor.png</file>
     <file>red_dot.png</file>
-    <file>stop.tiff</file>
+    <file>stop.png</file>
     <file>success.png</file>
-    <file>upload.tiff</file>
+    <file>upload.png</file>
     <file>warning.png</file>
-    <file>build.tiff</file>
+    <file>build.png</file>
   </qresource>
 </RCC>

@@ -19,9 +19,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>73</y>
+     <y>84</y>
      <width>681</width>
-     <height>555</height>
+     <height>541</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout" >
@@ -137,7 +137,7 @@
      <x>0</x>
      <y>0</y>
      <width>681</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile" >
@@ -234,9 +234,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>628</y>
+     <y>625</y>
      <width>681</width>
-     <height>19</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
@@ -244,9 +244,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>21</y>
+     <y>22</y>
      <width>681</width>
-     <height>52</height>
+     <height>62</height>
     </rect>
    </property>
    <property name="windowTitle" >
@@ -344,7 +344,7 @@
   <action name="actionUpload" >
    <property name="icon" >
     <iconset resource="../resources/icons/icons_rsrc.qrc" >
-     <normaloff>:/icons/upload.tiff</normaloff>:/icons/upload.tiff</iconset>
+     <normaloff>:/icons/upload.png</normaloff>:/icons/upload.png</iconset>
    </property>
    <property name="text" >
     <string>Upload</string>
@@ -356,7 +356,7 @@
   <action name="actionBuild" >
    <property name="icon" >
     <iconset resource="../resources/icons/icons_rsrc.qrc" >
-     <normaloff>:/icons/build.tiff</normaloff>:/icons/build.tiff</iconset>
+     <normaloff>:/icons/build.png</normaloff>:/icons/build.png</iconset>
    </property>
    <property name="text" >
     <string>Build</string>
@@ -441,7 +441,7 @@
   <action name="actionUsb_Monitor" >
    <property name="icon" >
     <iconset resource="../resources/icons/icons_rsrc.qrc" >
-     <normaloff>:/icons/monitor.tiff</normaloff>:/icons/monitor.tiff</iconset>
+     <normaloff>:/icons/monitor.png</normaloff>:/icons/monitor.png</iconset>
    </property>
    <property name="text" >
     <string>USB Console...</string>
@@ -488,7 +488,7 @@
    </property>
    <property name="icon" >
     <iconset resource="../resources/icons/icons_rsrc.qrc" >
-     <normaloff>:/icons/stop.tiff</normaloff>:/icons/stop.tiff</iconset>
+     <normaloff>:/icons/stop.png</normaloff>:/icons/stop.png</iconset>
    </property>
    <property name="text" >
     <string>Stop Build</string>
