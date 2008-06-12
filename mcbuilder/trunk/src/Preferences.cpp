@@ -58,11 +58,11 @@ QString Preferences::workspace( )
 {
   QSettings settings("MakingThings", "mcbuilder");
   #ifdef Q_WS_MAC
-  QString workspace = QDir::home().relativeFilePath("Documents/mcbuilder");
+  QString workspace = QDir::home().filePath("Documents/mcbuilder");
   #else
     #ifdef Q_WS_WIN
     // would be nice to use home dir, but can't have spaces in file path
-    QString workspace = QDir::current().relativeFilePath("workspace");
+    QString workspace = QDir::current().filePath("workspace");
     #else
     QString workspace = QDir::home().path() + "/mcbuilder";
     #endif // Q_WS_WIN
