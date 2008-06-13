@@ -45,6 +45,7 @@ private:
   };
   MainWindow *mainWindow;
   ProjectInfo *projInfo;
+  QString errMsg;
   QString currentProjectPath;
   enum BuildStep { BUILD, CLEAN };
   BuildStep buildStep;
@@ -56,6 +57,7 @@ private:
   bool createConfigFile(QString projectPath);
   bool matchErrorOrWarning(QString msg);
   bool matchInFunction(QString msg);
+  bool matchUndefinedRef(QString msg);
   void ensureBuildDirExists(QString projPath);
   bool parseVersionNumber( int *maj, int *min, int *bld );
   void loadDependencies(QString project);
