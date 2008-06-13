@@ -17,6 +17,7 @@
 
 
 #include "BuildLog.h"
+#include <QSettings>
 
 /*
  Build log displays the raw output from GCC, if you want to have a look at it.
@@ -25,6 +26,10 @@ BuildLog::BuildLog( ) : QDialog( )
 {
 	setupUi(this);
   connect(clearButton, SIGNAL(clicked()), logConsole, SLOT(clear()));
+  QSettings settings("MakingThings", "mcbuilder");
+  QSize dialogSize = settings.value("build_log_size").toSize();
+  if(dialogSize.isValid())
+    resize(dialogSize);
 }
 
 /*

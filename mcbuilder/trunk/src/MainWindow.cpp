@@ -138,6 +138,9 @@ void MainWindow::readSettings()
   if(!lastProject.isEmpty())
     openProject(lastProject);
 	settings.endGroup();
+  QPoint mainWinPos = settings.value("mainwindow_pos").toPoint();
+  if(!mainWinPos.isNull())
+    move(mainWinPos);
 }
 
 /*
@@ -155,6 +158,8 @@ void MainWindow::writeSettings()
   settings.setValue("splitterSizes", splitterSettings );
   settings.setValue("lastOpenProject", currentProject);
   settings.endGroup();
+  settings.setValue("build_log_size", buildLog->size());
+  settings.setValue("mainwindow_pos", pos());
 }
 
 /*
