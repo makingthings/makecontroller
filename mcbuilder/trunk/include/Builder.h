@@ -45,7 +45,6 @@ private:
   };
   MainWindow *mainWindow;
   ProjectInfo *projInfo;
-  QString errMsg, outputMsg;
   QString currentProjectPath;
   enum BuildStep { BUILD, CLEAN };
   BuildStep buildStep;
@@ -55,8 +54,6 @@ private:
   void resetBuildProcess();
   bool createMakefile(QString projectPath);
   bool createConfigFile(QString projectPath);
-  void filterOutput(QString output);
-  void filterErrorOutput(QString errOutput);
   bool matchErrorOrWarning(QString msg);
   bool matchInFunction(QString msg);
   void ensureBuildDirExists(QString projPath);
@@ -67,8 +64,8 @@ private:
 		
 private slots:
   void nextStep( int exitCode, QProcess::ExitStatus exitStatus );
-  void readOutput();
-  void readError();
+  void filterOutput();
+  void filterErrorOutput();
   void onBuildError(QProcess::ProcessError error);
 };
 

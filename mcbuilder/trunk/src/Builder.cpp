@@ -31,8 +31,8 @@ Builder::Builder(MainWindow *mainWindow, ProjectInfo *projInfo) : QProcess( 0 )
 {
   this->mainWindow = mainWindow;
   this->projInfo = projInfo;
-  connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
-  connect(this, SIGNAL(readyReadStandardError()), this, SLOT(readError()));
+  connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(filterOutput()));
+  connect(this, SIGNAL(readyReadStandardError()), this, SLOT(filterErrorOutput()));
   connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(nextStep(int, QProcess::ExitStatus)));
   connect(this, SIGNAL(error(QProcess::ProcessError)), this, SLOT(onBuildError(QProcess::ProcessError)));
 }
@@ -141,8 +141,6 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
 */
 void Builder::resetBuildProcess()
 {
-  errMsg.clear();
-  outputMsg.clear();
   currentProjectPath.clear();
   libraries.clear();
 }
@@ -436,46 +434,32 @@ void Builder::onBuildError(QProcess::ProcessError error)
   mainWindow->onBuildComplete(false);
 }
 
-void Builder::readOutput( )
-{
-  filterOutput(readAllStandardOutput());
-}
-
-/*
-  This gets called when the currently running program
-  spits out some error info.  The strings can come in chunks, so
-  wait till we get an end-of-line before doing anything.
-*/
-void Builder::readError( )
-{
-  filterErrorOutput(readAllStandardError());
-}
-
 /*
   Filter the output of the build process
   and only show the most important parts to the user.
   
-  Strings can come in chunks, so wait till we get an 
-  end-of-line before doing anything.
+  Read line by line...we're only really looking for which file is being compiled at the moment.
 */
-void Builder::filterOutput(QString output)
+void Builder::filterOutput()
 {
   // switch based on what part of the build we're performing
   switch(buildStep)
   {
     case BUILD:
     {
-      outputMsg += output;
-      if(outputMsg.endsWith("\n")) // we have a complete message to deal with
+      QString output = readAllStandardOutput();
+      QTextStream outstream(&output); // use QTextStream to deal with \r\n or \n line endings for us
+      QString outline = outstream.readLine();
+      while(!outline.isNull())
       {
-        qDebug("msg: %s\n", qPrintable(outputMsg));
-        QStringList sl = outputMsg.split(" ");
+        qDebug("msg: %s", qPrintable(outline));
+        QStringList sl = outline.split(" ");
         if(sl.first().endsWith("arm-elf-gcc") && sl.at(1) == "-c")
         {
           QFileInfo srcFile(sl.last());
           mainWindow->buildingNow(srcFile.baseName() + ".c");
         }
-        outputMsg.clear();
+        outline = outstream.readLine();
       }
       break;
     }
@@ -487,35 +471,40 @@ void Builder::filterOutput(QString output)
 /*
   Filter the error messages of the build process
   and only show the most important parts to the user.
+  
+  Try and match the output with some common patterns so we can highlight errors/warnings
+  in the editor.
 */
-void Builder::filterErrorOutput(QString errOutput)
+void Builder::filterErrorOutput()
 {
   switch(buildStep)
   {
     case BUILD:
-      errMsg += errOutput;
-      if(errMsg.endsWith("\n")) // we have a complete message to deal with
+    {
+      QString output = readAllStandardError();
+      QTextStream outstream(&output); // use QTextStream to deal with \r\n or \n line endings for us
+      QString outline = outstream.readLine();
+      bool matched = false;
+      while(!outline.isNull())
       {
-        qDebug("err: %s", qPrintable(errMsg));
-        QTextStream errStream(&errMsg, QIODevice::ReadOnly);
-        QString errLine = errStream.readLine();
-        bool matched = false;
-        while(!errLine.isNull())
-        {
-          QString line = errLine;
-          errLine = errStream.readLine();
-          if(matched = matchErrorOrWarning(line))
-            continue;
-          if(matched = matchInFunction(line))
-            continue;
-        }
+        qDebug("err: %s", qPrintable(outline));
+        QString line = outline;
+        outline = outstream.readLine();
+        // now try to match the output against common patterns...
+        matched = matchErrorOrWarning(line);
+        if(matched)
+          continue;
+        matched = matchInFunction(line);
+        if(matched)
+          continue;
+        // last step - we didn't matched anything, just print it to the console
         if(!matched)
-          mainWindow->printOutputError(errMsg);
-        errMsg.clear();
+          mainWindow->printOutputError(line);
       }
       break;
+    }
     case CLEAN:
-      mainWindow->printOutputError(errOutput);
+      mainWindow->printOutputError(readAllStandardError());
       break;
   }
 }
