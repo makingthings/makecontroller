@@ -27,10 +27,11 @@
 	We need to generate a Makefile based on the general Preferences 
   and Properties for this project.
 */
-Builder::Builder(MainWindow *mainWindow, ProjectInfo *projInfo) : QProcess( 0 )
+Builder::Builder(MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog) : QProcess( 0 )
 {
   this->mainWindow = mainWindow;
   this->projInfo = projInfo;
+  this->buildLog = buildLog;
   connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(filterOutput()));
   connect(this, SIGNAL(readyReadStandardError()), this, SLOT(filterErrorOutput()));
   connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(nextStep(int, QProcess::ExitStatus)));
@@ -55,6 +56,11 @@ void Builder::build(QString projectName)
   if(!makePath.isEmpty() && !makePath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
     makePath += "/";
   start(makePath + "make");
+  QString buildmsg("***************************************************************\n");
+  buildmsg += "  mcbuilder - building " + projectName + "\n";
+  buildmsg += QDateTime::currentDateTime().toString("  MMM d, yyyy h:m ap") + "\n";
+  buildmsg += "***************************************************************";
+  buildLog->append(buildmsg);
 }
 
 /*
@@ -68,6 +74,7 @@ void Builder::clean(QString projectName)
   buildStep = CLEAN;
   QStringList args = QStringList() << "clean";
   currentProcess = "make clean";
+  buildLog->clear( );
   setEnvironment(QProcess::systemEnvironment());
   QString makePath = Preferences::makePath();
   if(!makePath.isEmpty() && !makePath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
@@ -449,6 +456,7 @@ void Builder::filterOutput()
     case BUILD:
     {
       QString output = readAllStandardOutput();
+      buildLog->append(output);
       QTextStream outstream(&output); // use QTextStream to deal with \r\n or \n line endings for us
       QString outline = outstream.readLine();
       while(!outline.isNull())
@@ -485,6 +493,7 @@ void Builder::filterErrorOutput()
       errMsg += readAllStandardError();
       if(!errMsg.endsWith("\n"))
         return;
+      buildLog->append(errMsg);
       QTextStream outstream(&errMsg); // use QTextStream to deal with \r\n or \n line endings for us
       QString outline = outstream.readLine();
       bool matched = false;
@@ -504,7 +513,7 @@ void Builder::filterErrorOutput()
           continue;
         if(line.startsWith("make")) // don't need to hear anything from make
           continue;
-        // last step - we didn't matched anything, just print it to the console
+        // last step - we didn't match anything, just print it to the console
         if(!matched)
           mainWindow->printOutputError(line);
       }
@@ -512,14 +521,21 @@ void Builder::filterErrorOutput()
       break;
     }
     case CLEAN:
-      mainWindow->printOutputError(readAllStandardError());
+    {
+      QString output = readAllStandardError();
+      buildLog->append(output);
+      mainWindow->printOutputError(output);
       break;
+    }
   }
 }
 
+/*
+  Try to match an output message from gcc in the form of "filepath:linenumber: error|warning: errormessage"
+  If we get one, format it nicely, highlight the line, and pop it into the UI.
+*/
 bool Builder::matchErrorOrWarning(QString error)
 {
-  // match output in the form of "filepath:linenumber: error|warning: errormessage"
   bool matched = false;
   QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+):(\\d+): (error|warning): (.+)");
   int pos = 0;
@@ -554,9 +570,12 @@ bool Builder::matchErrorOrWarning(QString error)
   return matched;
 }
 
+/*
+  Try to match an output message from gcc in the form of "filepath: In function: msg"
+  If we get one, format it nicely, and pop it into the UI.
+*/
 bool Builder::matchInFunction(QString error)
 {
-  // match output in the form of "filepath: In function: msg"
   bool matched = false;
   QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+): In function (.+)");
   int pos = 0;
@@ -575,6 +594,10 @@ bool Builder::matchInFunction(QString error)
   return matched;
 }
 
+/*
+  Try to match an output message from gcc in the form of "file: undefined reference to function"
+  If we get one, format it nicely, and pop it into the UI.
+*/
 bool Builder::matchUndefinedRef(QString error)
 {
   // match output in the form of "filepath: In function: msg"
