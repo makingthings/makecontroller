@@ -32,6 +32,7 @@
 #include "About.h"
 #include "ConsoleItem.h"
 #include "AppUpdater.h"
+#include "BuildLog.h"
 
 class Preferences;
 class Uploader;
@@ -79,6 +80,7 @@ private:
   FindReplace *findReplace;
   About *about;
   AppUpdater *updater;
+  BuildLog *buildLog;
   QComboBox *currentFileDropDown;
   QActionGroup *boardTypeGroup;
   QString currentFile; // path of the file in the editor

@@ -23,6 +23,7 @@
 #include <QFileInfo>
 #include "MainWindow.h"
 #include "ProjectInfo.h"
+#include "BuildLog.h"
 
 class MainWindow;
 class ProjectInfo;
@@ -31,7 +32,7 @@ class Builder : public QProcess
 {
   Q_OBJECT
 public:
-  Builder(MainWindow *mainWindow, ProjectInfo *projInfo);
+  Builder(MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog);
   void build(QString projectName);
   void clean(QString projectName);
   void stop();
@@ -45,6 +46,7 @@ private:
   };
   MainWindow *mainWindow;
   ProjectInfo *projInfo;
+  BuildLog *buildLog;
   QString errMsg;
   QString currentProjectPath;
   enum BuildStep { BUILD, CLEAN };

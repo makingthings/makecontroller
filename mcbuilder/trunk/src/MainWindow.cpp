@@ -50,11 +50,12 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   toolBar->addWidget(pad);
   
   //initialization
+  buildLog = new BuildLog();
   highlighter = new Highlighter( editor->document() );
   prefs = new Preferences(this);
   projInfo = new ProjectInfo(this);
   uploader = new Uploader(this);
-  builder = new Builder(this, projInfo);
+  builder = new Builder(this, projInfo, buildLog);
   usbConsole = new UsbConsole();
   findReplace = new FindReplace(this);
   about = new About();
@@ -97,6 +98,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   connect(actionFind,         SIGNAL(triggered()), findReplace,	SLOT(show()));
   connect(actionAbout,        SIGNAL(triggered()), about,   SLOT(show()));
   connect(actionUpdate,        SIGNAL(triggered()), this,   SLOT(onUpdate()));
+  connect(actionBuildLog, SIGNAL(triggered()), buildLog, SLOT(show()));
   connect(actionVisitForum,        SIGNAL(triggered()), this,   SLOT(onVisitForum()));
   connect(actionClear_Output_Console,		SIGNAL(triggered()), outputConsole,	SLOT(clear()));
   connect(actionUpload_File_to_Board,		SIGNAL(triggered()), this,	SLOT(onUploadFile()));
@@ -526,6 +528,7 @@ void MainWindow::openProject(QString projectPath)
     setWindowTitle( projectName + "[*] - mcbuilder");
     updateRecentProjects(projectName);
     projInfo->load();
+    buildLog->clear();
 	}
 	else
       return statusBar()->showMessage( QString("Couldn't find main file for %1.").arg(projectName), 3500 );

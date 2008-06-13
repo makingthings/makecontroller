@@ -8,7 +8,8 @@ FORMS = layouts/mainwindow.ui \
         layouts/projectinfo.ui \
         layouts/usbconsole.ui \
         layouts/findreplace.ui \
-        layouts/about.ui
+        layouts/about.ui \
+        layouts/buildlog.ui
 
 HEADERS = include/Highlighter.h \
           include/MainWindow.h \
@@ -20,7 +21,8 @@ HEADERS = include/Highlighter.h \
           include/FindReplace.h \
           include/About.h \
           include/AppUpdater.h \
-          include/ConsoleItem.h
+          include/ConsoleItem.h \
+          include/BuildLog.h
 
 SOURCES = src/main.cpp \
           src/Highlighter.cpp \
@@ -32,7 +34,8 @@ SOURCES = src/main.cpp \
           src/UsbConsole.cpp \
           src/FindReplace.cpp \
           src/AppUpdater.cpp \
-          src/About.cpp
+          src/About.cpp \
+          src/BuildLog.cpp
 
 TARGET = mcbuilder
 
