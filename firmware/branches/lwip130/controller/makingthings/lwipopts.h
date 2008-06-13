@@ -34,6 +34,9 @@
 
 #include "config.h"
 
+// Liam testing...
+#define LWIP_SOCKET 0
+
 #define LWIP_NOASSERT 1 // To suppress some errors for now (no debug output)
 #define SYS_LIGHTWEIGHT_PROT            1
 
@@ -79,11 +82,11 @@ a lot of data that needs to be copied, this should be set high. */
 /* MEMP_NUM_APIMSG: the number of struct api_msg, used for
    communication between the TCP/IP stack and the sequential
    programs. */
-#define MEMP_NUM_API_MSG        8
+// #define MEMP_NUM_API_MSG        8 // deprecated in lwip 1.3.0
 /* MEMP_NUM_TCPIPMSG: the number of struct tcpip_msg, which is used
    for sequential API communication and incoming packets. Used in
    src/api/tcpip.c. */
-#define MEMP_NUM_TCPIP_MSG      8
+// #define MEMP_NUM_TCPIP_MSG      8 // deprecated in lwip 1.3.0
 
 /* These two control is reclaimer functions should be compiled
    in. Should always be turned on (1). */
@@ -155,6 +158,12 @@ a lot of data that needs to be copied, this should be set high. */
 /* 1 if you want to do an ARP check on the offered address
    (recommended). */
 #define DHCP_DOES_ARP_CHECK     1
+
+/**
+ * LWIP_DNS==1: Turn on DNS module. UDP must be available for DNS
+ * transport.
+ */
+#define LWIP_DNS 1
 
 /* ---------- UDP options ---------- */
 #define LWIP_UDP                1

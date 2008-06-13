@@ -28,7 +28,7 @@
 * 03-01-01 Marc Boucher <marc@mbsi.ca>
 *   Ported to lwIP.
 * 97-12-04 Guy Lancaster <lancasterg@acm.org>, Global Election Systems Inc.
-*	Original based on BSD magic.c.
+*   Original based on BSD magic.c.
 *****************************************************************************/
 /*
  * magic.c - PPP Magic Number routines.
@@ -49,10 +49,13 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include "lwip/opt.h"
+
+#if PPP_SUPPORT
+
 #include "ppp.h"
 #include "randm.h"
 #include "magic.h"
-
 
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
@@ -65,7 +68,7 @@
  */
 void magicInit()
 {
-	return;
+  return;
 }
 
 /*
@@ -73,7 +76,7 @@ void magicInit()
  */
 u32_t magic()
 {
-    return avRandom();
+  return avRandom();
 }
 
-
+#endif /* PPP_SUPPORT */
