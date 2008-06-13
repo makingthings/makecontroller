@@ -62,8 +62,9 @@ int intlevel = 0;
 
 /*-----------------------------------------------------------------------------------*/
 //  Creates an empty mailbox.
+// MakingThings - added 'size' param for lwip 1.3.0
 sys_mbox_t
-sys_mbox_new(void)
+sys_mbox_new(int size)
 {
 	xQueueHandle mbox;
 
@@ -96,6 +97,22 @@ void
 sys_mbox_post(sys_mbox_t mbox, void *data)
 {   
 	xQueueSend( mbox, &data, ( portTickType ) ( archPOST_BLOCK_TIME_MS / portTICK_RATE_MS ) );
+}
+
+/*-----------------------------------------------------------------------------------*/
+// MakingThings - added for lwip 1.3.0
+//  Posts the "msg" to the mailbox. This function have to block until
+//  the "msg" is really posted.
+err_t 
+sys_mbox_trypost(sys_mbox_t mbox, void *msg)
+{   
+	portBASE_TYPE result = xQueueSend( mbox, &msg, ( portTickType ) ( archPOST_BLOCK_TIME_MS / portTICK_RATE_MS ) );
+  while( result == errQUEUE_FULL)
+  {
+    vTaskDelay(1);
+    result = xQueueSend( mbox, &msg, ( portTickType ) ( archPOST_BLOCK_TIME_MS / portTICK_RATE_MS ) );
+  }
+  return ERR_OK;
 }
 
 
@@ -334,7 +351,7 @@ sys_arch_timeouts(void)
   thread() function. The id of the new thread is returned. Both the id and
   the priority are system dependent.
 */
-sys_thread_t sys_thread_new(void (* thread)(void *arg), void *arg, int prio)
+sys_thread_t sys_thread_new( char *name, void (* thread)(void *arg), void *arg, int stacksize, int prio)
 {
   xTaskHandle CreatedTask;
   int result;
@@ -342,13 +359,13 @@ sys_thread_t sys_thread_new(void (* thread)(void *arg), void *arg, int prio)
 
 	if( iCall == 0 )
 	{
-		/* The first time this is called we are creating the lwIP handler. */
-		result = xTaskCreate( thread, ( signed portCHAR * ) "lwIP", lwipTCP_STACK_SIZE, arg, prio, &CreatedTask );
+		/* The first time this is called we are creating the lwIP handler. */ // lwipTCP_STACK_SIZE
+		result = xTaskCreate( thread, ( signed portCHAR * ) "lwIP", 500, arg, prio, &CreatedTask );
 		iCall++;
 	}
 	else
 	{
-		result = xTaskCreate( thread, ( signed portCHAR * ) "Net", lwipBASIC_SERVER_STACK_SIZE, arg, prio, &CreatedTask );
+		result = xTaskCreate( thread, ( signed portCHAR * ) name, stacksize, arg, prio, &CreatedTask );
 	}
 
 	// For each task created, store the task handle (pid) in the timers array.

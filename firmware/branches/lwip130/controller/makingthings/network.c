@@ -126,7 +126,7 @@ void* Socket( int address, int port )
   {
     //netconn_delete( conn );
     while( netconn_delete( conn ) != ERR_OK )
-      vTaskDelay( 10 );
+      Sleep( 10 );
 
     conn = NULL;
   }
@@ -1134,8 +1134,8 @@ void Network_DhcpStart( struct netif* netif )
     gw.addr = Network->TempGateway;
     netif_set_addr( netif, &ip, &mask, &gw );
   }
-  sys_timeout( DHCP_FINE_TIMER_MSECS, dhcp_fine_tmr, NULL );
-  sys_timeout( DHCP_COARSE_TIMER_SECS * 1000, dhcp_coarse_tmr, NULL );
+//  sys_timeout( DHCP_FINE_TIMER_MSECS, dhcp_fine_tmr, NULL );
+//  sys_timeout( DHCP_COARSE_TIMER_SECS * 1000, dhcp_coarse_tmr, NULL );
   Network_SetPending( 0 );
   return;
 }
@@ -1143,8 +1143,8 @@ void Network_DhcpStart( struct netif* netif )
 void Network_DhcpStop( struct netif* netif )
 {
   dhcp_release( netif );
-  sys_untimeout( dhcp_fine_tmr, NULL );
-  sys_untimeout( dhcp_coarse_tmr, NULL );
+//  sys_untimeout( dhcp_fine_tmr, NULL );
+//  sys_untimeout( dhcp_coarse_tmr, NULL );
   netif_set_up(netif); // bring the interface back up, as dhcp_release() takes it down
   return;
 }
@@ -1181,14 +1181,16 @@ int Network_Init( )
   emacETHADDR3 = 0x50 | ( ( serialNumber >> 12 ) & 0xF );
 
   /* Initialize lwIP and its interface layer. */
-  stats_init();
-	sys_init();
-	mem_init();								
-	memp_init();
-	pbuf_init(); 
-	netif_init();
-	ip_init();
-	tcpip_init( NULL, NULL );
+  tcpip_init( NULL, NULL );
+// these are all done inside lwip_init() now...called from within tcpip_init
+//  stats_init();
+//	sys_init();
+//	mem_init();								
+//	memp_init();
+//	pbuf_init(); 
+//	netif_init();
+//	ip_init();
+	
 
   extern err_t ethernetif_init( struct netif *netif );
   static struct netif EMAC_if;
