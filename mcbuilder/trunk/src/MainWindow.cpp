@@ -1032,7 +1032,7 @@ void MainWindow::onConsoleDoubleClick(QListWidgetItem *item)
 */
 void MainWindow::highlightLine(QString filepath, int linenumber, ConsoleItem::Type type)
 {
-  if(filepath == currentFile)
+  if(QDir::toNativeSeparators(filepath) == QDir::toNativeSeparators(currentFile))
   {
     QTextCursor c(editor->document());
     c.movePosition(QTextCursor::Start);
