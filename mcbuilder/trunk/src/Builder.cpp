@@ -141,6 +141,7 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
 */
 void Builder::resetBuildProcess()
 {
+  errMsg.clear();
   currentProjectPath.clear();
   libraries.clear();
 }
@@ -481,8 +482,10 @@ void Builder::filterErrorOutput()
   {
     case BUILD:
     {
-      QString output = readAllStandardError();
-      QTextStream outstream(&output); // use QTextStream to deal with \r\n or \n line endings for us
+      errMsg += readAllStandardError();
+      if(!errMsg.endsWith("\n"))
+        return;
+      QTextStream outstream(&errMsg); // use QTextStream to deal with \r\n or \n line endings for us
       QString outline = outstream.readLine();
       bool matched = false;
       while(!outline.isNull())
@@ -497,10 +500,15 @@ void Builder::filterErrorOutput()
         matched = matchInFunction(line);
         if(matched)
           continue;
+        if(matched = matchUndefinedRef(line))
+          continue;
+        if(line.startsWith("make")) // don't need to hear anything from make
+          continue;
         // last step - we didn't matched anything, just print it to the console
         if(!matched)
           mainWindow->printOutputError(line);
       }
+      errMsg.clear();
       break;
     }
     case CLEAN:
@@ -560,6 +568,27 @@ bool Builder::matchInFunction(QString error)
     //qDebug("cap! %s: In function %s", qPrintable(filepath), qPrintable(func));
     QFileInfo fi(filepath);
     QString fullmsg = QString("%1: In function %2").arg(fi.fileName()).arg(func);
+    mainWindow->printOutputError(fullmsg);
+    pos += errExp.matchedLength(); // step the index past the match so we can continue looking
+    matched = true;
+  }
+  return matched;
+}
+
+bool Builder::matchUndefinedRef(QString error)
+{
+  // match output in the form of "filepath: In function: msg"
+  bool matched = false;
+  QRegExp errExp("(.+):.+: undefined reference to (.+)");
+  int pos = 0;
+  while((pos = errExp.indexIn(error, pos)) != -1)
+  {
+    QString filepath(errExp.cap(1));
+    QString func(errExp.cap(2));
+    
+    //qDebug("cap! %s: In function %s", qPrintable(filepath), qPrintable(func));
+    QFileInfo fi(filepath);
+    QString fullmsg = QString("Error - in %1: Undefined reference to %2").arg(fi.fileName()).arg(func);
     mainWindow->printOutputError(fullmsg);
     pos += errExp.matchedLength(); // step the index past the match so we can continue looking
     matched = true;
