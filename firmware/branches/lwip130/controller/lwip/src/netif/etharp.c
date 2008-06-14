@@ -43,7 +43,10 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  */
- 
+
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #if LWIP_ARP /* don't build if not configured for use in lwipopts.h */
@@ -1175,3 +1178,5 @@ ethernet_input(struct pbuf *p, struct netif *netif)
   return ERR_OK;
 }
 #endif /* LWIP_ARP */
+
+#endif // MAKE_CTRL_NETWORK

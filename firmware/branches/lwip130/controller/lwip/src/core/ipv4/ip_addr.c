@@ -36,6 +36,9 @@
  *
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 #include "lwip/ip_addr.h"
 #include "lwip/inet.h"
@@ -82,3 +85,6 @@ u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif)
   else
     return 0;
 }
+
+#endif // MAKE_CTRL_NETWORK
+

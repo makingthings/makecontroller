@@ -36,6 +36,9 @@
  *
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #include "lwip/init.h"
@@ -251,3 +254,5 @@ lwip_init(void)
   dns_init();
 #endif /* LWIP_DNS */
 }
+
+#endif // MAKE_CTRL_NETWORK

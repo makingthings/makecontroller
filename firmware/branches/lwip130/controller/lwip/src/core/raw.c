@@ -38,6 +38,9 @@
  *
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #if LWIP_RAW /* don't build if not configured for use in lwipopts.h */
@@ -334,3 +337,5 @@ raw_new(u8_t proto) {
 }
 
 #endif /* LWIP_RAW */
+
+#endif // MAKE_CTRL_NETWORK

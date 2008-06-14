@@ -36,6 +36,9 @@
  *
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #if (NO_SYS == 0) /* don't build if not configured for use in lwipopts.h */
@@ -342,3 +345,5 @@ sys_msleep(u32_t ms)
 
 
 #endif /* NO_SYS */
+
+#endif // MAKE_CTRL_NETWORK

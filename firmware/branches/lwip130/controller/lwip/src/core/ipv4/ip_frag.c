@@ -38,6 +38,9 @@
  * 
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 #include "lwip/ip_frag.h"
 #include "lwip/ip.h"
@@ -781,3 +784,5 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
   return ERR_OK;
 }
 #endif /* IP_FRAG */
+
+#endif // MAKE_CTRL_NETWORK

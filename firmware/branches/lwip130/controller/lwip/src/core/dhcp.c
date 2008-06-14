@@ -68,6 +68,9 @@
  *
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #if LWIP_DHCP /* don't build if not configured for use in lwipopts.h */
@@ -1546,3 +1549,5 @@ static u32_t dhcp_get_option_long(u8_t *ptr)
 }
 
 #endif /* LWIP_DHCP */
+
+#endif // MAKE_CTRL_NETWORK

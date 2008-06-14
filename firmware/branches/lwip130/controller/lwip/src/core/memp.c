@@ -38,6 +38,9 @@
  *
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #include "lwip/memp.h"
@@ -378,3 +381,6 @@ memp_free(memp_t type, void *mem)
 
   SYS_ARCH_UNPROTECT(old_level);
 }
+
+#endif // MAKE_CONTROL_NETWORK
+

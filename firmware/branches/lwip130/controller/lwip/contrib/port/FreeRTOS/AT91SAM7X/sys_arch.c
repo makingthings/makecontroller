@@ -62,11 +62,16 @@ int intlevel = 0;
 
 /*-----------------------------------------------------------------------------------*/
 //  Creates an empty mailbox.
-// MakingThings - added 'size' param for lwip 1.3.0
+/*
+  MakingThings - added 'size' param for lwip 1.3.0
+  note - I kept archMESG_QUEUE_LENGTH since lwip would come through and pass 0 for size
+  which made everything screwy
+*/
 sys_mbox_t
 sys_mbox_new(int size)
 {
-	xQueueHandle mbox;
+	(void)size;
+  xQueueHandle mbox;
 
 	mbox = xQueueCreate( archMESG_QUEUE_LENGTH, sizeof( void * ) );
 
@@ -359,8 +364,8 @@ sys_thread_t sys_thread_new( char *name, void (* thread)(void *arg), void *arg, 
 
 	if( iCall == 0 )
 	{
-		/* The first time this is called we are creating the lwIP handler. */ // lwipTCP_STACK_SIZE
-		result = xTaskCreate( thread, ( signed portCHAR * ) "lwIP", 500, arg, prio, &CreatedTask );
+		/* The first time this is called we are creating the lwIP handler. */
+		result = xTaskCreate( thread, ( signed portCHAR * ) "lwIP", lwipTCP_STACK_SIZE, arg, prio, &CreatedTask );
 		iCall++;
 	}
 	else
