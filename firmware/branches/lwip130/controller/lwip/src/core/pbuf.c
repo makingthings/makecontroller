@@ -61,6 +61,9 @@
  *
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #include "lwip/stats.h"
@@ -775,3 +778,5 @@ pbuf_copy_partial(struct pbuf *buf, void *dataptr, u16_t len, u16_t offset)
   }
   return copied_total;
 }
+
+#endif // MAKE_CTRL_NETWORK

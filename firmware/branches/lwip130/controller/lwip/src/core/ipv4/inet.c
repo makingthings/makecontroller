@@ -36,6 +36,9 @@
  *
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #include "lwip/inet.h"
@@ -276,3 +279,6 @@ ntohl(u32_t n)
 }
 
 #endif /* (LWIP_PLATFORM_BYTESWAP == 0) && (BYTE_ORDER == LITTLE_ENDIAN) */
+
+#endif // MAKE_CTRL_NETWORK
+

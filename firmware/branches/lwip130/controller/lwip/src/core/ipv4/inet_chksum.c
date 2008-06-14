@@ -36,6 +36,9 @@
  *
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #include "lwip/inet_chksum.h"
@@ -421,3 +424,5 @@ inet_chksum_pbuf(struct pbuf *p)
   }
   return (u16_t)~(acc & 0xffffUL);
 }
+
+#endif // MAKE_CTRL_NETWORK

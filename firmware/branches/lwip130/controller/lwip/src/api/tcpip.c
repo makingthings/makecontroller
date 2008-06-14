@@ -36,6 +36,9 @@
  *
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #if !NO_SYS /* don't build if not configured for use in lwipopts.h */
@@ -519,3 +522,5 @@ tcpip_init(void (* initfunc)(void *), void *arg)
 }
 
 #endif /* !NO_SYS */
+
+#endif // MAKE_CTRL_NETWORK

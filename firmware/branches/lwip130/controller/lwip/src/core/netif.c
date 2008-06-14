@@ -36,6 +36,9 @@
  *
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #include "lwip/def.h"
@@ -497,3 +500,6 @@ void netif_set_link_callback(struct netif *netif, void (* link_callback)(struct 
         netif->link_callback = link_callback;
 }
 #endif /* LWIP_NETIF_LINK_CALLBACK */
+
+#endif // MAKE_CTRL_NETWORK
+

@@ -39,6 +39,9 @@
 /* This is the part of the API that is linked with
    the application */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
@@ -568,3 +571,6 @@ netconn_gethostbyname(const char *name, struct ip_addr *addr)
 #endif /* LWIP_DNS*/
 
 #endif /* LWIP_NETCONN */
+
+#endif // MAKE_CTRL_NETWORK
+

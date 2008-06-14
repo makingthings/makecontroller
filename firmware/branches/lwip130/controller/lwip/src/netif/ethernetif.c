@@ -43,6 +43,9 @@
  * something that better describes your network interface.
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 /* This is all reimplemented by FreeRTOS/MakingThings */
@@ -437,3 +440,6 @@ ethernetif_init(struct netif *netif)
 }
 
 #endif /* 0 */
+
+#endif // MAKE_CTRL_NETWORK
+

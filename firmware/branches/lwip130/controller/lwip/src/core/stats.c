@@ -36,6 +36,9 @@
  *
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #if LWIP_STATS /* don't build if not configured for use in lwipopts.h */
@@ -140,3 +143,4 @@ stats_display(void)
 
 #endif /* LWIP_STATS */
 
+#endif // MAKE_CTRL_NETWORK

@@ -38,6 +38,9 @@
  *
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 #include "lwip/ip.h"
 #include "lwip/def.h"
@@ -612,3 +615,5 @@ ip_debug_print(struct pbuf *p)
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
 }
 #endif /* IP_DEBUG */
+
+#endif // MAKE_CTRL_NETWORK

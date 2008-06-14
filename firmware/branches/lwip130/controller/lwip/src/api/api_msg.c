@@ -36,6 +36,9 @@
  *
  */
 
+#include "config.h" // MakingThings - network system conditionalization
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/opt.h"
 
 #if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
@@ -1200,3 +1203,5 @@ do_gethostbyname(void *arg)
 #endif /* LWIP_DNS */
 
 #endif /* LWIP_NETCONN */
+
+#endif // MAKE_CTRL_NETWORK
