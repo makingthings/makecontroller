@@ -26,6 +26,7 @@
 #include "io.h"
 #include "eeprom.h"
 #include "timer.h"
+#include "rtos.h"
 
 /* lwIP includes. */
 #include "lwip/api.h"
@@ -34,6 +35,7 @@
 #include "lwip/stats.h"
 #include "netif/loopif.h"
 #include "lwip/dhcp.h"
+#include "lwip/dns.h"
 
 /* Low level includes. */
 #include "SAM7_EMAC.h"
@@ -63,11 +65,14 @@ typedef struct Network_
   int TcpOutPort;
   bool TcpRequested;
   void* WebServerTaskPtr;
+  int DnsResolvedAddress;
   #ifdef OSC
   char scratch1[ OSC_SCRATCH_SIZE ];
   char scratch2[ OSC_SCRATCH_SIZE ];
   #endif // OSC
 } NetworkStruct;
+
+xSemaphoreHandle Network_DnsSemaphore;
 
 // a few globals
 NetworkStruct* Network;
@@ -79,6 +84,7 @@ int Network_GetPending( void );
 void Network_DhcpStart( struct netif* netif );
 void Network_DhcpStop( struct netif* netif );
 void Network_SetDefaults( void );
+static void Network_DnsCallback(const char *name, struct ip_addr *addr, void *arg);
 
 /** \defgroup Sockets
   The Sockets system provides a simple interface for creating, reading and writing over both TCP and UDP.  
@@ -565,6 +571,9 @@ int Network_SetActive( int state )
       Network->pending = 1;
       Network->TcpRequested = 0;
       Network->WebServerTaskPtr = NULL;
+      Network_DnsSemaphore = NULL;
+      Network->DnsResolvedAddress = -1;
+
 
       if( !Network_GetValid() ) // if we don't have good values, set the defaults
         Network_SetDefaults( );
@@ -1141,10 +1150,53 @@ void Network_DhcpStart( struct netif* netif )
 void Network_DhcpStop( struct netif* netif )
 {
   dhcp_release( netif );
-//  sys_untimeout( dhcp_fine_tmr, NULL );
-//  sys_untimeout( dhcp_coarse_tmr, NULL );
   netif_set_up(netif); // bring the interface back up, as dhcp_release() takes it down
   return;
+}
+
+/**
+  Resolve the IP address for a given host name.
+  @param name A string specifying the name of the host to look up.
+  @return An integer representation of the IP address of the host.  This can be 
+  passed to the \ref Sockets functions to read and write.  Returns -1 on error.
+*/
+int Network_DnsGetHostByName( const char *name )
+{
+  struct ip_addr addr;
+  int retval = -1;
+  if(!Network_DnsSemaphore)
+  {
+    Network_DnsSemaphore = SemaphoreCreate();
+    if(!Network_DnsSemaphore) // the semaphore was not created successfully
+      return retval;
+    if(!SemaphoreTake(Network_DnsSemaphore, 0)) // do the initial take
+      return retval;
+  }
+  err_t result = dns_gethostbyname( name, &addr, Network_DnsCallback, 0);
+  if(result == ERR_OK) // the result was cached, just return it
+    retval = addr.addr;
+  else if(result == ERR_INPROGRESS) // a lookup is in progress - wait for the callback to signal that we've gotten a response
+  {
+    if(SemaphoreTake(Network_DnsSemaphore, 30000)) // timeout is 30 seconds by default
+      retval = Network->DnsResolvedAddress;
+  }
+  return retval;
+}
+
+// static
+/*
+  The callback for a DNS look up.  The original request is waiting (via semaphore) on
+  this to pop the looked up address in the right spot.
+*/
+void Network_DnsCallback(const char *name, struct ip_addr *addr, void *arg)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(name);
+  if(addr)
+    Network->DnsResolvedAddress = addr->addr;
+  else
+    Network->DnsResolvedAddress = -1; // we didn't get an address, stuff an error value in there
+  SemaphoreGive(Network_DnsSemaphore);
 }
 
 

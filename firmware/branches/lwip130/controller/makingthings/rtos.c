@@ -877,23 +877,22 @@ int QueueReceiveFromISR( void* queue, void* buffer, long* taskWoken )
 
 /**	
 	Create a semaphore. 
-	Create a semaphore by using the existing queue mechanism. The queue length is 1 as this is a binary semaphore. 
-	The data size is 0 as we don't want to actually store any data - we just want to know if the queue is empty or full.
   @param semaphore The semaphore to be created.
 	
   \par Example
   \code
-	void* mySemaphore;
-	SemaphoreCreate( mySemaphore );
+	void* mySemaphore = SemaphoreCreate( );
 	if( mySemaphore != NULL )
 	{
 		// The semaphore was created successfully and can now be used.
 	}
   \endcode
 */
-void SemaphoreCreate( void* semaphore )
+void* SemaphoreCreate( )
 {
-	vSemaphoreCreateBinary( semaphore );
+  void *sem;
+  vSemaphoreCreateBinary( sem );
+  return sem;
 }
 
 #if ( configUSE_MUTEXES == 1 )
