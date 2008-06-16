@@ -5,11 +5,20 @@
 #define __LWIP_DHCP_H__
 
 #include "lwip/opt.h"
+
+#if LWIP_DHCP /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/netif.h"
 #include "lwip/udp.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** period (in seconds) of the application calling dhcp_coarse_tmr() */
 #define DHCP_COARSE_TIMER_SECS 60 
+/** period (in milliseconds) of the application calling dhcp_coarse_tmr() */
+#define DHCP_COARSE_TIMER_MSECS (DHCP_COARSE_TIMER_SECS*1000)
 /** period (in milliseconds) of the application calling dhcp_fine_tmr() */
 #define DHCP_FINE_TIMER_MSECS 500 
 
@@ -50,6 +59,9 @@ struct dhcp
   u32_t offered_t0_lease; /* lease period (in seconds) */
   u32_t offered_t1_renew; /* recommended renew time (usually 50% of lease period) */
   u32_t offered_t2_rebind; /* recommended rebind time (usually 66% of lease period)  */
+#if LWIP_DHCP_AUTOIP_COOP
+  u8_t autoip_coop_state;
+#endif
 /** Patch #1308
  *  TODO: See dhcp.c "TODO"s
  */
@@ -119,9 +131,9 @@ void dhcp_arp_reply(struct netif *netif, struct ip_addr *addr);
 #endif
 
 /** to be called every minute */
-void dhcp_coarse_tmr(void *arg);
+void dhcp_coarse_tmr(void);
 /** to be called every half second */
-void dhcp_fine_tmr(void *arg);
+void dhcp_fine_tmr(void);
  
 /** DHCP message item offsets and length */
 #define DHCP_MSG_OFS (UDP_DATA_OFS)  
@@ -161,6 +173,10 @@ void dhcp_fine_tmr(void *arg);
 /** not yet implemented #define DHCP_RELEASING 11 */
 #define DHCP_BACKING_OFF 12
 #define DHCP_OFF 13
+
+/** AUTOIP cooperatation flags */
+#define DHCP_AUTOIP_COOP_STATE_OFF 0
+#define DHCP_AUTOIP_COOP_STATE_ON 1
  
 #define DHCP_BOOTREQUEST 1
 #define DHCP_BOOTREPLY 2
@@ -210,6 +226,7 @@ void dhcp_fine_tmr(void *arg);
 
 #define DHCP_OPTION_T1 58 /* T1 renewal time */
 #define DHCP_OPTION_T2 59 /* T2 rebinding time */
+#define DHCP_OPTION_US 60
 #define DHCP_OPTION_CLIENT_ID 61
 #define DHCP_OPTION_TFTP_SERVERNAME 66
 #define DHCP_OPTION_BOOTFILE 67
@@ -219,5 +236,11 @@ void dhcp_fine_tmr(void *arg);
 #define DHCP_OVERLOAD_FILE 1
 #define DHCP_OVERLOAD_SNAME  2
 #define DHCP_OVERLOAD_SNAME_FILE 3
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* LWIP_DHCP */
 
 #endif /*__LWIP_DHCP_H__*/

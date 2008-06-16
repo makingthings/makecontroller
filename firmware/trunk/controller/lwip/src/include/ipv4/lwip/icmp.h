@@ -32,13 +32,17 @@
 #ifndef __LWIP_ICMP_H__
 #define __LWIP_ICMP_H__
 
-#include "lwip/arch.h"
-
 #include "lwip/opt.h"
-#include "lwip/pbuf.h"
 
+#if LWIP_ICMP /* don't build if not configured for use in lwipopts.h */
+
+#include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define ICMP_ER 0      /* echo reply */
 #define ICMP_DUR 3     /* destination unreachable */
@@ -108,5 +112,10 @@ PACK_STRUCT_END
 #define ICMPH_TYPE_SET(hdr, type) ((hdr)->_type_code = htons(ICMPH_CODE(hdr) | ((type) << 8)))
 #define ICMPH_CODE_SET(hdr, code) ((hdr)->_type_code = htons((code) | (ICMPH_TYPE(hdr) << 8)))
 
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* LWIP_ICMP */
+
 #endif /* __LWIP_ICMP_H__ */
-    

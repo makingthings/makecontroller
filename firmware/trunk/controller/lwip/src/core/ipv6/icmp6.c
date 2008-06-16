@@ -35,13 +35,13 @@
 
 #include "lwip/opt.h"
 
+#if LWIP_ICMP /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/icmp.h"
 #include "lwip/inet.h"
 #include "lwip/ip.h"
 #include "lwip/def.h"
-
 #include "lwip/stats.h"
-
 
 void
 icmp_input(struct pbuf *p, struct netif *inp)
@@ -51,9 +51,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
   struct ip_hdr *iphdr;
   struct ip_addr tmpaddr;
 
-#ifdef ICMP_STATS
-  ++lwip_stats.icmp.recv;
-#endif /* ICMP_STATS */
+  ICMP_STATS_INC(icmp.recv);
 
   /* TODO: check length before accessing payload! */
 
@@ -67,20 +65,14 @@ icmp_input(struct pbuf *p, struct netif *inp)
       LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
 
       pbuf_free(p);
-#ifdef ICMP_STATS
-      ++lwip_stats.icmp.lenerr;
-#endif /* ICMP_STATS */
-
+      ICMP_STATS_INC(icmp.lenerr);
       return;
     }
     iecho = p->payload;
     iphdr = (struct ip_hdr *)((u8_t *)p->payload - IP_HLEN);
     if (inet_chksum_pbuf(p) != 0) {
       LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo (%"X16_F")\n", inet_chksum_pseudo(p, &(iphdr->src), &(iphdr->dest), IP_PROTO_ICMP, p->tot_len)));
-
-#ifdef ICMP_STATS
-      ++lwip_stats.icmp.chkerr;
-#endif /* ICMP_STATS */
+      ICMP_STATS_INC(icmp.chkerr);
     /*      return;*/
     }
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp: p->len %"S16_F" p->tot_len %"S16_F"\n", p->len, p->tot_len));
@@ -95,9 +87,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       iecho->chksum += htons(ICMP6_ECHO << 8);
     }
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo (%"X16_F")\n", inet_chksum_pseudo(p, &(iphdr->src), &(iphdr->dest), IP_PROTO_ICMP, p->tot_len)));
-#ifdef ICMP_STATS
-    ++lwip_stats.icmp.xmit;
-#endif /* ICMP_STATS */
+    ICMP_STATS_INC(icmp.xmit);
 
     /*    LWIP_DEBUGF("icmp: p->len %"U16_F" p->tot_len %"U16_F"\n", p->len, p->tot_len);*/
     ip_output_if (p, &(iphdr->src), IP_HDRINCL,
@@ -105,10 +95,8 @@ icmp_input(struct pbuf *p, struct netif *inp)
     break;
   default:
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" not supported.\n", (s16_t)type));
-#ifdef ICMP_STATS
-    ++lwip_stats.icmp.proterr;
-    ++lwip_stats.icmp.drop;
-#endif /* ICMP_STATS */
+    ICMP_STATS_INC(icmp.proterr);
+    ICMP_STATS_INC(icmp.drop);
   }
 
   pbuf_free(p);
@@ -121,8 +109,16 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   struct ip_hdr *iphdr;
   struct icmp_dur_hdr *idur;
 
+  /* @todo: can this be PBUF_LINK instead of PBUF_IP? */
   q = pbuf_alloc(PBUF_IP, 8 + IP_HLEN + 8, PBUF_RAM);
   /* ICMP header + IP header + 8 bytes of data */
+  if (q == NULL) {
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_dest_unreach: failed to allocate pbuf for ICMP packet.\n"));
+    pbuf_free(p);
+    return;
+  }
+  LWIP_ASSERT("check that first pbuf can hold icmp message",
+             (q->len >= (8 + IP_HLEN + 8)));
 
   iphdr = p->payload;
 
@@ -130,14 +126,12 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   idur->type = (u8_t)ICMP6_DUR;
   idur->icode = (u8_t)t;
 
-  memcpy((u8_t *)q->payload + 8, p->payload, IP_HLEN + 8);
+  SMEMCPY((u8_t *)q->payload + 8, p->payload, IP_HLEN + 8);
 
   /* calculate checksum */
   idur->chksum = 0;
   idur->chksum = inet_chksum(idur, q->len);
-#ifdef ICMP_STATS
-  ++lwip_stats.icmp.xmit;
-#endif /* ICMP_STATS */
+  ICMP_STATS_INC(icmp.xmit);
 
   ip_output(q, NULL,
       (struct ip_addr *)&(iphdr->src), ICMP_TTL, IP_PROTO_ICMP);
@@ -153,7 +147,16 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
 
   LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded\n"));
 
+  /* @todo: can this be PBUF_LINK instead of PBUF_IP? */
   q = pbuf_alloc(PBUF_IP, 8 + IP_HLEN + 8, PBUF_RAM);
+  /* ICMP header + IP header + 8 bytes of data */
+  if (q == NULL) {
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_dest_unreach: failed to allocate pbuf for ICMP packet.\n"));
+    pbuf_free(p);
+    return;
+  }
+  LWIP_ASSERT("check that first pbuf can hold icmp message",
+             (q->len >= (8 + IP_HLEN + 8)));
 
   iphdr = p->payload;
 
@@ -162,23 +165,15 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   tehdr->icode = (u8_t)t;
 
   /* copy fields from original packet */
-  memcpy((u8_t *)q->payload + 8, (u8_t *)p->payload, IP_HLEN + 8);
+  SMEMCPY((u8_t *)q->payload + 8, (u8_t *)p->payload, IP_HLEN + 8);
 
   /* calculate checksum */
   tehdr->chksum = 0;
   tehdr->chksum = inet_chksum(tehdr, q->len);
-#ifdef ICMP_STATS
-  ++lwip_stats.icmp.xmit;
-#endif /* ICMP_STATS */
+  ICMP_STATS_INC(icmp.xmit);
   ip_output(q, NULL,
       (struct ip_addr *)&(iphdr->src), ICMP_TTL, IP_PROTO_ICMP);
   pbuf_free(q);
 }
 
-
-
-
-
-
-
-
+#endif /* LWIP_ICMP */

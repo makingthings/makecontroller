@@ -32,11 +32,13 @@
 #ifndef __LWIP_INET_H__
 #define __LWIP_INET_H__
 
-#include "lwip/arch.h"
-
 #include "lwip/opt.h"
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 u16_t inet_chksum(void *data, u16_t len);
 u16_t inet_chksum_pbuf(struct pbuf *p);
@@ -57,6 +59,10 @@ u32_t ntohl(u32_t n);
 #endif /* _LINUX_BYTEORDER_GENERIC_H */
 #endif /* _NETINET_IN_H */
 #endif /* _MACHINE_ENDIAN_H_ */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_INET_H__ */
 

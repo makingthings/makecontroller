@@ -58,7 +58,8 @@ The following functions must be implemented by the sys_arch:
   Blocks the thread while waiting for the semaphore to be
   signaled. If the "timeout" argument is non-zero, the thread should
   only be blocked for the specified time (measured in
-  milliseconds).
+  milliseconds). If the "timeout" argument is zero, the thread should be
+  blocked until the semaphore is signalled.
 
   If the timeout argument is non-zero, the return value is the number of
   milliseconds spent waiting for the semaphore to be signaled. If the
@@ -69,9 +70,12 @@ The following functions must be implemented by the sys_arch:
   Notice that lwIP implements a function with a similar name,
   sys_sem_wait(), that uses the sys_arch_sem_wait() function.
 
-- sys_mbox_t sys_mbox_new(void)
+- sys_mbox_t sys_mbox_new(int size)
 
-  Creates an empty mailbox.
+  Creates an empty mailbox for maximum "size" elements. Elements stored
+  in mailboxes are pointers. You have to define macros "_MBOX_SIZE"
+  in your lwipopts.h, or ignore this parameter in your implementation
+  and use a default size.
 
 - void sys_mbox_free(sys_mbox_t mbox)
 
@@ -81,13 +85,20 @@ The following functions must be implemented by the sys_arch:
 
 - void sys_mbox_post(sys_mbox_t mbox, void *msg)
 
-  Posts the "msg" to the mailbox.
+  Posts the "msg" to the mailbox. This function have to block until
+  the "msg" is really posted.
+
+- err_t sys_mbox_trypost(sys_mbox_t mbox, void *msg)
+
+  Try to post the "msg" to the mailbox. Returns ERR_MEM if this one
+  is full, else, ERR_OK if the "msg" is posted.
 
 - u32_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout)
 
   Blocks the thread until a message arrives in the mailbox, but does
   not block the thread longer than "timeout" milliseconds (similar to
-  the sys_arch_sem_wait() function). The "msg" argument is a result
+  the sys_arch_sem_wait() function). If "timeout" is 0, the thread should
+  be blocked until a message arrives. The "msg" argument is a result
   parameter that is set by the function (i.e., by doing "*msg =
   ptr"). The "msg" parameter maybe NULL to indicate that the message
   should be dropped.
@@ -98,6 +109,19 @@ The following functions must be implemented by the sys_arch:
 
   Note that a function with a similar name, sys_mbox_fetch(), is
   implemented by lwIP. 
+
+- u32_t sys_arch_mbox_tryfetch(sys_mbox_t mbox, void **msg)
+
+  This is similar to sys_arch_mbox_fetch, however if a message is not
+  present in the mailbox, it immediately returns with the code
+  SYS_MBOX_EMPTY. On success 0 is returned.
+
+  To allow for efficient implementations, this can be defined as a
+  function-like macro in sys_arch.h instead of a normal function. For
+  example, a naive implementation could be:
+    #define sys_arch_mbox_tryfetch(mbox,msg) \
+      sys_arch_mbox_fetch(mbox,msg,1)
+  although this would introduce unnecessary delays.
   
 - struct sys_timeouts *sys_arch_timeouts(void)
 
@@ -107,7 +131,7 @@ The following functions must be implemented by the sys_arch:
   pointer to a linked list of timeouts. This function is called by
   the lwIP timeout scheduler and must not return a NULL value. 
 
-  In a single threadd sys_arch implementation, this function will
+  In a single thread sys_arch implementation, this function will
   simply return a pointer to a global sys_timeouts variable stored in
   the sys_arch module.
   
@@ -115,12 +139,13 @@ If threads are supported by the underlying operating system and if
 such functionality is needed in lwIP, the following function will have
 to be implemented as well:
 
-- sys_thread_t sys_thread_new(void (* thread)(void *arg), void *arg, int prio)
+- sys_thread_t sys_thread_new(char *name, void (* thread)(void *arg), void *arg, int stacksize, int prio)
 
-  Starts a new thread with priority "prio" that will begin its execution in the
-  function "thread()". The "arg" argument will be passed as an argument to the
-  thread() function. The id of the new thread is returned. Both the id and
-  the priority are system dependent.
+  Starts a new thread named "name" with priority "prio" that will begin its
+  execution in the function "thread()". The "arg" argument will be passed as an
+  argument to the thread() function. The stack size to used for this thread is
+  the "stacksize" parameter. The id of the new thread is returned. Both the id
+  and the priority are system dependent.
 
 - sys_prot_t sys_arch_protect(void)
 
@@ -142,6 +167,13 @@ to be implemented as well:
   value specified by pval. See the documentation for sys_arch_protect() for
   more information. This function is only required if your port is supporting
   an operating system.
+
+Note:
+
+Be carefull with using mem_malloc() in sys_arch. When malloc() refers to
+mem_malloc() you can run into a circular function call problem. In mem.c
+mem_init() tries to allcate a semaphore using mem_malloc, which of course
+can't be performed when sys_arch uses mem_malloc.
 
 -------------------------------------------------------------------------------
 Additional files required for the "OS support" emulation layer:
