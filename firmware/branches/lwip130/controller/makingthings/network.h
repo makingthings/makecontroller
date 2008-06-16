@@ -76,6 +76,9 @@ void DatagramSocketClose( void* socket );
 void Network_SetDhcpEnabled( int enabled );
 int Network_GetDhcpEnabled( void );
 
+// DNS stuff
+int Network_DnsGetHostByName( const char *name );
+
 // WebServer Stuff
 void Network_SetWebServerEnabled( int enabled );
 int Network_GetWebServerEnabled( void );
