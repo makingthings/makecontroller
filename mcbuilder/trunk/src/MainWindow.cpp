@@ -898,10 +898,11 @@ void MainWindow::loadExamples( )
 		QMenu *exampleMenu = new QMenu(category, this);
 		menuExamples->addMenu(exampleMenu);
 		QDir exampleDir(dir.filePath(category));
-		QStringList examples = exampleDir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
-		foreach(QString example, examples)
+		QFileInfoList examples = exampleDir.entryInfoList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
+		foreach(QFileInfo example, examples)
 		{
-			QAction *a = new QAction(example, exampleMenu);
+			QAction *a = new QAction(example.baseName(), exampleMenu); // use the base name for the name in the menu
+      a->setData(example.filePath()); // store the path in the action's data
 			exampleMenu->addAction(a);
 		}
 	}
@@ -913,10 +914,7 @@ void MainWindow::loadExamples( )
 */
 void MainWindow::onExample(QAction *example)
 {
-	QMenu *menu = (QMenu*)example->parent();
-	QString examplePath = QDir::currentPath();
-	examplePath += "/examples/" + menu->title() + "/" + example->text();
-	openProject(examplePath);
+	openProject(example->data().toString());
 }
 
 /*
