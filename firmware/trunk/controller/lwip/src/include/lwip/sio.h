@@ -32,7 +32,11 @@
  * It needs to be implemented by those platforms which need SLIP or PPP
  */
 
-#include "arch/cc.h"
+#include "lwip/arch.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifndef __sio_fd_t_defined
 typedef void * sio_fd_t;
@@ -60,4 +64,8 @@ u32_t sio_write(sio_fd_t, u8_t *, u32_t);
 
 #ifndef sio_read_abort
 void sio_read_abort(sio_fd_t);
+#endif
+
+#ifdef __cplusplus
+}
 #endif

@@ -38,6 +38,7 @@ Changes from V3.2.4
 
 */
 
+
 #ifndef SAM_7_EMAC_H
 #define SAM_7_EMAC_H
 

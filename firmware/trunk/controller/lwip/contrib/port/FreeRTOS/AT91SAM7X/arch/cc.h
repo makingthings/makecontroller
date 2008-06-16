@@ -49,4 +49,9 @@ typedef int sys_prot_t;
 #define PACK_STRUCT_END
 #define PACK_STRUCT_FIELD(x) x
 
+// MakingThings - add for lwip 1.3.0
+// hmm...to be implemented?
+#define LWIP_PLATFORM_ASSERT(x)  // fatal, print message and abandon execution.
+#define LWIP_PLATFORM_DIAG(x)  // non-fatal, print a message
+
 #endif /* __CC_H__ */
