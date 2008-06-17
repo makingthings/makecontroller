@@ -33,7 +33,7 @@ struct FastTimer_ FastTimer;
 
 static int FastTimer_Init( void );
 static int FastTimer_Deinit( void );
-static int FastTimer_GetCount( void );
+//static int FastTimer_GetCount( void );
 static int FastTimer_GetTimeTarget( void );
 static int FastTimer_GetTime( void );
 static void FastTimer_SetTimeTarget( int );
@@ -277,7 +277,7 @@ int FastTimer_Cancel( FastTimerEntry* fastTimerEntry )
 // INTERNAL
 //
 
-
+/*
 int FastTimer_GetCount()
 {
   int count;
@@ -287,6 +287,7 @@ int FastTimer_GetCount()
   TaskExitCritical();
   return count;
 }
+*/
 
 // Enable the timer.  Disable is performed by the ISR when timer is at an end
 void FastTimer_Enable( )

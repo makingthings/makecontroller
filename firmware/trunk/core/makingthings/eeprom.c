@@ -52,7 +52,7 @@ static int  Eeprom_Start( void );
 static int  Eeprom_Stop( void );
 
 static void Eeprom_WriteEnable( void );
-static void Eeprom_WriteDisable( void );
+//static void Eeprom_WriteDisable( void );
 
 static void Eeprom_Ready( void );
 
@@ -249,11 +249,12 @@ void Eeprom_WriteEnable()
   Spi_ReadWriteBlock( EEPROM_DEVICE, &c, 1 );
 }
 
-/**	
+/*
 	Disable writing from the EEPROM on the Make Controller Board.
 	@param none.
   @return none.
 */
+/* commented out to avoid 'defined but not used' error
 void Eeprom_WriteDisable()
 {
   uchar c;
@@ -261,6 +262,7 @@ void Eeprom_WriteDisable()
   
   Spi_ReadWriteBlock( EEPROM_DEVICE, &c, 1 );
 }
+*/
 
 void Eeprom_Ready( void )
 {

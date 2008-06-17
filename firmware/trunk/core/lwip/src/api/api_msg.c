@@ -1167,8 +1167,9 @@ static void
 do_dns_found(const char *name, struct ip_addr *ipaddr, void *arg)
 {
   struct dns_api_msg *msg = (struct dns_api_msg*)arg;
-
-  LWIP_ASSERT("DNS response for wrong host name", strcmp(msg->name, name) == 0);
+  
+  LWIP_UNUSED_ARG(name); // MakingThings - not using any 'assert' for the Make Controller at the moment...avoid compiler warning
+  //LWIP_ASSERT("DNS response for wrong host name", strcmp(msg->name, name) == 0);
 
   if (ipaddr == NULL) {
     /* timeout or memory error */

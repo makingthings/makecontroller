@@ -170,7 +170,7 @@ void FastTimer_Isr( void )
       if ( FastTimer.nextTime > 0xFF00 )
         FastTimer.nextTime = 0xFF00;
       // Make sure it's not too small
-      if ( FastTimer.nextTime < AT91C_BASE_TC2->TC_CV + 20 )
+      if ( FastTimer.nextTime < (int)AT91C_BASE_TC2->TC_CV + 20 )
         FastTimer.nextTime = AT91C_BASE_TC2->TC_CV + 20;
       AT91C_BASE_TC2->TC_RC = FastTimer.nextTime;
     }

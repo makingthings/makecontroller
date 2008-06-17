@@ -34,7 +34,7 @@ struct Timer_ Timer;
 
 static int Timer_Init( void );
 static int Timer_Deinit( void );
-static int Timer_GetCount( void );
+//static int Timer_GetCount( void );
 static int Timer_GetTimeTarget( void );
 static int Timer_GetTime( void );
 static void Timer_SetTimeTarget( int );
@@ -266,7 +266,7 @@ int Timer_Cancel( TimerEntry* timerEntry )
 // INTERNAL
 //
 
-
+/* commented out to avoid 'defined but not used' error
 int Timer_GetCount()
 {
   int count;
@@ -276,6 +276,7 @@ int Timer_GetCount()
   TaskExitCritical();
   return count;
 }
+*/
 
 // Enable the timer.  Disable is performed by the ISR when timer is at an end
 void Timer_Enable( )
