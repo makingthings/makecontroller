@@ -81,7 +81,7 @@ struct AnalogIn_* AnalogIn;
 
   \todo Provide multi-channel conversion routines
 
-	\ingroup Controller
+	\ingroup Core
 	@{
 */
 

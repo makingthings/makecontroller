@@ -45,7 +45,7 @@ DipSwitchSubsystem* DipSwitch;
 /** \defgroup DipSwitch DIP Switch
 * The DIP Switch subsystem reads values in from the 8 position DIP Switch (0 - 255) on the Application Board.
   Mask off the appropriate bits in the value returned from the DIP switch to determine whether a particular channel is on or off.
-* \ingroup AppBoard
+* \ingroup CoreLibraries
 * @{
 */
 

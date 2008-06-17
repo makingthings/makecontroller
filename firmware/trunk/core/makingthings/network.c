@@ -93,7 +93,7 @@ static void Network_DnsCallback(const char *name, struct ip_addr *addr, void *ar
 	- DatagramSocket - sockets for \b UDP communication
 	- Socket - sockets for \b TCP communication
 	- ServerSocket - sockets for accepting \b incoming TCP client connections
-  \ingroup Controller
+  \ingroup Core
   @{
 */
 
@@ -550,7 +550,7 @@ void DatagramSocketClose( void* socket )
 	displays some stats about the board's current state through a web interface.  It is intended mainly as
 	a starting point for more useful web applications.  See the source in webserver.c.
 
-  \ingroup Controller
+  \ingroup Core
   @{
 */
 

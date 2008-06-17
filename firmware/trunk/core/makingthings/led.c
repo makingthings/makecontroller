@@ -50,7 +50,7 @@ static int Led_Stop( void );
 	a power indicator and cannot be controlled by the Controller.  The green LED can be used for
 	program feedback.  In many MakingThings applications, for example, it is set to blink once a
 	second, showing the board's "heartbeat" and letting the user know that the board is running.
-* \ingroup Controller
+* \ingroup Core
 * @{
 */
 

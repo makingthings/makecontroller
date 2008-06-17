@@ -38,7 +38,7 @@ typedef struct
 
 XBeeSubsystem* XBee;
 
-/** \defgroup XBee
+/** \defgroup XBee XBee
 	Communicate with XBee (Zigbee) wireless modules via the Make Controller's serial port.
   
   XBee modules from \b MaxStream are small, cheap ($19 each), wireless \b RF (radio frequency) modules that
@@ -91,7 +91,7 @@ XBeeSubsystem* XBee;
 	be sent to the XBee module attached to the Make Controller.  The \b XBee_ functions deal with sending and receiving 
 	messages to other XBee modules not connected to the Make Controller.
 
-  \ingroup Controller
+  \ingroup CoreLibraries
   @{
 */
 

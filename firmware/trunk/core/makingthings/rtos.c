@@ -42,7 +42,7 @@ void* TaskGetNext_internal( void* task );
 	determine when each of those tasks should be given processor time.
 	
 	More info at http://www.freertos.org
-* \ingroup Controller
+* \ingroup Core
 */
 
 /** \defgroup Tasks Tasks

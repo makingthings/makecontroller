@@ -40,7 +40,7 @@ typedef struct Debug_
 
 DebugStruct* DebugData;
 
-/** \defgroup Debug
+/** \defgroup Debug OSC Debug
 	The Debug subsystem offers a simple way to send debug messages back from the MAKE Controller via OSC.
 	Even without single-stepping through the code running on the MAKE Controller, it is still easy to get helpful
 	debug information about the program through the Debug subsystem.
@@ -55,7 +55,7 @@ DebugStruct* DebugData;
   - 2 - Warning messages
   - 3 - Normal/test messages
 
-	\ingroup Controller
+	\ingroup Core
 	@{
 */
 

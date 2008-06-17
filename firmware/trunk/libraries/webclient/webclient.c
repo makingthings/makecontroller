@@ -37,9 +37,7 @@
   There's currently not a method provided for name resolution - you can always ping the 
   server you want to communicate with to see its IP address, and just use that.
 
-  \todo Get a DNS solution together.
-
-	\ingroup Controller
+	\ingroup CoreLibraries
 	@{
 */
 

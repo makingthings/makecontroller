@@ -149,7 +149,7 @@ void Oscillator_SaveConstants( OscillatorStruct *fp );
     etc.
 */
 
-/** \defgroup Poly Poly
+/* \defgroup Poly Poly
 	The Poly subsystem controls onboard pre-baked functions.
 * \ingroup Controller
 * @{

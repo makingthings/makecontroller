@@ -69,7 +69,7 @@ static int Eeprom_users;
 
   Internally, Eeprom relies on \ref Spi, so activating Eeprom also activates \ref Spi.
 
-	\ingroup Controller
+	\ingroup Core
 	@{
 */
 
