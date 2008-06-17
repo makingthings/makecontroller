@@ -132,7 +132,9 @@
         </folder>
         <folder Name="Startup" >
           <file file_name="../../core/startup/AT91SAM7_Startup.s" Name="AT91SAM7_Startup.s" />
-          <file file_name="../../core/startup/AT91SAM7_Target.js" Name="AT91SAM7_Target.js" />
+          <file file_name="../../core/startup/AT91SAM7_Target.js" Name="AT91SAM7_Target.js" >
+		        <configuration Name="Common" file_type="Reset Script" />
+		      </file>
           <file file_name="../../core/startup/AT91SAM7S256_MemoryMap.xml" Name="AT91SAM7S256_MemoryMap.xml" />
           <file file_name="../../core/startup/crt0.s" Name="crt0.s" />
           <file file_name="../../core/startup/flash_placement.xml" Name="flash_placement.xml" />
@@ -174,14 +176,4 @@
   <configuration inherited_configurations="THUMB;Flash;Release" Name="THUMB Flash Release" />
   <configuration c_preprocessor_definitions="NDEBUG" link_include_startup_code="No" build_debug_information="No" Name="Release" />
   <configuration arm_library_instruction_set="THUMB" gcc_entry_point="0x100000" build_quietly="Yes" c_preprocessor_definitions="SAM7_GCC;THUMB_INTERWORK;SUPERVISOR_START" c_user_include_directories="." link_include_startup_code="Yes" arm_instruction_set="THUMB" c_preprocessor_undefinitions="" c_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wmissing-prototypes;-Wmissing-declarations;-Wno-strict-aliasing" arm_linker_stack_size="0" Name="Common" c_system_include_directories="$(StudioDir)/include" arm_linker_heap_size="0" />
-  <project Name="heavy_external" >
-    <configuration arm_target_loader_parameter="18432000" Target="AT91SAM7X256" arm_simulator_memory_simulation_parameter="0x20000;0x4000" property_groups_file_path="$(StudioDir)/targets/Atmel_AT91SAM7/propertyGroups.xml" oscillator_frequency="18.432MHz" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" gcc_entry_point="reset_handler" external_build_file_name="C:/mtcode/make/firmware_103/heavy/output/heavy.elf" arm_architecture="v4T" project_directory="" project_type="Externally Built Executable" Name="Common" arm_target_debug_interface_type="ARM7TDI" arm_core_type="ARM7TDMI" arm_simulator_memory_simulation_filename="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7SimulatorMemory.dll" />
-    <configuration linker_section_placement_file="$(StudioDir)/targets/sram_placement.xml" target_reset_script="RAMReset()" Name="RAM" Placement="RAM" />
-    <configuration arm_target_flash_loader_file_path="$(StudioDir)/targets/Atmel_AT91SAM7/Release/Loader.elf" linker_section_placement_file="$(StudioDir)/targets/flash_placement.xml" target_reset_script="FLASHReset()" Name="Flash" Placement="Flash" />
-    <folder Name="System Files" >
-      <file file_name="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7_Target.js" Name="AT91SAM7_Target.js" >
-        <configuration Name="Common" file_type="Reset Script" />
-      </file>
-    </folder>
-  </project>
 </solution>
