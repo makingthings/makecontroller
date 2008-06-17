@@ -91,7 +91,7 @@ void Stepper_SetAll( int portAOn, int portBOn, int portAOff, int portBOff );
 
 Stepper_* Stepper;
 
-/** \defgroup Stepper
+/** \defgroup Stepper Stepper
   The Stepper Motor subsystem provides speed and position control for one or two stepper motors.
   Up to 2 stepper motors can be controlled with the Make Application Board.
   Specify settings for your stepper motor by setting whether it's:
@@ -105,7 +105,7 @@ Stepper_* Stepper;
   keeps an internal count of how many steps the motor has taken in order to keep track of where it is.
 
   For relative positioning, use Stepper_Step( ) to simply move a number of steps from the current position.
-* \ingroup AppBoard
+* \ingroup CoreLibraries
 * @{
 */
 

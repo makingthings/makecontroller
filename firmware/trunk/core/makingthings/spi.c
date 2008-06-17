@@ -88,7 +88,7 @@ static int  Spi_GetChannelPeripheralA( int channel );
    The SPI subsystem allows the MAKE Controller to communicate with peripheral devices via SPI.  
    See \ref Eeprom module for an example use.
   
-   \ingroup Controller
+   \ingroup Core
 * @{
 */
 

@@ -68,7 +68,7 @@ static int PwmOut_users[ PWMOUT_COUNT ];
 
 static void PwmOut_GetIos( int index, int* ioA, int* ioB );
 
-/** \defgroup PwmOut
+/** \defgroup PwmOut PWM Out
 	The PWM Out subsystem underlies the DC Motor subsystem and controls the 4 PWM signals on the SAM7X.
 	Each PWM device controls a pair of Digital Outs - an A and a B channel:
 	- PwmOut 0 - Digital Outs 0 (A) and 1 (B).
@@ -78,7 +78,7 @@ static void PwmOut_GetIos( int index, int* ioA, int* ioB );
 	
 	The A and B channels of a PWM device can be set independently to be inverted, or not, from one another
 	in order to control motors, lights, etc.
-	\ingroup AppBoard
+	\ingroup CoreLibraries
 	@{
 */
 

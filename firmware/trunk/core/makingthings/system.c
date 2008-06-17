@@ -53,7 +53,7 @@ SystemS* System;
 /** \defgroup System
     The System subsystem monitors and controls several aspects of the system. 
 
-* \ingroup Controller
+* \ingroup Core
 * @{
 */
 

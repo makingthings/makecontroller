@@ -64,7 +64,7 @@ struct Pwm_
 	of the Application Board, and in fact the AppBoard PwmOut relies on the Controller Board PWM.
 	
 	@see PWM_Out
-	\ingroup Controller
+	\ingroup Core
 	@{
 */
 

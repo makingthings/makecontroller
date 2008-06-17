@@ -52,7 +52,7 @@ void FastTimer_Isr( void );
   - In your callback function, you must not sleep or make any FreeRTOS-related calls.
 
   \todo Allow the fast timer callbacks to cooperate with the \ref RTOS
-* \ingroup Controller
+* \ingroup Core
 * @{
 */
 

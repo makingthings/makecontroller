@@ -57,10 +57,9 @@ static int Serial_SetDetails( void );
   - parity - the parity policy (-1 is odd, 0 is none and 1 is even).  Even is the default setting.
   - hardwareHandshake - whether hardware handshaking is used or not.  HardwareHandshaking is off by default.
 
-  \todo Need to complete support for the Hardware Handshaking
   \todo Convert to DMA interface for higher performance.
 
-	\ingroup Controller
+	\ingroup Core
 	@{
 */
 

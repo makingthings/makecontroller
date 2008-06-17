@@ -15,11 +15,7 @@
 
 *********************************************************************************/
 
-/** \file controller.c	
-	Functions available to the Make Controller Board.
-*/
-
-/** @defgroup Controller
+/** @defgroup Core
 	Functions available to the Make Controller Board.
 	
 	The \b Controller module provides an API to devices that are all included on the Make Controller, no matter
@@ -89,21 +85,4 @@
 	We look forward to hearing about your projects!
 */
 
-/*---------------------------------------------------------------------------------------------------------------*/
-
-
-#include "controller.h"
-#include "pwm.h"
-#include "adc.h"
-#include "spi.h"
-#include "USB-CDC.h"
-
-/**	
-	Controller Init.
-	Initialize the Make Processor Board to work with the Make Application Board.
-*/
-void Controller_Start()
-{
-
-}
 

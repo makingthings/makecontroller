@@ -102,7 +102,7 @@ static int WebServer_WriteResponseOk_( char* content, void* socket );
   This handler can be adapted/customized to provide access to other parts of the Make Controller if desired.
   Give a quick search for \b WebServer_Demo in webserver.c to see its source.
 
-	\ingroup Controller
+	\ingroup CoreLibraries
 	@{
 */
 

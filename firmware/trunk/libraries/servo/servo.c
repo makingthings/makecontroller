@@ -94,7 +94,7 @@ typedef struct ServoS
 
 Servo_* Servo;
 
-/** \defgroup Servo
+/** \defgroup Servo Servo
   The Servo Motor subsystem controls speed and position control for up to 4 standard servo motors.
   Standard servos have a range of motion of approximately 180 degrees, although this varies from motor to motor.
   Be sure to plug in the connector with the correct orientation with regard to the GND/5V signals on the board.
@@ -105,7 +105,7 @@ Servo_* Servo;
   
   You can also specify the speed with which the motors will respond to new position commands - a high
   value will result in an immediate response, while a lower value can offer some smoothing when appropriate.
-* \ingroup AppBoard
+* \ingroup CoreLibraries
 * @{
 */
 

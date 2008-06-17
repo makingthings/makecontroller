@@ -90,7 +90,7 @@ static int Io_TestPins( short users, bool lock );
 
   \todo Add glitch filter control
   \todo Implement more bits-style functions
-  \ingroup Controller
+  \ingroup Core
   @{
 */
 

@@ -727,7 +727,7 @@ int Osc_Quicky( int channel, char* preamble, char* string )
 	
 	Check the how-to at http://www.makingthings.com/documentation/how-to/create-your-own-osc-subsystem for details.
 	
-	\ingroup Controller	
+	\ingroup Core	
 */
 
 /**	

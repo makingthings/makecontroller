@@ -64,7 +64,7 @@ Usb_* Usb = NULL;
   COM port.  See also the \b mchelper codebase for code snippets.
 
   \todo expand usb support to include emulation of other kinds of USB device - mouse, keyboard, etc.
-* \ingroup Controller
+* \ingroup Core
 * @{
 */
 

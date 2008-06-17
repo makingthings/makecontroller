@@ -71,9 +71,9 @@ extern void ( CanIsr_Wrapper )( void );
 
 struct Can_ Can;
 
-/** \defgroup Can
+/* \defgroup Can
 * The CAN (Controller Area Network) subsystem allows for fast and reliable board-to-board communication.
-* \ingroup Controller
+* \ingroup Core
 * @{
 */
 

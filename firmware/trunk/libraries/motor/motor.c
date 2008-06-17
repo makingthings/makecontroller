@@ -40,7 +40,7 @@ struct Motor_
 
 static int Motor_SetFinal( int index, struct Motor_ * mp );
 
-/** \defgroup Motor
+/** \defgroup Motor Motor
 The Motor subsystem provides forward/reverse and speed control for up to 4 DC motors across the 8 high current outputs.
 Each motor controller is composed of 2 adjacent Digital Outs on the Make Application Board:
 - motor 0 - Digital Outs 0 and 1.
@@ -50,7 +50,7 @@ Each motor controller is composed of 2 adjacent Digital Outs on the Make Applica
 
 Other output devices cannot be used simultaneously - for example, the DigitalOuts cannot be called without
 first setting overlapping the DC motor I/O lines to inactive.
-\ingroup AppBoard
+\ingroup CoreLibraries
 @{
 */
 
