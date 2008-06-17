@@ -220,7 +220,7 @@ int  Io_Test( void );
 /* @} */
 
 /**
-\defgroup IoBits
+\defgroup IoBits IO Bits
   Bit values (1 << 0-63) for each of the processor's IO lines.  Since there are 
   so many, the data type is a long long - (a 64 bit number).
 \ingroup Io

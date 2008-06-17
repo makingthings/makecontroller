@@ -58,7 +58,7 @@ struct Pwm_
   int duty[ PWM_COUNT ];
 } Pwm;
 
-/** \defgroup Pwm
+/** \defgroup Pwm PWM
 	The Pwm subsystem provides control of the 4 PWM outputs on the SAM7X.
 	The Pwm subsystem of the Controller Board can be used independently from the PWM_Out subsystem
 	of the Application Board, and in fact the AppBoard PwmOut relies on the Controller Board PWM.

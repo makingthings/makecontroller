@@ -42,7 +42,7 @@ static void Timer_Enable( void );
 
 void Timer_Isr( void );
 
-/** \defgroup Timer
+/** \defgroup Timer Timer
 * The Timer subsystem provides a timer in a millisecond timeframe.
   For higher resolution timing, check the \ref FastTimer
 

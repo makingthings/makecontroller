@@ -877,7 +877,7 @@ int QueueReceiveFromISR( void* queue, void* buffer, long* taskWoken )
 
 /**	
 	Create a semaphore. 
-  @param semaphore The semaphore to be created.
+  @return A pointer to the newly created semaphore, or NULL on failure.
 	
   \par Example
   \code

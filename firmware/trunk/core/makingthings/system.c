@@ -50,7 +50,7 @@ typedef struct System_
 
 SystemS* System;
 
-/** \defgroup System
+/** \defgroup System System
     The System subsystem monitors and controls several aspects of the system. 
 
 * \ingroup Core

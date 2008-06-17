@@ -86,7 +86,7 @@ void Network_DhcpStop( struct netif* netif );
 void Network_SetDefaults( void );
 static void Network_DnsCallback(const char *name, struct ip_addr *addr, void *arg);
 
-/** \defgroup Sockets
+/** \defgroup Sockets Sockets
   The Sockets system provides a simple interface for creating, reading and writing over both TCP and UDP.  
   This subsystem is a light wrapper around LwIP, the open source TCP/IP stack used by the Make Controller Kit.
 	There are 3 groups of socket functions:
@@ -531,7 +531,7 @@ void DatagramSocketClose( void* socket )
 /** @}
 */
 
-/** \defgroup Network
+/** \defgroup Network Network
   The Network subsystem manages the Ethernet controller.
 	
   Like any other network enabled device, the Make Controller has an IP address, net mask and gateway.
