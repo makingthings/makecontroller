@@ -196,6 +196,9 @@ int WebClient_Post( int address, int port, char* path, char* hostname, char* buf
     return CONTROLLER_ERROR_BAD_ADDRESS;
 }
 
+/** @}
+*/
+
 #endif // MAKE_CTRL_NETWORK
 
 

@@ -15,7 +15,7 @@
 
 *********************************************************************************/
 
-/** @defgroup OSC
+/** @defgroup OSC OSC
 	Communicate with the Make Controller Kit via OSC.
 	
 	\section osc OSC

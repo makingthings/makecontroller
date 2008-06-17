@@ -15,12 +15,12 @@
 
 *********************************************************************************/
 
-/** @defgroup Core
+/** @defgroup Core Core
 	Functions available to the Make Controller Board.
 	
-	The \b Controller module provides an API to devices that are all included on the Make Controller, no matter
-	what interface electronics are used around it.  The \ref AppBoard module extends the Controller module to include
-	the devices found on the Make Application Board.
+	The \b Core module provides an API to devices that are all included on the Make Controller, no matter
+	what interface electronics are used around it.  The \ref CoreLibraries module extends the Core module to provide
+	additional functionality.
 */
 
 /**
@@ -46,9 +46,9 @@
   To ensure that the software environment for the Controller is consistent, regardless of the interface hardware,
 	the code for the Controller Board has been kept separate from the code for the Application Board to make this as easy
 	as possible:
-	- The \ref Controller module provides the core routines required for the Make Controller Board.
-	- The \ref AppBoard module provides routines that work with the Make Application Board, and are often based on or use
-	code from the ControllerBoard module.
+	- The \ref Core module provides the core routines required for the Make Controller Board.
+	- The \ref CoreLibraries module provides routines that work with the Make Application Board, and are often based on or use
+	code from the Core module.
 	- The \ref OSC module provides a communication interface to the Make Controller Kit from other computers and devices.
 
 	Software for the Make Controller Kit is open source, and thus subject to the licensing of each module of code.  Be sure to acquaint 

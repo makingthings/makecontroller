@@ -69,7 +69,7 @@ static int Io_TestStartStopBits( void );
 static int Io_TestPins( short users, bool lock );
 */
 
-/** \defgroup Io
+/** \defgroup Io IO
 	A mechanism to manage the 64 parallel IO lines on the controller.
 
   Control of the SAM7X's IO lines is more complex than most microcontrollers.  All 

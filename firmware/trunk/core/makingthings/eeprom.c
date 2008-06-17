@@ -58,7 +58,7 @@ static void Eeprom_Ready( void );
 
 static int Eeprom_users;
 
-/** \defgroup Eeprom
+/** \defgroup Eeprom EEPROM
 	Eeprom allows for the persistent storage of 32k bytes data. 
   The last 1k (1024) bytes of this space are reserved for system
   use storing things like the board's IP address, serial number, build version, etc.  Get the last

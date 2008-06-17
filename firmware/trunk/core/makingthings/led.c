@@ -44,7 +44,7 @@ static int Led_Stop( void );
 * be asked to flash at various times
 */
 
-/** \defgroup Led
+/** \defgroup Led LED
 	The Led subsystem controls the single green LED on the MAKE Controller Board.
 	There are two LEDs on the MAKE Controller Board - one green and one red.  The red LED is simply
 	a power indicator and cannot be controlled by the Controller.  The green LED can be used for

@@ -84,7 +84,7 @@ static void Spi_Deinit( void );
 static int  Spi_GetChannelIo( int channel );
 static int  Spi_GetChannelPeripheralA( int channel );
 
-/** \defgroup Spi
+/** \defgroup Spi SPI
    The SPI subsystem allows the MAKE Controller to communicate with peripheral devices via SPI.  
    See \ref Eeprom module for an example use.
   
