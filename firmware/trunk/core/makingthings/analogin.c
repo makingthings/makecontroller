@@ -247,7 +247,7 @@ int AnalogIn_GetValueMulti( int mask, int values[] )
     return -1;
 
   //Figure out which of the channels we want to read
-  int* reg = &AT91C_BASE_ADC->ADC_CDR0; // the address of the first ADC result register
+  volatile uint* reg = &AT91C_BASE_ADC->ADC_CDR0; // the address of the first ADC result register
   for( i = 0; i < 8; i++ )
   {
     if( mask >> i & 1 )
