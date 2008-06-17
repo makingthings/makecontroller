@@ -954,7 +954,7 @@ int SemaphoreGive( void* semaphore )
 
 /**	
 	Release a semaphore from within an ISR. 
-	This must not be used from an ISR. See SemaphoreGiveFromISR( ) for an alternative which can be used from an ISR.
+	See SemaphoreGive( ) for an alternative which can be used when not in an ISR.
   @param semaphore The semaphore to release.
 	@param taskWoken This is included so an ISR can make multiple calls to SemaphoreGiveFromISR() from a single interrupt. 
 	The first call should always pass in 0. Subsequent calls should pass in the value returned from the previous call. 	
