@@ -7,7 +7,6 @@
 #define CONFIG_H
 
 #include "controller.h"   // ...everybody uses the MAKE Controller Board
-#include "appboard.h"     // ...if you're using the MAKE Application Board
 #include "error.h"
 
 #define FIRMWARE_NAME          "Heavy svn"
@@ -24,7 +23,6 @@
 #define MAKE_CTRL_USB     // enable the USB system
 #define MAKE_CTRL_NETWORK // enable the Ethernet system
 #define OSC               // enable the OSC system
-#define XBEE              // enable the XBee (ZigBee) system
 
 // ---------------------------------------------------------------
 // Network options

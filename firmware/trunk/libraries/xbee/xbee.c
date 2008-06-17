@@ -15,7 +15,6 @@
 
 *********************************************************************************/
 #include "config.h"
-#ifdef XBEE
 
 #include "stdlib.h"
 #include <stdio.h>
@@ -1928,5 +1927,4 @@ int XBeeOsc_Async( int channel )
 
 #endif // OSC
 
-#endif // XBEE
 
