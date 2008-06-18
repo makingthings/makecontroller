@@ -15,11 +15,22 @@
 
 *********************************************************************************/
 
-/** @defgroup Libraries Libraries
- Libraries that extend core functionality.
- The MAKE Application Board provides an interface between the MAKE Controller Board and common electronic devices.
- Several subsystems extend the capability of the Controller Board, each with their own functions.
+#ifndef JSON_H
+#define JSON_H
 
- If you're using your own interface electronics around the Make Controller, the AppBoard module may not 
- necessarily work for you.
-*/
+#include "types.h"
+
+void Json_Reset(char *jsonbuf);
+
+char* JsonEncode_ObjectOpen(char *buf, int *remaining);
+char* JsonEncode_ObjectKey(char *buf, const char *key, int *remaining);
+char* JsonEncode_ObjectClose(char *buf, int *remaining);
+char* JsonEncode_ArrayOpen(char *buf, int *remaining);
+char* JsonEncode_ArrayClose(char *buf, int *remaining);
+char* JsonEncode_String(char *buf, const char *string, int *remaining);
+char* JsonEncode_Int(char *buf, int value, int *remaining);
+char* JsonEncode_Bool(char *buf, bool value, int *remaining);
+
+#endif /* JSON_H */
+
+

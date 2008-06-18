@@ -105,7 +105,7 @@ Servo_* Servo;
   
   You can also specify the speed with which the motors will respond to new position commands - a high
   value will result in an immediate response, while a lower value can offer some smoothing when appropriate.
-* \ingroup CoreLibraries
+* \ingroup Libraries
 * @{
 */
 

@@ -57,7 +57,7 @@ static int AppLed_users[ APPLED_COUNT ];
 
 /** \defgroup AppLed Application Board LEDs
 * The Application Board LED subsystem controls the 4 LEDs on the Application Board, for status and program feedback.
-* \ingroup CoreLibraries
+* \ingroup Libraries
 * @{
 */
 

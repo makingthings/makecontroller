@@ -91,7 +91,7 @@ XBeeSubsystem* XBee;
 	be sent to the XBee module attached to the Make Controller.  The \b XBee_ functions deal with sending and receiving 
 	messages to other XBee modules not connected to the Make Controller.
 
-  \ingroup CoreLibraries
+  \ingroup Libraries
   @{
 */
 

@@ -50,7 +50,7 @@ Each motor controller is composed of 2 adjacent Digital Outs on the Make Applica
 
 Other output devices cannot be used simultaneously - for example, the DigitalOuts cannot be called without
 first setting overlapping the DC motor I/O lines to inactive.
-\ingroup CoreLibraries
+\ingroup Libraries
 @{
 */
 

@@ -56,7 +56,7 @@ static int DigitalIn_users[ DIGITALIN_COUNT ];
 /** \defgroup DigitalIn Digital Inputs
 * The Digital In subsystem reads the 8 inputs on the Make Controller as digital values - 1 (on) or 0 (off).  
   The 8 inputs can be either read as digital inputs by DigitalIn or as \ref AnalogIn.
-* \ingroup CoreLibraries
+* \ingroup Libraries
 * @{
 */
 
