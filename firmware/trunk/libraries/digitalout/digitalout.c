@@ -88,7 +88,7 @@ int DigitalOut_enableUsers[ DIGITALOUT_COUNT >> 1 ];
   
   If you've previously used any of the other systems on the outputs (steppers, motors, etc.), you'll need
   to set them to \b inactive to unlock the IO lines and use the Digital Outs.
-* \ingroup CoreLibraries
+* \ingroup Libraries
 * @{
 */
 

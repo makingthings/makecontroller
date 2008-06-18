@@ -105,7 +105,7 @@ Stepper_* Stepper;
   keeps an internal count of how many steps the motor has taken in order to keep track of where it is.
 
   For relative positioning, use Stepper_Step( ) to simply move a number of steps from the current position.
-* \ingroup CoreLibraries
+* \ingroup Libraries
 * @{
 */
 

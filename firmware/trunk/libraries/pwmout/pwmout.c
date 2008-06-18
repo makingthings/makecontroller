@@ -78,7 +78,7 @@ static void PwmOut_GetIos( int index, int* ioA, int* ioB );
 	
 	The A and B channels of a PWM device can be set independently to be inverted, or not, from one another
 	in order to control motors, lights, etc.
-	\ingroup CoreLibraries
+	\ingroup Libraries
 	@{
 */
 

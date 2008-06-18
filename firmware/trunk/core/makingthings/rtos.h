@@ -24,6 +24,8 @@
 #ifndef RTOS_H
 #define RTOS_H
 
+#include "types.h"
+
 void  Sleep( int timems );
 void* TaskCreate(  void (taskCode)(void*), char* name, int stackDepth, void* parameters, int priority );
 void  TaskYield( void );
