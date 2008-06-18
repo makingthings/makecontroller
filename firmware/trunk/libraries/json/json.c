@@ -72,6 +72,7 @@ struct Json_t
   Not implemented yet...
 
   Thanks to YAJL (http://code.google.com/p/yajl-c) for some design inspiration.
+  \par
 
 	\ingroup Libraries
 	@{
