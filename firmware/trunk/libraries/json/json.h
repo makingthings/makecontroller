@@ -20,7 +20,7 @@
 
 #include "types.h"
 
-void Json_Reset(char *jsonbuf);
+void Json_Reset(void);
 
 char* JsonEncode_ObjectOpen(char *buf, int *remaining);
 char* JsonEncode_ObjectKey(char *buf, const char *key, int *remaining);
