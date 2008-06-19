@@ -82,11 +82,9 @@ struct Json_t
   Reset the internal state of the JSON system.
   Generally do this once you've successfully generated a string,
   and want to start on the next one.
-  @param jsonbuf A pointer to the buffer you've been using to build your JSON string.
 */
-void Json_Reset(char *jsonbuf)
+void Json_Reset( )
 {
-  *jsonbuf = 0;
   Json.encode_depth = 0;
   Json.states[0] = JSON_START;
 }
@@ -100,14 +98,42 @@ void Json_Reset(char *jsonbuf)
 */
 char* JsonEncode_ObjectOpen(char *buf, int *remaining)
 {
-  if(*remaining < 1)
-    return NULL;
+  int len = 1;
+  switch(Json.states[Json.encode_depth])
+  {
+    case JSON_ARRAY_START:
+    case JSON_OBJ_START:
+    case JSON_START:
+    {
+      if(*remaining < len)
+        return NULL;
+      memcpy(buf, "{", len);
+      break;
+    }
+    case JSON_OBJ_KEY:
+    case JSON_IN_ARRAY:
+    {
+      len += 1; // for ,
+      if(*remaining < len)
+        return NULL;
+      memcpy(buf, ",{", len);
+      break;
+    }
+    case JSON_OBJ_VALUE:
+    {
+      len += 1; // for :
+      if(*remaining < len)
+        return NULL;
+      memcpy(buf, ":{", len);
+      break;
+    }
+  }
+  
   if(++Json.encode_depth > JSON_MAX_DEPTH)
     return NULL;
-  strncat(buf, "{", 1);
   Json.states[Json.encode_depth] = JSON_OBJ_START;
-  (*remaining)--;
-  return buf + 1;
+  (*remaining) -= len;
+  return buf + len;
 }
 
 /**
@@ -133,7 +159,7 @@ char* JsonEncode_ObjectClose(char *buf, int *remaining)
 {
   if(*remaining < 1)
     return NULL;
-  strncat(buf, "}", 1);
+  memcpy(buf, "}", 1);
   Json.encode_depth--;
   JsonEncode_AppendedAtom();
   (*remaining)--;
@@ -149,14 +175,41 @@ char* JsonEncode_ObjectClose(char *buf, int *remaining)
 */
 char* JsonEncode_ArrayOpen(char *buf, int *remaining)
 {
-  if(*remaining < 1)
-    return NULL;
+  int len = 1;
+  switch(Json.states[Json.encode_depth])
+  {
+    case JSON_ARRAY_START:
+    case JSON_OBJ_START:
+    case JSON_START:
+    {
+      if(*remaining < len)
+        return NULL;
+      memcpy(buf, "[", len);
+      break;
+    }
+    case JSON_OBJ_KEY:
+    case JSON_IN_ARRAY:
+    {
+      len += 1; // for ,
+      if(*remaining < len)
+        return NULL;
+      memcpy(buf, ",[", len);
+      break;
+    }
+    case JSON_OBJ_VALUE:
+    {
+      len += 1; // for :
+      if(*remaining < len)
+        return NULL;
+      memcpy(buf, ":[", len);
+      break;
+    }
+  }
   if(++Json.encode_depth > JSON_MAX_DEPTH)
     return NULL;
-  strncat(buf, "[", 1);
   Json.states[Json.encode_depth] = JSON_ARRAY_START;
-  (*remaining)--;
-  return buf + 1;
+  (*remaining) -= len;
+  return buf + len;
 }
 
 /**
@@ -170,7 +223,7 @@ char* JsonEncode_ArrayClose(char *buf, int *remaining)
 {
   if(*remaining < 1)
     return NULL;
-  strncat(buf, "]", 1);
+  memcpy(buf, "]", 1);
   Json.encode_depth--;
   JsonEncode_AppendedAtom();
   (*remaining)--;
@@ -201,7 +254,7 @@ char* JsonEncode_String(char *buf, const char *string, int *remaining)
         return NULL;
       char temp[string_len+1];
       snprintf(temp, string_len+1, "\"%s\"", string);
-      strncat(buf, temp, string_len);
+      memcpy(buf, temp, string_len);
       break;
     }
     case JSON_OBJ_KEY:
@@ -212,7 +265,7 @@ char* JsonEncode_String(char *buf, const char *string, int *remaining)
         return NULL;
       char temp[string_len+1];
       snprintf(temp, string_len+1, ",\"%s\"", string);
-      strncat(buf, temp, string_len);
+      memcpy(buf, temp, string_len);
       break;
     }
     case JSON_OBJ_VALUE:
@@ -222,7 +275,7 @@ char* JsonEncode_String(char *buf, const char *string, int *remaining)
         return NULL;
       char temp[string_len+1];
       snprintf(temp, string_len+1, ":\"%s\"", string);
-      strncat(buf, temp, string_len);
+      memcpy(buf, temp, string_len);
       break;
     }
     default:
@@ -251,7 +304,7 @@ char* JsonEncode_Int(char *buf, int value, int *remaining)
         return NULL;
       char temp[int_len+1];
       snprintf(temp, int_len+1, "%d", value);
-      strncat(buf, temp, int_len);
+      memcpy(buf, temp, int_len);
       int_len = strlen(temp);
       break;
     }
@@ -262,7 +315,7 @@ char* JsonEncode_Int(char *buf, int value, int *remaining)
         return NULL;
       char temp[int_len+1];
       snprintf(temp, int_len+1, ",%d", value);
-      strncat(buf, temp, int_len);
+      memcpy(buf, temp, int_len);
       int_len = strlen(temp);
       break;
     }
@@ -273,7 +326,7 @@ char* JsonEncode_Int(char *buf, int value, int *remaining)
         return NULL;
       char temp[int_len+1];
       snprintf(temp, int_len+1, ":%d", value);
-      strncat(buf, temp, int_len);
+      memcpy(buf, temp, int_len);
       int_len = strlen(temp);
       break;
     }
@@ -304,7 +357,7 @@ char* JsonEncode_Bool(char *buf, bool value, int *remaining)
         return NULL;
       char temp[bool_len+1];
       snprintf(temp, bool_len+1, "%s", boolval);
-      strncat(buf, temp, bool_len);
+      memcpy(buf, temp, bool_len);
       break;
     }
     case JSON_IN_ARRAY:
@@ -314,7 +367,7 @@ char* JsonEncode_Bool(char *buf, bool value, int *remaining)
         return NULL;
       char temp[bool_len+1];
       snprintf(temp, bool_len+1, ",%s", boolval);
-      strncat(buf, temp, bool_len);
+      memcpy(buf, temp, bool_len);
       break;
     }
     case JSON_OBJ_VALUE:
@@ -324,7 +377,7 @@ char* JsonEncode_Bool(char *buf, bool value, int *remaining)
         return NULL;
       char temp[bool_len+1];
       snprintf(temp, bool_len+1, ":%s", boolval);
-      strncat(buf, temp, bool_len);
+      memcpy(buf, temp, bool_len);
       break;
     }
     default:
