@@ -20,8 +20,8 @@
 
 #include "types.h"
 
-void Json_Reset(void);
-
+// Encode
+void JsonEncode_Reset(void);
 char* JsonEncode_ObjectOpen(char *buf, int *remaining);
 char* JsonEncode_ObjectKey(char *buf, const char *key, int *remaining);
 char* JsonEncode_ObjectClose(char *buf, int *remaining);
@@ -30,6 +30,18 @@ char* JsonEncode_ArrayClose(char *buf, int *remaining);
 char* JsonEncode_String(char *buf, const char *string, int *remaining);
 char* JsonEncode_Int(char *buf, int value, int *remaining);
 char* JsonEncode_Bool(char *buf, bool value, int *remaining);
+
+// Decode
+void JsonDecode_SetIntCallback(bool(*int_callback)(void *ctx, int val));
+void JsonDecode_SetFloatCallback(bool(*float_callback)(void *ctx, float val));
+void JsonDecode_SetBoolCallback(bool(*bool_callback)(void *ctx, bool val));
+void JsonDecode_SetStringCallback(bool(*string_callback)(void *ctx, char *string, int len));
+void JsonDecode_SetStartObjCallback(bool(*start_obj_callback)(void *ctx));
+void JsonDecode_SetObjKeyCallback(bool(*obj_key_callback)(void *ctx, char *key, int len));
+void JsonDecode_SetEndObjCallback(bool(*end_obj_callback)(void *ctx));
+void JsonDecode_SetStartArrayCallback(bool(*start_array_callback)(void *ctx));
+void JsonDecode_SetEndArrayCallback(bool(*end_array_callback)(void *ctx));
+bool JsonDecode(char* text, int len, void* context);
 
 #endif /* JSON_H */
 
