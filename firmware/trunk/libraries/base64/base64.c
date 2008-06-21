@@ -33,8 +33,9 @@ static inline unsigned char to_uchar (char ch)
 
 /** \defgroup base64 Base 64
 	The Make Controller Base 64 library provides a way to decode and encode base 64 data.
-  This is often handy when you need to send raw data (as opposed to text) through a 
-  transport mechanism that can't be trusted not to play around with it, like email for example.
+
+  This is often handy when you need to send raw/binary data (as opposed to text) through a 
+  text based format, like XML or JSON.
 
   Most code lifted from gnulib - http://savannah.gnu.org/projects/gnulib - and written by Simon Josefsson.
   \par

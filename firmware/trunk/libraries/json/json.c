@@ -84,6 +84,10 @@ struct Json_t
   \par Parsing
   Parsing is done using an event-based mechanism.  This means you can register for any events you care
   to hear about, and then be called back with their value as they're encountered in the JSON string.
+  Parsing does not support incremental parsing at the moment - you need to pass in the whole JSON
+  string you want to parse.  The parser will get through as much of the string as it can.
+
+  In each callback, return true to continue parsing, or return false and parsing will stop.  
 
   If you need to pass around some context that you would like available in each of the callbacks, 
   you can pass it to JsonDecode() and it will be passed to each of the callbacks you've registered.
@@ -94,20 +98,20 @@ struct Json_t
   bool on_obj_opened(void* ctx)
   {
     // deal with an object being opened...
-    return true;
+    return true; // keep parsing
   }
   
   bool on_int(void *ctx, int val)
   {
     iny my_json_int = val;
     // deal with a new int...
-    return true;
+    return true; // keep parsing
   }
   
   bool on_string(void *ctx, char *string, int len)
   {
     // deal with a new string...
-    return true;
+    return true; // keep parsing
   }
 
   // Now, register these callbacks with the JSON parser.
