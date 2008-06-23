@@ -26,7 +26,7 @@
 
 UsbConsole::UsbConsole( ) : QDialog( )
 {
-	setupUi(this);
+  setupUi(this);
   connect( sendButton, SIGNAL(clicked()), this, SLOT(onCommandLine()));
   connect( commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onCommandLine()));
   connect( openCloseButton, SIGNAL(clicked()), this, SLOT(onOpenClose()));
@@ -70,9 +70,9 @@ void UsbConsole::onCommandLine( )
       QTextBlockFormat format;
       format.setBackground(QColor(229, 237, 247, 255)); // light blue
       if(currentView == "Characters")
-        outputConsole->append(commandLine->currentText()); // insert the message
+        outputConsole->appendPlainText(commandLine->currentText()); // insert the message
       else if(currentView == "Hex")
-        outputConsole->append(strToHex(commandLine->currentText()));
+        outputConsole->appendPlainText(strToHex(commandLine->currentText()));
       outputConsole->moveCursor(QTextCursor::End); // move the cursor to the end
       outputConsole->textCursor().setBlockFormat(format);
       outputConsole->insertPlainText("\n");
@@ -92,7 +92,7 @@ void UsbConsole::onView(QString view)
   if(view == currentView) // we haven't changed
     return;
   currentView = view;
-  if(!outputConsole->document()->blockCount()) // the console is empty
+  if(!outputConsole->blockCount()) // the console is empty
     return;
 
   QTextCursor c = outputConsole->textCursor();
@@ -169,13 +169,15 @@ void UsbConsole::enumerate()
   // check for new ports...
   foreach(QextPortInfo portInfo, portInfos)
   {
-    if(portInfo.friendName.startsWith("Make Controller Ki")
-        && !ports.contains(portInfo.portName) 
-        && !closedPorts.contains(portInfo.portName)) // found a new port
+    QString asciiname = port->portName().toAscii();
+    //qDebug("enumerated: %s", qPrintable(portInfo.friendName));
+	if(portInfo.friendName.startsWith("Make Controller Ki")
+        && !ports.contains(asciiname) 
+        && !closedPorts.contains(asciiname)) // found a new port
     {
       openDevice(portInfo.portName);
     }
-    foundPorts << portInfo.portName;
+    foundPorts << portInfo.portName.toAscii();
   }
   
   // now check for ports that have gone away
@@ -183,9 +185,12 @@ void UsbConsole::enumerate()
   {
     if(!foundPorts.contains(portname))
     {
-      closedPorts.removeAll(port->portName());
-      ports.removeAll(port->portName());
-      portList->removeItem(portList->findText(port->portName()));
+      QString asciiname = port->portName().toAscii();
+      closedPorts.removeAll(asciiname);
+      ports.removeAll(asciiname);
+      int idx = portList->findText(asciiname);
+      if(idx > -1)
+        portList->removeItem(idx);
       update();
       closeDevice();
     }
@@ -203,12 +208,14 @@ void UsbConsole::openDevice(QString name)
   port->setPortName(name);
   if(port->open(QIODevice::ReadWrite))
   {
-    if(!ports.contains(name))
-      ports.append(name);
-    if(portList->findText(name) < 0)
-      portList->addItem(name);
+	qDebug("UsbConsole: opened %s", qPrintable(name));
+	QString asciiname = name.toAscii();
+    ports.append(asciiname);
+    if(portList->findText(asciiname) < 0)
+      portList->addItem(asciiname);
     // the port might already be in the list, but we always want to set its icon appropriately
-    portList->setItemIcon( portList->findText(name), QIcon(":/icons/green_dot.png"));
+    if(portList->count())
+      portList->setItemIcon( portList->currentIndex(), QIcon(":/icons/green_dot.png"));
     openCloseButton->setText("Close");
   }
 }
@@ -222,7 +229,8 @@ void UsbConsole::closeDevice()
   if(port->isOpen())
   {
     port->close();
-    portList->setItemIcon( portList->currentIndex(), QIcon(":/icons/red_dot.png"));
+    if(portList->count())
+      portList->setItemIcon( portList->currentIndex(), QIcon(":/icons/red_dot.png"));
     openCloseButton->setText("Open");
   }
 }
@@ -238,7 +246,7 @@ void UsbConsole::onOpenClose()
   {
     // put this port name on the list of ports manually closed by the user
     // so it doesn't get added into the UI multiple times when it's subsequently opened
-    closedPorts.append(port->portName());
+    closedPorts.append(port->portName().toAscii());
     portList->setItemIcon( portList->currentIndex(), QIcon(":/icons/red_dot.png"));
     closeDevice();
   }

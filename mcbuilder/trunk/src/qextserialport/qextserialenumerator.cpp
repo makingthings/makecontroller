@@ -7,11 +7,14 @@
 #include "qextserialenumerator.h"
 
 #ifdef _TTY_WIN_
+#include <QRegExp>
 #include <objbase.h>
 #include <initguid.h>
 	//this is serial port GUID
 	#ifndef GUID_CLASS_COMPORT
-		DEFINE_GUID(GUID_CLASS_COMPORT, 0x86e0d1e0L, 0x8089, 0x11d0, 0x9c, 0xe4, 0x08, 0x00, 0x3e, 0x30, 0x1f, 0x73);
+		//DEFINE_GUID(GUID_CLASS_COMPORT, 0x86e0d1e0L, 0x8089, 0x11d0, 0x9c, 0xe4, 0x08, 0x00, 0x3e, 0x30, 0x1f, 0x73);
+        // use more Make Controller specific guid
+		DEFINE_GUID(GUID_CLASS_COMPORT, 0x4D36E978, 0xE325, 0x11CE, 0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18 );
 	#endif
 
 	/* Gordon Schumacher's macros for TCHAR -> QString conversions and vice versa */	
@@ -103,6 +106,19 @@
 					HKEY devKey = SetupDiOpenDevRegKey(devInfo, & devData, DICS_FLAG_GLOBAL, 0,
 														DIREG_DEV, KEY_READ);
 					info.portName = getRegKeyValue(devKey, TEXT("PortName"));
+					
+					// MakingThings
+					QRegExp rx("COM(\\d+)");
+                    int pos = 0;
+                    while((pos = rx.indexIn(info.portName, pos)) != -1)
+                    {
+                      int portnum(rx.cap(1).toInt());
+                      if(portnum > 9)
+                        info.portName.prepend("\\\\.\\"); // COM ports greater than 9 need \\.\ prepended
+                      pos += rx.matchedLength();
+                    }
+                    // end MakingThings
+					
 					RegCloseKey(devKey);
 					infoList.append(info);
 				} else {
