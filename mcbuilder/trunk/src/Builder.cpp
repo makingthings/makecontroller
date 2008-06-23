@@ -690,7 +690,9 @@ void Builder::getLibrarySources(QString libdir, QStringList *thmb, QStringList *
 /*
   Filter a path for inclusion in a Makefile.
   Make sure the directory separators are system appropriate.
-  If a file path is not absolute, assume it's relative to our current directory
+  If a file path is not absolute
+    1. check to see if it's in our cores dir
+    2. assume it's relative to the current project
 */
 QString Builder::filteredPath(QString path)
 {
@@ -698,7 +700,12 @@ QString Builder::filteredPath(QString path)
 	// but not quite sure how to deal at the moment...
   QString filtered = path;
   if(!QDir::isAbsolutePath(path))
-    filtered = QDir::current().filePath(path);
+  {
+    if(path.startsWith("resources/cores"))
+      filtered = QDir::current().filePath(path);
+    else
+      filtered = QDir(currentProjectPath).filePath(path);
+  }
   return QDir::toNativeSeparators(filtered);
 }
 
