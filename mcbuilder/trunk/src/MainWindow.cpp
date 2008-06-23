@@ -522,7 +522,12 @@ void MainWindow::openProject(QString projectPath)
         continue;
       // load the file name into the file dropdown
       if(projectDir.exists(fi.fileName()))
-        currentFileDropDown->addItem(fi.fileName(), fi.filePath());
+      {
+        if(QDir::isAbsolutePath(fi.filePath()))
+          currentFileDropDown->addItem(fi.fileName(), fi.filePath());
+        else
+          currentFileDropDown->addItem(fi.fileName(), projectDir.filePath(fi.filePath()));
+      }
       // if this is the main project file, load it into the editor
       if(fi.baseName() == pathname)
       {
@@ -642,7 +647,7 @@ void MainWindow::onSaveAs( )
 	file.copy(newFileName);
 	editorLoadFile(newFileName);
 	QFileInfo fi(newFileName);
-	currentFileDropDown->addItem(fi.fileName());
+	currentFileDropDown->addItem(fi.fileName(), fi.filePath());
 	currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
 }
 
