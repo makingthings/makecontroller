@@ -91,14 +91,17 @@
     </layout>
    </item>
    <item>
-    <widget class="QTextEdit" name="outputConsole" >
-     <property name="focusPolicy" >
-      <enum>Qt::NoFocus</enum>
+    <widget class="QPlainTextEdit" name="outputConsole" >
+     <property name="undoRedoEnabled" >
+      <bool>false</bool>
      </property>
      <property name="readOnly" >
       <bool>true</bool>
      </property>
-     <property name="acceptRichText" >
+     <property name="maximumBlockCount" >
+      <number>2500</number>
+     </property>
+     <property name="backgroundVisible" >
       <bool>false</bool>
      </property>
     </widget>
