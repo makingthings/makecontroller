@@ -335,10 +335,11 @@ bool Builder::createConfigFile(QString projectPath)
   if(configFile.open(QIODevice::WriteOnly|QFile::Text))
   {
     QTextStream tofile(&configFile);
-    tofile << "/****************************************************************" << endl << endl;
+    tofile << "/*****************************************************************************************" << endl << endl;
     tofile << "  config.h" << endl;
-    tofile << "  Generated automatically by mcbuilder." << endl << endl;
-    tofile << "****************************************************************/" << endl << endl;
+    tofile << "  Generated automatically by mcbuilder - " << QDateTime::currentDateTime().toString("MMM d, yyyy h:m ap") << endl;
+    tofile << "  Any manual changes made to this file will be overwritten the next time mcbuilder builds." << endl << endl;
+    tofile << "******************************************************************************************/" << endl << endl;
     
     tofile << "#ifndef CONFIG_H" << endl << "#define CONFIG_H" << endl << endl;
     
