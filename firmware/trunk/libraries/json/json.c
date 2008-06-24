@@ -694,6 +694,16 @@ void JsonDecode_SetEndArrayCallback(bool(*end_array_callback)(void *ctx))
 bool JsonDecode(char* text, int len, void* context)
 {
   JsonDecode_Token token;
+  typedef enum {
+    JSON_DECODE_OBJECT_START,
+    JSON_DECODE_IN_OBJECT,
+    JSON_DECODE_IN_ARRAY
+  } JsonDecode_State;
+
+  JsonDecode_State states[JSON_MAX_DEPTH];
+  int depth = 0;
+  bool gotcomma = false;
+
   while(len)
   {
     while(*text == ' ') // eat white space
@@ -728,8 +738,10 @@ bool JsonDecode(char* text, int len, void* context)
         text += 4;
         len -= 4;
         break;
-      case token_colon: // just get the next one
       case token_comma:
+        gotcomma = true;
+        // intentional fall-through
+      case token_colon: // just get the next one      
         text++;
         len--;
         break;
@@ -739,6 +751,7 @@ bool JsonDecode(char* text, int len, void* context)
           if(!Json_Callbacks.start_obj_callback(context))
             return false;
         }
+        states[++depth] = JSON_DECODE_OBJECT_START;
         text++;
         len--;
         break;
@@ -748,6 +761,7 @@ bool JsonDecode(char* text, int len, void* context)
           if(!Json_Callbacks.end_obj_callback(context))
             return false;
         }
+        depth--;
         text++;
         len--;
         break;
@@ -757,6 +771,7 @@ bool JsonDecode(char* text, int len, void* context)
           if(!Json_Callbacks.start_array_callback(context))
             return false;
         }
+        states[++depth] = JSON_DECODE_IN_ARRAY;
         text++;
         len--;
         break;
@@ -766,6 +781,7 @@ bool JsonDecode(char* text, int len, void* context)
           if(!Json_Callbacks.end_array_callback(context))
             return false;
         }
+        depth--;
         text++;
         len--;
         break;
@@ -817,10 +833,35 @@ bool JsonDecode(char* text, int len, void* context)
           p++;
         int size = p - text;
         *p = 0; // replace the trailing " with a null to make a string
-        if(Json_Callbacks.string_callback)
+
+        // figure out if this is a key or a normal string
+        bool objkey = false;
+        if(states[depth] == JSON_DECODE_OBJECT_START)
         {
-          if(!Json_Callbacks.string_callback(context, text, size))
-            return false;
+          states[depth] = JSON_DECODE_IN_OBJECT;
+          objkey = true;
+        }
+        if(gotcomma && states[depth] == JSON_DECODE_IN_OBJECT)
+        {
+          gotcomma = false;
+          objkey = true;
+        }
+
+        if(objkey) // last one was a comma - next string has to be a key
+        {
+          if(Json_Callbacks.obj_key_callback)
+          {
+            if(!Json_Callbacks.obj_key_callback(context, text, size))
+              return false;
+          }
+        }
+        else // just a normal string
+        {
+          if(Json_Callbacks.string_callback)
+          {
+            if(!Json_Callbacks.string_callback(context, text, size))
+              return false;
+          }
         }
         text += (size+1); // account for the trailing "
         len -= (size+1);
@@ -862,7 +903,7 @@ JsonDecode_Token JsonDecode_GetToken(char* text, int len)
       return token_maybe_negative;
     case 't':
     {
-      if(len < 4 + 1) // not enough space;
+      if(len < 4) // not enough space;
         return token_unknown;
       if(!strncmp(text, "true", 4))
         return token_true;
@@ -871,7 +912,7 @@ JsonDecode_Token JsonDecode_GetToken(char* text, int len)
     }
     case 'f':
     {
-      if(len < 5 + 1) // not enough space;
+      if(len < 5) // not enough space;
         return token_unknown;
       if(!strncmp(text, "false", 5))
         return token_false;
@@ -880,7 +921,7 @@ JsonDecode_Token JsonDecode_GetToken(char* text, int len)
     }
     case 'n':
     {
-      if(len < 4 + 1) // not enough space;
+      if(len < 4) // not enough space;
         return token_unknown;
       if(!strncmp(text, "null", 4))
         return token_null;
@@ -893,6 +934,7 @@ JsonDecode_Token JsonDecode_GetToken(char* text, int len)
       return token_unknown;
   }
 }
+
 
 
 
