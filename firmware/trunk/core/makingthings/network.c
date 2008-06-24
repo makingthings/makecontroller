@@ -26,12 +26,12 @@
 #include "io.h"
 #include "eeprom.h"
 #include "timer.h"
-#include "rtos.h"
 
 /* lwIP includes. */
 #include "lwip/api.h"
 #include "lwip/tcpip.h"
 #include "lwip/memp.h" 
+#include "lwip/netbuf.h" 
 #include "lwip/stats.h"
 #include "netif/loopif.h"
 #include "lwip/dhcp.h"
@@ -51,7 +51,7 @@ char emacETHADDR4 = 0x0;
 char emacETHADDR5 = 0x0;
 
 #include "network.h"
-#include "webserver.h"
+//#include "webserver.h"
 
 typedef struct Network_
 {
@@ -64,7 +64,7 @@ typedef struct Network_
   int TcpOutAddress;
   int TcpOutPort;
   bool TcpRequested;
-  void* WebServerTaskPtr;
+  //void* WebServerTaskPtr;
   int DnsResolvedAddress;
   #ifdef OSC
   char scratch1[ OSC_SCRATCH_SIZE ];
@@ -163,53 +163,57 @@ int SocketRead( void* socket, char* data, int length )
 {
   struct netconn *conn = socket;
   struct netbuf *buf;
-  int bytesRead;
-
-  if ( conn->readingbuf == NULL )
+  int totalBytesRead = 0;
+  
+  while(totalBytesRead < length)
   {
-    buf = netconn_recv( conn );
-    if ( buf == NULL )
-      return 0;
-    
-    /* 
-    Now deal appropriately with what we got.  If we got more than we asked for,
-    keep the extras in the conn->readingbuf and set the conn->readingoffset.
-    Otherwise, copy everything we got back into the calling buffer.
-    */
-    bytesRead = netbuf_len( buf );
-    if( bytesRead <= length ) 
+    if ( conn->readingbuf == NULL )
     {
-      netbuf_copy( buf, data, bytesRead );
-      netbuf_delete( buf );
-      // conn->readingbuf remains NULL
+      buf = netconn_recv( conn );
+      if ( buf == NULL )
+        return 0;
+      
+      /* 
+      Now deal appropriately with what we got.  If we got more than we asked for,
+      keep the extras in the conn->readingbuf and set the conn->readingoffset.
+      Otherwise, copy everything we got back into the calling buffer.
+      */
+      int bytesRead = netbuf_len( buf );
+      if( bytesRead <= length ) 
+      {
+        netbuf_copy( buf, data, bytesRead );
+        netbuf_delete( buf );
+        // conn->readingbuf remains NULL
+      }
+      else // if we got more than we asked for
+      {
+        netbuf_copy( buf, data, length );
+        conn->readingbuf = buf;
+        conn->readingoffset = length;
+        bytesRead = length;
+      }
+      totalBytesRead += bytesRead;
+      data += bytesRead;
     }
-    else // if we got more than we asked for
-    {
-      netbuf_copy( buf, data, length );
-      conn->readingbuf = buf;
-      conn->readingoffset = length;
-      bytesRead = length;
-    }
-  }
-  else
-  {
-    buf = conn->readingbuf;
-    bytesRead = netbuf_len( buf ) - conn->readingoffset;
-    netbuf_copy_partial( buf, data, length, conn->readingoffset );
-
-    if ( bytesRead <= length )
-    {
-      netbuf_delete( buf );
-      conn->readingbuf = NULL;
-    }  
     else
     {
-      conn->readingoffset += length;
-      bytesRead = length;
+      buf = conn->readingbuf;
+      int  bytesRead = netbuf_len( buf ) - conn->readingoffset;
+      netbuf_copy_partial( buf, data, length, conn->readingoffset );
+      if ( bytesRead <= length )
+      {
+        netbuf_delete( buf );
+        conn->readingbuf = NULL;
+      }  
+      else
+      {
+        conn->readingoffset += length;
+        bytesRead = length;
+      }
+      totalBytesRead += bytesRead;
     }
   }
-
-  return bytesRead;
+  return totalBytesRead;
 }
 
 /**	
@@ -570,7 +574,7 @@ int Network_SetActive( int state )
       Network = MallocWait( sizeof( NetworkStruct ), 100 );
       Network->pending = 1;
       Network->TcpRequested = 0;
-      Network->WebServerTaskPtr = NULL;
+      //Network->WebServerTaskPtr = NULL;
       Network_DnsSemaphore = NULL;
       Network->DnsResolvedAddress = -1;
 
@@ -908,35 +912,35 @@ int Network_GetDhcpEnabled( )
 	This value is stored persistently, so it will remain constant across system reboots.
 	@param state An integer specifying whether to enable the webserver - 1 (enable) or 0 (disable).
 */
-void Network_SetWebServerEnabled( int state )
-{
-  if( state )
-  {
-    Network_StartWebServer( );
-
-    if( !Network_GetWebServerEnabled( ) )
-      Eeprom_Write( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
-  }
-  else
-  {
-    Network_StopWebServer( );
-
-    if( Network_GetWebServerEnabled( ) )
-      Eeprom_Write( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
-  }
-}
+//void Network_SetWebServerEnabled( int state )
+//{
+//  if( state )
+//  {
+//    Network_StartWebServer( );
+//
+//    if( !Network_GetWebServerEnabled( ) )
+//      Eeprom_Write( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
+//  }
+//  else
+//  {
+//    Network_StopWebServer( );
+//
+//    if( Network_GetWebServerEnabled( ) )
+//      Eeprom_Write( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
+//  }
+//}
 
 /**
 	Read whether the demo webserver is enabled.
   This value is stored presistently, so it will be the same across system reboots.
 	@return An integer specifying whether the webserver is enabled - 1 (enabled) or 0 (disabled).
 */
-int Network_GetWebServerEnabled( )
-{
-  int state;
-  Eeprom_Read( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
-  return (state == 1) ? 1 : 0;
-}
+//int Network_GetWebServerEnabled( )
+//{
+//  int state;
+//  Eeprom_Read( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
+//  return (state == 1) ? 1 : 0;
+//}
 
 /** @}
 */
@@ -1113,15 +1117,15 @@ int NetworkOsc_GetUdpSendPort(  )
     return 10000;
 }
 
-void Network_StartWebServer( )
-{
-  WebServer_SetActive( 1 );
-}
-
-void Network_StopWebServer( )
-{
-  WebServer_SetActive( 0 );
-}
+//void Network_StartWebServer( )
+//{
+//  WebServer_SetActive( 1 );
+//}
+//
+//void Network_StopWebServer( )
+//{
+//  WebServer_SetActive( 0 );
+//}
 
 void Network_DhcpStart( struct netif* netif )
 {
@@ -1271,8 +1275,8 @@ int Network_Init( )
   }
   #endif
 
-  if( Network_GetWebServerEnabled( ) )
-    Network_StartWebServer( );
+//  if( Network_GetWebServerEnabled( ) )
+//    Network_StartWebServer( );
   
   if( dhcp )
     Network_DhcpStart( &EMAC_if );
@@ -1611,7 +1615,7 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
       if ( count != 1 )
         return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
       
-      Network_SetWebServerEnabled( value );
+      //Network_SetWebServerEnabled( value );
       break;
     }
     case 14: // osc_udp_send_port
@@ -1714,7 +1718,7 @@ int NetworkOsc_PropertyGet( int property, int channel )
       Osc_CreateMessage( channel, Network->scratch1, ",i", value );      
       break;
     case 12: // webserver
-      value = Network_GetWebServerEnabled( );
+      value = 0; //Network_GetWebServerEnabled( );
       snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       Osc_CreateMessage( channel, Network->scratch1, ",i", value );      
       break;
