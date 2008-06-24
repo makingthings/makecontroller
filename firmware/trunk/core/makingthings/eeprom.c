@@ -101,7 +101,22 @@ int Eeprom_GetActive( )
 	@param address An integer specifying the address.
 	@param buffer A pointer to the buffer to write from.
 	@param count An integer specifying the number of bytes to write.
-  @return status.
+  @return Status: 0 on success, < 0 on failure.
+
+  \par Example
+  \code
+  #define MY_STORED_VALUE (EEPROM_SYSTEM_BASE - 4)
+  int my_number_to_store = 1234;
+  int size = 4; // ints are 4
+  if(Eeprom_Write( MY_STORED_VALUE, (uchar*)&my_number_to_store, size ); < 0)
+  {
+    // then there was an error...
+  }
+  else
+  {
+    // my_stored_number now has the stored value
+  }
+  \endcode
 */
 int Eeprom_Write( int address, uchar* buffer, int count )
 {
@@ -146,7 +161,22 @@ int Eeprom_Write( int address, uchar* buffer, int count )
 	@param address An integer specifying the address to read from.
 	@param buffer A pointer to the buffer to read into.
 	@param count An integer specifying the number of bytes to read.
-  @return status.
+  @return Status: 0 on success, < 0 on failure.
+
+  \par Example
+  \code
+  #define MY_STORED_VALUE (EEPROM_SYSTEM_BASE - 4)
+  int my_stored_number;
+  int size = 4; // ints are 4
+  if(Eeprom_Read( MY_STORED_VALUE, (uchar*)&my_stored_number, size ) < 0)
+  {
+    // then there was an error...
+  }
+  else
+  {
+    // my_stored_number now has the stored value
+  }
+  \endcode
 */
 int Eeprom_Read( int address, uchar* buffer, int count )
 {
