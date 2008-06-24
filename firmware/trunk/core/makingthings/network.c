@@ -161,9 +161,12 @@ void* Socket( int address, int port )
 */
 int SocketRead( void* socket, char* data, int length )
 {
+  if(!socket)
+    return 0;
   struct netconn *conn = socket;
   struct netbuf *buf;
   int totalBytesRead = 0;
+  int extraBytes = 0;
   
   while(totalBytesRead < length)
   {
@@ -179,41 +182,47 @@ int SocketRead( void* socket, char* data, int length )
       Otherwise, copy everything we got back into the calling buffer.
       */
       int bytesRead = netbuf_len( buf );
-      if( bytesRead <= length ) 
+      totalBytesRead += bytesRead;
+      if( totalBytesRead <= length ) 
       {
         netbuf_copy( buf, data, bytesRead );
         netbuf_delete( buf );
+        data += bytesRead;
         // conn->readingbuf remains NULL
       }
       else // if we got more than we asked for
       {
-        netbuf_copy( buf, data, length );
+        extraBytes = totalBytesRead - length;
+        bytesRead -= extraBytes; // how many do we need to write to get the originally requested len
+        netbuf_copy( buf, data, bytesRead );
         conn->readingbuf = buf;
-        conn->readingoffset = length;
-        bytesRead = length;
+        conn->readingoffset = extraBytes;
       }
-      totalBytesRead += bytesRead;
-      data += bytesRead;
     }
-    else
+    else // conn->readingbuf != NULL
     {
       buf = conn->readingbuf;
-      int  bytesRead = netbuf_len( buf ) - conn->readingoffset;
-      netbuf_copy_partial( buf, data, length, conn->readingoffset );
-      if ( bytesRead <= length )
+      int bytesRead = netbuf_len( buf ) - conn->readingoffset; // grab whatever was lying around from a previous read
+      totalBytesRead += bytesRead;
+      
+      if( totalBytesRead <= length ) // there's less than or just enough left for what we need
       {
-        netbuf_delete( buf );
+        netbuf_copy_partial( buf, data, bytesRead, conn->readingoffset ); // copy out the rest of what was in the netbuf
+        netbuf_delete( buf ); // and get rid of it
         conn->readingbuf = NULL;
       }  
-      else
+      else // there's more in there than we were asked for
       {
-        conn->readingoffset += length;
-        bytesRead = length;
+        extraBytes = totalBytesRead - length;
+        bytesRead -= extraBytes; // how many do we need to write to get the originally requested len
+        netbuf_copy_partial( buf, data, bytesRead, conn->readingoffset ); // only read out what we need
+        //netbuf_copy( buf, data, bytesRead );
+        conn->readingoffset += bytesRead;
       }
-      totalBytesRead += bytesRead;
+      data += bytesRead;
     }
   }
-  return totalBytesRead;
+  return totalBytesRead - extraBytes;
 }
 
 /**	
