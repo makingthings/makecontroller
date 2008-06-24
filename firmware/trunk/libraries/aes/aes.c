@@ -1394,6 +1394,8 @@ int Aes_Decrypt(unsigned char* output, int outlen, unsigned char* input, int inl
     if(inlen < BLOCK_SIZE) // we're on our last block.  check the padding to determine the size of the original data
     {
       int padlen = plaintext[BLOCK_SIZE-1]; // look at the last byte
+      if(padlen < 1 || padlen > 16) // check for bogus padlen
+        return -1;
       int datalen = BLOCK_SIZE - padlen;
       if(outlen < datalen) // not enough room to write out
         return -1;
