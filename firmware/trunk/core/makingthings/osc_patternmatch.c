@@ -22,6 +22,9 @@
     Adapted from oscpattern.c, by Matt Wright and Amar Chaudhury
  */
 
+#include "config.h"
+#ifdef OSC
+
 #include "types.h"
 #include "osc.h"
 
@@ -202,6 +205,8 @@ static bool MatchList (const char *pattern, const char *test)
    }
  }
 }
+
+#endif // OSC
 
 
 
