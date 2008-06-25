@@ -50,8 +50,9 @@ static inline unsigned char to_uchar (char ch)
   4 bytes for every 3 source bytes, ensure your destination buffer is large enough.
 
   @param dest The buffer that the encoded string will be written into.
+  @param dest_size The maximum number of bytes to write into the destination buffer.
   @param src A block of data to encode.
-  @param len The number of bytes from src to encode.
+  @param src_size The number of bytes from src to encode.
   @return The length of the generated string (not including null termination).
 
   \par Example
@@ -328,4 +329,10 @@ bool Base64_Decode(char* dest, int* dest_size, const char* src, int src_size)
 
   return true;
 }
+
+/** @}
+*/
+
+
+
 
