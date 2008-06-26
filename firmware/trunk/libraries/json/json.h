@@ -65,16 +65,6 @@ typedef struct {
   void* context;
   char* p;
   int len;
-  bool(*null_callback)(void*);
-  bool(*bool_callback)(void*, bool);
-  bool(*int_callback)(void*, int);
-  bool(*float_callback)(void*, float);
-  bool(*string_callback)(void*, char*, int);
-  bool(*start_obj_callback)(void*);
-  bool(*obj_key_callback)(void*, char*, int);
-  bool(*end_obj_callback)(void*);
-  bool(*start_array_callback)(void*);
-  bool(*end_array_callback)(void*);
 } JsonDecode_State;
 
 // Encode
@@ -90,15 +80,15 @@ char* JsonEncode_Int(JsonEncode_State* state, char *buf, int value, int *remaini
 char* JsonEncode_Bool(JsonEncode_State* state, char *buf, bool value, int *remaining);
 
 // Decode
-void JsonDecode_SetIntCallback(JsonDecode_State* state, bool(*int_callback)(void *ctx, int val));
-void JsonDecode_SetFloatCallback(JsonDecode_State* state, bool(*float_callback)(void *ctx, float val));
-void JsonDecode_SetBoolCallback(JsonDecode_State* state, bool(*bool_callback)(void *ctx, bool val));
-void JsonDecode_SetStringCallback(JsonDecode_State* state, bool(*string_callback)(void *ctx, char *string, int len));
-void JsonDecode_SetStartObjCallback(JsonDecode_State* state, bool(*start_obj_callback)(void *ctx));
-void JsonDecode_SetObjKeyCallback(JsonDecode_State* state, bool(*obj_key_callback)(void *ctx, char *key, int len));
-void JsonDecode_SetEndObjCallback(JsonDecode_State* state, bool(*end_obj_callback)(void *ctx));
-void JsonDecode_SetStartArrayCallback(JsonDecode_State* state, bool(*start_array_callback)(void *ctx));
-void JsonDecode_SetEndArrayCallback(JsonDecode_State* state, bool(*end_array_callback)(void *ctx));
+void JsonDecode_SetIntCallback(bool(*int_callback)(void *ctx, int val));
+void JsonDecode_SetFloatCallback(bool(*float_callback)(void *ctx, float val));
+void JsonDecode_SetBoolCallback(bool(*bool_callback)(void *ctx, bool val));
+void JsonDecode_SetStringCallback(bool(*string_callback)(void *ctx, char *string, int len));
+void JsonDecode_SetStartObjCallback(bool(*start_obj_callback)(void *ctx));
+void JsonDecode_SetObjKeyCallback(bool(*obj_key_callback)(void *ctx, char *key, int len));
+void JsonDecode_SetEndObjCallback(bool(*end_obj_callback)(void *ctx));
+void JsonDecode_SetStartArrayCallback(bool(*start_array_callback)(void *ctx));
+void JsonDecode_SetEndArrayCallback(bool(*end_array_callback)(void *ctx));
 
 void JsonDecode_Init(JsonDecode_State* state, void* context);
 bool JsonDecode(JsonDecode_State* state, char* text, int len);

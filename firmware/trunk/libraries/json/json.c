@@ -35,11 +35,11 @@
   devices from the Make Controller.  
   
   \b Disclaimer - in an attempt to keep it as small and as simple as possible, this library is not 
-  completely full featured at the moment.  It doesn't deal with escaped strings or some of the 
-  more exotic numeric representations outlined in the JSON specification.  It does, however, work
-  quite well for most other JSON tasks.
+  completely full featured at the moment.  It doesn't process escaped strings for you, and doesn't deal
+  with some of the more exotic numeric representations outlined in the JSON specification.  
+  It does, however, work quite well for most other JSON tasks.
 
-  \b Generating
+  \section Generating
   Generating JSON is pretty simple - just make successive calls to the API to add the desired
   elements to your string.  
   
@@ -68,7 +68,7 @@
   \b Note - the library will add the appropriate separators (: or , usually) to the string, 
   depending on the context of the objects and arrays you've opened, or other data you've inserted.
 
-  \b Parsing
+  \section Parsing
   Parsing is done using an event-based mechanism.  This means you can register for any parse events you care
   to hear about, and then be called back with their value as they're encountered in the JSON string.
   Each parse process needs its own JsonDecode_State variable to keep track of where it is.
@@ -110,7 +110,7 @@
   JsonDecode_Init(&s, 0); // pass 0 if you don't need to use any special context
   char jsonstr[] = "[{\"label\":\"value\",\"label2\":{\"nested\":234}}]";
   JsonDecode(&s, jsonstr, strlen(jsonstr));
-  // now each of our callbacks will be triggered at the appropriate times
+  // now each of our callbacks will be triggered at the appropriate time
   \endcode
 
   Thanks to YAJL (http://code.google.com/p/yajl-c) for some design inspiration.
@@ -281,9 +281,6 @@ char* JsonEncode_ArrayClose(JsonEncode_State* state, char *buf, int *remaining)
   Add a string to the current JSON string.
   Depending on whether you've opened objects, arrays, or other inserted 
   other data, the approprate separating symbols will be added to the string.
-
-  Doesn't handle escaped elements in the string at the moment, since the internal 
-  implementation simply points to the string in the original data.
 
   @param state A pointer to the JsonEncode_State variable being used for this encode process.
   @param buf A pointer to the buffer containing the JSON string.
@@ -488,6 +485,20 @@ typedef enum {
     token_unknown
 } JsonDecode_Token;
 
+struct 
+{
+  bool(*null_callback)(void*);
+  bool(*bool_callback)(void*, bool);
+  bool(*int_callback)(void*, int);
+  bool(*float_callback)(void*, float);
+  bool(*string_callback)(void*, char*, int);
+  bool(*start_obj_callback)(void*);
+  bool(*obj_key_callback)(void*, char*, int);
+  bool(*end_obj_callback)(void*);
+  bool(*start_array_callback)(void*);
+  bool(*end_array_callback)(void*);
+} JsonDecode_Callbacks;
+
 static JsonDecode_Token JsonDecode_GetToken(char* text, int len);
 
 /**
@@ -498,18 +509,17 @@ static JsonDecode_Token JsonDecode_GetToken(char* text, int len);
   \endcode
   which would then be registered like so:
   \code
-  JsonDecode_State s;
-  JsonDecode_SetIntCallback(&s, on_int);
+  JsonDecode_SetIntCallback(on_int);
   \endcode
-  The \b context parameter can be optionally passed to JsonDecode_Init() 
-  to provide context within the callback.
+  The \b context parameter will be set to whatever you originally passed to 
+  JsonDecode_Init().  Since each JsonDecode_State can have a different context, 
+  this makes it convenient to know in your callback which one you're currently parsing.
 
-  @param state A pointer to the JsonDecode_State variable being used for this decode process.
   @param int_callback The function to be called back.
 */
-void JsonDecode_SetIntCallback(JsonDecode_State* state, bool(*int_callback)(void *ctx, int val))
+void JsonDecode_SetIntCallback(bool(*int_callback)(void *ctx, int val))
 {
-  state->int_callback = int_callback;
+  JsonDecode_Callbacks.int_callback = int_callback;
 }
 
 /**
@@ -520,18 +530,17 @@ void JsonDecode_SetIntCallback(JsonDecode_State* state, bool(*int_callback)(void
   \endcode
   which would then be registered like so:
   \code
-  JsonDecode_State s;
-  JsonDecode_SetFloatCallback(&s, on_float);
+  JsonDecode_SetFloatCallback(on_float);
   \endcode
-  The \b context parameter can be optionally passed to JsonDecode_Init() 
-  to provide context within the callback.
+  The \b context parameter will be set to whatever you originally passed to 
+  JsonDecode_Init().  Since each JsonDecode_State can have a different context, 
+  this makes it convenient to know in your callback which one you're currently parsing.
 
-  @param state A pointer to the JsonDecode_State variable being used for this decode process.
   @param float_callback The function to be called back.
 */
-void JsonDecode_SetFloatCallback(JsonDecode_State* state, bool(*float_callback)(void *ctx, float val))
+void JsonDecode_SetFloatCallback(bool(*float_callback)(void *ctx, float val))
 {
-  state->float_callback = float_callback;
+  JsonDecode_Callbacks.float_callback = float_callback;
 }
 
 /**
@@ -542,40 +551,44 @@ void JsonDecode_SetFloatCallback(JsonDecode_State* state, bool(*float_callback)(
   \endcode
   which would then be registered like so:
   \code
-  JsonDecode_State s;
-  JsonDecode_SetBoolCallback(&s, on_bool);
+  JsonDecode_SetBoolCallback(on_bool);
   \endcode
-  The \b context parameter can be optionally passed to JsonDecode_Init() 
-  to provide context within the callback.
+  The \b context parameter will be set to whatever you originally passed to 
+  JsonDecode_Init().  Since each JsonDecode_State can have a different context, 
+  this makes it convenient to know in your callback which one you're currently parsing.
 
-  @param state A pointer to the JsonDecode_State variable being used for this decode process.
   @param bool_callback The function to be called back.
 */
-void JsonDecode_SetBoolCallback(JsonDecode_State* state, bool(*bool_callback)(void *ctx, bool val))
+void JsonDecode_SetBoolCallback(bool(*bool_callback)(void *ctx, bool val))
 {
-  state->bool_callback = bool_callback;
+  JsonDecode_Callbacks.bool_callback = bool_callback;
 }
 
 /**
   Set the function to be called back when a string is parsed.
+
+  \b Note - escaped elements in strings are respected, but not processed/removed 
+  from the string at the moment, since the internal implementation simply points 
+  to the string in the original data.  If you have escaped data, you'll need to 
+  handle it in your code.
+
   The function must have the format:
   \code
   bool on_string(void* context, char* string);
   \endcode
   which would then be registered like so:
   \code
-  JsonDecode_State s;
-  JsonDecode_SetStringCallback(&s, on_string);
+  JsonDecode_SetStringCallback(on_string);
   \endcode
-  The \b context parameter can be optionally passed to JsonDecode_Init() 
-  to provide context within the callback.
+  The \b context parameter will be set to whatever you originally passed to 
+  JsonDecode_Init().  Since each JsonDecode_State can have a different context, 
+  this makes it convenient to know in your callback which one you're currently parsing.
 
-  @param state A pointer to the JsonDecode_State variable being used for this decode process.
   @param string_callback The function to be called back.
 */
-void JsonDecode_SetStringCallback(JsonDecode_State* state, bool(*string_callback)(void *ctx, char *string, int len))
+void JsonDecode_SetStringCallback(bool(*string_callback)(void *ctx, char *string, int len))
 {
-  state->string_callback = string_callback;
+  JsonDecode_Callbacks.string_callback = string_callback;
 }
 
 /**
@@ -587,42 +600,41 @@ void JsonDecode_SetStringCallback(JsonDecode_State* state, bool(*string_callback
   \endcode
   which would then be registered like so:
   \code
-  JsonDecode_State s;
-  JsonDecode_SetStartObjCallback(&s, on_obj_started);
+  JsonDecode_SetStartObjCallback(on_obj_started);
   \endcode
-  The \b context parameter can be optionally passed to JsonDecode_Init() 
-  to provide context within the callback.
+  The \b context parameter will be set to whatever you originally passed to 
+  JsonDecode_Init().  Since each JsonDecode_State can have a different context, 
+  this makes it convenient to know in your callback which one you're currently parsing.
 
-  @param state A pointer to the JsonDecode_State variable being used for this decode process.
   @param start_obj_callback The function to be called back.
 */
-void JsonDecode_SetStartObjCallback(JsonDecode_State* state, bool(*start_obj_callback)(void *ctx))
+void JsonDecode_SetStartObjCallback(bool(*start_obj_callback)(void *ctx))
 {
-  state->start_obj_callback = start_obj_callback;
+  JsonDecode_Callbacks.start_obj_callback = start_obj_callback;
 }
 
 /**
   Set the function to be called back when the key of a key-value pair has been encountered.
   A key must always be a string in JSON, so you'll get the string back.  This is particularly
   helpful for setting how the next element (the value in the key-value pair) should be handled.
+
   The function must have the format:
   \code
   bool on_obj_key(void* context);
   \endcode
   which would then be registered like so:
   \code
-  JsonDecode_State s;
-  JsonDecode_SetObjKeyCallback(&s, on_obj_key);
+  JsonDecode_SetObjKeyCallback(on_obj_key);
   \endcode
-  The \b context parameter can be optionally passed to JsonDecode_Init() 
-  to provide context within the callback.
+  The \b context parameter will be set to whatever you originally passed to 
+  JsonDecode_Init().  Since each JsonDecode_State can have a different context, 
+  this makes it convenient to know in your callback which one you're currently parsing.
 
-  @param state A pointer to the JsonDecode_State variable being used for this decode process.
   @param obj_key_callback The function to be called back.
 */
-void JsonDecode_SetObjKeyCallback(JsonDecode_State* state, bool(*obj_key_callback)(void *ctx, char *key, int len))
+void JsonDecode_SetObjKeyCallback(bool(*obj_key_callback)(void *ctx, char *key, int len))
 {
-  state->obj_key_callback = obj_key_callback;
+  JsonDecode_Callbacks.obj_key_callback = obj_key_callback;
 }
 
 /**
@@ -634,18 +646,17 @@ void JsonDecode_SetObjKeyCallback(JsonDecode_State* state, bool(*obj_key_callbac
   \endcode
   which would then be registered like so:
   \code
-  JsonDecode_State s;
-  JsonDecode_SetEndObjCallback(&s, on_obj_ended);
+  JsonDecode_SetEndObjCallback(on_obj_ended);
   \endcode
-  The \b context parameter can be optionally passed to JsonDecode_Init() 
-  to provide context within the callback.
+  The \b context parameter will be set to whatever you originally passed to 
+  JsonDecode_Init().  Since each JsonDecode_State can have a different context, 
+  this makes it convenient to know in your callback which one you're currently parsing.
 
-  @param state A pointer to the JsonDecode_State variable being used for this decode process.
   @param end_obj_callback The function to be called back.
 */
-void JsonDecode_SetEndObjCallback(JsonDecode_State* state, bool(*end_obj_callback)(void *ctx))
+void JsonDecode_SetEndObjCallback(bool(*end_obj_callback)(void *ctx))
 {
-  state->end_obj_callback = end_obj_callback;
+  JsonDecode_Callbacks.end_obj_callback = end_obj_callback;
 }
 
 /**
@@ -657,18 +668,17 @@ void JsonDecode_SetEndObjCallback(JsonDecode_State* state, bool(*end_obj_callbac
   \endcode
   which would then be registered like so:
   \code
-  JsonDecode_State s;
-  JsonDecode_SetStartArrayCallback(&s, on_array_started);
+  JsonDecode_SetStartArrayCallback(on_array_started);
   \endcode
-  The \b context parameter can be optionally passed to JsonDecode_Init() 
-  to provide context within the callback.
+  The \b context parameter will be set to whatever you originally passed to 
+  JsonDecode_Init().  Since each JsonDecode_State can have a different context, 
+  this makes it convenient to know in your callback which one you're currently parsing.
 
-  @param state A pointer to the JsonDecode_State variable being used for this decode process.
   @param start_array_callback The function to be called back.
 */
-void JsonDecode_SetStartArrayCallback(JsonDecode_State* state, bool(*start_array_callback)(void *ctx))
+void JsonDecode_SetStartArrayCallback(bool(*start_array_callback)(void *ctx))
 {
-  state->start_array_callback = start_array_callback;
+  JsonDecode_Callbacks.start_array_callback = start_array_callback;
 }
 
 /**
@@ -680,18 +690,17 @@ void JsonDecode_SetStartArrayCallback(JsonDecode_State* state, bool(*start_array
   \endcode
   which would then be registered like so:
   \code
-  JsonDecode_State s;
-  JsonDecode_SetEndArrayCallback(&s, on_array_ended);
+  JsonDecode_SetEndArrayCallback(on_array_ended);
   \endcode
-  The \b context parameter can be optionally passed to JsonDecode_Init() 
-  to provide context within the callback.
+  The \b context parameter will be set to whatever you originally passed to 
+  JsonDecode_Init().  Since each JsonDecode_State can have a different context, 
+  this makes it convenient to know in your callback which one you're currently parsing.
   
-  @param state A pointer to the JsonDecode_State variable being used for this decode process.
   @param end_array_callback The function to be called back.
 */
-void JsonDecode_SetEndArrayCallback(JsonDecode_State* state, bool(*end_array_callback)(void *ctx))
+void JsonDecode_SetEndArrayCallback(bool(*end_array_callback)(void *ctx))
 {
-  state->end_array_callback = end_array_callback;
+  JsonDecode_Callbacks.end_array_callback = end_array_callback;
 }
 
 /**
@@ -748,27 +757,27 @@ bool JsonDecode(JsonDecode_State* state, char* text, int len)
     switch(token)
     {
       case token_true:
-        if(state->bool_callback)
+        if(JsonDecode_Callbacks.bool_callback)
         {
-          if(!state->bool_callback(state->context, true))
+          if(!JsonDecode_Callbacks.bool_callback(state->context, true))
             return false;
         }
         state->p += 4;
         state->len -= 4;
         break;
       case token_false:
-        if(state->bool_callback)
+        if(JsonDecode_Callbacks.bool_callback)
         {
-          if(!state->bool_callback(state->context, false))
+          if(!JsonDecode_Callbacks.bool_callback(state->context, false))
             return false;
         }
         state->p += 5;
         state->len -= 5;
         break;
       case token_null:
-        if(state->null_callback)
+        if(JsonDecode_Callbacks.null_callback)
         {
-          if(!state->null_callback(state->context))
+          if(!JsonDecode_Callbacks.null_callback(state->context))
             return false;
         }
         state->p += 4;
@@ -783,9 +792,9 @@ bool JsonDecode(JsonDecode_State* state, char* text, int len)
         break;
       case token_left_bracket:
         state->steps[++state->depth] = JSON_DECODE_OBJECT_START;
-        if(state->start_obj_callback)
+        if(JsonDecode_Callbacks.start_obj_callback)
         {
-          if(!state->start_obj_callback(state->context))
+          if(!JsonDecode_Callbacks.start_obj_callback(state->context))
             return false;
         }
         state->p++;
@@ -793,9 +802,9 @@ bool JsonDecode(JsonDecode_State* state, char* text, int len)
         break;
       case token_right_bracket:
         state->depth--;
-        if(state->end_obj_callback)
+        if(JsonDecode_Callbacks.end_obj_callback)
         {
-          if(!state->end_obj_callback(state->context))
+          if(!JsonDecode_Callbacks.end_obj_callback(state->context))
             return false;
         }
         state->p++;
@@ -803,9 +812,9 @@ bool JsonDecode(JsonDecode_State* state, char* text, int len)
         break;
       case token_left_brace:
         state->steps[++state->depth] = JSON_DECODE_IN_ARRAY;
-        if(state->start_array_callback)
+        if(JsonDecode_Callbacks.start_array_callback)
         {
-          if(!state->start_array_callback(state->context))
+          if(!JsonDecode_Callbacks.start_array_callback(state->context))
             return false;
         }
         state->p++;
@@ -813,9 +822,9 @@ bool JsonDecode(JsonDecode_State* state, char* text, int len)
         break;
       case token_right_brace:
         state->depth--;
-        if(state->end_array_callback)
+        if(JsonDecode_Callbacks.end_array_callback)
         {
-          if(!state->end_array_callback(state->context))
+          if(!JsonDecode_Callbacks.end_array_callback(state->context))
             return false;
         }
         state->p++;
@@ -843,17 +852,17 @@ bool JsonDecode(JsonDecode_State* state, char* text, int len)
         int size = p - state->p;
         if(gotdecimal)
         {
-          if(state->float_callback)
+          if(JsonDecode_Callbacks.float_callback)
           {
-            if(!state->float_callback(state->context, atof(state->p)))
+            if(!JsonDecode_Callbacks.float_callback(state->context, atof(state->p)))
               return false;
           }
         }
         else
         {
-          if(state->int_callback)
+          if(JsonDecode_Callbacks.int_callback)
           {
-            if(!state->int_callback(state->context, atoi(state->p)))
+            if(!JsonDecode_Callbacks.int_callback(state->context, atoi(state->p)))
               return false;
           }
         }
@@ -863,10 +872,18 @@ bool JsonDecode(JsonDecode_State* state, char* text, int len)
       }
       case token_string:
       {
-        char* p = ++state->p;
+        char* p = ++state->p; // move past the opening "
         state->len--;
-        while(*p != '"') // just go until the next " for now...may ultimately check for escaped data
-          p++;
+        bool keepgoing = true;
+        while(keepgoing)
+        {
+          if(*p == '\\') // we got an escape - skip the escape and the next character
+            p += 2;
+          else if(*p == '"') // we got the end of a string
+            keepgoing = false;
+          else
+            p++; // keep looking for the end of the string
+        }
         int size = p - state->p;
         *p = 0; // replace the trailing " with a null to make a string
 
@@ -885,17 +902,17 @@ bool JsonDecode(JsonDecode_State* state, char* text, int len)
 
         if(objkey) // last one was a comma - next string has to be a key
         {
-          if(state->obj_key_callback)
+          if(JsonDecode_Callbacks.obj_key_callback)
           {
-            if(!state->obj_key_callback(state->context, state->p, size))
+            if(!JsonDecode_Callbacks.obj_key_callback(state->context, state->p, size))
               return false;
           }
         }
         else // just a normal string
         {
-          if(state->string_callback)
+          if(JsonDecode_Callbacks.string_callback)
           {
-            if(!state->string_callback(state->context, state->p, size))
+            if(!JsonDecode_Callbacks.string_callback(state->context, state->p, size))
               return false;
           }
         }
