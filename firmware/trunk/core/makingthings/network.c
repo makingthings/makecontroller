@@ -1187,7 +1187,7 @@ int Network_DnsGetHostByName( const char *name )
   }
   err_t result = dns_gethostbyname( name, &addr, Network_DnsCallback, 0);
   if(result == ERR_OK) // the result was cached, just return it
-    retval = addr.addr;
+    retval = ntohl(addr.addr);
   else if(result == ERR_INPROGRESS) // a lookup is in progress - wait for the callback to signal that we've gotten a response
   {
     if(SemaphoreTake(Network_DnsSemaphore, 30000)) // timeout is 30 seconds by default
@@ -1206,7 +1206,7 @@ void Network_DnsCallback(const char *name, struct ip_addr *addr, void *arg)
   LWIP_UNUSED_ARG(arg);
   LWIP_UNUSED_ARG(name);
   if(addr)
-    Network->DnsResolvedAddress = addr->addr;
+    Network->DnsResolvedAddress = ntohl(addr->addr);
   else
     Network->DnsResolvedAddress = -1; // we didn't get an address, stuff an error value in there
   SemaphoreGive(Network_DnsSemaphore);
