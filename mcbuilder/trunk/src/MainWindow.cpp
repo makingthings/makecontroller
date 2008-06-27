@@ -76,6 +76,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   connect(currentFileDropDown, SIGNAL(currentIndexChanged(int)), this, SLOT(onFileSelection(int)));
   connect(editor->document(), SIGNAL(contentsChanged()),this, SLOT(onDocumentModified()));
   connect(outputConsole, SIGNAL(itemDoubleClicked(QListWidgetItem*)),this, SLOT(onConsoleDoubleClick(QListWidgetItem*)));
+  connect(projInfo, SIGNAL(projectInfoUpdated()), builder, SLOT(onProjectUpdated()));
   
   // menu actions 
   connect(actionNew,					SIGNAL(triggered()), this,		SLOT(onNewFile()));
@@ -311,7 +312,7 @@ void MainWindow::onNewFile( )
   }
   QString newFilePath = QFileDialog::getSaveFileName(this, tr("Create New File"), currentProject, tr("C Files (*.c)"));
   if(!newFilePath.isNull()) // user cancelled
-    createNewFile(newFilePath);
+    createNewFile(QDir(currentProject).relativeFilePath(newFilePath));
 }
 
 /*
@@ -329,7 +330,7 @@ void MainWindow::onAddExistingFile( )
   if(!newFilePath.isNull()) // user cancelled
   {
     editorLoadFile(newFilePath);
-    addToProjectFile(currentProject, newFilePath, "thumb");
+    addToProjectFile(currentProject, QDir(currentProject).relativeFilePath(newFilePath), "thumb");
     QFileInfo fi(newFilePath);
     currentFileDropDown->addItem(fi.fileName(), fi.filePath());
     currentFileDropDown->setCurrentIndex(currentFileDropDown->count()-1);
@@ -372,8 +373,13 @@ void MainWindow::createNewFile(QString path)
 {
   QFileInfo fi(path);
   if(fi.suffix().isEmpty())
-  fi.setFile(fi.filePath() + ".c");
-  QFile file(fi.filePath());
+    fi.setFile(fi.filePath() + ".c");
+  QFile file;
+  if(fi.isRelative())
+    file.setFileName(QDir(currentProject).filePath(fi.filePath()));
+  else
+    file.setFileName(fi.filePath());
+    
   if(file.exists()) // don't do anything if this file's already there
     return;
   if(file.open(QIODevice::WriteOnly | QFile::Text))
@@ -476,7 +482,7 @@ bool MainWindow::addToProjectFile(QString projectPath, QString newFilePath, QStr
     // write our newly manipulated file
     if(projectFile.open(QIODevice::WriteOnly | QFile::Text))
     {
-      projectFile.write(newProjectDoc.toByteArray());
+      projectFile.write(newProjectDoc.toByteArray(2));
       projectFile.close();
       retval = true;
     }
@@ -527,16 +533,18 @@ void MainWindow::openProject(QString projectPath)
           currentFileDropDown->addItem(fi.fileName(), fi.filePath());
         else
           currentFileDropDown->addItem(fi.fileName(), projectDir.filePath(fi.filePath()));
-      }
-      // if this is the main project file, load it into the editor
-      if(fi.baseName() == pathname)
-      {
-        editorLoadFile(fi.filePath());
-        currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
+          
+        // if this is the main project file, load it into the editor
+        if(fi.baseName() == pathname)
+        {
+          editorLoadFile(projectDir.filePath(fi.filePath()));
+          currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
+        }
       }
     }
     setWindowTitle( projectName + "[*] - mcbuilder");
     updateRecentProjects(projectName);
+    builder->onProjectUpdated();
     projInfo->load();
     buildLog->clear();
 	}
@@ -681,18 +689,46 @@ void MainWindow::onSaveProjectAs( )
     // give any project-specific files the new project's name
     if(fi.baseName() == currentProjectName)
     {
-      if(fi.suffix() != "o")
+      if(fi.suffix() != "o") // don't need to copy obj files
       {
         QFile tocopy(fi.filePath());
-        tocopy.copy(newProjectPath + s + newProjectName + "." + fi.suffix());
+        tocopy.copy(dir.filePath(newProjectName + "." + fi.suffix()));
       }
     }
     else // just copy the file over
     {
       QFile tocopy(fi.filePath());
-      tocopy.copy(newProjectPath + s + fi.fileName());
+      tocopy.copy(dir.filePath(fi.fileName()));
     }
   }
+  
+  // update the contents of the project file
+  QDomDocument projectDoc;
+  QFile projFile(dir.filePath(newProjectName + ".xml"));
+  if(projectDoc.setContent(&projFile))
+  {
+    projFile.close();
+    QDomNodeList allFiles = projectDoc.elementsByTagName("files").at(0).childNodes();
+    for(int i = 0; i < allFiles.count(); i++)
+    {
+      if(!allFiles.at(i).toElement().text().startsWith("resources/cores"))
+      {
+        QFileInfo fi(allFiles.at(i).toElement().text());
+        if(fi.baseName() == currentProjectName)
+        {
+          fi.setFile(fi.path() + "/" + newProjectName + "." + fi.suffix());
+          allFiles.at(i).firstChild().setNodeValue(QDir::cleanPath(fi.filePath()));
+        }
+      }
+    }
+    // reopen with WriteOnly
+    if(projFile.open(QIODevice::WriteOnly|QFile::Text))
+    {
+      projFile.write(projectDoc.toByteArray(2));
+      projFile.close();
+    }
+  }
+  
   openProject(newProjectPath);
 }
 

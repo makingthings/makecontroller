@@ -36,6 +36,9 @@ Builder::Builder(MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildL
   connect(this, SIGNAL(readyReadStandardError()), this, SLOT(filterErrorOutput()));
   connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(nextStep(int, QProcess::ExitStatus)));
   connect(this, SIGNAL(error(QProcess::ProcessError)), this, SLOT(onBuildError(QProcess::ProcessError)));
+  
+  cleanFirst = false;
+  buildPending = false;
 }
 
 /*
@@ -43,6 +46,12 @@ Builder::Builder(MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildL
 */
 void Builder::build(QString projectName)
 {
+  if(cleanFirst)
+  {
+    cleanFirst = false;
+    buildPending = true;
+    return clean(projectName);
+  }
   currentProjectPath = projectName;
   ensureBuildDirExists(currentProjectPath);  // make sure we have a build dir
   setWorkingDirectory(QDir(currentProjectPath).filePath("build"));
@@ -70,7 +79,10 @@ void Builder::clean(QString projectName)
 {
   currentProjectPath = projectName;
   ensureBuildDirExists(currentProjectPath);
-  setWorkingDirectory(QDir(currentProjectPath).filePath("build"));
+  QDir buildDir(currentProjectPath + "/build");
+  setWorkingDirectory(buildDir.path());
+  if(!buildDir.exists("Makefile"))
+    createMakefile(currentProjectPath);
   buildStep = CLEAN;
   QStringList args = QStringList() << "clean";
   currentProcess = "make clean";
@@ -80,6 +92,11 @@ void Builder::clean(QString projectName)
   if(!makePath.isEmpty() && !makePath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
     makePath += "/";
   start(QDir::toNativeSeparators(makePath + "make"), args);
+}
+
+void Builder::onProjectUpdated()
+{
+  cleanFirst = true;
 }
 
 void Builder::stop()
@@ -138,6 +155,11 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
     }
     case CLEAN:
       mainWindow->onCleanComplete();
+      if(buildPending)
+      {
+        buildPending = false;
+        build(currentProjectPath);
+      }
       break;
   }
   resetBuildProcess();
@@ -149,7 +171,6 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
 void Builder::resetBuildProcess()
 {
   errMsg.clear();
-  currentProjectPath.clear();
   libraries.clear();
 }
 
