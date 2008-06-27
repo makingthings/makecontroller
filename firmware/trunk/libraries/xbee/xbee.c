@@ -1188,13 +1188,14 @@ static bool XBee_GetIOValues( XBeePacket* packet, int *inputs )
       p = packet->io64.data;
       channelIndicators = (packet->io64.channelIndicators[0] << 0x08) | packet->io64.channelIndicators[1];
     }
-    
+
     for( i = 0; i < XBEE_INPUTS; i++ )
     {
       enabled = channelIndicators & 1;
       channelIndicators >>= 1;
       if( i < 9 ) // digital ins
       {
+        inputs[i] = 0; // zero out the 9 inputs beforehand
         if( enabled )
         {
           if( !digitalins )
@@ -1204,8 +1205,6 @@ static bool XBee_GetIOValues( XBeePacket* packet, int *inputs )
           }
           inputs[i] = ((digitalins >> i) & 1) * 1023;
         }
-        else
-          inputs[i] = 0;
       }
       else // analog ins
       {
@@ -1214,8 +1213,6 @@ static bool XBee_GetIOValues( XBeePacket* packet, int *inputs )
           int ain_msb = *p++ << 0x08;
           inputs[i-9] = ain_msb | *p++;
         }
-        else
-          inputs[i-9] = 0;
       }
     }
     return true;
