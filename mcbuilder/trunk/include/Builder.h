@@ -53,6 +53,8 @@ private:
   BuildStep buildStep;
   int maxsize;
   QString currentProcess;
+  bool cleanFirst;
+  bool buildPending;
   QList<Library> libraries;
   void resetBuildProcess();
   bool createMakefile(QString projectPath);
@@ -66,6 +68,9 @@ private:
   void getLibrarySources(QString libdir, QStringList *thmb, QStringList *arm);
   QString filteredPath(QString path);
 		
+public slots:
+  void onProjectUpdated();
+
 private slots:
   void nextStep( int exitCode, QProcess::ExitStatus exitStatus );
   void filterOutput();

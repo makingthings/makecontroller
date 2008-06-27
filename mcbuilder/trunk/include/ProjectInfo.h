@@ -77,6 +77,9 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
     
 	public slots:
 		bool loadAndShow();
+  
+  signals:
+    void projectInfoUpdated();
     
 	private:
 		MainWindow *mainWindow;

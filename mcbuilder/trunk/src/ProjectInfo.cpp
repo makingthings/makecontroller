@@ -138,7 +138,7 @@ void ProjectInfo::loadFileBrowser(QDir *projectDir, QDomDocument *projectFile)
   QFileIconProvider ip;
   for(int i = 0; i < allFiles.count(); i++)
   {
-    QFileInfo fi(allFiles.at(i).toElement().text());
+    QFileInfo fi(projectDir->filePath(allFiles.at(i).toElement().text()));
     if(!fi.fileName().isEmpty())
     {
       if(projectDir->exists(fi.fileName()))
@@ -165,22 +165,33 @@ void ProjectInfo::applyChanges( )
 		QDomDocument projectFile;
     if(projectFile.setContent(&file))
     {
+      bool changed = false;
       // to get at the actual text of an element, you need to grab its child,
       // which will be a QDomText node
       if(versionEdit->text() != projectFile.elementsByTagName("version").at(0).toElement().text())
+      {
         projectFile.elementsByTagName("version").at(0).firstChild().setNodeValue(versionEdit->text());
+        changed = true;
+      }
         
       if(heapSizeEdit->text() != projectFile.elementsByTagName("heapsize").at(0).toElement().text())
+      {
         projectFile.elementsByTagName("heapsize").at(0).firstChild().setNodeValue(heapSizeEdit->text());
+        changed = true;
+      }
         
       if(optLevelBox->currentText() != projectFile.elementsByTagName("optlevel").at(0).toElement().text())
+      {
         projectFile.elementsByTagName("optlevel").at(0).firstChild().setNodeValue(optLevelBox->currentText());
+        changed = true;
+      }
       
       Qt::CheckState state = (projectFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
       if(debugInfoCheckbox->checkState() != state)
       {
         QString debugstr = (debugInfoCheckbox->checkState() == Qt::Checked) ? "true" : "false";
         projectFile.elementsByTagName("debuginfo").at(0).firstChild().setNodeValue(debugstr);
+        changed = true;
       }
       
       state = (projectFile.elementsByTagName("include_osc").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
@@ -188,6 +199,7 @@ void ProjectInfo::applyChanges( )
       {
         QString str = (oscBox->checkState() == Qt::Checked) ? "true" : "false";
         projectFile.elementsByTagName("include_osc").at(0).firstChild().setNodeValue(str);
+        changed = true;
       }
       
       state = (projectFile.elementsByTagName("include_usb").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
@@ -195,6 +207,7 @@ void ProjectInfo::applyChanges( )
       {
         QString str = (usbBox->checkState() == Qt::Checked) ? "true" : "false";
         projectFile.elementsByTagName("include_usb").at(0).firstChild().setNodeValue(str);
+        changed = true;
       }
       
       state = (projectFile.elementsByTagName("include_network").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
@@ -202,19 +215,35 @@ void ProjectInfo::applyChanges( )
       {
         QString str = (networkBox->checkState() == Qt::Checked) ? "true" : "false";
         projectFile.elementsByTagName("include_network").at(0).firstChild().setNodeValue(str);
+        changed = true;
       }
       
       if(networkMempoolEdit->text() != projectFile.elementsByTagName("network_mempool").at(0).toElement().text())
+      {
         projectFile.elementsByTagName("network_mempool").at(0).firstChild().setNodeValue(networkMempoolEdit->text());
+        changed = true;
+      }
         
       if(udpSocketEdit->text() != projectFile.elementsByTagName("network_udp_sockets").at(0).toElement().text())
+      {
         projectFile.elementsByTagName("network_udp_sockets").at(0).firstChild().setNodeValue(udpSocketEdit->text());
+        changed = true;
+      }
       
       if(tcpSocketEdit->text() != projectFile.elementsByTagName("network_tcp_sockets").at(0).toElement().text())
+      {
         projectFile.elementsByTagName("network_tcp_sockets").at(0).firstChild().setNodeValue(tcpSocketEdit->text());
+        changed = true;
+      }
       
       if(tcpServerEdit->text() != projectFile.elementsByTagName("network_tcp_servers").at(0).toElement().text())
+      {
         projectFile.elementsByTagName("network_tcp_servers").at(0).firstChild().setNodeValue(tcpServerEdit->text());
+        changed = true;
+      }
+      
+      if(changed)
+        emit projectInfoUpdated();
       
       file.resize(0); // clear out the current contents so we can update them, since we opened as read/write
       file.write(projectFile.toByteArray(2));
@@ -340,7 +369,7 @@ void ProjectInfo::onRemoveFileRequest(QString filename)
         QDomNode parent = files.at(i).parentNode();
         parent.removeChild(files.at(i));
         if(projectFile.open(QIODevice::WriteOnly|QFile::Text))
-          projectFile.write(doc.toByteArray());
+          projectFile.write(doc.toByteArray(2));
         mainWindow->removeFileFromProject(filename);
         return;
       }
@@ -366,7 +395,7 @@ void ProjectInfo::onChangeBuildType(QString filename, QString newtype)
       {
         files.at(i).toElement().setAttribute("type", newtype);
         if(projectFile.open(QIODevice::WriteOnly|QFile::Text))
-          projectFile.write(doc.toByteArray());
+          projectFile.write(doc.toByteArray(2));
         return;
       }
     }
