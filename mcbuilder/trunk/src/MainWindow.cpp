@@ -178,6 +178,31 @@ void MainWindow::closeEvent( QCloseEvent *qcloseevent )
 }
 
 /*
+  A key in the editor has been pressed.
+  If it's a return or an enter, insert the spaces on the previous
+  line so the cursor ends up in the same spot on the new line.
+*/
+void Editor::keyPressEvent(QKeyEvent* event) 
+{
+  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return)
+  {
+    QTextCursor c = textCursor();
+    QString whitespace;
+    QString line = c.block().text();
+    int count = 0;
+    while(count < line.size() && line.at(count).isSpace())
+      whitespace += line.at(count++);
+      
+    c.beginEditBlock();
+    c.insertBlock();
+    c.insertText(whitespace);
+    c.endEditBlock();
+  }
+  else
+    QPlainTextEdit::keyPressEvent(event); // call the base class implementation if we don't use the event
+}
+
+/*
   The cursor has moved.
   Highlight the current line, if appropriate.
   Update the line/column display in the status bar.

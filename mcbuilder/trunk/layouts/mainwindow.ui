@@ -33,7 +33,7 @@
       <property name="childrenCollapsible" >
        <bool>false</bool>
       </property>
-      <widget class="QPlainTextEdit" name="editor" />
+      <widget class="Editor" name="editor" />
       <widget class="QListWidget" name="outputConsole" >
        <property name="palette" >
         <palette>
@@ -516,6 +516,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>Editor</class>
+   <extends>QPlainTextEdit</extends>
+   <header>MainWindow.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../resources/icons/icons_rsrc.qrc" />
  </resources>

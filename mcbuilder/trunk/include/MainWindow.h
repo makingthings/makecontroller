@@ -21,7 +21,6 @@
 
 #include <QFile>
 #include <QMainWindow>
-#include "ui_mainwindow.h"
 #include "Highlighter.h"
 #include "Preferences.h"
 #include "ProjectInfo.h"
@@ -39,6 +38,22 @@ class Uploader;
 class Builder;
 class Properties;
 class FindReplace;
+
+// subclassed so we have access to the keypress events
+class Editor : public QPlainTextEdit
+{
+  Q_OBJECT
+public: 
+  Editor(QWidget *parent = 0) : QPlainTextEdit(0)
+  {
+    setParent(parent);
+  }
+  
+private:
+  void keyPressEvent( QKeyEvent* event );
+};
+
+#include "ui_mainwindow.h"
 
 class MainWindow : public QMainWindow, private Ui::MainWindow
 {
