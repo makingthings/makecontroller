@@ -543,7 +543,7 @@ void MainWindow::openProject(QString projectPath)
       }
     }
     setWindowTitle( projectName + "[*] - mcbuilder");
-    updateRecentProjects(projectName);
+    updateRecentProjects(projectPath);
     builder->onProjectUpdated();
     projInfo->load();
     buildLog->clear();
@@ -558,26 +558,32 @@ void MainWindow::openProject(QString projectPath)
 */
 void MainWindow::updateRecentProjects(QString newProject)
 {
-	QList<QAction*> recentActions = menuRecent_Projects->actions();
-	QStringList projects;
-	foreach(QAction* a, recentActions)
-		projects << a->text();
-	if(!projects.contains(newProject)) // only need to update if this project is not already included
+	QList<QAction*> recentProjects = menuRecent_Projects->actions();
+	QStringList recentProjectPaths;
+	foreach(QAction* a, recentProjects)
+		recentProjectPaths << a->data().toString();
+	if(!recentProjectPaths.contains(newProject)) // only need to update if this project is not already included
 	{
-		if(recentActions.count() >= RECENT_FILES )
-			menuRecent_Projects->removeAction(recentActions.at(0));
-		menuRecent_Projects->addAction(newProject);
-		foreach(QAction *a, menuRecent_Projects->actions()) // do this again to update our stringlist since it has changed
-			projects << a->text();
+		if(recentProjects.count() >= RECENT_FILES ) // make room in the list if we need to
+    {
+			menuRecent_Projects->removeAction(recentProjects.first());
+      recentProjectPaths.removeAll(newProject);
+    }
+      
+    QDir dir(newProject); // make the new action, and add it to the menu
+    QAction* action = new QAction(dir.dirName(), menuRecent_Projects);
+    action->setData(newProject);
+		menuRecent_Projects->addAction(action);
+    recentProjectPaths.append(newProject);
+
 		QSettings settings("MakingThings", "mcbuilder");
-		settings.setValue("MainWindow/recentProjects", projects);
+		settings.setValue("recentProjects", recentProjectPaths);
 	}	
 }
 
 void MainWindow::openRecentProject(QAction* project)
 {
-	QDir dir(Preferences::workspace());
-	openProject(dir.filePath(project->text( )));
+	openProject(project->data().toString());
 }
 
 /*
@@ -1035,10 +1041,15 @@ void MainWindow::onLibrary(QAction *example)
 void MainWindow::loadRecentProjects( )
 {
   QSettings settings("MakingThings", "mcbuilder");
-  QStringList projects = settings.value("MainWindow/recentProjects").toStringList();
+  QStringList projects = settings.value("recentProjects").toStringList();
   projects = projects.mid(0,RECENT_FILES); // just in case there are extras
   foreach(QString project, projects)
-    menuRecent_Projects->addAction(project);
+  {
+    QDir dir(project);
+    QAction* a = new QAction(dir.dirName(), menuRecent_Projects); // set the project name as the text
+    a->setData(project); // store the full path in data
+    menuRecent_Projects->addAction(a);
+  }
 }
 
 void MainWindow::printOutput(QString text)
