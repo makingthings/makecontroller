@@ -451,10 +451,11 @@ void MainWindow::onNewProject( )
   if( newProjPath.isNull() )
     return;
   // create a directory for the project
-  QDir workspaceDir(workspace);
-  workspaceDir.mkdir(newProjPath);
-  QDir newProjectDir(newProjPath);
-  QString newProjName = newProjectDir.dirName().remove(" "); // file names shouldn't have any spaces
+  QChar s = QDir::separator();
+  QString newProjName = newProjPath.split(s).last().remove(" ");
+  QDir newProjectDir(workspace);
+  newProjectDir.mkdir(newProjName);
+  newProjectDir.cd(newProjName);
   
   // grab the templates for a new project
   QDir templatesDir = QDir::current().filePath("resources/templates");
@@ -478,10 +479,10 @@ void MainWindow::onNewProject( )
       mainFile.close();
     }
     QFileInfo fi(mainFile);
-    addToProjectFile(newProjPath, fi.filePath(), "thumb");
+    addToProjectFile(newProjectDir.path(), fi.filePath(), "thumb");
     templateFile.close();
   }
-  openProject(newProjPath);
+  openProject(newProjectDir.path());
 }
 
 /*
@@ -539,7 +540,7 @@ void MainWindow::openProject(QString projectPath)
     return statusBar()->showMessage( QString("Couldn't find %1.").arg(projectName), 3500 );
 
   QString pathname = projectName; // filename should not have spaces
-  QFile projFile(projectDir.filePath(pathname.remove(" ") + ".xml"));
+  QFile projFile(projectDir.filePath(pathname + ".xml"));
   QDomDocument doc;
   if(doc.setContent(&projFile))
   {
@@ -709,7 +710,7 @@ void MainWindow::onSaveProjectAs( )
   QDir currentProjectDir(currentProject);
   QChar s = QDir::separator();
   QDir dir(workspace);
-  QString newProjectName = newProjectPath.split(s).last();
+  QString newProjectName = newProjectPath.split(s).last().remove(" ");
   QString currentProjectName = currentProject.split(s).last();
   dir.mkdir(newProjectName);
   dir.cd(newProjectName);
@@ -760,7 +761,7 @@ void MainWindow::onSaveProjectAs( )
     }
   }
   
-  openProject(newProjectPath);
+  openProject(dir.path());
 }
 
 /*
@@ -881,9 +882,13 @@ void MainWindow::onUpload( )
   if(currentProject.isEmpty())
     return statusBar()->showMessage( "Open a project to upload, or create a new one from the File menu.", 3500 );
   QDir projectDir(currentProject);
-  QString binName = projectDir.dirName().remove(" ").toLower();
   projectDir.cd("build");
-  uploadFile(projectDir.filePath(binName + ".bin"));
+  projectDir.setNameFilters(QStringList() << "*.bin");
+  QFileInfoList bins = projectDir.entryInfoList();
+  if(bins.count())
+    uploadFile(bins.first().filePath());
+  else
+    return statusBar()->showMessage( "Couldn't find the file to upload for this project.", 3500 );
 }
 
 /*

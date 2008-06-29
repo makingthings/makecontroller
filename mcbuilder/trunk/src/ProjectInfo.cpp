@@ -326,7 +326,7 @@ void FileBrowser::contextMenuEvent(QContextMenuEvent *event)
 */
 void FileBrowser::onRemoveRequest()
 {
-  QString filepath = currentItem()->data(FILENAME_COLUMN, FULLPATH_ROLE).toString();
+  QString filepath = currentItem()->text(FILENAME_COLUMN);
   QTreeWidgetItem *top = topLevelItem(0);
   delete top->takeChild(top->indexOfChild(currentItem()));
   emit removeFileRequest(filepath);
@@ -357,6 +357,7 @@ void FileBrowser::onSetBuildType()
 void ProjectInfo::onRemoveFileRequest(QString filename)
 {
   QFile projectFile(projectFilePath( ));
+  QDir projectDir(mainWindow->currentProjectPath());
   QDomDocument doc;
   if(doc.setContent(&projectFile))
   {
@@ -370,7 +371,7 @@ void ProjectInfo::onRemoveFileRequest(QString filename)
         parent.removeChild(files.at(i));
         if(projectFile.open(QIODevice::WriteOnly|QFile::Text))
           projectFile.write(doc.toByteArray(2));
-        mainWindow->removeFileFromProject(filename);
+        mainWindow->removeFileFromProject(projectDir.filePath(filename));
         return;
       }
     }
