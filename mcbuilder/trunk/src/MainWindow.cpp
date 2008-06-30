@@ -337,7 +337,7 @@ void MainWindow::onNewFile( )
   }
   QString newFilePath = QFileDialog::getSaveFileName(this, tr("Create New File"), currentProject, tr("C Files (*.c)"));
   if(!newFilePath.isNull()) // user cancelled
-    createNewFile(QDir(currentProject).relativeFilePath(newFilePath));
+    createNewFile(newFilePath);
 }
 
 /*
@@ -399,11 +399,7 @@ void MainWindow::createNewFile(QString path)
   QFileInfo fi(path);
   if(fi.suffix().isEmpty())
     fi.setFile(fi.filePath() + ".c");
-  QFile file;
-  if(fi.isRelative())
-    file.setFileName(QDir(currentProject).filePath(fi.filePath()));
-  else
-    file.setFileName(fi.filePath());
+  QFile file(fi.filePath());
     
   if(file.exists()) // don't do anything if this file's already there
     return;
@@ -494,13 +490,12 @@ bool MainWindow::addToProjectFile(QString projectPath, QString newFilePath, QStr
   QDomDocument newProjectDoc;
   QDir projectDir(projectPath);
   QFile projectFile(projectDir.filePath(projectDir.dirName() + ".xml"));
-  QFileInfo newFile(newFilePath);
   // read in the existing file, and add a node to the "files" section
   if(newProjectDoc.setContent(&projectFile))
   {
     QDomElement newFileElement = newProjectDoc.createElement("file");
     newFileElement.setAttribute("type", buildtype);
-    QDomText newFilePathElement = newProjectDoc.createTextNode(newFile.filePath());
+    QDomText newFilePathElement = newProjectDoc.createTextNode(projectDir.relativeFilePath(newFilePath));
     newFileElement.appendChild(newFilePathElement);
     newProjectDoc.elementsByTagName("files").at(0).toElement().appendChild(newFileElement);
     projectFile.close();
