@@ -50,9 +50,11 @@ bool UsbConsole::loadAndShow( )
   if(!portList->currentText().isEmpty())
     openDevice(portList->currentText());
   enumerate();
-  enumerateTimer.start(ENUM_FREQUENCY);
+#ifndef Q_WS_WIN
+  enumerateTimer.start(ENUM_FREQUENCY); // makes Windows unhappy...problem with enumerator
+#endif
   this->show();
-	return true;
+  return true;
 }
 
 /*

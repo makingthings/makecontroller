@@ -58,6 +58,10 @@ macx{
   release{ CONFIG += x86 ppc }
 }
 
+win32:debug {
+  CONFIG += console
+}
+
 # *******************************************
 #              qextserialport
 # *******************************************
