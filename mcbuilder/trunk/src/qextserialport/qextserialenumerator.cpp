@@ -109,13 +109,11 @@
 					
 					// MakingThings
 					QRegExp rx("COM(\\d+)");
-                    int pos = 0;
-                    while((pos = rx.indexIn(info.portName, pos)) != -1)
+					if(info.portName.contains(rx))
                     {
-                      int portnum(rx.cap(1).toInt());
+                      int portnum = rx.cap(1).toInt();
                       if(portnum > 9)
                         info.portName.prepend("\\\\.\\"); // COM ports greater than 9 need \\.\ prepended
-                      pos += rx.matchedLength();
                     }
                     // end MakingThings
 					
