@@ -52,6 +52,28 @@ bool ProjectManager::createNewFile(QString projectPath, QString filePath)
 }
 
 /*
+  Save an existing file with a new name.
+*/
+bool ProjectManager::saveFileAs(QString projectPath, QString existingFilePath, QString newFilePath)
+{
+  QFileInfo fi(newFilePath);
+  if(fi.exists()) // if it already exists, don't do anything
+    return true;
+  
+  if(fi.suffix() != "c" && fi.suffix() != "h") // default to a .c suffix if not provided
+    fi.setFile(fi.path() + "/" + fi.baseName() + ".c");
+
+  QFile file(existingFilePath);
+	if(!file.copy(fi.filePath()))
+    return false;
+  	
+  if(addToProjectFile(projectPath, fi.filePath(), "thumb"))
+    return true;
+  else
+    return false;
+}
+
+/*
   Create a new project.
   - a new directory for the project
   - an XML project file for the project, from template
@@ -61,10 +83,13 @@ bool ProjectManager::createNewFile(QString projectPath, QString filePath)
 */
 QString ProjectManager::createNewProject(QString newProjectPath)
 {
-  QStringList elems = newProjectPath.split(QDir::separator());
-  elems.last().remove(" "); // make sure the dir name doesn't have any spaces
-  newProjectPath = elems.join(QDir::separator());
-  if(newProjectPath.contains(" ")) // if there are still spaces, we have problems
+  if(newProjectPath.contains(" ")) // make sure the project name doesn't have any spaces
+  {
+    QStringList elems = newProjectPath.split(QDir::separator());
+    elems.last().remove(" ");
+    newProjectPath = elems.join(QDir::separator());
+  }
+  if(newProjectPath.contains(" ")) // if there are still spaces in the path, we have problems
     return "";
   QDir newProjectDir;
   newProjectDir.mkpath(newProjectPath);
@@ -130,6 +155,12 @@ bool ProjectManager::addToProjectFile(QString projectPath, QString newFilePath, 
   return retval;
 }
 
+//bool ProjectManager::removeFromProjectFile(QString projectPath, QString filePath)
+//{
+//  bool retval = false;
+//  return retval;
+//}
+
 /*
   Save a copy of a project.
   Any files in the project with the name of the project should be changed,
@@ -138,11 +169,20 @@ bool ProjectManager::addToProjectFile(QString projectPath, QString newFilePath, 
 QString ProjectManager::saveCurrentProjectAs(QString currentProjectPath, QString newProjectPath)
 {
   QDir currentProjectDir(currentProjectPath);
-  QChar s = QDir::separator();
-  QString newProjectName = newProjectPath.split(s).last().remove(" ");
   QString currentProjectName = currentProjectDir.dirName();
-  currentProjectDir.mkpath(newProjectName);
-  QDir newProjectDir(newProjectName);
+  if(newProjectPath.contains(" ")) // make sure the project name doesn't have any spaces
+  {
+    QStringList elems = newProjectPath.split(QDir::separator());
+    elems.last().remove(" ");
+    newProjectPath = elems.join(QDir::separator());
+  }
+  if(newProjectPath.contains(" ")) // if there are still spaces elsewhere in the path, we have problems
+    return "";
+    
+  QDir newProjectDir;
+  newProjectDir.mkpath(newProjectPath);
+  newProjectDir.setPath(newProjectPath);
+  QString newProjectName = newProjectDir.dirName();
   
   QFileInfoList fileList = currentProjectDir.entryInfoList();
   foreach(QFileInfo fi, fileList)

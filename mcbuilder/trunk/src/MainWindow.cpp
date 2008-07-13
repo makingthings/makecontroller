@@ -634,18 +634,20 @@ void MainWindow::onSaveAs( )
 		
 	QString newFileName = QFileDialog::getSaveFileName(this, tr("Save As"), 
 																			currentProject, tr("C Files (*.c)"));
-	if( newFileName.isNull() ) // user cancelled
-		return;
-		
-	QFile file(currentFile);
-	if(!newFileName.endsWith(".c"))
-		newFileName.append(".c");
-	file.copy(newFileName);
-	editorLoadFile(newFileName);
-  // TODO add file to project
-	QFileInfo fi(newFileName);
-	currentFileDropDown->addItem(fi.fileName(), fi.filePath());
-	currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
+	if(!newFileName.isNull()) // user cancelled
+  {
+    if(projectManager.saveFileAs(currentProject, currentFile, newFileName))
+    {
+      QFileInfo fi(newFileName);
+      editorLoadFile(newFileName);
+	    currentFileDropDown->addItem(fi.fileName(), fi.filePath());
+	    currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
+    }
+    else
+    {
+      // print error message
+    }
+  }
 }
 
 /*
