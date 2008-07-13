@@ -325,19 +325,30 @@ void MainWindow::editorLoadFile( QString filepath )
 
 /*
   Called when the "new file" action is triggered.
-  Prompt for a file name and create it within the
-  currently open project.
+  Prompt for a file name and create it within the currently open project.
 */
 void MainWindow::onNewFile( )
 {
   if(currentProject.isEmpty())
   {
-    statusBar()->showMessage( "Need to open a project first.  Open or create a new one from the File menu.", 3500 );
+    statusBar()->showMessage( tr("Need to open a project first.  Open or create a new one from the File menu."), 3500 );
     return;
   }
   QString newFilePath = QFileDialog::getSaveFileName(this, tr("Create New File"), currentProject, tr("C Files (*.c)"));
   if(!newFilePath.isNull()) // user cancelled
-    createNewFile(newFilePath);
+  {
+    if(projectManager.createNewFile(currentProject, newFilePath))
+    {
+      QFileInfo fi(newFilePath);
+      editorLoadFile(fi.filePath());
+      currentFileDropDown->addItem(fi.fileName(), fi.filePath()); // store the filepath on the combo box item 
+      currentFileDropDown->setCurrentIndex(currentFileDropDown->count()-1);
+    }
+    else
+    {
+      // print error
+    }
+  }
 }
 
 /*
@@ -354,11 +365,17 @@ void MainWindow::onAddExistingFile( )
   QString newFilePath = QFileDialog::getOpenFileName(this, tr("Add Existing File"), currentProject, tr("C Files (*.c)"));
   if(!newFilePath.isNull()) // user cancelled
   {
-    editorLoadFile(newFilePath);
-    addToProjectFile(currentProject, QDir(currentProject).relativeFilePath(newFilePath), "thumb");
-    QFileInfo fi(newFilePath);
-    currentFileDropDown->addItem(fi.fileName(), fi.filePath());
-    currentFileDropDown->setCurrentIndex(currentFileDropDown->count()-1);
+    if(projectManager.addToProjectFile(currentProject, QDir(currentProject).filePath(newFilePath), "thumb"))
+    {
+      editorLoadFile(newFilePath);
+      QFileInfo fi(newFilePath);
+      currentFileDropDown->addItem(fi.fileName(), fi.filePath());
+      currentFileDropDown->setCurrentIndex(currentFileDropDown->count()-1);
+    }
+    else
+    {
+      // print error msg
+    }
   }
 }
 
@@ -412,7 +429,7 @@ void MainWindow::createNewFile(QString path)
     editorLoadFile(fi.filePath());
     currentFileDropDown->addItem(fi.fileName(), fi.filePath()); // store the filepath on the combo box item 
     currentFileDropDown->setCurrentIndex(currentFileDropDown->count()-1);
-    addToProjectFile(currentProject, fi.filePath(), "thumb");
+    projectManager.addToProjectFile(currentProject, fi.filePath(), "thumb");
   }
 }
 
@@ -433,6 +450,7 @@ void MainWindow::onFileSelection(int index)
     QString message = QString("Couldn't find %1.").arg(file.fileName());
     currentFileDropDown->removeItem(currentFileDropDown->findText(file.fileName()));
     statusBar()->showMessage(message, 3000);
+    // should also be removed from the project file...
   }
 }
 
@@ -444,71 +462,14 @@ void MainWindow::onNewProject( )
 {	
   QString workspace = Preferences::workspace();
   QString newProjPath = QFileDialog::getSaveFileName(this, tr("Create Project"), workspace, "", 0, QFileDialog::ShowDirsOnly);
-  if( newProjPath.isNull() )
-    return;
-  // create a directory for the project
-  QChar s = QDir::separator();
-  QString newProjName = newProjPath.split(s).last().remove(" ");
-  QDir newProjectDir(workspace);
-  newProjectDir.mkdir(newProjName);
-  newProjectDir.cd(newProjName);
-  
-  // grab the templates for a new project
-  QDir templatesDir = QDir::current().filePath("resources/templates");
-    
-  // create the project file from our template
-  QFile templateFile(templatesDir.filePath("project_template.xml"));
-  templateFile.copy(newProjectDir.filePath(newProjName + ".xml"));
-  templateFile.close();
-  
-  templateFile.setFileName(templatesDir.filePath("source_template.txt"));
-  if( templateFile.open(QIODevice::ReadOnly | QFile::Text) )
+  if(!newProjPath.isNull())
   {
-    // and create the main file
-    QFile mainFile(newProjectDir.filePath(newProjName + ".c"));
-    if( mainFile.open(QIODevice::WriteOnly | QFile::Text) )
-    {
-      QTextStream out(&mainFile);
-      out << QString("// %1.c").arg(newProjName) << endl;
-      out << QString("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl;
-      out << templateFile.readAll();
-      mainFile.close();
-    }
-    QFileInfo fi(mainFile);
-    addToProjectFile(newProjectDir.path(), fi.filePath(), "thumb");
-    templateFile.close();
-  }
-  openProject(newProjectDir.path());
-}
-
-/*
-  Add a filepath to this project's file list.
-*/
-bool MainWindow::addToProjectFile(QString projectPath, QString newFilePath, QString buildtype)
-{
-  bool retval = false;
-  QDomDocument newProjectDoc;
-  QDir projectDir(projectPath);
-  QFile projectFile(projectDir.filePath(projectDir.dirName() + ".xml"));
-  // read in the existing file, and add a node to the "files" section
-  if(newProjectDoc.setContent(&projectFile))
-  {
-    QDomElement newFileElement = newProjectDoc.createElement("file");
-    newFileElement.setAttribute("type", buildtype);
-    QDomText newFilePathElement = newProjectDoc.createTextNode(projectDir.relativeFilePath(newFilePath));
-    newFileElement.appendChild(newFilePathElement);
-    newProjectDoc.elementsByTagName("files").at(0).toElement().appendChild(newFileElement);
-    projectFile.close();
-    
-    // write our newly manipulated file
-    if(projectFile.open(QIODevice::WriteOnly | QFile::Text))
-    {
-      projectFile.write(newProjectDoc.toByteArray(2));
-      projectFile.close();
-      retval = true;
-    }
-  }
-  return retval;
+    QString newProject = projectManager.createNewProject(newProjPath);
+    if(!newProject.isEmpty())
+      openProject(newProject);
+    else
+      return statusBar()->showMessage(tr("Couldn't create new project.  Make sure there are no spaces in the path specified."), 3000);
+  }  
 }
 
 /*
@@ -570,7 +531,7 @@ void MainWindow::openProject(QString projectPath)
     buildLog->clear();
 	}
 	else
-      return statusBar()->showMessage( QString("Couldn't find main file for %1.").arg(projectName), 3500 );
+    return statusBar()->showMessage( QString("Couldn't find main file for %1.").arg(projectName), 3500 );
 }
 
 /*
@@ -681,6 +642,7 @@ void MainWindow::onSaveAs( )
 		newFileName.append(".c");
 	file.copy(newFileName);
 	editorLoadFile(newFileName);
+  // TODO add file to project
 	QFileInfo fi(newFileName);
 	currentFileDropDown->addItem(fi.fileName(), fi.filePath());
 	currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
@@ -688,75 +650,24 @@ void MainWindow::onSaveAs( )
 
 /*
   The user has triggered the "save project as" action.
-  Pop up a dialog to get the new project's name, then
-  copy over the project file, main project source file and any 
-  other source files in the project directory.
+  Pop up a dialog to get the new project's name, then save a copy.
 */
 void MainWindow::onSaveProjectAs( )
 {
 	if(currentProject.isEmpty())
-    return statusBar()->showMessage( "Need to open a project first.  Open or create a new one from the File menu.", 3500 );
+    return statusBar()->showMessage( tr("Need to open a project first.  Open or create a new one from the File menu."), 3500 );
     
   QString workspace = Preferences::workspace();
   QString newProjectPath = QFileDialog::getSaveFileName(this, tr("Save Project As"), workspace, 
                                                         "", 0, QFileDialog::ShowDirsOnly);
-  if(newProjectPath.isNull()) // user canceled
-    return;
-  QDir currentProjectDir(currentProject);
-  QChar s = QDir::separator();
-  QDir dir(workspace);
-  QString newProjectName = newProjectPath.split(s).last().remove(" ");
-  QString currentProjectName = currentProject.split(s).last();
-  dir.mkdir(newProjectName);
-  dir.cd(newProjectName);
-  
-  QFileInfoList fileList = currentProjectDir.entryInfoList();
-  foreach(QFileInfo fi, fileList)
+  if(!newProjectPath.isNull()) // user canceled
   {
-    // give any project-specific files the new project's name
-    if(fi.baseName() == currentProjectName)
-    {
-      if(fi.suffix() != "o") // don't need to copy obj files
-      {
-        QFile tocopy(fi.filePath());
-        tocopy.copy(dir.filePath(newProjectName + "." + fi.suffix()));
-      }
-    }
-    else // just copy the file over
-    {
-      QFile tocopy(fi.filePath());
-      tocopy.copy(dir.filePath(fi.fileName()));
-    }
+    QString newProject = projectManager.saveCurrentProjectAs(currentProject, newProjectPath);
+    if(!newProject.isEmpty())
+      openProject(newProject);
+    else
+     return statusBar()->showMessage( tr("Couldn't create the new project.  Maybe there's a problem with the current project?"), 3500 );
   }
-  
-  // update the contents of the project file
-  QDomDocument projectDoc;
-  QFile projFile(dir.filePath(newProjectName + ".xml"));
-  if(projectDoc.setContent(&projFile))
-  {
-    projFile.close();
-    QDomNodeList allFiles = projectDoc.elementsByTagName("files").at(0).childNodes();
-    for(int i = 0; i < allFiles.count(); i++)
-    {
-      if(!allFiles.at(i).toElement().text().startsWith("resources/cores"))
-      {
-        QFileInfo fi(allFiles.at(i).toElement().text());
-        if(fi.baseName() == currentProjectName)
-        {
-          fi.setFile(fi.path() + "/" + newProjectName + "." + fi.suffix());
-          allFiles.at(i).firstChild().setNodeValue(QDir::cleanPath(fi.filePath()));
-        }
-      }
-    }
-    // reopen with WriteOnly
-    if(projFile.open(QIODevice::WriteOnly|QFile::Text))
-    {
-      projFile.write(projectDoc.toByteArray(2));
-      projFile.close();
-    }
-  }
-  
-  openProject(dir.path());
 }
 
 /*
@@ -1033,7 +944,7 @@ void MainWindow::loadLibraries( )
             a->setData(doclink); // otherwise just store the link
           menu->addAction(a);
         }
-        // add the library's examples to the example menu
+        // TODO add the library's examples to the example menu
       }
     }
   }
