@@ -21,6 +21,9 @@ private slots:
   void newFile();
   void saveProjectAs();
   void saveFileAs();
+  void saveFileAsNoSuffix();
+  void saveFileAsWrongSuffix();
+  void removeFromProject();
   
 private:
   void rmDirRecursive(QString path);
@@ -94,6 +97,8 @@ void TestMcbuilder::initTestCase()
   else
     currentDir.mkpath(currentDir.filePath("tests/test_debris"));
   testDir.setPath(QDir::current().filePath("tests/test_debris"));
+  QFileInfoList entries = testDir.entryInfoList(QDir::NoDotAndDotDot);
+  QVERIFY(entries.count() == 0); // make sure we actually have a clean slate
 }
 
 /*
@@ -164,6 +169,41 @@ void TestMcbuilder::saveFileAs()
     QFAIL("saveFileAs() returned false");
   QVERIFY(dir.exists("SavedAs.c"));
   QVERIFY(inProjectFile(dir.path(), "SavedAs.c"));
+}
+
+/*
+  We expect a filename with no suffix to be given a .c suffix by default
+*/
+void TestMcbuilder::saveFileAsNoSuffix()
+{
+  QDir dir(testDir.filePath("TestProject1"));
+  if(!projectManager.saveFileAs(dir.path(), dir.filePath("TestProject1.c"), dir.filePath("SavedAsNoSuffix")))
+    QFAIL("saveFileAs() returned false");
+  QVERIFY(dir.exists("SavedAsNoSuffix.c"));
+  QVERIFY(inProjectFile(dir.path(), "SavedAsNoSuffix.c"));
+}
+
+/*
+  Only .c or .h are acceptable suffixes - should be changed to .c by default
+*/
+void TestMcbuilder::saveFileAsWrongSuffix()
+{
+  QDir dir(testDir.filePath("TestProject1"));
+  if(!projectManager.saveFileAs(dir.path(), dir.filePath("TestProject1.c"), dir.filePath("SavedAsBadSuffix.php")))
+    QFAIL("saveFileAs() returned false");
+  QVERIFY(dir.exists("SavedAsBadSuffix.c"));
+  QVERIFY(inProjectFile(dir.path(), "SavedAsBadSuffix.c"));
+}
+
+/*
+  Confirm we can successfully remove a file from the project file.
+*/
+void TestMcbuilder::removeFromProject()
+{
+  QDir dir(testDir.filePath("TestProject1"));
+  if(!projectManager.removeFromProjectFile(dir.path(), "SavedAsBadSuffix.c"))
+    QFAIL("removeFromProjectFile() returned false");
+  QVERIFY(!inProjectFile(dir.path(), "SavedAsBadSuffix.c"));
 }
 
 /*

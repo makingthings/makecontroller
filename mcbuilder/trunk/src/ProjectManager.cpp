@@ -155,11 +155,36 @@ bool ProjectManager::addToProjectFile(QString projectPath, QString newFilePath, 
   return retval;
 }
 
-//bool ProjectManager::removeFromProjectFile(QString projectPath, QString filePath)
-//{
-//  bool retval = false;
-//  return retval;
-//}
+/*
+  Remove a file from the project file.
+  Don't delete the file.
+*/
+bool ProjectManager::removeFromProjectFile(QString projectPath, QString filePath)
+{
+  bool retval = false;
+  QDomDocument doc;
+  QDir dir(projectPath);
+  QFile projectFile(dir.filePath(dir.dirName() + ".xml"));
+  if(doc.setContent(&projectFile))
+  {
+    projectFile.close();
+    QDomNodeList files = doc.elementsByTagName("files").at(0).childNodes();
+    for(int i = 0; i < files.count(); i++)
+    {
+      if(files.at(i).toElement().text() == filePath)
+      {
+        QDomNode parent = files.at(i).parentNode();
+        parent.removeChild(files.at(i));
+        if(projectFile.open(QIODevice::WriteOnly|QFile::Text))
+        {
+          projectFile.write(doc.toByteArray(2));
+          retval = true;
+        }
+      }
+    }
+  }
+  return retval;
+}
 
 /*
   Save a copy of a project.

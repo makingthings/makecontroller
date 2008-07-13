@@ -24,6 +24,7 @@
 
 #include <QTreeWidget>
 #include "MainWindow.h"
+#include "ProjectManager.h"
 
 // subclassed so we have access to the context menu events
 class FileBrowser : public QTreeWidget
@@ -83,6 +84,7 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
     
 	private:
 		MainWindow *mainWindow;
+    ProjectManager projectManager;
 		QString projectFilePath( );
     bool configChanged;
     void setNetworkSectionEnabled(bool state);

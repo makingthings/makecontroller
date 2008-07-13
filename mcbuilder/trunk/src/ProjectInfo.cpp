@@ -358,24 +358,8 @@ void ProjectInfo::onRemoveFileRequest(QString filename)
 {
   QFile projectFile(projectFilePath( ));
   QDir projectDir(mainWindow->currentProjectPath());
-  QDomDocument doc;
-  if(doc.setContent(&projectFile))
-  {
-    projectFile.close();
-    QDomNodeList files = doc.elementsByTagName("files").at(0).childNodes();
-    for(int i = 0; i < files.count(); i++)
-    {
-      if(files.at(i).toElement().text() == filename)
-      {
-        QDomNode parent = files.at(i).parentNode();
-        parent.removeChild(files.at(i));
-        if(projectFile.open(QIODevice::WriteOnly|QFile::Text))
-          projectFile.write(doc.toByteArray(2));
-        mainWindow->removeFileFromProject(projectDir.filePath(filename));
-        return;
-      }
-    }
-  }
+  if(projectManager.removeFromProjectFile(projectDir.path(), filename))
+    mainWindow->removeFileFromProject(projectDir.filePath(filename));
 }
 
 /*
