@@ -32,6 +32,7 @@
 #include "ConsoleItem.h"
 #include "AppUpdater.h"
 #include "BuildLog.h"
+#include "ProjectManager.h"
 
 class Preferences;
 class Uploader;
@@ -96,13 +97,13 @@ private:
   About *about;
   AppUpdater *updater;
   BuildLog *buildLog;
+  ProjectManager projectManager;
   QComboBox *currentFileDropDown;
   QActionGroup *boardTypeGroup;
   QString currentFile; // path of the file in the editor
   QString currentProject; // path of the current project directory
   void editorLoadFile( QString filepath );
   void createNewFile(QString path);
-  bool addToProjectFile(QString projectPath, QString newFilePath, QString buildtype);
   void openProject(QString projectPath);
   void updateRecentProjects(QString newProject);
   void uploadFile(QString filename);

@@ -22,7 +22,8 @@ HEADERS = include/Highlighter.h \
           include/About.h \
           include/AppUpdater.h \
           include/ConsoleItem.h \
-          include/BuildLog.h
+          include/BuildLog.h \
+          include/ProjectManager.h
 
 SOURCES = src/main.cpp \
           src/Highlighter.cpp \
@@ -35,7 +36,8 @@ SOURCES = src/main.cpp \
           src/FindReplace.cpp \
           src/AppUpdater.cpp \
           src/About.cpp \
-          src/BuildLog.cpp
+          src/BuildLog.cpp \
+          src/ProjectManager.cpp
 
 TARGET = mcbuilder
 
