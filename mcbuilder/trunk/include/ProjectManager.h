@@ -31,6 +31,8 @@ class ProjectManager
     bool removeFromProjectFile(QString projectPath, QString filePath);
     QString createNewProject(QString newProjectPath);
     QString saveCurrentProjectAs(QString currentProjectPath, QString newProjectPath);
+    bool setFileBuildType(QString projectPath, QString filename, QString buildtype);
+    QString fileBuildType(QString projectPath, QString filename);
   
   private:
     void confirmValidFileSuffix(QFileInfo* fi);

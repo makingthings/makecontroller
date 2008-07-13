@@ -271,6 +271,57 @@ QString ProjectManager::saveCurrentProjectAs(QString currentProjectPath, QString
   return newProjectDir.path();
 }
 
+/*
+  Set the build type of a file in the project file to either thumb or arm.
+*/
+bool ProjectManager::setFileBuildType(QString projectPath, QString filename, QString buildtype)
+{
+  bool retval = false;
+  QDir dir(projectPath);
+  QFile projectFile(dir.filePath(dir.dirName() + ".xml"));
+  QDomDocument doc;
+  if(doc.setContent(&projectFile))
+  {
+    projectFile.close();
+    QDomNodeList files = doc.elementsByTagName("files").at(0).childNodes();
+    for(int i = 0; i < files.count(); i++)
+    {
+      if(files.at(i).toElement().text() == filename)
+      {
+        files.at(i).toElement().setAttribute("type", buildtype);
+        if(projectFile.open(QIODevice::WriteOnly|QFile::Text))
+        {
+          projectFile.write(doc.toByteArray(2));
+          retval = true;
+        }
+      }
+    }
+  }
+  return retval;
+}
+
+/*
+  Return the buildtype of a file in the project file.
+*/
+QString ProjectManager::fileBuildType(QString projectPath, QString filename)
+{
+  QString buildtype;
+  QDir dir(projectPath);
+  QFile projectFile(dir.filePath(dir.dirName() + ".xml"));
+  QDomDocument doc;
+  if(doc.setContent(&projectFile))
+  {
+    projectFile.close();
+    QDomNodeList files = doc.elementsByTagName("files").at(0).childNodes();
+    for(int i = 0; i < files.count(); i++)
+    {
+      if(files.at(i).toElement().text() == filename)
+        buildtype = files.at(i).toElement().attribute("type");
+    }
+  }
+  return buildtype;
+}
+
 
 
 

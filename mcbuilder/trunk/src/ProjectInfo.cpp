@@ -368,23 +368,7 @@ void ProjectInfo::onRemoveFileRequest(QString filename)
 */
 void ProjectInfo::onChangeBuildType(QString filename, QString newtype)
 {
-  QFile projectFile(projectFilePath( ));
-  QDomDocument doc;
-  if(doc.setContent(&projectFile))
-  {
-    projectFile.close();
-    QDomNodeList files = doc.elementsByTagName("files").at(0).childNodes();
-    for(int i = 0; i < files.count(); i++)
-    {
-      if(files.at(i).toElement().text() == filename)
-      {
-        files.at(i).toElement().setAttribute("type", newtype);
-        if(projectFile.open(QIODevice::WriteOnly|QFile::Text))
-          projectFile.write(doc.toByteArray(2));
-        return;
-      }
-    }
-  }
+  projectManager.setFileBuildType(mainWindow->currentProjectPath(), filename, newtype);
 }
 
 
