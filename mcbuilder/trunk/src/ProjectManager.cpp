@@ -190,7 +190,7 @@ bool ProjectManager::removeFromProjectFile(QString projectPath, QString filePath
     QDomNodeList files = doc.elementsByTagName("files").at(0).childNodes();
     for(int i = 0; i < files.count(); i++)
     {
-      if(files.at(i).toElement().text() == filePath)
+      if(files.at(i).toElement().text() == dir.relativeFilePath(filePath))
       {
         QDomNode parent = files.at(i).parentNode();
         parent.removeChild(files.at(i));
@@ -286,7 +286,7 @@ bool ProjectManager::setFileBuildType(QString projectPath, QString filename, QSt
     QDomNodeList files = doc.elementsByTagName("files").at(0).childNodes();
     for(int i = 0; i < files.count(); i++)
     {
-      if(files.at(i).toElement().text() == filename)
+      if(files.at(i).toElement().text() == dir.relativeFilePath(filename))
       {
         files.at(i).toElement().setAttribute("type", buildtype);
         if(projectFile.open(QIODevice::WriteOnly|QFile::Text))
@@ -315,7 +315,7 @@ QString ProjectManager::fileBuildType(QString projectPath, QString filename)
     QDomNodeList files = doc.elementsByTagName("files").at(0).childNodes();
     for(int i = 0; i < files.count(); i++)
     {
-      if(files.at(i).toElement().text() == filename)
+      if(files.at(i).toElement().text() == dir.relativeFilePath(filename))
         buildtype = files.at(i).toElement().attribute("type");
     }
   }
