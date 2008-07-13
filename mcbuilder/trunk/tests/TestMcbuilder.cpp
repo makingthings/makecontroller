@@ -19,11 +19,17 @@ private slots:
   void newProject();
   void newProjectWithSpaces();
   void newFile();
+  void saveProjectAs();
+  void saveFileAs();
   
 private:
   void rmDirRecursive(QString path);
   bool inProjectFile(QString projectpath, QString filepath);
 };
+
+/********************************************************************************
+                                  UTILS
+********************************************************************************/
 
 /*
   Utility for deleting file contents recursively
@@ -130,6 +136,34 @@ void TestMcbuilder::newFile()
   QDir dir(testDir.filePath("TestProject1"));
   QVERIFY(dir.exists("testfile.c"));
   QVERIFY(inProjectFile(dir.path(), "testfile.c"));
+}
+
+/*
+  Confirm a project is copied correctly when it's saved as a new one.
+*/
+void TestMcbuilder::saveProjectAs()
+{
+  QString newProj = projectManager.saveCurrentProjectAs(testDir.filePath("TestProject1"), testDir.filePath("Test Project 3"));
+  QDir newProjDir(newProj);
+  QCOMPARE(newProjDir.dirName(), QString("TestProject3")); // make sure spaces have been removed
+  QVERIFY(newProjDir.exists("testfile.c"));
+  QVERIFY(newProjDir.exists("TestProject3.c")); // make sure TestProject1.c is now TestProject3.c
+  QVERIFY(newProjDir.exists("TestProject3.xml"));
+  // make sure both sources are in the project file
+  QVERIFY(inProjectFile(newProjDir.path(), "testfile.c"));
+  QVERIFY(inProjectFile(newProjDir.path(), "TestProject3.c"));
+}
+
+/*
+  Confirm a file is copied properly and added to the project file.
+*/
+void TestMcbuilder::saveFileAs()
+{
+  QDir dir(testDir.filePath("TestProject1"));
+  if(!projectManager.saveFileAs(dir.path(), dir.filePath("TestProject1.c"), dir.filePath("SavedAs.c")))
+    QFAIL("saveFileAs() returned false");
+  QVERIFY(dir.exists("SavedAs.c"));
+  QVERIFY(inProjectFile(dir.path(), "SavedAs.c"));
 }
 
 /*
