@@ -137,7 +137,8 @@ void TestMcbuilder::newProjectWithSpaces()
 */
 void TestMcbuilder::newFile()
 {
-  projectManager.createNewFile(testDir.filePath("TestProject1"), testDir.filePath("TestProject1/testfile.c"));
+  if(!projectManager.createNewFile(testDir.filePath("TestProject1"), testDir.filePath("TestProject1/testfile.c")))
+    QFAIL("createNewFile() returned false");
   QDir dir(testDir.filePath("TestProject1"));
   QVERIFY(dir.exists("testfile.c"));
   QVERIFY(inProjectFile(dir.path(), "testfile.c"));
@@ -149,6 +150,7 @@ void TestMcbuilder::newFile()
 void TestMcbuilder::saveProjectAs()
 {
   QString newProj = projectManager.saveCurrentProjectAs(testDir.filePath("TestProject1"), testDir.filePath("Test Project 3"));
+  QVERIFY(!newProj.isEmpty());
   QDir newProjDir(newProj);
   QCOMPARE(newProjDir.dirName(), QString("TestProject3")); // make sure spaces have been removed
   QVERIFY(newProjDir.exists("testfile.c"));
