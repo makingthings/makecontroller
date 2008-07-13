@@ -1,7 +1,7 @@
 MCBUILDER_VERSION = "0.1.0"
 TEMPLATE = app
-#CONFIG += qt release
-CONFIG += qt debug
+#CONFIG += release
+CONFIG -= release
 
 FORMS = layouts/mainwindow.ui \
         layouts/preferences.ui \
@@ -44,7 +44,7 @@ TARGET = mcbuilder
 QT += xml network
 INCLUDEPATH += include
 RESOURCES   += resources/icons/icons_rsrc.qrc
-DEFINES     += MCBUILDER_VERSION=\\\"$${MCBUILDER_VERSION}\\\"
+DEFINES     += MCBUILDER_VERSION=\"$${MCBUILDER_VERSION}\"
 OBJECTS_DIR  = tmp
 MOC_DIR      = tmp
 RCC_DIR      = tmp

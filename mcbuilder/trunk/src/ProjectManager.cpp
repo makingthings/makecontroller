@@ -31,8 +31,10 @@
 bool ProjectManager::createNewFile(QString projectPath, QString filePath)
 {
   QFileInfo fi(filePath);
-  if(fi.suffix().isEmpty())
-    fi.setFile(fi.filePath() + ".c");
+  if(fi.exists()) // if it already exists, don't do anything
+    return true;
+    
+  confirmValidFileSuffix(&fi);
   QFile file(fi.filePath());
   
   bool retval = false;
@@ -60,9 +62,7 @@ bool ProjectManager::saveFileAs(QString projectPath, QString existingFilePath, Q
   if(fi.exists()) // if it already exists, don't do anything
     return true;
   
-  if(fi.suffix() != "c" && fi.suffix() != "h") // default to a .c suffix if not provided
-    fi.setFile(fi.path() + "/" + fi.baseName() + ".c");
-
+  confirmValidFileSuffix(&fi);
   QFile file(existingFilePath);
 	if(!file.copy(fi.filePath()))
     return false;
@@ -71,6 +71,30 @@ bool ProjectManager::saveFileAs(QString projectPath, QString existingFilePath, Q
     return true;
   else
     return false;
+}
+
+/*
+  Only valid file suffixes are .c and .h
+  If the suffix is missing or is not one of those, set it to .c by default
+*/
+void ProjectManager::confirmValidFileSuffix(QFileInfo* fi)
+{
+  if(fi->suffix() != "c" && fi->suffix() != "h") // default to a .c suffix if not provided
+    fi->setFile(fi->path() + "/" + fi->baseName() + ".c");
+}
+
+/*
+  Make sure a given project name is valid, and modify it if necessary.
+  Spaces are not allowed since make is unhappy with file paths with spaces.
+*/
+void ProjectManager::confirmValidProjectName(QString* name)
+{
+  if(name->contains(" ")) // make sure the project name doesn't have any spaces
+  {
+    QStringList elems = name->split(QDir::separator());
+    elems.last().remove(" ");
+    *name = elems.join(QDir::separator());
+  }
 }
 
 /*
@@ -83,12 +107,7 @@ bool ProjectManager::saveFileAs(QString projectPath, QString existingFilePath, Q
 */
 QString ProjectManager::createNewProject(QString newProjectPath)
 {
-  if(newProjectPath.contains(" ")) // make sure the project name doesn't have any spaces
-  {
-    QStringList elems = newProjectPath.split(QDir::separator());
-    elems.last().remove(" ");
-    newProjectPath = elems.join(QDir::separator());
-  }
+  confirmValidProjectName(&newProjectPath);
   if(newProjectPath.contains(" ")) // if there are still spaces in the path, we have problems
     return "";
   QDir newProjectDir;
@@ -195,12 +214,7 @@ QString ProjectManager::saveCurrentProjectAs(QString currentProjectPath, QString
 {
   QDir currentProjectDir(currentProjectPath);
   QString currentProjectName = currentProjectDir.dirName();
-  if(newProjectPath.contains(" ")) // make sure the project name doesn't have any spaces
-  {
-    QStringList elems = newProjectPath.split(QDir::separator());
-    elems.last().remove(" ");
-    newProjectPath = elems.join(QDir::separator());
-  }
+  confirmValidProjectName(&newProjectPath);
   if(newProjectPath.contains(" ")) // if there are still spaces elsewhere in the path, we have problems
     return "";
     

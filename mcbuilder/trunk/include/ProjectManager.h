@@ -19,6 +19,7 @@
 #define PROJECT_MANAGER_H
 
 #include <QString>
+#include <QFileInfo>
 
 class ProjectManager
 {
@@ -30,6 +31,10 @@ class ProjectManager
     bool removeFromProjectFile(QString projectPath, QString filePath);
     QString createNewProject(QString newProjectPath);
     QString saveCurrentProjectAs(QString currentProjectPath, QString newProjectPath);
+  
+  private:
+    void confirmValidFileSuffix(QFileInfo* fi);
+    void confirmValidProjectName(QString* name);
 };
 
 #endif // PROJECT_MANAGER_H
