@@ -24,6 +24,7 @@ private slots:
   void saveFileAsNoSuffix();
   void saveFileAsWrongSuffix();
   void removeFromProject();
+  void changeBuildType();
   
 private:
   void rmDirRecursive(QString path);
@@ -206,6 +207,17 @@ void TestMcbuilder::removeFromProject()
   if(!projectManager.removeFromProjectFile(dir.path(), "SavedAsBadSuffix.c"))
     QFAIL("removeFromProjectFile() returned false");
   QVERIFY(!inProjectFile(dir.path(), "SavedAsBadSuffix.c"));
+}
+
+void TestMcbuilder::changeBuildType()
+{
+  QDir dir(testDir.filePath("TestProject1"));
+  QString buildtype = projectManager.fileBuildType(dir.path(), "testfile.c");
+  QVERIFY(buildtype == "thumb"); // should be thumb by default
+  if(!projectManager.setFileBuildType(dir.path(), "testfile.c", "arm"))
+    QFAIL("setBuildType() returned false");
+  buildtype = projectManager.fileBuildType(dir.path(), "testfile.c");
+  QVERIFY(buildtype == "arm");
 }
 
 /*
