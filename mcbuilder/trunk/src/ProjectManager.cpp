@@ -35,7 +35,7 @@ QString ProjectManager::createNewFile(QString projectPath, QString filePath)
     return "";
   
   QString newFileName;
-  confirmValidFileSuffix(&fi);
+  confirmValidFileName(&fi);
   QFile file(fi.filePath());
       
   if(file.exists()) // don't do anything if this file's already there
@@ -61,7 +61,7 @@ QString ProjectManager::saveFileAs(QString projectPath, QString existingFilePath
   if(fi.exists()) // if it already exists, don't do anything
     return fi.filePath();
   
-  confirmValidFileSuffix(&fi);
+  confirmValidFileName(&fi);
   QFile file(existingFilePath);
 	if(!file.copy(fi.filePath()))
     return QString();
@@ -76,8 +76,13 @@ QString ProjectManager::saveFileAs(QString projectPath, QString existingFilePath
   Only valid file suffixes are .c and .h
   If the suffix is missing or is not one of those, set it to .c by default
 */
-void ProjectManager::confirmValidFileSuffix(QFileInfo* fi)
+void ProjectManager::confirmValidFileName(QFileInfo* fi)
 {
+  if(fi->baseName().contains(" "))
+  {
+    QString newBaseName = fi->baseName().remove(" ");
+    fi->setFile(fi->path() + "/" + newBaseName + "." + fi->suffix());
+  }
   if(fi->suffix() != "c" && fi->suffix() != "h") // default to a .c suffix if not provided
     fi->setFile(fi->path() + "/" + fi->baseName() + ".c");
 }

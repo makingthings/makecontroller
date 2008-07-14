@@ -35,7 +35,7 @@ class ProjectManager
     QString fileBuildType(QString projectPath, QString filename);
   
   private:
-    void confirmValidFileSuffix(QFileInfo* fi);
+    void confirmValidFileName(QFileInfo* fi);
     void confirmValidProjectName(QString* name);
 };
 
