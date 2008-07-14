@@ -138,10 +138,9 @@ void TestMcbuilder::newProjectWithSpaces()
 */
 void TestMcbuilder::newFile()
 {
-  if(!projectManager.createNewFile(testDir.filePath("TestProject1"), testDir.filePath("TestProject1/testfile.c")))
-    QFAIL("createNewFile() returned false");
+  QFileInfo fi = projectManager.createNewFile(testDir.filePath("TestProject1"), testDir.filePath("TestProject1/testfile.c"));
   QDir dir(testDir.filePath("TestProject1"));
-  QVERIFY(dir.exists("testfile.c"));
+  QVERIFY(fi.fileName() == "testfile.c");
   QVERIFY(inProjectFile(dir.path(), "testfile.c"));
 }
 
@@ -168,9 +167,8 @@ void TestMcbuilder::saveProjectAs()
 void TestMcbuilder::saveFileAs()
 {
   QDir dir(testDir.filePath("TestProject1"));
-  if(!projectManager.saveFileAs(dir.path(), dir.filePath("TestProject1.c"), dir.filePath("SavedAs.c")))
-    QFAIL("saveFileAs() returned false");
-  QVERIFY(dir.exists("SavedAs.c"));
+  QFileInfo fi = projectManager.saveFileAs(dir.path(), dir.filePath("TestProject1.c"), dir.filePath("SavedAs.c"));
+  QVERIFY(fi.fileName() == "SavedAs.c");
   QVERIFY(inProjectFile(dir.path(), "SavedAs.c"));
 }
 
@@ -180,9 +178,8 @@ void TestMcbuilder::saveFileAs()
 void TestMcbuilder::saveFileAsNoSuffix()
 {
   QDir dir(testDir.filePath("TestProject1"));
-  if(!projectManager.saveFileAs(dir.path(), dir.filePath("TestProject1.c"), dir.filePath("SavedAsNoSuffix")))
-    QFAIL("saveFileAs() returned false");
-  QVERIFY(dir.exists("SavedAsNoSuffix.c"));
+  QFileInfo fi = projectManager.saveFileAs(dir.path(), dir.filePath("TestProject1.c"), dir.filePath("SavedAsNoSuffix"));
+  QVERIFY(fi.fileName() == "SavedAsNoSuffix.c");
   QVERIFY(inProjectFile(dir.path(), "SavedAsNoSuffix.c"));
 }
 
@@ -192,9 +189,8 @@ void TestMcbuilder::saveFileAsNoSuffix()
 void TestMcbuilder::saveFileAsWrongSuffix()
 {
   QDir dir(testDir.filePath("TestProject1"));
-  if(!projectManager.saveFileAs(dir.path(), dir.filePath("TestProject1.c"), dir.filePath("SavedAsBadSuffix.php")))
-    QFAIL("saveFileAs() returned false");
-  QVERIFY(dir.exists("SavedAsBadSuffix.c"));
+  QFileInfo fi = projectManager.saveFileAs(dir.path(), dir.filePath("TestProject1.c"), dir.filePath("SavedAsBadSuffix.php"));
+  QVERIFY(fi.fileName() == "SavedAsBadSuffix.c");
   QVERIFY(inProjectFile(dir.path(), "SavedAsBadSuffix.c"));
 }
 

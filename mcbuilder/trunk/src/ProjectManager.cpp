@@ -28,49 +28,48 @@
   creating and modifying mcbuilder projects.
 */
 
-bool ProjectManager::createNewFile(QString projectPath, QString filePath)
+QString ProjectManager::createNewFile(QString projectPath, QString filePath)
 {
   QFileInfo fi(filePath);
   if(fi.exists()) // if it already exists, don't do anything
-    return true;
-    
+    return "";
+  
+  QString newFileName;
   confirmValidFileSuffix(&fi);
   QFile file(fi.filePath());
-  
-  bool retval = false;
-    
+      
   if(file.exists()) // don't do anything if this file's already there
-    return retval;
+    return fi.filePath();
   if(file.open(QIODevice::WriteOnly | QFile::Text))
   {
     QTextStream out(&file);
     out << QString("// %1").arg(fi.fileName()) << endl;
     out << QString("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl << endl;
     file.close();
-    addToProjectFile(projectPath, fi.filePath(), "thumb");
-    retval = true;
+    if(addToProjectFile(projectPath, fi.filePath(), "thumb"))
+      newFileName = fi.filePath();
   }
-  return retval;
+  return newFileName;
 }
 
 /*
   Save an existing file with a new name.
 */
-bool ProjectManager::saveFileAs(QString projectPath, QString existingFilePath, QString newFilePath)
+QString ProjectManager::saveFileAs(QString projectPath, QString existingFilePath, QString newFilePath)
 {
   QFileInfo fi(newFilePath);
   if(fi.exists()) // if it already exists, don't do anything
-    return true;
+    return fi.filePath();
   
   confirmValidFileSuffix(&fi);
   QFile file(existingFilePath);
 	if(!file.copy(fi.filePath()))
-    return false;
+    return QString();
   	
   if(addToProjectFile(projectPath, fi.filePath(), "thumb"))
-    return true;
+    return fi.filePath();
   else
-    return false;
+    return QString();
 }
 
 /*
