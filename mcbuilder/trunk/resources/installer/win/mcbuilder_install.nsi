@@ -82,11 +82,12 @@ Section "" ;No components page, name is not important
   File QtGui4.dll
   File QtNetwork4.dll
   File QtXml4.dll
-  File "..\ReadMe.rtf"
+  File "ReadMe.rtf"
   
   SetOutPath $INSTDIR\resources\templates
   File /nonfatal /r /x .svn "..\..\templates\*"
   
+  RMDir /r $INSTDIR\resources\examples  ; Remove any previous examples
   SetOutPath $INSTDIR\resources\examples
   File /nonfatal /r /x .svn "..\..\examples\*"
   
