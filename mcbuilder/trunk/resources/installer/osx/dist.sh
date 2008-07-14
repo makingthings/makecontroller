@@ -31,6 +31,7 @@ echo getting firmware source...
 mkdir mcbuilder/resources/cores
 mkdir mcbuilder/resources/cores/makecontroller
 # ...do an svn export of the latest tag in the MakingThings firmware SVN repo first
+# svn export https://makingthings.svn.sourceforge.net/svnroot/makingthings/firmware/tags/firmware-v1.3.1 firmware
 cp -r firmware/controller/* mcbuilder/resources/cores/makecontroller
 
 echo getting reference material...
