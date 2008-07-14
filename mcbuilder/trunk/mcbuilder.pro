@@ -1,4 +1,4 @@
-MCBUILDER_VERSION = "0.1.0"
+MCBUILDER_VERSION = "0.2.0"
 TEMPLATE = app
 #CONFIG += release
 CONFIG -= release
