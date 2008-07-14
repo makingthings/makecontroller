@@ -20,7 +20,7 @@ strip ../../../bin/mcbuilder.app/Contents/MacOS/mcbuilder
 
 # put it in the right spot and create the appropriate directories
 mkdir mcbuilder
-cp ../ReadMe.rtf mcbuilder/ReadMe.rtf
+cp ReadMe.rtf mcbuilder/ReadMe.rtf
 mkdir mcbuilder/resources
 cp -r ../../../bin/mcbuilder.app mcbuilder
 cp -r ../../examples mcbuilder/resources
