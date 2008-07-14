@@ -19,6 +19,7 @@ private slots:
   void newProject();
   void newProjectWithSpaces();
   void newFile();
+  void newFileWithSpaces();
   void saveProjectAs();
   void saveFileAs();
   void saveFileAsNoSuffix();
@@ -142,6 +143,19 @@ void TestMcbuilder::newFile()
   QDir dir(testDir.filePath("TestProject1"));
   QVERIFY(fi.fileName() == "testfile.c");
   QVERIFY(inProjectFile(dir.path(), "testfile.c"));
+}
+
+/*
+  Confirm a file name with spaces is sanitized.
+*/
+void TestMcbuilder::newFileWithSpaces()
+{
+  QString filename("spaces test 1.c");
+  QDir dir(testDir.filePath("TestProject1"));
+  QFileInfo fi = projectManager.createNewFile(dir.path(), dir.filePath(filename));
+  filename.remove(" ");
+  QVERIFY(fi.fileName() == filename);
+  QVERIFY(inProjectFile(dir.path(), filename));
 }
 
 /*
