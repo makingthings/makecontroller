@@ -25,8 +25,8 @@ class ProjectManager
 {
   public:
     ProjectManager( ) { };
-    bool createNewFile(QString projectPath, QString filePath);
-    bool saveFileAs(QString projectPath, QString existingFilePath, QString newFilePath);
+    QString createNewFile(QString projectPath, QString filePath);
+    QString saveFileAs(QString projectPath, QString existingFilePath, QString newFilePath);
     bool addToProjectFile(QString projectPath, QString newFilePath, QString buildtype);
     bool removeFromProjectFile(QString projectPath, QString filePath);
     QString createNewProject(QString newProjectPath);

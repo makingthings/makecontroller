@@ -337,9 +337,11 @@ void MainWindow::onNewFile( )
   QString newFilePath = QFileDialog::getSaveFileName(this, tr("Create New File"), currentProject, tr("C Files (*.c)"));
   if(!newFilePath.isNull()) // user cancelled
   {
-    if(projectManager.createNewFile(currentProject, newFilePath))
+    Q_ASSERT(!currentProject.isEmpty());
+    QString newFile = projectManager.createNewFile(currentProject, newFilePath);
+    if(!newFile.isEmpty())
     {
-      QFileInfo fi(newFilePath);
+      QFileInfo fi(newFile);
       editorLoadFile(fi.filePath());
       currentFileDropDown->addItem(fi.fileName(), fi.filePath()); // store the filepath on the combo box item 
       currentFileDropDown->setCurrentIndex(currentFileDropDown->count()-1);
@@ -636,10 +638,11 @@ void MainWindow::onSaveAs( )
 																			currentProject, tr("C Files (*.c)"));
 	if(!newFileName.isNull()) // user cancelled
   {
-    if(projectManager.saveFileAs(currentProject, currentFile, newFileName))
+    QString newFile = projectManager.saveFileAs(currentProject, currentFile, newFileName);
+    if(!newFile.isEmpty())
     {
-      QFileInfo fi(newFileName);
-      editorLoadFile(newFileName);
+      QFileInfo fi(newFile);
+      editorLoadFile(newFile);
 	    currentFileDropDown->addItem(fi.fileName(), fi.filePath());
 	    currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
     }
