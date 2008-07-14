@@ -1,0 +1,9 @@
+<library>
+  <version>0.1</version>
+  <author>me</author>
+  <display_name>My Wonderful Library</display_name>
+  <reference>http://yoursite.com</reference>
+  <files>
+    <file type="thumb" >mylib.c</file>
+  </files>
+</library>
