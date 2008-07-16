@@ -604,7 +604,7 @@ void WebServer_Demo( char* requestType, char* address, char* requestBuffer, int 
       if( strcmp( temp, form.elements[i].key ) == 0 )
         value = 1;
     }
-    AppLed_SetState( j, value );
+    //AppLed_SetState( j, value );
   }
   
   // Write out the dynamically generated page.

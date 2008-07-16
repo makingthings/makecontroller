@@ -14,97 +14,104 @@ all: output/$(OUTPUT).bin
 
 # Source files that can be built in THUMB mode.
 THUMB_SRC= \
-  ../controller/freertos/tasks.c \
-  ../controller/freertos/queue.c \
-  ../controller/freertos/list.c \
-  ../controller/freertos/portable/GCC/ARM7_AT91SAM7S/port.c \
-  ../controller/startup/extras.c \
-  ../controller/freertos/portable/MemMang/heap_2.c \
-  ../controller/makingthings/main.c \
-  ../controller/makingthings/webserver.c \
-	../controller/makingthings/webclient.c \
   make.c \
-  ../controller/makingthings/eeprom.c \
-  ../controller/makingthings/analogin.c \
-  ../controller/makingthings/serial.c \
-  ../controller/makingthings/pwm.c \
-  ../controller/makingthings/spi.c \
-  ../controller/makingthings/USB-CDC.c \
-  ../controller/makingthings/rtos.c \
-  ../controller/makingthings/usb.c \
-  ../controller/makingthings/network.c \
-  ../controller/makingthings/system.c \
-	../controller/makingthings/xbee.c \
-  ../appboard/makingthings/servo.c \
-  ../appboard/makingthings/stepper.c \
-  ../appboard/makingthings/dipswitch.c \
-  ../appboard/makingthings/motor.c \
-  ../appboard/makingthings/appboard.c \
-  ../appboard/makingthings/appled.c \
-  ../appboard/makingthings/pwmout.c \
-  ../appboard/makingthings/digitalin.c \
-  ../appboard/makingthings/digitalout.c \
-  ../controller/makingthings/io.c \
-  ../controller/makingthings/led.c \
-  ../controller/makingthings/timer.c \
-  ../controller/makingthings/fasttimer.c \
-  ../controller/makingthings/debugosc.c \
-  ../controller/makingthings/can.c \
-  ../controller/lwip/src/core/tcp_out.c \
-  ../controller/lwip/src/core/inet.c \
-  ../controller/lwip/src/core/mem.c \
-  ../controller/lwip/src/core/memp.c \
-  ../controller/lwip/src/core/netif.c \
-  ../controller/lwip/src/core/pbuf.c \
-  ../controller/lwip/src/core/raw.c \
-  ../controller/lwip/src/core/stats.c \
-  ../controller/lwip/src/core/sys.c \
-  ../controller/lwip/src/core/tcp.c \
-  ../controller/lwip/src/core/tcp_in.c \
-  ../controller/lwip/src/core/ipv4/ip.c \
-  ../controller/lwip/src/core/ipv4/ip_addr.c \
-  ../controller/lwip/src/core/ipv4/icmp.c \
-  ../controller/lwip/src/core/dhcp.c \
-  ../controller/lwip/src/api/tcpip.c \
-  ../controller/lwip/src/api/api_msg.c \
-  ../controller/lwip/src/api/err.c \
-  ../controller/lwip/src/api/api_lib.c \
-  ../controller/lwip/src/netif/etharp.c \
-  ../controller/lwip/contrib/port/FreeRTOS/AT91SAM7X/sys_arch.c \
-  ../controller/lwip/src/netif/ethernetif.c \
-  ../controller/makingthings/SAM7_EMAC.c \
-  ../controller/lwip/src/core/udp.c \
-  ../controller/lwip/src/core/ipv4/ip_frag.c \
-  ../controller/makingthings/osc.c \
-  ../controller/makingthings/osc_patternmatch.c \
-	../controller/makingthings/testing/atestee.c \
-	../controller/makingthings/testing/ctestee.c \
-	../controller/makingthings/testing/ctester.c
+  ../../core/freertos/tasks.c \
+  ../../core/freertos/queue.c \
+  ../../core/freertos/list.c \
+  ../../core/freertos/portable/GCC/ARM7_AT91SAM7S/port.c \
+  ../../core/startup/extras.c \
+  ../../core/freertos/portable/MemMang/heap_2.c \
+  ../../core/makingthings/main.c \
+  ../../core/makingthings/eeprom.c \
+  ../../core/makingthings/analogin.c \
+  ../../core/makingthings/serial.c \
+  ../../core/makingthings/pwm.c \
+  ../../core/makingthings/spi.c \
+  ../../core/makingthings/USB-CDC.c \
+  ../../core/makingthings/rtos.c \
+  ../../core/makingthings/usb.c \
+  ../../core/makingthings/network.c \
+  ../../core/makingthings/system.c \
+  ../../libraries/xbee/xbee.c \
+  ../../libraries/servo/servo.c \
+  ../../libraries/stepper/stepper.c \
+  ../../libraries/dipswitch/dipswitch.c \
+  ../../libraries/motor/motor.c \
+  ../../libraries/appled/appled.c \
+  ../../libraries/pwmout/pwmout.c \
+  ../../libraries/digitalin/digitalin.c \
+  ../../libraries/digitalout/digitalout.c \
+  ../../libraries/webserver/webserver.c \
+  ../../core/makingthings/io.c \
+  ../../core/makingthings/led.c \
+  ../../core/makingthings/timer.c \
+  ../../core/makingthings/fasttimer.c \
+  ../../core/makingthings/debugosc.c \
+  ../../core/makingthings/can.c \
+  ../../core/lwip/src/core/tcp_out.c \
+  ../../core/lwip/src/core/ipv4/inet.c \
+  ../../core/lwip/src/core/mem.c \
+  ../../core/lwip/src/core/memp.c \
+  ../../core/lwip/src/core/netif.c \
+  ../../core/lwip/src/core/pbuf.c \
+  ../../core/lwip/src/core/raw.c \
+  ../../core/lwip/src/core/stats.c \
+  ../../core/lwip/src/core/sys.c \
+  ../../core/lwip/src/core/tcp.c \
+  ../../core/lwip/src/core/tcp_in.c \
+  ../../core/lwip/src/core/init.c \
+  ../../core/lwip/src/core/ipv4/ip.c \
+  ../../core/lwip/src/core/ipv4/ip_addr.c \
+  ../../core/lwip/src/core/ipv4/icmp.c \
+  ../../core/lwip/src/core/ipv4/inet_chksum.c \
+  ../../core/lwip/src/core/dhcp.c \
+  ../../core/lwip/src/core/dns.c \
+  ../../core/lwip/src/api/tcpip.c \
+  ../../core/lwip/src/api/api_msg.c \
+  ../../core/lwip/src/api/err.c \
+  ../../core/lwip/src/api/netbuf.c \
+  ../../core/lwip/src/api/api_lib.c \
+  ../../core/lwip/src/netif/etharp.c \
+  ../../core/lwip/contrib/port/FreeRTOS/AT91SAM7X/sys_arch.c \
+  ../../core/lwip/src/netif/ethernetif.c \
+  ../../core/makingthings/SAM7_EMAC.c \
+  ../../core/lwip/src/core/udp.c \
+  ../../core/lwip/src/core/ipv4/ip_frag.c \
+  ../../core/makingthings/osc.c \
+  ../../core/makingthings/osc_patternmatch.c
   
 # Source files that must be built in ARM mode.
 ARM_SRC= \
-  ../controller/freertos/portable/GCC/ARM7_AT91SAM7S/portISR.c \
-  ../controller/makingthings/SAM7_EMAC_ISR.c \
-  ../controller/makingthings/USBIsr.c \
-  ../controller/startup/Cstartup_SAM7.c \
-  ../controller/makingthings/analogin_isr.c \
-  ../controller/makingthings/fasttimer_isr.c \
-  ../controller/makingthings/serial_isr.c \
-  ../controller/makingthings/timer_isr.c \
-  ../controller/makingthings/can_isr.c
+  ../../core/freertos/portable/GCC/ARM7_AT91SAM7S/portISR.c \
+  ../../core/makingthings/SAM7_EMAC_ISR.c \
+  ../../core/makingthings/USBIsr.c \
+  ../../core/startup/Cstartup_SAM7.c \
+  ../../core/makingthings/analogin_isr.c \
+  ../../core/makingthings/fasttimer_isr.c \
+  ../../core/makingthings/serial_isr.c \
+  ../../core/makingthings/timer_isr.c \
+  ../../core/makingthings/can_isr.c
   
 # All the include directories need to be appended here
 INCLUDEDIRS = \
 -I.  \
--I../appboard/makingthings  \
--I../utility/makingthings  \
--I../controller/makingthings  \
--I../controller/makingthings/testing  \
--I../controller/lwip/src/include  \
--I../controller/lwip/contrib/port/FreeRTOS/AT91SAM7X  \
--I../controller/freertos/include  \
--I../controller/freertos/portable/GCC/ARM7_AT91SAM7S  \
--I../controller/lwip/src/include/ipv4 \
+-I../../libraries/appled  \
+-I../../libraries/digitalin  \
+-I../../libraries/digitalout  \
+-I../../libraries/dipswitch  \
+-I../../libraries/motor  \
+-I../../libraries/pwmout  \
+-I../../libraries/servo  \
+-I../../libraries/stepper  \
+-I../../libraries/webserver  \
+-I../../libraries/xbee  \
+-I../../core/makingthings  \
+-I../../core/makingthings/testing  \
+-I../../core/lwip/src/include  \
+-I../../core/lwip/contrib/port/FreeRTOS/AT91SAM7X  \
+-I../../core/freertos/include  \
+-I../../core/freertos/portable/GCC/ARM7_AT91SAM7S  \
+-I../../core/lwip/src/include/ipv4 \
 
 ############################################################################
 # Below here should not change from project to project
@@ -112,10 +119,10 @@ INCLUDEDIRS = \
 CC=arm-elf-gcc
 OBJCOPY=arm-elf-objcopy
 ARCH=arm-elf-ar
-CRT0=../controller/startup/boot.s
+CRT0=../../core/startup/boot.s
 DEBUG=
 OPTIM=-O2
-LDSCRIPT=../controller/startup/atmel-rom.ld
+LDSCRIPT=../../core/startup/atmel-rom.ld
 
 #
 # CFLAGS common to both the THUMB and ARM mode builds
