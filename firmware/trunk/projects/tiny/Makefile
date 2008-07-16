@@ -17,19 +17,18 @@ all: output/$(OUTPUT).bin
 #
 THUMB_SRC=  \
   main.c \
-  ../controller/makingthings/io.c \
-  ../controller/makingthings/led.c \
+  ../../core/makingthings/io.c \
+  ../../core/makingthings/led.c \
 
 # Source files that must be built to ARM mode.
 ARM_SRC= \
-  ../controller/startup/Cstartup_SAM7.c
+  ../../core/startup/Cstartup_SAM7.c
 
 # All the include directories need to be appended here
 INCLUDEDIRS = \
 -I.  \
--I../controller/makingthings  \
--I../controller/freertos/portable/GCC/ARM7_AT91SAM7S  \
--I../utility/makingthings
+-I../../core/makingthings  \
+-I../../core/freertos/portable/GCC/ARM7_AT91SAM7S  \
 
 ############################################################################
 # Below here should not change from project to project
@@ -37,10 +36,10 @@ INCLUDEDIRS = \
 CC=arm-elf-gcc
 OBJCOPY=arm-elf-objcopy
 ARCH=arm-elf-ar
-CRT0=../controller/startup/boot.s
+CRT0=../../core/startup/boot.s
 DEBUG=
 #OPTIM=-Os
-LDSCRIPT=../controller/startup/atmel-rom.ld
+LDSCRIPT=../../core/startup/atmel-rom.ld
 
 #
 # CFLAGS common to both the THUMB and ARM mode builds
