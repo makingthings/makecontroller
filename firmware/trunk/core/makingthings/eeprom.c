@@ -60,9 +60,21 @@ static int Eeprom_users;
 
 /** \defgroup Eeprom EEPROM
 	Eeprom allows for the persistent storage of 32k bytes data. 
-  The last 1k (1024) bytes of this space are reserved for system
-  use storing things like the board's IP address, serial number, build version, etc.  Get the last
-  EEPROM address available before this reserved section with a call to Eeprom_GetLastAddress( ).
+  The last 1k (1024) bytes of this space are reserved for Make Controller system
+  use, storing things like the board's IP address, serial number, build version, etc.  
+  
+  The symbol \b EEPROM_SYSTEM_BASE provides the last available address before the reserved section.
+  Use it to locate your own locations in EEPROM by subracting from it as appropriate for your data.
+  For example, if you're storing integers, you can use code like
+  \code
+  #define MY_FIRST_VALUE (EEPROM_SYSTEM_BASE - 4)
+  #define MY_SECOND_VALUE (MY_FIRST_VALUE - 8)
+  \endcode
+
+  You can then use those values as the addresses to read and write from, like
+  \code
+  
+  \endcode
 
   Use Eeprom_Write() and Eeprom_Read() to store and retrieve characters.  These both internally set
   the EEPROM system to active automatically.  
@@ -212,15 +224,6 @@ int Eeprom_Read( int address, uchar* buffer, int count )
   Spi_Unlock();
 
   return CONTROLLER_OK;
-}
-
-/** 
-  Returns the last usable address in the EEPROM
-  @return address
-*/
-int Eeprom_GetLastAddress( )
-{
-  return EEPROM_SIZE - EEPROM_RESERVE_SIZE;
 }
 
 /** @}

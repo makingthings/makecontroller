@@ -657,7 +657,7 @@ int SystemOsc_PropertyGet( int property, int channel )
         a0 = a1 = a2 = a3 = -1;
 			snprintf( mask, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
       dhcp = Network_GetDhcpEnabled( );
-      webserver = Network_GetWebServerEnabled( );
+      webserver = 0; // webserver no longer in core. TODO - update system-info to not use webserver
       oscUdpListen = NetworkOsc_GetUdpListenPort( );
       oscUdpSend = NetworkOsc_GetUdpSendPort( );
       #else
