@@ -64,7 +64,6 @@ typedef struct Network_
   int TcpOutAddress;
   int TcpOutPort;
   bool TcpRequested;
-  //void* WebServerTaskPtr;
   int DnsResolvedAddress;
   #ifdef OSC
   char scratch1[ OSC_SCRATCH_SIZE ];
@@ -583,7 +582,6 @@ int Network_SetActive( int state )
       Network = MallocWait( sizeof( NetworkStruct ), 100 );
       Network->pending = 1;
       Network->TcpRequested = 0;
-      //Network->WebServerTaskPtr = NULL;
       Network_DnsSemaphore = NULL;
       Network->DnsResolvedAddress = -1;
 

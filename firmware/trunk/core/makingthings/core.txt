@@ -19,7 +19,7 @@
 	Functions available to the Make Controller Board.
 	
 	The \b Core module provides an API to devices that are all included on the Make Controller, no matter
-	what interface electronics are used around it.  The \ref CoreLibraries module extends the Core module to provide
+	what interface electronics are used around it.  The \ref Libraries module extends the Core module to provide
 	additional functionality.
 */
 
@@ -47,7 +47,7 @@
 	the code for the Controller Board has been kept separate from the code for the Application Board to make this as easy
 	as possible:
 	- The \ref Core module provides the core routines required for the Make Controller Board.
-	- The \ref CoreLibraries module provides routines that work with the Make Application Board, and are often based on or use
+	- The \ref Libraries module provides routines that work with the Make Application Board, and are often based on or use
 	code from the Core module.
 	- The \ref OSC module provides a communication interface to the Make Controller Kit from other computers and devices.
 
