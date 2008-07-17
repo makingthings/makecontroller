@@ -55,6 +55,7 @@ int Network_GetValid( void );
 
 // TCP stuff
 void* Socket( int address, int port );
+int SocketBytesAvailable( void* socket );
 int SocketRead( void* socket, char* data, int length );
 int SocketReadLine( void* socket, char* data, int length );
 int SocketWrite( void* socket, char* data, int length );
