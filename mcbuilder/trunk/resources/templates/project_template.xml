@@ -39,7 +39,7 @@
     <file type="thumb">resources/cores/makecontroller/makingthings/debugosc.c</file>
     <file type="thumb">resources/cores/makecontroller/makingthings/can.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/src/core/tcp_out.c</file>
-    <file type="thumb">resources/cores/makecontroller/lwip/src/core/inet.c</file>
+    <file type="thumb">resources/cores/makecontroller/lwip/src/core/ipv4/inet.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/src/core/mem.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/src/core/memp.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/src/core/netif.c</file>
@@ -49,13 +49,17 @@
     <file type="thumb">resources/cores/makecontroller/lwip/src/core/sys.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/src/core/tcp.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/src/core/tcp_in.c</file>
+    <file type="thumb">resources/cores/makecontroller/lwip/src/core/init.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/src/core/ipv4/ip.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/src/core/ipv4/ip_addr.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/src/core/ipv4/icmp.c</file>
+    <file type="thumb">resources/cores/makecontroller/lwip/src/core/ipv4/inet_chksum.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/src/core/dhcp.c</file>
+    <file type="thumb">resources/cores/makecontroller/lwip/src/core/dns.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/src/api/tcpip.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/src/api/api_msg.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/src/api/err.c</file>
+    <file type="thumb">resources/cores/makecontroller/lwip/src/api/netbuf.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/src/api/api_lib.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/src/netif/etharp.c</file>
     <file type="thumb">resources/cores/makecontroller/lwip/contrib/port/FreeRTOS/AT91SAM7X/sys_arch.c</file>
