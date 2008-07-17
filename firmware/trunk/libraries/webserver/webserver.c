@@ -513,7 +513,12 @@ bool WebServer_GetPostData( void *socket, char *requestBuffer, int maxSize )
   if ( contentLength > 0 && bufferLength > 0 )
   {  
     int bufferRead = 0;
-    int lengthToRead = maxSize - 1;
+    int lengthToRead;
+    int avail = SocketBytesAvailable(socket);
+    if(avail > maxSize)
+      lengthToRead = maxSize - 1;
+    else
+      lengthToRead = avail;
     char *rbp = requestBuffer;
     // read all that the socket has to offer...may come in chunks, so keep going until there's none left
     while ( ( bufferLength = SocketRead( socket, rbp, lengthToRead ) ) )

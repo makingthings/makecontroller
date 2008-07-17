@@ -139,9 +139,35 @@ void* Socket( int address, int port )
   return conn;
 }
 
+/**
+  Get the number of bytes available in a TCP socket.
+  Handy before calling SocketRead() so you know how many to read.
+  @param socket The socket.
+  @return The number of bytes available in that socket.
+
+  \b Example
+  \code
+  struct netconn* mysocket = Socket(IP_ADDRESS( 192, 168, 0, 54 ), 10101);
+  // ... reading and writing ...
+  int avail = Socket_BytesAvailable(mysocket);
+  \endcode
+*/
+int SocketBytesAvailable( void* socket )
+{
+  struct netconn *conn = socket;
+  int len;
+  if(conn->readingbuf)
+    len = netbuf_len( conn->readingbuf ) - conn->readingoffset;
+  else
+    len = conn->recv_avail;
+  return len;
+}
+
 /**	
 	Read from a TCP socket.
-  Make sure you have an open socket before trying to read from it.
+  Make sure you have an open socket before trying to read from it.  This function
+  will block until the requested number of bytes are read.  See Socket_BytesAvailable()
+  to get the number of bytes waiting to be read.
 	@param socket A pointer to the existing socket.
 	@param data A pointer to the buffer to read to.
 	@param length An integer specifying the maximum length in bytes that can be read.
