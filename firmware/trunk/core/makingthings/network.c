@@ -195,7 +195,7 @@ int SocketRead( void* socket, char* data, int length )
         bytesRead -= extraBytes; // how many do we need to write to get the originally requested len
         netbuf_copy( buf, data, bytesRead );
         conn->readingbuf = buf;
-        conn->readingoffset = extraBytes;
+        conn->readingoffset = bytesRead;
       }
     }
     else // conn->readingbuf != NULL
