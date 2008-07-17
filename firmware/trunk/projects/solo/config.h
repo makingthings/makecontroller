@@ -7,13 +7,12 @@
 #define CONFIG_H
 
 #include "controller.h"   // ...everybody uses the MAKE Controller Board
-//#include "appboard.h"     // ...if you're using the MAKE Application Board
 #include "error.h"
 
 #define FIRMWARE_NAME          "Solo-svn"
 #define FIRMWARE_MAJOR_VERSION 1
-#define FIRMWARE_MINOR_VERSION 2
-#define FIRMWARE_BUILD_NUMBER  1
+#define FIRMWARE_MINOR_VERSION 5
+#define FIRMWARE_BUILD_NUMBER  0
 
 
 #define CONTROLLER_HEAPSIZE 20000
