@@ -30,26 +30,39 @@
 	***************************************************************************
 */
 
-#ifndef BASIC_WEB_SERVER_H
-#define BASIC_WEB_SERVER_H
+#ifndef WEB_SERVER_H
+#define WEB_SERVER_H
+
+#include "string.h"
+#include "stdio.h"
 
 #define MAX_FORM_ELEMENTS 10
 
+/**
+  A structure that represents a key-value pair in an HTML form.
+  \ingroup webserver
+*/
 typedef struct
 {
   char *key;
   char *value;
-} HttpFormElement;
+} HtmlFormElement;
 
+/**
+  A structure that represents a collection of HtmlFormElement structures.
+  \ingroup webserver
+*/
 typedef struct
 {
-  HttpFormElement elements[MAX_FORM_ELEMENTS];
+  HtmlFormElement elements[MAX_FORM_ELEMENTS];
   int count;
-} HttpForm;
+} HtmlForm;
 
 // Web Server Task
 int WebServer_SetActive( int active );
 int WebServer_GetActive( void );
+int WebServer_SetListenPort( int port );
+int WebServer_GetListenPort( void );
 
 int WebServer_Route( char* address, int (*handler)( char* requestType, char* request, char* requestBuffer, int request_maxsize, void* socket, char* responseBuffer, int len )  );
 
@@ -63,7 +76,12 @@ int WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, i
 int WebServer_WriteBodyEnd( void* socket );
 
 bool WebServer_GetPostData( void *socket, char *requestBuffer, int maxSize );
-int WebServer_ParseFormElements( char *request, HttpForm *form );
+int WebServer_ParseFormElements( char *request, HtmlForm *form );
 
-#endif  // BASIC_WEB_SERVER_H
+// OSC interface
+const char* WebServerOsc_GetName( void );
+int WebServerOsc_ReceiveMessage( int channel, char* message, int length );
+int WebServerOsc_Async( int channel );
+
+#endif  // WEB_SERVER_H
 

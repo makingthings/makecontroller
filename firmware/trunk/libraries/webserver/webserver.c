@@ -64,7 +64,8 @@ typedef struct WebServerS
   void* serverTask;
   void *serverSocket;
   void *requestSocket;
-
+  int listenPort;
+  bool changeListenPort;
   char request[ REQUEST_SIZE_MAX ];
   char response[ RESPONSE_SIZE_MAX ];
 } WebServer_;
@@ -84,35 +85,39 @@ static int WebServer_WriteResponseOk_( char* content, void* socket );
 
 
 /** \defgroup webserver Web Server
-  Very simple Web Server
+  A simple Web Server
 
   This Web Server implementation is based on the \ref ServerSocket and \ref Socket functions defined
-  in \ref Sockets.  When started (usually by the Network subsystem), a ServerSocket is opened
-  and set to listen on port 80.
+  in \ref Sockets.  When started, a ServerSocket is opened and set to listen on port 80.
 
   When the server receives a request, it checks the incoming address against a list of handlers.
   If the request address matches, the handler is invoked and checking stops.  Users can add their own
-  handlers to return custom information.  Handlers persist even when the server is deactivated.
+  handlers to return custom information - see WebServer_Route().  Most of the rest of the WebServer 
+  system provides helpful functions for generating and parsing HTML.
 
-  There are two default handlers.  One is mounted at "/test" and will reply with the message "Test"
-  and a current hit count.  This handler will only be mounted if no other handlers are present when
-  the server is started up.  To see this handler, type the IP address of your board into a web browser, 
-  followed by \b /test, ie \b 192.168.1.200/test. The other handler is a default handler which will match any address not 
-  already matched.  This will show some info about the board and allow you to control the digital outputs.  
-  This handler can be adapted/customized to provide access to other parts of the Make Controller if desired.
-  Give a quick search for \b WebServer_Demo in webserver.c to see its source.
+  There is a single default/test handler that will handle any requests that are not otherwise handled.  This
+  is about the simplest demo possible of how to write a handler - it simply prints out some text and a count
+  of how pages it has served.  There are more handler examples further down this page, and in the mcbuilder 
+  examples.  Take a look at TestHandler() in webserver.c to see its source.
+
+  To access the web server type the IP address of your board into a web browser, optionally followed by
+  the address of any handlers you've registered, ie \b 192.168.1.200/myhandler.  
 
 	\ingroup Libraries
 	@{
 */
 
 /**
-	Set the active state of the WebServer subsystem.  This is automatically set to true
-  by the Network Subsystem as it activates if the \b /network/webserver property is 
-  set to true.  If there are no specifed handlers at the time of initialization,
-  the default test handler is installed.
+	Start the WebServer up, listening on port 80.
+  See WebServer_Route() for info on how to register handlers for certain requests.
 	@param active An integer specifying the active state - 1 (on) or 0 (off).
 	@return CONTROLLER_OK (0) on success or the appropriate error if not
+
+  \b Example
+  \code
+  // fire up the webserver
+  WebServer_SetActive(true);
+  \endcode
 */
 int WebServer_SetActive( int active )
 {
@@ -124,21 +129,20 @@ int WebServer_SetActive( int active )
       WebServer->hits = 0;
       WebServer->serverSocket = NULL;
       WebServer->requestSocket = NULL;
+      WebServer->changeListenPort = false;
+      WebServer->listenPort = HTTP_PORT; // default to 80
       #ifdef CROSSWORKS_BUILD
-      WebServer->serverTask = TaskCreate( WebServerTask, "WebServ", 800, NULL, 4 );
+      int stacksize = 800;
       #else
-      WebServer->serverTask = TaskCreate( WebServerTask, "WebServ", 1800, NULL, 4 );
+      int stacksize = 1800;
       #endif // CROSSWORKS_BUILD
+      WebServer->serverTask = TaskCreate( WebServerTask, "WebServ", stacksize, NULL, 4 );
       if ( WebServer->serverTask == NULL )
       {
         Free( WebServer );
         WebServer = NULL;
         return CONTROLLER_ERROR_CANT_START_TASK;
       }
-  
-      // Test the routing system
-      if ( WebServerHandlers == NULL )
-        WebServer_Route( "/test", TestHandler );
     }
   }
   else
@@ -169,6 +173,40 @@ int  WebServer_GetActive( void )
 }
 
 /**
+	Set the port that the webserver should listen on for new connections.
+  Note that this does not immediately take effect - because the webserver
+  (if it's open) is already listening on a port, it will only take effect
+  after it serves one last request on that port.
+  @param port The new port to listen on.
+  @return 0 on success.
+
+  \b Example
+  \code
+  // listen on a non-standard port for HTTP
+  WebServer_SetListenPort(8080);
+  \endcode
+*/
+int WebServer_SetListenPort( int port )
+{
+  WebServer->listenPort = port;
+  return CONTROLLER_OK;
+}
+
+/**
+  Get the port that the webserver is currently listening on.
+  @return The port number.
+
+  \b Example
+  \code
+  int currentPort = WebServer_GetListenPort( );
+  \endcode
+*/
+int WebServer_GetListenPort( void )
+{
+  return WebServer->listenPort;
+}
+
+/**
 	Adds a route handler to the WebServer.
 
   This function binds an address fragment (e.g. "/", "/adcs", etc.) to a handler
@@ -178,7 +216,8 @@ int  WebServer_GetActive( void )
   handlers will be checked.  Thus if a handler is set up to match "/images" it will match
   "/images" and "/images/logo.png" and so on.  Also if there is a subseqent handler 
   set to match "/images/diagram" it will never be called since the prior handler
-  will match the entire "/images" space.
+  will match the entire "/images" space.  You can register your handlers prior to firing up
+  the webserver system.
 
   The handler will be called with the request type specified (usually "GET" or  "POST"), 
   the incoming address ( "/device/0", "/images/logo.png", etc.) A buffer (and max length) is passed in that
@@ -189,18 +228,31 @@ int  WebServer_GetActive( void )
   At the time the handler is called, only the first line of the request has been read.  It is used
   to determine the request type and the address requested.  If you need to process the request further
   its contents may be read into a buffer (the request buffer passed in is good once the request type 
-  address have been used since they're in there initially).  It is suggested that you use the 
-  SocketReadLine( ) function to read a line of the request at a time.
+  address have been used since they're in there initially).  The SocketReadLine( ) function is 
+  convenient to read a line of the request at a time.
 
-  The handler itself must first write the response using one of WebServer_WriteResponseOkHTML for
-  sending HTML or WebServer_WriteResponseOkPlain for returning plain text.  
+  The handler itself must first write the response using one of WebServer_WriteResponseOkHTML() for
+  sending HTML or WebServer_WriteResponseOkPlain() for returning plain text.  
   These send the appropriate HTTP header (for example "HTTP/1.0 200 OK\r\nContent-type:text/html\r\n\r\n").
   All responses may be simply written to the Socket, but several helpers are provided to assist in the 
-  construction of simple web pages (for example WebServer_WriteHeader, WebServer_WriteBodyStart, etc.)
+  construction of simple web pages (for example WebServer_WriteHeader(), WebServer_WriteBodyStart(), etc.). 
+  
+  The handler should return non-zero if it handled the response appropriately or 0 if not, in which case
+  the webserver will check for matches with other handlers that can handle it.
+	@param address An string specify the addresses to match.
+	@param handler pointer to a handler function that will be called when the address is matched.
+  @return CONTROLLER_OK (=0) on success or the appropriate error if not
 
-  Here is an example handler which is installed when the server is started if there are no handlers already present.
+  Here is an example of how to register a handler:
   \code
-int TestHandler( char* requestType, char* address, char* requestBuffer, int requestMaxSize, void* socket, char* buffer, int len )
+// now requests at MyBoardsIPAddress/my/handler will be handled by MyHandler
+WebServer_Route( "/my/handler", MyHandler );
+  \endcode
+
+  And here is an example handler, printing out some simple info in response to any request.
+  \code
+int MyHandler( char* requestType, char* address, char* requestBuffer, int requestMaxSize, 
+                 void* socket, char* buffer, int len )
 {
   (void)requestType;
   (void)address;
@@ -213,14 +265,6 @@ int TestHandler( char* requestType, char* address, char* requestBuffer, int requ
   return true;
 }
   \endcode
-  And here is a quick example of how to register a handle:
-  \code
-  // now requests at MyBoardsIPAddress/my/handler will be handled by MyHandler
-  WebServer_Route( "/my/handler", MyHandler );
-  \endcode
-	@param address An string specify the addresses to match.
-	@param handler pointer to a handler function that will be called when the address is matched.
-  @return CONTROLLER_OK (=0) on success or the appropriate error if not
 */
 int WebServer_Route( char* address, 
                     int (*handler)( char* requestType, char* address, char* requestBuffer, 
@@ -250,7 +294,20 @@ int WebServer_Route( char* address,
 
 /**
 	Writes the HTTP OK message and sets the content type to HTML.
+  This will typically be the first thing you write out in your handler.
+  Also see WebServer_WriteResponseOkPlain() to set your response type to plain text.
 	@param socket The socket to write to
+  @return non-zero on success, zero on failure.
+
+  \b Example
+  \code
+  int MyRequestHandler( char* requestType, char* address, char* requestBuffer, 
+                      int requestMaxSize, void* socket, char* buffer, int len )
+  {
+    WebServer_WriteResponseOkHTML(socket); // write the response out first
+    // ... continue processing ...
+  }
+  \endcode
 */
 int WebServer_WriteResponseOkHTML( void* socket )
 {
@@ -273,8 +330,21 @@ int WebServer_WriteResponseOkHTML( void* socket )
 }
   
 /**
-	Writes the HTTP OK message and sets the content type to HTML.
-	@param socket The socket to write to
+	Writes the HTTP OK message and sets the content type to plain text.
+  This will typically be the first thing you write out in your handler.
+  Also see WebServer_WriteResponseOkHTML() to set your response type to HTML.
+	@param socket The socket to write to.
+  @return non-zero on success, zero on failure.
+
+  \b Example
+  \code
+  int MyRequestHandler( char* requestType, char* address, char* requestBuffer, 
+                      int requestMaxSize, void* socket, char* buffer, int len )
+  {
+    WebServer_WriteResponseOkPlain(socket); // write the response out first
+    // ... continue processing ...
+  }
+  \endcode
 */
 int WebServer_WriteResponseOkPlain( void* socket )
 {
@@ -283,12 +353,26 @@ int WebServer_WriteResponseOkPlain( void* socket )
 
 /**
 	Writes the HTML header.
-  Should be preceded by a call to WebServer_WriteResponseOkHTML
-  @param includeCSS flag signalling the inclusion of a very simple CSS header refining header one and body text slightly.
+  Should be preceded by a call to WebServer_WriteResponseOkHTML(). 
+  See WebServer_Route() for a more complete example.
+  @param includeCSS A flag signalling the inclusion of a very simple CSS header 
+  refining h1 and body text slightly.
 	@param socket The socket to write to
 	@param buffer Helper buffer which the function can use.  Should be at least 300 bytes.
 	@param len Helper buffer length
+  @return non-zero on success, zero on failure.
   \todo more parameterization
+
+  \b Example
+  \code
+  int MyRequestHandler( char* requestType, char* address, char* requestBuffer, 
+                      int requestMaxSize, void* socket, char* buffer, int len )
+  {
+    // ... usually write out the OK response first ...
+    WebServer_WriteHeader(true, socket, buffer, len); // write the header, including simple CSS
+    // ... continue processing ...
+  }
+  \endcode
 */
 int WebServer_WriteHeader( int includeCSS, void* socket, char* buffer, int len )
 {
@@ -310,12 +394,26 @@ h1 { font-family: Arial, Helvetica, sans-serif; font-weight: bold; }\
 
 /**
 	Writes the start of the BODY tag.
-  Should be preceded by a call to WebServer_WriteHeader.  Also writes a light grey background.
-  @param reloadAddress string signalling the address of a 1s reload request.  If it is NULL, no reload is requested.
-	@param socket The socket to write to
-	@param buffer Helper buffer which the function can use.  Should be at least 300 bytes.
-	@param len Helper buffer length
+  Should be preceded by a call to WebServer_WriteHeader().  Also writes a light grey background.
+  You can optionally specify that you'd like the page to automatically refresh itself once 
+  a second by passing in the address to reload to \b reloadAddress.  See WebServer_Route() for a more complete example.
+  @param reloadAddress A string signaling the address of a 1 second reload request.  If it is NULL, no reload is requested.
+	@param socket The socket to write to.
+	@param buffer Helper buffer which the function can use.  Should be at least 300 bytes.  This is usually the buffer
+  passed into your handler as \b buffer.
+	@param len Helper buffer length.  Also usually passed into your handler as \b len.
   \todo more parameterization of the tag
+
+  \b Example
+  \code
+  int MyRequestHandler( char* requestType, char* address, char* requestBuffer, 
+                      int requestMaxSize, void* socket, char* buffer, int len )
+  {
+    // ... usually write out the OK response and the header first ...
+    WebServer_WriteBodyStart(0, socket, buffer, len); // write the body start, with no reload
+    // ... continue processing ...
+  }
+  \endcode
 */
 int WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, int len )
 {
@@ -339,8 +437,21 @@ int WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, i
 
 /**
 	Writes the end of the Body tag - and the final end of HTML tag.
-  Should be preceded writes to the socket with the content of the page.
+  Should be preceded by writes to the socket with the content of the page - 
+  this is often the last thing done in a handler.  See WebServer_Route() for a more complete example.
 	@param socket The socket to write to
+  @return non-zero on success, zero on failure.
+
+  \b Example
+  \code
+  int MyRequestHandler( char* requestType, char* address, char* requestBuffer, 
+                      int requestMaxSize, void* socket, char* buffer, int len )
+  {
+    // ... other code actually doing interesting things ...
+    WebServer_WriteBodyEnd(socket); // now we're all done
+    return 1;
+  }
+  \endcode
 */
 int WebServer_WriteBodyEnd( void* socket )
 {
@@ -354,7 +465,10 @@ int WebServer_WriteBodyEnd( void* socket )
   This is designed to be used from within a custom handler.  An incoming HTTP request will have some number of
   lines of header information, and this function will read through them until getting to the body of the message.
   It will then store the contents of the body in the given buffer, null-terminating the end of the data.
-  \par Example
+
+  It's usually convenient to set the POST data in the requestBuffer since it's already allocated.
+
+  \b Example
   \code
 int MyRequestHandler( char* requestType, char* address, char* requestBuffer, 
                       int requestMaxSize, void* socket, char* buffer, int len )
@@ -375,8 +489,7 @@ int MyRequestHandler( char* requestType, char* address, char* requestBuffer,
 }
   \endcode
 	@param socket The socket from the incoming request
-	@param requestBuffer A pointer to the buffer to store the data in.  Usually, just storing it in the requestBuffer
-  is convenient since it's already allocated.
+	@param requestBuffer A pointer to the buffer to store the data in.
   @param maxSize The maximum amount of data to be placed in the buffer.
   @return true on success, false on failure
 */
@@ -421,13 +534,14 @@ bool WebServer_GetPostData( void *socket, char *requestBuffer, int maxSize )
   Extract the elements of an HTML form into key/value pairs.
   This is designed to be used from within a custom handler.  HTML forms can be sent via either the HTTP GET 
   or POST methods.  The \b request parameter must be set to the start of the form data, which is 
-  located in a different place for each method.  In the GET case, the form data is simply in the URL 
-  after a ? character.  In the POST case, the WebServer_GetPostData( ) function will conveniently zip through 
-  the incoming request and set up the pointer for you.
+  located in a different place for each method.  In the \b GET case, we need to check if there are any 
+  form elements, as indicated by a \b ? after the URL address.  In the \b POST case, we can use 
+  WebServer_GetPostData() to find the beginning of the POST data for us.
 
-  Note that the HttpForm structure will simply point to the elements in the request buffer, so as soon as
+  Note that the HtmlForm structure will simply point to the elements in the request buffer, so as soon as
   the buffer is deleted or out of scope, the form data is no longer valid.
-  \par Example
+
+  \b Example
   \code
 int MyRequestHandler( char* requestType, char* address, char* requestBuffer, 
                       int requestMaxSize, void* socket, char* buffer, int len )
@@ -435,20 +549,18 @@ int MyRequestHandler( char* requestType, char* address, char* requestBuffer,
   // ... other setup here ...
   
   int formElements = 0;
-  HttpForm form;
+  HtmlForm form;
   form.count = 0;
   
-  // if this request is an HTTP GET
+  // determine the kind of request - GET or POST
   if ( strncmp( requestType, "GET", 3 ) == 0 )
   {
-    char *p = strchr( requestBuffer, '?' );
-    if( p != NULL ) // if we didn't find a ?, then there were no form elements
+    char *p = strchr( requestBuffer, '?' ); // if GET, see if there's a ?
+    if( p != NULL ) // if we didn't find a ?, there were no form elements
       formElements = WebServer_ParseFormElements( p+1, &form );
     // we have to send "p + 1" since the form data starts right after the ?
   }
-  
-  // if this request is an HTTP POST
-  if ( strncmp( requestType, "POST", 4 ) == 0 )
+  else if ( strncmp( requestType, "POST", 4 ) == 0 )
   {
     // make sure we're pointing at the POST data and if it looks good, process it
     if( WebServer_GetPostData( socket, requestBuffer, requestMaxSize ) )
@@ -459,10 +571,10 @@ int MyRequestHandler( char* requestType, char* address, char* requestBuffer,
 }
   \endcode
 	@param request A pointer to the form data
-  @param form The HttpForm structure to populate with elements
+  @param form The HtmlForm structure to populate with elements
   @return The number of form elements found
 */
-int WebServer_ParseFormElements( char *request, HttpForm *form )
+int WebServer_ParseFormElements( char *request, HtmlForm *form )
 {
   int count = 0;
   bool cont = true;
@@ -510,15 +622,16 @@ int TestHandler( char* requestType, char* address, char* requestBuffer, int requ
   WebServer_WriteResponseOkHTML( socket );
   WebServer_WriteHeader( true, socket, buffer, len );
   WebServer_WriteBodyStart( address, socket, buffer, len );
-  snprintf( buffer, len, "<H1>TEST</H1>%d hits", WebServer->hits );
+  snprintf( buffer, len, "<H1>Make Controller Web Server Test</H1> %d happy pages served...", WebServer->hits );
   SocketWrite( socket, buffer, strlen( buffer ) );
   WebServer_WriteBodyEnd( socket );
   return true;
 }
 
 void WebServer_Demo( char* requestType, char* address, char* requestBuffer, int requestMaxSize, void* socket, char* buffer, int len );
-void WebServer_ProcessRequest( void* requestSocket );
-char* WebServer_GetRequestAddress( char* request, int length, char** requestType );
+static void WebServer_ProcessRequest( void* requestSocket );
+static void WebServer_CreateServerSocket( void );
+static char* WebServer_GetRequestAddress( char* request, int length, char** requestType );
 
 void WebServer_ProcessRequest( void* requestSocket )
 {
@@ -544,9 +657,8 @@ void WebServer_ProcessRequest( void* requestSocket )
       }
     }
   }
-
-  if( !responded ) 
-    WebServer_Demo( requestType, address, WebServer->request, REQUEST_SIZE_MAX, requestSocket, WebServer->response, RESPONSE_SIZE_MAX ); 
+  if(!responded)
+    TestHandler(requestType, address, WebServer->request, REQUEST_SIZE_MAX, requestSocket, WebServer->response, RESPONSE_SIZE_MAX);
 
   SocketClose( requestSocket );
 }
@@ -566,7 +678,7 @@ void WebServer_Demo( char* requestType, char* address, char* requestBuffer, int 
     return;
   
   int formElements = 0;
-  HttpForm form;
+  HtmlForm form;
   form.count = 0;
   
   // if this request is an HTTP GET
@@ -619,16 +731,16 @@ void WebServerTask( void *p )
   (void)p;
 
   // Try to create a socket on the appropriate port
-  while ( WebServer->serverSocket == NULL )
-  { 
-    WebServer->serverSocket = ServerSocket( HTTP_PORT );
-    if ( WebServer->serverSocket == NULL )
-      Sleep( 1000 );
-  }
+  WebServer_CreateServerSocket();
 
   while( 1 )
 	{
-		/* Wait for connection. */
+    if(WebServer->changeListenPort == true)
+    {
+      WebServer_CreateServerSocket();
+      WebServer->changeListenPort = false;
+    }
+    /* Wait for connection. */
 		WebServer->requestSocket = ServerSocketAccept( WebServer->serverSocket );
     
 		if ( WebServer->requestSocket != NULL )
@@ -637,9 +749,26 @@ void WebServerTask( void *p )
       WebServer_ProcessRequest( WebServer->requestSocket );
       WebServer->requestSocket = NULL;
 		}
-
     Sleep( 5 );
 	}
+}
+
+/*
+  Create a new ServerSocket on the appropriate listenPort
+*/
+static void WebServer_CreateServerSocket( )
+{
+  if(WebServer->serverSocket)
+  {
+    SocketClose(WebServer->serverSocket);
+    WebServer->serverSocket = NULL;
+  }
+  while( WebServer->serverSocket == NULL )
+  { 
+    WebServer->serverSocket = ServerSocket( WebServer->listenPort );
+    if ( WebServer->serverSocket == NULL )
+      Sleep( 1000 );
+  }
 }
 
 static int WebServer_WriteResponseOk_( char* contentType, void* socket )
@@ -690,5 +819,68 @@ char* WebServer_GetRequestAddress( char* request, int length, char** requestType
   return address;
 }
 
-#endif
+#ifdef OSC // Webserver OSC interface
+
+#include "osc.h"
+static char* WebServerOsc_Name = "webserver";
+static char* WebServerOsc_PropertyNames[] = { "active", "listenport", 0 }; // must have a trailing 0
+
+int WebServerOsc_PropertySet( int value, int property );
+int WebServerOsc_PropertyGet( int property );
+
+const char* WebServerOsc_GetName( void )
+{
+  return WebServerOsc_Name;
+}
+
+int WebServerOsc_ReceiveMessage( int channel, char* message, int length )
+{
+  int status = Osc_IntReceiverHelper( channel, message, length, 
+                                      WebServerOsc_Name,
+                                      WebServerOsc_PropertySet, WebServerOsc_PropertyGet, 
+                                      WebServerOsc_PropertyNames );
+
+  if ( status != CONTROLLER_OK )
+    return Osc_SendError( channel, WebServerOsc_Name, status );
+  return CONTROLLER_OK;
+}
+
+// Set the index LED, property with the value
+int WebServerOsc_PropertySet( int property, int value )
+{
+  switch ( property )
+  {
+    case 0: // active
+      WebServer_SetActive( value );
+      break;
+    case 1: // listenport
+      if(value != WebServer_GetListenPort())
+      {
+        WebServer_SetListenPort( value );
+        WebServer->changeListenPort = true;
+      }
+      break;     
+  }
+  return CONTROLLER_OK;
+}
+
+// Get the property
+int WebServerOsc_PropertyGet( int property )
+{
+  int value = 0;
+  switch ( property )
+  {
+    case 0: // active
+      value = WebServer_GetActive( );
+      break;
+    case 1: // listenport
+      value = WebServer_GetListenPort( );
+      break;   
+  }
+  return value;
+}
+
+#endif // OSC
+
+#endif // MAKE_CTRL_NETWORK
 
