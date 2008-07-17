@@ -38,8 +38,9 @@
   <ProjectSessionItem path="tiny" name="unnamed" />
   <ProjectSessionItem path="tiny;tiny" name="unnamed" />
   <ProjectSessionItem path="tiny;tiny;Source Files" name="unnamed" />
-  <ProjectSessionItem path="tiny;tiny;Source Files;Controller" name="unnamed" />
-  <ProjectSessionItem path="tiny;tiny;Source Files;Controller;MakingThings" name="unnamed" />
+  <ProjectSessionItem path="tiny;tiny;Source Files;Core" name="unnamed" />
+  <ProjectSessionItem path="tiny;tiny;Source Files;Core;MakingThings" name="unnamed" />
+  <ProjectSessionItem path="tiny;tiny;Source Files;Core;Startup" name="unnamed" />
   <ProjectSessionItem path="tiny;tiny;Source Files;Tiny" name="unnamed" />
  </Project>
  <Register1>
@@ -60,9 +61,9 @@
  </TraceWindow>
  <Watch1>
   <Watches active="1" >
-   <Watchpoint evalMode="3" linenumber="332" evalType="1" radix="16" name="message" expression="message" filename="C:\mtcode\make\beta\utility\makingthings\osc.c" />
-   <Watchpoint evalMode="1" linenumber="17" evalType="2" radix="-1" name="Timer" expression="Timer" filename="C:\mtcode\make\beta\controller\makingthings\timer.c" />
    <Watchpoint evalMode="1" linenumber="139" evalType="1" radix="-1" name="pcb" expression="pcb" filename="C:\mtcode\make\beta\controller\lwip\src\core\udp.c" />
+   <Watchpoint evalMode="1" linenumber="17" evalType="2" radix="-1" name="Timer" expression="Timer" filename="C:\mtcode\make\beta\controller\makingthings\timer.c" />
+   <Watchpoint evalMode="3" linenumber="332" evalType="1" radix="16" name="message" expression="message" filename="C:\mtcode\make\beta\utility\makingthings\osc.c" />
   </Watches>
  </Watch1>
  <Watch2>
@@ -75,12 +76,7 @@
   <Watches active="0" />
  </Watch4>
  <Files>
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="7" debugPath="C:\mtcode\make\v1.0\tiny\main.c" y="31" useHTMLEdit="0" path="C:\mtcode\make\v1.0\tiny\main.c" left="0" selected="0" name="unnamed" top="0" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="19" debugPath="C:\mtcode\make\firmware_102\controller\makingthings\led.c" y="148" useHTMLEdit="0" path="C:\mtcode\make\firmware_102\controller\makingthings\led.c" left="0" selected="0" name="unnamed" top="136" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware_102\tiny\config.h" y="17" useHTMLEdit="0" path="C:\mtcode\make\firmware_102\tiny\config.h" left="0" selected="0" name="unnamed" top="0" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\controller\makingthings\io.h" y="0" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\io.h" left="0" selected="0" name="unnamed" top="20" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="0" debugPath="C:\mtcode\make\firmware\tiny\config.h" y="0" useHTMLEdit="0" path="C:\mtcode\make\firmware\tiny\config.h" left="0" selected="0" name="unnamed" top="0" />
-  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="16" debugPath="C:\mtcode\make\firmware\controller\makingthings\controller.h" y="33" useHTMLEdit="0" path="C:\mtcode\make\firmware\controller\makingthings\controller.h" left="0" selected="1" name="unnamed" top="24" />
+  <SessionOpenFile useTextEdit="1" useBinaryEdit="0" x="44" debugPath="C:\mtcode\make\firmware_fresh\projects\tiny\main.c" y="5" useHTMLEdit="0" path="C:\mtcode\make\firmware_fresh\projects\tiny\main.c" left="0" selected="1" name="unnamed" top="0" />
  </Files>
- <ARMCrossStudioWindow activeProject="tiny" autoConnectTarget="/Macraigor Wiggler (20 Pin)" debugSearchFileMap="" fileDialogInitialDirectory="C:\mtcode\make\firmware\controller\makingthings" fileDialogDefaultFilter="*" autoConnectCapabilities="1407" debugSearchPath="" buildConfiguration="THUMB Flash Debug" />
+ <ARMCrossStudioWindow activeProject="tiny" autoConnectTarget="/Macraigor Wiggler (20 Pin)" debugSearchFileMap="" fileDialogInitialDirectory="C:\mtcode\make\firmware\controller\startup" fileDialogDefaultFilter="*" autoConnectCapabilities="1407" debugSearchPath="" buildConfiguration="THUMB Flash Debug" />
 </session>

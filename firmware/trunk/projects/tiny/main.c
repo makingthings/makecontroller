@@ -10,14 +10,13 @@
 #include "AT91SAM7X256.h"
 #include "led.h"
 void swi_handler( void );
+void kill( void );
 
 int main( void )
 {
-  int i;
-
   Led_SetState( 1 );
 
-  //int i;
+  int i;
   for ( i = 0; i < 1000000; i++ )
     ;
 
@@ -42,4 +41,9 @@ int main( void )
 void swi_handler( void )
 {
 
+}
+
+void kill( void )
+{
+  AT91C_BASE_RSTC->RSTC_RCR = ( AT91C_RSTC_EXTRST | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | (0xA5 << 24 ) );
 }
