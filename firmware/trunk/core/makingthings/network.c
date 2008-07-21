@@ -154,12 +154,12 @@ void* Socket( int address, int port )
 */
 int SocketBytesAvailable( void* socket )
 {
+  if(!socket)
+    return 0;
   struct netconn *conn = socket;
-  int len;
+  int len = conn->recv_avail;
   if(conn->readingbuf)
-    len = netbuf_len( conn->readingbuf ) - conn->readingoffset;
-  else
-    len = conn->recv_avail;
+    len += netbuf_len( conn->readingbuf ) - conn->readingoffset;
   return len;
 }
 
@@ -1211,13 +1211,13 @@ int Network_DnsGetHostByName( const char *name )
   }
   err_t result = dns_gethostbyname( name, &addr, Network_DnsCallback, 0);
   if(result == ERR_OK) // the result was cached, just return it
-    retval = ntohl(addr.addr);
+    retval = addr.addr;
   else if(result == ERR_INPROGRESS) // a lookup is in progress - wait for the callback to signal that we've gotten a response
   {
     if(SemaphoreTake(Network_DnsSemaphore, 30000)) // timeout is 30 seconds by default
       retval = Network->DnsResolvedAddress;
   }
-  return retval;
+  return ntohl(retval);
 }
 
 // static
@@ -1230,7 +1230,7 @@ void Network_DnsCallback(const char *name, struct ip_addr *addr, void *arg)
   LWIP_UNUSED_ARG(arg);
   LWIP_UNUSED_ARG(name);
   if(addr)
-    Network->DnsResolvedAddress = ntohl(addr->addr);
+    Network->DnsResolvedAddress = addr->addr;
   else
     Network->DnsResolvedAddress = -1; // we didn't get an address, stuff an error value in there
   SemaphoreGive(Network_DnsSemaphore);
