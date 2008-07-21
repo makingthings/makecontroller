@@ -24,6 +24,7 @@
 #include "webclient.h"
 
 #define WEBCLIENT_INTERNAL_BUFFER_SIZE 200
+char WebClient_InternalBuffer[ WEBCLIENT_INTERNAL_BUFFER_SIZE ];
 
 /** \defgroup webclient Web Client
   A very simple web client for HTTP operations.
@@ -66,11 +67,11 @@
 */
 int WebClient_Get( int address, int port, char* hostname, char* path, char* buffer, int buffer_size )
 {
-  char b[ WEBCLIENT_INTERNAL_BUFFER_SIZE ];
-  int buffer_read = 0;
+  char* b = WebClient_InternalBuffer;
   void* s = Socket( address, port );  
   if ( s != NULL )
   {
+    // construct the GET request
     int send_len = snprintf( b, WEBCLIENT_INTERNAL_BUFFER_SIZE, "GET %s HTTP/1.1\r\n%s%s%s\r\n", 
                                 path,
                                 ( hostname != NULL ) ? "Host: " : "",
@@ -81,10 +82,16 @@ int WebClient_Get( int address, int port, char* hostname, char* path, char* buff
       SocketClose( s );
       return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
     }
-
-    SocketWrite( s, b, send_len );
-    int content_length = 0;
     
+    // send the GET request
+    if(!SocketWrite( s, b, send_len ))
+    {
+      SocketClose( s );
+      return CONTROLLER_ERROR_WRITE_FAILED;
+    }
+
+    int content_length = 0;
+    // read through the response to get to the data, and pick up the content-length as we go
     int buffer_length;
     while ( ( buffer_length = SocketReadLine( s, b, WEBCLIENT_INTERNAL_BUFFER_SIZE ) ) )
     {
@@ -94,14 +101,25 @@ int WebClient_Get( int address, int port, char* hostname, char* path, char* buff
         content_length = atoi( &b[ 15 ] );
     }
     
+    // read the data into the given buffer until there's none left, or the passed in buffer is full
+    int buffer_read = 0;
     if ( content_length > 0 && buffer_length > 0 )
     {
       char* bp = buffer;
-      while ( ( buffer_length = SocketRead( s, bp, buffer_size - buffer_read ) ) )
+      while( buffer_read < buffer_size )
       {
+        int avail = SocketBytesAvailable(s);
+        if(!avail)
+          break;
+        if(avail > buffer_size) // make sure we don't read more than can fit
+          avail = buffer_size;
+        buffer_length = SocketRead( s, bp, avail );
+
+        buffer_size -= buffer_read;
         buffer_read += buffer_length;
         bp += buffer_length;
-        if ( buffer_read >= content_length )
+
+        if ( buffer_read >= content_length ) // there's nothing else to read
           break;
       }
     }
@@ -139,7 +157,7 @@ int WebClient_Get( int address, int port, char* hostname, char* path, char* buff
 */
 int WebClient_Post( int address, int port, char* path, char* hostname, char* buffer, int buffer_length, int buffer_size )
 {
-  char b[ WEBCLIENT_INTERNAL_BUFFER_SIZE ];
+  char* b = WebClient_InternalBuffer;
   int buffer_read = 0;
   int wrote = 0;
   void* s = Socket( address, port );  
