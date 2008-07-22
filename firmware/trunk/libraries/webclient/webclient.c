@@ -15,13 +15,12 @@
 
 *********************************************************************************/
 
-#include "config.h" // MakingThings.
+#include "config.h"
 #ifdef MAKE_CTRL_NETWORK
 
 #include "stdlib.h"
-#include "string.h"
-#include <stdio.h>
 #include "webclient.h"
+#include "lwip/api.h"
 
 #define WEBCLIENT_INTERNAL_BUFFER_SIZE 200
 char WebClient_InternalBuffer[ WEBCLIENT_INTERNAL_BUFFER_SIZE ];
@@ -68,7 +67,7 @@ char WebClient_InternalBuffer[ WEBCLIENT_INTERNAL_BUFFER_SIZE ];
 int WebClient_Get( int address, int port, char* hostname, char* path, char* buffer, int buffer_size )
 {
   char* b = WebClient_InternalBuffer;
-  void* s = Socket( address, port );  
+  struct netconn *s = Socket( address, port );  
   if ( s != NULL )
   {
     // construct the GET request
@@ -91,7 +90,7 @@ int WebClient_Get( int address, int port, char* hostname, char* path, char* buff
     }
 
     int content_length = 0;
-    // read through the response to get to the data, and pick up the content-length as we go
+    // read through the response header to get to the data, and pick up the content-length as we go
     int buffer_length;
     while ( ( buffer_length = SocketReadLine( s, b, WEBCLIENT_INTERNAL_BUFFER_SIZE ) ) )
     {
@@ -102,30 +101,35 @@ int WebClient_Get( int address, int port, char* hostname, char* path, char* buff
     }
     
     // read the data into the given buffer until there's none left, or the passed in buffer is full
-    int buffer_read = 0;
+    int total_bytes_read = 0;
+    int buf_remaining = buffer_size;
     if ( content_length > 0 && buffer_length > 0 )
     {
       char* bp = buffer;
-      while( buffer_read < buffer_size )
+      while( total_bytes_read < buffer_size && total_bytes_read < content_length )
       {
         int avail = SocketBytesAvailable(s);
-        if(!avail)
+        if(!avail) // sometimes the connection can be slooooow, sleep a bit and try again
+          Sleep(1000);
+        avail = SocketBytesAvailable(s);
+        if(!avail) // if we still didn't get anything, bail
           break;
-        if(avail > buffer_size) // make sure we don't read more than can fit
-          avail = buffer_size;
+
+        if(avail > buf_remaining) // make sure we don't read more than can fit
+          avail = buf_remaining;
         buffer_length = SocketRead( s, bp, avail );
-
-        buffer_size -= buffer_read;
-        buffer_read += buffer_length;
-        bp += buffer_length;
-
-        if ( buffer_read >= content_length ) // there's nothing else to read
+        if(!buffer_length) // this will be 0 when we get a read error - bail in that case
           break;
+
+        // update counts
+        buf_remaining -= buffer_length;
+        total_bytes_read += buffer_length;
+        bp += buffer_length;
       }
     }
           
     SocketClose( s );
-    return buffer_read;
+    return total_bytes_read;
   }
   else
     return CONTROLLER_ERROR_BAD_ADDRESS;

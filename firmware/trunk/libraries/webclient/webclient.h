@@ -23,6 +23,9 @@
 #ifndef WEBCLIENT_H
 #define WEBCLIENT_H
 
+#include "string.h"
+#include <stdio.h>
+
 int WebClient_Get( int address, int port, char* path, char* hostname, char* buffer, int buffer_size );
 int WebClient_Post( int address, int port, char* path, char* hostname, char* buffer, int buffer_length, int buffer_size );
 
