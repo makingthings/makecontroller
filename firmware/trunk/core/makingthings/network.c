@@ -159,7 +159,7 @@ int SocketBytesAvailable( void* socket )
   struct netconn *conn = socket;
   int len = conn->recv_avail;
   if(conn->readingbuf)
-    len += netbuf_len( conn->readingbuf ) - conn->readingoffset;
+    len += (netbuf_len( conn->readingbuf ) - conn->readingoffset);
   return len;
 }
 
