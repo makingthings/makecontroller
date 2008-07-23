@@ -93,7 +93,7 @@ static void prvSendNextSegment( void );
 static void prvSendStall( void );
 
 /* Send a zero-length (null) packet */
-static void prvSendZLP( void );
+static void prvSendZLP( int endpoint );
 
 /* Handle requests for standard interface descriptors */
 static void prvGetStandardInterfaceDescriptor( xUSB_REQUEST *pxRequest );
@@ -152,6 +152,10 @@ unsigned portLONG ulRxBytes;
 	 
   /* MAKINGTHINGS: USB RUNNING */
   Usb_Running = 1;
+  /* MakingThings - if we sent a packet that was a multiple of EP_FIFO,
+     we need to send a zero length packet to force the transfer
+  */
+  bool sentEvenPacket = false; 
 
 	for( ;; )
 	{
@@ -170,6 +174,12 @@ unsigned portLONG ulRxBytes;
 				prvResetEndPoints();		
 			}
 		}
+
+    if(sentEvenPacket) // if we sent a packet with a length multiple of EP_FIFO
+    {
+      prvSendZLP(usbEND_POINT_2);
+      sentEvenPacket = false;
+    }
 		
 		/* See if we're ready to send and receive data. */
 		if( eDriverState == eREADY_TO_SEND && ucControlState ) 
@@ -177,10 +187,10 @@ unsigned portLONG ulRxBytes;
 			if( ( !(AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_2 ] & AT91C_UDP_TXPKTRDY) ) && uxQueueMessagesWaiting( xTxCDC ) )
 			{
         xBULKBUFFER Queue2USB;
-
         if( xQueueReceive( xTxCDC, &Queue2USB, 0 ) ) 
         {
           unsigned char out = 0;
+          sentEvenPacket = ( Queue2USB.Count == EP_FIFO);
 
           while (out < Queue2USB.Count)
             AT91C_BASE_UDP->UDP_FDR[ usbEND_POINT_2 ] = Queue2USB.Data[out++];
@@ -191,8 +201,6 @@ unsigned portLONG ulRxBytes;
 			/* Check for incoming data (host-to-device) on endpoint 1. */
 			while( AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_1 ] & (AT91C_UDP_RX_DATA_BK0 | AT91C_UDP_RX_DATA_BK1) )
 			{
-        //if (!OscBusy)
-        //{
 				/* Only process FIFO if there's room to store it in the queue */
 				if ( USB_CDC_QUEUE_SIZE > uxQueueMessagesWaiting( xRxCDC ))
 				{	
@@ -229,7 +237,6 @@ unsigned portLONG ulRxBytes;
 				}
 				else 
 					break;
-        //}
 			}
 		}
 	}
@@ -294,13 +301,13 @@ drainQueue:
 #endif
 /*------------------------------------------------------------*/
 
-static void prvSendZLP( void )
+static void prvSendZLP( int endpoint )
 {
 unsigned portLONG ulStatus;
 
 	/* Wait until the FIFO is free - even though we are not going to use it.
 	THERE IS NO TIMEOUT HERE! */
-	while( AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_0 ] & AT91C_UDP_TXPKTRDY )
+	while( AT91C_BASE_UDP->UDP_CSR[ endpoint ] & AT91C_UDP_TXPKTRDY )
 	{
 		vTaskDelay( usbSHORTEST_DELAY );
 	}
@@ -311,9 +318,9 @@ unsigned portLONG ulStatus;
 		pxControlTx.ulTotalDataLength = pxControlTx.ulNextCharIndex;
 
 		/* Set the TXPKTRDY bit to cause a transmission with no data. */
-		ulStatus = AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_0 ];
+		ulStatus = AT91C_BASE_UDP->UDP_CSR[ endpoint ];
 		usbCSR_SET_BIT( &ulStatus, AT91C_UDP_TXPKTRDY );
-		AT91C_BASE_UDP->UDP_CSR[ usbEND_POINT_0 ] = ulStatus;
+		AT91C_BASE_UDP->UDP_CSR[ endpoint ] = ulStatus;
 	}
 	portEXIT_CRITICAL();
 }
@@ -618,12 +625,12 @@ unsigned portSHORT usStatus = 0;
 			break;
 
 		case usbSET_FEATURE_REQUEST:
-			prvSendZLP();
+			prvSendZLP(usbEND_POINT_0);
 			break;
 
 		case usbSET_ADDRESS_REQUEST:			
 			/* Get assigned address and send ack, but don't implement new address until we get a TXCOMP */
-			prvSendZLP();			
+			prvSendZLP(usbEND_POINT_0);			
 			eDriverState = eJUST_GOT_ADDRESS;			
 			ulReceivedAddress = ( unsigned portLONG ) pxRequest->usValue;
 			break;
@@ -632,7 +639,7 @@ unsigned portSHORT usStatus = 0;
 			/* Ack SET_CONFIGURATION request, but don't implement until TXCOMP */
 			ucUSBConfig = ( unsigned portCHAR ) ( pxRequest->usValue & 0xff );
 			eDriverState = eJUST_GOT_CONFIG;
-			prvSendZLP();
+			prvSendZLP(usbEND_POINT_0);
 			break;
 
 		default:
@@ -657,7 +664,7 @@ static void prvHandleClassInterfaceRequest( xUSB_REQUEST *pxRequest )
 
 		case usbSET_LINE_CODING:
 			/* Set line coding - baud rate, data bits, parity, stop bits */
-			prvSendZLP();
+			prvSendZLP(usbEND_POINT_0);
 			memcpy( ( void * ) pxLineCoding, pxControlRx.ucBuffer, sizeof( pxLineCoding ) );
 			break;
 
@@ -668,7 +675,7 @@ static void prvHandleClassInterfaceRequest( xUSB_REQUEST *pxRequest )
 
 		case usbSET_CONTROL_LINE_STATE:
 			/* D0: 1=DTR, 0=No DTR,  D1: 1=Activate Carrier, 0=Deactivate carrier (RTS, half-duplex) */
-			prvSendZLP();
+			prvSendZLP(usbEND_POINT_0);
 			ucControlState = pxRequest->usValue;
 			break;
 
@@ -932,11 +939,12 @@ volatile unsigned portLONG ulNextLength, ulStatus, ulLengthLeftToSend;
 	else
 	{
 		/* There is no data to send.  If we were sending a descriptor and the 
-		descriptor was an exact multiple of the max packet size then we need
+		descriptor was an exact multiple of the max packet 
+     then we need
 		to send a null to terminate the transmission. */
 		if( eDriverState == eSENDING_EVEN_DESCRIPTOR )
 		{
-			prvSendZLP();
+			prvSendZLP(usbEND_POINT_0);
 			eDriverState = eNOTHING;
 		}
 	}
