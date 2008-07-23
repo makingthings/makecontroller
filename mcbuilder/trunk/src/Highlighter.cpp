@@ -42,7 +42,7 @@ Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
 									<< "\\bswitch\\b" << "\\bcase\\b" << "\\bbreak\\b"
 									<< "\\bshort\\b" << "\\bsigned\\b" << "\\bstatic\\b" 
 									<< "\\btypedef\\b" << "\\btypename\\b" << "\\bif\\b"
-									<< "\\bunion\\b" << "\\bunsigned\\b"
+									<< "\\bunion\\b" << "\\bunsigned\\b" << "\\bbool\\b"
 									<< "\\bvoid\\b" << "\\bvolatile\\b" << "\\bstruct\\b";
                   
 	foreach (QString pattern, keywordPatterns) {
@@ -50,11 +50,6 @@ Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
 		rule.format = keywordFormat;
 		highlightingRules.append(rule);
 	}
-	
-  quotationFormat.setForeground(QColor("#E20000"));
-	rule.pattern = QRegExp("\".*\"");
-	rule.format = quotationFormat;
-	highlightingRules.append(rule);
   
   preprocFormat.setForeground(QColor("#6E3719"));
 	rule.pattern = QRegExp("^#[^\n]*");
@@ -64,6 +59,11 @@ Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
   digitFormat.setForeground(Qt::blue);
 	rule.pattern = QRegExp("[0-9]");
 	rule.format = digitFormat;
+	highlightingRules.append(rule);
+	
+  quotationFormat.setForeground(QColor("#E20000"));
+	rule.pattern = QRegExp("\".*\"");
+	rule.format = quotationFormat;
 	highlightingRules.append(rule);
 	
   singleLineCommentFormat.setForeground(QColor("#007800"));
