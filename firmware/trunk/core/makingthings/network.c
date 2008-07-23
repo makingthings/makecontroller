@@ -1193,9 +1193,20 @@ void Network_DhcpStop( struct netif* netif )
 
 /**
   Resolve the IP address for a given host name.
+  Up to 4 DNS entries are cached, so if you make successive calls to this function, 
+  you won't incur a whole lookup roundtrip - you'll just get the cached value.
+  The cached values are maintained internally, so if one of them becomes invalid, a
+  new lookup will be fired off the next time it's asked for.
   @param name A string specifying the name of the host to look up.
   @return An integer representation of the IP address of the host.  This can be 
   passed to the \ref Sockets functions to read and write.  Returns -1 on error.
+
+  \b Example
+  \code
+  // try to open a socket connection to makingthings.com
+  int addr = Network_DnsGetHostByName("makingthings.com");
+  struct netconn* socket = Socket(addr, 80); // open up a new connection to that address
+  \endcode
 */
 int Network_DnsGetHostByName( const char *name )
 {
