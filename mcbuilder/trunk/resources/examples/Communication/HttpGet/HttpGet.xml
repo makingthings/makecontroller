@@ -1,0 +1,92 @@
+<!DOCTYPE mcbuilder_project_file>
+<project>
+  <version>0.1.0</version>
+  <heapsize>18000</heapsize>
+  <optlevel>Optimize For Size (-Os)</optlevel>
+  <debuginfo>false</debuginfo>
+  <include_osc>false</include_osc>
+  <include_usb>true</include_usb>
+  <include_network>true</include_network>
+  <network_mempool>2000</network_mempool>
+  <network_udp_sockets>4</network_udp_sockets>
+  <network_tcp_sockets>4</network_tcp_sockets>
+  <network_tcp_servers>2</network_tcp_servers>
+  <!-- Any files or directories listed here that are not absolute file paths (ie, start with '/') 
+  are assumed to be relative to the directory mcbuilder is running in.
+  Most normal files are THUMB, while ISRs and startup code are usually ARM.  -->
+  <files>
+    <file type="thumb" >resources/cores/makecontroller/freertos/tasks.c</file>
+    <file type="thumb" >resources/cores/makecontroller/freertos/queue.c</file>
+    <file type="thumb" >resources/cores/makecontroller/freertos/list.c</file>
+    <file type="thumb" >resources/cores/makecontroller/freertos/portable/GCC/ARM7_AT91SAM7S/port.c</file>
+    <file type="thumb" >resources/cores/makecontroller/startup/extras.c</file>
+    <file type="thumb" >resources/cores/makecontroller/freertos/portable/MemMang/heap_2.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/main.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/eeprom.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/analogin.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/serial.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/pwm.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/spi.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/USB-CDC.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/rtos.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/usb.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/network.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/system.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/io.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/led.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/timer.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/fasttimer.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/debugosc.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/can.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/tcp_out.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/ipv4/inet.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/mem.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/memp.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/netif.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/pbuf.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/raw.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/stats.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/sys.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/tcp.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/tcp_in.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/init.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/ipv4/ip.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/ipv4/ip_addr.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/ipv4/icmp.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/ipv4/inet_chksum.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/dhcp.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/dns.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/api/tcpip.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/api/api_msg.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/api/err.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/api/netbuf.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/api/api_lib.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/netif/etharp.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/contrib/port/FreeRTOS/AT91SAM7X/sys_arch.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/netif/ethernetif.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/SAM7_EMAC.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/udp.c</file>
+    <file type="thumb" >resources/cores/makecontroller/lwip/src/core/ipv4/ip_frag.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/osc.c</file>
+    <file type="thumb" >resources/cores/makecontroller/makingthings/osc_patternmatch.c</file>
+    <file type="arm" >resources/cores/makecontroller/freertos/portable/GCC/ARM7_AT91SAM7S/portISR.c</file>
+    <file type="arm" >resources/cores/makecontroller/makingthings/SAM7_EMAC_ISR.c</file>
+    <file type="arm" >resources/cores/makecontroller/makingthings/USBIsr.c</file>
+    <file type="arm" >resources/cores/makecontroller/startup/Cstartup_SAM7.c</file>
+    <file type="arm" >resources/cores/makecontroller/makingthings/analogin_isr.c</file>
+    <file type="arm" >resources/cores/makecontroller/makingthings/fasttimer_isr.c</file>
+    <file type="arm" >resources/cores/makecontroller/makingthings/serial_isr.c</file>
+    <file type="arm" >resources/cores/makecontroller/makingthings/timer_isr.c</file>
+    <file type="arm" >resources/cores/makecontroller/makingthings/can_isr.c</file>
+    <file type="thumb" >HttpGet.c</file>
+  </files>
+  <!-- Directories to include in the build process -->
+  <include_dirs>
+    <dir>resources/cores/makecontroller/makingthings</dir>
+    <dir>resources/cores/makecontroller/lwip/src/include</dir>
+    <dir>resources/cores/makecontroller/lwip/contrib/port/FreeRTOS/AT91SAM7X</dir>
+    <dir>resources/cores/makecontroller/freertos/include</dir>
+    <dir>resources/cores/makecontroller/freertos/portable/GCC/ARM7_AT91SAM7S</dir>
+    <dir>resources/cores/makecontroller/lwip/src/include/ipv4</dir>
+  </include_dirs>
+</project>
