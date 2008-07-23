@@ -48,7 +48,7 @@ int Usb_Running;
 #define TICKRATE 1000
 
 void vUSBCDCTask( void *pvParameters );
-int TestAndSend(xBULKBUFFER *pq, char newByte);
+static void Usb_WriteInternal(xBULKBUFFER *pq);
 Usb_* Usb = NULL;
 
 /** \defgroup USB USB
@@ -163,20 +163,29 @@ int Usb_Write( char* buffer, int length )
   xBULKBUFFER q;
   q.Count = 0;
   int count = length;
-  char *bp = buffer;
 
-  while( count-- )
-    TestAndSend( &q, *bp++ );
-
-  // if bytes have been loaded into the buffer, but not sent because it's not full yet, send it now
-  if( q.Count ) 
+  // load bytes into the BULKBUFFER and when it's full, send it and continue loading
+  while( length-- )
   {
-    while(xQueueSend( xTxCDC, &q, 0) != pdPASS)
-      Sleep( usbSHORTEST_DELAY );
-    q.Count = 0;
+    q.Data[q.Count++] = *buffer++;
+    if(q.Count == EP_FIFO)
+      Usb_WriteInternal(&q);
   }
+
+  // if bytes have been loaded into the BULKBUFFER but not sent because it's not full yet, send it now
+  if( q.Count ) 
+    Usb_WriteInternal(&q);
   
-  return CONTROLLER_OK;
+  return count;
+}
+
+// the outgoing USB hardware can write a block of 64 (EP_FIFO) bytes.
+// test the buffer's size and send it if we're full.
+void Usb_WriteInternal(xBULKBUFFER *pq)
+{
+  while(xQueueSend( xTxCDC, pq, 0) != pdPASS)
+    Sleep( usbSHORTEST_DELAY );
+  pq->Count = 0;
 }
 
 /**	
@@ -312,22 +321,6 @@ int Usb_SlipReceive( char* buffer, int length )
 
 /** @}
 */
-
-// the outgoing USB hardware can write a block of 64 (EP_FIFO) bytes.
-// test the buffer's size and send it if we're full.
-int TestAndSend(xBULKBUFFER *pq, char newByte)
-{
-  pq->Data[pq->Count++] = newByte;
-  
-  if(pq->Count == EP_FIFO) 
-  { 
-    while(xQueueSend( xTxCDC, pq, 0) != pdPASS)
-      Sleep( usbSHORTEST_DELAY );
-    pq->Count = 0; 
-  }
-
-  return pq->Count;
-}
 
 #ifdef OSC
 

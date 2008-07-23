@@ -42,10 +42,18 @@ char WebClient_InternalBuffer[ WEBCLIENT_INTERNAL_BUFFER_SIZE ];
 */
 
 /**	
-	Performs an HTTP GET operation to the path at the address / port specified.  Note that this
-  uses lots of printf style functions and may require a fair amount of memory to be allocated
-  to the task calling it.
-  The result is returned in the specified buffer.
+	Performs an HTTP GET operation to the path at the address / port specified.  
+  
+  Reads through the HTTP header and copies the data into the buffer you pass in.  Because
+  sites can often be slow in their responses, this will wait up to 1 second (in 100 ms. intervals)
+  for data to become available.
+
+  Some websites seem to reject connections occassionally - perhaps because we don't supply as
+  much info to the server as a browser might, for example.  Simpler websites should be just fine.
+  
+  Note that this uses lots of printf style functions and may require a fair amount of memory to be allocated
+  to the task calling it.  The result is returned in the specified buffer.
+
 	@param address The IP address of the server to get from.  Usually created using the IP_ADDRESS( ) macro.
   @param port The port to connect on.  Usually 80 for HTTP.
   @param hostname A string specifying the name of the host to connect to.  When connecting to a server
@@ -110,8 +118,15 @@ int WebClient_Get( int address, int port, char* hostname, char* path, char* buff
       {
         int avail = SocketBytesAvailable(s);
         if(!avail) // sometimes the connection can be slooooow, sleep a bit and try again
-          Sleep(1000);
-        avail = SocketBytesAvailable(s);
+        {
+          int times = 10;
+          while(times--)
+          {
+            Sleep(100);
+            if((avail = SocketBytesAvailable(s)))
+              break;
+          }
+        }
         if(!avail) // if we still didn't get anything, bail
           break;
 
