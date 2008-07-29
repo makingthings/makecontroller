@@ -362,12 +362,14 @@ register unsigned portLONG ulIndex, ulLength = 0;
 
 	/* Walk through the descriptors until we find the last buffer for this 
 	frame.  The last buffer will give us the length of the entire frame. */
-	while( ( xRxDescriptors[ ulIndex ].addr & AT91C_OWNERSHIP_BIT ) && !ulLength )
+  int count = 0; // MAKINGTHINGS - if the buffer is not found, this just spins forever
+	while( ( xRxDescriptors[ ulIndex ].addr & AT91C_OWNERSHIP_BIT ) && !ulLength && count < NB_RX_BUFFERS)
 	{
 		ulLength = xRxDescriptors[ ulIndex ].U_Status.status & emacRX_LENGTH_FRAME;
 
 		/* Increment to the next buffer, wrapping if necessary. */
 		ulIndex++;
+    count++;
 		if( ulIndex >= NB_RX_BUFFERS )
 		{
 			ulIndex = 0;
