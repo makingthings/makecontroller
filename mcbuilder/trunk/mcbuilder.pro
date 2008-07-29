@@ -61,8 +61,9 @@ macx{
   ICON = resources/icons/mcbuilder.icns
 }
 
-win32:debug {
-  CONFIG += console
+win32{
+  RC_FILE = resources/icons/mcbuilder.rc
+  debug{ CONFIG += console }
 }
 
 # *******************************************
