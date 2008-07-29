@@ -30,6 +30,7 @@ public:
   About();
 private:
   QTextBrowser body;
+  QPixmap pixmap;
 };
 
 #endif // ABOUT_H
