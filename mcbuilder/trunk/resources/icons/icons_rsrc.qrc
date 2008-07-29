@@ -11,5 +11,6 @@
     <file>upload.png</file>
     <file>warning.png</file>
     <file>build.png</file>
+    <file>mcbuilder128.png</file>
   </qresource>
 </RCC>
