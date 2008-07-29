@@ -344,38 +344,39 @@ char* JsonEncode_String(JsonEncode_State* state, char *buf, const char *string, 
 */
 char* JsonEncode_Int(JsonEncode_State* state, char *buf, int value, int *remaining)
 {
-  int int_len = 4;
+  int int_as_str_len = 11; // largest 32-bit int is 10 digits long, and also leave room for a +/-
+  int int_len = 0;
   switch(state->steps[state->depth])
   {
     case JSON_ARRAY_START:
     {
+      char temp[int_as_str_len+1];
+      snprintf(temp, int_as_str_len+1, "%d", value);
+      int_len = strlen(temp);
       if(*remaining < int_len)
         return NULL;
-      char temp[int_len+1];
-      snprintf(temp, int_len+1, "%d", value);
       memcpy(buf, temp, int_len);
-      int_len = strlen(temp);
       break;
     }
     case JSON_IN_ARRAY:
     {
-      int_len += 1; // for ,
+      int_as_str_len += 1; // for ,
+      char temp[int_as_str_len+1];
+      snprintf(temp, int_as_str_len+1, ",%d", value);
+      int_len = strlen(temp);
       if(*remaining < int_len)
         return NULL;
-      char temp[int_len+1];
-      snprintf(temp, int_len+1, ",%d", value);
       memcpy(buf, temp, int_len);
-      int_len = strlen(temp);
       break;
     }
     case JSON_OBJ_VALUE:
     {
-      int_len += 1; // for :
+      int_as_str_len += 1; // for :
+      char temp[int_as_str_len+1];
+      snprintf(temp, int_as_str_len+1, ":%d", value);
+      int_len = strlen(temp);
       if(*remaining < int_len)
         return NULL;
-      char temp[int_len+1];
-      snprintf(temp, int_len+1, ":%d", value);
-      int_len = strlen(temp);
       memcpy(buf, temp, int_len);
       break;
     }
