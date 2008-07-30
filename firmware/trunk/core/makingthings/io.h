@@ -73,6 +73,8 @@ int  Io_SetPeripheralBBits( longlong bits );
 int  Io_PioEnableBits( longlong bits );
 int  Io_PioDisableBits( longlong bits );
 longlong Io_GetValueBits( void );
+void Io_PullupEnableBits( longlong bits );
+void Io_PullupDisableBits( longlong bits );
 
 const char* IoOsc_GetName( void );
 int IoOsc_ReceiveMessage( int channel, char* message, int length );
