@@ -573,24 +573,37 @@ int  Io_PullupDisable( int index )
   return CONTROLLER_OK;
 }
 
+void Io_PullupEnableBits( longlong bits )
+{ 
+  AT91C_BASE_PIOB->PIO_PPUER = bits >> 32;
+  AT91C_BASE_PIOA->PIO_PPUER = bits & 0xFFFFFFFF;
+}
+
+void Io_PullupDisableBits( longlong bits )
+{ 
+  AT91C_BASE_PIOB->PIO_PPUDR = bits >> 32;
+  AT91C_BASE_PIOA->PIO_PPUDR = bits & 0xFFFFFFFF;
+}
+
 void Io_SetTrueBits( longlong bits )
 {
-  AT91C_BASE_PIOA->PIO_SODR = bits >> 32; 
-  AT91C_BASE_PIOB->PIO_SODR = bits & 0xFFFFFFFF;
+  AT91C_BASE_PIOA->PIO_SODR = bits & 0xFFFFFFFF;
+  AT91C_BASE_PIOB->PIO_SODR = bits >> 32; 
 }
 
 void Io_SetFalseBits( longlong bits )
 {
-  AT91C_BASE_PIOA->PIO_CODR = bits >> 32;
-  AT91C_BASE_PIOB->PIO_CODR = bits & 0xFFFFFFFF;
+  AT91C_BASE_PIOA->PIO_CODR = bits & 0xFFFFFFFF;
+  AT91C_BASE_PIOB->PIO_CODR = bits >> 32;
 }
 
 void Io_SetValueBits( longlong bits, longlong values )
 {
-  int aBits = bits >> 32;
-  int aValues = values >> 32;
-  int bBits = bits & 0xFFFFFFFF;
-  int bValues = values & 0xFFFFFFFF;
+  int aBits = bits & 0xFFFFFFFF;
+  int aValues = values & 0xFFFFFFFF;
+  int bBits = bits >> 32;
+  int bValues = values >> 32;
+
   AT91C_BASE_PIOA->PIO_SODR = (int)( aBits & aValues );
   AT91C_BASE_PIOA->PIO_CODR = (int)( aBits & ~aValues  );
   AT91C_BASE_PIOB->PIO_SODR = (int)( bBits & bValues );
@@ -599,14 +612,14 @@ void Io_SetValueBits( longlong bits, longlong values )
 
 void Io_SetOutputBits( longlong bits )
 {
-  AT91C_BASE_PIOA->PIO_OER = bits >> 32;
-  AT91C_BASE_PIOB->PIO_OER = bits & 0xFFFFFFFF;
+  AT91C_BASE_PIOA->PIO_OER = bits & 0xFFFFFFFF;
+  AT91C_BASE_PIOB->PIO_OER = bits >> 32;
 }
 
 void Io_SetInputBits( longlong bits )
 {
-  AT91C_BASE_PIOA->PIO_ODR = bits >> 32;
-  AT91C_BASE_PIOB->PIO_ODR = bits & 0xFFFFFFFF;
+  AT91C_BASE_PIOA->PIO_ODR = bits & 0xFFFFFFFF;
+  AT91C_BASE_PIOB->PIO_ODR = bits >> 32;
 }
 
 int Io_SetPortA( int value )
@@ -674,7 +687,7 @@ void Io_Deinit()
 
 longlong Io_GetValueBits( )
 {
-  return ( ((longlong)AT91C_BASE_PIOA->PIO_PDSR) << 32 ) || AT91C_BASE_PIOB->PIO_PDSR;
+  return ( ((longlong)AT91C_BASE_PIOB->PIO_PDSR) << 32 ) || AT91C_BASE_PIOA->PIO_PDSR;
 }
 
 /** @}
@@ -875,380 +888,7 @@ int IoOsc_IntPropertyGet( int property )
 
 #endif
 
-/**	
-	Io_Test.
-	Tests the IO routines.  Also tests the initial state, so should be called before
-  any Io routines are called.
-	@return status - CONTROLLER_OK (0) for all OK, or an error code
-*/
-/*
-int Io_Test()
-{
-  int status;
 
-  // Check the data structure
-  status = Io_TestDataStructure();
-  if ( status != CONTROLLER_OK )
-    return status;
 
-  // Check the initial state of the sub-system
-  status = Io_TestInitialState();
-  if ( status != CONTROLLER_OK )
-    return status;
 
-  // Check to make sure Io pins can be started and stopped correctly
-  status = Io_TestStartStop();
-  if ( status != CONTROLLER_OK )
-    return status;
 
-  // Check to make sure Io pins can be started and stopped correctly using BITS
-  status = Io_TestStartStopBits();
-  if ( status != CONTROLLER_OK )
-    return status;
-
-  return CONTROLLER_OK;
-}
-
-int Io_TestDataStructure()
-{
-  // Check for correct packing
-  int s = sizeof( struct Io_ ); 
-  if ( s != IO_PIN_COUNT + 8 )
-    return CONTROLLER_ERROR_DATA_STRUCTURE_SIZE_WRONG;
-  return CONTROLLER_OK;
-}
-
-int Io_TestInitialState()
-{  
-  int status;
-
-  // Total init count is zero
-  if ( Io.init != 0 )
-    return CONTROLLER_ERROR_INITIALIZATION;
-
-  // Total user count is zero
-  if ( Io.users != 0 )
-    return CONTROLLER_ERROR_INITIALIZATION;
-
-  // Each pin's user count and lock status is where it should be
-  status = Io_TestPins( 0, false );
-  if ( status != CONTROLLER_OK )
-    return status;
-
-  return CONTROLLER_OK;
-}
-
-int Io_TestStartStop()
-{
-  int status;
-  int i;
-
-  //
-  // Start/Stop Test - first no lock
-  //
-
-  // Start with no lock
-  for ( i = 0; i < IO_PIN_COUNT; i++ )
-  {
-    if ( Io_Start( i, false ) != CONTROLLER_OK )
-      return CONTROLLER_ERROR_START_FAILED;
-  }
-
-  // Attempt to start the new pins again
-  for ( i = 0; i < IO_PIN_COUNT; i++ )
-  {
-    if ( Io_Start( i, false ) != CONTROLLER_OK )
-      return CONTROLLER_ERROR_START_FAILED;
-  }
-
-  // Make sure the init code has only been run once
-  if ( Io.init != 1 )
-    return CONTROLLER_ERROR_INCORRECT_INIT;
-
-  // Make sure the global user count is equal to the number of starts
-  if ( Io.users != IO_PIN_COUNT * 2 )
-    return CONTROLLER_ERROR_COUNT_MISMATCH;
-
-  // Check each pin record to make sure there' are two users there  
-  status = Io_TestPins( 2, false );
-  if ( status != CONTROLLER_OK )
-    return status;
-
-
-  // Now try to stop all the pins
-  for ( i = 0; i < IO_PIN_COUNT; i++ )
-  {
-    if ( Io_Stop( i ) != CONTROLLER_OK )
-      return CONTROLLER_ERROR_STOP_FAILED;
-  }
-
-  // Now try to stop all the pins again
-  for ( i = 0; i < IO_PIN_COUNT; i++ )
-  {
-    if ( Io_Stop( i ) != CONTROLLER_OK )
-      return CONTROLLER_ERROR_STOP_FAILED;
-  }
-
-  // Make sure the module de-initialized
-  if ( Io.init != 0 )
-    return CONTROLLER_ERROR_INCORRECT_DEINIT;
-
-  // Make sure the users are back to zero
-  if ( Io.users != 0 )
-    return CONTROLLER_ERROR_COUNT_MISMATCH;
-
-  // Make sure each pin is back to zero
-  status = Io_TestPins( 0, false );
-  if ( status != CONTROLLER_OK )
-    return status;
-
-  //
-  // Start/Stop Test - with lock
-  //
-
-  // Start with starting each pin
-  for ( i = 0; i < IO_PIN_COUNT; i++ )
-  {
-    if ( Io_Start( i, true ) != CONTROLLER_OK )
-      return CONTROLLER_ERROR_START_FAILED;
-  }
-
-  // Make sure the init code has been run again
-  if ( Io.init != 1 )
-    return CONTROLLER_ERROR_INCORRECT_INIT;
-
-  // Make sure the global user count is equal to the number of starts
-  if ( Io.users != IO_PIN_COUNT )
-    return CONTROLLER_ERROR_COUNT_MISMATCH;
-
-  // Check each pin record to make sure there's one locked user
-  status = Io_TestPins( 1, true );
-  if ( status != CONTROLLER_OK )
-    return status;
-
-  // Now try to use them - no lock, shouldn't work
-  for ( i = 0; i < IO_PIN_COUNT; i++ )
-  {
-    if ( Io_Start( i, false ) == CONTROLLER_OK )
-      return CONTROLLER_ERROR_USE_GRANTED_ERROR;
-  }
-
-  // Now try to use them - with lock, shouldn't work
-  for ( i = 0; i < IO_PIN_COUNT; i++ )
-  {
-    if ( Io_Start( i, true ) == CONTROLLER_OK )
-      return CONTROLLER_ERROR_LOCK_GRANTED_ERROR;
-  }
-
-  // Now try to stop all the pins again
-  for ( i = 0; i < IO_PIN_COUNT; i++ )
-  {
-    if ( Io_Stop( i ) != CONTROLLER_OK )
-      return CONTROLLER_ERROR_STOP_FAILED;
-  }
-
-  // Make sure the module de-initialized
-  if ( Io.init != 0 )
-    return CONTROLLER_ERROR_INCORRECT_DEINIT;
-
-  // Make sure the users are back to zero
-  if ( Io.users != 0 )
-    return CONTROLLER_ERROR_COUNT_MISMATCH;
-
-  // Make sure each pin is back to zero and not locked
-  status = Io_TestPins( 0, false );
-  if ( status != CONTROLLER_OK )
-    return status;
-
-  return CONTROLLER_OK;
-}
-
-int Io_TestStartStopBits()
-{
-  int status;
-
-  //
-  // Start/Stop Bits Test - first no lock
-  //
-  llong all = 0xFFFFFFFFFFFFFFFFLL;
-  //llong half1 = 0x00000000FFFFFFFFLL;
-  //llong half2 = 0xFFFFFFFF00000000LL;
-
-  // Start with no lock
-  if ( Io_StartBits( all, false ) != CONTROLLER_OK )
-      return CONTROLLER_ERROR_START_FAILED;
-
-  // Start again
-  if ( Io_StartBits( all, false ) != CONTROLLER_OK )
-      return CONTROLLER_ERROR_START_FAILED;
-
-  // Make sure the init code has only been run once
-  if ( Io.init != 1 )
-    return CONTROLLER_ERROR_INCORRECT_INIT;
-
-  // Make sure the global user count is equal to the number of starts
-  if ( Io.users != IO_PIN_COUNT * 2 )
-    return CONTROLLER_ERROR_COUNT_MISMATCH;
-
-  // Check each pin record to make sure there' are two users there  
-  status = Io_TestPins( 2, false );
-  if ( status != CONTROLLER_OK )
-    return status;
-
-  // Now try to stop all the pins
-  if ( Io_StopBits( all ) != CONTROLLER_OK )
-    return CONTROLLER_ERROR_STOP_FAILED;
-
-  // Now try to stop all the pins again
-  if ( Io_StopBits( all ) != CONTROLLER_OK )
-    return CONTROLLER_ERROR_STOP_FAILED;
-
-  // Make sure the module de-initialized
-  if ( Io.init != 0 )
-    return CONTROLLER_ERROR_INCORRECT_DEINIT;
-
-  // Make sure the users are back to zero
-  if ( Io.users != 0 )
-    return CONTROLLER_ERROR_COUNT_MISMATCH;
-
-  // Make sure each pin is back to zero
-  status = Io_TestPins( 0, false );
-  if ( status != CONTROLLER_OK )
-    return status;
-
-  //
-  // Start/Stop Bits Test - with lock
-  //
-
-  // Start with starting each pin
-  if ( Io_StartBits( all, true ) != CONTROLLER_OK )
-      return CONTROLLER_ERROR_START_FAILED;
-
-  // Make sure the init code has been run again
-  if ( Io.init != 1 )
-    return CONTROLLER_ERROR_INCORRECT_INIT;
-
-  // Make sure the global user count is equal to the number of starts
-  if ( Io.users != IO_PIN_COUNT )
-    return CONTROLLER_ERROR_COUNT_MISMATCH;
-
-  // Check each pin record to make sure there's one locked user
-  status = Io_TestPins( 1, true );
-  if ( status != CONTROLLER_OK )
-    return status;
-
-  // Now try to use them - no lock, shouldn't work
-  if ( Io_StartBits( all, false ) == CONTROLLER_OK )
-    return CONTROLLER_ERROR_LOCK_GRANTED_ERROR;
-
-  // Now try to use them - with lock, shouldn't work
-  if ( Io_StartBits( all, true ) == CONTROLLER_OK )
-    return CONTROLLER_ERROR_LOCK_GRANTED_ERROR;
-
-  // Now try to stop all the pins again
-  if ( Io_StopBits( all ) != CONTROLLER_OK )
-    return CONTROLLER_ERROR_STOP_FAILED;
-
-  // Make sure the module de-initialized
-  if ( Io.init != 0 )
-    return CONTROLLER_ERROR_INCORRECT_DEINIT;
-
-  // Make sure the users are back to zero
-  if ( Io.users != 0 )
-    return CONTROLLER_ERROR_COUNT_MISMATCH;
-
-  // Make sure each pin is back to zero and not locked
-  status = Io_TestPins( 0, false );
-  if ( status != CONTROLLER_OK )
-    return status;
-
-  // 
-  // Check individual bits and unwind on error
-  //
-
-  status = Io_StartBits( 3LL<<19, false );
-  if ( status != CONTROLLER_OK )
-    return status;
-
-  // Make sure the init code has been run again
-  if ( Io.init != 1 )
-    return CONTROLLER_ERROR_INCORRECT_INIT;
-
-  // Make sure the global user count is equal to the number of starts
-  if ( Io.users != 2 )
-    return CONTROLLER_ERROR_COUNT_MISMATCH;
-
-  // try to lock them all up - lock blocking, shouldn't work
-  if ( Io_StartBits( all, true ) == CONTROLLER_OK )
-    return CONTROLLER_ERROR_LOCK_GRANTED_ERROR;
-
-  // Make sure the code is still inited
-  if ( Io.init != 1 )
-    return CONTROLLER_ERROR_INCORRECT_INIT;
-
-  // Make sure the global user count is equal to the number of starts
-  if ( Io.users != 2 )
-    return CONTROLLER_ERROR_COUNT_MISMATCH;
-
-  // Turn the one bit off
-  status = Io_StopBits( 3LL<<19 );
-  if ( status != CONTROLLER_OK )
-    return status;
-
-  // Make sure the code is un-inited
-  if ( Io.init != 0 )
-    return CONTROLLER_ERROR_INCORRECT_INIT;
-
-  // Make sure the global user count is zero
-  if ( Io.users != 0 )
-    return CONTROLLER_ERROR_COUNT_MISMATCH;
-
-  status = Io_StartBits( 3LL<<19, true );
-  if ( status != CONTROLLER_OK )
-    return status;
-  
-  // try to lock them all up - lock blocking, shouldn't work
-  if ( Io_StartBits( all, true ) == CONTROLLER_OK )
-    return CONTROLLER_ERROR_LOCK_GRANTED_ERROR;
-
-  // Make sure the code is still inited
-  if ( Io.init != 1 )
-    return CONTROLLER_ERROR_INCORRECT_INIT;
-
-  // Make sure the global user count is equal to the number of correct starts
-  if ( Io.users != 2 )
-    return CONTROLLER_ERROR_COUNT_MISMATCH;
-
-  // Turn the bits off
-  status = Io_StopBits( 3LL<<19 );
-  if ( status != CONTROLLER_OK )
-    return status;
-
-  // Make sure the code is un-inited
-  if ( Io.init != 0 )
-    return CONTROLLER_ERROR_INCORRECT_INIT;
-
-  // Make sure the global user count is zero
-  if ( Io.users != 0 )
-    return CONTROLLER_ERROR_COUNT_MISMATCH;
-
-
-  return CONTROLLER_OK;
-}
-
-int Io_TestPins( short users, bool lock )
-{
-  // Make sure each pin is correct
-  IoPin* p = &Io.pins[ 0 ];
-  int i;
-  for ( i = 0; i < IO_PIN_COUNT; i++ )
-  {
-    if ( p->users != users )
-      return CONTROLLER_ERROR_WRONG_USER_COUNT;
-    if ( p->lock != lock )
-      return CONTROLLER_ERROR_LOCK_ERROR;
-  }
-
-  return CONTROLLER_OK;
-}
-*/
