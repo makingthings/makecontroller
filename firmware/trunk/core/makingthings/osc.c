@@ -187,7 +187,16 @@ int OscBusy;
 	Osc_SetActive.
 	Sets whether the Osc system active. \n
 	@param state
-	@return Zero on success.
+  @param udptask Whether or not to start up the internal UDP-OSC task (only relevant on startup).
+  @param usbtask Whether or not to start up the internal USB-OSC task (only relevant on startup).
+  @param async Whether or not to start up the internal async task that monitors registered subsystems
+  and automatically sends out messages from them (only relevant on startup).
+
+  \b Example
+  \code
+  // Fire up the OSC system with everything running (as in heavy)
+  Osc_SetActive( true, true, true, true );
+  \endcode
 */
 void Osc_SetActive( int state, bool udptask, bool usbtask, bool async )
 {
