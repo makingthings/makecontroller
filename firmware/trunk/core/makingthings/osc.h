@@ -34,7 +34,7 @@
 #define OSC_CHANNEL_TCP 2
 
 // Top level functions
-void Osc_SetActive( int state );
+void Osc_SetActive( int state, bool udptask, bool usbtask, bool async );
 int Osc_GetActive( void );
 int Osc_GetRunning( void );
 
@@ -87,6 +87,8 @@ int Osc_PropertyLookup( char** properties, char* property );
 char *Osc_FindDataTag( char* message, int length );
 int Osc_ExtractData( char* buffer, char* format, ... );
 int Osc_NumberMatch( int max, char* pattern, int* fancy );
+int Osc_SetReplyAddress( int channel, int replyAddress );
+int Osc_SetReplyPort( int channel, int replyPort );
 
 // Pattern Match Stuff
 bool Osc_PatternMatch(const char *  pattern, const char * test);

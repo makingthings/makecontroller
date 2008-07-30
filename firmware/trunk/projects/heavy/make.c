@@ -30,7 +30,7 @@ void Run( ) // this task gets called as soon as we boot up.
   Usb_SetActive( 1 );
 
   // Fire up the OSC system and register the subsystems you want to use
-  Osc_SetActive( true );
+  Osc_SetActive( true, true, true, true );
   // make sure OSC_SUBSYSTEM_COUNT (osc.h) is large enough to accomodate them all
   Osc_RegisterSubsystem( AppLedOsc_GetName(), AppLedOsc_ReceiveMessage, NULL );
   Osc_RegisterSubsystem( DipSwitchOsc_GetName(), DipSwitchOsc_ReceiveMessage, DipSwitchOsc_Async );
