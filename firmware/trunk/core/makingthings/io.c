@@ -42,8 +42,6 @@ struct IoPin_
 
 #define IO_PIN_COUNT 64
 #define IO_USERS_MAX 127
-#define IO_OUTPUT 1
-#define IO_INPUT 0
 
 typedef struct IoPin_ IoPin ;
 
@@ -56,44 +54,71 @@ struct Io_
   IoPin pins[ IO_PIN_COUNT ];
 } Io;
 
-// 260?
-
 static void Io_Init( void );
 static void Io_Deinit( void );
-
-/* Testing
-static int Io_TestDataStructure( void );
-static int Io_TestInitialState( void );
-static int Io_TestStartStop( void );
-static int Io_TestStartStopBits( void );
-static int Io_TestPins( short users, bool lock );
-*/
+static int Io_SetActive( int index, int value );
+static int Io_GetActive( int index );
+static int Io_SetOutput( int index );
+static int Io_SetInput( int index );
+static int Io_PullupEnable( int index );
+static int Io_PullupDisable( int index );
+static int Io_PioEnable( int index );
+static int Io_PioDisable( int index );
 
 /** \defgroup Io IO
-	A mechanism to manage the 64 parallel IO lines on the controller.
+	A mechanism to manage the 64 IO lines on the controller.
 
-  Control of the SAM7X's IO lines is more complex than most microcontrollers.  All 
-  lines may be inputs or outputs, have pull-ups or not, have a glitch filter enabled 
-  or not, and so on.  In addition all IO pins serve at least double and sometimes 
-  triple duty, being general IO lines and also being IO lines for one or more of 
-  the controller's many on-chip peripherals.  All these functions can be controlled
-  from the IO subsystem.
+  The 64 IO (Input/Output) lines on the Make Controller are grouped into 2 ports of 32 lines each, 
+  port A and port B.  Each line  has many parameters that can be configured:
+   - whether it's an input or an output
+   - whether it's turned on or off (if it's an output)
+   - whether the internal pullup is enabled
+   - whether the glitch filter is enabled
+   - and more...
+  
+  In addition, all IO pins serve at least double and sometimes triple duty, being general IO lines 
+  and also being IO lines for one or more of the controller's many on-chip peripherals, such as the
+  Ethernet system, USB system, SPI, UART, etc.  To help address this, the IO system provides a mechanism to "lock"
+  the IO lines, so that you can always be sure that your line has not been altered by some other
+  system while you weren't looking.
+  
+  \section api IO API 
+  This API can be used in two ways - either one line at a time or many at a time.  Functions to set
+  the values of all the lines at once end in \b Bits.  For example, the one-at-a-time 
+  mechanism for setting an IO line configured as an output to true is called Io_SetTrue().  
+  It takes a single index and the one for setting a number of lines is Io_SetTrueBits( ) which takes a
+  mask with the values of all the lines.
 
-  This API can be used in two ways - either one line at a time or many at a time.  
-  Functions supporting the latter are suffixed with \b Bits.  So the one-at-a-time 
-  mechanism for setting an IO to true is called Io_SetTrue().  It takes an index and
-  the ones for setting a number of lines is Io_SetTrueBits( ).
+  To find the index to use for a single line, please see \ref IoIndices.  For the constants to help
+  create masks for the \b Bits style, please see \ref IoBits.
 
-  The pattern of use is as follows:  prior to using an IO line, Call Io_Start() on it, the 
-  return value indicates if the start operation was successful.  After this, call any 
-  of the other Io functions.
+  \section use Normal Use
+  The pattern of use is to call Io_Start() prior to using an IO line.  If it returns successfully, the 
+  line was not previously locked and you can use it as you please.  Otherwise, you don't have access to the 
+  IO line, and should not make any calls to configure or use it.
 
   \todo Add glitch filter control
-  \todo Implement more bits-style functions
   \ingroup Core
   @{
 */
 
+/**
+  Get access to an IO line, possibly locking it.
+  @param index The IO line to start - use the appropriate entry from \ref IoIndices
+  @param lock Whether to lock this line from being used by another system.
+  @return 0 on success, < 0 on failure
+
+  \b Example
+
+  \code
+  if( Io_Start(IO_PA18, true) == CONTROLLER_OK)
+  {
+    // then we have access to PA18 and successfully locked it
+  }
+  else
+    // can't use PA18
+  \endcode
+*/
 int Io_Start( int index, bool lock )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
@@ -112,11 +137,6 @@ int Io_Start( int index, bool lock )
     p->users++;
     if ( lock )
       p->lock = true;
-
-    // Output Pair 1
-    // Switch to PIO
-    // AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA26;
-    // AT91C_BASE_PIOB->PIO_PER = AT91C_PIO_PB23;
     
     return CONTROLLER_OK;
   }
@@ -124,6 +144,19 @@ int Io_Start( int index, bool lock )
     return CONTROLLER_ERROR_TOO_MANY_USERS;
 }
 
+/**
+  Release your lock on an IO line, possibly deactivating it.
+  When you call Io_Stop(), it will remove the lock you placed on the line.  If no other
+  systems are using it, the line will be deactivated.
+  @param index The IO line to stop - use the appropriate entry from \ref IoIndices
+  @return 0 on success, < 0 on failure
+
+  \b Example
+
+  \code
+  Io_Stop(IO_PA18);
+  \endcode
+*/
 int Io_Stop( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
@@ -219,25 +252,7 @@ int  Io_StopBits( longlong bits )
   return CONTROLLER_OK;
 }
 
-/**
-  Lock or release an IO line.
-  When you set an IO line active, you're locking it so it can't be used by anything else.
-  When you're done with it, you should always set it to inactive so it can be used by
-  other things if needed.
-  @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
-  @param value Specify \b true to set it active, or \b false to set it to inactive.
-  
-  \par Example
-  \code
-  // we want to use IO 18
-  if( Io_SetActive( IO_PA18, true ) == CONTROLLER_OK )
-  {
-		DoThingsWithIO18( );
-		// now we're done - unlock it
-		Io_SetActive( IO_PA18, false );
-  }
-  \endcode
-*/
+// static
 int Io_SetActive( int index, int value )
 {
   if ( value )
@@ -247,6 +262,7 @@ int Io_SetActive( int index, int value )
   return CONTROLLER_OK;
 }
 
+// static
 int Io_GetActive( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
@@ -262,7 +278,7 @@ int Io_GetActive( int index )
   @param output Specify 1 for an output, or 0 for an input.
   @return CONTROLLER_OK (0) on success, non-zero otherwise.
   
-  \par Example
+  \b Example
   \code
   // Set io23 to an input
   if( Io_SetDirection( IO_PA23, IO_INPUT ) == CONTROLLER_OK )
@@ -271,7 +287,7 @@ int Io_GetActive( int index )
   }
   \endcode
 */
-int Io_SetDirection( int index, int output )
+int Io_SetDirection( int index, bool output )
 {
   if ( output )
     return Io_SetOutput( index );
@@ -284,7 +300,7 @@ int Io_SetDirection( int index, int output )
   @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
   @return Non-zero if the pin is an output, 0 if it's an input.
   
-  \par Example
+  \b Example
   \code
   // Check whether IO 23 is an output or input
   if( Io_GetDirection( IO_PA23 ) )
@@ -297,7 +313,7 @@ int Io_SetDirection( int index, int output )
   }
   \endcode
 */
-int Io_GetDirection( int index )
+bool Io_GetDirection( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
@@ -308,6 +324,7 @@ int Io_GetDirection( int index )
     return ( AT91C_BASE_PIOB->PIO_OSR & ( 1 << ( index & 0x1F ) ) ) != 0;
 }
 
+// static
 int Io_SetOutput( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
@@ -322,6 +339,7 @@ int Io_SetOutput( int index )
   return CONTROLLER_OK;
 }
 
+// static
 int Io_SetInput( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
@@ -336,36 +354,6 @@ int Io_SetInput( int index )
   return CONTROLLER_OK;
 }
 
-
-int Io_SetTrue( int index )
-{
-  if ( index < 0 || index > IO_PIN_COUNT )
-    return CONTROLLER_ERROR_ILLEGAL_INDEX;
-
-  int mask = 1 << ( index & 0x1F );
-  if ( index < 32 )
-      AT91C_BASE_PIOA->PIO_SODR = mask;
-  else
-      AT91C_BASE_PIOB->PIO_SODR = mask;
-  
-  return CONTROLLER_OK;
-}
-
-
-int Io_SetFalse( int index )
-{
-  if ( index < 0 || index > IO_PIN_COUNT )
-    return CONTROLLER_ERROR_ILLEGAL_INDEX;
-
-  int mask = 1 << ( index & 0x1F );
-  if ( index < 32 )
-      AT91C_BASE_PIOA->PIO_CODR = mask;
-  else
-      AT91C_BASE_PIOB->PIO_CODR = mask;
-  
-  return CONTROLLER_OK;
-}
-
  /**
   Turn an IO line on or off.
 	This IO should have already been set to be an output via Io_SetDirection( )
@@ -373,13 +361,13 @@ int Io_SetFalse( int index )
 	@param value Non-zero for on, 0 for off.
   @return CONTROLLER_OK (0) on success, otherwise non-zero.
   
-  \par Example
+  \b Example
   \code
   // Turn on IO 17
   Io_SetValue( IO_PA17, 1 );
   \endcode
 */
-int Io_SetValue( int index, char value )
+int Io_SetValue( int index, bool value )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
@@ -409,13 +397,13 @@ int Io_SetValue( int index, char value )
   @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
   @return CONTROLLER_OK (0) on success, otherwise non-zero.
   
-  \par Example
+  \b Example
   \code
   // Turn on IO 17
   Io_SetValue( IO_PA17, 1 );
   \endcode
 */
-char Io_GetValue( int index )
+bool Io_GetValue( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
     return 0;
@@ -426,7 +414,17 @@ char Io_GetValue( int index )
     return ( ( AT91C_BASE_PIOB->PIO_PDSR & mask ) != 0 ) ? 1 : 0;
 }
 
-int  Io_SetPeripheralA( int index )
+/**
+  Configure an IO line to be part of its peripheral A.
+  @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
+  @return 0 on success, non-zero on failure
+
+  \b Example
+  \code
+  Io_SetPeripheralA( IO_PA18);
+  \endcode
+*/
+int Io_SetPeripheralA( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
@@ -440,7 +438,17 @@ int  Io_SetPeripheralA( int index )
   return CONTROLLER_OK;
 }
 
-int  Io_SetPeripheralB( int index )
+/**
+  Configure an IO line to be part of its peripheral B.
+  @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
+  @return 0 on success, non-zero on failure
+
+  \b Example
+  \code
+  Io_SetPeripheralB( IO_PA18);
+  \endcode
+*/
+int Io_SetPeripheralB( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
@@ -454,8 +462,18 @@ int  Io_SetPeripheralB( int index )
   return CONTROLLER_OK;
 }
 
+/**
+  Configure an IO line to be a general purpose IO.
+  @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
+  @param enable Whether to enable a pin as a PIO or disable it, reverting to an unconfigured state.
+  @return 0 on success, non-zero on failure
 
-int Io_SetPio( int index, int enable )
+  \b Example
+  \code
+  Io_SetPio( IO_PA18);
+  \endcode
+*/
+int Io_SetPio( int index, bool enable )
 {
   if ( enable )
     return Io_PioEnable( index );
@@ -463,7 +481,20 @@ int Io_SetPio( int index, int enable )
     return Io_PioDisable( index );
 }
 
-int Io_GetPio( int index )
+/**
+  Read whether an IO line is configured as a general purpose IO.
+  @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
+  @return true if it is a PIO, false if it's not.
+
+  \b Example
+  \code
+  if( Io_GetPio( IO_PA18) )
+  {
+    // then we know PA18 is a PIO
+  }
+  \endcode
+*/
+bool Io_GetPio( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
@@ -474,6 +505,7 @@ int Io_GetPio( int index )
     return ( AT91C_BASE_PIOB->PIO_PSR & ( 1 << ( index & 0x1F ) ) ) != 0;
 }
 
+// static
 int  Io_PioEnable( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
@@ -488,6 +520,7 @@ int  Io_PioEnable( int index )
   return CONTROLLER_OK;
 }
 
+// static
 int  Io_PioDisable( int index )
 {  
   if ( index < 0 || index > IO_PIN_COUNT )
@@ -508,13 +541,13 @@ int  Io_PioDisable( int index )
 	@param enable Non-zero for on, 0 for off.
   @return CONTROLLER_OK (0) on success, otherwise non-zero.
   
-  \par Example
+  \b Example
   \code
   // Turn on the pullup for IO 17
   Io_SetPullup( IO_PA17, 1 );
   \endcode
 */
-int Io_SetPullup( int index, int enable )
+int Io_SetPullup( int index, bool enable )
 {
   if ( enable )
     return Io_PullupEnable( index );
@@ -527,13 +560,13 @@ int Io_SetPullup( int index, int enable )
   @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
   @return CONTROLLER_OK (0) on success, otherwise non-zero.
   
-  \par Example
+  \b Example
   \code
   // Turn on the pullup for IO 17
   Io_GetPullup( IO_PA17 );
   \endcode
 */
-int Io_GetPullup( int index )
+bool Io_GetPullup( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
@@ -545,6 +578,7 @@ int Io_GetPullup( int index )
     return ( AT91C_BASE_PIOB->PIO_PPUSR & ( 1 << ( index & 0x1F ) ) ) == 0;
 }
 
+// static
 int  Io_PullupEnable( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
@@ -559,6 +593,7 @@ int  Io_PullupEnable( int index )
   return CONTROLLER_OK;
 }
 
+// static
 int  Io_PullupDisable( int index )
 {  
   if ( index < 0 || index > IO_PIN_COUNT )
@@ -573,30 +608,39 @@ int  Io_PullupDisable( int index )
   return CONTROLLER_OK;
 }
 
-void Io_PullupEnableBits( longlong bits )
-{ 
-  AT91C_BASE_PIOB->PIO_PPUER = bits >> 32;
-  AT91C_BASE_PIOA->PIO_PPUER = bits & 0xFFFFFFFF;
-}
+/*
+  Enable/disable IO pullups by the batch.
+  @param bits The bitmask containing the IO lines you'd like to configure - see \ref IoBits.  Must be
+  a longlong to accommodate all 64 bits.
+  @param enable true to enable, false to disable the pullup
 
-void Io_PullupDisableBits( longlong bits )
-{ 
-  AT91C_BASE_PIOB->PIO_PPUDR = bits >> 32;
-  AT91C_BASE_PIOA->PIO_PPUDR = bits & 0xFFFFFFFF;
-}
-
-void Io_SetTrueBits( longlong bits )
+  \b Example
+  \code
+  longlong mymask = 0;
+  mymask |= (IO_PA18_BIT | IO_PA00_BIT | IO_PB12_BIT );
+  Io_SetPullupBits( mymask, enable ); // enable those pullups
+  \endcode
+*/
+void Io_SetPullupBits( longlong bits, bool enable )
 {
-  AT91C_BASE_PIOA->PIO_SODR = bits & 0xFFFFFFFF;
-  AT91C_BASE_PIOB->PIO_SODR = bits >> 32; 
+  if(enable)
+  {
+    AT91C_BASE_PIOB->PIO_PPUER = bits >> 32;
+    AT91C_BASE_PIOA->PIO_PPUER = bits & 0xFFFFFFFF;
+  }
+  else
+  {
+    AT91C_BASE_PIOB->PIO_PPUDR = bits >> 32;
+    AT91C_BASE_PIOA->PIO_PPUDR = bits & 0xFFFFFFFF;
+  }
 }
 
-void Io_SetFalseBits( longlong bits )
-{
-  AT91C_BASE_PIOA->PIO_CODR = bits & 0xFFFFFFFF;
-  AT91C_BASE_PIOB->PIO_CODR = bits >> 32;
-}
-
+/**
+  Set the values of a batch of IO lines at once.
+  @param bits The bitmask containing the IO lines you'd like to configure - see \ref IoBits.  Must be
+  a longlong to accommodate all 64 bits.
+  @param values The mask of 0 or non-0 values that you'd like to write into those lines.
+*/
 void Io_SetValueBits( longlong bits, longlong values )
 {
   int aBits = bits & 0xFFFFFFFF;
@@ -610,16 +654,44 @@ void Io_SetValueBits( longlong bits, longlong values )
   AT91C_BASE_PIOB->PIO_CODR = (int)( bBits & ~bValues  );
 }
 
-void Io_SetOutputBits( longlong bits )
+/**
+  Set a batch of IO lines to a particular direction (in or out) at once.
+  @param bits The bitmask containing the IO lines you'd like to configure - see \ref IoBits.  Must be
+  a longlong to accommodate all 64 bits.
+  @param output true to set the lines as outputs, false to set them as inputs
+*/
+void Io_SetDirectionBits( longlong bits, bool output )
 {
-  AT91C_BASE_PIOA->PIO_OER = bits & 0xFFFFFFFF;
-  AT91C_BASE_PIOB->PIO_OER = bits >> 32;
+  if(output)
+  {
+    AT91C_BASE_PIOA->PIO_OER = bits & 0xFFFFFFFF;
+    AT91C_BASE_PIOB->PIO_OER = bits >> 32;
+  }
+  else
+  {
+    AT91C_BASE_PIOA->PIO_ODR = bits & 0xFFFFFFFF;
+    AT91C_BASE_PIOB->PIO_ODR = bits >> 32;
+  }
 }
 
-void Io_SetInputBits( longlong bits )
+/**
+  Set a batch of IO lines to being general IOs at once.
+  @param bits The bitmask containing the IO lines you'd like to configure - see \ref IoBits.  Must be
+  a longlong to accommodate all 64 bits.
+  @param enable true to configure the lines as PIOs, false un-configure them
+*/
+void Io_SetPioBits( longlong bits, bool enable )
 {
-  AT91C_BASE_PIOA->PIO_ODR = bits & 0xFFFFFFFF;
-  AT91C_BASE_PIOB->PIO_ODR = bits >> 32;
+  if(enable)
+  {
+    AT91C_BASE_PIOA->PIO_PER = bits & 0xFFFFFFFF;
+    AT91C_BASE_PIOB->PIO_PER = bits >> 32;
+  }
+  else
+  {
+    AT91C_BASE_PIOA->PIO_PER = bits & 0xFFFFFFFF;
+    AT91C_BASE_PIOB->PIO_PER = bits >> 32;
+  }
 }
 
 int Io_SetPortA( int value )
@@ -668,6 +740,7 @@ int Io_GetPortBMask( )
   return Io.portBMask;
 }
 
+// static
 void Io_Init()
 {
   Io.init++;
@@ -680,14 +753,83 @@ void Io_Init()
   Io.portBMask = 0;
 }
 
+// static
 void Io_Deinit()
 {
   Io.init--;
 }
 
+/**
+  Get a bitmask with the output values of all the IO lines.
+  @return A longlong (64 bit) value with the values of the output lines.
+
+  \b Example
+  \code
+  longlong values = Io_GetValueBits( );
+  if( values & IO_PA18_BIT )
+  {
+    // then we know PA18 is configured as an output
+  }
+  \endcode
+*/
 longlong Io_GetValueBits( )
 {
-  return ( ((longlong)AT91C_BASE_PIOB->PIO_PDSR) << 32 ) || AT91C_BASE_PIOA->PIO_PDSR;
+  return ( ((longlong)AT91C_BASE_PIOB->PIO_PDSR) << 32 ) | AT91C_BASE_PIOA->PIO_PDSR;
+}
+
+/**
+  Get a bitmask with the state of the internal pullup for all the IO lines.
+  @return A longlong (64 bit) value with the status of the pullups.
+
+  \b Example
+  \code
+  longlong pullups = Io_GetPullupBits( );
+  if( pullups & IO_PA18_BIT )
+  {
+    // then we know PA18 has its pullup turned on
+  }
+  \endcode
+*/
+longlong Io_GetPullupBits( )
+{
+  return ( ((longlong)AT91C_BASE_PIOB->PIO_PPUSR) << 32 ) | AT91C_BASE_PIOA->PIO_PPUSR;
+}
+
+/**
+  Get a bitmask indicating PIO configuration for all the IO lines.
+  @return A longlong (64 bit) value specifying which lines are configured as PIOs.
+
+  \b Example
+  \code
+  longlong pios = Io_GetPioBits( );
+  if( pios & IO_PA18_BIT )
+  {
+    // then we know PA18 is configured as a PIO
+  }
+  \endcode
+*/
+longlong Io_GetPioBits( )
+{
+  return ( ((longlong)AT91C_BASE_PIOB->PIO_PSR) << 32 ) | AT91C_BASE_PIOA->PIO_PSR;
+}
+
+/**
+  Get a bitmask indicating the in-or-out configuration for all the IO lines.
+  @return A longlong (64 bit) value specifying which lines are inputs and which are outputs.  Non-zero
+  values indicate that a line is configured as an output.
+
+  \b Example
+  \code
+  longlong directions = Io_GetDirectionBits( );
+  if( directions & IO_PA18_BIT )
+  {
+    // then we know PA18 is configured as an output
+  }
+  \endcode
+*/
+longlong Io_GetDirectionBits( )
+{
+  return ( ((longlong)AT91C_BASE_PIOB->PIO_OSR) << 32 ) | AT91C_BASE_PIOA->PIO_OSR;
 }
 
 /** @}

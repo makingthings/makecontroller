@@ -119,9 +119,9 @@ int AppLed_SetState( int index, int state )
   // remember the LED's are tied to +3.3, so they're
   // on when the output is off
   if ( state )
-    Io_SetFalse( io );
+    Io_SetValue( io, false );
   else 
-    Io_SetTrue( io );
+    Io_SetValue( io, true );
 
   return CONTROLLER_OK;
 }
@@ -166,9 +166,9 @@ int AppLed_Start( int index )
     }
 
     // Got it, now set the io up right
-    Io_PioEnable( io );
-    Io_SetTrue( io );
-    Io_SetOutput( io );
+    Io_SetPio( io, true );
+    Io_SetValue( io, true );
+    Io_SetDirection( io, IO_OUTPUT );
   }
 
   return CONTROLLER_OK;

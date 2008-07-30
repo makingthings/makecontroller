@@ -371,19 +371,19 @@ int PwmOut_Start( int index )
     // Set all the io's right
   
     // Enable as PIOs
-    Io_PioEnable( ioA );
-    Io_PioEnable( ioB );
+    Io_SetPio( ioA, true );
+    Io_SetPio( ioB, true );
   
     // Switch them off
-    Io_SetFalse( ioA );
-    Io_SetFalse( ioB );
+    Io_SetValue( ioA, false );
+    Io_SetValue( ioB, false );
   
     // Turn them into outputs
-    Io_SetOutput( ioA );
-    Io_SetOutput( ioB );
+    Io_SetDirection( ioA, IO_OUTPUT );
+    Io_SetDirection( ioB, IO_OUTPUT );
 
     PwmOut_SetDuty( index, 0 );
-    Io_SetTrue( ioA );
+    Io_SetValue( ioA, true );
   }
 
   return CONTROLLER_OK;

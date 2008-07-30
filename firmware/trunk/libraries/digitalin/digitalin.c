@@ -139,8 +139,8 @@ int DigitalIn_Start( int index )
       }
   
       // Got it, now set the io up right
-      Io_PioEnable( io );
-      Io_SetInput( io );
+      Io_SetPio( io, true );
+      Io_SetDirection( io, IO_INPUT );
     }
     else
       return AnalogIn_SetActive( -io, 1 );

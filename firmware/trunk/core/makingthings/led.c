@@ -120,9 +120,9 @@ int Led_Start()
     status = Io_Start( LED_IO, true );
     if ( status != CONTROLLER_OK )
       return status;
-    Io_SetFalse( LED_IO );
-    Io_PioEnable( LED_IO );
-    Io_SetOutput( LED_IO );
+    Io_SetValue( LED_IO, false );
+    Io_SetPio( LED_IO, true );
+    Io_SetDirection( LED_IO, IO_OUTPUT );
   }
   Led_users++;
  
@@ -134,9 +134,9 @@ int Led_Stop()
   if ( Led_users == 1 )
   {
     Io_Stop( LED_IO );
-    Io_SetFalse( LED_IO );
-    Io_PioEnable( LED_IO );
-    Io_SetOutput( LED_IO );
+    Io_SetValue( LED_IO, false );
+    Io_SetPio( LED_IO, true );
+    Io_SetDirection( LED_IO, IO_OUTPUT );
   }
   Led_users--;
 
