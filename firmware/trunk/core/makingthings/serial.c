@@ -408,8 +408,8 @@ int Serial_Init()
 
   Io_SetPeripheralA( IO_PA00 );
   Io_SetPeripheralA( IO_PA01 );
-  Io_PioDisable( IO_PA00 );
-  Io_PioDisable( IO_PA01 );
+  Io_SetPio( IO_PA00, false );
+  Io_SetPio( IO_PA01, false );
   
   // Create the queues
   Serial.receiveQueue = xQueueCreate( 100, 1 ); 

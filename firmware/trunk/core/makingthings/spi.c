@@ -220,7 +220,7 @@ int Spi_Start( int channel )
     return status;
 
   // Disable the PIO for the IO Line
-  Io_PioDisable( io );
+  Io_SetPio( io, false );
 
   // Select the correct peripheral for the IO line
   int peripheralA = Spi_GetChannelPeripheralA( channel );

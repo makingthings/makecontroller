@@ -344,7 +344,7 @@ int AnalogIn_Start( int index )
         return status;
       }
 
-      Io_PullupDisable( io );
+      Io_SetPullup( io, false );
     }
 
     if ( AnalogIn->users++ == 0 )

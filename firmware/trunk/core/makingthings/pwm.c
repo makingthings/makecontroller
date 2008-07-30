@@ -125,7 +125,7 @@ int Pwm_Start( int channel )
   Pwm.channels |= c;
 
   // Disable the PIO for the IO Line
-  Io_PioDisable( io );
+  Io_SetPio( io, false );
 
   Io_SetPeripheralA( io );
 
@@ -157,7 +157,7 @@ int Pwm_Stop( int channel )
 
   // Set the pin to OFF
   Io_SetValue( io, false );
-  Io_PioEnable( io );
+  Io_SetPio( io, true );
   
   // release the pin
   Io_Stop( io );

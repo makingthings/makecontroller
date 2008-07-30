@@ -279,9 +279,9 @@ int Servo_Start( int index )
       return status;
     }
 
-    Io_PioEnable( io );
-    Io_SetTrue( io );
-    Io_SetOutput( io );
+    Io_SetPio( io, true );
+    Io_SetValue( io, true );
+    Io_SetDirection( io, IO_OUTPUT );
 
     sc->position = (SERVO_MID_POSITION + SERVO_OFFSET) << 6;
     sc->speed = 1023 << 6;
@@ -304,7 +304,8 @@ int Servo_Stop( int index )
   if ( --sc->users == 0 )
   {
     int io = Servo_GetIo( index );
-    Io_SetInput( io );
+    //Io_SetInput( io );
+    Io_SetDirection( io, IO_INPUT );
     Io_Stop( io );
   }
 

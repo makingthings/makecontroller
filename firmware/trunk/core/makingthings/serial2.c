@@ -507,8 +507,8 @@ int Serial2_Init( int index )
 
   Io_SetPeripheralA( rxPin );
   Io_SetPeripheralA( txPin );
-  Io_PioDisable( rxPin );
-  Io_PioDisable( txPin );
+  Io_SetPio( rxPin, false );
+  Io_SetPio( txPin, false );
   
   // Create the queues
   s2p->receiveQueue = xQueueCreate( 100, 1 ); 

@@ -505,9 +505,9 @@ int Stepper_Start( int index )
         sc->users--;
         return status;
       }
-      Io_PioEnable( io );
-      Io_SetTrue( io );
-      Io_SetOutput( io );
+      Io_SetPio( io, true );
+      Io_SetValue( io, true );
+      Io_SetDirection( io, IO_OUTPUT );
     }
 
     DisableFIQFromThumb();
@@ -552,7 +552,7 @@ int Stepper_Stop( int index )
     for ( i = 0; i < 4; i++ )
     {
       int io = s->io[ i ];
-      Io_SetFalse( io );
+      Io_SetValue( io, false );
       Io_Stop( io );
     }
  

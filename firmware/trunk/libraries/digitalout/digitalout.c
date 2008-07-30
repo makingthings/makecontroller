@@ -143,9 +143,9 @@ int DigitalOut_SetValue( int index, int state )
 
   int io = DigitalOut_GetIo( index );
   if ( state )
-    Io_SetTrue( io );
+    Io_SetValue( io, true );
   else 
-    Io_SetFalse( io );
+    Io_SetValue( io, false );
 
   return CONTROLLER_OK;
 }
@@ -198,7 +198,7 @@ int DigitalOut_Start( int index )
         DigitalOut_users[ index ]--;
         return CONTROLLER_ERROR_CANT_LOCK;
       }
-      Io_SetTrue( enableIo );
+      Io_SetValue( enableIo, true );
     }
 
     int io = DigitalOut_GetIo( index );
@@ -211,9 +211,10 @@ int DigitalOut_Start( int index )
     }
 
     // Got it, now set the io up right
-    Io_PioEnable( io );
-    Io_SetFalse( io );
-    Io_SetOutput( io );
+    Io_SetPio( io, true );
+    Io_SetValue( io, false );
+
+    Io_SetDirection( io, IO_OUTPUT );
   }
 
   return CONTROLLER_OK;
