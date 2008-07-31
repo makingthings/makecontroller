@@ -30,6 +30,7 @@ int DipSwitch_SetActive( int state );
 int DipSwitch_GetActive( void );
 
 int DipSwitch_GetValue( void );
+bool DipSwitch_GetValueChannel( int channel );
 
 bool DipSwitch_GetAutoSend( bool init );
 void DipSwitch_SetAutoSend( int onoff );

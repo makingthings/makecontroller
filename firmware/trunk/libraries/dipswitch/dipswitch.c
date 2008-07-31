@@ -117,6 +117,24 @@ int DipSwitch_GetValue( )
   return r;
 }
 
+/**
+  Read a single channel's value.
+  @param channel The channel (0-7) you'd like to read.
+  return true if the channel is on, false if it's off.
+  @see DipSwitch_GetValue( )
+*/
+bool DipSwitch_GetValueChannel( int channel )
+{
+  if( channel < 0 || channel > 7 )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  int val = DipSwitch_GetValue();
+  if( val < 0 )
+    return false;
+  else
+    return ((val << channel) & 0x1);
+}
+
 bool DipSwitch_GetAutoSend( bool init )
 {
   DipSwitch_SetActive( 1 );
