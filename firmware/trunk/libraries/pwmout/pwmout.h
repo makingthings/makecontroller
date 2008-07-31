@@ -44,6 +44,26 @@ int PwmOut_GetInvertB( int motor );
 int PwmOut_SetInvert( int index, char invertA, char invertB );
 int PwmOut_SetAll( int motor, int duty, char invertA, char invertB );
 
+// Divider A is used by default to setup the clock period.
+// Read the notes in controll/makingthings/pwm.c before changing these.
+int PwmOut_SetDividerAValue(int val);
+int PwmOut_GetDividerAValue( void );
+
+int PwmOut_SetDividerAMux(int mux);
+int PwmOut_GetDividerAMux( void );
+
+int PwmOut_SetDividerBValue(int val);
+int PwmOut_GetDividerBValue( void );
+
+int PwmOut_SetDividerBMux(int mux);
+int PwmOut_GetDividerBMux( void );
+
+int PwmOut_SetWaveformAlignment(int index, int val);
+int PwmOut_GetWaveformAlignment(int index);
+
+int PwmOut_SetWaveformPolarity(int index, int val);
+int PwmOut_GetWaveformPolarity(int index);
+
 /* OSC Interface */
 const char* PwmOutOsc_GetName( void );
 int PwmOutOsc_ReceiveMessage( int channel, char* message, int length );

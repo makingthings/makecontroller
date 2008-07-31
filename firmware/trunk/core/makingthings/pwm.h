@@ -29,4 +29,17 @@ int Pwm_Stop( int channel );
 int Pwm_Set( int index, int duty );
 int Pwm_Get( int index );
 
+int Pwm_SetDividerA(int val);
+int Pwm_GetDividerA( void );
+
+int Pwm_SetDividerB(int val);
+int Pwm_GetDividerB( void );
+
+int Pwm_SetClockSource(int channel, int val);
+int Pwm_GetClockSource(int channel);
+
+int Pwm_SetWaveformProperties(int channel, int val);
+int Pwm_GetWaveformProperties(int channel);
+
+
 #endif
