@@ -633,6 +633,8 @@ int Stepper_Init()
 
 void Stepper_IRQCallback( int id )
 {
+  if(id < 0 || id > 1)
+    return;
   StepperControl* s = Stepper->control[ id ]; 
 
   if ( s->position < s->positionRequested )
@@ -875,7 +877,8 @@ void Stepper_SetBipolarHalfStepOutput( StepperControl *s, int position )
 
 void Stepper_SetBipolarOutput( StepperControl *s, int position )
 {
-  int output = position % 4;
+  //int output = position % 4; // work around % bug - negative numbers not handled properly
+  int output = position & 0x3;
   int* iop = s->io;
 
   int portAOn = 0;
