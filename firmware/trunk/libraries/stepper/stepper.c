@@ -687,7 +687,8 @@ void Stepper_SetDetails( StepperControl* s )
 
 void Stepper_SetUnipolarHalfStepOutput( StepperControl *s, int position )
 {
-  int output = position % 8;
+  //int output = position % 8;
+  int output = position & 0x7;
 
   int* iop = s->io;
 
@@ -759,7 +760,8 @@ void Stepper_SetUnipolarHalfStepOutput( StepperControl *s, int position )
 
 void Stepper_SetUnipolarOutput( StepperControl *s, int position )
 {
-  int output = position % 4;
+  //int output = position % 4;
+  int output = position & 0x3;
   int* iop = s->io;
 
   int portAOn = 0;
@@ -805,8 +807,8 @@ void Stepper_SetUnipolarOutput( StepperControl *s, int position )
 
 void Stepper_SetBipolarHalfStepOutput( StepperControl *s, int position )
 {
-  int output = position % 8;
-
+  //int output = position % 8;
+  int output = position & 0x7;
   int* iop = s->io;
 
   int portAOn = 0;
