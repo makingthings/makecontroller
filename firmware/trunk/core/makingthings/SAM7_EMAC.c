@@ -521,9 +521,10 @@ xSemaphoreHandle xEMACInit( void )
 	/* Wait for hardware reset end. */
 	while( !( AT91C_BASE_RSTC->RSTC_RSR & AT91C_RSTC_NRSTL ) )
 	{
-		__asm volatile ( "NOP" );
+		portNOP();
 	}
-    __asm volatile ( "NOP" );
+
+	portNOP();
 
 	/* Setup the pins. */
 	AT91C_BASE_PIOB->PIO_ASR = emacPERIPHERAL_A_SETUP;
@@ -782,7 +783,7 @@ static void vReadPHY( unsigned portCHAR ucPHYAddress, unsigned portCHAR ucAddres
 	/* Wait until IDLE bit in Network Status register is cleared. */
 	while( !( AT91C_BASE_EMAC->EMAC_NSR & AT91C_EMAC_IDLE ) )
 	{
-		__asm( "NOP" );
+		portNOP();
 	}
 
 	*pulValue = ( AT91C_BASE_EMAC->EMAC_MAN & 0x0000ffff );	
@@ -805,7 +806,7 @@ static void vWritePHY( unsigned portCHAR ucPHYAddress, unsigned portCHAR ucAddre
 	/* Wait until IDLE bit in Network Status register is cleared */
 	while( !( AT91C_BASE_EMAC->EMAC_NSR & AT91C_EMAC_IDLE ) )
 	{
-		__asm( "NOP" );
+		portNOP();
 	};
 
 	/* End of code supplied by Atmel ------------------------*/

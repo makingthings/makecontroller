@@ -38,10 +38,8 @@
 #include "lwip/def.h"
 #include "lwip/sys.h"
 #include "lwip/mem.h"
-
-/* Message queue constants. */
-#define archMESG_QUEUE_LENGTH	( 6 )
-#define archPOST_BLOCK_TIME_MS	( ( unsigned portLONG ) 10000 )
+#include "lwip/stats.h"
+#include "lwipopts.h"
 
 struct timeoutlist 
 {
@@ -50,10 +48,7 @@ struct timeoutlist
 };
 
 /* This is the number of threads that can be started with sys_thread_new() */
-// #define SYS_THREAD_MAX 6
-
-#define lwipTCP_STACK_SIZE			200
-#define lwipBASIC_SERVER_STACK_SIZE	150
+//#define SYS_THREAD_MAX 4
 
 // static struct timeoutlist timeoutlist[SYS_THREAD_MAX];
 // static u16_t nextthread = 0;
@@ -75,6 +70,13 @@ sys_mbox_new(int size)
 
 	mbox = xQueueCreate( archMESG_QUEUE_LENGTH, sizeof( void * ) );
 
+#if SYS_STATS
+      ++lwip_stats.sys.mbox.used;
+      if (lwip_stats.sys.mbox.max < lwip_stats.sys.mbox.used) {
+         lwip_stats.sys.mbox.max = lwip_stats.sys.mbox.used;
+	  }
+#endif /* SYS_STATS */
+
 	return mbox;
 }
 
@@ -90,10 +92,17 @@ sys_mbox_free(sys_mbox_t mbox)
 	if( uxQueueMessagesWaiting( mbox ) )
 	{
 		/* Line for breakpoint.  Should never break here! */
-		__asm volatile ( "NOP" );
+		portNOP();
+#if SYS_STATS
+	    lwip_stats.sys.mbox.err++;
+#endif /* SYS_STATS */
 	}
 
 	vQueueDelete( mbox ); 
+
+#if SYS_STATS
+     --lwip_stats.sys.mbox.used;
+#endif /* SYS_STATS */
 }
 
 /*-----------------------------------------------------------------------------------*/
@@ -106,18 +115,25 @@ sys_mbox_post(sys_mbox_t mbox, void *data)
 
 /*-----------------------------------------------------------------------------------*/
 // MakingThings - added for lwip 1.3.0
-//  Posts the "msg" to the mailbox. This function have to block until
-//  the "msg" is really posted.
+//  Posts the "msg" to the mailbox.
 err_t 
 sys_mbox_trypost(sys_mbox_t mbox, void *msg)
-{   
-	portBASE_TYPE result = xQueueSend( mbox, &msg, ( portTickType ) ( archPOST_BLOCK_TIME_MS / portTICK_RATE_MS ) );
-  while( result == errQUEUE_FULL)
-  {
-    vTaskDelay(1);
-    result = xQueueSend( mbox, &msg, ( portTickType ) ( archPOST_BLOCK_TIME_MS / portTICK_RATE_MS ) );
-  }
-  return ERR_OK;
+{
+err_t result;
+
+   if ( xQueueSend( mbox, &msg, 0 ) == pdPASS ) 
+   {
+      result = ERR_OK;
+   }
+   else {
+      // could not post, queue must be full
+      result = ERR_MEM;
+#if SYS_STATS
+      lwip_stats.sys.mbox.err++;
+#endif /* SYS_STATS */
+   }
+
+   return result;
 }
 
 
@@ -184,6 +200,30 @@ portTickType StartTime, EndTime, Elapsed;
 }
 
 /*-----------------------------------------------------------------------------------*/
+/*
+  Similar to sys_arch_mbox_fetch, but if message is not ready immediately, we'll
+  return with SYS_MBOX_EMPTY.  On success, 0 is returned.
+*/
+u32_t sys_arch_mbox_tryfetch(sys_mbox_t mbox, void **msg)
+{
+void *dummyptr;
+
+	if ( msg == NULL )
+	{
+		msg = &dummyptr;
+	}
+   
+   if ( pdTRUE == xQueueReceive( mbox, &(*msg), 0 ) ) 
+   {
+      return ERR_OK;
+   }
+   else 
+   {
+      return SYS_MBOX_EMPTY;   
+   }
+}
+
+/*-----------------------------------------------------------------------------------*/
 //  Creates and returns a new semaphore. The "count" argument specifies
 //  the initial state of the semaphore. TBD finish and test
 sys_sem_t
@@ -201,10 +241,19 @@ sys_sem_new(u8_t count)
 
 	if( xSemaphore == NULL )
 	{
+#if SYS_STATS
+      ++lwip_stats.sys.sem.err;
+#endif /* SYS_STATS */
 		return NULL;	// TBD need assert
 	}
 	else
 	{
+#if SYS_STATS
+      ++lwip_stats.sys.sem.used;
+      if (lwip_stats.sys.sem.max < lwip_stats.sys.sem.used) {
+         lwip_stats.sys.sem.max = lwip_stats.sys.sem.used;
+	  }
+#endif /* SYS_STATS */
 		return xSemaphore;
 	}
 }
@@ -280,6 +329,9 @@ sys_sem_signal(sys_sem_t sem)
 void
 sys_sem_free(sys_sem_t sem)
 {
+#if SYS_STATS
+      --lwip_stats.sys.sem.used;
+#endif /* SYS_STATS */
 	vQueueDelete( sem ); 
 }
 
