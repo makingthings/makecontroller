@@ -39,13 +39,14 @@
 
 #define SYS_MBOX_NULL (xQueueHandle)0
 #define SYS_SEM_NULL  (xSemaphoreHandle)0
-// MakingThings - addition for lwip 1.3.0
-// FIXME - more robust implementation...
-#define sys_arch_mbox_tryfetch(mbox,msg) sys_arch_mbox_fetch(mbox,msg,1)
 
 typedef xSemaphoreHandle sys_sem_t;
 typedef xQueueHandle sys_mbox_t;
 typedef xTaskHandle sys_thread_t;
+
+/* Message queue constants. */
+#define archMESG_QUEUE_LENGTH	( 6 )
+#define archPOST_BLOCK_TIME_MS	( ( unsigned portLONG ) 10000 )
 
 #endif /* __SYS_RTXC_H__ */
 
