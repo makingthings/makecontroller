@@ -54,8 +54,10 @@ static int DigitalIn_users[ DIGITALIN_COUNT ];
 
 
 /** \defgroup DigitalIn Digital Inputs
-* The Digital In subsystem reads the 8 inputs on the Make Controller as digital values - 1 (on) or 0 (off).  
-  The 8 inputs can be either read as digital inputs by DigitalIn or as \ref AnalogIn.
+* Read the 8 inputs on the Make Controller as digital values - 1 (on) or 0 (off).  
+  The 8 inputs can be either read as digital inputs by DigitalIn or as \ref AnalogIn.  
+  Because inputs 4-7 are actually AnalogIn lines, there's no performance gain to reading
+  those as DigitalIns.
 * \ingroup Libraries
 * @{
 */
@@ -65,6 +67,12 @@ static int DigitalIn_users[ DIGITALIN_COUNT ];
 	@param index An integer specifying which Digital In (0-7).
 	@param state An integer specifying the state - 1 (active) or 0 (inactive).
 	@return Zero on success.
+	
+	\b Example
+	\code
+	// Enable DigitalIn 3
+	DigitalIn_SetActive(3, 1);
+	\endcode
 */
 int DigitalIn_SetActive( int index, int state )
 {
@@ -81,6 +89,18 @@ int DigitalIn_SetActive( int index, int state )
 	Returns the active state of the Digital In.
 	@param index An integer specifying which Digital In (0-7).
 	@return Zero if inactive, non-zero if active.
+	
+	\b Example
+	\code
+	if( DigitalIn_GetActive(3) )
+	{
+	  // DigitalIn 3 is active
+	}
+	else
+	{
+	  // DigitalIn 3 is inactive
+	}
+	\endcode
 */
 int DigitalIn_GetActive( int index )
 {
@@ -93,7 +113,19 @@ int DigitalIn_GetActive( int index )
 	Read the value of a Digital Input on the MAKE Application Board.
 	If the voltage on the input is greater than ~0.6V, the Digital In will read high.
 	@param index An integer specifying which Digital In (0-7).
-  @return The value - 1 (high) or 0 (low).
+  @return Non-zero when high, 0 when low
+  
+  \b Example
+	\code
+	if( DigitalIn_GetValue(5) )
+	{
+	  // DigitalIn 5 is high
+	}
+	else
+	{
+	  // DigitalIn 5 is low
+	}
+	\endcode
 */
 int DigitalIn_GetValue( int index )
 {
