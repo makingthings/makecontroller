@@ -45,6 +45,9 @@ DipSwitchSubsystem* DipSwitch;
 /** \defgroup DipSwitch DIP Switch
 * The DIP Switch subsystem reads values in from the 8 position DIP Switch (0 - 255) on the Application Board.
   Mask off the appropriate bits in the value returned from the DIP switch to determine whether a particular channel is on or off.
+  
+  See the <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/user-interface">
+  Application Board overview</a> for details.
 * \ingroup Libraries
 * @{
 */
@@ -53,6 +56,12 @@ DipSwitchSubsystem* DipSwitch;
 	Sets whether the DIP Switch is active.
 	@param state An integer specifying the state of the DIP Switch - 1 (on) or 0 (off).
 	@return Zero on success.
+	
+	\b Example
+	\code
+	// enable the DIP switch
+	DipSwitch_SetActive(1);
+	\endcode
 */
 int DipSwitch_SetActive( int state )
 {
@@ -79,6 +88,18 @@ int DipSwitch_SetActive( int state )
 /**
 	Returns the active state of the DIP Switch.
 	@return The active state of the DIP Switch - 1 (active) or 0 (inactive).
+	
+	\b Example
+	\code
+	if( DipSwitch_GetActive() )
+	{
+	  // DIP switch is active
+	}
+	else
+	{
+	  // DIP switch is not active
+	}
+	\endcode
 */
 int DipSwitch_GetActive( )
 {
@@ -88,6 +109,12 @@ int DipSwitch_GetActive( )
 /**	
 	Read the current configuration of the on-board DIP switch.
 	@return An integer from 0-255 indicating the current configuration of the DIP switch.
+	
+	\b Example
+	\code
+	int dip_switch = DipSwitch_GetValue();
+	// now dip_switch has a bitmask of all 8 channels of the DIP switch
+	\endcode
 */
 int DipSwitch_GetValue( )
 {
@@ -119,9 +146,24 @@ int DipSwitch_GetValue( )
 
 /**
   Read a single channel's value.
+  This is a convenience function that relies on DipSwitch_GetValue()
+  internally, but extracts the value for a given channel.
   @param channel The channel (0-7) you'd like to read.
   return true if the channel is on, false if it's off.
   @see DipSwitch_GetValue( )
+  
+  \b Example
+	\code
+	if(DipSwitch_GetValueChannel(4) )
+	{
+	  // DIP switch channel 4 is on
+	}
+	else
+	{
+	  // DIP switch channel 4 is off
+	}
+	// now dip_switch has a bitmask of all 8 channels of the DIP switch
+	\endcode
 */
 bool DipSwitch_GetValueChannel( int channel )
 {
@@ -133,28 +175,6 @@ bool DipSwitch_GetValueChannel( int channel )
     return false;
   else
     return ((val << channel) & 0x1);
-}
-
-bool DipSwitch_GetAutoSend( bool init )
-{
-  DipSwitch_SetActive( 1 );
-  if( init )
-  {
-    int autosend;
-    Eeprom_Read( EEPROM_DIPSWITCH_AUTOSEND, (uchar*)&autosend, 4 );
-    DipSwitch->autosend = (autosend == 1 ) ? 1 : 0;
-  }
-  return DipSwitch->autosend;
-}
-
-void DipSwitch_SetAutoSend( int onoff )
-{
-  DipSwitch_SetActive( 1 );
-  if( DipSwitch->autosend != onoff )
-  {
-    DipSwitch->autosend = onoff;
-    Eeprom_Write( EEPROM_DIPSWITCH_AUTOSEND, (uchar*)&onoff, 4 );
-  }
 }
 
 /** @}
@@ -254,6 +274,28 @@ int DipSwitch_Stop()
 */
 
 #include "osc.h"
+
+bool DipSwitch_GetAutoSend( bool init )
+{
+  DipSwitch_SetActive( 1 );
+  if( init )
+  {
+    int autosend;
+    Eeprom_Read( EEPROM_DIPSWITCH_AUTOSEND, (uchar*)&autosend, 4 );
+    DipSwitch->autosend = (autosend == 1 ) ? 1 : 0;
+  }
+  return DipSwitch->autosend;
+}
+
+void DipSwitch_SetAutoSend( int onoff )
+{
+  DipSwitch_SetActive( 1 );
+  if( DipSwitch->autosend != onoff )
+  {
+    DipSwitch->autosend = onoff;
+    Eeprom_Write( EEPROM_DIPSWITCH_AUTOSEND, (uchar*)&onoff, 4 );
+  }
+}
 
 static char* DipSwitchOsc_Name = "dipswitch";
 static char* DipSwitchOsc_PropertyNames[] = { "active", "value", "autosend",  0 }; // must have a trailing 0
