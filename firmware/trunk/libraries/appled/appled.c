@@ -62,10 +62,16 @@ static int AppLed_users[ APPLED_COUNT ];
 */
 
 /**
-	Attempts to gain access to the I/O lines associated the given LED.
+	Enable an LED in the AppLed subsystem.
 	@param index An integer specifying which LED (0-3).
 	@param state An integer specifying locked/active (1) or unlocked/inactive (0).
 	@return Zero on success.
+	
+	\b Example
+	\code
+	// enable LED 0
+	AppLed_SetActive(0, 1);
+	\endcode
 */
 int AppLed_SetActive( int index, int state )
 {
@@ -79,9 +85,21 @@ int AppLed_SetActive( int index, int state )
 }
 
 /**
-	Returns whether the I/O lines associated with the LED are available.
+	Read whether an AppLed is enabled.
 	@param index An integer specifying which LED (0-3).
 	@return Zero if available, otherwise non-zero.
+	
+	\b Example
+	\code
+	if(AppLed_GetActive(1))
+	{
+	  // LED 1 is enabled
+	}
+	else
+	{
+	  // LED 1 is not enabled
+	}
+	\endcode
 */
 int AppLed_GetActive( int index )
 {
@@ -91,13 +109,13 @@ int AppLed_GetActive( int index )
 }
 
 /**	
-	Control an LED on the Application Board.
+	Turn an LED on or off.
 	Sets whether the specified LED on the Application Board is on or off.
 	@param index an integer specifying which LED (0-3).
 	@param state an integer specifying on (1) or off (0).
 	@return Zero on success, otherwise error code.
 
-  \par Example
+  \b Example
   \code
   // turn on LED 2
   AppLed_SetState( 2, 1 );
@@ -127,9 +145,21 @@ int AppLed_SetState( int index, int state )
 }
 
 /**	
-	Read the state of an LED on the Application Board.
+	Read whether an LED is on or off.
 	@param index An integer specifying which LED (0-3).
   @return the LED state, or zero on error.
+  
+  \b Example
+	\code
+	if(AppLed_GetState(2))
+	{
+	  // LED 2 is currently on
+	}
+	else
+	{
+	  // LED 2 is currently off
+	}
+	\endcode
 */
 int AppLed_GetState( int index )
 {
