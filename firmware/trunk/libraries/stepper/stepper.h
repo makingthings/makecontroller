@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006 MakingThings
+ Copyright 2006-2008 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -43,7 +43,6 @@ int  Stepper_GetSpeed( int index );
 void Stepper_SetAcceleration( int index, int acceleration );
 int  Stepper_GetAcceleration( int index );
 int Stepper_Step( int index, int steps );
-int Stepper_GetStep( int index );
 
 /* OSC Interface */
 const char* StepperOsc_GetName( void );
