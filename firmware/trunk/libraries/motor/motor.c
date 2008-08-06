@@ -50,6 +50,10 @@ Each motor controller is composed of 2 adjacent Digital Outs on the Make Applica
 
 Other output devices cannot be used simultaneously - for example, the DigitalOuts cannot be called without
 first setting overlapping the DC motor I/O lines to inactive.
+
+See the digital out section of the 
+<a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/digital-outputs">
+Application Board overview</a> for more details.
 \ingroup Libraries
 @{
 */
@@ -59,6 +63,12 @@ first setting overlapping the DC motor I/O lines to inactive.
 	@param index An integer specifying which Motor (0-3).
 	@param state An integer specifying the availability of the motor's I/O lines - 1 (active) or 0 (inactive).
 	@return Zero on success.
+	
+	\b Example
+	\code
+	// Enable motor 0
+	Motor_SetActive(0, 1);
+	\endcode
 */
 int Motor_SetActive( int index, int state )
 {
@@ -75,6 +85,18 @@ int Motor_SetActive( int index, int state )
 	Returns the active state of the DC Motor I/O lines.
 	@param index An integer specifying which DC Motor (0-3).
 	@return The availability of the motor's I/O lines - 1 (active) or 0 (inactive).
+	
+	\b Example
+	\code
+	if( Motor_GetActive(0) )
+	{
+	  // Motor 0 is active
+	}
+	else
+	{
+	  // Motor 0 is inactive
+	}
+	\endcode
 */
 int Motor_GetActive( int index )
 {
@@ -88,6 +110,12 @@ int Motor_GetActive( int index )
 	@param index An integer specifying which DC Motor (0-3).
 	@param duty An integer (0 - 1023) specifying the speed.
   @returns Zero on success.
+  
+  \b Example
+	\code
+	// Set the speed of motor 3 to %75
+	Motor_SetSpeed(3, 768);
+	\endcode
 */
 int Motor_SetSpeed( int index, int duty )
 {
@@ -113,6 +141,12 @@ int Motor_SetSpeed( int index, int duty )
 	@param index An integer specifying which DC Motor (0-3).
 	@param forward A character specifying direction - 1/non-zero (forward) or 0 (reverse).
   @return Zero on success.
+  
+  \b Example
+	\code
+	// Set the direction of motor 2 to reverse.
+	Motor_SetDirection(2, 0);
+	\endcode
 */
 int Motor_SetDirection( int index, char forward )
 {
@@ -137,6 +171,12 @@ int Motor_SetDirection( int index, char forward )
 	Read the speed of a DC motor.
 	@param index An integer specifying which DC Motor (0-3).
   @return the speed (0 - 1023)
+  
+  \b Example
+	\code
+	// check the current speed of motor 1
+	int motor1_speed = Motor_GetSpeed(1);
+	\endcode
 */
 int Motor_GetSpeed( int index )
 {
@@ -158,7 +198,19 @@ int Motor_GetSpeed( int index )
 /**	
 	Read the direction of a DC motor.
 	@param index An integer specifying which DC Motor (0-3).
-  @return Direction - 1/non-zero (forward) or 0 (reverse).
+  @return Direction - non-zero (forward) or 0 (reverse).
+  
+  \b Example
+	\code
+	if( Motor_GetDirection(0) )
+	{
+	  // Motor 0 is going forward
+	}
+	else
+	{
+	  // Motor 0 is going in reverse
+	}
+	\endcode
 */
 int Motor_GetDirection( int index )
 {
