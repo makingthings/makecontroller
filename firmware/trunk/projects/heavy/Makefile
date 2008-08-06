@@ -47,7 +47,6 @@ THUMB_SRC= \
   ../../core/makingthings/timer.c \
   ../../core/makingthings/fasttimer.c \
   ../../core/makingthings/debugosc.c \
-  ../../core/makingthings/can.c \
   ../../core/lwip/src/core/tcp_out.c \
   ../../core/lwip/src/core/ipv4/inet.c \
   ../../core/lwip/src/core/mem.c \

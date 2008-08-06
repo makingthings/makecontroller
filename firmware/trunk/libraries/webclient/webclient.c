@@ -36,6 +36,8 @@ char WebClient_InternalBuffer[ WEBCLIENT_INTERNAL_BUFFER_SIZE ];
 
   There's currently not a method provided for name resolution - you can always ping the 
   server you want to communicate with to see its IP address, and just use that.
+  
+  See Network_DnsGetHostByName() for a way to get the address of a particular web site.
 
 	\ingroup Libraries
 	@{
