@@ -25,7 +25,8 @@
  If you're using \b mcbuilder, just \b include the library you want to use.  
  
  If you're building from a Makefile, there are a few extra steps:
- - add the library directory to your list of include directories
+ - add the library directory to your list of include directories (along with any sub-directories if not all
+ the include files are in a single directory).
  - add each .c file of the library to your list of files to compile
  
  In the Makefiles in the example projects in the firmware download, you can see the \b THUMB_SRC and 
