@@ -78,6 +78,13 @@ static void PwmOut_GetIos( int index, int* ioA, int* ioB );
 	
 	The A and B channels of a PWM device can be set independently to be inverted, or not, from one another
 	in order to control motors, lights, etc.
+	
+	The simplest way to get started is simply with a call to PwmOut_SetActive() and then to 
+	PwmOut_SetDuty() - this will allow you to control simple dimming and motors.  If you need to adjust timing, 
+	inversion or other parameters, delve a bit deeper into the API above.
+	
+	PwmOut relies on the internal \ref Pwm system.  See that page for more info on the timing issues 
+	involved with the PWM Out system.
 	\ingroup Libraries
 	@{
 */
