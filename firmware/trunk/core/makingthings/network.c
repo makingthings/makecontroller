@@ -938,42 +938,60 @@ int Network_GetDhcpEnabled( )
 }
 
 /**
-	Set whether the demo webserver is enabled.
-  The demo webserver provides access to some of the Make Controller's stats via a
-	standard web browser.  It is intended mainly as a reference for creating web based applications.
-	
-	This value is stored persistently, so it will remain constant across system reboots.
-	@param state An integer specifying whether to enable the webserver - 1 (enable) or 0 (disable).
-*/
-//void Network_SetWebServerEnabled( int state )
-//{
-//  if( state )
-//  {
-//    Network_StartWebServer( );
-//
-//    if( !Network_GetWebServerEnabled( ) )
-//      Eeprom_Write( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
-//  }
-//  else
-//  {
-//    Network_StopWebServer( );
-//
-//    if( Network_GetWebServerEnabled( ) )
-//      Eeprom_Write( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
-//  }
-//}
+  Resolve the IP address for a given host name.
+  Up to 4 DNS entries are cached, so if you make successive calls to this function, 
+  you won't incur a whole lookup roundtrip - you'll just get the cached value.
+  The cached values are maintained internally, so if one of them becomes invalid, a
+  new lookup will be fired off the next time it's asked for.
+  @param name A string specifying the name of the host to look up.
+  @return An integer representation of the IP address of the host.  This can be 
+  passed to the \ref Sockets functions to read and write.  Returns -1 on error.
 
-/**
-	Read whether the demo webserver is enabled.
-  This value is stored presistently, so it will be the same across system reboots.
-	@return An integer specifying whether the webserver is enabled - 1 (enabled) or 0 (disabled).
+  \b Example
+  \code
+  // try to open a socket connection to makingthings.com
+  int addr = Network_DnsGetHostByName("makingthings.com");
+  struct netconn* socket = Socket(addr, 80); // open up a new connection to that address
+  \endcode
 */
-//int Network_GetWebServerEnabled( )
-//{
-//  int state;
-//  Eeprom_Read( EEPROM_WEBSERVER_ENABLED, (uchar*)&state, 4 );
-//  return (state == 1) ? 1 : 0;
-//}
+int Network_DnsGetHostByName( const char *name )
+{
+  struct ip_addr addr;
+  int retval = -1;
+  if(!Network_DnsSemaphore)
+  {
+    Network_DnsSemaphore = SemaphoreCreate();
+    if(!Network_DnsSemaphore) // the semaphore was not created successfully
+      return retval;
+    if(!SemaphoreTake(Network_DnsSemaphore, 0)) // do the initial take
+      return retval;
+  }
+  err_t result = dns_gethostbyname( name, &addr, Network_DnsCallback, 0);
+  if(result == ERR_OK) // the result was cached, just return it
+    retval = addr.addr;
+  else if(result == ERR_INPROGRESS) // a lookup is in progress - wait for the callback to signal that we've gotten a response
+  {
+    if(SemaphoreTake(Network_DnsSemaphore, 30000)) // timeout is 30 seconds by default
+      retval = Network->DnsResolvedAddress;
+  }
+  return ntohl(retval);
+}
+
+// static
+/*
+  The callback for a DNS look up.  The original request is waiting (via semaphore) on
+  this to pop the looked up address in the right spot.
+*/
+void Network_DnsCallback(const char *name, struct ip_addr *addr, void *arg)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(name);
+  if(addr)
+    Network->DnsResolvedAddress = addr->addr;
+  else
+    Network->DnsResolvedAddress = -1; // we didn't get an address, stuff an error value in there
+  SemaphoreGive(Network_DnsSemaphore);
+}
 
 /** @}
 */
@@ -1150,16 +1168,6 @@ int NetworkOsc_GetUdpSendPort(  )
     return 10000;
 }
 
-//void Network_StartWebServer( )
-//{
-//  WebServer_SetActive( 1 );
-//}
-//
-//void Network_StopWebServer( )
-//{
-//  WebServer_SetActive( 0 );
-//}
-
 void Network_DhcpStart( struct netif* netif )
 {
   Network_SetPending( 1 ); // set a flag so nobody else tries to set up this netif
@@ -1190,63 +1198,6 @@ void Network_DhcpStop( struct netif* netif )
   netif_set_up(netif); // bring the interface back up, as dhcp_release() takes it down
   return;
 }
-
-/**
-  Resolve the IP address for a given host name.
-  Up to 4 DNS entries are cached, so if you make successive calls to this function, 
-  you won't incur a whole lookup roundtrip - you'll just get the cached value.
-  The cached values are maintained internally, so if one of them becomes invalid, a
-  new lookup will be fired off the next time it's asked for.
-  @param name A string specifying the name of the host to look up.
-  @return An integer representation of the IP address of the host.  This can be 
-  passed to the \ref Sockets functions to read and write.  Returns -1 on error.
-
-  \b Example
-  \code
-  // try to open a socket connection to makingthings.com
-  int addr = Network_DnsGetHostByName("makingthings.com");
-  struct netconn* socket = Socket(addr, 80); // open up a new connection to that address
-  \endcode
-*/
-int Network_DnsGetHostByName( const char *name )
-{
-  struct ip_addr addr;
-  int retval = -1;
-  if(!Network_DnsSemaphore)
-  {
-    Network_DnsSemaphore = SemaphoreCreate();
-    if(!Network_DnsSemaphore) // the semaphore was not created successfully
-      return retval;
-    if(!SemaphoreTake(Network_DnsSemaphore, 0)) // do the initial take
-      return retval;
-  }
-  err_t result = dns_gethostbyname( name, &addr, Network_DnsCallback, 0);
-  if(result == ERR_OK) // the result was cached, just return it
-    retval = addr.addr;
-  else if(result == ERR_INPROGRESS) // a lookup is in progress - wait for the callback to signal that we've gotten a response
-  {
-    if(SemaphoreTake(Network_DnsSemaphore, 30000)) // timeout is 30 seconds by default
-      retval = Network->DnsResolvedAddress;
-  }
-  return ntohl(retval);
-}
-
-// static
-/*
-  The callback for a DNS look up.  The original request is waiting (via semaphore) on
-  this to pop the looked up address in the right spot.
-*/
-void Network_DnsCallback(const char *name, struct ip_addr *addr, void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_UNUSED_ARG(name);
-  if(addr)
-    Network->DnsResolvedAddress = addr->addr;
-  else
-    Network->DnsResolvedAddress = -1; // we didn't get an address, stuff an error value in there
-  SemaphoreGive(Network_DnsSemaphore);
-}
-
 
 int Network_AddressConvert( char* address, int* a0, int* a1, int* a2, int* a3 )
 {
