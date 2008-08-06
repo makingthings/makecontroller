@@ -17,9 +17,17 @@
 
 /** @defgroup Libraries Libraries
  Libraries that extend core functionality.
- The MAKE Application Board provides an interface between the MAKE Controller Board and common electronic devices.
- Several subsystems extend the capability of the Controller Board, each with their own functions.
-
- If you're using your own interface electronics around the Make Controller, the AppBoard module may not 
- necessarily work for you.
+ Libraries are modules of code that can be easily added/removed based on the needs of a particular project.
+ This is a list of libraries maintained by MakingThings, but you're free to create your own.  
+ Just add a directory with your source files into the \b libraries directory of the firmware codebase.
+ 
+ \section lib_in_project Incorporating a Library into your Project
+ If you're using \b mcbuilder, just \b include the library you want to use.  
+ 
+ If you're building from a Makefile, there are a few extra steps:
+ - add the library directory to your list of include directories
+ - add each .c file of the library to your list of files to compile
+ 
+ In the Makefiles in the example projects in the firmware download, you can see the \b THUMB_SRC and 
+ \b INCLUDEDIRS sections where you can add your own listings of both source files and include directories.
 */
