@@ -39,13 +39,8 @@ static int Led_users;
 static int Led_Start( void );
 static int Led_Stop( void );
 
-/** LED
-* This whole thing needs to run on timers and events so that the LED can 
-* be asked to flash at various times
-*/
-
 /** \defgroup Led LED
-	The Led subsystem controls the single green LED on the MAKE Controller Board.
+	Controls the single green LED on the MAKE Controller Board.
 	There are two LEDs on the MAKE Controller Board - one green and one red.  The red LED is simply
 	a power indicator and cannot be controlled by the Controller.  The green LED can be used for
 	program feedback.  In many MakingThings applications, for example, it is set to blink once a
@@ -58,6 +53,12 @@ static int Led_Stop( void );
 	Sets whether the Led subsystem is active.
 	@param state An integer specifying the active state of the LED system - 1 (on) or 0 (off).
 	@return Zero on success.
+	
+	\b Example
+	\code
+	// enable the LED system
+	Led_SetActive(1);
+	\endcode
 */
 int Led_SetActive( int state )
 {
@@ -70,6 +71,19 @@ int Led_SetActive( int state )
 /**
 	Read the active state of the LED system.
 	@return State - 1/non-zero (on) or 0 (off).
+	
+	\b Example
+	\code
+	int enabled = Led_GetActive();
+	if(enabled)
+	{
+	  // then we're enabled
+	}
+	else
+	{
+	  // not enabled
+	}
+	\endcode
 */
 int Led_GetActive( )
 {
@@ -80,6 +94,12 @@ int Led_GetActive( )
 	Control the LED on the MAKE Controller Board.
 	@param state An integer specifying the state - on (1) or off (0).
   @return 0 on success.
+  
+  \b Example
+	\code
+	// turn the LED on
+	Led_SetState(1);
+	\endcode
 */
 int Led_SetState( int state )
 {
@@ -96,6 +116,19 @@ int Led_SetState( int state )
 /**	
 	Read the state of the LED on the MAKE Controller Board.
   @return State - 1/non-zero (on) or 0 (off).
+  
+  \b Example
+	\code
+	int led_on = Led_GetState();
+	if(led_on)
+	{
+	  // the LED is on
+	}
+	else
+	{
+	  // the LED is off
+	}
+	\endcode
 */
 int Led_GetState( )
 {
