@@ -88,17 +88,26 @@ int DigitalOut_enableUsers[ DIGITALOUT_COUNT >> 1 ];
   
   If you've previously used any of the other systems on the outputs (steppers, motors, etc.), you'll need
   to set them to \b inactive to unlock the IO lines and use the Digital Outs.
+  
+  See the <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/digital-outputs">
+  Digital Out section</a> of the Application Board overview for more details.
 * \ingroup Libraries
 * @{
 */
 
 /**
-	Sets whether the specified Digital Out is active.
-	This is automatically called, setting the channel active, the first time DigitalOut_SetValue() is called.\n
+	Enable or disable a DigitalOut.
+	This is automatically called, setting the channel active, the first time DigitalOut_SetValue() is called.
 	However, the channel must be explicitly set to inactive in order for any other devices to access the I/O lines. 
 	@param index An integer specifying which Digital Out (0-7).
 	@param state An integer specifying the state - on (1) or off (0).
 	@return Zero on success.
+	
+	\b Example
+	\code
+	// Enable DigitalOut 6
+	DigitalOut_SetActive( 6, 1 );
+	\endcode
 */
 int DigitalOut_SetActive( int index, int state )
 {
@@ -112,9 +121,21 @@ int DigitalOut_SetActive( int index, int state )
 }
 
 /**
-	Returns the availability of the Digital Out I/O lines.
+	Read whether a DigitalOut is active.
 	@param index An integer specifying which Digital Out (0-7).
-	@return State - on (1) or off (0).
+	@return Nonzero when active, 0 when inactive
+	
+	\b Example
+	\code
+	if( DigitalOut_GetActive( 5 ) )
+	{
+	  // DigitalOut 5 is active
+	}
+	else
+	{
+	  // DigitalOut 5 is inactive
+	}
+	\endcode
 */
 int DigitalOut_GetActive( int index )
 {
@@ -124,10 +145,16 @@ int DigitalOut_GetActive( int index )
 }
 
 /**	
-	Turn a Digital Out on or off on the MAKE Application Board.
+	Turn a Digital Out on or off.
 	@param index An integer specifying which Digital Out (0-7).
 	@param state An integer specifying the state - on (1) or off (0).
   @return Zero on success.
+  
+  \b Example
+	\code
+	// Turn digital out 2 on
+	DigitalOut_SetValue( 2, 1 );
+	\endcode
 */
 int DigitalOut_SetValue( int index, int state )
 {
@@ -151,9 +178,21 @@ int DigitalOut_SetValue( int index, int state )
 }
 
 /**	
-	Read the value of a Digital Out on the Make Application Board.
+	Read whether a DigitalOut is on or off.
 	@param index An integer specifying which Digital Out (0-7).
   @return The value - on (1) or off (0).
+  
+  \b Example
+	\code
+	if( DigitalOut_GetValue( 2 ) )
+	{
+	  // DigitalOut 2 is high
+	}
+	else
+	{
+	  // DigitalOut 2 is low
+	}
+	\endcode
 */
 int DigitalOut_GetValue( int index )
 {
