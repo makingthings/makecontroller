@@ -9,7 +9,7 @@
 #include "controller.h"   // ...everybody uses the MAKE Controller Board
 #include "error.h"
 
-#define FIRMWARE_NAME          "Tiny-svn"
+#define FIRMWARE_NAME          "Tiny"
 #define FIRMWARE_MAJOR_VERSION 1
 #define FIRMWARE_MINOR_VERSION 5
 #define FIRMWARE_BUILD_NUMBER  0
