@@ -61,6 +61,12 @@ SystemS* System;
 	Sets whether the System subsystem is active.
 	@param state An integer specifying the state system
 	@return Zero on success.
+	
+	\b Example
+	\code
+	// enable the System subsystem
+	System_SetActive(1);
+	\endcode
 */
 int System_SetActive( int state )
 {
@@ -94,6 +100,18 @@ int System_SetActive( int state )
 /**
 	Returns the active state of the subsystem.
 	@return The active state of the subsystem - 1 (active) or 0 (inactive).
+	
+	\b Example
+	\code
+	if(System_GetActive())
+	{
+	  // System is active
+	}
+	else
+	{
+	  // System is inactive
+	}
+	\endcode
 */
 int System_GetActive( )
 {
@@ -102,7 +120,16 @@ int System_GetActive( )
 
 /**
 	Returns the free size of the heap.
+	The heap size is set in config.h in the constant CONTROLLER_HEAPSIZE.
+	Any calls to Malloc will take their memory from the heap.  This allows
+	you to check how much heap is remaining.
 	@return The size free memory.
+	
+	\b Example
+	\code
+	// see how much memory is available
+	int freemem = System_GetFreeMemory();
+	\endcode
 */
 int System_GetFreeMemory( void )
 {
@@ -110,8 +137,19 @@ int System_GetFreeMemory( void )
 }
 
 /**
-	Gets the board's Serial Number.  
+	Gets the board's Serial Number.
+	Each board has a serial number, although it's not necessarily unique
+	as you can reset it as you please.
+	
+	The serial number is used to determine the Ethernet MAC address, so boards
+	on the same network need to have unique serial numbers.
 	@return CONTROLLER_OK ( = 0 ).
+	
+	\b Example
+	\code
+	// get this board's serial number
+	int sernum = System_GetSerialNumber();
+	\endcode
 */
 int System_GetSerialNumber( void )
 {
@@ -122,11 +160,18 @@ int System_GetSerialNumber( void )
 }
 
 /**
-	Sets the Serial Number. Note that this can be changed by the user at 
+	Sets the Serial Number. 
+	Note that this can be changed by the user at 
   any time, but that it is used in the \ref Network subsystem to form the last 
   two bytes of the network MAC address, so ideally units on the same network
   should have unique serial numbers.
-	@return CONTROLLER_OK if OK.
+	@return 0 on success.
+	
+	\b Example
+	\code
+	// set the serial number to 12345
+	System_SetSerialNumber(12345);
+	\endcode
 */
 int System_SetSerialNumber( int serial )
 {
@@ -136,8 +181,17 @@ int System_SetSerialNumber( int serial )
 
 /**
 	Returns the board to SAM-BA mode, erasing the flash memory.
-  Leaves the board in a non-deterministic state awaiting a power cycle or reset.
-	@return CONTROLLER_OK if OK.
+  When a board is in SAM-BA mode, it is ready to have new firmware uploaded to it.
+  Note that you'll need to unplug/replug the board to complete the transition to
+  SAM-BA mode.
+  @param sure Confirm you're sure you want to do this.
+	@return 0 on success.
+	
+	\b Example
+	\code
+	// prepare to be uploaded
+	System_SetSamba(1);
+	\endcode
 */
 int System_SetSamba( int sure )
 {
@@ -167,9 +221,17 @@ int System_SetSamba( int sure )
 
 /**
 	Gives the board a name.
-  The name must be alpha-numeric - only letters and numbers.
+  The name must be alpha-numeric - only letters and numbers.  It can help you
+  determine one board from another when there are more than one connected to 
+  your system.
   @param name A string specifying the board's name
-	@return CONTROLLER_OK if OK.
+	@return 0 on success.
+	
+	\b Example
+	\code
+	// give the board a special name
+	System_SetName("my very special controller");
+	\endcode
 */
 int System_SetName( char* name )
 {
@@ -192,6 +254,11 @@ int System_SetName( char* name )
 /**
 	Read the board's name.
 	@return The board's name as a string.
+	
+	\b Example
+	\code
+	char* board_name = System_GetName();
+	\endcode
 */
 char* System_GetName( )
 {
@@ -233,7 +300,13 @@ char* System_GetName( )
 	Reset the board.
   Will reboot the board if the parameter sure is true.
   @param sure confirms the request is true.
-	@return CONTROLLER_OK if OK.
+	@return 0 on success.
+	
+	\b Example
+	\code
+	// reboot
+	System_SetReset(1);
+	\endcode
 */
 int System_SetReset( int sure )
 {
