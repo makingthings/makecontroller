@@ -105,6 +105,9 @@ Servo_* Servo;
   
   You can also specify the speed with which the motors will respond to new position commands - a high
   value will result in an immediate response, while a lower value can offer some smoothing when appropriate.
+  
+  See the servo section in the <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/servos">
+  Application Board overview</a> for more detailed info.
 * \ingroup Libraries
 * @{
 */
@@ -115,6 +118,12 @@ Servo_* Servo;
 	@param index An integer specifying which servo (0 - 3).
 	@param state An integer specifying the active state - 1 (active) or 0 (inactive).
 	@return Zero on success.
+	
+	\b Example
+	\code
+	// enable servo 2
+	Servo_SetActive(2, 1);
+	\endcode
 */
 int Servo_SetActive( int index, int state )
 {
@@ -151,6 +160,18 @@ int Servo_SetActive( int index, int state )
 	Check whether the I/O lines used by the servos are locked.
 	@param index An integer specifying which servo (0-3).
 	@return State - 1 (active) or 0 (inactive).
+	
+	\b Example
+	\code
+	if( Servo_GetActive(2) )
+	{
+	  // Servo 2 is active
+	}
+	else
+	{
+	  // Servo 2 is inactive
+	}
+	\endcode
 */
 int Servo_GetActive( int index )
 {
@@ -176,6 +197,12 @@ int Servo_GetActive( int index )
 	@param index An integer specifying which servo (0 - 3).
 	@param position An integer specifying the servo position (0 - 1023).
   @return status (0 = OK).
+  
+  \b Example
+	\code
+	// set servo 1 to midway through the "safe" range
+	Servo_SetPosition(1, 512);
+	\endcode
 */
 int Servo_SetPosition( int index, int position )
 {
@@ -205,6 +232,12 @@ int Servo_SetPosition( int index, int position )
 	@param index An integer specifying which servo (0 - 3).
 	@param speed An integer specifying the servo speed (0 - 1023).
   @return status (0 = OK).
+  
+  \b Example
+	\code
+	// set servo 1 half speed
+	Servo_SetSpeed(1, 512);
+	\endcode
 */
 int Servo_SetSpeed( int index, int speed )
 {
@@ -228,6 +261,12 @@ int Servo_SetSpeed( int index, int speed )
 	Read the current position of a servo motor.
 	@param index An integer specifying which servo (0 - 3).
   @return The position (0 - 1023), or 0 on error.
+  
+  \b Example
+	\code
+	int srv0_pos = Servo_GetPosition(0);
+	// now srv0_pos is the current position
+	\endcode
 */
 int Servo_GetPosition( int index )
 {
@@ -243,6 +282,12 @@ int Servo_GetPosition( int index )
 	Read the value previously set for the speed parameter.
 	@param index An integer specifying which servo (0 - 3).
   @return The speed (0 - 1023), or 0 on error.
+  
+  \b Example
+	\code
+	int srv0_speed = Servo_GetSpeed(0);
+	// now srv0_speed is the current speed
+	\endcode
 */
 int Servo_GetSpeed( int index )
 {
