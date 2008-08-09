@@ -32,7 +32,7 @@ About::About( ) : QDialog( )
   body.append("Thanks to Erik Gilling for <a href=\"http://oss.tekno.us/sam7utils\">sam7utils</a>.<br>");
   body.append("Thanks to Michael Fischer for <a href=\"http://www.yagarto.de\">Yagarto</a>.<br>");
   body.append("Application icon by <a href=\"http://cultivatestudios.com\">Cultivate Studios</a>.<br>");
-  body.append("Toolbar icons by <a href=\"http://www.mattballdesign.com\">Matt Ball</a> and <a href=\"http://colloquy.info\">Timothy Hatcher</a>.");
+  body.append("Toolbar icons by <a href=\"http://www.mattballdesign.com\">Matt Ball</a> and <a href=\"http://cultivatestudios.com\">Cultivate Studios</a>.");
 }
 
 

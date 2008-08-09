@@ -249,7 +249,7 @@ bool Builder::createMakefile(QString projectPath)
           tofile << "  -I" << filteredPath(projectDir.path()) << " \\" << endl; // always include the project directory
           
           // add in the directories for the required libraries
-          QDir libdir(QDir::current().filePath("libraries"));
+          QDir libdir(QDir::current().filePath("cores/makecontroller/libraries"));
           foreach(Library lib, libraries)
             tofile << "  -I" << filteredPath(libdir.filePath(lib.name)) << " \\" << endl;
           
@@ -268,7 +268,7 @@ bool Builder::createMakefile(QString projectPath)
           tofile << "CC=" << QDir::toNativeSeparators(toolsPath + "arm-elf-gcc") << endl;
           tofile << "OBJCOPY=" << QDir::toNativeSeparators(toolsPath + "arm-elf-objcopy") << endl;
           tofile << "ARCH=" << QDir::toNativeSeparators(toolsPath + "arm-elf-ar") << endl;
-          tofile << "CRT0=" + filteredPath("resources/cores/makecontroller/startup/boot.s") << endl;
+          tofile << "CRT0=" + filteredPath("cores/makecontroller/core/startup/boot.s") << endl;
           QString debug = (projInfo->debug()) ? "-g" : "";
           tofile << "DEBUG=" + debug << endl;
           QString optLevel = projInfo->optLevel();
@@ -283,7 +283,7 @@ bool Builder::createMakefile(QString projectPath)
           else
             optLevel = "-O0";
           tofile << "OPTIM=" + optLevel << endl;
-          tofile << "LDSCRIPT=" + filteredPath("resources/cores/makecontroller/startup/atmel-rom.ld") << endl << endl;
+          tofile << "LDSCRIPT=" + filteredPath("cores/makecontroller/core/startup/atmel-rom.ld") << endl << endl;
 
           // the rest is always the same...
           tofile << "CFLAGS= \\" << endl;
@@ -651,7 +651,7 @@ void Builder::loadDependencies(QString project)
 {
   QDir projDir(project);
   QStringList srcFiles = projDir.entryList(QStringList() << "*.c" << "*.h");
-  QDir libDir(QDir::current().filePath("libraries"));
+  QDir libDir(QDir::current().filePath("cores/makecontroller/libraries"));
   QStringList libDirs = libDir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
   
   foreach(QString filename, srcFiles)
@@ -722,7 +722,7 @@ QString Builder::filteredPath(QString path)
   QString filtered = path;
   if(!QDir::isAbsolutePath(path))
   {
-    if(path.startsWith("resources/cores"))
+    if(path.startsWith("cores"))
       filtered = QDir::current().filePath(path);
     else
       filtered = QDir(currentProjectPath).filePath(path);
