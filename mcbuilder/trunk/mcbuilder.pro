@@ -92,6 +92,27 @@ win32{
 }
 
 
+# *******************************************
+#              test suite
+# *******************************************
+
+test_suite {
+  TARGET = mcbuilder_test
+  DEFINES += MCBUILDER_TEST_SUITE
+  CONFIG += qtestlib
+  CONFIG -= release # always, no matter what it's set to above
+  DESTDIR = tests
+  INCLUDEPATH += tests
+  
+  SOURCES -= src/main.cpp
+  
+  SOURCES +=  tests/main.cpp \
+              tests/TestProjectManager.cpp \
+              tests/TestBuilder.cpp \
+              
+  HEADERS +=  tests/TestProjectManager.h \
+              tests/TestBuilder.h
+}
 
 
 

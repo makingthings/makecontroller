@@ -1,36 +1,8 @@
 
 
-#include <QtTest/QtTest>
+#include "TestProjectManager.h"
 #include <QDirIterator>
 #include <QDomDocument>
-#include "ProjectManager.h"
-
-/*
- Our test class declaration.
- each slot is automatically called as a test function.
-*/
-class TestMcbuilder : public QObject
-{
-	Q_OBJECT
-  ProjectManager projectManager;
-  QDir testDir;
-private slots:
-  void initTestCase();
-  void newProject();
-  void newProjectWithSpaces();
-  void newFile();
-  void newFileWithSpaces();
-  void saveProjectAs();
-  void saveFileAs();
-  void saveFileAsNoSuffix();
-  void saveFileAsWrongSuffix();
-  void removeFromProject();
-  void changeBuildType();
-  
-private:
-  void rmDirRecursive(QString path);
-  bool inProjectFile(QString projectpath, QString filepath);
-};
 
 /********************************************************************************
                                   UTILS
@@ -39,7 +11,7 @@ private:
 /*
   Utility for deleting file contents recursively
 */
-void TestMcbuilder::rmDirRecursive(QString path)
+void TestProjectManager::rmDirRecursive(QString path)
 {
   QDirIterator it(path, QDirIterator::Subdirectories);
   QDir dir(path);
@@ -60,7 +32,7 @@ void TestMcbuilder::rmDirRecursive(QString path)
 /*
   Confirm a given file is in a project file.
 */
-bool TestMcbuilder::inProjectFile(QString projectpath, QString filepath)
+bool TestProjectManager::inProjectFile(QString projectpath, QString filepath)
 {
   QDomDocument doc;
   QDir projDir(projectpath);
@@ -89,11 +61,9 @@ bool TestMcbuilder::inProjectFile(QString projectpath, QString filepath)
   - Clear out remnants of any previous tests
   - set the app directory to the appropriate spot
 */
-void TestMcbuilder::initTestCase()
+void TestProjectManager::initTestCase()
 {
   QDir currentDir = QDir::current();
-  currentDir.cdUp();
-  QDir::setCurrent(currentDir.path()); // so we can access resources in the source tree as if we were where the normal app is
   if(currentDir.exists("tests/test_debris")) // dump the contents
     rmDirRecursive(currentDir.filePath("tests/test_debris"));
   else
@@ -106,7 +76,7 @@ void TestMcbuilder::initTestCase()
 /*
   Create a new project.
 */
-void TestMcbuilder::newProject()
+void TestProjectManager::newProject()
 {
   QString projectName = "TestProject1";
   QString newProj = projectManager.createNewProject(testDir.filePath(projectName));
@@ -123,7 +93,7 @@ void TestMcbuilder::newProject()
 /*
   Confirm that the project filters spaces out of the project name appropriately.
 */
-void TestMcbuilder::newProjectWithSpaces()
+void TestProjectManager::newProjectWithSpaces()
 {
   QString projectName = "Test Project 2";
   QString newProj = projectManager.createNewProject(testDir.filePath(projectName));
@@ -137,7 +107,7 @@ void TestMcbuilder::newProjectWithSpaces()
 /*
   Confirm a new file is created and successfully added to the project file.
 */
-void TestMcbuilder::newFile()
+void TestProjectManager::newFile()
 {
   QFileInfo fi = projectManager.createNewFile(testDir.filePath("TestProject1"), testDir.filePath("TestProject1/testfile.c"));
   QDir dir(testDir.filePath("TestProject1"));
@@ -148,7 +118,7 @@ void TestMcbuilder::newFile()
 /*
   Confirm a file name with spaces is sanitized.
 */
-void TestMcbuilder::newFileWithSpaces()
+void TestProjectManager::newFileWithSpaces()
 {
   QString filename("spaces test 1.c");
   QDir dir(testDir.filePath("TestProject1"));
@@ -161,7 +131,7 @@ void TestMcbuilder::newFileWithSpaces()
 /*
   Confirm a project is copied correctly when it's saved as a new one.
 */
-void TestMcbuilder::saveProjectAs()
+void TestProjectManager::saveProjectAs()
 {
   QString newProj = projectManager.saveCurrentProjectAs(testDir.filePath("TestProject1"), testDir.filePath("Test Project 3"));
   QVERIFY(!newProj.isEmpty());
@@ -178,7 +148,7 @@ void TestMcbuilder::saveProjectAs()
 /*
   Confirm a file is copied properly and added to the project file.
 */
-void TestMcbuilder::saveFileAs()
+void TestProjectManager::saveFileAs()
 {
   QDir dir(testDir.filePath("TestProject1"));
   QFileInfo fi = projectManager.saveFileAs(dir.path(), dir.filePath("TestProject1.c"), dir.filePath("SavedAs.c"));
@@ -189,7 +159,7 @@ void TestMcbuilder::saveFileAs()
 /*
   We expect a filename with no suffix to be given a .c suffix by default
 */
-void TestMcbuilder::saveFileAsNoSuffix()
+void TestProjectManager::saveFileAsNoSuffix()
 {
   QDir dir(testDir.filePath("TestProject1"));
   QFileInfo fi = projectManager.saveFileAs(dir.path(), dir.filePath("TestProject1.c"), dir.filePath("SavedAsNoSuffix"));
@@ -200,7 +170,7 @@ void TestMcbuilder::saveFileAsNoSuffix()
 /*
   Only .c or .h are acceptable suffixes - should be changed to .c by default
 */
-void TestMcbuilder::saveFileAsWrongSuffix()
+void TestProjectManager::saveFileAsWrongSuffix()
 {
   QDir dir(testDir.filePath("TestProject1"));
   QFileInfo fi = projectManager.saveFileAs(dir.path(), dir.filePath("TestProject1.c"), dir.filePath("SavedAsBadSuffix.php"));
@@ -211,7 +181,7 @@ void TestMcbuilder::saveFileAsWrongSuffix()
 /*
   Confirm we can successfully remove a file from the project file.
 */
-void TestMcbuilder::removeFromProject()
+void TestProjectManager::removeFromProject()
 {
   QDir dir(testDir.filePath("TestProject1"));
   if(!projectManager.removeFromProjectFile(dir.path(), "SavedAsBadSuffix.c"))
@@ -219,7 +189,7 @@ void TestMcbuilder::removeFromProject()
   QVERIFY(!inProjectFile(dir.path(), "SavedAsBadSuffix.c"));
 }
 
-void TestMcbuilder::changeBuildType()
+void TestProjectManager::changeBuildType()
 {
   QDir dir(testDir.filePath("TestProject1"));
   QString buildtype = projectManager.fileBuildType(dir.path(), "testfile.c");
@@ -230,11 +200,8 @@ void TestMcbuilder::changeBuildType()
   QVERIFY(buildtype == "arm");
 }
 
-/*
- execute
-*/
-QTEST_MAIN(TestMcbuilder)
-#include "TestMcbuilder.moc"
+
+
 
 
 
