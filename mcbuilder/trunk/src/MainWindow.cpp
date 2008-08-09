@@ -912,8 +912,8 @@ void MainWindow::onExample(QAction *example)
 */
 void MainWindow::loadLibraries( )
 {
-  QDir dir = QDir::current().filePath("libraries");
-	if(dir.exists())
+  QDir dir = QDir::current().filePath("cores/makecontroller/libraries");
+  if(dir.exists())
   {
     QStringList libraries = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
     foreach(QString library, libraries)
