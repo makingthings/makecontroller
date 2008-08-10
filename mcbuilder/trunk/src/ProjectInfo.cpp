@@ -371,6 +371,32 @@ void ProjectInfo::onChangeBuildType(QString filename, QString newtype)
   projectManager.setFileBuildType(mainWindow->currentProjectPath(), filename, newtype);
 }
 
+void ProjectInfo::setIncludeOsc(bool osc)
+{
+  if(osc)
+    oscBox->setCheckState(Qt::Checked);
+  else
+    oscBox->setCheckState(Qt::Unchecked);
+}
+
+void ProjectInfo::setIncludeUsb(bool usb)
+{
+  if(usb)
+    usbBox->setCheckState(Qt::Checked);
+  else
+    usbBox->setCheckState(Qt::Unchecked);
+}
+
+void ProjectInfo::setIncludeNetwork(bool network)
+{
+  if(network)
+    networkBox->setCheckState(Qt::Checked);
+  else
+    networkBox->setCheckState(Qt::Unchecked);
+}
+
+
+
 
 
 
