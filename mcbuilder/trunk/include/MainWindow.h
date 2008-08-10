@@ -34,6 +34,10 @@
 #include "BuildLog.h"
 #include "ProjectManager.h"
 
+#ifdef MCBUILDER_TEST_SUITE
+#include "TestBuilder.h"
+#endif
+
 class Preferences;
 class Uploader;
 class Builder;
@@ -135,6 +139,10 @@ private slots:
   void onConsoleDoubleClick(QListWidgetItem *item);
   void onUpdate();
   void onVisitForum();
+  
+  #ifdef MCBUILDER_TEST_SUITE
+  friend class TestBuilder;
+  #endif
 };
 
 #endif // MAINWINDOW_H

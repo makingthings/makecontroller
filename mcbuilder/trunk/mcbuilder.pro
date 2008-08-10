@@ -97,14 +97,14 @@ win32{
 # *******************************************
 
 test_suite {
-  TARGET = mcbuilder_test
-  DEFINES += MCBUILDER_TEST_SUITE
-  CONFIG += qtestlib
-  CONFIG -= release # always, no matter what it's set to above
-  DESTDIR = tests
+  TARGET       = mcbuilder_test
+  DEFINES     += MCBUILDER_TEST_SUITE
+  CONFIG      += qtestlib
+  CONFIG      -= release # always, no matter what it's set to above
+  DESTDIR      = tests
   INCLUDEPATH += tests
   
-  SOURCES -= src/main.cpp
+  SOURCES -=  src/main.cpp
   
   SOURCES +=  tests/main.cpp \
               tests/TestProjectManager.cpp \
