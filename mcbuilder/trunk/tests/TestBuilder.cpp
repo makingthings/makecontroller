@@ -16,6 +16,7 @@
 *********************************************************************************/
 
 #include "TestBuilder.h"
+#include "ProjectInfo.h"
 
 #define TEST_PROJECT "resources/examples/Input-Output/AinToServo"
 
@@ -174,10 +175,10 @@ void TestBuilder::testConfigFile()
   QVERIFY( builder->compareConfigFile(currentProjectPath()) == false );
   
   // now let's change a few things in the config file, and confirm that we need to update it
-//  QVERIFY(configFile.open(QFile::Text));
-//  QTextStream in(&configFile);
-//  
-//  configFile.close();
+  ProjectInfo* pi = window->projInfo;
+  pi->setHeapSize( pi->heapsize() + 100 );
+  QVERIFY( builder->compareConfigFile(currentProjectPath()) == true );
+  
 }
 
 

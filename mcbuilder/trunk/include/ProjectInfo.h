@@ -26,6 +26,10 @@
 #include "MainWindow.h"
 #include "ProjectManager.h"
 
+#ifdef MCBUILDER_TEST_SUITE
+#include "TestBuilder.h"
+#endif
+
 // subclassed so we have access to the context menu events
 class FileBrowser : public QTreeWidget
 {
@@ -89,6 +93,16 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
     bool configChanged;
     void setNetworkSectionEnabled(bool state);
     void loadFileBrowser(QDir *projectDir, QDomDocument *projectFile);
+    // mostly for testing...
+    void setVersion(QString version) { versionEdit->setText(version); }
+    void setHeapSize(int heap) { heapSizeEdit->setText(QString::number(heap)); }
+    void setMempool(int mempool) { networkMempoolEdit->setText(QString::number(mempool)); }
+    void setUdp(int udp) { udpSocketEdit->setText(QString::number(udp)); }
+    void setTcp(int tcp) { tcpSocketEdit->setText(QString::number(tcp)); }
+    void setTcpListen(int tcplisten) { tcpServerEdit->setText(QString::number(tcplisten)); }
+    void setIncludeOsc(bool osc);
+    void setIncludeUsb(bool usb);
+    void setIncludeNetwork(bool network);
     
 	private slots:
 		void applyChanges( );
@@ -96,6 +110,10 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
     void onNetworkChanged(int state);
     void onRemoveFileRequest(QString filename);
     void onChangeBuildType(QString filename, QString newtype);
+  
+  #ifdef MCBUILDER_TEST_SUITE
+  friend class TestBuilder;
+  #endif
 };
 
 #endif // PROJECT_INFO_H
