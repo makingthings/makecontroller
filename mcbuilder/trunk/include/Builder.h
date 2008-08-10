@@ -25,14 +25,23 @@
 #include "ProjectInfo.h"
 #include "BuildLog.h"
 
+#ifdef MCBUILDER_TEST_SUITE
+#include "TestBuilder.h"
+#endif
+
 class MainWindow;
 class ProjectInfo;
 
 class Builder : public QProcess
 {
   Q_OBJECT
+  
+  #ifdef MCBUILDER_TEST_SUITE
+  friend class TestBuilder;
+  #endif
+  
 public:
-  Builder(MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog);
+  Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog );
   void build(QString projectName);
   void clean(QString projectName);
   void stop();
@@ -62,9 +71,9 @@ private:
   bool matchErrorOrWarning(QString msg);
   bool matchInFunction(QString msg);
   bool matchUndefinedRef(QString msg);
-  void ensureBuildDirExists(QString projPath);
+  QString ensureBuildDirExists(QString projPath);
   bool parseVersionNumber( int *maj, int *min, int *bld );
-  void loadDependencies(QString project);
+  void loadDependencies(QString libsDir, QString project);
   void getLibrarySources(QString libdir, QStringList *thmb, QStringList *arm);
   QString filteredPath(QString path);
 		

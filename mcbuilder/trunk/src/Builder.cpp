@@ -22,16 +22,19 @@
 #include "Builder.h"
 #include "ConsoleItem.h"
 
+#define LIBRARIES_DIR "cores/makecontroller/libraries"
+
 /*
 	Builder takes a project and turns it into a binary executable.
 	We need to generate a Makefile based on the general Preferences 
   and Properties for this project.
 */
-Builder::Builder(MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog) : QProcess( 0 )
+Builder::Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog ) : QProcess( 0 )
 {
   this->mainWindow = mainWindow;
   this->projInfo = projInfo;
   this->buildLog = buildLog;
+  
   connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(filterOutput()));
   connect(this, SIGNAL(readyReadStandardError()), this, SLOT(filterErrorOutput()));
   connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(nextStep(int, QProcess::ExitStatus)));
@@ -53,9 +56,8 @@ void Builder::build(QString projectName)
     return clean(projectName);
   }
   currentProjectPath = projectName;
-  ensureBuildDirExists(currentProjectPath);  // make sure we have a build dir
   setWorkingDirectory(QDir(currentProjectPath).filePath("build"));
-  loadDependencies(currentProjectPath);      // this loads up the list of libraries this project depends on
+  loadDependencies(LIBRARIES_DIR, currentProjectPath);      // this loads up the list of libraries this project depends on
   createMakefile(currentProjectPath);        // create a Makefile for this project, given the dependencies
   createConfigFile(currentProjectPath);      // create a config file based on the Properties for this project
   buildStep = BUILD;
@@ -106,12 +108,14 @@ void Builder::stop()
 
 /*
   If there's no build directory within a project, create one.
+  Return the build dir's path.
 */
-void Builder::ensureBuildDirExists(QString projPath)
+QString Builder::ensureBuildDirExists(QString projPath)
 {
   QDir dir(projPath);
   if(!dir.exists("build"))
     dir.mkdir("build");
+  return dir.filePath("build");
 }
 
 /*
@@ -183,7 +187,7 @@ void Builder::resetBuildProcess()
 bool Builder::createMakefile(QString projectPath)
 {
   bool retval = true;
-  QDir buildDir(projectPath + "/build");
+  QDir buildDir( ensureBuildDirExists(projectPath) );
   QFile makefile(buildDir.filePath("Makefile"));
   if(makefile.open(QIODevice::WriteOnly | QFile::Text))
   {
@@ -249,7 +253,7 @@ bool Builder::createMakefile(QString projectPath)
           tofile << "  -I" << filteredPath(projectDir.path()) << " \\" << endl; // always include the project directory
           
           // add in the directories for the required libraries
-          QDir libdir(QDir::current().filePath("cores/makecontroller/libraries"));
+          QDir libdir(QDir::current().filePath(LIBRARIES_DIR));
           foreach(Library lib, libraries)
             tofile << "  -I" << filteredPath(libdir.filePath(lib.name)) << " \\" << endl;
           
@@ -483,7 +487,7 @@ void Builder::filterOutput()
       QString outline = outstream.readLine();
       while(!outline.isNull())
       {
-        qDebug("msg: %s", qPrintable(outline));
+        //qDebug("msg: %s", qPrintable(outline));
         QStringList sl = outline.split(" ");
         if(sl.first().endsWith("arm-elf-gcc") && sl.at(1) == "-c")
         {
@@ -521,7 +525,7 @@ void Builder::filterErrorOutput()
       bool matched = false;
       while(!outline.isNull())
       {
-        qDebug("err: %s", qPrintable(outline));
+        //qDebug("err: %s", qPrintable(outline));
         QString line = outline;
         outline = outstream.readLine();
         // now try to match the output against common patterns...
@@ -647,11 +651,11 @@ bool Builder::matchUndefinedRef(QString error)
   directives and see if any of them match the libs in our libraries directory.
   Create a Library structure for each library and store it in our class member "libraries"
 */
-void Builder::loadDependencies(QString project)
+void Builder::loadDependencies(QString libsDir, QString project)
 {
   QDir projDir(project);
   QStringList srcFiles = projDir.entryList(QStringList() << "*.c" << "*.h");
-  QDir libDir(QDir::current().filePath("cores/makecontroller/libraries"));
+  QDir libDir(QDir::current().filePath(libsDir));
   QStringList libDirs = libDir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
   
   foreach(QString filename, srcFiles)
