@@ -58,6 +58,10 @@ void TestBuilder::loadLibs()
   QVERIFY(libs.at(0).name == QString("servo"));
   // only expect there to be one thumb src file - servo.c
   QVERIFY(libs.at(0).thumb_src.size() == 1);
+  QString servoFile = libs.at(0).thumb_src.at(0);
+  QVERIFY(QDir::isAbsolutePath(servoFile)); // make sure the path is absolute (not relative)
+  libDir.cd("servo");
+  QVERIFY(libDir.exists(servoFile));
   QVERIFY(libs.at(0).arm_src.size() == 0);
 }
 
