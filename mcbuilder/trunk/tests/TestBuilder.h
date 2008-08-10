@@ -43,6 +43,7 @@ private slots:
   void initTestCase();
   void loadLibs();
   void testMakefile();
+  void testConfigFile();
 };
 
 #endif // TEST_BUILDER_H

@@ -403,6 +403,120 @@ bool Builder::createConfigFile(QString projectPath)
 }
 
 /*
+  Check if we need to modify the config file for this project.
+  Compare the info currently in ProjectInfo with the info in config.h.
+  If they don't match or config.h doesn't exist, return true.
+  If we don't need to update/create config.h, return false.
+*/
+bool Builder::compareConfigFile(QString projectPath)
+{
+  bool retval = false;
+  QDir dir(projectPath);
+  QFile configFile(dir.filePath("config.h"));
+  if(configFile.open(QIODevice::ReadOnly|QFile::Text))
+  {
+    QTextStream in(&configFile);
+    int maj, min, bld;
+    parseVersionNumber( &maj, &min, &bld );
+    
+    bool network = false;
+    bool osc = false;
+    bool usb = false;
+    
+    QRegExp majorVersionExp("#define FIRMWARE_MAJOR_VERSION (\\d+)");
+    QRegExp minorVersionExp("#define FIRMWARE_MINOR_VERSION (\\d+)");
+    QRegExp buildVersionExp("#define FIRMWARE_BUILD_NUMBER (\\d+)");
+    
+    QRegExp heapExp("#define CONTROLLER_HEAPSIZE (\\d+)");
+    QRegExp nameExp("#define FIRMWARE_NAME \"(.+)\"");
+    
+    QRegExp mempoolExp("#define NETWORK_MEM_POOL (\\d+)");
+    QRegExp udpExp("#define NETWORK_UDP_CONNS (\\d+)");
+    QRegExp tcpExp("#define NETWORK_TCP_CONNS (\\d+)");
+    QRegExp tcpListenExp("#define NETWORK_TCP_LISTEN_CONNS (\\d+)");
+    
+    QString line = in.readLine();
+    while(!line.isNull())
+    {
+      if( line.contains(majorVersionExp) ) // major version number
+      {
+        int majVer = majorVersionExp.cap(1).toInt();
+        if(majVer != maj)
+          retval = true;
+      }
+      else if( line.contains(minorVersionExp) ) // minor version number
+      {
+        int minVer = minorVersionExp.cap(1).toInt();
+        if(minVer != min)
+          retval = true;
+      }
+      else if( line.contains(buildVersionExp) ) // build version number
+      {
+        int bldVer = buildVersionExp.cap(1).toInt();
+        if(bldVer != bld)
+          retval = true;
+      }
+      else if( line.contains(heapExp) ) // heap size
+      {
+        int heap = heapExp.cap(1).toInt();
+        if(heap != projInfo->heapsize())
+          retval = true;
+      }
+      else if( line.contains(nameExp) ) // project name
+      {
+        QString firmwareName = nameExp.cap(1);
+        if(firmwareName != dir.dirName())
+          retval = true;
+      }
+      else if( line.contains("#define MAKE_CTRL_USB") ) // include USB
+        usb = true;
+      else if( line.contains("#define OSC") ) // include OSC
+        osc = true;
+      else if( line.contains("#define MAKE_CTRL_NETWORK") ) // include network
+        network = true;
+      else if( line.contains(mempoolExp) ) // network memory pool size
+      {
+        int mempool = mempoolExp.cap(1).toInt();
+        if( mempool != projInfo->networkMempool() )
+          retval = true;
+      }
+      else if( line.contains(udpExp) ) // number of UDP connections
+      {
+        int udp = udpExp.cap(1).toInt();
+        if( udp != projInfo->udpSockets() )
+          retval = true;
+      }
+      else if( line.contains(tcpExp) ) // number of TCP sockets
+      {
+        int tcp = tcpExp.cap(1).toInt();
+        if( tcp != projInfo->tcpSockets() )
+          retval = true;
+      }
+      else if( line.contains(tcpListenExp) ) // number of TCP server sockets
+      {
+        int tcpListen = tcpListenExp.cap(1).toInt();
+        if( tcpListen != projInfo->tcpServers() )
+          retval = true;
+      }
+      
+      line = in.readLine();
+    }
+    
+    if(usb != projInfo->includeUsb() )
+      retval = true;
+    if(osc != projInfo->includeOsc() )
+      retval = true;
+    if(network != projInfo->includeNetwork() )
+      retval = true;
+    
+    configFile.close();
+  }
+  else
+    retval = true; // file doesn't exist or couldn't be read
+  return retval;
+}
+
+/*
   Convert a version number string to 3 ints.
   We expect the version string to be in the form X.Y.Z
 */

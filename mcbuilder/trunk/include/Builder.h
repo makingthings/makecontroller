@@ -68,6 +68,7 @@ private:
   void resetBuildProcess();
   bool createMakefile(QString projectPath);
   bool createConfigFile(QString projectPath);
+  bool compareConfigFile(QString projectPath);
   bool matchErrorOrWarning(QString msg);
   bool matchInFunction(QString msg);
   bool matchUndefinedRef(QString msg);

@@ -16,7 +16,6 @@
 *********************************************************************************/
 
 #include "TestBuilder.h"
-#include "ProjectInfo.h"
 
 #define TEST_PROJECT "resources/examples/Input-Output/AinToServo"
 
@@ -39,8 +38,8 @@ QString TestBuilder::currentProjectPath()
 */
 void TestBuilder::initTestCase()
 {
+  window->openProject(currentProjectPath());
   builder = window->builder;
-  builder->currentProjectPath = currentProjectPath();
 }
 
 /*
@@ -84,11 +83,13 @@ void TestBuilder::testMakefile()
   QVERIFY(projectFiles.size()); // make sure we got something
   
   QStringList makeFiles; // list of files in the Makefile
+  QStringList makeFileDirs; // list of include dirs in the Makefile
   QVERIFY(makefile.open(QFile::ReadOnly | QFile::Text));
   QTextStream in(&makefile);
   QString makeLine = in.readLine();
   static const int BEGIN = 0;
   static const int FILES = 1;
+  static const int DIRS = 2;
   int state = BEGIN;
   while(!makeLine.isNull())
   {
@@ -100,17 +101,20 @@ void TestBuilder::testMakefile()
         break;
       case FILES:
         if(makeLine.startsWith("INCLUDEDIRS"))
-          state = BEGIN;
-        else
-        {
-          if(!makeLine.isEmpty() && !makeLine.startsWith("ARM_SRC"))
-            makeFiles.append(makeLine.remove("\\").trimmed());
-        }
+          state = DIRS;
+        else if(!makeLine.isEmpty() && !makeLine.startsWith("ARM_SRC"))
+          makeFiles << makeLine.remove("\\").trimmed();
         break;
+      case DIRS:
+        if(makeLine.startsWith("CC"))
+          state = BEGIN;
+        else if(!makeLine.isEmpty())
+          makeFileDirs << makeLine.remove("\\").remove("-I").trimmed();
     }
     makeLine = in.readLine();
   }
   QVERIFY(makeFiles.size()); // make sure we got something
+  QVERIFY(makeFileDirs.size());
   
   // now, let's compare our lists
   // it's possible (probable) that the list of files in the makefiles list will be
@@ -127,6 +131,53 @@ void TestBuilder::testMakefile()
   }
   //qDebug("makefiles: %d, projectfiles: %d, matches: %d", makeFiles.size(), projectFiles.size(), matches);
   QVERIFY( matches == (makeFiles.size() - libraryFiles));
+  
+  // now check that the appropriate include directories have been added
+  QDomNodeList dirs = projectDoc.elementsByTagName("include_dirs").at(0).childNodes();
+  QStringList includeDirs;
+  for(int i = 0; i < dirs.count(); i++)
+    includeDirs.append(builder->filteredPath(dirs.at(i).toElement().text()));
+  QVERIFY(includeDirs.size()); // make sure we got something
+  
+  matches = 0;
+  int libraryDirs = 0;
+  foreach( QString dir, makeFileDirs )
+  {
+    if(includeDirs.contains(dir))
+      matches++;
+    else if(dir.contains("cores/makecontroller/libraries"))
+      libraryDirs++;
+  }
+  //qDebug("makefile dirs: %d, project file dirs: %d, matches: %d, library dirs: %d", 
+  //         makeFileDirs.size(), includeDirs.size(), matches, libraryDirs);
+  
+  // one additional difference is that the Makefile should include the project dir itself as an include dir
+  // whereas this is not specificed in the project file
+  QVERIFY(matches == (makeFileDirs.size() - libraryDirs - 1));
+}
+
+/*
+  Create a config file.
+  Make sure it includes the appropriate elements, based on the 
+  ProjectInfo.
+*/
+void TestBuilder::testConfigFile()
+{
+  QDir projDir(currentProjectPath());
+  QFile configFile(projDir.filePath("config.h"));
+  
+  if( configFile.exists() )
+    projDir.remove("config.h"); // get rid of the file, so we can test creating it
+
+  builder->createConfigFile(currentProjectPath());
+  // we haven't changed anything in the file yet, so this should return false
+  QVERIFY( builder->compareConfigFile(currentProjectPath()) == false );
+  
+  // now let's change a few things in the config file, and confirm that we need to update it
+//  QVERIFY(configFile.open(QFile::Text));
+//  QTextStream in(&configFile);
+//  
+//  configFile.close();
 }
 
 
