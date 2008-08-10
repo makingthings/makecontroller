@@ -44,6 +44,8 @@ private slots:
   void loadLibs();
   void testMakefile();
   void testConfigFile();
+  void testClean();
+  void testBuild();
 };
 
 #endif // TEST_BUILDER_H

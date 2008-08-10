@@ -181,4 +181,30 @@ void TestBuilder::testConfigFile()
   
 }
 
+void TestBuilder::testClean()
+{
+  qRegisterMetaType<QProcess::ExitStatus>("QProcess::ExitStatus");
+  qRegisterMetaType<QProcess::ProcessError>("QProcess::ProcessError");
+  QSignalSpy finishedSpy(builder, SIGNAL(finished(int, QProcess::ExitStatus)));
+  QSignalSpy errorSpy(builder, SIGNAL(error(QProcess::ProcessError)));
+  
+  builder->clean(currentProjectPath());
+  while(builder->state() != QProcess::NotRunning) // wait until the clean is complete
+    QTest::qWait(10);
+  
+  QVERIFY( errorSpy.count() == 0); // make sure we didn't get any errors
+  for( int i = 0; i < finishedSpy.count(); i++ )
+  {
+    int exitcode = finishedSpy.at(i).at(0).toInt();
+    int exitstatus = finishedSpy.at(i).at(1).toInt();
+    if( exitcode != 0 || exitstatus != QProcess::NormalExit )
+      QFAIL("clean exited unhappily.");
+  }
+}
+
+void TestBuilder::testBuild( )
+{
+  
+}
+
 
