@@ -190,7 +190,7 @@ void TestBuilder::testClean()
   
   builder->clean(currentProjectPath());
   while(builder->state() != QProcess::NotRunning) // wait until the clean is complete
-    QTest::qWait(10);
+    QTest::qWait(100);
   
   QVERIFY( errorSpy.count() == 0); // make sure we didn't get any errors
   for( int i = 0; i < finishedSpy.count(); i++ )
@@ -198,13 +198,45 @@ void TestBuilder::testClean()
     int exitcode = finishedSpy.at(i).at(0).toInt();
     int exitstatus = finishedSpy.at(i).at(1).toInt();
     if( exitcode != 0 || exitstatus != QProcess::NormalExit )
-      QFAIL("clean exited unhappily.");
+      QFAIL("make/clean exited unhappily.");
   }
+  
+  QDir projDir(currentProjectPath());
+  QString shortname = projDir.dirName().toLower();
+  projDir.cd("build");
+  QVERIFY(!projDir.exists(shortname + ".bin"));
+  QVERIFY(!projDir.exists(shortname + ".elf"));
+  QVERIFY(!projDir.exists(shortname + "_o.map"));
 }
 
 void TestBuilder::testBuild( )
 {
+  QSignalSpy finishedSpy(builder, SIGNAL(finished(int, QProcess::ExitStatus)));
+  QSignalSpy errorSpy(builder, SIGNAL(error(QProcess::ProcessError)));
   
+  builder->build(currentProjectPath());
+  while(builder->state() != QProcess::NotRunning) // wait until the build is complete
+    QTest::qWait(100);
+  
+  QVERIFY( errorSpy.count() == 0); // make sure we didn't get any errors
+  for( int i = 0; i < finishedSpy.count(); i++ )
+  {
+    int exitcode = finishedSpy.at(i).at(0).toInt();
+    int exitstatus = finishedSpy.at(i).at(1).toInt();
+    if( exitcode != 0 || exitstatus != QProcess::NormalExit )
+    {
+      qWarning("exit code: %d, exit status: %d", exitcode, exitstatus);
+      QFAIL("make/build exited unhappily.");
+    }
+  }
+  
+  // now let's make sure our .bin and friends are where we expect them
+  QDir projDir(currentProjectPath());
+  QString shortname = projDir.dirName().toLower();
+  projDir.cd("build");
+  QVERIFY(projDir.exists(shortname + ".bin"));
+  QVERIFY(projDir.exists(shortname + ".elf"));
+  QVERIFY(projDir.exists(shortname + "_o.map"));
 }
 
 
