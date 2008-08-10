@@ -39,8 +39,8 @@ AppUpdater::AppUpdater( ) : QDialog( )
 	buttonLayout.addStretch( );
 	buttonLayout.addWidget( &acceptButton );
 	
-//	mcbuilderIcon.load( ":mticon64.png" );
-//	icon.setPixmap( mcbuilderIcon );
+	mcbuilderIcon.load( ":icons/mcbuilder96.png" );
+	icon.setPixmap( mcbuilderIcon );
 	icon.setAlignment( Qt::AlignHCenter );
 	
 	headline.setWordWrap( false );
