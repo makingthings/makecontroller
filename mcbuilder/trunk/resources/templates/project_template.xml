@@ -58,6 +58,7 @@
     <file type="thumb">cores/makecontroller/core/lwip/src/api/tcpip.c</file>
     <file type="thumb">cores/makecontroller/core/lwip/src/api/api_msg.c</file>
     <file type="thumb">cores/makecontroller/core/lwip/src/api/err.c</file>
+    <file type="thumb">cores/makecontroller/core/lwip/src/api/netbuf.c</file>
     <file type="thumb">cores/makecontroller/core/lwip/src/api/api_lib.c</file>
     <file type="thumb">cores/makecontroller/core/lwip/src/netif/etharp.c</file>
     <file type="thumb">cores/makecontroller/core/lwip/contrib/port/FreeRTOS/AT91SAM7X/sys_arch.c</file>
