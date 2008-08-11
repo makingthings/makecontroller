@@ -224,6 +224,9 @@ int XBee_GetPacket( XBeePacket* packet, int timeout )
 
   do
   {
+    if( Serial_GetErrors( 0, 0, 0 ) )
+      Serial_ClearErrors();
+
     while( Serial_GetReadable( ) )
     {
       int newChar = Serial_GetChar( );
@@ -249,6 +252,7 @@ int XBee_GetPacket( XBeePacket* packet, int timeout )
             packet->rxState = XBEE_PACKET_RX_START;
           else
             packet->rxState = XBEE_PACKET_RX_PAYLOAD;
+          packet->crc = 0;
           break;
         case XBEE_PACKET_RX_PAYLOAD:
           *packet->dataPtr++ = newChar;
