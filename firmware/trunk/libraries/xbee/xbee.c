@@ -246,8 +246,9 @@ int XBee_GetPacket( XBeePacket* packet, int timeout )
         case XBEE_PACKET_RX_LENGTH_2:
           packet->length += newChar;
           if( packet->length > XBEE_MAX_PACKET_SIZE ) // in case we somehow get some garbage
-            packet->length = XBEE_MAX_PACKET_SIZE;
-          packet->rxState = XBEE_PACKET_RX_PAYLOAD;
+            packet->rxState = XBEE_PACKET_RX_START;
+          else
+            packet->rxState = XBEE_PACKET_RX_PAYLOAD;
           break;
         case XBEE_PACKET_RX_PAYLOAD:
           *packet->dataPtr++ = newChar;
@@ -436,7 +437,6 @@ int XBeeConfig_RequestPacketApiMode( )
   @param cmd The 2-character AT command.
   @param params A pointer to the buffer containing the data to be sent.
   @param datalength The number of bytes to send from the params buffer.
-	@return An integer specifying the active state - 1 (active) or 0 (inactive).
   
   \par Example - Writing
   \code
