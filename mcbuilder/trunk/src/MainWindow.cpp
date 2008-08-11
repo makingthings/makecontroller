@@ -528,7 +528,6 @@ void MainWindow::openProject(QString projectPath)
     }
     setWindowTitle( projectName + "[*] - mcbuilder");
     updateRecentProjects(projectPath);
-    builder->onProjectUpdated();
     projInfo->load();
     buildLog->clear();
 	}

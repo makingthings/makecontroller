@@ -39,9 +39,6 @@ Builder::Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *build
   connect(this, SIGNAL(readyReadStandardError()), this, SLOT(filterErrorOutput()));
   connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(nextStep(int, QProcess::ExitStatus)));
   connect(this, SIGNAL(error(QProcess::ProcessError)), this, SLOT(onBuildError(QProcess::ProcessError)));
-  
-  cleanFirst = false;
-  buildPending = false;
 }
 
 /*
@@ -49,18 +46,16 @@ Builder::Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *build
 */
 void Builder::build(QString projectName)
 {
-  if(cleanFirst)
-  {
-    cleanFirst = false;
-    buildPending = true;
-    return clean(projectName);
-  }
   currentProjectPath = projectName;
   QDir dir(currentProjectPath);
   setWorkingDirectory(dir.filePath("build"));
   loadDependencies(LIBRARIES_DIR, currentProjectPath);      // this loads up the list of libraries this project depends on
+  if(compareConfigFile(currentProjectPath))
+  {
+    createConfigFile(currentProjectPath);      // create a config file based on the Properties for this project
+    qDebug("creating/updating config file");
+  }
   createMakefile(currentProjectPath);        // create a Makefile for this project, given the dependencies
-  createConfigFile(currentProjectPath);      // create a config file based on the Properties for this project
   buildStep = BUILD;
   currentProcess = "make";
   setEnvironment(QProcess::systemEnvironment());
@@ -95,11 +90,6 @@ void Builder::clean(QString projectName)
   if(!makePath.isEmpty() && !makePath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
     makePath += "/";
   start(QDir::toNativeSeparators(makePath + "make"), args);
-}
-
-void Builder::onProjectUpdated()
-{
-  cleanFirst = true;
 }
 
 void Builder::stop()
@@ -160,11 +150,6 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
     }
     case CLEAN:
       mainWindow->onCleanComplete();
-      if(buildPending)
-      {
-        buildPending = false;
-        build(currentProjectPath);
-      }
       break;
   }
   resetBuildProcess();
@@ -320,10 +305,10 @@ bool Builder::createMakefile(QString projectPath)
           tofile << "$(OUTPUT).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CRT0)" << endl;
           tofile << "\t" << "$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles $(CRT0) $(LINKER_FLAGS)" << endl << endl;
 
-          tofile << "$(THUMB_OBJ) : %.o : %.c" << endl;
+          tofile << "$(THUMB_OBJ) : %.o : %.c ../config.h" << endl;
           tofile << "\t" << "$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@" << endl << endl;
 
-          tofile << "$(ARM_OBJ) : %.o : %.c" << endl;
+          tofile << "$(ARM_OBJ) : %.o : %.c ../config.h" << endl;
           tofile << "\t" << "$(CC) -c $(CFLAGS) $< -o $@" << endl << endl;
                   
           tofile << "clean :" << endl;
