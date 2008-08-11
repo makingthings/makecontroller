@@ -46,6 +46,12 @@ int Serial_GetChar( void );
 int Serial_Write( uchar *buffer, int count, int timeout );
 int Serial_Read( uchar* buffer, int count, int timeout );
 
+void Serial_Flush( void );
+void Serial_ClearErrors( void );
+bool Serial_GetErrors( bool* overrun, bool* frame, bool* parity );
+void Serial_StartBreak( void );
+void Serial_StopBreak( void );
+
 /* OSC Interface */
 const char* SerialOsc_GetName( void );
 int SerialOsc_ReceiveMessage( int channel, char* message, int length );

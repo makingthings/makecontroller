@@ -388,6 +388,146 @@ int Serial_GetHardwareHandshake( )
   return Serial.hardwareHandshake;
 }
 
+/**
+  Clear out the serial port.
+  Ensures that there are no bytes in the incoming buffer.
+
+  \b Example
+  \code
+  Serial_SetActive(1);
+  Serial_Flush( ); // after starting up, make sure there's no junk in there
+  \endcode
+*/
+void Serial_Flush()
+{
+  char c;
+  while( Serial_GetReadable() )
+    c = Serial_GetChar( );
+}
+
+/**
+  Reset the error flags in the serial system.
+  In the normal course of operation, the serial system may experience
+  a variety of different error modes, including buffer overruns, framing 
+  and parity errors, and more.  When in an error state, the serial system
+  may behave differently than normal.
+
+  Serial_ClearErrors() resets the appropriate status bits to a state of
+  normal operation.  It will only reset the error states if there are 
+  currently any errors.
+  @see Serial_GetErrors
+  
+  \b Example
+
+  \code 
+  Serial_ClearErrors();
+  // that's all there is to it.
+  \endcode
+*/
+void Serial_ClearErrors( )
+{
+  if( AT91C_BASE_US0->US_CSR & (AT91C_US_OVRE | AT91C_US_FRAME | AT91C_US_PARE) )
+    AT91C_BASE_US0->US_CR = AT91C_US_RSTSTA; // clear all errors
+}
+
+/**
+  Read whether there are any errors.
+  We can check for three kinds of errors in the serial system:
+  - buffer overrun
+  - framing error
+  - parity error
+  
+  Each parameter will be set with a true or a false given the current
+  error state.  If you don't care to check one of the parameters, just
+  pass in 0.
+
+  @param overrun A bool that will be set with the overrun error state.
+  @param frame A bool that will be set with the frame error state.
+  @param parity A bool that will be set with the parity error state.
+  @return True if there were any errors, false if there were no errors.
+  @see Serial_ClearErrors( )
+
+  \b Example
+  \code
+  bool over, fr, par;
+  if( Serial_GetErrors( &over, &fr, &par ) )
+  {
+    // if we wanted, we could just clear them all right here with Serial_ClearErrors()
+    // but here we'll check to see what kind of errors we got
+    if(over)
+    {
+      // then we have an overrun error
+    }
+    if(fr)
+    {
+      // then we have a framing error
+    }
+    if(par)
+    {
+      // then we have a parity error
+    }
+  }
+  else
+  {
+    // there were no errors
+  }
+  \endcode
+*/
+bool Serial_GetErrors( bool* overrun, bool* frame, bool* parity )
+{
+  bool retval = false;
+
+  bool ovre = AT91C_BASE_US0->US_CSR & AT91C_US_OVRE;
+  if(ovre)
+    retval = true;
+  if(overrun)
+    *overrun = ovre;
+
+  bool fr = AT91C_BASE_US0->US_CSR & AT91C_US_FRAME;
+  if(fr)
+    retval = true;
+  if(frame)
+    *frame = fr;
+
+  bool par = AT91C_BASE_US0->US_CSR & AT91C_US_PARE;
+  if(par)
+    retval = true;
+  if(parity)
+    *parity = par;
+  
+  return retval;
+}
+
+/**
+  Start the transimission of a break.
+  This has no effect if a break is already in progress.
+
+  \b Example
+  
+  \code 
+  Serial_StartBreak();
+  \endcode
+*/
+void Serial_StartBreak( )
+{
+  AT91C_BASE_US0->US_CR = AT91C_US_STTBRK;
+}
+
+/**
+  Stop the transimission of a break.
+  This has no effect if there's not a break already in progress.
+
+  \b Example
+  
+  \code 
+  Serial_StopBreak();
+  \endcode
+*/
+void Serial_StopBreak( )
+{
+  AT91C_BASE_US0->US_CR = AT91C_US_STPBRK;
+}
+
 /** @}
 */
 
