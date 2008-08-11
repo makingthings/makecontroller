@@ -37,7 +37,17 @@ BuildLog::BuildLog( ) : QDialog( )
 */
 void BuildLog::append(QString msg)
 {
+  if(msg.startsWith("*****************"))
+    fmt.setForeground(Qt::black);
+  else
+    fmt.setForeground(QColor(75, 75, 75)); // gray
+  
+  if(!msg.endsWith("\n")) // for some reason, block coloring only seems to happen with new lines...shrug
+    msg.append("\n");
+  
+  logConsole->textCursor().setBlockCharFormat(fmt);
   logConsole->appendPlainText(msg);
+  
   // scroll to the bottom
   logConsole->moveCursor(QTextCursor::End);
   logConsole->ensureCursorVisible();

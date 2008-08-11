@@ -56,7 +56,8 @@ void Builder::build(QString projectName)
     return clean(projectName);
   }
   currentProjectPath = projectName;
-  setWorkingDirectory(QDir(currentProjectPath).filePath("build"));
+  QDir dir(currentProjectPath);
+  setWorkingDirectory(dir.filePath("build"));
   loadDependencies(LIBRARIES_DIR, currentProjectPath);      // this loads up the list of libraries this project depends on
   createMakefile(currentProjectPath);        // create a Makefile for this project, given the dependencies
   createConfigFile(currentProjectPath);      // create a config file based on the Properties for this project
@@ -68,7 +69,7 @@ void Builder::build(QString projectName)
     makePath += "/";
   start(makePath + "make");
   QString buildmsg("***************************************************************\n");
-  buildmsg += "  mcbuilder - building " + projectName + "\n";
+  buildmsg += "  mcbuilder - building " + dir.dirName() + "\n";
   buildmsg += QDateTime::currentDateTime().toString("  MMM d, yyyy h:m ap") + "\n";
   buildmsg += "***************************************************************";
   buildLog->append(buildmsg);

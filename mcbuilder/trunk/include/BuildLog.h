@@ -29,6 +29,9 @@ public:
   BuildLog();
   void append(QString msg);
   void clear( );
+  
+private:
+  QTextCharFormat fmt;
 };
 
 #endif // BUILD_LOG_H
