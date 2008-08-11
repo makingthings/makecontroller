@@ -56,8 +56,6 @@ struct Io_
 
 static void Io_Init( void );
 static void Io_Deinit( void );
-static int Io_SetActive( int index, int value );
-static int Io_GetActive( int index );
 static int Io_SetOutput( int index );
 static int Io_SetInput( int index );
 static int Io_PullupEnable( int index );
@@ -252,18 +250,25 @@ int  Io_StopBits( longlong bits )
   return CONTROLLER_OK;
 }
 
-// static
-int Io_SetActive( int index, int value )
-{
-  if ( value )
-    return Io_Start( index, false );
+/**
+  Read whether an IO pin is in use.
+  @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
+  @param output Specify 1 for an output, or 0 for an input.
+  @return non-zero if active, 0 if inactive
+  
+  \b Example
+  \code
+  if( Io_GetActive( IO_PA23 ) )
+  {
+		// it's already active
+  }
   else
-    return Io_Stop( index );
-  return CONTROLLER_OK;
-}
-
-// static
-int Io_GetActive( int index )
+  {
+    // not yet active
+  }
+  \endcode
+*/
+bool Io_GetActive( int index )
 {
   if ( index < 0 || index > IO_PIN_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
@@ -940,8 +945,11 @@ int IoOsc_IndexIntPropertySet( int index, int property, int value )
 {
   switch ( property )
   {
-    case 0: 
-      Io_SetActive( index, value );
+    case 0:
+      if(value)
+        Io_Start( index, false );
+      else
+        Io_Stop( index );
       break;      
     case 1: 
       Io_SetValue( index, value );

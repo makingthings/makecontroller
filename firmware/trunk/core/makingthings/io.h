@@ -31,6 +31,7 @@
 
 int Io_Start( int index, bool lock );
 int Io_Stop( int index );
+bool Io_GetActive( int index );
 int Io_StartBits( longlong bits, bool lock );
 int Io_StopBits( longlong bits );
 
