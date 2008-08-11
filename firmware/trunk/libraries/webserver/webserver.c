@@ -826,6 +826,45 @@ char* WebServer_GetRequestAddress( char* request, int length, char** requestType
 
 #ifdef OSC // Webserver OSC interface
 
+/** \defgroup webserverosc Web Server - OSC
+  Configure the Web Server  via OSC.
+  \ingroup OSC
+
+  \section devices Devices
+    There is only one Web Server system, so a device index is not used.
+   
+  \section properties Properties
+  The Web Server system has the following properties
+  - active
+  - listenport
+
+  \section details Property Details
+
+  \b Active
+
+  The \b active property sets whether the web server on the Make Controller is running or not.
+  The default web server does not really do anything too interesting, but provides a count of the
+  number of requests it has served.  You can access the web server by typing the board's IP address
+  into your favorite browser.  You can check the board's IP address in mchelper.
+
+  To turn the web server on, send the message
+  \code /webserver/active 1 \endcode
+  then enter the board's IP address into the address bar of your favorite web browser.  Send the message
+  \code /network/webserver 0 \endcode
+  to turn the webserver off.
+
+  <b> Listen Port </b>
+
+  The \b listenport property sets which port the web server should listen on for incoming requests.  By default
+  this is set to 80, the standard port for HTTP.
+
+  To listen on port 8080, send the message
+  \code /webserver/listenport 8080 \endcode
+
+  Note that the server will most likely already be listening on the previous port, and it won't update its port
+  until it serves that last request it's waiting for.
+*/
+
 #include "osc.h"
 static char* WebServerOsc_Name = "webserver";
 static char* WebServerOsc_PropertyNames[] = { "active", "listenport", 0 }; // must have a trailing 0

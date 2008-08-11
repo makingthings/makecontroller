@@ -253,7 +253,6 @@ int  Io_StopBits( longlong bits )
 /**
   Read whether an IO pin is in use.
   @param index An int specifying which IO line.  Use the appropriate entry from the \ref IoIndices
-  @param output Specify 1 for an output, or 0 for an input.
   @return non-zero if active, 0 if inactive
   
   \b Example
