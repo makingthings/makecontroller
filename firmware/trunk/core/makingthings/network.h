@@ -15,15 +15,23 @@
 
 *********************************************************************************/
 
-/*
-	NETWORK.h
-
-  MakingThings
+/**
+  @file
+	Network system defines.
 */
 
 #ifndef NETWORK_H
 #define NETWORK_H
 
+/**
+  \def IP_ADDRESS( a, b, c, d )
+  Generate an address appropriate for Socket functions from 4 integers.
+  \b Example
+  \code
+  void* sock = Socket( IP_ADDRESS( 192, 168, 0, 200 ), 80 );
+  \endcode
+  \ingroup Sockets
+*/
 // lwIP socket addresses are formatted this way...
 #define IP_ADDRESS( a, b, c, d ) ( ( (int)a << 24 ) + ( (int)b << 16 ) + ( (int)c << 8 ) + (int)d )
 #define IP_ADDRESS_A( address )  ( ( (int)address >> 24 ) & 0xFF )
