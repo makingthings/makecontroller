@@ -43,6 +43,7 @@ Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
 									<< "\\bshort\\b" << "\\bsigned\\b" << "\\bstatic\\b" 
 									<< "\\btypedef\\b" << "\\btypename\\b" << "\\bif\\b"
 									<< "\\bunion\\b" << "\\bunsigned\\b" << "\\bbool\\b"
+                  << "\\bnull\\b" << "\\bNULL\\b"
 									<< "\\bvoid\\b" << "\\bvolatile\\b" << "\\bstruct\\b";
                   
 	foreach (QString pattern, keywordPatterns) {
