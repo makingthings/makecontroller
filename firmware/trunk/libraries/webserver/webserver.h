@@ -40,22 +40,25 @@
 
 /**
   A structure that represents a key-value pair in an HTML form.
+  This structure only points at the data received by the web server - it does not copy it.  So be sure
+  to note that this structure becomes invalid as soon as the data used to create is gone.
   \ingroup webserver
 */
 typedef struct
 {
-  char *key;
-  char *value;
+  char *key;   /**< A pointer to the key of this element. */ 
+  char *value; /**< A pointer to the value of this element. */
 } HtmlFormElement;
 
 /**
   A structure that represents a collection of HtmlFormElement structures.
+  If you need a larger form, you can adjust \b MAX_FORM_ELEMENTS in webserver.h it accommodates 10 by default.
   \ingroup webserver
 */
 typedef struct
 {
-  HtmlFormElement elements[MAX_FORM_ELEMENTS];
-  int count;
+  HtmlFormElement elements[MAX_FORM_ELEMENTS]; /**< An array of form elements. */
+  int count;                                   /**< The number of form elements contained in this form. */
 } HtmlForm;
 
 // Web Server Task
