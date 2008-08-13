@@ -157,6 +157,21 @@ window.onload = initDynSections;
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__serial.html#g4fefdaf9c2c9573e475157c00c81537a">Serial_GetHardwareHandshake</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns whether hardware handshaking is being employed or not.  <a href="group__serial.html#g4fefdaf9c2c9573e475157c00c81537a"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__serial.html#gd20f0e0e6e94a2eb295d8b031e8654d0">Serial_Flush</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Clear out the serial port.  <a href="group__serial.html#gd20f0e0e6e94a2eb295d8b031e8654d0"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__serial.html#gc368f134feb83c2e53c8fddd174383c9">Serial_ClearErrors</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Reset the error flags in the serial system.  <a href="group__serial.html#gc368f134feb83c2e53c8fddd174383c9"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__serial.html#g6bcf588659024eeac864cc28bdb25d28">Serial_GetErrors</a> (bool *overrun, bool *frame, bool *parity)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Read whether there are any errors.  <a href="group__serial.html#g6bcf588659024eeac864cc28bdb25d28"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__serial.html#geec26c7427674cc573de061cf2bdf93b">Serial_StartBreak</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Start the transimission of a break.  <a href="group__serial.html#geec26c7427674cc573de061cf2bdf93b"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__serial.html#ged714067a7af33d94b729b374391f1a6">Serial_StopBreak</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Stop the transimission of a break.  <a href="group__serial.html#ged714067a7af33d94b729b374391f1a6"></a><br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 Functions for working with the Serial Interface on the Make Controller Board. 
@@ -186,7 +201,7 @@ Functions for working with the Serial Interface on the Make Controller Board.
   <p class="footer">The Make Controller Kit is an open source project maintained by <a href="http://www.makingthings.com">MakingThings</a>.<br />
     MakingThings code is released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 license</a>.<br />
     Bug tracker, development wiki and status can be found at <a href="http://dev.makingthings.com">http://dev.makingthings.com</a>.<br />
-		This document was last updated on 6 Aug 2008.
+		This document was last updated on 13 Aug 2008.
 </p>
 </div>
 <!-- Google Analytics Code -->

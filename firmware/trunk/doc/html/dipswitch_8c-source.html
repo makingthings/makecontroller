@@ -129,8 +129,8 @@ window.onload = initDynSections;
 <a name="l00030"></a>00030 
 <a name="l00031"></a>00031 <span class="preprocessor">#define DIPSWITCH_DEVICE 2</span>
 <a name="l00032"></a>00032 <span class="preprocessor"></span>
-<a name="l00033"></a>00033 <span class="keywordtype">int</span> DipSwitch_Start( <span class="keywordtype">void</span> );
-<a name="l00034"></a>00034 <span class="keywordtype">int</span> DipSwitch_Stop( <span class="keywordtype">void</span> );
+<a name="l00033"></a>00033 <span class="keyword">static</span> <span class="keywordtype">int</span> DipSwitch_Start( <span class="keywordtype">void</span> );
+<a name="l00034"></a>00034 <span class="keyword">static</span> <span class="keywordtype">int</span> DipSwitch_Stop( <span class="keywordtype">void</span> );
 <a name="l00035"></a>00035 
 <a name="l00036"></a>00036 <span class="keyword">typedef</span> <span class="keyword">struct</span>
 <a name="l00037"></a>00037 {
@@ -273,7 +273,7 @@ window.onload = initDynSections;
 <a name="l00174"></a>00174   <span class="keywordflow">if</span>( val &lt; 0 )
 <a name="l00175"></a>00175     <span class="keywordflow">return</span> <span class="keyword">false</span>;
 <a name="l00176"></a>00176   <span class="keywordflow">else</span>
-<a name="l00177"></a>00177     <span class="keywordflow">return</span> ((val &lt;&lt; channel) &amp; 0x1);
+<a name="l00177"></a>00177     <span class="keywordflow">return</span> ((val &gt;&gt; channel) &amp; 0x1);
 <a name="l00178"></a>00178 }
 <a name="l00179"></a>00179 <span class="comment"></span>
 <a name="l00180"></a>00180 <span class="comment">/** @}</span>
@@ -497,7 +497,7 @@ window.onload = initDynSections;
   <p class="footer">The Make Controller Kit is an open source project maintained by <a href="http://www.makingthings.com">MakingThings</a>.<br />
     MakingThings code is released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 license</a>.<br />
     Bug tracker, development wiki and status can be found at <a href="http://dev.makingthings.com">http://dev.makingthings.com</a>.<br />
-		This document was last updated on 6 Aug 2008.
+		This document was last updated on 13 Aug 2008.
 </p>
 </div>
 <!-- Google Analytics Code -->

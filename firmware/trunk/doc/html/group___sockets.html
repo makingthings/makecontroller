@@ -105,6 +105,10 @@ window.onload = initDynSections;
 </h1>The Sockets system provides a simple interface for creating, reading and writing over both TCP and UDP.  
 <a href="#_details">More...</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
+<tr><td colspan="2"><br><h2>Defines</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___sockets.html#g54087ee7398710212cc4e6bbaa861b9e">IP_ADDRESS</a>(a, b, c, d)&nbsp;&nbsp;&nbsp;( ( (int)a &lt;&lt; 24 ) + ( (int)b &lt;&lt; 16 ) + ( (int)c &lt;&lt; 8 ) + (int)d )</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Generate an address appropriate for Socket functions from 4 integers.  <a href="#g54087ee7398710212cc4e6bbaa861b9e"></a><br></td></tr>
 <tr><td colspan="2"><br><h2>Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">void *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___sockets.html#g7e4b76e6d4a93aa7c281e5cbba6cc584">Socket</a> (int address, int port)</td></tr>
 
@@ -151,6 +155,41 @@ The Sockets system provides a simple interface for creating, reading and writing
 <p>
 This subsystem is a light wrapper around LwIP, the open source TCP/IP stack used by the Make Controller Kit. There are 3 groups of socket functions:<ul>
 <li>DatagramSocket - sockets for <b>UDP</b> communication</li><li>Socket - sockets for <b>TCP</b> communication</li><li>ServerSocket - sockets for accepting <b>incoming</b> TCP client connections </li></ul>
+<hr><h2>Define Documentation</h2>
+<a class="anchor" name="g54087ee7398710212cc4e6bbaa861b9e"></a><!-- doxytag: member="network.h::IP_ADDRESS" ref="g54087ee7398710212cc4e6bbaa861b9e" args="(a, b, c, d)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define IP_ADDRESS          </td>
+          <td>(</td>
+          <td class="paramtype">a,         <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">b,         <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">c,         <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">d&nbsp;</td>
+          <td class="paramname">          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td>&nbsp;&nbsp;&nbsp;( ( (int)a &lt;&lt; 24 ) + ( (int)b &lt;&lt; 16 ) + ( (int)c &lt;&lt; 8 ) + (int)d )</td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+Generate an address appropriate for Socket functions from 4 integers. 
+<p>
+<b>Example</b> <div class="fragment"><pre class="fragment">  <span class="keywordtype">void</span>* sock = <a class="code" href="group___sockets.html#g7e4b76e6d4a93aa7c281e5cbba6cc584" title="Create a new TCP socket connected to the address and port specified.">Socket</a>( <a class="code" href="group___sockets.html#g54087ee7398710212cc4e6bbaa861b9e" title="Generate an address appropriate for Socket functions from 4 integers.">IP_ADDRESS</a>( 192, 168, 0, 200 ), 80 );
+</pre></div> 
+<p>Definition at line <a class="el" href="network_8h-source.html#l00036">36</a> of file <a class="el" href="network_8h-source.html">network.h</a>.</p>
+
+</div>
+</div><p>
 <hr><h2>Function Documentation</h2>
 <a class="anchor" name="g2cd3724da41c8c8235fa648a6fc9bcce"></a><!-- doxytag: member="network.c::DatagramSocket" ref="g2cd3724da41c8c8235fa648a6fc9bcce" args="(int port)" -->
 <div class="memitem">
@@ -352,7 +391,7 @@ Send a UDP packet to a specified address.
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>An integer corresponding to the number of bytes successfully written. </dd></dl>
 <dl class="see" compact><dt><b>See also:</b></dt><dd><a class="el" href="group___sockets.html#g2cd3724da41c8c8235fa648a6fc9bcce" title="Create a socket to read and write UDP packets.">DatagramSocket( )</a></dd></dl>
 <dl class="user" compact><dt><b>Example</b></dt><dd><div class="fragment"><pre class="fragment">  <span class="keyword">struct </span>netconn* udpSocket = <a class="code" href="group___sockets.html#g2cd3724da41c8c8235fa648a6fc9bcce" title="Create a socket to read and write UDP packets.">DatagramSocket</a>( 10101 ); <span class="comment">// our socket</span>
-  <span class="keywordtype">int</span> address = IP_ADDRESS( 192, 168, 0, 200 );
+  <span class="keywordtype">int</span> address = <a class="code" href="group___sockets.html#g54087ee7398710212cc4e6bbaa861b9e" title="Generate an address appropriate for Socket functions from 4 integers.">IP_ADDRESS</a>( 192, 168, 0, 200 );
   <span class="keywordtype">int</span> sent = <a class="code" href="group___sockets.html#g5aa01e1403bafbfca35746bcd44a5c83" title="Send a UDP packet to a specified address.">DatagramSocketSend</a>( udpSocket, address, 10101, myBuffer, myLength );
 </pre></div> </dd></dl>
 
@@ -501,7 +540,7 @@ Create a new TCP socket connected to the address and port specified.
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>A pointer to the socket, if it was created successfully. NULL if unsuccessful. </dd></dl>
 <dl class="see" compact><dt><b>See also:</b></dt><dd><a class="el" href="group___sockets.html#g838d1ceaf477b3496a9fe4adf8d28147" title="Read from a TCP socket.">SocketRead()</a>, <a class="el" href="group___sockets.html#g1031bc0757e65ea265deb5dc3ded3029" title="Write to a TCP socket.">SocketWrite()</a>, <a class="el" href="group___sockets.html#geab922d85a99bd7577f5e5b54628a5b4" title="Close an existing TCP socket.">SocketClose()</a></dd></dl>
 <dl class="user" compact><dt><b>Example</b></dt><dd><div class="fragment"><pre class="fragment">  <span class="comment">// use the IP_ADDRESS macro to format the address properly</span>
-  <span class="keywordtype">int</span> addr = IP_ADDRESS( 192, 168, 0, 54 );
+  <span class="keywordtype">int</span> addr = <a class="code" href="group___sockets.html#g54087ee7398710212cc4e6bbaa861b9e" title="Generate an address appropriate for Socket functions from 4 integers.">IP_ADDRESS</a>( 192, 168, 0, 54 );
   <span class="comment">// then create the socket, connecting on port 10101</span>
   <span class="keyword">struct </span>netconn* socket = <a class="code" href="group___sockets.html#g7e4b76e6d4a93aa7c281e5cbba6cc584" title="Create a new TCP socket connected to the address and port specified.">Socket</a>( addr, 10101 );
 </pre></div> </dd></dl>
@@ -535,7 +574,7 @@ Handy before calling <a class="el" href="group___sockets.html#g838d1ceaf477b3496
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>The number of bytes available in that socket.</dd></dl>
-<b>Example</b> <div class="fragment"><pre class="fragment">  <span class="keyword">struct </span>netconn* mysocket = <a class="code" href="group___sockets.html#g7e4b76e6d4a93aa7c281e5cbba6cc584" title="Create a new TCP socket connected to the address and port specified.">Socket</a>(IP_ADDRESS( 192, 168, 0, 54 ), 10101);
+<b>Example</b> <div class="fragment"><pre class="fragment">  <span class="keyword">struct </span>netconn* mysocket = <a class="code" href="group___sockets.html#g7e4b76e6d4a93aa7c281e5cbba6cc584" title="Create a new TCP socket connected to the address and port specified.">Socket</a>(<a class="code" href="group___sockets.html#g54087ee7398710212cc4e6bbaa861b9e" title="Generate an address appropriate for Socket functions from 4 integers.">IP_ADDRESS</a>( 192, 168, 0, 54 ), 10101);
   <span class="comment">// ... reading and writing ...</span>
   <span class="keywordtype">int</span> avail = Socket_BytesAvailable(mysocket);
 </pre></div> 
@@ -761,7 +800,7 @@ Not surprisingly, we need an existing socket before we can write to it.<p>
   <p class="footer">The Make Controller Kit is an open source project maintained by <a href="http://www.makingthings.com">MakingThings</a>.<br />
     MakingThings code is released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 license</a>.<br />
     Bug tracker, development wiki and status can be found at <a href="http://dev.makingthings.com">http://dev.makingthings.com</a>.<br />
-		This document was last updated on 6 Aug 2008.
+		This document was last updated on 13 Aug 2008.
 </p>
 </div>
 <!-- Google Analytics Code -->

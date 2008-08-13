@@ -101,6 +101,7 @@ window.onload = initDynSections;
     <ul>
       <li><a href="classes.html"><span>Alphabetical&nbsp;List</span></a></li>
       <li><a href="annotated.html"><span>Data&nbsp;Structures</span></a></li>
+      <li><a href="functions.html"><span>Data&nbsp;Fields</span></a></li>
     </ul>
   </div>
 </div>
@@ -113,10 +114,58 @@ window.onload = initDynSections;
 <p>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
+<tr><td colspan="2"><br><h2>Data Fields</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="struct_html_form_element.html">HtmlFormElement</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_html_form.html#3dcd6f72099a7ad50be56d4586985901">elements</a> [MAX_FORM_ELEMENTS]</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">An array of form elements.  <a href="#3dcd6f72099a7ad50be56d4586985901"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_html_form.html#ea7470fe5e3bd89b82778558eb1d40d9">count</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The number of form elements contained in this form.  <a href="#ea7470fe5e3bd89b82778558eb1d40d9"></a><br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 A structure that represents a collection of <a class="el" href="struct_html_form_element.html" title="A structure that represents a key-value pair in an HTML form.">HtmlFormElement</a> structures. 
-<p>Definition at line <a class="el" href="webserver_8h-source.html#l00055">55</a> of file <a class="el" href="webserver_8h-source.html">webserver.h</a>.</p>
+<p>
+If you need a larger form, you can adjust <b>MAX_FORM_ELEMENTS</b> in <a class="el" href="webserver_8h-source.html">webserver.h</a> it accommodates 10 by default. 
+<p>Definition at line <a class="el" href="webserver_8h-source.html#l00058">58</a> of file <a class="el" href="webserver_8h-source.html">webserver.h</a>.</p>
+<hr><h2>Field Documentation</h2>
+<a class="anchor" name="3dcd6f72099a7ad50be56d4586985901"></a><!-- doxytag: member="HtmlForm::elements" ref="3dcd6f72099a7ad50be56d4586985901" args="[MAX_FORM_ELEMENTS]" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="struct_html_form_element.html">HtmlFormElement</a> <a class="el" href="struct_html_form.html#3dcd6f72099a7ad50be56d4586985901">HtmlForm::elements</a>[MAX_FORM_ELEMENTS]          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+An array of form elements. 
+<p>
+
+<p>Definition at line <a class="el" href="webserver_8h-source.html#l00060">60</a> of file <a class="el" href="webserver_8h-source.html">webserver.h</a>.</p>
+
+</div>
+</div><p>
+<a class="anchor" name="ea7470fe5e3bd89b82778558eb1d40d9"></a><!-- doxytag: member="HtmlForm::count" ref="ea7470fe5e3bd89b82778558eb1d40d9" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int <a class="el" href="struct_html_form.html#ea7470fe5e3bd89b82778558eb1d40d9">HtmlForm::count</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+The number of form elements contained in this form. 
+<p>
+
+<p>Definition at line <a class="el" href="webserver_8h-source.html#l00061">61</a> of file <a class="el" href="webserver_8h-source.html">webserver.h</a>.</p>
+
+</div>
+</div><p>
 </div>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -140,7 +189,7 @@ A structure that represents a collection of <a class="el" href="struct_html_form
   <p class="footer">The Make Controller Kit is an open source project maintained by <a href="http://www.makingthings.com">MakingThings</a>.<br />
     MakingThings code is released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 license</a>.<br />
     Bug tracker, development wiki and status can be found at <a href="http://dev.makingthings.com">http://dev.makingthings.com</a>.<br />
-		This document was last updated on 6 Aug 2008.
+		This document was last updated on 13 Aug 2008.
 </p>
 </div>
 <!-- Google Analytics Code -->

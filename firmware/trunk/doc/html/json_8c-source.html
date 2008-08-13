@@ -227,8 +227,8 @@ window.onload = initDynSections;
 <a name="l00128"></a>00128 <span class="comment">*/</span>
 <a name="l00129"></a><a class="code" href="group__json.html#g9d87420f61e37591b1d08be556effb6d">00129</a> <span class="keywordtype">void</span> <a class="code" href="group__json.html#g9d87420f61e37591b1d08be556effb6d" title="Initialize or reset the state of a JsonEncode_State variable.">JsonEncode_Init</a>(<a class="code" href="struct_json_encode___state.html" title="The structure used to maintain the state of a JSON encode process.">JsonEncode_State</a>* state)
 <a name="l00130"></a>00130 {
-<a name="l00131"></a>00131   state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a> = 0;
-<a name="l00132"></a>00132   state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c">steps</a>[0] = JSON_START;
+<a name="l00131"></a>00131   state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a> = 0;
+<a name="l00132"></a>00132   state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c" title="An array to keep track of the state of each step in the encoder.">steps</a>[0] = JSON_START;
 <a name="l00133"></a>00133 }
 <a name="l00134"></a>00134 <span class="comment"></span>
 <a name="l00135"></a>00135 <span class="comment">/**</span>
@@ -242,7 +242,7 @@ window.onload = initDynSections;
 <a name="l00143"></a><a class="code" href="group__json.html#g8d5bc99723b8f2d184cf2d10f3c0ef88">00143</a> <span class="keywordtype">char</span>* <a class="code" href="group__json.html#g8d5bc99723b8f2d184cf2d10f3c0ef88" title="Open up a new JSON object.">JsonEncode_ObjectOpen</a>(<a class="code" href="struct_json_encode___state.html" title="The structure used to maintain the state of a JSON encode process.">JsonEncode_State</a>* state, <span class="keywordtype">char</span> *buf, <span class="keywordtype">int</span> *remaining)
 <a name="l00144"></a>00144 {
 <a name="l00145"></a>00145   <span class="keywordtype">int</span> len = 1;
-<a name="l00146"></a>00146   <span class="keywordflow">switch</span>(state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a>])
+<a name="l00146"></a>00146   <span class="keywordflow">switch</span>(state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c" title="An array to keep track of the state of each step in the encoder.">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a>])
 <a name="l00147"></a>00147   {
 <a name="l00148"></a>00148     <span class="keywordflow">case</span> JSON_ARRAY_START:
 <a name="l00149"></a>00149     <span class="keywordflow">case</span> JSON_OBJ_START:
@@ -272,9 +272,9 @@ window.onload = initDynSections;
 <a name="l00173"></a>00173     }
 <a name="l00174"></a>00174   }
 <a name="l00175"></a>00175   
-<a name="l00176"></a>00176   <span class="keywordflow">if</span>(++state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a> &gt; JSON_MAX_DEPTH)
+<a name="l00176"></a>00176   <span class="keywordflow">if</span>(++state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a> &gt; JSON_MAX_DEPTH)
 <a name="l00177"></a>00177     <span class="keywordflow">return</span> NULL;
-<a name="l00178"></a>00178   state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a>] = JSON_OBJ_START;
+<a name="l00178"></a>00178   state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c" title="An array to keep track of the state of each step in the encoder.">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a>] = JSON_OBJ_START;
 <a name="l00179"></a>00179   (*remaining) -= len;
 <a name="l00180"></a>00180   <span class="keywordflow">return</span> buf + len;
 <a name="l00181"></a>00181 }
@@ -304,7 +304,7 @@ window.onload = initDynSections;
 <a name="l00205"></a>00205   <span class="keywordflow">if</span>(*remaining &lt; 1)
 <a name="l00206"></a>00206     <span class="keywordflow">return</span> NULL;
 <a name="l00207"></a>00207   memcpy(buf, <span class="stringliteral">"}"</span>, 1);
-<a name="l00208"></a>00208   state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a>--;
+<a name="l00208"></a>00208   state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a>--;
 <a name="l00209"></a>00209   JsonEncode_AppendedAtom(state);
 <a name="l00210"></a>00210   (*remaining)--;
 <a name="l00211"></a>00211   <span class="keywordflow">return</span> buf + 1;
@@ -321,7 +321,7 @@ window.onload = initDynSections;
 <a name="l00222"></a><a class="code" href="group__json.html#g4c882aeaa727473d789c2beffacb6064">00222</a> <span class="keywordtype">char</span>* <a class="code" href="group__json.html#g4c882aeaa727473d789c2beffacb6064" title="Open up a new JSON array.">JsonEncode_ArrayOpen</a>(<a class="code" href="struct_json_encode___state.html" title="The structure used to maintain the state of a JSON encode process.">JsonEncode_State</a>* state, <span class="keywordtype">char</span> *buf, <span class="keywordtype">int</span> *remaining)
 <a name="l00223"></a>00223 {
 <a name="l00224"></a>00224   <span class="keywordtype">int</span> len = 1;
-<a name="l00225"></a>00225   <span class="keywordflow">switch</span>(state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a>])
+<a name="l00225"></a>00225   <span class="keywordflow">switch</span>(state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c" title="An array to keep track of the state of each step in the encoder.">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a>])
 <a name="l00226"></a>00226   {
 <a name="l00227"></a>00227     <span class="keywordflow">case</span> JSON_ARRAY_START:
 <a name="l00228"></a>00228     <span class="keywordflow">case</span> JSON_OBJ_START:
@@ -350,9 +350,9 @@ window.onload = initDynSections;
 <a name="l00251"></a>00251       <span class="keywordflow">break</span>;
 <a name="l00252"></a>00252     }
 <a name="l00253"></a>00253   }
-<a name="l00254"></a>00254   <span class="keywordflow">if</span>(++state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a> &gt; JSON_MAX_DEPTH)
+<a name="l00254"></a>00254   <span class="keywordflow">if</span>(++state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a> &gt; JSON_MAX_DEPTH)
 <a name="l00255"></a>00255     <span class="keywordflow">return</span> NULL;
-<a name="l00256"></a>00256   state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a>] = JSON_ARRAY_START;
+<a name="l00256"></a>00256   state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c" title="An array to keep track of the state of each step in the encoder.">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a>] = JSON_ARRAY_START;
 <a name="l00257"></a>00257   (*remaining) -= len;
 <a name="l00258"></a>00258   <span class="keywordflow">return</span> buf + len;
 <a name="l00259"></a>00259 }
@@ -370,7 +370,7 @@ window.onload = initDynSections;
 <a name="l00271"></a>00271   <span class="keywordflow">if</span>(*remaining &lt; 1)
 <a name="l00272"></a>00272     <span class="keywordflow">return</span> NULL;
 <a name="l00273"></a>00273   memcpy(buf, <span class="stringliteral">"]"</span>, 1);
-<a name="l00274"></a>00274   state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a>--;
+<a name="l00274"></a>00274   state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a>--;
 <a name="l00275"></a>00275   JsonEncode_AppendedAtom(state);
 <a name="l00276"></a>00276   (*remaining)--;
 <a name="l00277"></a>00277   <span class="keywordflow">return</span> buf + 1;
@@ -391,7 +391,7 @@ window.onload = initDynSections;
 <a name="l00292"></a>00292 {
 <a name="l00293"></a>00293   <span class="keywordtype">int</span> string_len = strlen(<span class="keywordtype">string</span>) + 2 <span class="comment">/* quotes */</span>;
 <a name="l00294"></a>00294 
-<a name="l00295"></a>00295   <span class="keywordflow">switch</span>(state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a>])
+<a name="l00295"></a>00295   <span class="keywordflow">switch</span>(state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c" title="An array to keep track of the state of each step in the encoder.">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a>])
 <a name="l00296"></a>00296   {
 <a name="l00297"></a>00297     <span class="keywordflow">case</span> JSON_ARRAY_START:
 <a name="l00298"></a>00298     <span class="keywordflow">case</span> JSON_OBJ_START:
@@ -445,7 +445,7 @@ window.onload = initDynSections;
 <a name="l00346"></a>00346 {
 <a name="l00347"></a>00347   <span class="keywordtype">int</span> int_as_str_len = 11; <span class="comment">// largest 32-bit int is 10 digits long, and also leave room for a +/-</span>
 <a name="l00348"></a>00348   <span class="keywordtype">int</span> int_len = 0;
-<a name="l00349"></a>00349   <span class="keywordflow">switch</span>(state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a>])
+<a name="l00349"></a>00349   <span class="keywordflow">switch</span>(state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c" title="An array to keep track of the state of each step in the encoder.">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a>])
 <a name="l00350"></a>00350   {
 <a name="l00351"></a>00351     <span class="keywordflow">case</span> JSON_ARRAY_START:
 <a name="l00352"></a>00352     {
@@ -500,7 +500,7 @@ window.onload = initDynSections;
 <a name="l00401"></a>00401 {
 <a name="l00402"></a>00402   <span class="keyword">const</span> <span class="keywordtype">char</span>* boolval = (value) ? <span class="stringliteral">"true"</span> : <span class="stringliteral">"false"</span>;
 <a name="l00403"></a>00403   <span class="keywordtype">int</span> bool_len = strlen(boolval);
-<a name="l00404"></a>00404   <span class="keywordflow">switch</span>(state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a>])
+<a name="l00404"></a>00404   <span class="keywordflow">switch</span>(state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c" title="An array to keep track of the state of each step in the encoder.">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a>])
 <a name="l00405"></a>00405   {
 <a name="l00406"></a>00406     <span class="keywordflow">case</span> JSON_ARRAY_START:
 <a name="l00407"></a>00407     {
@@ -546,17 +546,17 @@ window.onload = initDynSections;
 <a name="l00447"></a>00447 <span class="comment">// static</span>
 <a name="l00448"></a>00448 <span class="keywordtype">void</span> JsonEncode_AppendedAtom(<a class="code" href="struct_json_encode___state.html" title="The structure used to maintain the state of a JSON encode process.">JsonEncode_State</a>* state)
 <a name="l00449"></a>00449 {
-<a name="l00450"></a>00450   <span class="keywordflow">switch</span>(state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a>])
+<a name="l00450"></a>00450   <span class="keywordflow">switch</span>(state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c" title="An array to keep track of the state of each step in the encoder.">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a>])
 <a name="l00451"></a>00451   {
 <a name="l00452"></a>00452     <span class="keywordflow">case</span> JSON_OBJ_START:
 <a name="l00453"></a>00453     <span class="keywordflow">case</span> JSON_OBJ_KEY:
-<a name="l00454"></a>00454       state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a>] = JSON_OBJ_VALUE;
+<a name="l00454"></a>00454       state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c" title="An array to keep track of the state of each step in the encoder.">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a>] = JSON_OBJ_VALUE;
 <a name="l00455"></a>00455       <span class="keywordflow">break</span>;
 <a name="l00456"></a>00456     <span class="keywordflow">case</span> JSON_ARRAY_START:
-<a name="l00457"></a>00457       state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a>] = JSON_IN_ARRAY;
+<a name="l00457"></a>00457       state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c" title="An array to keep track of the state of each step in the encoder.">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a>] = JSON_IN_ARRAY;
 <a name="l00458"></a>00458       <span class="keywordflow">break</span>;
 <a name="l00459"></a>00459     <span class="keywordflow">case</span> JSON_OBJ_VALUE:
-<a name="l00460"></a>00460       state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">depth</a>] = JSON_OBJ_KEY;
+<a name="l00460"></a>00460       state-&gt;<a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c" title="An array to keep track of the state of each step in the encoder.">steps</a>[state-&gt;<a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282" title="The current depth of the encoder (how many elements have been opened).">depth</a>] = JSON_OBJ_KEY;
 <a name="l00461"></a>00461       <span class="keywordflow">break</span>;
 <a name="l00462"></a>00462     <span class="keywordflow">default</span>:
 <a name="l00463"></a>00463       <span class="keywordflow">break</span>;
@@ -812,11 +812,11 @@ window.onload = initDynSections;
 <a name="l00713"></a>00713 <span class="comment">*/</span>
 <a name="l00714"></a><a class="code" href="group__json.html#g4e60765cc38dc83f56d092fa9b6a03c0">00714</a> <span class="keywordtype">void</span> <a class="code" href="group__json.html#g4e60765cc38dc83f56d092fa9b6a03c0" title="Initialize or reset a JsonDecode_State variable.">JsonDecode_Init</a>(<a class="code" href="struct_json_decode___state.html" title="The structure used to maintain the state of a JSON decode process.">JsonDecode_State</a>* state, <span class="keywordtype">void</span>* context)
 <a name="l00715"></a>00715 {
-<a name="l00716"></a>00716   state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a">depth</a> = 0;
-<a name="l00717"></a>00717   state-&gt;<a class="code" href="struct_json_decode___state.html#f0bd5b3257a0c3b59914003582da0a9f">gotcomma</a> = <span class="keyword">false</span>;
-<a name="l00718"></a>00718   state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad">context</a> = context;
-<a name="l00719"></a>00719   state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a> = 0;
-<a name="l00720"></a>00720   state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a> = 0;
+<a name="l00716"></a>00716   state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a" title="The current depth of the decoder (how many elements have been opened).">depth</a> = 0;
+<a name="l00717"></a>00717   state-&gt;<a class="code" href="struct_json_decode___state.html#f0bd5b3257a0c3b59914003582da0a9f" title="Used internally by the decoder.">gotcomma</a> = <span class="keyword">false</span>;
+<a name="l00718"></a>00718   state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad" title="A pointer to the user context.">context</a> = context;
+<a name="l00719"></a>00719   state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a> = 0;
+<a name="l00720"></a>00720   state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a> = 0;
 <a name="l00721"></a>00721 }
 <a name="l00722"></a>00722 <span class="comment"></span>
 <a name="l00723"></a>00723 <span class="comment">/**</span>
@@ -844,95 +844,95 @@ window.onload = initDynSections;
 <a name="l00745"></a>00745   JsonDecode_Token token;
 <a name="l00746"></a>00746   
 <a name="l00747"></a>00747   <span class="comment">// if these haven't been initialized, do it</span>
-<a name="l00748"></a>00748   <span class="keywordflow">if</span>(!state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>) 
-<a name="l00749"></a>00749     state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a> = text;
-<a name="l00750"></a>00750   <span class="keywordflow">if</span>(!state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a>)
-<a name="l00751"></a>00751     state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a> = len;
+<a name="l00748"></a>00748   <span class="keywordflow">if</span>(!state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>) 
+<a name="l00749"></a>00749     state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a> = text;
+<a name="l00750"></a>00750   <span class="keywordflow">if</span>(!state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a>)
+<a name="l00751"></a>00751     state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a> = len;
 <a name="l00752"></a>00752 
-<a name="l00753"></a>00753   <span class="keywordflow">while</span>(state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a>)
+<a name="l00753"></a>00753   <span class="keywordflow">while</span>(state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a>)
 <a name="l00754"></a>00754   {
-<a name="l00755"></a>00755     <span class="keywordflow">while</span>(*state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a> == <span class="charliteral">' '</span>) <span class="comment">// eat white space</span>
-<a name="l00756"></a>00756       state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>++;
-<a name="l00757"></a>00757     token = JsonDecode_GetToken( state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>, state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a>);
+<a name="l00755"></a>00755     <span class="keywordflow">while</span>(*state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a> == <span class="charliteral">' '</span>) <span class="comment">// eat white space</span>
+<a name="l00756"></a>00756       state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>++;
+<a name="l00757"></a>00757     token = JsonDecode_GetToken( state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>, state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a>);
 <a name="l00758"></a>00758     <span class="keywordflow">switch</span>(token)
 <a name="l00759"></a>00759     {
 <a name="l00760"></a>00760       <span class="keywordflow">case</span> token_true:
 <a name="l00761"></a>00761         <span class="keywordflow">if</span>(JsonDecode_Callbacks.bool_callback)
 <a name="l00762"></a>00762         {
-<a name="l00763"></a>00763           <span class="keywordflow">if</span>(!JsonDecode_Callbacks.bool_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad">context</a>, <span class="keyword">true</span>))
+<a name="l00763"></a>00763           <span class="keywordflow">if</span>(!JsonDecode_Callbacks.bool_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad" title="A pointer to the user context.">context</a>, <span class="keyword">true</span>))
 <a name="l00764"></a>00764             <span class="keywordflow">return</span> <span class="keyword">false</span>;
 <a name="l00765"></a>00765         }
-<a name="l00766"></a>00766         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a> += 4;
-<a name="l00767"></a>00767         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a> -= 4;
+<a name="l00766"></a>00766         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a> += 4;
+<a name="l00767"></a>00767         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a> -= 4;
 <a name="l00768"></a>00768         <span class="keywordflow">break</span>;
 <a name="l00769"></a>00769       <span class="keywordflow">case</span> token_false:
 <a name="l00770"></a>00770         <span class="keywordflow">if</span>(JsonDecode_Callbacks.bool_callback)
 <a name="l00771"></a>00771         {
-<a name="l00772"></a>00772           <span class="keywordflow">if</span>(!JsonDecode_Callbacks.bool_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad">context</a>, <span class="keyword">false</span>))
+<a name="l00772"></a>00772           <span class="keywordflow">if</span>(!JsonDecode_Callbacks.bool_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad" title="A pointer to the user context.">context</a>, <span class="keyword">false</span>))
 <a name="l00773"></a>00773             <span class="keywordflow">return</span> <span class="keyword">false</span>;
 <a name="l00774"></a>00774         }
-<a name="l00775"></a>00775         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a> += 5;
-<a name="l00776"></a>00776         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a> -= 5;
+<a name="l00775"></a>00775         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a> += 5;
+<a name="l00776"></a>00776         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a> -= 5;
 <a name="l00777"></a>00777         <span class="keywordflow">break</span>;
 <a name="l00778"></a>00778       <span class="keywordflow">case</span> token_null:
 <a name="l00779"></a>00779         <span class="keywordflow">if</span>(JsonDecode_Callbacks.null_callback)
 <a name="l00780"></a>00780         {
-<a name="l00781"></a>00781           <span class="keywordflow">if</span>(!JsonDecode_Callbacks.null_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad">context</a>))
+<a name="l00781"></a>00781           <span class="keywordflow">if</span>(!JsonDecode_Callbacks.null_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad" title="A pointer to the user context.">context</a>))
 <a name="l00782"></a>00782             <span class="keywordflow">return</span> <span class="keyword">false</span>;
 <a name="l00783"></a>00783         }
-<a name="l00784"></a>00784         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a> += 4;
-<a name="l00785"></a>00785         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a> -= 4;
+<a name="l00784"></a>00784         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a> += 4;
+<a name="l00785"></a>00785         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a> -= 4;
 <a name="l00786"></a>00786         <span class="keywordflow">break</span>;
 <a name="l00787"></a>00787       <span class="keywordflow">case</span> token_comma:
-<a name="l00788"></a>00788         state-&gt;<a class="code" href="struct_json_decode___state.html#f0bd5b3257a0c3b59914003582da0a9f">gotcomma</a> = <span class="keyword">true</span>;
+<a name="l00788"></a>00788         state-&gt;<a class="code" href="struct_json_decode___state.html#f0bd5b3257a0c3b59914003582da0a9f" title="Used internally by the decoder.">gotcomma</a> = <span class="keyword">true</span>;
 <a name="l00789"></a>00789         <span class="comment">// intentional fall-through</span>
 <a name="l00790"></a>00790       <span class="keywordflow">case</span> token_colon: <span class="comment">// just get the next one      </span>
-<a name="l00791"></a>00791         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>++;
-<a name="l00792"></a>00792         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a>--;
+<a name="l00791"></a>00791         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>++;
+<a name="l00792"></a>00792         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a>--;
 <a name="l00793"></a>00793         <span class="keywordflow">break</span>;
 <a name="l00794"></a>00794       <span class="keywordflow">case</span> token_left_bracket:
-<a name="l00795"></a>00795         state-&gt;<a class="code" href="struct_json_decode___state.html#32c6a5da5319ed534ed412a06431e2c6">steps</a>[++state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a">depth</a>] = JSON_DECODE_OBJECT_START;
+<a name="l00795"></a>00795         state-&gt;<a class="code" href="struct_json_decode___state.html#32c6a5da5319ed534ed412a06431e2c6" title="An array to keep track of each step of the decoder.">steps</a>[++state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a" title="The current depth of the decoder (how many elements have been opened).">depth</a>] = JSON_DECODE_OBJECT_START;
 <a name="l00796"></a>00796         <span class="keywordflow">if</span>(JsonDecode_Callbacks.start_obj_callback)
 <a name="l00797"></a>00797         {
-<a name="l00798"></a>00798           <span class="keywordflow">if</span>(!JsonDecode_Callbacks.start_obj_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad">context</a>))
+<a name="l00798"></a>00798           <span class="keywordflow">if</span>(!JsonDecode_Callbacks.start_obj_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad" title="A pointer to the user context.">context</a>))
 <a name="l00799"></a>00799             <span class="keywordflow">return</span> <span class="keyword">false</span>;
 <a name="l00800"></a>00800         }
-<a name="l00801"></a>00801         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>++;
-<a name="l00802"></a>00802         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a>--;
+<a name="l00801"></a>00801         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>++;
+<a name="l00802"></a>00802         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a>--;
 <a name="l00803"></a>00803         <span class="keywordflow">break</span>;
 <a name="l00804"></a>00804       <span class="keywordflow">case</span> token_right_bracket:
-<a name="l00805"></a>00805         state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a">depth</a>--;
+<a name="l00805"></a>00805         state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a" title="The current depth of the decoder (how many elements have been opened).">depth</a>--;
 <a name="l00806"></a>00806         <span class="keywordflow">if</span>(JsonDecode_Callbacks.end_obj_callback)
 <a name="l00807"></a>00807         {
-<a name="l00808"></a>00808           <span class="keywordflow">if</span>(!JsonDecode_Callbacks.end_obj_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad">context</a>))
+<a name="l00808"></a>00808           <span class="keywordflow">if</span>(!JsonDecode_Callbacks.end_obj_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad" title="A pointer to the user context.">context</a>))
 <a name="l00809"></a>00809             <span class="keywordflow">return</span> <span class="keyword">false</span>;
 <a name="l00810"></a>00810         }
-<a name="l00811"></a>00811         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>++;
-<a name="l00812"></a>00812         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a>--;
+<a name="l00811"></a>00811         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>++;
+<a name="l00812"></a>00812         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a>--;
 <a name="l00813"></a>00813         <span class="keywordflow">break</span>;
 <a name="l00814"></a>00814       <span class="keywordflow">case</span> token_left_brace:
-<a name="l00815"></a>00815         state-&gt;<a class="code" href="struct_json_decode___state.html#32c6a5da5319ed534ed412a06431e2c6">steps</a>[++state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a">depth</a>] = JSON_DECODE_IN_ARRAY;
+<a name="l00815"></a>00815         state-&gt;<a class="code" href="struct_json_decode___state.html#32c6a5da5319ed534ed412a06431e2c6" title="An array to keep track of each step of the decoder.">steps</a>[++state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a" title="The current depth of the decoder (how many elements have been opened).">depth</a>] = JSON_DECODE_IN_ARRAY;
 <a name="l00816"></a>00816         <span class="keywordflow">if</span>(JsonDecode_Callbacks.start_array_callback)
 <a name="l00817"></a>00817         {
-<a name="l00818"></a>00818           <span class="keywordflow">if</span>(!JsonDecode_Callbacks.start_array_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad">context</a>))
+<a name="l00818"></a>00818           <span class="keywordflow">if</span>(!JsonDecode_Callbacks.start_array_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad" title="A pointer to the user context.">context</a>))
 <a name="l00819"></a>00819             <span class="keywordflow">return</span> <span class="keyword">false</span>;
 <a name="l00820"></a>00820         }
-<a name="l00821"></a>00821         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>++;
-<a name="l00822"></a>00822         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a>--;
+<a name="l00821"></a>00821         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>++;
+<a name="l00822"></a>00822         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a>--;
 <a name="l00823"></a>00823         <span class="keywordflow">break</span>;
 <a name="l00824"></a>00824       <span class="keywordflow">case</span> token_right_brace:
-<a name="l00825"></a>00825         state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a">depth</a>--;
+<a name="l00825"></a>00825         state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a" title="The current depth of the decoder (how many elements have been opened).">depth</a>--;
 <a name="l00826"></a>00826         <span class="keywordflow">if</span>(JsonDecode_Callbacks.end_array_callback)
 <a name="l00827"></a>00827         {
-<a name="l00828"></a>00828           <span class="keywordflow">if</span>(!JsonDecode_Callbacks.end_array_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad">context</a>))
+<a name="l00828"></a>00828           <span class="keywordflow">if</span>(!JsonDecode_Callbacks.end_array_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad" title="A pointer to the user context.">context</a>))
 <a name="l00829"></a>00829             <span class="keywordflow">return</span> <span class="keyword">false</span>;
 <a name="l00830"></a>00830         }
-<a name="l00831"></a>00831         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>++;
-<a name="l00832"></a>00832         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a>--;
+<a name="l00831"></a>00831         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>++;
+<a name="l00832"></a>00832         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a>--;
 <a name="l00833"></a>00833         <span class="keywordflow">break</span>;
 <a name="l00834"></a>00834       <span class="keywordflow">case</span> token_number:
 <a name="l00835"></a>00835       {
-<a name="l00836"></a>00836         <span class="keyword">const</span> <span class="keywordtype">char</span>* p = state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>;
+<a name="l00836"></a>00836         <span class="keyword">const</span> <span class="keywordtype">char</span>* p = state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>;
 <a name="l00837"></a>00837         <span class="keywordtype">bool</span> keepgoing = <span class="keyword">true</span>;
 <a name="l00838"></a>00838         <span class="keywordtype">bool</span> gotdecimal = <span class="keyword">false</span>;
 <a name="l00839"></a>00839         <span class="keywordflow">do</span>
@@ -949,12 +949,12 @@ window.onload = initDynSections;
 <a name="l00850"></a>00850           <span class="keywordflow">else</span>
 <a name="l00851"></a>00851             p++;
 <a name="l00852"></a>00852         } <span class="keywordflow">while</span>(keepgoing);
-<a name="l00853"></a>00853         <span class="keywordtype">int</span> size = p - state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>;
+<a name="l00853"></a>00853         <span class="keywordtype">int</span> size = p - state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>;
 <a name="l00854"></a>00854         <span class="keywordflow">if</span>(gotdecimal)
 <a name="l00855"></a>00855         {
 <a name="l00856"></a>00856           <span class="keywordflow">if</span>(JsonDecode_Callbacks.float_callback)
 <a name="l00857"></a>00857           {
-<a name="l00858"></a>00858             <span class="keywordflow">if</span>(!JsonDecode_Callbacks.float_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad">context</a>, atof(state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>)))
+<a name="l00858"></a>00858             <span class="keywordflow">if</span>(!JsonDecode_Callbacks.float_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad" title="A pointer to the user context.">context</a>, atof(state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>)))
 <a name="l00859"></a>00859               <span class="keywordflow">return</span> <span class="keyword">false</span>;
 <a name="l00860"></a>00860           }
 <a name="l00861"></a>00861         }
@@ -962,18 +962,18 @@ window.onload = initDynSections;
 <a name="l00863"></a>00863         {
 <a name="l00864"></a>00864           <span class="keywordflow">if</span>(JsonDecode_Callbacks.int_callback)
 <a name="l00865"></a>00865           {
-<a name="l00866"></a>00866             <span class="keywordflow">if</span>(!JsonDecode_Callbacks.int_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad">context</a>, atoi(state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>)))
+<a name="l00866"></a>00866             <span class="keywordflow">if</span>(!JsonDecode_Callbacks.int_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad" title="A pointer to the user context.">context</a>, atoi(state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>)))
 <a name="l00867"></a>00867               <span class="keywordflow">return</span> <span class="keyword">false</span>;
 <a name="l00868"></a>00868           }
 <a name="l00869"></a>00869         }
-<a name="l00870"></a>00870         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a> += size;
-<a name="l00871"></a>00871         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a> -= size;
+<a name="l00870"></a>00870         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a> += size;
+<a name="l00871"></a>00871         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a> -= size;
 <a name="l00872"></a>00872         <span class="keywordflow">break</span>;
 <a name="l00873"></a>00873       }
 <a name="l00874"></a>00874       <span class="keywordflow">case</span> token_string:
 <a name="l00875"></a>00875       {
-<a name="l00876"></a>00876         <span class="keywordtype">char</span>* p = ++state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>; <span class="comment">// move past the opening "</span>
-<a name="l00877"></a>00877         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a>--;
+<a name="l00876"></a>00876         <span class="keywordtype">char</span>* p = ++state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>; <span class="comment">// move past the opening "</span>
+<a name="l00877"></a>00877         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a>--;
 <a name="l00878"></a>00878         <span class="keywordtype">bool</span> keepgoing = <span class="keyword">true</span>;
 <a name="l00879"></a>00879         <span class="keywordflow">while</span>(keepgoing)
 <a name="l00880"></a>00880         {
@@ -984,19 +984,19 @@ window.onload = initDynSections;
 <a name="l00885"></a>00885           <span class="keywordflow">else</span>
 <a name="l00886"></a>00886             p++; <span class="comment">// keep looking for the end of the string</span>
 <a name="l00887"></a>00887         }
-<a name="l00888"></a>00888         <span class="keywordtype">int</span> size = p - state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>;
+<a name="l00888"></a>00888         <span class="keywordtype">int</span> size = p - state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>;
 <a name="l00889"></a>00889         *p = 0; <span class="comment">// replace the trailing " with a null to make a string</span>
 <a name="l00890"></a>00890 
 <a name="l00891"></a>00891         <span class="comment">// figure out if this is a key or a normal string</span>
 <a name="l00892"></a>00892         <span class="keywordtype">bool</span> objkey = <span class="keyword">false</span>;
-<a name="l00893"></a>00893         <span class="keywordflow">if</span>(state-&gt;<a class="code" href="struct_json_decode___state.html#32c6a5da5319ed534ed412a06431e2c6">steps</a>[state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a">depth</a>] == JSON_DECODE_OBJECT_START)
+<a name="l00893"></a>00893         <span class="keywordflow">if</span>(state-&gt;<a class="code" href="struct_json_decode___state.html#32c6a5da5319ed534ed412a06431e2c6" title="An array to keep track of each step of the decoder.">steps</a>[state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a" title="The current depth of the decoder (how many elements have been opened).">depth</a>] == JSON_DECODE_OBJECT_START)
 <a name="l00894"></a>00894         {
-<a name="l00895"></a>00895           state-&gt;<a class="code" href="struct_json_decode___state.html#32c6a5da5319ed534ed412a06431e2c6">steps</a>[state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a">depth</a>] = JSON_DECODE_IN_OBJECT;
+<a name="l00895"></a>00895           state-&gt;<a class="code" href="struct_json_decode___state.html#32c6a5da5319ed534ed412a06431e2c6" title="An array to keep track of each step of the decoder.">steps</a>[state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a" title="The current depth of the decoder (how many elements have been opened).">depth</a>] = JSON_DECODE_IN_OBJECT;
 <a name="l00896"></a>00896           objkey = <span class="keyword">true</span>;
 <a name="l00897"></a>00897         }
-<a name="l00898"></a>00898         <span class="keywordflow">if</span>(state-&gt;<a class="code" href="struct_json_decode___state.html#f0bd5b3257a0c3b59914003582da0a9f">gotcomma</a> &amp;&amp; state-&gt;<a class="code" href="struct_json_decode___state.html#32c6a5da5319ed534ed412a06431e2c6">steps</a>[state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a">depth</a>] == JSON_DECODE_IN_OBJECT)
+<a name="l00898"></a>00898         <span class="keywordflow">if</span>(state-&gt;<a class="code" href="struct_json_decode___state.html#f0bd5b3257a0c3b59914003582da0a9f" title="Used internally by the decoder.">gotcomma</a> &amp;&amp; state-&gt;<a class="code" href="struct_json_decode___state.html#32c6a5da5319ed534ed412a06431e2c6" title="An array to keep track of each step of the decoder.">steps</a>[state-&gt;<a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a" title="The current depth of the decoder (how many elements have been opened).">depth</a>] == JSON_DECODE_IN_OBJECT)
 <a name="l00899"></a>00899         {
-<a name="l00900"></a>00900           state-&gt;<a class="code" href="struct_json_decode___state.html#f0bd5b3257a0c3b59914003582da0a9f">gotcomma</a> = <span class="keyword">false</span>;
+<a name="l00900"></a>00900           state-&gt;<a class="code" href="struct_json_decode___state.html#f0bd5b3257a0c3b59914003582da0a9f" title="Used internally by the decoder.">gotcomma</a> = <span class="keyword">false</span>;
 <a name="l00901"></a>00901           objkey = <span class="keyword">true</span>;
 <a name="l00902"></a>00902         }
 <a name="l00903"></a>00903 
@@ -1004,7 +1004,7 @@ window.onload = initDynSections;
 <a name="l00905"></a>00905         {
 <a name="l00906"></a>00906           <span class="keywordflow">if</span>(JsonDecode_Callbacks.obj_key_callback)
 <a name="l00907"></a>00907           {
-<a name="l00908"></a>00908             <span class="keywordflow">if</span>(!JsonDecode_Callbacks.obj_key_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad">context</a>, state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>, size))
+<a name="l00908"></a>00908             <span class="keywordflow">if</span>(!JsonDecode_Callbacks.obj_key_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad" title="A pointer to the user context.">context</a>, state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>, size))
 <a name="l00909"></a>00909               <span class="keywordflow">return</span> <span class="keyword">false</span>;
 <a name="l00910"></a>00910           }
 <a name="l00911"></a>00911         }
@@ -1012,12 +1012,12 @@ window.onload = initDynSections;
 <a name="l00913"></a>00913         {
 <a name="l00914"></a>00914           <span class="keywordflow">if</span>(JsonDecode_Callbacks.string_callback)
 <a name="l00915"></a>00915           {
-<a name="l00916"></a>00916             <span class="keywordflow">if</span>(!JsonDecode_Callbacks.string_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad">context</a>, state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a>, size))
+<a name="l00916"></a>00916             <span class="keywordflow">if</span>(!JsonDecode_Callbacks.string_callback(state-&gt;<a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad" title="A pointer to the user context.">context</a>, state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a>, size))
 <a name="l00917"></a>00917               <span class="keywordflow">return</span> <span class="keyword">false</span>;
 <a name="l00918"></a>00918           }
 <a name="l00919"></a>00919         }
-<a name="l00920"></a>00920         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">p</a> += (size+1); <span class="comment">// account for the trailing "</span>
-<a name="l00921"></a>00921         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">len</a> -= (size+1);
+<a name="l00920"></a>00920         state-&gt;<a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4" title="A pointer to the data.">p</a> += (size+1); <span class="comment">// account for the trailing "</span>
+<a name="l00921"></a>00921         state-&gt;<a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc" title="The current length.">len</a> -= (size+1);
 <a name="l00922"></a>00922         <span class="keywordflow">break</span>;
 <a name="l00923"></a>00923       }
 <a name="l00924"></a>00924       <span class="keywordflow">case</span> token_eof: <span class="comment">// we don't expect to get this, since our len should run out before we get eof</span>
@@ -1118,7 +1118,7 @@ window.onload = initDynSections;
   <p class="footer">The Make Controller Kit is an open source project maintained by <a href="http://www.makingthings.com">MakingThings</a>.<br />
     MakingThings code is released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 license</a>.<br />
     Bug tracker, development wiki and status can be found at <a href="http://dev.makingthings.com">http://dev.makingthings.com</a>.<br />
-		This document was last updated on 6 Aug 2008.
+		This document was last updated on 13 Aug 2008.
 </p>
 </div>
 <!-- Google Analytics Code -->

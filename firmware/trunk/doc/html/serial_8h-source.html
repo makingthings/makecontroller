@@ -145,11 +145,17 @@ window.onload = initDynSections;
 <a name="l00046"></a>00046 <span class="keywordtype">int</span> <a class="code" href="group__serial.html#ga84bc3522badbcf45ad97e7a0320c54e" title="Write a block of data to the Serial port.">Serial_Write</a>( uchar *buffer, <span class="keywordtype">int</span> count, <span class="keywordtype">int</span> timeout );
 <a name="l00047"></a>00047 <span class="keywordtype">int</span> <a class="code" href="group__serial.html#g38bf8f1f9d2f3eca49c449a1c1a4a350" title="Read data from the Serial port.">Serial_Read</a>( uchar* buffer, <span class="keywordtype">int</span> count, <span class="keywordtype">int</span> timeout );
 <a name="l00048"></a>00048 
-<a name="l00049"></a>00049 <span class="comment">/* OSC Interface */</span>
-<a name="l00050"></a>00050 <span class="keyword">const</span> <span class="keywordtype">char</span>* SerialOsc_GetName( <span class="keywordtype">void</span> );
-<a name="l00051"></a>00051 <span class="keywordtype">int</span> SerialOsc_ReceiveMessage( <span class="keywordtype">int</span> channel, <span class="keywordtype">char</span>* message, <span class="keywordtype">int</span> length );
-<a name="l00052"></a>00052 
-<a name="l00053"></a>00053 <span class="preprocessor">#endif // SERIAL_H</span>
+<a name="l00049"></a>00049 <span class="keywordtype">void</span> <a class="code" href="group__serial.html#gd20f0e0e6e94a2eb295d8b031e8654d0" title="Clear out the serial port.">Serial_Flush</a>( <span class="keywordtype">void</span> );
+<a name="l00050"></a>00050 <span class="keywordtype">void</span> <a class="code" href="group__serial.html#gc368f134feb83c2e53c8fddd174383c9" title="Reset the error flags in the serial system.">Serial_ClearErrors</a>( <span class="keywordtype">void</span> );
+<a name="l00051"></a>00051 <span class="keywordtype">bool</span> <a class="code" href="group__serial.html#g6bcf588659024eeac864cc28bdb25d28" title="Read whether there are any errors.">Serial_GetErrors</a>( <span class="keywordtype">bool</span>* overrun, <span class="keywordtype">bool</span>* frame, <span class="keywordtype">bool</span>* parity );
+<a name="l00052"></a>00052 <span class="keywordtype">void</span> <a class="code" href="group__serial.html#geec26c7427674cc573de061cf2bdf93b" title="Start the transimission of a break.">Serial_StartBreak</a>( <span class="keywordtype">void</span> );
+<a name="l00053"></a>00053 <span class="keywordtype">void</span> <a class="code" href="group__serial.html#ged714067a7af33d94b729b374391f1a6" title="Stop the transimission of a break.">Serial_StopBreak</a>( <span class="keywordtype">void</span> );
+<a name="l00054"></a>00054 
+<a name="l00055"></a>00055 <span class="comment">/* OSC Interface */</span>
+<a name="l00056"></a>00056 <span class="keyword">const</span> <span class="keywordtype">char</span>* SerialOsc_GetName( <span class="keywordtype">void</span> );
+<a name="l00057"></a>00057 <span class="keywordtype">int</span> SerialOsc_ReceiveMessage( <span class="keywordtype">int</span> channel, <span class="keywordtype">char</span>* message, <span class="keywordtype">int</span> length );
+<a name="l00058"></a>00058 
+<a name="l00059"></a>00059 <span class="preprocessor">#endif // SERIAL_H</span>
 </pre></div></div>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -173,7 +179,7 @@ window.onload = initDynSections;
   <p class="footer">The Make Controller Kit is an open source project maintained by <a href="http://www.makingthings.com">MakingThings</a>.<br />
     MakingThings code is released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 license</a>.<br />
     Bug tracker, development wiki and status can be found at <a href="http://dev.makingthings.com">http://dev.makingthings.com</a>.<br />
-		This document was last updated on 6 Aug 2008.
+		This document was last updated on 13 Aug 2008.
 </p>
 </div>
 <!-- Google Analytics Code -->

@@ -128,7 +128,7 @@ window.onload = initDynSections;
 <a name="l00029"></a>00029 <span class="preprocessor">#include &lt;stdlib.h&gt;</span>
 <a name="l00030"></a>00030 <span class="preprocessor">#include &lt;ctype.h&gt;</span>
 <a name="l00031"></a>00031 
-<a name="l00032"></a>00032 <span class="preprocessor">#include "network.h"</span>
+<a name="l00032"></a>00032 <span class="preprocessor">#include "<a class="code" href="network_8h.html" title="Network system defines.">network.h</a>"</span>
 <a name="l00033"></a>00033 
 <a name="l00034"></a>00034 <span class="preprocessor">#define HANDLERS_MAX        5</span>
 <a name="l00035"></a>00035 <span class="preprocessor"></span><span class="preprocessor">#define REQUEST_SIZE_MAX  256</span>
@@ -689,7 +689,7 @@ window.onload = initDynSections;
 <a name="l00590"></a>00590   {
 <a name="l00591"></a>00591     endp = strchr( p, <span class="charliteral">'='</span> );
 <a name="l00592"></a>00592     *endp = 0;
-<a name="l00593"></a>00593     form-&gt;<a class="code" href="struct_html_form.html#3dcd6f72099a7ad50be56d4586985901">elements</a>[form-&gt;<a class="code" href="struct_html_form.html#ea7470fe5e3bd89b82778558eb1d40d9">count</a>].<a class="code" href="struct_html_form_element.html#c927ea60e64d624e039d1827747de713">key</a> = p;
+<a name="l00593"></a>00593     form-&gt;<a class="code" href="struct_html_form.html#3dcd6f72099a7ad50be56d4586985901" title="An array of form elements.">elements</a>[form-&gt;<a class="code" href="struct_html_form.html#ea7470fe5e3bd89b82778558eb1d40d9" title="The number of form elements contained in this form.">count</a>].<a class="code" href="struct_html_form_element.html#c927ea60e64d624e039d1827747de713" title="A pointer to the key of this element.">key</a> = p;
 <a name="l00594"></a>00594     
 <a name="l00595"></a>00595     p = ++endp;
 <a name="l00596"></a>00596     endp = strchr( p, <span class="charliteral">'&amp;'</span> ); <span class="comment">// look for the next element</span>
@@ -702,12 +702,12 @@ window.onload = initDynSections;
 <a name="l00603"></a>00603 
 <a name="l00604"></a>00604     <span class="comment">// if the value was empty, we'll either get the &amp; if there are more elements, or 0 if we're at the end</span>
 <a name="l00605"></a>00605     <span class="keywordflow">if</span>( *(p+1) == <span class="charliteral">'&amp;'</span> || *(p+1) == 0 )
-<a name="l00606"></a>00606       form-&gt;<a class="code" href="struct_html_form.html#3dcd6f72099a7ad50be56d4586985901">elements</a>[form-&gt;<a class="code" href="struct_html_form.html#ea7470fe5e3bd89b82778558eb1d40d9">count</a>].<a class="code" href="struct_html_form_element.html#5bc8de944403717a3f579dee36f4d854">value</a> = 0;
+<a name="l00606"></a>00606       form-&gt;<a class="code" href="struct_html_form.html#3dcd6f72099a7ad50be56d4586985901" title="An array of form elements.">elements</a>[form-&gt;<a class="code" href="struct_html_form.html#ea7470fe5e3bd89b82778558eb1d40d9" title="The number of form elements contained in this form.">count</a>].<a class="code" href="struct_html_form_element.html#5bc8de944403717a3f579dee36f4d854" title="A pointer to the value of this element.">value</a> = 0;
 <a name="l00607"></a>00607     <span class="keywordflow">else</span>
-<a name="l00608"></a>00608       form-&gt;<a class="code" href="struct_html_form.html#3dcd6f72099a7ad50be56d4586985901">elements</a>[form-&gt;<a class="code" href="struct_html_form.html#ea7470fe5e3bd89b82778558eb1d40d9">count</a>].<a class="code" href="struct_html_form_element.html#5bc8de944403717a3f579dee36f4d854">value</a> = p;
+<a name="l00608"></a>00608       form-&gt;<a class="code" href="struct_html_form.html#3dcd6f72099a7ad50be56d4586985901" title="An array of form elements.">elements</a>[form-&gt;<a class="code" href="struct_html_form.html#ea7470fe5e3bd89b82778558eb1d40d9" title="The number of form elements contained in this form.">count</a>].<a class="code" href="struct_html_form_element.html#5bc8de944403717a3f579dee36f4d854" title="A pointer to the value of this element.">value</a> = p;
 <a name="l00609"></a>00609     p = ++endp;
 <a name="l00610"></a>00610   
-<a name="l00611"></a>00611     form-&gt;<a class="code" href="struct_html_form.html#ea7470fe5e3bd89b82778558eb1d40d9">count</a>++;
+<a name="l00611"></a>00611     form-&gt;<a class="code" href="struct_html_form.html#ea7470fe5e3bd89b82778558eb1d40d9" title="The number of form elements contained in this form.">count</a>++;
 <a name="l00612"></a>00612     count++;
 <a name="l00613"></a>00613   } <span class="keywordflow">while</span>( cont == <span class="keyword">true</span> );
 <a name="l00614"></a>00614 
@@ -783,7 +783,7 @@ window.onload = initDynSections;
 <a name="l00684"></a>00684   
 <a name="l00685"></a>00685   <span class="keywordtype">int</span> formElements = 0;
 <a name="l00686"></a>00686   <a class="code" href="struct_html_form.html" title="A structure that represents a collection of HtmlFormElement structures.">HtmlForm</a> form;
-<a name="l00687"></a>00687   form.<a class="code" href="struct_html_form.html#ea7470fe5e3bd89b82778558eb1d40d9">count</a> = 0;
+<a name="l00687"></a>00687   form.<a class="code" href="struct_html_form.html#ea7470fe5e3bd89b82778558eb1d40d9" title="The number of form elements contained in this form.">count</a> = 0;
 <a name="l00688"></a>00688   
 <a name="l00689"></a>00689   <span class="comment">// if this request is an HTTP GET</span>
 <a name="l00690"></a>00690   <span class="keywordflow">if</span> ( strncmp( requestType, <span class="stringliteral">"GET"</span>, 3 ) == 0 )
@@ -817,7 +817,7 @@ window.onload = initDynSections;
 <a name="l00718"></a>00718     snprintf( temp, 100, <span class="stringliteral">"appled%d"</span>, j );
 <a name="l00719"></a>00719     <span class="keywordflow">for</span>( i = 0; i &lt; formElements; i++ )
 <a name="l00720"></a>00720     {
-<a name="l00721"></a>00721       <span class="keywordflow">if</span>( strcmp( temp, form.<a class="code" href="struct_html_form.html#3dcd6f72099a7ad50be56d4586985901">elements</a>[i].<a class="code" href="struct_html_form_element.html#c927ea60e64d624e039d1827747de713">key</a> ) == 0 )
+<a name="l00721"></a>00721       <span class="keywordflow">if</span>( strcmp( temp, form.<a class="code" href="struct_html_form.html#3dcd6f72099a7ad50be56d4586985901" title="An array of form elements.">elements</a>[i].<a class="code" href="struct_html_form_element.html#c927ea60e64d624e039d1827747de713" title="A pointer to the key of this element.">key</a> ) == 0 )
 <a name="l00722"></a>00722         value = 1;
 <a name="l00723"></a>00723     }
 <a name="l00724"></a>00724     <span class="comment">//AppLed_SetState( j, value );</span>
@@ -924,70 +924,109 @@ window.onload = initDynSections;
 <a name="l00825"></a>00825 }
 <a name="l00826"></a>00826 
 <a name="l00827"></a>00827 <span class="preprocessor">#ifdef OSC // Webserver OSC interface</span>
-<a name="l00828"></a>00828 <span class="preprocessor"></span>
-<a name="l00829"></a>00829 <span class="preprocessor">#include "osc.h"</span>
-<a name="l00830"></a>00830 <span class="keyword">static</span> <span class="keywordtype">char</span>* WebServerOsc_Name = <span class="stringliteral">"webserver"</span>;
-<a name="l00831"></a>00831 <span class="keyword">static</span> <span class="keywordtype">char</span>* WebServerOsc_PropertyNames[] = { <span class="stringliteral">"active"</span>, <span class="stringliteral">"listenport"</span>, 0 }; <span class="comment">// must have a trailing 0</span>
-<a name="l00832"></a>00832 
-<a name="l00833"></a>00833 <span class="keywordtype">int</span> WebServerOsc_PropertySet( <span class="keywordtype">int</span> value, <span class="keywordtype">int</span> property );
-<a name="l00834"></a>00834 <span class="keywordtype">int</span> WebServerOsc_PropertyGet( <span class="keywordtype">int</span> property );
-<a name="l00835"></a>00835 
-<a name="l00836"></a>00836 <span class="keyword">const</span> <span class="keywordtype">char</span>* WebServerOsc_GetName( <span class="keywordtype">void</span> )
-<a name="l00837"></a>00837 {
-<a name="l00838"></a>00838   <span class="keywordflow">return</span> WebServerOsc_Name;
-<a name="l00839"></a>00839 }
-<a name="l00840"></a>00840 
-<a name="l00841"></a>00841 <span class="keywordtype">int</span> WebServerOsc_ReceiveMessage( <span class="keywordtype">int</span> channel, <span class="keywordtype">char</span>* message, <span class="keywordtype">int</span> length )
-<a name="l00842"></a>00842 {
-<a name="l00843"></a>00843   <span class="keywordtype">int</span> status = <a class="code" href="group___o_s_c_a_p_i.html#g9331ca23d8e81ba91c4e728f0470627e" title="Receive an integer for a subsystem with no indexes.">Osc_IntReceiverHelper</a>( channel, message, length, 
-<a name="l00844"></a>00844                                       WebServerOsc_Name,
-<a name="l00845"></a>00845                                       WebServerOsc_PropertySet, WebServerOsc_PropertyGet, 
-<a name="l00846"></a>00846                                       WebServerOsc_PropertyNames );
-<a name="l00847"></a>00847 
-<a name="l00848"></a>00848   <span class="keywordflow">if</span> ( status != <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a> )
-<a name="l00849"></a>00849     <span class="keywordflow">return</span> Osc_SendError( channel, WebServerOsc_Name, status );
-<a name="l00850"></a>00850   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
-<a name="l00851"></a>00851 }
-<a name="l00852"></a>00852 
-<a name="l00853"></a>00853 <span class="comment">// Set the index LED, property with the value</span>
-<a name="l00854"></a>00854 <span class="keywordtype">int</span> WebServerOsc_PropertySet( <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> value )
-<a name="l00855"></a>00855 {
-<a name="l00856"></a>00856   <span class="keywordflow">switch</span> ( property )
-<a name="l00857"></a>00857   {
-<a name="l00858"></a>00858     <span class="keywordflow">case</span> 0: <span class="comment">// active</span>
-<a name="l00859"></a>00859       <a class="code" href="group__webserver.html#g5a95d049647db95b76a70bc5f722719c" title="Start the WebServer up, listening on port 80.">WebServer_SetActive</a>( value );
-<a name="l00860"></a>00860       <span class="keywordflow">break</span>;
-<a name="l00861"></a>00861     <span class="keywordflow">case</span> 1: <span class="comment">// listenport</span>
-<a name="l00862"></a>00862       <span class="keywordflow">if</span>(value != <a class="code" href="group__webserver.html#g920af9c0e4153c414d94417d0ec2c263" title="Get the port that the webserver is currently listening on.">WebServer_GetListenPort</a>())
-<a name="l00863"></a>00863       {
-<a name="l00864"></a>00864         <a class="code" href="group__webserver.html#g8d09559930507b44a8b6ba6888bcd8e0" title="Set the port that the webserver should listen on for new connections.">WebServer_SetListenPort</a>( value );
-<a name="l00865"></a>00865         WebServer-&gt;changeListenPort = <span class="keyword">true</span>;
-<a name="l00866"></a>00866       }
-<a name="l00867"></a>00867       <span class="keywordflow">break</span>;     
-<a name="l00868"></a>00868   }
-<a name="l00869"></a>00869   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
-<a name="l00870"></a>00870 }
+<a name="l00828"></a>00828 <span class="preprocessor"></span><span class="comment"></span>
+<a name="l00829"></a>00829 <span class="comment">/** \defgroup webserverosc Web Server - OSC</span>
+<a name="l00830"></a>00830 <span class="comment">  Configure the Web Server  via OSC.</span>
+<a name="l00831"></a>00831 <span class="comment">  \ingroup OSC</span>
+<a name="l00832"></a>00832 <span class="comment"></span>
+<a name="l00833"></a>00833 <span class="comment">  \section devices Devices</span>
+<a name="l00834"></a>00834 <span class="comment">    There is only one Web Server system, so a device index is not used.</span>
+<a name="l00835"></a>00835 <span class="comment">   </span>
+<a name="l00836"></a>00836 <span class="comment">  \section properties Properties</span>
+<a name="l00837"></a>00837 <span class="comment">  The Web Server system has the following properties</span>
+<a name="l00838"></a>00838 <span class="comment">  - active</span>
+<a name="l00839"></a>00839 <span class="comment">  - listenport</span>
+<a name="l00840"></a>00840 <span class="comment"></span>
+<a name="l00841"></a>00841 <span class="comment">  \section details Property Details</span>
+<a name="l00842"></a>00842 <span class="comment"></span>
+<a name="l00843"></a>00843 <span class="comment">  \b Active</span>
+<a name="l00844"></a>00844 <span class="comment"></span>
+<a name="l00845"></a>00845 <span class="comment">  The \b active property sets whether the web server on the Make Controller is running or not.</span>
+<a name="l00846"></a>00846 <span class="comment">  The default web server does not really do anything too interesting, but provides a count of the</span>
+<a name="l00847"></a>00847 <span class="comment">  number of requests it has served.  You can access the web server by typing the board's IP address</span>
+<a name="l00848"></a>00848 <span class="comment">  into your favorite browser.  You can check the board's IP address in mchelper.</span>
+<a name="l00849"></a>00849 <span class="comment"></span>
+<a name="l00850"></a>00850 <span class="comment">  To turn the web server on, send the message</span>
+<a name="l00851"></a>00851 <span class="comment">  \code /webserver/active 1 \endcode</span>
+<a name="l00852"></a>00852 <span class="comment">  then enter the board's IP address into the address bar of your favorite web browser.  Send the message</span>
+<a name="l00853"></a>00853 <span class="comment">  \code /network/webserver 0 \endcode</span>
+<a name="l00854"></a>00854 <span class="comment">  to turn the webserver off.</span>
+<a name="l00855"></a>00855 <span class="comment"></span>
+<a name="l00856"></a>00856 <span class="comment">  &lt;b&gt; Listen Port &lt;/b&gt;</span>
+<a name="l00857"></a>00857 <span class="comment"></span>
+<a name="l00858"></a>00858 <span class="comment">  The \b listenport property sets which port the web server should listen on for incoming requests.  By default</span>
+<a name="l00859"></a>00859 <span class="comment">  this is set to 80, the standard port for HTTP.</span>
+<a name="l00860"></a>00860 <span class="comment"></span>
+<a name="l00861"></a>00861 <span class="comment">  To listen on port 8080, send the message</span>
+<a name="l00862"></a>00862 <span class="comment">  \code /webserver/listenport 8080 \endcode</span>
+<a name="l00863"></a>00863 <span class="comment"></span>
+<a name="l00864"></a>00864 <span class="comment">  Note that the server will most likely already be listening on the previous port, and it won't update its port</span>
+<a name="l00865"></a>00865 <span class="comment">  until it serves that last request it's waiting for.</span>
+<a name="l00866"></a>00866 <span class="comment">*/</span>
+<a name="l00867"></a>00867 
+<a name="l00868"></a>00868 <span class="preprocessor">#include "osc.h"</span>
+<a name="l00869"></a>00869 <span class="keyword">static</span> <span class="keywordtype">char</span>* WebServerOsc_Name = <span class="stringliteral">"webserver"</span>;
+<a name="l00870"></a>00870 <span class="keyword">static</span> <span class="keywordtype">char</span>* WebServerOsc_PropertyNames[] = { <span class="stringliteral">"active"</span>, <span class="stringliteral">"listenport"</span>, 0 }; <span class="comment">// must have a trailing 0</span>
 <a name="l00871"></a>00871 
-<a name="l00872"></a>00872 <span class="comment">// Get the property</span>
-<a name="l00873"></a>00873 <span class="keywordtype">int</span> WebServerOsc_PropertyGet( <span class="keywordtype">int</span> property )
-<a name="l00874"></a>00874 {
-<a name="l00875"></a>00875   <span class="keywordtype">int</span> value = 0;
-<a name="l00876"></a>00876   <span class="keywordflow">switch</span> ( property )
-<a name="l00877"></a>00877   {
-<a name="l00878"></a>00878     <span class="keywordflow">case</span> 0: <span class="comment">// active</span>
-<a name="l00879"></a>00879       value = <a class="code" href="group__webserver.html#g3c8767183fe744b19e9fb799fe1b0e27" title="Read the active state of the WebServer subsystem.">WebServer_GetActive</a>( );
-<a name="l00880"></a>00880       <span class="keywordflow">break</span>;
-<a name="l00881"></a>00881     <span class="keywordflow">case</span> 1: <span class="comment">// listenport</span>
-<a name="l00882"></a>00882       value = <a class="code" href="group__webserver.html#g920af9c0e4153c414d94417d0ec2c263" title="Get the port that the webserver is currently listening on.">WebServer_GetListenPort</a>( );
-<a name="l00883"></a>00883       <span class="keywordflow">break</span>;   
-<a name="l00884"></a>00884   }
-<a name="l00885"></a>00885   <span class="keywordflow">return</span> value;
-<a name="l00886"></a>00886 }
-<a name="l00887"></a>00887 
-<a name="l00888"></a>00888 <span class="preprocessor">#endif // OSC</span>
-<a name="l00889"></a>00889 <span class="preprocessor"></span>
-<a name="l00890"></a>00890 <span class="preprocessor">#endif // MAKE_CTRL_NETWORK</span>
-<a name="l00891"></a>00891 <span class="preprocessor"></span>
+<a name="l00872"></a>00872 <span class="keywordtype">int</span> WebServerOsc_PropertySet( <span class="keywordtype">int</span> value, <span class="keywordtype">int</span> property );
+<a name="l00873"></a>00873 <span class="keywordtype">int</span> WebServerOsc_PropertyGet( <span class="keywordtype">int</span> property );
+<a name="l00874"></a>00874 
+<a name="l00875"></a>00875 <span class="keyword">const</span> <span class="keywordtype">char</span>* WebServerOsc_GetName( <span class="keywordtype">void</span> )
+<a name="l00876"></a>00876 {
+<a name="l00877"></a>00877   <span class="keywordflow">return</span> WebServerOsc_Name;
+<a name="l00878"></a>00878 }
+<a name="l00879"></a>00879 
+<a name="l00880"></a>00880 <span class="keywordtype">int</span> WebServerOsc_ReceiveMessage( <span class="keywordtype">int</span> channel, <span class="keywordtype">char</span>* message, <span class="keywordtype">int</span> length )
+<a name="l00881"></a>00881 {
+<a name="l00882"></a>00882   <span class="keywordtype">int</span> status = <a class="code" href="group___o_s_c_a_p_i.html#g9331ca23d8e81ba91c4e728f0470627e" title="Receive an integer for a subsystem with no indexes.">Osc_IntReceiverHelper</a>( channel, message, length, 
+<a name="l00883"></a>00883                                       WebServerOsc_Name,
+<a name="l00884"></a>00884                                       WebServerOsc_PropertySet, WebServerOsc_PropertyGet, 
+<a name="l00885"></a>00885                                       WebServerOsc_PropertyNames );
+<a name="l00886"></a>00886 
+<a name="l00887"></a>00887   <span class="keywordflow">if</span> ( status != <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a> )
+<a name="l00888"></a>00888     <span class="keywordflow">return</span> Osc_SendError( channel, WebServerOsc_Name, status );
+<a name="l00889"></a>00889   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
+<a name="l00890"></a>00890 }
+<a name="l00891"></a>00891 
+<a name="l00892"></a>00892 <span class="comment">// Set the index LED, property with the value</span>
+<a name="l00893"></a>00893 <span class="keywordtype">int</span> WebServerOsc_PropertySet( <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> value )
+<a name="l00894"></a>00894 {
+<a name="l00895"></a>00895   <span class="keywordflow">switch</span> ( property )
+<a name="l00896"></a>00896   {
+<a name="l00897"></a>00897     <span class="keywordflow">case</span> 0: <span class="comment">// active</span>
+<a name="l00898"></a>00898       <a class="code" href="group__webserver.html#g5a95d049647db95b76a70bc5f722719c" title="Start the WebServer up, listening on port 80.">WebServer_SetActive</a>( value );
+<a name="l00899"></a>00899       <span class="keywordflow">break</span>;
+<a name="l00900"></a>00900     <span class="keywordflow">case</span> 1: <span class="comment">// listenport</span>
+<a name="l00901"></a>00901       <span class="keywordflow">if</span>(value != <a class="code" href="group__webserver.html#g920af9c0e4153c414d94417d0ec2c263" title="Get the port that the webserver is currently listening on.">WebServer_GetListenPort</a>())
+<a name="l00902"></a>00902       {
+<a name="l00903"></a>00903         <a class="code" href="group__webserver.html#g8d09559930507b44a8b6ba6888bcd8e0" title="Set the port that the webserver should listen on for new connections.">WebServer_SetListenPort</a>( value );
+<a name="l00904"></a>00904         WebServer-&gt;changeListenPort = <span class="keyword">true</span>;
+<a name="l00905"></a>00905       }
+<a name="l00906"></a>00906       <span class="keywordflow">break</span>;     
+<a name="l00907"></a>00907   }
+<a name="l00908"></a>00908   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
+<a name="l00909"></a>00909 }
+<a name="l00910"></a>00910 
+<a name="l00911"></a>00911 <span class="comment">// Get the property</span>
+<a name="l00912"></a>00912 <span class="keywordtype">int</span> WebServerOsc_PropertyGet( <span class="keywordtype">int</span> property )
+<a name="l00913"></a>00913 {
+<a name="l00914"></a>00914   <span class="keywordtype">int</span> value = 0;
+<a name="l00915"></a>00915   <span class="keywordflow">switch</span> ( property )
+<a name="l00916"></a>00916   {
+<a name="l00917"></a>00917     <span class="keywordflow">case</span> 0: <span class="comment">// active</span>
+<a name="l00918"></a>00918       value = <a class="code" href="group__webserver.html#g3c8767183fe744b19e9fb799fe1b0e27" title="Read the active state of the WebServer subsystem.">WebServer_GetActive</a>( );
+<a name="l00919"></a>00919       <span class="keywordflow">break</span>;
+<a name="l00920"></a>00920     <span class="keywordflow">case</span> 1: <span class="comment">// listenport</span>
+<a name="l00921"></a>00921       value = <a class="code" href="group__webserver.html#g920af9c0e4153c414d94417d0ec2c263" title="Get the port that the webserver is currently listening on.">WebServer_GetListenPort</a>( );
+<a name="l00922"></a>00922       <span class="keywordflow">break</span>;   
+<a name="l00923"></a>00923   }
+<a name="l00924"></a>00924   <span class="keywordflow">return</span> value;
+<a name="l00925"></a>00925 }
+<a name="l00926"></a>00926 
+<a name="l00927"></a>00927 <span class="preprocessor">#endif // OSC</span>
+<a name="l00928"></a>00928 <span class="preprocessor"></span>
+<a name="l00929"></a>00929 <span class="preprocessor">#endif // MAKE_CTRL_NETWORK</span>
+<a name="l00930"></a>00930 <span class="preprocessor"></span>
 </pre></div></div>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -1011,7 +1050,7 @@ window.onload = initDynSections;
   <p class="footer">The Make Controller Kit is an open source project maintained by <a href="http://www.makingthings.com">MakingThings</a>.<br />
     MakingThings code is released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 license</a>.<br />
     Bug tracker, development wiki and status can be found at <a href="http://dev.makingthings.com">http://dev.makingthings.com</a>.<br />
-		This document was last updated on 6 Aug 2008.
+		This document was last updated on 13 Aug 2008.
 </p>
 </div>
 <!-- Google Analytics Code -->

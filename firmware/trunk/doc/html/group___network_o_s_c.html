@@ -110,8 +110,8 @@ window.onload = initDynSections;
 Devices</a></h2>
 There is only one Network system, so a device index is not used.<h2><a class="anchor" name="properties">
 Properties</a></h2>
-The Network system has seven properties<ul>
-<li>address</li><li>mask</li><li>gateway</li><li>valid</li><li>mac</li><li>osc_udp_port</li><li>dhcp</li><li>webserver</li></ul>
+The Network system has the following properties<ul>
+<li>address</li><li>mask</li><li>gateway</li><li>valid</li><li>mac</li><li>osc_udp_port</li><li>dhcp</li></ul>
 <p>
 <dl class="user" compact><dt><b>Address</b></dt><dd>The <b>address</b> property corresponds to the IP address of the Controller Board. This value can be both read and written. To set a new address, send a message like <div class="fragment"><pre class="fragment">/network/address 192.168.0.235 </pre></div> </dd></dl>
 <dl class="user" compact><dt><b></b></dt><dd>To read the current IP address, omit the argument value from the end of the message: <div class="fragment"><pre class="fragment">/network/address </pre></div></dd></dl>
@@ -131,10 +131,6 @@ The Network system has seven properties<ul>
 </pre></div> as you normally would. To turn DHCP off, send the message <div class="fragment"><pre class="fragment"> /network/dhcp 0 
 </pre></div> To read whether DHCP is currently enabled on the board, send the message <div class="fragment"><pre class="fragment"> /network/dhcp 
 </pre></div> with no argument value.</dd></dl>
-<dl class="user" compact><dt><b>Web Server</b></dt><dd>The <b>webserver</b> property sets whether the demo web server on the Make Controller is running or not. The web server can provide current stats about the board through a web browser interface. Because the web server consumes a significant chunk of the board's resources, it's best to turn it off when you're not using it. </dd></dl>
-<dl class="user" compact><dt><b></b></dt><dd>To turn the web server on, send the message <div class="fragment"><pre class="fragment"> /network/webserver 1 
-</pre></div> then enter the board's IP address into the address bar of your favorite web browser. Send the message <div class="fragment"><pre class="fragment"> /network/webserver 0 
-</pre></div> to turn the webserver off.</dd></dl>
 <dl class="user" compact><dt><b>MAC</b></dt><dd>The <b>mac</b> property corresponds to the Ethernet MAC address of the Controller Board. This value is read-only. Each board on a network must have a unique MAC address. The MAC address is generated using the board's serial number, so ensure that your board's serial numbers are unique. </dd></dl>
 <dl class="user" compact><dt><b></b></dt><dd>To read the MAC address of the Controller, send the message <div class="fragment"><pre class="fragment">/network/mac </pre></div> The board will respond by sending back an OSC message with the MAC address. </dd></dl>
 </div>
@@ -160,7 +156,7 @@ The Network system has seven properties<ul>
   <p class="footer">The Make Controller Kit is an open source project maintained by <a href="http://www.makingthings.com">MakingThings</a>.<br />
     MakingThings code is released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 license</a>.<br />
     Bug tracker, development wiki and status can be found at <a href="http://dev.makingthings.com">http://dev.makingthings.com</a>.<br />
-		This document was last updated on 6 Aug 2008.
+		This document was last updated on 13 Aug 2008.
 </p>
 </div>
 <!-- Google Analytics Code -->
