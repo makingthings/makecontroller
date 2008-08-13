@@ -41,8 +41,8 @@ typedef enum
  */
 typedef struct
 {
-  JsonEncode_Step steps[JSON_MAX_DEPTH];
-  int depth;
+  JsonEncode_Step steps[JSON_MAX_DEPTH]; /**< An array to keep track of the state of each step in the encoder. */
+  int depth;                             /**< The current depth of the encoder (how many elements have been opened). */
 } JsonEncode_State;
 
 // state object for decoding
@@ -59,12 +59,12 @@ typedef enum {
   \ingroup json
  */
 typedef struct {
-  JsonDecode_Step steps[JSON_MAX_DEPTH];
-  int depth;
-  bool gotcomma;
-  void* context;
-  char* p;
-  int len;
+  JsonDecode_Step steps[JSON_MAX_DEPTH]; /**< An array to keep track of each step of the decoder. */
+  int depth;                             /**< The current depth of the decoder (how many elements have been opened). */
+  bool gotcomma;                         /**< Used internally by the decoder. */
+  void* context;                         /**< A pointer to the user context. */
+  char* p;                               /**< A pointer to the data. */
+  int len;                               /**< The current length. */
 } JsonDecode_State;
 
 // Encode
