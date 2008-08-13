@@ -224,16 +224,12 @@ int XBee_GetPacket( XBeePacket* packet, int timeout )
 
   do
   {
-    if( Serial_GetErrors( 0, 0, 0 ) )
-      Serial_ClearErrors();
-
+    Serial_ClearErrors();
     while( Serial_GetReadable( ) )
     {
       int newChar = Serial_GetChar( );
       if( newChar == -1 )
         break;
-  
-      // should really have a watchdog to reset the parser if it goes haywire
   
       switch( packet->rxState )
       {
@@ -390,11 +386,13 @@ void XBeeConfig_SetPacketApiMode( int value )
   if( value )
   {
     char buf[50];
-    snprintf( buf, 50, "+++" ); // enter command mode
+    sprintf( buf, "+++" ); // enter command mode
     Serial_Write( (uchar*)buf, strlen(buf), 0 );
     Sleep( 1025 ); // have to wait one second after +++ to actually get set to receive in AT mode
-    snprintf( buf, 50, "ATAP %x,CN\r", 1 ); // turn API mode on, and leave command mode
+    sprintf( buf, "ATAP1,CN\r" ); // turn API mode on, and leave command mode
     Serial_Write( (uchar*)buf, strlen(buf), 0 );
+    Sleep(50);
+    Serial_Flush(); // rip the OKs out of there
   }
   else
   {
