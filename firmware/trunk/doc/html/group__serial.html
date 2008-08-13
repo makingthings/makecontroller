@@ -157,6 +157,21 @@ window.onload = initDynSections;
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__serial.html#g4fefdaf9c2c9573e475157c00c81537a">Serial_GetHardwareHandshake</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns whether hardware handshaking is being employed or not.  <a href="#g4fefdaf9c2c9573e475157c00c81537a"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__serial.html#gd20f0e0e6e94a2eb295d8b031e8654d0">Serial_Flush</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Clear out the serial port.  <a href="#gd20f0e0e6e94a2eb295d8b031e8654d0"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__serial.html#gc368f134feb83c2e53c8fddd174383c9">Serial_ClearErrors</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Reset the error flags in the serial system.  <a href="#gc368f134feb83c2e53c8fddd174383c9"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__serial.html#g6bcf588659024eeac864cc28bdb25d28">Serial_GetErrors</a> (bool *overrun, bool *frame, bool *parity)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Read whether there are any errors.  <a href="#g6bcf588659024eeac864cc28bdb25d28"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__serial.html#geec26c7427674cc573de061cf2bdf93b">Serial_StartBreak</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Start the transimission of a break.  <a href="#geec26c7427674cc573de061cf2bdf93b"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__serial.html#ged714067a7af33d94b729b374391f1a6">Serial_StopBreak</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Stop the transimission of a break.  <a href="#ged714067a7af33d94b729b374391f1a6"></a><br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 Serial provides a way to send and receive data via the serial port. 
@@ -167,6 +182,62 @@ Permits all of the common serial characteristics to be set including:<ul>
 <p>
 <dl compact><dt><b><a class="el" href="todo.html#_todo000007">Todo:</a></b></dt><dd>Convert to DMA interface for higher performance.</dd></dl>
 <hr><h2>Function Documentation</h2>
+<a class="anchor" name="gc368f134feb83c2e53c8fddd174383c9"></a><!-- doxytag: member="serial.c::Serial_ClearErrors" ref="gc368f134feb83c2e53c8fddd174383c9" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Serial_ClearErrors           </td>
+          <td>(</td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname">          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+Reset the error flags in the serial system. 
+<p>
+In the normal course of operation, the serial system may experience a variety of different error modes, including buffer overruns, framing and parity errors, and more. When in an error state, the serial system may behave differently than normal.<p>
+<a class="el" href="group__serial.html#gc368f134feb83c2e53c8fddd174383c9" title="Reset the error flags in the serial system.">Serial_ClearErrors()</a> resets the appropriate status bits to a state of normal operation. It will only reset the error states if there are currently any errors. <dl class="see" compact><dt><b>See also:</b></dt><dd><a class="el" href="group__serial.html#g6bcf588659024eeac864cc28bdb25d28" title="Read whether there are any errors.">Serial_GetErrors</a></dd></dl>
+<b>Example</b> <p>
+<div class="fragment"><pre class="fragment">  <a class="code" href="group__serial.html#gc368f134feb83c2e53c8fddd174383c9" title="Reset the error flags in the serial system.">Serial_ClearErrors</a>();
+  <span class="comment">// that's all there is to it.</span>
+</pre></div> 
+<p>Definition at line <a class="el" href="serial_8c-source.html#l00427">427</a> of file <a class="el" href="serial_8c-source.html">serial.c</a>.</p>
+
+</div>
+</div><p>
+<a class="anchor" name="gd20f0e0e6e94a2eb295d8b031e8654d0"></a><!-- doxytag: member="serial.c::Serial_Flush" ref="gd20f0e0e6e94a2eb295d8b031e8654d0" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Serial_Flush           </td>
+          <td>(</td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname">          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+Clear out the serial port. 
+<p>
+Ensures that there are no bytes in the incoming buffer.<p>
+<b>Example</b> <div class="fragment"><pre class="fragment">  <a class="code" href="group__serial.html#g9193106181ca33626bd405a1f0434ee6" title="Set the active state of the Serial subsystem.">Serial_SetActive</a>(1);
+  <a class="code" href="group__serial.html#gd20f0e0e6e94a2eb295d8b031e8654d0" title="Clear out the serial port.">Serial_Flush</a>( ); <span class="comment">// after starting up, make sure there's no junk in there</span>
+</pre></div> 
+<p>Definition at line <a class="el" href="serial_8c-source.html#l00401">401</a> of file <a class="el" href="serial_8c-source.html">serial.c</a>.</p>
+
+</div>
+</div><p>
 <a class="anchor" name="gcce26617c8506ce4194adefd107f93a2"></a><!-- doxytag: member="serial.c::Serial_GetActive" ref="gcce26617c8506ce4194adefd107f93a2" args="()" -->
 <div class="memitem">
 <div class="memproto">
@@ -264,6 +335,80 @@ Returns a single character from the receive queue if available.
 This character is returned unsigned - i.e. having a value of 0 - 255. The return value is -1 if there is no character waiting. <dl class="return" compact><dt><b>Returns:</b></dt><dd>character from the queue or -1 if there is no character. </dd></dl>
 
 <p>Definition at line <a class="el" href="serial_8c-source.html#l00305">305</a> of file <a class="el" href="serial_8c-source.html">serial.c</a>.</p>
+
+</div>
+</div><p>
+<a class="anchor" name="g6bcf588659024eeac864cc28bdb25d28"></a><!-- doxytag: member="serial.c::Serial_GetErrors" ref="g6bcf588659024eeac864cc28bdb25d28" args="(bool *overrun, bool *frame, bool *parity)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Serial_GetErrors           </td>
+          <td>(</td>
+          <td class="paramtype">bool *&nbsp;</td>
+          <td class="paramname"> <em>overrun</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool *&nbsp;</td>
+          <td class="paramname"> <em>frame</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool *&nbsp;</td>
+          <td class="paramname"> <em>parity</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+Read whether there are any errors. 
+<p>
+We can check for three kinds of errors in the serial system:<ul>
+<li>buffer overrun</li><li>framing error</li><li>parity error</li></ul>
+<p>
+Each parameter will be set with a true or a false given the current error state. If you don't care to check one of the parameters, just pass in 0.<p>
+<dl compact><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>overrun</em>&nbsp;</td><td>A bool that will be set with the overrun error state. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>frame</em>&nbsp;</td><td>A bool that will be set with the frame error state. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>parity</em>&nbsp;</td><td>A bool that will be set with the parity error state. </td></tr>
+  </table>
+</dl>
+<dl class="return" compact><dt><b>Returns:</b></dt><dd>True if there were any errors, false if there were no errors. </dd></dl>
+<dl class="see" compact><dt><b>See also:</b></dt><dd><a class="el" href="group__serial.html#gc368f134feb83c2e53c8fddd174383c9" title="Reset the error flags in the serial system.">Serial_ClearErrors( )</a></dd></dl>
+<b>Example</b> <div class="fragment"><pre class="fragment">  <span class="keywordtype">bool</span> over, fr, par;
+  <span class="keywordflow">if</span>( <a class="code" href="group__serial.html#g6bcf588659024eeac864cc28bdb25d28" title="Read whether there are any errors.">Serial_GetErrors</a>( &amp;over, &amp;fr, &amp;par ) )
+  {
+    <span class="comment">// if we wanted, we could just clear them all right here with Serial_ClearErrors()</span>
+    <span class="comment">// but here we'll check to see what kind of errors we got</span>
+    <span class="keywordflow">if</span>(over)
+    {
+      <span class="comment">// then we have an overrun error</span>
+    }
+    <span class="keywordflow">if</span>(fr)
+    {
+      <span class="comment">// then we have a framing error</span>
+    }
+    <span class="keywordflow">if</span>(par)
+    {
+      <span class="comment">// then we have a parity error</span>
+    }
+  }
+  <span class="keywordflow">else</span>
+  {
+    <span class="comment">// there were no errors</span>
+  }
+</pre></div> 
+<p>Definition at line <a class="el" href="serial_8c-source.html#l00476">476</a> of file <a class="el" href="serial_8c-source.html">serial.c</a>.</p>
 
 </div>
 </div><p>
@@ -624,6 +769,60 @@ Sets the stop bits per character.
 
 </div>
 </div><p>
+<a class="anchor" name="geec26c7427674cc573de061cf2bdf93b"></a><!-- doxytag: member="serial.c::Serial_StartBreak" ref="geec26c7427674cc573de061cf2bdf93b" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Serial_StartBreak           </td>
+          <td>(</td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname">          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+Start the transimission of a break. 
+<p>
+This has no effect if a break is already in progress.<p>
+<b>Example</b> <p>
+<div class="fragment"><pre class="fragment">  <a class="code" href="group__serial.html#geec26c7427674cc573de061cf2bdf93b" title="Start the transimission of a break.">Serial_StartBreak</a>();
+</pre></div> 
+<p>Definition at line <a class="el" href="serial_8c-source.html#l00511">511</a> of file <a class="el" href="serial_8c-source.html">serial.c</a>.</p>
+
+</div>
+</div><p>
+<a class="anchor" name="ged714067a7af33d94b729b374391f1a6"></a><!-- doxytag: member="serial.c::Serial_StopBreak" ref="ged714067a7af33d94b729b374391f1a6" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Serial_StopBreak           </td>
+          <td>(</td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname">          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+Stop the transimission of a break. 
+<p>
+This has no effect if there's not a break already in progress.<p>
+<b>Example</b> <p>
+<div class="fragment"><pre class="fragment">  <a class="code" href="group__serial.html#ged714067a7af33d94b729b374391f1a6" title="Stop the transimission of a break.">Serial_StopBreak</a>();
+</pre></div> 
+<p>Definition at line <a class="el" href="serial_8c-source.html#l00526">526</a> of file <a class="el" href="serial_8c-source.html">serial.c</a>.</p>
+
+</div>
+</div><p>
 <a class="anchor" name="ga84bc3522badbcf45ad97e7a0320c54e"></a><!-- doxytag: member="serial.c::Serial_Write" ref="ga84bc3522badbcf45ad97e7a0320c54e" args="(uchar *buffer, int count, int timeout)" -->
 <div class="memitem">
 <div class="memproto">
@@ -694,7 +893,7 @@ Will block for the time specified (in ms) if the queue fills up. <dl compact><dt
   <p class="footer">The Make Controller Kit is an open source project maintained by <a href="http://www.makingthings.com">MakingThings</a>.<br />
     MakingThings code is released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 license</a>.<br />
     Bug tracker, development wiki and status can be found at <a href="http://dev.makingthings.com">http://dev.makingthings.com</a>.<br />
-		This document was last updated on 6 Aug 2008.
+		This document was last updated on 13 Aug 2008.
 </p>
 </div>
 <!-- Google Analytics Code -->

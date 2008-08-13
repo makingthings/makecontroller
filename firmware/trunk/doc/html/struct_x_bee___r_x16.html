@@ -101,6 +101,7 @@ window.onload = initDynSections;
     <ul>
       <li><a href="classes.html"><span>Alphabetical&nbsp;List</span></a></li>
       <li><a href="annotated.html"><span>Data&nbsp;Structures</span></a></li>
+      <li><a href="functions.html"><span>Data&nbsp;Fields</span></a></li>
     </ul>
   </div>
 </div>
@@ -108,19 +109,105 @@ window.onload = initDynSections;
 <h1>XBee_RX16 Struct Reference<br>
 <small>
 [<a class="el" href="group___x_bee_packet_types.html">XBee Packet Types</a>]</small>
-</h1><!-- doxytag: class="XBee_RX16" -->An incoming packet with a 16-bit address.  
+</h1><!-- doxytag: class="XBee_RX16" -->An incoming data packet with a 16-bit address.  
 <a href="#_details">More...</a>
 <p>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
+<tr><td colspan="2"><br><h2>Data Fields</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">uint8&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_x_bee___r_x16.html#1dffd1837c62c47aa1784a5b3e4c5801">source</a> [2]</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">the 16-bit (2-byte) address of the sender.  <a href="#1dffd1837c62c47aa1784a5b3e4c5801"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">uint8&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_x_bee___r_x16.html#2de0e14b59afd8cafeabd43e719b35f4">rssi</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">the signal strength of the received message.  <a href="#2de0e14b59afd8cafeabd43e719b35f4"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">uint8&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_x_bee___r_x16.html#3d7bd9d1b6829cdfb78977d93ad0f60f">options</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">bit 1 is Address Broadcast, bit 2 is PAN broadcast.  <a href="#3d7bd9d1b6829cdfb78977d93ad0f60f"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">uint8&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_x_bee___r_x16.html#e69e7b149d147da784d3982039385fb7">data</a> [95]</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">a buffer containing the value of the incoming packet.  <a href="#e69e7b149d147da784d3982039385fb7"></a><br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
-An incoming packet with a 16-bit address. 
-<p>
-<ul>
-<li><b>source</b> is the 16-bit (2-byte) address of the sender.</li><li><b>rssi</b> is the signal strength of the received message.</li><li><b>options</b> - bit 1 is Address Broadcast, bit 2 is PAN broadcast. Other bits reserved.</li><li><b>data</b> is a buffer that holds the value of the incoming packet. </li></ul>
+An incoming data packet with a 16-bit address. 
+<p>Definition at line <a class="el" href="xbee_8h-source.html#l00127">127</a> of file <a class="el" href="xbee_8h-source.html">xbee.h</a>.</p>
+<hr><h2>Field Documentation</h2>
+<a class="anchor" name="1dffd1837c62c47aa1784a5b3e4c5801"></a><!-- doxytag: member="XBee_RX16::source" ref="1dffd1837c62c47aa1784a5b3e4c5801" args="[2]" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8 <a class="el" href="struct_x_bee___r_x16.html#1dffd1837c62c47aa1784a5b3e4c5801">XBee_RX16::source</a>[2]          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
 
-<p>Definition at line <a class="el" href="xbee_8h-source.html#l00153">153</a> of file <a class="el" href="xbee_8h-source.html">xbee.h</a>.</p>
+<p>
+the 16-bit (2-byte) address of the sender. 
+<p>
+
+<p>Definition at line <a class="el" href="xbee_8h-source.html#l00129">129</a> of file <a class="el" href="xbee_8h-source.html">xbee.h</a>.</p>
+
+</div>
+</div><p>
+<a class="anchor" name="2de0e14b59afd8cafeabd43e719b35f4"></a><!-- doxytag: member="XBee_RX16::rssi" ref="2de0e14b59afd8cafeabd43e719b35f4" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8 <a class="el" href="struct_x_bee___r_x16.html#2de0e14b59afd8cafeabd43e719b35f4">XBee_RX16::rssi</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+the signal strength of the received message. 
+<p>
+
+<p>Definition at line <a class="el" href="xbee_8h-source.html#l00130">130</a> of file <a class="el" href="xbee_8h-source.html">xbee.h</a>.</p>
+
+</div>
+</div><p>
+<a class="anchor" name="3d7bd9d1b6829cdfb78977d93ad0f60f"></a><!-- doxytag: member="XBee_RX16::options" ref="3d7bd9d1b6829cdfb78977d93ad0f60f" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8 <a class="el" href="struct_x_bee___r_x16.html#3d7bd9d1b6829cdfb78977d93ad0f60f">XBee_RX16::options</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+bit 1 is Address Broadcast, bit 2 is PAN broadcast. 
+<p>
+Other bits reserved. 
+<p>Definition at line <a class="el" href="xbee_8h-source.html#l00131">131</a> of file <a class="el" href="xbee_8h-source.html">xbee.h</a>.</p>
+
+</div>
+</div><p>
+<a class="anchor" name="e69e7b149d147da784d3982039385fb7"></a><!-- doxytag: member="XBee_RX16::data" ref="e69e7b149d147da784d3982039385fb7" args="[95]" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8 <a class="el" href="struct_x_bee___r_x16.html#e69e7b149d147da784d3982039385fb7">XBee_RX16::data</a>[95]          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+a buffer containing the value of the incoming packet. 
+<p>
+
+<p>Definition at line <a class="el" href="xbee_8h-source.html#l00132">132</a> of file <a class="el" href="xbee_8h-source.html">xbee.h</a>.</p>
+
+</div>
+</div><p>
 </div>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -144,7 +231,7 @@ An incoming packet with a 16-bit address.
   <p class="footer">The Make Controller Kit is an open source project maintained by <a href="http://www.makingthings.com">MakingThings</a>.<br />
     MakingThings code is released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 license</a>.<br />
     Bug tracker, development wiki and status can be found at <a href="http://dev.makingthings.com">http://dev.makingthings.com</a>.<br />
-		This document was last updated on 6 Aug 2008.
+		This document was last updated on 13 Aug 2008.
 </p>
 </div>
 <!-- Google Analytics Code -->

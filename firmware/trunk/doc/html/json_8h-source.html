@@ -140,8 +140,8 @@ window.onload = initDynSections;
 <a name="l00041"></a>00041 <span class="comment"> */</span>
 <a name="l00042"></a><a class="code" href="struct_json_encode___state.html">00042</a> <span class="keyword">typedef</span> <span class="keyword">struct</span>
 <a name="l00043"></a>00043 {
-<a name="l00044"></a>00044   JsonEncode_Step steps[JSON_MAX_DEPTH];
-<a name="l00045"></a>00045   <span class="keywordtype">int</span> depth;
+<a name="l00044"></a><a class="code" href="struct_json_encode___state.html#ad9a4f1aebcfaa0e54cc5d3be820d42c">00044</a>   JsonEncode_Step steps[JSON_MAX_DEPTH]; <span class="comment">/**&lt; An array to keep track of the state of each step in the encoder. */</span>
+<a name="l00045"></a><a class="code" href="struct_json_encode___state.html#24e09f02be0d9d05d408878dc703b282">00045</a>   <span class="keywordtype">int</span> depth;                             <span class="comment">/**&lt; The current depth of the encoder (how many elements have been opened). */</span>
 <a name="l00046"></a>00046 } <a class="code" href="struct_json_encode___state.html" title="The structure used to maintain the state of a JSON encode process.">JsonEncode_State</a>;
 <a name="l00047"></a>00047 
 <a name="l00048"></a>00048 <span class="comment">// state object for decoding</span>
@@ -158,12 +158,12 @@ window.onload = initDynSections;
 <a name="l00059"></a>00059 <span class="comment">  \ingroup json</span>
 <a name="l00060"></a>00060 <span class="comment"> */</span>
 <a name="l00061"></a><a class="code" href="struct_json_decode___state.html">00061</a> <span class="keyword">typedef</span> <span class="keyword">struct </span>{
-<a name="l00062"></a>00062   JsonDecode_Step steps[JSON_MAX_DEPTH];
-<a name="l00063"></a>00063   <span class="keywordtype">int</span> depth;
-<a name="l00064"></a>00064   <span class="keywordtype">bool</span> gotcomma;
-<a name="l00065"></a>00065   <span class="keywordtype">void</span>* context;
-<a name="l00066"></a>00066   <span class="keywordtype">char</span>* p;
-<a name="l00067"></a>00067   <span class="keywordtype">int</span> len;
+<a name="l00062"></a><a class="code" href="struct_json_decode___state.html#32c6a5da5319ed534ed412a06431e2c6">00062</a>   JsonDecode_Step steps[JSON_MAX_DEPTH]; <span class="comment">/**&lt; An array to keep track of each step of the decoder. */</span>
+<a name="l00063"></a><a class="code" href="struct_json_decode___state.html#6b2a03cafa2d2cba13c06bbd6e42a10a">00063</a>   <span class="keywordtype">int</span> depth;                             <span class="comment">/**&lt; The current depth of the decoder (how many elements have been opened). */</span>
+<a name="l00064"></a><a class="code" href="struct_json_decode___state.html#f0bd5b3257a0c3b59914003582da0a9f">00064</a>   <span class="keywordtype">bool</span> gotcomma;                         <span class="comment">/**&lt; Used internally by the decoder. */</span>
+<a name="l00065"></a><a class="code" href="struct_json_decode___state.html#a8da7116fdbeba1c9d12454c9bef83ad">00065</a>   <span class="keywordtype">void</span>* context;                         <span class="comment">/**&lt; A pointer to the user context. */</span>
+<a name="l00066"></a><a class="code" href="struct_json_decode___state.html#7805ccb893b410f72725a9caa9f521b4">00066</a>   <span class="keywordtype">char</span>* p;                               <span class="comment">/**&lt; A pointer to the data. */</span>
+<a name="l00067"></a><a class="code" href="struct_json_decode___state.html#57da5c93417c816615fe9f05b0f74acc">00067</a>   <span class="keywordtype">int</span> len;                               <span class="comment">/**&lt; The current length. */</span>
 <a name="l00068"></a>00068 } <a class="code" href="struct_json_decode___state.html" title="The structure used to maintain the state of a JSON decode process.">JsonDecode_State</a>;
 <a name="l00069"></a>00069 
 <a name="l00070"></a>00070 <span class="comment">// Encode</span>
@@ -218,7 +218,7 @@ window.onload = initDynSections;
   <p class="footer">The Make Controller Kit is an open source project maintained by <a href="http://www.makingthings.com">MakingThings</a>.<br />
     MakingThings code is released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 license</a>.<br />
     Bug tracker, development wiki and status can be found at <a href="http://dev.makingthings.com">http://dev.makingthings.com</a>.<br />
-		This document was last updated on 6 Aug 2008.
+		This document was last updated on 13 Aug 2008.
 </p>
 </div>
 <!-- Google Analytics Code -->

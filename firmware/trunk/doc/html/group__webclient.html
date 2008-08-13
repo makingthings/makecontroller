@@ -177,7 +177,7 @@ Some websites seem to reject connections occassionally - perhaps because we don'
 Note that this uses lots of printf style functions and may require a fair amount of memory to be allocated to the task calling it. The result is returned in the specified buffer.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>address</em>&nbsp;</td><td>The IP address of the server to get from. Usually created using the IP_ADDRESS( ) macro. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>address</em>&nbsp;</td><td>The IP address of the server to get from. Usually created using the <a class="el" href="group___sockets.html#g54087ee7398710212cc4e6bbaa861b9e" title="Generate an address appropriate for Socket functions from 4 integers.">IP_ADDRESS( )</a> macro. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>port</em>&nbsp;</td><td>The port to connect on. Usually 80 for HTTP. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>hostname</em>&nbsp;</td><td>A string specifying the name of the host to connect to. When connecting to a server that does shared hosting, this will specify who to connect with. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>path</em>&nbsp;</td><td>The path on the server to connect to. </td></tr>
@@ -186,7 +186,7 @@ Note that this uses lots of printf style functions and may require a fair amount
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>the number of bytes read, or &lt; 0 on error.</dd></dl>
-<dl class="user" compact><dt><b>Example</b></dt><dd><div class="fragment"><pre class="fragment">  <span class="keywordtype">int</span> addr = IP_ADDRESS( 72, 249, 53, 185); <span class="comment">// makingthings.com is 72.249.53.185</span>
+<dl class="user" compact><dt><b>Example</b></dt><dd><div class="fragment"><pre class="fragment">  <span class="keywordtype">int</span> addr = <a class="code" href="group___sockets.html#g54087ee7398710212cc4e6bbaa861b9e" title="Generate an address appropriate for Socket functions from 4 integers.">IP_ADDRESS</a>( 72, 249, 53, 185); <span class="comment">// makingthings.com is 72.249.53.185</span>
   <span class="keywordtype">int</span> bufLength = 100;
   <span class="keywordtype">char</span> myBuffer[bufLength];
   <span class="keywordtype">int</span> getSize = <a class="code" href="group__webclient.html#ge6d303d67a7adfe38b34873dba7e2e39" title="Performs an HTTP GET operation to the path at the address / port specified.">WebClient_Get</a>( addr, 80, <span class="stringliteral">"www.makingthings.com"</span>, <span class="stringliteral">"/test/path"</span>, myBuffer, bufLength );
@@ -267,7 +267,7 @@ The actual post contents are found read from a given buffer and the result is re
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>status.</dd></dl>
 <dl class="user" compact><dt><b>Example</b></dt><dd><div class="fragment"><pre class="fragment">  <span class="comment">// we'll post a test message to www.makingthings.com/post/path</span>
-  <span class="keywordtype">int</span> addr = IP_ADDRESS( 72, 249, 53, 185); <span class="comment">// makingthings.com is 72.249.53.185</span>
+  <span class="keywordtype">int</span> addr = <a class="code" href="group___sockets.html#g54087ee7398710212cc4e6bbaa861b9e" title="Generate an address appropriate for Socket functions from 4 integers.">IP_ADDRESS</a>( 72, 249, 53, 185); <span class="comment">// makingthings.com is 72.249.53.185</span>
   <span class="keywordtype">int</span> bufLength = 100;
   <span class="keywordtype">char</span> myBuffer[bufLength];
   sprintf( myBuffer, <span class="stringliteral">"A test message to post"</span> );
@@ -302,7 +302,7 @@ The actual post contents are found read from a given buffer and the result is re
   <p class="footer">The Make Controller Kit is an open source project maintained by <a href="http://www.makingthings.com">MakingThings</a>.<br />
     MakingThings code is released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 license</a>.<br />
     Bug tracker, development wiki and status can be found at <a href="http://dev.makingthings.com">http://dev.makingthings.com</a>.<br />
-		This document was last updated on 6 Aug 2008.
+		This document was last updated on 13 Aug 2008.
 </p>
 </div>
 <!-- Google Analytics Code -->

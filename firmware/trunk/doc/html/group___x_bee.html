@@ -111,6 +111,10 @@ window.onload = initDynSections;
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The different types of packet that can be used with the <a class="el" href="group___x_bee.html">XBee</a> subsystem. <br></td></tr>
 
 <p>
+<tr><td colspan="2"><br><h2>Data Structures</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_x_bee_packet.html">XBeePacket</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Representation of an XBee packet.  <a href="struct_x_bee_packet.html#_details">More...</a><br></td></tr>
 <tr><td colspan="2"><br><h2>Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#gf99a020a130eed99733b529b8cdb84a8">XBee_SetActive</a> (int state)</td></tr>
 
@@ -127,16 +131,16 @@ window.onload = initDynSections;
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g1893372e87de84879591c054279a2b9b">XBee_GetReadable</a> (void)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns the number of bytes in the queue waiting to be read.  <a href="#g1893372e87de84879591c054279a2b9b"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#gb6f350a2b5dea977c3ab6244e4984833">XBee_GetPacket</a> (XBeePacket *packet, int timeout)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#gb6f350a2b5dea977c3ab6244e4984833">XBee_GetPacket</a> (<a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *packet, int timeout)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Receive an incoming XBee packet.  <a href="#gb6f350a2b5dea977c3ab6244e4984833"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g88dd9f12ff38f318e59ec8e8283a78d3">XBee_SendPacket</a> (XBeePacket *packet, int datalength)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g88dd9f12ff38f318e59ec8e8283a78d3">XBee_SendPacket</a> (<a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *packet, int datalength)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Send an XBee packet.  <a href="#g88dd9f12ff38f318e59ec8e8283a78d3"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g066e28d0aaafb23eb1171bcdb31e5c45">XBee_ResetPacket</a> (XBeePacket *packet)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g066e28d0aaafb23eb1171bcdb31e5c45">XBee_ResetPacket</a> (<a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *packet)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Initialize a packet before reading into it.  <a href="#g066e28d0aaafb23eb1171bcdb31e5c45"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g3c5a7b65b5a7c71a57e45cfab591deb4">XBee_IsBusyPacket</a> (XBeePacket *packet)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g3c5a7b65b5a7c71a57e45cfab591deb4">XBee_IsBusyPacket</a> (<a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *packet)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Checks to see if a packet is receiving a message.  <a href="#g3c5a7b65b5a7c71a57e45cfab591deb4"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#gb3abc9b61091749d5aa7a48e8aa35e18">XBeeConfig_SetPacketApiMode</a> (int value)</td></tr>
@@ -145,7 +149,7 @@ window.onload = initDynSections;
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g5d8c12d4fba507727eded9aad78f5126">XBeeConfig_RequestPacketApiMode</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Query whether the module is in API mode.  <a href="#g5d8c12d4fba507727eded9aad78f5126"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g2c4ec9c048a04f7d7b46850377e51008">XBee_CreateATCommandPacket</a> (XBeePacket *packet, uint8 frameID, char *cmd, uint8 *params, uint8 datalength)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g2c4ec9c048a04f7d7b46850377e51008">XBee_CreateATCommandPacket</a> (<a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *packet, uint8 frameID, char *cmd, uint8 *params, uint8 datalength)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">A convenience function for creating an AT command packet.  <a href="#g2c4ec9c048a04f7d7b46850377e51008"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g2f0a97c1a7ce219eb7ccd807e8a860e2">XBeeConfig_RequestATResponse</a> (char *cmd)</td></tr>
@@ -157,28 +161,28 @@ window.onload = initDynSections;
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g471f419a8be85dff56cb190ac1122df3">XBeeConfig_RequestIO</a> (int pin)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Query the configuration of an IO pin.  <a href="#g471f419a8be85dff56cb190ac1122df3"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g64d16869ea926373568cc1c09c53b0fa">XBee_CreateTX16Packet</a> (XBeePacket *xbp, uint8 frameID, uint16 destination, uint8 options, uint8 *data, uint8 datalength)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g64d16869ea926373568cc1c09c53b0fa">XBee_CreateTX16Packet</a> (<a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *xbp, uint8 frameID, uint16 destination, uint8 options, uint8 *data, uint8 datalength)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Create a packet to be transmitted with a 16-bit address.  <a href="#g64d16869ea926373568cc1c09c53b0fa"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#gda9cdb29dfffba8aea12c8f9e5586237">XBee_CreateTX64Packet</a> (XBeePacket *xbp, uint8 frameID, uint64 destination, uint8 options, uint8 *data, uint8 datalength)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#gda9cdb29dfffba8aea12c8f9e5586237">XBee_CreateTX64Packet</a> (<a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *xbp, uint8 frameID, uint64 destination, uint8 options, uint8 *data, uint8 datalength)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Create a packet to be transmitted with a 64-bit address.  <a href="#gda9cdb29dfffba8aea12c8f9e5586237"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g90063926b2e0055e8476887828e8eaa4">XBee_ReadRX16Packet</a> (XBeePacket *xbp, uint16 *srcAddress, uint8 *sigstrength, uint8 *options, uint8 **data, uint8 *datalength)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g90063926b2e0055e8476887828e8eaa4">XBee_ReadRX16Packet</a> (<a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *xbp, uint16 *srcAddress, uint8 *sigstrength, uint8 *options, uint8 **data, uint8 *datalength)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Unpack the info from an incoming packet with a 16-bit address.  <a href="#g90063926b2e0055e8476887828e8eaa4"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g366e1d12df63ac0bb6b4fbf380c9311c">XBee_ReadRX64Packet</a> (XBeePacket *xbp, uint64 *srcAddress, uint8 *sigstrength, uint8 *options, uint8 **data, uint8 *datalength)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g366e1d12df63ac0bb6b4fbf380c9311c">XBee_ReadRX64Packet</a> (<a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *xbp, uint64 *srcAddress, uint8 *sigstrength, uint8 *options, uint8 **data, uint8 *datalength)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Unpack the info from an incoming packet with a 64-bit address.  <a href="#g366e1d12df63ac0bb6b4fbf380c9311c"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#gdc33b8d4803250488422484b2129f659">XBee_ReadIO16Packet</a> (XBeePacket *xbp, uint16 *srcAddress, uint8 *sigstrength, uint8 *options, int *samples)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#gdc33b8d4803250488422484b2129f659">XBee_ReadIO16Packet</a> (<a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *xbp, uint16 *srcAddress, uint8 *sigstrength, uint8 *options, int *samples)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Unpack the info from an incoming IO packet with a 16-bit address.  <a href="#gdc33b8d4803250488422484b2129f659"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#ga54eca4b48efbf8f8080203f9930c1cd">XBee_ReadIO64Packet</a> (XBeePacket *xbp, uint64 *srcAddress, uint8 *sigstrength, uint8 *options, int *samples)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#ga54eca4b48efbf8f8080203f9930c1cd">XBee_ReadIO64Packet</a> (<a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *xbp, uint64 *srcAddress, uint8 *sigstrength, uint8 *options, int *samples)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Unpack the info from an incoming IO packet with a 64-bit address.  <a href="#ga54eca4b48efbf8f8080203f9930c1cd"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#gec56fbcf2e08aa68574da35e467b9ec6">XBee_ReadAtResponsePacket</a> (XBeePacket *xbp, uint8 *frameID, char **command, uint8 *status, int *datavalue)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#gec56fbcf2e08aa68574da35e467b9ec6">XBee_ReadAtResponsePacket</a> (<a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *xbp, uint8 *frameID, char **command, uint8 *status, int *datavalue)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Unpack the info from an incoming AT Command Response packet.  <a href="#gec56fbcf2e08aa68574da35e467b9ec6"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#ga9d737273a7ae0ab7240424b058fc639">XBee_ReadTXStatusPacket</a> (XBeePacket *xbp, uint8 *frameID, uint8 *status)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#ga9d737273a7ae0ab7240424b058fc639">XBee_ReadTXStatusPacket</a> (<a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *xbp, uint8 *frameID, uint8 *status)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Unpack the info from TX Status packet.  <a href="#ga9d737273a7ae0ab7240424b058fc639"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___x_bee.html#g60564c155b8d6a6e73a9bfa54917ebd2">XBeeConfig_WriteStateToMemory</a> (void)</td></tr>
@@ -236,7 +240,7 @@ The <b>XBeeConfig_</b> functions are convenient wrappers around some of the most
         <tr>
           <td class="memname">void XBee_CreateATCommandPacket           </td>
           <td>(</td>
-          <td class="paramtype">XBeePacket *&nbsp;</td>
+          <td class="paramtype"><a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *&nbsp;</td>
           <td class="paramname"> <em>packet</em>, </td>
         </tr>
         <tr>
@@ -278,14 +282,13 @@ A convenience function for creating an AT command packet.
 As per the XBee spec, AT Command packets that want to set/write a value must have 4 bytes of data. Packets that query the value of an AT parameter send 0 bytes of data. Note that multi-byte data must be sent <b>big-endian</b> (most significant byte first) - see <a class="el" href="group___x_bee.html#gd357b57c2604013a69ec60e746318f89" title="Convert a 32-bit integer into a big endian array of 4 unsigned 8-bit integers.">XBee_IntToBigEndianArray( )</a>.<p>
 Make sure you're in API mode before creating &amp; sending packets - see <a class="el" href="group___x_bee.html#gb3abc9b61091749d5aa7a48e8aa35e18" title="Set a module into packet API mode.">XBeeConfig_SetPacketApiMode( )</a>. See the XBee documentation for the official list of AT commands that the XBee modules understand. <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>packet</em>&nbsp;</td><td>The XBeePacket to create. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>packet</em>&nbsp;</td><td>The <a class="el" href="struct_x_bee_packet.html" title="Representation of an XBee packet.">XBeePacket</a> to create. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>frameID</em>&nbsp;</td><td>The frame ID for this packet that subsequent response/status messages can refer to. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>cmd</em>&nbsp;</td><td>The 2-character AT command. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>params</em>&nbsp;</td><td>A pointer to the buffer containing the data to be sent. </td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>datalength</em>&nbsp;</td><td>The number of bytes to send from the params buffer. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>datalength</em>&nbsp;</td><td>The number of bytes to send from the params buffer.</td></tr>
   </table>
 </dl>
-<dl class="return" compact><dt><b>Returns:</b></dt><dd>An integer specifying the active state - 1 (active) or 0 (inactive).</dd></dl>
 <dl class="user" compact><dt><b>Example - Writing</b></dt><dd><div class="fragment"><pre class="fragment">  XBeePacket txPacket;
   uint8 params[4];
   <a class="code" href="group___x_bee.html#gd357b57c2604013a69ec60e746318f89" title="Convert a 32-bit integer into a big endian array of 4 unsigned 8-bit integers.">XBee_IntToBigEndianArray</a>( 1000, params ); <span class="comment">// set our sampling rate to 1000</span>
@@ -298,7 +301,7 @@ Make sure you're in API mode before creating &amp; sending packets - see <a clas
   <span class="comment">// then we'll receive a response packet</span>
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00458">458</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00460">460</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -309,7 +312,7 @@ Make sure you're in API mode before creating &amp; sending packets - see <a clas
         <tr>
           <td class="memname">bool XBee_CreateTX16Packet           </td>
           <td>(</td>
-          <td class="paramtype">XBeePacket *&nbsp;</td>
+          <td class="paramtype"><a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *&nbsp;</td>
           <td class="paramname"> <em>xbp</em>, </td>
         </tr>
         <tr>
@@ -357,7 +360,7 @@ Create a packet to be transmitted with a 16-bit address.
 If the <b>frameID</b> is 0, you won't receive a TX Status message in response.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The XBeePacket to create. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The <a class="el" href="struct_x_bee_packet.html" title="Representation of an XBee packet.">XBeePacket</a> to create. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>frameID</em>&nbsp;</td><td>The frame ID for this packet that subsequent response/status messages can refer to. Set to 0 for no response. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>destination</em>&nbsp;</td><td>The destination address for this packet. Broadcast Address: 0xFFFF. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>options</em>&nbsp;</td><td>The XBee options for this packet (0 if none). </td></tr>
@@ -372,7 +375,7 @@ If the <b>frameID</b> is 0, you won't receive a TX Status message in response.<p
   <a class="code" href="group___x_bee.html#g88dd9f12ff38f318e59ec8e8283a78d3" title="Send an XBee packet.">XBee_SendPacket</a>( &amp;txPacket, 3 );
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00566">566</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00568">568</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -383,7 +386,7 @@ If the <b>frameID</b> is 0, you won't receive a TX Status message in response.<p
         <tr>
           <td class="memname">bool XBee_CreateTX64Packet           </td>
           <td>(</td>
-          <td class="paramtype">XBeePacket *&nbsp;</td>
+          <td class="paramtype"><a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *&nbsp;</td>
           <td class="paramname"> <em>xbp</em>, </td>
         </tr>
         <tr>
@@ -430,7 +433,7 @@ Create a packet to be transmitted with a 64-bit address.
 <p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The XBeePacket to create. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The <a class="el" href="struct_x_bee_packet.html" title="Representation of an XBee packet.">XBeePacket</a> to create. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>frameID</em>&nbsp;</td><td>The frame ID for this packet that subsequent response/status messages can refer to. Set to 0 for no response. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>destination</em>&nbsp;</td><td>The destination address for this packet. Broadcast Address: 0xFFFF (same as 16b broadcast address) </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>options</em>&nbsp;</td><td>The XBee options for this packet (0 if none). </td></tr>
@@ -445,7 +448,7 @@ Create a packet to be transmitted with a 64-bit address.
   <a class="code" href="group___x_bee.html#g88dd9f12ff38f318e59ec8e8283a78d3" title="Send an XBee packet.">XBee_SendPacket</a>( &amp;txPacket, 5 );
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00599">599</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00601">601</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -481,7 +484,7 @@ Read the active state of the <b>XBee</b> subsystem.
         <tr>
           <td class="memname">int XBee_GetPacket           </td>
           <td>(</td>
-          <td class="paramtype">XBeePacket *&nbsp;</td>
+          <td class="paramtype"><a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *&nbsp;</td>
           <td class="paramname"> <em>packet</em>, </td>
         </tr>
         <tr>
@@ -505,7 +508,7 @@ Receive an incoming XBee packet.
 A single call to this will continue to read from the serial port as long as there are characters to read or until it times out. If a packet has not been completely received, call it repeatedly with the same packet.<p>
 Clear out a packet before reading into it with a call to <a class="el" href="group___x_bee.html#g066e28d0aaafb23eb1171bcdb31e5c45" title="Initialize a packet before reading into it.">XBee_ResetPacket( )</a> <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>packet</em>&nbsp;</td><td>The XBeePacket to receive into. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>packet</em>&nbsp;</td><td>The <a class="el" href="struct_x_bee_packet.html" title="Representation of an XBee packet.">XBeePacket</a> to receive into. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>timeout</em>&nbsp;</td><td>The number of milliseconds to wait for a packet to arrive. Set this to 0 to return as soon as there are no characters left to process. </td></tr>
   </table>
 </dl>
@@ -589,7 +592,7 @@ This is mostly useful for sending AT Command packets. <dl compact><dt><b>Paramet
 </dl>
 <dl class="user" compact><dt><b>Example</b></dt><dd>see <a class="el" href="group___x_bee.html#g2c4ec9c048a04f7d7b46850377e51008" title="A convenience function for creating an AT command packet.">XBee_CreateATCommandPacket( )</a> for an example. </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l01142">1142</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l01144">1144</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -600,7 +603,7 @@ This is mostly useful for sending AT Command packets. <dl compact><dt><b>Paramet
         <tr>
           <td class="memname">int XBee_IsBusyPacket           </td>
           <td>(</td>
-          <td class="paramtype">XBeePacket *&nbsp;</td>
+          <td class="paramtype"><a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *&nbsp;</td>
           <td class="paramname"> <em>packet</em>          </td>
           <td>&nbsp;)&nbsp;</td>
           <td></td>
@@ -614,12 +617,12 @@ Checks to see if a packet is receiving a message.
 <p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>packet</em>&nbsp;</td><td>The XBeePacket to check </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>packet</em>&nbsp;</td><td>The <a class="el" href="struct_x_bee_packet.html" title="Representation of an XBee packet.">XBeePacket</a> to check </td></tr>
   </table>
 </dl>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd>true if the packet is busy, false if it's free </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00353">353</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00354">354</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -677,7 +680,7 @@ Use <a class="el" href="group___x_bee.html#g1893372e87de84879591c054279a2b9b" ti
         <tr>
           <td class="memname">bool XBee_ReadAtResponsePacket           </td>
           <td>(</td>
-          <td class="paramtype">XBeePacket *&nbsp;</td>
+          <td class="paramtype"><a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *&nbsp;</td>
           <td class="paramname"> <em>xbp</em>, </td>
         </tr>
         <tr>
@@ -719,7 +722,7 @@ Unpack the info from an incoming AT Command Response packet.
 In response to a previous AT Command message, the module will send an AT Command Response message.<p>
 Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The XBeePacket to read from. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The <a class="el" href="struct_x_bee_packet.html" title="Representation of an XBee packet.">XBeePacket</a> to read from. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>frameID</em>&nbsp;</td><td>A pointer to a uint64 that will be filled up with the 16-bit address of this packet. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>command</em>&nbsp;</td><td>A pointer to a uint8 that will be filled up with the signal strength of this packet. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>status</em>&nbsp;</td><td>A pointer to a uint8 that will be filled up with the XBee options for this packet. </td></tr>
@@ -742,7 +745,7 @@ Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><d
   }
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00856">856</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00858">858</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -753,7 +756,7 @@ Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><d
         <tr>
           <td class="memname">bool XBee_ReadIO16Packet           </td>
           <td>(</td>
-          <td class="paramtype">XBeePacket *&nbsp;</td>
+          <td class="paramtype"><a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *&nbsp;</td>
           <td class="paramname"> <em>xbp</em>, </td>
         </tr>
         <tr>
@@ -795,7 +798,7 @@ Unpack the info from an incoming IO packet with a 16-bit address.
 When an XBee module has been given a sample rate, it will sample its IO pins according to their current configuration and send an IO packet with the sample data. This function will extract the sample info into an array of ints for you. There are 9 IO pins on the XBee modules, so be sure that the array you pass in has room for 9 ints.<p>
 Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The XBeePacket to read from. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The <a class="el" href="struct_x_bee_packet.html" title="Representation of an XBee packet.">XBeePacket</a> to read from. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>srcAddress</em>&nbsp;</td><td>A pointer to a uint16 that will be filled up with the 16-bit address of this packet. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>sigstrength</em>&nbsp;</td><td>A pointer to a uint8 that will be filled up with the signal strength of this packet. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>options</em>&nbsp;</td><td>A pointer to a uint8 that will be filled up with the XBee options for this packet. </td></tr>
@@ -818,7 +821,7 @@ Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><d
   }
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00749">749</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00751">751</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -829,7 +832,7 @@ Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><d
         <tr>
           <td class="memname">bool XBee_ReadIO64Packet           </td>
           <td>(</td>
-          <td class="paramtype">XBeePacket *&nbsp;</td>
+          <td class="paramtype"><a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *&nbsp;</td>
           <td class="paramname"> <em>xbp</em>, </td>
         </tr>
         <tr>
@@ -871,7 +874,7 @@ Unpack the info from an incoming IO packet with a 64-bit address.
 When an XBee module has been given a sample rate, it will sample its IO pins according to their current configuration and send an IO packet with the sample data. This function will extract the sample info into an array of ints for you. There are 9 IO pins on the XBee modules, so be sure that the array you pass in has room for 9 ints.<p>
 Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The XBeePacket to read from. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The <a class="el" href="struct_x_bee_packet.html" title="Representation of an XBee packet.">XBeePacket</a> to read from. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>srcAddress</em>&nbsp;</td><td>A pointer to a uint64 that will be filled up with the 16-bit address of this packet. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>sigstrength</em>&nbsp;</td><td>A pointer to a uint8 that will be filled up with the signal strength of this packet. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>options</em>&nbsp;</td><td>A pointer to a uint8 that will be filled up with the XBee options for this packet. </td></tr>
@@ -894,7 +897,7 @@ Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><d
   }
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00802">802</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00804">804</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -905,7 +908,7 @@ Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><d
         <tr>
           <td class="memname">bool XBee_ReadRX16Packet           </td>
           <td>(</td>
-          <td class="paramtype">XBeePacket *&nbsp;</td>
+          <td class="paramtype"><a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *&nbsp;</td>
           <td class="paramname"> <em>xbp</em>, </td>
         </tr>
         <tr>
@@ -952,7 +955,7 @@ Unpack the info from an incoming packet with a 16-bit address.
 <p>
 Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The XBeePacket to read from. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The <a class="el" href="struct_x_bee_packet.html" title="Representation of an XBee packet.">XBeePacket</a> to read from. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>srcAddress</em>&nbsp;</td><td>The 16-bit address of this packet. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>sigstrength</em>&nbsp;</td><td>The signal strength of this packet. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>options</em>&nbsp;</td><td>The XBee options for this packet. </td></tr>
@@ -976,7 +979,7 @@ Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><d
   }
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00643">643</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00645">645</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -987,7 +990,7 @@ Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><d
         <tr>
           <td class="memname">bool XBee_ReadRX64Packet           </td>
           <td>(</td>
-          <td class="paramtype">XBeePacket *&nbsp;</td>
+          <td class="paramtype"><a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *&nbsp;</td>
           <td class="paramname"> <em>xbp</em>, </td>
         </tr>
         <tr>
@@ -1034,7 +1037,7 @@ Unpack the info from an incoming packet with a 64-bit address.
 <p>
 Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The XBeePacket to read from. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The <a class="el" href="struct_x_bee_packet.html" title="Representation of an XBee packet.">XBeePacket</a> to read from. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>srcAddress</em>&nbsp;</td><td>The 64-bit address of this packet. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>sigstrength</em>&nbsp;</td><td>The signal strength of this packet. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>options</em>&nbsp;</td><td>The XBee options for this packet. </td></tr>
@@ -1058,7 +1061,7 @@ Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><d
   }
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00693">693</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00695">695</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1069,7 +1072,7 @@ Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><d
         <tr>
           <td class="memname">bool XBee_ReadTXStatusPacket           </td>
           <td>(</td>
-          <td class="paramtype">XBeePacket *&nbsp;</td>
+          <td class="paramtype"><a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *&nbsp;</td>
           <td class="paramname"> <em>xbp</em>, </td>
         </tr>
         <tr>
@@ -1099,7 +1102,7 @@ Unpack the info from TX Status packet.
 When a TX is completed, the modules esnds a TX Status message. This indicates whether the packet was transmitted successfully or not. If the message you sent had a frameID of 0, a TX status message will not be generated.<p>
 Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The XBeePacket to read from. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>xbp</em>&nbsp;</td><td>The <a class="el" href="struct_x_bee_packet.html" title="Representation of an XBee packet.">XBeePacket</a> to read from. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>frameID</em>&nbsp;</td><td>A pointer to a uint8 that will be filled up with the frame ID of this packet. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>status</em>&nbsp;</td><td>A pointer to a uint8 that will be filled up with the status of this packet. </td></tr>
   </table>
@@ -1118,7 +1121,7 @@ Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><d
   }
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00907">907</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00909">909</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1129,7 +1132,7 @@ Pass <b>NULL</b> into any of the parameters you don't care about. <dl compact><d
         <tr>
           <td class="memname">void XBee_ResetPacket           </td>
           <td>(</td>
-          <td class="paramtype">XBeePacket *&nbsp;</td>
+          <td class="paramtype"><a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *&nbsp;</td>
           <td class="paramname"> <em>packet</em>          </td>
           <td>&nbsp;)&nbsp;</td>
           <td></td>
@@ -1143,12 +1146,12 @@ Initialize a packet before reading into it.
 <p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>packet</em>&nbsp;</td><td>The XBeePacket to initialize. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>packet</em>&nbsp;</td><td>The <a class="el" href="struct_x_bee_packet.html" title="Representation of an XBee packet.">XBeePacket</a> to initialize. </td></tr>
   </table>
 </dl>
 <dl class="see" compact><dt><b>See also:</b></dt><dd><a class="el" href="group___x_bee.html#gb6f350a2b5dea977c3ab6244e4984833" title="Receive an incoming XBee packet.">XBee_GetPacket( )</a> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00337">337</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00338">338</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1159,7 +1162,7 @@ Initialize a packet before reading into it.
         <tr>
           <td class="memname">int XBee_SendPacket           </td>
           <td>(</td>
-          <td class="paramtype">XBeePacket *&nbsp;</td>
+          <td class="paramtype"><a class="el" href="struct_x_bee_packet.html">XBeePacket</a> *&nbsp;</td>
           <td class="paramname"> <em>packet</em>, </td>
         </tr>
         <tr>
@@ -1183,7 +1186,7 @@ Send an XBee packet.
 Use the following functions to create packets to be sent:<ul>
 <li><a class="el" href="group___x_bee.html#g64d16869ea926373568cc1c09c53b0fa" title="Create a packet to be transmitted with a 16-bit address.">XBee_CreateTX16Packet( )</a> - create a data packet to be sent out wirelessly with a 16-bit address</li><li><a class="el" href="group___x_bee.html#gda9cdb29dfffba8aea12c8f9e5586237" title="Create a packet to be transmitted with a 64-bit address.">XBee_CreateTX64Packet( )</a> - create a data packet to be sent out wirelessly with a 64-bit address</li><li><a class="el" href="group___x_bee.html#g2c4ec9c048a04f7d7b46850377e51008" title="A convenience function for creating an AT command packet.">XBee_CreateATCommandPacket( )</a> - create an AT command to configure an attached XBee module <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>packet</em>&nbsp;</td><td>The XBeePacket to send. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>packet</em>&nbsp;</td><td>The <a class="el" href="struct_x_bee_packet.html" title="Representation of an XBee packet.">XBeePacket</a> to send. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>datalength</em>&nbsp;</td><td>The length of the actual data being sent (not including headers, options, etc.) </td></tr>
   </table>
 </dl>
@@ -1196,7 +1199,7 @@ Use the following functions to create packets to be sent:<ul>
 </pre></div> </dd></dl>
 </li></ul>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00295">295</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00296">296</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1304,7 +1307,7 @@ This will block for up to a 1/2 second waiting for a response from the XBee modu
   }
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00981">981</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00983">983</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1335,7 +1338,7 @@ This will block for up to a 1/2 second waiting for a response from the XBee modu
   }
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00484">484</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00486">486</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1366,7 +1369,7 @@ This will block for up to a 1/2 second waiting for a response from the XBee modu
   }
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l01078">1078</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l01080">1080</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1397,7 +1400,7 @@ See <a class="el" href="group___x_bee.html#g2a1939254f9174e0ee2c33a4d2ff8ba3" ti
   }
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00536">536</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00538">538</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1428,7 +1431,7 @@ This will block for up to a 1/2 second waiting for a response from the XBee modu
   }
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00418">418</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00421">421</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1459,7 +1462,7 @@ This will block for up to a 1/2 second waiting for a response from the XBee modu
   }
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l01028">1028</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l01030">1030</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1490,7 +1493,7 @@ This will block for up to a 1/2 second waiting for a response from the XBee modu
   }
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l01126">1126</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l01128">1128</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1525,7 +1528,7 @@ As with the other <b>XBeeConfig</b> functions, make sure you're in API mode befo
   <a class="code" href="group___x_bee.html#g60564c155b8d6a6e73a9bfa54917ebd2" title="Save the configuration changes you&amp;#39;ve made on the module to memory.">XBeeConfig_WriteStateToMemory</a>( );
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00958">958</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00960">960</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1561,7 +1564,7 @@ As with the other <b>XBeeConfig</b> functions, make sure you're in API mode befo
   <a class="code" href="group___x_bee.html#gd5fd4ac5a68e76d7a16b3e685f05a4f8" title="Set the module&amp;#39;s channel.">XBeeConfig_SetChannel</a>( 0x0D );
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l01055">1055</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l01057">1057</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1605,7 +1608,7 @@ IO pins can have one of 5 values:<ul>
 </pre></div> </dd></dl>
 </li></ul>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00509">509</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00511">511</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1644,7 +1647,7 @@ When setting this on, the XBee module needs to wait 1 second after sending the c
   }
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00380">380</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00381">381</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1679,7 +1682,7 @@ As with the other <b>XBeeConfig</b> functions, make sure you're in API mode befo
   <a class="code" href="group___x_bee.html#gbb8511090eee4d72a26bf55fb44bcd68" title="Set this PAN (Personal Area Network) ID.">XBeeConfig_SetPanID</a>( 0x1234 );
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l01005">1005</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l01007">1007</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1714,7 +1717,7 @@ As with the other <b>XBeeConfig</b> functions, make sure you're in API mode befo
   <a class="code" href="group___x_bee.html#g35826df514efda2aab33f86cf0e24f2e" title="Set the rate at which the module will sample its IO pins.">XBeeConfig_SetSampleRate</a>( 0x14 );
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l01103">1103</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l01105">1105</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1745,7 +1748,7 @@ As with the other <b>XBeeConfig</b> functions, make sure you're in API mode befo
   <a class="code" href="group___x_bee.html#g60564c155b8d6a6e73a9bfa54917ebd2" title="Save the configuration changes you&amp;#39;ve made on the module to memory.">XBeeConfig_WriteStateToMemory</a>( );
 </pre></div> </dd></dl>
 
-<p>Definition at line <a class="el" href="xbee_8c-source.html#l00934">934</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
+<p>Definition at line <a class="el" href="xbee_8c-source.html#l00936">936</a> of file <a class="el" href="xbee_8c-source.html">xbee.c</a>.</p>
 
 </div>
 </div><p>
@@ -1772,7 +1775,7 @@ As with the other <b>XBeeConfig</b> functions, make sure you're in API mode befo
   <p class="footer">The Make Controller Kit is an open source project maintained by <a href="http://www.makingthings.com">MakingThings</a>.<br />
     MakingThings code is released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 license</a>.<br />
     Bug tracker, development wiki and status can be found at <a href="http://dev.makingthings.com">http://dev.makingthings.com</a>.<br />
-		This document was last updated on 6 Aug 2008.
+		This document was last updated on 13 Aug 2008.
 </p>
 </div>
 <!-- Google Analytics Code -->
