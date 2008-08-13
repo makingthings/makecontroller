@@ -30,8 +30,8 @@
 
 #define DIPSWITCH_DEVICE 2
 
-int DipSwitch_Start( void );
-int DipSwitch_Stop( void );
+static int DipSwitch_Start( void );
+static int DipSwitch_Stop( void );
 
 typedef struct
 {
@@ -174,7 +174,7 @@ bool DipSwitch_GetValueChannel( int channel )
   if( val < 0 )
     return false;
   else
-    return ((val << channel) & 0x1);
+    return ((val >> channel) & 0x1);
 }
 
 /** @}
