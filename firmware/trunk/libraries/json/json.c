@@ -142,6 +142,8 @@ void JsonEncode_Init(JsonEncode_State* state)
 */
 char* JsonEncode_ObjectOpen(JsonEncode_State* state, char *buf, int *remaining)
 {
+  if( !buf )
+    return 0;
   int len = 1;
   switch(state->steps[state->depth])
   {
@@ -202,7 +204,7 @@ char* JsonEncode_ObjectKey(JsonEncode_State* state, char *buf, const char *key, 
 */
 char* JsonEncode_ObjectClose(JsonEncode_State* state, char *buf, int *remaining)
 {
-  if(*remaining < 1)
+  if(*remaining < 1 || !buf )
     return NULL;
   memcpy(buf, "}", 1);
   state->depth--;
@@ -221,6 +223,8 @@ char* JsonEncode_ObjectClose(JsonEncode_State* state, char *buf, int *remaining)
 */
 char* JsonEncode_ArrayOpen(JsonEncode_State* state, char *buf, int *remaining)
 {
+  if( !buf )
+    return 0;
   int len = 1;
   switch(state->steps[state->depth])
   {
@@ -268,7 +272,7 @@ char* JsonEncode_ArrayOpen(JsonEncode_State* state, char *buf, int *remaining)
 */
 char* JsonEncode_ArrayClose(JsonEncode_State* state, char *buf, int *remaining)
 {
-  if(*remaining < 1)
+  if(*remaining < 1 || !buf )
     return NULL;
   memcpy(buf, "]", 1);
   state->depth--;
@@ -290,6 +294,8 @@ char* JsonEncode_ArrayClose(JsonEncode_State* state, char *buf, int *remaining)
 */
 char* JsonEncode_String(JsonEncode_State* state, char *buf, const char *string, int *remaining)
 {
+  if( !buf )
+    return 0;
   int string_len = strlen(string) + 2 /* quotes */;
 
   switch(state->steps[state->depth])
@@ -344,6 +350,8 @@ char* JsonEncode_String(JsonEncode_State* state, char *buf, const char *string, 
 */
 char* JsonEncode_Int(JsonEncode_State* state, char *buf, int value, int *remaining)
 {
+  if( !buf )
+    return 0;
   int int_as_str_len = 11; // largest 32-bit int is 10 digits long, and also leave room for a +/-
   int int_len = 0;
   switch(state->steps[state->depth])
@@ -399,6 +407,8 @@ char* JsonEncode_Int(JsonEncode_State* state, char *buf, int value, int *remaini
 */
 char* JsonEncode_Bool(JsonEncode_State* state, char *buf, bool value, int *remaining)
 {
+  if( !buf )
+    return 0;
   const char* boolval = (value) ? "true" : "false";
   int bool_len = strlen(boolval);
   switch(state->steps[state->depth])
