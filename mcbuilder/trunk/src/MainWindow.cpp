@@ -220,7 +220,7 @@ void MainWindow::onCursorMoved( )
   extras << highlight;
   editor->setExtraSelections( extras );
   
-  statusBar()->showMessage( QString("Line: %1  Column: %2").arg(c.blockNumber()+1).arg(c.columnNumber()));
+  statusBar()->showMessage( tr("Line: %1  Column: %2").arg(c.blockNumber()+1).arg(c.columnNumber()));
 }
 
 /*
@@ -360,7 +360,7 @@ void MainWindow::onAddExistingFile( )
 {
   if(currentProject.isEmpty())
   {
-    statusBar()->showMessage( "Need to open a project first.  Open or create a new one from the File menu.", 3500 );
+    statusBar()->showMessage( tr("Need to open a project first.  Open or create a new one from the File menu."), 3500 );
     return;
   }
   QString newFilePath = QFileDialog::getOpenFileName(this, tr("Add Existing File"), currentProject, tr("C Files (*.c)"));
@@ -425,7 +425,7 @@ void MainWindow::createNewFile(QString path)
   {
     QTextStream out(&file);
     out << QString("// %1").arg(fi.fileName()) << endl;
-    out << QString("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl << endl;
+    out << tr("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl << endl;
     file.close();
     editorLoadFile(fi.filePath());
     currentFileDropDown->addItem(fi.fileName(), fi.filePath()); // store the filepath on the combo box item 
@@ -448,7 +448,7 @@ void MainWindow::onFileSelection(int index)
     editorLoadFile(file.filePath());
   else
   {
-    QString message = QString("Couldn't find %1.").arg(file.fileName());
+    QString message = tr("Couldn't find %1.").arg(file.fileName());
     currentFileDropDown->removeItem(currentFileDropDown->findText(file.fileName()));
     statusBar()->showMessage(message, 3000);
     // should also be removed from the project file...
@@ -494,7 +494,7 @@ void MainWindow::openProject(QString projectPath)
   QDir projectDir(projectPath);
   QString projectName = projectDir.dirName();
   if(!projectDir.exists())
-    return statusBar()->showMessage( QString("Couldn't find %1.").arg(projectName), 3500 );
+    return statusBar()->showMessage( tr("Couldn't find %1.").arg(projectName), 3500 );
 
   QString pathname = projectName; // filename should not have spaces
   QFile projFile(projectDir.filePath(pathname + ".xml"));
@@ -533,7 +533,7 @@ void MainWindow::openProject(QString projectPath)
     buildLog->clear();
 	}
 	else
-    return statusBar()->showMessage( QString("Couldn't find main file for %1.").arg(projectName), 3500 );
+    return statusBar()->showMessage( tr("Couldn't find main file for %1.").arg(projectName), 3500 );
 }
 
 /*
@@ -576,7 +576,7 @@ void MainWindow::openRecentProject(QAction* project)
 void MainWindow::onSave( )
 {
 	if(currentFile.isEmpty())
-		return statusBar()->showMessage( "Need to open a file or project first.  Open or create a new one from the File menu.", 3500 );
+		return statusBar()->showMessage( tr("Need to open a file or project first.  Open or create a new one from the File menu."), 3500 );
 	save( );
 }
 
@@ -598,7 +598,7 @@ bool MainWindow::save( )
 	}
   else
   {
-    statusBar()->showMessage( "Couldn't save...maybe the current file has been moved or deleted.", 3500 );
+    statusBar()->showMessage( tr("Couldn't save...maybe the current file has been moved or deleted."), 3500 );
     return false;
   }
 }
@@ -632,7 +632,7 @@ bool MainWindow::maybeSave()
 void MainWindow::onSaveAs( )
 {
 	if(currentFile.isEmpty())
-		return statusBar()->showMessage( "Need to open a project first.  Open or create a new one from the File menu.", 3500 );
+		return statusBar()->showMessage( tr("Need to open a project first.  Open or create a new one from the File menu."), 3500 );
 		
 	QString newFileName = QFileDialog::getSaveFileName(this, tr("Save As"), 
 																			currentProject, tr("C Files (*.c)"));
@@ -683,7 +683,7 @@ void MainWindow::onSaveProjectAs( )
 void MainWindow::onBuild( )
 {
   if(currentProject.isEmpty())
-		return statusBar()->showMessage( "Open a project to build, or create a new one from the File menu.", 3500 );
+		return statusBar()->showMessage( tr("Open a project to build, or create a new one from the File menu."), 3500 );
   if(!maybeSave( ))
     return;
 	if(builder->state() == QProcess::NotRunning) 
@@ -693,7 +693,7 @@ void MainWindow::onBuild( )
     builder->build(currentProject);
   }
 	else
-		return statusBar()->showMessage( "Builder is currently busy...give it a second, then try again.", 3500 );
+		return statusBar()->showMessage( tr("Builder is currently busy...give it a second, then try again."), 3500 );
 }
 
 /*
@@ -714,15 +714,15 @@ void MainWindow::onBuildComplete(bool success)
 {
   if(success)
   {
-    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), "Build succeeded.", outputConsole));
+    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), tr("Build succeeded."), outputConsole));
     outputConsole->scrollToBottom();
-    statusBar()->showMessage("Build succeeded.");
+    statusBar()->showMessage(tr("Build succeeded."));
   }
   else
   {
-    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), "Build failed.", outputConsole));
+    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), tr("Build failed."), outputConsole));
     outputConsole->scrollToBottom();
-    statusBar()->showMessage("Build failed.");
+    statusBar()->showMessage(tr("Build failed."));
   }
   actionStop->setEnabled(false);
 }
@@ -731,28 +731,28 @@ void MainWindow::onUploadComplete(bool success)
 {
   if(success)
   {
-    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), "Upload succeeded.", outputConsole));
+    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), tr("Upload succeeded."), outputConsole));
     outputConsole->scrollToBottom();
-    statusBar()->showMessage("Upload succeeded.");
+    statusBar()->showMessage(tr("Upload succeeded."));
   }
   else
   {
-    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), "Upload failed.", outputConsole));
+    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), tr("Upload failed."), outputConsole));
     outputConsole->scrollToBottom();
-    statusBar()->showMessage("Upload failed.");
+    statusBar()->showMessage(tr("Upload failed."));
   }
 }
 
 void MainWindow::onCleanComplete()
 {
   outputConsole->clear();
-  outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), "Clean succeeded.", outputConsole));
-  statusBar()->showMessage("Clean succeeded.");
+  outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), tr("Clean succeeded."), outputConsole));
+  statusBar()->showMessage(tr("Clean succeeded."));
 }
 
 void MainWindow::buildingNow(QString file)
 {
-  statusBar()->showMessage("Building..." + file);
+  statusBar()->showMessage(tr("Building...") + file);
 }
 
 /*
@@ -766,7 +766,7 @@ void MainWindow::onClean( )
   if(builder->state() == QProcess::NotRunning)
     builder->clean(currentProject);
 	else
-		return statusBar()->showMessage( "Builder is currently busy...give it a second, then try again.", 3500 );
+		return statusBar()->showMessage( tr("Builder is currently busy...give it a second, then try again."), 3500 );
 }
 
 /*
@@ -776,11 +776,11 @@ void MainWindow::onClean( )
 void MainWindow::onProperties( )
 {
 	if(currentProject.isEmpty())
-		return statusBar()->showMessage( "Open a project first, or create a new one from the File menu.", 3500 );
+		return statusBar()->showMessage( tr("Open a project first, or create a new one from the File menu."), 3500 );
 	if( !projInfo->loadAndShow() )
 	{
 		QDir dir(currentProject);
-		return statusBar()->showMessage( "Couldn't find/open project properties for " + dir.dirName(), 3500 );
+		return statusBar()->showMessage( tr("Couldn't find/open project properties for ") + dir.dirName(), 3500 );
 	}
 }
 
@@ -791,7 +791,7 @@ void MainWindow::onProperties( )
 void MainWindow::onUpload( )
 {
   if(currentProject.isEmpty())
-    return statusBar()->showMessage( "Open a project to upload, or create a new one from the File menu.", 3500 );
+    return statusBar()->showMessage( tr("Open a project to upload, or create a new one from the File menu."), 3500 );
   QDir projectDir(currentProject);
   projectDir.cd("build");
   projectDir.setNameFilters(QStringList() << "*.bin");
@@ -799,7 +799,7 @@ void MainWindow::onUpload( )
   if(bins.count())
     uploadFile(bins.first().filePath());
   else
-    return statusBar()->showMessage( "Couldn't find the file to upload for this project.", 3500 );
+    return statusBar()->showMessage( tr("Couldn't find the file to upload for this project."), 3500 );
 }
 
 /*
@@ -824,17 +824,17 @@ void MainWindow::uploadFile(QString filename)
   // get the board type so the uploader can check which upload mechanism to use
   QFileInfo fi(filename);
   if(!fi.exists())
-    return statusBar()->showMessage( QString("Couldn't find %1.").arg(fi.fileName()), 3500 );
+    return statusBar()->showMessage( tr("Couldn't find %1.").arg(fi.fileName()), 3500 );
   QAction *board = boardTypeGroup->checkedAction( );
   if(board)
   {
     if(uploader->state() == QProcess::NotRunning)
       uploader->upload(board->data().toString(), filename);
     else
-      return statusBar()->showMessage( "Uploader is currently busy...give it a second, then try again.", 3500 );
+      return statusBar()->showMessage( tr("Uploader is currently busy...give it a second, then try again."), 3500 );
   }
   else
-    return statusBar()->showMessage( "Please select a board type from the Project menu first.", 3500 );
+    return statusBar()->showMessage( tr("Please select a board type from the Project menu first."), 3500 );
 }
 
 // read the available board files and load them into the UI
@@ -933,14 +933,14 @@ void MainWindow::loadLibraries( )
         // create a menu that allows us to import the library, view its documentation, etc
         QMenu *menu = new QMenu(libname, menuLibraries);
         menuLibraries->addMenu(menu);
-        QAction *a = new QAction("Import to Current Project", menu);
+        QAction *a = new QAction(tr("Import to Current Project"), menu);
         a->setData(library);
         menu->addAction(a);
         
         nodes = doc.elementsByTagName("reference");
         if(nodes.count())
         {
-          a = new QAction("View Documentation", menu);
+          a = new QAction(tr("View Documentation"), menu);
           QString doclink = nodes.at(0).toElement().text();
           QUrl url(doclink);
           if(url.isRelative()) // if it's relative, we need to store the path for context
@@ -961,7 +961,7 @@ void MainWindow::loadLibraries( )
 */
 void MainWindow::onLibrary(QAction *example)
 {
-  if(example->text() == "Import to Current Project")
+  if(example->text() == tr("Import to Current Project"))
   {
     QString includeString = QString("#include \"%1.h\"").arg(example->data().toString());
     // only add if it isn't already in there
@@ -972,7 +972,7 @@ void MainWindow::onLibrary(QAction *example)
       editor->insertPlainText(includeString + "\n");
     }
   }
-  else if(example->text() == "View Documentation")
+  else if(example->text() == tr("View Documentation"))
     QDesktopServices::openUrl(QUrl::fromLocalFile(example->data().toString()));
 }
 
@@ -1001,9 +1001,9 @@ void MainWindow::printOutput(QString text)
 
 void MainWindow::printOutputError(QString text)
 {
-  if(text.startsWith("Warning"))
+  if(text.startsWith(tr("Warning")))
     outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/warning.png"), text.trimmed(), outputConsole));
-  else if(text.startsWith("Error"))
+  else if(text.startsWith(tr("Error")))
     outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), text.trimmed(), outputConsole));
   else
     outputConsole->addItem(text.trimmed());

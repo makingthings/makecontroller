@@ -53,7 +53,7 @@ void Builder::build(QString projectName)
   if(compareConfigFile(currentProjectPath))
   {
     createConfigFile(currentProjectPath);      // create a config file based on the Properties for this project
-    qDebug("creating/updating config file");
+    qDebug("builder - creating/updating config file");
   }
   createMakefile(currentProjectPath);        // create a Makefile for this project, given the dependencies
   buildStep = BUILD;
@@ -137,12 +137,12 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
         int filesize = bins.first().size();
         if(filesize <= 256000)
         {
-          mainWindow->printOutput(QString("%1.bin is %2 out of a possible 256000 bytes.").arg(projectName).arg(filesize));
+          mainWindow->printOutput(tr("%1.bin is %2 out of a possible 256000 bytes.").arg(projectName).arg(filesize));
           mainWindow->onBuildComplete(true);
           success = true;
         }
         else
-          mainWindow->printOutputError(QString("Error - %1.bin is too big!  %2 out of a possible 256000 bytes.").arg(projectName).arg(filesize));
+          mainWindow->printOutputError(tr("Error - %1.bin is too big!  %2 out of a possible 256000 bytes.").arg(projectName).arg(filesize));
       }
       if(!success)
         mainWindow->onBuildComplete(false);
@@ -180,9 +180,9 @@ bool Builder::createMakefile(QString projectPath)
     QDir projectDir(projectPath);
     QTextStream tofile(&makefile);
     tofile << "##################################################################################################" << endl;
-    tofile << "#" << endl << "# This file generated automatically by mcbuilder - ";
+    tofile << "#" << endl << tr("# This file generated automatically by mcbuilder - ");
     tofile << QDateTime::currentDateTime().toString("MMM d, yyyy h:m ap") << endl;
-    tofile << "# Any manual changes made to this file will be overwritten the next time mcbuilder builds." << endl << "#" << endl;
+    tofile << tr("# Any manual changes made to this file will be overwritten the next time mcbuilder builds.") << endl << "#" << endl;
     tofile << "##################################################################################################" << endl << endl;
 
     tofile << "OUTPUT = " + projectDir.dirName().toLower() << endl << endl;
@@ -348,8 +348,8 @@ bool Builder::createConfigFile(QString projectPath)
     QTextStream tofile(&configFile);
     tofile << "/*****************************************************************************************" << endl << endl;
     tofile << "  config.h" << endl;
-    tofile << "  Generated automatically by mcbuilder - " << QDateTime::currentDateTime().toString("MMM d, yyyy h:m ap") << endl;
-    tofile << "  Any manual changes made to this file will be overwritten the next time mcbuilder builds." << endl << endl;
+    tofile << tr("  Generated automatically by mcbuilder - ") << QDateTime::currentDateTime().toString("MMM d, yyyy h:m ap") << endl;
+    tofile << tr("  Any manual changes made to this file will be overwritten the next time mcbuilder builds.") << endl << endl;
     tofile << "******************************************************************************************/" << endl << endl;
     
     tofile << "#ifndef CONFIG_H" << endl << "#define CONFIG_H" << endl << endl;
@@ -545,25 +545,25 @@ void Builder::onBuildError(QProcess::ProcessError error)
   switch(error)
   {
     case QProcess::FailedToStart:
-      msg = QString("'%1' failed to start.  It's either missing, or doesn't have the correct permissions").arg(currentProcess);
+      msg = tr("'%1' failed to start.  It's either missing, or doesn't have the correct permissions").arg(currentProcess);
       break;
     case QProcess::Crashed:
-      msg = QString("'%1' was canceled or crashed.").arg(currentProcess);
+      msg = tr("'%1' was canceled or crashed.").arg(currentProcess);
       break;
     case QProcess::Timedout:
-      msg = QString("'%1' timed out.").arg(currentProcess);
+      msg = tr("'%1' timed out.").arg(currentProcess);
       break;
     case QProcess::WriteError:
-      msg = QString("'%1' reported a write error.").arg(currentProcess);
+      msg = tr("'%1' reported a write error.").arg(currentProcess);
       break;
     case QProcess::ReadError:
-      msg = QString("'%1' reported a read error.").arg(currentProcess);
+      msg = tr("'%1' reported a read error.").arg(currentProcess);
       break;
     case QProcess::UnknownError:
-      msg = QString("'%1' - unknown error type.").arg(currentProcess);
+      msg = tr("'%1' - unknown error type.").arg(currentProcess);
       break;
   }
-  mainWindow->printOutputError("Error: " + msg);
+  mainWindow->printOutputError(tr("Error: ") + msg);
   resetBuildProcess();
   mainWindow->onBuildComplete(false);
 }
@@ -675,7 +675,7 @@ bool Builder::matchErrorOrWarning(QString error)
     //qDebug("cap! %s: %s, %d - %s", qPrintable(severity), qPrintable(filepath), linenumber, qPrintable(msg));
     QFileInfo fi(filepath);
     ConsoleItem *item;
-    QString fullmsg = QString("%1 (line %2): %3").arg(fi.fileName()).arg(linenumber).arg(msg);
+    QString fullmsg = tr("%1 (line %2): %3").arg(fi.fileName()).arg(linenumber).arg(msg);
     if(severity == "error")
     {
       item = new ConsoleItem(filepath, linenumber, ConsoleItem::Error);
@@ -712,7 +712,7 @@ bool Builder::matchInFunction(QString error)
     
     //qDebug("cap! %s: In function %s", qPrintable(filepath), qPrintable(func));
     QFileInfo fi(filepath);
-    QString fullmsg = QString("%1: In function %2").arg(fi.fileName()).arg(func);
+    QString fullmsg = tr("%1: In function %2").arg(fi.fileName()).arg(func);
     mainWindow->printOutputError(fullmsg);
     pos += errExp.matchedLength(); // step the index past the match so we can continue looking
     matched = true;
@@ -737,7 +737,7 @@ bool Builder::matchUndefinedRef(QString error)
     
     //qDebug("cap! %s: In function %s", qPrintable(filepath), qPrintable(func));
     QFileInfo fi(filepath);
-    QString fullmsg = QString("Error - in %1: Undefined reference to %2").arg(fi.fileName()).arg(func);
+    QString fullmsg = tr("Error - in %1: Undefined reference to %2").arg(fi.fileName()).arg(func);
     mainWindow->printOutputError(fullmsg);
     pos += errExp.matchedLength(); // step the index past the match so we can continue looking
     matched = true;

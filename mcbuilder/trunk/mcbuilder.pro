@@ -1,4 +1,4 @@
-MCBUILDER_VERSION = "0.2.0"
+MCBUILDER_VERSION = "0.5.0"
 TEMPLATE = app
 #CONFIG += release
 CONFIG -= release
@@ -38,6 +38,8 @@ SOURCES = src/main.cpp \
           src/About.cpp \
           src/BuildLog.cpp \
           src/ProjectManager.cpp
+          
+TRANSLATIONS = translations/mcbuilder_fr.ts
 
 TARGET = mcbuilder
 

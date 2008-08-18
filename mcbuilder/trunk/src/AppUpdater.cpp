@@ -31,7 +31,7 @@
 AppUpdater::AppUpdater( ) : QDialog( )
 {
 	setModal( true );
-	setWindowTitle( "Software Update" );
+	setWindowTitle( tr("Software Update") );
 	
 	acceptButton.setDefault( true );
 	ignoreButton.setText( tr("Not Right Now") );
@@ -81,8 +81,8 @@ void AppUpdater::finishedRead( int id, bool errors )
 	
 	if (!doc.setContent(http.readAll(), true, &err, &line, &col))
 	{
-		headline.setText( "<font size=4>Couldn't contact the update server...</font>" );
-		details.setText( QString( "Make sure you're connected to the internet." ) );
+		headline.setText( tr("<font size=4>Couldn't contact the update server...</font>") );
+		details.setText( tr( "Make sure you're connected to the internet." ) );
 		acceptButton.setText( tr("OK") );
 		acceptButton.disconnect( ); // make sure it wasn't connected by anything else previously
 		connect( &acceptButton, SIGNAL( clicked() ), this, SLOT( accept() ) );
@@ -132,8 +132,8 @@ void AppUpdater::finishedRead( int id, bool errors )
 	// add the appropriate elements/info depending on whether an update is available
 	if( updateAvailable )
 	{
-		headline.setText( "<font size=4>A new version of mcbuilder is available!</font>" );
-		QString d = QString( "mcbuilder %1 is now available (you have %2).  Would you like to download it?" )
+		headline.setText( tr("<font size=4>A new version of mcbuilder is available!</font>" ));
+		QString d = tr( "mcbuilder %1 is now available (you have %2).  Would you like to download it?" )
 													.arg(latest.first).arg( MCBUILDER_VERSION );
 		details.setText( d );
 		browser.setHtml( latest.second );
@@ -151,8 +151,8 @@ void AppUpdater::finishedRead( int id, bool errors )
 	}
 	else
 	{
-		headline.setText( "<font size=4>You're up to date!</font>" );
-		details.setText( QString( "You're running the latest version of mcbuilder, version %1." ).arg( MCBUILDER_VERSION ) );
+		headline.setText( tr("<font size=4>You're up to date!</font>") );
+		details.setText( tr( "You're running the latest version of mcbuilder, version %1." ).arg( MCBUILDER_VERSION ) );
 		acceptButton.setText( tr("OK") );
 		acceptButton.disconnect( );
 		connect( &acceptButton, SIGNAL( clicked() ), this, SLOT( accept() ) );

@@ -27,12 +27,12 @@ About::About( ) : QDialog( )
 	setupUi(this);
   verticalLayout->addWidget(&body);
   body.setOpenExternalLinks(true);
-  versionLabel->setText(QString("<font size=6>mcbuilder</font><br>Version %1").arg(MCBUILDER_VERSION));
-  body.append(QString("By <a href=\"http://www.makingthings.com\">MakingThings</a>, %1.<br>").arg(QDate::currentDate().toString("yyyy")));
-  body.append("Thanks to Erik Gilling for <a href=\"http://oss.tekno.us/sam7utils\">sam7utils</a>.<br>");
-  body.append("Thanks to Michael Fischer for <a href=\"http://www.yagarto.de\">Yagarto</a>.<br>");
-  body.append("Application icon by <a href=\"http://cultivatestudios.com\">Cultivate Studios</a>.<br>");
-  body.append("Toolbar icons by <a href=\"http://www.mattballdesign.com\">Matt Ball</a> and <a href=\"http://cultivatestudios.com\">Cultivate Studios</a>.");
+  versionLabel->setText(tr("<font size=6>mcbuilder</font><br>Version %1").arg(MCBUILDER_VERSION));
+  body.append(tr("By <a href=\"http://www.makingthings.com\">MakingThings</a>, %1.<br>").arg(QDate::currentDate().toString("yyyy")));
+  body.append(tr("Thanks to Erik Gilling for <a href=\"http://oss.tekno.us/sam7utils\">sam7utils</a>.<br>"));
+  body.append(tr("Thanks to Michael Fischer for <a href=\"http://www.yagarto.de\">Yagarto</a>.<br>"));
+  body.append(tr("Application icon by <a href=\"http://cultivatestudios.com\">Cultivate Studios</a>.<br>"));
+  body.append(tr("Toolbar icons by <a href=\"http://www.mattballdesign.com\">Matt Ball</a> and <a href=\"http://cultivatestudios.com\">Cultivate Studios</a>."));
 }
 
 

@@ -18,11 +18,25 @@
 
 
 #include <QApplication>
+#include <QTranslator>
+#include <QLibraryInfo>
 #include "MainWindow.h"
 
 int main( int argc, char *argv[] )
 {
   QApplication app(argc, argv);
+  
+  QString locale = QLocale::system().name();
+
+  QTranslator qtTranslator;
+  QTranslator mcbuilderTranslator;
+
+  qtTranslator.load(QString("qt_") + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+  app.installTranslator(&qtTranslator);
+
+  mcbuilderTranslator.load(QString("mcbuilder_") + locale);
+  app.installTranslator(&mcbuilderTranslator);
+
   MainWindow window;
   window.show();
   return app.exec();

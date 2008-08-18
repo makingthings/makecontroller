@@ -106,8 +106,8 @@ void Uploader::filterError( )
   QString err(readAllStandardError());
   if(err.startsWith("can't find boot agent"))
   {
-    mainWindow->printOutputError("Error - couldn't find an unprogrammed board to upload to.");
-    mainWindow->printOutputError("  Make sure you've erased and unplugged/replugged your board.");
+    mainWindow->printOutputError(tr("Error - couldn't find an unprogrammed board to upload to."));
+    mainWindow->printOutputError(tr("  Make sure you've erased and unplugged/replugged your board."));
   }
   else
     qDebug("upload err: %s", qPrintable(err));
@@ -121,7 +121,7 @@ void Uploader::filterError( )
 void Uploader::uploadStarted( )
 {
   QFileInfo fi(currentFile);
-  uploaderProgress->setLabelText(QString("Uploading %1...").arg(fi.fileName()));
+  uploaderProgress->setLabelText(tr("Uploading %1...").arg(fi.fileName()));
   uploaderProgress->show();
 }
 
@@ -148,25 +148,25 @@ void Uploader::onError(QProcess::ProcessError error)
   switch(error)
   {
     case QProcess::FailedToStart:
-      msg = QString("uploader failed to start.  '%1' is either missing, or doesn't have the correct permissions").arg(uploaderName);
+      msg = tr("uploader failed to start.  '%1' is either missing, or doesn't have the correct permissions").arg(uploaderName);
       break;
     case QProcess::Crashed:
-      msg = QString("uploader (%1) was canceled or crashed.").arg(uploaderName);
+      msg = tr("uploader (%1) was canceled or crashed.").arg(uploaderName);
       break;
     case QProcess::Timedout:
-      msg = QString("uploader (%1) timed out.").arg(uploaderName);
+      msg = tr("uploader (%1) timed out.").arg(uploaderName);
       break;
     case QProcess::WriteError:
-      msg = QString("uploader (%1) reported a write error.").arg(uploaderName);
+      msg = tr("uploader (%1) reported a write error.").arg(uploaderName);
       break;
     case QProcess::ReadError:
-      msg = QString("uploader (%1) reported a read error.").arg(uploaderName);
+      msg = tr("uploader (%1) reported a read error.").arg(uploaderName);
       break;
     case QProcess::UnknownError:
-      msg = QString("uploader (%1) - unknown error type.").arg(uploaderName);
+      msg = tr("uploader (%1) - unknown error type.").arg(uploaderName);
       break;
   }
-  mainWindow->printOutputError("Error - " + msg);
+  mainWindow->printOutputError(tr("Error - ") + msg);
 }
 
 /*
