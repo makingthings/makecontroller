@@ -79,6 +79,7 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
     int tcpSockets() { return tcpSocketEdit->text().toInt(); }
     int tcpServers() { return tcpServerEdit->text().toInt(); }
     bool load();
+    bool diffProjects( QString newProjectPath, bool saveUiToFile = false );
     
 	public slots:
 		bool loadAndShow();
@@ -89,7 +90,7 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
 	private:
 		MainWindow *mainWindow;
     ProjectManager projectManager;
-		QString projectFilePath( );
+		QString projectFilePath( QString projectPath );
     bool configChanged;
     void setNetworkSectionEnabled(bool state);
     void loadFileBrowser(QDir *projectDir, QDomDocument *projectFile);

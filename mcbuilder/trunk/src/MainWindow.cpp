@@ -76,7 +76,6 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   connect(currentFileDropDown, SIGNAL(currentIndexChanged(int)), this, SLOT(onFileSelection(int)));
   connect(editor->document(), SIGNAL(contentsChanged()),this, SLOT(onDocumentModified()));
   connect(outputConsole, SIGNAL(itemDoubleClicked(QListWidgetItem*)),this, SLOT(onConsoleDoubleClick(QListWidgetItem*)));
-  connect(projInfo, SIGNAL(projectInfoUpdated()), builder, SLOT(onProjectUpdated()));
   
   // menu actions 
   connect(actionNew,					SIGNAL(triggered()), this,		SLOT(onNewFile()));
@@ -528,6 +527,8 @@ void MainWindow::openProject(QString projectPath)
     }
     setWindowTitle( projectName + "[*] - mcbuilder");
     updateRecentProjects(projectPath);
+    if(projInfo->diffProjects(projectPath))
+      builder->clean(projectPath);
     projInfo->load();
     buildLog->clear();
 	}
