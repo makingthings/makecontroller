@@ -1,26 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="1.1">
+<!DOCTYPE TS><TS version="1.1" language="fr">
+<defaultcodec></defaultcodec>
 <context>
     <name>About</name>
     <message>
         <location filename="../src/About.cpp" line="30"/>
         <source>&lt;font size=6&gt;mcbuilder&lt;/font&gt;&lt;br&gt;Version %1</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;font size=6&gt;mcbuilder&lt;/font&gt;&lt;br&gt;Version %1</translation>
     </message>
     <message>
         <location filename="../src/About.cpp" line="31"/>
         <source>By &lt;a href=&quot;http://www.makingthings.com&quot;&gt;MakingThings&lt;/a&gt;, %1.&lt;br&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>Par &lt;a href=&quot;http://www.makingthings.com&quot;&gt;MakingThings&lt;/a&gt;, %1.&lt;br&gt;</translation>
     </message>
     <message>
         <location filename="../src/About.cpp" line="32"/>
         <source>Thanks to Erik Gilling for &lt;a href=&quot;http://oss.tekno.us/sam7utils&quot;&gt;sam7utils&lt;/a&gt;.&lt;br&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>Merci à Erik Gilling pour &lt;a href=&quot;http://oss.tekno.us/sam7utils&quot;&gt;sam7utils&lt;/a&gt;.&lt;br&gt;</translation>
     </message>
     <message>
         <location filename="../src/About.cpp" line="33"/>
         <source>Thanks to Michael Fischer for &lt;a href=&quot;http://www.yagarto.de&quot;&gt;Yagarto&lt;/a&gt;.&lt;br&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>Merci à Michael Fischer pour &lt;a href=&quot;http://www.yagarto.de&quot;&gt;Yagarto&lt;/a&gt;.&lt;br&gt;</translation>
     </message>
     <message>
         <location filename="../src/About.cpp" line="34"/>
@@ -30,7 +31,7 @@
     <message>
         <location filename="../src/About.cpp" line="35"/>
         <source>Toolbar icons by &lt;a href=&quot;http://www.mattballdesign.com&quot;&gt;Matt Ball&lt;/a&gt; and &lt;a href=&quot;http://cultivatestudios.com&quot;&gt;Cultivate Studios&lt;/a&gt;.</source>
-        <translation type="unfinished"></translation>
+        <translation>Icons de la barre d&apos;outils par &lt;a href=&quot;http://www.mattballdesign.com&quot;&gt;Matt Ball&lt;/a&gt; et &lt;a href=&quot;http://cultivatestudios.com&quot;&gt;Cultivate Studios&lt;/a&gt;.</translation>
     </message>
 </context>
 <context>
@@ -38,7 +39,7 @@
     <message>
         <location filename="../layouts/about.ui" line="16"/>
         <source>About mcbuilder</source>
-        <translation type="unfinished"></translation>
+        <translation>À propos de mcbuilder</translation>
     </message>
 </context>
 <context>
@@ -46,52 +47,52 @@
     <message>
         <location filename="../src/AppUpdater.cpp" line="37"/>
         <source>Not Right Now</source>
-        <translation type="unfinished"></translation>
+        <translation>Pas Maintenant</translation>
     </message>
     <message>
         <location filename="../src/AppUpdater.cpp" line="156"/>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <location filename="../src/AppUpdater.cpp" line="140"/>
         <source>Visit Download Page</source>
-        <translation type="unfinished"></translation>
+        <translation>Visiter la Page de Téléchargement</translation>
     </message>
     <message>
         <location filename="../src/AppUpdater.cpp" line="34"/>
         <source>Software Update</source>
-        <translation type="unfinished"></translation>
+        <translation>Mise à Jour Logicielle</translation>
     </message>
     <message>
         <location filename="../src/AppUpdater.cpp" line="84"/>
         <source>&lt;font size=4&gt;Couldn&apos;t contact the update server...&lt;/font&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;font size=4&gt;Impossible de contacter le serveur de mise à jour...&lt;/font&gt;</translation>
     </message>
     <message>
         <location filename="../src/AppUpdater.cpp" line="85"/>
         <source>Make sure you&apos;re connected to the internet.</source>
-        <translation type="unfinished"></translation>
+        <translation>Assurez-vous d&apos;être connecté à internet.</translation>
     </message>
     <message>
         <location filename="../src/AppUpdater.cpp" line="135"/>
         <source>&lt;font size=4&gt;A new version of mcbuilder is available!&lt;/font&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;font size=4&gt;Une nouvelle version de mcbuilder est disponible!&lt;/font&gt;</translation>
     </message>
     <message>
         <location filename="../src/AppUpdater.cpp" line="137"/>
         <source>mcbuilder %1 is now available (you have %2).  Would you like to download it?</source>
-        <translation type="unfinished"></translation>
+        <translation>mcbuilder %1 est maintenant disponible (vous avez %2).  Voulez-vous le télécharger?</translation>
     </message>
     <message>
         <location filename="../src/AppUpdater.cpp" line="154"/>
         <source>&lt;font size=4&gt;You&apos;re up to date!&lt;/font&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;font size=4&gt;Vous êtes à jour!&lt;/font&gt;</translation>
     </message>
     <message>
         <location filename="../src/AppUpdater.cpp" line="155"/>
         <source>You&apos;re running the latest version of mcbuilder, version %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vous utilisez la dernière version de mcbuilder, version %1.</translation>
     </message>
 </context>
 <context>
@@ -99,12 +100,12 @@
     <message>
         <location filename="../layouts/buildlog.ui" line="13"/>
         <source>Build Log</source>
-        <translation type="unfinished"></translation>
+        <translation>Journal de Compilation</translation>
     </message>
     <message>
         <location filename="../layouts/buildlog.ui" line="50"/>
         <source>Clear</source>
-        <translation type="unfinished"></translation>
+        <translation>Vider</translation>
     </message>
 </context>
 <context>
@@ -112,7 +113,7 @@
     <message>
         <location filename="../src/Builder.cpp" line="140"/>
         <source>%1.bin is %2 out of a possible 256000 bytes.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1.bin est %2 pour 256000 bytes possibles.</translation>
     </message>
     <message>
         <location filename="../src/Builder.cpp" line="145"/>
@@ -172,22 +173,22 @@
     <message>
         <location filename="../src/Builder.cpp" line="566"/>
         <source>Error: </source>
-        <translation type="unfinished"></translation>
+        <translation>Erreur:</translation>
     </message>
     <message>
         <location filename="../src/Builder.cpp" line="678"/>
         <source>%1 (line %2): %3</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (ligne %2) : %3</translation>
     </message>
     <message>
         <location filename="../src/Builder.cpp" line="715"/>
         <source>%1: In function %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 : Dans la fonction %2</translation>
     </message>
     <message>
         <location filename="../src/Builder.cpp" line="740"/>
         <source>Error - in %1: Undefined reference to %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Erreur - dans %1 : Référence non définie à %2</translation>
     </message>
 </context>
 <context>
@@ -195,47 +196,47 @@
     <message>
         <location filename="../layouts/findreplace.ui" line="13"/>
         <source>Find</source>
-        <translation type="unfinished"></translation>
+        <translation>Trouver</translation>
     </message>
     <message>
         <location filename="../layouts/findreplace.ui" line="34"/>
         <source>Find:</source>
-        <translation type="unfinished"></translation>
+        <translation>Trouver:</translation>
     </message>
     <message>
         <location filename="../layouts/findreplace.ui" line="60"/>
         <source>Replace:</source>
-        <translation type="unfinished"></translation>
+        <translation>Remplacer:</translation>
     </message>
     <message>
         <location filename="../layouts/findreplace.ui" line="73"/>
         <source>Ignore Case</source>
-        <translation type="unfinished"></translation>
+        <translation>Ignorer la Casse</translation>
     </message>
     <message>
         <location filename="../layouts/findreplace.ui" line="80"/>
         <source>Match Whole Word Only</source>
-        <translation type="unfinished"></translation>
+        <translation>Mot Entier Seulement</translation>
     </message>
     <message>
         <location filename="../layouts/findreplace.ui" line="94"/>
         <source>Replace</source>
-        <translation type="unfinished"></translation>
+        <translation>Remplacer</translation>
     </message>
     <message>
         <location filename="../layouts/findreplace.ui" line="104"/>
         <source>Replace All</source>
-        <translation type="unfinished"></translation>
+        <translation>Tout Remplacer</translation>
     </message>
     <message>
         <location filename="../layouts/findreplace.ui" line="127"/>
         <source>Previous</source>
-        <translation type="unfinished"></translation>
+        <translation>Précédent</translation>
     </message>
     <message>
         <location filename="../layouts/findreplace.ui" line="137"/>
         <source>Next</source>
-        <translation type="unfinished"></translation>
+        <translation>Suivant</translation>
     </message>
 </context>
 <context>
@@ -243,363 +244,363 @@
     <message>
         <location filename="../src/MainWindow.cpp" line="615"/>
         <source>mcbuilder</source>
-        <translation type="unfinished"></translation>
+        <translation>mcbuilder</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="149"/>
         <source>File</source>
-        <translation type="unfinished"></translation>
+        <translation>Fichier</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="153"/>
         <source>Recent Projects</source>
-        <translation type="unfinished"></translation>
+        <translation>Projets Récents</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="168"/>
         <source>Help</source>
-        <translation type="unfinished"></translation>
+        <translation>Aide</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="180"/>
         <source>Project</source>
-        <translation type="unfinished"></translation>
+        <translation>Projet</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="184"/>
         <source>Board Type</source>
-        <translation type="unfinished"></translation>
+        <translation>Type de Carte</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="334"/>
         <source>Examples</source>
-        <translation type="unfinished"></translation>
+        <translation>Examples</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="194"/>
         <source>Libraries</source>
-        <translation type="unfinished"></translation>
+        <translation>Librairies</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="210"/>
         <source>Edit</source>
-        <translation type="unfinished"></translation>
+        <translation>Editer</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="225"/>
         <source>View</source>
-        <translation type="unfinished"></translation>
+        <translation>Vue</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="258"/>
         <source>toolBar</source>
-        <translation type="unfinished"></translation>
+        <translation>barreOutils</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="284"/>
         <source>New File...</source>
-        <translation type="unfinished"></translation>
+        <translation>Nouveau Fichier...</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="287"/>
         <source>Ctrl+N</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+N</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="292"/>
         <source>Save</source>
-        <translation type="unfinished"></translation>
+        <translation>Enregistrer</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="295"/>
         <source>Ctrl+S</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+S</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="300"/>
         <source>Save File As...</source>
-        <translation type="unfinished"></translation>
+        <translation>Enregistrer Sous...</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="303"/>
         <source>Ctrl+Shift+S</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+Shift+S</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="313"/>
         <source>New Project...</source>
-        <translation type="unfinished"></translation>
+        <translation>Nouveau Projet...</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="316"/>
         <source>Ctrl+Shift+N</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+Shift+N</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="321"/>
         <source>Open Project...</source>
-        <translation type="unfinished"></translation>
+        <translation>Ouvrir Projet...</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="324"/>
         <source>Ctrl+O</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+O</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="329"/>
         <source>Preferences...</source>
-        <translation type="unfinished"></translation>
+        <translation>Préférences...</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="343"/>
         <source>Info</source>
-        <translation type="unfinished"></translation>
+        <translation>Info</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="346"/>
         <source>Ctrl+I</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+I</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="355"/>
         <source>Upload</source>
-        <translation type="unfinished"></translation>
+        <translation>Envoyer</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="358"/>
         <source>Ctrl+U</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+U</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="367"/>
         <source>Build</source>
-        <translation type="unfinished"></translation>
+        <translation>Compiler</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="370"/>
         <source>Ctrl+B</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+B</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="375"/>
         <source>Undo</source>
-        <translation type="unfinished"></translation>
+        <translation>Annuler</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="378"/>
         <source>Ctrl+Z</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+Z</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="383"/>
         <source>Redo</source>
-        <translation type="unfinished"></translation>
+        <translation>Refaire</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="386"/>
         <source>Ctrl+Y</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+Y</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="391"/>
         <source>Copy</source>
-        <translation type="unfinished"></translation>
+        <translation>Copier</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="394"/>
         <source>Ctrl+C</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+C</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="399"/>
         <source>Paste</source>
-        <translation type="unfinished"></translation>
+        <translation>Coller</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="402"/>
         <source>Ctrl+V</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+V</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="407"/>
         <source>Cut</source>
-        <translation type="unfinished"></translation>
+        <translation>Couper</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="410"/>
         <source>Ctrl+X</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+X</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="415"/>
         <source>Delete</source>
-        <translation type="unfinished"></translation>
+        <translation>Effacer</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="420"/>
         <source>Select All</source>
-        <translation type="unfinished"></translation>
+        <translation>Tout Sélectionner</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="423"/>
         <source>Ctrl+A</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+A</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="428"/>
         <source>Clear Output Console</source>
-        <translation type="unfinished"></translation>
+        <translation>Vider la Console de Sortie</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="433"/>
         <source>Upload File to Board...</source>
-        <translation type="unfinished"></translation>
+        <translation>Envoyer le Fichier à la Carte...</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="438"/>
         <source>Make Controller API Reference</source>
-        <translation type="unfinished"></translation>
+        <translation>Référence API Make Controller</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="443"/>
         <source>Save Project As...</source>
-        <translation type="unfinished"></translation>
+        <translation>Enregistrer le Projet Sous...</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="452"/>
         <source>USB Console...</source>
-        <translation type="unfinished"></translation>
+        <translation>Console USB...</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="457"/>
         <source>Find</source>
-        <translation type="unfinished"></translation>
+        <translation>Trouver</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="460"/>
         <source>Ctrl+F</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+F</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="469"/>
         <source>Clean</source>
-        <translation type="unfinished"></translation>
+        <translation>Nettoyer</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="472"/>
         <source>Ctrl+K</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+K</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="477"/>
         <source>Ethernet Monitor...</source>
-        <translation type="unfinished"></translation>
+        <translation>Moniteur Ethernet...</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="482"/>
         <source>mcbuilder User Manual</source>
-        <translation type="unfinished"></translation>
+        <translation>Manuel Utilisateur mcbuilder</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="487"/>
         <source>About mcbuilder</source>
-        <translation type="unfinished"></translation>
+        <translation>À Propos de mcbuilder</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="499"/>
         <source>Stop Build</source>
-        <translation type="unfinished"></translation>
+        <translation>Arrêter Compilation</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="504"/>
         <source>Check for updates</source>
-        <translation type="unfinished"></translation>
+        <translation>Vérifier Mises à Jour</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="509"/>
         <source>Add Existing File...</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajouter un Fichier Existant...</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="514"/>
         <source>Visit MakingThings Forum</source>
-        <translation type="unfinished"></translation>
+        <translation>Visiter le Forum MakingThings</translation>
     </message>
     <message>
         <location filename="../layouts/mainwindow.ui" line="519"/>
         <source>Build Log...</source>
-        <translation type="unfinished"></translation>
+        <translation>Journal de Compilation...</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="663"/>
         <source>Need to open a project first.  Open or create a new one from the File menu.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vous devez d&apos;abord ouvrir un projet. Ouvrez ou créez-en un nouveau depuis le menu Fichier.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="336"/>
         <source>Create New File</source>
-        <translation type="unfinished"></translation>
+        <translation>Créez Nouveau Fichier</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="638"/>
         <source>C Files (*.c)</source>
-        <translation type="unfinished"></translation>
+        <translation>Fichiers C (*.c)</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="366"/>
         <source>Add Existing File</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajouter un Fichier Existant</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="465"/>
         <source>Create Project</source>
-        <translation type="unfinished"></translation>
+        <translation>Créer Projet</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="472"/>
         <source>Couldn&apos;t create new project.  Make sure there are no spaces in the path specified.</source>
-        <translation type="unfinished"></translation>
+        <translation>Impossible de créer le nouveau projet. Assurez-vous qu&apos;il n&apos;y a pas d&apos;espace dans le chemin spécifié.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="482"/>
         <source>Open Project</source>
-        <translation type="unfinished"></translation>
+        <translation>Ouvrir Projet</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="617"/>
         <source>This document has been modified.
 Do you want to save your changes?</source>
-        <translation type="unfinished"></translation>
+        <translation>Ce document à été modifié.Voulez-vous enregistrer vos changements?</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="637"/>
         <source>Save As</source>
-        <translation type="unfinished"></translation>
+        <translation>Enregistrer Sous</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="666"/>
         <source>Save Project As</source>
-        <translation type="unfinished"></translation>
+        <translation>Enregistrer Projet Sous</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="674"/>
         <source>Couldn&apos;t create the new project.  Maybe there&apos;s a problem with the current project?</source>
-        <translation type="unfinished"></translation>
+        <translation>Impossible de créer le nouveau projet. Peut-être y a-t-il un problème avec le projet courant?</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="812"/>
         <source>Open File</source>
-        <translation type="unfinished"></translation>
+        <translation>Ouvrir Ficher</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="813"/>
         <source>Binaries (*.bin)</source>
-        <translation type="unfinished"></translation>
+        <translation>Binaires (*.bin)</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="223"/>
         <source>Line: %1  Column: %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ligne : %1 Colonne : %2</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="428"/>
@@ -609,92 +610,92 @@ Do you want to save your changes?</source>
     <message>
         <location filename="../src/MainWindow.cpp" line="827"/>
         <source>Couldn&apos;t find %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Impossible de trouver %1.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="536"/>
         <source>Couldn&apos;t find main file for %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Impossible de trouver le fichier principal pour %1.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="579"/>
         <source>Need to open a file or project first.  Open or create a new one from the File menu.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vous devez d&apos;abord ouvrir un projet. Ouvrez ou créez-en un nouveau depuis le menu Fichier.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="601"/>
         <source>Couldn&apos;t save...maybe the current file has been moved or deleted.</source>
-        <translation type="unfinished"></translation>
+        <translation>Impossible d&apos;enregistrer...Peut-être que le fichier actuel a été déplacé ou effacé.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="686"/>
         <source>Open a project to build, or create a new one from the File menu.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ouvrez un projet à compiler ou créez-en un nouveau depuis le menu Fichier.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="769"/>
         <source>Builder is currently busy...give it a second, then try again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Le compilateur est actuellement occupé...laissez-lui une seconde puis essayez à nouveau.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="719"/>
         <source>Build succeeded.</source>
-        <translation type="unfinished"></translation>
+        <translation>Compilation réussie.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="725"/>
         <source>Build failed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Compilation echouée.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="736"/>
         <source>Upload succeeded.</source>
-        <translation type="unfinished"></translation>
+        <translation>Envoi réussi.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="742"/>
         <source>Upload failed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Envoi échoué.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="750"/>
         <source>Clean succeeded.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nettoyage réussi.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="755"/>
         <source>Building...</source>
-        <translation type="unfinished"></translation>
+        <translation>Compile...</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="779"/>
         <source>Open a project first, or create a new one from the File menu.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ouvrez d&apos;abord un projet ou créez-en un nouveau depuis le menu Fichier.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="783"/>
         <source>Couldn&apos;t find/open project properties for </source>
-        <translation type="unfinished"></translation>
+        <translation>Impossible de trouver/ouvrir le propriétés de projet pour</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="794"/>
         <source>Open a project to upload, or create a new one from the File menu.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ouvrez un projet à envoyer ou créez-en un nouveau depuis le menu Fichier.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="802"/>
         <source>Couldn&apos;t find the file to upload for this project.</source>
-        <translation type="unfinished"></translation>
+        <translation>Impossible de trouver le fichier à envoyer pour ce projet.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="834"/>
         <source>Uploader is currently busy...give it a second, then try again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Le téléverseur est actuellement occupé...laissez lui une seconde puis essayez à nouveau.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="837"/>
         <source>Please select a board type from the Project menu first.</source>
-        <translation type="unfinished"></translation>
+        <translation>Veuillez d&apos;abord sélectionner un type de carte depuis le menu Projet.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="964"/>
@@ -714,7 +715,7 @@ Do you want to save your changes?</source>
     <message>
         <location filename="../src/MainWindow.cpp" line="1006"/>
         <source>Error</source>
-        <translation type="unfinished"></translation>
+        <translation>Erreur</translation>
     </message>
 </context>
 <context>
@@ -722,93 +723,93 @@ Do you want to save your changes?</source>
     <message>
         <location filename="../layouts/preferences.ui" line="13"/>
         <source>Preferences</source>
-        <translation type="unfinished"></translation>
+        <translation>Préférences</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="31"/>
         <source>General</source>
-        <translation type="unfinished"></translation>
+        <translation>Général</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="37"/>
         <source>The directory in which your mcbuilder projects are stored.</source>
-        <translation type="unfinished"></translation>
+        <translation>Le répertoire dans lequel sont stockés les projets mcbuilder.</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="40"/>
         <source>Workspace:</source>
-        <translation type="unfinished"></translation>
+        <translation>Espace de travail :</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="60"/>
         <source>Browse...</source>
-        <translation type="unfinished"></translation>
+        <translation>Parcourir...</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="67"/>
         <source>Editor Font:</source>
-        <translation type="unfinished"></translation>
+        <translation>Police Éditeur :</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="87"/>
         <source>Select...</source>
-        <translation type="unfinished"></translation>
+        <translation>Sélectionner...</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="97"/>
         <source>Editor Tab Width:</source>
-        <translation type="unfinished"></translation>
+        <translation>Largeur de Tabulation Éditeur :</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="113"/>
         <source>Check for updates on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Vérifier les mises à jour au démarrage</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="129"/>
         <source>Tools</source>
-        <translation type="unfinished"></translation>
+        <translation>Outils</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="137"/>
         <source>Only change these if you want to use tools not provided by mcbuilder.
 Leave blank to use your system versions.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ne changez ceci que si vous désirez utiliser des outils non fournis par mcbuilder.Laissez vide pour utiliser vos versions système.</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="151"/>
         <source>The path to the &apos;make&apos; utility on your machine.</source>
-        <translation type="unfinished"></translation>
+        <translation>Le chemin vers l&apos;outil &apos;make&apos; sur votre machine.</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="154"/>
         <source>Path to make:</source>
-        <translation type="unfinished"></translation>
+        <translation>Chemin vers make :</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="170"/>
         <source>The path to the arm-elf tools on your machine</source>
-        <translation type="unfinished"></translation>
+        <translation>Le chemin vers les outils arm-elf sur votre machine</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="173"/>
         <source>Path to arm-elf tools:</source>
-        <translation type="unfinished"></translation>
+        <translation>Chemin vers les outils arm-elf :</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="189"/>
         <source>Path to the sam7 uploader on your machine.</source>
-        <translation type="unfinished"></translation>
+        <translation>Chemin vers le téléverseur sam7 sur votre machine.</translation>
     </message>
     <message>
         <location filename="../layouts/preferences.ui" line="192"/>
         <source>Path to sam7:</source>
-        <translation type="unfinished"></translation>
+        <translation>Chemin vers sam7 :</translation>
     </message>
     <message>
         <location filename="../src/Preferences.cpp" line="140"/>
         <source>Select Workspace Directory</source>
-        <translation type="unfinished"></translation>
+        <translation>Sélectionnez un Répertoire d&apos;Espace de Travail</translation>
     </message>
 </context>
 <context>
@@ -816,133 +817,133 @@ Leave blank to use your system versions.</source>
     <message>
         <location filename="../layouts/projectinfo.ui" line="13"/>
         <source>Project Info</source>
-        <translation type="unfinished"></translation>
+        <translation>Info Projet</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="31"/>
         <source>Config</source>
-        <translation type="unfinished"></translation>
+        <translation>Config</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="37"/>
         <source>A version number for your project.</source>
-        <translation type="unfinished"></translation>
+        <translation>Un numéro de version pour votre projet.</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="40"/>
         <source>Version:</source>
-        <translation type="unfinished"></translation>
+        <translation>Version :</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="56"/>
         <source>The amount of memory available to your project at run time.
 Generally, make this as high as you can until the project won&apos;t build.</source>
-        <translation type="unfinished"></translation>
+        <translation>La quantité de mémoire disponible pour votre projet à l&apos;exécution.Généralement, mettez ceci le plus haut possible jusqu&apos;à ce que le projet ne compile plus.</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="60"/>
         <source>Heap Size:</source>
-        <translation type="unfinished"></translation>
+        <translation>Taille de segment :</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="76"/>
         <source>Optimized code is generally smaller and faster.</source>
-        <translation type="unfinished"></translation>
+        <translation>Le code optimisé est généralement plus petit et plus rapide.</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="79"/>
         <source>Optimization Level:</source>
-        <translation type="unfinished"></translation>
+        <translation>Niveau d&apos;Optimisation :</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="93"/>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <translation>Aucun</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="98"/>
         <source>Level 1 (-O1)</source>
-        <translation type="unfinished"></translation>
+        <translation>Niveau 1 (-O1)</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="103"/>
         <source>Level 2 (-O2)</source>
-        <translation type="unfinished"></translation>
+        <translation>Niveau 2 (-O2)</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="108"/>
         <source>Optimize For Size (-Os)</source>
-        <translation type="unfinished"></translation>
+        <translation>Optimiser la Taille (-Os)</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="113"/>
         <source>Optimize For Speed (-O3)</source>
-        <translation type="unfinished"></translation>
+        <translation>Optimiser la Vitesse (-O3)</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="121"/>
         <source>Include debugging info in your build.  Makes your project bigger.</source>
-        <translation type="unfinished"></translation>
+        <translation>Inclure les info de débogage dans votre compilation. Rend votre projet plus gros.</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="124"/>
         <source>Include Debug Info</source>
-        <translation type="unfinished"></translation>
+        <translation>Inclure Info Débogage</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="138"/>
         <source>Include OSC System</source>
-        <translation type="unfinished"></translation>
+        <translation>Inclure Système OSC</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="145"/>
         <source>Include USB System</source>
-        <translation type="unfinished"></translation>
+        <translation>Inclure Système USB</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="152"/>
         <source>Include Network System</source>
-        <translation type="unfinished"></translation>
+        <translation>Inclure Système Réseau</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="169"/>
         <source>Network Memory Pool:</source>
-        <translation type="unfinished"></translation>
+        <translation>Pool Mémoire Réseau :</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="185"/>
         <source>UDP Sockets:</source>
-        <translation type="unfinished"></translation>
+        <translation>Sockets UDP :</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="201"/>
         <source>TCP Socket Sockets:</source>
-        <translation type="unfinished"></translation>
+        <translation>Sockets TCP :</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="217"/>
         <source>TCP Server Sockets:</source>
-        <translation type="unfinished"></translation>
+        <translation>Sockets Serveur TCP :</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="233"/>
         <source>Restore Defaults</source>
-        <translation type="unfinished"></translation>
+        <translation>Restaurer Valeurs par Défaut</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="249"/>
         <source>Files</source>
-        <translation type="unfinished"></translation>
+        <translation>Fichiers</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="262"/>
         <source>File</source>
-        <translation type="unfinished"></translation>
+        <translation>Fichier</translation>
     </message>
     <message>
         <location filename="../layouts/projectinfo.ui" line="267"/>
         <source>Build Type</source>
-        <translation type="unfinished"></translation>
+        <translation>Type de Compilation</translation>
     </message>
 </context>
 <context>
@@ -960,42 +961,42 @@ Generally, make this as high as you can until the project won&apos;t build.</sou
     <message>
         <location filename="../src/Uploader.cpp" line="124"/>
         <source>Uploading %1...</source>
-        <translation type="unfinished"></translation>
+        <translation>Envoi %1...</translation>
     </message>
     <message>
         <location filename="../src/Uploader.cpp" line="151"/>
         <source>uploader failed to start.  &apos;%1&apos; is either missing, or doesn&apos;t have the correct permissions</source>
-        <translation type="unfinished"></translation>
+        <translation>démarage téléverseur échoué. &apos;%1&apos; manque ou n&apos;a pas les bonnes permissions</translation>
     </message>
     <message>
         <location filename="../src/Uploader.cpp" line="154"/>
         <source>uploader (%1) was canceled or crashed.</source>
-        <translation type="unfinished"></translation>
+        <translation>téléverseur (%1) a été annulé ou à planté.</translation>
     </message>
     <message>
         <location filename="../src/Uploader.cpp" line="157"/>
         <source>uploader (%1) timed out.</source>
-        <translation type="unfinished"></translation>
+        <translation>téléverseur (%1) ne répond pas.</translation>
     </message>
     <message>
         <location filename="../src/Uploader.cpp" line="160"/>
         <source>uploader (%1) reported a write error.</source>
-        <translation type="unfinished"></translation>
+        <translation>téléverseur (%1) a rapporter un erreur d&apos;écriture.</translation>
     </message>
     <message>
         <location filename="../src/Uploader.cpp" line="163"/>
         <source>uploader (%1) reported a read error.</source>
-        <translation type="unfinished"></translation>
+        <translation>téléverseur (%1) a rapporter un erreur de lecture.</translation>
     </message>
     <message>
         <location filename="../src/Uploader.cpp" line="166"/>
         <source>uploader (%1) - unknown error type.</source>
-        <translation type="unfinished"></translation>
+        <translation>téléverseur (%1) - type d&apos;erreur inconnue.</translation>
     </message>
     <message>
         <location filename="../src/Uploader.cpp" line="169"/>
         <source>Error - </source>
-        <translation type="unfinished"></translation>
+        <translation>Erreur - </translation>
     </message>
 </context>
 <context>
@@ -1003,37 +1004,37 @@ Generally, make this as high as you can until the project won&apos;t build.</sou
     <message>
         <location filename="../layouts/usbconsole.ui" line="13"/>
         <source>USB Console</source>
-        <translation type="unfinished"></translation>
+        <translation>Console USB</translation>
     </message>
     <message>
         <location filename="../layouts/usbconsole.ui" line="21"/>
         <source>View As:</source>
-        <translation type="unfinished"></translation>
+        <translation>Voir en :</translation>
     </message>
     <message>
         <location filename="../layouts/usbconsole.ui" line="38"/>
         <source>Characters</source>
-        <translation type="unfinished"></translation>
+        <translation>Caractères</translation>
     </message>
     <message>
         <location filename="../layouts/usbconsole.ui" line="43"/>
         <source>Hex</source>
-        <translation type="unfinished"></translation>
+        <translation>Hex</translation>
     </message>
     <message>
         <location filename="../layouts/usbconsole.ui" line="64"/>
         <source>Port:</source>
-        <translation type="unfinished"></translation>
+        <translation>Port:</translation>
     </message>
     <message>
         <location filename="../layouts/usbconsole.ui" line="84"/>
         <source>Open</source>
-        <translation type="unfinished"></translation>
+        <translation>Ouvrir</translation>
     </message>
     <message>
         <location filename="../layouts/usbconsole.ui" line="130"/>
         <source>Send</source>
-        <translation type="unfinished"></translation>
+        <translation>Envoyer</translation>
     </message>
 </context>
 </TS>
