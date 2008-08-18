@@ -1,5 +1,5 @@
 
-#include <QTextStream>
+#include <QFileInfo>
 #include <QSettings>
 #include "Uploader.h"
 #include "Preferences.h"
@@ -13,57 +13,112 @@
 Uploader::Uploader(MainWindow *mainWindow) : QProcess( )
 {
 	this->mainWindow = mainWindow;
-	uploaderProgress = new QProgressDialog("Uploading...", "Cancel", 0, 100);
-	connect(uploaderProgress, SIGNAL(canceled()), this, SLOT(terminate()));
-	connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(readOutput()));
-	connect(this, SIGNAL(readyReadStandardError()), this, SLOT(readError()));
+	uploaderProgress = new QProgressDialog();
+	connect(uploaderProgress, SIGNAL(canceled()), this, SLOT(kill()));
+	connect(uploaderProgress, SIGNAL(finished(int)), this, SLOT(onProgressDialogFinished(int)));
+  connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(filterOutput()));
+  connect(this, SIGNAL(readyReadStandardError()), this, SLOT(filterError()));
 	connect(this, SIGNAL(started()), this, SLOT(uploadStarted()));
 	connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(uploadFinished(int, QProcess::ExitStatus)));
+  connect(this, SIGNAL(error(QProcess::ProcessError)), this, SLOT(onError(QProcess::ProcessError)));
 }
 
 void Uploader::upload(QString filename)
 {
   QSettings settings("MakingThings", "mchelper");
   QString uploaderName = settings.value("sam7_path", DEFAULT_SAM7_PATH).toString();
+  currentFile = filename;
   QStringList uploaderArgs;
-  uploaderArgs << "flash " + filename << "boot_from_flash";
+  uploaderArgs << "-e" << "set_clock";
+  uploaderArgs << "-e" << "unlock_regions";
+  uploaderArgs << "-e" << QString("flash -show_progress %1").arg(currentFile);
+  uploaderArgs << "-e" << "boot_from_flash";
+  uploaderArgs << "-e" << "reset";
   start(uploaderName, uploaderArgs);
 }
 
-void Uploader::readOutput( )
+void Uploader::filterOutput( )
 {
-	//mainWindow->printOutput(readAll());
-  printf( "sam7: %s", qPrintable(QString(readAll())));
-//	QTextStream in(uploader);
-//	QString line = in.readLine();
-//	while (!line.isNull())
-//	{
-//		mainWindow->printOutput(line.append("\n"));
-//		line = in.readLine();
-//	} 
+  QString output(readAllStandardOutput());
+  QRegExp re("upload progress: (\\d+)%");
+  int pos = 0;
+  bool matched = false;
+  while((pos = re.indexIn(output, pos)) != -1)
+  {
+    int progress = re.cap(1).toInt();
+    if(progress != uploaderProgress->value())
+      uploaderProgress->setValue(progress);
+	  pos += re.matchedLength();
+    matched = true;
+  }
+  if(!matched)
+    qDebug("upload output: %s", qPrintable(output));
 }
 
-void Uploader::readError( )
+void Uploader::filterError( )
 {
-	//mainWindow->printOutputError(readAll());
-//	QTextStream in(uploader);
-//	QString line = in.readLine();
-//	while (!line.isNull())
-//	{
-//		mainWindow->printOutputError(line.append("\n"));
-//		line = in.readLine();
-//	} 
+  QString err(readAllStandardError());
+  if(err.startsWith("can't find boot agent"))
+    mainWindow->statusMsg("Error - couldn't find an unprogrammed board to upload to.");
+  else
+    qDebug("upload err: %s", qPrintable(err));
 }
 
 void Uploader::uploadStarted( )
 {
-	uploaderProgress->show();
+	QFileInfo fi(currentFile);
+  uploaderProgress->setLabelText(QString("Uploading %1...").arg(fi.fileName()));
+  uploaderProgress->show();
 }
 
 void Uploader::uploadFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
 	(void)exitCode;
 	(void)exitStatus;
-	uploaderProgress->hide();
-	uploaderProgress->setValue(0);
+	uploaderProgress->reset();
 }
+
+/*
+  The uploader has reported an error.
+  Check what kind it was and print out a message to the user.
+*/
+void Uploader::onError(QProcess::ProcessError error)
+{
+  QString msg;
+  switch(error)
+  {
+    case QProcess::FailedToStart:
+      msg = "uploader failed to start.  sam7 is either missing, or doesn't have the correct permissions";
+      break;
+    case QProcess::Crashed:
+      msg = "uploader (sam7) was canceled or crashed.";
+      break;
+    case QProcess::Timedout:
+      msg = "uploader (sam7) timed out.";
+      break;
+    case QProcess::WriteError:
+      msg = "uploader (sam7) reported a write error.";
+      break;
+    case QProcess::ReadError:
+      msg = "uploader (sam7) reported a read error.";
+      break;
+    case QProcess::UnknownError:
+      msg = "uploader (sam7) - unknown error type.";
+      break;
+  }
+  mainWindow->statusMsg("Error - " + msg);
+}
+
+/*
+  The progress dialog was clicked out of, instead of the the cancel button being hit.
+  Cancel it just the same.
+*/
+void Uploader::onProgressDialogFinished(int result)
+{
+  if(result == QDialog::Rejected && state() == QProcess::Running)
+    kill();
+}
+
+
+
+

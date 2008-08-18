@@ -196,3 +196,6 @@ void Inspector::setLabelsRole(QPalette::ColorRole role)
 	dhcpBox->setForegroundRole( role ); // how to actually get at the text?
 	webserverBox->setForegroundRole( role ); // same...
 }
+
+
+

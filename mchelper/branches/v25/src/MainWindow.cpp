@@ -316,6 +316,11 @@ void MainWindow::message(QString msg, MsgType::Type type, QString from)
   }
 }
 
+void MainWindow::statusMsg(QString msg, int duration)
+{
+  statusBar()->showMessage(msg, duration);
+}
+
 QColor MainWindow::msgColor(MsgType::Type type)
 {
   switch(type)
