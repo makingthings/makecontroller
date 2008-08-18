@@ -23,3 +23,6 @@ public:
   BoardType( ) { }
 };
 #endif //BOARD_TYPE_H
+
+
+

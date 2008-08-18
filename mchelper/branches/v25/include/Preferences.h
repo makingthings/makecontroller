@@ -41,3 +41,6 @@ private slots:
 };
 
 #endif // PREFERENCES_H
+
+
+
