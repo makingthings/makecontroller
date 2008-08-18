@@ -33,3 +33,5 @@ private:
 };
 
 #endif // INSPECTOR_H
+
+

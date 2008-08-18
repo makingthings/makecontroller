@@ -49,6 +49,7 @@ public:
   // make these available to the device list
   QAction* uploadAction() { return actionUpload; }
   QAction* inspectorAction() { return actionInspector; }
+  void statusMsg(QString msg, int duration = 0);
   
 public slots:
   void onEthernetDeviceArrived(PacketInterface* pi);

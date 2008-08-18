@@ -20,10 +20,14 @@ class Uploader : public QProcess
 		QString currentFile;
 		
 	private slots:
-		void readOutput();
-		void readError();
+		void filterOutput();
+		void filterError();
 		void uploadStarted();
 		void uploadFinished(int exitCode, QProcess::ExitStatus exitStatus);
+    void onError(QProcess::ProcessError error);
+    void onProgressDialogFinished(int result);
 };
 
 #endif // UPLOADER_H
+
+
