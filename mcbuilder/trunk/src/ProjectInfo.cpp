@@ -84,7 +84,7 @@ bool ProjectInfo::load()
 	setWindowTitle(projectName + " - Project Info");
 	
 	// read the ProjectInfo file
-	QFile file(projectFilePath());
+	QFile file(projectFilePath(proj));
 	if(file.open(QIODevice::ReadOnly|QFile::Text))
 	{
 		QDomDocument projectFile;
@@ -159,13 +159,27 @@ void ProjectInfo::loadFileBrowser(QDir *projectDir, QDomDocument *projectFile)
 // update appropriately if they have
 void ProjectInfo::applyChanges( )
 {
-	QFile file(projectFilePath());
+  if( diffProjects( projectFilePath(mainWindow->currentProjectPath()), true ) )
+    emit projectInfoUpdated();
+  accept();
+}
+
+/*
+  Determine whether the ProjectInfo for a new project is
+  different than the existing project, optionally saving the
+  values currently in the UI to the project file.
+*/
+bool ProjectInfo::diffProjects( QString newProjectPath, bool saveUiToFile )
+{
+  if(versionEdit->text().isEmpty()) // check the version box as a sample...if this is empty, we don't have anything loaded so don't bother checking
+    return false;
+  bool changed = false;
+  QFile file(projectFilePath(newProjectPath));
 	if(file.open(QIODevice::ReadWrite|QFile::Text))
 	{
 		QDomDocument projectFile;
     if(projectFile.setContent(&file))
     {
-      bool changed = false;
       // to get at the actual text of an element, you need to grab its child,
       // which will be a QDomText node
       if(versionEdit->text() != projectFile.elementsByTagName("version").at(0).toElement().text())
@@ -242,27 +256,25 @@ void ProjectInfo::applyChanges( )
         changed = true;
       }
       
-      if(changed)
-        emit projectInfoUpdated();
-      
-      file.resize(0); // clear out the current contents so we can update them, since we opened as read/write
-      file.write(projectFile.toByteArray(2));
+      if(saveUiToFile)
+      {
+        file.resize(0); // clear out the current contents so we can update them, since we opened as read/write
+        file.write(projectFile.toByteArray(2));
+      }
     }
 		file.close();
 	}
-  accept();
+  return changed;
 }
 
 /*
   Return the path of the project file
   for the current project.
 */
-QString ProjectInfo::projectFilePath( )
+QString ProjectInfo::projectFilePath( QString projectPath )
 {
-	QDir projectDir(mainWindow->currentProjectPath());
-	QString projectName = projectDir.dirName();
-	// filename should not have spaces
-	return projectDir.filePath(projectName.remove(" ") + ".xml"); 
+	QDir projectDir(projectPath);
+	return projectDir.filePath(projectDir.dirName() + ".xml"); 
 }
 
 void ProjectInfo::restoreDefaults( )
@@ -356,7 +368,7 @@ void FileBrowser::onSetBuildType()
 */
 void ProjectInfo::onRemoveFileRequest(QString filename)
 {
-  QFile projectFile(projectFilePath( ));
+  QFile projectFile(projectFilePath(mainWindow->currentProjectPath()));
   QDir projectDir(mainWindow->currentProjectPath());
   if(projectManager.removeFromProjectFile(projectDir.path(), filename))
     mainWindow->removeFileFromProject(projectDir.filePath(filename));
