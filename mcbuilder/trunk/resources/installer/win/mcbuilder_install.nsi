@@ -1,7 +1,7 @@
 ; mcbuilder_install.nsi
 
 !ifndef VERSION
-  !define VERSION '0.2.0'
+  !define VERSION '0.5.0'
 !endif
 
 !ifndef APPNAME
@@ -91,8 +91,8 @@ Section "" ;No components page, name is not important
   SetOutPath $INSTDIR\resources\examples
   File /nonfatal /r /x .svn "..\..\examples\*"
   
-  SetOutPath $INSTDIR\resources\cores\makecontroller
-  File /nonfatal /r /x .svn "..\..\cores\makecontroller\*"
+  SetOutPath $INSTDIR\cores
+  File /nonfatal /r /x .svn "..\..\..\cores\*"
   
   SetOutPath $INSTDIR\resources\board_profiles
   File /nonfatal /r /x .svn "..\..\board_profiles\*"
@@ -103,8 +103,7 @@ Section "" ;No components page, name is not important
   SetOutPath $INSTDIR\resources\reference
   File /nonfatal /r /x .svn /x diagrams "..\..\reference\*"
   
-  SetOutPath $INSTDIR\libraries
-  File /nonfatal /r /x .svn "..\..\..\libraries\*"
+  RMDir /r $INSTDIR\libraries  ; Remove any previous libraries from earlier installer versions
   
   WriteUninstaller "$INSTDIR\uninstall.exe"
   
