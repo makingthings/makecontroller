@@ -3,7 +3,7 @@
   <version>1.0</version>
   <display_name>JSON</display_name>
   <author>MakingThings</author>
-  <reference>../../../../resources/reference/makecontroller/html/group___json.html</reference>
+  <reference>../../../../resources/reference/makecontroller/html/group__json.html</reference>
   <files>
     <file type="thumb" >json.c</file>
   </files>
