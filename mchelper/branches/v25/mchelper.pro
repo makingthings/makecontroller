@@ -1,8 +1,8 @@
+MCHELPER_VERSION = "2.5.0"
 TEMPLATE = app
 TARGET = mchelper
 # CONFIG += qt release
 CONFIG += qt debug
-MCHELPER_VERSION = "2.5.0"
 
 FORMS = layouts/mainwindow.ui \
         layouts/inspector.ui \
@@ -46,7 +46,7 @@ SOURCES = src/main.cpp \
           src/PacketUsbSerial.cpp
 
 QT += network xml
-DEFINES     += MCHELPER_VERSION=\"$${MCHELPER_VERSION}\"
+DEFINES     += MCHELPER_VERSION=\\\"$${MCHELPER_VERSION}\\\"
 RESOURCES   += resources/mchelper.qrc
 INCLUDEPATH += include
 OBJECTS_DIR  = tmp
