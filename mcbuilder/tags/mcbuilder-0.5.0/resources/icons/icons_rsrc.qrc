@@ -1,0 +1,17 @@
+<RCC>
+  <qresource prefix="icons" >
+    <file>clean.png</file>
+    <file>error.png</file>
+    <file>green_dot.png</file>
+    <file>info.png</file>
+    <file>monitor.png</file>
+    <file>red_dot.png</file>
+    <file>stop.png</file>
+    <file>success.png</file>
+    <file>upload.png</file>
+    <file>warning.png</file>
+    <file>build.png</file>
+    <file>mcbuilder128.png</file>
+    <file>mcbuilder96.png</file>
+  </qresource>
+</RCC>
