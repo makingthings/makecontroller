@@ -28,11 +28,12 @@ cp -r ../../board_profiles mcbuilder/resources
 cp -r ../../templates mcbuilder/resources
 
 echo getting firmware source...
-mkdir mcbuilder/resources/cores
-mkdir mcbuilder/resources/cores/makecontroller
+mkdir -p mcbuilder/cores/makecontroller/core
+mkdir mcbuilder/cores/makecontroller/libraries
 # ...do an svn export of the latest tag in the MakingThings firmware SVN repo first
-# svn export https://makingthings.svn.sourceforge.net/svnroot/makingthings/firmware/tags/firmware-v1.3.1 firmware
-cp -r firmware/controller/* mcbuilder/resources/cores/makecontroller
+# svn export https://makingthings.svn.sourceforge.net/svnroot/makingthings/firmware/tags/firmware-v1.5.1 firmware
+cp -r firmware/core/* mcbuilder/cores/makecontroller/core
+cp -r firmware/libraries/* mcbuilder/cores/makecontroller/libraries
 
 echo getting reference material...
 mkdir mcbuilder/resources/reference
@@ -45,9 +46,6 @@ echo unzipping intel tools...
 unzip -q ../../tools/osx-intel.zip -d tmp
 mv tmp/osx-intel/* mcbuilder/resources/tools
 rm -Rf tmp
-
-# add the core libraries
-cp -r libraries mcbuilder
 
 # remove any crap
 find mcbuilder -name "*~" -exec rm -f {} ';'
