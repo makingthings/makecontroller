@@ -527,9 +527,11 @@ void MainWindow::openProject(QString projectPath)
     }
     setWindowTitle( projectName + "[*] - mcbuilder");
     updateRecentProjects(projectPath);
-    if(projInfo->diffProjects(projectPath))
+    // diff projects before loading the new one in
+    bool clean = projInfo->diffProjects(projectPath);
+    projInfo->load(projectPath); // but load the new one in before we clean, so the proper config and Makefiles are created
+    if(clean)
       builder->clean(projectPath);
-    projInfo->load();
     buildLog->clear();
 	}
 	else
@@ -777,11 +779,13 @@ void MainWindow::onProperties( )
 {
 	if(currentProject.isEmpty())
 		return statusBar()->showMessage( tr("Open a project first, or create a new one from the File menu."), 3500 );
-	if( !projInfo->loadAndShow() )
+	if( !projInfo->load(currentProject) )
 	{
 		QDir dir(currentProject);
 		return statusBar()->showMessage( tr("Couldn't find/open project properties for ") + dir.dirName(), 3500 );
 	}
+  else
+    projInfo->show();
 }
 
 /*

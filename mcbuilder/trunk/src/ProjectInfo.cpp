@@ -60,31 +60,18 @@ ProjectInfo::ProjectInfo(MainWindow *mainWindow) : QDialog( 0 )
 }
 
 /*
-	Read the project ProjectInfo from the project profile, load them into
-	the ProjectInfo dialog and show it.
-*/
-bool ProjectInfo::loadAndShow( )
-{
-	load();
-	show();
-	return true;
-}
-
-/*
   Read the project's ProjectInfo from the project file
   and load them into the UI.
 */  
-bool ProjectInfo::load()
+bool ProjectInfo::load( QString projectPath )
 {
-  QString proj = mainWindow->currentProjectPath();
-  if(proj.isEmpty())
+  if(projectPath.isEmpty())
     return false;
-  QDir projectDir(proj);
-	QString projectName = projectDir.dirName();
-	setWindowTitle(projectName + " - Project Info");
+  QDir projectDir(projectPath);
+	setWindowTitle(projectDir.dirName() + " - Project Info");
 	
 	// read the ProjectInfo file
-	QFile file(projectFilePath(proj));
+	QFile file(projectFilePath(projectPath));
 	if(file.open(QIODevice::ReadOnly|QFile::Text))
 	{
 		QDomDocument projectFile;

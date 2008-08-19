@@ -51,10 +51,7 @@ void Builder::build(QString projectName)
   setWorkingDirectory(dir.filePath("build"));
   loadDependencies(LIBRARIES_DIR, currentProjectPath);      // this loads up the list of libraries this project depends on
   if(compareConfigFile(currentProjectPath))
-  {
     createConfigFile(currentProjectPath);      // create a config file based on the Properties for this project
-    qDebug("builder - creating/updating config file");
-  }
   createMakefile(currentProjectPath);        // create a Makefile for this project, given the dependencies
   buildStep = BUILD;
   currentProcess = "make";
@@ -64,7 +61,7 @@ void Builder::build(QString projectName)
     makePath += "/";
   start(makePath + "make");
   QString buildmsg("***************************************************************\n");
-  buildmsg += "  mcbuilder - building " + dir.dirName() + "\n";
+  buildmsg += tr("  mcbuilder - building ") + dir.dirName() + "\n";
   buildmsg += QDateTime::currentDateTime().toString("  MMM d, yyyy h:m ap") + "\n";
   buildmsg += "***************************************************************";
   buildLog->append(buildmsg);
@@ -75,11 +72,11 @@ void Builder::build(QString projectName)
 */
 void Builder::clean(QString projectName)
 {
-  currentProjectPath = projectName;
-  QDir buildDir(ensureBuildDirExists(currentProjectPath));
+  QDir buildDir(ensureBuildDirExists(projectName));
   setWorkingDirectory(buildDir.path());
-  if(!buildDir.exists("Makefile"))
-    createMakefile(currentProjectPath);
+  if(compareConfigFile(projectName))
+    createConfigFile(projectName);      // create a config file based on the Properties for this project
+  createMakefile(currentProjectPath);
   buildStep = CLEAN;
   QStringList args = QStringList() << "clean";
   currentProcess = "make clean";
@@ -344,6 +341,7 @@ bool Builder::createConfigFile(QString projectPath)
   QFile configFile(dir.filePath("config.h"));
   if(configFile.open(QIODevice::WriteOnly|QFile::Text))
   {
+    qDebug("builder - creating/updating config file");
     QTextStream tofile(&configFile);
     tofile << "/*****************************************************************************************" << endl << endl;
     tofile << "  config.h" << endl;
