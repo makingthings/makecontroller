@@ -76,8 +76,7 @@ void Builder::build(QString projectName)
 void Builder::clean(QString projectName)
 {
   currentProjectPath = projectName;
-  ensureBuildDirExists(currentProjectPath);
-  QDir buildDir(currentProjectPath + "/build");
+  QDir buildDir(ensureBuildDirExists(currentProjectPath));
   setWorkingDirectory(buildDir.path());
   if(!buildDir.exists("Makefile"))
     createMakefile(currentProjectPath);
