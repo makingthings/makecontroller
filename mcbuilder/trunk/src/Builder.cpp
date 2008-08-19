@@ -74,6 +74,7 @@ void Builder::clean(QString projectName)
 {
   QDir buildDir(ensureBuildDirExists(projectName));
   setWorkingDirectory(buildDir.path());
+  loadDependencies(LIBRARIES_DIR, currentProjectPath);
   if(compareConfigFile(projectName))
     createConfigFile(projectName);      // create a config file based on the Properties for this project
   createMakefile(currentProjectPath);
@@ -131,7 +132,7 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
       if(bins.count())
       {
         int filesize = bins.first().size();
-        if(filesize <= 256000)
+        if(filesize <= (256 * 1024) )
         {
           mainWindow->printOutput(tr("%1.bin is %2 out of a possible 256000 bytes.").arg(projectName).arg(filesize));
           mainWindow->onBuildComplete(true);
