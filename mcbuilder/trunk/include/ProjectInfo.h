@@ -78,11 +78,8 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
     int udpSockets() { return udpSocketEdit->text().toInt(); }
     int tcpSockets() { return tcpSocketEdit->text().toInt(); }
     int tcpServers() { return tcpServerEdit->text().toInt(); }
-    bool load();
+    bool load( QString projectPath );
     bool diffProjects( QString newProjectPath, bool saveUiToFile = false );
-    
-	public slots:
-		bool loadAndShow();
   
   signals:
     void projectInfoUpdated();
