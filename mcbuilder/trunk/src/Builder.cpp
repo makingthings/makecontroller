@@ -47,12 +47,12 @@ Builder::Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *build
 void Builder::build(QString projectName)
 {
   currentProjectPath = projectName;
-  QDir dir(currentProjectPath);
+  QDir dir(projectName);
   setWorkingDirectory(dir.filePath("build"));
-  loadDependencies(LIBRARIES_DIR, currentProjectPath);      // this loads up the list of libraries this project depends on
-  if(compareConfigFile(currentProjectPath))
-    createConfigFile(currentProjectPath);      // create a config file based on the Properties for this project
-  createMakefile(currentProjectPath);        // create a Makefile for this project, given the dependencies
+  loadDependencies(LIBRARIES_DIR, projectName);      // this loads up the list of libraries this project depends on
+  if(compareConfigFile(projectName))
+    createConfigFile(projectName);      // create a config file based on the Properties for this project
+  createMakefile(projectName);        // create a Makefile for this project, given the dependencies
   buildStep = BUILD;
   currentProcess = "make";
   setEnvironment(QProcess::systemEnvironment());
@@ -74,10 +74,10 @@ void Builder::clean(QString projectName)
 {
   QDir buildDir(ensureBuildDirExists(projectName));
   setWorkingDirectory(buildDir.path());
-  loadDependencies(LIBRARIES_DIR, currentProjectPath);
+  loadDependencies(LIBRARIES_DIR, projectName);
   if(compareConfigFile(projectName))
     createConfigFile(projectName);      // create a config file based on the Properties for this project
-  createMakefile(currentProjectPath);
+  createMakefile(projectName);
   buildStep = CLEAN;
   QStringList args = QStringList() << "clean";
   currentProcess = "make clean";
