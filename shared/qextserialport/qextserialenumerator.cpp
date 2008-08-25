@@ -6,6 +6,7 @@
  
 #include "qextserialenumerator.h"
 
+
 #ifdef _TTY_WIN_
 #include <QRegExp>
 #include <objbase.h>
@@ -206,43 +207,91 @@ void QextSerialEnumerator::scanPortsOSX(QList<QextPortInfo> & infoList)
 
 #else /* Q_WS_MAC */
 
-#include <usb.h> // libusb
-
-void QextSerialEnumerator::scanPortsLibUsb(QList<QextPortInfo> & infoList)
+#include <unistd.h>
+#include <hal/libhal.h>
+// thanks to EBo for unix support
+void QextSerialEnumerator::scanPortsNix(QList<QextPortInfo> & infoList)
 {
-  struct usb_bus *bus;
-  struct usb_device *usbdev;
-  usb_dev_handle *io_handle;
-  
-  usb_init();         // initialize the library
-  usb_find_busses();  // find all busses
-  usb_find_devices(); // find all connected devices
-  
-  // now enumerate
-  for(bus = usb_get_busses(); bus; bus = bus->next)
+	int i;
+	int num_udis;
+	char **udis;
+	DBusError error;
+	LibHalContext *hal_ctx;
+
+	dbus_error_init (&error);	
+	if ((hal_ctx = libhal_ctx_new ()) == NULL) {
+		qWarning("error: libhal_ctx_new");
+		LIBHAL_FREE_DBUS_ERROR (&error);
+		return;
+	}
+	if (!libhal_ctx_set_dbus_connection (hal_ctx, 
+           dbus_bus_get (DBUS_BUS_SYSTEM, &error))) {
+		qWarning("error: libhal_ctx_set_dbus_connection: %s: %s", error.name, error.message);
+		LIBHAL_FREE_DBUS_ERROR (&error);
+		return;
+	}
+	if (!libhal_ctx_init (hal_ctx, &error)) {
+		if (dbus_error_is_set(&error)) {
+			qWarning("error: libhal_ctx_init: %s: %s", error.name, error.message);
+			LIBHAL_FREE_DBUS_ERROR (&error);
+		}
+		qWarning("Could not initialise connection to hald.\n  
+                 Normally this means the HAL daemon (hald) is not running or not ready.");
+		return;
+	}
+
+
+	udis = libhal_find_device_by_capability (hal_ctx, "serial",
+             &num_udis, &error);
+
+	if (dbus_error_is_set (&error)) {
+		qWarning("libahl error: %s: %s", error.name, error.message);
+		LIBHAL_FREE_DBUS_ERROR (&error);
+		return;
+	}
+
+  // spin through and find the device names...
+	for (i = 0; i < num_udis; i++)
   {
-    for(usbdev = bus->devices; usbdev; usbdev = usbdev->next)
+    //printf ("udis = %s\n", udis[i]);
+
+    QextPortInfo info;
+    char * iparent;
+
+    // get the device file name and the product name...
+    info.portName = libhal_device_get_property_string (hal_ctx,
+                      udis[i],"linux.device_file",&error);
+
+    info.friendName = libhal_device_get_property_string (hal_ctx, 
+                       udis[i],"info.product",&error);
+
+    // the vendor and product ID's cannot be obtained by the same
+    // device entry as the serial device, but must be gotten for
+    // the parent.
+    iparent = libhal_device_get_property_string (hal_ctx,
+    udis[i], "info.parent", &error);
+
+    // get the vendor and product ID's from the parent
+    info.vendorID  = libhal_device_get_property_int (hal_ctx,
+                       iparent , "usb.vendor_id", &error);
+
+    info.productID = libhal_device_get_property_int (hal_ctx, 
+                       iparent,"usb.product_id",&error);
+
+    // check for errors.
+    if (dbus_error_is_set (&error))
     {
-      if((io_handle = usb_open(usbdev)))
-      {
-        if(usb_set_configuration( io_handle, 1 ) < 0)
-        {
-          usb_close(io_handle);
-          continue;
-        }
-        if(usb_claim_interface( io_handle, 1 ) < 0)
-        {
-          usb_close(io_handle);
-          continue;
-        }
-        // if we got this far, we're all good
-        usb_close(io_handle);
-        QextPortInfo info;
-        // set port info...
-        infoList.append(info);
-      }
+      qWarning("libhal error: %s: %s", error.name, error.message);
+      LIBHAL_FREE_DBUS_ERROR (&error);
+      return;
     }
-  }
+
+    infoList.append(info);
+	}
+
+	libhal_free_string_array (udis);
+
+	return;
 }
 
 #endif /* Q_WS_MAC */
@@ -275,7 +324,7 @@ QList<QextPortInfo> QextSerialEnumerator::getPorts()
   #ifdef Q_WS_MAC
     scanPortsOSX(ports); 
   #else /* Q_WS_MAC */
-    scanPortsLibUsb(ports);
+    scanPortsNix(ports);
   #endif /* Q_WS_MAC */
 	#endif /*_TTY_POSIX_*/
 	
