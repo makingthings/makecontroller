@@ -173,12 +173,13 @@ void MainWindow::onEthernetDeviceArrived(PacketInterface* pi)
   board->setText(pi->key());
   board->setIcon(QIcon(":icons/network_icon.gif"));
   board->setToolTip("Ethernet Device: " + pi->key());
+  
   if(noUi())
   {
     QTextStream out(stdout);
     out << "network device discovered: " + pi->key() << endl;
   }
-  deviceList->addItem(board);
+  
   boardInit(board);
   boardList.append(board);
   oscXmlServer->sendBoardListUpdate(boardList, true);
@@ -205,6 +206,7 @@ void MainWindow::onUsbDeviceArrived(QStringList keys, BoardType::Type type)
       board->setIcon(QIcon(":icons/usb_icon.gif"));
       board->setToolTip("USB Serial Device: " + key);
       noUiString = "usb device discovered: " + key;
+      actionUpload->setEnabled(false);
     }
     else if(type == BoardType::UsbSamba)
     {
@@ -213,6 +215,7 @@ void MainWindow::onUsbDeviceArrived(QStringList keys, BoardType::Type type)
       board->setIcon(QIcon(":icons/usb_icon.gif"));
       board->setToolTip("Unprogrammed device");
       noUiString = "sam-ba device discovered: " + key;
+      actionUpload->setEnabled(true);
     }
     
     if(noUi())
@@ -220,7 +223,7 @@ void MainWindow::onUsbDeviceArrived(QStringList keys, BoardType::Type type)
       QTextStream out(stdout);
       out << noUiString << endl;
     }
-    deviceList->addItem(board);
+    
     boardInit(board);
     boardList.append(board);
   }
@@ -237,6 +240,11 @@ void MainWindow::boardInit(Board *board)
   int placeholderRow = deviceList->row( &deviceListPlaceholder );
   if( placeholderRow >= 0 )
     deviceList->takeItem( placeholderRow );
+  deviceList->addItem(board);
+  // if no other boards are selected, select this new one
+  if( !getCurrentBoard() )
+    deviceList->setCurrentRow (deviceList->count()-1);
+  board->sendMessage("/system/info-internal"); // get the board's info
 }
 
 /*
@@ -355,6 +363,10 @@ void MainWindow::setBoardName( QString key, QString name )
   }
 }
 
+/*
+  Return the currently selected board in the UI list of boards,
+  or NULL if none are selected.
+*/
 Board* MainWindow::getCurrentBoard( )
 {
 	if( deviceList->currentItem( ) == &deviceListPlaceholder )
