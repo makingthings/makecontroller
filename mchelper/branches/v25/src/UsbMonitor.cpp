@@ -19,6 +19,11 @@
 #include "PacketUsbSerial.h"
 #include "qextserialenumerator.h"
 
+#define MAKE_CONTROLLER_VID 0xEB03
+#define MAKE_CONTROLLER_PID 0x0920
+#define SAM_BA_VID          0xEB03
+#define SAM_BA_PID          0x6124
+
 /*
  Scans the USB system for boards and reports whether boards have been attached/removed.
 */
@@ -49,14 +54,29 @@ void UsbMonitor::run( )
     // first check if there are any new boards
     foreach(QextPortInfo port, ports)
     {
-      if(!usbSerialList.contains(port.portName) && port.friendName.startsWith("Make Controller Ki"))
+      // the portname needs to be tweeked 
+      if( !usbSerialList.contains(port.portName) )
       {
-        usbSerialList.append(port.portName); // keep our internal list, the portName is the unique key
-        newSerialPorts.append(port.portName); // on the list to be posted to the UI
+        if( port.friendName.startsWith("Make Controller Ki") ||
+           (port.vendorID == MAKE_CONTROLLER_VID && port.productID == MAKE_CONTROLLER_PID))
+        {
+          usbSerialList.append(port.portName);  // keep our internal list, the portName is the unique key
+          newSerialPorts.append(port.portName); // on the list to be posted to the UI
+        }
+      }
+      
+      if( !usbSambaList.contains(port.portName) )
+      {
+        if( port.vendorID == SAM_BA_VID && port.productID == SAM_BA_PID )
+        {
+          usbSambaList.append(port.portName);  // keep our internal list, the portName is the unique key
+          newSambaPorts.append(port.portName); // on the list to be posted to the UI
+        }
       }
       // check for samba boards...
       portNames << port.portName;
     }
+    
     if(newSerialPorts.count())
       emit newBoards(newSerialPorts, BoardType::UsbSerial);
     if(newSambaPorts.count())
@@ -72,7 +92,7 @@ void UsbMonitor::run( )
       }
     }
     
-    // then check the samba boards
+    // same thing for the samba boards
     foreach(QString key, usbSambaList)
     {
       if(!portNames.contains(key))

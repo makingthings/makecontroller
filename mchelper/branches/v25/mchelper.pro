@@ -9,10 +9,6 @@ FORMS = layouts/mainwindow.ui \
         layouts/preferences.ui
 
 HEADERS = include/MainWindow.h \
-          # src/bonjour/BonjourRecord.h \
-          # src/bonjour/BonjourServiceBrowser.h \
-          # src/bonjour/BonjourServiceRegister.h \
-          # src/bonjour/BonjourServiceResolver.h \
           include/OscXmlServer.h \
           include/Osc.h \
           include/Inspector.h \
@@ -30,9 +26,6 @@ HEADERS = include/MainWindow.h \
 
 SOURCES = src/main.cpp \
           src/MainWindow.cpp \
-          # src/bonjour/BonjourServiceBrowser.cpp \
-          # src/bonjour/BonjourServiceRegister.cpp \
-          # src/bonjour/BonjourServiceResolver.cpp \
           src/OscXmlServer.cpp \
           src/Osc.cpp \
           src/Inspector.cpp \
@@ -63,9 +56,6 @@ macx{
   QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
 }
 
-# OS X links Bonjour all by itself
-# !mac:LIBS += -ldns_sd
-
 # *******************************************
 #              qextserialport
 # *******************************************
@@ -82,7 +72,12 @@ unix:HEADERS  += src/qextserialport/posix_qextserialport.h
 unix:SOURCES  += src/qextserialport/posix_qextserialport.cpp
 unix:DEFINES  += _TTY_POSIX_
 macx: LIBS += -framework IOKit # use IOKit on OS X
-unix{ !macx: LIBS += -lusb } # use libusb on other unices
+unix{ 
+  !macx{
+    CONFIG += link_pkgconfig
+    PKGCONFIG += dbus-1 hal
+  }
+}
 
 win32:HEADERS += src/qextserialport/win_qextserialport.h
 win32:SOURCES += src/qextserialport/win_qextserialport.cpp
