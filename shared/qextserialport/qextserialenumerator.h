@@ -22,8 +22,10 @@
 struct QextPortInfo {
 	QString portName;		///< Port name.
 	QString physName;		///< Physical name.
-	QString friendName;		///< Friendly name.
+	QString friendName;	///< Friendly name.
 	QString enumName;		///< Enumerator name.
+  int vendorID;       ///< Vendor ID.
+  int productID;      ///< Product ID
 };
 
 
@@ -76,10 +78,10 @@ class QextSerialEnumerator
       
     #else /* Q_WS_MAC */
       /*!
-       * Search for serial ports using libusb.
+       * Search for serial ports on unix.
        * 	\param infoList list with result.
        */
-      static void scanPortsLibUsb(QList<QextPortInfo> & infoList);
+      static void scanPortsNix(QList<QextPortInfo> & infoList);
     #endif /* Q_WS_MAC */
     #endif /* _TTY_POSIX_ */
 
