@@ -169,7 +169,7 @@ void MainWindow::onUpload()
 void MainWindow::onEthernetDeviceArrived(PacketInterface* pi)
 {
   QList<Board*> boardList;
-  Board *board = new Board(this, pi, oscXmlServer, BoardType::Ethernet);
+  Board *board = new Board(this, pi, oscXmlServer, BoardType::Ethernet, pi->key());
   board->setText(pi->key());
   board->setIcon(QIcon(":icons/network_icon.gif"));
   board->setToolTip("Ethernet Device: " + pi->key());
@@ -200,7 +200,7 @@ void MainWindow::onUsbDeviceArrived(QStringList keys, BoardType::Type type)
     if( type == BoardType::UsbSerial)
     {
       PacketUsbSerial *usb = new PacketUsbSerial(key);
-      board = new Board(this, usb, oscXmlServer, type);
+      board = new Board(this, usb, oscXmlServer, type, key);
       usb->open();
       board->setText(key);
       board->setIcon(QIcon(":icons/usb_icon.gif"));
@@ -210,7 +210,7 @@ void MainWindow::onUsbDeviceArrived(QStringList keys, BoardType::Type type)
     }
     else if(type == BoardType::UsbSamba)
     {
-      board = new Board(this, 0, 0, type);
+      board = new Board(this, 0, 0, type, key);
       board->setText("Unprogrammed Board");
       board->setIcon(QIcon(":icons/usb_icon.gif"));
       board->setToolTip("Unprogrammed device");

@@ -21,7 +21,7 @@
 
 #define MAKE_CONTROLLER_VID 0xEB03
 #define MAKE_CONTROLLER_PID 0x0920
-#define SAM_BA_VID          0xEB03
+#define SAM_BA_VID          0x03EB
 #define SAM_BA_PID          0x6124
 
 /*
