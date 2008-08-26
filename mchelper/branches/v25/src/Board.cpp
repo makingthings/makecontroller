@@ -20,14 +20,16 @@
 #include <QStringList>
 #include <QList>
 
-Board::Board(MainWindow *mw, PacketInterface* pi, OscXmlServer *oxs, BoardType::Type type) : QListWidgetItem()
+Board::Board(MainWindow *mw, PacketInterface* pi, OscXmlServer *oxs, BoardType::Type type, QString key) : QListWidgetItem()
 {
   mainWindow = mw;
   packetInterface = pi;
   oscXmlServer = oxs;
   _type = type;
-  _key = pi->key();
-  packetInterface->setBoard(this);
+  _key = key;
+  if(packetInterface)
+    packetInterface->setBoard(this);
+    
   
   connect(this, SIGNAL(msg(QString, MsgType::Type, QString)), 
           mainWindow, SLOT(message(QString, MsgType::Type, QString)));
@@ -262,9 +264,7 @@ bool Board::extractNetworkFind( OscMessage* msg )
 */
 void Board::sendMessage( QString rawMessage )
 {
-	if( packetInterface == NULL || rawMessage.isEmpty() )
-		return;
-	else
+	if( packetInterface && !rawMessage.isEmpty() )
 	{		
 		QByteArray packet = osc.createPacket( rawMessage );
 		if( !packet.isEmpty( ) )
@@ -274,19 +274,21 @@ void Board::sendMessage( QString rawMessage )
 
 void Board::sendMessage( QList<OscMessage*> messageList )
 {	
-	if( packetInterface == NULL || !messageList.count() )
-		return;
-  QByteArray packet = osc.createPacket( messageList );
-  if( !packet.isEmpty( ) )
-    packetInterface->sendPacket( packet.data( ), packet.size( ) );
+	if( packetInterface && messageList.count() )
+  {
+    QByteArray packet = osc.createPacket( messageList );
+    if( !packet.isEmpty( ) )
+      packetInterface->sendPacket( packet.data( ), packet.size( ) );
+  }
 }
 
 void Board::sendMessage( QStringList messageList )
 {
-	if( packetInterface == NULL || !messageList.count() )
-		return;
-  QByteArray packet = osc.createPacket( messageList );
-  if( !packet.isEmpty( ) )
-    packetInterface->sendPacket( packet.data( ), packet.size( ) );
+	if( packetInterface && messageList.count() )
+  {
+    QByteArray packet = osc.createPacket( messageList );
+    if( !packet.isEmpty( ) )
+      packetInterface->sendPacket( packet.data( ), packet.size( ) );
+  }
 }
 
