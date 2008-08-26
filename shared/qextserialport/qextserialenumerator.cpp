@@ -144,65 +144,97 @@
 // OS X version
 #include <IOKit/IOKitLib.h>
 #include <IOKit/serial/IOSerialKeys.h>
+#include <CoreFoundation/CFNumber.h>
+#include <IOKit/IOCFPlugIn.h>
+#include <IOKit/usb/IOUSBLib.h>
+#include <sys/param.h>
+#include <IOKit/IOBSD.h>
+
 // static
 void QextSerialEnumerator::scanPortsOSX(QList<QextPortInfo> & infoList)
 {
   io_iterator_t serialPortIterator = 0;
   io_object_t modemService;
   kern_return_t kernResult = KERN_FAILURE;
-  CFMutableDictionaryRef bsdMatchingDictionary;
+  CFMutableDictionaryRef matchingDictionary;
   
-  bsdMatchingDictionary = IOServiceMatching(kIOSerialBSDServiceValue);
-  if (bsdMatchingDictionary == NULL)
-    qWarning("IOServiceMatching returned a NULL dictionary.");
-  else
-    CFDictionarySetValue(bsdMatchingDictionary, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDAllTypes));
+  matchingDictionary = IOServiceMatching(kIOSerialBSDServiceValue);
+  if (matchingDictionary == NULL)
+    return qWarning("IOServiceMatching returned a NULL dictionary.");
+  CFDictionaryAddValue(matchingDictionary, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDAllTypes));
   
   // then create the iterator with all the matching devices
-  kernResult = IOServiceGetMatchingServices(kIOMasterPortDefault, bsdMatchingDictionary, &serialPortIterator);    
-  if(KERN_SUCCESS != kernResult)
-  {
-    qCritical("IOServiceGetMatchingServices failed, returned %d", kernResult);
-    return;
-  }
+  if( IOServiceGetMatchingServices(kIOMasterPortDefault, matchingDictionary, &serialPortIterator) != KERN_SUCCESS )
+    return qCritical("IOServiceGetMatchingServices failed, returned %d", kernResult);
   
   // Iterate through all modems found.
   while((modemService = IOIteratorNext(serialPortIterator)))
   {
-    char path[PATH_MAX];
-    char productName[PATH_MAX];
-    CFTypeRef bsdPathAsCFString;
-    CFTypeRef productNameAsCFString;
+    CFTypeRef bsdPathAsCFString = NULL;
+    CFTypeRef productNameAsCFString = NULL;
+    CFTypeRef vendorIdAsCFNumber = NULL;
+    CFTypeRef productIdAsCFNumber = NULL;
     // check the name of the modem's callout device
-    bsdPathAsCFString = IORegistryEntrySearchCFProperty(modemService, kIOServicePlane, CFSTR(kIOCalloutDeviceKey), kCFAllocatorDefault, 0);
-    // then, because the callout device could be any old thing, and because the reference to the modem returned by the
-    // iterator doesn't include much device specific info, look at its parent, and check the product name
-    io_registry_entry_t parent;  
-    kernResult = IORegistryEntryGetParentEntry(modemService, kIOServicePlane, &parent);																										
-    productNameAsCFString = IORegistryEntrySearchCFProperty(parent, kIOServicePlane, CFSTR("Product Name"), kCFAllocatorDefault, 0);
-    IOObjectRelease(parent);
+    bsdPathAsCFString = IORegistryEntryCreateCFProperty(modemService, CFSTR(kIOCalloutDeviceKey), kCFAllocatorDefault, 0);
+
+    // wander up the hierarchy until we find the level that can give us the vendor/product IDs and the product name, if available
+    io_registry_entry_t parent;
+    kernResult = IORegistryEntryGetParentEntry(modemService, kIOServicePlane, &parent);
+    while( !kernResult && !vendorIdAsCFNumber && !productIdAsCFNumber )
+    {
+      if(!productNameAsCFString)
+        productNameAsCFString = IORegistryEntrySearchCFProperty(parent, kIOServicePlane, CFSTR("Product Name"), kCFAllocatorDefault, 0);
+      vendorIdAsCFNumber = IORegistryEntrySearchCFProperty(parent, kIOServicePlane, CFSTR(kUSBVendorID), kCFAllocatorDefault, 0);
+      productIdAsCFNumber = IORegistryEntrySearchCFProperty(parent, kIOServicePlane, CFSTR(kUSBProductID), kCFAllocatorDefault, 0);
+      io_registry_entry_t oldparent = parent;
+      kernResult = IORegistryEntryGetParentEntry(parent, kIOServicePlane, &parent);
+      IOObjectRelease(oldparent);
+    }
     
-    bool path_result = false;
-    bool name_result = false;
+    QextPortInfo info;
+    info.vendorID = 0;
+    info.productID = 0;
+    
+    io_string_t ioPathName;
+    IORegistryEntryGetPath( modemService, kIOServicePlane, ioPathName );
+    info.physName = ioPathName;
+    
     if( bsdPathAsCFString )
     {   
-      path_result = CFStringGetCString((CFStringRef)bsdPathAsCFString, path, PATH_MAX, kCFStringEncodingUTF8);
+      char path[MAXPATHLEN];
+      if( CFStringGetCString((CFStringRef)bsdPathAsCFString, path, PATH_MAX, kCFStringEncodingUTF8) )
+        info.portName = path;
       CFRelease(bsdPathAsCFString);
-    }      
+    }
+    
     if(productNameAsCFString)
     {
-      name_result = CFStringGetCString((CFStringRef)productNameAsCFString, productName, PATH_MAX, kCFStringEncodingUTF8);
+      char productName[MAXPATHLEN];
+      if( CFStringGetCString((CFStringRef)productNameAsCFString, productName, PATH_MAX, kCFStringEncodingUTF8) )
+        info.friendName = productName;
       CFRelease(productNameAsCFString);
     }
-    if(path_result && name_result)
+    
+    if(vendorIdAsCFNumber)
     {
-      QextPortInfo info;
-      info.friendName = productName;
-      info.portName = path;
-      infoList.append(info);
+      SInt32 vID;
+      if(CFNumberGetValue((CFNumberRef)vendorIdAsCFNumber, kCFNumberSInt32Type, &vID))
+        info.vendorID = vID;
+      CFRelease(vendorIdAsCFNumber);
     }
+    
+    if(productIdAsCFNumber)
+    {
+      SInt32 pID;
+      if(CFNumberGetValue((CFNumberRef)productIdAsCFNumber, kCFNumberSInt32Type, &pID))
+        info.productID = pID;
+      CFRelease(productIdAsCFNumber);
+    }
+    
+    infoList.append(info);
+    IOObjectRelease(modemService);
   }
-  IOObjectRelease(modemService);
+  IOObjectRelease(serialPortIterator);
 }
 
 #else /* Q_WS_MAC */
