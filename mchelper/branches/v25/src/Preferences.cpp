@@ -37,9 +37,9 @@ void Preferences::applyChanges( )
   settings.setValue("udp_listen_port", udp_listen_port);
   networkMonitor->setListenPort(udp_listen_port);
   
-//  int udp_send_port = udpSendEdit->text().toInt();
-//  settings.setValue("udp_send_port", udp_send_port);
-//  networkMonitor->setListenPort(udp_send_port);
+  int udp_send_port = udpSendEdit->text().toInt();
+  settings.setValue("udp_send_port", udp_send_port);
+  networkMonitor->setSendPort(udp_send_port);
   
   int xml_listen_port = xmlListenEdit->text().toInt();
   settings.setValue("xml_listen_port", xml_listen_port);

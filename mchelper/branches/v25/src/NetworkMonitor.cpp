@@ -28,7 +28,7 @@ NetworkMonitor::NetworkMonitor( MainWindow* mainWindow ) : QUdpSocket( )
 {
 	QSettings settings("MakingThings", "mchelper");
   listen_port = settings.value("udp_listen_port", DEFAULT_UDP_LISTEN_PORT).toInt();
-  send_port = settings.value("udp_listen_port", DEFAULT_UDP_SEND_PORT).toInt();
+  send_port = settings.value("udp_send_port", DEFAULT_UDP_SEND_PORT).toInt();
   this->mainWindow = mainWindow;
   sendLocal = false;
 	QHostInfo::lookupHost( QHostInfo::localHostName(), this, SLOT(lookedUp(QHostInfo)));
