@@ -1,5 +1,6 @@
 
 #include "Inspector.h"
+#include <QSettings>
 
 /*
  A dialog for getting/setting general info about a Make Controller
@@ -24,6 +25,11 @@ Inspector::Inspector(MainWindow *mainWindow) : QDialog( 0 )
   connect(sendPortEdit, SIGNAL(textEdited(QString)), this, SLOT(onAnyValueEdited()));
   connect(dhcpBox, SIGNAL(clicked(bool)), this, SLOT(onAnyValueEdited()));
   connect(webserverBox, SIGNAL(clicked(bool)), this, SLOT(onAnyValueEdited()));
+  
+  QSettings settings("MakingThings", "mchelper");
+  QPoint inspectorPos = settings.value("inspector_pos").toPoint();
+  if(!inspectorPos.isNull())
+    move(inspectorPos);
 }
 
 void Inspector::loadAndShow( )
