@@ -60,6 +60,10 @@ void MainWindow::readSettings()
 	QSize size = settings.value( "size" ).toSize( );
 	if( size.isValid( ) )
 		resize( size );
+  
+  QPoint mainWinPos = settings.value("mainwindow_pos").toPoint();
+  if(!mainWinPos.isNull())
+    move(mainWinPos);
 	
 	QList<QVariant> splitterSettings = settings.value( "splitterSizes" ).toList( );
 	QList<int> splitterSizes;
@@ -83,11 +87,16 @@ void MainWindow::writeSettings()
 	QSettings settings("MakingThings", "mchelper");
 
 	settings.setValue("size", size() );
+  settings.setValue("mainwindow_pos", pos());
+  settings.setValue("inspector_pos", inspector->pos());
+  
 	QList<QVariant> splitterSettings;
 	QList<int> splitterSizes = splitter->sizes();
 	for( int i = 0; i < splitterSizes.count( ); i++ )
 		splitterSettings.append( splitterSizes.at(i) );
 	settings.setValue("splitterSizes", splitterSettings );
+  
+  
 }
 
 /*
