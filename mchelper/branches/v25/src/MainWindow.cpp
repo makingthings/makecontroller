@@ -131,8 +131,14 @@ void DeviceList::contextMenuEvent(QContextMenuEvent *event)
 
 void MainWindow::onDoubleClick()
 {
-  if(getCurrentBoard())
-    inspector->loadAndShow();
+  Board *brd = getCurrentBoard( );
+  if( brd )
+  {
+    if( brd->type() == BoardType::UsbSamba )
+      onUpload(); // TODO - create an upload prompt dialog, so it's clearer WTF is going on
+    else
+      inspector->loadAndShow();
+  }
 }
 
 /*
@@ -215,7 +221,6 @@ void MainWindow::onUsbDeviceArrived(QStringList keys, BoardType::Type type)
       board->setIcon(QIcon(":icons/usb_icon.gif"));
       board->setToolTip(tr("USB Serial Device: ") + key);
       noUiString = tr("usb device discovered: ") + key;
-      actionUpload->setEnabled(false);
     }
     else if(type == BoardType::UsbSamba)
     {
@@ -224,7 +229,6 @@ void MainWindow::onUsbDeviceArrived(QStringList keys, BoardType::Type type)
       board->setIcon(QIcon(":icons/usb_icon.gif"));
       board->setToolTip(tr("Unprogrammed device"));
       noUiString = tr("sam-ba device discovered: ") + key;
-      actionUpload->setEnabled(true);
     }
     
     if(noUi())
@@ -273,7 +277,8 @@ void MainWindow::onDeviceRemoved(QString key)
   {
     if(board->key() == key)
     {
-      delete deviceList->takeItem(deviceList->row(board));
+      Board* brd = (Board*)deviceList->takeItem(deviceList->row(board));
+      brd->deleteLater();
       if(noUi())
       {
         QTextStream out(stdout);

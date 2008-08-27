@@ -37,6 +37,8 @@ public:
   ~NetworkMonitor( ) {}
   bool setListenPort( int port );
   int listenPort( ) { return listen_port; }
+  void setSendPort( int port ) { send_port = port; }
+  int sendPort( ) { return send_port; }
   
 private:
   MainWindow* mainWindow;
