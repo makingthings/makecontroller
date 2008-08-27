@@ -17,6 +17,7 @@
 
 #include "Osc.h"
 #include <QtCore/qendian.h>
+#include <QObject>
 
 QString OscMessage::toString( )
 {
@@ -259,7 +260,7 @@ void Osc::receivePacket( char* packet, int length, QList<OscMessage*>* oscMessag
       break;
 		default:
 			// something we don't recognize...
-			QString msg = QString( "Error - Osc packets must start with either a '/' (message) or '[' (bundle).");
+			QString msg = QObject::tr( "Error - Osc packets must start with either a '/' (message) or '[' (bundle).");
 			//messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
 	}
 }
@@ -280,7 +281,7 @@ void Osc::receiveMessage( char* in, int length, QList<OscMessage*>* oscMessageLi
 	char* type = findDataTag( in, length );
   if ( type == NULL )		//If there was no type tag, say so and stop processing this message.
   {
-		QString msg = QString( "Error - No type tag.");
+		QString msg = QObject::tr( "Error - No type tag.");
 		//messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
 		delete oscMessage;
   }
@@ -291,7 +292,7 @@ void Osc::receiveMessage( char* in, int length, QList<OscMessage*>* oscMessageLi
 		int count = extractData( type, oscMessage );
 		if ( count != (int)( strlen(type) - 1 ) )
 		{
-			QString msg = QString( "Error extracting data from packet - type tag doesn't correspond to data included.");
+			QString msg = QObject::tr( "Error extracting data from packet - type tag doesn't correspond to data included.");
 			//messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
 			delete oscMessage;
 		}

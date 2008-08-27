@@ -39,7 +39,7 @@ bool PacketUdp::sendPacket( char* packet, int length )
 	qint64 result = writeDatagram( (const char*)packet, (qint64)length, remoteAddress, send_port);
 	if( result < 0 )
   {
-		emit msg( "Error - Couldn't send packet.", MsgType::Error, "Ethernet" );
+		emit msg( tr("Error - Couldn't send packet."), MsgType::Error, "Ethernet" );
 		return false;
   }
 	return true;
