@@ -3,6 +3,8 @@
 #include <QSettings>
 #include "Uploader.h"
 #include "Preferences.h"
+#include <QDir>
+#include <QFileDialog>
 
 /**
 	Uploader handles uploading a binary image to a board.  It reads the board profile for the 
@@ -10,44 +12,71 @@
 	and runs the uploader with flags determined by settings in Preferences.  It prints output
 	from the upload process back to the console output in the MainWindow.
 */
-Uploader::Uploader(MainWindow *mainWindow) : QProcess( )
+Uploader::Uploader(MainWindow *mainWindow) : QDialog( 0 )
 {
 	this->mainWindow = mainWindow;
-	uploaderProgress = new QProgressDialog();
-	connect(uploaderProgress, SIGNAL(canceled()), this, SLOT(kill()));
-	connect(uploaderProgress, SIGNAL(finished(int)), this, SLOT(onProgressDialogFinished(int)));
-  connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(filterOutput()));
-  connect(this, SIGNAL(readyReadStandardError()), this, SLOT(filterError()));
-	connect(this, SIGNAL(started()), this, SLOT(uploadStarted()));
-	connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(uploadFinished(int, QProcess::ExitStatus)));
-  connect(this, SIGNAL(error(QProcess::ProcessError)), this, SLOT(onError(QProcess::ProcessError)));
+  setupUi(this);
+  connect(&uploader, SIGNAL(readyReadStandardOutput()), this, SLOT(filterOutput()));
+  connect(&uploader, SIGNAL(readyReadStandardError()), this, SLOT(filterError()));
+	connect(&uploader, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(uploadFinished(int, QProcess::ExitStatus)));
+  connect(&uploader, SIGNAL(error(QProcess::ProcessError)), this, SLOT(onError(QProcess::ProcessError)));
+  connect(browseButton, SIGNAL(clicked()), this, SLOT(onBrowseButton()));
+  connect(uploadButton, SIGNAL(clicked()), this, SLOT(onUploadButton()));
+  
+  QSettings settings("MakingThings", "mchelper");
+  QString lastFilePath = settings.value("last_firmware_upload", QDir::homePath()).toString();
+  browseEdit->setText(lastFilePath);
+  progressBar->reset();
+}
+
+void Uploader::onBrowseButton()
+{
+  QSettings settings("MakingThings", "mchelper");
+  QString lastFilePath = settings.value("last_firmware_upload", QDir::homePath()).toString();
+  QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), lastFilePath, tr("Binaries (*.bin)"));
+	if(!fileName.isNull()) // user canceled
+  {
+    settings.setValue("last_firmware_upload", fileName);
+    browseEdit->setText(fileName);
+  }
+}
+
+void Uploader::onUploadButton()
+{
+  QFileInfo fi(browseEdit->text());
+  if(!fi.exists())
+    return mainWindow->message( tr("%1 can't be found.").arg(fi.fileName()), MsgType::Error, tr("Uploader") );
+  
+  if( uploader.state() != QProcess::NotRunning )
+    return mainWindow->message( tr("Uploader is currently busy...give it a second, then try again."), MsgType::Error, tr("Uploader") );
+  
+  upload(fi.filePath());
 }
 
 void Uploader::upload(QString filename)
 {
   QSettings settings("MakingThings", "mchelper");
   QString uploaderName = settings.value("sam7_path", DEFAULT_SAM7_PATH).toString();
-  currentFile = filename;
   QStringList uploaderArgs;
   uploaderArgs << "-e" << "set_clock";
   uploaderArgs << "-e" << "unlock_regions";
-  uploaderArgs << "-e" << QString("flash -show_progress %1").arg(currentFile);
+  uploaderArgs << "-e" << QString("flash -show_progress %1").arg(filename);
   uploaderArgs << "-e" << "boot_from_flash";
   uploaderArgs << "-e" << "reset";
-  start(uploaderName, uploaderArgs);
+  uploader.start(uploaderName, uploaderArgs);
 }
 
 void Uploader::filterOutput( )
 {
-  QString output(readAllStandardOutput());
+  QString output(uploader.readAllStandardOutput());
   QRegExp re("upload progress: (\\d+)%");
   int pos = 0;
   bool matched = false;
   while((pos = re.indexIn(output, pos)) != -1)
   {
     int progress = re.cap(1).toInt();
-    if(progress != uploaderProgress->value())
-      uploaderProgress->setValue(progress);
+    if(progress != progressBar->value())
+      progressBar->setValue(progress);
 	  pos += re.matchedLength();
     matched = true;
   }
@@ -57,25 +86,20 @@ void Uploader::filterOutput( )
 
 void Uploader::filterError( )
 {
-  QString err(readAllStandardError());
+  QString err(uploader.readAllStandardError());
   if(err.startsWith("can't find boot agent"))
-    mainWindow->statusMsg(tr("Error - couldn't find an unprogrammed board to upload to."));
+    mainWindow->message(tr("Couldn't find an unprogrammed board to upload to."), MsgType::Error, tr("Uploader") );
   else
     qDebug("upload err: %s", qPrintable(err));
-}
-
-void Uploader::uploadStarted( )
-{
-	QFileInfo fi(currentFile);
-  uploaderProgress->setLabelText(QString("Uploading %1...").arg(fi.fileName()));
-  uploaderProgress->show();
 }
 
 void Uploader::uploadFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
 	(void)exitCode;
 	(void)exitStatus;
-	uploaderProgress->reset();
+	progressBar->reset();
+  hide();
+  mainWindow->message(tr("Upload complete."), MsgType::Notice, tr("Uploader") );
 }
 
 /*
@@ -106,18 +130,11 @@ void Uploader::onError(QProcess::ProcessError error)
       msg = tr("uploader (sam7) - unknown error type.");
       break;
   }
-  mainWindow->statusMsg(tr("Error - ") + msg);
+  mainWindow->message( msg, MsgType::Error, tr("Uploader"));
+  hide();
 }
 
-/*
-  The progress dialog was clicked out of, instead of the the cancel button being hit.
-  Cancel it just the same.
-*/
-void Uploader::onProgressDialogFinished(int result)
-{
-  if(result == QDialog::Rejected && state() == QProcess::Running)
-    kill();
-}
+
 
 
 
