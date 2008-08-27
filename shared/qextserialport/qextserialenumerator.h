@@ -75,6 +75,7 @@ class QextSerialEnumerator
        * 	\param infoList list with result.
        */
       static void scanPortsOSX(QList<QextPortInfo> & infoList);
+      static void getSamBaBoards(QList<QextPortInfo> & infoList);
       
     #else /* Q_WS_MAC */
       /*!
