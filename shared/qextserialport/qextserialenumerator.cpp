@@ -235,6 +235,54 @@ void QextSerialEnumerator::scanPortsOSX(QList<QextPortInfo> & infoList)
     IOObjectRelease(modemService);
   }
   IOObjectRelease(serialPortIterator);
+  
+  getSamBaBoards( infoList );
+}
+
+void QextSerialEnumerator::getSamBaBoards( QList<QextPortInfo> & infoList )
+{
+  kern_return_t err;
+  SInt32 idVendor = 0x03EB;
+  SInt32 idProduct = 0x6124;
+  CFNumberRef numberRef;
+  mach_port_t masterPort = 0;
+  CFMutableDictionaryRef matchingDictionary = 0;
+  io_iterator_t iterator = 0;
+  io_service_t usbDeviceRef;
+  
+  if( (err = IOMasterPort( MACH_PORT_NULL, &masterPort )) )
+    return qWarning( "could not create master port, err = %08x\n", err );
+
+  if( !(matchingDictionary = IOServiceMatching(kIOUSBDeviceClassName)) )
+    return qWarning( "could not create matching dictionary\n" );
+  
+  if( !(matchingDictionary = IOServiceMatching(kIOUSBDeviceClassName)) )
+    return qWarning( "could not create matching dictionary\n" );
+  
+  if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idVendor)) )
+    return qWarning( "could not create CFNumberRef for vendor\n" );
+
+  CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBVendorID), numberRef);
+  CFRelease( numberRef );
+  numberRef = 0;
+
+  if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idProduct)) )
+    return qWarning( "could not create CFNumberRef for product\n" );
+
+  CFDictionaryAddValue( matchingDictionary, CFSTR(kUSBProductID), numberRef);
+  CFRelease( numberRef );
+  numberRef = 0;
+  
+  err = IOServiceGetMatchingServices( masterPort, matchingDictionary, &iterator );
+  
+  while( (usbDeviceRef = IOIteratorNext( iterator )) )
+  {
+    QextPortInfo info;
+    info.vendorID = idVendor;
+    info.productID = idProduct;
+    infoList.append(info);
+  }
+  IOObjectRelease(iterator);
 }
 
 #else /* Q_WS_MAC */
