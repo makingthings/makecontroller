@@ -43,7 +43,7 @@ NetworkMonitor::NetworkMonitor( MainWindow* mainWindow ) : QUdpSocket( )
   if (!bind(listen_port))
   {
     abort();
-    QString str = QString("Error: Can't listen on port %1 - make sure it's not already in use.").arg( listen_port );
+    QString str = tr("Error: Can't listen on port %1 - make sure it's not already in use.").arg( listen_port );
     emit msg( str, MsgType::Error, "Ethernet" );
   }
   pingTimer.start(1000);
@@ -56,7 +56,7 @@ bool NetworkMonitor::setListenPort( int port )
   close( );
 	if( !bind( port, QUdpSocket::ShareAddress ) )
 	{
-		QString str = QString( "Error: Can't listen on port %1 - make sure it's not already in use.").arg( port );
+		QString str = tr( "Error: Can't listen on port %1 - make sure it's not already in use.").arg( port );
     emit msg( str, MsgType::Error, "Ethernet" );
 		return false;
 	}
@@ -65,7 +65,7 @@ bool NetworkMonitor::setListenPort( int port )
 		listen_port = port;
     QSettings settings("MakingThings", "mchelper");
     settings.setValue("udp_listen_port", listen_port);
-    QString str = QString( "Now listening on port %1 for UDP messages.").arg( listen_port );
+    QString str = tr( "Now listening on port %1 for UDP messages.").arg( listen_port );
 		emit msg( str, MsgType::Notice, "Ethernet" );
 		return true;
 	}

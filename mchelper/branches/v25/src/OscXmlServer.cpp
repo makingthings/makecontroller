@@ -30,7 +30,7 @@ OscXmlServer::OscXmlServer( MainWindow *mainWindow, QObject *parent ) : QTcpServ
   QSettings settings("MakingThings", "mchelper");
   listenPort = settings.value("xml_listen_port", DEFAULT_XML_LISTEN_PORT).toInt();
   if(!listen(QHostAddress::Any, listenPort))
-    emit msg( QString("Error - can't listen on port %1.  Make sure it's available.").arg(listenPort), MsgType::Error, FROM_STRING );
+    emit msg( tr("Error - can't listen on port %1.  Make sure it's available.").arg(listenPort), MsgType::Error, FROM_STRING );
 }
 
 /*
@@ -58,13 +58,13 @@ bool OscXmlServer::setListenPort( int port )
   close( );
 	if( !listen( QHostAddress::Any, port ) )
 	{
-		emit msg( QString("Error - can't listen on port %1.  Make sure it's available.").arg(port), MsgType::Error, FROM_STRING );
+		emit msg( tr("Error - can't listen on port %1.  Make sure it's available.").arg(port), MsgType::Error, FROM_STRING );
 		return false;
 	}
 	else
 	{
 		listenPort = port;
-		emit msg( QString("Now listening on port %1 for XML connections.").arg(port), MsgType::Notice, FROM_STRING );
+		emit msg( tr("Now listening on port %1 for XML connections.").arg(port), MsgType::Notice, FROM_STRING );
 		return true;
 	}
 }
@@ -129,7 +129,7 @@ void OscXmlClient::run( )
 		//				this, SLOT(boardListUpdate(QList<Board*>, bool)), Qt::DirectConnection);
 	
 	peerAddress = socket->peerAddress( ).toString( );
-	emit msg( QString("New connection from peer at %1").arg(peerAddress), MsgType::Notice, FROM_STRING );
+	emit msg( tr("New connection from peer at %1").arg(peerAddress), MsgType::Notice, FROM_STRING );
 	exec( ); // run the thread, listening for and sending messages, until we call exit( )
 }
 
@@ -175,7 +175,7 @@ void OscXmlClient::processData( )
 void OscXmlClient::disconnected( )
 {
 	shuttingDown = true;
-  emit msg( QString("Peer at %1 disconnected.").arg(peerAddress), MsgType::Notice, FROM_STRING );
+  emit msg( tr("Peer at %1 disconnected.").arg(peerAddress), MsgType::Notice, FROM_STRING );
 	disconnect( ); // don't want to respond to any more signals
 	socket->abort( );
 	socket->deleteLater( ); // these will get deleted when control returns to the main event loop

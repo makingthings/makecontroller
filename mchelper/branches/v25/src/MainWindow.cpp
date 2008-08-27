@@ -45,7 +45,7 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   
   // add an item to the list as a UI cue that no boards were found.
 	// remove when boards have been discovered
-	deviceListPlaceholder = QListWidgetItem( "No Make Controllers found..." );
+	deviceListPlaceholder = QListWidgetItem( tr("No Make Controllers found...") );
 	deviceListPlaceholder.setData( Qt::ForegroundRole, Qt::gray );
 	deviceList->addItem( &deviceListPlaceholder );
   
@@ -168,7 +168,7 @@ void MainWindow::onUpload()
   if(uploader->state() == QProcess::NotRunning)
     uploader->upload(fileName);
   else
-    return statusBar()->showMessage( "Uploader is currently busy...give it a second, then try again.", 3500 );
+    return statusBar()->showMessage( tr("Uploader is currently busy...give it a second, then try again."), 3500 );
 }
 
 /*
@@ -181,12 +181,12 @@ void MainWindow::onEthernetDeviceArrived(PacketInterface* pi)
   Board *board = new Board(this, pi, oscXmlServer, BoardType::Ethernet, pi->key());
   board->setText(pi->key());
   board->setIcon(QIcon(":icons/network_icon.gif"));
-  board->setToolTip("Ethernet Device: " + pi->key());
+  board->setToolTip(tr("Ethernet Device: ") + pi->key());
   
   if(noUi())
   {
     QTextStream out(stdout);
-    out << "network device discovered: " + pi->key() << endl;
+    out << tr("network device discovered: ") + pi->key() << endl;
   }
   
   boardInit(board);
@@ -213,17 +213,17 @@ void MainWindow::onUsbDeviceArrived(QStringList keys, BoardType::Type type)
       usb->open();
       board->setText(key);
       board->setIcon(QIcon(":icons/usb_icon.gif"));
-      board->setToolTip("USB Serial Device: " + key);
-      noUiString = "usb device discovered: " + key;
+      board->setToolTip(tr("USB Serial Device: ") + key);
+      noUiString = tr("usb device discovered: ") + key;
       actionUpload->setEnabled(false);
     }
     else if(type == BoardType::UsbSamba)
     {
       board = new Board(this, 0, 0, type, key);
-      board->setText("Unprogrammed Board");
+      board->setText(tr("Unprogrammed Board"));
       board->setIcon(QIcon(":icons/usb_icon.gif"));
-      board->setToolTip("Unprogrammed device");
-      noUiString = "sam-ba device discovered: " + key;
+      board->setToolTip(tr("Unprogrammed device"));
+      noUiString = tr("sam-ba device discovered: ") + key;
       actionUpload->setEnabled(true);
     }
     
@@ -277,7 +277,7 @@ void MainWindow::onDeviceRemoved(QString key)
       if(noUi())
       {
         QTextStream out(stdout);
-        out << "network device removed: " + key;
+        out << tr("network device removed: ") + key;
       }
       break;
     }
@@ -320,9 +320,9 @@ void MainWindow::message(QString msg, MsgType::Type type, QString from)
   {
     QTextBlockFormat format;
     format.setBackground(msgColor(type));
-    QString tofrom("from");
+    QString tofrom = tr("from");
     if(type == MsgType::Command || type == MsgType::XMLMessage)
-      tofrom = "to";
+      tofrom = tr("to");
     
     msg.prepend(QTime::currentTime().toString() + "    "); // todo - maybe make the time text gray
     msg += QString(" %1 %2").arg(tofrom).arg(from);

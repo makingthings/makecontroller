@@ -5,7 +5,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>545</width>
+    <width>551</width>
     <height>405</height>
    </rect>
   </property>
@@ -110,7 +110,7 @@
           <property name="orientation" >
            <enum>Qt::Horizontal</enum>
           </property>
-          <property name="sizeHint" >
+          <property name="sizeHint" stdset="0" >
            <size>
             <width>40</width>
             <height>20</height>
@@ -200,7 +200,7 @@
           <property name="orientation" >
            <enum>Qt::Horizontal</enum>
           </property>
-          <property name="sizeHint" >
+          <property name="sizeHint" stdset="0" >
            <size>
             <width>40</width>
             <height>20</height>
@@ -228,19 +228,12 @@
         <item row="8" column="4" colspan="2" >
          <widget class="QLineEdit" name="sendPortEdit" />
         </item>
-        <item row="9" column="2" >
-         <widget class="QCheckBox" name="webserverBox" >
-          <property name="text" >
-           <string>Webserver</string>
-          </property>
-         </widget>
-        </item>
-        <item row="9" column="3" colspan="3" >
+        <item row="9" column="2" colspan="4" >
          <spacer>
           <property name="orientation" >
            <enum>Qt::Horizontal</enum>
           </property>
-          <property name="sizeHint" >
+          <property name="sizeHint" stdset="0" >
            <size>
             <width>40</width>
             <height>20</height>
@@ -253,7 +246,7 @@
           <property name="orientation" >
            <enum>Qt::Horizontal</enum>
           </property>
-          <property name="sizeHint" >
+          <property name="sizeHint" stdset="0" >
            <size>
             <width>40</width>
             <height>20</height>
@@ -291,7 +284,6 @@
   <tabstop>listenPortEdit</tabstop>
   <tabstop>sendPortEdit</tabstop>
   <tabstop>dhcpBox</tabstop>
-  <tabstop>webserverBox</tabstop>
   <tabstop>revertButton</tabstop>
   <tabstop>applyButton</tabstop>
  </tabstops>

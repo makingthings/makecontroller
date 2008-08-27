@@ -59,7 +59,7 @@ void Uploader::filterError( )
 {
   QString err(readAllStandardError());
   if(err.startsWith("can't find boot agent"))
-    mainWindow->statusMsg("Error - couldn't find an unprogrammed board to upload to.");
+    mainWindow->statusMsg(tr("Error - couldn't find an unprogrammed board to upload to."));
   else
     qDebug("upload err: %s", qPrintable(err));
 }
@@ -88,25 +88,25 @@ void Uploader::onError(QProcess::ProcessError error)
   switch(error)
   {
     case QProcess::FailedToStart:
-      msg = "uploader failed to start.  sam7 is either missing, or doesn't have the correct permissions";
+      msg = tr("uploader failed to start.  sam7 is either missing, or doesn't have the correct permissions");
       break;
     case QProcess::Crashed:
-      msg = "uploader (sam7) was canceled or crashed.";
+      msg = tr("uploader (sam7) was canceled or crashed.");
       break;
     case QProcess::Timedout:
-      msg = "uploader (sam7) timed out.";
+      msg = tr("uploader (sam7) timed out.");
       break;
     case QProcess::WriteError:
-      msg = "uploader (sam7) reported a write error.";
+      msg = tr("uploader (sam7) reported a write error.");
       break;
     case QProcess::ReadError:
-      msg = "uploader (sam7) reported a read error.";
+      msg = tr("uploader (sam7) reported a read error.");
       break;
     case QProcess::UnknownError:
-      msg = "uploader (sam7) - unknown error type.";
+      msg = tr("uploader (sam7) - unknown error type.");
       break;
   }
-  mainWindow->statusMsg("Error - " + msg);
+  mainWindow->statusMsg(tr("Error - ") + msg);
 }
 
 /*

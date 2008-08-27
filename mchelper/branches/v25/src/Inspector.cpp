@@ -24,7 +24,6 @@ Inspector::Inspector(MainWindow *mainWindow) : QDialog( 0 )
   connect(listenPortEdit, SIGNAL(textEdited(QString)), this, SLOT(onAnyValueEdited()));
   connect(sendPortEdit, SIGNAL(textEdited(QString)), this, SLOT(onAnyValueEdited()));
   connect(dhcpBox, SIGNAL(clicked(bool)), this, SLOT(onAnyValueEdited()));
-  connect(webserverBox, SIGNAL(clicked(bool)), this, SLOT(onAnyValueEdited()));
   
   QSettings settings("MakingThings", "mchelper");
   QPoint inspectorPos = settings.value("inspector_pos").toPoint();
@@ -58,9 +57,6 @@ void Inspector::setData(Board* board)
   
   Qt::CheckState boardDhcpState = (board->dhcp) ? Qt::Checked : Qt::Unchecked;
   dhcpBox->setCheckState( boardDhcpState );
-  
-	Qt::CheckState boardWebServerState = (board->webserver) ? Qt::Checked : Qt::Unchecked;
-  webserverBox->setCheckState( boardWebServerState );
 }
 
 /*
@@ -101,7 +97,7 @@ void Inspector::onApply()
 	if( !newName.isEmpty() && board->name != newName )
 	{
 		msgs << QString( "/system/name %1" ).arg( QString( "\"%1\"" ).arg( newName ) );
-		displayMsgs << QString( "Changed name to %1" ).arg( newName );
+		displayMsgs << tr( "Changed name to %1" ).arg( newName );
 		mainWindow->setBoardName( board->key(), QString( "%1 : %2" ).arg(newName).arg(board->location()) );
 	}
 		
@@ -110,7 +106,7 @@ void Inspector::onApply()
 	if( !newNumber.isEmpty() && board->serialNumber != newNumber )
 	{
 		msgs << QString( "/system/serialnumber %1" ).arg( newNumber );
-		displayMsgs << QString( "Changed serial number to %1" ).arg( newNumber );
+		displayMsgs << tr( "Changed serial number to %1" ).arg( newNumber );
 	}
 		
 	// IP address
@@ -118,7 +114,7 @@ void Inspector::onApply()
 	if( !newAddress.isEmpty() && board->ip_address != newAddress )
 	{
 		msgs << QString( "/network/address %1" ).arg( newAddress );
-		displayMsgs << QString( "Changed IP address to %1" ).arg( newAddress );
+		displayMsgs << tr( "Changed IP address to %1" ).arg( newAddress );
 	}
 		
 	// dhcp
@@ -126,25 +122,12 @@ void Inspector::onApply()
 	if( newState == true && !board->dhcp )
 	{
 		msgs << "/network/dhcp 1";
-		displayMsgs << "Turned DHCP on";
+		displayMsgs << tr("Turned DHCP on");
 	}
 	if( newState == false && board->dhcp )
 	{
 		msgs << "/network/dhcp 0";
-		displayMsgs << "Turned DHCP off";
-	}
-		
-	// webserver
-	newState = webserverBox->checkState( );
-	if( newState == true && !board->webserver )
-	{
-		msgs << "/network/webserver 1";
-		displayMsgs << "Turned the webserver on";
-	}
-	if( newState == false && board->webserver )
-	{
-		msgs << "/network/webserver 0";
-		displayMsgs << "Turned the webserver off";
+		displayMsgs << tr("Turned DHCP off");
 	}
 		
 	// udp listen port
@@ -152,7 +135,7 @@ void Inspector::onApply()
 	if( !newPort.isEmpty() && board->udp_listen_port != newPort )
 	{
 		msgs << QString( "/network/osc_udp_listen_port %1" ).arg( newPort );
-		displayMsgs << QString( "Changed the board to listen on port %1 for messages" ).arg( newPort );
+		displayMsgs << tr( "Changed the board to listen on port %1 for messages" ).arg( newPort );
 	}
 		
 	// udp send port
@@ -160,7 +143,7 @@ void Inspector::onApply()
 	if( !newPort.isEmpty() && board->udp_send_port != newPort )
 	{
 		msgs << QString( "/network/osc_udp_send_port %1" ).arg( newPort );
-		displayMsgs << QString( "Changed the board to send messages on port %1" ).arg( newPort );
+		displayMsgs << tr( "Changed the board to send messages on port %1" ).arg( newPort );
 	}
 		
 	setLabelsRole( QPalette::WindowText );
@@ -200,7 +183,6 @@ void Inspector::setLabelsRole(QPalette::ColorRole role)
 	listenPortLabel->setForegroundRole( role );
 	sendPortLabel->setForegroundRole( role );
 	dhcpBox->setForegroundRole( role ); // how to actually get at the text?
-	webserverBox->setForegroundRole( role ); // same...
 }
 
 
