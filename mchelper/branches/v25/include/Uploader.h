@@ -2,30 +2,30 @@
 #define UPLOADER_H
 
 #include <QProcess>
-#include <QProgressDialog>
 #include "MainWindow.h"
+#include "ui_uploader.h"
 
 class MainWindow;
 
-class Uploader : public QProcess
+class Uploader : public QDialog, private Ui::UploaderUi
 {
 	Q_OBJECT
 	public:
 		Uploader(MainWindow *mainWindow);
 		void upload(QString filename);
+    QProcess::ProcessState state() { return uploader.state(); }
 		
 	private:
 		MainWindow *mainWindow;
-		QProgressDialog *uploaderProgress;
-		QString currentFile;
+    QProcess uploader;
 		
 	private slots:
 		void filterOutput();
 		void filterError();
-		void uploadStarted();
 		void uploadFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void onError(QProcess::ProcessError error);
-    void onProgressDialogFinished(int result);
+    void onBrowseButton();
+    void onUploadButton();
 };
 
 #endif // UPLOADER_H

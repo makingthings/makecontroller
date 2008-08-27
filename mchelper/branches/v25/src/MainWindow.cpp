@@ -35,7 +35,7 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   // menu connections
   connect( actionInspector, SIGNAL(triggered()), inspector, SLOT(loadAndShow()));
   connect( actionPreferences, SIGNAL(triggered()), preferences, SLOT(loadAndShow()));
-  connect( actionUpload, SIGNAL(triggered()), this, SLOT(onUpload()));
+  connect( actionUpload, SIGNAL(triggered()), uploader, SLOT(show()));
   connect( actionClearConsole, SIGNAL(triggered()), outputConsole, SLOT(clear()));
   connect( actionAbout, SIGNAL(triggered()), about, SLOT(show()));
   
@@ -51,6 +51,10 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   
   // the USB monitor runs in a separate thread...start it up
   usbMonitor->start();
+  
+  // default these to off until we see a board
+  actionUpload->setEnabled(false);
+  actionInspector->setEnabled(false);
 }
 
 void MainWindow::readSettings()
@@ -129,15 +133,30 @@ void DeviceList::contextMenuEvent(QContextMenuEvent *event)
   }
 }
 
+/*
+  A board in the list has been double clicked.
+  If it's a sam-ba board, bring up the uploader,
+  otherwise bring up the inspector.
+*/
 void MainWindow::onDoubleClick()
 {
   Board *brd = getCurrentBoard( );
   if( brd )
   {
     if( brd->type() == BoardType::UsbSamba )
-      onUpload(); // TODO - create an upload prompt dialog, so it's clearer WTF is going on
+    {
+      if(!uploader->isVisible())
+        uploader->show();
+      uploader->raise();
+      uploader->activateWindow();
+    }
     else
-      inspector->loadAndShow();
+    {
+      if(!inspector->isVisible())
+        inspector->loadAndShow();
+      inspector->raise();
+      inspector->activateWindow();
+    }
   }
 }
 
@@ -151,30 +170,14 @@ void MainWindow::onDeviceSelectionChanged()
   Board *brd = getCurrentBoard( );
   if(brd)
   {
-    inspector->setData(brd);
     if(brd->type() == BoardType::UsbSamba)
       actionUpload->setEnabled(true);
     else
+    {
+      inspector->setData(brd);
       actionUpload->setEnabled(false);
+    }
   }
-}
-
-/*
- The upload action has been triggered.
- Pop up a file dialog and try to upload the file selected by the user.
-*/
-void MainWindow::onUpload()
-{
-  QSettings settings("MakingThings", "mchelper");
-  QString lastFilePath = settings.value("last_firmware_upload", QDir::homePath()).toString();
-  QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), lastFilePath, tr("Binaries (*.bin)"));
-	if(fileName.isNull()) // user canceled
-		return;
-  settings.setValue("last_firmware_upload", fileName);
-  if(uploader->state() == QProcess::NotRunning)
-    uploader->upload(fileName);
-  else
-    return statusBar()->showMessage( tr("Uploader is currently busy...give it a second, then try again."), 3500 );
 }
 
 /*

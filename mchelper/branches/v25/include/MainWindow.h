@@ -49,7 +49,7 @@ public:
   // make these available to the device list
   QAction* uploadAction() { return actionUpload; }
   QAction* inspectorAction() { return actionInspector; }
-  void statusMsg(QString msg, int duration = 0);
+  void statusMsg(QString msg, int duration = 3500);
   
 public slots:
   void onEthernetDeviceArrived(PacketInterface* pi);
@@ -78,7 +78,6 @@ private:
   
 private slots:
   void onDeviceSelectionChanged();
-  void onUpload();
   void onCommandLine();
   void onDoubleClick();
 };
