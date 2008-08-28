@@ -171,10 +171,14 @@ void MainWindow::onDeviceSelectionChanged()
   if(brd)
   {
     if(brd->type() == BoardType::UsbSamba)
+    {
       actionUpload->setEnabled(true);
+      actionInspector->setEnabled(false);
+    }
     else
     {
       inspector->setData(brd);
+      actionInspector->setEnabled(true);
       actionUpload->setEnabled(false);
     }
   }
