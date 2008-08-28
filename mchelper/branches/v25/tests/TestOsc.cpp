@@ -1,30 +1,26 @@
+/*********************************************************************************
 
+ Copyright 2008 MakingThings
 
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
 
-#include <QtTest/QtTest>
-#include "Osc.h"
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
 
-/*
- Our test class declaration.
- each slot is automatically called as a test function.
-*/
-class Test_mchelper: public QObject
-{
-	Q_OBJECT
-  Osc osc;
-	private slots:
-    void test_OSC_basic();
-    void test_OSC_numbers();
-    void test_OSC_strings();
-    void test_OSC_mixed();
-    //void test_OSC_blob(); // eventually specify how to send blobs via text
-    void test_OSC_roundtrip();
-};
+*********************************************************************************/
+
+#include "TestOsc.h"
 
 /*
   simple test of creating an OscMessage
 */
-void Test_mchelper::test_OSC_basic()
+void TestOsc::basic()
 {
   OscMessage msg;
   osc.createMessage("/test", &msg);
@@ -35,7 +31,7 @@ void Test_mchelper::test_OSC_basic()
 /*
   verify that numbers are parsed properly
 */
-void Test_mchelper::test_OSC_numbers()
+void TestOsc::numbers()
 {
   OscMessage msg;
   osc.createMessage("/test 12 34.5 -3 -23.6", &msg);
@@ -49,7 +45,7 @@ void Test_mchelper::test_OSC_numbers()
 /*
   verify strings are parsed properly
 */
-void Test_mchelper::test_OSC_strings()
+void TestOsc::strings()
 {
   OscMessage msg;
   osc.createMessage("/test string \"test spaces\"", &msg);
@@ -61,7 +57,7 @@ void Test_mchelper::test_OSC_strings()
 /*
   Combine strings and numbers.
 */
-void Test_mchelper::test_OSC_mixed()
+void TestOsc::mixed()
 {
   OscMessage msg;
   osc.createMessage("/test 23 \"space this\" -34.5 anotherstring 56", &msg);
@@ -77,16 +73,13 @@ void Test_mchelper::test_OSC_mixed()
   Create an OscMessage, then confirm that we can
   parse it and come up with the same message.
 */
-void Test_mchelper::test_OSC_roundtrip()
+void TestOsc::roundtrip()
 {
   
 }
 
-/*
- execute
-*/
-QTEST_MAIN(Test_mchelper)
-#include "testmchelper.moc"
+
+
 
 
 

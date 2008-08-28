@@ -1,4 +1,4 @@
-DEFINES += MCHELPER_VERSION=\"2.5.0\"
+MCHELPER_VERSION = "2.5.0"
 TEMPLATE = app
 TARGET = mchelper
 # CONFIG += qt release
@@ -40,6 +40,7 @@ SOURCES = src/main.cpp \
           src/PacketUsbSerial.cpp
 
 QT += network xml
+DEFINES += MCHELPER_VERSION=\\\"$${MCHELPER_VERSION}\\\"
 RESOURCES   += resources/mchelper.qrc
 INCLUDEPATH += include
 OBJECTS_DIR  = tmp
@@ -82,6 +83,26 @@ unix{
 win32:HEADERS += src/qextserialport/win_qextserialport.h
 win32:SOURCES += src/qextserialport/win_qextserialport.cpp
 win32:DEFINES += _TTY_WIN_
+
+# *******************************************
+#              test suite
+# *******************************************
+
+test_suite {
+  TARGET       = mchelper_test
+  DEFINES     += MCHELPER_TEST_SUITE
+  CONFIG      += qtestlib
+  CONFIG      -= release # always, no matter what it's set to above
+  DESTDIR      = tests
+  INCLUDEPATH += tests
+  
+  SOURCES -=  src/main.cpp
+  
+  SOURCES +=  tests/main.cpp \
+              tests/TestOsc.cpp
+              
+  HEADERS +=  tests/TestOsc.h
+}
 
 
 

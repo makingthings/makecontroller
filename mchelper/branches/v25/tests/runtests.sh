@@ -1,13 +1,13 @@
 #!/bin/sh
 
 # first build the test
-# qmake -project "CONFIG += console qtestlib"
-qmake
+cd ..
+qmake "CONFIG += test_suite" mchelper.pro
 make
+echo # some space
 
 # then run it...
-open ./tests.app/Contents/MacOS/tests # OS X
+tests/mchelper_test.app/Contents/MacOS/mchelper_test
 
-
-
+echo # more space
 
