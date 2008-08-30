@@ -297,6 +297,7 @@ void QextSerialEnumerator::scanPortsNix(QList<QextPortInfo> & infoList)
 	char **udis;
 	DBusError error;
 	LibHalContext *hal_ctx;
+    QextPortInfo info;
 
 	dbus_error_init (&error);	
 	if ((hal_ctx = libhal_ctx_new ()) == NULL) {
@@ -320,7 +321,43 @@ void QextSerialEnumerator::scanPortsNix(QList<QextPortInfo> & infoList)
 		return;
 	}
 
+    // spin through all the serial devices.
+	udis = libhal_manager_find_device_string_match (hal_ctx, 
+             "usb.vendor", "Atmel Corp.", &num_udis, &error);
 
+	if (dbus_error_is_set (&error)) {
+		qWarning("libahl error: %s: %s", error.name, error.message);
+		LIBHAL_FREE_DBUS_ERROR (&error);
+		return;
+	}
+
+    // spin through and find the device names...
+	for (i = 0; i < num_udis; i++)
+    {
+        info.friendName = libhal_device_get_property_string (hal_ctx, 
+                            udis[i],"info.product",&error);
+
+        info.vendorID  = libhal_device_get_property_int (hal_ctx,
+                           udis[i], "usb.vendor_id", &error);
+        
+        if (-1 == info.vendorID) continue;
+        
+        info.productID = libhal_device_get_property_int (hal_ctx, 
+                           udis[i],"usb.product_id",&error);
+        
+        // check for errors.
+        if (dbus_error_is_set (&error))
+        {
+            qWarning("libhal error: %s: %s", error.name, error.message);
+            LIBHAL_FREE_DBUS_ERROR (&error);
+            return;
+        }
+        
+        infoList.append(info);
+	}
+	libhal_free_string_array (udis);
+
+    // spin through all the Amtal devices.
 	udis = libhal_find_device_by_capability (hal_ctx, "serial",
              &num_udis, &error);
 
@@ -330,45 +367,43 @@ void QextSerialEnumerator::scanPortsNix(QList<QextPortInfo> & infoList)
 		return;
 	}
 
-  // spin through and find the device names...
+    // spin through and find the device names...
 	for (i = 0; i < num_udis; i++)
-  {
-    //printf ("udis = %s\n", udis[i]);
-
-    QextPortInfo info;
-    char * iparent;
-
-    // get the device file name and the product name...
-    info.portName = libhal_device_get_property_string (hal_ctx,
-                      udis[i],"linux.device_file",&error);
-
-    info.friendName = libhal_device_get_property_string (hal_ctx, 
-                       udis[i],"info.product",&error);
-
-    // the vendor and product ID's cannot be obtained by the same
-    // device entry as the serial device, but must be gotten for
-    // the parent.
-    iparent = libhal_device_get_property_string (hal_ctx,
-    udis[i], "info.parent", &error);
-
-    // get the vendor and product ID's from the parent
-    info.vendorID  = libhal_device_get_property_int (hal_ctx,
-                       iparent , "usb.vendor_id", &error);
-
-    info.productID = libhal_device_get_property_int (hal_ctx, 
-                       iparent,"usb.product_id",&error);
-
-    // check for errors.
-    if (dbus_error_is_set (&error))
     {
-      qWarning("libhal error: %s: %s", error.name, error.message);
-      LIBHAL_FREE_DBUS_ERROR (&error);
-      return;
-    }
-
-    infoList.append(info);
+        //printf ("udis = %s\n", udis[i]);
+        
+        char * iparent;
+        
+        // get the device file name and the product name...
+        info.portName = libhal_device_get_property_string (hal_ctx,
+                          udis[i],"linux.device_file",&error);
+        
+        info.friendName = libhal_device_get_property_string (hal_ctx, 
+                            udis[i],"info.product",&error);
+        
+        // the vendor and product ID's cannot be obtained by the same
+        // device entry as the serial device, but must be gotten for
+        // the parent.
+        iparent = libhal_device_get_property_string (hal_ctx,
+                    udis[i], "info.parent", &error);
+        
+        // get the vendor and product ID's from the parent
+        info.vendorID  = libhal_device_get_property_int (hal_ctx,
+                           iparent , "usb.vendor_id", &error);
+        
+        info.productID = libhal_device_get_property_int (hal_ctx, 
+                           iparent,"usb.product_id",&error);
+        
+        // check for errors.
+        if (dbus_error_is_set (&error))
+        {
+            qWarning("libhal error: %s: %s", error.name, error.message);
+            LIBHAL_FREE_DBUS_ERROR (&error);
+            return;
+        }
+        
+        infoList.append(info);
 	}
-
 	libhal_free_string_array (udis);
 
 	return;
