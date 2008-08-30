@@ -316,8 +316,8 @@ void QextSerialEnumerator::scanPortsNix(QList<QextPortInfo> & infoList)
 			qWarning("error: libhal_ctx_init: %s: %s", error.name, error.message);
 			LIBHAL_FREE_DBUS_ERROR (&error);
 		}
-		qWarning("Could not initialise connection to hald.\n  
-                 Normally this means the HAL daemon (hald) is not running or not ready.");
+		qWarning("Could not initialise connection to hald.\n  "
+                 "Normally this means the HAL daemon (hald) is not running or not ready.");
 		return;
 	}
 
