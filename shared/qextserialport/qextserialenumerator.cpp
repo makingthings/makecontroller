@@ -307,17 +307,18 @@ void QextSerialEnumerator::scanPortsNix(QList<QextPortInfo> & infoList)
 	}
 	if (!libhal_ctx_set_dbus_connection (hal_ctx, 
            dbus_bus_get (DBUS_BUS_SYSTEM, &error))) {
-		qWarning("error: libhal_ctx_set_dbus_connection: %s: %s", error.name, error.message);
+		qWarning("error: libhal_ctx_set_dbus_connection: %s: %s",
+                 error.name, error.message);
 		LIBHAL_FREE_DBUS_ERROR (&error);
 		return;
 	}
 	if (!libhal_ctx_init (hal_ctx, &error)) {
 		if (dbus_error_is_set(&error)) {
-			qWarning("error: libhal_ctx_init: %s: %s", error.name, error.message);
+			qWarning("error: libhal_ctx_init: %s: %s",
+                     error.name, error.message);
 			LIBHAL_FREE_DBUS_ERROR (&error);
 		}
-		qWarning("Could not initialise connection to hald.\n  "
-                 "Normally this means the HAL daemon (hald) is not running or not ready.");
+		qWarning("Could not initialise connection to hald.\n Normally this means the HAL daemon (hald) is not running or not ready.");
 		return;
 	}
 
@@ -334,14 +335,22 @@ void QextSerialEnumerator::scanPortsNix(QList<QextPortInfo> & infoList)
     // spin through and find the device names...
 	for (i = 0; i < num_udis; i++)
     {
+        dbus_error_init (&error);
+
+        if (!libhal_device_property_exists(hal_ctx, 
+                            udis[i],"info.product", &error)) continue;
         info.friendName = libhal_device_get_property_string (hal_ctx, 
                             udis[i],"info.product",&error);
 
+        if (!libhal_device_property_exists(hal_ctx, 
+                            udis[i],"usb.vendor_id", &error)) continue;
         info.vendorID  = libhal_device_get_property_int (hal_ctx,
                            udis[i], "usb.vendor_id", &error);
         
         if (-1 == info.vendorID) continue;
         
+        if (!libhal_device_property_exists(hal_ctx, 
+                            udis[i],"usb.product_id", &error)) continue;
         info.productID = libhal_device_get_property_int (hal_ctx, 
                            udis[i],"usb.product_id",&error);
         
@@ -350,7 +359,7 @@ void QextSerialEnumerator::scanPortsNix(QList<QextPortInfo> & infoList)
         {
             qWarning("libhal error: %s: %s", error.name, error.message);
             LIBHAL_FREE_DBUS_ERROR (&error);
-            return;
+            continue;
         }
         
         infoList.append(info);
@@ -358,6 +367,8 @@ void QextSerialEnumerator::scanPortsNix(QList<QextPortInfo> & infoList)
 	libhal_free_string_array (udis);
 
     // spin through all the Amtal devices.
+	dbus_error_init (&error);
+
 	udis = libhal_find_device_by_capability (hal_ctx, "serial",
              &num_udis, &error);
 
@@ -374,37 +385,62 @@ void QextSerialEnumerator::scanPortsNix(QList<QextPortInfo> & infoList)
         
         char * iparent;
         
+        dbus_error_init (&error);
+
         // get the device file name and the product name...
+        if (!libhal_device_property_exists(hal_ctx, 
+                            udis[i],"linux.device_file", &error)) continue;
         info.portName = libhal_device_get_property_string (hal_ctx,
                           udis[i],"linux.device_file",&error);
         
+        if (!libhal_device_property_exists(hal_ctx, 
+                            udis[i],"info.product", &error)) continue;
         info.friendName = libhal_device_get_property_string (hal_ctx, 
-                            udis[i],"info.product",&error);
+                              udis[i],"info.product",&error);
         
         // the vendor and product ID's cannot be obtained by the same
         // device entry as the serial device, but must be gotten for
         // the parent.
+        if (!libhal_device_property_exists(hal_ctx, 
+                            udis[i],"info.parent", &error)) continue;
         iparent = libhal_device_get_property_string (hal_ctx,
-                    udis[i], "info.parent", &error);
+                      udis[i], "info.parent", &error);
         
         // get the vendor and product ID's from the parent
-        info.vendorID  = libhal_device_get_property_int (hal_ctx,
+        if (libhal_device_property_exists(hal_ctx, 
+                            iparent,"usb.vendor_id", &error))
+            info.vendorID  = libhal_device_get_property_int (hal_ctx,
                            iparent , "usb.vendor_id", &error);
-        
-        info.productID = libhal_device_get_property_int (hal_ctx, 
+        else if (libhal_device_property_exists(hal_ctx, 
+                            iparent,"usb_device.vendor_id", &error))
+            info.vendorID  = libhal_device_get_property_int (hal_ctx,
+                           iparent , "usb_device.vendor_id", &error);
+
+        if (libhal_device_property_exists(hal_ctx, 
+                           iparent,"usb.product_id", &error))
+            info.productID = libhal_device_get_property_int (hal_ctx, 
                            iparent,"usb.product_id",&error);
+        else if (libhal_device_property_exists(hal_ctx, 
+                           iparent,"usb_device.product_id", &error))
+            info.productID = libhal_device_get_property_int (hal_ctx, 
+                           iparent,"usb_device.product_id",&error);
         
         // check for errors.
         if (dbus_error_is_set (&error))
         {
             qWarning("libhal error: %s: %s", error.name, error.message);
             LIBHAL_FREE_DBUS_ERROR (&error);
-            return;
+            continue;
         }
         
         infoList.append(info);
 	}
 	libhal_free_string_array (udis);
+
+    // free up the HAL context
+    libhal_ctx_shutdown (hal_ctx, &error);
+    libhal_ctx_free (hal_ctx);
+
 
 	return;
 }
