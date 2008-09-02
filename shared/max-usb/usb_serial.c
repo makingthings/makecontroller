@@ -15,7 +15,6 @@
 
 *********************************************************************************/
 
-#include "mcError.h"
 #include "usb_serial.h"
 #include "usb_enum.h"
 #include "ext.h" //for calling post() to the Max window.
@@ -38,23 +37,23 @@ int usb_open( t_usbInterface* usbInt )
   #ifndef WIN32
   
   if( usbInt->deviceOpen )  //if it's already open, do nothing.
-    return MC_ALREADY_OPEN;
+    return USB_E_ALREADY_OPEN;
 	
 	bool success = findUsbDevice( usbInt );
 	
 	if (!success )
-		return MC_NOT_OPEN;
+		return USB_E_NOT_OPEN;
 		
   // now try to actually do something
   usbInt->deviceHandle = open( usbInt->deviceLocation, O_RDWR | O_NOCTTY | O_NDELAY );
   if ( usbInt->deviceHandle < 0 )
-    return MC_NOT_OPEN;
+    return USB_E_NOT_OPEN;
   else
   {
     usbInt->deviceOpen = true;
 		//post( "USB opened at %s, deviceHandle = %d", usbInt->deviceName, usbInt->deviceHandle);
 		post( "mc.usb connected to a Make Controller." );
-    return MC_OK;
+    return USB_OK;
   }
   #endif
 		
@@ -64,7 +63,7 @@ int usb_open( t_usbInterface* usbInt )
   bool result;
 
   if( usbInt->deviceOpen )  //if it's already open, do nothing.
-    return MC_ALREADY_OPEN;
+    return USB_E_ALREADY_OPEN;
   
   if( findUsbDevice( usbInt ) )
 	{
@@ -77,11 +76,11 @@ int usb_open( t_usbInterface* usbInt )
 
 		  Sleep( 10 );  // wait after opening it before trying to read/write
 		  usbInt->deviceOpen = true;
-		  return MC_OK;
+		  return USB_OK;
 	  }
   }
   //post( "mc.usb did not open." );
-  return MC_NOT_OPEN;
+  return USB_E_NOT_OPEN;
   #endif
 }
 
@@ -116,22 +115,22 @@ int usb_read( t_usbInterface* usbInt, char* buffer, int length )
   {
     //post( "Didn't think the port was open." );
 		int portIsOpen = usb_open( usbInt );
-		if( portIsOpen != MC_OK )
-			return MC_NOT_OPEN;
+		if( portIsOpen != USB_OK )
+			return USB_E_NOT_OPEN;
   }
   count = read( usbInt->deviceHandle, buffer, length );
 	if( count < 1 )
 	{
-		int retval = MC_IO_ERROR;
+		int retval = USB_E_IOERROR;
 		if( count == 0 )
-			retval = MC_ERROR_CLOSE;
+			retval = USB_E_CLOSE;
 		else if( count == -1 )
 		{
 			if ( errno == EAGAIN )
-	      retval = MC_NOTHING_AVAILABLE; // non-blocking but no data available
+	      retval = USB_E_NOTHING_AVAILABLE; // non-blocking but no data available
       else
 			  //post( "Some other error...errno = %d", errno );
-	      retval = MC_IO_ERROR;
+	      retval = USB_E_IOERROR;
 		}
 		return retval;
 	}
@@ -167,22 +166,22 @@ int usb_write( t_usbInterface* usbInt, char* buffer, int length )
 	if( !usbInt->deviceOpen )  //then try to open it
 	{
 	  int portIsOpen = usb_open( usbInt );
-      if( portIsOpen != MC_OK )
-	    return MC_NOT_OPEN;
+      if( portIsOpen != USB_OK )
+	    return USB_E_NOT_OPEN;
 	}
 	int size = write( usbInt->deviceHandle, buffer, length );
 	if ( length == size )
-		return MC_OK;
+		return USB_OK;
 	else if( errno == EAGAIN )
 	{
 	  //post( "Nothing available. ");
-		return MC_NOTHING_AVAILABLE;
+		return USB_E_NOTHING_AVAILABLE;
 	}
     else
     {
 	  //post("usbWrite: write failed, errno %d", errno);
       usb_close( usbInt );
-      return MC_IO_ERROR;
+      return USB_E_IOERROR;
     }
   #endif
 	
@@ -212,7 +211,7 @@ int usb_numBytesAvailable( t_usbInterface* usbInt )
 	if( ioctl( usbInt->deviceHandle, FIONREAD, &n ) < 0 )
 	{
 		// ioctl error
-		return MC_ERROR_CLOSE;
+		return USB_E_CLOSE;
 	}
 	#endif // Mac-only usb_numBytesAvailable( )
 
