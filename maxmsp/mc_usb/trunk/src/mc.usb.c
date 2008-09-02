@@ -131,12 +131,12 @@ void mcUsb_tick( t_mcUsb *x )
 void usb_tick( t_mcUsb *x )
 {
   t_usbInterface usbInt;
-  bool success = findUsbDevice( &usbInt );
+  bool success = findUsbDevice( &usbInt, FIND_MAKE_CONTROLLER );
   
   if( success && !x->mc_usbInt->deviceOpen ) // we found a new one, but we're not currently open
   {
     
-    usb_open( x->mc_usbInt );
+    usb_open( x->mc_usbInt, FIND_MAKE_CONTROLLER );
     if( !x->mc_usbInt->deviceOpen ) // if we're still not open, bail
       return;
     post( "mc.usb connected to a Make Controller." );        
