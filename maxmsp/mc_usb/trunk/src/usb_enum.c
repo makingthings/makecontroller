@@ -72,7 +72,57 @@ bool findUsbDevice( t_usbInterface* usbInt )
   }
   // destroy the device information set and free all associated memory.
   SetupDiDestroyDeviceInfoList(hardwareDeviceInfo);
-	#endif // Windows-only FindUsbDevices( )
+  
+	#else ifndef WIN32  // Windows-only FindUsbDevices( )
+//--------------------------------------- Mac-only -------------------------------
+  io_object_t modemService;
+  io_iterator_t iterator = 0;
+    
+  // create a dictionary that looks for all BSD modems
+  CFMutableDictionaryRef matchingDictionary = IOServiceMatching( kIOSerialBSDServiceValue );
+  if (matchingDictionary == NULL)
+    return false;
+  else
+    CFDictionarySetValue(matchingDictionary, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDModemType));
+  
+  // then create the iterator with all the matching devices
+  if( IOServiceGetMatchingServices( kIOMasterPortDefault, matchingDictionary, &iterator ) != KERN_SUCCESS )
+    return false;
+  
+  // Iterate through all modems found. In this example, we bail after finding the first modem.
+  while( (modemService = IOIteratorNext(iterator)) && !retval )
+  {
+    CFTypeRef bsdPathAsCFString = NULL;
+    CFTypeRef productNameAsCFString = NULL;
+    // check the name of the modem's callout device
+    bsdPathAsCFString = IORegistryEntrySearchCFProperty(modemService, kIOServicePlane, CFSTR(kIOCalloutDeviceKey), kCFAllocatorDefault, 0);
+    // then, because the callout device could be any old thing, and because the reference to the modem returned by the
+    // iterator doesn't include much device specific info, look at its parent, and check the product name
+    io_registry_entry_t parent;
+    if( IORegistryEntryGetParentEntry( modemService,	kIOServicePlane, &parent ) == KERN_SUCCESS )
+    {
+      productNameAsCFString = IORegistryEntrySearchCFProperty(parent, kIOServicePlane, CFSTR("Product Name"), kCFAllocatorDefault, 0);
+      IOObjectRelease(parent);
+    }
+    
+    if(productNameAsCFString && bsdPathAsCFString)
+    {
+      char productName[MAXPATHLEN];
+      char devicePath[MAXPATHLEN];
+      CFStringGetCString((CFStringRef)bsdPathAsCFString, devicePath, MAXPATHLEN, kCFStringEncodingUTF8);
+      CFStringGetCString((CFStringRef)productNameAsCFString, productName, MAXPATHLEN, kCFStringEncodingUTF8);
+      if( !strncmp( productName, "Make Controller Ki", 18) )
+      {
+        strcpy( usbInt->deviceLocation, devicePath );
+        retval = true;
+      }
+      CFRelease(productNameAsCFString);
+      CFRelease(bsdPathAsCFString);
+    }
+    IOObjectRelease(modemService);
+  }
+  IOObjectRelease(iterator);
+  #endif // WIN32
   return retval;
 }
 #ifdef WIN32

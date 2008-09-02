@@ -66,7 +66,6 @@ typedef struct
   #endif
 	
   #ifndef WIN32
-  bool blocking;
   int deviceHandle;
   #endif
 	
@@ -80,12 +79,6 @@ int usb_read( t_usbInterface* usbInt, char* buffer, int length );
 int usb_write( t_usbInterface* usbInt, char* buffer, int length );
 int usb_writeChar( t_usbInterface* usbInt, char c );
 int usb_numBytesAvailable( t_usbInterface* usbInt );
-
-// Mac-only
-#ifndef WIN32
-// usb function prototypes
-kern_return_t getDevicePath(io_iterator_t serialPortIterator, char *path, CFIndex maxPathSize);
-#endif
 
 //Windows only
 #ifdef WIN32
