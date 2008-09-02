@@ -31,7 +31,7 @@ t_usbInterface* usb_init( cchar* name, t_usbInterface** uip )
   return usbInt;
 }
 
-int usb_open( t_usbInterface* usbInt )
+int usb_open( t_usbInterface* usbInt, int devicetype )
 {		
   //--------------------------------------- Mac-only -------------------------------
   #ifndef WIN32
@@ -39,7 +39,7 @@ int usb_open( t_usbInterface* usbInt )
   if( usbInt->deviceOpen )  //if it's already open, do nothing.
     return USB_E_ALREADY_OPEN;
 	
-	bool success = findUsbDevice( usbInt );
+	bool success = findUsbDevice( usbInt, devicetype );
 	
 	if (!success )
 		return USB_E_NOT_OPEN;
@@ -108,12 +108,8 @@ int usb_read( t_usbInterface* usbInt, char* buffer, int length )
   int count;
 	
   if( !usbInt->deviceOpen )
-  {
-    //post( "Didn't think the port was open." );
-		int portIsOpen = usb_open( usbInt );
-		if( portIsOpen != USB_OK )
-			return USB_E_NOT_OPEN;
-  }
+    return USB_E_NOT_OPEN;
+  
   count = read( usbInt->deviceHandle, buffer, length );
 	if( count < 1 )
 	{
@@ -160,11 +156,8 @@ int usb_write( t_usbInterface* usbInt, char* buffer, int length )
   //--------------------------------------- Mac-only -------------------------------
   #ifndef WIN32
 	if( !usbInt->deviceOpen )  //then try to open it
-	{
-	  int portIsOpen = usb_open( usbInt );
-      if( portIsOpen != USB_OK )
-	    return USB_E_NOT_OPEN;
-	}
+    return USB_E_NOT_OPEN;
+  
 	int size = write( usbInt->deviceHandle, buffer, length );
 	if ( length == size )
 		return USB_OK;

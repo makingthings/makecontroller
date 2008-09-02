@@ -73,7 +73,7 @@ typedef struct
 
 //function prototypes
 t_usbInterface* usb_init( cchar* name, t_usbInterface** uip );
-int usb_open( t_usbInterface* usbInt );
+int usb_open( t_usbInterface* usbInt, int devicetype );
 void usb_close( t_usbInterface* usbInt );
 int usb_read( t_usbInterface* usbInt, char* buffer, int length );
 int usb_write( t_usbInterface* usbInt, char* buffer, int length );

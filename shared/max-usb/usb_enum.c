@@ -24,7 +24,7 @@
 DEFINE_GUID( GUID_MAKE_CTRL_KIT, 0x4D36E978, 0xE325, 0x11CE, 0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18 );
 #endif
 
-bool findUsbDevice( t_usbInterface* usbInt )
+bool findUsbDevice( t_usbInterface* usbInt, int devicetype )
 {
 	bool retval = false;
 	#ifdef WIN32 // Windows only
@@ -110,7 +110,14 @@ bool findUsbDevice( t_usbInterface* usbInt )
       char devicePath[MAXPATHLEN];
       CFStringGetCString((CFStringRef)bsdPathAsCFString, devicePath, MAXPATHLEN, kCFStringEncodingUTF8);
       CFStringGetCString((CFStringRef)productNameAsCFString, productName, MAXPATHLEN, kCFStringEncodingUTF8);
-      if( !strncmp( productName, "Make Controller Ki", 18) )
+      
+      bool gotdevice = false;
+      if( devicetype == FIND_MAKE_CONTROLLER && !strncmp( productName, "Make Controller Ki", 18) )
+        gotdevice = true;
+      else if( devicetype == FIND_TELEO && !strncmp( productName, "USB <-> Serial", 14) )
+        gotdevice = true;
+      
+      if( gotdevice )
       {
         strcpy( usbInt->deviceLocation, devicePath );
         retval = true;
