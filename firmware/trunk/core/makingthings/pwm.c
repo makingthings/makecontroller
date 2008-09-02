@@ -101,7 +101,7 @@ struct Pwm_
 */
 int Pwm_Set( int index, int duty )
 {
-  if ( index < 0 || index > PWM_COUNT )
+  if ( index < 0 || index >= PWM_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
   // Set the duty
@@ -118,7 +118,7 @@ int Pwm_Set( int index, int duty )
 */
 int Pwm_Get( int index )
 {
-  if ( index < 0 || index > PWM_COUNT )
+  if ( index < 0 || index >= PWM_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
   return Pwm.duty[ index ];
@@ -128,7 +128,7 @@ int Pwm_Start( int channel )
 {
   int status;
 
-  if ( channel < 0 || channel > PWM_COUNT )
+  if ( channel < 0 || channel >= PWM_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
   // Make sure the channel isn't already being used
@@ -167,7 +167,7 @@ int Pwm_Stop( int channel )
   if ( Pwm.users <= 0 )
     return CONTROLLER_ERROR_TOO_MANY_STOPS;
 
-  if ( channel < 0 || channel > PWM_COUNT )
+  if ( channel < 0 || channel >= PWM_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
   int c = 1 << channel;
@@ -355,7 +355,7 @@ int Pwm_GetDividerB()
 */
 int Pwm_SetClockSource(int channel, int val)
 {
-  if ( channel < 0 || channel > PWM_COUNT )
+  if ( channel < 0 || channel >= PWM_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
   if ( val < 0 || val > 12 )
@@ -385,7 +385,7 @@ int Pwm_SetClockSource(int channel, int val)
 */
 int Pwm_GetClockSource(int channel)
 {
-  if ( channel < 0 || channel > PWM_COUNT )
+  if ( channel < 0 || channel >= PWM_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
   return (AT91C_BASE_PWMC->PWMC_CH[ channel ].PWMC_CMR & 0x0000000f);
@@ -405,7 +405,7 @@ int Pwm_GetClockSource(int channel)
 */
 int Pwm_SetWaveformProperties(int channel, int val)
 {
-  if ( channel < 0 || channel > PWM_COUNT )
+  if ( channel < 0 || channel >= PWM_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
   if ( val < 0 || val > 3 )
@@ -436,7 +436,7 @@ int Pwm_SetWaveformProperties(int channel, int val)
 */
 int Pwm_GetWaveformProperties(int channel)
 {
-  if ( channel < 0 || channel > PWM_COUNT )
+  if ( channel < 0 || channel >= PWM_COUNT )
     return CONTROLLER_ERROR_ILLEGAL_INDEX;
   
   return ( (AT91C_BASE_PWMC->PWMC_CH[ channel ].PWMC_CMR >> 8) & 0x00000003 );
