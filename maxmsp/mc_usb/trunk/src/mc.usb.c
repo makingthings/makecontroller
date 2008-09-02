@@ -37,7 +37,6 @@
 typedef struct _mcUsb
 {
   t_object mcUsb_ob;
-  void* obex;
   t_symbol *symval;
   //Max things
   void* mc_clock;
@@ -55,7 +54,7 @@ typedef struct _mcUsb
 	int usbReadBufLength;
 } t_mcUsb;
 
-void *mcUsb_class;  // global variable pointing to the class
+t_class* mcUsb_class;  // global variable pointing to the class
 
 void *mcUsb_new( t_symbol *s, long ac, t_atom *av );
 void mcUsb_free(t_mcUsb *x);
@@ -66,22 +65,21 @@ mcError mc_send_packet( t_mcUsb *x, t_usbInterface* u, char* packet, int length 
 bool mc_SLIP_receive( t_mcUsb *x );
 int mc_getMoreBytes( t_mcUsb *x );
 void mcUsb_devicepath( t_mcUsb *x );
+static int mcusb_obj_count;
 
 // define the object so Max knows all about it, and define which messages it will implement and respond to
 int main( )
-{
-  t_class	*c;
-	
-	c = class_new("mcUsb", (method)mcUsb_new, (method)mcUsb_free, (short)sizeof(t_mcUsb), 0L, A_GIMME, 0);
-	class_obexoffset_set(c, calcoffset(t_mcUsb, obex));  // register the byte offset of obex with the class
+{  	
+	mcUsb_class = class_new("mc.usb", (method)mcUsb_new, (method)mcUsb_free, (short)sizeof(t_mcUsb), 0L, A_GIMME, 0);
 
-	class_addmethod(c, (method)mcUsb_anything, "anything", A_GIMME, 0);
-	class_addmethod(c, (method)mcUsb_assist, "assist", A_CANT, 0);
-	class_addmethod(c, (method)mcUsb_devicepath, "devicepath", A_GIMME, 0);
+	class_addmethod(mcUsb_class, (method)mcUsb_anything, "anything", A_GIMME, 0);
+	class_addmethod(mcUsb_class, (method)mcUsb_assist, "assist", A_CANT, 0);
+	class_addmethod(mcUsb_class, (method)mcUsb_devicepath, "devicepath", A_GIMME, 0);
 
 	// we want this class to instantiate inside of the Max UI; ergo CLASS_BOX
-	class_register(CLASS_BOX, c);
-	mcUsb_class = c;
+	class_register(CLASS_BOX, mcUsb_class);
+  mcusb_obj_count = 0;
+
 	return 0;
 }
 
@@ -153,14 +151,15 @@ int mc_getMoreBytes( t_mcUsb *x )
 bool mc_SLIP_receive( t_mcUsb *x )
 {
   int started = 0, i;
-  char *bufferPtr = x->osc_packet->packetBuf, *tempPtr;
+  char *bufferPtr = x->osc_packet->packetBuf;
 	x->osc_packet->length = 0;
 
   if( !x->mc_usbInt->deviceOpen )
+  {
     usb_open( x->mc_usbInt );
-  
-  if( !x->mc_usbInt->deviceOpen ) // if we're still not open, bail
-     return false;
+    if( !x->mc_usbInt->deviceOpen ) // if we're still not open, bail
+      return false;
+  }
 	
 	while( 1 )
 	{
@@ -281,6 +280,7 @@ void mcUsb_free(t_mcUsb *x)
   free( (t_osc_packet*)x->osc_packet );
   free( (t_osc*)x->Osc );
   free( (t_osc_message*)x->osc_message );
+  mcusb_obj_count--;
   usb_close( x->mc_usbInt );
 }
 
@@ -290,13 +290,17 @@ void *mcUsb_new( t_symbol *s, long ac, t_atom *av )
 	t_mcUsb* new_mcUsb;
 	//int i;
 	cchar* usbConn = NULL;
+  
+  if( mcusb_obj_count )
+  {
+    post("note: only one mc.usb is allowed per patch - new object not created.");
+    return NULL;
+  }
+  else
+    mcusb_obj_count++;
 
-	// we use object_alloc here, rather than newobject
 	if( new_mcUsb = (t_mcUsb*)object_alloc(mcUsb_class) )
-	{
-		//object_obex_store( new_mcUsb, _sym_dumpout, outlet_new(new_mcUsb, NULL) ); // add a dumpout outlet
 		new_mcUsb->out0 = outlet_new(new_mcUsb, 0L);  // add a left outlet
-	}
 	
 	new_mcUsb->mc_clock = clock_new( new_mcUsb, (method)mcUsb_tick );
 	clock_delay( new_mcUsb->mc_clock, 1 );  //set the clock running every millisecond

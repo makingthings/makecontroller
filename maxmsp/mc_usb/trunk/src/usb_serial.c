@@ -26,15 +26,9 @@
 
 t_usbInterface* usb_init( cchar* name, t_usbInterface** uip )
 {
-  t_usbInterface* usbInt;
-  usbInt = (t_usbInterface*)malloc( sizeof( t_usbInterface ) );
-	
+  t_usbInterface* usbInt = (t_usbInterface*)malloc( sizeof( t_usbInterface ) );
   usbInt->deviceOpen = false;
   usbInt->readInProgress = false;
-  #ifndef WIN32
-  usbInt->blocking = false;
-  #endif
-		
   return usbInt;
 }
 
@@ -45,33 +39,23 @@ int usb_open( t_usbInterface* usbInt )
   
   if( usbInt->deviceOpen )  //if it's already open, do nothing.
     return MC_ALREADY_OPEN;
-
-  kern_return_t kernResult;
-	io_iterator_t iterator = 0;
 	
-	kernResult = getDevicePath( iterator, usbInt->deviceLocation, sizeof(usbInt->deviceLocation) );
-	IOObjectRelease( iterator ); // clean up
+	bool success = findUsbDevice( usbInt );
 	
-	if (!usbInt->deviceLocation[0] )
-	{
-		//post("Didn't find a Make Controller!.\n");
+	if (!success )
 		return MC_NOT_OPEN;
-	}
 		
   // now try to actually do something
-  usbInt->deviceHandle = open( usbInt->deviceLocation, O_RDWR | O_NOCTTY | ( ( usbInt->blocking ) ? 0 : O_NDELAY ) );
+  usbInt->deviceHandle = open( usbInt->deviceLocation, O_RDWR | O_NOCTTY | O_NDELAY );
   if ( usbInt->deviceHandle < 0 )
-  {
-    //post( "Could not open the port (Error %d)\n", usbInt->deviceHandle );
     return MC_NOT_OPEN;
-  } else
+  else
   {
     usbInt->deviceOpen = true;
-		usleep( 10000 ); //give it a moment after opening before trying to read/write
 		//post( "USB opened at %s, deviceHandle = %d", usbInt->deviceName, usbInt->deviceHandle);
 		post( "mc.usb connected to a Make Controller." );
+    return MC_OK;
   }
-  return MC_OK;
   #endif
 		
   //--------------------------------------- Windows-only -------------------------------
@@ -246,93 +230,6 @@ int usb_numBytesAvailable( t_usbInterface* usbInt )
 
 	return n;
 }
-
-
-//--------------------------------------- Mac-only -------------------------------
-#ifndef WIN32
-
-kern_return_t getDevicePath(io_iterator_t serialPortIterator, char *path, CFIndex maxPathSize)
-{
-    io_object_t modemService;
-		char productName[50] = "";
-    kern_return_t kernResult = KERN_FAILURE;
-    Boolean deviceFound = false;
-    // Initialize the returned path
-    *path = '\0';
-	
-	CFMutableDictionaryRef bsdMatchingDictionary;
-	
-	// create a dictionary that looks for all BSD modems
-	bsdMatchingDictionary = IOServiceMatching( kIOSerialBSDServiceValue );
-	if (bsdMatchingDictionary == NULL)
-		printf("IOServiceMatching returned a NULL dictionary.\n");
-	else
-		CFDictionarySetValue(bsdMatchingDictionary, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDModemType));
-	
-	// then create the iterator with all the matching devices
-	kernResult = IOServiceGetMatchingServices( kIOMasterPortDefault, bsdMatchingDictionary, &serialPortIterator );    
-	if ( KERN_SUCCESS != kernResult )
-	{
-		//post("IOServiceGetMatchingServices returned %d\n", kernResult);
-		return kernResult;
-	}
-	
-	// Iterate through all modems found. In this example, we bail after finding the first modem.
-	while ((modemService = IOIteratorNext(serialPortIterator)) && !deviceFound)
-	{
-		CFTypeRef bsdPathAsCFString;
-		CFTypeRef productNameAsCFString;
-		// check the name of the modem's callout device
-		bsdPathAsCFString = IORegistryEntrySearchCFProperty(modemService,
-																													kIOServicePlane,
-																													CFSTR(kIOCalloutDeviceKey),
-																													kCFAllocatorDefault,
-																													0);
-		// then, because the callout device could be any old thing, and because the reference to the modem returned by the
-		// iterator doesn't include much device specific info, look at its parent, and check the product name
-		io_registry_entry_t parent;  
-		kernResult = IORegistryEntryGetParentEntry( modemService,	kIOServicePlane, &parent );																										
-		productNameAsCFString = IORegistryEntrySearchCFProperty(parent,
-																													kIOServicePlane,
-																													CFSTR("Product Name"),
-																													kCFAllocatorDefault,
-																													0);
-		
-		if( bsdPathAsCFString )
-		{
-			Boolean result;      
-			result = CFStringGetCString( (CFStringRef)bsdPathAsCFString,
-																	path,
-																	maxPathSize, 
-																	kCFStringEncodingUTF8);
-
-			if( productNameAsCFString )
-			{
-				result = CFStringGetCString( (CFStringRef)productNameAsCFString,
-																	productName,
-																	maxPathSize, 
-																	kCFStringEncodingUTF8);
-			}
-			if (result)
-			{
-				if( (strcmp( productName, "Make Controller Ki") == 0) )
-				{
-					CFRelease(bsdPathAsCFString);
-					IOObjectRelease(parent);
-					deviceFound = true;
-					kernResult = KERN_SUCCESS;
-				}
-				else
-					*path = '\0';  // clear this, since this is checked above.
-			}
-			printf("\n");
-			(void) IOObjectRelease(modemService);
-		}
-	}
-	return kernResult;
-}
-
-#endif
 
 // Windows specific functions
 #ifdef WIN32
