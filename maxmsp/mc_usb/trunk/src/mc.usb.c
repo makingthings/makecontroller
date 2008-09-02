@@ -159,6 +159,8 @@ bool mc_SLIP_receive( t_mcUsb *x )
     usb_open( x->mc_usbInt );
     if( !x->mc_usbInt->deviceOpen ) // if we're still not open, bail
       return false;
+    else
+      post( "mc.usb connected to a Make Controller." );
   }
 	
 	while( 1 )
@@ -282,6 +284,7 @@ void mcUsb_free(t_mcUsb *x)
   free( (t_osc_message*)x->osc_message );
   mcusb_obj_count--;
   usb_close( x->mc_usbInt );
+  post( "mc.usb closed the Make Controller Kit USB connection." );
 }
 
 // the constructor for the object
