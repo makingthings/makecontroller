@@ -87,5 +87,15 @@ int openDevice( t_usbInterface* usbInt );
 bool DoRegisterForNotification( t_usbInterface* usbInt );
 #endif
 
+typedef enum 
+{
+  USB_OK                  = 0,
+	USB_E_ALREADY_OPEN      = -1,
+	USB_E_NOT_OPEN          = -2,
+  USB_E_IOERROR           = -3,
+  USB_E_CLOSE             = -4,
+	USB_E_NOTHING_AVAILABLE = -5
+} MaxUsbError;
+
 #endif // USB_SERIAL_H
 

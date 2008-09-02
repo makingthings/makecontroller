@@ -16,7 +16,6 @@
 *********************************************************************************/
 
 #include "usb_enum.h"
-#include "mcError.h"
 #include "ext.h"
 #include <stdio.h>
 
