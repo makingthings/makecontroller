@@ -18,6 +18,9 @@
 #ifndef USB_ENUM_H_
 #define USB_ENUM_H_
 
+#define FIND_MAKE_CONTROLLER 0
+#define FIND_TELEO 1
+
 #include "usb_serial.h"
 
 #ifdef WIN32
@@ -31,7 +34,7 @@ typedef unsigned char bool;
 #include <sys/param.h>
 #endif
 
-bool findUsbDevice( t_usbInterface* usbInt );
+bool findUsbDevice( t_usbInterface* usbInt, int devicetype );
 
 #ifdef WIN32
 HANDLE GetDeviceInfo( HDEVINFO HardwareDeviceInfo, PSP_INTERFACE_DEVICE_DATA DeviceInfoData, char* portName );
