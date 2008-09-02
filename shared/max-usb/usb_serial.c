@@ -52,7 +52,6 @@ int usb_open( t_usbInterface* usbInt )
   {
     usbInt->deviceOpen = true;
 		//post( "USB opened at %s, deviceHandle = %d", usbInt->deviceName, usbInt->deviceHandle);
-		post( "mc.usb connected to a Make Controller." );
     return USB_OK;
   }
   #endif
@@ -69,8 +68,6 @@ int usb_open( t_usbInterface* usbInt )
 	{
 	  if( openDevice( usbInt ) == 0 )
 	  {
-		  post( "mc.usb connected to a Make Controller Kit at: %s", usbInt->deviceLocation );
-
 		  // now set up to get called back when it's unplugged
 		  result = DoRegisterForNotification( usbInt );
 
@@ -101,7 +98,6 @@ void usb_close( t_usbInterface* usbInt )
     usbInt->deviceHandle = INVALID_HANDLE_VALUE;
     usbInt->deviceOpen = false;
     #endif
-	post( "mc.usb closed the Make Controller Kit USB connection." );
   }
 }
 
