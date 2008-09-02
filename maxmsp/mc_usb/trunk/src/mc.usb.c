@@ -22,7 +22,7 @@
 #include "mc_osc.h"
 #include "mcError.h"
 #include "usb_serial.h"
-
+#include "usb_enum.h"
 
 #define MAXSIZE 512
 #define MAX_READ_LENGTH 16384
@@ -40,6 +40,7 @@ typedef struct _mcUsb
   t_symbol *symval;
   //Max things
   void* mc_clock;
+  void* usb_clock;
   void *out0;
   //OSC things
   t_osc_packet* osc_packet;  //the current packet being created
@@ -61,6 +62,7 @@ void mcUsb_free(t_mcUsb *x);
 void mcUsb_anything(t_mcUsb *x, t_symbol *s, short ac, t_atom *av);
 void mcUsb_assist(t_mcUsb *x, void *b, long m, long a, char *s);
 void mcUsb_tick( t_mcUsb *x );
+void usb_tick( t_mcUsb *x );
 mcError mc_send_packet( t_mcUsb *x, t_usbInterface* u, char* packet, int length );
 bool mc_SLIP_receive( t_mcUsb *x );
 int mc_getMoreBytes( t_mcUsb *x );
@@ -116,13 +118,35 @@ void mcUsb_assist(t_mcUsb *x, void *b, long msg, long arg, char *s)
 
 // function that gets called back by the clock.
 void mcUsb_tick( t_mcUsb *x )
-{
-	mc_SLIP_receive( x );
-	
+{	
 	if( x->mc_usbInt->deviceOpen )
-	  clock_delay( x->mc_clock, 1 ); //set the delay interval for the next tick
+  {
+	  mc_SLIP_receive( x );
+    clock_delay( x->mc_clock, 1 ); //set the delay interval for the next tick
+  }
 	else
 	  clock_delay( x->mc_clock, 100 );
+}
+
+void usb_tick( t_mcUsb *x )
+{
+  t_usbInterface usbInt;
+  bool success = findUsbDevice( &usbInt );
+  
+  if( success && !x->mc_usbInt->deviceOpen ) // we found a new one, but we're not currently open
+  {
+    
+    usb_open( x->mc_usbInt );
+    if( !x->mc_usbInt->deviceOpen ) // if we're still not open, bail
+      return;
+    post( "mc.usb connected to a Make Controller." );        
+  }
+  else if( !success && x->mc_usbInt->deviceOpen ) // we're currently open but can no longer find the device
+  {
+    usb_close( x->mc_usbInt );
+    post( "mc.usb closed the Make Controller Kit USB connection." );
+  }
+  clock_delay( x->usb_clock, 1000 );
 }
 
 int mc_getMoreBytes( t_mcUsb *x )
@@ -153,15 +177,6 @@ bool mc_SLIP_receive( t_mcUsb *x )
   int started = 0, i;
   char *bufferPtr = x->osc_packet->packetBuf;
 	x->osc_packet->length = 0;
-
-  if( !x->mc_usbInt->deviceOpen )
-  {
-    usb_open( x->mc_usbInt );
-    if( !x->mc_usbInt->deviceOpen ) // if we're still not open, bail
-      return false;
-    else
-      post( "mc.usb connected to a Make Controller." );
-  }
 	
 	while( 1 )
 	{
@@ -279,6 +294,7 @@ void mcUsb_devicepath( t_mcUsb *x )
 void mcUsb_free(t_mcUsb *x)
 {
   freeobject( (t_object*)x->mc_clock );
+  freeobject( (t_object*)x->usb_clock );
   free( (t_osc_packet*)x->osc_packet );
   free( (t_osc*)x->Osc );
   free( (t_osc_message*)x->osc_message );
@@ -307,6 +323,9 @@ void *mcUsb_new( t_symbol *s, long ac, t_atom *av )
 	
 	new_mcUsb->mc_clock = clock_new( new_mcUsb, (method)mcUsb_tick );
 	clock_delay( new_mcUsb->mc_clock, 1 );  //set the clock running every millisecond
+  
+  new_mcUsb->usb_clock = clock_new( new_mcUsb, (method)usb_tick );
+	clock_delay( new_mcUsb->usb_clock, 1000);  //set the clock running once a second
 	
 	new_mcUsb->Osc = ( t_osc* )malloc( sizeof( t_osc ) );
 	Osc_resetOutBuffer( new_mcUsb->Osc );
@@ -322,8 +341,8 @@ void *mcUsb_new( t_symbol *s, long ac, t_atom *av )
 	new_mcUsb->usbReadBufLength = 0;
 	
 	new_mcUsb->mc_usbInt = usb_init( usbConn, &new_mcUsb->mc_usbInt );
-	usb_open( new_mcUsb->mc_usbInt );
-	
+  usb_tick( new_mcUsb );
+  	
 	return( new_mcUsb );
 }
 
