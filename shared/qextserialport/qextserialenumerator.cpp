@@ -38,14 +38,13 @@
 		DWORD size = 0;
 		RegQueryValueEx(key, property, NULL, NULL, NULL, & size);
 		BYTE * buff = new BYTE[size];
-		if (RegQueryValueEx(key, property, NULL, NULL, buff, & size) == ERROR_SUCCESS) {
-			return TCHARToQStringN(buff, size);
-			delete [] buff;
-		} else {
+    QString result;
+		if (RegQueryValueEx(key, property, NULL, NULL, buff, & size) == ERROR_SUCCESS)
+			result = TCHARToQStringN(buff, size);
+		else
 			qWarning("QextSerialEnumerator::getRegKeyValue: can not obtain value from registry");
-			delete [] buff;
-			return QString();
-		}
+		delete [] buff;
+    return result;
 	}
 	
 	//static
