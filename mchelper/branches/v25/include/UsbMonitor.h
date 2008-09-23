@@ -22,6 +22,7 @@
 
 #include "BoardType.h"
 #include "MainWindow.h"
+#include "qextserialenumerator.h"
 
 class MainWindow;
 
@@ -35,11 +36,16 @@ public:
 signals:
   void newBoards(QStringList ports, BoardType::Type type);
   void boardsRemoved(QString key);
+
+private slots:
+  void onDeviceDiscovered(QextPortInfo info);
+  void onDeviceTerminated(QextPortInfo info);
   
 private:
   QStringList usbSerialList;
   QStringList usbSambaList;
   MainWindow* mainWindow;
+  QextSerialEnumerator enumerator;
 };
 
 #endif // USB_MONITOR_H_

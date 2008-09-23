@@ -32,7 +32,7 @@ PacketUsbSerial::PacketUsbSerial(QString portName)
 PacketUsbSerial::~PacketUsbSerial( )
 {
 	port->close();
-	delete port;
+	port->deleteLater();
 }
 
 /*

@@ -17,7 +17,6 @@
 
 #include "UsbMonitor.h"
 #include "PacketUsbSerial.h"
-#include "qextserialenumerator.h"
 
 #define MAKE_CONTROLLER_VID 0xEB03
 #define MAKE_CONTROLLER_PID 0x0920
@@ -34,6 +33,11 @@ UsbMonitor::UsbMonitor(MainWindow* mw) : QThread()
   connect(this, SIGNAL(newBoards(QStringList, BoardType::Type)), 
                        mainWindow, SLOT(onUsbDeviceArrived(QStringList, BoardType::Type)));
   connect(this, SIGNAL(boardsRemoved(QString)), mainWindow, SLOT(onDeviceRemoved(QString)));
+  connect( &enumerator, SIGNAL(deviceDiscovered(QextPortInfo)), this, SLOT(onDeviceDiscovered(QextPortInfo)));
+  connect( &enumerator, SIGNAL(deviceTerminated(QextPortInfo)), this, SLOT(onDeviceTerminated(QextPortInfo)));
+  #ifdef Q_WS_MAC
+  enumerator.setUpNotifications();
+  #endif
 }
 
 /*
@@ -105,6 +109,19 @@ void UsbMonitor::run( )
     sleep(1); // scan once per second
   }
 }
+
+void UsbMonitor::onDeviceDiscovered(QextPortInfo info)
+{
+  qDebug("new device - %s", qPrintable(info.portName));
+}
+
+void UsbMonitor::onDeviceTerminated(QextPortInfo info)
+{
+  qDebug("device removed - %s", qPrintable(info.portName));
+}
+
+
+
 
 
 
