@@ -10,11 +10,16 @@
 
 #include <QString>
 #include <QList>
+#include <QObject>
 
 #ifdef _TTY_WIN_
 	#include <windows.h>
 	#include <setupapi.h>
 #endif /*_TTY_WIN_*/
+
+#ifdef Q_WS_MAC
+  #include <IOKit/usb/IOUSBLib.h>
+#endif
 
 /*!
  * Structure containing port information.
@@ -28,7 +33,6 @@ struct QextPortInfo {
   int productID;      ///< Product ID
 };
 
-
 /*!
  * Serial port enumerator. This class provides list of ports available in the system.
  * 
@@ -38,10 +42,14 @@ struct QextPortInfo {
  * OS X implementation, see
  * http://developer.apple.com/documentation/DeviceDrivers/Conceptual/AccessingHardware/AH_Finding_Devices/chapter_4_section_2.html
  */
-class QextSerialEnumerator
+class QextSerialEnumerator : public QObject
 {
-	private:
+	Q_OBJECT
+  public:
+    QextSerialEnumerator( );
+  
 		#ifdef _TTY_WIN_
+    private:
 			/*!
 			 * Get value of specified property from the registry.
 			 * 	\param key handle to an open key.
@@ -70,12 +78,19 @@ class QextSerialEnumerator
   
     #ifdef _TTY_POSIX_
     #ifdef Q_WS_MAC
+      
+      void onDeviceDiscoveredOSX( io_object_t service );
+      void onDeviceTerminatedOSX( io_object_t service );
+      void setUpNotificationOSX( );
+      
+    private:
       /*!
        * Search for serial ports using IOKit.
        * 	\param infoList list with result.
        */
       static void scanPortsOSX(QList<QextPortInfo> & infoList);
       static void getSamBaBoards(QList<QextPortInfo> & infoList);
+      static bool getServiceDetails( io_object_t service, QextPortInfo* portInfo );
       
     #else /* Q_WS_MAC */
       /*!
@@ -92,6 +107,11 @@ class QextSerialEnumerator
 		 * 	\return list of ports currently available in the system.
 		 */
 		static QList<QextPortInfo> getPorts();
+    void setUpNotifications( void );
+  
+  signals:
+    void deviceDiscovered( const QextPortInfo & info );
+    void deviceTerminated( const QextPortInfo & info );
 };
 
 #endif /*_QEXTSERIALENUMERATOR_H_*/
