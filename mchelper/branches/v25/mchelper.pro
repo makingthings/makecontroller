@@ -1,8 +1,9 @@
 MCHELPER_VERSION = "2.5.0"
 TEMPLATE = app
 TARGET = mchelper
-# CONFIG += qt release
 CONFIG += qt debug
+#CONFIG += qt release
+#CONFIG -= debug
 
 FORMS = layouts/mainwindow.ui \
         layouts/inspector.ui \
@@ -83,6 +84,10 @@ unix{
 win32:HEADERS += src/qextserialport/win_qextserialport.h
 win32:SOURCES += src/qextserialport/win_qextserialport.cpp
 win32:DEFINES += _TTY_WIN_
+win32:DEFINES += WINVER=0x0501
+win32:LIBS += -lSetupapi
+win32:debug:CONFIG += console
+
 
 # *******************************************
 #              test suite
