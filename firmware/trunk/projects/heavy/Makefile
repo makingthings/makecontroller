@@ -84,7 +84,6 @@ ARM_SRC= \
   ../../core/freertos/portable/GCC/ARM7_AT91SAM7S/portISR.c \
   ../../core/makingthings/SAM7_EMAC_ISR.c \
   ../../core/makingthings/USBIsr.c \
-  ../../core/startup/Cstartup_SAM7.c \
   ../../core/makingthings/analogin_isr.c \
   ../../core/makingthings/fasttimer_isr.c \
   ../../core/makingthings/serial_isr.c \
@@ -118,10 +117,10 @@ INCLUDEDIRS = \
 CC=arm-elf-gcc
 OBJCOPY=arm-elf-objcopy
 ARCH=arm-elf-ar
-CRT0=../../core/startup/boot.s
+CRT0=../../core/startup/AT91SAM7_Startup.s ../../core/startup/crt0.s
 DEBUG=
 OPTIM=-O2
-LDSCRIPT=../../core/startup/atmel-rom.ld
+LDSCRIPT=../../core/startup/make-controller.ld
 
 #
 # CFLAGS common to both the THUMB and ARM mode builds
@@ -137,6 +136,8 @@ $(INCLUDEDIRS) \
 -Wno-strict-aliasing  \
 -D SAM7_GCC  \
 -D THUMB_INTERWORK \
+-D__FLASH_BUILD \
+-DSUPERVISOR_START \
 -mthumb-interwork \
 -mcpu=arm7tdmi  \
 -T$(LDSCRIPT) \
@@ -153,12 +154,12 @@ output/$(OUTPUT).bin : output/$(OUTPUT).elf
 	$(OBJCOPY) output/$(OUTPUT).elf -O binary output/$(OUTPUT).bin
 	
 output/$(OUTPUT).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CRT0)
-	$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles $(CRT0) $(LINKER_FLAGS)
+	$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles -x assembler-with-cpp $(CRT0) $(LINKER_FLAGS)
 
-$(THUMB_OBJ) : %.o : %.c
+$(THUMB_OBJ) : %.o : %.c config.h
 	$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@
 
-$(ARM_OBJ) : %.o : %.c
+$(ARM_OBJ) : %.o : %.c config.h
 	$(CC) -c $(CFLAGS) $< -o $@
   	    
 clean :
