@@ -139,8 +139,14 @@ __reset_handler:
   
 #ifdef __FLASH_BUILD
   /* Copy exception vectors into Internal SRAM */
-  mov r8, #0x00200000
-  ldr r9, =_vectors
+  /* 
+  *  MakingThings
+  *  mov r8, #0x00200000
+  *  ldr r9, =_vectors
+  */
+  ldr r8, =__vectors_ram_start__
+  ldr r9, =__vectors_load_start__
+  /* end MakingThings */
   ldmia r9!, {r0-r7}
   stmia r8!, {r0-r7}
   ldmia r9!, {r0-r6}
