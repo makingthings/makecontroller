@@ -132,6 +132,7 @@ int XBee_SetActive( int state )
     if( XBee )
     {
       Free( XBee );
+      Free( XBee->currentPkt );
       XBee = NULL;
     }
   }
