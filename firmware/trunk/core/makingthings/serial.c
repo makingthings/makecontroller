@@ -586,6 +586,8 @@ int Serial_Init()
 
 int Serial_Deinit()
 {
+  vQueueDelete( Serial.receiveQueue );
+  vQueueDelete( Serial.transmitQueue );
   return CONTROLLER_OK;
 }
 
