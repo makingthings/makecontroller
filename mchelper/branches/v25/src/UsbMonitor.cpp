@@ -37,6 +37,20 @@ UsbMonitor::UsbMonitor(MainWindow* mw) : QThread()
   connect( &enumerator, SIGNAL(deviceTerminated(QextPortInfo)), this, SLOT(onDeviceTerminated(QextPortInfo)));
   #ifdef Q_WS_MAC
   enumerator.setUpNotifications();
+  #elif (defined Q_WS_WIN)
+  QList<QextPortInfo> ports = enumerator.getPorts();
+  if( ports.count())
+  {
+    QStringList boards;
+    foreach( QextPortInfo port, ports )
+    {
+      if(port.friendName.startsWith("Make Controller Ki"))
+        boards << port.portName.toAscii();
+    }
+    if( boards.count())
+      emit newBoards(boards, BoardType::UsbSerial);
+  }
+  enumerator.setUpNotifications(mainWindow);
   #endif
 }
 
@@ -110,14 +124,23 @@ void UsbMonitor::run( )
   }
 }
 
+#ifdef Q_WS_WIN
+void UsbMonitor::onDeviceChangeEventWin( WPARAM wParam, LPARAM lParam )
+{
+  enumerator.onDeviceChangeWin( wParam, lParam );
+}
+#endif
+
 void UsbMonitor::onDeviceDiscovered(QextPortInfo info)
 {
-  qDebug("new device - %s", qPrintable(info.portName));
+  QStringList ports;
+  ports << info.portName.toAscii();
+  emit newBoards(ports, BoardType::UsbSerial);
 }
 
 void UsbMonitor::onDeviceTerminated(QextPortInfo info)
 {
-  qDebug("device removed - %s", qPrintable(info.portName));
+  emit boardsRemoved(info.portName.toAscii());
 }
 
 

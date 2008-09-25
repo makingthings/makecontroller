@@ -51,6 +51,7 @@ QextSerialEnumerator::QextSerialEnumerator( )
 		else
 			qWarning("QextSerialEnumerator::getRegKeyValue: can not obtain value from registry");
 		delete [] buff;
+		RegCloseKey(key);
     return result;
 	}
 	
@@ -83,64 +84,113 @@ QextSerialEnumerator::QextSerialEnumerator( )
 		bool ok = true;
 		SP_DEVICE_INTERFACE_DATA ifcData;
 		ifcData.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
-		SP_DEVICE_INTERFACE_DETAIL_DATA * detData = NULL;
-		DWORD detDataSize = 0;
-		DWORD oldDetDataSize = 0;
+		PSP_DEVICE_INTERFACE_DETAIL_DATA detData = NULL;
+		DWORD detDataPredictedLength;
 		
 		for (DWORD i = 0; ok; i++) {
 			ok = SetupDiEnumDeviceInterfaces(devInfo, NULL, guidDev, i, &ifcData);
-			if (ok) {
+			if (ok)
+			{
 				SP_DEVINFO_DATA devData = {sizeof(SP_DEVINFO_DATA)};
 				//check for required detData size
-				SetupDiGetDeviceInterfaceDetail(devInfo, & ifcData, NULL, 0, & detDataSize, & devData);
-				//if larger than old detData size then reallocate the buffer
-				if (detDataSize > oldDetDataSize) {
-					delete [] detData;
-					detData = (SP_DEVICE_INTERFACE_DETAIL_DATA *) new char[detDataSize];
-					detData->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
-					oldDetDataSize = detDataSize;
-				}
+				SetupDiGetDeviceInterfaceDetail(devInfo, & ifcData, NULL, 0, &detDataPredictedLength, & devData);
+				detData = (PSP_DEVICE_INTERFACE_DETAIL_DATA)malloc(detDataPredictedLength);
+				detData->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
+
 				//check the details
-				if (SetupDiGetDeviceInterfaceDetail(devInfo, & ifcData, detData, detDataSize, 
-													NULL, & devData)) {
+				if (SetupDiGetDeviceInterfaceDetail(devInfo, &ifcData, detData, detDataPredictedLength, NULL, & devData)) {
 					// Got a device. Get the details.
 					QextPortInfo info;
-					info.friendName = getDeviceProperty(devInfo, & devData, SPDRP_FRIENDLYNAME);
-					info.physName = getDeviceProperty(devInfo, & devData, SPDRP_PHYSICAL_DEVICE_OBJECT_NAME);
-					info.enumName = getDeviceProperty(devInfo, & devData, SPDRP_ENUMERATOR_NAME);
-					//anyway, to get the port name we must still open registry directly :( ??? 
-					//Eh...			
-					HKEY devKey = SetupDiOpenDevRegKey(devInfo, & devData, DICS_FLAG_GLOBAL, 0,
-														DIREG_DEV, KEY_READ);
-					info.portName = getRegKeyValue(devKey, TEXT("PortName"));
-					
-					// MakingThings
-					QRegExp rx("COM(\\d+)");
-					if(info.portName.contains(rx))
-                    {
-                      int portnum = rx.cap(1).toInt();
-                      if(portnum > 9)
-                        info.portName.prepend("\\\\.\\"); // COM ports greater than 9 need \\.\ prepended
-                    }
-                    // end MakingThings
-					
-					RegCloseKey(devKey);
+					getDeviceDetails( &info, devInfo, &devData );
 					infoList.append(info);
-				} else {
+				}
+				else
 					qCritical("SetupDiGetDeviceInterfaceDetail failed. Error code: %ld", GetLastError());
-					delete [] detData;
-					return;
-				}
-			} else {
-				if (GetLastError() != ERROR_NO_MORE_ITEMS) {
-					delete [] detData;
-					qCritical("SetupDiEnumDeviceInterfaces failed. Error code: %ld", GetLastError());
-					return;
-				}
+				delete detData;
 			}
+			else if (GetLastError() != ERROR_NO_MORE_ITEMS)
+				return qCritical("SetupDiEnumDeviceInterfaces failed. Error code: %ld", GetLastError());
 		}
-		delete [] detData;
+		SetupDiDestroyDeviceInfoList(devInfo);
 	}
+  
+  void QextSerialEnumerator::setUpNotificationWin( QMainWindow* win )
+  {    
+    DEV_BROADCAST_DEVICEINTERFACE dbh;
+    ZeroMemory(&dbh, sizeof(dbh));
+    dbh.dbcc_size = sizeof(dbh);
+    dbh.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+    CopyMemory(&dbh.dbcc_classguid, &GUID_CLASS_COMPORT, sizeof(GUID));
+    
+    notificationHandle = RegisterDeviceNotification( win->winId( ), &dbh, DEVICE_NOTIFY_WINDOW_HANDLE );
+    if(!notificationHandle)
+      qWarning( "RegisterDeviceNotification failed: %ld", GetLastError());
+  }
+  
+  LRESULT QextSerialEnumerator::onDeviceChangeWin( WPARAM wParam, LPARAM lParam )
+  {
+    if ( DBT_DEVICEARRIVAL == wParam || DBT_DEVICEREMOVECOMPLETE == wParam )
+    {
+      PDEV_BROADCAST_HDR pHdr = (PDEV_BROADCAST_HDR)lParam;
+      if( pHdr->dbch_devicetype == DBT_DEVTYP_DEVICEINTERFACE )
+      {
+        PDEV_BROADCAST_DEVICEINTERFACE pDevInf = (PDEV_BROADCAST_DEVICEINTERFACE)pHdr;
+        QString devId = TCHARToQString(pDevInf->dbcc_name);
+        // devId: \\?\USB#Vid_04e8&Pid_503b#0002F9A9828E0F06#{a5dcbf10-6530-11d2-901f-00c04fb951ed}
+        devId.remove("\\\\?\\"); // USB#Vid_04e8&Pid_503b#0002F9A9828E0F06#{a5dcbf10-6530-11d2-901f-00c04fb951ed}
+        devId.remove(QRegExp("#\\{(.+)\\}")); // USB#Vid_04e8&Pid_503b#0002F9A9828E0F06
+        devId.replace("#", "\\"); // USB\Vid_04e8&Pid_503b\0002F9A9828E0F06
+        devId = devId.toUpper();
+        //qDebug("devname: %s", qPrintable(devId));
+        QString enumclass = devId.left(devId.indexOf("\\")); // USB
+        
+        DWORD dwFlag = DBT_DEVICEARRIVAL == wParam ? (DIGCF_ALLCLASSES | DIGCF_PRESENT) : DIGCF_ALLCLASSES;
+        HDEVINFO hDevInfo = SetupDiGetClassDevs(&GUID_CLASS_COMPORT,NULL,NULL,dwFlag);
+        SP_DEVINFO_DATA spDevInfoData;
+        spDevInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
+        
+        for(int i=0; SetupDiEnumDeviceInfo(hDevInfo, i, &spDevInfoData); i++)
+        {
+          DWORD nSize=0 ;
+          TCHAR buf[MAX_PATH];
+          if ( !SetupDiGetDeviceInstanceId(hDevInfo, &spDevInfoData, buf, sizeof(buf), &nSize) )
+            qDebug("SetupDiGetDeviceInstanceId(): %ld", GetLastError());
+          if( devId == TCHARToQString(buf) ) // we found a match
+          {
+            QextPortInfo info;
+            getDeviceDetails( &info, hDevInfo, &spDevInfoData, wParam );
+            if( wParam == DBT_DEVICEARRIVAL )
+              emit deviceDiscovered(info);
+            else if( wParam == DBT_DEVICEREMOVECOMPLETE )
+              emit deviceTerminated(info);
+            break;
+          }
+        }
+        SetupDiDestroyDeviceInfoList(hDevInfo);
+      }
+    }
+    return 0;
+  }
+  
+  bool QextSerialEnumerator::getDeviceDetails( QextPortInfo* portInfo, HDEVINFO devInfo, PSP_DEVINFO_DATA devData, WPARAM wParam )
+  {
+    portInfo->friendName = getDeviceProperty(devInfo, devData, SPDRP_FRIENDLYNAME);
+    if( wParam == DBT_DEVICEARRIVAL)
+      portInfo->physName = getDeviceProperty(devInfo, devData, SPDRP_PHYSICAL_DEVICE_OBJECT_NAME);
+    portInfo->enumName = getDeviceProperty(devInfo, devData, SPDRP_ENUMERATOR_NAME);
+    HKEY devKey = SetupDiOpenDevRegKey(devInfo, devData, DICS_FLAG_GLOBAL, 0,
+                                        DIREG_DEV, KEY_READ);
+    portInfo->portName = getRegKeyValue(devKey, TEXT("PortName"));
+    QRegExp rx("COM(\\d+)");
+    if(portInfo->portName.contains(rx))
+    {
+      int portnum = rx.cap(1).toInt();
+      if(portnum > 9)
+        portInfo->portName.prepend("\\\\.\\"); // COM ports greater than 9 need \\.\ prepended
+    }
+    return true;
+  }
+
 
 #endif /*_TTY_WIN_*/
 
@@ -618,13 +668,14 @@ QList<QextPortInfo> QextSerialEnumerator::getPorts()
 	return ports;
 }
 
-void QextSerialEnumerator::setUpNotifications( void )
+void QextSerialEnumerator::setUpNotifications( QMainWindow* win )
 {
   #ifdef _TTY_WIN_
-    qCritical("Notifications for Windows are not implemented yet");
+    setUpNotificationWin( win );
   #endif
   #ifdef _TTY_POSIX_
   #ifdef Q_WS_MAC
+    (void)win;
     setUpNotificationOSX( ); 
   #else /* Q_WS_MAC */
     qCritical("Notifications for *Nix/FreeBSD are not implemented yet");

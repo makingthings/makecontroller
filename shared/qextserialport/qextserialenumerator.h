@@ -10,11 +10,12 @@
 
 #include <QString>
 #include <QList>
-#include <QObject>
+#include <QMainWindow>
 
 #ifdef _TTY_WIN_
 	#include <windows.h>
 	#include <setupapi.h>
+  #include <dbt.h>
 #endif /*_TTY_WIN_*/
 
 #ifdef Q_WS_MAC
@@ -49,6 +50,7 @@ class QextSerialEnumerator : public QObject
     QextSerialEnumerator( );
   
 		#ifdef _TTY_WIN_
+    LRESULT onDeviceChangeWin( WPARAM wParam, LPARAM lParam );
     private:
 			/*!
 			 * Get value of specified property from the registry.
@@ -74,6 +76,10 @@ class QextSerialEnumerator : public QObject
 			 * 	\param infoList list with result.
 			 */
 			static void setupAPIScan(QList<QextPortInfo> & infoList);
+      void setUpNotificationWin( QMainWindow* win );
+      static bool getDeviceDetails( QextPortInfo* portInfo, HDEVINFO devInfo, 
+                              PSP_DEVINFO_DATA devData, WPARAM wParam = DBT_DEVICEARRIVAL );
+      HDEVNOTIFY notificationHandle;
 		#endif /*_TTY_WIN_*/
   
     #ifdef _TTY_POSIX_
@@ -81,7 +87,6 @@ class QextSerialEnumerator : public QObject
       
       void onDeviceDiscoveredOSX( io_object_t service );
       void onDeviceTerminatedOSX( io_object_t service );
-      void setUpNotificationOSX( );
       
     private:
       /*!
@@ -91,6 +96,7 @@ class QextSerialEnumerator : public QObject
       static void scanPortsOSX(QList<QextPortInfo> & infoList);
       static void getSamBaBoards(QList<QextPortInfo> & infoList);
       static bool getServiceDetails( io_object_t service, QextPortInfo* portInfo );
+      void setUpNotificationOSX( );
       
     #else /* Q_WS_MAC */
       /*!
@@ -107,7 +113,7 @@ class QextSerialEnumerator : public QObject
 		 * 	\return list of ports currently available in the system.
 		 */
 		static QList<QextPortInfo> getPorts();
-    void setUpNotifications( void );
+    void setUpNotifications( QMainWindow* win = 0 );
   
   signals:
     void deviceDiscovered( const QextPortInfo & info );

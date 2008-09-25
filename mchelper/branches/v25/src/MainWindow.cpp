@@ -19,11 +19,17 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   this->no_ui = no_ui;
   readSettings( );
   
+  // add an item to the list as a UI cue that no boards were found.
+  // remove when boards have been discovered
+  deviceListPlaceholder = QListWidgetItem( tr("No Make Controllers found...") );
+  deviceListPlaceholder.setData( Qt::ForegroundRole, Qt::gray );
+  deviceList->addItem( &deviceListPlaceholder );
+  
   // initializations
   inspector = new Inspector(this);
-  networkMonitor = new NetworkMonitor(this);
-  usbMonitor = new UsbMonitor(this);
   oscXmlServer = new OscXmlServer(this);
+  usbMonitor = new UsbMonitor(this);
+  networkMonitor = new NetworkMonitor(this);
   preferences = new Preferences(this, networkMonitor, oscXmlServer);
   uploader = new Uploader(this);
   about = new About();
@@ -43,14 +49,8 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   connect( commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onCommandLine()));
   connect( sendButton, SIGNAL(clicked()), this, SLOT(onCommandLine()));
   
-  // add an item to the list as a UI cue that no boards were found.
-	// remove when boards have been discovered
-	deviceListPlaceholder = QListWidgetItem( tr("No Make Controllers found...") );
-	deviceListPlaceholder.setData( Qt::ForegroundRole, Qt::gray );
-	deviceList->addItem( &deviceListPlaceholder );
-  
   // the USB monitor runs in a separate thread...start it up
-  usbMonitor->start();
+  //usbMonitor->start();
   
   // default these to off until we see a board
   actionUpload->setEnabled(false);
@@ -112,6 +112,15 @@ void MainWindow::closeEvent( QCloseEvent *qcloseevent )
 	(void)qcloseevent;
 	writeSettings( );
 }
+
+#ifdef Q_WS_WIN
+bool MainWindow::winEvent( MSG* msg, long* result )
+{
+  if ( msg->message == WM_DEVICECHANGE )
+    usbMonitor->onDeviceChangeEventWin( msg->wParam, msg->lParam );
+  return false;
+}
+#endif
 
 /*
  Called back when we get a right click on the device list.
@@ -282,7 +291,7 @@ void MainWindow::onDeviceRemoved(QString key)
   QList<Board*> boards = getConnectedBoards();
   foreach(Board *board, boards)
   {
-    if(board->key() == key)
+    if( board->key() == key )
     {
       Board* brd = (Board*)deviceList->takeItem(deviceList->row(board));
       brd->deleteLater();

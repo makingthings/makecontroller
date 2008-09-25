@@ -75,6 +75,9 @@ private:
   void closeEvent( QCloseEvent *qcloseevent );
   void boardInit(Board *board);
   QColor msgColor(MsgType::Type type);
+  #ifdef Q_WS_WIN
+  bool winEvent( MSG* msg, long* result );
+  #endif
   
 private slots:
   void onDeviceSelectionChanged();

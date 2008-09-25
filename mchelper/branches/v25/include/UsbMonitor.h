@@ -32,6 +32,9 @@ class UsbMonitor : public QThread
 public:
   UsbMonitor(MainWindow* mw);
   void run();
+  #ifdef Q_WS_WIN
+  void onDeviceChangeEventWin( WPARAM wParam, LPARAM lParam );
+  #endif
   
 signals:
   void newBoards(QStringList ports, BoardType::Type type);
