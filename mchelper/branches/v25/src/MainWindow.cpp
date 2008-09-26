@@ -44,6 +44,8 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   connect( actionUpload, SIGNAL(triggered()), uploader, SLOT(show()));
   connect( actionClearConsole, SIGNAL(triggered()), outputConsole, SLOT(clear()));
   connect( actionAbout, SIGNAL(triggered()), about, SLOT(show()));
+  connect( actionResetDevice, SIGNAL(triggered()), this, SLOT(onDeviceResetRequest()));
+  connect( actionSAMBA, SIGNAL(triggered()), this, SLOT(onSamBaRequest()));
   
   // command line connections
   connect( commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onCommandLine()));
@@ -142,7 +144,11 @@ void DeviceList::contextMenuEvent(QContextMenuEvent *event)
     if(brd->type() == BoardType::UsbSamba)
       menu.addAction(mw->uploadAction());
     else if(brd->type() == BoardType::Ethernet || brd->type() == BoardType::UsbSerial)
+    {
       menu.addAction(mw->inspectorAction());
+      menu.addAction(mw->resetAction());
+      menu.addAction(mw->sambaAction());
+    }
     menu.exec(event->globalPos());
   }
 }
@@ -188,12 +194,16 @@ void MainWindow::onDeviceSelectionChanged()
     {
       actionUpload->setEnabled(true);
       actionInspector->setEnabled(false);
+      actionResetDevice->setEnabled(false);
+      actionSAMBA->setEnabled(false);
     }
     else
     {
       inspector->setData(brd);
       actionInspector->setEnabled(true);
       actionUpload->setEnabled(false);
+      actionResetDevice->setEnabled(true);
+      actionSAMBA->setEnabled(true);
     }
   }
 }
@@ -448,6 +458,26 @@ void MainWindow::onCommandLine()
   }
   
   commandLine->clearEditText();
+}
+
+void MainWindow::onDeviceResetRequest()
+{
+  Board* brd = getCurrentBoard();
+  if(brd)
+  {
+    brd->sendMessage("/system/reset 1");
+    message (tr("Resetting Board"), MsgType::Notice, "mchelper");
+  }
+}
+
+void MainWindow::onSamBaRequest()
+{
+  Board* brd = getCurrentBoard();
+  if(brd)
+  {
+    brd->sendMessage("/system/samba 1");
+    message (tr("Setting board into SAM-BA mode"), MsgType::Notice, "mchelper");
+  }
 }
 
 

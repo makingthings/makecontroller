@@ -49,6 +49,8 @@ public:
   // make these available to the device list
   QAction* uploadAction() { return actionUpload; }
   QAction* inspectorAction() { return actionInspector; }
+  QAction* resetAction() { return actionResetDevice; }
+  QAction* sambaAction() { return actionSAMBA; }
   void statusMsg(QString msg, int duration = 3500);
   
 public slots:
@@ -83,6 +85,8 @@ private slots:
   void onDeviceSelectionChanged();
   void onCommandLine();
   void onDoubleClick();
+  void onDeviceResetRequest();
+  void onSamBaRequest();
 };
 
 #include "NetworkMonitor.h"
