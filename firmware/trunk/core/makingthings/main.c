@@ -130,6 +130,13 @@ static void prvSetupHardware( void )
 	/* Most setup is performed by the low level init function called from the
 	startup asm file.*/
 
+  // ENABLE HARDWARE RESET
+  while((AT91C_BASE_RSTC->RSTC_RSR & (AT91C_RSTC_SRCMP | AT91C_RSTC_NRSTL)) != (AT91C_RSTC_NRSTL));
+  AT91C_BASE_RSTC->RSTC_RMR = (0xa5 << 24)
+    | AT91C_RSTC_URSTEN
+    | ((12 - 1) << 8) // 125ms == (1 << 12) / 32768
+  ;
+
   // EEPROM DISABLE
   #if ( CONTROLLER_VERSION == 90 )
     AT91C_BASE_PIOB->PIO_PER = 1 << 17; // Set PB17 - the EEPROM ~enable - in PIO mode

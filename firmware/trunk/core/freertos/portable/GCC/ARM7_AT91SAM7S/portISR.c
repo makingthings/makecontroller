@@ -156,6 +156,32 @@ void vPortYieldProcessor( void )
 	}
 
 #endif
+
+
+/*-----------------------------------------------------------*/
+
+/*
+ * This is provided for use in reset routines which need to disable all interrupts; even FIQ, prior to messing with the exception vector table.
+ * There is no complementary function; so as to discourage other use of it.
+ * There is also not a macro version of this.
+ * If you're doing this, speed isn't the most important thing in the world.
+ */
+void vPortDisableAllInterrupts( void );
+void vPortDisableAllInterrupts( void )
+{
+	asm volatile (
+	"	mrs	r3, cpsr	\n"
+	"	orr	r3, r3, %0	\n"
+	"	msr	cpsr_c, r3	\n"
+	:
+	:
+		"n" (0x80 | 0x40)
+	:
+		"r3"
+	);
+}
+
+
 /*-----------------------------------------------------------*/
 
 /*

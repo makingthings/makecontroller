@@ -489,6 +489,8 @@ register unsigned portLONG ulBytesRemainingInBuffer, ulRemainingSectionBytes;
 /* See the header file for descriptions of public functions. */
 xSemaphoreHandle xEMACInit( void )
 {
+	unsigned portLONG	saved_RSTC_RMR;
+
 	/* Code supplied by Atmel -------------------------------*/
 
 	/* Disable pull up on RXDV => PHY normal mode (not in test mode),
@@ -514,17 +516,36 @@ xSemaphoreHandle xEMACInit( void )
     AT91C_BASE_PIOB->PIO_CODR = 1 << 13;
   #endif
 
-	/* After PHY power up, hardware reset. */
-	AT91C_BASE_RSTC->RSTC_RMR = emacRESET_KEY | emacRESET_LENGTH;
-	AT91C_BASE_RSTC->RSTC_RCR = emacRESET_KEY | AT91C_RSTC_EXTRST;
+	/* MAKINGTHINGS
+	  Critical section while commandeering the RSTC. */
+  	portENTER_CRITICAL();
 
-	/* Wait for hardware reset end. */
-	while( !( AT91C_BASE_RSTC->RSTC_RSR & AT91C_RSTC_NRSTL ) )
+	/* We do not have to do anything special with the RSTC interrupt, since the following disables it in RSTC_RMR. */
+
+	/* Save prior RTSC setup to restore afterward. */
+	saved_RSTC_RMR = AT91C_BASE_RSTC->RSTC_RMR;
+
+	/* Wait until it is safe to write to RSTC_RCR. */
+	while(AT91C_BASE_RSTC->RSTC_RSR & AT91C_RSTC_SRCMP)
 	{
 		portNOP();
 	}
 
-	portNOP();
+	/* After PHY power up, hardware reset. */
+	AT91C_BASE_RSTC->RSTC_RMR = emacRESET_KEY | emacRESET_LENGTH;
+	AT91C_BASE_RSTC->RSTC_RCR = emacRESET_KEY | AT91C_RSTC_EXTRST;
+
+	/* Wait for hardware reset end and for NRST to not be asserted. */
+	while((AT91C_BASE_RSTC->RSTC_RSR & (AT91C_RSTC_SRCMP | AT91C_RSTC_NRSTL)) != (AT91C_RSTC_NRSTL))
+	{
+		portNOP();
+	}
+
+	/* Restore prior RTSC setup. */
+	AT91C_BASE_RSTC->RSTC_RMR = (saved_RSTC_RMR & ~(0xff << 24)) | (0xa5 << 24);
+
+  	portEXIT_CRITICAL();
+  /* end MAKINGTHINGS */
 
 	/* Setup the pins. */
 	AT91C_BASE_PIOB->PIO_ASR = emacPERIPHERAL_A_SETUP;
