@@ -63,7 +63,7 @@ class Osc
 		
     void setPreamble( QString preamble ) { this->preamble = preamble; }
     QString getPreamble( );
-		bool createMessage( QString msg, OscMessage *msg );
+		bool createMessage( QString msg, OscMessage *oscMsg );
 	  		
 	private:
 		char* findDataTag( char* message, int length );
