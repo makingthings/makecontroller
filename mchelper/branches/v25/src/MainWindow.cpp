@@ -49,8 +49,13 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   connect( commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onCommandLine()));
   connect( sendButton, SIGNAL(clicked()), this, SLOT(onCommandLine()));
   
-  // the USB monitor runs in a separate thread...start it up
-  //usbMonitor->start();
+  #ifndef Q_WS_WIN
+  #ifndef Q_WS_MAC
+  // the USB monitor runs in a separate thread...start it up.
+  // only need to do this on non-Windows/OSX machines since automatic device detection is not implemented
+  usbMonitor->start();
+  #endif
+  #endif
   
   // default these to off until we see a board
   actionUpload->setEnabled(false);
