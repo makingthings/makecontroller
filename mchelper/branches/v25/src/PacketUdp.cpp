@@ -52,7 +52,7 @@ bool PacketUdp::sendPacket( char* packet, int length )
 void PacketUdp::newMessage( QByteArray message )
 {
 	pingTimer.start( PING_TIMEOUT ); // reset our timer
-  if(board != NULL);
+  if(board != NULL)
     board->msgReceived(message);
 }
 

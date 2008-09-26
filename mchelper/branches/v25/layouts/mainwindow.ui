@@ -128,6 +128,8 @@
     </property>
     <addaction name="actionInspector" />
     <addaction name="actionUpload" />
+    <addaction name="actionResetDevice" />
+    <addaction name="actionSAMBA" />
    </widget>
    <widget class="QMenu" name="menuHelp" >
     <property name="title" >
@@ -189,6 +191,16 @@
    </property>
    <property name="shortcut" >
     <string>Ctrl+U</string>
+   </property>
+  </action>
+  <action name="actionResetDevice" >
+   <property name="text" >
+    <string>Reset Device</string>
+   </property>
+  </action>
+  <action name="actionSAMBA" >
+   <property name="text" >
+    <string>Set Device to SAM-BA</string>
    </property>
   </action>
  </widget>
