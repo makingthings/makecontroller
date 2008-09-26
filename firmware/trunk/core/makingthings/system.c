@@ -28,11 +28,22 @@
 #include "system.h"
 #include "config.h"
 #include "AT91SAM7X256.h"
+#include "portmacro.h"
+#include "FreeRTOSConfig.h"
 #include "network.h"
+
+/* the Atmel header file doesn't define these. */
+#ifdef AT91SAM7X256_H
+# define AT91C_RSTC_KEY_PASSWORD	(0xa5 << 24)
+
+# define AT91C_IROM			((char *)(0x3 << 20))
+# define AT91C_IROM_SIZE		(8 << 10)
+#endif
 
 int PortFreeMemory( void );
 void StackAuditTask( void* p );
 void kill( void );
+void vPortDisableAllInterrupts( void );
 #define ASYNC_INIT -10
 #define ASYNC_INACTIVE -1
 
@@ -180,12 +191,13 @@ int System_SetSerialNumber( int serial )
 }
 
 /**
-	Returns the board to SAM-BA mode, erasing the flash memory.
-  When a board is in SAM-BA mode, it is ready to have new firmware uploaded to it.
-  Note that you'll need to unplug/replug the board to complete the transition to
-  SAM-BA mode.
+	Returns the board to SAM-BA mode.
+	When a board is in SAM-BA mode, it is ready to have new firmware uploaded to it. 
+	Upon successful completion, the board will be reset and begin running SAM-BA.  
+	This function does not clear the GPNVM2 bit, so if you unplug/replug you'll be running
+	your old code again.
   @param sure Confirm you're sure you want to do this.
-	@return 0 on success.
+	@return nonzero on failure.  Successful completion does not return.
 	
 	\b Example
 	\code
@@ -197,22 +209,89 @@ int System_SetSamba( int sure )
 {
   if ( sure )
   {
-    // Wait for End Of Programming
-    while( !(AT91C_BASE_MC->MC_FSR & AT91C_MC_FRDY) );
-    
-    // Send Boot From Flash Command
-    AT91C_BASE_MC->MC_FCR = (AT91C_MC_FCMD_CLR_GP_NVM |  (( (2) << 8) & AT91C_MC_PAGEN) | (0x5A << 24));
+    vPortDisableAllInterrupts();
 
-    AT91C_BASE_RSTC->RSTC_RCR = ( AT91C_RSTC_EXTRST | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | (0xA5 << 24 ) );
+    /* Disable the USB pullup. */
+#if ( CONTROLLER_VERSION == 90 )
+    AT91C_BASE_PIOB->PIO_PER = AT91C_PIO_PB11;
+    AT91C_BASE_PIOB->PIO_OER = AT91C_PIO_PB11;
+    AT91C_BASE_PIOB->PIO_SODR = AT91C_PIO_PB11;
+#endif
+#if ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 )
+    AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA11;
+    AT91C_BASE_PIOA->PIO_OER = AT91C_PIO_PA11;
+    AT91C_BASE_PIOA->PIO_CODR = AT91C_PIO_PA11;
+#endif
 
-    // Wait for End Of Programming
-    while( !(AT91C_BASE_MC->MC_FSR & AT91C_MC_FRDY) );
-  
-    if ( AT91C_BASE_MC->MC_FSR & AT91C_MC_PROGE )
-      return 0;
-  
-    if ( AT91C_BASE_MC->MC_FSR & AT91C_MC_GPNVM2 )
-      return 0;
+    /* Steal the PIT for the pullup disable delay. */
+    AT91C_BASE_PITC->PITC_PIMR = (
+      (configCPU_CLOCK_HZ + (16 * 1000 / 2))
+      / (16 * 1000)
+    ) | AT91C_PITC_PITEN
+    ;
+
+    /* Dummy read to clear picnt. */
+    __asm__ __volatile__ ("ldr r3, %0" :: "m" (AT91C_BASE_PITC->PITC_PIVR) : "r3");
+
+    /* Loop until picnt passes 200ms */
+    while((AT91C_BASE_PITC->PITC_PIIR & AT91C_PITC_PICNT) < (200 << 20));
+
+    /* Reset onboard and offboard peripherals, but not processor */
+    while(AT91C_BASE_RSTC->RSTC_RSR & AT91C_RSTC_SRCMP);
+    AT91C_BASE_RSTC->RSTC_RMR = AT91C_RSTC_KEY_PASSWORD;
+    AT91C_BASE_RSTC->RSTC_RCR = AT91C_RSTC_KEY_PASSWORD
+	| AT91C_RSTC_PERRST
+    	| AT91C_RSTC_EXTRST
+    ;
+    while(AT91C_BASE_RSTC->RSTC_RSR & AT91C_RSTC_SRCMP);
+
+    /*
+       The ROM code copies itself to RAM, where it runs.
+       That works fine when running SAM-BA in the usual way (booting with GPNVM2 clear).
+       However, it is actually copying from the remap page; not the native ROM address.
+       So with GPNVM2 set, that means the FLASH image (and only 8KB or so of that) gets copied, 
+       which is not a recipe for success.
+       This workaround would be unnecessary if the ROM just copied itself from 0x300000 instead of 0x0.
+       If not for the fact that the ROM code doesn't appear to issue a remap command (the exception vectors 
+       ordinarily remain in ROM instead of being remapped), this workaround would not be possible.  Either 
+       it doesn't remap or it does it an even number of times.  To address the problem, we copy the ROM 
+       image to the RAM, ourselves and issue a remap so that when we run the image, RAM will already be remapped, 
+       and the image copy that it performs will be from the RAM to itself, therefore harmless. This does have 
+       the side effect that when SAM-BA runs other code (via the G command), the remap page will be 
+       remapped to RAM.  Any code run that way which assumes otherwise will break.  We are not using SAM-BA 
+       in that way.
+     */
+
+    /* From here on, we have to be in asm to prevent the compiler from trying to use RAM in any way. */
+    __asm__ __volatile__ (
+    /* Copy the ROM image to RAM. */
+    "	mov	r6, %0		\n"	/* save ROM address for later */
+    "	b	2f		\n"
+    "1:				\n"
+    "	ldmia	%0!, {r7}	\n"
+    "	str	r7, [%2]	\n"
+    "	add	%2, %2, #4	\n"
+    "2:				\n"
+    "	cmp	%0, %1		\n"
+    "	bmi	1b		\n"
+
+    /* Remap so that image copy in SAM-BA is RAM to RAM. */
+    /* We know that the remap page is not currently remapped because we just did an AT91C_RSTC_PERRST. */
+    "	mov	r7, %4 		\n"
+    "	str	r7, %3		\n"
+
+    /* Start running the ROM. */
+    "	bx	r6		\n"
+    :
+    :
+    "r"(AT91C_IROM),
+    "r"(AT91C_IROM + AT91C_IROM_SIZE),
+    "r"(AT91C_ISRAM),
+    "m"(AT91C_BASE_MC->MC_RCR),
+    "n"(AT91C_MC_RCB)
+    :
+    "r7", "r6"
+    );
   }
 
   // Never will do this
