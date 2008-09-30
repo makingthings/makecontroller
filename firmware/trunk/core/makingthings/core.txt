@@ -32,45 +32,17 @@
   
   The \ref Core module provides the basic capabilities of the Controller and a variety of \ref Libraries provide
   additional functionality that can easily be added/removed based on the needs of a particular project.
+  
+  The \ref OSC module provides a reference for all the OSC commands that the Make Controller can respond to.
 
   To jump right into browsing the entire API, click on \b Modules above.  For general info, check the <a href="http://www.makingthings.com/documentation/tutorial/programming-the-make-controller-kit">
   Programming the Make Controller</a> tutorial on the MakingThings site.
   
-  \section Tools
-  The easiest way to get started programming the Make Controller is with \b mcbuilder, a program that provides 
-  a simple development environment, compiler and uploader in a single download.  Check the 
-  <a href="http://www.makingthings.com/resources/downloads">MakingThings download page</a> for details.
+  \subsection toolssection Tools
+  The Make Controller Kit is supported by great open source \ref Tools - a free simple IDE, toolchain, and more.
   
-  Otherwise, programs for the Make Controller Kit can be built using the freely available ARM-flavored 
-  version of the GCC compiler, \b arm-elf-gcc.  Many toolchains are available - OS X and Windows versions can 
-  be found on the <a href="http://www.makingthings.com/resources/downloads">MakingThings download page</a>.
-	Other good options include:
-	- GNU-ARM: http://www.gnuarm.com
-	- WinARM (Windows-only): http://www.siwawi.arubi.uni-kl.de/avr_projects/arm_projects/#winarm
-	- YAGARTO (Windows-only): http://www.yagarto.de
-
-	To upload new firmware to your Make Controller, you have a few options:
-	- Use \b mcbuilder (Make Controller Builder) or \b mchelper (Make Controller Helper), from <a href="http://www.makingthings.com/resources/downloads">MakingThings</a>.
-	- Use \b sam7utils, a command line app: http://oss.tekno.us/sam7utils
-	- Use a JTAG device.
-
-	Rowley also provides a very good IDE for ARM7 projects called \b CrossWorks, which supports in-circuit debugging.  There are single user
-	licenses available.  Check http://www.rowley.co.uk/arm/index.htm
-		
-	\section Licenses
-	The Make Controller Kit software environment is a fusion of four main bodies of code:
-	- User code - the applications that you, the user, create.
-	- MakingThings library - code that MakingThings has contributed to make it easier to work with the Make Controller Kit.
-	- FreeRTOS - an open source Real Time Operating System for the SAM7X.  See http://www.freertos.org
-	- lwIP - a complete and open source TCIP/IP code library.  See http://www.sics.se/~adam/lwip/
-
-	This software is all open source, and thus subject to the licensing of each module 
-	of code.  All MakingThings specific code is licensed under the Apache 2.0 license, which is quite flexible for
-	both open source and commercial projects.  Be sure to acquaint yourself with the licenses for the main 
-	bodies of code in the Make Controller firmware codebase:
-	- MakingThings: http://www.apache.org/licenses/LICENSE-2.0.html
-	- FreeRTOS: http://www.freertos.org/a00114.html
-	- lwIP: http://www.xfree86.org/3.3.6/COPYRIGHT2.html#5
+  \subsection licensessection Licenses
+  The Make Controller codebase is subject to various \ref Licenses - make sure to check them out if you're going to be releasing your own code or selling it.
 
 	\section Community
 	As you begin to create projects with the Make Controller, please consider contributing any potentially helpful material you generate
@@ -79,7 +51,7 @@
 	The best places to get in touch are:
 	- MakingThings forums: http://www.makingthings.com/forum
 	- MakingThings bug tracker & development wiki: http://dev.makingthings.com
-	- MakingThings IRC channel: \b makingthings on \b irc.freenode.net
+	- MakingThings IRC channel: \b makingthings on \b irc.freenode.net.  You can chat through the web at http://www.mibbit.com.
 
 	We look forward to hearing about your projects!
 */

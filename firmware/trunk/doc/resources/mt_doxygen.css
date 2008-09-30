@@ -37,7 +37,7 @@ h2 {
 	font-size: 120%;
 	
 }
-h2 a { font-weight: bold; }
+h2 a, h3 a { font-weight: bold; }
 
 h3 {
 	font-size: 100%;
