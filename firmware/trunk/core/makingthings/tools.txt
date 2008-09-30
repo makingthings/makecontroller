@@ -1,0 +1,44 @@
+/*********************************************************************************
+
+ Copyright 2006-2008 MakingThings
+
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
+
+*********************************************************************************/
+
+/**
+ \page Tools Tools
+  The Make Controller is supported by great open source tools.
+
+  The easiest way to get started programming the Make Controller is with \b mcbuilder, a program that provides 
+  a simple development environment, compiler and uploader in a single download.  Check the 
+  <a href="http://www.makingthings.com/resources/downloads">MakingThings download page</a> for details.
+  
+  Otherwise, programs for the Make Controller Kit can be built using the freely available ARM-flavored 
+  version of the GCC compiler, \b arm-elf-gcc.  Many toolchains are available - OS X and Windows versions can 
+  be found on the <a href="http://www.makingthings.com/resources/downloads">MakingThings download page</a>.
+	Other good options include:
+	- GNU-ARM: http://www.gnuarm.com
+	- WinARM (Windows-only): http://www.siwawi.arubi.uni-kl.de/avr_projects/arm_projects/#winarm
+	- YAGARTO (Windows-only): http://www.yagarto.de
+
+	To upload new firmware to your Make Controller, you have a few options:
+	- Use \b mcbuilder (Make Controller Builder) or \b mchelper (Make Controller Helper), from <a href="http://www.makingthings.com/resources/downloads">MakingThings</a>.
+	- Use \b sam7utils, a command line app: http://oss.tekno.us/sam7utils
+	- Use a JTAG device.
+
+	Rowley also provides a very good IDE for ARM7 projects called \b CrossWorks, which supports in-circuit debugging.  There are single user
+	licenses available.  Check http://www.rowley.co.uk/arm/index.htm
+		
+*/
+
+
