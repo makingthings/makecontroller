@@ -106,14 +106,14 @@ int XBee_SetActive( int state )
   { 
     if( XBee == NULL )
     {
-      if( CONTROLLER_OK != Serial_SetActive( 1 ) )
+      if( CONTROLLER_OK != Serial_SetActive( SERIAL_0, 1 ) )
         return CONTROLLER_ERROR_SUBSYSTEM_INACTIVE;
       
       // Configure the serial port
-      Serial_SetBaud( 9600 );
-      Serial_SetBits( 8 );
-      Serial_SetParity( 0 );
-      Serial_SetStopBits( 1 );
+      Serial_SetBaud( SERIAL_0, 9600 );
+      Serial_SetBits( SERIAL_0, 8 );
+      Serial_SetParity( SERIAL_0, 0 );
+      Serial_SetStopBits( SERIAL_0, 1 );
 
       XBee = MallocWait( sizeof( XBeeSubsystem ), 100 );
       XBee->packetIndex = 0;
@@ -127,7 +127,7 @@ int XBee_SetActive( int state )
   }
   else
   {
-    Serial_SetActive( 0 );
+    Serial_SetActive( SERIAL_0, 0 );
 
     if( XBee )
     {
@@ -145,7 +145,7 @@ int XBee_SetActive( int state )
 */
 int XBee_GetActive( )
 {
-  return Serial_GetActive( );
+  return Serial_GetActive( SERIAL_0 );
 }
 
 
@@ -161,7 +161,7 @@ int XBee_GetActive( )
 */
 int XBee_Write( uchar *buffer, int count, int timeout )
 {
-  return Serial_Write( buffer, count, timeout );
+  return Serial_Write( SERIAL_0, buffer, count, timeout );
 }
 
 /**	
@@ -177,7 +177,7 @@ int XBee_Write( uchar *buffer, int count, int timeout )
 */
 int XBee_Read( uchar* buffer, int count, int timeout )
 {
-  return Serial_Read( buffer, count, timeout );
+  return Serial_Read( SERIAL_0, buffer, count, timeout );
 }
 
 /**	
@@ -225,10 +225,10 @@ int XBee_GetPacket( XBeePacket* packet, int timeout )
 
   do
   {
-    Serial_ClearErrors();
-    while( Serial_GetReadable( ) )
+    Serial_ClearErrors( SERIAL_0 );
+    while( Serial_GetReadable( SERIAL_0 ) )
     {
-      int newChar = Serial_GetChar( );
+      int newChar = Serial_GetChar( SERIAL_0 );
       if( newChar == -1 )
         break;
   
@@ -299,7 +299,7 @@ int XBee_SendPacket( XBeePacket* packet, int datalength )
   if( CONTROLLER_OK != XBee_SetActive( 1 ) )
     return CONTROLLER_ERROR_SUBSYSTEM_INACTIVE;
   
-  Serial_SetChar( XBEE_PACKET_STARTBYTE );
+  Serial_SetChar( SERIAL_0, XBEE_PACKET_STARTBYTE );
   int size = datalength;
   switch( packet->apiId )
   {
@@ -317,17 +317,17 @@ int XBee_SendPacket( XBeePacket* packet, int datalength )
       break;
   }
 
-  Serial_SetChar( (size >> 8) & 0xFF ); // send the most significant bit
-  Serial_SetChar( size & 0xFF ); // then the LSB
+  Serial_SetChar( SERIAL_0, (size >> 8) & 0xFF ); // send the most significant bit
+  Serial_SetChar( SERIAL_0, size & 0xFF ); // then the LSB
   packet->crc = 0; // just in case it hasn't been initialized.
   uint8* p = (uint8*)packet;
   while( size-- )
   {
-    Serial_SetChar( *p );
+    Serial_SetChar( SERIAL_0, *p );
     packet->crc += *p++;
   }
   //uint8 test = 0xFF - packet->crc;
-  Serial_SetChar( 0xFF - packet->crc );
+  Serial_SetChar( SERIAL_0, 0xFF - packet->crc );
   return CONTROLLER_OK;
 }
 
@@ -388,12 +388,12 @@ void XBeeConfig_SetPacketApiMode( int value )
   {
     char buf[50];
     sprintf( buf, "+++" ); // enter command mode
-    Serial_Write( (uchar*)buf, strlen(buf), 0 );
+    Serial_Write( SERIAL_0, (uchar*)buf, strlen(buf), 0 );
     Sleep( 1025 ); // have to wait one second after +++ to actually get set to receive in AT mode
     sprintf( buf, "ATAP1,CN\r" ); // turn API mode on, and leave command mode
-    Serial_Write( (uchar*)buf, strlen(buf), 0 );
+    Serial_Write( SERIAL_0, (uchar*)buf, strlen(buf), 0 );
     Sleep(50);
-    Serial_Flush(); // rip the OKs out of there
+    Serial_Flush( SERIAL_0 ); // rip the OKs out of there
   }
   else
   {

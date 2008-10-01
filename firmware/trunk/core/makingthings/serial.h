@@ -16,7 +16,7 @@
 *********************************************************************************/
 
 /*
-	SERIAL.h
+	serial.h
   MakingThings
 */
 
@@ -24,33 +24,38 @@
 #define SERIAL_H
 
 #include "types.h"
+/** Index to be used to specify serial port 0 \ingroup serial */
+#define SERIAL_0 0
+/** Index to be used to specify serial port 1 \ingroup serial */
+#define SERIAL_1 1
 
-int Serial_SetActive( int state );
-int Serial_GetActive( void );
 
-int Serial_SetBaud( int baud );
-int Serial_SetBits( int bits );
-int Serial_SetParity( int parity );
-int Serial_SetStopBits( int stop );
-int Serial_SetHardwareHandshake( int hardwareHandshake );
-int Serial_SetChar( int character );
+int Serial_SetActive( int index, int state );
+bool Serial_GetActive( int index );
 
-int Serial_GetBaud( void );
-int Serial_GetBits( void );
-int Serial_GetParity( void );
-int Serial_GetStopBits( void );
-int Serial_GetHardwareHandshake( void );
-int Serial_GetReadable( void );
-int Serial_GetChar( void );
+int Serial_SetBaud( int index, int baud );
+int Serial_SetBits( int index, int bits );
+int Serial_SetParity( int index, int parity );
+int Serial_SetStopBits( int index, int stop );
+int Serial_SetHardwareHandshake( int index, int hardwareHandshake );
+int Serial_SetChar( int index, int character );
 
-int Serial_Write( uchar *buffer, int count, int timeout );
-int Serial_Read( uchar* buffer, int count, int timeout );
+int Serial_GetBaud( int index );
+int Serial_GetBits( int index );
+int Serial_GetParity( int index );
+int Serial_GetStopBits( int index );
+int Serial_GetHardwareHandshake( int index );
+int Serial_GetReadable( int index );
+int Serial_GetChar( int index );
 
-void Serial_Flush( void );
-void Serial_ClearErrors( void );
-bool Serial_GetErrors( bool* overrun, bool* frame, bool* parity );
-void Serial_StartBreak( void );
-void Serial_StopBreak( void );
+int Serial_Write( int index, uchar *buffer, int count, int timeout );
+int Serial_Read( int index, uchar* buffer, int count, int timeout );
+
+void Serial_Flush( int index );
+void Serial_ClearErrors( int index );
+bool Serial_GetErrors(int index,  bool* overrun, bool* frame, bool* parity );
+void Serial_StartBreak( int index );
+void Serial_StopBreak( int index );
 
 /* OSC Interface */
 const char* SerialOsc_GetName( void );

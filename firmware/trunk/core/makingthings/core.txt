@@ -51,7 +51,7 @@
 	The best places to get in touch are:
 	- MakingThings forums: http://www.makingthings.com/forum
 	- MakingThings bug tracker & development wiki: http://dev.makingthings.com
-	- MakingThings IRC channel: \b makingthings on \b irc.freenode.net.  You can chat through the web at http://www.mibbit.com.
+	- MakingThings IRC channel: \b makingthings on \b irc.freenode.net.  You can chat through the web at http://www.mibbit.com
 
 	We look forward to hearing about your projects!
 */

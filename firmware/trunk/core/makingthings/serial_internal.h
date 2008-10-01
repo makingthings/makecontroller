@@ -31,16 +31,23 @@
 /* OS includes. */
 #include "queue.h"
 
+#define SERIAL_PORTS 2
+
 typedef struct
 {
-  int users;
+  bool active;
   int baud;
   int bits;
   int parity;
   int stopBits;
   int hardwareHandshake;
 
+  int rxQSize;
+  int txQSize;
+
   int detailsInitialized;
+
+  AT91S_USART* at91UARTRegs;
 
   xQueueHandle receiveQueue;  
   xQueueHandle transmitQueue;  

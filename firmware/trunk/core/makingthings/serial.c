@@ -15,6 +15,10 @@
 
 *********************************************************************************/
 
+/** \file serial2.c	
+	Functions for working with the Serial Interface on the Make Controller Board.
+*/
+
 /* Library includes. */
 #include <string.h>
 #include <stdio.h>
@@ -26,94 +30,106 @@
 /* Hardware specific headers. */
 #include "Board.h"
 #include "AT91SAM7X256.h"
+
 #include "config.h"
 #include "io.h"
+
 #include "serial.h"
 #include "serial_internal.h"
 
-Serial_ Serial;
+#define DEFAULT_SERIAL_Q_LEN 100
+Serial_ Serial[ SERIAL_PORTS ];
 
 extern void ( SerialIsr_Wrapper )( void );
 
-static int Serial_Init( void );
-static int Serial_Deinit( void );
-static int Serial_SetDefault( void );
-static int Serial_SetDetails( void );
+static int Serial_Init( int index );
+static int Serial_Deinit( int index );
+static int Serial_SetDefault( int index );
+static int Serial_SetDetails( int index );
+
 
 /** \file serial.c	
 	Functions for working with the Serial Interface on the Make Controller Board.
 */
 
 /** \defgroup serial Serial
-  Serial provides a way to send and receive data via the serial port.
+  Send and receive data via the Make Controller's serial ports.
+
+  There are 2 full serial ports on the Make Controller, and this library provides support for both of them.
+
+  Control all of the common serial characteristics including:
+  - \b baud - the speed of the connection (110 - > 2M) in baud or raw bits per second.  9600 baud is the default setting.
+  - \b bits - the size of each character (5 - 8).  8 bits is the default setting.
+  - \b stopBits - the number of stop bits transmitted (1 or 2)  1 stop bit is the default setting.
+  - \b parity - the parity policy (-1 is odd, 0 is none and 1 is even).  Even is the default setting.
+  - \b hardwareHandshake - whether hardware handshaking is used or not.  HardwareHandshaking is off by default.
 
   The subsystem is supplied with small input and output buffers (of 100 characters each) and at present
   the implementation is interrupt per character so it's not particularly fast.
 
-  Permits all of the common serial characteristics to be set including:
-  - baud - the speed of the connection (110 - > 2M) in baud or raw bits per second.  9600 baud is the default setting.
-  - bits - the size of each character (5 - 8).  8 bits is the default setting.
-  - stopBits - the number of stop bits transmitted (1 or 2)  1 stop bit is the default setting.
-  - parity - the parity policy (-1 is odd, 0 is none and 1 is even).  Even is the default setting.
-  - hardwareHandshake - whether hardware handshaking is used or not.  HardwareHandshaking is off by default.
-
-  \todo Convert to DMA interface for higher performance.
+  \todo Convert to DMA interface for higher performance, and add support for debug UART
 
 	\ingroup Core
 	@{
 */
 
-
 /**
-	Set the active state of the Serial subsystem.  This is automatically set to 
+	Set the active state of a serial port.
+  This is automatically set to 
   true by any call to Serial_Write or Serial_Read.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
 	@param state An integer specifying the active state - 1 (on) or 0 (off).
 	@return CONTROLLER_OK (=0) on success.
 */
-int Serial_SetActive( int state )
+int Serial_SetActive( int index, int state )
 {
-  if ( state )
-  {
-    if ( Serial.users++ == 0 )
-    {
-      Serial_Init();
-    }
-  }
-  else
-  {
-    if ( Serial.users > 0 ) 
-    {
-      if ( --Serial.users == 0 )
-      {
-        Serial_Deinit();
-      }
-    }
-  }
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  Serial_* sp = &Serial[ index ];
+
+  if ( state && !sp->active )
+    return Serial_Init( index );
+  else if( !state && sp->active )
+    return Serial_Deinit( index );
+
   return CONTROLLER_OK;
 }
 
 /**
 	Read the active state of the Serial subsystem.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
 	@return State - 1/non-zero (on) or 0 (off).
 */
-int Serial_GetActive( )
+bool Serial_GetActive( int index )
 {
-  return Serial.users > 0;
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  Serial_* sp = &Serial[ index ];
+
+  return sp->active;
 }
 
 /**	
 	Write a block of data to the Serial port.  Will block for the time specified (in ms)
   if the queue fills up.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
 	@param buffer A pointer to the buffer to write from.
 	@param count An integer specifying the number of bytes to write.
   @param timeout Time in milliseconds to block waiting for the queue to free up. 0 means don't wait.
   @return status.
 */
-int Serial_Write( uchar* buffer, int count, int timeout )
+int Serial_Write( int index, uchar* buffer, int count, int timeout )
 {
-  if ( Serial.users == 0 )
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  Serial_* sp = &Serial[ index ];
+
+  if ( !sp->active )
   {
-    int status = Serial_SetActive( 1 );
+    int status = Serial_SetActive( index, 1 );
     if ( status != CONTROLLER_OK )
       return status;
   }
@@ -121,7 +137,7 @@ int Serial_Write( uchar* buffer, int count, int timeout )
   // Do the business
   while ( count )
   {
-    if( xQueueSend( Serial.transmitQueue, buffer++, timeout / portTICK_RATE_MS  ) == 0 ) 
+    if( xQueueSend( sp->transmitQueue, buffer++, timeout ) == 0 ) 
       return CONTROLLER_ERROR_QUEUE_ERROR; 
     count--;
   }
@@ -130,7 +146,7 @@ int Serial_Write( uchar* buffer, int count, int timeout )
   queue and send it. This does not need to be in a critical section as 
   if the interrupt has already removed the character the next interrupt 
   will simply turn off the Tx interrupt again. */ 
-  AT91C_BASE_US0->US_IER = AT91C_US_TXRDY; 
+  sp->at91UARTRegs->US_IER = AT91C_US_TXRDY; 
  
   return CONTROLLER_OK;
 }
@@ -140,16 +156,22 @@ int Serial_Write( uchar* buffer, int count, int timeout )
   there are insufficient characters.  Blocking can be avoided if Serial_GetReadable( )
   is used to determine how many characters are available to read prior to calling
   this function.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
 	@param buffer A pointer to the buffer to read into.
 	@param size An integer specifying the maximum number of bytes to read.
   @param timeout Time in milliseconds to block waiting for the specified number of bytes. 0 means don't wait.
   @return number of bytes read (>=0) or error <0 .
 */
-int Serial_Read( uchar* buffer, int size, int timeout )
+int Serial_Read( int index, uchar* buffer, int size, int timeout )
 {
-  if ( Serial.users == 0 )
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  Serial_* sp = &Serial[ index ];
+
+  if ( !sp->active )
   {
-    int status = Serial_SetActive( 1 );
+    int status = Serial_SetActive( index, 1 );
     if ( status != CONTROLLER_OK )
       return status;
   }
@@ -159,7 +181,7 @@ int Serial_Read( uchar* buffer, int size, int timeout )
   while ( count < size )
   {
     /* Place the character in the queue of characters to be transmitted. */ 
-    if( xQueueReceive( Serial.receiveQueue, buffer++, timeout ) == 0 )
+    if( xQueueReceive( sp->receiveQueue, buffer++, timeout ) == 0 )
       break;
     count++;
   }
@@ -169,23 +191,35 @@ int Serial_Read( uchar* buffer, int size, int timeout )
 
 /**	
 	Returns the number of bytes in the queue waiting to be read.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
   @return bytes in the receive queue.
 */
-int Serial_GetReadable( void )
+int Serial_GetReadable( int index )
 {
-  return uxQueueMessagesWaiting( Serial.receiveQueue );
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  Serial_* sp = &Serial[ index ];
+
+  return uxQueueMessagesWaiting( sp->receiveQueue );
 }
 
 /**	
 	Sends a character (in the range of 0 to 255) to the write queue
+  @param index Which serial port - SERIAL_0 or SERIAL_1
 	@param character The character to be sent.  Must be 0 <= c < 256.
   @return status.
 */
-int Serial_SetChar( int character )
+int Serial_SetChar( int index, int character )
 {
-  if ( Serial.users == 0 )
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  Serial_* sp = &Serial[ index ];
+
+  if ( !sp->active )
   {
-    int status = Serial_SetActive( 1 );
+    int status = Serial_SetActive( index, 1 );
     if ( status != CONTROLLER_OK )
       return status;
   }
@@ -193,9 +227,9 @@ int Serial_SetChar( int character )
   if ( character >= 0 && character < 256 )
   {
     unsigned char c = (unsigned char)character;
-    if( xQueueSend( Serial.transmitQueue, &c, 0 ) == 0 ) 
+    if( xQueueSend( sp->transmitQueue, &c, 0 ) == 0 ) 
       return CONTROLLER_ERROR_QUEUE_ERROR; 
-    AT91C_BASE_US0->US_IER = AT91C_US_TXRDY; 
+    sp->at91UARTRegs->US_IER = AT91C_US_TXRDY; 
    }
 
   return CONTROLLER_OK;
@@ -203,118 +237,155 @@ int Serial_SetChar( int character )
 
 /**	
 	Sets the serial baud rate.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
 	@param baud The desired baud rate.
   @return status.
 */
-int Serial_SetBaud( int baud )
+int Serial_SetBaud( int index, int baud )
 {
-  // If there are no default values, get some
-  if ( !Serial.detailsInitialized )
-    Serial_SetDefault();
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  Serial.baud = baud;
-  Serial_SetDetails( );
+  Serial_* sp = &Serial[ index ];
+
+  // If there are no default values, get some
+  if ( !sp->detailsInitialized )
+    Serial_SetDefault( index );
+
+  sp->baud = baud;
+  Serial_SetDetails( index );
 
   return CONTROLLER_OK;
 }
 
 /**	
 	Sets the number of bits per character.  5 - 8 are legal values.  8 is the default.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
 	@param bits bits per character
   @return status.
 */
-int Serial_SetBits( int bits )
+int Serial_SetBits( int index, int bits )
 {
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  Serial_* sp = &Serial[ index ];
+
   // If there are no default values, get some
-  if ( !Serial.detailsInitialized )
-    Serial_SetDefault();
+  if ( !sp->detailsInitialized )
+    Serial_SetDefault( index );
 
-  if ( Serial.bits >= 5 && Serial.bits <= 8 )
-    Serial.bits = bits;
+  if ( sp->bits >= 5 && sp->bits <= 8 )
+    sp->bits = bits;
   else
-    Serial.bits = 8;
+    sp->bits = 8;
 
-  Serial_SetDetails( );
+  Serial_SetDetails( index );
 
   return CONTROLLER_OK;
 }
 
 /**	
 	Sets the parity.  -1 is odd, 0 is none, 1 is even.  The default is none - 0.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
 	@param parity -1, 0 or 1.
   @return status.
 */
-int Serial_SetParity( int parity )
+int Serial_SetParity( int index, int parity )
 {
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  Serial_* sp = &Serial[ index ];
+
   // If there are no default values, get some
-  if ( !Serial.detailsInitialized )
-    Serial_SetDefault();
+  if ( !sp->detailsInitialized )
+    Serial_SetDefault( index );
 
   if ( parity >= -1 && parity <= 1 )
-    Serial.parity = parity;
+    sp->parity = parity;
   else
-    Serial.parity = 1;
-  Serial_SetDetails( );
+    sp->parity = 1;
+  Serial_SetDetails( index );
 
   return CONTROLLER_OK;
 }
 
 /**	
 	Sets the stop bits per character.  1 or 2 are legal values.  1 is the default.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
 	@param stopBits stop bits per character
   @return status.
 */
-int Serial_SetStopBits( int stopBits )
+int Serial_SetStopBits( int index, int stopBits )
 {
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  Serial_* sp = &Serial[ index ];
+
   // If there are no default values, get some
-  if ( !Serial.detailsInitialized )
-    Serial_SetDefault();
+  if ( !sp->detailsInitialized )
+    Serial_SetDefault( index );
 
   if ( stopBits == 1 || stopBits == 2 )
-    Serial.stopBits = stopBits;
+    sp->stopBits = stopBits;
   else
-    Serial.stopBits = 1;
+    sp->stopBits = 1;
 
-  Serial_SetDetails( );
+  Serial_SetDetails( index );
 
   return CONTROLLER_OK;
 }
 
 /**	
 	Sets whether hardware handshaking is being used.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
 	@param hardwareHandshake sets hardware handshaking on (1) or off (0)
   @return status.
 */
-int Serial_SetHardwareHandshake( int hardwareHandshake )
+int Serial_SetHardwareHandshake( int index, int hardwareHandshake )
 {
-  // If there are no default values, get some
-  if ( !Serial.detailsInitialized )
-    Serial_SetDefault();
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  Serial.hardwareHandshake = hardwareHandshake;
-  Serial_SetDetails( );
+  Serial_* sp = &Serial[ index ];
+
+  // If there are no default values, get some
+  if ( !sp->detailsInitialized )
+    Serial_SetDefault( index );
+
+  sp->hardwareHandshake = hardwareHandshake;
+  Serial_SetDetails( index );
   
   return CONTROLLER_OK;
 }
 
 /**	
-	Returns a single character from the receive queue if available.  This character is returned
-  unsigned - i.e. having a value of 0 - 255.  The return value is -1 if there is no character waiting.
+	Returns a single character from the receive queue if available.
+  This character is returned unsigned - i.e. having a value of 0 - 255.  
+  The return value is -1 if there is no character waiting.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
   @return character from the queue or -1 if there is no character.
 */
-int Serial_GetChar( )
+int Serial_GetChar( int index )
 {
-  if ( Serial.users == 0 )
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  Serial_* sp = &Serial[ index ];
+
+  if ( !sp->active )
   {
-    int status = Serial_SetActive( 1 );
+    int status = Serial_SetActive( index, 1 );
     if ( status != CONTROLLER_OK )
       return -1;
   }
 
-  if ( uxQueueMessagesWaiting( Serial.receiveQueue ) )
+  if ( uxQueueMessagesWaiting( sp->receiveQueue ) )
   {
     unsigned char c;
-    if( xQueueReceive( Serial.receiveQueue, &c, 0 ) == 0 )
+    if( xQueueReceive( sp->receiveQueue, &c, 0 ) == 0 )
       return -1;
     else
       return (int)c;
@@ -325,72 +396,103 @@ int Serial_GetChar( )
 
 /**	
 	Returns the current baud rate
+  @param index Which serial port - SERIAL_0 or SERIAL_1
   @return baud
 */
-int Serial_GetBaud( )
+int Serial_GetBaud( int index )
 {
-  // If there are no default values, get some
-  if ( !Serial.detailsInitialized )
-    Serial_SetDefault();
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  return Serial.baud;
+  Serial_* sp = &Serial[ index ];
+
+  // If there are no default values, get some
+  if ( !sp->detailsInitialized )
+    Serial_SetDefault( index );
+
+  return sp->baud;
 }
 
 /**	
 	Returns the number of bits for each character
+  @param index Which serial port - SERIAL_0 or SERIAL_1
   @return bits
 */
-int Serial_GetBits( )
+int Serial_GetBits( int index )
 {
-  // If there are no default values, get some
-  if ( !Serial.detailsInitialized )
-    Serial_SetDefault();
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  return Serial.bits;
+  Serial_* sp = &Serial[ index ];
+
+  // If there are no default values, get some
+  if ( !sp->detailsInitialized )
+    Serial_SetDefault( index );
+
+  return sp->bits;
 }
 
 /**	
 	Returns the current parity.  -1 means odd, 0 means none, 1 means even
+  @param index Which serial port - SERIAL_0 or SERIAL_1
   @return parity
 */
-int Serial_GetParity( )
+int Serial_GetParity( int index )
 {
-  // If there are no default values, get some
-  if ( !Serial.detailsInitialized )
-    Serial_SetDefault();
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  return Serial.parity;
+  Serial_* sp = &Serial[ index ];
+
+  // If there are no default values, get some
+  if ( !sp->detailsInitialized )
+    Serial_SetDefault( index );
+
+  return sp->parity;
 }
 
 /**	
 	Returns the number of stop bits.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
   @return stopBits
 */
-int Serial_GetStopBits( )
+int Serial_GetStopBits( int index )
 {
-  // If there are no default values, get some
-  if ( !Serial.detailsInitialized )
-    Serial_SetDefault();
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  return Serial.stopBits;
+  Serial_* sp = &Serial[ index ];
+
+  // If there are no default values, get some
+  if ( !sp->detailsInitialized )
+    Serial_SetDefault( index );
+
+  return sp->stopBits;
 }
 
 /**	
 	Returns whether hardware handshaking is being employed or not.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
   @return hardwareHandshake
 */
-int Serial_GetHardwareHandshake( )
+int Serial_GetHardwareHandshake( int index )
 {
-  // If there are no default values, get some
-  if ( !Serial.detailsInitialized )
-    Serial_SetDefault();
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  return Serial.hardwareHandshake;
+  Serial_* sp = &Serial[ index ];
+
+  // If there are no default values, get some
+  if ( !sp->detailsInitialized )
+    Serial_SetDefault( index );
+
+  return sp->hardwareHandshake;
 }
 
 /**
   Clear out the serial port.
   Ensures that there are no bytes in the incoming buffer.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
 
   \b Example
   \code
@@ -398,11 +500,14 @@ int Serial_GetHardwareHandshake( )
   Serial_Flush( ); // after starting up, make sure there's no junk in there
   \endcode
 */
-void Serial_Flush()
+void Serial_Flush( int index )
 {
   char c;
-  while( Serial_GetReadable() )
-    c = Serial_GetChar( );
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return;
+
+  while( Serial_GetReadable( index ) )
+    c = Serial_GetChar( index );
 }
 
 /**
@@ -415,6 +520,7 @@ void Serial_Flush()
   Serial_ClearErrors() resets the appropriate status bits to a state of
   normal operation.  It will only reset the error states if there are 
   currently any errors.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
   @see Serial_GetErrors
   
   \b Example
@@ -424,10 +530,14 @@ void Serial_Flush()
   // that's all there is to it.
   \endcode
 */
-void Serial_ClearErrors( )
+void Serial_ClearErrors( int index )
 {
-  if( AT91C_BASE_US0->US_CSR & (AT91C_US_OVRE | AT91C_US_FRAME | AT91C_US_PARE) )
-    AT91C_BASE_US0->US_CR = AT91C_US_RSTSTA; // clear all errors
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return;
+  
+  Serial_* sp = &Serial[ index ];
+  if( sp->at91UARTRegs->US_CSR & (AT91C_US_OVRE | AT91C_US_FRAME | AT91C_US_PARE) )
+    sp->at91UARTRegs->US_CR = AT91C_US_RSTSTA; // clear all errors
 }
 
 /**
@@ -440,7 +550,8 @@ void Serial_ClearErrors( )
   Each parameter will be set with a true or a false given the current
   error state.  If you don't care to check one of the parameters, just
   pass in 0.
-
+  
+  @param index Which serial port - SERIAL_0 or SERIAL_1
   @param overrun A bool that will be set with the overrun error state.
   @param frame A bool that will be set with the frame error state.
   @param parity A bool that will be set with the parity error state.
@@ -473,23 +584,27 @@ void Serial_ClearErrors( )
   }
   \endcode
 */
-bool Serial_GetErrors( bool* overrun, bool* frame, bool* parity )
+bool Serial_GetErrors( int index, bool* overrun, bool* frame, bool* parity )
 {
   bool retval = false;
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return false;
+  
+  Serial_* sp = &Serial[ index ];
 
-  bool ovre = AT91C_BASE_US0->US_CSR & AT91C_US_OVRE;
+  bool ovre = sp->at91UARTRegs->US_CSR & AT91C_US_OVRE;
   if(ovre)
     retval = true;
   if(overrun)
     *overrun = ovre;
 
-  bool fr = AT91C_BASE_US0->US_CSR & AT91C_US_FRAME;
+  bool fr = sp->at91UARTRegs->US_CSR & AT91C_US_FRAME;
   if(fr)
     retval = true;
   if(frame)
     *frame = fr;
 
-  bool par = AT91C_BASE_US0->US_CSR & AT91C_US_PARE;
+  bool par = sp->at91UARTRegs->US_CSR & AT91C_US_PARE;
   if(par)
     retval = true;
   if(parity)
@@ -501,6 +616,7 @@ bool Serial_GetErrors( bool* overrun, bool* frame, bool* parity )
 /**
   Start the transimission of a break.
   This has no effect if a break is already in progress.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
 
   \b Example
   
@@ -508,14 +624,17 @@ bool Serial_GetErrors( bool* overrun, bool* frame, bool* parity )
   Serial_StartBreak();
   \endcode
 */
-void Serial_StartBreak( )
+void Serial_StartBreak( int index )
 {
-  AT91C_BASE_US0->US_CR = AT91C_US_STTBRK;
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return;
+  Serial[ index ].at91UARTRegs->US_CR = AT91C_US_STTBRK;
 }
 
 /**
   Stop the transimission of a break.
   This has no effect if there's not a break already in progress.
+  @param index Which serial port - SERIAL_0 or SERIAL_1
 
   \b Example
   
@@ -523,129 +642,184 @@ void Serial_StartBreak( )
   Serial_StopBreak();
   \endcode
 */
-void Serial_StopBreak( )
+void Serial_StopBreak( int index  )
 {
-  AT91C_BASE_US0->US_CR = AT91C_US_STPBRK;
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return;
+  Serial[ index ].at91UARTRegs->US_CR = AT91C_US_STPBRK;
 }
 
 /** @}
 */
 
-int Serial_Init()
+int Serial_Init( int index )
 {
-  // If there are no default values, get some
-  if ( !Serial.detailsInitialized )
-    Serial_SetDefault();
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  Serial_* sp = &Serial[ index ];
+
+  int id;
+  int rxPin;
+  int txPin;
+  long rxPinBit;
+  long txPinBit;
+  switch( index )
+  {
+    case SERIAL_0:
+      id = AT91C_ID_US0;
+      rxPinBit = IO_PA00_BIT;
+      txPinBit = IO_PA01_BIT;
+      rxPin = IO_PA00;
+      txPin = IO_PA01;
+      sp->at91UARTRegs = AT91C_BASE_US0;
+      break;
+    case SERIAL_1:
+      id = AT91C_ID_US1;
+      rxPinBit = IO_PA05_BIT;
+      txPinBit = IO_PA06_BIT;
+      rxPin = IO_PA05;
+      txPin = IO_PA06;
+      sp->at91UARTRegs = AT91C_BASE_US1;
+      break;
+  }
 
   // Enable the peripheral clock
-  AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_US0;
+  AT91C_BASE_PMC->PMC_PCER = 1 << id;
+
+  // If there are no default values, get some
+  if ( !sp->detailsInitialized )
+    Serial_SetDefault( index );
 
   int status;
    
-  status = Io_StartBits( IO_PA00_BIT | IO_PA01_BIT, false  );
+  status = Io_StartBits( rxPinBit | txPinBit, false  );
   if ( status != CONTROLLER_OK )
     return status;
 
-  Io_SetPeripheralA( IO_PA00 );
-  Io_SetPeripheralA( IO_PA01 );
-  Io_SetPio( IO_PA00, false );
-  Io_SetPio( IO_PA01, false );
+  Io_SetPeripheralA( rxPin );
+  Io_SetPeripheralA( txPin );
+  Io_SetPio( rxPin, false );
+  Io_SetPio( txPin, false );
   
   // Create the queues
-  Serial.receiveQueue = xQueueCreate( 100, 1 ); 
-  Serial.transmitQueue = xQueueCreate( 100, 1 ); 
+  if( sp->rxQSize == 0 )
+   sp->rxQSize = DEFAULT_SERIAL_Q_LEN;
+  sp->receiveQueue = xQueueCreate( sp->rxQSize, 1 );
+
+  if( sp->txQSize == 0 )
+     sp->txQSize = DEFAULT_SERIAL_Q_LEN;
+  sp->transmitQueue = xQueueCreate( sp->txQSize, 1 );
 
   // Disable interrupts
-  AT91C_BASE_US0->US_IDR = (unsigned int) -1;
+  sp->at91UARTRegs->US_IDR = (unsigned int) -1;
 
   // Timeguard disabled
-  AT91C_BASE_US0->US_TTGR = 0;
+  sp->at91UARTRegs->US_TTGR = 0;
 
   // Most of the detail setting is done in here
   // Also Resets TXRX and re-enables RX
-  Serial_SetDetails();
+  Serial_SetDetails( index );
 
-  unsigned int mask = 0x1 << AT91C_ID_US0;		
+  unsigned int mask = 0x1 << id;		
                         
   /* Disable the interrupt on the interrupt controller */					
   AT91C_BASE_AIC->AIC_IDCR = mask ;										
   /* Save the interrupt handler routine pointer and the interrupt priority */	
-  AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_US0 ] = (unsigned int)SerialIsr_Wrapper;			
+  AT91C_BASE_AIC->AIC_SVR[ id ] = (unsigned int)SerialIsr_Wrapper;			
   /* Store the Source Mode Register */									
-  AT91C_BASE_AIC->AIC_SMR[ AT91C_ID_US0 ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;				
+  AT91C_BASE_AIC->AIC_SMR[ id ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;				
   /* Clear the interrupt on the interrupt controller */					
   AT91C_BASE_AIC->AIC_ICCR = mask ;					
 
   AT91C_BASE_AIC->AIC_IECR = mask;
 
-  AT91C_BASE_US0->US_IER = AT91C_US_RXRDY; 
+  sp->at91UARTRegs->US_IER = AT91C_US_RXRDY; 
 
+  sp->active = true;
 
   return CONTROLLER_OK;
 }
 
-int Serial_Deinit()
+int Serial_Deinit( int index )
 {
-  vQueueDelete( Serial.receiveQueue );
-  vQueueDelete( Serial.transmitQueue );
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  Serial_* sp = &Serial[ index ];
+  vQueueDelete( sp->receiveQueue );
+  vQueueDelete( sp->transmitQueue );
+  sp->active = false;
   return CONTROLLER_OK;
 }
 
-int Serial_SetDetails( )
+int Serial_SetDetails( int index )
 {
-  if ( Serial.users )
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+
+  Serial_* sp = &Serial[ index ];
+
+  if ( sp->active )
   {
      // Reset receiver and transmitter
-    AT91C_BASE_US0->US_CR = AT91C_US_RSTRX | AT91C_US_RSTTX | AT91C_US_RXDIS | AT91C_US_TXDIS; 
+    sp->at91UARTRegs->US_CR = AT91C_US_RSTRX | AT91C_US_RSTTX | AT91C_US_RXDIS | AT91C_US_TXDIS; 
 
     int baudValue; 
 
     // MCK is 47923200 for the Make Controller Kit
 
     // Calculate ( * 10 )
-    baudValue = ( MCK * 10 ) / ( Serial.baud * 16 );
+    baudValue = ( MCK * 10 ) / ( sp->baud * 16 );
     // Round (and / 10)
     if ( ( baudValue % 10 ) >= 5 ) 
       baudValue = ( baudValue / 10 ) + 1; 
     else 
       baudValue /= 10;
 
-    AT91C_BASE_US0->US_BRGR = baudValue; 
+    sp->at91UARTRegs->US_BRGR = baudValue; 
 
-    AT91C_BASE_US0->US_MR = 
-      ( ( Serial.hardwareHandshake ) ? AT91C_US_USMODE_HWHSH : AT91C_US_USMODE_NORMAL ) |
+    sp->at91UARTRegs->US_MR = 
+      ( ( sp->hardwareHandshake ) ? AT91C_US_USMODE_HWHSH : AT91C_US_USMODE_NORMAL ) |
       ( AT91C_US_CLKS_CLOCK ) |
-      ( ( ( Serial.bits - 5 ) << 6 ) & AT91C_US_CHRL ) |
-      ( ( Serial.stopBits == 1 ) ? AT91C_US_NBSTOP_1_BIT : AT91C_US_NBSTOP_1_BIT ) |
-      ( ( Serial.parity == 0 ) ? AT91C_US_PAR_NONE : ( ( Serial.parity == -1 ) ? AT91C_US_PAR_ODD : AT91C_US_PAR_EVEN ) );
+      ( ( ( sp->bits - 5 ) << 6 ) & AT91C_US_CHRL ) |
+      ( ( sp->stopBits == 1 ) ? AT91C_US_NBSTOP_1_BIT : AT91C_US_NBSTOP_1_BIT ) |
+      ( ( sp->parity == 0 ) ? AT91C_US_PAR_NONE : ( ( sp->parity == -1 ) ? AT91C_US_PAR_ODD : AT91C_US_PAR_EVEN ) );
       // 2 << 14; // this last thing puts it in loopback mode
 
 
-    AT91C_BASE_US0->US_CR = AT91C_US_RXEN | AT91C_US_TXEN; 
+    sp->at91UARTRegs->US_CR = AT91C_US_RXEN | AT91C_US_TXEN; 
   }
   return CONTROLLER_OK;
 }
 
-int Serial_SetDefault()
+int Serial_SetDefault( int index )
 {
-  Serial.baud = 9600;
-  Serial.bits = 8;
-  Serial.stopBits = 1;
-  Serial.parity = 0;
-  Serial.hardwareHandshake = 0;
+  if ( index < 0 || index >= SERIAL_PORTS )
+    return CONTROLLER_ERROR_ILLEGAL_INDEX;
 
-  Serial.detailsInitialized = true;
+  Serial_* sp = &Serial[ index ];
+
+  sp->baud = 9600;
+  sp->bits = 8;
+  sp->stopBits = 1;
+  sp->parity = 0;
+  sp->hardwareHandshake = 0;
+
+  sp->detailsInitialized = true;
   return CONTROLLER_OK;
 }
 
 #ifdef OSC
-
 /** \defgroup SerialOSC Serial - OSC
   Configure the Serial Port and Read Characters via OSC.
   \ingroup OSC
+
+  \section devices Devices
+  There are 2 serial ports, so use 0 or 1 as an index.
 	
 	\section properties Properties
-	The Serial Subsystem has eight properties:
+  The Serial Subsystem has the following properties:
   - baud
   - bits
   - stopbits
@@ -654,56 +828,57 @@ int Serial_SetDefault()
   - readable
   - char
   - block
-  
-  \par Baud
-	The Baud rate of the device. Valid from 110 baud to >2M baud\n
-	To set baud rate to 115200, for example, send the message
-	\verbatim /serial/baud 112500\endverbatim
+
+	\subsection Baud
+	The Baud rate of the device. Valid from 110 baud to >2M baud.
+	To set baud rate to 115200 on the first serial port, for example, send the message
+	\verbatim /serial/0/baud 112500\endverbatim
 	
-	\par Bits
-	The number of bits per character.  Can range from 5 to 8\n
-	To set the number of bits to 7, for example, send the message
-	\verbatim /serial/bits 7\endverbatim
+	\subsection Bits
+	The number of bits per character.  Can range from 5 to 8.
+	To set the number of bits to 7 on the first serial port, for example, send the message
+	\verbatim /serial/0/bits 7\endverbatim
 	
-	\par StopBits
+	\subsection StopBits
 	The number of stop bits per character.  Can be 1 or 2\n
-	To set the number of stop bits to 2, for example, send the message
-	\verbatim /serial/stopbits 2\endverbatim
+	To set the number of stop bits to 2 on the second serial port, for example, send the message
+	\verbatim /serial/1/stopbits 2\endverbatim
 
-	\par Parity
-	The parity of the character.  Can be -1 for odd, 0 for none or 1 for even\n
+	\subsection Parity
+	The parity of the character.  Can be -1 for odd, 0 for none or 1 for even.
 	To set the parity to even, for example, send the message
-	\verbatim /serial/parity 1\endverbatim
+	\verbatim /serial/0/parity 1\endverbatim
 
-	\par HardwareHandshake
-	Whether hardware handshaking (i.e. CTS RTS) is being employed.\n
+	\subsection HardwareHandshake
+	Whether hardware handshaking (i.e. CTS RTS) is being employed.
 	To set hardware handshaking on, for example, send the message
-	\verbatim /serial/hardwarehandshake 1\endverbatim
+	\verbatim /serial/0/hardwarehandshake 1\endverbatim
 
-	\par Readable
-	How many characters are presently available to read.\n
+	\subsection Readable
+	How many characters are presently available to read.
 	To check, for example, send the message
-	\verbatim /serial/readable\endverbatim
+	\verbatim /serial/0/readable\endverbatim
 
-	\par Char
-	This property is the mechanism by which individual characters can be sent and received\n
+	\subsection Char
+	Send and receive individual characters with the char property.
 	To send a character 32 (a space), for example, send the message
-	\verbatim /serial/char 32\endverbatim
+	\verbatim /serial/0/char 32\endverbatim
 	To get a character send the message
-	\verbatim /serial/char\endverbatim
+	\verbatim /serial/0/char\endverbatim
   In this case the reply will be an unsigned value between 0 and 255 or -1 if there is 
   no character available.
-  
-  \par Block
+
+  \subsection Block
   This property allows for reading or writing a block of characters to/from the serial port.  If you're
   writing a block, you must send the block you want to write as an OSC blob.
   
   For example, to send a block:
-	\verbatim /serial/block blockofchars\endverbatim
+	\verbatim /serial/1/block blockofchars\endverbatim
 	To get a block, send the message
-	\verbatim /serial/block\endverbatim
+	\verbatim /serial/1/block\endverbatim
   In this case the reply will be a block of up to 100 unsigned chars, or the chars currently available to read
   from the serial port.
+
 */
 
 #include "osc.h"
@@ -718,11 +893,11 @@ static char* SerialOsc_Name = "serial";
 static char* SerialOsc_IntPropertyNames[] = { "active", "char", "baud", "bits", "stopbits", "parity", "hardwarehandshake", "readable", 0  }; // must have a trailing 0
 static char* SerialOsc_BlobPropertyNames[] = { "block", 0  }; // must have a trailing 0
 
-int SerialOsc_IntPropertySet( int property, int value );
-int SerialOsc_IntPropertyGet( int property );
+int SerialOsc_IntPropertySet( int index, int property, int value );
+int SerialOsc_IntPropertyGet( int index, int property );
 
-int SerialOsc_BlobPropertySet( int property, uchar* blob, int length );
-int SerialOsc_BlobPropertyGet( int property, uchar* blob, int size );
+int SerialOsc_BlobPropertySet( int index, int property, uchar* blob, int length );
+int SerialOsc_BlobPropertyGet( int index, int property, uchar* blob, int size );
 
 // Returns the name of the subsystem
 const char* SerialOsc_GetName( )
@@ -734,13 +909,13 @@ const char* SerialOsc_GetName( )
 // part (the subsystem) already parsed off.
 int SerialOsc_ReceiveMessage( int channel, char* message, int length )
 {
-  int status = Osc_IntReceiverHelper( channel, message, length, 
+  int status = Osc_IndexIntReceiverHelper( channel, message, length, SERIAL_PORTS,
                                       SerialOsc_Name,
                                       SerialOsc_IntPropertySet, SerialOsc_IntPropertyGet, 
                                       SerialOsc_IntPropertyNames );
 
   if ( status != CONTROLLER_OK )
-    status = Osc_BlobReceiverHelper( channel, message, length, 
+    status = Osc_IndexBlobReceiverHelper( channel, message, length, SERIAL_PORTS,
                                       SerialOsc_Name,
                                       SerialOsc_BlobPropertySet, SerialOsc_BlobPropertyGet, 
                                       SerialOsc_BlobPropertyNames );                        
@@ -750,82 +925,82 @@ int SerialOsc_ReceiveMessage( int channel, char* message, int length )
   return CONTROLLER_OK;
 }
 // Set the index LED, property with the value
-int SerialOsc_IntPropertySet( int property, int value )
+int SerialOsc_IntPropertySet( int index, int property, int value )
 {
   switch ( property )
   {
     case 0: 
-      Serial_SetActive( value );
+      Serial_SetActive( index, value );
       break;      
     case 1: 
-      Serial_SetChar( value );
+      Serial_SetChar( index, value );
       break;      
     case 2: 
-      Serial_SetBaud( value );
+      Serial_SetBaud( index, value );
       break;      
     case 3: 
-      Serial_SetBits( value );
+      Serial_SetBits( index, value );
       break;    
     case 4: 
-      Serial_SetStopBits( value );
+      Serial_SetStopBits( index, value );
       break;
     case 5: 
-      Serial_SetParity( value );
+      Serial_SetParity( index, value );
       break;    
     case 6: 
-      Serial_SetHardwareHandshake( value );
+      Serial_SetHardwareHandshake( index, value );
       break;    
   }
   return CONTROLLER_OK;
 }
 
-// Get the index LED, property
-int SerialOsc_IntPropertyGet( int property )
+// Get the index, property
+int SerialOsc_IntPropertyGet( int index, int property )
 {
   int value = 0;
   switch ( property )
   {
     case 0:
-      value = Serial_GetActive( );
+      value = Serial_GetActive( index );
       break;
     case 1:
-      value = Serial_GetChar( );
+      value = Serial_GetChar( index );
       break;
     case 2:
-      value = Serial_GetBaud( );
+      value = Serial_GetBaud( index );
       break;
     case 3:
-      value = Serial_GetBits( );
+      value = Serial_GetBits( index );
       break;
     case 4:
-      value = Serial_GetStopBits( );
+      value = Serial_GetStopBits( index );
       break;
     case 5:
-      value = Serial_GetParity( );
+      value = Serial_GetParity( index );
       break;
     case 6:
-      value = Serial_GetHardwareHandshake( );
+      value = Serial_GetHardwareHandshake( index );
       break;
     case 7:
-      value = Serial_GetReadable( );
+      value = Serial_GetReadable( index );
       break;
   }
   
   return value;
 }
 
-// Get the index LED, property
-int SerialOsc_BlobPropertyGet( int property, uchar* blob, int maxSize )
+// Get the index, property
+int SerialOsc_BlobPropertyGet( int index, int property, uchar* blob, int maxSize )
 {
   int xfer = 0;
   switch ( property )
   {
     case 0:
     {
-      int length = Serial_GetReadable();
+      int length = Serial_GetReadable( index );
       xfer = ( length < maxSize ) ? length : maxSize;
       if ( xfer > 0 )
-        Serial_Read( blob, xfer, 100 );
+        Serial_Read( index, blob, xfer, 100 );
       break;
     }
   }
@@ -835,12 +1010,12 @@ int SerialOsc_BlobPropertyGet( int property, uchar* blob, int maxSize )
 
 
 // Set the index LED, property with the value
-int SerialOsc_BlobPropertySet( int property, uchar* blob, int length )
+int SerialOsc_BlobPropertySet( int index, int property, uchar* blob, int length )
 {
   switch ( property )
   {
     case 0: 
-      Serial_Write( blob, length, 100 );
+      Serial_Write( index, blob, length, 100 );
       break;      
   }
   return CONTROLLER_OK;
