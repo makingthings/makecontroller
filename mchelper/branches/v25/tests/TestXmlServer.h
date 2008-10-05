@@ -41,10 +41,13 @@ private:
   MainWindow* mainWindow;
   int serverPort;
   QTcpSocket xmlClient1, xmlClient2;
+  QSignalSpy* updateSpy;
 
 private slots:
   void initTestCase();
   void clientConnect();
+  void clientConnect2();
+  void dataFromBoard();
 };
 
 #endif //TEST_XML_SERVER_H
