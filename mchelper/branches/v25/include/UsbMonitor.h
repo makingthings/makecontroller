@@ -49,6 +49,8 @@ private:
   QStringList usbSambaList;
   MainWindow* mainWindow;
   QextSerialEnumerator enumerator;
+  bool isMakeController(QextPortInfo* info);
+  bool isSamBa(QextPortInfo* info);
 };
 
 #endif // USB_MONITOR_H_

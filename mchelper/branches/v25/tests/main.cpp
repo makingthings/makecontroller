@@ -19,6 +19,7 @@
 #include <QApplication>
 #include "MainWindow.h"
 #include "TestOsc.h"
+#include "TestXmlServer.h"
 
 /*
   A test suite that fires off each unit test in succession.
@@ -33,6 +34,8 @@ int main(int argc, char* argv[])
   TestOsc testOsc;
 	QTest::qExec(&testOsc);
   
+  TestXmlServer testXmlServer(&window);
+  QTest::qExec(&testXmlServer);
 }
 
 
