@@ -39,7 +39,7 @@ OscXmlServer::OscXmlServer( MainWindow *mainWindow, QObject *parent ) : QTcpServ
 */
 void OscXmlServer::openNewConnection( )
 {
-	qDebug("new connection");
+	//qDebug("new connection");
   OscXmlClient *client = new OscXmlClient( nextPendingConnection( ), mainWindow );
   client->sendCrossDomainPolicy();
 	connect( client, SIGNAL(finished()), client, SLOT(deleteLater()));
@@ -49,7 +49,7 @@ void OscXmlServer::openNewConnection( )
 	client->start( );
   
 	// tell Flash about the boards we have connected
-	emit boardListUpdated( mainWindow->getConnectedBoards( ), true );
+  client->boardListUpdate(mainWindow->getConnectedBoards( ), true);
 }
 
 bool OscXmlServer::setListenPort( int port )
@@ -219,6 +219,8 @@ void OscXmlClient::boardInfoUpdate( Board* board )
 */
 void OscXmlClient::boardListUpdate( QList<Board*> boardList, bool arrived )
 {
+	if(!boardList.count())
+    return;
 	QDomDocument doc;
 	QDomElement boardUpdate;
 	if( arrived )
