@@ -15,6 +15,10 @@
 #include "BoardType.h"
 #include "UsbMonitor.h"
 
+#ifdef MCHELPER_TEST_SUITE
+#include "TestXmlServer.h"
+#endif
+
 class Inspector;
 class NetworkMonitor;
 class UsbMonitor;
@@ -87,6 +91,11 @@ private slots:
   void onDoubleClick();
   void onDeviceResetRequest();
   void onSamBaRequest();
+  
+  #ifdef MCHELPER_TEST_SUITE
+  friend class TestXmlServer;
+  #endif
+
 };
 
 #include "NetworkMonitor.h"

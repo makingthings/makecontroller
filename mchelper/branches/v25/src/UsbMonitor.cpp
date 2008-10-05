@@ -43,12 +43,7 @@ UsbMonitor::UsbMonitor(MainWindow* mw) : QThread()
   {
     QStringList boards;
     foreach( QextPortInfo port, ports )
-    {
-      if(port.friendName.startsWith("Make Controller Ki"))
-        boards << port.portName.toAscii();
-    }
-    if( boards.count())
-      emit newBoards(boards, BoardType::UsbSerial);
+      onDeviceDiscovered( port );
   }
   enumerator.setUpNotifications(mainWindow);
   #endif
@@ -75,8 +70,7 @@ void UsbMonitor::run( )
       // the portname needs to be tweeked 
       if( !usbSerialList.contains(port.portName) )
       {
-        if( port.friendName.startsWith("Make Controller Ki") ||
-           (port.vendorID == MAKE_CONTROLLER_VID && port.productID == MAKE_CONTROLLER_PID))
+        if( isMakeController( &port ) )
         {
           usbSerialList.append(port.portName);  // keep our internal list, the portName is the unique key
           newSerialPorts.append(port.portName); // on the list to be posted to the UI
@@ -85,7 +79,7 @@ void UsbMonitor::run( )
       
       if( !usbSambaList.contains(port.portName) )
       {
-        if( port.vendorID == SAM_BA_VID && port.productID == SAM_BA_PID )
+        if( isSamBa( &port ) )
         {
           usbSambaList.append(port.portName);  // keep our internal list, the portName is the unique key
           newSambaPorts.append(port.portName); // on the list to be posted to the UI
@@ -133,9 +127,16 @@ void UsbMonitor::onDeviceChangeEventWin( WPARAM wParam, LPARAM lParam )
 
 void UsbMonitor::onDeviceDiscovered(QextPortInfo info)
 {
-  QStringList ports;
-  ports << info.portName.toAscii();
-  emit newBoards(ports, BoardType::UsbSerial);
+  if( isMakeController(&info) )
+  {
+    QStringList ports = QStringList() << info.portName.toAscii();
+    emit newBoards(ports, BoardType::UsbSerial);
+  }
+  else if( isSamBa( &info ) )
+  {
+    QStringList ports = QStringList() << info.portName.toAscii();
+    emit newBoards(ports, BoardType::UsbSamba);
+  }
 }
 
 void UsbMonitor::onDeviceTerminated(QextPortInfo info)
@@ -143,6 +144,16 @@ void UsbMonitor::onDeviceTerminated(QextPortInfo info)
   emit boardsRemoved(info.portName.toAscii());
 }
 
+bool UsbMonitor::isMakeController(QextPortInfo* info)
+{
+  return ( info->friendName.startsWith("Make Controller Ki") ||
+           (info->vendorID == MAKE_CONTROLLER_VID && info->productID == MAKE_CONTROLLER_PID));
+}
+
+bool UsbMonitor::isSamBa(QextPortInfo* info)
+{
+  return (info->vendorID == SAM_BA_VID && info->productID == SAM_BA_PID);
+}
 
 
 

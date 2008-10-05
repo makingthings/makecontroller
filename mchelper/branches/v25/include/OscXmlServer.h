@@ -30,6 +30,10 @@
 #include "Osc.h"
 #include "Board.h"
 
+#ifdef MCHELPER_TEST_SUITE
+#include "TestXmlServer.h";
+#endif
+
 class OscXmlServer;
 class OscXmlClient;
 class OscMessage;
@@ -96,6 +100,10 @@ class OscXmlClient : public QThread
 	private slots:
 		void processData( );
 		void disconnected( );
+	
+	#ifdef MCHELPER_TEST_SUITE
+  friend class TestXmlServer;
+  #endif
 };
 
 class OscXmlServer : public QTcpServer
@@ -103,7 +111,6 @@ class OscXmlServer : public QTcpServer
 	Q_OBJECT
 	public:
 		OscXmlServer( MainWindow *mainWindow, QObject *parent = 0 );
-		void run( );
 		bool setListenPort( int port );
     void sendPacket(QList<OscMessage*> msgs, QString srcAddress);
     void sendBoardListUpdate(QList<Board*> boardList, bool arrived);
@@ -120,6 +127,10 @@ class OscXmlServer : public QTcpServer
 	private:
 		MainWindow *mainWindow;
 		int listenPort;
+
+	#ifdef MCHELPER_TEST_SUITE
+  friend class TestXmlServer;
+  #endif
 };
 
 #endif // OSC_XML_SERVER_H

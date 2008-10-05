@@ -104,9 +104,11 @@ test_suite {
   SOURCES -=  src/main.cpp
   
   SOURCES +=  tests/main.cpp \
-              tests/TestOsc.cpp
+              tests/TestOsc.cpp \
+              tests/TestXmlServer.cpp
               
-  HEADERS +=  tests/TestOsc.h
+  HEADERS +=  tests/TestOsc.h \
+              tests/TestXmlServer.h
 }
 
 
