@@ -47,13 +47,21 @@ void TestXmlServer::clientConnect()
     if(count++ > 10)
       QFAIL("couldn't connect to host.");
   }
+  
   QCOMPARE(updateSpy.count(), 1 );
-  xmlClient1.readAll();
   QCOMPARE(client1DataSpy.count(), 1 );
-  QByteArray boardUpdate = xmlClient1.readAll();
+  QList<QByteArray> newDocuments = xmlClient1.readAll( ).split( '\0' );
+  foreach( QByteArray document, newDocuments )
+  {
+    if(!document.length())
+      newDocuments.removeOne(document);
+  }
+  QCOMPARE(newDocuments.count(), 2); // should have the crossdomain.xml policy file and the list of connected boards
   QDomDocument doc;
-  doc.setContent(boardUpdate);
-  qDebug("update: %s", qPrintable(doc.toString(2)));
+  QVERIFY(doc.setContent(newDocuments.at(1)));
+  //qDebug("%s", qPrintable(doc.toString(2)));
+  QDomElement board = elementsByTagName("BOARD").item(0).toElement();
+  QCOMPARE(board.attribute("LOCATION"), "192.168.0.123"); // make sure this is our fake board from above
 }
 
 

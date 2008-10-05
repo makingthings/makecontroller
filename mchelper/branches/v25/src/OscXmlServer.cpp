@@ -244,7 +244,7 @@ void OscXmlClient::writeXmlDoc( QDomDocument doc )
 {
   if( isConnected( ) )
   {
-		qDebug("sending %s", qPrintable(doc.toString(2)));
+		//qDebug("sending %s", qPrintable(doc.toString(2)));
     socket->write( doc.toByteArray(0).append( '\0' ) ); // Flash wants XML followed by a zero byte
   }
 }
