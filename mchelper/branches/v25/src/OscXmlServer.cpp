@@ -39,8 +39,9 @@ OscXmlServer::OscXmlServer( MainWindow *mainWindow, QObject *parent ) : QTcpServ
 */
 void OscXmlServer::openNewConnection( )
 {
-	OscXmlClient *client = new OscXmlClient( nextPendingConnection( ), mainWindow );
-  client->sendCrossDomainPolicy(); 
+	qDebug("new connection");
+  OscXmlClient *client = new OscXmlClient( nextPendingConnection( ), mainWindow );
+  client->sendCrossDomainPolicy();
 	connect( client, SIGNAL(finished()), client, SLOT(deleteLater()));
   connect(this, SIGNAL(newXmlPacket(QList<OscMessage*>, QString)), client, SLOT(sendXmlPacket(QList<OscMessage*>, QString)));
   connect(this, SIGNAL(boardInfoUpdate(Board*)), client, SLOT(boardInfoUpdate(Board*)));
@@ -125,8 +126,6 @@ void OscXmlClient::run( )
 	connect( socket, SIGNAL(disconnected()), this, SLOT(disconnected()), Qt::DirectConnection);
 	//connect( socket, SIGNAL(bytesWritten(qint64)), this, SLOT(wroteBytes(qint64)), Qt::DirectConnection);
 	qRegisterMetaType< QList<OscMessage*> >("QList<OscMessage*>");
-	//connect( mainWindow, SIGNAL(boardListUpdate(QList<Board*>, bool)), 
-		//				this, SLOT(boardListUpdate(QList<Board*>, bool)), Qt::DirectConnection);
 	
 	peerAddress = socket->peerAddress( ).toString( );
 	emit msg( tr("New connection from peer at %1").arg(peerAddress), MsgType::Notice, FROM_STRING );
@@ -142,12 +141,12 @@ void OscXmlClient::processData( )
 	// if there's more than one XML document, we expect them to be delimited by \0
 	QList<QByteArray> newDocuments = socket->readAll( ).split( '\0' );
 	bool status;
-	for( int i = 0; i < newDocuments.size( ); i++ )
+  
+	foreach( QByteArray document, newDocuments )
 	{
-		if( newDocuments.at( i ).size( ) )
+		if( document.size( ) )
 		{
-			//printf( "string: %s\n", newDocuments.at( i ).data() );
-			xmlInput.setData( newDocuments.at( i ) );
+			xmlInput.setData( document );
 		
 			if( lastParseComplete )
 			{
@@ -174,7 +173,7 @@ void OscXmlClient::processData( )
 */
 void OscXmlClient::disconnected( )
 {
-	shuttingDown = true;
+  shuttingDown = true;
   emit msg( tr("Peer at %1 disconnected.").arg(peerAddress), MsgType::Notice, FROM_STRING );
 	disconnect( ); // don't want to respond to any more signals
 	socket->abort( );
@@ -243,8 +242,11 @@ void OscXmlClient::boardListUpdate( QList<Board*> boardList, bool arrived )
 
 void OscXmlClient::writeXmlDoc( QDomDocument doc )
 {
-	if( isConnected( ) )
-		socket->write( doc.toByteArray( ).append( '\0' ) ); // Flash wants XML followed by a zero byte
+  if( isConnected( ) )
+  {
+		qDebug("sending %s", qPrintable(doc.toString(2)));
+    socket->write( doc.toByteArray(0).append( '\0' ) ); // Flash wants XML followed by a zero byte
+  }
 }
 
 /*
@@ -253,14 +255,17 @@ void OscXmlClient::writeXmlDoc( QDomDocument doc )
 */
 void OscXmlClient::sendCrossDomainPolicy()
 {
-  QString policyFile("<?xml version=\"1.0\"?> \
-    <!DOCTYPE cross-domain-policy \
-      SYSTEM \"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd\">\
-    <cross-domain-policy>\
-      <allow-access-from domain=\"*\" /> \
-    </cross-domain-policy>");
-  QDomDocument doc;
-  doc.setContent(policyFile);
+  QDomImplementation impl;
+  QDomDocumentType doctype = impl.createDocumentType("cross-domain-policy", QString(), "/xml/dtds/cross-domain-policy.dtd");
+  QDomDocument doc(doctype);
+  QDomProcessingInstruction instr = doc.createProcessingInstruction("xml","version=\"1.0\"");
+  doc.appendChild(instr);
+  QDomElement pol = doc.createElement("cross-domain-policy");
+  doc.appendChild( pol );
+  QDomElement access = doc.createElement("allow-access-from");
+  access.setAttribute( "domain", "*" );
+  access.setAttribute( "to-ports", "*" );
+  pol.appendChild( access );
   writeXmlDoc(doc);
 }
 
@@ -422,8 +427,8 @@ bool XmlHandler::endElement( const QString & namespaceURI, const QString & local
 	{
 		//mainWindow->newXmlPacketReceived( oscMessageList, currentDestination );
 		QStringList strings;
-		for( int i = 0; i < oscMessageList.count( ); i++ )
-			strings << oscMessageList.at( i )->toString( );
+    foreach( OscMessage* msg, oscMessageList )
+			strings << msg->toString( );
 		emit msg( strings, MsgType::XMLMessage, FROM_STRING);
 		qDeleteAll( oscMessageList );
 		oscMessageList.clear( );
