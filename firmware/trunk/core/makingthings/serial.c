@@ -659,19 +659,16 @@ int Serial_Init( int index )
 
   Serial_* sp = &Serial[ index ];
 
-  int id;
-  int rxPin;
-  int txPin;
-  long rxPinBit;
-  long txPinBit;
+  // default to SERIAL_0 values
+  int id = AT91C_ID_US0;
+  int rxPin = IO_PA00_BIT;
+  int txPin = IO_PA01_BIT;
+  long rxPinBit = IO_PA00;
+  long txPinBit = IO_PA01;
   switch( index )
   {
     case SERIAL_0:
-      id = AT91C_ID_US0;
-      rxPinBit = IO_PA00_BIT;
-      txPinBit = IO_PA01_BIT;
-      rxPin = IO_PA00;
-      txPin = IO_PA01;
+      // values already set for this above
       sp->at91UARTRegs = AT91C_BASE_US0;
       break;
     case SERIAL_1:
@@ -765,12 +762,10 @@ int Serial_SetDetails( int index )
      // Reset receiver and transmitter
     sp->at91UARTRegs->US_CR = AT91C_US_RSTRX | AT91C_US_RSTTX | AT91C_US_RXDIS | AT91C_US_TXDIS; 
 
-    int baudValue; 
-
     // MCK is 47923200 for the Make Controller Kit
 
     // Calculate ( * 10 )
-    baudValue = ( MCK * 10 ) / ( sp->baud * 16 );
+    int baudValue = ( MCK * 10 ) / ( sp->baud * 16 );
     // Round (and / 10)
     if ( ( baudValue % 10 ) >= 5 ) 
       baudValue = ( baudValue / 10 ) + 1; 
@@ -783,7 +778,7 @@ int Serial_SetDetails( int index )
       ( ( sp->hardwareHandshake ) ? AT91C_US_USMODE_HWHSH : AT91C_US_USMODE_NORMAL ) |
       ( AT91C_US_CLKS_CLOCK ) |
       ( ( ( sp->bits - 5 ) << 6 ) & AT91C_US_CHRL ) |
-      ( ( sp->stopBits == 1 ) ? AT91C_US_NBSTOP_1_BIT : AT91C_US_NBSTOP_1_BIT ) |
+      ( ( sp->stopBits == 2 ) ? AT91C_US_NBSTOP_2_BIT : AT91C_US_NBSTOP_1_BIT ) |
       ( ( sp->parity == 0 ) ? AT91C_US_PAR_NONE : ( ( sp->parity == -1 ) ? AT91C_US_PAR_ODD : AT91C_US_PAR_EVEN ) );
       // 2 << 14; // this last thing puts it in loopback mode
 
