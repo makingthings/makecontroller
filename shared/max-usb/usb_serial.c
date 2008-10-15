@@ -28,6 +28,7 @@ t_usbInterface* usb_init( cchar* name, t_usbInterface** uip )
   t_usbInterface* usbInt = (t_usbInterface*)malloc( sizeof( t_usbInterface ) );
   usbInt->deviceOpen = false;
   usbInt->readInProgress = false;
+  usbInt->debug = true;
   return usbInt;
 }
 
@@ -64,14 +65,13 @@ int usb_open( t_usbInterface* usbInt, int devicetype )
   if( usbInt->deviceOpen )  //if it's already open, do nothing.
     return USB_E_ALREADY_OPEN;
   
-  if( findUsbDevice( usbInt ) )
+  if( findUsbDevice( usbInt, FIND_MAKE_CONTROLLER ) )
 	{
-	  if( openDevice( usbInt ) == 0 )
+	  post("found a device");
+    if( openDevice( usbInt ) == 0 )
 	  {
-		  // now set up to get called back when it's unplugged
-		  result = DoRegisterForNotification( usbInt );
-
-		  Sleep( 10 );  // wait after opening it before trying to read/write
+		  post("opened a device");
+      Sleep( 10 );  // wait after opening it before trying to read/write
 		  usbInt->deviceOpen = true;
 		  return USB_OK;
 	  }
@@ -168,7 +168,8 @@ int usb_write( t_usbInterface* usbInt, char* buffer, int length )
 	}
     else
     {
-	  //post("usbWrite: write failed, errno %d", errno);
+      if( usbInt->debug )
+        error("mc.usb: write error, errno: %d", errno);
       usb_close( usbInt );
       return USB_E_IOERROR;
     }
@@ -179,12 +180,30 @@ int usb_write( t_usbInterface* usbInt, char* buffer, int length )
   int retVal=0;
   DWORD Win_BytesWritten;
   if (!WriteFile( usbInt->deviceHandle, (void*)buffer, (DWORD)length, &Win_BytesWritten, NULL))
+  {
     retVal=-1;
+    if( usbInt->debug )
+      error("mc.usb: write error: %d", GetLastError());
+  }
   else
     retVal=((int)Win_BytesWritten);
 
+  post("writing %d, sent %d", length, Win_BytesWritten);
+
   return retVal;
   #endif //Windows-only usb_write( )
+}
+
+void usb_flush( t_usbInterface* usbInt )
+{
+#ifndef WIN32
+
+#endif
+
+#ifdef WIN32
+  if (usbInt->deviceOpen)
+    FlushFileBuffers(usbInt->deviceHandle);
+#endif
 }
 
 int usb_writeChar( t_usbInterface* usbInt, char c )
@@ -260,17 +279,24 @@ int openDevice( t_usbInterface* usbInt )
 			0 );
   
   if ( usbInt->deviceHandle == INVALID_HANDLE_VALUE )
+  {
+    if( usbInt->debug )
+      error("mc.usb: error opening device - %d", GetLastError());
     return -1;
+  }
 
   // initialize the overlapped structures
   usbInt->overlappedRead.Offset  = usbInt->overlappedWrite.Offset = 0; 
-  usbInt->overlappedRead.OffsetHigh = usbInt->overlappedWrite.OffsetHigh = 0; 
+  usbInt->overlappedRead.OffsetHigh = usbInt->overlappedWrite.OffsetHigh = 0;
+  usbInt->overlappedRead.Internal = usbInt->overlappedWrite.Internal = 0; 
+  usbInt->overlappedRead.InternalHigh = usbInt->overlappedWrite.InternalHigh = 0;
   usbInt->overlappedRead.hEvent = CreateEvent(0, TRUE, FALSE, 0);
   usbInt->overlappedWrite.hEvent  = CreateEvent(0, TRUE, FALSE, 0);
 
   if (!usbInt->overlappedRead.hEvent || !usbInt->overlappedWrite.hEvent )
   {
-	  printf( "Could Not create overlapped events\n");
+    if( usbInt->debug )
+      error("mc.usb: couldn't create overlapped events - %d", GetLastError());
     return -1;
   }
 
@@ -284,30 +310,19 @@ int openDevice( t_usbInterface* usbInt )
   dcb.fAbortOnError = TRUE;
   if( !SetCommState( usbInt->deviceHandle, &dcb ) )
   {
-	  printf( "SetCommState failed\n");
+    if( usbInt->debug )
+      error("mc.usb: SetCommState failed - %d", GetLastError());
 	  return -1;
   }
-/*
-  if ( blocking )
-  {
-      timeouts.ReadIntervalTimeout = 5000; 
-	  // we don't really want to wait forever since we'll miss errors
-	  // due to closing of the port.
-  }
-  else
-  {
-	  if( debug ) printf
-		  ( "non-blocking desired, setting timeout to MAXDWORD\n");
-      timeouts.ReadIntervalTimeout = MAXDWORD; // return immediately
-  }
-*/
+
   timeouts.ReadTotalTimeoutMultiplier = 0;
   timeouts.ReadTotalTimeoutConstant = 0;
   timeouts.WriteTotalTimeoutMultiplier = 0;
   timeouts.WriteTotalTimeoutConstant = 0;   
   if( ! SetCommTimeouts( usbInt->deviceHandle, &timeouts ) )
   {
-	  printf( "SetCommTimeouts failed\n");
+    if( usbInt->debug )
+      error("mc.usb: SetCommTimeouts failed - %d", GetLastError());
 	  return -1;
   }
 
@@ -316,42 +331,6 @@ int openDevice( t_usbInterface* usbInt )
   usbInt->deviceOpen = true;
 
   return 0;
-}
-
- // make sure to do this only once the device has been opened,
- // since it relies on the deviceHandle to register for the call.
-bool DoRegisterForNotification( t_usbInterface* usbInt )
-{
-	DEV_BROADCAST_HANDLE NotificationFilter;
-	HWND winId;
-	bool test;
-	
-	ZeroMemory( &NotificationFilter, sizeof(NotificationFilter) );
-	NotificationFilter.dbch_size = sizeof( DEV_BROADCAST_HANDLE );
-	NotificationFilter.dbch_devicetype = DBT_DEVTYP_HANDLE;
-	NotificationFilter.dbch_handle = usbInt->deviceHandle;
-
-  //maxWind = wind_new( x, 0, 0, 0, 0, 0 );
-  
-  //winId = wind_gethwnd( maxWind );
-  //wind_gethwnd( maxWind )
-
-	winId = main_get_frame( );
-	if( winId )
-		post( "Got winId!" );
-	else
-		post( "Didn't get winId" ); 
-
-    usbInt->deviceNotificationHandle = RegisterDeviceNotification( winId, &NotificationFilter, DEVICE_NOTIFY_WINDOW_HANDLE );
-
-    if( !usbInt->deviceNotificationHandle ) 
-    {
-        post( "RegisterDeviceNotification failed: %ld", GetLastError() );
-        return false;
-    }
-    post( "RegisterDeviceNotification success!" ); 
-	
-    return true;
 }
 
 #endif
