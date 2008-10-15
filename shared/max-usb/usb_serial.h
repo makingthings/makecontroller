@@ -55,6 +55,7 @@ typedef struct
 {
   bool deviceOpen;
   bool readInProgress;
+  bool debug;
   char deviceLocation[ 512 ];
   
   #ifdef WIN32
@@ -77,6 +78,7 @@ int usb_open( t_usbInterface* usbInt, int devicetype );
 void usb_close( t_usbInterface* usbInt );
 int usb_read( t_usbInterface* usbInt, char* buffer, int length );
 int usb_write( t_usbInterface* usbInt, char* buffer, int length );
+void usb_flush( t_usbInterface* usbInt );
 int usb_writeChar( t_usbInterface* usbInt, char c );
 int usb_numBytesAvailable( t_usbInterface* usbInt );
 
