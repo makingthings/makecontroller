@@ -29,7 +29,7 @@ typedef enum
   MC_IO_ERROR                   = -6,  // Usb error
   MC_UNKNOWN_ERROR              = -7,	 // Unknown error
   MC_PACKET_LENGTH_0            = -8,
-  MC_ERROR_CREATING_BUNDLE      = -9,
+  MC_ERROR_CREATING_MESSAGE      = -9,
   MC_ERROR_SENDING_TEXT_MESSAGE = -10
 } mcError;
 
