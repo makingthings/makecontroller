@@ -262,72 +262,39 @@ mcError Osc_create_message( t_osc* o, char* address, int ac, t_atom* av )
 {  
   // try to send this message - if there's a problem somewhere, 
   // send the existing buffer - freeing up space, then try (once) again.
-  int count = 0;
-  char* bp;
-  char* buffer;
-  int length;
-  int* lp;
-  char* mp;
-	
-  do
-  {  
-    count++;
+  char* bp = o->outBufferPointer;
+  int length = o->outBufferRemaining;
 
-	buffer = o->outBufferPointer;
-    length = o->outBufferRemaining;	
-	bp = buffer;
-  
-    // First message in the buffer?
-		/*
-    if ( bp == o->outBuffer )
-    {
-      bp = Osc_create_bundle( o, bp, &length, 0, 0 );
-      if ( bp == NULL )
-        return MC_ERROR_CREATING_BUNDLE;
-    }
-  */
-    // remember the place we're going to store the message length
-    lp = (int *)bp;
-    //bp += 4;
-    //length -= 4;
-    
-    // remember the start of the message
-    mp = bp;    
-    if( length > 0 )
-	  bp = Osc_create_message_internal( o, bp, &length, address, ac, av ); 
-	else
-	  bp = 0;
-      
-    if ( bp != 0 )
-    {
-      // Set the size
-      //*lp = endianSwap( bp - mp );
-	  o->outBufferPointer = bp;
-      o->outBufferRemaining = length;
-      o->outMessageCount++;
-    }
-    else
-    {
-			//return o->//Osc_send_packet( o, bp, (OSC_MAX_MESSAGE - outBufferRemaining) );
-    }
-  } while ( bp == 0 && count == 1 );
+  if( length > 0 )
+    bp = Osc_create_message_internal( o, bp, &length, address, ac, av );
+  else
+    bp = 0;
 
-	return ( bp != 0 ) ? MC_OK : MC_ERROR_SENDING_TEXT_MESSAGE;
+  if ( bp != 0 )
+  {
+    o->outBufferPointer = bp;
+    o->outBufferRemaining = length;
+    o->outMessageCount++;
+  }
+  else
+  {
+    //return o->//Osc_send_packet( o, bp, (OSC_MAX_MESSAGE - outBufferRemaining) );
+  }
+
+  return ( bp != 0 ) ? MC_OK : MC_ERROR_CREATING_MESSAGE;
 }
 
 char* Osc_create_message_internal( t_osc* o, char* bp, int* length, char* address, int ac, t_atom* av )
 {
   char typetag[128];
   char dataBuf[256]; //place to build up all the arguments while we're still figuring out the typetag
-  char* typeP;
   char* tp;
-  char* dataP;
   char* dp;
   int data_length;
-  int i;
   t_symbol* s;
   int string_length;
   int val;
+  int i;
 
   // do the address
   bp = writePaddedString( bp, length, address );
@@ -336,81 +303,74 @@ char* Osc_create_message_internal( t_osc* o, char* bp, int* length, char* addres
 
   // Going to be walking the tag string, the format string and the data
   // skip the ',' comma
-	
-  typeP = typetag;
   tp = typetag;
-  *tp = ','; // first char has to be a ,
-  tp++;
-	
-  dataP = dataBuf;
+  *tp++ = ','; // first char has to be a ,
+
   dp = dataBuf;
   data_length = 0;
-	
+
   // use the argc and argv that Max gives us to create the typetag and the data arguments
   // hold them in temporary places (since we don't know how long they are and therefore don't know
   // how we're going to need to pad the typetag).
   for( i = 0; i < ac; i++ )
   {
-	switch( av->a_type )
-	{
-	  case A_SYM:
-		// stick things in the typetag
-		*tp = 's';
-		tp++;
-		// stick things in the data string
-		s = atom_getsym( av );
-		string_length = *length; //grab this so we can check it after writePaddedString
-		dp = writePaddedString( dp, length, s->s_name );
-		string_length -= *length; //find out how long the string was
-		data_length += string_length;
-	    break;
-	  case A_LONG:
-	    *length -= 4;
-		if( *length >= 0 )
-		{
-		  // stick things in the typetag
-		  *tp = 'i';
-		  tp++;
-		  // stick things in the data string
-		  val = (int)atom_getlong( av );
-		  val = endianSwap( val );
-		  //post( "Putting this int into data buffer: %d", val );
-		  *((int*)dp) = val;
-		  dp += 4;
-		  data_length += 4;
-		}
-		break;
-	  case A_FLOAT:
-		*length -= 4;
-		if( *length >= 0 )
-		{
-		  // stick things in the typetag
-		  *tp = 'f';
-		  tp++;
-		  // stick things in the data string
-		  *((float*)dp) = atom_getfloat( av );
-		  dp += 4;
-		  data_length += 4;
-		}
-		break;
-	  default:
-		//post( "first message was something else." );
-		break;
-	}
-	av++;
+    switch( av->a_type )
+    {
+    case A_SYM:
+      // stick things in the typetag
+      *tp++ = 's';
+      // stick things in the data string
+      s = atom_getsym( av );
+      string_length = *length; //grab this so we can check it after writePaddedString
+      dp = writePaddedString( dp, length, s->s_name );
+      string_length -= *length; //find out how long the string was
+      data_length += string_length;
+      break;
+    case A_LONG:
+      *length -= 4;
+      if( *length >= 0 )
+      {
+        // stick things in the typetag
+        *tp = 'i';
+        tp++;
+        // stick things in the data string
+        val = endianSwap( (int)atom_getlong( av ) );
+        post( "Putting this int into data buffer: %d", val );
+        *((int*)dp) = val;
+        dp += 4;
+        data_length += 4;
+      }
+      break;
+    case A_FLOAT:
+      *length -= 4;
+      if( *length >= 0 )
+      {
+        // stick things in the typetag
+        *tp++ = 'f';
+        // stick things in the data string
+        *((float*)dp) = atom_getfloat( av );
+        dp += 4;
+        data_length += 4;
+      }
+      break;
+    default:
+      //post( "first message was something else." );
+      break;
+    }
+    av++;
   }
   *tp = '\0'; //terminate the typetag
-  //post( "Typetag: %s", typeP );
+  post( "Typetag: %s", typetag );
   *dp = '\0'; //terminate the data string
-	
+
   // do the type
-  bp = writePaddedString( bp, length, typeP );
+  bp = writePaddedString( bp, length, typetag );
   if ( bp == NULL )
     return 0;
-		
+
   // do the data.
-  //post( "Data: %s, data length: %d", dataP, data_length );
-  memcpy( bp, dataP, data_length );
+  post( "Data: %s, data length: %d", dataBuf, data_length );
+  memcpy( bp, dataBuf, data_length );
 
   return bp;
 }
