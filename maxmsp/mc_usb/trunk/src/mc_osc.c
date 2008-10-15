@@ -276,10 +276,6 @@ mcError Osc_create_message( t_osc* o, char* address, int ac, t_atom* av )
     o->outBufferRemaining = length;
     o->outMessageCount++;
   }
-  else
-  {
-    //return o->//Osc_send_packet( o, bp, (OSC_MAX_MESSAGE - outBufferRemaining) );
-  }
 
   return ( bp != 0 ) ? MC_OK : MC_ERROR_CREATING_MESSAGE;
 }
@@ -288,26 +284,17 @@ char* Osc_create_message_internal( t_osc* o, char* bp, int* length, char* addres
 {
   char typetag[128];
   char dataBuf[256]; //place to build up all the arguments while we're still figuring out the typetag
-  char* tp;
-  char* dp;
-  int data_length;
-  t_symbol* s;
-  int string_length;
   int val;
   int i;
+  char* tp = typetag;
+  char* dp = dataBuf;
 
   // do the address
   bp = writePaddedString( bp, length, address );
   if ( bp == NULL )
     return 0;
 
-  // Going to be walking the tag string, the format string and the data
-  // skip the ',' comma
-  tp = typetag;
   *tp++ = ','; // first char has to be a ,
-
-  dp = dataBuf;
-  data_length = 0;
 
   // use the argc and argv that Max gives us to create the typetag and the data arguments
   // hold them in temporary places (since we don't know how long they are and therefore don't know
@@ -317,40 +304,27 @@ char* Osc_create_message_internal( t_osc* o, char* bp, int* length, char* addres
     switch( av->a_type )
     {
     case A_SYM:
-      // stick things in the typetag
-      *tp++ = 's';
-      // stick things in the data string
-      s = atom_getsym( av );
-      string_length = *length; //grab this so we can check it after writePaddedString
-      dp = writePaddedString( dp, length, s->s_name );
-      string_length -= *length; //find out how long the string was
-      data_length += string_length;
+      *tp++ = 's'; // stick things in the typetag
+      dp = writePaddedString( dp, length, atom_getsym(av)->s_name ); // stick things in the data string
       break;
     case A_LONG:
-      *length -= 4;
-      if( *length >= 0 )
+      if( *length >= 4 )
       {
-        // stick things in the typetag
-        *tp = 'i';
-        tp++;
-        // stick things in the data string
-        val = endianSwap( (int)atom_getlong( av ) );
-        post( "Putting this int into data buffer: %d", val );
+        *length -= 4;
+        *tp++ = 'i'; // stick things in the typetag
+        val = endianSwap( (int)atom_getlong( av ) ); // stick things in the data string
+        //post( "Putting this int into data buffer: %d", val );
         *((int*)dp) = val;
         dp += 4;
-        data_length += 4;
       }
       break;
     case A_FLOAT:
-      *length -= 4;
-      if( *length >= 0 )
+      if( *length >= 4 )
       {
-        // stick things in the typetag
-        *tp++ = 'f';
-        // stick things in the data string
-        *((float*)dp) = atom_getfloat( av );
+        *length -= 4;
+        *tp++ = 'f'; // stick things in the typetag
+        *((float*)dp) = atom_getfloat( av ); // stick things in the data string
         dp += 4;
-        data_length += 4;
       }
       break;
     default:
@@ -360,18 +334,14 @@ char* Osc_create_message_internal( t_osc* o, char* bp, int* length, char* addres
     av++;
   }
   *tp = '\0'; //terminate the typetag
-  post( "Typetag: %s", typetag );
-  *dp = '\0'; //terminate the data string
+  //post( "Typetag: %s", typetag );
 
-  // do the type
-  bp = writePaddedString( bp, length, typetag );
+  bp = writePaddedString( bp, length, typetag ); // add the type into the buffer
   if ( bp == NULL )
     return 0;
 
-  // do the data.
-  post( "Data: %s, data length: %d", dataBuf, data_length );
-  memcpy( bp, dataBuf, data_length );
-
+  //post( "Data: %s, data length: %d", dataBuf, data_length );
+  memcpy( bp, dataBuf, (dp - dataBuf) ); // add the data to the buffer
   return bp;
 }
 
