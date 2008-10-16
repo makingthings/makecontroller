@@ -43,11 +43,9 @@ typedef struct _mcUsb
   void* usb_clock;
   void *out0;
   //OSC things
-  t_osc_packet* osc_packet;  //the current packet being created
-  char* packetP;  //the pointer to the beginning of the packet
   t_osc_message* osc_message; // the message to be sent out into Max
   t_osc* Osc;  //the osc object
-  int packetStarted;
+  bool incomingPacketStarted;
   // USB things
   t_usbInterface* mc_usbInt;  // the USB interface
   char* usbReadBufPtr;
@@ -146,7 +144,7 @@ void usb_tick( t_mcUsb *x )
     usb_close( x->mc_usbInt );
     post( "mc.usb closed the Make Controller Kit USB connection." );
   }
-  clock_delay( x->usb_clock, 1000 );
+  clock_delay( x->usb_clock, 250 );
 }
 
 int mc_getMoreBytes( t_mcUsb *x )
@@ -163,6 +161,7 @@ int mc_getMoreBytes( t_mcUsb *x )
 			if( available > MAX_READ_LENGTH )
 				available = MAX_READ_LENGTH;
 			justGot = usb_read( x->mc_usbInt, x->usbReadBuffer, available );
+      post("read: avail %d, got %d", available, justGot);
       if( justGot < 0 )
         return -1;
     	x->usbReadBufPtr = x->usbReadBuffer;
@@ -174,33 +173,38 @@ int mc_getMoreBytes( t_mcUsb *x )
 
 bool mc_SLIP_receive( t_mcUsb *x )
 {
-  int started = 0, i;
-  char *bufferPtr = x->osc_packet->packetBuf;
-	x->osc_packet->length = 0;
+  int finished = 0, i;
+  t_osc* osc = x->Osc;
 	
-	while( 1 )
+	while( true )
 	{
     int size;
-    if( mc_getMoreBytes( x ) < 0 )
-      return false;
+    if( !x->usbReadBufLength )
+    {
+      if( mc_getMoreBytes( x ) < 0 )
+        return false;
+      if( !x->usbReadBufLength )
+        return false;
+    }
 
 		size = x->usbReadBufLength;
     for( i = 0; i < size; i++ )
 		{
-			switch( (unsigned char)*x->usbReadBufPtr )
+      switch( (unsigned char)*x->usbReadBufPtr )
 			{
 				case END:
-					if( started && x->osc_packet->length > 0 ) // it was the END byte
+					if( x->incomingPacketStarted && osc->inbuf_length > 0 ) // it was the END byte
 					{
-						*bufferPtr = '\0';
-						Osc_receive_packet( x->out0, x->Osc, x->osc_packet->packetBuf, x->osc_packet->length, x->osc_message );
-						x->packetStarted = 0;
-						return true; // We're done now if we had received any characters
+						Osc_receive_packet( x->out0, osc, osc->inBuffer, osc->inbuf_length, x->osc_message );
+						finished = true; // We're done now if we had received any characters
+            x->incomingPacketStarted = false;
 					}
 					else // skipping all starting END bytes
 					{
-						started = true;
-						x->osc_packet->length = 0;
+						x->incomingPacketStarted = true;
+            finished = false;
+            osc->inBufferPointer = osc->inBuffer;
+						osc->inbuf_length = 0;
 					}
 					break;					
 				case ESC:
@@ -209,36 +213,36 @@ bool mc_SLIP_receive( t_mcUsb *x )
           // drop it in the packet in this case
           x->usbReadBufPtr++;
 					x->usbReadBufLength--;
-          if( started )
+          if( x->incomingPacketStarted )
           {
             if( *x->usbReadBufPtr == ESC_END )
             {
-              *bufferPtr++ = END;
-						  x->osc_packet->length++;
+              *osc->inBufferPointer++ = END;
+						  osc->inbuf_length++;
               break;
             }
             else if( *x->usbReadBufPtr == ESC_ESC )
             {
-              *bufferPtr++ = ESC;
-						  x->osc_packet->length++;
+              *osc->inBufferPointer++ = ESC;
+						  osc->inbuf_length++;
               break;
             }
           }
 					// no break here
 				default:
-					if( started )
+					if( x->incomingPacketStarted )
 					{
-						*bufferPtr++ = *x->usbReadBufPtr;
-						x->osc_packet->length++;
+						*osc->inBufferPointer++ = *x->usbReadBufPtr;
+						osc->inbuf_length++;
 					}
 			}
 			x->usbReadBufPtr++;
 			x->usbReadBufLength--;
+      if( finished )
+        return true;
 		}
-		if( x->usbReadBufLength == 0 ) // if we didn't get anything, sleep...otherwise just rip through again
-			break;
 	}
-	return false; // should never get here
+	return false;
 }
 
 
@@ -295,7 +299,6 @@ void mcUsb_free(t_mcUsb *x)
 {
   freeobject( (t_object*)x->mc_clock );
   freeobject( (t_object*)x->usb_clock );
-  free( (t_osc_packet*)x->osc_packet );
   free( (t_osc*)x->Osc );
   free( (t_osc_message*)x->osc_message );
   mcusb_obj_count--;
@@ -325,17 +328,14 @@ void *mcUsb_new( t_symbol *s, long ac, t_atom *av )
 	clock_delay( new_mcUsb->mc_clock, 1 );  //set the clock running every millisecond
   
   new_mcUsb->usb_clock = clock_new( new_mcUsb, (method)usb_tick );
-	clock_delay( new_mcUsb->usb_clock, 1000);  //set the clock running once a second
+	clock_delay( new_mcUsb->usb_clock, 250);  //set the clock running once a second
 	
 	new_mcUsb->Osc = ( t_osc* )malloc( sizeof( t_osc ) );
 	Osc_resetOutBuffer( new_mcUsb->Osc );
 	
-	new_mcUsb->osc_packet = ( t_osc_packet* )malloc( sizeof( t_osc_packet ));
-	new_mcUsb->packetStarted = 0;
-	new_mcUsb->packetP = NULL;
-	
 	new_mcUsb->osc_message = ( t_osc_message* )malloc( sizeof( t_osc_message ) );
 	Osc_reset_message( new_mcUsb->osc_message );
+  new_mcUsb->incomingPacketStarted = false;
 
 	new_mcUsb->usbReadBufPtr = new_mcUsb->usbReadBuffer;
 	new_mcUsb->usbReadBufLength = 0;

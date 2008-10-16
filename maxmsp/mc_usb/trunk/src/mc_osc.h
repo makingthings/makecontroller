@@ -28,12 +28,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-typedef struct
-{
-  char packetBuf[1500];
-  int length;
-} t_osc_packet;
-
 typedef struct // aligned with the way Max sends out messages
 {
   t_symbol* address; // there's the address, that needs to be put in here with gensym( )
@@ -44,6 +38,9 @@ typedef struct // aligned with the way Max sends out messages
 typedef struct
 {
   char outBuffer[ OSC_MAX_MESSAGE ];
+  char inBuffer[ OSC_MAX_MESSAGE ];
+  int inbuf_length;
+  char* inBufferPointer;
   char* outBufferPointer;
   int outBufferRemaining;
   int outMessageCount;
