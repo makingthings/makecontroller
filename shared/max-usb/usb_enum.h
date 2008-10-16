@@ -37,8 +37,9 @@ typedef unsigned char bool;
 bool findUsbDevice( t_usbInterface* usbInt, int devicetype );
 
 #ifdef WIN32
-HANDLE GetDeviceInfo( HDEVINFO HardwareDeviceInfo, PSP_INTERFACE_DEVICE_DATA DeviceInfoData, char* portName );
-bool checkFriendlyName( HDEVINFO HardwareDeviceInfo, PSP_DEVINFO_DATA deviceSpecificInfo, char* portName );
+bool getRegKeyValue(char* buf, int len, HKEY key, LPCTSTR property);
+bool getDeviceProperty(char* buf, int len, HDEVINFO devInfo, PSP_DEVINFO_DATA devData, DWORD property);
+int getPortNumber( char* portName );
 #endif
 
 #endif // usb_enum_H_

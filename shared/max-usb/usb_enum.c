@@ -26,68 +26,92 @@ DEFINE_GUID( GUID_MAKE_CTRL_KIT, 0x4D36E978, 0xE325, 0x11CE, 0xBF, 0xC1, 0x08, 0
 
 bool findUsbDevice( t_usbInterface* usbInt, int devicetype )
 {
-	bool retval = false;
-	#ifdef WIN32 // Windows only
-	HANDLE hOut;
-  HDEVINFO                 hardwareDeviceInfo;
-  SP_INTERFACE_DEVICE_DATA deviceInfoData;
-  ULONG                    i = 0;
-  
-  // Open a handle to the plug and play dev node.
-  // SetupDiGetClassDevs() returns a device information set that contains info on all
-  // installed devices of a specified class.
-  hardwareDeviceInfo = SetupDiGetClassDevs (
-                         (LPGUID)&GUID_MAKE_CTRL_KIT,
-                         NULL,            // Define no enumerator (global)
-                         NULL,            // Define no
-                         (DIGCF_PRESENT | // Only Devices present
-                         DIGCF_INTERFACEDEVICE)); // Function class devices.
+  bool retval = false;
+  bool ok = true;
+#ifdef WIN32 // Windows only
 
-  deviceInfoData.cbSize = sizeof(SP_INTERFACE_DEVICE_DATA);
-  
-  while( true ) 
-  {
-	  if(SetupDiEnumDeviceInterfaces (hardwareDeviceInfo,
-	                                      0, // We don't care about specific PDOs
-	                                      (LPGUID)&GUID_MAKE_CTRL_KIT,
-	                                      i++,
-	                                      &deviceInfoData))
-	  {
-	  	char portName[ 8 ];
-	  	hOut = GetDeviceInfo( hardwareDeviceInfo, &deviceInfoData, portName );
-	    if(hOut != INVALID_HANDLE_VALUE && portName != NULL )
-	    {
-				usbInt->deviceHandle = hOut;
-        sprintf( usbInt->deviceLocation, portName );
-				retval = true;
-        break;
-	    }
-	  }
-	  else 
-	  {
-	    if(ERROR_NO_MORE_ITEMS == GetLastError()) 
-	       break;
-	  }
+  SP_DEVICE_INTERFACE_DATA ifcData;
+  DWORD detDataPredictedLength;
+  HDEVINFO devInfo = INVALID_HANDLE_VALUE;
+  GUID * guidDev = (GUID *) & GUID_MAKE_CTRL_KIT;
+  DWORD i;
+
+  PSP_DEVICE_INTERFACE_DETAIL_DATA detData = NULL;
+  ifcData.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
+
+  devInfo = SetupDiGetClassDevs(guidDev, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+  if(devInfo == INVALID_HANDLE_VALUE) {
+    error("SetupDiGetClassDevs failed. Error code: %d", GetLastError());
+    return false;
   }
-  // destroy the device information set and free all associated memory.
-  SetupDiDestroyDeviceInfoList(hardwareDeviceInfo);
-  
-	#else ifndef WIN32  // Windows-only FindUsbDevices( )
-//--------------------------------------- Mac-only -------------------------------
+
+  for ( i = 0; ok; i++)
+  {
+    ok = SetupDiEnumDeviceInterfaces(devInfo, NULL, guidDev, i, &ifcData);
+    if (ok)
+    {
+      SP_DEVINFO_DATA devData = {sizeof(SP_DEVINFO_DATA)};
+      //check for required detData size
+      SetupDiGetDeviceInterfaceDetail(devInfo, & ifcData, NULL, 0, &detDataPredictedLength, & devData);
+      detData = (PSP_DEVICE_INTERFACE_DETAIL_DATA)malloc(detDataPredictedLength);
+      detData->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
+
+      //check the details
+      if (SetupDiGetDeviceInterfaceDetail(devInfo, &ifcData, detData, detDataPredictedLength, NULL, & devData))
+      {
+        char portName[512];
+        char friendName[512];
+        HKEY devKey;
+        bool gotdevice = false;
+        if( !getDeviceProperty(friendName, 1024, devInfo, &devData, SPDRP_FRIENDLYNAME) )
+          error("getDeviceProperty friendly name failed" );
+        devKey = SetupDiOpenDevRegKey(devInfo, &devData, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
+        if( !getRegKeyValue(portName, 1024, devKey, TEXT("PortName")) )
+          error("getRegKeyValue portName failed");
+
+        if( devicetype == FIND_MAKE_CONTROLLER && !strncmp( friendName, "Make Controller Ki", 18) )
+          gotdevice = true;
+        else if( devicetype == FIND_TELEO && !strncmp( friendName, "USB <-> Serial", 14) )
+          gotdevice = true;
+
+        if( gotdevice)
+        {
+          if( getPortNumber(portName) > 9 )
+            sprintf(usbInt->deviceLocation, "\\\\.\\%s", portName);
+          else
+            memcpy(usbInt->deviceLocation, portName, strlen(portName));
+          retval = true;
+        }
+      }
+      else
+        error("SetupDiGetDeviceInterfaceDetail failed. Error code: %d", GetLastError());
+
+      free( detData );
+    }
+    else if (GetLastError() != ERROR_NO_MORE_ITEMS)
+    {
+      error("SetupDiEnumDeviceInterfaces failed. Error code: %d", GetLastError());
+      return false;
+    }
+  }
+  SetupDiDestroyDeviceInfoList(devInfo);
+
+#else ifndef WIN32  // Windows-only FindUsbDevices( )
+  //--------------------------------------- Mac-only -------------------------------
   io_object_t modemService;
   io_iterator_t iterator = 0;
-    
+
   // create a dictionary that looks for all BSD modems
   CFMutableDictionaryRef matchingDictionary = IOServiceMatching( kIOSerialBSDServiceValue );
   if (matchingDictionary == NULL)
     return false;
   else
     CFDictionarySetValue(matchingDictionary, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDModemType));
-  
+
   // then create the iterator with all the matching devices
   if( IOServiceGetMatchingServices( kIOMasterPortDefault, matchingDictionary, &iterator ) != KERN_SUCCESS )
     return false;
-  
+
   // Iterate through all modems found. In this example, we bail after finding the first modem.
   while( (modemService = IOIteratorNext(iterator)) && !retval )
   {
@@ -95,7 +119,7 @@ bool findUsbDevice( t_usbInterface* usbInt, int devicetype )
     CFTypeRef productNameAsCFString = NULL;
     char devicePath[MAXPATHLEN];
     char productName[MAXPATHLEN];
-    
+
     // check the name of the modem's callout device
     bsdPathAsCFString = IORegistryEntrySearchCFProperty(modemService, kIOServicePlane, CFSTR(kIOCalloutDeviceKey), kCFAllocatorDefault, 0);
     // then, because the callout device could be any old thing, and because the reference to the modem returned by the
@@ -106,23 +130,23 @@ bool findUsbDevice( t_usbInterface* usbInt, int devicetype )
       productNameAsCFString = IORegistryEntrySearchCFProperty(parent, kIOServicePlane, CFSTR("Product Name"), kCFAllocatorDefault, 0);
       IOObjectRelease(parent);
     }
-    
+
     if( bsdPathAsCFString )
     {   
       CFStringGetCString((CFStringRef)bsdPathAsCFString, devicePath, PATH_MAX, kCFStringEncodingUTF8);
       CFRelease(bsdPathAsCFString);
     }
-    
+
     if(productNameAsCFString)
     {
       bool gotdevice = false;
       CFStringGetCString((CFStringRef)productNameAsCFString, productName, PATH_MAX, kCFStringEncodingUTF8);
-        
+
       if( devicetype == FIND_MAKE_CONTROLLER && !strncmp( productName, "Make Controller Ki", 18) )
         gotdevice = true;
       else if( devicetype == FIND_TELEO && !strncmp( productName, "USB <-> Serial", 14) )
         gotdevice = true;
-        
+
       if( gotdevice )
       {
         strcpy( usbInt->deviceLocation, devicePath );
@@ -133,101 +157,47 @@ bool findUsbDevice( t_usbInterface* usbInt, int devicetype )
     IOObjectRelease(modemService);
   }
   IOObjectRelease(iterator);
-  #endif // WIN32
+#endif // WIN32
   return retval;
 }
 #ifdef WIN32
-HANDLE GetDeviceInfo(HDEVINFO HardwareDeviceInfo, PSP_INTERFACE_DEVICE_DATA DeviceInfoData, char* portName  )
+
+bool getRegKeyValue(char* buf, int len, HKEY key, LPCTSTR property)
 {
-  PSP_INTERFACE_DEVICE_DETAIL_DATA functionClassDeviceData = NULL;
-  ULONG                            predictedLength = 0;
-  ULONG                            requiredLength = 0;
-	SP_DEVINFO_DATA deviceSpecificInfo;
-  
-  // allocate a function class device data structure to receive the
-  // goods about this particular device.
-  SetupDiGetInterfaceDeviceDetail(HardwareDeviceInfo,
-                                  DeviceInfoData,
-                                  NULL,  // probing so no output buffer yet
-                                  0,     // probing so output buffer length of zero
-                                  &requiredLength,
-                                  NULL); // not interested in the specific dev-node
-
-  predictedLength = requiredLength;
-  
-  deviceSpecificInfo.cbSize = sizeof(SP_DEVINFO_DATA);
-
-  functionClassDeviceData = (PSP_INTERFACE_DEVICE_DETAIL_DATA) malloc (predictedLength);
-  functionClassDeviceData->cbSize = sizeof (SP_INTERFACE_DEVICE_DETAIL_DATA);
-
-  // Retrieve the information from Plug and Play.
-  if (! SetupDiGetInterfaceDeviceDetail(HardwareDeviceInfo,
-                                        DeviceInfoData,
-                                        functionClassDeviceData,
-                                        predictedLength,
-                                        &requiredLength,
-                                        &deviceSpecificInfo))
+	DWORD size = 0;
+  bool retval = false;
+	RegQueryValueEx(key, property, NULL, NULL, NULL, & size);
+  if( (DWORD)len >= size )
   {
-    free(functionClassDeviceData);
-    return INVALID_HANDLE_VALUE;
+	  if (RegQueryValueEx(key, property, NULL, NULL, buf, & size) == ERROR_SUCCESS)
+      retval = true;
+	  else
+      error("getRegKeyValue: can not obtain value from registry");
   }
-  
-  if( checkFriendlyName( HardwareDeviceInfo, &deviceSpecificInfo, portName ) )
-  	return functionClassDeviceData->DevicePath;
-  else
-  {
-		free( functionClassDeviceData );
-		return INVALID_HANDLE_VALUE;
-  }
+	RegCloseKey(key);
+  return retval;
 }
 
-//-----------------------------------------------------------------
-//                  Windows-only checkFriendlyName( )
-//-----------------------------------------------------------------
-bool checkFriendlyName( HDEVINFO HardwareDeviceInfo, PSP_DEVINFO_DATA deviceSpecificInfo, char* portName )
+int getPortNumber( char* portName )
 {
-	DWORD DataT;
-    LPTSTR buffer = NULL;
-    DWORD buffersize = 0;
-		TCHAR *ptr;
-		char* namePtr;
-    
-    while (!SetupDiGetDeviceRegistryProperty(
-               HardwareDeviceInfo,
-               deviceSpecificInfo,
-               SPDRP_FRIENDLYNAME,
-               &DataT,
-               (PBYTE)buffer,
-               buffersize,
-               &buffersize))
-   {
-       if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) // then change the buffer size.
-       {
-           if (buffer) LocalFree(buffer);
-           // Double the size to avoid problems on W2k MBCS systems per KB 888609.
-           buffer = (TCHAR*)LocalAlloc(LPTR, buffersize * 2);
-       }
-       else
-           break;
-   }  
-	if (buffer)
-	{	// if the friendly name is Make Controller Kit, then that's us.
-		if(!_tcsncmp(TEXT("Make Controller Kit"), buffer, 19))
-		{
-			// zip through the buffer to find the COM port number - between parentheses
-			ptr = buffer;
-			namePtr = portName;
-			while( *ptr++ != '(' ) {};
-			while( *ptr != ')' )
-				*namePtr++ = *ptr++;
-			*namePtr = '\0'; // null terminate the string
-			return true;
-		}
-			
-		LocalFree(buffer);
-	}
-		
-	return false;
+  while( !isdigit(*portName) )
+    portName++;
+  return atoi(portName);
+}
+
+bool getDeviceProperty(char* buf, int len, HDEVINFO devInfo, PSP_DEVINFO_DATA devData, DWORD property)
+{
+	DWORD buffSize = 0;
+  bool result = false;
+	SetupDiGetDeviceRegistryProperty(devInfo, devData, property, NULL, NULL, 0, & buffSize);
+  if( (DWORD)len >= buffSize )
+  {
+    if (SetupDiGetDeviceRegistryProperty(devInfo, devData, property, NULL, buf, buffSize, NULL))
+      result = true;
+    else
+		  error("Can not obtain property: %d from registry", property); 
+  }
+	return result;
 }
 
 #endif // WIN32
