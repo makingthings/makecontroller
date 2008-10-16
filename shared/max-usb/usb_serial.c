@@ -93,6 +93,7 @@ void usb_close( t_usbInterface* usbInt )
 	//Windows only
     #ifdef WIN32
     CloseHandle( usbInt->deviceHandle );
+    usbInt->deviceHandle = INVALID_HANDLE_VALUE;
     usbInt->deviceOpen = false;
     #endif
   }
@@ -171,18 +172,15 @@ int usb_write( t_usbInterface* usbInt, char* buffer, int length )
 	
   //--------------------------------------- Windows-only -------------------------------
   #ifdef WIN32
-  int retVal=0;
+  int retVal = -1;
   DWORD Win_BytesWritten;
   if (!WriteFile( usbInt->deviceHandle, (void*)buffer, (DWORD)length, &Win_BytesWritten, NULL))
   {
-    retVal=-1;
     if( usbInt->debug )
       error("mc.usb: write error: %d", GetLastError());
   }
   else
     retVal=((int)Win_BytesWritten);
-
-  post("writing %d, sent %d", length, Win_BytesWritten);
 
   return retVal;
   #endif //Windows-only usb_write( )
@@ -212,21 +210,22 @@ int usb_numBytesAvailable( t_usbInterface* usbInt )
 	#ifndef WIN32
 	if( ioctl( usbInt->deviceHandle, FIONREAD, &n ) < 0 )
 	{
-		// ioctl error
+		if( usbInt->debug )
+      error("mc.usb: error reading number of bytes in queue - %d", errno);
 		return USB_E_CLOSE;
 	}
 	#endif // Mac-only usb_numBytesAvailable( )
 
 	#ifdef WIN32
 	COMSTAT status;
-	unsigned long   state;
-
-	if (usbInt->deviceHandle != INVALID_HANDLE_VALUE)
-	{
-			bool success = false;
-			success = ClearCommError( usbInt->deviceHandle, &state, &status);
-			n = status.cbInQue;
-	}
+	unsigned long state;
+	if( ClearCommError( usbInt->deviceHandle, &state, &status) )
+	  n = status.cbInQue;
+  else
+  {
+    if( usbInt->debug )
+      error("mc.usb: error reading number of bytes in queue - %d", GetLastError());
+  }
 	#endif // Windows-only usb_numBytesAvailable( )
 
 	return n;
