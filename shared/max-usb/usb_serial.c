@@ -66,10 +66,8 @@ int usb_open( t_usbInterface* usbInt, int devicetype )
   
   if( findUsbDevice( usbInt, FIND_MAKE_CONTROLLER ) )
 	{
-	  post("found a device");
     if( openDevice( usbInt ) == 0 )
 	  {
-		  post("opened a device");
       Sleep( 10 );  // wait after opening it before trying to read/write
 		  usbInt->deviceOpen = true;
 		  return USB_OK;
@@ -238,7 +236,7 @@ int openDevice( t_usbInterface* usbInt )
     return 0;
 
   // Open the port
-  usbInt->deviceHandle = CreateFile( (TCHAR*)usbInt->deviceHandle,
+  usbInt->deviceHandle = CreateFile( (TCHAR*)usbInt->deviceLocation,
 			GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0 );
   
   if ( usbInt->deviceHandle == INVALID_HANDLE_VALUE )
