@@ -93,6 +93,9 @@ bool findUsbDevice( t_usbInterface* usbInt, int devicetype )
   {
     CFTypeRef bsdPathAsCFString = NULL;
     CFTypeRef productNameAsCFString = NULL;
+    char devicePath[MAXPATHLEN];
+    char productName[MAXPATHLEN];
+    
     // check the name of the modem's callout device
     bsdPathAsCFString = IORegistryEntrySearchCFProperty(modemService, kIOServicePlane, CFSTR(kIOCalloutDeviceKey), kCFAllocatorDefault, 0);
     // then, because the callout device could be any old thing, and because the reference to the modem returned by the
@@ -104,26 +107,28 @@ bool findUsbDevice( t_usbInterface* usbInt, int devicetype )
       IOObjectRelease(parent);
     }
     
-    if(productNameAsCFString && bsdPathAsCFString)
+    if( bsdPathAsCFString )
+    {   
+      CFStringGetCString((CFStringRef)bsdPathAsCFString, devicePath, PATH_MAX, kCFStringEncodingUTF8);
+      CFRelease(bsdPathAsCFString);
+    }
+    
+    if(productNameAsCFString)
     {
-      char productName[MAXPATHLEN];
-      char devicePath[MAXPATHLEN];
-      CFStringGetCString((CFStringRef)bsdPathAsCFString, devicePath, MAXPATHLEN, kCFStringEncodingUTF8);
-      CFStringGetCString((CFStringRef)productNameAsCFString, productName, MAXPATHLEN, kCFStringEncodingUTF8);
-      
       bool gotdevice = false;
+      CFStringGetCString((CFStringRef)productNameAsCFString, productName, PATH_MAX, kCFStringEncodingUTF8);
+        
       if( devicetype == FIND_MAKE_CONTROLLER && !strncmp( productName, "Make Controller Ki", 18) )
         gotdevice = true;
       else if( devicetype == FIND_TELEO && !strncmp( productName, "USB <-> Serial", 14) )
         gotdevice = true;
-      
+        
       if( gotdevice )
       {
         strcpy( usbInt->deviceLocation, devicePath );
         retval = true;
       }
       CFRelease(productNameAsCFString);
-      CFRelease(bsdPathAsCFString);
     }
     IOObjectRelease(modemService);
   }
