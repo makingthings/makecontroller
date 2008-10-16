@@ -23,11 +23,11 @@
 #include <sys/ioctl.h>
 #endif
 
-t_usbInterface* usb_init( cchar* name, t_usbInterface** uip )
+t_usbInterface* usb_init( t_usbInterface** uip )
 {
   t_usbInterface* usbInt = (t_usbInterface*)malloc( sizeof( t_usbInterface ) );
   usbInt->deviceOpen = false;
-  usbInt->debug = true;
+  usbInt->debug = false;
   return usbInt;
 }
 
@@ -84,6 +84,7 @@ void usb_close( t_usbInterface* usbInt )
 {
   if( usbInt->deviceOpen )
   {
+    usb_flush( usbInt );
     //Mac-only
     #ifndef WIN32
     close( usbInt->deviceHandle );
@@ -154,20 +155,16 @@ int usb_write( t_usbInterface* usbInt, char* buffer, int length )
     return USB_E_NOT_OPEN;
   
 	int size = write( usbInt->deviceHandle, buffer, length );
-	if ( length == size )
-		return USB_OK;
+	if ( size > 0 )
+		return size;
 	else if( errno == EAGAIN )
-	{
-	  //post( "Nothing available. ");
 		return USB_E_NOTHING_AVAILABLE;
-	}
-    else
-    {
-      if( usbInt->debug )
-        error("mc.usb: write error, errno: %d", errno);
-      usb_close( usbInt );
-      return USB_E_IOERROR;
-    }
+  else
+  {
+    if( usbInt->debug )
+      error("mc.usb: write error - %s (%d)", strerror(errno), errno);
+    return USB_E_IOERROR;
+  }
   #endif
 	
   //--------------------------------------- Windows-only -------------------------------
@@ -189,7 +186,8 @@ int usb_write( t_usbInterface* usbInt, char* buffer, int length )
 void usb_flush( t_usbInterface* usbInt )
 {
 #ifndef WIN32
-
+  if (usbInt->deviceOpen)
+    tcflush(usbInt->deviceHandle, TCIOFLUSH);
 #endif
 
 #ifdef WIN32
@@ -209,11 +207,7 @@ int usb_numBytesAvailable( t_usbInterface* usbInt )
 
 	#ifndef WIN32
 	if( ioctl( usbInt->deviceHandle, FIONREAD, &n ) < 0 )
-	{
-		if( usbInt->debug )
-      error("mc.usb: error reading number of bytes in queue - %d", errno);
 		return USB_E_CLOSE;
-	}
 	#endif // Mac-only usb_numBytesAvailable( )
 
 	#ifdef WIN32

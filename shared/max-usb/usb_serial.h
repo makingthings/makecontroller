@@ -18,8 +18,6 @@
 #ifndef USB_SERIAL_H
 #define USB_SERIAL_H
 
-typedef const char cchar;
-
 //--------------------------------------- Mac-only -------------------------------
 #ifndef WIN32
 
@@ -68,7 +66,7 @@ typedef struct
 } t_usbInterface;
 
 //function prototypes
-t_usbInterface* usb_init( cchar* name, t_usbInterface** uip );
+t_usbInterface* usb_init( t_usbInterface** uip );
 int usb_open( t_usbInterface* usbInt, int devicetype );
 void usb_close( t_usbInterface* usbInt );
 int usb_read( t_usbInterface* usbInt, char* buffer, int length );
