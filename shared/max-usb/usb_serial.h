@@ -54,16 +54,11 @@ typedef unsigned char bool;
 typedef struct
 {
   bool deviceOpen;
-  bool readInProgress;
   bool debug;
   char deviceLocation[ 512 ];
   
   #ifdef WIN32
   HANDLE deviceHandle;
-  OVERLAPPED overlappedRead;
-  char readBuffer[512];
-  OVERLAPPED overlappedWrite;
-  HDEVNOTIFY deviceNotificationHandle;
   #endif
 	
   #ifndef WIN32
@@ -84,7 +79,6 @@ int usb_numBytesAvailable( t_usbInterface* usbInt );
 
 //Windows only
 #ifdef WIN32
-int testOpen( t_usbInterface* usbInt, TCHAR* deviceName );
 int openDevice( t_usbInterface* usbInt );
 bool DoRegisterForNotification( t_usbInterface* usbInt );
 #endif

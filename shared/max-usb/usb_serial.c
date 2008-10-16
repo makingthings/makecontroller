@@ -27,7 +27,6 @@ t_usbInterface* usb_init( cchar* name, t_usbInterface** uip )
 {
   t_usbInterface* usbInt = (t_usbInterface*)malloc( sizeof( t_usbInterface ) );
   usbInt->deviceOpen = false;
-  usbInt->readInProgress = false;
   usbInt->debug = true;
   return usbInt;
 }
@@ -94,8 +93,6 @@ void usb_close( t_usbInterface* usbInt )
 	//Windows only
     #ifdef WIN32
     CloseHandle( usbInt->deviceHandle );
-	UnregisterDeviceNotification( usbInt->deviceNotificationHandle );
-    usbInt->deviceHandle = INVALID_HANDLE_VALUE;
     usbInt->deviceOpen = false;
     #endif
   }
@@ -241,25 +238,6 @@ int usb_numBytesAvailable( t_usbInterface* usbInt )
 // Windows specific functions
 #ifdef WIN32
 
-int testOpen( t_usbInterface* usbInt, TCHAR* deviceName )
-{
-  usbInt->deviceHandle = CreateFile( deviceName, 
-			GENERIC_READ | GENERIC_WRITE, 
-			0, 
-			0, 
-			OPEN_EXISTING, 
-			FILE_ATTRIBUTE_NORMAL, 0 );
-  
-  if ( usbInt->deviceHandle == INVALID_HANDLE_VALUE )
-    return -1;
-
-  // otherwise, we found one.
-  // close it again immediately - we were just checking to see if anything was there...
-  CloseHandle( usbInt->deviceHandle );
-  usbInt->deviceHandle = INVALID_HANDLE_VALUE;
-  return 0;
-}
-
 int openDevice( t_usbInterface* usbInt )
 {
   DCB dcb;
@@ -271,32 +249,12 @@ int openDevice( t_usbInterface* usbInt )
 
   // Open the port
   usbInt->deviceHandle = CreateFile( (TCHAR*)usbInt->deviceHandle,
-			GENERIC_READ | GENERIC_WRITE, 
-			0, 
-			0, 
-			OPEN_EXISTING, 
-			FILE_FLAG_OVERLAPPED, 
-			0 );
+			GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0 );
   
   if ( usbInt->deviceHandle == INVALID_HANDLE_VALUE )
   {
     if( usbInt->debug )
       error("mc.usb: error opening device - %d", GetLastError());
-    return -1;
-  }
-
-  // initialize the overlapped structures
-  usbInt->overlappedRead.Offset  = usbInt->overlappedWrite.Offset = 0; 
-  usbInt->overlappedRead.OffsetHigh = usbInt->overlappedWrite.OffsetHigh = 0;
-  usbInt->overlappedRead.Internal = usbInt->overlappedWrite.Internal = 0; 
-  usbInt->overlappedRead.InternalHigh = usbInt->overlappedWrite.InternalHigh = 0;
-  usbInt->overlappedRead.hEvent = CreateEvent(0, TRUE, FALSE, 0);
-  usbInt->overlappedWrite.hEvent  = CreateEvent(0, TRUE, FALSE, 0);
-
-  if (!usbInt->overlappedRead.hEvent || !usbInt->overlappedWrite.hEvent )
-  {
-    if( usbInt->debug )
-      error("mc.usb: couldn't create overlapped events - %d", GetLastError());
     return -1;
   }
 
