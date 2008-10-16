@@ -53,7 +53,7 @@ char* Osc_createBundle( t_osc* o, char* buffer, int* length, int a, int b );
 mcError Osc_create_message( t_osc* o, char* address, int ac, t_atom* av );
 int Osc_extractData( t_osc* o, char* buffer, t_osc_message* osc_message );
 void Osc_receive_packet( void* out, t_osc* o, char* packet, int length, t_osc_message* osc_message );
-void Osc_receive_message( t_osc* o, char* in, int length, t_osc_message* osc_message );
+bool Osc_receive_message( t_osc* o, char* in, int length, t_osc_message* osc_message );
 char* Osc_find_data_tag( t_osc* o, char* message, int length );
 char* Osc_create_message_internal( t_osc* o, char* bp, int* length, char* address, int ac, t_atom* av );
 void Osc_resetOutBuffer( t_osc* o );

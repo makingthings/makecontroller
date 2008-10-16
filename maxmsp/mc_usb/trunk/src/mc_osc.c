@@ -113,71 +113,68 @@ int Osc_extract_data( t_osc* o, char* buffer, t_osc_message* osc_message )
   if ( pad != 0 )
     tagLen += ( 4 - pad );
   data = buffer + tagLen;
-
+  
   // Going to be walking through the type tag, and the data.
-   // need to skip the comma ','
+  // need to skip the comma ','
   ap = osc_message->argv; // to walk along the data arguments
+  tp = buffer + 1; // set our typetag pointer after the initial comma
   cont = true;
-  for( tp = buffer + 1; *tp && cont; tp++ )
+  while( *tp && cont )
   {
     cont = false;
-    switch ( *tp )
+    switch ( *tp++ )
     {
       case 'i':
-	  {
+      {
         long i = *(long*)data;
         i = endianSwap( i );
-		//post( "Integer: %d ", i );
-		data += 4;
-		count++;
-		if ( osc_message->argc < OSC_MAX_ARG_COUNT )
-		{
-		  osc_message->argc++;
-		  atom_setlong( ap, i );
-		  ap++;
-		  cont = true;
-		}
+        //post( "Integer: %d ", i );
+        data += 4;
+        count++;
+        if ( osc_message->argc < OSC_MAX_ARG_COUNT ) // if we have room in our osc_msg
+        {
+          osc_message->argc++;
+          atom_setlong( ap++, i );
+          cont = true;
+        }
         break;
-	  }
+      }
       case 'f':
-	  {
-		int i = *(int*)data;
-		float f;
+      {
+        int i = *(int*)data;
+        float f;
         i = endianSwap( i );
         f = *(float*)&i;
-		//post( "Float: %f ", f );
-		data += 4;
-		count++;
-		if ( osc_message->argc < OSC_MAX_ARG_COUNT )
-		{ 
-  		  osc_message->argc++;
-		  atom_setfloat( ap, f );
-		  ap++;
-		  cont = true;
-		}
-        break;
-	  }
-      case 's':
-	  {
-		//post( "String: %s ", data );
-	    int pad;
-		int len = strlen( data ) + 1;
-		if ( osc_message->argc < OSC_MAX_ARG_COUNT )
-		{
+        //post( "Float: %f ", f );
+        data += 4;
+        count++;
+        if ( osc_message->argc < OSC_MAX_ARG_COUNT )
+        { 
           osc_message->argc++;
-		  atom_setsym( ap, gensym( data ) );
-		  ap++;
-		  pad = len % 4;
-		  if ( pad != 0 )
-		    len += ( 4 - pad );
-		  data += len;
-		  count++;
-		  cont = true;
-		}
-		
+          atom_setfloat( ap++, f );
+          cont = true;
+        }
         break;
-	  }
-	  default:
+      }
+      case 's':
+      {
+        //post( "String: %s ", data );
+        int pad;
+        int len = strlen( data ) + 1;
+        if ( osc_message->argc < OSC_MAX_ARG_COUNT )
+        {
+          osc_message->argc++;
+          atom_setsym( ap++, gensym( data ) );
+          pad = len % 4;
+          if ( pad != 0 )
+            len += ( 4 - pad );
+          data += len;
+          count++;
+          cont = true;
+        }
+        break;
+      }
+      default:
         break;
     }
   }
@@ -191,8 +188,8 @@ void Osc_receive_packet( void* out, t_osc* o, char* packet, int length, t_osc_me
 	switch( *packet )
 	{
 		case '/':		// the '/' in front tells us this is an Osc message.
-			Osc_receive_message( o, packet, length, osc_message );
-			outlet_anything( out, osc_message->address, osc_message->argc, osc_message->argv );
+			if( Osc_receive_message( o, packet, length, osc_message ) )
+        outlet_anything( out, osc_message->address, osc_message->argc, osc_message->argv );
 			Osc_reset_message( osc_message );
 			break;
 		case '#':		// the '#' tells us this is an Osc bundle, and we check for "#bundle" just to be sure.
@@ -226,26 +223,31 @@ void Osc_receive_packet( void* out, t_osc* o, char* packet, int length, t_osc_me
 	Once we receive a message, we need to make sure it's in the right format,
 	and then send it off to be interpreted (via extractData() ).
 */
-void Osc_receive_message( t_osc* o, char* packet, int length, t_osc_message* osc_message )
+bool Osc_receive_message( t_osc* o, char* packet, int length, t_osc_message* osc_message )
 {
   char* type;
+  bool retval = false;
   // We can print the address by just trying to print message, since it's null-terminated after the address.
 	//post( "New message: address - %s ", packet );
   if ( osc_message != 0 )
     osc_message->address = gensym( packet );
 	
   // Then try to find the type tag
-  type = Osc_find_data_tag( o, packet, length );
-  if ( type == NULL )		//If there was no type tag, say so and stop processing this message.
-	post( "Error - No type tag." );
-  else		//Otherwise, step through the type tag and print the data out accordingly.
+  type = Osc_find_data_tag( o, packet + strlen(packet), length );
+  if ( type )
   {
-	//We get a count back from extractData() of how many items were included - if this
-	//doesn't match the length of the type tag, something funky is happening.
-	int count = Osc_extract_data( o, type, osc_message );
-	if ( count != (int)( strlen(type) - 1 ) )
-	  post( "Error extracting data from packet - type tag doesn't correspond to data included." );
+    //We get a count back from extractData() of how many items were included - if this
+    //doesn't match the length of the type tag, something funky is happening.
+    int count = Osc_extract_data( o, type, osc_message );
+    if ( count != (int)( strlen(type) - 1 ) )
+      error( "mc.usb: Error extracting data from packet - type tag doesn't correspond to data included." );
+    else
+      retval = true;
   }
+  else
+    error( "Error - No type tag." );
+    
+  return retval;
 }
 
 char* Osc_find_data_tag( t_osc* o, char* message, int length )

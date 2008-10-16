@@ -163,7 +163,7 @@ int mc_getMoreBytes( t_mcUsb *x )
 			if( available > MAX_READ_LENGTH )
 				available = MAX_READ_LENGTH;
 			int justGot = usb_read( x->mc_usbInt, x->usbReadBuffer, available );
-      post("read: avail %d, got %d", available, justGot);
+      //post("read: avail %d, got %d", available, justGot);
       if( justGot < 0 )
         return -1;
     	x->usbReadBufPtr = x->usbReadBuffer;
@@ -178,7 +178,7 @@ void mc_SLIP_receive( t_mcUsb *x )
   int finished = 0;
   t_osc* osc = x->Osc;
 	
-	while( osc->inbuf_length < OSC_MAX_MESSAGE )
+	while( true )
 	{
     if( !x->usbReadBufLength )
     {
@@ -196,7 +196,7 @@ void mc_SLIP_receive( t_mcUsb *x )
 				case END:
 					if( x->incomingPacketStarted && osc->inbuf_length > 0 ) // it was the END byte
 					{
-						//Osc_receive_packet( x->out0, osc, osc->inBuffer, osc->inbuf_length, x->osc_message );
+						Osc_receive_packet( x->out0, osc, osc->inBuffer, osc->inbuf_length, x->osc_message );
 						finished = true; // We're done now if we had received any characters
             x->incomingPacketStarted = false;
 					}
@@ -242,13 +242,15 @@ void mc_SLIP_receive( t_mcUsb *x )
 			x->usbReadBufLength--;
       if( finished )
         return;
+      else if( osc->inbuf_length > OSC_MAX_MESSAGE ) // if we ran out of space, reset.
+      {
+        osc->inBufferPointer = osc->inBuffer;
+        osc->inbuf_length = 0;
+        x->incomingPacketStarted = false;
+        x->usbReadBufLength = 0;
+      }
 		}
 	}
-  if( osc->inbuf_length >= OSC_MAX_MESSAGE )
-  {
-    osc->inBufferPointer = osc->inBuffer;
-    osc->inbuf_length = 0;
-  }
 	return;
 }
 
