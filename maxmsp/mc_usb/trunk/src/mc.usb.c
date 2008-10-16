@@ -160,9 +160,10 @@ int mc_getMoreBytes( t_mcUsb *x )
 			return -1;
 		if( available > 0 )
 		{
-			if( available > MAX_READ_LENGTH )
+			int justGot;
+      if( available > MAX_READ_LENGTH )
 				available = MAX_READ_LENGTH;
-			int justGot = usb_read( x->mc_usbInt, x->usbReadBuffer, available );
+			justGot = usb_read( x->mc_usbInt, x->usbReadBuffer, available );
       //post("read: avail %d, got %d", available, justGot);
       if( justGot < 0 )
         return -1;
