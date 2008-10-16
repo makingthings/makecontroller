@@ -101,51 +101,48 @@ void usb_close( t_usbInterface* usbInt )
 int usb_read( t_usbInterface* usbInt, char* buffer, int length )
 {
   //--------------------------------------- Mac-only -------------------------------
-  #ifndef WIN32
+#ifndef WIN32
   int count;
-	
+
   if( !usbInt->deviceOpen )
     return USB_E_NOT_OPEN;
-  
-  count = read( usbInt->deviceHandle, buffer, length );
-	if( count < 1 )
-	{
-		int retval = USB_E_IOERROR;
-		if( count == 0 )
-			retval = USB_E_CLOSE;
-		else if( count == -1 )
-		{
-			if ( errno == EAGAIN )
-	      retval = USB_E_NOTHING_AVAILABLE; // non-blocking but no data available
-      else
-			  //post( "Some other error...errno = %d", errno );
-	      retval = USB_E_IOERROR;
-		}
-		return retval;
-	}
-	else
-		return count;
-	#endif
-	
-  //--------------------------------------- Windows-only -------------------------------
-  #ifdef WIN32
-  //Windows-only
-    int retVal=0;
-    COMSTAT Win_ComStat;
-    DWORD Win_BytesRead=0;
-    DWORD Win_ErrorMask=0;
-    ClearCommError( usbInt->deviceHandle, &Win_ErrorMask, &Win_ComStat);
-    if( (ReadFile( usbInt->deviceHandle, buffer, (DWORD)length, &Win_BytesRead, NULL)==0) || (Win_BytesRead==0) ) 
-	{
-		//lastErr=GetLastError();
-        retVal=-1;
-    }
-    else {
-        retVal=((int)Win_BytesRead);
-    }
 
-    return retVal;
-  #endif //Windows-only usbRead( )	
+  count = read( usbInt->deviceHandle, buffer, length );
+  if( count < 1 )
+  {
+    int retval = USB_E_IOERROR;
+    if( count == 0 )
+      retval = USB_E_CLOSE;
+    else if( count == -1 )
+    {
+      if ( errno == EAGAIN )
+        retval = USB_E_NOTHING_AVAILABLE; // non-blocking but no data available
+      else
+        //post( "Some other error...errno = %d", errno );
+        retval = USB_E_IOERROR;
+    }
+    return retval;
+  }
+  else
+    return count;
+#endif
+
+  //--------------------------------------- Windows-only -------------------------------
+#ifdef WIN32
+  //Windows-only
+  int retVal = -1;
+  DWORD Win_BytesRead=0;
+  DWORD Win_ErrorMask=0;
+  if( !ReadFile( usbInt->deviceHandle, buffer, (DWORD)length, &Win_BytesRead, NULL) ) 
+  {
+    if( usbInt->debug )
+      error("mc.usb: read error - %d", GetLastError());
+  }
+  else
+    retVal=((int)Win_BytesRead);
+
+  return retVal;
+#endif //Windows-only usbRead( )	
 }
 
 int usb_write( t_usbInterface* usbInt, char* buffer, int length )
