@@ -51,6 +51,7 @@ typedef struct _mcUsb
   char* usbReadBufPtr;
   char usbReadBuffer[ MAX_READ_LENGTH ];
 	int usbReadBufLength;
+  bool debug;
 } t_mcUsb;
 
 t_class* mcUsb_class;  // global variable pointing to the class
@@ -62,9 +63,10 @@ void mcUsb_assist(t_mcUsb *x, void *b, long m, long a, char *s);
 void mcUsb_tick( t_mcUsb *x );
 void usb_tick( t_mcUsb *x );
 mcError mc_send_packet( t_mcUsb *x, t_usbInterface* u, char* packet, int length );
-bool mc_SLIP_receive( t_mcUsb *x );
+void mc_SLIP_receive( t_mcUsb *x );
 int mc_getMoreBytes( t_mcUsb *x );
 void mcUsb_devicepath( t_mcUsb *x );
+void mcUsb_debug( t_mcUsb *x, t_symbol *s, short ac, t_atom *av );
 static int mcusb_obj_count;
 
 // define the object so Max knows all about it, and define which messages it will implement and respond to
@@ -75,6 +77,7 @@ int main( )
 	class_addmethod(mcUsb_class, (method)mcUsb_anything, "anything", A_GIMME, 0);
 	class_addmethod(mcUsb_class, (method)mcUsb_assist, "assist", A_CANT, 0);
 	class_addmethod(mcUsb_class, (method)mcUsb_devicepath, "devicepath", A_GIMME, 0);
+  class_addmethod(mcUsb_class, (method)mcUsb_debug, "debug", A_GIMME, 0);
 
 	// we want this class to instantiate inside of the Max UI; ergo CLASS_BOX
 	class_register(CLASS_BOX, mcUsb_class);
@@ -157,10 +160,9 @@ int mc_getMoreBytes( t_mcUsb *x )
 			return -1;
 		if( available > 0 )
 		{
-			int justGot = 0;
 			if( available > MAX_READ_LENGTH )
 				available = MAX_READ_LENGTH;
-			justGot = usb_read( x->mc_usbInt, x->usbReadBuffer, available );
+			int justGot = usb_read( x->mc_usbInt, x->usbReadBuffer, available );
       post("read: avail %d, got %d", available, justGot);
       if( justGot < 0 )
         return -1;
@@ -171,31 +173,30 @@ int mc_getMoreBytes( t_mcUsb *x )
   return retval;
 }
 
-bool mc_SLIP_receive( t_mcUsb *x )
+void mc_SLIP_receive( t_mcUsb *x )
 {
-  int finished = 0, i;
+  int finished = 0;
   t_osc* osc = x->Osc;
 	
-	while( true )
+	while( osc->inbuf_length < OSC_MAX_MESSAGE )
 	{
-    int size;
     if( !x->usbReadBufLength )
     {
       if( mc_getMoreBytes( x ) < 0 )
-        return false;
+        return;
       if( !x->usbReadBufLength )
-        return false;
+        return;
     }
-
-		size = x->usbReadBufLength;
-    for( i = 0; i < size; i++ )
+    
+    while( x->usbReadBufLength )
 		{
+      //post("rx: %c, len %d", *x->usbReadBufPtr, osc->inbuf_length);
       switch( (unsigned char)*x->usbReadBufPtr )
 			{
 				case END:
 					if( x->incomingPacketStarted && osc->inbuf_length > 0 ) // it was the END byte
 					{
-						Osc_receive_packet( x->out0, osc, osc->inBuffer, osc->inbuf_length, x->osc_message );
+						//Osc_receive_packet( x->out0, osc, osc->inBuffer, osc->inbuf_length, x->osc_message );
 						finished = true; // We're done now if we had received any characters
             x->incomingPacketStarted = false;
 					}
@@ -206,6 +207,7 @@ bool mc_SLIP_receive( t_mcUsb *x )
             osc->inBufferPointer = osc->inBuffer;
 						osc->inbuf_length = 0;
 					}
+          //post("END! started %d, finished %d", x->incomingPacketStarted, finished);
 					break;					
 				case ESC:
           // get the next byte.  if it's not an ESC_END or ESC_ESC, it's a 
@@ -215,13 +217,13 @@ bool mc_SLIP_receive( t_mcUsb *x )
 					x->usbReadBufLength--;
           if( x->incomingPacketStarted )
           {
-            if( *x->usbReadBufPtr == ESC_END )
+            if( *(uchar*)x->usbReadBufPtr == ESC_END )
             {
               *osc->inBufferPointer++ = END;
 						  osc->inbuf_length++;
               break;
             }
-            else if( *x->usbReadBufPtr == ESC_ESC )
+            else if( *(uchar*)x->usbReadBufPtr == ESC_ESC )
             {
               *osc->inBufferPointer++ = ESC;
 						  osc->inbuf_length++;
@@ -239,10 +241,15 @@ bool mc_SLIP_receive( t_mcUsb *x )
 			x->usbReadBufPtr++;
 			x->usbReadBufLength--;
       if( finished )
-        return true;
+        return;
 		}
 	}
-	return false;
+  if( osc->inbuf_length >= OSC_MAX_MESSAGE )
+  {
+    osc->inBufferPointer = osc->inBuffer;
+    osc->inbuf_length = 0;
+  }
+	return;
 }
 
 
@@ -257,7 +264,7 @@ mcError mc_send_packet( t_mcUsb *x, t_usbInterface* u, char* packet, int length 
 
   while( size-- )
   {
-    switch(*packet)
+    switch(*(uchar*)packet)
 		{
 			// if it's the same code as an END character, we send a special 
 			//two character code so as not to make the receiver think we sent an END
@@ -295,6 +302,29 @@ void mcUsb_devicepath( t_mcUsb *x )
 		post( "mc.usb is not currently connected to a Make Controller Kit." );
 }
 
+/*
+  set mc.usb into a more verbose debug mode
+*/
+void mcUsb_debug( t_mcUsb *x, t_symbol *s, short ac, t_atom *av )
+{
+  if( ac == 1 )
+  {
+    int debug = atom_getlong(av);
+    if( debug && !x->debug )
+    {
+      x->debug = debug;
+      x->mc_usbInt->debug = debug;
+      post("mc.usb: debug mode is on");
+    }
+    else if( !debug && x->debug )
+    {
+      x->debug = debug;
+      x->mc_usbInt->debug = debug;
+      post("mc.usb: debug mode is off");
+    }
+  }
+}
+
 void mcUsb_free(t_mcUsb *x)
 {
   freeobject( (t_object*)x->mc_clock );
@@ -310,8 +340,6 @@ void mcUsb_free(t_mcUsb *x)
 void *mcUsb_new( t_symbol *s, long ac, t_atom *av )
 {
 	t_mcUsb* new_mcUsb;
-	//int i;
-	cchar* usbConn = NULL;
   
   if( mcusb_obj_count )
   {
@@ -339,8 +367,9 @@ void *mcUsb_new( t_symbol *s, long ac, t_atom *av )
 
 	new_mcUsb->usbReadBufPtr = new_mcUsb->usbReadBuffer;
 	new_mcUsb->usbReadBufLength = 0;
+  new_mcUsb->debug = false;
 	
-	new_mcUsb->mc_usbInt = usb_init( usbConn, &new_mcUsb->mc_usbInt );
+	new_mcUsb->mc_usbInt = usb_init( &new_mcUsb->mc_usbInt );
   usb_tick( new_mcUsb );
   	
 	return( new_mcUsb );
