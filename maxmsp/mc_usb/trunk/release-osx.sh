@@ -36,6 +36,7 @@ hdiutil create -fs HFS+ -srcfolder "./mc.usb-$VERSION/" -volname "mc.usb-$VERSIO
 echo Creating source package
 mkdir mc.usb-src
 cp -r src mc.usb-src
+cp -R msvc mc.usb-src
 cp -R mc.usb.xcodeproj mc.usb-src
 rm mc.usb-src/mc.usb.xcodeproj/*.pbxuser
 rm mc.usb-src/mc.usb.xcodeproj/*.mode*
