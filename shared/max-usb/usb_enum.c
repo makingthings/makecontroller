@@ -27,7 +27,7 @@ DEFINE_GUID( GUID_MAKE_CTRL_KIT, 0x4D36E978, 0xE325, 0x11CE, 0xBF, 0xC1, 0x08, 0
 bool findUsbDevice( t_usbInterface* usbInt, int devicetype )
 {
   bool retval = false;
-  bool ok = true;
+  
 #ifdef WIN32 // Windows only
 
   SP_DEVICE_INTERFACE_DATA ifcData;
@@ -35,7 +35,8 @@ bool findUsbDevice( t_usbInterface* usbInt, int devicetype )
   HDEVINFO devInfo = INVALID_HANDLE_VALUE;
   GUID * guidDev = (GUID *) & GUID_MAKE_CTRL_KIT;
   DWORD i;
-
+  
+  bool ok = true;
   PSP_DEVICE_INTERFACE_DETAIL_DATA detData = NULL;
   ifcData.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
 
