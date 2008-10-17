@@ -182,13 +182,13 @@ int Osc_extract_data( t_osc* o, char* buffer, t_osc_message* osc_message )
 }
 
 // When we receive a packet, check to see whether it is a message or a bundle.
-void Osc_receive_packet( void* out, t_osc* o, char* packet, int length, t_osc_message* osc_message )
+void Osc_receive_packet( void* out, t_osc* o, char* packet, int length, t_osc_message* osc_message, bool debug )
 {
 	//post( "Raw: %s, Length: %d\n", packet, length );
 	switch( *packet )
 	{
 		case '/':		// the '/' in front tells us this is an Osc message.
-			if( Osc_receive_message( o, packet, length, osc_message ) )
+			if( Osc_receive_message( o, packet, length, osc_message, debug ) )
         outlet_anything( out, osc_message->address, osc_message->argc, osc_message->argv );
 			Osc_reset_message( osc_message );
 			break;
@@ -206,7 +206,7 @@ void Osc_receive_packet( void* out, t_osc* o, char* packet, int length, t_osc_me
           packet += 4;
           length -= 4;
           if ( messageLength <= length )
-            Osc_receive_packet( out, o, packet, messageLength, osc_message );
+            Osc_receive_packet( out, o, packet, messageLength, osc_message, debug );
           length -= messageLength;
           packet += messageLength;
         }
@@ -223,7 +223,7 @@ void Osc_receive_packet( void* out, t_osc* o, char* packet, int length, t_osc_me
 	Once we receive a message, we need to make sure it's in the right format,
 	and then send it off to be interpreted (via extractData() ).
 */
-bool Osc_receive_message( t_osc* o, char* packet, int length, t_osc_message* osc_message )
+bool Osc_receive_message( t_osc* o, char* packet, int length, t_osc_message* osc_message, bool debug )
 {
   char* type;
   bool retval = false;
@@ -239,13 +239,16 @@ bool Osc_receive_message( t_osc* o, char* packet, int length, t_osc_message* osc
     //We get a count back from extractData() of how many items were included - if this
     //doesn't match the length of the type tag, something funky is happening.
     int count = Osc_extract_data( o, type, osc_message );
-    if ( count != (int)( strlen(type) - 1 ) )
+    if ( count != (int)( strlen(type) - 1 ) && debug )
       error( "mc.usb: Error extracting data from packet - type tag doesn't correspond to data included." );
     else
       retval = true;
   }
   else
-    error( "Error - No type tag." );
+  {
+    if( debug )
+      error( "Error - No type tag." );
+  }
     
   return retval;
 }

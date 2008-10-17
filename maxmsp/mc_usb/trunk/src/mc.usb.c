@@ -197,7 +197,7 @@ void mc_SLIP_receive( t_mcUsb *x )
 				case END:
 					if( x->incomingPacketStarted && osc->inbuf_length > 0 ) // it was the END byte
 					{
-						Osc_receive_packet( x->out0, osc, osc->inBuffer, osc->inbuf_length, x->osc_message );
+						Osc_receive_packet( x->out0, osc, osc->inBuffer, osc->inbuf_length, x->osc_message, x->debug );
 						finished = true; // We're done now if we had received any characters
             x->incomingPacketStarted = false;
 					}
