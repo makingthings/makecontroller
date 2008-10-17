@@ -18,6 +18,7 @@ cp ReadMe-OSX.rtf mc.usb-$VERSION/ReadMe.rtf
 mkdir mc.usb-$VERSION/MakeController-externals
 mkdir mc.usb-$VERSION/MakeController-help
 cp -r MakeController-externals mc.usb-$VERSION
+cp -r build/Deployment/mc.usb.mxo mc.usb-$VERSION/MakeController-externals
 cp -r MakeController-help mc.usb-$VERSION
 cp mc-objectlist.txt mc.usb-$VERSION
 
