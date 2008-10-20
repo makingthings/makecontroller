@@ -64,15 +64,12 @@ int usb_open( t_usbInterface* usbInt, int devicetype )
   if( usbInt->deviceOpen )  //if it's already open, do nothing.
     return USB_E_ALREADY_OPEN;
   
-  if( findUsbDevice( usbInt, FIND_MAKE_CONTROLLER ) )
+  if( openDevice( usbInt ) == 0 )
 	{
-    if( openDevice( usbInt ) == 0 )
-	  {
-      Sleep( 10 );  // wait after opening it before trying to read/write
-		  usbInt->deviceOpen = true;
-		  return USB_OK;
-	  }
-  }
+    Sleep( 10 );  // wait after opening it before trying to read/write
+		usbInt->deviceOpen = true;
+		return USB_OK;
+	}
   //post( "mc.usb did not open." );
   return USB_E_NOT_OPEN;
   #endif
@@ -242,7 +239,11 @@ int openDevice( t_usbInterface* usbInt )
   if ( usbInt->deviceHandle == INVALID_HANDLE_VALUE )
   {
     if( usbInt->debug )
-      error("mc.usb: error opening device - %d", GetLastError());
+    {
+      void *buf = formatErrorMsg();
+      error("mc.usb: error opening device at %s - %s (%d)", usbInt->deviceLocation, buf, GetLastError());
+      LocalFree(buf);
+    }
     return -1;
   }
 
@@ -277,6 +278,17 @@ int openDevice( t_usbInterface* usbInt )
   usbInt->deviceOpen = true;
 
   return 0;
+}
+
+void* formatErrorMsg( )
+{
+  void* buf;
+  FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                    FORMAT_MESSAGE_FROM_SYSTEM |
+                    FORMAT_MESSAGE_IGNORE_INSERTS,
+                    NULL,GetLastError(),0,
+                    (LPTSTR)&buf,0,NULL);
+  return buf;
 }
 
 #endif
