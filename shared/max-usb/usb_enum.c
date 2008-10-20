@@ -60,8 +60,8 @@ bool findUsbDevice( t_usbInterface* usbInt, int devicetype )
       //check the details
       if (SetupDiGetDeviceInterfaceDetail(devInfo, &ifcData, detData, detDataPredictedLength, NULL, & devData))
       {
-        char portName[512];
-        char friendName[512];
+        static char portName[512];
+        static char friendName[512];
         HKEY devKey;
         bool gotdevice = false;
         if( !getDeviceProperty(friendName, 1024, devInfo, &devData, SPDRP_FRIENDLYNAME) )
@@ -80,7 +80,7 @@ bool findUsbDevice( t_usbInterface* usbInt, int devicetype )
           if( getPortNumber(portName) > 9 )
             sprintf(usbInt->deviceLocation, "\\\\.\\%s", portName);
           else
-            memcpy(usbInt->deviceLocation, portName, strlen(portName));
+            strcpy(usbInt->deviceLocation, portName);
           retval = true;
         }
       }

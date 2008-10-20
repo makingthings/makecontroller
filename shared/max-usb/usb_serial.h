@@ -78,7 +78,7 @@ int usb_numBytesAvailable( t_usbInterface* usbInt );
 //Windows only
 #ifdef WIN32
 int openDevice( t_usbInterface* usbInt );
-bool DoRegisterForNotification( t_usbInterface* usbInt );
+void* formatErrorMsg( );
 #endif
 
 typedef enum 
