@@ -240,9 +240,7 @@ void mc_SLIP_receive( t_mcUsb *x )
 			}
 			x->usbReadBufPtr++;
 			x->usbReadBufLength--;
-      if( finished )
-        return;
-      else if( osc->inbuf_length > OSC_MAX_MESSAGE ) // if we ran out of space, reset.
+      if( osc->inbuf_length > OSC_MAX_MESSAGE ) // if we ran out of space, reset.
       {
         osc->inBufferPointer = osc->inBuffer;
         osc->inbuf_length = 0;
