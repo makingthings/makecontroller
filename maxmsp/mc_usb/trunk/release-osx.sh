@@ -3,7 +3,7 @@
 # script for generating an mc.usb release on OS X
 
 #grab the version
-VERSION=v0.5
+VERSION=v0.6
 
 echo Creating mcbuilder $VERSION OS X distribution...
 
