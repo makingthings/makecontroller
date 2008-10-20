@@ -131,8 +131,7 @@ void mcUsb_tick( t_mcUsb *x )
 
 void usb_tick( t_mcUsb *x )
 {
-  t_usbInterface usbInt;
-  bool success = findUsbDevice( &usbInt, FIND_MAKE_CONTROLLER );
+  bool success = findUsbDevice( x->mc_usbInt, FIND_MAKE_CONTROLLER );
   
   if( success && !x->mc_usbInt->deviceOpen ) // we found a new one, but we're not currently open
   {
@@ -335,8 +334,11 @@ void mcUsb_free(t_mcUsb *x)
   free( (t_osc*)x->Osc );
   free( (t_osc_message*)x->osc_message );
   mcusb_obj_count--;
-  usb_close( x->mc_usbInt );
-  post( "mc.usb closed the Make Controller Kit USB connection." );
+  if( x->mc_usbInt->deviceOpen )
+  {
+    usb_close( x->mc_usbInt );
+    post( "mc.usb closed the Make Controller Kit USB connection." );
+  }
 }
 
 // the constructor for the object
