@@ -1,0 +1,11 @@
+;mc.usb.def
+
+
+
+LIBRARY	mc.usb
+
+
+
+EXPORTS
+
+	main

@@ -1,0 +1,9 @@
+max oblist "Make Controller Kit" mc.usb;
+max oblist "Make Controller Kit" mc.analogin;
+max oblist "Make Controller Kit" mc.appled;
+max oblist "Make Controller Kit" mc.digitalin;
+max oblist "Make Controller Kit" mc.digitalout;
+max oblist "Make Controller Kit" mc.dipswitch;
+max oblist "Make Controller Kit" mc.motor;
+max oblist "Make Controller Kit" mc.servo;
+max oblist "Make Controller Kit" mc.stepper;
