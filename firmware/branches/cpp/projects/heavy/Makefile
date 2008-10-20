@@ -78,7 +78,10 @@ THUMB_SRC= \
   ../../core/lwip/src/core/ipv4/ip_frag.c \
   ../../core/makingthings/osc.c \
   ../../core/makingthings/osc_patternmatch.c
-  
+
+CPP_THUMB_SRC = \
+  ../../core/startup/extras_cpp.cpp
+
 # Source files that must be built in ARM mode.
 ARM_SRC= \
   ../../core/freertos/portable/GCC/ARM7_AT91SAM7S/portISR.c \
@@ -115,6 +118,7 @@ INCLUDEDIRS = \
 # Below here should not change from project to project
 
 CC=arm-elf-gcc
+CPP=arm-elf-g++
 OBJCOPY=arm-elf-objcopy
 ARCH=arm-elf-ar
 CRT0=../../core/startup/AT91SAM7_Startup.s ../../core/startup/crt0.s
@@ -122,17 +126,11 @@ DEBUG=
 OPTIM=-O2
 LDSCRIPT=../../core/startup/make-controller.ld
 
-#
-# CFLAGS common to both the THUMB and ARM mode builds
-#
-
-CFLAGS= \
+# flags common to both c and c++
+C_AND_CPP_FLAGS = \
 $(INCLUDEDIRS) \
 -Wall  \
 -Wextra  \
--Wstrict-prototypes  \
--Wmissing-prototypes  \
--Wmissing-declarations  \
 -Wno-strict-aliasing  \
 -D SAM7_GCC  \
 -D THUMB_INTERWORK \
@@ -144,20 +142,30 @@ $(INCLUDEDIRS) \
 $(DEBUG)  \
 $(OPTIM)
 
+CFLAGS = ${C_AND_CPP_FLAGS}
+CFLAGS += -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations
+
+CPPFLAGS = ${C_AND_CPP_FLAGS}
+CPPFLAGS += -fno-rtti -fno-exceptions
+
 THUMB_FLAGS=-mthumb
 LINKER_FLAGS=-Xlinker -ooutput/$(OUTPUT).elf -Xlinker -M -Xlinker -Map=output/$(OUTPUT)_o.map
 
 ARM_OBJ = $(ARM_SRC:.c=.o)
 THUMB_OBJ = $(THUMB_SRC:.c=.o)
+CPP_THUMB_OBJ = $(CPP_THUMB_SRC:.cpp=.o)
 
 output/$(OUTPUT).bin : output/$(OUTPUT).elf
 	$(OBJCOPY) output/$(OUTPUT).elf -O binary output/$(OUTPUT).bin
 	
-output/$(OUTPUT).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CRT0)
-	$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles -x assembler-with-cpp $(CRT0) $(LINKER_FLAGS)
+output/$(OUTPUT).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CPP_THUMB_OBJ) $(CRT0)
+	$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) $(CPP_THUMB_OBJ) -nostartfiles -x assembler-with-cpp $(CRT0) $(LINKER_FLAGS)
 
 $(THUMB_OBJ) : %.o : %.c config.h
 	$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@
+
+$(CPP_THUMB_OBJ) : %.o : %.cpp config.h
+	$(CPP) -c $(THUMB_FLAGS) $(CPPFLAGS) $< -o $@
 
 $(ARM_OBJ) : %.o : %.c config.h
 	$(CC) -c $(CFLAGS) $< -o $@

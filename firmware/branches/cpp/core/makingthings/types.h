@@ -25,7 +25,9 @@
 #define TYPES_H
 
 /* some types */
+#ifndef __cplusplus
 typedef unsigned char bool;
+#endif
 typedef unsigned char uchar;
 typedef unsigned char uint8;
 typedef unsigned int uint;
