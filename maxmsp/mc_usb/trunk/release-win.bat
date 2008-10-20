@@ -1,4 +1,4 @@
-set VERSION=v0.5
+set VERSION=v0.6
 
 rmdir mc.usb-win-%VERSION%
 
