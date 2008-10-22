@@ -107,7 +107,7 @@ bool findUsbDevice( t_usbInterface* usbInt, int devicetype )
   if (matchingDictionary == NULL)
     return false;
   else
-    CFDictionarySetValue(matchingDictionary, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDModemType));
+    CFDictionarySetValue(matchingDictionary, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDAllTypes));
 
   // then create the iterator with all the matching devices
   if( IOServiceGetMatchingServices( kIOMasterPortDefault, matchingDictionary, &iterator ) != KERN_SUCCESS )
