@@ -13,6 +13,13 @@ QextSerialEnumerator::QextSerialEnumerator( )
     qRegisterMetaType<QextPortInfo>("QextPortInfo");
 }
 
+QextSerialEnumerator::~QextSerialEnumerator( )
+{
+  #ifdef Q_WS_MAC
+  IONotificationPortDestroy( notificationPortRef );
+  #endif
+}
+
 
 #ifdef _TTY_WIN_
 #include <QRegExp>
@@ -319,55 +326,37 @@ void QextSerialEnumerator::setUpNotificationOSX( )
 {
   kern_return_t kernResult;
   mach_port_t masterPort;
-  IONotificationPortRef notificationDiscoveredPortRef;
-  IONotificationPortRef notificationTerminatedPortRef;
-  CFRunLoopSourceRef notificationDiscoveredRunLoopSource;
-  CFRunLoopSourceRef notificationTerminatedRunLoopSource;
-  CFMutableDictionaryRef classesToMatchDiscovered;
-  CFMutableDictionaryRef classesToMatchTerminated;
+  CFRunLoopSourceRef notificationRunLoopSource;
+  CFMutableDictionaryRef classesToMatch;
   io_iterator_t serialPortDiscoveredIterator;
   io_iterator_t serialPortTerminatedIterator;
-  
-  //SerialDeviceNotificationContext* context = (SerialDeviceNotificationContext*)ctxt;
-  
+    
   kernResult = IOMasterPort(MACH_PORT_NULL, &masterPort);
   if (KERN_SUCCESS != kernResult)
     return qDebug("IOMasterPort returned %d", kernResult);
   
-  classesToMatchDiscovered = IOServiceMatching(kIOSerialBSDServiceValue);
-  if (classesToMatchDiscovered == NULL)
+  classesToMatch = IOServiceMatching(kIOSerialBSDServiceValue);
+  if (classesToMatch == NULL)
     qDebug("IOServiceMatching returned a NULL dictionary.");
   else
-    CFDictionarySetValue(classesToMatchDiscovered, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDAllTypes));
+    CFDictionarySetValue(classesToMatch, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDAllTypes));
   
-  classesToMatchTerminated = IOServiceMatching(kIOSerialBSDServiceValue);
-  if (classesToMatchTerminated == NULL)
-    qDebug("IOServiceMatching returned a NULL dictionary.");
-  else
-    CFDictionarySetValue(classesToMatchTerminated, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDAllTypes));
+  // Retain an additional reference since each call to IOServiceAddMatchingNotification consumes one.
+  classesToMatch = (CFMutableDictionaryRef) CFRetain(classesToMatch);
   
-  notificationDiscoveredPortRef = IONotificationPortCreate(masterPort);
-  if (notificationDiscoveredPortRef == NULL)
+  notificationPortRef = IONotificationPortCreate(masterPort);
+  if (notificationPortRef == NULL)
     return qDebug("IONotificationPortCreate return a NULL IONotificationPortRef.");
   
-  notificationTerminatedPortRef = IONotificationPortCreate(masterPort);
-  if (notificationTerminatedPortRef == NULL)
-    return qDebug("IONotificationPortCreate return a NULL IONotificationPortRef.");
-  
-  notificationDiscoveredRunLoopSource = IONotificationPortGetRunLoopSource(notificationDiscoveredPortRef);
-  if (notificationDiscoveredRunLoopSource == NULL)
+  notificationRunLoopSource = IONotificationPortGetRunLoopSource(notificationPortRef);
+  if (notificationRunLoopSource == NULL)
     return qDebug("IONotificationPortGetRunLoopSource returned NULL CFRunLoopSourceRef.");
   
-  notificationTerminatedRunLoopSource = IONotificationPortGetRunLoopSource(notificationTerminatedPortRef);
-  if (notificationTerminatedRunLoopSource == NULL)
-    return qDebug("IONotificationPortGetRunLoopSource returned NULL CFRunLoopSourceRef.");
+  CFRunLoopAddSource(CFRunLoopGetCurrent(), notificationRunLoopSource, kCFRunLoopDefaultMode);
   
-  CFRunLoopAddSource(CFRunLoopGetCurrent(), notificationDiscoveredRunLoopSource, kCFRunLoopDefaultMode);
-  CFRunLoopAddSource(CFRunLoopGetCurrent(), notificationTerminatedRunLoopSource, kCFRunLoopDefaultMode);
-  
-  kernResult = IOServiceAddMatchingNotification(notificationDiscoveredPortRef, 
-                                                  kIOMatchedNotification,
-                                                  classesToMatchDiscovered,
+  kernResult = IOServiceAddMatchingNotification(notificationPortRef, 
+                                                  kIOFirstMatchNotification,
+                                                  classesToMatch,
                                                   deviceDiscoveredCallbackOSX,
                                                   this,
                                                   &serialPortDiscoveredIterator);
@@ -377,9 +366,9 @@ void QextSerialEnumerator::setUpNotificationOSX( )
   // arm the callback, and grab any devices that are already connected
   deviceDiscoveredCallbackOSX( this, serialPortDiscoveredIterator );
   
-  kernResult = IOServiceAddMatchingNotification(notificationTerminatedPortRef, 
+  kernResult = IOServiceAddMatchingNotification(notificationPortRef, 
                                                   kIOTerminatedNotification,
-                                                  classesToMatchTerminated,
+                                                  classesToMatch,
                                                   deviceTerminatedCallbackOSX,
                                                   this,
                                                   &serialPortTerminatedIterator);
