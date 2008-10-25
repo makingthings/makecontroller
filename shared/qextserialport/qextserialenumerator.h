@@ -48,6 +48,7 @@ class QextSerialEnumerator : public QObject
 	Q_OBJECT
   public:
     QextSerialEnumerator( );
+    ~QextSerialEnumerator( );
   
 		#ifdef _TTY_WIN_
     LRESULT onDeviceChangeWin( WPARAM wParam, LPARAM lParam );
@@ -97,6 +98,7 @@ class QextSerialEnumerator : public QObject
       static void getSamBaBoards(QList<QextPortInfo> & infoList);
       static bool getServiceDetails( io_object_t service, QextPortInfo* portInfo );
       void setUpNotificationOSX( );
+      IONotificationPortRef notificationPortRef;
       
     #else /* Q_WS_MAC */
       /*!
