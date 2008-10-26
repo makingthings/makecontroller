@@ -87,6 +87,14 @@ void MainWindow::readSettings()
 		splitter->setSizes( splitterSizes );
 	}
   
+  QStringList commands = settings.value( "commands" ).toStringList( );
+  foreach( QString cmd, commands )
+    commandLine->addItem(cmd);
+  if(!commandLine->count()) // always want to have a space on the end of our list of commands
+    commandLine->addItem( "" );
+  else
+    commandLine->setCurrentIndex(commandLine->count() - 1 );
+  
   setMaxMessages(settings.value("max_messages", DEFAULT_ACTIVITY_MESSAGES).toInt( ));
 }
 
@@ -108,6 +116,11 @@ void MainWindow::writeSettings()
 	foreach( int splitterSize, splitterSizes )
 		splitterSettings << splitterSize;
 	settings.setValue("splitterSizes", splitterSettings );
+  
+  QStringList commands;
+  for( int i = 0; i < commandLine->count(); i++ )
+    commands << commandLine->itemText(i);
+  settings.setValue("commands", commands );
 }
 
 /*
@@ -449,15 +462,10 @@ void MainWindow::onCommandLine()
   
   // in order to get a readline-style history of commands via up/down arrows
   // we need to keep an empty item at the end of the list so we have a context from which to up-arrow
-  if( commandLine->count() < 10 )
-  	commandLine->addItem( cmd );
-  else
-  {
-	  commandLine->removeItem( 0 );
-	  commandLine->insertItem( 9, "" );
-	  commandLine->insertItem( 8, cmd );
-	  commandLine->setCurrentIndex( 9 );
-  }
+  if( commandLine->count() >= commandLine->maxCount() )
+    commandLine->removeItem( 0 );
+  commandLine->insertItem( commandLine->count() - 1, cmd );
+  commandLine->setCurrentIndex( commandLine->count() - 1 );
   
   commandLine->clearEditText();
 }
