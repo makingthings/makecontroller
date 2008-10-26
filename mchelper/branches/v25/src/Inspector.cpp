@@ -60,6 +60,23 @@ void Inspector::setData(Board* board)
 }
 
 /*
+  Clear out the inspector.
+*/
+void Inspector::clear( )
+{
+  nameEdit->setText("");
+  serialEdit->setText("");
+  versionEdit->setText("");
+  freememEdit->setText("");
+  ipEdit->setText("");
+  netmaskEdit->setText("");
+  gatewayEdit->setText("");
+  listenPortEdit->setText("");
+  sendPortEdit->setText("");
+  dhcpBox->setCheckState( Qt::Unchecked );
+}
+
+/*
  The dialog has been closed.
  Stop the timer asking for board info
 */

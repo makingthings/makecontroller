@@ -15,6 +15,7 @@ class Inspector : public QDialog, private Ui::InspectorUi
 public:
   Inspector(MainWindow *mainWindow);
   void setData(Board* board);
+  void clear( );
   
 public slots:
   void loadAndShow();
