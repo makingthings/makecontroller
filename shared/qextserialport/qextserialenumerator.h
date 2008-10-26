@@ -97,6 +97,7 @@ class QextSerialEnumerator : public QObject
       static void scanPortsOSX(QList<QextPortInfo> & infoList);
       static void getSamBaBoards(QList<QextPortInfo> & infoList);
       static bool getServiceDetails( io_object_t service, QextPortInfo* portInfo );
+      static bool createSambaMatchingDict( CFMutableDictionaryRef* matchingDictionary );
       void setUpNotificationOSX( );
       IONotificationPortRef notificationPortRef;
       
