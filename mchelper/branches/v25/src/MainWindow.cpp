@@ -62,6 +62,8 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   // default these to off until we see a board
   actionUpload->setEnabled(false);
   actionInspector->setEnabled(false);
+  actionResetDevice->setEnabled(false);
+  actionSAMBA->setEnabled(false);
 }
 
 void MainWindow::readSettings()
@@ -80,8 +82,8 @@ void MainWindow::readSettings()
 	QList<int> splitterSizes;
 	if( !splitterSettings.isEmpty( ) )
 	{
-		for( int i = 0; i < splitterSettings.count( ); i++ )
-			splitterSizes.append( splitterSettings.at(i).toInt( ) );
+		foreach( QVariant setting, splitterSettings )
+			splitterSizes << setting.toInt( );
 		splitter->setSizes( splitterSizes );
 	}
   
@@ -103,11 +105,9 @@ void MainWindow::writeSettings()
   
 	QList<QVariant> splitterSettings;
 	QList<int> splitterSizes = splitter->sizes();
-	for( int i = 0; i < splitterSizes.count( ); i++ )
-		splitterSettings.append( splitterSizes.at(i) );
+	foreach( int splitterSize, splitterSizes )
+		splitterSettings << splitterSize;
 	settings.setValue("splitterSizes", splitterSettings );
-  
-  
 }
 
 /*
@@ -206,6 +206,8 @@ void MainWindow::onDeviceSelectionChanged()
       actionSAMBA->setEnabled(true);
     }
   }
+  else
+    inspector->clear();
 }
 
 /*
