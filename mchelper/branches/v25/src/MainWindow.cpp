@@ -25,6 +25,12 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   deviceListPlaceholder.setData( Qt::ForegroundRole, Qt::gray );
   deviceList->addItem( &deviceListPlaceholder );
   
+  // default these to off until we see a board
+  actionUpload->setEnabled(false);
+  actionInspector->setEnabled(false);
+  actionResetDevice->setEnabled(false);
+  actionSAMBA->setEnabled(false);
+  
   // initializations
   inspector = new Inspector(this);
   oscXmlServer = new OscXmlServer(this);
@@ -58,12 +64,6 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   usbMonitor->start();
   #endif
   #endif
-  
-  // default these to off until we see a board
-  actionUpload->setEnabled(false);
-  actionInspector->setEnabled(false);
-  actionResetDevice->setEnabled(false);
-  actionSAMBA->setEnabled(false);
 }
 
 void MainWindow::readSettings()
@@ -304,6 +304,7 @@ void MainWindow::boardInit(Board *board)
   if( !getCurrentBoard() )
     deviceList->setCurrentRow (deviceList->count()-1);
   board->sendMessage("/system/info-internal"); // get the board's info
+  onDeviceSelectionChanged(); // make sure menus get updated
 }
 
 /*
