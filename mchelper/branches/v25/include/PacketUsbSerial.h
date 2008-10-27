@@ -48,6 +48,7 @@ private:
   Board* board;
   MainWindow *mainWindow;
   QextSerialPort *port;
+  bool pkt_started;
   void slipDecode();
 };
 

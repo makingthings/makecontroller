@@ -77,7 +77,7 @@ private:
   About *about;
   QListWidgetItem deviceListPlaceholder;
   bool no_ui;
-  bool showOscMsgs;
+  bool hideOscMsgs;
   void readSettings();
   void writeSettings();
   void closeEvent( QCloseEvent *qcloseevent );

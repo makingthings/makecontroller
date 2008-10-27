@@ -96,7 +96,8 @@ void MainWindow::readSettings()
   else
     commandLine->setCurrentIndex(commandLine->count() - 1 );
   
-  showOscMsgs = settings.value("showOscMsgs", true ).toBool();
+  hideOscMsgs = settings.value("hideOscMsgs", false ).toBool();
+  actionHide_OSC->setChecked(hideOscMsgs);
   
   setMaxMessages(settings.value("max_messages", DEFAULT_ACTIVITY_MESSAGES).toInt( ));
 }
@@ -125,7 +126,7 @@ void MainWindow::writeSettings()
     commands << commandLine->itemText(i);
   settings.setValue("commands", commands );
   
-  settings.setValue("showOscMsgs", showOscMsgs );
+  settings.setValue("hideOscMsgs", hideOscMsgs );
 }
 
 /*
@@ -134,8 +135,8 @@ void MainWindow::writeSettings()
 */
 void MainWindow::closeEvent( QCloseEvent *qcloseevent )
 {
-	(void)qcloseevent;
 	writeSettings( );
+  qcloseevent->accept();
 }
 
 #ifdef Q_WS_WIN
@@ -353,10 +354,10 @@ void MainWindow::message(QStringList msgs, MsgType::Type type, QString from)
   QString tofrom("from");
   if(type == MsgType::Command || type == MsgType::XMLMessage || type == MsgType::Response)
   {
-    if( !showOscMsgs )
+    if( hideOscMsgs )
       return;
   }
-  if(type == MsgType::Command || type == MsgType::XMLMessage)
+  if(type == MsgType::Command)
     tofrom = "to";
 
   foreach(QString msg, msgs)
@@ -386,10 +387,10 @@ void MainWindow::message(QString msg, MsgType::Type type, QString from)
     QString tofrom = tr("from");
     if(type == MsgType::Command || type == MsgType::XMLMessage || type == MsgType::Response)
     {
-      if( !showOscMsgs )
+      if( hideOscMsgs )
         return;
     }
-    if(type == MsgType::Command || type == MsgType::XMLMessage)
+    if(type == MsgType::Command)
       tofrom = tr("to");
     
     msg.prepend(QTime::currentTime().toString() + "    "); // todo - maybe make the time text gray
@@ -522,7 +523,7 @@ void MainWindow::onSamBaRequest()
 
 void MainWindow::onHideOsc(bool checked)
 {
-  showOscMsgs = !checked;
+  hideOscMsgs = checked;
 }
 
 
