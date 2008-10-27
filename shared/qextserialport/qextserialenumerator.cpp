@@ -279,7 +279,7 @@ bool QextSerialEnumerator::createSambaMatchingDict( CFMutableDictionaryRef* matc
   SInt32 idProduct = SAMBA_PID;
   CFNumberRef numberRef;
   
-  if( !(*matchingDictionary = IOServiceMatching(kIOUSBDeviceClassName)) )
+  if( !(*matchingDictionary = IOServiceNameMatching("AppleUSBCDC")) )
   {
     qWarning( "could not create matching dictionary\n" );
     return false;
@@ -375,7 +375,7 @@ void QextSerialEnumerator::setUpNotificationOSX( )
   
   CFRunLoopAddSource(CFRunLoopGetCurrent(), notificationRunLoopSource, kCFRunLoopDefaultMode);
   
-  kernResult = IOServiceAddMatchingNotification(notificationPortRef, kIOFirstMatchNotification, classesToMatch,
+  kernResult = IOServiceAddMatchingNotification(notificationPortRef, kIOMatchedNotification, classesToMatch,
                                                   deviceDiscoveredCallbackOSX, this, &portIterator);
   if (kernResult != KERN_SUCCESS)
     return qDebug("IOServiceAddMatchingNotification return %d", kernResult);
@@ -383,7 +383,7 @@ void QextSerialEnumerator::setUpNotificationOSX( )
   // arm the callback, and grab any devices that are already connected
   deviceDiscoveredCallbackOSX( this, portIterator );
   
-  kernResult = IOServiceAddMatchingNotification(notificationPortRef, kIOFirstMatchNotification, sambaClassesToMatch,
+  kernResult = IOServiceAddMatchingNotification(notificationPortRef, kIOMatchedNotification, sambaClassesToMatch,
                                                   deviceDiscoveredCallbackOSX, this, &portIterator);
   if (kernResult != KERN_SUCCESS)
     return qDebug("IOServiceAddMatchingNotification return %d", kernResult);
