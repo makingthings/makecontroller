@@ -127,6 +127,11 @@ void UsbMonitor::onDeviceChangeEventWin( WPARAM wParam, LPARAM lParam )
 
 void UsbMonitor::onDeviceDiscovered(QextPortInfo info)
 {
+  #ifdef Q_WS_MAC
+  msleep(50); // not quite sure why this is necessary...only really need it when a port has been
+  // opened, closed and then re-opened...
+  #endif
+  qDebug("device discovered at %s", qPrintable(info.portName));
   if( isMakeController(&info) )
   {
     QStringList ports = QStringList() << info.portName.toAscii();
@@ -146,7 +151,10 @@ void UsbMonitor::onDeviceTerminated(QextPortInfo info)
 
 bool UsbMonitor::isMakeController(QextPortInfo* info)
 {
-  return ( info->friendName.startsWith("Make Controller Ki") ||
+  if( info->portName.isEmpty() )
+    return false;
+  else
+    return ( info->friendName.startsWith("Make Controller Ki") ||
            (info->vendorID == MAKE_CONTROLLER_VID && info->productID == MAKE_CONTROLLER_PID));
 }
 

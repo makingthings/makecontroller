@@ -6,11 +6,13 @@
 #include <QDir>
 #include <QFileDialog>
 
-/**
-	Uploader handles uploading a binary image to a board.  It reads the board profile for the 
-	currently selected board to determine which uploader to use.  Then it fires up a QProcess
-	and runs the uploader with flags determined by settings in Preferences.  It prints output
-	from the upload process back to the console output in the MainWindow.
+#ifdef Q_WS_MAC
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
+/*
+	Uploader handles uploading a binary image to a board.  It fires up a QProcess
+	and runs the uploader with flags determined by settings in Preferences.
 */
 Uploader::Uploader(MainWindow *mainWindow) : QDialog( 0 )
 {
@@ -55,8 +57,15 @@ void Uploader::onUploadButton()
 
 void Uploader::upload(QString filename)
 {
+  #ifdef Q_WS_MAC // get the path within the app bundle
+  CFURLRef pluginRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
+  CFStringRef macPath = CFURLCopyFileSystemPath(pluginRef, kCFURLPOSIXPathStyle);
+  QString uploaderName = CFStringGetCStringPtr(macPath, CFStringGetSystemEncoding());
+  uploaderName += "/Contents/Resources/sam7";
+  #else
   QSettings settings("MakingThings", "mchelper");
   QString uploaderName = settings.value("sam7_path", DEFAULT_SAM7_PATH).toString();
+  #endif
   QStringList uploaderArgs;
   uploaderArgs << "-e" << "set_clock";
   uploaderArgs << "-e" << "unlock_regions";
@@ -95,11 +104,13 @@ void Uploader::filterError( )
 
 void Uploader::uploadFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
-	(void)exitCode;
-	(void)exitStatus;
+  if( exitCode == 0 && exitStatus == QProcess::NormalExit )
+    mainWindow->message(tr("Upload complete."), MsgType::Notice, tr("Uploader") );
+  else
+    mainWindow->message(tr("Upload failed."), MsgType::Warning, tr("Uploader") );
 	progressBar->reset();
   hide();
-  mainWindow->message(tr("Upload complete."), MsgType::Notice, tr("Uploader") );
+  
 }
 
 /*
