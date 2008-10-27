@@ -27,6 +27,7 @@ PacketUsbSerial::PacketUsbSerial(QString portName)
 {
 	port = new QextSerialPort(portName, QextSerialPort::EventDriven);
   connect(port, SIGNAL(readyRead()), this, SLOT(processNewData()));
+  pkt_started = false;
 }
 
 PacketUsbSerial::~PacketUsbSerial( )
@@ -47,13 +48,15 @@ void PacketUsbSerial::processNewData( )
   {
     newData.resize(avail);
     if(port->read(newData.data(), newData.size()) < 0)
-      return;
+      return qDebug("USB read failed");
     else
     {
       readBuffer += newData;
       slipDecode();
     }
   }
+  else
+    qDebug("USB bytes available error");
 }
 
 bool PacketUsbSerial::open( )
@@ -113,11 +116,7 @@ bool PacketUsbSerial::sendPacket( char* packet, int length )
 */
 void PacketUsbSerial::slipDecode( )
 {
-  bool pkt_started = (currentPacket.size() > 0);
-  int size = readBuffer.size();
-  if(!size)
-    return;
-  for( int i = 0; i < size; i++ )
+  while( readBuffer.size() )
   {
     char c = *readBuffer.data();
     switch( c )
