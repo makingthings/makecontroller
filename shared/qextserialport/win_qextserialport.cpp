@@ -4,6 +4,7 @@
 //#include <QEvent>
 #include <QReadWriteLock>
 #include "win_qextserialport.h"
+#include <QMutexLocker>
 
 
 /*!
@@ -184,7 +185,7 @@ bool Win_QextSerialPort::open(OpenMode mode) {
 	if (queryMode() == QextSerialBase::EventDriven)
 		dwFlagsAndAttributes += FILE_FLAG_OVERLAPPED;
 
-    LOCK_MUTEX();
+    QMutexLocker locker( mutex );
     if (mode == QIODevice::NotOpen)
         return isOpen();
     if (!isOpen()) {
@@ -220,7 +221,6 @@ bool Win_QextSerialPort::open(OpenMode mode) {
 				SetCommTimeouts(Win_Handle, &Win_CommTimeouts);
             	if (!SetCommMask( Win_Handle, EV_TXEMPTY | EV_RXCHAR | EV_DSR)) {
             		qWarning("failed to set Comm Mask. Error code: %ld", GetLastError());
-					UNLOCK_MUTEX();
             		return false;
             	}
             	overlapThread->start();
@@ -230,10 +230,8 @@ bool Win_QextSerialPort::open(OpenMode mode) {
         else
         	qDebug("Qesp failed to open device: %s, last error: %ld", qPrintable(port), GetLastError());
     } else {
-    	UNLOCK_MUTEX();
     	return false;
     }
-    UNLOCK_MUTEX();
     return isOpen();
 }
 
@@ -244,7 +242,7 @@ is not currently open.
 */
 void Win_QextSerialPort::close() 
 {
-    LOCK_MUTEX();
+  QMutexLocker locker( mutex );
 
     if (isOpen()) {
 		flush();
@@ -258,8 +256,6 @@ void Win_QextSerialPort::close()
 		_bytesToWrite = 0;
 		QIODevice::close();
     }
-
-    UNLOCK_MUTEX();
 }
 
 /*!
@@ -268,11 +264,10 @@ Flushes all pending I/O to the serial port.  This function has no effect if the 
 associated with the class is not currently open.
 */
 void Win_QextSerialPort::flush() {
-    LOCK_MUTEX();
+  QMutexLocker locker( mutex );
     if (isOpen()) {
         FlushFileBuffers(Win_Handle);
     }
-    UNLOCK_MUTEX();
 }
 
 /*!
@@ -298,18 +293,15 @@ the port is not currently open, or -1 on error.  Error information can be retrie
 Win_QextSerialPort::getLastError().
 */
 qint64 Win_QextSerialPort::bytesAvailable() {
-    LOCK_MUTEX();
+  QMutexLocker locker( mutex );
     if (isOpen()) {
         DWORD Errors;
         COMSTAT Status;
         if (ClearCommError(Win_Handle, &Errors, &Status)) {
-            UNLOCK_MUTEX();
             return Status.cbInQue + QIODevice::bytesAvailable();
         }
-        UNLOCK_MUTEX();
         return (qint64)-1;
     }
-    UNLOCK_MUTEX();
     return 0;
 }
 
@@ -357,7 +349,7 @@ qint64 Win_QextSerialPort::readData(char *data, qint64 maxSize)
 {
     DWORD retVal;
 	
-    LOCK_MUTEX();
+    QMutexLocker locker( mutex );
     
     retVal = 0;
 	if (queryMode() == QextSerialBase::EventDriven) {
@@ -381,8 +373,6 @@ qint64 Win_QextSerialPort::readData(char *data, qint64 maxSize)
         retVal = (DWORD)-1;
     }
 
-	UNLOCK_MUTEX();
-
     return (qint64)retVal;
 }
 
@@ -399,7 +389,7 @@ qint64 Win_QextSerialPort::writeData(const char *data, qint64 maxSize)
 {
 	DWORD retVal;
 	
-    LOCK_MUTEX();
+	QMutexLocker locker( mutex );
 
     retVal = 0;
     if (queryMode() == QextSerialBase::EventDriven) {
@@ -421,8 +411,6 @@ qint64 Win_QextSerialPort::writeData(const char *data, qint64 maxSize)
 		retVal = (DWORD)-1;
    	}
    	
-    UNLOCK_MUTEX();
-
     return (qint64)retVal;
 }
 
@@ -448,7 +436,7 @@ Sets the flow control used by the port.  Possible values of flow are:
 \endverbatim
 */
 void Win_QextSerialPort::setFlowControl(FlowType flow) {
-    LOCK_MUTEX();
+  QMutexLocker locker( mutex );
     if (Settings.FlowControl!=flow) {
         Settings.FlowControl=flow;
     }
@@ -482,7 +470,6 @@ void Win_QextSerialPort::setFlowControl(FlowType flow) {
                 break;
         }
     }
-    UNLOCK_MUTEX();
 }
 
 /*!
@@ -497,7 +484,7 @@ Sets the parity associated with the serial port.  The possible values of parity 
 \endverbatim
 */
 void Win_QextSerialPort::setParity(ParityType parity) {
-    LOCK_MUTEX();
+  QMutexLocker locker( mutex );
     if (Settings.Parity!=parity) {
         Settings.Parity=parity;
     }
@@ -536,7 +523,6 @@ void Win_QextSerialPort::setParity(ParityType parity) {
         }
         SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
     }
-    UNLOCK_MUTEX();
 }
 
 /*!
@@ -560,7 +546,7 @@ This function is subject to the following restrictions:
 
 */
 void Win_QextSerialPort::setDataBits(DataBitsType dataBits) {
-    LOCK_MUTEX();
+  QMutexLocker locker( mutex );
     if (Settings.DataBits!=dataBits) {
         if ((Settings.StopBits==STOP_2 && dataBits==DATA_5) ||
             (Settings.StopBits==STOP_1_5 && dataBits!=DATA_5)) {
@@ -617,7 +603,6 @@ void Win_QextSerialPort::setDataBits(DataBitsType dataBits) {
                 break;
         }
     }
-    UNLOCK_MUTEX();
 }
 
 /*!
@@ -639,7 +624,7 @@ This function is subject to the following restrictions:
     POSIX does not support 1.5 stop bits.
 */
 void Win_QextSerialPort::setStopBits(StopBitsType stopBits) {
-    LOCK_MUTEX();
+  QMutexLocker locker( mutex );
     if (Settings.StopBits!=stopBits) {
         if ((Settings.DataBits==DATA_5 && stopBits==STOP_2) ||
             (stopBits==STOP_1_5 && Settings.DataBits!=DATA_5)) {
@@ -681,7 +666,6 @@ void Win_QextSerialPort::setStopBits(StopBitsType stopBits) {
                 break;
         }
     }
-    UNLOCK_MUTEX();
 }
 
 /*!
@@ -719,7 +703,7 @@ are speeds that are usable on both Windows and POSIX.
 \endverbatim
 */
 void Win_QextSerialPort::setBaudRate(BaudRateType baudRate) {
-    LOCK_MUTEX();
+  QMutexLocker locker( mutex );
     if (Settings.BaudRate!=baudRate) {
         switch (baudRate) {
             case BAUD50:
@@ -869,7 +853,6 @@ void Win_QextSerialPort::setBaudRate(BaudRateType baudRate) {
         }
         SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
     }
-    UNLOCK_MUTEX();
 }
 
 /*!
@@ -878,7 +861,7 @@ Sets DTR line to the requested state (high by default).  This function will have
 the port associated with the class is not currently open.
 */
 void Win_QextSerialPort::setDtr(bool set) {
-    LOCK_MUTEX();
+  QMutexLocker locker( mutex );
     if (isOpen()) {
         if (set) {
             EscapeCommFunction(Win_Handle, SETDTR);
@@ -887,7 +870,6 @@ void Win_QextSerialPort::setDtr(bool set) {
             EscapeCommFunction(Win_Handle, CLRDTR);
         }
     }
-    UNLOCK_MUTEX();
 }
 
 /*!
@@ -896,7 +878,7 @@ Sets RTS line to the requested state (high by default).  This function will have
 the port associated with the class is not currently open.
 */
 void Win_QextSerialPort::setRts(bool set) {
-    LOCK_MUTEX();
+  QMutexLocker locker( mutex );
     if (isOpen()) {
         if (set) {
             EscapeCommFunction(Win_Handle, SETRTS);
@@ -905,7 +887,6 @@ void Win_QextSerialPort::setRts(bool set) {
             EscapeCommFunction(Win_Handle, CLRRTS);
         }
     }
-    UNLOCK_MUTEX();
 }
 
 /*!
@@ -929,7 +910,7 @@ This function will return 0 if the port associated with the class is not current
 */
 ulong Win_QextSerialPort::lineStatus(void) {
     unsigned long Status=0, Temp=0;
-    LOCK_MUTEX();
+    QMutexLocker locker( mutex );
     if (isOpen()) {
         GetCommModemStatus(Win_Handle, &Temp);
         if (Temp&MS_CTS_ON) {
@@ -945,7 +926,6 @@ ulong Win_QextSerialPort::lineStatus(void) {
             Status|=LS_DCD;
         }
     }
-    UNLOCK_MUTEX();
     return Status;
 }
 
@@ -1013,7 +993,7 @@ non-blocking behaviour (read() and write() will return immediately).
 \note this function does nothing in event driven mode.
 */
 void Win_QextSerialPort::setTimeout(long millisec) {
-    LOCK_MUTEX();
+  QMutexLocker locker( mutex );
     Settings.Timeout_Millisec = millisec;
 
 	if (millisec == -1) {
@@ -1029,7 +1009,6 @@ void Win_QextSerialPort::setTimeout(long millisec) {
 	if (queryMode() != QextSerialBase::EventDriven)
       	SetCommTimeouts(Win_Handle, &Win_CommTimeouts);
 
-    UNLOCK_MUTEX();
 }
 
 
