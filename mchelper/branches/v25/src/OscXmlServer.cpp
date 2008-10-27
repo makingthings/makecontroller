@@ -39,7 +39,6 @@ OscXmlServer::OscXmlServer( MainWindow *mainWindow, QObject *parent ) : QTcpServ
 */
 void OscXmlServer::openNewConnection( )
 {
-	//qDebug("new connection");
   OscXmlClient *client = new OscXmlClient( nextPendingConnection( ), mainWindow );
   client->sendCrossDomainPolicy();
 	connect( client, SIGNAL(finished()), client, SLOT(deleteLater()));
@@ -427,7 +426,7 @@ bool XmlHandler::endElement( const QString & namespaceURI, const QString & local
 	
 	if( localName == "OSCPACKET" )
 	{
-		//mainWindow->newXmlPacketReceived( oscMessageList, currentDestination );
+		mainWindow->newXmlPacketReceived( oscMessageList, currentDestination );
 		QStringList strings;
     foreach( OscMessage* msg, oscMessageList )
 			strings << msg->toString( );
