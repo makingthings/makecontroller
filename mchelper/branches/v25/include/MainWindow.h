@@ -56,6 +56,7 @@ public:
   QAction* resetAction() { return actionResetDevice; }
   QAction* sambaAction() { return actionSAMBA; }
   void statusMsg(QString msg, int duration = 3500);
+  void newXmlPacketReceived( QList<OscMessage*> msgs, QString destination );
   
 public slots:
   void onEthernetDeviceArrived(PacketInterface* pi);
@@ -76,6 +77,7 @@ private:
   About *about;
   QListWidgetItem deviceListPlaceholder;
   bool no_ui;
+  bool showOscMsgs;
   void readSettings();
   void writeSettings();
   void closeEvent( QCloseEvent *qcloseevent );
@@ -91,6 +93,7 @@ private slots:
   void onDoubleClick();
   void onDeviceResetRequest();
   void onSamBaRequest();
+  void onHideOsc(bool checked);
   
   #ifdef MCHELPER_TEST_SUITE
   friend class TestXmlServer;

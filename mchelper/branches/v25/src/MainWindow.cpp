@@ -52,6 +52,7 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   connect( actionAbout, SIGNAL(triggered()), about, SLOT(show()));
   connect( actionResetDevice, SIGNAL(triggered()), this, SLOT(onDeviceResetRequest()));
   connect( actionSAMBA, SIGNAL(triggered()), this, SLOT(onSamBaRequest()));
+  connect( actionHide_OSC, SIGNAL(triggered(bool)), this, SLOT(onHideOsc(bool)));
   
   // command line connections
   connect( commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onCommandLine()));
@@ -95,6 +96,8 @@ void MainWindow::readSettings()
   else
     commandLine->setCurrentIndex(commandLine->count() - 1 );
   
+  showOscMsgs = settings.value("showOscMsgs", true ).toBool();
+  
   setMaxMessages(settings.value("max_messages", DEFAULT_ACTIVITY_MESSAGES).toInt( ));
 }
 
@@ -121,6 +124,8 @@ void MainWindow::writeSettings()
   for( int i = 0; i < commandLine->count(); i++ )
     commands << commandLine->itemText(i);
   settings.setValue("commands", commands );
+  
+  settings.setValue("showOscMsgs", showOscMsgs );
 }
 
 /*
@@ -346,8 +351,14 @@ void MainWindow::message(QStringList msgs, MsgType::Type type, QString from)
   QTextBlockFormat format;
   format.setBackground(msgColor(type));
   QString tofrom("from");
+  if(type == MsgType::Command || type == MsgType::XMLMessage || type == MsgType::Response)
+  {
+    if( !showOscMsgs )
+      return;
+  }
   if(type == MsgType::Command || type == MsgType::XMLMessage)
     tofrom = "to";
+
   foreach(QString msg, msgs)
     post << QString("%1    %2 %3 %4").arg(currentTime).arg(msg).arg(tofrom).arg(from);
 
@@ -373,6 +384,11 @@ void MainWindow::message(QString msg, MsgType::Type type, QString from)
     QTextBlockFormat format;
     format.setBackground(msgColor(type));
     QString tofrom = tr("from");
+    if(type == MsgType::Command || type == MsgType::XMLMessage || type == MsgType::Response)
+    {
+      if( !showOscMsgs )
+        return;
+    }
     if(type == MsgType::Command || type == MsgType::XMLMessage)
       tofrom = tr("to");
     
@@ -408,6 +424,19 @@ QColor MainWindow::msgColor(MsgType::Type type)
       return QColor(219, 250, 224, 255); // green
     default:
       return Qt::white;
+  }
+}
+
+void MainWindow::newXmlPacketReceived( QList<OscMessage*> msgs, QString destination )
+{
+  QList<Board*> boardList = getConnectedBoards( );
+  foreach(Board *board, boardList)
+  {
+    if( board->key() == destination )
+    {
+      board->sendMessage( msgs );
+      break;
+    }
   }
 }
 
@@ -490,6 +519,13 @@ void MainWindow::onSamBaRequest()
     message (tr("Setting board into SAM-BA mode"), MsgType::Notice, "mchelper");
   }
 }
+
+void MainWindow::onHideOsc(bool checked)
+{
+  showOscMsgs = !checked;
+}
+
+
 
 
 
