@@ -1,0 +1,3 @@
+Welcome to the OS X Uploader Installer.  This will configure your Mac to upload new firmware to your Make Controller.
+
+Please note that it's only necessary to run this installer once - after that both mchelper and mcbuilder should be able to upload without problems.
