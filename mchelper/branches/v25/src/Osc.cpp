@@ -231,9 +231,9 @@ QString Osc::getTypeTag( char *message )
 }
 
 // When we receive a packet, check to see whether it is a message or a bundle.
-void Osc::receivePacket( char* packet, int length, QList<OscMessage*>* oscMessageList )
+bool Osc::receivePacket( char* packet, int length, QList<OscMessage*>* oscMessageList )
 {
-	//printf( "Raw: %s, Length: %d\n", packet, length );
+	//qDebug( "Raw: %s, Length: %d\n", packet, length );
 	switch( *packet )
 	{
 		case '/':		// the '/' in front tells us this is an Osc message.
@@ -247,12 +247,20 @@ void Osc::receivePacket( char* packet, int length, QList<OscMessage*>* oscMessag
         length -= 16;
         while ( length > 0 )
         {
+          if( length > 16384 || length <= 0 )
+          {
+            qDebug("got insane length - %d, bailing.", length);
+            return false;
+          }
           // read the length (pretend packet is a pointer to integer)
           int messageLength = qFromBigEndian( *((int*)packet) );
           packet += 4;
           length -= 4;
           if ( messageLength <= length )
-            receivePacket( packet, messageLength, oscMessageList );
+          {
+            if( !receivePacket( packet, messageLength, oscMessageList ) )
+              return false;
+          }
           length -= messageLength;
           packet += messageLength;
         }
@@ -263,6 +271,7 @@ void Osc::receivePacket( char* packet, int length, QList<OscMessage*>* oscMessag
 			QString msg = QObject::tr( "Error - Osc packets must start with either a '/' (message) or '[' (bundle).");
 			//messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
 	}
+  return true;
 }
 
 /*
