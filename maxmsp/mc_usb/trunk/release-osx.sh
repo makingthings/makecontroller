@@ -3,7 +3,7 @@
 # script for generating an mc.usb release on OS X
 
 #grab the version
-VERSION=v0.6
+VERSION=v0.6.1
 
 echo Creating mcbuilder $VERSION OS X distribution...
 
@@ -15,11 +15,13 @@ rm -Rf *.zip
 # put it in the right spot and create the appropriate directories
 mkdir mc.usb-$VERSION
 cp ReadMe-OSX.rtf mc.usb-$VERSION/ReadMe.rtf
-mkdir mc.usb-$VERSION/MakeController-externals
-mkdir mc.usb-$VERSION/MakeController-help
+mkdir mc.usb-$VERSION/Max4  # need to send along versions of abstractions and help patches for Max 4 as well.
+cp -r max4 mc.usb-$VERSION
 cp -r MakeController-externals mc.usb-$VERSION
 cp -r build/Deployment/mc.usb.mxo mc.usb-$VERSION/MakeController-externals
+cp -r mc.usb-$VERSION/MakeController-externals/*.mxo mc.usb-$VERSION/max4/MakeController-externals
 cp -r MakeController-help mc.usb-$VERSION
+rm mc.usb-$VERSION/MakeController-externals/*.mxe
 cp mc-objectlist.txt mc.usb-$VERSION
 
 # remove any crap
