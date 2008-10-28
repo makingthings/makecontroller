@@ -68,7 +68,7 @@ class Osc
 	private:
 		char* findDataTag( char* message, int length );
 		QString getTypeTag( char* message );
-		void receivePacket( char* packet, int length,  QList<OscMessage*>* oscMessageList );
+		bool receivePacket( char* packet, int length,  QList<OscMessage*>* oscMessageList );
 		void receiveMessage( char* message, int length, QList<OscMessage*>* oscMessageList );
 		int extractData( char* buffer, OscMessage* message );
 		QString preamble;
