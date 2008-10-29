@@ -25,6 +25,7 @@
 #define DIPSWITCH_H
 
 /* DipSwitch Interface */
+#include "types.h"
 
 int DipSwitch_SetActive( int state );
 int DipSwitch_GetActive( void );
