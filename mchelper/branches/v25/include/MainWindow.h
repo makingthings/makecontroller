@@ -76,6 +76,7 @@ private:
   Uploader *uploader;
   About *about;
   QListWidgetItem deviceListPlaceholder;
+  QTextCharFormat grayText, blackText;
   bool no_ui;
   bool hideOscMsgs;
   void readSettings();
@@ -86,6 +87,8 @@ private:
   #ifdef Q_WS_WIN
   bool winEvent( MSG* msg, long* result );
   #endif
+  void addMessage( QString time, QString msg, QString tofrom, QTextBlockFormat bkgnd );
+  bool messagesEnabled( MsgType::Type type );
   
 private slots:
   void onDeviceSelectionChanged();
