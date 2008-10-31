@@ -31,6 +31,9 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   actionResetDevice->setEnabled(false);
   actionSAMBA->setEnabled(false);
   
+  grayText.setForeground( Qt::gray );
+  blackText.setForeground( Qt::black );
+  
   // initializations
   inspector = new Inspector(this);
   oscXmlServer = new OscXmlServer(this);
@@ -136,7 +139,9 @@ void MainWindow::writeSettings()
 void MainWindow::closeEvent( QCloseEvent *qcloseevent )
 {
 	writeSettings( );
+  qDebug( "closing" );
   qcloseevent->accept();
+  qApp->quit(); // in case the inspector or anything else is still open
 }
 
 #ifdef Q_WS_WIN
@@ -347,30 +352,20 @@ void MainWindow::onDeviceRemoved(QString key)
 
 void MainWindow::message(QStringList msgs, MsgType::Type type, QString from)
 {
-  QStringList post;
+  if( !messagesEnabled( type ) )
+    return;
   QString currentTime = QTime::currentTime().toString();
   QTextBlockFormat format;
   format.setBackground(msgColor(type));
   QString tofrom("from");
-  if(type == MsgType::Command || type == MsgType::XMLMessage || type == MsgType::Response)
-  {
-    if( hideOscMsgs )
-      return;
-  }
   if(type == MsgType::Command)
     tofrom = "to";
 
+  outputConsole->setUpdatesEnabled(false);
+  QString tf = QString("%1 %2").arg(tofrom).arg(from);
   foreach(QString msg, msgs)
-    post << QString("%1    %2 %3 %4").arg(currentTime).arg(msg).arg(tofrom).arg(from);
-
-  // because the format will be the same for all lines added via insertPlainText()
-  // we need to add a blank line to set our format, then insert the message
-  outputConsole->moveCursor(QTextCursor::End);
-  if(outputConsole->blockCount())
-    outputConsole->insertPlainText("\n");
-  outputConsole->textCursor().setBlockFormat(format);
-  outputConsole->insertPlainText(post.join("\n"));
-  outputConsole->ensureCursorVisible();
+    addMessage( currentTime, msg, tf, format);
+  outputConsole->setUpdatesEnabled(true);
 }
 
 void MainWindow::message(QString msg, MsgType::Type type, QString from)
@@ -382,24 +377,41 @@ void MainWindow::message(QString msg, MsgType::Type type, QString from)
   }
   else
   {
+    if( !messagesEnabled( type ) )
+      return;
     QTextBlockFormat format;
     format.setBackground(msgColor(type));
     QString tofrom = tr("from");
-    if(type == MsgType::Command || type == MsgType::XMLMessage || type == MsgType::Response)
-    {
-      if( hideOscMsgs )
-        return;
-    }
+    
     if(type == MsgType::Command)
       tofrom = tr("to");
     
-    msg.prepend(QTime::currentTime().toString() + "    "); // todo - maybe make the time text gray
-    msg += QString(" %1 %2").arg(tofrom).arg(from);
-    outputConsole->appendPlainText(msg); // insert the message
-    outputConsole->moveCursor(QTextCursor::End); // move the cursor to the end
-    outputConsole->textCursor().setBlockFormat(format); // so that when we set the color, it colors the right block
-    outputConsole->ensureCursorVisible();
+    outputConsole->setUpdatesEnabled(false);
+    addMessage( QTime::currentTime().toString(), msg, QString("%1 %2").arg(tofrom).arg(from), format);
+    outputConsole->setUpdatesEnabled(true);
   }
+}
+
+void MainWindow::addMessage( QString time, QString msg, QString tofrom, QTextBlockFormat bkgnd )
+{
+  outputConsole->setCurrentCharFormat(grayText);
+  outputConsole->appendPlainText(time + "   ");
+  outputConsole->setCurrentCharFormat(blackText);
+  outputConsole->insertPlainText(msg);
+  outputConsole->setCurrentCharFormat(grayText);
+  outputConsole->insertPlainText(" " + tofrom);
+  outputConsole->textCursor().setBlockFormat(bkgnd);
+}
+
+bool MainWindow::messagesEnabled( MsgType::Type type )
+{
+  bool retval = true;
+  if(type == MsgType::Command || type == MsgType::XMLMessage || type == MsgType::Response || type == MsgType::Warning)
+  {
+    if( hideOscMsgs )
+      retval = false;
+  }
+  return retval;
 }
 
 void MainWindow::statusMsg(QString msg, int duration)
