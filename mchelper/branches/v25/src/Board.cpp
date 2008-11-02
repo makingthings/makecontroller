@@ -48,15 +48,9 @@ QString Board::location( )
 	switch( _type )
 	{
 		case BoardType::UsbSamba:
-			return "Unprogrammed Board";
+			return tr("Unprogrammed Board");
 		case BoardType::UsbSerial:
-		{
-			#ifdef Q_WS_WIN
-				return QString( "USB (%1)" ).arg(_key);
-			#else
-				return "USB";
-			#endif
-		}
+      return QString( "USB (%1)" ).arg(_key);
 		case BoardType::Ethernet:
 			return _key;
     default:
