@@ -50,7 +50,7 @@ void Uploader::onUploadButton()
     return mainWindow->message( tr("%1 can't be found.").arg(fi.fileName()), MsgType::Error, tr("Uploader") );
   
   if( uploader.state() != QProcess::NotRunning )
-    return mainWindow->message( tr("Uploader is currently busy...give it a second, then try again."), MsgType::Error, tr("Uploader") );
+    return mainWindow->message( tr("Uploader is currently busy...give it a second, then try again"), MsgType::Error, tr("Uploader") );
   
   upload(fi.filePath());
 }
@@ -73,6 +73,8 @@ void Uploader::upload(QString filename)
   uploaderArgs << "-e" << "boot_from_flash";
   uploaderArgs << "-e" << "reset";
   uploader.start(uploaderName, uploaderArgs);
+  QFileInfo fi(filename);
+  setWindowTitle(tr("Uploader - uploading %1").arg(fi.fileName()));
 }
 
 void Uploader::filterOutput( )
@@ -105,12 +107,12 @@ void Uploader::filterError( )
 void Uploader::uploadFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
   if( exitCode == 0 && exitStatus == QProcess::NormalExit )
-    mainWindow->message(tr("Upload complete."), MsgType::Notice, tr("Uploader") );
+    mainWindow->message(tr("Upload complete"), MsgType::Notice, tr("Uploader") );
   else
-    mainWindow->message(tr("Upload failed."), MsgType::Warning, tr("Uploader") );
+    mainWindow->message(tr("Upload failed"), MsgType::Warning, tr("Uploader") );
 	progressBar->reset();
   hide();
-  
+  setWindowTitle(tr("Uploader"));
 }
 
 /*
@@ -126,19 +128,19 @@ void Uploader::onError(QProcess::ProcessError error)
       msg = tr("uploader failed to start.  sam7 is either missing, or doesn't have the correct permissions");
       break;
     case QProcess::Crashed:
-      msg = tr("uploader (sam7) was canceled or crashed.");
+      msg = tr("uploader (sam7) was canceled or crashed");
       break;
     case QProcess::Timedout:
-      msg = tr("uploader (sam7) timed out.");
+      msg = tr("uploader (sam7) timed out");
       break;
     case QProcess::WriteError:
-      msg = tr("uploader (sam7) reported a write error.");
+      msg = tr("uploader (sam7) reported a write error");
       break;
     case QProcess::ReadError:
-      msg = tr("uploader (sam7) reported a read error.");
+      msg = tr("uploader (sam7) reported a read error");
       break;
     case QProcess::UnknownError:
-      msg = tr("uploader (sam7) - unknown error type.");
+      msg = tr("uploader (sam7) - unknown error type");
       break;
   }
   mainWindow->message( msg, MsgType::Error, tr("Uploader"));
