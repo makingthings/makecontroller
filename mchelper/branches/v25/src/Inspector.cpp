@@ -29,6 +29,8 @@ Inspector::Inspector(MainWindow *mainWindow) : QDialog( 0 )
   QPoint inspectorPos = settings.value("inspector_pos").toPoint();
   if(!inspectorPos.isNull())
     move(inspectorPos);
+  
+  resize(gridLayout->sizeHint());
 }
 
 void Inspector::loadAndShow( )
@@ -108,66 +110,46 @@ void Inspector::onApply()
 		return;
 	
 	QStringList msgs;
-	QStringList displayMsgs;
 	
 	QString newName = nameEdit->text();
 	if( !newName.isEmpty() && board->name != newName )
 	{
 		msgs << QString( "/system/name %1" ).arg( QString( "\"%1\"" ).arg( newName ) );
-		displayMsgs << tr( "Changed name to %1" ).arg( newName );
 		mainWindow->setBoardName( board->key(), QString( "%1 : %2" ).arg(newName).arg(board->location()) );
 	}
 		
 	// serial number
 	QString newNumber = serialEdit->text();
 	if( !newNumber.isEmpty() && board->serialNumber != newNumber )
-	{
 		msgs << QString( "/system/serialnumber %1" ).arg( newNumber );
-		displayMsgs << tr( "Changed serial number to %1" ).arg( newNumber );
-	}
 		
 	// IP address
 	QString newAddress = ipEdit->text();
 	if( !newAddress.isEmpty() && board->ip_address != newAddress )
-	{
 		msgs << QString( "/network/address %1" ).arg( newAddress );
-		displayMsgs << tr( "Changed IP address to %1" ).arg( newAddress );
-	}
 		
 	// dhcp
 	bool newState = dhcpBox->checkState( );
 	if( newState == true && !board->dhcp )
-	{
 		msgs << "/network/dhcp 1";
-		displayMsgs << tr("Turned DHCP on");
-	}
 	if( newState == false && board->dhcp )
-	{
 		msgs << "/network/dhcp 0";
-		displayMsgs << tr("Turned DHCP off");
-	}
 		
 	// udp listen port
 	QString newPort = listenPortEdit->text();
 	if( !newPort.isEmpty() && board->udp_listen_port != newPort )
-	{
 		msgs << QString( "/network/osc_udp_listen_port %1" ).arg( newPort );
-		displayMsgs << tr( "Changed the board to listen on port %1 for messages" ).arg( newPort );
-	}
 		
 	// udp send port
 	newPort = sendPortEdit->text();
 	if( !newPort.isEmpty() && board->udp_send_port != newPort )
-	{
 		msgs << QString( "/network/osc_udp_send_port %1" ).arg( newPort );
-		displayMsgs << tr( "Changed the board to send messages on port %1" ).arg( newPort );
-	}
 		
 	setLabelsRole( QPalette::WindowText );
 	if( msgs.size( ) > 0 )
 	{
 		board->sendMessage( msgs );
-		mainWindow->message( displayMsgs, MsgType::Notice, "mchelper" );
+    mainWindow->message(msgs, MsgType::Command, board->location());
 	}
 }
 

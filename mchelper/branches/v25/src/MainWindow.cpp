@@ -61,12 +61,10 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   connect( commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onCommandLine()));
   connect( sendButton, SIGNAL(clicked()), this, SLOT(onCommandLine()));
   
-  #ifndef Q_WS_WIN
-  #ifndef Q_WS_MAC
+  #if !defined (Q_WS_WIN) && !defined (Q_WS_MAC)
   // the USB monitor runs in a separate thread...start it up.
   // only need to do this on non-Windows/OSX machines since automatic device detection is not implemented
   usbMonitor->start();
-  #endif
   #endif
 }
 
@@ -83,10 +81,10 @@ void MainWindow::readSettings()
     move(mainWinPos);
 	
 	QList<QVariant> splitterSettings = settings.value( "splitterSizes" ).toList( );
-	QList<int> splitterSizes;
 	if( !splitterSettings.isEmpty( ) )
 	{
-		foreach( QVariant setting, splitterSettings )
+		QList<int> splitterSizes;
+    foreach( QVariant setting, splitterSettings )
 			splitterSizes << setting.toInt( );
 		splitter->setSizes( splitterSizes );
 	}
@@ -499,7 +497,7 @@ void MainWindow::onCommandLine()
   Board* brd = getCurrentBoard();
   if(cmd.isEmpty() || brd == NULL)
     return;
-  message(cmd, MsgType::Command, brd->key()); // print it to screen
+  message(cmd, MsgType::Command, brd->location()); // print it to screen
   brd->sendMessage(cmd); // send it to the board
   
   // in order to get a readline-style history of commands via up/down arrows
@@ -528,7 +526,7 @@ void MainWindow::onEraseRequest()
   if(brd)
   {
     brd->sendMessage("/system/samba 1");
-    message (tr("Setting board into SAM-BA mode"), MsgType::Notice, "mchelper");
+    message (tr("Erasing Board"), MsgType::Notice, "mchelper");
   }
 }
 
