@@ -11,6 +11,12 @@ Preferences::Preferences(MainWindow *mw, NetworkMonitor *nm, OscXmlServer *oxs) 
   
   connect(okButton, SIGNAL(accepted()), this, SLOT(applyChanges()));
   connect(defaultsButton, SIGNAL(clicked()), this, SLOT(restoreDefaults()));
+  #if defined (Q_WS_WIN) || defined (Q_WS_MAC)
+  // only need to know the sam7 path on *nix - remove this from the prefs window
+  uploaderLabel->setParent(0);
+  uploaderEdit->setParent(0);
+  #endif
+  resize(vboxLayout->sizeHint()); // resize the window based on the size hint from the top level layout
 }
 
 // read the current settings, load them into the preferences form and then display it
