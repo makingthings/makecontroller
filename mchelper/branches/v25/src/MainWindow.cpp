@@ -28,8 +28,8 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   // default these to off until we see a board
   actionUpload->setEnabled(false);
   actionInspector->setEnabled(false);
-  actionResetDevice->setEnabled(false);
-  actionSAMBA->setEnabled(false);
+  actionResetBoard->setEnabled(false);
+  actionEraseBoard->setEnabled(false);
   
   grayText.setForeground( Qt::gray );
   blackText.setForeground( Qt::black );
@@ -53,8 +53,8 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   connect( actionUpload, SIGNAL(triggered()), uploader, SLOT(show()));
   connect( actionClearConsole, SIGNAL(triggered()), outputConsole, SLOT(clear()));
   connect( actionAbout, SIGNAL(triggered()), about, SLOT(show()));
-  connect( actionResetDevice, SIGNAL(triggered()), this, SLOT(onDeviceResetRequest()));
-  connect( actionSAMBA, SIGNAL(triggered()), this, SLOT(onSamBaRequest()));
+  connect( actionResetBoard, SIGNAL(triggered()), this, SLOT(onDeviceResetRequest()));
+  connect( actionEraseBoard, SIGNAL(triggered()), this, SLOT(onEraseRequest()));
   connect( actionHide_OSC, SIGNAL(triggered(bool)), this, SLOT(onHideOsc(bool)));
   
   // command line connections
@@ -139,7 +139,6 @@ void MainWindow::writeSettings()
 void MainWindow::closeEvent( QCloseEvent *qcloseevent )
 {
 	writeSettings( );
-  qDebug( "closing" );
   qcloseevent->accept();
   qApp->quit(); // in case the inspector or anything else is still open
 }
@@ -218,16 +217,16 @@ void MainWindow::onDeviceSelectionChanged()
     {
       actionUpload->setEnabled(true);
       actionInspector->setEnabled(false);
-      actionResetDevice->setEnabled(false);
-      actionSAMBA->setEnabled(false);
+      actionResetBoard->setEnabled(false);
+      actionEraseBoard->setEnabled(false);
     }
     else
     {
       inspector->setData(brd);
       actionInspector->setEnabled(true);
       actionUpload->setEnabled(false);
-      actionResetDevice->setEnabled(true);
-      actionSAMBA->setEnabled(true);
+      actionResetBoard->setEnabled(true);
+      actionEraseBoard->setEnabled(true);
     }
   }
   else
@@ -523,7 +522,7 @@ void MainWindow::onDeviceResetRequest()
   }
 }
 
-void MainWindow::onSamBaRequest()
+void MainWindow::onEraseRequest()
 {
   Board* brd = getCurrentBoard();
   if(brd)

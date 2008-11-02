@@ -53,8 +53,8 @@ public:
   // make these available to the device list
   QAction* uploadAction() { return actionUpload; }
   QAction* inspectorAction() { return actionInspector; }
-  QAction* resetAction() { return actionResetDevice; }
-  QAction* sambaAction() { return actionSAMBA; }
+  QAction* resetAction() { return actionResetBoard; }
+  QAction* sambaAction() { return actionEraseBoard; }
   void statusMsg(QString msg, int duration = 3500);
   void newXmlPacketReceived( QList<OscMessage*> msgs, QString destination );
   
@@ -95,7 +95,7 @@ private slots:
   void onCommandLine();
   void onDoubleClick();
   void onDeviceResetRequest();
-  void onSamBaRequest();
+  void onEraseRequest();
   void onHideOsc(bool checked);
   
   #ifdef MCHELPER_TEST_SUITE

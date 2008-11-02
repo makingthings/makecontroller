@@ -32,7 +32,7 @@
       </property>
       <widget class="QGroupBox" name="groupBox" >
        <property name="title" >
-        <string>Devices</string>
+        <string>Boards</string>
        </property>
        <layout class="QGridLayout" >
         <item row="0" column="0" >
@@ -124,12 +124,12 @@
    </widget>
    <widget class="QMenu" name="menuDevice" >
     <property name="title" >
-     <string>Device</string>
+     <string>Board</string>
     </property>
     <addaction name="actionInspector" />
     <addaction name="actionUpload" />
-    <addaction name="actionResetDevice" />
-    <addaction name="actionSAMBA" />
+    <addaction name="actionResetBoard" />
+    <addaction name="actionEraseBoard" />
    </widget>
    <widget class="QMenu" name="menuHelp" >
     <property name="title" >
@@ -193,14 +193,14 @@
     <string>Ctrl+U</string>
    </property>
   </action>
-  <action name="actionResetDevice" >
+  <action name="actionResetBoard" >
    <property name="text" >
-    <string>Reset Device</string>
+    <string>Reset Board</string>
    </property>
   </action>
-  <action name="actionSAMBA" >
+  <action name="actionEraseBoard" >
    <property name="text" >
-    <string>Set Device to SAM-BA</string>
+    <string>Erase Board</string>
    </property>
   </action>
  </widget>
