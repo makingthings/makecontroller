@@ -62,6 +62,8 @@ void Uploader::upload(QString filename)
   CFStringRef macPath = CFURLCopyFileSystemPath(pluginRef, kCFURLPOSIXPathStyle);
   QString uploaderName = CFStringGetCStringPtr(macPath, CFStringGetSystemEncoding());
   uploaderName += "/Contents/Resources/sam7";
+  #elif defined (Q_WS_WIN)
+  QString uploaderName = QDir::current().filePath("sam7");
   #else
   QSettings settings("MakingThings", "mchelper");
   QString uploaderName = settings.value("sam7_path", DEFAULT_SAM7_PATH).toString();
