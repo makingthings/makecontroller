@@ -80,6 +80,7 @@ class QextSerialEnumerator : public QObject
       void setUpNotificationWin( QMainWindow* win );
       static bool getDeviceDetails( QextPortInfo* portInfo, HDEVINFO devInfo, 
                               PSP_DEVINFO_DATA devData, WPARAM wParam = DBT_DEVICEARRIVAL );
+      static void QextSerialEnumerator::enumerateDevicesWin( HDEVINFO devInfo, GUID* guidDev, QList<QextPortInfo>* infoList );
       HDEVNOTIFY notificationHandle;
 		#endif /*_TTY_WIN_*/
   

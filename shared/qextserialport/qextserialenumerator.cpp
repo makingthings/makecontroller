@@ -85,45 +85,52 @@ QextSerialEnumerator::~QextSerialEnumerator( )
 	{
 		HDEVINFO devInfo = INVALID_HANDLE_VALUE;
 		GUID * guidDev = (GUID *) & GUID_CLASS_COMPORT;
+		GUID * sambaGuidDev = (GUID *) & SAMBA_GUID;
 
 		devInfo = SetupDiGetClassDevs(guidDev, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
-		if(devInfo == INVALID_HANDLE_VALUE) {
-			qCritical("SetupDiGetClassDevs failed. Error code: %ld", GetLastError());
-			return;
-		}
-
-		//enumerate the devices
-		bool ok = true;
-		SP_DEVICE_INTERFACE_DATA ifcData;
-		ifcData.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
-		PSP_DEVICE_INTERFACE_DETAIL_DATA detData = NULL;
-		DWORD detDataPredictedLength;
+		if(devInfo == INVALID_HANDLE_VALUE)
+			return qCritical("SetupDiGetClassDevs failed. Error code: %ld", GetLastError());
+		enumerateDevicesWin( devInfo, guidDev, &infoList );
 		
-		for (DWORD i = 0; ok; i++) {
-			ok = SetupDiEnumDeviceInterfaces(devInfo, NULL, guidDev, i, &ifcData);
-			if (ok)
-			{
-				SP_DEVINFO_DATA devData = {sizeof(SP_DEVINFO_DATA)};
-				//check for required detData size
-				SetupDiGetDeviceInterfaceDetail(devInfo, & ifcData, NULL, 0, &detDataPredictedLength, & devData);
-				detData = (PSP_DEVICE_INTERFACE_DETAIL_DATA)malloc(detDataPredictedLength);
-				detData->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
+		devInfo = SetupDiGetClassDevs(sambaGuidDev, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+    if(devInfo == INVALID_HANDLE_VALUE)
+      return qCritical("SetupDiGetClassDevs failed. Error code: %ld", GetLastError());
+    enumerateDevicesWin( devInfo, sambaGuidDev, &infoList );
+	}
+	
+	void QextSerialEnumerator::enumerateDevicesWin( HDEVINFO devInfo, GUID* guidDev, QList<QextPortInfo>* infoList )
+	{
+	  //enumerate the devices
+    bool ok = true;
+    SP_DEVICE_INTERFACE_DATA ifcData;
+    ifcData.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
+    PSP_DEVICE_INTERFACE_DETAIL_DATA detData = NULL;
+    DWORD detDataPredictedLength;
+	  for (DWORD i = 0; ok; i++) {
+      ok = SetupDiEnumDeviceInterfaces(devInfo, NULL, guidDev, i, &ifcData);
+      if (ok)
+      {
+        SP_DEVINFO_DATA devData = {sizeof(SP_DEVINFO_DATA)};
+        //check for required detData size
+        SetupDiGetDeviceInterfaceDetail(devInfo, & ifcData, NULL, 0, &detDataPredictedLength, & devData);
+        detData = (PSP_DEVICE_INTERFACE_DETAIL_DATA)malloc(detDataPredictedLength);
+        detData->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
 
-				//check the details
-				if (SetupDiGetDeviceInterfaceDetail(devInfo, &ifcData, detData, detDataPredictedLength, NULL, & devData)) {
-					// Got a device. Get the details.
-					QextPortInfo info;
-					getDeviceDetails( &info, devInfo, &devData );
-					infoList.append(info);
-				}
-				else
-					qCritical("SetupDiGetDeviceInterfaceDetail failed. Error code: %ld", GetLastError());
-				delete detData;
-			}
-			else if (GetLastError() != ERROR_NO_MORE_ITEMS)
-				return qCritical("SetupDiEnumDeviceInterfaces failed. Error code: %ld", GetLastError());
-		}
-		SetupDiDestroyDeviceInfoList(devInfo);
+        //check the details
+        if (SetupDiGetDeviceInterfaceDetail(devInfo, &ifcData, detData, detDataPredictedLength, NULL, & devData)) {
+          // Got a device. Get the details.
+          QextPortInfo info;
+          getDeviceDetails( &info, devInfo, &devData );
+          infoList->append(info);
+        }
+        else
+          qCritical("SetupDiGetDeviceInterfaceDetail failed. Error code: %ld", GetLastError());
+        delete detData;
+      }
+      else if (GetLastError() != ERROR_NO_MORE_ITEMS)
+        return qCritical("SetupDiEnumDeviceInterfaces failed. Error code: %ld", GetLastError());
+    }
+    SetupDiDestroyDeviceInfoList(devInfo);
 	}
   
   void QextSerialEnumerator::setUpNotificationWin( QMainWindow* win )
@@ -179,14 +186,6 @@ QextSerialEnumerator::~QextSerialEnumerator( )
           {
             QextPortInfo info;
             getDeviceDetails( &info, hDevInfo, &spDevInfoData, wParam );
-            QRegExp idRx("VID_(\\w+)&PID_(\\w+)\\\\");
-            if( devId.contains(idRx) )
-            {
-              bool dummy;
-              info.vendorID = idRx.cap(1).toInt(&dummy, 16);
-              info.productID = idRx.cap(2).toInt(&dummy, 16);
-              //qDebug("got vid: %d, pid: %d", vid, pid);
-            }
             if( wParam == DBT_DEVICEARRIVAL )
               emit deviceDiscovered(info);
             else if( wParam == DBT_DEVICEREMOVECOMPLETE )
@@ -206,6 +205,7 @@ QextSerialEnumerator::~QextSerialEnumerator( )
     if( wParam == DBT_DEVICEARRIVAL)
       portInfo->physName = getDeviceProperty(devInfo, devData, SPDRP_PHYSICAL_DEVICE_OBJECT_NAME);
     portInfo->enumName = getDeviceProperty(devInfo, devData, SPDRP_ENUMERATOR_NAME);
+    QString hardwareIDs = getDeviceProperty(devInfo, devData, SPDRP_HARDWAREID);
     HKEY devKey = SetupDiOpenDevRegKey(devInfo, devData, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
     portInfo->portName = getRegKeyValue(devKey, TEXT("PortName"));
     QRegExp rx("COM(\\d+)");
@@ -214,6 +214,14 @@ QextSerialEnumerator::~QextSerialEnumerator( )
       int portnum = rx.cap(1).toInt();
       if(portnum > 9)
         portInfo->portName.prepend("\\\\.\\"); // COM ports greater than 9 need \\.\ prepended
+    }
+    QRegExp idRx("VID_(\\w+)&PID_(\\w+)&");
+    if( hardwareIDs.toUpper().contains(idRx) )
+    {
+      bool dummy;
+      portInfo->vendorID = idRx.cap(1).toInt(&dummy, 16);
+      portInfo->productID = idRx.cap(2).toInt(&dummy, 16);
+      //qDebug("got vid: %d, pid: %d", vid, pid);
     }
     return true;
   }
