@@ -33,6 +33,8 @@ QextSerialEnumerator::~QextSerialEnumerator( )
 		//DEFINE_GUID(GUID_CLASS_COMPORT, 0x86e0d1e0L, 0x8089, 0x11d0, 0x9c, 0xe4, 0x08, 0x00, 0x3e, 0x30, 0x1f, 0x73);
         // use more Make Controller specific guid
 		DEFINE_GUID(GUID_CLASS_COMPORT, 0x4D36E978, 0xE325, 0x11CE, 0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18 );
+		DEFINE_GUID(SAMBA_GUID, 0xe6ef7dcd, 0x1795, 0x4a08, 0x9f, 0xbf, 0xaa, 0x78, 0x42, 0x3c, 0x26, 0xf0);
+
 	#endif
 
 	/* Gordon Schumacher's macros for TCHAR -> QString conversions and vice versa */	
@@ -135,6 +137,15 @@ QextSerialEnumerator::~QextSerialEnumerator( )
     notificationHandle = RegisterDeviceNotification( win->winId( ), &dbh, DEVICE_NOTIFY_WINDOW_HANDLE );
     if(!notificationHandle)
       qWarning( "RegisterDeviceNotification failed: %ld", GetLastError());
+    
+    ZeroMemory(&dbh, sizeof(dbh));
+    dbh.dbcc_size = sizeof(dbh);
+    dbh.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+    CopyMemory(&dbh.dbcc_classguid, &SAMBA_GUID, sizeof(GUID));
+    
+    notificationHandle = RegisterDeviceNotification( win->winId( ), &dbh, DEVICE_NOTIFY_WINDOW_HANDLE );
+    if(!notificationHandle)
+      qWarning( "RegisterDeviceNotification failed: %ld", GetLastError());
   }
   
   LRESULT QextSerialEnumerator::onDeviceChangeWin( WPARAM wParam, LPARAM lParam )
@@ -152,7 +163,6 @@ QextSerialEnumerator::~QextSerialEnumerator( )
         devId.replace("#", "\\"); // USB\Vid_04e8&Pid_503b\0002F9A9828E0F06
         devId = devId.toUpper();
         //qDebug("devname: %s", qPrintable(devId));
-        QString enumclass = devId.left(devId.indexOf("\\")); // USB
         
         DWORD dwFlag = DBT_DEVICEARRIVAL == wParam ? (DIGCF_ALLCLASSES | DIGCF_PRESENT) : DIGCF_ALLCLASSES;
         HDEVINFO hDevInfo = SetupDiGetClassDevs(&GUID_CLASS_COMPORT,NULL,NULL,dwFlag);
@@ -169,6 +179,14 @@ QextSerialEnumerator::~QextSerialEnumerator( )
           {
             QextPortInfo info;
             getDeviceDetails( &info, hDevInfo, &spDevInfoData, wParam );
+            QRegExp idRx("VID_(\\w+)&PID_(\\w+)\\\\");
+            if( devId.contains(idRx) )
+            {
+              bool dummy;
+              info.vendorID = idRx.cap(1).toInt(&dummy, 16);
+              info.productID = idRx.cap(2).toInt(&dummy, 16);
+              //qDebug("got vid: %d, pid: %d", vid, pid);
+            }
             if( wParam == DBT_DEVICEARRIVAL )
               emit deviceDiscovered(info);
             else if( wParam == DBT_DEVICEREMOVECOMPLETE )
@@ -188,8 +206,7 @@ QextSerialEnumerator::~QextSerialEnumerator( )
     if( wParam == DBT_DEVICEARRIVAL)
       portInfo->physName = getDeviceProperty(devInfo, devData, SPDRP_PHYSICAL_DEVICE_OBJECT_NAME);
     portInfo->enumName = getDeviceProperty(devInfo, devData, SPDRP_ENUMERATOR_NAME);
-    HKEY devKey = SetupDiOpenDevRegKey(devInfo, devData, DICS_FLAG_GLOBAL, 0,
-                                        DIREG_DEV, KEY_READ);
+    HKEY devKey = SetupDiOpenDevRegKey(devInfo, devData, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
     portInfo->portName = getRegKeyValue(devKey, TEXT("PortName"));
     QRegExp rx("COM(\\d+)");
     if(portInfo->portName.contains(rx))
