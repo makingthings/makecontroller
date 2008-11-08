@@ -60,14 +60,26 @@ void Uploader::upload(QString filename)
   #ifdef Q_WS_MAC // get the path within the app bundle
   CFURLRef pluginRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
   CFStringRef macPath = CFURLCopyFileSystemPath(pluginRef, kCFURLPOSIXPathStyle);
-  QString uploaderName = CFStringGetCStringPtr(macPath, CFStringGetSystemEncoding());
-  uploaderName += "/Contents/Resources/sam7";
+  QDir appBundle( CFStringGetCStringPtr(macPath, CFStringGetSystemEncoding()) );
+  QString uploaderName = appBundle.filePath( "Contents/Resources/sam7" );
   #elif defined (Q_WS_WIN)
   QString uploaderName = QDir::current().filePath("sam7");
   #else
   QSettings settings("MakingThings", "mchelper");
   QString uploaderName = settings.value("sam7_path", DEFAULT_SAM7_PATH).toString();
   #endif
+  int offset = 0; // escape any spaces in the filename
+  do
+  {
+    offset = filename.indexOf(" ", offset);
+    if( offset != -1 )
+    {
+      filename.insert(offset, "\\");
+      offset += 2; // step past the \ we inserted and the space we put it in front of
+    }
+  } while( offset != -1 );
+  qDebug( "uploading %s", qPrintable(filename));
+  
   QStringList uploaderArgs;
   uploaderArgs << "-e" << "set_clock";
   uploaderArgs << "-e" << "unlock_regions";
