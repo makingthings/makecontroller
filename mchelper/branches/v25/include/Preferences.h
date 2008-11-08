@@ -13,11 +13,7 @@
 #define DEFAULT_ACTIVITY_MESSAGES 150
 #define DEFAULT_CHECK_UPDATES true
 
-#ifdef Q_WS_WIN
-  #define DEFAULT_SAM7_PATH "C:\something\sam7.exe"
-#else
-  #define DEFAULT_SAM7_PATH "/usr/bin/sam7"
-#endif
+#define DEFAULT_SAM7_PATH "/usr/bin/sam7" // only relevant for *nix 
 
 class MainWindow;
 

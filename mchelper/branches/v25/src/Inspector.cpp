@@ -115,7 +115,7 @@ void Inspector::onApply()
 	if( !newName.isEmpty() && board->name != newName )
 	{
 		msgs << QString( "/system/name %1" ).arg( QString( "\"%1\"" ).arg( newName ) );
-		mainWindow->setBoardName( board->key(), QString( "%1 : %2" ).arg(newName).arg(board->location()) );
+		mainWindow->setBoardName( board->key(), QString( "%1 : %2" ).arg(newName).arg(board->key()) );
 	}
 		
 	// serial number
