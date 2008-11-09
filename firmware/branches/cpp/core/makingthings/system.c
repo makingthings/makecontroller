@@ -429,14 +429,14 @@ void StackAuditTask( void* p )
     int stackremaining = TaskGetRemainingStack( task );
     if( stackremaining < 50 )
     {
-      Led_SetState( 1 );
+      //Led_SetState( 1 );
       Debug( DEBUG_WARNING, "Warning: Stack running low on task %s. %d bytes left.", TaskGetName( task ), stackremaining );
     }
 
     int freemem = System_GetFreeMemory( );
     if( freemem < 100 )
     {
-      Led_SetState( 1 );
+      //Led_SetState( 1 );
       Debug( DEBUG_WARNING, "Warning: System memory running low. %d bytes left.", freemem );
     }
     

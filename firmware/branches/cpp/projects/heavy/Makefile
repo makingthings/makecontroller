@@ -14,7 +14,6 @@ all: output/$(OUTPUT).bin
 
 # Source files that can be built in THUMB mode.
 THUMB_SRC= \
-  make.c \
   ../../core/freertos/tasks.c \
   ../../core/freertos/queue.c \
   ../../core/freertos/list.c \
@@ -37,13 +36,11 @@ THUMB_SRC= \
   ../../libraries/stepper/stepper.c \
   ../../libraries/dipswitch/dipswitch.c \
   ../../libraries/motor/motor.c \
-  ../../libraries/appled/appled.c \
   ../../libraries/pwmout/pwmout.c \
   ../../libraries/digitalin/digitalin.c \
   ../../libraries/digitalout/digitalout.c \
   ../../libraries/webserver/webserver.c \
   ../../core/makingthings/io.c \
-  ../../core/makingthings/led.c \
   ../../core/makingthings/timer.c \
   ../../core/makingthings/fasttimer.c \
   ../../core/makingthings/debugosc.c \
@@ -80,7 +77,15 @@ THUMB_SRC= \
   ../../core/makingthings/osc_patternmatch.c
 
 CPP_THUMB_SRC = \
-  ../../core/startup/extras_cpp.cpp
+  ../../core/startup/extras_cpp.cpp \
+  ../../core/makingthings/io_cpp.cpp \
+  ../../core/makingthings/led_.cpp \
+  ../../core/makingthings/tcpsocket.cpp \
+  ../../core/makingthings/udpsocket.cpp \
+  ../../core/makingthings/tcpserver.cpp \
+  ../../core/makingthings/osc_cpp.cpp \
+  ../../libraries/appled/appled_.cpp \
+  make_.cpp \
 
 # Source files that must be built in ARM mode.
 ARM_SRC= \
@@ -91,7 +96,9 @@ ARM_SRC= \
   ../../core/makingthings/fasttimer_isr.c \
   ../../core/makingthings/serial_isr.c \
   ../../core/makingthings/timer_isr.c \
-  ../../core/makingthings/can_isr.c
+  
+# CPP_ARM_SRC = \
+# # ../../core/makingthings/analogin_isr_cpp.cpp \
   
 # All the include directories need to be appended here
 INCLUDEDIRS = \
@@ -132,6 +139,7 @@ $(INCLUDEDIRS) \
 -Wall  \
 -Wextra  \
 -Wno-strict-aliasing  \
+-fno-builtin-printf \
 -D SAM7_GCC  \
 -D THUMB_INTERWORK \
 -D__FLASH_BUILD \
@@ -146,20 +154,21 @@ CFLAGS = ${C_AND_CPP_FLAGS}
 CFLAGS += -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations
 
 CPPFLAGS = ${C_AND_CPP_FLAGS}
-CPPFLAGS += -fno-rtti -fno-exceptions
+CPPFLAGS += -fno-rtti -fno-exceptions -fno-unwind-tables
 
 THUMB_FLAGS=-mthumb
-LINKER_FLAGS=-Xlinker -ooutput/$(OUTPUT).elf -Xlinker -M -Xlinker -Map=output/$(OUTPUT)_o.map
+LINKER_FLAGS=-Xlinker -ooutput/$(OUTPUT).elf -Xlinker -M -Xlinker -Map=output/$(OUTPUT)_o.map 
 
 ARM_OBJ = $(ARM_SRC:.c=.o)
 THUMB_OBJ = $(THUMB_SRC:.c=.o)
 CPP_THUMB_OBJ = $(CPP_THUMB_SRC:.cpp=.o)
+CPP_ARM_OBJ = $(CPP_ARM_SRC:.cpp=.o)
 
 output/$(OUTPUT).bin : output/$(OUTPUT).elf
 	$(OBJCOPY) output/$(OUTPUT).elf -O binary output/$(OUTPUT).bin
 	
-output/$(OUTPUT).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CPP_THUMB_OBJ) $(CRT0)
-	$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) $(CPP_THUMB_OBJ) -nostartfiles -x assembler-with-cpp $(CRT0) $(LINKER_FLAGS)
+output/$(OUTPUT).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CPP_ARM_OBJ) $(CPP_THUMB_OBJ) $(CRT0)
+	$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) $(CPP_ARM_OBJ) $(CPP_THUMB_OBJ) -nostartfiles -x assembler-with-cpp $(CRT0) $(LINKER_FLAGS)
 
 $(THUMB_OBJ) : %.o : %.c config.h
 	$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@
@@ -169,12 +178,17 @@ $(CPP_THUMB_OBJ) : %.o : %.cpp config.h
 
 $(ARM_OBJ) : %.o : %.c config.h
 	$(CC) -c $(CFLAGS) $< -o $@
-  	    
+
+$(CPP_ARM_OBJ) : %.o : %.cpp config.h
+	$(CPP) -c $(CPPFLAGS) $< -o $@
+
 clean :
 	rm -f $(ARM_OBJ)
 	rm -f $(THUMB_OBJ)
-	rm -f output/$(OUTPUT).elf     
-	rm -f output/$(OUTPUT).bin     
-	rm -f output/$(OUTPUT)_o.map     
+	rm -f $(CPP_ARM_OBJ)
+	rm -f $(CPP_THUMB_OBJ)
+	rm -f output/$(OUTPUT).elf
+	rm -f output/$(OUTPUT).bin
+	rm -f output/$(OUTPUT)_o.map
 
 
