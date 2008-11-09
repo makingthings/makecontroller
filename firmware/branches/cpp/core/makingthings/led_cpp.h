@@ -16,22 +16,35 @@
 *********************************************************************************/
 
 /*
-	can.h
+	led.h
 
-  MakingThings
 */
 
-#ifndef CAN_H
-#define CAN_H
+#ifndef LED_CPP_H
+#define LED_CPP_H
 
-int Can_SetActive( int state );
-int Can_GetActive( void );
+#include "io_cpp.h"
 
-int Can_SendMessage( int id, char* message, int length );
-int Can_GetMessage( int* id, char* message, int* length );
+class Led
+{
+public:
+  Led( );
+  ~Led( ) { }
+  void setState( bool value );
+  bool getState( );
+  
+private:
+  Io ledIo;
+};
 
-/* OSC Interface */
-const char* CanOsc_GetName( void );
-int CanOsc_ReceiveMessage( int channel, char* message, int length );
+// int Led_SetActive( int state );
+// int Led_GetActive( void );
+// 
+// int Led_SetState( int state );
+// int Led_GetState( void );
+// 
+// /* OSC Interface */
+// const char* LedOsc_GetName( void );
+// int LedOsc_ReceiveMessage( int channel, char* message, int length );
 
 #endif

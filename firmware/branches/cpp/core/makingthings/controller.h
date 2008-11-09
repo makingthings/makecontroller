@@ -38,7 +38,6 @@
 #include "timer.h"
 #include "fasttimer.h"
 #include "debug.h"
-#include "can.h"
 #include "osc.h"
 #include "system.h"
 #include "usb.h"
