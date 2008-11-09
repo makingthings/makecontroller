@@ -126,34 +126,67 @@ bool AppLed::getState( )
 #include "string.h"
 #include "stdio.h"
 
+const char* AppLedOSC::propertyList[] = {"state", 0};
+
 /*
   We expect to get a message like /appled/index/property (data)
 */
-void AppLedOSC::onNewMsg( OscMessage* msg, OscTransport t, int src_addr, int src_port )
+int AppLedOSC::onNewMsg( OscMessage* msg, OscTransport t, int src_addr, int src_port )
 {
   (void)t;
   (void)src_addr;
   (void)src_port;
+  int replies = 0;
   bool ok;
-  int index = msg->addressElementAsInt( 1, &ok );
+  int index = msg->addressElementAsInt( 1, &ok ); // address element 1 should be our index
   if( !ok )
-    return;
-  char* property = msg->addressElementAsString( 2 );
+    return replies;
+  char* property = msg->addressElementAsString( 2 ); // address element 2 should be the property
   if( !property )
-    return;
-  AppLed led(index);
-  int value;  
-  if( msg->data_count )
-    value = msg->dataItemAsInt(0);
+    return replies;
   
-  // now go through our possible properties
-  if(strcmp(property, "state") == 0)
+  int prop_index = propertyLookup( propertyList, property );
+  if( prop_index < 0 ) // not one of our properties
+    return replies;
+  
+  AppLed led(index);
+  if( msg->data_count ) // this is a setter
   {
-    if( msg->data_count )
-      led.setState( value );
-    // else
-    //   
+    int value = msg->dataItemAsInt(0);
+    switch( prop_index )
+    {
+      case 0: // state
+        led.setState(value);
+        break;
+    }
   }
+  else // this is a getter
+  {
+    int value;
+    switch( prop_index )
+    {
+      case 0: // state
+        value = led.getState( );
+        // create new message to send it back
+        break;
+    }
+  }
+  return replies;
+}
+
+int AppLedOSC::onQuery( int element )
+{
+  int replies = 0;
+  switch( element )
+  {
+    case 1: // index
+      // create message for each index 0-3
+      break;
+    case 2: // property
+      // create message for each item in our propertyList
+      break;
+  }
+  return replies;
 }
 
 // Need a list of property names

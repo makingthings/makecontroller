@@ -48,9 +48,11 @@ public:
 class OscHandler
 {
 public:
-  virtual void onNewMsg( OscMessage* msg, OscTransport t, int src_addr, int src_port ) = 0;
-  // virtual void onQuery( char* address ) = 0;
+  virtual int onNewMsg( OscMessage* msg, OscTransport t, int src_addr, int src_port ) = 0;
+  virtual int onQuery( int element ) = 0;
   virtual const char* name( ) = 0;
+protected:
+  int propertyLookup( const char* propertyList[], char* property );
 };
 
 typedef struct OscChannel
