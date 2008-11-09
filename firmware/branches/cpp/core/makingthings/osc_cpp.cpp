@@ -114,6 +114,19 @@ bool OSCC::receivePacket( int channel, char* packet, int length )
   return true;
 }
 
+int OscHandler::propertyLookup( const char* propertyList[], char* property )
+{
+  const char** p = propertyList;
+  int index = 0;
+  while (*p != NULL )
+  {
+    if ( strcmp( property, *p++ ) == 0 )
+      return index;
+    index++;
+  }
+  return -1;
+}
+
 int OscMessage::addressElementAsInt( int element, bool* ok )
 {
   if(ok)

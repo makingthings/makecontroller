@@ -43,29 +43,19 @@ private:
 };
 
 #ifdef OSC
+
 #include "osc_cpp.h"
 
 class AppLedOSC : public OscHandler
 {
 public:
   AppLedOSC( ) { }
-  void onNewMsg( OscMessage* msg, OscTransport t, int src_addr, int src_port );
-  void onQuery( char* address );
+  int onNewMsg( OscMessage* msg, OscTransport t, int src_addr, int src_port );
+  int onQuery( int element );
   const char* name( ) { return "appled"; }
-  // const char* properties( ) { return propertyList; }
-  // static const char* propertyList[];
+  static const char* propertyList[];
 };
 
 #endif // OSC
-
-// int AppLed_SetActive( int index, int state );
-// int AppLed_GetActive( int index );
-// 
-// int AppLed_SetState( int index, int state );
-// int AppLed_GetState( int index );
-
-/* OSC Interface */
-// const char* AppLedOsc_GetName( void );
-// int AppLedOsc_ReceiveMessage( int channel, char* message, int length );
-
 #endif // APPLED_CPP_H
+
