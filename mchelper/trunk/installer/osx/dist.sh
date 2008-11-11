@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REVISION=`head -1 ../../version.txt`
+REVISION=`sed -e '2,$ d' -e 's/MCHELPER_VERSION = \"\([0-9].[0-9].[0-9]\)\"/\1/' ../../mchelper.pro`
 
 echo Creating mchelper v$REVISION OS X distribution...
 
@@ -18,6 +18,7 @@ strip ../../bin/mchelper.app/Contents/MacOS/mchelper
 mkdir mchelper
 cp -r ../../bin/mchelper.app mchelper
 cp ../../ReadMe.rtf mchelper
+cp -r ../../../uploader/OSXUploader.mpkg mchelper
 
 # add a link to the Applications directory
 ln -s /Applications mchelper
