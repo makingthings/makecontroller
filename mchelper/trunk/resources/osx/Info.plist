@@ -18,7 +18,5 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>@@version@@</string>
-	<key>SUFeedURL</key>
-	<string>http://www.makingthings.com/updates/mchelper.xml</string>
 </dict>
 </plist>
