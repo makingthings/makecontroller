@@ -30,6 +30,8 @@ void Preferences::loadAndShow( )
   uploaderEdit->setText(settings.value("sam7_path", DEFAULT_SAM7_PATH).toString());
   Qt::CheckState cs = (settings.value("check_updates", DEFAULT_CHECK_UPDATES).toBool()) ? Qt::Checked: Qt::Unchecked;
   updatesCheckBox->setCheckState(cs);
+  cs = (settings.value("networkDiscovery", DEFAULT_NETWORK_DISCOVERY).toBool()) ? Qt::Checked: Qt::Unchecked;
+  netDiscoveryCheckBox->setCheckState(cs);
 	this->show( );
 }
 
@@ -58,7 +60,11 @@ void Preferences::applyChanges( )
   settings.setValue("sam7_path", uploaderEdit->text());
 	
   bool cs = (updatesCheckBox->checkState() == Qt::Checked) ? true : false;
-  settings.setValue("check_updates", cs);
+  settings.setValue("checkForUpdatesOnStartup", cs);
+  
+  cs = (netDiscoveryCheckBox->checkState() == Qt::Checked) ? true : false;
+  settings.setValue("networkDiscovery", cs);
+  networkMonitor->setDiscoveryMode( cs );
 }
 
 /*

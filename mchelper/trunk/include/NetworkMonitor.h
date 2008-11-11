@@ -39,6 +39,7 @@ public:
   int listenPort( ) { return listen_port; }
   void setSendPort( int port ) { send_port = port; }
   int sendPort( ) { return send_port; }
+  void setDiscoveryMode( bool enabled ) { sendDiscoveryPackets = enabled; }
   
 private:
   MainWindow* mainWindow;
@@ -49,6 +50,7 @@ private:
   QByteArray broadcastPing;
   QHostAddress localBroadcastAddress;
   bool sendLocal;
+  bool sendDiscoveryPackets;
 	
 private slots:
   void processPendingDatagrams( );

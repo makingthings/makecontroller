@@ -34,7 +34,7 @@ class AppUpdater : public QDialog
 	Q_OBJECT
 	public:
 		AppUpdater( );
-		~AppUpdater( ){ };
+		~AppUpdater( ){ }
 		void checkForUpdates( bool inBackground );
 		bool checkingOnStartup;
 			

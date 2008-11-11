@@ -24,7 +24,8 @@ HEADERS = include/MainWindow.h \
           include/MsgType.h \
           include/BoardType.h \
           include/PacketUdp.h \
-          include/PacketUsbSerial.h
+          include/PacketUsbSerial.h \
+          include/AppUpdater.h
 
 SOURCES = source/main.cpp \
           source/MainWindow.cpp \
@@ -38,7 +39,8 @@ SOURCES = source/main.cpp \
           source/About.cpp \
           source/Board.cpp \
           source/PacketUdp.cpp \
-          source/PacketUsbSerial.cpp
+          source/PacketUsbSerial.cpp \
+          source/AppUpdater.cpp
 
 QT += network xml
 DEFINES += MCHELPER_VERSION=\\\"$${MCHELPER_VERSION}\\\"

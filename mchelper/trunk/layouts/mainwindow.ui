@@ -135,6 +135,8 @@
     <property name="title" >
      <string>Help</string>
     </property>
+    <addaction name="separator" />
+    <addaction name="actionCheckForUpdates" />
    </widget>
    <addaction name="menuFile" />
    <addaction name="menuView" />
@@ -201,6 +203,11 @@
   <action name="actionEraseBoard" >
    <property name="text" >
     <string>Erase Board</string>
+   </property>
+  </action>
+  <action name="actionCheckForUpdates" >
+   <property name="text" >
+    <string>Check For Updates...</string>
    </property>
   </action>
  </widget>

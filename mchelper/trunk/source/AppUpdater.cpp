@@ -39,7 +39,7 @@ AppUpdater::AppUpdater( ) : QDialog( )
 	buttonLayout.addStretch( );
 	buttonLayout.addWidget( &acceptButton );
 	
-	mchelperIcon.load( ":mticon64.png" );
+	mchelperIcon.load( ":icons/mticon64.png" );
 	icon.setPixmap( mchelperIcon );
 	icon.setAlignment( Qt::AlignHCenter );
 	
