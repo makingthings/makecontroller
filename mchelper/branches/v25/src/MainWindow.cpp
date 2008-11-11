@@ -273,8 +273,8 @@ void MainWindow::onUsbDeviceArrived(QStringList keys, BoardType::Type type)
       usb->open();
       board->setText(key);
       board->setIcon(QIcon(":icons/usb_icon.gif"));
-      board->setToolTip(tr("USB Serial Device: ") + key);
-      noUiString = tr("usb device discovered: ") + key;
+      board->setToolTip(tr("USB Serial Device: ") + board->location());
+      noUiString = tr("usb device discovered: ") + board->location();
     }
     else if(type == BoardType::UsbSamba)
     {
@@ -282,7 +282,7 @@ void MainWindow::onUsbDeviceArrived(QStringList keys, BoardType::Type type)
       board->setText(tr("Unprogrammed Board"));
       board->setIcon(QIcon(":icons/usb_icon.gif"));
       board->setToolTip(tr("Unprogrammed device"));
-      noUiString = tr("sam-ba device discovered: ") + key;
+      noUiString = tr("sam-ba device discovered: ") + board->location();
     }
     
     if(noUi())

@@ -30,7 +30,6 @@ Board::Board(MainWindow *mw, PacketInterface* pi, OscXmlServer *oxs, BoardType::
   if(packetInterface)
     packetInterface->setBoard(this);
     
-  
   connect(this, SIGNAL(msg(QString, MsgType::Type, QString)), 
           mainWindow, SLOT(message(QString, MsgType::Type, QString)));
   connect(this, SIGNAL(msgs(QStringList, MsgType::Type, QString)), 
@@ -50,7 +49,12 @@ QString Board::location( )
 		case BoardType::UsbSamba:
 			return tr("Unprogrammed Board");
 		case BoardType::UsbSerial:
-      return QString( "USB (%1)" ).arg(_key);
+		{
+		  QString k = _key;
+		  if( k.startsWith("\\\\.\\"))
+		     k.remove("\\\\.\\");
+		  return QString( "USB (%1)" ).arg(k);
+		}
 		case BoardType::Ethernet:
 			return _key;
     default:
