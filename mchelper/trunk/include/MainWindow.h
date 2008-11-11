@@ -14,6 +14,7 @@
 #include "MsgType.h"
 #include "BoardType.h"
 #include "UsbMonitor.h"
+#include "AppUpdater.h"
 
 #ifdef MCHELPER_TEST_SUITE
 #include "TestXmlServer.h"
@@ -75,6 +76,7 @@ private:
   OscXmlServer *oscXmlServer;
   Uploader *uploader;
   About *about;
+  AppUpdater* appUpdater;
   QListWidgetItem deviceListPlaceholder;
   QTextCharFormat grayText, blackText;
   bool no_ui;
@@ -97,6 +99,7 @@ private slots:
   void onDeviceResetRequest();
   void onEraseRequest();
   void onHideOsc(bool checked);
+  void onCheckForUpdates(bool inBackground = false);
   
   #ifdef MCHELPER_TEST_SUITE
   friend class TestXmlServer;

@@ -12,6 +12,7 @@
 #define DEFAULT_XML_LISTEN_PORT 11000
 #define DEFAULT_ACTIVITY_MESSAGES 150
 #define DEFAULT_CHECK_UPDATES true
+#define DEFAULT_NETWORK_DISCOVERY true
 
 #define DEFAULT_SAM7_PATH "/usr/bin/sam7" // only relevant for *nix 
 

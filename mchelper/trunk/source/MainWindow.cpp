@@ -17,6 +17,7 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
 {
 	setupUi(this);
   this->no_ui = no_ui;
+  appUpdater = new AppUpdater();
   readSettings( );
   
   // add an item to the list as a UI cue that no boards were found.
@@ -56,6 +57,7 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   connect( actionResetBoard, SIGNAL(triggered()), this, SLOT(onDeviceResetRequest()));
   connect( actionEraseBoard, SIGNAL(triggered()), this, SLOT(onEraseRequest()));
   connect( actionHide_OSC, SIGNAL(triggered(bool)), this, SLOT(onHideOsc(bool)));
+  connect( actionCheckForUpdates, SIGNAL(triggered()), this, SLOT(onCheckForUpdates()));
   
   // command line connections
   connect( commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onCommandLine()));
@@ -101,6 +103,10 @@ void MainWindow::readSettings()
   actionHide_OSC->setChecked(hideOscMsgs);
   
   setMaxMessages(settings.value("max_messages", DEFAULT_ACTIVITY_MESSAGES).toInt( ));
+  
+  bool checkForUpdates = settings.value("checkForUpdatesOnStartup", DEFAULT_CHECK_UPDATES).toBool( );
+  if( checkForUpdates )
+    appUpdater->checkForUpdates(true);
 }
 
 void MainWindow::setMaxMessages(int msgs)
@@ -534,6 +540,13 @@ void MainWindow::onHideOsc(bool checked)
 {
   hideOscMsgs = checked;
 }
+
+void MainWindow::onCheckForUpdates(bool inBackground)
+{
+  appUpdater->checkForUpdates( inBackground );
+}
+
+
 
 
 

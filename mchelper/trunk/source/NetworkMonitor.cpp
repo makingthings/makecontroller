@@ -29,6 +29,7 @@ NetworkMonitor::NetworkMonitor( MainWindow* mainWindow ) : QUdpSocket( )
 	QSettings settings("MakingThings", "mchelper");
   listen_port = settings.value("udp_listen_port", DEFAULT_UDP_LISTEN_PORT).toInt();
   send_port = settings.value("udp_send_port", DEFAULT_UDP_SEND_PORT).toInt();
+  sendDiscoveryPackets = settings.value("networkDiscovery", DEFAULT_NETWORK_DISCOVERY).toBool();
   this->mainWindow = mainWindow;
   sendLocal = false;
 	QHostInfo::lookupHost( QHostInfo::localHostName(), this, SLOT(lookedUp(QHostInfo)));
@@ -103,9 +104,8 @@ void NetworkMonitor::processPendingDatagrams()
 
 void NetworkMonitor::sendPing( )
 {
-//	if( mainWindow->findNetBoardsEnabled( ) )
-//	{
-			
+	if( sendDiscoveryPackets )
+	{			
 		// normally we'll be set to send on QHostAddress::Broadcast, but if that fails, just try
 		// to send on the local broadcast address
 		QHostAddress dest = ( sendLocal ) ? localBroadcastAddress : QHostAddress::Broadcast;
@@ -114,7 +114,7 @@ void NetworkMonitor::sendPing( )
 			writeDatagram( broadcastPing.data(), broadcastPing.size(), localBroadcastAddress, send_port );
 			sendLocal = true;
 		}
-//	}
+	}
 }
 
 void NetworkMonitor::lookedUp(const QHostInfo &host) 
