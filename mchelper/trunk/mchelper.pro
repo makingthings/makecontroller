@@ -56,13 +56,13 @@ DESTDIR      = bin
 macx{
   QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
   QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
-  ICON = resources/mchelper.icns
+  ICON = resources/icons/mchelper.icns
 }
 
 win32{
   DEFINES += WINVER=0x0501
   LIBS += -lSetupapi
-  RC_FILE = resources/mchelper.rc # for application icon
+  RC_FILE = resources/icons/mchelper.rc # for application icon
   debug:CONFIG += console
 }
 
