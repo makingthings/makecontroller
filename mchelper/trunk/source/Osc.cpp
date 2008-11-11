@@ -393,7 +393,7 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
   return count;
 }
 
-QByteArray Osc::createOneRequest( char* message )
+QByteArray Osc::createOneRequest( const char* message )
 {
 	QByteArray oneRequest;
 	oneRequest += Osc::writePaddedString( message );
@@ -407,7 +407,7 @@ QByteArray Osc::writePaddedString( QString str )
 	return writePaddedString( str.toAscii().data() );
 }
 
-QByteArray Osc::writePaddedString( char *string )
+QByteArray Osc::writePaddedString( const char *string )
 {
 	QByteArray paddedString( string );
 	paddedString.append( '\0' ); // OSC requires that strings be null-terminated

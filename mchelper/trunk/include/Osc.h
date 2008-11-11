@@ -52,10 +52,10 @@ class Osc
 {	
 	public:
 		Osc( ) { };
-		static QByteArray writePaddedString( char *string );
+		static QByteArray writePaddedString( const char *string );
 		static QByteArray writePaddedString( QString str );
 		static QByteArray writeTimetag( int a, int b );
-		static QByteArray createOneRequest( char* message );
+		static QByteArray createOneRequest( const char* message );
 		QList<OscMessage*> processPacket( char* data, int size );
 		QByteArray createPacket( QStringList strings );
 		QByteArray createPacket( QList<OscMessage*> msgs );
