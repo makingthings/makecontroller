@@ -56,7 +56,16 @@ DESTDIR      = bin
 macx{
   QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
   QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
+  ICON = resources/mchelper.icns
 }
+
+win32{
+  DEFINES += WINVER=0x0501
+  LIBS += -lSetupapi
+  RC_FILE = resources/mchelper.rc # for application icon
+  debug:CONFIG += console
+}
+
 
 # *******************************************
 #              qextserialport
@@ -84,9 +93,6 @@ unix{
 win32:HEADERS += source/qextserialport/win_qextserialport.h
 win32:SOURCES += source/qextserialport/win_qextserialport.cpp
 win32:DEFINES += _TTY_WIN_
-win32:DEFINES += WINVER=0x0501
-win32:LIBS += -lSetupapi
-win32:debug:CONFIG += console
 
 
 # *******************************************
