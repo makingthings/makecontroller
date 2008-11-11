@@ -18,6 +18,7 @@ Uploader::Uploader(MainWindow *mainWindow) : QDialog( 0 )
 {
 	this->mainWindow = mainWindow;
   setupUi(this);
+  connect(this, SIGNAL(finished(int)), this, SLOT(onDialogClosed()));
   connect(&uploader, SIGNAL(readyReadStandardOutput()), this, SLOT(filterOutput()));
   connect(&uploader, SIGNAL(readyReadStandardError()), this, SLOT(filterError()));
 	connect(&uploader, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(uploadFinished(int, QProcess::ExitStatus)));
@@ -29,6 +30,12 @@ Uploader::Uploader(MainWindow *mainWindow) : QDialog( 0 )
   QString lastFilePath = settings.value("last_firmware_upload", QDir::homePath()).toString();
   browseEdit->setText(lastFilePath);
   progressBar->reset();
+  resize(gridLayout->sizeHint());
+}
+
+Uploader::~Uploader( )
+{
+  onDialogClosed( );
 }
 
 void Uploader::onBrowseButton()
@@ -159,6 +166,12 @@ void Uploader::onError(QProcess::ProcessError error)
   }
   mainWindow->message( msg, MsgType::Error, tr("Uploader"));
   hide();
+}
+
+void Uploader::onDialogClosed( )
+{
+  if(uploader.state() != QProcess::NotRunning )
+    uploader.kill();
 }
 
 

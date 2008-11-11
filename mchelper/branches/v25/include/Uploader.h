@@ -12,6 +12,7 @@ class Uploader : public QDialog, private Ui::UploaderUi
 	Q_OBJECT
 	public:
 		Uploader(MainWindow *mainWindow);
+		~Uploader( );
 		void upload(QString filename);
     QProcess::ProcessState state() { return uploader.state(); }
 		
@@ -26,6 +27,7 @@ class Uploader : public QDialog, private Ui::UploaderUi
     void onError(QProcess::ProcessError error);
     void onBrowseButton();
     void onUploadButton();
+    void onDialogClosed( );
 };
 
 #endif // UPLOADER_H
