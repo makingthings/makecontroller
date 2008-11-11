@@ -26,19 +26,19 @@ HEADERS = include/MainWindow.h \
           include/PacketUdp.h \
           include/PacketUsbSerial.h
 
-SOURCES = src/main.cpp \
-          src/MainWindow.cpp \
-          src/OscXmlServer.cpp \
-          src/Osc.cpp \
-          src/Inspector.cpp \
-          src/NetworkMonitor.cpp \
-          src/UsbMonitor.cpp \
-          src/Preferences.cpp \
-          src/Uploader.cpp \
-          src/About.cpp \
-          src/Board.cpp \
-          src/PacketUdp.cpp \
-          src/PacketUsbSerial.cpp
+SOURCES = source/main.cpp \
+          source/MainWindow.cpp \
+          source/OscXmlServer.cpp \
+          source/Osc.cpp \
+          source/Inspector.cpp \
+          source/NetworkMonitor.cpp \
+          source/UsbMonitor.cpp \
+          source/Preferences.cpp \
+          source/Uploader.cpp \
+          source/About.cpp \
+          source/Board.cpp \
+          source/PacketUdp.cpp \
+          source/PacketUsbSerial.cpp
 
 QT += network xml
 DEFINES += MCHELPER_VERSION=\\\"$${MCHELPER_VERSION}\\\"
@@ -61,17 +61,17 @@ macx{
 # *******************************************
 #              qextserialport
 # *******************************************
-INCLUDEPATH += src/qextserialport
-HEADERS +=  src/qextserialport/qextserialbase.h \
-            src/qextserialport/qextserialport.h \
-            src/qextserialport/qextserialenumerator.h
+INCLUDEPATH += source/qextserialport
+HEADERS +=  source/qextserialport/qextserialbase.h \
+            source/qextserialport/qextserialport.h \
+            source/qextserialport/qextserialenumerator.h
             
-SOURCES +=  src/qextserialport/qextserialbase.cpp \
-            src/qextserialport/qextserialport.cpp \
-            src/qextserialport/qextserialenumerator.cpp
+SOURCES +=  source/qextserialport/qextserialbase.cpp \
+            source/qextserialport/qextserialport.cpp \
+            source/qextserialport/qextserialenumerator.cpp
 
-unix:HEADERS  += src/qextserialport/posix_qextserialport.h
-unix:SOURCES  += src/qextserialport/posix_qextserialport.cpp
+unix:HEADERS  += source/qextserialport/posix_qextserialport.h
+unix:SOURCES  += source/qextserialport/posix_qextserialport.cpp
 unix:DEFINES  += _TTY_POSIX_
 macx: LIBS += -framework IOKit # use IOKit on OS X
 unix{ 
@@ -81,8 +81,8 @@ unix{
   }
 }
 
-win32:HEADERS += src/qextserialport/win_qextserialport.h
-win32:SOURCES += src/qextserialport/win_qextserialport.cpp
+win32:HEADERS += source/qextserialport/win_qextserialport.h
+win32:SOURCES += source/qextserialport/win_qextserialport.cpp
 win32:DEFINES += _TTY_WIN_
 win32:DEFINES += WINVER=0x0501
 win32:LIBS += -lSetupapi
@@ -101,7 +101,7 @@ test_suite {
   DESTDIR      = tests
   INCLUDEPATH += tests
   
-  SOURCES -=  src/main.cpp
+  SOURCES -=  source/main.cpp
   
   SOURCES +=  tests/main.cpp \
               tests/TestOsc.cpp \
