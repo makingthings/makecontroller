@@ -56,7 +56,6 @@ UsbMonitor::UsbMonitor(MainWindow* mw) : QThread()
 */
 void UsbMonitor::run( )
 {
-	QextSerialEnumerator enumerator;
   forever
   {
     QList<QextPortInfo> ports = enumerator.getPorts();
