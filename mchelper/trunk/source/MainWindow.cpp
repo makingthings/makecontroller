@@ -331,7 +331,7 @@ void MainWindow::boardInit(Board *board)
 */
 void MainWindow::updateBoardInfo(Board *board)
 {
-  //oscXmlServer->sendBoardListUpdate(board);
+  emit boardInfoUpdate(board);
   inspector->setData(board);
 }
 
