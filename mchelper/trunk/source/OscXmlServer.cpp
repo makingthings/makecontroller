@@ -104,6 +104,7 @@ OscXmlClient::OscXmlClient( QTcpSocket *socket, MainWindow *mainWindow, QObject 
 	this->socket = socket;
   qRegisterMetaType<MsgType::Type>("MsgType::Type"); 
   connect(this, SIGNAL(msg(QString, MsgType::Type, QString)), mainWindow, SLOT(message(QString, MsgType::Type, QString)));
+  connect(mainWindow, SIGNAL(boardInfoUpdate(Board*)), this, SLOT(boardInfoUpdate(Board*)));
 	handler = new XmlHandler( mainWindow, this );	
 	xml.setContentHandler( handler );
 	xml.setErrorHandler( handler );
@@ -199,7 +200,9 @@ bool OscXmlClient::isConnected( )
 */
 void OscXmlClient::boardInfoUpdate( Board* board )
 {		
-	QDomDocument doc;
+  if(!board)
+    return;
+  QDomDocument doc;
 	QDomElement boardUpdate = doc.createElement( "BOARD_INFO" );
 	doc.appendChild( boardUpdate );
 

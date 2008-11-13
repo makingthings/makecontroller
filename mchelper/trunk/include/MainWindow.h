@@ -103,10 +103,12 @@ private slots:
   void onHelp();
   void onOscTutorial();
   
+signals:
+  void boardInfoUpdate(Board* board);
+  
   #ifdef MCHELPER_TEST_SUITE
   friend class TestXmlServer;
   #endif
-
 };
 
 #include "NetworkMonitor.h"

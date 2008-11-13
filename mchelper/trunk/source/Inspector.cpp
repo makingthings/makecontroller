@@ -149,6 +149,7 @@ void Inspector::onApply()
 	if( msgs.size( ) > 0 )
 	{
 		board->sendMessage( msgs );
+    mainWindow->updateBoardInfo(board);
     mainWindow->message(msgs, MsgType::Command, board->location());
 	}
 }
