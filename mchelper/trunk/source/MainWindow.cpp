@@ -6,6 +6,8 @@
 #include <QFileDialog>
 #include <QTextBlock>
 #include <QTime>
+#include <QDesktopServices>
+#include <QUrl>
 #include "MainWindow.h"
 #include "PacketUsbSerial.h"
 
@@ -58,6 +60,8 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   connect( actionEraseBoard, SIGNAL(triggered()), this, SLOT(onEraseRequest()));
   connect( actionHide_OSC, SIGNAL(triggered(bool)), this, SLOT(onHideOsc(bool)));
   connect( actionCheckForUpdates, SIGNAL(triggered()), this, SLOT(onCheckForUpdates()));
+  connect( actionHelp, SIGNAL(triggered()), this, SLOT(onHelp()));
+  connect( actionOscTutorial, SIGNAL(triggered()), this, SLOT(onOscTutorial()));
   
   // command line connections
   connect( commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onCommandLine()));
@@ -545,6 +549,21 @@ void MainWindow::onCheckForUpdates(bool inBackground)
 {
   appUpdater->checkForUpdates( inBackground );
 }
+
+void MainWindow::onHelp()
+{
+  if( !QDesktopServices::openUrl( QUrl("http://www.makingthings.com/documentation/tutorial/mchelper") ) )
+    statusBar()->showMessage( tr("Help is online and requires an internet connection."), 3000 );
+}
+
+void MainWindow::onOscTutorial()
+{
+  if( !QDesktopServices::openUrl( QUrl("http://www.makingthings.com/documentation/tutorial/osc") ) )
+    statusBar()->showMessage( tr("Help is online and requires an internet connection."), 3000 );
+}
+
+
+
 
 
 

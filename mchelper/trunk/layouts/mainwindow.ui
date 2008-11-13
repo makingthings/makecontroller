@@ -112,7 +112,6 @@
     <property name="title" >
      <string>File</string>
     </property>
-    <addaction name="actionAbout" />
     <addaction name="actionPreferences" />
    </widget>
    <widget class="QMenu" name="menuView" >
@@ -135,7 +134,10 @@
     <property name="title" >
      <string>Help</string>
     </property>
+    <addaction name="actionHelp" />
+    <addaction name="actionOscTutorial" />
     <addaction name="separator" />
+    <addaction name="actionAbout" />
     <addaction name="actionCheckForUpdates" />
    </widget>
    <addaction name="menuFile" />
@@ -208,6 +210,16 @@
   <action name="actionCheckForUpdates" >
    <property name="text" >
     <string>Check For Updates...</string>
+   </property>
+  </action>
+  <action name="actionHelp" >
+   <property name="text" >
+    <string>mchelper Help</string>
+   </property>
+  </action>
+  <action name="actionOscTutorial" >
+   <property name="text" >
+    <string>OSC Tutorial</string>
    </property>
   </action>
  </widget>

@@ -100,6 +100,8 @@ private slots:
   void onEraseRequest();
   void onHideOsc(bool checked);
   void onCheckForUpdates(bool inBackground = false);
+  void onHelp();
+  void onOscTutorial();
   
   #ifdef MCHELPER_TEST_SUITE
   friend class TestXmlServer;
