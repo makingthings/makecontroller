@@ -137,10 +137,6 @@ int AppLedOSC::onNewMsg( OscMessage* msg, OscTransport t, int src_addr, int src_
   (void)src_addr;
   (void)src_port;
   int replies = 0;
-  bool ok;
-  int index = msg->addressElementAsInt( 1, &ok ); // address element 1 should be our index
-  if( !ok )
-    return replies;
   char* property = msg->addressElementAsString( 2 ); // address element 2 should be the property
   if( !property )
     return replies;
@@ -149,26 +145,35 @@ int AppLedOSC::onNewMsg( OscMessage* msg, OscTransport t, int src_addr, int src_
   if( prop_index < 0 ) // not one of our properties
     return replies;
   
-  AppLed led(index);
-  if( msg->data_count ) // this is a setter
+  int index;
+  OscRangeHelper rangeHelper(msg, 1, APPLED_COUNT); // element 1 should be our index
+  while( rangeHelper.hasNextIndex() )
   {
-    int value = msg->dataItemAsInt(0);
-    switch( prop_index )
+    index = rangeHelper.nextIndex();
+    if( index < 0 || index >= APPLED_COUNT )
+      continue;
+    AppLed led(index);
+    if( msg->data_count ) // setter...write the value to the led
     {
-      case 0: // state
-        led.setState(value);
-        break;
+      int value = msg->dataItemAsInt(0);
+      switch( prop_index )
+      {
+        case 0: // state
+          led.setState(value);
+          break;
+      }
     }
-  }
-  else // this is a getter
-  {
-    int value;
-    switch( prop_index )
+    else // getter...return a message
     {
-      case 0: // state
-        value = led.getState( );
-        // create new message to send it back
-        break;
+      int value;
+      switch( prop_index )
+      {
+        case 0: // state
+          value = led.getState( );
+          // create new message to send it back
+          replies++;
+          break;
+      }
     }
   }
   return replies;
@@ -188,65 +193,5 @@ int AppLedOSC::onQuery( int element )
   }
   return replies;
 }
-
-// Need a list of property names
-// MUST end in zero
-// static char* AppLedOsc_Name = "appled";
-// static char* AppLedOsc_PropertyNames[] = { "active", "state", 0 }; // must have a trailing 0
-// 
-// int AppLedOsc_PropertySet( int index, int property, int value );
-// int AppLedOsc_PropertyGet( int index, int property );
-// 
-// // Returns the name of the subsystem
-// const char* AppLedOsc_GetName( )
-// {
-//   return AppLedOsc_Name;
-// }
-// 
-// // Now getting a message.  This is actually a part message, with the first
-// // part (the subsystem) already parsed off.
-// int AppLedOsc_ReceiveMessage( int channel, char* message, int length )
-// {
-//   int status = Osc_IndexIntReceiverHelper( channel, message, length, 
-//                                            APPLED_COUNT, AppLedOsc_Name,
-//                                            AppLedOsc_PropertySet, AppLedOsc_PropertyGet, 
-//                                            AppLedOsc_PropertyNames );
-// 
-//   if ( status != CONTROLLER_OK )
-//     return Osc_SendError( channel, AppLedOsc_Name, status );
-//   return CONTROLLER_OK;
-// }
-// 
-// // Set the index LED, property with the value
-// int AppLedOsc_PropertySet( int index, int property, int value )
-// {
-//   switch ( property )
-//   {
-//     case 0: 
-//       AppLed_SetActive( index, value );
-//       break;      
-//     case 1:
-//       AppLed_SetState( index, value );
-//       break;
-//   }
-//   return CONTROLLER_OK;
-// }
-// 
-// // Get the index LED, property
-// int AppLedOsc_PropertyGet( int index, int property )
-// {
-//   int value = 0;
-//   switch ( property )
-//   {
-//     case 0:
-//       value = AppLed_GetActive( index );
-//       break;
-//     case 1:
-//       value = AppLed_GetState( index );
-//       break;
-//   }
-//   
-//   return value;
-// }
 
 #endif // OSC
