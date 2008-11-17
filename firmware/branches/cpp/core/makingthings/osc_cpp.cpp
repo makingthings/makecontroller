@@ -6,6 +6,8 @@
 #include "osc_cpp.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
 
 extern "C" {
   #include "rtos.h"
@@ -76,7 +78,7 @@ void OSCC::udpTask( void* parameters )
   }
 }
 
-bool OSCC::receivePacket( int channel, char* packet, int length )
+bool OSCC::receivePacket( OscTransport t, char* packet, int length )
 {
   // Got a packet.  Unpacket.
   int status = -1;
@@ -112,6 +114,97 @@ bool OSCC::receivePacket( int channel, char* packet, int length )
 
   // return Osc_SendPacket( channel );
   return true;
+}
+
+OscRangeHelper::OscRangeHelper( OscMessage* msg, int element, int max, int min )
+{
+  remaining = 0;
+  single = -1;
+  if( !msg->address )
+    return;
+  const char* p = strchr(msg->address, '/'); // should give us the very first char of the OSC message
+  if( !p++ ) // step to the beginning of the address element
+    return;
+  int j;
+  for( j = 0; j < element; j++ )
+  {
+    p = strchr( p, '/');
+    if(!p++)
+      return;
+  }
+  
+  int n = 0;
+  int digits = 0;
+  // from OSC_NumberMatch()
+  while ( isdigit( *p ) )
+  {
+    digits++;
+    n = n * 10 + ( *p++ - '0' );
+  }
+
+  bits = -1;
+  if ( n >= max )
+    return; // -1;
+
+  switch ( *p )
+  {
+    case '*':
+    case '?':
+    case '[':
+    case '{':
+    {
+      int i;
+      int b = 0;
+      char s[ 5 ];
+      for ( i = max - 1; i >= min ; i-- )
+      {
+        b <<= 1;
+        sprintf( s, "%d", i );
+        // if ( Osc_PatternMatch( p, s ) )
+        // {
+        //   b |= 1;
+        //   remaining++;
+        // }
+      }
+      bits = b;
+      current = max;
+      return; // -1;
+    }
+    default:
+      if ( digits == 0 )
+        return; // -1;
+      else
+        single = n;
+        return; // n;
+  }
+}
+
+bool OscRangeHelper::hasNextIndex( )
+{
+  return remaining > 0;
+}
+
+int OscRangeHelper::nextIndex( )
+{
+  int retval = 0;
+  if( single != -1 )
+  {
+    remaining = 0;
+    return single;
+  }
+  bool cont = true;
+  while ( bits > 0 && remaining && cont )
+  { 
+    if ( bits & 1 )
+    {
+      retval = current;
+      remaining--;
+      cont = false;
+    }
+    current--;
+    bits >>= 1;
+  }
+  return retval;
 }
 
 int OscHandler::propertyLookup( const char* propertyList[], char* property )

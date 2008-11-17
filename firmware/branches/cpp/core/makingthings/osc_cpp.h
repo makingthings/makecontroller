@@ -7,7 +7,6 @@
 
 #define OSC_MAX_HANDLERS 56
 #define OSC_MSG_MAX_DATA_ITEMS 20
-// #define OSC_MSG_MAX_LEN 1024
 #define OSC_MAX_MESSAGE_IN   400
 #define OSC_MAX_MESSAGE_OUT  600
 #define OSC_SCRATCH_BUF_SIZE 100
@@ -45,12 +44,25 @@ public:
   char* dataItemAsBlob( int index, int* blob_len );
 };
 
+class OscRangeHelper
+{
+public:
+  OscRangeHelper( OscMessage* msg, int element, int max, int min = 0 );
+  bool hasNextIndex( );
+  int nextIndex( );
+private:
+  int remaining, bits, current, single;
+};
+
 class OscHandler
 {
 public:
+  // mandatory
   virtual int onNewMsg( OscMessage* msg, OscTransport t, int src_addr, int src_port ) = 0;
   virtual int onQuery( int element ) = 0;
   virtual const char* name( ) = 0;
+  // optional
+  bool autoSend( OscTransport t ) { (void)t; return false; }
 protected:
   int propertyLookup( const char* propertyList[], char* property );
 };
@@ -80,7 +92,7 @@ public:
   static void* getAddressElement( int position );
   OSCC* instance( )
   {
-    if( _instance )
+    if( !_instance )
       _instance = new OSCC( );
     return _instance;
   }
@@ -88,7 +100,7 @@ public:
 protected:
   OSCC( ) { }
   OSCC* _instance;
-  bool receivePacket( int channel, char* packet, int length );
+  bool receivePacket( OscTransport t, char* packet, int length );
   char* writePaddedString( char* buffer, int* length, char* string );
   char* writePaddedBlob( char* buffer, int* length, char* blob, int blen );
   char* writeTimetag( char* buffer, int* length, int a, int b );
