@@ -1,6 +1,10 @@
 
 
 #include <reent.h>
+#include <stdlib.h>
+
+#include "projdefs.h"
+#include "portable.h"
 
 void *_sbrk_r (struct _reent *r, ptrdiff_t t )
 {
@@ -53,6 +57,16 @@ int _fstat_r (struct _reent *r, int fd, struct stat *buf)
 	(void) fd;
 	(void) buf;
 	return -1;
+}
+
+void* malloc( size_t size )
+{
+  return pvPortMalloc( size );
+}
+
+void free( void* memory )
+{
+  vPortFree( memory );
 }
 
 
