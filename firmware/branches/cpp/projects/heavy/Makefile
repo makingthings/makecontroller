@@ -84,6 +84,7 @@ CPP_THUMB_SRC = \
   ../../core/makingthings/udpsocket.cpp \
   ../../core/makingthings/tcpserver.cpp \
   ../../core/makingthings/osc_cpp.cpp \
+  ../../core/makingthings/rtos_.cpp \
   ../../libraries/appled/appled_.cpp \
   make_.cpp \
 
