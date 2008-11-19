@@ -101,8 +101,10 @@ void MakeStarterTask( void* parameters )
 
 int main( void )
 {
+  // __libc_init_array();
 	/* Setup the ports. */
 	prvSetupHardware();
+  
 
 	/* Create the make task. */
 	TaskCreate( MakeStarterTask, "Make", 1200, NULL, 4 );
@@ -125,7 +127,14 @@ static void prvSetupHardware( void )
 	/* When using the JTAG debugger the hardware is not always initialised to
 	the correct default state.  This line just ensures that this does not
 	cause all interrupts to be masked at the start. */
-	AT91C_BASE_AIC->AIC_EOICR = 0;
+  
+  // Unstack nested interrupts
+  unsigned int i;
+  for (i = 0; i < 8 ; i++)
+    AT91C_BASE_AIC->AIC_EOICR = 0;
+
+	// Enable Protection mode
+  AT91C_BASE_AIC->AIC_DCR = AT91C_AIC_DCR_PROT;
 	
 	/* Most setup is performed by the low level init function called from the
 	startup asm file.*/
