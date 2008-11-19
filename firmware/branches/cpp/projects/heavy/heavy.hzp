@@ -7,8 +7,8 @@
     <folder Name="Source Files" >
       <configuration filter="c;cpp;cxx;cc;h;s;asm;inc" Name="Common" />
       <folder Name="Heavy" >
-        <file file_name="make.c" Name="make.c" />
         <file file_name="config.h" Name="config.h" />
+        <file file_name="make_.cpp" Name="make_.cpp" />
       </folder>
       <folder Name="Core" >
         <folder Name="MakingThings" >
@@ -50,12 +50,6 @@
           <file file_name="../../core/makingthings/serial_isr.c" Name="serial_isr.c" >
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
           </file>
-          <file file_name="../../core/makingthings/serial2.c" Name="serial2.c" />
-          <file file_name="../../core/makingthings/serial2.h" Name="serial2.h" />
-          <file file_name="../../core/makingthings/serial2_internal.h" Name="serial2_internal.h" />
-          <file file_name="../../core/makingthings/serial2_isr.c" Name="serial2_isr.c" >
-            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
-          </file>
           <file file_name="../../core/makingthings/serial.c" Name="serial.c" />
           <file file_name="../../core/makingthings/serial.h" Name="serial.h" />
           <file file_name="../../core/makingthings/serial_internal.h" Name="serial_internal.h" />
@@ -77,6 +71,22 @@
           <file file_name="../../core/makingthings/usb.h" Name="usb.h" />
           <file file_name="../../core/makingthings/USB-CDC.c" Name="USB-CDC.c" />
           <file file_name="../../core/makingthings/USB-CDC.h" Name="USB-CDC.h" />
+          <file file_name="../../core/makingthings/udpsocket.h" Name="udpsocket.h" />
+          <file file_name="../../core/makingthings/io_cpp.cpp" Name="io_cpp.cpp" />
+          <file file_name="../../core/makingthings/io_cpp.h" Name="io_cpp.h" />
+          <file file_name="../../core/makingthings/led_.cpp" Name="led_.cpp" />
+          <file file_name="../../core/makingthings/led_cpp.h" Name="led_cpp.h" />
+          <file file_name="../../core/makingthings/osc_cpp.cpp" Name="osc_cpp.cpp" />
+          <file file_name="../../core/makingthings/osc_cpp.h" Name="osc_cpp.h" />
+          <file file_name="../../core/makingthings/rtos_.cpp" Name="rtos_.cpp" />
+          <file file_name="../../core/makingthings/rtos_.h" Name="rtos_.h" />
+          <file file_name="../../core/makingthings/tcpserver.cpp" Name="tcpserver.cpp" />
+          <file file_name="../../core/makingthings/tcpserver.h" Name="tcpserver.h" />
+          <file file_name="../../core/makingthings/tcpsocket.cpp" Name="tcpsocket.cpp" />
+          <file file_name="../../core/makingthings/tcpsocket.h" Name="tcpsocket.h" />
+          <file file_name="../../core/makingthings/udpsocket.cpp" Name="udpsocket.cpp" />
+          <file file_name="../../core/makingthings/usb_.cpp" Name="usb_.cpp" />
+          <file file_name="../../core/makingthings/usb_.h" Name="usb_.h" />
         </folder>
         <folder Name="FreeRTOS" >
           <configuration c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />
@@ -93,6 +103,7 @@
           <file file_name="../../core/freertos/include/portable.h" Name="portable.h" />
           <file file_name="../../core/freertos/include/semphr.h" Name="semphr.h" />
           <file file_name="../../core/freertos/include/task.h" Name="task.h" />
+          <file file_name="../../core/freertos/portable/GCC/ARM7_AT91SAM7S/AT91SAM7X256.h" Name="AT91SAM7X256.h" />
         </folder>
         <folder Name="lwIP" >
           <file file_name="../../core/lwip/src/api/api_msg.c" Name="api_msg.c" />
@@ -133,12 +144,37 @@
         <folder Name="Startup" >
           <file file_name="../../core/startup/AT91SAM7_Startup.s" Name="AT91SAM7_Startup.s" />
           <file file_name="../../core/startup/AT91SAM7_Target.js" Name="AT91SAM7_Target.js" >
-		        <configuration Name="Common" file_type="Reset Script" />
-		      </file>
+            <configuration Name="Common" file_type="Reset Script" />
+          </file>
           <file file_name="../../core/startup/AT91SAM7S256_MemoryMap.xml" Name="AT91SAM7S256_MemoryMap.xml" />
           <file file_name="../../core/startup/crt0.s" Name="crt0.s" />
           <file file_name="../../core/startup/flash_placement.xml" Name="flash_placement.xml" />
           <file file_name="../../core/freertos/portable/GCC/ARM7_AT91SAM7S/AT91SAM7X256.h" Name="AT91SAM7X256.h" />
+        </folder>
+        <folder Name="USB" >
+          <file file_name="../../core/usb/common/cdc/CDCSetControlLineStateRequest.c" Name="CDCSetControlLineStateRequest.c" />
+          <file file_name="../../core/usb/common/cdc/CDCLineCoding.c" Name="CDCLineCoding.c" />
+          <file file_name="../../core/usb/common/core/USBSetConfigurationRequest.c" Name="USBSetConfigurationRequest.c" />
+          <file file_name="../../core/usb/common/core/USBConfigurationDescriptor.c" Name="USBConfigurationDescriptor.c" />
+          <file file_name="../../core/usb/common/core/USBEndpointDescriptor.c" Name="USBEndpointDescriptor.c" />
+          <file file_name="../../core/usb/common/core/USBFeatureRequest.c" Name="USBFeatureRequest.c" />
+          <file file_name="../../core/usb/common/core/USBGenericDescriptor.c" Name="USBGenericDescriptor.c" />
+          <file file_name="../../core/usb/common/core/USBGenericRequest.c" Name="USBGenericRequest.c" />
+          <file file_name="../../core/usb/common/core/USBGetDescriptorRequest.c" Name="USBGetDescriptorRequest.c" />
+          <file file_name="../../core/usb/common/core/USBInterfaceRequest.c" Name="USBInterfaceRequest.c" />
+          <file file_name="../../core/usb/common/core/USBSetAddressRequest.c" Name="USBSetAddressRequest.c" />
+          <file file_name="../../core/usb/device/cdc-serial/CDCDSerialDriverDescriptors.c" Name="CDCDSerialDriverDescriptors.c" />
+          <file file_name="../../core/usb/device/cdc-serial/CDCDSerialDriver.c" Name="CDCDSerialDriver.c" />
+          <file file_name="../../core/usb/device/core/USBDDriverCallbacks_InterfaceSettingChanged.c" Name="USBDDriverCallbacks_InterfaceSettingChanged.c" />
+          <file file_name="../../core/usb/device/core/USBD_UDP.c" Name="USBD_UDP.c" >
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+          </file>
+          <file file_name="../../core/usb/device/core/USBDCallbacks_Initialized.c" Name="USBDCallbacks_Initialized.c" />
+          <file file_name="../../core/usb/device/core/USBDCallbacks_Reset.c" Name="USBDCallbacks_Reset.c" />
+          <file file_name="../../core/usb/device/core/USBDCallbacks_Resumed.c" Name="USBDCallbacks_Resumed.c" />
+          <file file_name="../../core/usb/device/core/USBDCallbacks_Suspended.c" Name="USBDCallbacks_Suspended.c" />
+          <file file_name="../../core/usb/device/core/USBDDriver.c" Name="USBDDriver.c" />
+          <file file_name="../../core/usb/device/core/USBDDriverCallbacks_ConfigurationChanged.c" Name="USBDDriverCallbacks_ConfigurationChanged.c" />
         </folder>
       </folder>
       <folder Name="Libraries" >
@@ -163,13 +199,15 @@
         <file file_name="../../libraries/xbee/xbee.c" Name="xbee.c" />
         <file file_name="../../libraries/webserver/webserver.h" Name="webserver.h" />
         <file file_name="../../libraries/webserver/webserver.c" Name="webserver.c" />
+        <file file_name="../../libraries/appled/appled_cpp.h" Name="appled_cpp.h" />
+        <file file_name="../../libraries/appled/appled_.cpp" Name="appled_.cpp" />
       </folder>
     </folder>
     <configuration arm_target_loader_reset_after_download="Yes" Target="AT91SAM7X256" build_intermediate_directory="intermediate" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" target_reset_script="FLASHReset()" build_output_directory="output" arm_target_flash_loader_type="Comms Channel Loader" Name="THUMB Flash Debug" />
     <configuration Target="AT91SAM7X256" arm_simulator_memory_simulation_parameter="0x40000;0x10000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" c_user_include_directories=".;../controller/makingthings;../controller/makingthings/testing;../appboard/makingthings;../controller/freertos/include;../controller/lwip/src/include;../controller/lwip/contrib/port/FreeRTOS/AT91SAM7X;../controller/freertos/portable/GCC/ARM7_AT91SAM7S;../controller/lwip/src/include/ipv4" gcc_optimization_level="Optimize For Size" c_additional_options="-D CROSSWORKS_BUILD" build_debug_information="No" linker_printf_width_precision_supported="Yes" Name="THUMB Flash Release" />
-    <configuration Target="AT91SAM7X256" arm_simulator_memory_simulation_parameter="0x40000;0x10000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" c_user_include_directories=".;../../core/makingthings;../../core/freertos/include;../../core/lwip/src/include;../../core/lwip/contrib/port/FreeRTOS/AT91SAM7X;../../core/freertos/portable/GCC/ARM7_AT91SAM7S;../../core/lwip/src/include/ipv4;../../libraries/appled;../../libraries/digitalin;../../libraries/digitalout;../../libraries/dipswitch;../../libraries/motor;../../libraries/pwmout;../../libraries/servo;../../libraries/stepper;../../libraries/webclient;../../libraries/webserver;../../libraries/xbee" gcc_optimization_level="None" c_additional_options="-D CROSSWORKS_BUILD" linker_printf_width_precision_supported="Yes" Name="THUMB Flash Debug" />
+    <configuration Target="AT91SAM7X256" arm_simulator_memory_simulation_parameter="0x40000;0x10000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" c_user_include_directories=".;../../core/makingthings;../../core/freertos/include;../../core/lwip/src/include;../../core/lwip/contrib/port/FreeRTOS/AT91SAM7X;../../core/freertos/portable/GCC/ARM7_AT91SAM7S;../../core/lwip/src/include/ipv4;../../libraries/appled;../../libraries/digitalin;../../libraries/digitalout;../../libraries/dipswitch;../../libraries/motor;../../libraries/pwmout;../../libraries/servo;../../libraries/stepper;../../libraries/webclient;../../libraries/webserver;../../libraries/xbee;../../core/usb/device/cdc-serial;../../core/usb/device/core;../../core/usb/common/cdc;../../core/usb/common/core" gcc_optimization_level="None" c_additional_options="-D CROSSWORKS_BUILD" linker_printf_width_precision_supported="Yes" Name="THUMB Flash Debug" />
   </project>
-  <configuration build_intermediate_directory="intermediate" build_quietly="Yes" link_use_multi_threaded_libraries="No" inherited_configurations="THUMB;Flash;Debug" arm_linker_fiq_stack_size="256" build_output_directory="output" gcc_optimization_level="None" c_additional_options="-fomit-frame-pointer" arm_linker_stack_size="256" Name="THUMB Flash Debug" arm_linker_svc_stack_size="256" arm_linker_heap_size="512" />
+  <configuration build_intermediate_directory="intermediate" build_remove_unused_symbols="No" build_quietly="Yes" link_use_multi_threaded_libraries="No" inherited_configurations="THUMB;Flash;Debug" arm_linker_fiq_stack_size="256" build_output_directory="output" gcc_optimization_level="None" c_additional_options="-fomit-frame-pointer" arm_linker_stack_size="256" Name="THUMB Flash Debug" arm_linker_svc_stack_size="256" arm_linker_heap_size="512" />
   <configuration arm_library_instruction_set="THUMB" c_preprocessor_definitions="__THUMB" arm_instruction_set="THUMB" hidden="Yes" Name="THUMB" />
   <configuration c_preprocessor_definitions="__FLASH_BUILD" hidden="Yes" Name="Flash" />
   <configuration c_preprocessor_definitions="DEBUG" link_include_startup_code="No" build_debug_information="Yes" Name="Debug" />

@@ -50,6 +50,8 @@
 // #include <usb/common/core/USBGenericRequest.h>
 #include "USBGenericRequest.h"
 
+#include "FreeRTOS.h"
+
 #if defined(BOARD_USB_UDP)
 
 //------------------------------------------------------------------------------
@@ -658,13 +660,28 @@ void USBD_ConfigureEndpoint(const USBEndpointDescriptor *descriptor)
     AT91C_BASE_UDP->UDP_RSTEP &= ~(1 << eptnum);
 
     // Configure endpoint
-    SET_CSR(eptnum, (unsigned char)AT91C_UDP_EPEDS | (type << 8) | (direction << 10));
+    SET_CSR(eptnum, AT91C_UDP_EPEDS | (type << 8) | (direction << 10));
     if (type == USBEndpointDescriptor_CONTROL) {
 
         AT91C_BASE_UDP->UDP_IER = (1 << eptnum);
     }
 
     // trace_LOG(trace_INFO, "CfgEpt%d ", eptnum);
+}
+
+void UsbIsr_Wrapper( void ) __attribute__ ((naked));
+
+void UsbIsr_Wrapper( void )
+{
+	/* Save the context of the interrupted task. */
+	portSAVE_CONTEXT();
+
+	/* Call the handler to do the work.  This must be a separate
+	function to ensure the stack frame is set up correctly. */
+	USBD_InterruptHandler();
+
+	/* Restore the context of whichever task will execute next. */
+	portRESTORE_CONTEXT();
 }
 
 /*
@@ -1162,12 +1179,6 @@ void USBD_Connect()
 #elif !defined(BOARD_USB_PULLUP_ALWAYSON)
     #error Unsupported pull-up type.
 #endif
-  AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA10;
-  AT91C_BASE_PIOA->PIO_ODR = AT91C_PIO_PA10;
-  
-  AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA11;
-  AT91C_BASE_PIOA->PIO_OER = AT91C_PIO_PA11;
-  AT91C_BASE_PIOA->PIO_CODR = AT91C_PIO_PA11;
 }
 
 /*
@@ -1233,8 +1244,16 @@ void USBD_Init()
     UDP_EnableUsbClock();
     AT91C_BASE_UDP->UDP_IER = AT91C_UDP_WAKEUP;
 
+    AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA10;
+    AT91C_BASE_PIOA->PIO_ODR = AT91C_PIO_PA10;
+    AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA11;
+		AT91C_BASE_PIOA->PIO_OER = AT91C_PIO_PA11;
+    AT91C_BASE_PIOA->PIO_CODR = AT91C_PIO_PA11;
+
     // Configure interrupts
     USBDCallbacks_Initialized();
+
+    AT91C_BASE_PIOA->PIO_SODR = AT91C_PIO_PA11;
 }
 
 /*

@@ -36,6 +36,8 @@
 #include <board.h>
 // #include <aic/aic.h>
 
+extern void ( UsbIsr_Wrapper )( void );
+
 //------------------------------------------------------------------------------
 //         Exported function
 //------------------------------------------------------------------------------
@@ -48,12 +50,20 @@ void USBDCallbacks_Initialized(void)
 {
 #if defined(BOARD_USB_UDP)
     // Configure and enable the UDP interrupt
-    AIC_ConfigureIT(AT91C_ID_UDP, 0, USBD_InterruptHandler);
-    AIC_EnableIT(AT91C_ID_UDP);
+//    AIC_ConfigureIT(AT91C_ID_UDP, 0, UsbIsr_Wrapper);
+    AT91C_BASE_AIC->AIC_IDCR = 1 << AT91C_ID_UDP;
+    // Configure mode and handler
+    AT91C_BASE_AIC->AIC_SMR[AT91C_ID_UDP] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 3;
+    AT91C_BASE_AIC->AIC_SVR[AT91C_ID_UDP] = (unsigned int) UsbIsr_Wrapper;
+  
+    // Clear interrupt
+    AT91C_BASE_AIC->AIC_ICCR = 1 << AT91C_ID_UDP;
+//    AIC_EnableIT(AT91C_ID_UDP);
+    AT91C_BASE_AIC->AIC_IECR = 1 << AT91C_ID_UDP;
 
 #elif defined(BOARD_USB_UDPHS)
     // Configure and enable the UDPHS interrupt
-    AIC_ConfigureIT(AT91C_ID_UDPHS, 0, USBD_InterruptHandler);
+    AIC_ConfigureIT(AT91C_ID_UDPHS, 0, UsbIsr_Wrapper);
     AIC_EnableIT(AT91C_ID_UDPHS);
 #else
     #error Unsupported controller.
