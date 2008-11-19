@@ -87,7 +87,6 @@ THUMB_SRC= \
   $(USB)/device/core/USBDCallbacks_Reset.c \
   $(USB)/device/core/USBDCallbacks_Resumed.c \
   $(USB)/device/core/USBDCallbacks_Suspended.c \
-  $(USB)/device/core/USBD_UDP.c \
   $(USB)/device/core/USBDDriverCallbacks_ConfigurationChanged.c \
   $(USB)/device/core/USBDDriverCallbacks_InterfaceSettingChanged.c \
   $(USB)/device/core/USBDDriver.c \
@@ -113,41 +112,41 @@ CPP_THUMB_SRC = \
   $(MAKINGTHINGS)/osc_cpp.cpp \
   $(MAKINGTHINGS)/rtos_.cpp \
   $(MAKINGTHINGS)/usb_.cpp \
-  ../../libraries/appled/appled_.cpp \
+  $(LIBRARIES)/appled/appled_.cpp \
   make_.cpp \
 
 # Source files that must be built in ARM mode.
 ARM_SRC= \
-  ../../core/freertos/portable/GCC/ARM7_AT91SAM7S/portISR.c \
-  ../../core/makingthings/SAM7_EMAC_ISR.c \
-  ../../core/makingthings/USBIsr.c \
-  ../../core/makingthings/analogin_isr.c \
-  ../../core/makingthings/fasttimer_isr.c \
-  ../../core/makingthings/serial_isr.c \
-  ../../core/makingthings/timer_isr.c \
+  $(FREERTOS)/portable/GCC/ARM7_AT91SAM7S/portISR.c \
+  $(MAKINGTHINGS)/SAM7_EMAC_ISR.c \
+  $(MAKINGTHINGS)/USBIsr.c \
+  $(MAKINGTHINGS)/analogin_isr.c \
+  $(MAKINGTHINGS)/fasttimer_isr.c \
+  $(MAKINGTHINGS)/serial_isr.c \
+  $(MAKINGTHINGS)/timer_isr.c \
+  $(USB)/device/core/USBD_UDP.c
   
-# CPP_ARM_SRC = \
-# # ../../core/makingthings/analogin_isr_cpp.cpp \
+# CPP_ARM_SRC = 
   
 # All the include directories need to be appended here
 INCLUDEDIRS = \
 -I.  \
--I../../libraries/appled  \
--I../../libraries/digitalin  \
--I../../libraries/digitalout  \
--I../../libraries/dipswitch  \
--I../../libraries/motor  \
--I../../libraries/pwmout  \
--I../../libraries/servo  \
--I../../libraries/stepper  \
--I../../libraries/webserver  \
--I../../libraries/xbee  \
--I../../core/makingthings  \
--I../../core/makingthings/testing  \
+-I$(LIBRARIES)/appled  \
+-I$(LIBRARIES)/digitalin  \
+-I$(LIBRARIES)/digitalout  \
+-I$(LIBRARIES)/dipswitch  \
+-I$(LIBRARIES)/motor  \
+-I$(LIBRARIES)/pwmout  \
+-I$(LIBRARIES)/servo  \
+-I$(LIBRARIES)/stepper  \
+-I$(LIBRARIES)/webserver  \
+-I$(LIBRARIES)/xbee  \
+-I$(MAKINGTHINGS)  \
+-I$(MAKINGTHINGS)/testing  \
 -I$(LWIP)/src/include  \
 -I$(LWIP)/contrib/port/FreeRTOS/AT91SAM7X  \
--I../../core/freertos/include  \
--I../../core/freertos/portable/GCC/ARM7_AT91SAM7S  \
+-I$(FREERTOS)/include  \
+-I$(FREERTOS)/portable/GCC/ARM7_AT91SAM7S  \
 -I$(LWIP)/src/include/ipv4 \
 -I$(USB)/device/cdc-serial \
 -I$(USB)/device/core \
@@ -184,13 +183,13 @@ $(DEBUG)  \
 $(OPTIM)
 
 CFLAGS = ${C_AND_CPP_FLAGS}
-CFLAGS += -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations
+CFLAGS += -Wmissing-prototypes -Wmissing-declarations
 
 CPPFLAGS = ${C_AND_CPP_FLAGS}
 CPPFLAGS += -fno-rtti -fno-exceptions -fno-unwind-tables
 
 THUMB_FLAGS=-mthumb
-LINKER_FLAGS=-Xlinker -ooutput/$(OUTPUT).elf -Xlinker -M -Xlinker -Map=output/$(OUTPUT)_o.map 
+LINKER_FLAGS=-Xlinker -ooutput/$(OUTPUT).elf -Xlinker -M -Xlinker -Map=output/$(OUTPUT)_o.map
 
 ARM_OBJ = $(ARM_SRC:.c=.o)
 THUMB_OBJ = $(THUMB_SRC:.c=.o)
