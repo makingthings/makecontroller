@@ -32,7 +32,7 @@
 //------------------------------------------------------------------------------
 
 #include "USBDDriverCallbacks.h"
-#include <utility/trace.h>
+// #include <utility/trace.h>
 
 //------------------------------------------------------------------------------
 //         Global functions
@@ -44,6 +44,6 @@
 //------------------------------------------------------------------------------
 void USBDDriverCallbacks_ConfigurationChanged(unsigned char cfgnum)
 {
-    trace_LOG(trace_INFO, "ConfigurationChanged ");
+    // trace_LOG(trace_INFO, "ConfigurationChanged ");
 }
 

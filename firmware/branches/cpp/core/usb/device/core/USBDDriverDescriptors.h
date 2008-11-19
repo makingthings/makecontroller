@@ -42,9 +42,12 @@
 //         Headers
 //------------------------------------------------------------------------------
 
-#include <usb/common/core/USBDeviceDescriptor.h>
-#include <usb/common/core/USBConfigurationDescriptor.h>
-#include <usb/common/core/USBDeviceQualifierDescriptor.h>
+// #include <usb/common/core/USBDeviceDescriptor.h>
+// #include <usb/common/core/USBConfigurationDescriptor.h>
+// #include <usb/common/core/USBDeviceQualifierDescriptor.h>
+#include "USBDeviceDescriptor.h"
+#include "USBConfigurationDescriptor.h"
+#include "USBDeviceQualifierDescriptor.h"
 
 //------------------------------------------------------------------------------
 //         Types

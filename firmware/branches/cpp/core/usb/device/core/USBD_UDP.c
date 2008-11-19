@@ -42,11 +42,13 @@
 #include "USBD.h"
 #include "USBDCallbacks.h"
 #include <board.h>
-#include <pio/pio.h>
-#include <utility/trace.h>
-#include <utility/led.h>
-#include <usb/common/core/USBEndpointDescriptor.h>
-#include <usb/common/core/USBGenericRequest.h>
+// #include <pio/pio.h>
+// #include <utility/trace.h>
+// #include <utility/led.h>
+// #include <usb/common/core/USBEndpointDescriptor.h>
+#include "USBEndpointDescriptor.h"
+// #include <usb/common/core/USBGenericRequest.h>
+#include "USBGenericRequest.h"
 
 #if defined(BOARD_USB_UDP)
 
@@ -169,12 +171,12 @@ static unsigned char previousDeviceState;
         EnablePeripheralClock - Enables the clock of the UDP peripheral.
         DisablePeripheralClock - Disables the UDP peripheral clock.
 */
-static inline void UDP_EnablePeripheralClock()
+static inline void UDP_EnablePeripheralClock(void)
 {
     AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_UDP;
 }
 
-static inline void UDP_DisablePeripheralClock()
+static inline void UDP_DisablePeripheralClock(void)
 {
     AT91C_BASE_PMC->PMC_PCDR = 1 << AT91C_ID_UDP;
 }
@@ -184,12 +186,12 @@ static inline void UDP_DisablePeripheralClock()
         EnableUsbClock - Enables the 48MHz USB clock.
         DisableUsbClock - Disables the 48MHz USB clock.
 */
-static inline void UDP_EnableUsbClock()
+static inline void UDP_EnableUsbClock(void)
 {
     AT91C_BASE_PMC->PMC_SCER = AT91C_PMC_UDP;
 }
 
-static inline void UDP_DisableUsbClock()
+static inline void UDP_DisableUsbClock(void)
 {
     AT91C_BASE_PMC->PMC_SCDR = AT91C_PMC_UDP;
 }
@@ -199,12 +201,12 @@ static inline void UDP_DisableUsbClock()
         UDP_EnableTransceiver - Enables the UDP transceiver.
         UDP_DisableTransceiver - Disables the UDP transceiver.
 */
-static inline void UDP_EnableTransceiver()
+static inline void UDP_EnableTransceiver(void)
 {
     AT91C_BASE_UDP->UDP_TXVC &= ~AT91C_UDP_TXVDIS;
 }
 
-static inline void UDP_DisableTransceiver()
+static inline void UDP_DisableTransceiver(void)
 {
     AT91C_BASE_UDP->UDP_TXVC |= AT91C_UDP_TXVDIS;
 }
@@ -227,7 +229,7 @@ static void UDP_EndOfTransfer(unsigned char eptnum, char status)
     if ((endpoint->state == UDP_ENDPOINT_RECEIVING)
         || (endpoint->state == UDP_ENDPOINT_SENDING)) {
 
-        trace_LOG(trace_INFO, "EoT ");
+        // trace_LOG(trace_INFO, "EoT ");
 
         // Endpoint returns in Idle state
         endpoint->state = UDP_ENDPOINT_IDLE;
@@ -365,7 +367,7 @@ static void UDP_ReadRequest(USBGenericRequest *request)
     Function: UDP_ResetEndpoints
         Resets all the endpoints of the UDP peripheral.
 */
-static void UDP_ResetEndpoints()
+static void UDP_ResetEndpoints(void)
 {
     Endpoint *endpoint;
     Transfer *transfer;
@@ -395,7 +397,7 @@ static void UDP_ResetEndpoints()
     Function: UDP_DisableEndpoints
         Disables all endpoints of the UDP peripheral except Control endpoint 0.
 */
-static void UDP_DisableEndpoints()
+static void UDP_DisableEndpoints(void)
 {
     unsigned char eptnum;
 
@@ -453,13 +455,13 @@ static void UDP_EndpointHandler(unsigned char eptnum)
     Transfer *transfer = &(endpoint->transfer);
     unsigned int status = AT91C_BASE_UDP->UDP_CSR[eptnum];
 
-    trace_LOG(trace_INFO, "Ept%d ", eptnum);
+    // trace_LOG(trace_INFO, "Ept%d ", eptnum);
 
     // Handle interrupts
     // IN packet sent
     if ((status & AT91C_UDP_TXCOMP) != 0) {
 
-        trace_LOG(trace_INFO, "Wr ");
+        // trace_LOG(trace_INFO, "Wr ");
 
         // Check that endpoint was in Sending state
         if (endpoint->state == UDP_ENDPOINT_SENDING) {
@@ -467,7 +469,7 @@ static void UDP_EndpointHandler(unsigned char eptnum)
             // End of transfer ?
             if (UDP_IsTransferFinished(eptnum)) {
 
-                trace_LOG(trace_INFO, "%d ", transfer->buffered);
+                // trace_LOG(trace_INFO, "%d ", transfer->buffered);
 
                 transfer->transferred += transfer->buffered;
                 transfer->buffered = 0;
@@ -484,7 +486,7 @@ static void UDP_EndpointHandler(unsigned char eptnum)
             else {
 
                 // Transfer remaining data
-                trace_LOG(trace_INFO, "%d ", endpoint->size);
+                // trace_LOG(trace_INFO, "%d ", endpoint->size);
 
                 transfer->transferred += endpoint->size;
                 transfer->buffered -= endpoint->size;
@@ -514,7 +516,7 @@ static void UDP_EndpointHandler(unsigned char eptnum)
     // OUT packet received
     if ((status & UDP_RXDATA) != 0) {
 
-        trace_LOG(trace_INFO, "Rd ");
+        // trace_LOG(trace_INFO, "Rd ");
 
         // Check that the endpoint is in Receiving state
         if (endpoint->state != UDP_ENDPOINT_RECEIVING) {
@@ -524,7 +526,7 @@ static void UDP_EndpointHandler(unsigned char eptnum)
                 && ((status & AT91C_UDP_RXBYTECNT) == 0)) {
 
                 // Acknowledge the data and finish the current transfer
-                trace_LOG(trace_INFO, "Ack ");
+                // trace_LOG(trace_INFO, "Ack ");
                 UDP_ClearRxFlag(eptnum);
                 UDP_EndOfTransfer(eptnum, USBD_STATUS_SUCCESS);
             }
@@ -532,13 +534,13 @@ static void UDP_EndpointHandler(unsigned char eptnum)
             else if ((status & AT91C_UDP_FORCESTALL) != 0) {
 
                 // Discard STALLed data
-                trace_LOG(trace_INFO, "Disc ");
+                // trace_LOG(trace_INFO, "Disc ");
                 UDP_ClearRxFlag(eptnum);
             }
             // NAK the data
             else {
 
-                trace_LOG(trace_INFO, "Nak ");
+                // trace_LOG(trace_INFO, "Nak ");
                 AT91C_BASE_UDP->UDP_IDR = 1 << eptnum;
             }
         }
@@ -547,7 +549,7 @@ static void UDP_EndpointHandler(unsigned char eptnum)
 
             // Retrieve data and store it into the current transfer buffer
             unsigned short size = (unsigned short) (status >> 16);
-            trace_LOG(trace_INFO, "%d ", size);
+            // trace_LOG(trace_INFO, "%d ", size);
             UDP_ReadPayload(eptnum, size);
             UDP_ClearRxFlag(eptnum);
 
@@ -568,7 +570,7 @@ static void UDP_EndpointHandler(unsigned char eptnum)
     // SETUP packet received
     if ((status & AT91C_UDP_RXSETUP) != 0) {
 
-        trace_LOG(trace_INFO, "Stp ");
+        // trace_LOG(trace_INFO, "Stp ");
 
         // If a transfer was pending, complete it
         // Handles the case where during the status phase of a control write
@@ -596,7 +598,7 @@ static void UDP_EndpointHandler(unsigned char eptnum)
     // STALL sent
     if ((status & AT91C_UDP_STALLSENT) != 0) {
 
-        trace_LOG(trace_INFO, "Sta ");
+        // trace_LOG(trace_INFO, "Sta ");
 
         // If the endpoint is not halted, clear the STALL condition
         CLEAR_CSR(eptnum, AT91C_UDP_STALLSENT);
@@ -656,13 +658,13 @@ void USBD_ConfigureEndpoint(const USBEndpointDescriptor *descriptor)
     AT91C_BASE_UDP->UDP_RSTEP &= ~(1 << eptnum);
 
     // Configure endpoint
-    SET_CSR(eptnum, AT91C_UDP_EPEDS | (type << 8) | (direction << 10));
+    SET_CSR(eptnum, (unsigned char)AT91C_UDP_EPEDS | (type << 8) | (direction << 10));
     if (type == USBEndpointDescriptor_CONTROL) {
 
         AT91C_BASE_UDP->UDP_IER = (1 << eptnum);
     }
 
-    trace_LOG(trace_INFO, "CfgEpt%d ", eptnum);
+    // trace_LOG(trace_INFO, "CfgEpt%d ", eptnum);
 }
 
 /*
@@ -690,11 +692,11 @@ void USBD_InterruptHandler()
     }
 
     // Toggle USB LED if the device is active
-    trace_LOG(trace_INFO, "Hlr ");
-    if (deviceState >= USBD_STATE_POWERED) {
-
-        LED_Set(USBD_LEDUSB);
-    }
+    // trace_LOG(trace_INFO, "Hlr ");
+    // if (deviceState >= USBD_STATE_POWERED) {
+    // 
+    //     LED_Set(USBD_LEDUSB);
+    // }
 
     // Service interrupts
 
@@ -715,7 +717,7 @@ void USBD_InterruptHandler()
     // This interrupt is always treated last (hence the '==')
     if (status == AT91C_UDP_RXSUSP) {
 
-        trace_LOG(trace_INFO, "Susp ");
+        // trace_LOG(trace_INFO, "Susp ");
 
         // Don't do anything if the device is already suspended
         if (deviceState != USBD_STATE_SUSPENDED) {
@@ -741,7 +743,7 @@ void USBD_InterruptHandler()
     // Resume
     else if ((status & (AT91C_UDP_WAKEUP | AT91C_UDP_RXRSM)) != 0) {
 
-        trace_LOG(trace_INFO, "Res ");
+        // trace_LOG(trace_INFO, "Res ");
 
         // Invoke the Resume callback
         USBDCallbacks_Resumed();
@@ -771,7 +773,7 @@ void USBD_InterruptHandler()
     // End of bus reset
     else if ((status & AT91C_UDP_ENDBUSRES) != 0) {
 
-        trace_LOG(trace_INFO, "EoBRes ");
+        // trace_LOG(trace_INFO, "EoBRes ");
 
         // The device enters the Default state
         deviceState = USBD_STATE_DEFAULT;
@@ -810,21 +812,21 @@ void USBD_InterruptHandler()
                 UDP_EndpointHandler(eptnum);
                 status &= ~(1 << eptnum);
                 
-                if (status != 0) {
-                
-                    trace_LOG(trace_INFO, "\n\r  - ");
-                }
+                // if (status != 0) {
+                // 
+                //     trace_LOG(trace_INFO, "\n\r  - ");
+                // }
             }
             eptnum++;
         }
     }
 
     // Toggle LED back to its previous state
-    trace_LOG(trace_INFO, "\n\r");
-    if (deviceState >= USBD_STATE_POWERED) {
-
-        LED_Clear(USBD_LEDUSB);
-    }
+    // trace_LOG(trace_INFO, "\n\r");
+    // if (deviceState >= USBD_STATE_POWERED) {
+    // 
+    //     LED_Clear(USBD_LEDUSB);
+    // }
 }
 
 /*
@@ -867,7 +869,7 @@ char USBD_Write(unsigned char eptnum,
         return USBD_STATUS_LOCKED;
     }
 
-    trace_LOG(trace_INFO, "Write%d(%u) ", eptnum, size);
+    // trace_LOG(trace_INFO, "Write%d(%u) ", eptnum, size);
 
     // Setup the transfer descriptor
     transfer->data = (void *) data;
@@ -932,7 +934,7 @@ char USBD_Read(unsigned char eptnum,
         return USBD_STATUS_LOCKED;
     }
 
-    trace_LOG(trace_INFO, "Read%u(%u) ", (unsigned int) eptnum, size);
+    // trace_LOG(trace_INFO, "Read%u(%u) ", (unsigned int) eptnum, size);
 
     // Endpoint enters Receiving state
     endpoint->state = UDP_ENDPOINT_RECEIVING;
@@ -967,7 +969,7 @@ void USBD_Halt(unsigned char eptnum)
     if ((endpoint->state != UDP_ENDPOINT_DISABLED)
         && (endpoint->state != UDP_ENDPOINT_HALTED)) {
 
-        trace_LOG(trace_INFO, "Halt%d ", eptnum);
+        // trace_LOG(trace_INFO, "Halt%d ", eptnum);
 
         // Abort the current transfer if necessary
         UDP_EndOfTransfer(eptnum, USBD_STATUS_ABORTED);
@@ -995,7 +997,7 @@ void USBD_Unhalt(unsigned char eptnum)
     // Check if the endpoint is enabled
     if (endpoint->state != UDP_ENDPOINT_DISABLED) {
 
-        trace_LOG(trace_INFO, "Unhalt%d ", eptnum);
+        // trace_LOG(trace_INFO, "Unhalt%d ", eptnum);
 
         // Return endpoint to Idle state
         endpoint->state = UDP_ENDPOINT_IDLE;
@@ -1050,11 +1052,11 @@ unsigned char USBD_Stall(unsigned char eptnum)
     // Check that endpoint is in Idle state
     if (endpoint->state != UDP_ENDPOINT_IDLE) {
 
-        trace_LOG(trace_WARNING, "USBD_Stall: Endpoint%d locked\n\r", eptnum);
+        // trace_LOG(trace_WARNING, "USBD_Stall: Endpoint%d locked\n\r", eptnum);
         return USBD_STATUS_LOCKED;
     }
 
-    trace_LOG(trace_INFO, "Stall%d ", eptnum);
+    // trace_LOG(trace_INFO, "Stall%d ", eptnum);
     SET_CSR(eptnum, AT91C_UDP_FORCESTALL);
 
     return USBD_STATUS_SUCCESS;
@@ -1070,7 +1072,7 @@ void USBD_RemoteWakeUp()
     UDP_EnableUsbClock();
     UDP_EnableTransceiver();
 
-    trace_LOG(trace_INFO, "RWUp ");
+    // trace_LOG(trace_INFO, "RWUp ");
 
     // Activates a remote wakeup (edge on ESR), then clear ESR
     AT91C_BASE_UDP->UDP_GLBSTATE |= AT91C_UDP_ESR;
@@ -1086,7 +1088,7 @@ void USBD_RemoteWakeUp()
 */
 void USBD_SetAddress(unsigned char address)
 {
-    trace_LOG(trace_INFO, "SetAddr(%d) ", address);
+    // trace_LOG(trace_INFO, "SetAddr(%d) ", address);
 
     // Set address
     AT91C_BASE_UDP->UDP_FADDR = AT91C_UDP_FEN | address;
@@ -1114,7 +1116,7 @@ void USBD_SetAddress(unsigned char address)
 */
 void USBD_SetConfiguration(unsigned char cfgnum)
 {
-    trace_LOG(trace_INFO, "SetCfg(%d) ", cfgnum);
+    // trace_LOG(trace_INFO, "SetCfg(%d) ", cfgnum);
 
     // If the configuration number if non-zero, the device enters the
     // Configured state
@@ -1141,7 +1143,7 @@ void USBD_SetConfiguration(unsigned char cfgnum)
 */
 void USBD_Connect()
 {
-    trace_LOG(trace_DEBUG, "Conn ");
+    // trace_LOG(trace_DEBUG, "Conn ");
 
 #if defined(BOARD_USB_PULLUP_EXTERNAL)
     const Pin pinPullUp = PIN_USB_PULLUP;
@@ -1168,7 +1170,7 @@ void USBD_Connect()
 */
 void USBD_Disconnect()
 {
-    trace_LOG(trace_DEBUG, "Disc ");
+    // trace_LOG(trace_DEBUG, "Disc ");
 
 #if defined(BOARD_USB_PULLUP_EXTERNAL)
     const Pin pinPullUp = PIN_USB_PULLUP;
@@ -1201,7 +1203,7 @@ void USBD_Disconnect()
 */
 void USBD_Init()
 {
-    trace_LOG(trace_INFO, "USBD_Init\n\r");
+    // trace_LOG(trace_INFO, "USBD_Init\n\r");
 
     // Reset endpoint structures
     UDP_ResetEndpoints();

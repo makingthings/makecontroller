@@ -33,7 +33,7 @@
 
 #include "USBDCallbacks.h"
 #include "USBD.h"
-#include <utility/led.h>
+// #include <utility/led.h>
 
 //------------------------------------------------------------------------------
 //         Exported function
@@ -46,9 +46,9 @@
 void USBDCallbacks_Resumed(void)
 {
     // Initialize LEDs
-    LED_Configure(USBD_LEDPOWER);
-    LED_Set(USBD_LEDPOWER);
-    LED_Configure(USBD_LEDUSB);
-    LED_Clear(USBD_LEDUSB);
+    // LED_Configure(USBD_LEDPOWER);
+    // LED_Set(USBD_LEDPOWER);
+    // LED_Configure(USBD_LEDUSB);
+    // LED_Clear(USBD_LEDUSB);
 }
 

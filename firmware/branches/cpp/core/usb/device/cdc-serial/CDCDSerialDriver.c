@@ -40,12 +40,16 @@
 
 #include "CDCDSerialDriver.h"
 #include "CDCDSerialDriverDescriptors.h"
-#include <utility/trace.h>
-#include <utility/assert.h>
-#include <usb/device/core/USBDDriver.h>
-#include <usb/common/cdc/CDCLineCoding.h>
-#include <usb/common/cdc/CDCGenericRequest.h>
-#include <usb/common/cdc/CDCSetControlLineStateRequest.h>
+// #include <utility/trace.h>
+// #include <utility/assert.h>
+// #include <usb/device/core/USBDDriver.h>
+#include "USBDDriver.h"
+// #include <usb/common/cdc/CDCLineCoding.h>
+#include "CDCLineCoding.h"
+// #include <usb/common/cdc/CDCGenericRequest.h>
+#include "CDCGenericRequest.h"
+// #include <usb/common/cdc/CDCSetControlLineStateRequest.h>
+#include "CDCSetControlLineStateRequest.h"
 
 //------------------------------------------------------------------------------
 //         Types
@@ -86,7 +90,7 @@ static CDCDSerialDriver cdcdSerialDriver;
         SetLineCoding request has been retrieved. Sends a zero-length packet
         to the host for acknowledging the request.
 */
-static void CDCDSerialDriver_SetLineCodingCallback()
+static void CDCDSerialDriver_SetLineCodingCallback(void)
 {
     USBD_Write(0, 0, 0, 0, 0);
 }
@@ -95,9 +99,9 @@ static void CDCDSerialDriver_SetLineCodingCallback()
     Function: CDCDSerialDriver_SetLineCoding
         Receives new line coding information from the USB host.
 */
-static void CDCDSerialDriver_SetLineCoding()
+static void CDCDSerialDriver_SetLineCoding(void)
 {
-    trace_LOG(trace_INFO, "sLineCoding ");
+    // // trace_LOG(trace_INFO, "sLineCoding ");
 
     USBD_Read(0,
               (void *) &(cdcdSerialDriver.lineCoding),
@@ -111,9 +115,9 @@ static void CDCDSerialDriver_SetLineCoding()
         Sends the current line coding information to the host through Control
         endpoint 0.
 */
-static void CDCDSerialDriver_GetLineCoding()
+static void CDCDSerialDriver_GetLineCoding(void)
 {
-    trace_LOG(trace_INFO, "gLineCoding ");
+    // trace_LOG(trace_INFO, "gLineCoding ");
 
     USBD_Write(0,
                (void *) &(cdcdSerialDriver.lineCoding),
@@ -131,10 +135,10 @@ static void CDCDSerialDriver_GetLineCoding()
 static void CDCDSerialDriver_SetControlLineState(unsigned char activateCarrier,
                                                  unsigned char isDTEPresent)
 {
-    trace_LOG(trace_INFO,
-              "sControlLineState(%d, %d) ",
-              activateCarrier,
-              isDTEPresent);
+    // trace_LOG(trace_INFO,
+    //           "sControlLineState(%d, %d) ",
+    //           activateCarrier,
+    //           isDTEPresent);
 
     cdcdSerialDriver.isCarrierActivated = activateCarrier;
     USBD_Write(0, 0, 0, 0, 0);
@@ -161,7 +165,7 @@ void USBDCallbacks_RequestReceived(const USBGenericRequest *request)
 */
 void CDCDSerialDriver_Initialize()
 {
-    trace_LOG(trace_INFO, "CDCDSerialDriver_Initialize\n\r");
+    // trace_LOG(trace_INFO, "CDCDSerialDriver_Initialize\n\r");
     
     // Initialize Abstract Control Model attributes
     CDCLineCoding_Initialize(&(cdcdSerialDriver.lineCoding),
@@ -191,7 +195,7 @@ void CDCDSerialDriver_Initialize()
 */
 void CDCDSerialDriver_RequestHandler(const USBGenericRequest *request)
 {
-    trace_LOG(trace_INFO, "NewReq ");
+    // trace_LOG(trace_INFO, "NewReq ");
 
     // Handle the request
     switch (USBGenericRequest_GetRequest(request)) {
@@ -291,8 +295,8 @@ unsigned short CDCDSerialDriver_GetSerialState()
 //------------------------------------------------------------------------------
 void CDCDSerialDriver_SetSerialState(unsigned short serialState)
 {
-    ASSERT((serialState & 0xFF80) == 0,
-           "CDCDSerialDriver_SetSerialState: Bits D7-D15 are reserved for future use\n\r");
+    // ASSERT((serialState & 0xFF80) == 0,
+    //        "CDCDSerialDriver_SetSerialState: Bits D7-D15 are reserved for future use\n\r");
 
     // If new state is different from previous one, send a notification to the
     // host

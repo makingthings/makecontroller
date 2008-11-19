@@ -92,7 +92,7 @@
 #define usbEND_POINT_3						( 3 )
 #define usbMAX_CONTROL_MESSAGE_SIZE			( 128 )
 #define usbRX_COUNT_MASK					( ( unsigned portLONG ) 0x7ff )
-#define AT91C_UDP_STALLSENT					AT91C_UDP_ISOERROR
+// #define AT91C_UDP_STALLSENT          AT91C_UDP_ISOERROR
 #define usbSHORTEST_DELAY					( ( portTickType ) 1 )
 #define usbINIT_DELAY						( ( portTickType ) 1000 / portTICK_RATE_MS )
 #define usbSHORT_DELAY						( ( portTickType ) 50 / portTICK_RATE_MS )
