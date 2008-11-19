@@ -27,7 +27,7 @@
 #include "types.h"
 
 void  Sleep( int timems );
-void* TaskCreate(  void (taskCode)(void*), char* name, int stackDepth, void* parameters, int priority );
+void* TaskCreate(  void (taskCode)(void*), const char* name, int stackDepth, void* parameters, int priority );
 void  TaskYield( void );
 void  TaskDelete( void* task );
 void  TaskEnterCritical( void );

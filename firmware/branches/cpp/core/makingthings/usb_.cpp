@@ -22,6 +22,8 @@ extern "C" {
 }
 
 #include "appled_cpp.h"
+#include "AT91SAM7X256.h"
+#include "Board.h"
 
 /// Size in bytes of the buffer used for reading data from the USB & USART
 #define DATABUFFERSIZE BOARD_USB_ENDPOINTS_MAXPACKETSIZE(CDCDSerialDriverDescriptors_DATAIN)
@@ -30,6 +32,9 @@ void USB::init( ) // static
 {
   AppLed led(3);
   led.setState(1);
+  
+  AT91C_BASE_CKGR->CKGR_PLLR |= AT91C_CKGR_USBDIV_1; // Set the PLL USB Divider
+  
   CDCDSerialDriver_Initialize();
   USBD_Connect();
   while (USBD_GetState() < USBD_STATE_CONFIGURED); // wait for things to get set up
@@ -38,22 +43,22 @@ void USB::init( ) // static
 
 int USB::read( char *buffer, int length ) // static
 {
-  
+  return 0;
 }
 
 int USB::write( char *buffer, int length ) // static
 {
-  
+  return 0;
 }
 
 int USB::readSlip( char *buffer, int length ) // static
 {
-  
+  return 0;
 }
 
 int USB::writeSlip( char *buffer, int length ) // static
 {
-  
+  return 0;
 }
 
 
