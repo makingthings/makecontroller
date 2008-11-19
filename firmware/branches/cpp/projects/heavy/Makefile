@@ -149,10 +149,10 @@ INCLUDEDIRS = \
 -I../../core/freertos/include  \
 -I../../core/freertos/portable/GCC/ARM7_AT91SAM7S  \
 -I$(LWIP)/src/include/ipv4 \
--I../../core/usb/device/cdc-serial \
--I../../core/usb/device/core \
--I../../core/usb/common/core \
--I../../core/usb/common/cdc
+-I$(USB)/device/cdc-serial \
+-I$(USB)/device/core \
+-I$(USB)/common/core \
+-I$(USB)/common/cdc
 
 ############################################################################
 # Below here should not change from project to project

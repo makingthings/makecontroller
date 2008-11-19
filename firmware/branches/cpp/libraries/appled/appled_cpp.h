@@ -27,6 +27,8 @@ extern "C" {
   #include "config.h"
 }
 
+#include "io_cpp.h"
+
 /* AppLed Functions */
 
 class AppLed

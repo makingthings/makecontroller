@@ -63,11 +63,11 @@
         USBDCallbacks_RequestReceived - Invoked when a new SETUP request is
             received. Does nothing by default.
 */
-void USBDCallbacks_Initialized(void);
-void USBDCallbacks_Reset(void);
-void USBDCallbacks_Suspended(void);
-void USBDCallbacks_Resumed(void);
-void USBDCallbacks_RequestReceived(const USBGenericRequest *request);
+extern void USBDCallbacks_Initialized(void);
+extern void USBDCallbacks_Reset(void);
+extern void USBDCallbacks_Suspended(void);
+extern void USBDCallbacks_Resumed(void);
+extern void USBDCallbacks_RequestReceived(const USBGenericRequest *request);
 
 #endif //#ifndef USBDCALLBACKS_H
 

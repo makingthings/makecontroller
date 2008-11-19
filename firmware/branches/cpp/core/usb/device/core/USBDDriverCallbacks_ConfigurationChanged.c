@@ -45,5 +45,6 @@
 void USBDDriverCallbacks_ConfigurationChanged(unsigned char cfgnum)
 {
     // trace_LOG(trace_INFO, "ConfigurationChanged ");
+  (void)cfgnum;
 }
 

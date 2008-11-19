@@ -25,6 +25,7 @@ extern "C" {
 
 #include "led_cpp.h"
 #include "appled_cpp.h"
+#include "usb_.h"
 
 void BlinkTask( void* parameters );
 
@@ -33,7 +34,9 @@ void Run( ) // this task gets called as soon as we boot up.
   TaskCreate( BlinkTask, "Blink", 400, 0, 1 );
 
   // Do this right quick after booting up - otherwise we won't be recognised
-  Usb_SetActive( 1 );
+  // Usb_SetActive( 1 );
+  // Led_SetState( );
+  USB::init();
 
   // Fire up the OSC system and register the subsystems you want to use
   Osc_SetActive( true, true, true, true );
