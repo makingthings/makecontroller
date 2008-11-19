@@ -156,7 +156,7 @@ void MyTask( void *p) // in your task
 }
 \endcode
 */
-void* TaskCreate( void (taskCode)( void*), char* name, int stackDepth, void* parameters, int priority )
+void* TaskCreate( void (taskCode)( void*), const char* name, int stackDepth, void* parameters, int priority )
 {
   void* taskHandle;
   if( xTaskCreate( taskCode, (signed char*)name, ( stackDepth >> 2 ), parameters, priority, &taskHandle ) == 1 )
