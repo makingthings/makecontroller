@@ -12,79 +12,107 @@ OUTPUT = heavy
 # this rule says that when "make" is typed the bin file is created 		       
 all: output/$(OUTPUT).bin
 
+FREERTOS = ../../core/freertos
+LWIP = ../../core/lwip
+USB = ../../core/usb
+MAKINGTHINGS = ../../core/makingthings
+LIBRARIES = ../../libraries
+
 # Source files that can be built in THUMB mode.
 THUMB_SRC= \
-  ../../core/freertos/tasks.c \
-  ../../core/freertos/queue.c \
-  ../../core/freertos/list.c \
-  ../../core/freertos/portable/GCC/ARM7_AT91SAM7S/port.c \
   ../../core/startup/extras.c \
-  ../../core/freertos/portable/MemMang/heap_2.c \
-  ../../core/makingthings/main.c \
-  ../../core/makingthings/eeprom.c \
-  ../../core/makingthings/analogin.c \
-  ../../core/makingthings/serial.c \
-  ../../core/makingthings/pwm.c \
-  ../../core/makingthings/spi.c \
-  ../../core/makingthings/USB-CDC.c \
-  ../../core/makingthings/rtos.c \
-  ../../core/makingthings/usb.c \
-  ../../core/makingthings/network.c \
-  ../../core/makingthings/system.c \
-  ../../libraries/xbee/xbee.c \
-  ../../libraries/servo/servo.c \
-  ../../libraries/stepper/stepper.c \
-  ../../libraries/dipswitch/dipswitch.c \
-  ../../libraries/motor/motor.c \
-  ../../libraries/pwmout/pwmout.c \
-  ../../libraries/digitalin/digitalin.c \
-  ../../libraries/digitalout/digitalout.c \
-  ../../libraries/webserver/webserver.c \
-  ../../core/makingthings/io.c \
-  ../../core/makingthings/timer.c \
-  ../../core/makingthings/fasttimer.c \
-  ../../core/makingthings/debugosc.c \
-  ../../core/lwip/src/core/tcp_out.c \
-  ../../core/lwip/src/core/ipv4/inet.c \
-  ../../core/lwip/src/core/mem.c \
-  ../../core/lwip/src/core/memp.c \
-  ../../core/lwip/src/core/netif.c \
-  ../../core/lwip/src/core/pbuf.c \
-  ../../core/lwip/src/core/raw.c \
-  ../../core/lwip/src/core/stats.c \
-  ../../core/lwip/src/core/sys.c \
-  ../../core/lwip/src/core/tcp.c \
-  ../../core/lwip/src/core/tcp_in.c \
-  ../../core/lwip/src/core/init.c \
-  ../../core/lwip/src/core/ipv4/ip.c \
-  ../../core/lwip/src/core/ipv4/ip_addr.c \
-  ../../core/lwip/src/core/ipv4/icmp.c \
-  ../../core/lwip/src/core/ipv4/inet_chksum.c \
-  ../../core/lwip/src/core/dhcp.c \
-  ../../core/lwip/src/core/dns.c \
-  ../../core/lwip/src/api/tcpip.c \
-  ../../core/lwip/src/api/api_msg.c \
-  ../../core/lwip/src/api/err.c \
-  ../../core/lwip/src/api/netbuf.c \
-  ../../core/lwip/src/api/api_lib.c \
-  ../../core/lwip/src/netif/etharp.c \
-  ../../core/lwip/contrib/port/FreeRTOS/AT91SAM7X/sys_arch.c \
-  ../../core/lwip/src/netif/ethernetif.c \
-  ../../core/makingthings/SAM7_EMAC.c \
-  ../../core/lwip/src/core/udp.c \
-  ../../core/lwip/src/core/ipv4/ip_frag.c \
-  ../../core/makingthings/osc.c \
-  ../../core/makingthings/osc_patternmatch.c
+  $(FREERTOS)/tasks.c \
+  $(FREERTOS)/queue.c \
+  $(FREERTOS)/list.c \
+  $(FREERTOS)/portable/GCC/ARM7_AT91SAM7S/port.c \
+  $(FREERTOS)/portable/MemMang/heap_2.c \
+  $(MAKINGTHINGS)/main.c \
+  $(MAKINGTHINGS)/eeprom.c \
+  $(MAKINGTHINGS)/analogin.c \
+  $(MAKINGTHINGS)/serial.c \
+  $(MAKINGTHINGS)/pwm.c \
+  $(MAKINGTHINGS)/spi.c \
+  $(MAKINGTHINGS)/USB-CDC.c \
+  $(MAKINGTHINGS)/rtos.c \
+  $(MAKINGTHINGS)/usb.c \
+  $(MAKINGTHINGS)/network.c \
+  $(MAKINGTHINGS)/system.c \
+  $(MAKINGTHINGS)/io.c \
+  $(MAKINGTHINGS)/timer.c \
+  $(MAKINGTHINGS)/fasttimer.c \
+  $(MAKINGTHINGS)/debugosc.c \
+  $(MAKINGTHINGS)/osc.c \
+  $(MAKINGTHINGS)/osc_patternmatch.c \
+  $(LIBRARIES)/xbee/xbee.c \
+  $(LIBRARIES)/servo/servo.c \
+  $(LIBRARIES)/stepper/stepper.c \
+  $(LIBRARIES)/dipswitch/dipswitch.c \
+  $(LIBRARIES)/motor/motor.c \
+  $(LIBRARIES)/pwmout/pwmout.c \
+  $(LIBRARIES)/digitalin/digitalin.c \
+  $(LIBRARIES)/digitalout/digitalout.c \
+  $(LIBRARIES)/webserver/webserver.c \
+  $(LWIP)/src/core/tcp_out.c \
+  $(LWIP)/src/core/ipv4/inet.c \
+  $(LWIP)/src/core/mem.c \
+  $(LWIP)/src/core/memp.c \
+  $(LWIP)/src/core/netif.c \
+  $(LWIP)/src/core/pbuf.c \
+  $(LWIP)/src/core/raw.c \
+  $(LWIP)/src/core/stats.c \
+  $(LWIP)/src/core/sys.c \
+  $(LWIP)/src/core/tcp.c \
+  $(LWIP)/src/core/tcp_in.c \
+  $(LWIP)/src/core/init.c \
+  $(LWIP)/src/core/ipv4/ip.c \
+  $(LWIP)/src/core/ipv4/ip_addr.c \
+  $(LWIP)/src/core/ipv4/icmp.c \
+  $(LWIP)/src/core/ipv4/inet_chksum.c \
+  $(LWIP)/src/core/dhcp.c \
+  $(LWIP)/src/core/dns.c \
+  $(LWIP)/src/api/tcpip.c \
+  $(LWIP)/src/api/api_msg.c \
+  $(LWIP)/src/api/err.c \
+  $(LWIP)/src/api/netbuf.c \
+  $(LWIP)/src/api/api_lib.c \
+  $(LWIP)/src/netif/etharp.c \
+  $(LWIP)/contrib/port/FreeRTOS/AT91SAM7X/sys_arch.c \
+  $(LWIP)/src/netif/ethernetif.c \
+  $(MAKINGTHINGS)/SAM7_EMAC.c \
+  $(LWIP)/src/core/udp.c \
+  $(LWIP)/src/core/ipv4/ip_frag.c \
+  $(USB)/device/cdc-serial/CDCDSerialDriver.c \
+  $(USB)/device/cdc-serial/CDCDSerialDriverDescriptors.c \
+  $(USB)/device/core/USBDCallbacks_Initialized.c \
+  $(USB)/device/core/USBDCallbacks_Reset.c \
+  $(USB)/device/core/USBDCallbacks_Resumed.c \
+  $(USB)/device/core/USBDCallbacks_Suspended.c \
+  $(USB)/device/core/USBD_UDP.c \
+  $(USB)/device/core/USBDDriverCallbacks_ConfigurationChanged.c \
+  $(USB)/device/core/USBDDriverCallbacks_InterfaceSettingChanged.c \
+  $(USB)/device/core/USBDDriver.c \
+  $(USB)/common/core/USBSetAddressRequest.c \
+  $(USB)/common/core/USBGenericDescriptor.c \
+  $(USB)/common/core/USBGenericRequest.c \
+  $(USB)/common/core/USBGetDescriptorRequest.c \
+  $(USB)/common/core/USBSetConfigurationRequest.c \
+  $(USB)/common/core/USBFeatureRequest.c \
+  $(USB)/common/core/USBEndpointDescriptor.c \
+  $(USB)/common/core/USBConfigurationDescriptor.c \
+  $(USB)/common/core/USBInterfaceRequest.c \
+  $(USB)/common/cdc/CDCSetControlLineStateRequest.c \
+  $(USB)/common/cdc/CDCLineCoding.c \
 
 CPP_THUMB_SRC = \
   ../../core/startup/extras_cpp.cpp \
-  ../../core/makingthings/io_cpp.cpp \
-  ../../core/makingthings/led_.cpp \
-  ../../core/makingthings/tcpsocket.cpp \
-  ../../core/makingthings/udpsocket.cpp \
-  ../../core/makingthings/tcpserver.cpp \
-  ../../core/makingthings/osc_cpp.cpp \
-  ../../core/makingthings/rtos_.cpp \
+  $(MAKINGTHINGS)/io_cpp.cpp \
+  $(MAKINGTHINGS)/led_.cpp \
+  $(MAKINGTHINGS)/tcpsocket.cpp \
+  $(MAKINGTHINGS)/udpsocket.cpp \
+  $(MAKINGTHINGS)/tcpserver.cpp \
+  $(MAKINGTHINGS)/osc_cpp.cpp \
+  $(MAKINGTHINGS)/rtos_.cpp \
+  $(MAKINGTHINGS)/usb_.cpp \
   ../../libraries/appled/appled_.cpp \
   make_.cpp \
 
@@ -116,11 +144,15 @@ INCLUDEDIRS = \
 -I../../libraries/xbee  \
 -I../../core/makingthings  \
 -I../../core/makingthings/testing  \
--I../../core/lwip/src/include  \
--I../../core/lwip/contrib/port/FreeRTOS/AT91SAM7X  \
+-I$(LWIP)/src/include  \
+-I$(LWIP)/contrib/port/FreeRTOS/AT91SAM7X  \
 -I../../core/freertos/include  \
 -I../../core/freertos/portable/GCC/ARM7_AT91SAM7S  \
--I../../core/lwip/src/include/ipv4 \
+-I$(LWIP)/src/include/ipv4 \
+-I../../core/usb/device/cdc-serial \
+-I../../core/usb/device/core \
+-I../../core/usb/common/core \
+-I../../core/usb/common/cdc
 
 ############################################################################
 # Below here should not change from project to project

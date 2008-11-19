@@ -33,7 +33,7 @@
 
 #include "USBDCallbacks.h"
 #include "USBD.h"
-#include <utility/led.h>
+// #include <utility/led.h>
 
 //------------------------------------------------------------------------------
 //         Exported function
@@ -45,7 +45,7 @@
 void USBDCallbacks_Suspended(void)
 {
     // Turn off LEDs
-    LED_Clear(USBD_LEDPOWER);
-    LED_Clear(USBD_LEDUSB);
+    // LED_Clear(USBD_LEDPOWER);
+    // LED_Clear(USBD_LEDUSB);
 }
 

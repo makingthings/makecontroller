@@ -112,6 +112,6 @@ typedef struct _AT91S_TxTdDescriptor {
 #define AT91C_TRANSMIT_NO_CRC	((unsigned int) (1 << 16))	//* No CRC will be appended to the current frame
 #define AT91C_LAST_BUFFER    	((unsigned int) (1 << 15))	//*
 
-#define AT91C_EMAC_CLKEN 0x2
+// #define AT91C_EMAC_CLKEN 0x2
 
 #endif //* AT91C_EMAC_H

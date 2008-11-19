@@ -34,7 +34,7 @@
 #include "USBDCallbacks.h"
 #include "USBD.h"
 #include <board.h>
-#include <aic/aic.h>
+// #include <aic/aic.h>
 
 //------------------------------------------------------------------------------
 //         Exported function

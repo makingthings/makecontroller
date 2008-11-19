@@ -39,7 +39,7 @@
 //------------------------------------------------------------------------------
 
 #include "CDCLineCoding.h"
-#include <utility/assert.h>
+// #include <utility/assert.h>
 
 //------------------------------------------------------------------------------
 //         Exported functions
@@ -62,15 +62,15 @@ void CDCLineCoding_Initialize(CDCLineCoding *lineCoding,
                               unsigned char parity,
                               unsigned char databits)
 {
-    ASSERT(stopbits <= CDCLineCoding_TWOSTOPBITS,
-           "CDCLineCoding_Initialize: Invalid stopbits value (%d)\n\r",
-           stopbits);
-    ASSERT(parity <= CDCLineCoding_SPACEPARITY,
-           "CDCLineCoding_Initialize: Invalid parity value (%d)\n\r",
-           parity);
-    ASSERT(((databits >= 5) && (databits <= 8)) || (databits == 16),
-           "CDCLineCoding_Initialize: Invalid databits value (%d)\n\r",
-           databits);
+    // ASSERT(stopbits <= CDCLineCoding_TWOSTOPBITS,
+    //        "CDCLineCoding_Initialize: Invalid stopbits value (%d)\n\r",
+    //        stopbits);
+    // ASSERT(parity <= CDCLineCoding_SPACEPARITY,
+    //        "CDCLineCoding_Initialize: Invalid parity value (%d)\n\r",
+    //        parity);
+    // ASSERT(((databits >= 5) && (databits <= 8)) || (databits == 16),
+    //        "CDCLineCoding_Initialize: Invalid databits value (%d)\n\r",
+    //        databits);
 
     lineCoding->dwDTERate = bitrate;
     lineCoding->bCharFormat = stopbits;

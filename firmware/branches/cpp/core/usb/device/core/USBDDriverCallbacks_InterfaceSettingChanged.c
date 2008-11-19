@@ -32,7 +32,7 @@
 //------------------------------------------------------------------------------
 
 #include "USBDDriverCallbacks.h"
-#include <utility/trace.h>
+// #include <utility/trace.h>
 
 //------------------------------------------------------------------------------
 //         Global functions
@@ -47,6 +47,8 @@ void USBDDriverCallbacks_InterfaceSettingChanged(
     unsigned char interface,
     unsigned char setting)
 {
-    trace_LOG(trace_INFO, "InterfaceSettingChanged ");
+    // trace_LOG(trace_INFO, "InterfaceSettingChanged ");
+  (void)interface;
+  (void)setting;
 }
 
