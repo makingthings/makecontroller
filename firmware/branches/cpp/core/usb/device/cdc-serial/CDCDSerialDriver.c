@@ -40,6 +40,7 @@
 
 #include "CDCDSerialDriver.h"
 #include "CDCDSerialDriverDescriptors.h"
+#include "USBDCallbacks.h"
 // #include <utility/trace.h>
 // #include <utility/assert.h>
 // #include <usb/device/core/USBDDriver.h>
@@ -140,6 +141,7 @@ static void CDCDSerialDriver_SetControlLineState(unsigned char activateCarrier,
     //           activateCarrier,
     //           isDTEPresent);
 
+    (void)isDTEPresent;
     cdcdSerialDriver.isCarrierActivated = activateCarrier;
     USBD_Write(0, 0, 0, 0, 0);
 }
