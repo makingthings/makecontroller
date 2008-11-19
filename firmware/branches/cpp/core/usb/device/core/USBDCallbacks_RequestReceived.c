@@ -45,5 +45,6 @@
 void USBDCallbacks_RequestReceived(const USBGenericRequest *pRequest)
 {
     // Does nothing
+    (void)pRequest;
 }
 
