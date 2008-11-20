@@ -20,6 +20,26 @@ Task::~Task( )
   vTaskDelete( _task );
 }
 
+void Task::sleep( int ms ) // static
+{
+  vTaskDelay( ms / portTICK_RATE_MS );
+}
+
+void Task::yield( ) // static
+{
+  taskYIELD(); 
+}
+
+void Task::enterCritical( ) // static
+{
+  taskENTER_CRITICAL();
+}
+
+void Task::exitCritical( ) // static
+{
+  taskEXIT_CRITICAL();
+}
+
 int Task::getRemainingStack( )
 {
   if( !_task )
