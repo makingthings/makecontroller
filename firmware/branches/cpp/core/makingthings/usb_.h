@@ -19,18 +19,34 @@
 #define USB__H
 
 #include "config.h"
+#include "rtos_.h"
 
 // #define MAX_INCOMING_SLIP_PACKET 400
 // #define MAX_OUTGOING_SLIP_PACKET 600
 
-class USB
+#define USB UsbSerial::instance()
+
+class UsbSerial
 {
 public:
-  static void init( );
-  static int read( char *buffer, int length );
-  static int write( char *buffer, int length );
-  static int readSlip( char *buffer, int length );
-  static int writeSlip( char *buffer, int length );
+  void init( );
+  int read( char *buffer, int length );
+  int write( char *buffer, int length );
+  int readSlip( char *buffer, int length );
+  int writeSlip( char *buffer, int length );
+  static UsbSerial* instance( )
+  {
+    if( !_instance )
+      _instance = new UsbSerial();
+    return _instance;
+  }
+
+protected:
+  UsbSerial( );
+  static UsbSerial* _instance; // the only instance of UsbSerial anywhere.
+  friend void onUsbData( void *pArg, unsigned char status, unsigned int transferred, unsigned int remaining);
+  Semaphore readSemaphore;
+  int justRead, remaining;
 };
 
 // typedef struct

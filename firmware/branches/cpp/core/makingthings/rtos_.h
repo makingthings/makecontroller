@@ -80,7 +80,7 @@ class Semaphore
 public:
   Semaphore( );
   ~Semaphore( );
-  int take( int timeout );
+  int take( int timeout = -1 );
   int give( );
   int giveFromISR( int taskPreviouslyWoken );
 private:

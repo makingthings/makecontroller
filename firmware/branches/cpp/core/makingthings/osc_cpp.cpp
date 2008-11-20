@@ -283,7 +283,7 @@ int OscMessage::dataItemAsInt( int index, bool* ok )
 {
   if(ok)
     *ok = false;
-  if( index >= data_count || (data_items[index].type != Int) )
+  if( index >= data_count || (data_items[index].type != oscInt) )
     return 0;
   if(ok)
     *ok = true;
@@ -294,7 +294,7 @@ float OscMessage::dataItemAsFloat( int index, bool* ok )
 {
   if(ok)
     *ok = false;
-  if( index >= data_count || (data_items[index].type != Float) )
+  if( index >= data_count || (data_items[index].type != oscFloat) )
     return 0;
   if(ok)
     *ok = true;
@@ -303,14 +303,14 @@ float OscMessage::dataItemAsFloat( int index, bool* ok )
 
 char* OscMessage::dataItemAsString( int index )
 {
-  if( index >= data_count || (data_items[index].type != String) )
+  if( index >= data_count || (data_items[index].type != oscString) )
     return 0;
   return data_items[index].s;
 }
 
 char* OscMessage::dataItemAsBlob( int index, int* blob_len )
 {
-  if( index >= data_count || (data_items[index].type != Blob) )
+  if( index >= data_count || (data_items[index].type != oscBlob) )
     return 0;
   char* p = data_items[index].s;
   *blob_len = *(int*)p;
