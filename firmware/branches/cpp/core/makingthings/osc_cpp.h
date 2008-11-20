@@ -11,10 +11,8 @@
 #define OSC_MAX_MESSAGE_OUT  600
 #define OSC_SCRATCH_BUF_SIZE 100
 
-#define mOSC OSC::instance()
-
-enum OscTransport { UDP, USB };
-enum OscDataType { Int, Float, String, Blob };
+enum OscTransport { oscUDP, oscUSB };
+enum OscDataType { oscInt, oscFloat, oscString, oscBlob };
 
 typedef struct OscData
 {

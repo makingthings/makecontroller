@@ -207,12 +207,15 @@ Semaphore::Semaphore( )
 
 Semaphore::~Semaphore( )
 {
-  delete _sem;
+  vQueueDelete( _sem );
 }
 
 int Semaphore::take( int timeout )
 {
-  return xSemaphoreTake( _sem, timeout / portTICK_RATE_MS );
+  if( timeout < 0 )
+    return xSemaphoreTake( _sem, portMAX_DELAY );
+  else
+    return xSemaphoreTake( _sem, timeout / portTICK_RATE_MS );
 }
 
 int Semaphore::give( )
