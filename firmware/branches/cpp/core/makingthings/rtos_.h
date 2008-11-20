@@ -27,16 +27,15 @@ extern "C" {
   #include "semphr.h"
 }
 
-void  Sleep( int timems );
-void  TaskYield( void );
-void  TaskEnterCritical( void );
-void  TaskExitCritical( void );
-
 class Task
 {
 public:
   Task( void (loop)(void*), const char* name, int stackDepth, void* parameters, int priority );
   ~Task( );
+  static void sleep( int ms );
+  static void yield( );
+  static void enterCritical( );
+  static void exitCritical( );
   int getRemainingStack( );
   int getPriority( );
   void setPriority( int priority );
