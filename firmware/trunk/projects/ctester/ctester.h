@@ -6,8 +6,6 @@
 #ifndef CTESTER_H
 #define CTESTER_H
 
-#ifdef FACTORY_TESTING
-
 int CTester_SetTesteePower( int level );
 int CTester_GetTesteePower( void );
 int CTester_GetTesteeCurrent( void );
@@ -22,7 +20,5 @@ int CTester_SetCanOut( int mode );
 /* OSC Interface */
 const char* CTesterOsc_GetName( void );
 int CTesterOsc_ReceiveMessage( int channel, char* message, int length );
-
-#endif
 
 #endif // FACTORY_TESTING
