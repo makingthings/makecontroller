@@ -1,17 +1,10 @@
 // MakingThings - Make Controller Kit - 2006
 
-/** \file ctester.c	
-	Controller Tester
-	Functions for working with the status LED on the Make Controller Board.
-*/
-
 #include "debug.h"
 #include <stdio.h>
 #include "osc.h"
 #include "config.h"
 #include "ctester.h"
-
-#ifdef FACTORY_TESTING
 
 static int CTester_CalculateCurrent( int index );
 
@@ -120,7 +113,7 @@ int CTester_GetTesteeVoltage( )
   if ( !CTesterData.init )
     CTester_Init();
   
-  int a = Adc_GetValue( 5 );
+  int a = AnalogIn_GetValue( 5 );
   // x2 because of the voltage divider
   float c = 2 * 3.3 * a / 1.024; 
   return (int)c;
@@ -221,22 +214,22 @@ int CTester_GetCanIn( )
 
 void CanPowerDown()
 {
-  Io_SetTrue( IO_PA07 );
+  Io_SetValue( IO_PA07, true );
 }
 
 void CanPowerUp()
 {
-  Io_SetFalse( IO_PA07 );
+  Io_SetValue( IO_PA07, false );
 }
 
 void CanSendDominant()
 {
-  Io_SetFalse( IO_PA20 );
+  Io_SetValue( IO_PA20, false );
 }
 
 void CanSendNothing()
 {
-  Io_SetTrue( IO_PA20 );
+  Io_SetValue( IO_PA20, true );
 }
 
 int CanReceive()
@@ -250,41 +243,41 @@ int CTester_Init( )
   // Power control
   Io_Start( IO_PA21, true );
   Io_Start( IO_PA22, true );
-  Io_SetOutput( IO_PA21 );
-  Io_SetOutput( IO_PA22 );
-  Io_PullupDisable( IO_PA21 );
-  Io_PullupDisable( IO_PA22 );
-  Io_PioEnable( IO_PA21 );
-  Io_PioEnable( IO_PA22 );
+  Io_SetDirection( IO_PA21, true );
+  Io_SetDirection( IO_PA22, true );
+  Io_SetPullup( IO_PA21, false );
+  Io_SetPullup( IO_PA22, false );
+  Io_SetPio( IO_PA21, true );
+  Io_SetPio( IO_PA22, true );
   Io_SetValue( IO_PA21, false );
   Io_SetValue( IO_PA22, false );
 
   // Current
-  Adc_GetValue( 4 );
+  AnalogIn_GetValue( 4 );
 
   // Voltage
-  Adc_GetValue( 5 );
+  AnalogIn_GetValue( 5 );
 
   // CAN 
   // RS - Controls speed, etc.
   Io_Start( IO_PA07, true );
-  Io_PullupDisable( IO_PA07 );
-  Io_PioEnable( IO_PA07 );
-  Io_SetOutput( IO_PA07 );
-  Io_SetTrue( IO_PA07 );
+  Io_SetPullup( IO_PA07, false );
+  Io_SetPio( IO_PA07, true );
+  Io_SetDirection( IO_PA07, true );
+  Io_SetValue( IO_PA07, true );
 
   // RxD - Receive Data
   Io_Start( IO_PA19, true );
-  Io_PullupDisable( IO_PA19 );
-  Io_PioEnable( IO_PA19 );
-  Io_SetInput( IO_PA19 );
+  Io_SetPullup( IO_PA19, false );
+  Io_SetPio( IO_PA19, true );
+  Io_SetDirection( IO_PA19, false );
 
   // TxD - Transmit Data
   Io_Start( IO_PA20, true );
-  Io_PullupDisable( IO_PA20 );
-  Io_PioEnable( IO_PA20 );
-  Io_SetOutput( IO_PA20 );
-  Io_SetTrue( IO_PA20 );
+  Io_SetPullup( IO_PA20, false );
+  Io_SetPio( IO_PA20, true );
+  Io_SetDirection( IO_PA20, true );
+  Io_SetValue( IO_PA20, true );
 
   CanPowerDown();
   CanSendNothing();
@@ -298,9 +291,9 @@ int CTester_Init( )
   {
     int io = CTester_Io[ i ];
     Io_Start( io, false );
-    Io_PioEnable( io );
-    Io_SetInput( io ); 
-    Io_PullupDisable( io );
+    Io_SetPio( io, true );
+    Io_SetDirection( io, false ); 
+    Io_SetPullup( io, false );
   }
 
   return 0;
@@ -308,7 +301,7 @@ int CTester_Init( )
 
 int CTester_CalculateCurrent( int index )
 {
-  int a = Adc_GetValue( index );
+  int a = AnalogIn_GetValue( index );
   float c = 500 * ( 3.3 * a / 1024.0 ) / 2.5; 
   return (int)c;
 }
@@ -397,6 +390,5 @@ int CTesterOsc_PropertyGet( int property )
   return value;
 }
 
-#endif // FACTORY_TESTING
 
 
