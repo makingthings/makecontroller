@@ -20,11 +20,17 @@
 
 #include "config.h"
 #include "rtos_.h"
+#include "Board.h"
+extern "C" {
+  #include "CDCDSerialDriver.h"
+  #include "CDCDSerialDriverDescriptors.h"
+}
 
 // #define MAX_INCOMING_SLIP_PACKET 400
 // #define MAX_OUTGOING_SLIP_PACKET 600
 
 #define USB UsbSerial::instance()
+#define USB_SER_RX_BUF_LEN BOARD_USB_ENDPOINTS_MAXPACKETSIZE(CDCDSerialDriverDescriptors_DATAIN)
 
 class UsbSerial
 {
@@ -46,7 +52,10 @@ protected:
   static UsbSerial* _instance; // the only instance of UsbSerial anywhere.
   friend void onUsbData( void *pArg, unsigned char status, unsigned int transferred, unsigned int remaining);
   Semaphore readSemaphore;
-  int justRead, remaining;
+  Queue* rxQueue;
+  int justGot;
+  int rxBufCount;
+  static char rxBuf[];
 };
 
 // typedef struct

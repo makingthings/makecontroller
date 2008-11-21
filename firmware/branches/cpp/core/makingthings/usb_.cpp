@@ -16,21 +16,15 @@
 *********************************************************************************/
 
 #include "usb_.h"
-extern "C" {
-  #include "CDCDSerialDriver.h"
-  #include "CDCDSerialDriverDescriptors.h"
-}
-
-#include "appled_cpp.h"
+#include "string.h"
 #include "AT91SAM7X256.h"
-#include "Board.h"
 
 /// Size in bytes of the buffer used for reading data from the UsbSerial & USART
-#define DATABUFFERSIZE BOARD_USB_ENDPOINTS_MAXPACKETSIZE(CDCDSerialDriverDescriptors_DATAIN)
 
 void onUsbData(void *pArg, unsigned char status, unsigned int received, unsigned int remaining);
 
 UsbSerial* UsbSerial::_instance = 0;
+char UsbSerial::rxBuf[USB_SER_RX_BUF_LEN];
 
 UsbSerial::UsbSerial( )
 {
@@ -39,8 +33,9 @@ UsbSerial::UsbSerial( )
   USBD_Connect();
   while (USBD_GetState() < USBD_STATE_CONFIGURED); // wait for things to get set up
   readSemaphore.take( );
-  justRead = 0;
-  remaining = 0;
+  justGot = 0;
+  rxBufCount = 0;
+//  rxQueue = new Queue( 8, 64 );
 }
 
 void UsbSerial::init( ) // static
@@ -51,24 +46,45 @@ void UsbSerial::init( ) // static
 
 int UsbSerial::read( char *buffer, int length )
 {
-  unsigned char result = USBD_Read(CDCDSerialDriverDescriptors_DATAOUT,
-                                    buffer, length, onUsbData, this);
-  int retval = -1;
-  if(result == USBD_STATUS_SUCCESS)
+//  int readcount = 0;
+  int length_to_go = length;
+  while( length_to_go )
   {
-    if( readSemaphore.take( ) )
-      retval = justRead;
+    if( rxBufCount ) // do we already have some lying around?
+    {
+      int copylen = (rxBufCount > length_to_go) ? length_to_go : rxBufCount;
+      memcpy( buffer, rxBuf, copylen );
+      buffer += copylen;
+      rxBufCount -= copylen;
+      length_to_go -= copylen;
+      continue; // re-evaluate how far along we've gotten
+    }
+    unsigned char result = USBD_Read(CDCDSerialDriverDescriptors_DATAOUT,
+                                    rxBuf, USB_SER_RX_BUF_LEN, onUsbData, this);
+    if(result == USBD_STATUS_SUCCESS)
+    {
+      if( readSemaphore.take( ) )
+      {
+        int copylen = (justGot > length_to_go) ? length_to_go : justGot;
+        memcpy( buffer, rxBuf, copylen );
+        buffer += copylen;
+        rxBufCount -= copylen;
+        length_to_go -= copylen;
+        justGot = 0;
+      }
+    }
   }
-  return retval;
+  return length;
 }
 
 void onUsbData(void *pArg, unsigned char status, unsigned int received, unsigned int remaining)
 {
+  (void)remaining; // not much that can be done with this, I think - they're just dropped
   UsbSerial* usb = (UsbSerial*)pArg;
   if( status == USBD_STATUS_SUCCESS )
   {
-    usb->justRead = received;
-    usb->remaining = remaining;
+    usb->rxBufCount += received;
+    usb->justGot = received;
   }
   usb->readSemaphore.giveFromISR(0);
 }
