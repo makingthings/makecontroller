@@ -7,17 +7,31 @@
                                   Task
                                   
 **********************************************************************************/
-
-Task::Task( void (loop)(void*), const char* name, int stackDepth, void* parameters, int priority )
+Task::Task( void (loop)(void*), const char* name, int stackDepth, void* params, int priority )
 {
-  if( xTaskCreate( loop, (const signed char*)name, ( stackDepth >> 2 ), parameters, priority, &_task ) != 1 )
+  observer = false;
+  if( xTaskCreate( loop, (const signed char*)name, ( stackDepth >> 2 ), params, priority, &_task ) != 1 )
     _task = NULL;
   return;
 }
 
+Task::Task( void* taskPtr )
+{
+  _task = taskPtr;
+  observer = true;
+}
+
+Task Task::operator=(const Task t)
+{
+  _task = t._task;
+  observer = true;
+  return *this;
+}
+
 Task::~Task( )
 {
-  vTaskDelete( _task );
+  if(!observer)
+    vTaskDelete( _task );
 }
 
 void Task::sleep( int ms ) // static
@@ -48,17 +62,6 @@ int Task::getRemainingStack( )
     return usVoidTaskCheckFreeStackSpace( _task );
 }
 
-// Task* RTOS::getTaskByName( char *taskName )
-// {
-//   void *tcb = NULL;
-//   vTaskSuspendAll();
-//   {
-//     tcb = findTask( taskName, -1 );
-//   }
-//   xTaskResumeAll();
-//   return tcb;
-// }
-
 int Task::getPriority( )
 {
   return xTaskGetPriority( _task );
@@ -84,15 +87,15 @@ int Task::getStackAllocated( )
   return xTaskGetStackAllocated( _task );
 }
 
-Task* Task::getNext( )
+Task Task::getNext( )
 {
-  // void* taskreturn = NULL;
-  // vTaskSuspendAll();
-  // {
-  //   taskreturn = TaskGetNext_internal( task );
-  // }
-  // xTaskResumeAll( );
-  // return taskreturn;
+  void* taskreturn = NULL;
+  vTaskSuspendAll();
+  {
+    // taskreturn = TaskGetNext_internal( task );
+  }
+  xTaskResumeAll( );
+  return Task(taskreturn);
 }
 
 /**********************************************************************************
@@ -101,31 +104,31 @@ Task* Task::getNext( )
                                   
 **********************************************************************************/
 
-Task* RTOS::getTaskByName( const char* name ) // static
+Task RTOS::getTaskByName( const char* name ) // static
 {
-  // void *tcb = NULL;
-  // vTaskSuspendAll();
-  // {
-  //   tcb = findTask( taskName, -1 );
-  // }
-  // xTaskResumeAll();
-  // return tcb;
+  void *tcb = NULL;
+  vTaskSuspendAll();
+  {
+    //tcb = findTask( taskName, -1 );
+  }
+  xTaskResumeAll();
+  return Task(tcb);
 }
 
-Task* RTOS::getTaskByID( int id ) // static
+Task RTOS::getTaskByID( int id ) // static
 {
-  // void* tcb = NULL;
-  // vTaskSuspendAll();
-  // {
-  //   tcb = findTask( NULL, taskID );
-  // }
-  // xTaskResumeAll();
-  // return tcb;
+  void* tcb = NULL;
+  vTaskSuspendAll();
+  {
+    // tcb = findTask( NULL, taskID );
+  }
+  xTaskResumeAll();
+  return Task(tcb);
 }
 
-Task* RTOS::getCurrentTask( ) // static
+Task RTOS::getCurrentTask( ) // static
 {
-  // return xTaskGetCurrentTaskHandle( );
+  return Task(xTaskGetCurrentTaskHandle( ));
 }
 
 int RTOS::numberOfTasks( ) // static
