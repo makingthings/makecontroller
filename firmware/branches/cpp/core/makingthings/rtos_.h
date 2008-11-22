@@ -27,10 +27,12 @@ extern "C" {
   #include "semphr.h"
 }
 
+typedef void (TaskLoop)(void*);
+
 class Task
 {
 public:
-  Task( void (loop)(void*), const char* name, int stackDepth, void* params, int priority );
+  Task( TaskLoop loop, const char* name, int stackDepth, void* params, int priority );
   Task( void* taskPtr );
   Task operator=(const Task t);
   ~Task( );

@@ -36,6 +36,7 @@ class UsbSerial
 {
 public:
   void init( );
+  bool isActive();
   int read( char *buffer, int length );
   int write( char *buffer, int length );
   int readSlip( char *buffer, int length );

@@ -7,7 +7,7 @@
                                   Task
                                   
 **********************************************************************************/
-Task::Task( void (loop)(void*), const char* name, int stackDepth, void* params, int priority )
+Task::Task( TaskLoop loop, const char* name, int stackDepth, void* params, int priority )
 {
   observer = false;
   if( xTaskCreate( loop, (const signed char*)name, ( stackDepth >> 2 ), params, priority, &_task ) != 1 )
@@ -30,7 +30,7 @@ Task Task::operator=(const Task t)
 
 Task::~Task( )
 {
-  if(!observer)
+  if(!observer && _task != NULL)
     vTaskDelete( _task );
 }
 

@@ -36,8 +36,8 @@ void Run( ) // this task gets called as soon as we boot up.
   // Do this right quick after booting up - otherwise we won't be recognised
   // Usb_SetActive( 1 );
   // Led_SetState( );
-  USB::init();
-
+  USB->init();
+  
   // Fire up the OSC system and register the subsystems you want to use
 //  Osc_SetActive( true, true, true, true );
 //  // make sure OSC_SUBSYSTEM_COUNT (osc.h) is large enough to accomodate them all
