@@ -44,6 +44,11 @@ void UsbSerial::init( ) // static
     _instance = new UsbSerial( );
 }
 
+bool UsbSerial::isActive()
+{
+  return USBD_GetState() == USBD_STATE_CONFIGURED;
+}
+
 int UsbSerial::read( char *buffer, int length )
 {
 //  int readcount = 0;

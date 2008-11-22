@@ -16,30 +16,49 @@ extern "C" {
   #include "queue.h"
 }
 
-// void OSC::setUsbListener( bool enable )
-// {
-//   if( enable && !usbTaskPtr )
-//     usbTaskPtr = TaskCreate( &OSC::usbTask, "OSC-USB", 1000, USB, 3 );
-//   else if( !enable && usbTaskPtr )
-//     TaskDelete( usbTaskPtr );
-// }
-// 
-// void OSC::setUdpListener( bool enable, int port )
-// {
-//   if( enable && !udpTaskPtr )
-//     usbTaskPtr = TaskCreate( OSC::udpTask, "OSC-UDP", (void*)port, UDP, 3 );
-//   else if( !enable && udpTaskPtr )
-//     TaskDelete( udpTaskPtr );
-// }
+#include "usb_.h"
+
+void oscUdpLoop( void* parameters );
+void oscUsbLoop( void* parameters );
+void oscAsyncLoop( void* parameters );
+
+OSCC::OSCC( )
+{
+  udpTask = NULL;
+  usbTask = NULL;
+  asyncTask = NULL;
+}
+
+void OSCC::setUdpListener( bool enable, int port )
+{
+  if( enable && !udpTask )
+  {
+    udpTask = new Task( oscUdpLoop, "OSC-UDP", 1000, this, 3 );
+    udp_listen_port = port;
+  }
+  else if( !enable && udpTask )
+    delete udpTask;
+}
+
+void OSCC::setUsbListener( bool enable )
+{
+  if( enable && !usbTask )
+    usbTask = new Task( oscUsbLoop, "OSC-USB", 1000, this, 3 );
+  else if( !enable && usbTask )
+    delete usbTask;
+}
+
+
 // 
 // void OSC::setAutoSender( bool enable )
 // {
 //   
 // }
 
-void OSCC::udpTask( void* parameters )
+void oscUdpLoop( void* params )
 {
-  int listen_port = (int)parameters;
+  // int listen_port = (int)parameters;
+  OSCC* osc = (OSCC*)params;
   // Osc->channel[ channel ] = MallocWait( sizeof( OscChannel ), 100 );
   // OscChannel *ch = Osc->channel[ channel ];
   // ch->running = false;
@@ -55,26 +74,44 @@ void OSCC::udpTask( void* parameters )
   if( !udp_sock.valid() )
     return;
   
-  if( !send_sock.valid() )
+  if( !osc->send_sock.valid() )
     return;
   
   while( !udp_sock.isBound( ) )
   {
-    udp_sock.bind( listen_port );
-    vTaskDelay( 10 / portTICK_RATE_MS ); // Sleep( 10 );
+    udp_sock.bind( osc->udp_listen_port );
+    Task::sleep( 10 );
   }
   
   int address, port, length;
   
   while ( true )
   {
-    length = udp_sock.read( udpChannel.inBuf, OSC_MAX_MESSAGE_IN, &address, &port );
+    length = udp_sock.read( osc->udpChannel.inBuf, OSC_MAX_MESSAGE_IN, &address, &port );
     if( length > 0 )
     {
       // Osc_SetReplyAddress( channel, address );
       // Osc_ReceivePacket( channel, ch->incoming, length );
     }
-    taskYIELD( ); // TaskYield( );
+    Task::yield( );
+  }
+}
+
+void oscUsbLoop( void* params )
+{
+  OSCC* osc = (OSCC*)params;
+  // Osc_ResetChannel( ch );
+
+  // Chill until the USB connection is up
+  while ( !USB->isActive() )
+    Task::sleep( 100 );
+
+  while ( true )
+  {
+    int length = USB->readSlip( osc->usbChannel.inBuf, OSC_MAX_MESSAGE_IN );
+    if ( length > 0 )
+      osc->receivePacket( oscUSB, osc->usbChannel.inBuf, length );
+    Task::sleep( 1 );
   }
 }
 

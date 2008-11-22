@@ -4,6 +4,7 @@
 #define OSC_CPP_H
 
 #include "udpsocket.h"
+#include "rtos_.h"
 
 #define OSC_MAX_HANDLERS 56
 #define OSC_MSG_MAX_DATA_ITEMS 20
@@ -96,22 +97,23 @@ public:
   }
   
 protected:
-  OSCC( ) { }
+  OSCC( );
   OSCC* _instance;
   bool receivePacket( OscTransport t, char* packet, int length );
   char* writePaddedString( char* buffer, int* length, char* string );
   char* writePaddedBlob( char* buffer, int* length, char* blob, int blen );
   char* writeTimetag( char* buffer, int* length, int a, int b );
   int endianSwap( int a );
-  void udpTask( void* parameters );
-  void usbTask( void* parameters );
-  void asyncTask( void* parameters );
   int udpPacketSend( char* packet, int length, int replyAddress, int replyPort );
   int usbPacketSend( char* packet, int length );
+  int udp_listen_port;
   
-  void* udpTaskPtr;
-  void* usbTaskPtr;
-  void* asyncTaskPtr;
+  Task* udpTask;
+  Task* usbTask;
+  Task* asyncTask;
+  friend void oscUdpLoop( void* parameters );
+  friend void oscUsbLoop( void* parameters );
+  friend void oscAsyncLoop( void* parameters );
   OscHandler* handlers[OSC_MAX_HANDLERS];
   UdpSocket send_sock;
   OscChannel usbChannel;
