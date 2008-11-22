@@ -30,7 +30,9 @@ extern "C" {
 class Task
 {
 public:
-  Task( void (loop)(void*), const char* name, int stackDepth, void* parameters, int priority );
+  Task( void (loop)(void*), const char* name, int stackDepth, void* params, int priority );
+  Task( void* taskPtr );
+  Task operator=(const Task t);
   ~Task( );
   static void sleep( int ms );
   static void yield( );
@@ -42,18 +44,18 @@ public:
   int getIDNumber( );
   char* getName( );
   int getStackAllocated( );
-  Task* getNext( );
+  Task getNext( );
 private:
   void* _task;
-  // Task( void* task ) { _task = task; }
+  bool observer; // flag to signify that only tasks created with the full constructor should delete the internal task on deletion
 };
 
 class RTOS
 {
 public:
-  static Task* getTaskByName( const char* name );
-  static Task* getTaskByID( int id );
-  static Task* getCurrentTask( );
+  static Task getTaskByName( const char* name );
+  static Task getTaskByID( int id );
+  static Task getCurrentTask( );
   static int numberOfTasks( );
   static int topTaskPriority( );
   static int ticksSinceBoot( );
