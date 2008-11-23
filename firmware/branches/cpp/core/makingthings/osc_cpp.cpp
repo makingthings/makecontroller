@@ -29,8 +29,8 @@ OSCC::OSCC( )
   usbTask = NULL;
   autoSendTask = NULL;
   handler_count = 0;
-  resetChannel( oscUDP );
-  resetChannel( oscUSB );
+  resetChannel( oscUDP, true, true );
+  resetChannel( oscUSB, true, true );
 }
 
 void OSCC::setUdpListener( bool enable, int port )
@@ -66,8 +66,7 @@ void OSCC::setAutoSender( bool enable )
 void oscUdpLoop( void* params )
 {
   OSCC* osc = (OSCC*)params;
-  osc->resetChannel( oscUDP );
-
+  
   // Chill until the Network is up
   // while ( !Network_GetActive() )
   //   Sleep( 100 );
@@ -106,8 +105,7 @@ void oscUdpLoop( void* params )
 void oscUsbLoop( void* params )
 {
   OSCC* osc = (OSCC*)params;
-  osc->resetChannel( oscUSB );
-
+  
   // Chill until the USB connection is up
   while ( !USB->isActive() )
     Task::sleep( 100 );
@@ -192,9 +190,7 @@ bool OSCC::receivePacket( OscTransport t, char* packet, int length )
       //Osc_CreateMessage( channel, "/error", ",s", "Packet Error" );
       break;
   }
-
-  // return Osc_SendPacket( channel );
-  return true;
+  return send( t ); // send anything out that might have been created in response to the msg just received
 }
 
 /*
@@ -221,9 +217,9 @@ int OSCC::receiveMessage( OscTransport t, char* message, int length )
     for( i = 0; i < handler_count; i++ )
     {
       handler = handlers[i];
-      //createMessage(t, "/", ",s", handler->name());
+      createMessage(t, "/", ",s", handler->name());
     }
-    //sendMessages(t);
+    send(t);
     return CONTROLLER_OK;
   }
   
@@ -246,6 +242,7 @@ int OSCC::receiveMessage( OscTransport t, char* message, int length )
         handler->onNewMsg( t, msg, 0, 0 );
     }
   }
+  resetChannel(t, false, true);
   return CONTROLLER_OK;
 }
 
@@ -366,14 +363,213 @@ char* OSCC::findTypeTag( char* message, int length )
     return message;
 }
 
-void OSCC::resetChannel( OscTransport t )
+/*
+  Create a new message in the outgoing buffer of messages.
+  If your message fills up the buffer, it will be sent immediately to make space.  Otherwise,
+  you'll need to send it yourself using send().
+*/
+int OSCC::createMessage( OscTransport t, const char* address, const char* format, ... )
+{
+  if ( !address || !format || *format != ',' )
+    return CONTROLLER_ERROR_BAD_DATA;
+  
+  OscChannel* ch = (t == oscUDP) ? &udpChannel : &usbChannel;
+  if(!ch->outgoingSemaphore.take())
+    return CONTROLLER_ERROR_CANT_LOCK;
+  
+  int count = 0;
+  char *buf_p;
+  do
+  {  
+    count++;
+
+    char* buffer = ch->outBufPtr;
+    int length = ch->outBufRemaining;
+  
+    buf_p = buffer;
+  
+    // First message in the buffer?
+    if ( buf_p == ch->outBuf )
+    {
+      buf_p = createBundle( buf_p, &length, 0, 0 );
+      if ( buf_p == NULL )
+        return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
+    }
+  
+    // Make room for the new message
+    int* msg_length_p = (int *)buf_p;
+    buf_p += 4;
+    length -= 4;
+
+    // remember the start of the message
+    char* msg_start_p = buf_p;    
+
+    if ( length > 0 )
+    {      
+      // Set up to iterate through the arguments
+      va_list args;
+      va_start( args, format );
+      buf_p = createMessageInternal( buf_p, &length, address, format, args );
+    }
+    else
+      buf_p = 0;
+      
+    if ( buf_p != 0 )
+    {
+      *msg_length_p = endianSwap( buf_p - msg_start_p ); // Set the size
+      ch->outBufPtr = buf_p;
+      ch->outBufRemaining = length;
+      ch->outgoingMsgCount++;
+    }
+    // else
+    //   sendPacketInternal( ch );
+  } while ( buf_p == 0 && count == 1 );
+  
+  ch->outgoingSemaphore.give();
+  return CONTROLLER_OK;
+}
+
+char* OSCC::createMessageInternal( char* bp, int* length, const char* address, const char* format, va_list args )
+{
+  // do the address
+  bp = writePaddedString( bp, length, address );
+  if ( bp == NULL )
+    return 0;
+
+  // do the type
+  bp = writePaddedString( bp, length, format );
+  if ( bp == NULL )
+    return 0;
+
+  // Going to be walking the tag string, the format string and the data
+  // skip the ',' comma
+  const char* fp;
+  bool cont = true;
+  for ( fp = format + 1; *fp && cont; fp++ )
+  {
+    switch ( *fp )
+    {
+      case 'i':
+          *length -= 4;
+          if ( *length >= 0 )
+          {
+            int v = va_arg( args, int );
+            v = endianSwap( v );
+            *((int*)bp) = v;
+            bp += 4;
+          }
+          else 
+            cont = false;
+        break;
+      case 'f':
+        *length -= 4;
+        if ( *length >= 0 )
+        {
+          int v;
+          *((float*)&v) = (float)( va_arg( args, double ) ); 
+          v = endianSwap( v );
+          *((int*)bp) = v;
+          bp += 4;
+        }
+        else 
+          cont = false;
+        break;
+      case 's':
+      {
+        char* s = va_arg( args, char* );
+        bp = writePaddedString( bp, length, s );
+        if ( bp == NULL )
+          cont = false;
+        break;
+      }
+      case 'b':
+      {
+        char* b = va_arg( args, char* );
+        int blen = va_arg( args, int );
+        bp = writePaddedBlob( bp, length, b, blen  );
+        if ( bp == NULL )
+          cont = false;
+        break;
+      }
+      default:
+        cont = false;
+    }
+  }
+  return ( cont ) ? bp : NULL;
+}
+
+char* OSCC::createBundle( char* buffer, int* length, int a, int b )
+{
+  char *bp = buffer;
+
+  // do the bundle bit
+  bp = writePaddedString( bp, length, "#bundle" );
+  if ( bp == NULL )
+    return 0;
+
+  // do the timetag
+  bp = writeTimetag( bp, length, a, b );
+  if ( bp == NULL )
+    return 0;
+
+  return bp;
+}
+
+int OSCC::send( OscTransport t )
 {
   OscChannel* ch = (t == oscUDP) ? &udpChannel : &usbChannel;
-  ch->outBufPtr = ch->outBuf;
-  ch->outBufRemaining = OSC_MAX_MESSAGE_OUT;
-  ch->outgoingMsgs = 0;
-  ch->incomingMsg.data_count = 0;
-  ch->incomingMsg.address = ch->inBuf;
+
+  if(!ch->outgoingSemaphore.take())
+    return CONTROLLER_ERROR_CANT_LOCK;
+
+  int ret = sendInternal( t );
+  ch->outgoingSemaphore.give();
+  return ret;
+}
+
+int OSCC::sendInternal( OscTransport t )
+{
+  OscChannel* ch = (t == oscUDP) ? &udpChannel : &usbChannel;
+  if ( ch->outgoingMsgCount == 0 )
+    return CONTROLLER_OK;
+
+  // set the buffer and length up
+  char* buffer = ch->outBuf;
+  int length = OSC_MAX_MESSAGE_OUT - ch->outBufRemaining;
+
+  // see if we can dispense with the bundle business
+  if ( ch->outgoingMsgCount == 1 )
+  {
+    buffer += 20; // skip 8 bytes of "#bundle" and 8 bytes of timetag and 4 bytes of size
+    length -= 20;
+  }
+  if( t == oscUDP )
+  {
+    int retval = send_sock.write( udp_reply_address, udp_reply_port, buffer, length );
+    return retval;
+  }
+  else if( t == oscUSB )
+    USB->writeSlip( buffer, length );
+
+  resetChannel( t, true, false );
+
+  return CONTROLLER_OK;
+}
+
+void OSCC::resetChannel( OscTransport t, bool outgoing, bool incoming )
+{
+  OscChannel* ch = (t == oscUDP) ? &udpChannel : &usbChannel;
+  if(outgoing)
+  {
+    ch->outBufPtr = ch->outBuf;
+    ch->outBufRemaining = OSC_MAX_MESSAGE_OUT;
+    ch->outgoingMsgCount = 0;
+  }
+  if(incoming)
+  {
+    ch->incomingMsg.data_count = 0;
+    ch->incomingMsg.address = ch->inBuf;
+  }
 }
 
 int OSCC::endianSwap( int a ) // static
@@ -385,7 +581,7 @@ int OSCC::endianSwap( int a ) // static
 
 }
 
-char* OSCC::writePaddedString( char* buffer, int* length, char* string )
+char* OSCC::writePaddedString( char* buffer, int* length, const char* string )
 {
   int tagLen = strlen( string ) + 1;
   int tagPadLen = tagLen;
@@ -405,6 +601,34 @@ char* OSCC::writePaddedString( char* buffer, int* length, char* string )
   }
   else
     return NULL;
+
+  return buffer;
+}
+
+char* OSCC::writePaddedBlob( char* buffer, int* length, char* blob, int blen )
+{
+  int i;
+  int padLength = blen;
+  int pad = ( padLength ) % 4;
+  if ( pad != 0 )
+    padLength += ( 4 - pad );
+ 
+  if ( *length < ( padLength + 4 ) )
+    return 0;
+
+  // add the length of the blob
+  int l = endianSwap( blen );
+  *((int*)buffer) = l;
+  buffer += 4;
+  *length -= 4;
+
+  memcpy( buffer, blob, blen );
+  buffer += blen;
+  // reduce the remaining buffer size
+  *length -= padLength;
+
+  for ( i = blen; i < padLength; i++ ) 
+      *buffer++ = 0;
 
   return buffer;
 }

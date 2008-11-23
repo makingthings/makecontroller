@@ -6,6 +6,7 @@
 #include "udpsocket.h"
 #include "rtos_.h"
 #include "osc_message.h"
+#include <stdarg.h>
 
 #define OSC_MAX_HANDLERS 56
 #define OSC_MAX_MESSAGE_IN   400
@@ -44,9 +45,9 @@ typedef struct OscChannel
   char scratchBuf[OSC_SCRATCH_BUF_SIZE];
   char* outBufPtr;
   int outBufRemaining;
-  int outgoingMsgs;
+  int outgoingMsgCount;
   OscMessage incomingMsg;
-  Semaphore semaphore;
+  Semaphore outgoingSemaphore;
   int (*sendMessage)( char* packet, int length, int replyAddress, int replyPort );
 };
 
@@ -59,7 +60,7 @@ public:
   bool registerHandler( const char* address, OscHandler* handler );
   int pendingMessages( OscTransport t );
   int send( OscTransport t );
-  int createMessage( OscTransport t, char* address, char* format, ... );
+  int createMessage( OscTransport t, const char* address, const char* format, ... );
   static int endianSwap( int a );
   
   OSCC* instance( )
@@ -76,14 +77,17 @@ protected:
   int receiveMessage( OscTransport t, char* message, int length );
   int handleQuery( OscTransport t, char* message );
   OscMessage* extractData( OscTransport t, char* message, int length );
+  char* createMessageInternal( char* bp, int* length, const char* address, const char* format, va_list args );
+  char* createBundle( char* buffer, int* length, int a, int b );
   char* findTypeTag( char* message, int length );
-  char* writePaddedString( char* buffer, int* length, char* string );
+  char* writePaddedString( char* buffer, int* length, const char* string );
   char* writePaddedBlob( char* buffer, int* length, char* blob, int blen );
   char* writeTimetag( char* buffer, int* length, int a, int b );
+  int sendInternal( OscTransport t );
   int udpPacketSend( char* packet, int length, int replyAddress, int replyPort );
   int usbPacketSend( char* packet, int length );
   int udp_listen_port, udp_reply_port, udp_reply_address;
-  void resetChannel( OscTransport t );
+  void resetChannel( OscTransport t, bool outgoing, bool incoming );
   
   Task* udpTask;
   Task* usbTask;
