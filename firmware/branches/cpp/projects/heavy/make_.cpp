@@ -27,16 +27,16 @@ extern "C" {
 #include "appled_cpp.h"
 #include "usb_.h"
 
-void BlinkTask( void* parameters );
+void blinkLoop( void* parameters );
 
 void Run( ) // this task gets called as soon as we boot up.
 {
-  TaskCreate( BlinkTask, "Blink", 400, 0, 1 );
+  Task* blink = new Task(blinkLoop, "Blink", 400, 0, 1);
 
   // Do this right quick after booting up - otherwise we won't be recognised
   // Usb_SetActive( 1 );
   // Led_SetState( );
-  USB->init();
+  // usbSerial.init();
   
   // Fire up the OSC system and register the subsystems you want to use
 //  Osc_SetActive( true, true, true, true );
@@ -67,13 +67,13 @@ void Run( ) // this task gets called as soon as we boot up.
 // A very simple task...a good starting point for programming experiments.
 // If you do anything more exciting than blink the LED in this task, however,
 // you may need to increase the stack allocated to it above.
-void BlinkTask( void* p )
+void blinkLoop( void* p )
 {
   (void)p;
   Led led;
   AppLed al0(0), al1(1), al2(2), al3(3);
   led.setState( 1 );
-  Sleep( 1000 );
+  Task::sleep( 1000 );
 
   while ( true )
   {
@@ -82,13 +82,13 @@ void BlinkTask( void* p )
     al1.setState( 0 );
     al2.setState( 0 );
     al3.setState( 0 );
-    Sleep( 900 );
+    Task::sleep( 900 );
     led.setState( 1 );
     al0.setState( 1 );
     al1.setState( 1 );
     al2.setState( 1 );
     al3.setState( 1 );
-    Sleep( 10 ); 
+    Task::sleep( 10 ); 
   }
 }
 

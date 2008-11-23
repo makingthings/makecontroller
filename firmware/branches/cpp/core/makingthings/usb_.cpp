@@ -35,7 +35,6 @@ UsbSerial::UsbSerial( )
   readSemaphore.take( );
   justGot = 0;
   rxBufCount = 0;
-//  rxQueue = new Queue( 8, 64 );
 }
 
 void UsbSerial::init( ) // static

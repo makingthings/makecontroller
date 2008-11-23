@@ -59,19 +59,4 @@ protected:
   static char rxBuf[];
 };
 
-// typedef struct
-// {
-//   char slipSendBuffer[ MAX_OUTGOING_SLIP_PACKET ];
-//   char slipReadBuffer[ MAX_INCOMING_SLIP_PACKET ];
-// } Usb_;
-// 
-// int Usb_SetActive( int state );
-// int Usb_GetActive( void );
-// 
-// int Usb_Write( char *buffer, int length );
-// int Usb_Read(char *buffer, int length);
-// 
-// int Usb_SlipSend( char* buffer, int length );
-// int Usb_SlipReceive( char* buffer, int length );
-
 #endif // USB__H
