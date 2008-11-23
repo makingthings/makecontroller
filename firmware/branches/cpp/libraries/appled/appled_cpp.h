@@ -52,8 +52,8 @@ class AppLedOSC : public OscHandler
 {
 public:
   AppLedOSC( ) { }
-  int onNewMsg( OscMessage* msg, OscTransport t, int src_addr, int src_port );
-  int onQuery( int element );
+  int onNewMsg( OscTransport t, OscMessage* msg, int src_addr, int src_port );
+  int onQuery( OscTransport t, int element );
   const char* name( ) { return "appled"; }
   static const char* propertyList[];
 };

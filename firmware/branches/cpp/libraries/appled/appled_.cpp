@@ -131,7 +131,7 @@ const char* AppLedOSC::propertyList[] = {"state", 0};
 /*
   We expect to get a message like /appled/index/property (data)
 */
-int AppLedOSC::onNewMsg( OscMessage* msg, OscTransport t, int src_addr, int src_port )
+int AppLedOSC::onNewMsg( OscTransport t, OscMessage* msg, int src_addr, int src_port )
 {
   (void)t;
   (void)src_addr;
@@ -179,7 +179,7 @@ int AppLedOSC::onNewMsg( OscMessage* msg, OscTransport t, int src_addr, int src_
   return replies;
 }
 
-int AppLedOSC::onQuery( int element )
+int AppLedOSC::onQuery( OscTransport t, int element )
 {
   int replies = 0;
   switch( element )

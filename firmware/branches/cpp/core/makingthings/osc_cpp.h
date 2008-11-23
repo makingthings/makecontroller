@@ -5,43 +5,14 @@
 
 #include "udpsocket.h"
 #include "rtos_.h"
+#include "osc_message.h"
 
 #define OSC_MAX_HANDLERS 56
-#define OSC_MSG_MAX_DATA_ITEMS 20
 #define OSC_MAX_MESSAGE_IN   400
 #define OSC_MAX_MESSAGE_OUT  600
 #define OSC_SCRATCH_BUF_SIZE 100
 
 enum OscTransport { oscUDP, oscUSB };
-enum OscDataType { oscInt, oscFloat, oscString, oscBlob };
-
-typedef struct OscData
-{
-  union
-  {
-    int i;
-    float f;
-    char* s;
-  };
-  OscDataType type;
-};
-
-class OscMessage
-{
-public:
-  char* address;
-  OscData data_items[OSC_MSG_MAX_DATA_ITEMS];
-  int data_count;
-  
-  int   addressElementAsInt( int element, bool* ok = 0 );
-  float addressElementAsFloat( int element, bool* ok = 0 );
-  char* addressElementAsString( int element );
-  
-  int   dataItemAsInt( int index, bool* ok = 0 );
-  float dataItemAsFloat( int index, bool* ok = 0 );
-  char* dataItemAsString( int index );
-  char* dataItemAsBlob( int index, int* blob_len );
-};
 
 class OscRangeHelper
 {
@@ -57,8 +28,8 @@ class OscHandler
 {
 public:
   // mandatory
-  virtual int onNewMsg( OscMessage* msg, OscTransport t, int src_addr, int src_port ) = 0;
-  virtual int onQuery( int element ) = 0;
+  virtual int onNewMsg( OscTransport t, OscMessage* msg, int src_addr, int src_port ) = 0;
+  virtual int onQuery( OscTransport t, char* address, int element ) = 0;
   virtual const char* name( ) = 0;
   // optional
   bool autoSend( OscTransport t ) { (void)t; return false; }
@@ -73,8 +44,9 @@ typedef struct OscChannel
   char scratchBuf[OSC_SCRATCH_BUF_SIZE];
   char* outBufPtr;
   int outBufRemaining;
+  int outgoingMsgs;
   OscMessage incomingMsg;
-  xSemaphoreHandle semaphore;
+  Semaphore semaphore;
   int (*sendMessage)( char* packet, int length, int replyAddress, int replyPort );
 };
 
@@ -86,9 +58,10 @@ public:
   void setAutoSender( bool enable );
   bool registerHandler( const char* address, OscHandler* handler );
   int pendingMessages( OscTransport t );
-  int sendMessages( OscTransport t );
+  int send( OscTransport t );
   int createMessage( OscTransport t, char* address, char* format, ... );
-  static void* getAddressElement( int position );
+  static int endianSwap( int a );
+  
   OSCC* instance( )
   {
     if( !_instance )
@@ -100,21 +73,26 @@ protected:
   OSCC( );
   OSCC* _instance;
   bool receivePacket( OscTransport t, char* packet, int length );
+  int receiveMessage( OscTransport t, char* message, int length );
+  int handleQuery( OscTransport t, char* message );
+  OscMessage* extractData( OscTransport t, char* message, int length );
+  char* findTypeTag( char* message, int length );
   char* writePaddedString( char* buffer, int* length, char* string );
   char* writePaddedBlob( char* buffer, int* length, char* blob, int blen );
   char* writeTimetag( char* buffer, int* length, int a, int b );
-  int endianSwap( int a );
   int udpPacketSend( char* packet, int length, int replyAddress, int replyPort );
   int usbPacketSend( char* packet, int length );
-  int udp_listen_port;
+  int udp_listen_port, udp_reply_port, udp_reply_address;
+  void resetChannel( OscTransport t );
   
   Task* udpTask;
   Task* usbTask;
-  Task* asyncTask;
+  Task* autoSendTask;
   friend void oscUdpLoop( void* parameters );
   friend void oscUsbLoop( void* parameters );
-  friend void oscAsyncLoop( void* parameters );
+  friend void oscAutoSendLoop( void* parameters );
   OscHandler* handlers[OSC_MAX_HANDLERS];
+  int handler_count;
   UdpSocket send_sock;
   OscChannel usbChannel;
   OscChannel udpChannel;

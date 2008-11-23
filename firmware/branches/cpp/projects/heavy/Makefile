@@ -110,6 +110,8 @@ CPP_THUMB_SRC = \
   $(MAKINGTHINGS)/udpsocket.cpp \
   $(MAKINGTHINGS)/tcpserver.cpp \
   $(MAKINGTHINGS)/osc_cpp.cpp \
+  $(MAKINGTHINGS)/osc_message.cpp \
+  $(MAKINGTHINGS)/osc_pattern.cpp \
   $(MAKINGTHINGS)/rtos_.cpp \
   $(MAKINGTHINGS)/usb_.cpp \
   $(LIBRARIES)/appled/appled_.cpp \
