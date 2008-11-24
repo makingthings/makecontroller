@@ -17,7 +17,7 @@ extern "C" {
   #include "queue.h"
 }
 
-#include "usb_.h"
+#include "usb_serial.h"
 
 void oscUdpLoop( void* parameters );
 void oscUsbLoop( void* parameters );
@@ -184,10 +184,6 @@ bool OSCC::receivePacket( OscTransport t, char* packet, int length )
           packet += messageLength;
         }
       }
-      break;
-    default:
-      // Something else?
-      //Osc_CreateMessage( channel, "/error", ",s", "Packet Error" );
       break;
   }
   return send( t ); // send anything out that might have been created in response to the msg just received

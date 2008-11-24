@@ -15,8 +15,8 @@
 
 *********************************************************************************/
 
-#ifndef USB__H
-#define USB__H
+#ifndef USB_SERIAL_H
+#define USB_SERIAL_H
 
 #include "config.h"
 #include "rtos_.h"
@@ -59,4 +59,4 @@ protected:
   static char rxBuf[];
 };
 
-#endif // USB__H
+#endif // USB_SERIAL_H
