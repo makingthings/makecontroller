@@ -41,7 +41,10 @@ void OSCC::setUdpListener( bool enable, int port )
     udp_listen_port = port;
   }
   else if( !enable && udpTask )
+  {
     delete udpTask;
+    udpTask = NULL;
+  }
 }
 
 void OSCC::setUsbListener( bool enable )
@@ -49,7 +52,10 @@ void OSCC::setUsbListener( bool enable )
   if( enable && !usbTask )
     usbTask = new Task( oscUsbLoop, "Osc USB", 1000, this, 3 );
   else if( !enable && usbTask )
+  {
     delete usbTask;
+    usbTask = NULL;
+  }
 }
 
 void OSCC::setAutoSender( bool enable )
@@ -57,7 +63,10 @@ void OSCC::setAutoSender( bool enable )
   if( enable && !autoSendTask )
     autoSendTask = new Task( oscAutoSendLoop, "AutoSend", 1000, this, 3 );
   else if( !enable && autoSendTask )
+  {
     delete autoSendTask;
+    autoSendTask = NULL;
+  }
 }
 
 /*
