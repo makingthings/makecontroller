@@ -23,6 +23,8 @@ void oscUdpLoop( void* parameters );
 void oscUsbLoop( void* parameters );
 void oscAutoSendLoop( void* parameters );
 
+OSCC* OSCC::_instance = 0;
+
 OSCC::OSCC( )
 {
   udpTask = NULL;
@@ -270,16 +272,15 @@ int OSCC::handleQuery( OscTransport t, char* message )
         element_count++;
     }
   }
-  int i;
+  int i, replies = 0;
   for( i = 0; i < handler_count; i++ )
   {
     OscHandler* handler = handlers[i];
-    if( !strncmp(message + 1, handler->name(), root_len) )
-    {
-      handler->onQuery(t, message, element_count);
-      return CONTROLLER_OK;
-    }
+    if( OscPattern::match(message + 1, handler->name()) )
+      replies+= handler->onQuery(t, message, element_count);
   }
+  if(replies)
+    return send(t);
   return CONTROLLER_ERROR_UNKNOWN_PROPERTY; // if we got down here, we didn't find a matching handler
 }
 
