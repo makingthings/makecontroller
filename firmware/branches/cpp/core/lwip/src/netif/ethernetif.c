@@ -93,7 +93,7 @@ static struct netif *xNetIf = NULL;
 /* Forward declarations. */
 //static void  ethernetif_input(struct netif *netif);
 static void  ethernetif_input(void *); // MakingThings
-err_t ethernetif_init( struct netif *netif ); // MakingThings
+// err_t ethernetif_init( struct netif *netif ); // MakingThings
 
 /**
  * In this function, the hardware should be initialized.

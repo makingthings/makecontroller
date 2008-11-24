@@ -123,4 +123,6 @@ void vEMACWaitForInput( void );
  */
 unsigned portLONG ulEMACInputLength( void );
 
+err_t ethernetif_init( struct netif *netif ); // MakingThings
+
 #endif
