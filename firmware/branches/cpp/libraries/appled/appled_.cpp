@@ -56,38 +56,48 @@ extern "C" {
 * @{
 */
 
+Io* AppLed::leds[] = {0, 0, 0, 0};
+
 AppLed::AppLed( int index )
 {
   if( index < 0 || index >= APPLED_COUNT )
     return;
   
-  switch( index )
-  {
-    case 0:
-      appledIo.setPin( APPLED_0_IO );
-      break;
-    case 1:
-      appledIo.setPin( APPLED_1_IO );
-      break;
-    case 2:
-      appledIo.setPin( APPLED_2_IO );
-      break;
-    case 3:
-      appledIo.setPin( APPLED_3_IO );
-      break;
-  }
-  appledIo.setDirection( IO_OUTPUT );
-  appledIo.setPeripheral( GPIO );
+  _index = index;
+  Io* io = leds[_index];
+  if( !io )
+    io = new Io( getIo(_index), IO_OUTPUT, GPIO );
 }
 
 void AppLed::setState( bool state )
 {
-  appledIo.setValue( state );
+  if(!leds[_index])
+    return;
+  leds[_index]->setValue( state );
 }
 
 bool AppLed::getState( )
 {
-  return appledIo.getValue( );
+  if(!leds[_index])
+    return false;
+  return leds[_index]->getValue( );
+}
+
+int AppLed::getIo(int index)
+{
+  switch( index )
+  {
+    case 0:
+      return APPLED_0_IO;
+    case 1:
+      return APPLED_1_IO;
+    case 2:
+      return APPLED_2_IO;
+    case 3:
+      return APPLED_3_IO;
+    default:
+      return -1;
+  }
 }
 
 #ifdef OSC
@@ -133,7 +143,6 @@ const char* AppLedOSC::propertyList[] = {"state", 0};
 */
 int AppLedOSC::onNewMsg( OscTransport t, OscMessage* msg, int src_addr, int src_port )
 {
-  (void)t;
   (void)src_addr;
   (void)src_port;
   int replies = 0;
@@ -153,24 +162,23 @@ int AppLedOSC::onNewMsg( OscTransport t, OscMessage* msg, int src_addr, int src_
     if( index < 0 || index >= APPLED_COUNT )
       continue;
     AppLed led(index);
+    if(!led.valid())
+      return replies;
     if( msg->data_count ) // setter...write the value to the led
     {
-      int value = msg->dataItemAsInt(0);
       switch( prop_index )
       {
         case 0: // state
-          led.setState(value);
+          led.setState(msg->dataItemAsInt(0));
           break;
       }
     }
     else // getter...return a message
     {
-      int value;
       switch( prop_index )
       {
         case 0: // state
-          value = led.getState( );
-          // create new message to send it back
+          Oscc->createMessage(t, msg->address, ",i", led.getState());
           replies++;
           break;
       }
@@ -179,17 +187,32 @@ int AppLedOSC::onNewMsg( OscTransport t, OscMessage* msg, int src_addr, int src_
   return replies;
 }
 
-int AppLedOSC::onQuery( OscTransport t, int element )
+int AppLedOSC::onQuery( OscTransport t, char* address, int element )
 {
   int replies = 0;
   switch( element )
   {
     case 1: // index
-      // create message for each index 0-3
+    {
+      int i;
+      for(i = 0; i < APPLED_COUNT; i++)
+      {
+        Oscc->createMessage(t, address, ",i", i);
+        replies++;
+      }
       break;
+    }
     case 2: // property
-      // create message for each item in our propertyList
+    {
+      const char** prop = propertyList; // create message for each item in our propertyList
+      while(prop)
+      {
+        Oscc->createMessage(t, address, ",s", *prop);
+        replies++;
+        prop++;
+      }
       break;
+    }
   }
   return replies;
 }

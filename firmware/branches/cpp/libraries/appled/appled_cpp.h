@@ -36,12 +36,14 @@ class AppLed
 public:
   AppLed( int index );
   ~AppLed( ) { }
-  bool valid( ) { return appledIo.valid(); }
+  bool valid( ) { return leds[_index] != NULL; }
   void setState( bool state );
   bool getState( );
   
 private:
-  Io appledIo;
+  int getIo(int index);
+  int _index;
+  static Io* leds[4]; // only ever want to make 4 of these, to allow for multiple instances using the same Io*
 };
 
 #ifdef OSC
@@ -53,7 +55,7 @@ class AppLedOSC : public OscHandler
 public:
   AppLedOSC( ) { }
   int onNewMsg( OscTransport t, OscMessage* msg, int src_addr, int src_port );
-  int onQuery( OscTransport t, int element );
+  int onQuery( OscTransport t, char* address, int element );
   const char* name( ) { return "appled"; }
   static const char* propertyList[];
 };

@@ -13,6 +13,8 @@
 #define OSC_MAX_MESSAGE_OUT  600
 #define OSC_SCRATCH_BUF_SIZE 100
 
+#define Oscc OSCC::instance()
+
 enum OscTransport { oscUDP, oscUSB };
 
 class OscRangeHelper
@@ -63,7 +65,7 @@ public:
   int createMessage( OscTransport t, const char* address, const char* format, ... );
   static int endianSwap( int a );
   
-  OSCC* instance( )
+  static OSCC* instance( )
   {
     if( !_instance )
       _instance = new OSCC( );
@@ -72,7 +74,7 @@ public:
   
 protected:
   OSCC( );
-  OSCC* _instance;
+  static OSCC* _instance;
   bool receivePacket( OscTransport t, char* packet, int length );
   int receiveMessage( OscTransport t, char* message, int length );
   int handleQuery( OscTransport t, char* message );
