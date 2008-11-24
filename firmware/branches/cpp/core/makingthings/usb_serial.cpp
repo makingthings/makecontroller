@@ -15,7 +15,7 @@
 
 *********************************************************************************/
 
-#include "usb_.h"
+#include "usb_serial.h"
 #include "string.h"
 #include "AT91SAM7X256.h"
 

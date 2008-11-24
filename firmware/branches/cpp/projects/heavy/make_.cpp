@@ -25,7 +25,7 @@ extern "C" {
 
 #include "led_cpp.h"
 #include "appled_cpp.h"
-#include "usb_.h"
+#include "usb_serial.h"
 
 void blinkLoop( void* parameters );
 

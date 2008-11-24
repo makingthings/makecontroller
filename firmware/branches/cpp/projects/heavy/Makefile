@@ -113,7 +113,7 @@ CPP_THUMB_SRC = \
   $(MAKINGTHINGS)/osc_message.cpp \
   $(MAKINGTHINGS)/osc_pattern.cpp \
   $(MAKINGTHINGS)/rtos_.cpp \
-  $(MAKINGTHINGS)/usb_.cpp \
+  $(MAKINGTHINGS)/usb_serial.cpp \
   $(LIBRARIES)/appled/appled_.cpp \
   make_.cpp \
 
