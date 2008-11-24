@@ -26,8 +26,8 @@ extern "C" {
   #include "CDCDSerialDriverDescriptors.h"
 }
 
-// #define MAX_INCOMING_SLIP_PACKET 400
-// #define MAX_OUTGOING_SLIP_PACKET 600
+#define MAX_INCOMING_SLIP_PACKET 400
+#define MAX_OUTGOING_SLIP_PACKET 600
 
 #define USB UsbSerial::instance()
 #define USB_SER_RX_BUF_LEN BOARD_USB_ENDPOINTS_MAXPACKETSIZE(CDCDSerialDriverDescriptors_DATAIN)
@@ -53,10 +53,10 @@ protected:
   static UsbSerial* _instance; // the only instance of UsbSerial anywhere.
   friend void onUsbData( void *pArg, unsigned char status, unsigned int transferred, unsigned int remaining);
   Semaphore readSemaphore;
-  Queue* rxQueue;
-  int justGot;
-  int rxBufCount;
-  static char rxBuf[];
+  int justGot, rxBufCount;
+  char rxBuf[USB_SER_RX_BUF_LEN];
+  char slipOutBuf[MAX_OUTGOING_SLIP_PACKET];
+  char slipInBuf[MAX_INCOMING_SLIP_PACKET];
 };
 
 #endif // USB_SERIAL_H
