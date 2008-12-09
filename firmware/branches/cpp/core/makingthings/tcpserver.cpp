@@ -2,6 +2,8 @@
 
 #include "tcpserver.h"
 
+#ifdef MAKE_CTRL_NETWORK
+
 TcpServer::TcpServer( )
 {
   _socket = netconn_new( NETCONN_TCP );
@@ -49,5 +51,7 @@ bool TcpServer::accept( TcpSocket* next_connection )
     next_connection->_socket->readingbuf = NULL;
   return true;
 }
+
+#endif // MAKE_CTRL_NETWORK
 
 

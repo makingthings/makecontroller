@@ -3,6 +3,10 @@
 #ifndef TCP_SERVER_H
 #define TCP_SERVER_H
 
+#include "config.h"
+
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/api.h"
 #include "tcpsocket.h"
 
@@ -24,6 +28,7 @@ private:
   struct netconn* _socket;
 };
 
+#endif //MAKE_CTRL_NETWORK
 #endif // TCP_SERVER_H
 
 

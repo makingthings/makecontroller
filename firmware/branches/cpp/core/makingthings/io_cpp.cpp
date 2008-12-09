@@ -29,14 +29,15 @@
 
 #define IO_PIN_COUNT_ 64
 
-Io::Io( int index, bool direction, IoPeripheral peripheral )
+Io::Io( int index, IoPeripheral peripheral, bool direction  )
 {
   io_pin = INVALID_PIN;
   if ( index < 0 || index > IO_PIN_COUNT_ )
     return;
   io_pin = index;
-  setDirection( direction );
   setPeripheral( peripheral );
+  if( peripheral == GPIO )
+    setDirection( direction );
 }
 
 bool Io::setPin( int pin )
@@ -208,13 +209,13 @@ bool Io::setPeripheral( IoPeripheral periph )
   int mask = 1 << ( io_pin & 0x1F );
   switch( periph )
   {
-    case A:
+    case IO_A:
       if ( io_pin < 32 )
           AT91C_BASE_PIOA->PIO_ASR = mask;
       else
           AT91C_BASE_PIOB->PIO_ASR = mask;
       break;
-    case B:
+    case IO_B:
       if ( io_pin < 32 )
           AT91C_BASE_PIOA->PIO_BSR = mask;
       else

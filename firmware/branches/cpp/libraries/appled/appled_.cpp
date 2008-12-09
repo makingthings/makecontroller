@@ -57,6 +57,9 @@ extern "C" {
 */
 
 Io* AppLed::leds[] = {0, 0, 0, 0};
+#ifdef OSC
+AppLedOSC* AppLed::oscHandler;
+#endif
 
 AppLed::AppLed( int index )
 {
@@ -66,7 +69,10 @@ AppLed::AppLed( int index )
   _index = index;
   Io* io = leds[_index];
   if( !io )
-    io = new Io( getIo(_index), IO_OUTPUT, GPIO );
+    io = new Io( getIo(_index), GPIO, IO_OUTPUT );
+  #ifdef OSC
+  oscHandler = new AppLedOSC();
+  #endif
 }
 
 void AppLed::setState( bool state )

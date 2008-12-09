@@ -59,7 +59,7 @@ public:
   void setUsbListener( bool enable );
   void setUdpListener( bool enable, int port = 0 );
   void setAutoSender( bool enable );
-  bool registerHandler( const char* address, OscHandler* handler );
+  bool registerHandler( OscHandler* handler );
   int pendingMessages( OscTransport t );
   int send( OscTransport t );
   int createMessage( OscTransport t, const char* address, const char* format, ... );
@@ -86,12 +86,9 @@ protected:
   char* writePaddedBlob( char* buffer, int* length, char* blob, int blen );
   char* writeTimetag( char* buffer, int* length, int a, int b );
   int sendInternal( OscTransport t );
-  int udpPacketSend( char* packet, int length, int replyAddress, int replyPort );
   int usbPacketSend( char* packet, int length );
-  int udp_listen_port, udp_reply_port, udp_reply_address;
   void resetChannel( OscTransport t, bool outgoing, bool incoming );
   
-  Task* udpTask;
   Task* usbTask;
   Task* autoSendTask;
   friend void oscUdpLoop( void* parameters );
@@ -99,9 +96,16 @@ protected:
   friend void oscAutoSendLoop( void* parameters );
   OscHandler* handlers[OSC_MAX_HANDLERS];
   int handler_count;
+  #ifdef MAKE_CTRL_NETWORK
+  Task* udpTask;
   UdpSocket send_sock;
-  OscChannel usbChannel;
   OscChannel udpChannel;
+  int udp_listen_port, udp_reply_port, udp_reply_address;
+  int udpPacketSend( char* packet, int length, int replyAddress, int replyPort );
+  #endif // MAKE_CTRL_NETWORK
+  OscChannel usbChannel;
+  OscChannel* getChannel(OscTransport t);
+  
 };
 
 #endif // OSC_CPP_H

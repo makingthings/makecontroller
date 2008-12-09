@@ -2,6 +2,9 @@
 #ifndef TCP_SOCKET_H
 #define TCP_SOCKET_H
 
+#include "config.h"
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/api.h"
 #include "tcpserver.h"
 
@@ -27,5 +30,6 @@ private:
   friend class TcpServer;
 };
 
+#endif // MAKE_CTRL_NETWORK
 #endif // TCP_SOCKET_H
 

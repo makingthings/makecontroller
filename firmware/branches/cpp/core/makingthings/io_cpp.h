@@ -31,12 +31,12 @@ extern "C" {
 // #define IO_INPUT false
 #define INVALID_PIN 1024 // a value too large for any pin
 
-enum IoPeripheral { A, B, GPIO };
+enum IoPeripheral { IO_A, IO_B, GPIO };
 
 class Io
 {
 public:
-  Io( int pin = INVALID_PIN, bool direction = IO_OUTPUT, IoPeripheral = GPIO );
+  Io( int pin = INVALID_PIN, IoPeripheral = GPIO, bool direction = IO_OUTPUT );
   ~Io( ) { releasePeripherals( ); }
   bool valid( ) { return io_pin != INVALID_PIN; }
   

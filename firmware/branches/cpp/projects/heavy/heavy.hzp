@@ -85,8 +85,16 @@
           <file file_name="../../core/makingthings/tcpsocket.cpp" Name="tcpsocket.cpp" />
           <file file_name="../../core/makingthings/tcpsocket.h" Name="tcpsocket.h" />
           <file file_name="../../core/makingthings/udpsocket.cpp" Name="udpsocket.cpp" />
-          <file file_name="../../core/makingthings/usb_.cpp" Name="usb_.cpp" />
-          <file file_name="../../core/makingthings/usb_.h" Name="usb_.h" />
+          <file file_name="../../core/makingthings/network_.h" Name="network_.h" />
+          <file file_name="../../core/makingthings/network_.cpp" Name="network_.cpp" />
+          <file file_name="../../core/makingthings/usb_serial.h" Name="usb_serial.h" />
+          <file file_name="../../core/makingthings/usb_serial.cpp" Name="usb_serial.cpp" />
+          <file file_name="../../core/makingthings/osc_pattern.h" Name="osc_pattern.h" />
+          <file file_name="../../core/makingthings/osc_message.cpp" Name="osc_message.cpp" />
+          <file file_name="../../core/makingthings/osc_message.h" Name="osc_message.h" />
+          <file file_name="../../core/makingthings/osc_pattern.cpp" Name="osc_pattern.cpp" />
+          <file file_name="../../core/makingthings/spi_.h" Name="spi_.h" />
+          <file file_name="../../core/makingthings/spi_cpp.cpp" Name="spi_cpp.cpp" />
         </folder>
         <folder Name="FreeRTOS" >
           <configuration c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />
@@ -150,6 +158,7 @@
           <file file_name="../../core/startup/crt0.s" Name="crt0.s" />
           <file file_name="../../core/startup/flash_placement.xml" Name="flash_placement.xml" />
           <file file_name="../../core/freertos/portable/GCC/ARM7_AT91SAM7S/AT91SAM7X256.h" Name="AT91SAM7X256.h" />
+          <file file_name="../../core/startup/extras_cpp.cpp" Name="extras_cpp.cpp" />
         </folder>
         <folder Name="USB" >
           <file file_name="../../core/usb/common/cdc/CDCSetControlLineStateRequest.c" Name="CDCSetControlLineStateRequest.c" />
@@ -213,5 +222,5 @@
   <configuration c_preprocessor_definitions="DEBUG" link_include_startup_code="No" build_debug_information="Yes" Name="Debug" />
   <configuration inherited_configurations="THUMB;Flash;Release" Name="THUMB Flash Release" />
   <configuration c_preprocessor_definitions="NDEBUG" link_include_startup_code="No" build_debug_information="No" Name="Release" />
-  <configuration arm_library_instruction_set="THUMB" gcc_entry_point="0x100000" build_quietly="Yes" c_preprocessor_definitions="SAM7_GCC;THUMB_INTERWORK;SUPERVISOR_START" c_user_include_directories="." link_include_startup_code="Yes" arm_instruction_set="THUMB" c_preprocessor_undefinitions="" c_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wmissing-prototypes;-Wmissing-declarations;-Wno-strict-aliasing" arm_linker_stack_size="0" Name="Common" c_system_include_directories="$(StudioDir)/include" arm_linker_heap_size="0" />
+  <configuration arm_library_instruction_set="THUMB" gcc_entry_point="0x100000" build_quietly="Yes" c_preprocessor_definitions="SAM7_GCC;THUMB_INTERWORK;SUPERVISOR_START" c_user_include_directories="." link_include_startup_code="Yes" arm_instruction_set="THUMB" c_preprocessor_undefinitions="" c_additional_options="-Wall;-Wextra;-Wmissing-declarations;-Wno-strict-aliasing" arm_linker_stack_size="0" Name="Common" c_system_include_directories="$(StudioDir)/include" arm_linker_heap_size="0" />
 </solution>

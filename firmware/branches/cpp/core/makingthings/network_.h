@@ -4,6 +4,7 @@
 #define NETWORK__H
 
 #include "config.h"
+#ifdef MAKE_CTRL_NETWORK
 #include "rtos_.h"
 
 class Network
@@ -55,4 +56,5 @@ protected:
 };
 
 #endif // OSC
+#endif // MAKE_CTRL_NETWORK
 #endif // NETWORK__H
