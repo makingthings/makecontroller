@@ -2,6 +2,8 @@
 
 #include "tcpsocket.h"
 
+#ifdef MAKE_CTRL_NETWORK
+
 TcpSocket::TcpSocket( )
 {
   //Network_SetActive( 1 );
@@ -168,6 +170,8 @@ int TcpSocket::readLine( char* data, int length )
   
   return lineLength;
 }
+
+#endif // MAKE_CTRL_NETWORK
 
 
 

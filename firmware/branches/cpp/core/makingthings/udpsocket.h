@@ -3,6 +3,8 @@
 #ifndef UDP_SOCKET_H
 #define UDP_SOCKET_H
 
+#include "config.h"
+#ifdef MAKE_CTRL_NETWORK
 #include "lwip/api.h"
 
 class UdpSocket
@@ -23,4 +25,5 @@ private:
   struct netconn* _socket;
 };
 
+#endif // MAKE_CTRL_NETWORK
 #endif // UDP_SOCKET_H

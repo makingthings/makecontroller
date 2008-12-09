@@ -1,6 +1,8 @@
 
 
 #include "network_.h"
+#ifdef MAKE_CTRL_NETWORK
+
 extern "C" {
   #include "lwip/api.h"
   #include "lwip/tcpip.h"
@@ -288,6 +290,8 @@ void Network::setDefaults( )
   tempMask = NETIF_IP_ADDRESS( 255, 255, 255, 0 );
   setValid( 1 );
 }
+
+#endif // MAKE_CTRL_NETWORK
 
 
 

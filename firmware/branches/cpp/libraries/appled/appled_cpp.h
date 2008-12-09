@@ -29,25 +29,7 @@ extern "C" {
 
 #include "io_cpp.h"
 
-/* AppLed Functions */
-
-class AppLed
-{
-public:
-  AppLed( int index );
-  ~AppLed( ) { }
-  bool valid( ) { return leds[_index] != NULL; }
-  void setState( bool state );
-  bool getState( );
-  
-private:
-  int getIo(int index);
-  int _index;
-  static Io* leds[4]; // only ever want to make 4 of these, to allow for multiple instances using the same Io*
-};
-
 #ifdef OSC
-
 #include "osc_cpp.h"
 
 class AppLedOSC : public OscHandler
@@ -59,7 +41,25 @@ public:
   const char* name( ) { return "appled"; }
   static const char* propertyList[];
 };
-
 #endif // OSC
+
+class AppLed
+{
+public:
+  AppLed( int index );
+  ~AppLed( ) { }
+  bool valid( ) { return leds[_index] != NULL; }
+  void setState( bool state );
+  bool getState( );
+  #ifdef OSC
+  static AppLedOSC* oscHandler;
+  #endif
+  
+private:
+  int getIo(int index);
+  int _index;
+  static Io* leds[4]; // only ever want to make 4 of these, to allow for multiple instances using the same Io*
+};
+
 #endif // APPLED_CPP_H
 

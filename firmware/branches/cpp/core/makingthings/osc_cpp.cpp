@@ -19,7 +19,9 @@ extern "C" {
 
 #include "usb_serial.h"
 
+#ifdef MAKE_CTRL_NETWORK
 void oscUdpLoop( void* parameters );
+#endif
 void oscUsbLoop( void* parameters );
 void oscAutoSendLoop( void* parameters );
 
@@ -27,7 +29,9 @@ OSCC* OSCC::_instance = 0;
 
 OSCC::OSCC( )
 {
+  #ifdef MAKE_CTRL_NETWORK
   udpTask = NULL;
+  #endif
   usbTask = NULL;
   autoSendTask = NULL;
   handler_count = 0;
@@ -37,6 +41,7 @@ OSCC::OSCC( )
 
 void OSCC::setUdpListener( bool enable, int port )
 {
+  #ifdef MAKE_CTRL_NETWORK
   if( enable && !udpTask )
   {
     udpTask = new Task( oscUdpLoop, "Osc UDP", 1000, this, 3 );
@@ -47,6 +52,7 @@ void OSCC::setUdpListener( bool enable, int port )
     delete udpTask;
     udpTask = NULL;
   }
+  #endif
 }
 
 void OSCC::setUsbListener( bool enable )
@@ -71,9 +77,21 @@ void OSCC::setAutoSender( bool enable )
   }
 }
 
+bool OSCC::registerHandler( OscHandler* handler )
+{
+  if( handler_count >= OSC_MAX_HANDLERS )
+    return false;
+  else
+  {
+    handlers[handler_count++] = handler;
+    return true;
+  }
+}
+
 /*
   Loop that sits around waiting for UDP data to process as OSC messages.
 */
+#ifdef MAKE_CTRL_NETWORK
 void oscUdpLoop( void* params )
 {
   OSCC* osc = (OSCC*)params;
@@ -109,6 +127,7 @@ void oscUdpLoop( void* params )
     Task::yield( );
   }
 }
+#endif
 
 /*
   Loop that sits around waiting for USB data to process as OSC messages.
@@ -243,9 +262,11 @@ int OSCC::receiveMessage( OscTransport t, char* message, int length )
     OscHandler* handler = handlers[ i ];
     if ( OscPattern::match( message + 1, handler->name() ) )
     {
+      #ifdef MAKE_CTRL_NETWORK
       if( t == oscUDP )
         handler->onNewMsg( t, msg, udp_reply_address, udp_reply_port );
-      else if( t == oscUSB )
+      #endif
+      if( t == oscUSB )
         handler->onNewMsg( t, msg, 0, 0 );
     }
   }
@@ -296,7 +317,7 @@ OscMessage* OSCC::extractData( OscTransport t, char* message, int length )
   if(!typetag)
     return NULL;
   
-  OscMessage* msg = (t == oscUDP) ? &(udpChannel.incomingMsg) : &(usbChannel.incomingMsg);
+  OscMessage* msg = &(getChannel(t)->incomingMsg);
   
   // figure out where the data starts after the typetag
   int tagLen = strlen( typetag ) + 1;
@@ -305,8 +326,9 @@ OscMessage* OSCC::extractData( OscTransport t, char* message, int length )
     tagLen += ( 4 - pad );
   char* data = typetag + tagLen;
   length -= tagLen;
+  typetag++; // step past the initial , that all typetags must start with
   
-  while( typetag && length && msg->data_count < OSC_MSG_MAX_DATA_ITEMS )
+  while( *typetag && length && msg->data_count < OSC_MSG_MAX_DATA_ITEMS )
   {
     switch ( *typetag++ )
     {
@@ -379,7 +401,7 @@ int OSCC::createMessage( OscTransport t, const char* address, const char* format
   if ( !address || !format || *format != ',' )
     return CONTROLLER_ERROR_BAD_DATA;
   
-  OscChannel* ch = (t == oscUDP) ? &udpChannel : &usbChannel;
+  OscChannel* ch = getChannel(t);
   if(!ch->outgoingSemaphore.take())
     return CONTROLLER_ERROR_CANT_LOCK;
   
@@ -523,7 +545,7 @@ char* OSCC::createBundle( char* buffer, int* length, int a, int b )
 
 int OSCC::send( OscTransport t )
 {
-  OscChannel* ch = (t == oscUDP) ? &udpChannel : &usbChannel;
+  OscChannel* ch = getChannel(t);
 
   if(!ch->outgoingSemaphore.take())
     return CONTROLLER_ERROR_CANT_LOCK;
@@ -535,7 +557,7 @@ int OSCC::send( OscTransport t )
 
 int OSCC::sendInternal( OscTransport t )
 {
-  OscChannel* ch = (t == oscUDP) ? &udpChannel : &usbChannel;
+  OscChannel* ch = getChannel(t);
   if ( ch->outgoingMsgCount == 0 )
     return CONTROLLER_OK;
 
@@ -549,12 +571,14 @@ int OSCC::sendInternal( OscTransport t )
     buffer += 20; // skip 8 bytes of "#bundle" and 8 bytes of timetag and 4 bytes of size
     length -= 20;
   }
+  #ifdef MAKE_CTRL_NETWORK
   if( t == oscUDP )
   {
     int retval = send_sock.write( udp_reply_address, udp_reply_port, buffer, length );
     return retval;
   }
-  else if( t == oscUSB )
+  #endif
+  if( t == oscUSB )
     USB->writeSlip( buffer, length );
 
   resetChannel( t, true, false );
@@ -564,7 +588,7 @@ int OSCC::sendInternal( OscTransport t )
 
 void OSCC::resetChannel( OscTransport t, bool outgoing, bool incoming )
 {
-  OscChannel* ch = (t == oscUDP) ? &udpChannel : &usbChannel;
+  OscChannel* ch = getChannel(t);
   if(outgoing)
   {
     ch->outBufPtr = ch->outBuf;
@@ -576,6 +600,17 @@ void OSCC::resetChannel( OscTransport t, bool outgoing, bool incoming )
     ch->incomingMsg.data_count = 0;
     ch->incomingMsg.address = ch->inBuf;
   }
+}
+
+OscChannel* OSCC::getChannel(OscTransport t)
+{
+  #ifdef MAKE_CTRL_NETWORK
+  if(t == oscUDP)
+    return &udpChannel;
+  #endif
+  if(t == oscUSB)
+    return &usbChannel;
+  return NULL;
 }
 
 int OSCC::endianSwap( int a ) // static

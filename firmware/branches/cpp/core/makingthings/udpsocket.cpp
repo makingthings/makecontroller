@@ -1,5 +1,6 @@
 
 #include "udpsocket.h"
+#ifdef MAKE_CTRL_NETWORK
 
 UdpSocket::UdpSocket( )
 {
@@ -99,6 +100,8 @@ int UdpSocket::read( char* data, int length, int* src_address, int* src_port )
 
   return buflen;
 }
+
+#endif // MAKE_CTRL_NETWORK
 
 
 

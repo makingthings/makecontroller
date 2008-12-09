@@ -53,21 +53,19 @@ bool UsbSerial::isActive()
 
 int UsbSerial::read( char *buffer, int length )
 {
-//  int readcount = 0;
   int length_to_go = length;
-  while( length_to_go )
+  if( rxBufCount ) // do we already have some lying around?
   {
-    if( rxBufCount ) // do we already have some lying around?
-    {
-      int copylen = (rxBufCount > length_to_go) ? length_to_go : rxBufCount;
-      memcpy( buffer, rxBuf, copylen );
-      buffer += copylen;
-      rxBufCount -= copylen;
-      length_to_go -= copylen;
-      continue; // re-evaluate how far along we've gotten
-    }
+    int copylen = (rxBufCount > length_to_go) ? length_to_go : rxBufCount;
+    memcpy( buffer, rxBuf, copylen );
+    buffer += copylen;
+    rxBufCount -= copylen;
+    length_to_go -= copylen;
+  }
+  if(length_to_go) // if we still would like to get more
+  {
     unsigned char result = USBD_Read(CDCDSerialDriverDescriptors_DATAOUT,
-                                    rxBuf, USB_SER_RX_BUF_LEN, onUsbData, this);
+                                  rxBuf, USB_SER_RX_BUF_LEN, onUsbData, this);
     if(result == USBD_STATUS_SUCCESS)
     {
       if( readSemaphore.take( ) )
@@ -81,12 +79,13 @@ int UsbSerial::read( char *buffer, int length )
       }
     }
   }
-  return length;
+  return length - length_to_go;
 }
 
 void onUsbData(void *pArg, unsigned char status, unsigned int received, unsigned int remaining)
 {
   (void)remaining; // not much that can be done with this, I think - they're just dropped
+  // in fact, we're pretty unlikely to ever see it since we're always trying to read as much as can be transferred at once
   UsbSerial* usb = (UsbSerial*)pArg;
   if( status == USBD_STATUS_SUCCESS )
   {

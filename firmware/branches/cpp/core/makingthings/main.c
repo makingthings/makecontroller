@@ -55,6 +55,10 @@
 /* Library includes. */
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
+
+//#include <unistd.h>
 
 /* Scheduler includes. */
 #include "FreeRTOS.h"
@@ -101,7 +105,7 @@ void MakeStarterTask( void* parameters )
 
 int main( void )
 {
-  // __libc_init_array();
+//  __libc_init_array();
 	/* Setup the ports. */
 	prvSetupHardware();
   
