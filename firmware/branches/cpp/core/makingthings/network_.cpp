@@ -47,7 +47,7 @@ Network::Network( )
   
   static struct netif EMAC_if;
   int address, mask, gateway;
-  bool dhcp = getDhcp();
+  bool dhcp = true ; //getDhcp();
   if( dhcp )
   {
     address = 0;
@@ -66,8 +66,8 @@ Network::Network( )
                         (struct ip_addr*)&gateway, NULL, ethernetif_init, tcpip_input);
   netif_set_default(&EMAC_if); // make it the default interface
   netif_set_up(&EMAC_if);      // bring it up
-  // EMAC_if.name[0] = 'e';       // name it so we can find it later
-  // EMAC_if.name[1] = 'n';
+  EMAC_if.name[0] = 'e';       // name it so we can find it later
+  EMAC_if.name[1] = 'n';
   EMAC_if.num = 0;
   
   if( dhcp )
