@@ -95,6 +95,8 @@
           <file file_name="../../core/makingthings/osc_pattern.cpp" Name="osc_pattern.cpp" />
           <file file_name="../../core/makingthings/spi_.h" Name="spi_.h" />
           <file file_name="../../core/makingthings/spi_cpp.cpp" Name="spi_cpp.cpp" />
+          <file file_name="../../core/makingthings/eeprom_.h" Name="eeprom_.h" />
+          <file file_name="../../core/makingthings/eeprom_.cpp" Name="eeprom_.cpp" />
         </folder>
         <folder Name="FreeRTOS" >
           <configuration c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />

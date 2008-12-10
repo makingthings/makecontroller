@@ -34,6 +34,8 @@ Io::Io( int index, IoPeripheral peripheral, bool direction  )
   io_pin = INVALID_PIN;
   if ( index < 0 || index > IO_PIN_COUNT_ )
     return;
+  AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_PIOA; // maybe only assert these once...
+  AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_PIOB;
   io_pin = index;
   setPeripheral( peripheral );
   if( peripheral == GPIO )
@@ -201,7 +203,7 @@ int Io::getPeripheral( )
     return ( AT91C_BASE_PIOB->PIO_PSR & ( 1 << ( io_pin & 0x1F ) ) ) != 0;
 }
 
-bool Io::setPeripheral( IoPeripheral periph )
+bool Io::setPeripheral( IoPeripheral periph, bool disableGpio )
 {
   if ( io_pin == INVALID_PIN )
     return 0;
@@ -209,17 +211,33 @@ bool Io::setPeripheral( IoPeripheral periph )
   int mask = 1 << ( io_pin & 0x1F );
   switch( periph )
   {
-    case IO_A:
+    case IO_A: // disable pio for each
       if ( io_pin < 32 )
-          AT91C_BASE_PIOA->PIO_ASR = mask;
+      {
+        if( disableGpio )
+          AT91C_BASE_PIOA->PIO_PDR = mask;
+        AT91C_BASE_PIOA->PIO_ASR = mask;
+      }
       else
-          AT91C_BASE_PIOB->PIO_ASR = mask;
+      {
+        if( disableGpio )
+          AT91C_BASE_PIOB->PIO_PDR = mask;
+        AT91C_BASE_PIOB->PIO_ASR = mask;
+      }
       break;
     case IO_B:
       if ( io_pin < 32 )
-          AT91C_BASE_PIOA->PIO_BSR = mask;
+      {
+        if( disableGpio )
+          AT91C_BASE_PIOA->PIO_PDR = mask;
+        AT91C_BASE_PIOA->PIO_BSR = mask;
+      }
       else
-          AT91C_BASE_PIOB->PIO_BSR = mask;
+      {
+        if( disableGpio )
+          AT91C_BASE_PIOB->PIO_PDR = mask;
+        AT91C_BASE_PIOB->PIO_BSR = mask;
+      }
       break;
     case GPIO:
       if ( io_pin < 32 )

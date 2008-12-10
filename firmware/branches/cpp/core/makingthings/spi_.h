@@ -32,17 +32,19 @@ class SPI
 {
   public:
     SPI( int channel );
+    ~SPI( );
     int configure( int bits, int clockDivider, int delayBeforeSPCK, int delayBetweenTransfers );
     int readWriteBlock( unsigned char* buffer, int count );
-    bool valid( ) { return _channel != -1; }
+    void lock() { _lock.take(); }
+    void unlock() { _lock.give(); }
+    bool valid( ) { return chan != NULL; }
 
   protected:
+    Semaphore _lock;
     int _channel;
-    ~SPI( ) { }
-//    Semaphore lock;
-    Io* chan, periphA;
-    int getIO( int channel );
-    int getChannelPeripheralA( int channel );
+    Io* chan;
+    static int getIO( int channel );
+    static int getChannelPeripheralA( int channel );
     void init( );
 };
 
