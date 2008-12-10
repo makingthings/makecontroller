@@ -56,7 +56,7 @@ public:
   bool setFilter( bool enabled );
   
   int getPeripheral( );
-  bool setPeripheral( IoPeripheral periph );
+  bool setPeripheral( IoPeripheral periph, bool disableGpio = true );
   bool releasePeripherals( );
   
 private:

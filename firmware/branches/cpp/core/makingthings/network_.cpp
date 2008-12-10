@@ -15,6 +15,8 @@ extern "C" {
   #include "SAM7_EMAC.h"
 }
 
+#include "eeprom_.h"
+
 void dnsCallback(const char *name, struct ip_addr *addr, void *arg);
 
 Network::Network( )
@@ -25,9 +27,9 @@ Network::Network( )
     setDefaults( );
   else // load the values from EEPROM
   {
-    // Eeprom.read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&tempIpAddress, 4 );
-    // Eeprom.read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&tempGateway, 4 );
-    // Eeprom.read( EEPROM_SYSTEM_NET_MASK, (uchar*)&tempMask, 4 );
+    tempIpAddress = EEPROM->read( EEPROM_SYSTEM_NET_ADDRESS );
+    tempGateway = EEPROM->read( EEPROM_SYSTEM_NET_GATEWAY );
+    tempMask = EEPROM->read( EEPROM_SYSTEM_NET_MASK );
   }
   
   emacETHADDR0 = 0xAC;
@@ -83,6 +85,7 @@ int Network::setAddress( int a0, int a1, int a2, int a3 )
   }
   tempIpAddress = NETIF_IP_ADDRESS( a0, a1, a2, a3 );
   setValid( 1 ); // apply the changes and save them as valid
+  return CONTROLLER_OK;
 }
 
 int Network::setMask( int m0, int m1, int m2, int m3 )
@@ -94,7 +97,6 @@ int Network::setMask( int m0, int m1, int m2, int m3 )
   }
   tempMask = NETIF_IP_ADDRESS( m0, m1, m2, m3 );
   setValid( 1 ); // apply the changes and save them as valid
-
   return CONTROLLER_OK;
 }
 
@@ -157,7 +159,7 @@ void Network::setDhcp(bool enabled)
     if( mc_netif != NULL )
       dhcpStart( mc_netif );
       
-    // Eeprom.write( EEPROM_DHCP_ENABLED, (uchar*)&enabled, 4 );
+    EEPROM->write( EEPROM_DHCP_ENABLED, enabled );
   }
   
   if( !enabled && getDhcp() )
@@ -167,15 +169,14 @@ void Network::setDhcp(bool enabled)
     mc_netif = netif_find( (char*)"en0" );
     if( mc_netif != NULL )
       dhcpStop( mc_netif );
-    // Eeprom.write( EEPROM_DHCP_ENABLED, (uchar*)&enabled, 4 );
+    EEPROM->write( EEPROM_DHCP_ENABLED, enabled );
     setValid( 1 );
   }
 }
 
 bool Network::getDhcp()
 {
-  int state;
-  // Eeprom.read( EEPROM_DHCP_ENABLED, (uchar*)&state, 4 );
+  int state = EEPROM->read( EEPROM_DHCP_ENABLED );
   return (state == 1) ? 1 : 0;
 }
 
@@ -252,19 +253,19 @@ int Network::setValid( int v )
     }
     
     // but write the addresses to memory regardless, so we can use them next time we boot up without DHCP
-    // Eeprom.write( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&ip.addr, 4 );
-    // Eeprom.write( EEPROM_SYSTEM_NET_MASK, (uchar*)&mask.addr, 4 );
-    // Eeprom.write( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&gw.addr, 4 );
+    EEPROM->write( EEPROM_SYSTEM_NET_ADDRESS, ip.addr );
+    EEPROM->write( EEPROM_SYSTEM_NET_MASK, mask.addr );
+    EEPROM->write( EEPROM_SYSTEM_NET_GATEWAY, gw.addr );
 
-    // int total = tempIpAddress + tempMask + tempGateway;
-    // Eeprom.write( EEPROM_SYSTEM_NET_CHECK, (uchar*)&total, 4 );
+    int total = tempIpAddress + tempMask + tempGateway;
+    EEPROM->write( EEPROM_SYSTEM_NET_CHECK, total );
 
     // Network_Valid = NET_VALID;
   }
   else
   {
     // int value = 0;
-    // Eeprom.write( EEPROM_SYSTEM_NET_CHECK, (uchar*)&value, 4 );
+    EEPROM->write( EEPROM_SYSTEM_NET_CHECK, 0 );
     // Network_Valid = NET_INVALID;
   }
 
@@ -273,12 +274,10 @@ int Network::setValid( int v )
 
 bool Network::getValid( )
 {
-  int address, mask, gateway, total;
-  // Eeprom.read( EEPROM_SYSTEM_NET_ADDRESS, (uchar*)&address, 4 );
-  // Eeprom.read( EEPROM_SYSTEM_NET_MASK, (uchar*)&mask, 4 );
-  // Eeprom.read( EEPROM_SYSTEM_NET_GATEWAY, (uchar*)&gateway, 4 );
-  // Eeprom.read( EEPROM_SYSTEM_NET_CHECK, (uchar*)&total, 4 );
-
+  int address = EEPROM->read( EEPROM_SYSTEM_NET_ADDRESS );
+  int mask = EEPROM->read( EEPROM_SYSTEM_NET_MASK );
+  int gateway = EEPROM->read( EEPROM_SYSTEM_NET_GATEWAY );
+  int total = EEPROM->read( EEPROM_SYSTEM_NET_CHECK );
   return ( total == address + mask + gateway ) ? true : false;
 }
 
