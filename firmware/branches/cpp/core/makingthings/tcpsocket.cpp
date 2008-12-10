@@ -1,4 +1,19 @@
+/*********************************************************************************
 
+ Copyright 2006-2008 MakingThings
+
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
+
+*********************************************************************************/
 
 #include "tcpsocket.h"
 
@@ -6,12 +21,25 @@
 
 TcpSocket::TcpSocket( )
 {
-  //Network_SetActive( 1 );
+  getNewSocket();
+  return;
+}
+
+TcpSocket::TcpSocket( void* sock )
+{
+  struct netconn* s = (struct netconn*)sock;
+  _socket = s;
+  _socket->readingbuf = s->readingbuf;
+  return;
+}
+
+bool TcpSocket::getNewSocket( )
+{
   _socket = netconn_new( NETCONN_TCP );
   if( !_socket )
-    return;
+    return false;
   _socket->readingbuf = NULL;
-  return;
+  return true;
 }
 
 bool TcpSocket::valid( )
@@ -21,35 +49,34 @@ bool TcpSocket::valid( )
 
 TcpSocket::~TcpSocket( )
 {
-  if( _socket )
-  {
-    netconn_delete(_socket);
-    if ( _socket->readingbuf != NULL )
-      netbuf_delete( _socket->readingbuf );
-  }
+  close();
 }
 
 bool TcpSocket::connect( int address, int port )
 {
   if( !_socket )
-    return false;
+  {
+    if(!getNewSocket())
+      return false;
+  }
   struct ip_addr remote_addr;
   remote_addr.addr = address;
   err_t retval = netconn_connect( _socket, &remote_addr, port );
-  if( ERR_OK != retval )
-  {
-    netconn_delete( _socket );
-    _socket = NULL;
-    return false;
-  }
-  return true;
+  return ( ERR_OK == retval ) ? true : false;
 }
 
 bool TcpSocket::close( )
 {
   if( !_socket )
     return false;
+  if ( _socket->readingbuf != NULL )
+  {   
+    netbuf_delete( _socket->readingbuf );
+    _socket->readingbuf = NULL;
+  }
   netconn_close( _socket );
+  netconn_delete( _socket );
+  _socket = 0;
   return true;
 }
 

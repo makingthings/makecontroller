@@ -44,12 +44,13 @@ bool TcpServer::close( )
   return (ERR_OK == netconn_close( _socket )) ? true : false;
 }
 
-bool TcpServer::accept( TcpSocket* next_connection )
+TcpSocket* TcpServer::accept( )
 {
-  next_connection->_socket = netconn_accept( _socket );
-  if ( next_connection->_socket != NULL )
-    next_connection->_socket->readingbuf = NULL;
-  return true;
+  void* s = netconn_accept( _socket );
+  if( s == NULL )
+    return NULL;
+  else
+    return new TcpSocket( s );
 }
 
 #endif // MAKE_CTRL_NETWORK
