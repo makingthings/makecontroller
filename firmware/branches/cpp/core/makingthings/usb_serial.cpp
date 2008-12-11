@@ -279,7 +279,8 @@ int UsbSerial::writeSlip( const char *buffer, int length )
   if( length > MAX_OUTGOING_SLIP_PACKET )
      return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
 
-   char *obp = slipOutBuf, *bp = buffer;
+   char* obp = slipOutBuf;
+   const char* bp = buffer;
    *obp++ = (char)END;
 
    while( length-- )

@@ -107,12 +107,7 @@ void oscUdpLoop( void* params )
   if( !osc->send_sock.valid() )
     return;
   
-  while( !udp_sock.isBound( ) )
-  {
-    udp_sock.bind( osc->udp_listen_port );
-    Task::sleep( 10 );
-  }
-  
+  udp_sock.bind( osc->udp_listen_port );  
   int address, port, length;
   
   while ( true )
@@ -137,13 +132,13 @@ void oscUsbLoop( void* params )
   OSCC* osc = (OSCC*)params;
   
   // Chill until the USB connection is up
-  while ( !USB->isActive() )
+  while ( !UsbSerial::get()->isActive() )
     Task::sleep( 100 );
   
   int length;
   while ( true )
   {
-    length = USB->readSlip( osc->usbChannel.inBuf, OSC_MAX_MESSAGE_IN );
+    length = UsbSerial::get()->readSlip( osc->usbChannel.inBuf, OSC_MAX_MESSAGE_IN );
     if ( length > 0 )
       osc->receivePacket( oscUSB, osc->usbChannel.inBuf, length );
     Task::sleep( 1 );
@@ -574,12 +569,12 @@ int OSCC::sendInternal( OscTransport t )
   #ifdef MAKE_CTRL_NETWORK
   if( t == oscUDP )
   {
-    int retval = send_sock.write( udp_reply_address, udp_reply_port, buffer, length );
+    int retval = send_sock.write(  buffer, length, udp_reply_address, udp_reply_port );
     return retval;
   }
   #endif
   if( t == oscUSB )
-    USB->writeSlip( buffer, length );
+    UsbSerial::get()->writeSlip( buffer, length );
 
   resetChannel( t, true, false );
 
