@@ -28,25 +28,38 @@ extern "C" {
 
 #define MAX_INCOMING_SLIP_PACKET 400
 #define MAX_OUTGOING_SLIP_PACKET 600
-
-#define USB UsbSerial::instance()
 #define USB_SER_RX_BUF_LEN BOARD_USB_ENDPOINTS_MAXPACKETSIZE(CDCDSerialDriverDescriptors_DATAIN)
 
+/**
+  Virutal serial port USB communication.
+  This allows the Make Controller look like a serial modem to your desktop, which it can then easily
+  open up, read and write to.
+  
+  \section Usage
+  There's only one UsbSerial object in the system, so you never create your own.  You can access
+  it through the get() method.
+  
+  \section Drivers
+  On OS X, the system driver is used - no external drivers are needed.
+  An entry in \b /dev is created - similar to <b>/dev/cu.usbmodem.xxxx</b>.  It may be opened for reading and 
+  writing like a regular file using the standard POSIX open(), close(), read(), write() functions.
+
+  On Windows, the first time the device is seen, it needs 
+  to be pointed to a .INF file containing additional information - the \b make_controller_kit.inf in 
+  the same directory as this file.  Once Windows sets this up, the device can be opened as a normal
+  COM port.  If you've installed mchelper or mcbuilder, this file is already in the right spot
+  on your system.
+*/
 class UsbSerial
 {
 public:
   void init( );
   bool isActive();
   int read( char *buffer, int length );
-  int write( char *buffer, int length );
+  int write( const char *buffer, int length );
   int readSlip( char *buffer, int length );
-  int writeSlip( char *buffer, int length );
-  static UsbSerial* instance( )
-  {
-    if( !_instance )
-      _instance = new UsbSerial();
-    return _instance;
-  }
+  int writeSlip( const char *buffer, int length );
+  static UsbSerial* get();
 
 protected:
   UsbSerial( );
