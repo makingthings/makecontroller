@@ -1,50 +1,58 @@
+/*********************************************************************************
+
+ Copyright 2006-2008 MakingThings
+
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
+
+*********************************************************************************/
 
 #include "udpsocket.h"
 #ifdef MAKE_CTRL_NETWORK
 
-UdpSocket::UdpSocket( )
+UdpSocket::UdpSocket( int port )
 {
   _socket = netconn_new( NETCONN_UDP );
   if( _socket == NULL || _socket->err != ERR_OK )
     return;
   _socket->readingbuf = NULL;
+  if(port >= 0)
+    bind(port);
 }
 
 UdpSocket::~UdpSocket( )
 {
-  if( _socket )
-  {
-    netconn_delete(_socket);
-    if ( _socket->readingbuf != NULL )
-      netbuf_delete( _socket->readingbuf );
-  }
+  close();
 }
 
 bool UdpSocket::bind( int port )
 {
   if( !_socket )
     return false;
-  if( ERR_OK == netconn_bind( _socket, IP_ADDR_ANY, port ) )
-    return true;
   else
-    return false;
-}
-
-bool UdpSocket::isBound( )
-{
-  if( !_socket )
-    return false;
-  return ( _socket->state == NETCONN_CONNECT );
+    return (ERR_OK == netconn_bind( _socket, IP_ADDR_ANY, port )) ? true : false;
 }
 
 bool UdpSocket::close( )
 {
-  if( !_socket )
-    return false;
-  return (ERR_OK == netconn_close( _socket )) ? true : false;
+  if( _socket )
+  {
+    netconn_close( _socket );
+    netconn_delete(_socket);
+    if ( _socket->readingbuf != NULL )
+      netbuf_delete( _socket->readingbuf );
+  }
 }
 
-int UdpSocket::write( int address, int port, const char* data, int length )
+int UdpSocket::write( const char* data, int length, int address, int port )
 {
   if( !_socket )
     return 0;
@@ -78,9 +86,6 @@ int UdpSocket::read( char* data, int length, int* src_address, int* src_port )
   struct ip_addr *addr;
   int buflen = 0;
 
-  if( _socket->state != NETCONN_CONNECT ) // make sure we're bound
-    return 0;
-
   buf = netconn_recv( _socket );
   if( buf != NULL )
   {
@@ -90,11 +95,14 @@ int UdpSocket::read( char* data, int length, int* src_address, int* src_port )
     // copy the contents of the received buffer into the supplied memory pointer
     netbuf_copy(buf, data, buflen);
     
-    addr = netbuf_fromaddr(buf);
+    // if we got passed in valid pointers for addr and port, fill them up
     if( src_port )
       *src_port = netbuf_fromport(buf);
     if( src_address )
+    {
+      addr = netbuf_fromaddr(buf);
       *src_address = addr->addr;
+    }
     netbuf_delete(buf);
   }
 
