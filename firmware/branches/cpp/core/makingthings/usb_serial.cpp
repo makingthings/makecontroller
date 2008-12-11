@@ -40,17 +40,81 @@ UsbSerial::UsbSerial( )
   rxBufCount = 0;
 }
 
+/**
+  Grab a reference to the UsbSerial system.
+  There's only one UsbSerial object in the system, so you never create your own.  
+  You just grab a reference to the central one via get().  
+  @return A reference to the UsbSerial system.
+  
+  \b Example
+  \code
+  UsbSerial* usb = UsbSerial::get();
+  // now we can do our reading and writing
+  usb->write("a little message", 16);
+  
+  // or, we can combine those onto a single line if we're feeling tricky
+   UsbSerial::get()->write("a little message", 16);
+  \endcode
+*/
+UsbSerial* UsbSerial::get() // static
+{
+  if( !_instance )
+    _instance = new UsbSerial();
+  return _instance;
+}
+
 void UsbSerial::init( ) // static
 {
   if(!_instance)
     _instance = new UsbSerial( );
 }
 
+/**
+  Check if the USB system got set up OK.
+  When things are starting up, if you want to wait until the USB is ready, 
+  you can use this to check.  
+  @return Whether the UsbSerial system is currently running.
+  
+  \b Example
+  \code
+  UsbSerial* usb = UsbSerial::get(); // get a reference to the usb system
+  while( !usb->isActive() ) // while usb is not active
+    Task::sleep(10);        // wait around for a little bit
+  // now we're ready to go
+  \endcode
+*/
 bool UsbSerial::isActive()
 {
   return USBD_GetState() == USBD_STATE_CONFIGURED;
 }
 
+/**
+  Read data from a USB host.
+  This will read up to 64 bytes of data at a time, as this is the maximum USB transfer
+  for the Make Controller internally.  If you want to read more than that, 
+  keep calling read until you've got what you need.  
+  
+  If nothing is ready to be read, this will not return until new data arrives.
+  @param buffer Where to store the incoming data.
+  @param length How many bytes to read. 64 is the max that can be read at one time.
+  @return The number of bytes successfully read.
+  
+  \b Example
+  \code
+  char mydata[128];
+  UsbSerial* usb = UsbSerial::get(); // get a reference to the usb system
+  // simplest is reading a short chunk
+  int read = usb->read(mydata, 20);
+  
+  // or, we can wait until we've read more than the maximum of 64 bytes
+  int got_so_far = 0;
+  while(got_so_far < 128) // wait until we've read 128 bytes
+  {
+    int read = usb->read(mydata, (128 - got_so_far)); // read some new data
+    got_so_far += read; // add to how much we've gotten so far
+  }
+  \endcode
+*/
 int UsbSerial::read( char *buffer, int length )
 {
   int length_to_go = length;
@@ -95,12 +159,39 @@ void onUsbData(void *pArg, unsigned char status, unsigned int received, unsigned
   usb->readSemaphore.giveFromISR(0);
 }
 
-int UsbSerial::write( char *buffer, int length )
+/**
+  Write data to a USB host.
+  @param buffer The data to send.
+  @param length How many bytes to send.
+  @return The number of bytes successfully written.
+  
+  \b Example
+  \code
+  UsbSerial* usb = UsbSerial::get(); // get a reference to the usb system
+  int written = usb->write( "hi hi", 5 );
+  \endcode
+*/
+int UsbSerial::write( const char *buffer, int length )
 {
   unsigned char result = USBD_Write(CDCDSerialDriverDescriptors_DATAIN, buffer, length, 0, 0);
   return (result == USBD_STATUS_SUCCESS) ? 0 : -1;
 }
 
+/**
+  Read from the USB port using SLIP codes to de-packetize messages.
+  SLIP (Serial Line Internet Protocol) is a way to separate one "packet" from another 
+  on an open serial connection.  This is the way OSC messages are sent over USB, for example.  
+  
+  SLIP uses a simple start/end byte and an escape byte in case your data actually 
+  contains the start/end byte.  This function will not return until it has received a complete 
+  SLIP encoded message, and will pass back the original message with the SLIP codes removed.
+
+  Check the Wikipedia description of SLIP at http://en.wikipedia.org/wiki/Serial_Line_Internet_Protocol
+  @param buffer Where to store the incoming data.
+  @param length The number of bytes to read.
+  @return The number of characters successfully read.
+  @see read() for a similar example
+*/
 int UsbSerial::readSlip( char *buffer, int length )
 {
   if( length > MAX_INCOMING_SLIP_PACKET )
@@ -169,7 +260,21 @@ int UsbSerial::readSlip( char *buffer, int length )
   return 0;
 }
 
-int UsbSerial::writeSlip( char *buffer, int length )
+/**
+  Write to the USB port using SLIP codes to packetize messages.
+  SLIP (Serial Line Internet Protocol) is a way to separate one "packet" from 
+  another on an open serial connection.  This is the way OSC messages are sent over USB, 
+  for example.  SLIP uses a simple start/end byte and an escape byte in case your data
+  actually contains the start/end byte.  Pass your normal buffer to this function to
+  have the SLIP codes inserted and then write it out over USB.
+
+  Check the Wikipedia description of SLIP at http://en.wikipedia.org/wiki/Serial_Line_Internet_Protocol
+  @param buffer The data to write.
+  @param length The number of bytes to write.
+  @return The number of characters successfully written.
+  @see write() for a similar example.
+*/
+int UsbSerial::writeSlip( const char *buffer, int length )
 {
   if( length > MAX_OUTGOING_SLIP_PACKET )
      return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
