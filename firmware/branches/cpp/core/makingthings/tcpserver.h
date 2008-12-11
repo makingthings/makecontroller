@@ -41,6 +41,7 @@ public:
   
 private:
   struct netconn* _socket;
+  bool getNewSocket( );
 };
 
 #endif //MAKE_CTRL_NETWORK
