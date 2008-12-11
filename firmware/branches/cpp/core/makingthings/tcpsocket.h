@@ -24,6 +24,13 @@
 #include "lwip/api.h"
 #include "tcpserver.h"
 
+/**
+  Read and write Ethernet data via TCP.
+  TCP is a reliable way to transfer information via Ethernet.  
+  
+  Note that you don't need to destroy a socket each time you connect and disconnect with it.
+  You can call connect() and close() in succession as many times as you like.
+*/
 class TcpSocket
 {
 public:
@@ -39,7 +46,6 @@ public:
   
   int write( const char* data, int length );
   int read( char* data, int length );
-  int readNonBlock( char* data, int length );
   int readLine( char* data, int length );
   
 private:
