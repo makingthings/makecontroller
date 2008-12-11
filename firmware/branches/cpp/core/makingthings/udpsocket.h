@@ -22,9 +22,17 @@
 #ifdef MAKE_CTRL_NETWORK
 #include "lwip/api.h"
 
+
+/**
+  Read and write Ethernet data via UDP.
+  UDP is a lightweight network protocol that's great for streaming lots of data
+  at quick rates.  Unlike \ref TcpSocket you're not always guaranteed that each and every message
+  you send will ultimately reach its destination, but the ones that do will get there very quickly.
+*/
 class UdpSocket
 {
 public:
+  
   UdpSocket( int port = -1 );
   ~UdpSocket( );
   bool valid( ) { return _socket != NULL; }
