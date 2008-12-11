@@ -57,8 +57,12 @@ typedef struct
 class WebHandler
 {
   public:
-    const char* address() { return ""; }
-    bool newRequest(HttpMethod method, char* address, char* request, int len );
+    virtual const char* address() { return ""; }
+    virtual bool get( char* path );
+    virtual bool post( char* path, char* body, int len );
+    virtual bool put( char* path, char* body, int len );
+    virtual bool del( char* path );
+    virtual ~WebHandler( ) { }
 };
 
 class WebServer
@@ -72,6 +76,7 @@ class WebServer
   
   protected:
     WebServer( );
+    virtual ~WebServer( ) { }
     static WebServer* _instance; // the only instance of WebServer anywhere.
     friend void webServerLoop( void *parameters );
     Task* webServerTask;
@@ -80,35 +85,11 @@ class WebServer
     char requestBuf[ REQUEST_SIZE_MAX ];
     char responseBuf[ RESPONSE_SIZE_MAX ];
 
-    
-    void processRequest( TcpSocket* request );
+    virtual void processRequest( TcpSocket* request, HttpMethod method, char* path );
     WebHandler* handlers[MAX_WEB_HANDLERS];
+    char* getRequestAddress( char* request, int length, HttpMethod* method );
+    int getBody( TcpSocket* socket, char* requestBuffer, int maxSize );
 };
-
-// Web Server Task
-// int WebServer_SetActive( int active );
-// int WebServer_GetActive( void );
-// int WebServer_SetListenPort( int port );
-// int WebServer_GetListenPort( void );
-
-// int WebServer_Route( char* address, int (*handler)( char* requestType, char* request, char* requestBuffer, int request_maxsize, void* socket, char* responseBuffer, int len )  );
-
-// HTTP Helpers
-//int WebServer_WriteResponseOkHTML( void* socket );
-//int WebServer_WriteResponseOkPlain( void* socket );
-//
-//// HTML Helpers
-//int WebServer_WriteHeader( int includeCSS, void* socket, char* buffer, int len );
-//int WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, int len );
-//int WebServer_WriteBodyEnd( void* socket );
-//
-//bool WebServer_GetPostData( void *socket, char *requestBuffer, int maxSize );
-//int WebServer_ParseFormElements( char *request, HtmlForm *form );
-//
-//// OSC interface
-//const char* WebServerOsc_GetName( void );
-//int WebServerOsc_ReceiveMessage( int channel, char* message, int length );
-//int WebServerOsc_Async( int channel );
 
 #endif  // WEB_SERVER_H
 
