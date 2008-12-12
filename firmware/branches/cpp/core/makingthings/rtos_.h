@@ -72,6 +72,7 @@ public:
   int sendToBack( void* itemToQueue, int timeout );
   int receive( void* buffer, int timeout );
   int msgsAvailable( );
+  int sendFromISR( void* itemToSend, int taskPreviouslyWoken );
   int sendToFrontFromISR( void* itemToSend, int taskPreviouslyWoken );
   int sendToBackFromISR( void* itemToSend, int taskPreviouslyWoken );
   int receiveFromISR( void* buffer, long* taskWoken );
