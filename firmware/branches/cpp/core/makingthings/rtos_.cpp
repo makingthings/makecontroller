@@ -182,6 +182,11 @@ int Queue::msgsAvailable( )
   return uxQueueMessagesWaiting( _q );
 }
 
+int Queue::sendFromISR( void* itemToSend, int taskPreviouslyWoken )
+{
+  return xQueueSendFromISR( _q, itemToSend, taskPreviouslyWoken );
+}
+
 int Queue::sendToFrontFromISR( void* itemToSend, int taskPreviouslyWoken )
 {
   return xQueueSendToFrontFromISR( _q, itemToSend, taskPreviouslyWoken );

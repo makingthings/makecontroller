@@ -20,8 +20,17 @@
 #include "Board.h"
 
 Serial::Internal Serial::internals[SERIAL_PORTS];
-extern void (SerialIsr_Wrapper)(void);
+extern void (Serial0Isr_Wrapper)(void);
+extern void (Serial1Isr_Wrapper)(void);
 
+/**
+  Create a new serial port.
+  
+  \b Example
+  \code
+  Serial ser(0);
+  \endcode
+*/
 Serial::Serial( int channel, int q_size )
 {
   if( channel < 0 || channel >= 2 ) // make sure channel is valid
@@ -65,18 +74,21 @@ Serial::Serial( int channel, int q_size )
   si->uart->US_TTGR = 0;                // Timeguard disabled
   Io rx( rxPin, IO_A );
   Io tx( txPin, IO_A );
-
+  
   setDetails( );
-
+  
   unsigned int mask = 0x1 << id;                      
-  /* Disable the interrupt on the interrupt controller */					
-  AT91C_BASE_AIC->AIC_IDCR = mask ;										
-  /* Save the interrupt handler routine pointer and the interrupt priority */	
-  AT91C_BASE_AIC->AIC_SVR[ id ] = (unsigned int)SerialIsr_Wrapper;
-  /* Store the Source Mode Register */									
-  AT91C_BASE_AIC->AIC_SMR[ id ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;				
-  /* Clear the interrupt on the interrupt controller */					
-  AT91C_BASE_AIC->AIC_ICCR = mask ;					
+  // Disable the interrupt on the interrupt controller
+  AT91C_BASE_AIC->AIC_IDCR = mask;
+  // Save the interrupt handler routine pointer and the interrupt priority
+  if(_channel == 0)
+    AT91C_BASE_AIC->AIC_SVR[ id ] = (unsigned int)Serial0Isr_Wrapper;
+  else
+    AT91C_BASE_AIC->AIC_SVR[ id ] = (unsigned int)Serial1Isr_Wrapper;
+  // Store the Source Mode Register
+  AT91C_BASE_AIC->AIC_SMR[ id ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4;
+  // Clear the interrupt on the interrupt controller
+  AT91C_BASE_AIC->AIC_ICCR = mask;
   AT91C_BASE_AIC->AIC_IECR = mask;
   si->uart->US_IER = AT91C_US_RXRDY;
 }
@@ -97,6 +109,7 @@ void Serial::setDetails( )
     baudValue /= 10;
 
   sp->uart->US_BRGR = baudValue;
+//  sp->uart->US_BRGR = (MCK / baud) / 16;  ...from Atmel example code...does this work?
   sp->uart->US_MR = 
     ( ( handshaking ) ? AT91C_US_USMODE_HWHSH : AT91C_US_USMODE_NORMAL ) |
     ( AT91C_US_CLKS_CLOCK ) |
@@ -105,20 +118,50 @@ void Serial::setDetails( )
     ( ( parity == 0 ) ? AT91C_US_PAR_NONE : ( ( parity == -1 ) ? AT91C_US_PAR_ODD : AT91C_US_PAR_EVEN ) );
     // 2 << 14; // this last thing puts it in loopback mode
 
-  sp->uart->US_CR = AT91C_US_RXEN | AT91C_US_TXEN; 
+  sp->uart->US_CR = AT91C_US_RXEN | AT91C_US_TXEN;
 }
 
+/**
+  Set the baud rate of a serial port.
+  
+  \b Example
+  \code
+  Serial ser(0);
+  ser.setBaud(115200);
+  \endcode
+*/
 void Serial::setBaud( int rate )
 {
   baud = rate;
   setDetails( );
 }
 
+/**
+  Returns the current baud rate.
+  @return The current baud rate.
+  
+  \b Example
+  \code
+  Serial ser(0);
+  int baudrate = ser.getBaud();
+  \endcode
+*/
 int Serial::getBaud( )
 {
   return baud;
 }
 
+/**
+  Sets the number of bits per character.
+  5 through 8 are legal values - 8 is the default.
+  @param bits bits per character
+  
+  \b Example
+  \code
+  Serial ser(0);
+  ser.setDataBits(5);
+  \endcode
+*/
 void Serial::setDataBits( int bits )
 {
   if ( this->bits >= 5 && this->bits <= 8 )
@@ -128,11 +171,32 @@ void Serial::setDataBits( int bits )
   setDetails( );
 }
 
+/**
+  Returns the number of bits for each character.
+  @return The current data bits setting.
+  
+  \b Example
+  \code
+  Serial ser(0);
+  int dbits = ser.getDataBits();
+  \endcode
+*/
 int Serial::getDataBits( )
 {
   return bits;
 }
 
+/**
+  Sets the parity.
+  -1 is odd, 0 is none, 1 is even.  The default is none - 0.
+  @param parity -1, 0 or 1.
+  
+  \b Example
+  \code
+  Serial ser(0);
+  ser.setParity(-1); // set to odd parity
+  \endcode
+*/
 void Serial::setParity( int parity )
 {
   if ( parity >= -1 && parity <= 1 )
@@ -142,11 +206,33 @@ void Serial::setParity( int parity )
   setDetails( );
 }
 
+/**
+  Returns the current parity.
+  -1 is odd, 0 is none, 1 is even.  The default is none - 0.
+  @return The current parity setting.
+  
+  \b Example
+  \code
+  Serial ser(0);
+  int par = getParity();
+  \endcode
+*/
 int Serial::getParity( )
 {
   return parity;
 }
 
+/**
+  Sets the stop bits per character.
+  1 or 2 are legal values.  1 is the default.
+  @param bits stop bits per character
+  
+  \b Example
+  \code
+  Serial ser(0);
+  ser.setStopBits(2);
+  \endcode
+*/
 void Serial::setStopBits( int bits )
 {
   if ( bits == 1 || bits == 2 )
@@ -156,27 +242,70 @@ void Serial::setStopBits( int bits )
   setDetails( );
 }
 
+/**
+  Returns the number of stop bits.
+  @return The number of stop bits.
+  
+  \b Example
+  \code
+  Serial ser(0);
+  int sbits = ser.getStopBits();
+  \endcode
+*/
 int Serial::getStopBits( )
 {
   return stopBits;
 }
 
+/**
+  Sets whether hardware handshaking is being used.
+  @param enable Whether to use handshaking - true or false.
+  
+  \b Example
+  \code
+  Serial ser(0);
+  ser.setHandshaking(true); // enable hardware handshaking
+  \endcode
+*/
 void Serial::setHandshaking( bool enable )
 {
   handshaking = enable;
   setDetails( );
 }
 
+/**
+  Returns whether hardware handshaking is enabled or not.
+  @return Wheter handshaking is currently enabled - true or false.
+  
+  \b Example
+  \code
+  Serial ser(0);
+  if( ser.getHandshaking() )
+  {
+    // then handshaking is enabled
+  }
+  \endcode
+*/
 bool Serial::getHandshaking( )
 {
   return handshaking;
 }
 
+/**
+  Write a single character
+  @param character The character to write.
+*/
 int Serial::write( char character )
 {
-
+  return 0;
 }
 
+/**
+  Write a block of data
+  @param data The data to send.
+  @param length How many bytes of data to send.
+  @param timeout How long to wait to make sure it goes through.
+*/
 int Serial::write( char* data, int length, int timeout )
 {
   Internal* sp = &internals[ _channel ];
@@ -195,10 +324,38 @@ int Serial::write( char* data, int length, int timeout )
   return CONTROLLER_OK;
 }
 
+int Serial::writeDMA(void *data, int length)
+{
+    Internal* sp = &internals[ _channel ];
+    // Check if the first PDC bank is free
+    if ((sp->uart->US_TCR == 0) && (sp->uart->US_TNCR == 0))
+    {
+      sp->uart->US_TPR = (unsigned int) data;
+      sp->uart->US_TCR = length;
+      sp->uart->US_PTCR = AT91C_PDC_TXTEN;
+      return 1;
+    }
+    // Check if the second PDC bank is free
+    else if (sp->uart->US_TNCR == 0)
+    {
+      sp->uart->US_TNPR = (unsigned int) data;
+      sp->uart->US_TNCR = length;
+      return 1;
+    }
+    else
+      return 0;
+}
+
 int Serial::bytesAvailable( )
 {
   Internal* sp = &internals[ _channel ];
   return sp->rxQueue->msgsAvailable( );
+}
+
+bool Serial::bytesAvailableBool()
+{
+  Internal* sp = &internals[ _channel ];
+  return ((sp->uart->US_CSR & AT91C_US_RXRDY) != 0);
 }
 
 int Serial::read( char* data, int length, int timeout )
@@ -217,17 +374,73 @@ int Serial::read( char* data, int length, int timeout )
   return count;
 }
 
-char Serial::readChar( )
+int Serial::readDMA( char* data, int length, int timeout )
 {
-
+  Internal* sp = &internals[ _channel ];
+  // Check if the first PDC bank is free
+  int retval = 0;
+  if ((sp->uart->US_RCR == 0) && (sp->uart->US_RNCR == 0))
+  {
+    sp->uart->US_RPR = (unsigned int) data;
+    sp->uart->US_RCR = length;
+    sp->uart->US_PTCR = AT91C_PDC_RXTEN;
+    retval = 1;
+  }
+  // Check if the second PDC bank is free
+  else if (sp->uart->US_RNCR == 0)
+  {
+    sp->uart->US_RNPR = (unsigned int) data;
+    sp->uart->US_RNCR = length;
+    retval = 1;
+  }
+  
+  if(retval)
+    sp->uart->US_IER = AT91C_US_RXBUFF;
+  
+  sp->rxSem->take(); // wait until we get this back from the interrupt
+  return retval;
 }
 
+char Serial::read( )
+{
+  return 0;
+}
+
+/**
+  Clear out the serial port.
+  Ensures that there are no bytes in the incoming buffer.
+
+  \b Example
+  \code
+  Serial ser(1);
+  ser.flush( ); // after starting up, make sure there's no junk in there
+  \endcode
+*/
 void Serial::flush( )
 {
   while( bytesAvailable( ) )
-    readChar( );
+    read( );
 }
 
+/**
+  Reset the error flags in the serial system.
+  In the normal course of operation, the serial system may experience
+  a variety of different error modes, including buffer overruns, framing 
+  and parity errors, and more.  You'll usually only want to call this
+  after you've determined that errors exist with getErrors().
+  If there aren't any errors, this has no effect.
+  
+  \b Example
+
+  \code 
+  Serial ser(1);
+  if( ser.getErrors() )
+  {
+    // handle errors...
+    ser.clearErors();
+  }
+  \endcode
+*/
 void Serial::clearErrors( )
 {
   Internal* sp = &internals[ _channel ];
@@ -235,6 +448,49 @@ void Serial::clearErrors( )
     sp->uart->US_CR = AT91C_US_RSTSTA; // clear all errors
 }
 
+/**
+  Read whether there are any errors.
+  We can check for three kinds of errors in the serial system:
+  - buffer overrun
+  - framing error
+  - parity error
+  
+  Each parameter will be set with a true or a false, given the current
+  error state.  If you don't care to check one of the parameters, just
+  pass in 0.
+  
+  @param overrun (optional) Will be set with the overrun error state.
+  @param frame (optional) Will be set with the frame error state.
+  @param parity (optional) Will be set with the parity error state.
+  @return True if there were any errors, false if there were no errors.
+
+  \b Example
+  \code
+  Serial ser(1);
+  bool over, fr, par;
+  if( ser.getErrors( &over, &fr, &par ) )
+  {
+    // if we wanted, we could just clear them all right here with clearErrors()
+    // but here we'll check to see what kind of errors we got for the sake of the example
+    if(over)
+    {
+      // then we have an overrun error
+    }
+    if(fr)
+    {
+      // then we have a framing error
+    }
+    if(par)
+    {
+      // then we have a parity error
+    }
+  }
+  else
+  {
+    // there were no errors
+  }
+  \endcode
+*/
 bool Serial::getErrors( bool* overrun, bool* frame, bool* parity )
 {
   bool retval = false;
@@ -261,11 +517,31 @@ bool Serial::getErrors( bool* overrun, bool* frame, bool* parity )
   return retval;
 }
 
+/**
+  Start the transmission of a break.
+  This has no effect if a break is already in progress.
+  
+  \b Example
+  \code 
+  Serial ser(1);
+  ser.startBreak();
+  \endcode
+*/
 void Serial::startBreak( )
 {
   internals[ _channel ].uart->US_CR = AT91C_US_STTBRK;
 }
 
+/**
+  Stop the transmission of a break.
+  This has no effect if there's not a break already in progress.
+  
+  \b Example
+  \code
+  Serial ser(1);
+  ser.stopBreak();
+  \endcode
+*/
 void Serial::stopBreak( )
 {
   internals[ _channel ].uart->US_CR = AT91C_US_STPBRK;

@@ -18,62 +18,49 @@
 #include "serial_.h"
 #include "rtos_.h"
 
-/* The interrupt entry point is naked so we can control the context saving. */
-void SerialIsr_Wrapper( void ) __attribute__ ((naked));
+// The interrupt entry point is naked so we can control the context saving.
+void Serial0Isr_Wrapper( void ) __attribute__ ((naked));
+void Serial1Isr_Wrapper( void ) __attribute__ ((naked));
 
 /* The interrupt handler function must be separate from the entry function
 to ensure the correct stack frame is set up. */
-void SerialIsr_Handler( void );
+void SerialIsr_Handler( int index );
 
-void SerialIsr_Handler( void )
+void SerialIsr_Handler( int index )
 {
-  unsigned portLONG ulStatus; 
-  signed portCHAR cChar; 
-
-  long xTaskWokenByTx = false; 
+  signed portCHAR cChar;
+  long xTaskWokenByTx = false;
   long xTaskWokenByPost = false;
-
-  int index;
-  for ( index = 0; index < SERIAL_PORTS; index++ )
-  {
-    long xTaskWokenByTxThis = false; 
-    long xTaskWokenByPostThis = false; 
- 
-    Serial::Internal* si = &Serial::internals[index];
-
-    /* What caused the interrupt? */ 
-    ulStatus = ( si->uart->US_CSR ) & ( si->uart->US_IMR ); 
-   
-    if( ulStatus & AT91C_US_TXRDY ) 
+  long xTaskWokenByTxThis = false;
+  long xTaskWokenByPostThis = false;
+  Serial::Internal* si = &Serial::internals[index];
+  
+  unsigned int status = ( si->uart->US_CSR ) & ( si->uart->US_IMR ); // What caused the interrupt?
+  if( status & AT91C_US_TXRDY ) 
+  { 
+    /* The interrupt was caused by the THR becoming empty. Are there any 
+       more characters to transmit? */ 
+    if( si->txQueue->receiveFromISR( &cChar, &xTaskWokenByTx ) == pdTRUE ) 
     { 
-      /* The interrupt was caused by the THR becoming empty. Are there any 
-         more characters to transmit? */ 
-      if( si->txQueue->receiveFromISR( &cChar, &xTaskWokenByTx ) == pdTRUE ) 
-      { 
-        /* A character was retrieved from the queue so can be sent to the 
-           THR now. */ 
-        si->uart->US_THR = cChar; 
-      } 
-      else 
-      {    
-        /* Queue empty, nothing to send so turn off the Tx interrupt. */ 
-        si->uart->US_IDR = AT91C_US_TXRDY; 
-      }   
+      // A character was retrieved from the queue so can be sent to the THR now.
+      si->uart->US_THR = cChar; 
     } 
-     
-    if( ulStatus & AT91C_US_RXRDY ) 
-    { 
-      /* The interrupt was caused by a character being received. Grab the 
-      character from the RHR and place it in the queue or received  
-      characters. */ 
-      int t = si->uart->US_RHR;
-      cChar = t & 0xFF; 
-      xTaskWokenByPost = si->rxQueue->sendToBackFromISR( &cChar, xTaskWokenByPost );
-    }
-
-    xTaskWokenByTx = xTaskWokenByTx || xTaskWokenByTxThis; 
-    xTaskWokenByPost = xTaskWokenByPost || xTaskWokenByPostThis; 
+    else // Queue empty, nothing to send so turn off the Tx interrupt.
+      si->uart->US_IDR = AT91C_US_TXRDY; 
+  } 
+   
+  if( status & AT91C_US_RXRDY ) 
+  { 
+    /* The interrupt was caused by a character being received. Grab the 
+    character from the RHR and place it in the queue or received  
+    characters. */ 
+    int t = si->uart->US_RHR;
+    cChar = t & 0xFF; 
+    xTaskWokenByPost = si->rxQueue->sendFromISR( &cChar, xTaskWokenByPost );
   }
+
+  xTaskWokenByTx = xTaskWokenByTx || xTaskWokenByTxThis; 
+  xTaskWokenByPost = xTaskWokenByPost || xTaskWokenByPostThis; 
    
   /* End the interrupt in the AIC. */ 
   AT91C_BASE_AIC->AIC_EOICR = 0;
@@ -88,17 +75,22 @@ void SerialIsr_Handler( void )
 	}
 }
 
-void SerialIsr_Wrapper( void )
+void Serial0Isr_Wrapper( void )
 {
-	/* Save the context of the interrupted task. */
-	portSAVE_CONTEXT();
+  portSAVE_CONTEXT(); // Save the context of the interrupted task.
+  /* Call the handler to do the work.  This must be a separate
+  function to ensure the stack frame is set up correctly. */
+  SerialIsr_Handler(0);
+  portRESTORE_CONTEXT(); // Restore the context of whichever task will execute next.
+}
 
-	/* Call the handler to do the work.  This must be a separate
-	function to ensure the stack frame is set up correctly. */
-	SerialIsr_Handler();
-
-	/* Restore the context of whichever task will execute next. */
-	portRESTORE_CONTEXT();
+void Serial1Isr_Wrapper( void )
+{
+  portSAVE_CONTEXT(); // Save the context of the interrupted task.
+  /* Call the handler to do the work.  This must be a separate
+  function to ensure the stack frame is set up correctly. */
+  SerialIsr_Handler(1);
+  portRESTORE_CONTEXT(); // Restore the context of whichever task will execute next.
 }
 
 
