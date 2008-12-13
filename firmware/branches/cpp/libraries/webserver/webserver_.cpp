@@ -22,11 +22,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#define HTTP_OK "HTTP/1.0 200 OK\r\nContent-type: "
-#define HTTP_CONTENT_HTML "text/html\r\n\r\n"
-#define HTTP_CONTENT_PLAIN "text/plain\r\n\r\n"
-#define HTTP_PORT 80
-
 void webServerLoop(void* parameters);
 WebServer* WebServer::_instance = 0;
 
@@ -42,6 +37,17 @@ WebServer* WebServer::get()
   if( !_instance )
     _instance = new WebServer();
   return _instance;
+}
+
+bool WebServer::route(WebHandler* handler)
+{
+  if( handler_count < MAX_WEB_HANDLERS )
+  {
+    handlers[handler_count++] = handler;
+    return true;
+  }
+  else
+    return false;
 }
 
 /*
@@ -65,7 +71,7 @@ void webServerLoop(void* parameters)
     {
       ws->hits++;
       HttpMethod method;
-      request->readLine( ws->requestBuf, REQUEST_SIZE_MAX ); 
+      request->readLine( ws->requestBuf, REQUEST_SIZE_MAX );
       char* address = ws->getRequestAddress( ws->requestBuf, REQUEST_SIZE_MAX, &method );
       ws->processRequest( request, method, address );
       delete request;
@@ -78,6 +84,9 @@ void webServerLoop(void* parameters)
   Handle a new web request.
   If you want to create a new webserver, you can inherit from WebServer and re-implement
   this function to provide new functionality.
+
+  At this point, the request has had the first line read from it to determine the path and the method
+  which are passed into you.  
 
   \b Example
   \code
@@ -229,7 +238,34 @@ int WebServer::getBody( TcpSocket* socket, char* requestBuffer, int maxSize )
   return bufferRead;
 }
 
+// Default empty implementations for WebHandler
+bool WebHandler::get( char* path )
+{
+ (void)path;
+ return false;
+}
 
+bool WebHandler::post( char* path, char* body, int len )
+{
+  (void)path;
+  (void)body;
+  (void)len;
+  return false;
+}
+
+bool WebHandler::put( char* path, char* body, int len )
+{
+  (void)path;
+  (void)body;
+  (void)len;
+  return false;
+}
+
+bool WebHandler::del( char* path )
+{
+ (void)path;
+ return false;
+}
 
 
 

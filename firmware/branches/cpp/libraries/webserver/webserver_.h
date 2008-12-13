@@ -23,13 +23,12 @@
 #include "rtos_.h"
 #include "tcpserver.h"
 #include "tcpsocket.h"
+#include "http.h"
 
 #define MAX_FORM_ELEMENTS 10
 #define MAX_WEB_HANDLERS  5
 #define REQUEST_SIZE_MAX  256
 #define RESPONSE_SIZE_MAX 1000
-
-enum HttpMethod {HTTP_GET, HTTP_PUT, HTTP_POST, HTTP_DELETE};
 
 /**
   A structure that represents a key-value pair in an HTML form.
@@ -69,7 +68,7 @@ class WebServer
 {
   public:
     static WebServer* get();
-    int route();
+    bool route(WebHandler* handler);
     bool setListenPort(int port);
     int getListenPort();
     void sendResponse();
