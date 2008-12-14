@@ -26,7 +26,7 @@
 #include "http.h"
 
 #define MAX_FORM_ELEMENTS 10
-#define MAX_WEB_HANDLERS  5
+#define MAX_WEB_RESPONDERS  5
 #define REQUEST_SIZE_MAX  256
 #define RESPONSE_SIZE_MAX 1000
 
@@ -53,7 +53,10 @@ typedef struct
   int count;                                   /**< The number of form elements contained in this form. */
 } HtmlForm;
 
-class WebHandler
+/**
+  Helper class to respond to WebServer requests.
+*/
+class WebResponder
 {
   public:
     virtual const char* address() { return ""; }
@@ -61,14 +64,24 @@ class WebHandler
     virtual bool post( char* path, char* body, int len );
     virtual bool put( char* path, char* body, int len );
     virtual bool del( char* path );
-    virtual ~WebHandler( ) { }
+    void setResponseSocket( TcpSocket* socket ) { response = socket; }
+    virtual ~WebResponder( ) { }
+
+  protected:
+    bool setResponseCode( int code );
+    bool addHeader( const char* type, const char* value, bool lastone = true );
+    TcpSocket* response; /**< The TcpSocket to respond on. */
 };
 
+/**
+  A simple webserver.
+  Also see \ref WebResponder.
+*/
 class WebServer
 {
   public:
     static WebServer* get();
-    bool route(WebHandler* handler);
+    bool route(WebResponder* handler);
     bool setListenPort(int port);
     int getListenPort();
     void sendResponse();
@@ -80,12 +93,12 @@ class WebServer
     friend void webServerLoop( void *parameters );
     Task* webServerTask;
     TcpServer tcpServer;
-    int listenPort, newListenPort, hits, handler_count;
+    int listenPort, newListenPort, hits, responder_count;
     char requestBuf[ REQUEST_SIZE_MAX ];
     char responseBuf[ RESPONSE_SIZE_MAX ];
 
     virtual void processRequest( TcpSocket* request, HttpMethod method, char* path );
-    WebHandler* handlers[MAX_WEB_HANDLERS];
+    WebResponder* responders[MAX_WEB_RESPONDERS];
     char* getRequestAddress( char* request, int length, HttpMethod* method );
     int getBody( TcpSocket* socket, char* requestBuffer, int maxSize );
 };
