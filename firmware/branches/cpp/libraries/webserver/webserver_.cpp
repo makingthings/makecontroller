@@ -27,7 +27,7 @@ WebServer* WebServer::_instance = 0;
 
 WebServer::WebServer()
 {
-  handler_count = hits = 0;
+  responder_count = hits = 0;
   listenPort = newListenPort = HTTP_PORT;
   webServerTask = new Task(webServerLoop, "WebServ", 800, this, 3);
 }
@@ -39,11 +39,11 @@ WebServer* WebServer::get()
   return _instance;
 }
 
-bool WebServer::route(WebHandler* handler)
+bool WebServer::route(WebResponder* handler)
 {
-  if( handler_count < MAX_WEB_HANDLERS )
+  if( responder_count < MAX_WEB_RESPONDERS )
   {
-    handlers[handler_count++] = handler;
+    responders[responder_count++] = handler;
     return true;
   }
   else
@@ -100,14 +100,15 @@ void webServerLoop(void* parameters)
 void WebServer::processRequest( TcpSocket* request, HttpMethod method, char* path )
 {
   bool responded = false;
-  if ( handler_count )
+  if ( responder_count )
   {
     int i;
-    for ( i = 0; i < handler_count; i++ )
+    for ( i = 0; i < responder_count; i++ )
     {
-      WebHandler* hp = handlers[ i ];
+      WebResponder* hp = responders[ i ];
       if ( strncmp( hp->address(), path, strlen( hp->address() ) ) == 0 )
       {
+        hp->setResponseSocket(request);
         switch(method)
         {
           case HTTP_GET:
@@ -238,14 +239,14 @@ int WebServer::getBody( TcpSocket* socket, char* requestBuffer, int maxSize )
   return bufferRead;
 }
 
-// Default empty implementations for WebHandler
-bool WebHandler::get( char* path )
+// Default empty implementations for WebResponder
+bool WebResponder::get( char* path )
 {
  (void)path;
  return false;
 }
 
-bool WebHandler::post( char* path, char* body, int len )
+bool WebResponder::post( char* path, char* body, int len )
 {
   (void)path;
   (void)body;
@@ -253,7 +254,7 @@ bool WebHandler::post( char* path, char* body, int len )
   return false;
 }
 
-bool WebHandler::put( char* path, char* body, int len )
+bool WebResponder::put( char* path, char* body, int len )
 {
   (void)path;
   (void)body;
@@ -261,10 +262,34 @@ bool WebHandler::put( char* path, char* body, int len )
   return false;
 }
 
-bool WebHandler::del( char* path )
+bool WebResponder::del( char* path )
 {
  (void)path;
  return false;
+}
+
+bool WebResponder::setResponseCode( int code )
+{
+  if(response == NULL)
+    return false;
+  char temp[26];
+  sprintf(temp, "HTTP 1.0 %d OK\r\n");
+  int written = response->write(temp, strlen(temp));
+  return (written != 0) ? true : false;
+}
+
+bool WebResponder::addHeader( const char* type, const char* value, bool lastone )
+{
+  if(response == NULL)
+    return false;
+  int len = strlen(type) + strlen(value);
+  char temp[len + 6];
+  if( lastone )
+    sprintf(temp, "%s: %s\r\n\r\n");
+  else
+    sprintf(temp, "%s: %s\r\n");
+  int written = response->write(temp, strlen(temp));
+  return (written != 0) ? true : false;
 }
 
 
