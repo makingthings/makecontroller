@@ -68,8 +68,8 @@ class Queue
 public:
   Queue( uint length, uint itemSize );
   ~Queue( );
-  int sendToFront( void* itemToQueue, int timeout );
-  int sendToBack( void* itemToQueue, int timeout );
+
+  int send( void* itemToQueue, int timeout );
   int receive( void* buffer, int timeout );
   int msgsAvailable( );
   int sendFromISR( void* itemToSend, int taskPreviouslyWoken );

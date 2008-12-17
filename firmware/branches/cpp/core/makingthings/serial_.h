@@ -72,7 +72,7 @@ class Serial
     int bytesAvailable( );
     bool bytesAvailableBool();
     int read( char* data, int length, int timeout = 0 );
-    char read( );
+    char read( int timeout = 0 );
     int readDMA( char* data, int length, int timeout = 0 );
 
     void flush( );

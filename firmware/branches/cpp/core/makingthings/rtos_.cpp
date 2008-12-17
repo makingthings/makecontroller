@@ -162,12 +162,7 @@ Queue::~Queue( )
   vQueueDelete( _q );
 }
 
-int Queue::sendToFront( void* itemToQueue, int timeout )
-{
-  return xQueueSend( _q, itemToQueue, timeout / portTICK_RATE_MS );
-}
-
-int Queue::sendToBack( void* itemToQueue, int timeout )
+int Queue::send( void* itemToQueue, int timeout )
 {
   return xQueueSend( _q, itemToQueue, timeout / portTICK_RATE_MS );
 }
