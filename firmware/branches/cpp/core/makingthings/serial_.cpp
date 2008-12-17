@@ -311,7 +311,7 @@ int Serial::write( char* data, int length, int timeout )
   Internal* sp = &internals[ _channel ];
   while ( length ) // Do the business
   {
-    if( sp->txQueue->sendToBack( data++, timeout ) == 0 ) 
+    if( sp->txQueue->send( data++, timeout ) == 0 ) 
       return CONTROLLER_ERROR_QUEUE_ERROR;
     length--;
   }
@@ -401,9 +401,15 @@ int Serial::readDMA( char* data, int length, int timeout )
   return retval;
 }
 
-char Serial::read( )
+char Serial::read( int timeout )
 {
-  return 0;
+  Internal* sp = &internals[ _channel ];
+  char c;
+  // Do the business
+  if( sp->rxQueue->receive( &c, timeout ) == 0 )
+    return 0;
+  else
+    return c;
 }
 
 /**

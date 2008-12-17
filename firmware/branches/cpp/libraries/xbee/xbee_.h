@@ -214,14 +214,15 @@ class XBeePacket
 {
 public:
   XBeePacket( );
-  XBeePacket( uint8 frameID, uint16 destination, uint8 options, uint8* data, uint8 datalength ); // tx16
-  XBeePacket( uint8 frameID, uint64 destination, uint8 options, uint8* data, uint8 datalength ); // tx64
-  XBeePacket( uint8 frameID, char* cmd, int value ); // at cmd
+  void tx16( uint8 frameID, uint16 destination, uint8 options, uint8* data, uint8 datalength ); // tx16
+  void tx64( uint8 frameID, uint64 destination, uint8 options, uint8* data, uint8 datalength ); // tx64
+  void atCmd( uint8 frameID, char* cmd, int value ); // at cmd
   ~XBeePacket( );
   bool get( int timeout = 0 );
   bool send( int datalength = 0 );
   void reset( );
   XBeeApiId type();
+  bool setPacketApiMode( bool enabled );
   bool unpackRX16( uint16* srcAddress, uint8* sigstrength = 0, uint8* options = 0, uint8** data = 0, uint8* datalength = 0 );
   bool unpackRX64( uint64* srcAddress, uint8* sigstrength = 0, uint8* options = 0, uint8** data = 0, uint8* datalength = 0  );
   bool unpackIO16( uint16* srcAddress, uint8* sigstrength = 0, uint8* options = 0, int* samples = 0 );
@@ -254,12 +255,11 @@ public:
     int rxState;     /**< Used internally by XBee_GetPacket() to keep track of the parse state. */
     int length;      /**< The length of a packet - only useful after a successful call to XBee_GetPacket().  */
     int index;       /**< Used internally by XBee_GetPacket() to keep track of the current length.  */
-  } __attribute__((packed)) Packet;
-  Packet p;
+  } __attribute__((packed)) PacketData;
+  PacketData packetData;
 
 protected:
   Serial* ser;
-  void commonInit();
   bool getIOValues( int *inputs );
 };
 
