@@ -14,6 +14,7 @@
         <folder Name="MakingThings" >
           <file file_name="../../core/makingthings/analogin_isr.c" Name="analogin_isr.c" >
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
           </file>
           <file file_name="../../core/makingthings/analogin.c" Name="analogin.c" />
           <file file_name="../../core/makingthings/analogin.h" Name="analogin.h" />
@@ -21,24 +22,21 @@
           <file file_name="../../core/makingthings/controller.h" Name="controller.h" />
           <file file_name="../../core/makingthings/debugosc.c" Name="debugosc.c" />
           <file file_name="../../core/makingthings/error.h" Name="error.h" />
-          <file file_name="../../core/makingthings/eeprom.c" Name="eeprom.c" />
-          <file file_name="../../core/makingthings/eeprom.h" Name="eeprom.h" />
           <file file_name="../../core/makingthings/FreeRTOSConfig.h" Name="FreeRTOSConfig.h" />
           <file file_name="../../core/makingthings/fasttimer.c" Name="fasttimer.c" />
           <file file_name="../../core/makingthings/fasttimer.h" Name="fasttimer.h" />
           <file file_name="../../core/makingthings/fasttimer_internal.h" Name="fasttimer_internal.h" />
           <file file_name="../../core/makingthings/fasttimer_isr.c" Name="fasttimer_isr.c" >
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
           </file>
           <file file_name="../../core/freertos/portable/MemMang/heap_2.c" Name="heap_2.c" />
           <file file_name="../../core/makingthings/led.h" Name="led.h" />
           <file file_name="../../core/makingthings/io.c" Name="io.c" />
           <file file_name="../../core/makingthings/io.h" Name="io.h" />
           <file file_name="../../core/makingthings/led.c" Name="led.c" />
-          <file file_name="../../core/makingthings/network.h" Name="network.h" />
           <file file_name="../../core/makingthings/lwipopts.h" Name="lwipopts.h" />
           <file file_name="../../core/makingthings/main.c" Name="main.c" />
-          <file file_name="../../core/makingthings/network.c" Name="network.c" />
           <file file_name="../../core/makingthings/osc_patternmatch.h" Name="osc_patternmatch.h" />
           <file file_name="../../core/makingthings/osc.c" Name="osc.c" />
           <file file_name="../../core/makingthings/osc.h" Name="osc.h" />
@@ -47,30 +45,16 @@
           <file file_name="../../core/makingthings/pwm.c" Name="pwm.c" />
           <file file_name="../../core/makingthings/pwm.h" Name="pwm.h" />
           <file file_name="../../core/makingthings/rtos.c" Name="rtos.c" />
-          <file file_name="../../core/makingthings/serial_isr.c" Name="serial_isr.c" >
-            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
-          </file>
-          <file file_name="../../core/makingthings/serial.c" Name="serial.c" />
-          <file file_name="../../core/makingthings/serial.h" Name="serial.h" />
-          <file file_name="../../core/makingthings/serial_internal.h" Name="serial_internal.h" />
-          <file file_name="../../core/makingthings/system.h" Name="system.h" />
           <file file_name="../../core/makingthings/spi.c" Name="spi.c" />
           <file file_name="../../core/makingthings/spi.h" Name="spi.h" />
-          <file file_name="../../core/makingthings/system.c" Name="system.c" />
           <file file_name="../../core/makingthings/types.h" Name="types.h" />
           <file file_name="../../core/makingthings/timer.c" Name="timer.c" />
           <file file_name="../../core/makingthings/timer.h" Name="timer.h" />
           <file file_name="../../core/makingthings/timer_internal.h" Name="timer_internal.h" />
           <file file_name="../../core/makingthings/timer_isr.c" Name="timer_isr.c" >
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
           </file>
-          <file file_name="../../core/makingthings/USBIsr.c" Name="USBIsr.c" >
-            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
-          </file>
-          <file file_name="../../core/makingthings/usb.c" Name="usb.c" />
-          <file file_name="../../core/makingthings/usb.h" Name="usb.h" />
-          <file file_name="../../core/makingthings/USB-CDC.c" Name="USB-CDC.c" />
-          <file file_name="../../core/makingthings/USB-CDC.h" Name="USB-CDC.h" />
           <file file_name="../../core/makingthings/udpsocket.h" Name="udpsocket.h" />
           <file file_name="../../core/makingthings/io_cpp.cpp" Name="io_cpp.cpp" />
           <file file_name="../../core/makingthings/io_cpp.h" Name="io_cpp.h" />
@@ -97,6 +81,13 @@
           <file file_name="../../core/makingthings/spi_cpp.cpp" Name="spi_cpp.cpp" />
           <file file_name="../../core/makingthings/eeprom_.h" Name="eeprom_.h" />
           <file file_name="../../core/makingthings/eeprom_.cpp" Name="eeprom_.cpp" />
+          <file file_name="../../core/makingthings/serial_isr_.cpp" Name="serial_isr_.cpp" >
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
+          </file>
+          <file file_name="../../core/makingthings/serial_.cpp" Name="serial_.cpp" />
+          <file file_name="../../core/makingthings/serial_.h" Name="serial_.h" />
+          <file file_name="../../core/makingthings/http.h" Name="http.h" />
         </folder>
         <folder Name="FreeRTOS" >
           <configuration c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />
@@ -109,6 +100,7 @@
           <file file_name="../../core/freertos/portable/GCC/ARM7_AT91SAM7S/port.c" Name="port.c" />
           <file file_name="../../core/freertos/portable/GCC/ARM7_AT91SAM7S/portISR.c" Name="portISR.c" >
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
           </file>
           <file file_name="../../core/freertos/include/portable.h" Name="portable.h" />
           <file file_name="../../core/freertos/include/semphr.h" Name="semphr.h" />
@@ -137,6 +129,7 @@
           <file file_name="../../core/lwip/src/core/pbuf.c" Name="pbuf.c" />
           <file file_name="../../core/makingthings/SAM7_EMAC_ISR.c" Name="SAM7_EMAC_ISR.c" >
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
           </file>
           <file file_name="../../core/makingthings/SAM7_EMAC.c" Name="SAM7_EMAC.c" />
           <file file_name="../../core/makingthings/SAM7_EMAC.h" Name="SAM7_EMAC.h" />
@@ -152,15 +145,14 @@
           <file file_name="../../core/lwip/src/core/init.c" Name="init.c" />
         </folder>
         <folder Name="Startup" >
-          <file file_name="../../core/startup/AT91SAM7_Startup.s" Name="AT91SAM7_Startup.s" />
           <file file_name="../../core/startup/AT91SAM7_Target.js" Name="AT91SAM7_Target.js" >
             <configuration Name="Common" file_type="Reset Script" />
           </file>
           <file file_name="../../core/startup/AT91SAM7S256_MemoryMap.xml" Name="AT91SAM7S256_MemoryMap.xml" />
-          <file file_name="../../core/startup/crt0.s" Name="crt0.s" />
           <file file_name="../../core/startup/flash_placement.xml" Name="flash_placement.xml" />
           <file file_name="../../core/freertos/portable/GCC/ARM7_AT91SAM7S/AT91SAM7X256.h" Name="AT91SAM7X256.h" />
           <file file_name="../../core/startup/extras_cpp.cpp" Name="extras_cpp.cpp" />
+          <file file_name="../../core/startup/Cstartup_SAM7.c" Name="Cstartup_SAM7.c" />
         </folder>
         <folder Name="USB" >
           <file file_name="../../core/usb/common/cdc/CDCSetControlLineStateRequest.c" Name="CDCSetControlLineStateRequest.c" />
@@ -179,6 +171,7 @@
           <file file_name="../../core/usb/device/core/USBDDriverCallbacks_InterfaceSettingChanged.c" Name="USBDDriverCallbacks_InterfaceSettingChanged.c" />
           <file file_name="../../core/usb/device/core/USBD_UDP.c" Name="USBD_UDP.c" >
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
           </file>
           <file file_name="../../core/usb/device/core/USBDCallbacks_Initialized.c" Name="USBDCallbacks_Initialized.c" />
           <file file_name="../../core/usb/device/core/USBDCallbacks_Reset.c" Name="USBDCallbacks_Reset.c" />
@@ -206,8 +199,6 @@
         <file file_name="../../libraries/servo/servo.h" Name="servo.h" />
         <file file_name="../../libraries/stepper/stepper.h" Name="stepper.h" />
         <file file_name="../../libraries/stepper/stepper.c" Name="stepper.c" />
-        <file file_name="../../libraries/xbee/xbee.h" Name="xbee.h" />
-        <file file_name="../../libraries/xbee/xbee.c" Name="xbee.c" />
         <file file_name="../../libraries/appled/appled_cpp.h" Name="appled_cpp.h" />
         <file file_name="../../libraries/appled/appled_.cpp" Name="appled_.cpp" />
         <file file_name="../../libraries/webserver/webserver_.h" Name="webserver_.h" />
@@ -215,7 +206,7 @@
       </folder>
     </folder>
     <configuration arm_target_loader_reset_after_download="Yes" Target="AT91SAM7X256" build_intermediate_directory="intermediate" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" target_reset_script="FLASHReset()" build_output_directory="output" arm_target_flash_loader_type="Comms Channel Loader" Name="THUMB Flash Debug" />
-    <configuration Target="AT91SAM7X256" arm_simulator_memory_simulation_parameter="0x40000;0x10000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" c_user_include_directories=".;../controller/makingthings;../controller/makingthings/testing;../appboard/makingthings;../controller/freertos/include;../controller/lwip/src/include;../controller/lwip/contrib/port/FreeRTOS/AT91SAM7X;../controller/freertos/portable/GCC/ARM7_AT91SAM7S;../controller/lwip/src/include/ipv4" gcc_optimization_level="Optimize For Size" c_additional_options="-D CROSSWORKS_BUILD" build_debug_information="No" linker_printf_width_precision_supported="Yes" Name="THUMB Flash Release" />
+    <configuration Target="AT91SAM7X256" arm_simulator_memory_simulation_parameter="0x40000;0x10000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" c_user_include_directories=".;../../core/makingthings;../../core/freertos/include;../../core/lwip/src/include;../../core/lwip/contrib/port/FreeRTOS/AT91SAM7X;../../core/freertos/portable/GCC/ARM7_AT91SAM7S;../../core/lwip/src/include/ipv4;../../libraries/appled;../../libraries/digitalin;../../libraries/digitalout;../../libraries/dipswitch;../../libraries/motor;../../libraries/pwmout;../../libraries/servo;../../libraries/stepper;../../libraries/webclient;../../libraries/webserver;../../libraries/xbee;../../core/usb/device/cdc-serial;../../core/usb/device/core;../../core/usb/common/cdc;../../core/usb/common/core" gcc_optimization_level="Optimize For Size" c_additional_options="-D CROSSWORKS_BUILD" build_debug_information="No" linker_printf_width_precision_supported="Yes" Name="THUMB Flash Release" />
     <configuration Target="AT91SAM7X256" arm_simulator_memory_simulation_parameter="0x40000;0x10000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" c_user_include_directories=".;../../core/makingthings;../../core/freertos/include;../../core/lwip/src/include;../../core/lwip/contrib/port/FreeRTOS/AT91SAM7X;../../core/freertos/portable/GCC/ARM7_AT91SAM7S;../../core/lwip/src/include/ipv4;../../libraries/appled;../../libraries/digitalin;../../libraries/digitalout;../../libraries/dipswitch;../../libraries/motor;../../libraries/pwmout;../../libraries/servo;../../libraries/stepper;../../libraries/webclient;../../libraries/webserver;../../libraries/xbee;../../core/usb/device/cdc-serial;../../core/usb/device/core;../../core/usb/common/cdc;../../core/usb/common/core" gcc_optimization_level="None" c_additional_options="-D CROSSWORKS_BUILD" linker_printf_width_precision_supported="Yes" Name="THUMB Flash Debug" />
   </project>
   <configuration build_intermediate_directory="intermediate" build_remove_unused_symbols="No" build_quietly="Yes" link_use_multi_threaded_libraries="No" inherited_configurations="THUMB;Flash;Debug" arm_linker_fiq_stack_size="256" build_output_directory="output" gcc_optimization_level="None" c_additional_options="-fomit-frame-pointer" arm_linker_stack_size="256" Name="THUMB Flash Debug" arm_linker_svc_stack_size="256" arm_linker_heap_size="512" />

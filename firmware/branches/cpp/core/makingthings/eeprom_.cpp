@@ -132,17 +132,17 @@ int Eeprom::readBlock(int address, uchar* data, int length)
   spi->lock();
   ready( );
 
-  unsigned char c[ count + 4 ];
+  unsigned char c[ length + 4 ];
   c[ 0 ] = EEPROM_INSTRUCTION_READ;
   c[ 1 ] = (unsigned char)( address >> 8 );
   c[ 2 ] = (unsigned char)( address & 0xFF );
   c[ 3 ] = 0;
   
-  spi->readWriteBlock( c, count + 3 );
+  spi->readWriteBlock( c, length + 3 );
 
   int i;
-  for ( i = 0; i < count; i++ )
-    buffer[ i ] = c[ i + 3 ];
+  for ( i = 0; i < length; i++ )
+    data[ i ] = c[ i + 3 ];
 
   spi->unlock();
 
@@ -171,17 +171,17 @@ int Eeprom::writeBlock(int address, uchar *data, int length)
   ready( );
   writeEnable();    
 
-  uchar c[ count + 4 ];
+  uchar c[ length + 4 ];
   c[ 0 ] = EEPROM_INSTRUCTION_WRITE;
   c[ 1 ] = (unsigned char)( address >> 8 );
   c[ 2 ] = (unsigned char)( address & 0xFF );
   c[ 3 ] = 0;
 
   int i;
-  for ( i = 0; i < count; i++ )
-    c[ i + 3 ] = buffer[ i ];
+  for ( i = 0; i < length; i++ )
+    c[ i + 3 ] = data[ i ];
   
-  spi->readWriteBlock( c, 3 + count );
+  spi->readWriteBlock( c, 3 + length );
   spi->unlock();
 
   return CONTROLLER_OK;
