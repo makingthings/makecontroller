@@ -28,6 +28,12 @@
 #ifndef SPI__H
 #define SPI__H
 
+/** 
+   Communicate with peripheral devices via SPI.
+   Many external devices use the <b>Serial Peripheral Interface</b> to communicate
+   with other devices.  The Make Controller SPI interface has 4 channels, although 2 of these
+   are not available since they're used internally.  Channels 2 and 3 can still be used, though.
+*/
 class SPI
 {
   public:

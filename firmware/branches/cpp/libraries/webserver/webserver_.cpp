@@ -239,13 +239,30 @@ int WebServer::getBody( TcpSocket* socket, char* requestBuffer, int maxSize )
   return bufferRead;
 }
 
-// Default empty implementations for WebResponder
+/**
+  Method called when an HTTP GET request has arrived.
+  Re-implement this in your class that inherits from WebHandler to
+  provide the desired functionality.
+  
+  @param path This is the request path.  If the entire URL looked like
+  192.168.0.200/first/second/34, then path is "/first/second/34"
+*/
 bool WebResponder::get( char* path )
 {
  (void)path;
  return false;
 }
 
+/**
+  Method called when an HTTP POST request has arrived.
+  Re-implement this in your class that inherits from WebHandler to
+  provide the desired functionality.
+  
+  @param path This is the request path.  If the entire URL looked like
+  192.168.0.200/first/second/34, then path is "/first/second/34"
+  @param body The body data of the POST request.
+  @param len How many bytes of data are in the body.
+*/
 bool WebResponder::post( char* path, char* body, int len )
 {
   (void)path;
@@ -254,6 +271,16 @@ bool WebResponder::post( char* path, char* body, int len )
   return false;
 }
 
+/**
+  Method called when an HTTP PUT request has arrived.
+  Re-implement this in your class that inherits from WebHandler to
+  provide the desired functionality.
+  
+  @param path This is the request path.  If the entire URL looked like
+  192.168.0.200/first/second/34, then path is "/first/second/34"
+  @param body The body data of the PUT request.
+  @param len How many bytes of data are in the body.
+*/
 bool WebResponder::put( char* path, char* body, int len )
 {
   (void)path;
@@ -262,12 +289,43 @@ bool WebResponder::put( char* path, char* body, int len )
   return false;
 }
 
+/**
+  Method called when an HTTP DELETE request has arrived.
+  Re-implement this in your class that inherits from WebHandler to
+  provide the desired functionality.
+  
+  @param path This is the request path.  If the entire URL looked like
+  192.168.0.200/first/second/34, then path is "/first/second/34"
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 bool WebResponder::del( char* path )
 {
  (void)path;
  return false;
 }
 
+/**
+  Set the code for your response.
+  This is usually the first thing you want to do any of your handlers.  200
+  is the code that generally means OK.  There are a variety of HTTP response codes
+  to choose from, though - .
+  
+  @param code The code for your response.
+  @return True if it was successfully written, otherwise false.
+  
+  \b Example
+  \code
+  bool MyResponder::get( char* path ) // method that gets called on an HTTP GET
+  {
+   setResponseCode(200); // indicate everything is OK
+   return true;
+  }
+  \endcode
+*/
 bool WebResponder::setResponseCode( int code )
 {
   if(response == NULL)
@@ -278,6 +336,30 @@ bool WebResponder::setResponseCode( int code )
   return (written != 0) ? true : false;
 }
 
+/**
+  Add a header to your response.
+  A variety of HTTP headers can provide more info about your response.  A common one
+  is to specify the content type...could be 'text/plain' or 'text/html' for example.
+  
+  @param type The type of header to add.
+  @param value The value for the header.
+  @param lastone Whether this header is the last header you're adding.  This is true 
+  by default, so if you're adding more than one header, be sure to set it false for all 
+  calls before the last one.  This is so the headers can be properly separated from 
+  the body of the reponse.
+  
+  \b Example
+  \code
+  bool MyResponder::get( char* path ) // method that gets called on an HTTP GET
+  {
+   setResponseCode(200); // indicate everything is OK
+   addHeader("Something", "blah", false);
+   addHeader("Content-type", "text/plain"); // indicate we're sending back plain text
+                                            // and that this is the last header
+   return true;
+  }
+  \endcode
+*/
 bool WebResponder::addHeader( const char* type, const char* value, bool lastone )
 {
   if(response == NULL)

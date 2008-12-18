@@ -20,6 +20,9 @@
 
 #define JSON_MAX_DEPTH 20
 
+/**
+  Encode JSON strings.
+*/
 class JsonEncoder
 {
 public:
@@ -53,6 +56,9 @@ protected:
   EncodeState state;
 };
 
+/**
+  Decode JSON strings.
+*/
 class JsonDecoder
 {
 public:

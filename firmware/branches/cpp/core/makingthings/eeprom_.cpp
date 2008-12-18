@@ -35,6 +35,27 @@ Eeprom::Eeprom( )
   spi->configure( 8, 4, 0, 1 );
 }
 
+/**
+  Get a reference to the Eeprom system.
+  You'll need to go this anytime you want to do anything with the Eeprom.  The first
+  call to get() initializes the Eeprom system.
+  
+  \b Example
+  \code
+  Eeprom* e = Eeprom::get( ); // get our reference
+  int myvalue = e->read(32); // now we can read from address 32
+  
+  // or if we want to be sneaky, we can chain them together
+  int myvalue =  Eeprom::get()->read(32);
+  \endcode
+*/
+Eeprom* Eeprom::get( )
+{
+  if( !_instance )
+    _instance = new Eeprom();
+  return _instance;
+}
+
 void Eeprom::writeEnable( )
 {
   uchar c = EEPROM_INSTRUCTION_WREN;
@@ -54,6 +75,17 @@ void Eeprom::ready( )
   } while ( !status );
 }
 
+/**
+  Read an individual character from EEPROM.
+  @param address The address to read from.
+  @return The value stored at that address.
+  
+  \b Example
+  \code
+  Eeprom* e = Eeprom::get(); // get a reference to the EEPROM
+  int myvalue = e->read(32); // read from address 32
+  \endcode
+*/
 int Eeprom::read( int address )
 {
   int val;
@@ -61,12 +93,38 @@ int Eeprom::read( int address )
   return val;
 }
 
+/**
+  Write an individual character to EEPROM.
+  @param address The address to write to.
+  @param value The value to store
+  
+  \b Example
+  \code
+  Eeprom* e = Eeprom::get( ); // get a reference to the EEPROM
+  int valueToStore = 95;
+  e->write(32, valueToStore);
+  \endcode
+*/
 void Eeprom::write(int address, int value)
 {
   writeBlock( address, (uchar*)&value, 4 );
 }
 
-int Eeprom::readBlock(int address, uchar* buffer, int count)
+/**
+  Read a block of data from EEPROM.
+  @param address The address to start reading from
+  @param data Where to read the data into
+  @param length How many bytes of data to read
+  @return 0 on OK, otherwise less than 0
+  
+  \b Example
+  \code
+  uchar mydata[24];
+  Eeprom* e = Eeprom::get( ); // get a reference to the EEPROM
+  e->readBlock(32, mydata, 24);
+  \endcode
+*/
+int Eeprom::readBlock(int address, uchar* data, int length)
 {
   if ( address < 0 || address > EEPROM_SIZE )
     return CONTROLLER_ERROR_BAD_ADDRESS;
@@ -91,7 +149,20 @@ int Eeprom::readBlock(int address, uchar* buffer, int count)
   return CONTROLLER_OK;
 }
 
-int Eeprom::writeBlock(int address, uchar *buffer, int count)
+/**
+  Write a block of data to EEPROM.
+  @param address The address to start writing at
+  @param data The data to write
+  @param length How many bytes of data to write
+  
+  \b Example
+  \code
+  uchar mydata[24];
+  Eeprom* e = Eeprom::get( ); // get a reference to the EEPROM
+  e->writeBlock(32, mydata, 24);
+  \endcode
+*/
+int Eeprom::writeBlock(int address, uchar *data, int length)
 {
   if ( address < 0 || address >= EEPROM_SIZE )
     return CONTROLLER_ERROR_BAD_ADDRESS;

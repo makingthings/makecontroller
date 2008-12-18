@@ -1,16 +1,13 @@
 #
-# MAKINGTHINGS MAKE FILE FOR THE MAKE CONTROLLER
-# Each project may be named uniquely 
-# (See Output variable below) and possibly have different source files
-# Dependencies are automatically created by the compiler (into .d files) and 
-# included in the makefile 
+# MakingThings -  Makefile for the Make Controller
 #
 
-# Name the output files here
-OUTPUT = heavy
-
-# this rule says that when "make" is typed the bin file is created 		       
-all: output/$(OUTPUT).bin
+# the name for your project...will result in PROJECT_NAME.bin
+PROJECT_NAME = heavy
+# set DEBUG to -g to include debug info, otherwise leave blank
+DEBUG = 
+# available optimization levels: -O0, -O1, -O2, -O3, -Os
+OPTIMIZATION = -O2
 
 FREERTOS = ../../core/freertos
 LWIP = ../../core/lwip
@@ -29,21 +26,12 @@ THUMB_SRC= \
   $(MAKINGTHINGS)/main.c \
   $(MAKINGTHINGS)/eeprom.c \
   $(MAKINGTHINGS)/analogin.c \
-  $(MAKINGTHINGS)/serial.c \
   $(MAKINGTHINGS)/pwm.c \
   $(MAKINGTHINGS)/spi.c \
-  $(MAKINGTHINGS)/USB-CDC.c \
   $(MAKINGTHINGS)/rtos.c \
-  $(MAKINGTHINGS)/usb.c \
-  $(MAKINGTHINGS)/network.c \
-  $(MAKINGTHINGS)/system.c \
   $(MAKINGTHINGS)/io.c \
   $(MAKINGTHINGS)/timer.c \
   $(MAKINGTHINGS)/fasttimer.c \
-  $(MAKINGTHINGS)/debugosc.c \
-  $(MAKINGTHINGS)/osc.c \
-  $(MAKINGTHINGS)/osc_patternmatch.c \
-  $(LIBRARIES)/xbee/xbee.c \
   $(LIBRARIES)/servo/servo.c \
   $(LIBRARIES)/stepper/stepper.c \
   $(LIBRARIES)/dipswitch/dipswitch.c \
@@ -51,7 +39,6 @@ THUMB_SRC= \
   $(LIBRARIES)/pwmout/pwmout.c \
   $(LIBRARIES)/digitalin/digitalin.c \
   $(LIBRARIES)/digitalout/digitalout.c \
-  $(LIBRARIES)/webserver/webserver.c \
   $(LWIP)/src/core/tcp_out.c \
   $(LWIP)/src/core/ipv4/inet.c \
   $(LWIP)/src/core/mem.c \
@@ -106,6 +93,7 @@ CPP_THUMB_SRC = \
   ../../core/startup/extras_cpp.cpp \
   $(MAKINGTHINGS)/io_cpp.cpp \
   $(MAKINGTHINGS)/led_.cpp \
+  $(MAKINGTHINGS)/network_.cpp \
   $(MAKINGTHINGS)/tcpsocket.cpp \
   $(MAKINGTHINGS)/udpsocket.cpp \
   $(MAKINGTHINGS)/tcpserver.cpp \
@@ -114,8 +102,11 @@ CPP_THUMB_SRC = \
   $(MAKINGTHINGS)/osc_pattern.cpp \
   $(MAKINGTHINGS)/rtos_.cpp \
   $(MAKINGTHINGS)/usb_serial.cpp \
-  $(MAKINGTHINGS)/network_.cpp \
+  $(MAKINGTHINGS)/spi_cpp.cpp \
+  $(MAKINGTHINGS)/eeprom_.cpp \
   $(LIBRARIES)/appled/appled_.cpp \
+  $(MAKINGTHINGS)/serial_.cpp \
+  $(LIBRARIES)/json/json_.cpp \
   make_.cpp \
 
 # Source files that must be built in ARM mode.
@@ -125,11 +116,11 @@ ARM_SRC= \
   $(MAKINGTHINGS)/USBIsr.c \
   $(MAKINGTHINGS)/analogin_isr.c \
   $(MAKINGTHINGS)/fasttimer_isr.c \
-  $(MAKINGTHINGS)/serial_isr.c \
   $(MAKINGTHINGS)/timer_isr.c \
   $(USB)/device/core/USBD_UDP.c
   
-# CPP_ARM_SRC = 
+CPP_ARM_SRC = \
+  $(MAKINGTHINGS)/serial_isr_.cpp
   
 # All the include directories need to be appended here
 INCLUDEDIRS = \
@@ -145,7 +136,6 @@ INCLUDEDIRS = \
 -I$(LIBRARIES)/webserver  \
 -I$(LIBRARIES)/xbee  \
 -I$(MAKINGTHINGS)  \
--I$(MAKINGTHINGS)/testing  \
 -I$(LWIP)/src/include  \
 -I$(LWIP)/contrib/port/FreeRTOS/AT91SAM7X  \
 -I$(FREERTOS)/include  \
@@ -164,8 +154,6 @@ CPP=arm-elf-g++
 OBJCOPY=arm-elf-objcopy
 ARCH=arm-elf-ar
 CRT0=../../core/startup/AT91SAM7_Startup.s ../../core/startup/crt0.s
-DEBUG=
-OPTIM=-O2
 LDSCRIPT=../../core/startup/make-controller.ld
 
 # flags common to both c and c++
@@ -192,17 +180,19 @@ CPPFLAGS = ${C_AND_CPP_FLAGS}
 CPPFLAGS += -fno-rtti -fno-exceptions -fno-unwind-tables
 
 THUMB_FLAGS=-mthumb
-LINKER_FLAGS=-Xlinker -ooutput/$(OUTPUT).elf -Xlinker -M -Xlinker -Map=output/$(OUTPUT)_o.map
+LINKER_FLAGS=-Xlinker -ooutput/$(PROJECT_NAME).elf -Xlinker -M -Xlinker -Map=output/$(PROJECT_NAME)_o.map
 
 ARM_OBJ = $(ARM_SRC:.c=.o)
 THUMB_OBJ = $(THUMB_SRC:.c=.o)
 CPP_THUMB_OBJ = $(CPP_THUMB_SRC:.cpp=.o)
 CPP_ARM_OBJ = $(CPP_ARM_SRC:.cpp=.o)
 
-output/$(OUTPUT).bin : output/$(OUTPUT).elf
-	$(OBJCOPY) output/$(OUTPUT).elf -O binary output/$(OUTPUT).bin
+all: output/$(PROJECT_NAME).bin
+  
+output/$(PROJECT_NAME).bin : output/$(PROJECT_NAME).elf
+	$(OBJCOPY) output/$(PROJECT_NAME).elf -O binary output/$(PROJECT_NAME).bin
 	
-output/$(OUTPUT).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CPP_ARM_OBJ) $(CPP_THUMB_OBJ) $(CRT0)
+output/$(PROJECT_NAME).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CPP_ARM_OBJ) $(CPP_THUMB_OBJ) $(CRT0)
 	$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) $(CPP_ARM_OBJ) $(CPP_THUMB_OBJ) -nostartfiles -x assembler-with-cpp $(CRT0) $(LINKER_FLAGS)
 
 $(THUMB_OBJ) : %.o : %.c config.h
@@ -222,8 +212,8 @@ clean :
 	rm -f $(THUMB_OBJ)
 	rm -f $(CPP_ARM_OBJ)
 	rm -f $(CPP_THUMB_OBJ)
-	rm -f output/$(OUTPUT).elf
-	rm -f output/$(OUTPUT).bin
-	rm -f output/$(OUTPUT)_o.map
+	rm -f output/$(PROJECT_NAME).elf
+	rm -f output/$(PROJECT_NAME).bin
+	rm -f output/$(PROJECT_NAME)_o.map
 
 

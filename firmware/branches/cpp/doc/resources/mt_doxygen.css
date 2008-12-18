@@ -128,14 +128,22 @@ dl.el {
 }
 
 .fragment {
-	font-family: monospace, fixed;
-	font-size: 105%;
+	font-family: Monaco, monospace, fixed;
+	font-size: 95%;
+	-webkit-border-top-left-radius: 8px;
+	-webkit-border-top-right-radius: 8px;
+	-webkit-border-bottom-left-radius: 8px;
+	-webkit-border-bottom-right-radius: 8px;
+	-moz-border-radius-topleft: 8px;
+	-moz-border-radius-topright: 8px;
+	-moz-border-radius-bottomleft: 8px;
+	-moz-border-radius-bottomright: 8px;
 }
 
 pre.fragment {
-	border: 1px solid #CCCCCC;
-	background-color: #f5f5f5;
-	padding: 4px 6px;
+	background-color: #221E1E;
+	color: white;
+	padding: 6px 6px;
 	margin: 4px 8px 4px 2px;
 }
 
@@ -205,11 +213,11 @@ img.formulaInl {
 /* @group Code Colorization */
 
 span.keyword {
-	color: #008000
+	color: #A39FFF
 }
 
 span.keywordtype {
-	color: #604020
+	color: #A39FFF
 }
 
 span.keywordflow {
@@ -217,27 +225,27 @@ span.keywordflow {
 }
 
 span.comment {
-	color: #800000
+	color: #666666
 }
 
 span.preprocessor {
-	color: #806020
+	color: #6181D8
 }
 
 span.stringliteral {
-	color: #002080
+	color: #B3935C
 }
 
 span.charliteral {
-	color: #008080
+	color: #EE8B1D
 }
 
 span.vhdldigit { 
-	color: #ff00ff 
+	color: #C0C332 
 }
 
 span.vhdlchar { 
-	color: #000000 
+	color: #C0C332 
 }
 
 span.vhdlkeyword { 
@@ -380,7 +388,7 @@ hr {
 }
 
 .paramname {
-	color: #602020;
+	color: #9B2E49;
 	white-space: nowrap;
 }
 .paramname em {

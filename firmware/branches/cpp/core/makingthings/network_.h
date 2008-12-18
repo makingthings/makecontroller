@@ -7,6 +7,10 @@
 #ifdef MAKE_CTRL_NETWORK
 #include "rtos_.h"
 
+/**
+  The network system on the Controller.  
+  \ingroup Network
+*/
 class Network
 {
 public:
