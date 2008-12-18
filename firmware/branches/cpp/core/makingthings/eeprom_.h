@@ -23,19 +23,32 @@
 
 #define EEPROM Eeprom::get()
 
+/**
+  Persistent storage of 32k bytes of data.
+  If you want to store a little information that can be retrieved even after the board has 
+  been powered down, then Eeprom is for you.  You don't have a TON of space, but 32K is a good amount
+  for configuration info and even a tiny bit of logging.
+  
+  \section Usage
+  Since there's only one internal EEPROM system, access is granted through the Eeprom::get()
+  method.  So before any operations you'll need to use that to get a reference to it first.  See the
+  example for get() for a sample.
+  
+  The last 1k (1024) bytes of this space are reserved for Make Controller system
+  use, storing things like the board's IP address, serial number, build version, etc.  The symbol
+   \b EEPROM_SYSTEM_BASE provides the last available address before the reserved section, so
+  make sure that none of the addresses that you're writing to are greater than \b EEPROM_SYSTEM_BASE.
+  
+  Internally, Eeprom relies on \ref Spi, so activating Eeprom also activates \ref Spi.
+*/
 class Eeprom
 {
   public:
-    static Eeprom* get( )
-    {
-      if( !_instance )
-        _instance = new Eeprom();
-      return _instance;
-    }
+    static Eeprom* get( );
     int read(int address);
     void write(int address, int value);
-    int readBlock(int address, uchar* buffer, int count);
-    int writeBlock(int address, uchar *buffer, int count);
+    int readBlock(int address, uchar* data, int length);
+    int writeBlock(int address, uchar *data, int length);
 
   protected:
     Eeprom( );

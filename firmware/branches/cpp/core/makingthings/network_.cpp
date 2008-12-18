@@ -17,7 +17,20 @@ extern "C" {
 
 #include "eeprom_.h"
 
+/* MAC address definition.  The MAC address must be unique on the network. */
+char emacETHADDR0 = 0xAC;
+char emacETHADDR1 = 0xDE;
+char emacETHADDR2 = 0x48;
+char emacETHADDR3 = 0x55;
+char emacETHADDR4 = 0x0;
+char emacETHADDR5 = 0x0;
+
 void dnsCallback(const char *name, struct ip_addr *addr, void *arg);
+
+
+/** \defgroup Network Network
+  Parts of the Network group.
+*/
 
 Network::Network( )
 {
