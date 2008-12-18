@@ -14,7 +14,7 @@
 class Network
 {
 public:
-  Network( );
+  static Network* get( );
   int setAddress( int a0, int a1, int a2, int a3 );
   int setMask( int m0, int m1, int m2, int m3 );
   int setGateway( int g0, int g1, int g2, int g3 );
@@ -24,8 +24,11 @@ public:
   int getHostByName( const char *name );
   void setDhcp(bool enabled);
   bool getDhcp();
+  static bool addressToString( char* data, int address );
   
 protected:
+  Network( );
+  static Network* _instance; // the only instance of Network anywhere.
   void setDefaults();
   int setValid( int v );
   bool getValid( );

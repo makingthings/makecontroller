@@ -34,10 +34,10 @@
 */
 // lwIP socket addresses are formatted this way...
 #define IP_ADDRESS( a, b, c, d ) ( ( (int)a << 24 ) + ( (int)b << 16 ) + ( (int)c << 8 ) + (int)d )
-#define IP_ADDRESS_A( address )  ( ( (int)address >> 24 ) & 0xFF )
-#define IP_ADDRESS_B( address )  ( ( (int)address >> 16 ) & 0xFF ) 
-#define IP_ADDRESS_C( address )  ( ( (int)address >>  8 ) & 0xFF )
-#define IP_ADDRESS_D( address )  ( ( (int)address       ) & 0xFF )
+#define IP_ADDRESS_A( address )  ( ( (int)address       ) & 0xFF )
+#define IP_ADDRESS_B( address )  ( ( (int)address >>  8 ) & 0xFF ) 
+#define IP_ADDRESS_C( address )  ( ( (int)address >> 16 ) & 0xFF )
+#define IP_ADDRESS_D( address )  ( ( (int)address >> 24 ) & 0xFF )
 // the lwIP netif structure formats the address the other way round...weird.
 #define NETIF_IP_ADDRESS( a, b, c, d ) ( ( (int)d << 24 ) + ( (int)c << 16 ) + ( (int)b << 8 ) + (int)a )
 #define NETIF_IP_ADDRESS_D( address )  ( ( (int)address >> 24 ) & 0xFF )

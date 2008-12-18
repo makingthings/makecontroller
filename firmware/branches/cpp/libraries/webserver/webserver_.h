@@ -119,11 +119,6 @@ class WebResponder
     bool addHeader( const char* type, const char* value, bool lastone = true );
     TcpSocket* response; /**< The TcpSocket to respond on. The WebServer sets this to the appropriate 
     value while you're inside a response handler. */
-    
-  protected:
-    bool setResponseCode(HttpResponseCode code);
-    char* addHeader(const char* type, const char* value);
-    char* addHeader(const char* type, const char* value);
 };
 
 /**

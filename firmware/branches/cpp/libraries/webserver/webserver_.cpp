@@ -106,7 +106,8 @@ void WebServer::processRequest( TcpSocket* request, HttpMethod method, char* pat
     for ( i = 0; i < responder_count; i++ )
     {
       WebResponder* hp = responders[ i ];
-      if ( strncmp( hp->address(), path, strlen( hp->address() ) ) == 0 )
+      const char* t = hp->address();
+      if ( !strncmp( t, (path + 1), strlen( t ) ) )
       {
         hp->setResponseSocket(request);
         switch(method)
@@ -116,20 +117,14 @@ void WebServer::processRequest( TcpSocket* request, HttpMethod method, char* pat
             break;
           case HTTP_POST:
           {
-            int path_len = strlen(path);
-            char temp_path[path_len+1];
-            strncpy( temp_path, path, path_len);
             int content_len = getBody( request, requestBuf, REQUEST_SIZE_MAX );
-            responded = hp->post(temp_path, requestBuf, content_len);
+            responded = hp->post(path, requestBuf, content_len);
             break;
           }
           case HTTP_PUT:
           {
-            int path_len = strlen(path);
-            char temp_path[path_len+1];
-            strncpy( temp_path, path, path_len);
             int content_len = getBody( request, requestBuf, REQUEST_SIZE_MAX );
-            responded = hp->put(temp_path, requestBuf, content_len);
+            responded = hp->put(path, requestBuf, content_len);
             break;
           }
           case HTTP_DELETE:
@@ -331,7 +326,7 @@ bool WebResponder::setResponseCode( int code )
   if(response == NULL)
     return false;
   char temp[26];
-  sprintf(temp, "HTTP 1.0 %d OK\r\n");
+  sprintf(temp, "HTTP/1.0 %d OK\r\n", code);
   int written = response->write(temp, strlen(temp));
   return (written != 0) ? true : false;
 }
@@ -367,9 +362,9 @@ bool WebResponder::addHeader( const char* type, const char* value, bool lastone 
   int len = strlen(type) + strlen(value);
   char temp[len + 6];
   if( lastone )
-    sprintf(temp, "%s: %s\r\n\r\n");
+    sprintf(temp, "%s: %s\r\n\r\n", type, value);
   else
-    sprintf(temp, "%s: %s\r\n");
+    sprintf(temp, "%s: %s\r\n", type, value);
   int written = response->write(temp, strlen(temp));
   return (written != 0) ? true : false;
 }

@@ -16,21 +16,18 @@ extern "C" {
 }
 
 #include "eeprom_.h"
+#include "stdio.h"
 
-/* MAC address definition.  The MAC address must be unique on the network. */
+// MAC address definition.  The MAC address must be unique on the network.
 char emacETHADDR0 = 0xAC;
 char emacETHADDR1 = 0xDE;
 char emacETHADDR2 = 0x48;
 char emacETHADDR3 = 0x55;
 char emacETHADDR4 = 0x0;
 char emacETHADDR5 = 0x0;
+Network* Network::_instance = 0;
 
 void dnsCallback(const char *name, struct ip_addr *addr, void *arg);
-
-
-/** \defgroup Network Network
-  Parts of the Network group.
-*/
 
 Network::Network( )
 {
@@ -89,6 +86,13 @@ Network::Network( )
   // Network_SetPending( 0 );
 }
 
+Network* Network::get( ) // static
+{
+  if( !_instance )
+    _instance = new Network();
+  return _instance;
+}
+
 int Network::setAddress( int a0, int a1, int a2, int a3 )
 {
   if( !getValid() ) // make sure the other elements are initialized, set to defaults
@@ -137,6 +141,16 @@ int Network::getAddress( )
     return mc_netif->ip_addr.addr;
   else // if the Ethernet interface is not up, we'll just get garbage back
     return -1;
+}
+
+bool Network::addressToString( char* data, int address )
+{
+  int a0 = IP_ADDRESS_A( address );
+  int a1 = IP_ADDRESS_B( address );
+  int a2 = IP_ADDRESS_C( address );
+  int a3 = IP_ADDRESS_D( address );
+  sprintf( data, "%d.%d.%d.%d", a0, a1, a2, a3 );
+  return true;
 }
 
 int Network::getMask( )
@@ -232,7 +246,7 @@ int Network::getHostByName( const char *name )
     if(dnsSemaphore.take(30000)) // timeout is 30 seconds by default
       retval = dnsResolvedAddress;
   }
-  return ntohl(retval);
+  return retval;
 }
 
 /*
