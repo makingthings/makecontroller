@@ -1,19 +1,19 @@
 /*********************************************************************************
 
- Copyright 2008 MakingThings
+  Copyright 2008 MakingThings
 
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
- with the License. You may obtain a copy of the License at
+  Licensed under the Apache License, 
+  Version 2.0 (the "License"); you may not use this file except in compliance 
+  with the License. You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0 
- 
- Unless required by applicable law or agreed to in writing, software distributed
- under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
- CONDITIONS OF ANY KIND, either express or implied. See the License for
- the specific language governing permissions and limitations under the License.
+  http://www.apache.org/licenses/LICENSE-2.0 
 
-*********************************************************************************/
+  Unless required by applicable law or agreed to in writing, software distributed
+  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+  CONDITIONS OF ANY KIND, either express or implied. See the License for
+  the specific language governing permissions and limitations under the License.
+
+  *********************************************************************************/
 
 
 #include "ProjectInfo.h"
@@ -44,15 +44,15 @@
 */
 ProjectInfo::ProjectInfo(MainWindow *mainWindow) : QDialog( 0 )
 {
-	this->mainWindow = mainWindow;
-	setupUi(this);
-	connect(buttonBox, SIGNAL(accepted()), this, SLOT(applyChanges()));
+  this->mainWindow = mainWindow;
+  setupUi(this);
+  connect(buttonBox, SIGNAL(accepted()), this, SLOT(applyChanges()));
   connect(buttonBox, SIGNAL(rejected()), this, SLOT(accept()));
   connect(defaultsButton, SIGNAL(clicked()), this, SLOT(restoreDefaults()));
   connect(networkBox, SIGNAL(stateChanged(int)), this, SLOT(onNetworkChanged(int)));
   connect(fileBrowser, SIGNAL(removeFileRequest(QString)), this, SLOT(onRemoveFileRequest(QString)));
   connect(fileBrowser, SIGNAL(changeBuildType(QString, QString)), this, SLOT(onChangeBuildType(QString, QString)));
-  
+
   QHeaderView *header = fileBrowser->header();
   header->setResizeMode(FILENAME_COLUMN, QHeaderView::Stretch);
   header->setResizeMode(BUILDTYPE_COLUMN, QHeaderView::ResizeToContents);
@@ -68,43 +68,43 @@ bool ProjectInfo::load( QString projectPath )
   if(projectPath.isEmpty())
     return false;
   QDir projectDir(projectPath);
-	setWindowTitle(projectDir.dirName() + " - Project Info");
-	
-	// read the ProjectInfo file
-	QFile file(projectFilePath(projectPath));
-	if(file.open(QIODevice::ReadOnly|QFile::Text))
-	{
-		QDomDocument projectFile;
+  setWindowTitle(projectDir.dirName() + " - Project Info");
+
+  // read the ProjectInfo file
+  QFile file(projectFilePath(projectPath));
+  if(file.open(QIODevice::ReadOnly|QFile::Text))
+  {
+    QDomDocument projectFile;
     if(projectFile.setContent(&file))
-		{
-			versionEdit->setText(projectFile.elementsByTagName("version").at(0).toElement().text());
-			heapSizeEdit->setText(projectFile.elementsByTagName("heapsize").at(0).toElement().text());
-			QString optlevel = projectFile.elementsByTagName("optlevel").at(0).toElement().text();
-			optLevelBox->setCurrentIndex(optLevelBox->findText(optlevel));
-			Qt::CheckState state = (projectFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
-			debugInfoCheckbox->setCheckState(state);
-      
+    {
+      versionEdit->setText(projectFile.elementsByTagName("version").at(0).toElement().text());
+      heapSizeEdit->setText(projectFile.elementsByTagName("heapsize").at(0).toElement().text());
+      QString optlevel = projectFile.elementsByTagName("optlevel").at(0).toElement().text();
+      optLevelBox->setCurrentIndex(optLevelBox->findText(optlevel));
+      Qt::CheckState state = (projectFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
+      debugInfoCheckbox->setCheckState(state);
+
       state = (projectFile.elementsByTagName("include_osc").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
-			oscBox->setCheckState(state);
-      
+      oscBox->setCheckState(state);
+
       state = (projectFile.elementsByTagName("include_usb").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
-			usbBox->setCheckState(state);
-      
+      usbBox->setCheckState(state);
+
       state = (projectFile.elementsByTagName("include_network").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
-			networkBox->setCheckState(state);
+      networkBox->setCheckState(state);
       setNetworkSectionEnabled(state == Qt::Checked);
-      
+
       networkMempoolEdit->setText(projectFile.elementsByTagName("network_mempool").at(0).toElement().text());
       udpSocketEdit->setText(projectFile.elementsByTagName("network_udp_sockets").at(0).toElement().text());
       tcpSocketEdit->setText(projectFile.elementsByTagName("network_tcp_sockets").at(0).toElement().text());
       tcpServerEdit->setText(projectFile.elementsByTagName("network_tcp_servers").at(0).toElement().text());
-      
+
       loadFileBrowser( &projectDir, &projectFile);
-		}
-		file.close();
-	}
-	else
-		return false;
+    }
+    file.close();
+  }
+  else
+    return false;
   return true;
 }
 
@@ -120,7 +120,7 @@ void ProjectInfo::loadFileBrowser(QDir *projectDir, QDomDocument *projectFile)
   QTreeWidgetItem *top = new QTreeWidgetItem(QStringList() << projectDir->dirName());
   top->setIcon(0, QApplication::style()->standardIcon(QStyle::SP_DirIcon));
   fileBrowser->addTopLevelItem(top);
-  
+
   // only deals with files in the top level directory at the moment
   QFileIconProvider ip;
   for(int i = 0; i < allFiles.count(); i++)
@@ -162,9 +162,9 @@ bool ProjectInfo::diffProjects( QString newProjectPath, bool saveUiToFile )
     return false;
   bool changed = false;
   QFile file(projectFilePath(newProjectPath));
-	if(file.open(QIODevice::ReadWrite|QFile::Text))
-	{
-		QDomDocument projectFile;
+  if(file.open(QIODevice::ReadWrite|QFile::Text))
+  {
+    QDomDocument projectFile;
     if(projectFile.setContent(&file))
     {
       // to get at the actual text of an element, you need to grab its child,
@@ -174,19 +174,19 @@ bool ProjectInfo::diffProjects( QString newProjectPath, bool saveUiToFile )
         projectFile.elementsByTagName("version").at(0).firstChild().setNodeValue(versionEdit->text());
         changed = true;
       }
-        
+
       if(heapSizeEdit->text() != projectFile.elementsByTagName("heapsize").at(0).toElement().text())
       {
         projectFile.elementsByTagName("heapsize").at(0).firstChild().setNodeValue(heapSizeEdit->text());
         changed = true;
       }
-        
+
       if(optLevelBox->currentText() != projectFile.elementsByTagName("optlevel").at(0).toElement().text())
       {
         projectFile.elementsByTagName("optlevel").at(0).firstChild().setNodeValue(optLevelBox->currentText());
         changed = true;
       }
-      
+
       Qt::CheckState state = (projectFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
       if(debugInfoCheckbox->checkState() != state)
       {
@@ -194,7 +194,7 @@ bool ProjectInfo::diffProjects( QString newProjectPath, bool saveUiToFile )
         projectFile.elementsByTagName("debuginfo").at(0).firstChild().setNodeValue(debugstr);
         changed = true;
       }
-      
+
       state = (projectFile.elementsByTagName("include_osc").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
       if(oscBox->checkState() != state)
       {
@@ -202,7 +202,7 @@ bool ProjectInfo::diffProjects( QString newProjectPath, bool saveUiToFile )
         projectFile.elementsByTagName("include_osc").at(0).firstChild().setNodeValue(str);
         changed = true;
       }
-      
+
       state = (projectFile.elementsByTagName("include_usb").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
       if(usbBox->checkState() != state)
       {
@@ -210,7 +210,7 @@ bool ProjectInfo::diffProjects( QString newProjectPath, bool saveUiToFile )
         projectFile.elementsByTagName("include_usb").at(0).firstChild().setNodeValue(str);
         changed = true;
       }
-      
+
       state = (projectFile.elementsByTagName("include_network").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
       if(networkBox->checkState() != state)
       {
@@ -218,39 +218,39 @@ bool ProjectInfo::diffProjects( QString newProjectPath, bool saveUiToFile )
         projectFile.elementsByTagName("include_network").at(0).firstChild().setNodeValue(str);
         changed = true;
       }
-      
+
       if(networkMempoolEdit->text() != projectFile.elementsByTagName("network_mempool").at(0).toElement().text())
       {
         projectFile.elementsByTagName("network_mempool").at(0).firstChild().setNodeValue(networkMempoolEdit->text());
         changed = true;
       }
-        
+
       if(udpSocketEdit->text() != projectFile.elementsByTagName("network_udp_sockets").at(0).toElement().text())
       {
         projectFile.elementsByTagName("network_udp_sockets").at(0).firstChild().setNodeValue(udpSocketEdit->text());
         changed = true;
       }
-      
+
       if(tcpSocketEdit->text() != projectFile.elementsByTagName("network_tcp_sockets").at(0).toElement().text())
       {
         projectFile.elementsByTagName("network_tcp_sockets").at(0).firstChild().setNodeValue(tcpSocketEdit->text());
         changed = true;
       }
-      
+
       if(tcpServerEdit->text() != projectFile.elementsByTagName("network_tcp_servers").at(0).toElement().text())
       {
         projectFile.elementsByTagName("network_tcp_servers").at(0).firstChild().setNodeValue(tcpServerEdit->text());
         changed = true;
       }
-      
+
       if(saveUiToFile)
       {
         file.resize(0); // clear out the current contents so we can update them, since we opened as read/write
         file.write(projectFile.toByteArray(2));
       }
     }
-		file.close();
-	}
+    file.close();
+  }
   return changed;
 }
 
@@ -260,8 +260,8 @@ bool ProjectInfo::diffProjects( QString newProjectPath, bool saveUiToFile )
 */
 QString ProjectInfo::projectFilePath( QString projectPath )
 {
-	QDir projectDir(projectPath);
-	return projectDir.filePath(projectDir.dirName() + ".xml"); 
+  QDir projectDir(projectPath);
+  return projectDir.filePath(projectDir.dirName() + ".xml"); 
 }
 
 void ProjectInfo::restoreDefaults( )
@@ -344,7 +344,7 @@ void FileBrowser::onSetBuildType()
     newtype = "arm";
   else if(item->text(BUILDTYPE_COLUMN) == "arm")
     newtype = "thumb";
-    
+
   item->setText(BUILDTYPE_COLUMN, newtype);
   emit changeBuildType(filepath, newtype);
 }
