@@ -35,8 +35,8 @@ int main(int argc, char* argv[])
   TestProjectManager testProjectManager;
   QTest::qExec(&testProjectManager);
   
-  // TestBuilder testBuilder(&window);
-  // QTest::qExec(&testBuilder);
+  TestBuilder testBuilder(&window);
+  QTest::qExec(&testBuilder);
   
   TestProjectInfo testProjectInfo(&window);
   QTest::qExec(&testProjectInfo);
