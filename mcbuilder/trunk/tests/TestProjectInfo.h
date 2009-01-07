@@ -15,32 +15,37 @@
 
 *********************************************************************************/
 
+#ifndef TEST_PROJECT_INFO_H
+#define TEST_PROJECT_INFO_H
+
 #include <QtTest/QtTest>
-#include <QApplication>
 #include "MainWindow.h"
-#include "TestProjectManager.h"
-#include "TestBuilder.h"
-#include "TestProjectInfo.h"
+#include "Builder.h"
+#include "ProjectInfo.h"
+
+class Builder;
+class ProjectInfo;
 
 /*
-  A test suite that fires off each unit test in succession.
+ Test class for Builder.cpp
 */
-int main(int argc, char* argv[])
-{  
-  (void)argc;
-  (void)argv;
-  QApplication app(argc, argv);
-  MainWindow window;
+class TestProjectInfo : public QObject
+{
+	Q_OBJECT
   
-  TestProjectManager testProjectManager;
-  QTest::qExec(&testProjectManager);
+public:
+  TestProjectInfo( MainWindow* mw );
   
-  // TestBuilder testBuilder(&window);
-  // QTest::qExec(&testBuilder);
-  
-  TestProjectInfo testProjectInfo(&window);
-  QTest::qExec(&testProjectInfo);
-}
+private:
+  MainWindow* mainWindow;
+  ProjectInfo* projectInfo;
+
+private slots:
+  void includeSystem();
+};
+
+#endif // TEST_PROJECT_INFO_H
+
 
 
 

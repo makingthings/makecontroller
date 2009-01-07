@@ -28,6 +28,7 @@
 
 #ifdef MCBUILDER_TEST_SUITE
 #include "TestBuilder.h"
+#include "TestProjectInfo.h"
 #endif
 
 // subclassed so we have access to the context menu events
@@ -38,8 +39,8 @@ public:
   FileBrowser(QWidget *parent = 0) : QTreeWidget(0)
   {
     setParent(parent);
-    actionRemoveFromProject = new QAction("Remove from project...", this);
-    actionSetBuildType = new QAction("Change build type to thumb", this);
+    actionRemoveFromProject = new QAction(tr("Remove from project..."), this);
+    actionSetBuildType = new QAction(tr("Change build type to thumb"), this);
     connect(actionRemoveFromProject, SIGNAL(triggered()), this, SLOT(onRemoveRequest()));
     connect(actionSetBuildType, SIGNAL(triggered()), this, SLOT(onSetBuildType()));
   }
@@ -64,9 +65,9 @@ class MainWindow;
 
 class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
 {
-	Q_OBJECT
-	public:
-		ProjectInfo(MainWindow *mainWindow);
+  Q_OBJECT
+  public:
+    ProjectInfo(MainWindow *mainWindow);
     QString version() { return versionEdit->text(); }
     QString optLevel() { return optLevelBox->currentText(); }
     bool debug() { return (debugInfoCheckbox->checkState() == Qt::Checked); }
@@ -84,10 +85,10 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
   signals:
     void projectInfoUpdated();
     
-	private:
-		MainWindow *mainWindow;
+  private:
+    MainWindow *mainWindow;
     ProjectManager projectManager;
-		QString projectFilePath( QString projectPath );
+    QString projectFilePath( QString projectPath );
     bool configChanged;
     void setNetworkSectionEnabled(bool state);
     void loadFileBrowser(QDir *projectDir, QDomDocument *projectFile);
@@ -102,8 +103,8 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
     void setIncludeUsb(bool usb);
     void setIncludeNetwork(bool network);
     
-	private slots:
-		void applyChanges( );
+  private slots:
+    void applyChanges( );
     void restoreDefaults( );
     void onNetworkChanged(int state);
     void onRemoveFileRequest(QString filename);
@@ -111,6 +112,7 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
   
   #ifdef MCBUILDER_TEST_SUITE
   friend class TestBuilder;
+  friend class TestProjectInfo;
   #endif
 };
 
