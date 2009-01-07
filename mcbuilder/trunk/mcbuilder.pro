@@ -1,5 +1,6 @@
 MCBUILDER_VERSION = "0.5.0"
 TEMPLATE = app
+CONFIG += debug
 #CONFIG += release
 CONFIG -= release
 
@@ -51,7 +52,6 @@ OBJECTS_DIR  = tmp
 MOC_DIR      = tmp
 RCC_DIR      = tmp
 UI_DIR       = tmp
-DESTDIR      = bin
 
 # *******************************************
 #           platform specific stuff
@@ -111,9 +111,11 @@ test_suite {
   SOURCES +=  tests/main.cpp \
               tests/TestProjectManager.cpp \
               tests/TestBuilder.cpp \
+              tests/TestProjectInfo.cpp \
               
   HEADERS +=  tests/TestProjectManager.h \
-              tests/TestBuilder.h
+              tests/TestBuilder.h \
+              tests/TestProjectInfo.h \
 }
 
 

@@ -36,6 +36,7 @@
 
 #ifdef MCBUILDER_TEST_SUITE
 #include "TestBuilder.h"
+#include "TestProjectInfo.h"
 #endif
 
 class Preferences;
@@ -142,6 +143,7 @@ private slots:
   
   #ifdef MCBUILDER_TEST_SUITE
   friend class TestBuilder;
+  friend class TestProjectInfo;
   #endif
 };
 
