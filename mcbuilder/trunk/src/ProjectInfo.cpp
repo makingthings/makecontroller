@@ -146,7 +146,7 @@ void ProjectInfo::loadFileBrowser(QDir *projectDir, QDomDocument *projectFile)
 // update appropriately if they have
 void ProjectInfo::applyChanges( )
 {
-  if( diffProjects( projectFilePath(mainWindow->currentProjectPath()), true ) )
+  if( diffProjects( mainWindow->currentProjectPath(), true ) )
     emit projectInfoUpdated();
   accept();
 }
@@ -161,14 +161,14 @@ bool ProjectInfo::diffProjects( QString newProjectPath, bool saveUiToFile )
   if(versionEdit->text().isEmpty()) // check the version box as a sample...if this is empty, we don't have anything loaded so don't bother checking
     return false;
   bool changed = false;
+  
   QFile file(projectFilePath(newProjectPath));
   if(file.open(QIODevice::ReadWrite|QFile::Text))
   {
     QDomDocument projectFile;
     if(projectFile.setContent(&file))
     {
-      // to get at the actual text of an element, you need to grab its child,
-      // which will be a QDomText node
+      // to get at the actual text of an element, you need to grab its child, which will be a QDomText node
       if(versionEdit->text() != projectFile.elementsByTagName("version").at(0).toElement().text())
       {
         projectFile.elementsByTagName("version").at(0).firstChild().setNodeValue(versionEdit->text());
@@ -242,7 +242,7 @@ bool ProjectInfo::diffProjects( QString newProjectPath, bool saveUiToFile )
         projectFile.elementsByTagName("network_tcp_servers").at(0).firstChild().setNodeValue(tcpServerEdit->text());
         changed = true;
       }
-
+      
       if(saveUiToFile)
       {
         file.resize(0); // clear out the current contents so we can update them, since we opened as read/write
