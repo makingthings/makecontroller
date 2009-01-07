@@ -32,7 +32,7 @@ void TestProjectInfo::includeSystem()
 {
   QCheckBox* u = projectInfo->usbBox;
   bool originalState = (u->checkState() == Qt::Checked);
-  QString projectPath = projectInfo->projectFilePath(mainWindow->currentProject);
+  QString projectPath = projectInfo->projectFilePath(mainWindow->currentProjectPath());
   projectInfo->load(projectPath);
   
   QFile file(projectPath);
@@ -46,10 +46,11 @@ void TestProjectInfo::includeSystem()
     }
     file.close();
   }
+  else
+    QFAIL("Couldn't open project file.");
   
-  QTest::mouseClick(u, Qt::NoButton);
+  QTest::mouseClick(u, Qt::LeftButton);
   projectInfo->applyChanges();
-  // QVERIFY(u->checkState() != originalState);
   
   if(file.open(QIODevice::ReadOnly|QFile::Text))
   {
@@ -61,6 +62,8 @@ void TestProjectInfo::includeSystem()
     }
     file.close();
   }
+  else
+    QFAIL("Couldn't open project file.");
 }
 
 
