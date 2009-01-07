@@ -1,7 +1,7 @@
 #
 # Grab qextserialport from shared repo
 # Apply/update externals definitions with this file by typing
-#   svn propset svn:externals -F EXTERNALS.txt
+#   svn propset svn:externals -F EXTERNALS.txt .
 # 
 
-qextserialport https://makingthings.svn.sourceforge.net/svnroot/makingthings/shared/qextserialport
+qextserialport https://www.makingthings.com/svn/shared/qextserialport
