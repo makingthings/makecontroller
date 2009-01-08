@@ -15,10 +15,6 @@
 
 *********************************************************************************/
 
-/** \file serial2.c	
-	Functions for working with the Serial Interface on the Make Controller Board.
-*/
-
 /* Library includes. */
 #include <string.h>
 #include <stdio.h>
@@ -496,8 +492,8 @@ int Serial_GetHardwareHandshake( int index )
 
   \b Example
   \code
-  Serial_SetActive(1);
-  Serial_Flush( ); // after starting up, make sure there's no junk in there
+  Serial_SetActive(SERIAL_0, 1);
+  Serial_Flush(SERIAL_0); // after starting up, make sure there's no junk in there
   \endcode
 */
 void Serial_Flush( int index )
@@ -526,7 +522,7 @@ void Serial_Flush( int index )
   \b Example
 
   \code 
-  Serial_ClearErrors();
+  Serial_ClearErrors(SERIAL_0);
   // that's all there is to it.
   \endcode
 */
@@ -561,7 +557,7 @@ void Serial_ClearErrors( int index )
   \b Example
   \code
   bool over, fr, par;
-  if( Serial_GetErrors( &over, &fr, &par ) )
+  if( Serial_GetErrors( SERIAL_0, &over, &fr, &par ) )
   {
     // if we wanted, we could just clear them all right here with Serial_ClearErrors()
     // but here we'll check to see what kind of errors we got
@@ -621,7 +617,7 @@ bool Serial_GetErrors( int index, bool* overrun, bool* frame, bool* parity )
   \b Example
   
   \code 
-  Serial_StartBreak();
+  Serial_StartBreak(SERIAL_0);
   \endcode
 */
 void Serial_StartBreak( int index )
@@ -639,10 +635,10 @@ void Serial_StartBreak( int index )
   \b Example
   
   \code 
-  Serial_StopBreak();
+  Serial_StopBreak(SERIAL_0);
   \endcode
 */
-void Serial_StopBreak( int index  )
+void Serial_StopBreak( int index )
 {
   if ( index < 0 || index >= SERIAL_PORTS )
     return;
