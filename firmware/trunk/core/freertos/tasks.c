@@ -215,8 +215,10 @@ Changes since V4.3.1:
 #include "FreeRTOS.h"
 #include "task.h"
 
+#ifdef MAKE_CTRL_NETWORK
 // MakingThings: Added for sys_timeouts structure def
 #include "lwip/sys.h"
+#endif
 /*
  * Macro to define the amount of stack available to the idle task.
  */
@@ -261,8 +263,10 @@ typedef struct tskTaskControlBlock
 	portSTACK_TYPE			*pxStack;			/*< Points to the start of the stack. */
 	signed portCHAR			pcTaskName[ configMAX_TASK_NAME_LEN ];/*< Descriptive name given to the task when created.  Facilitates debugging only. */
 	unsigned portSHORT		usStackDepth;		/*< Total depth of the stack (when empty).  This is defined as the number of variables the stack can hold, not the number of bytes. */
+  #ifdef MAKE_CTRL_NETWORK
   // MakingThings: addition to better incorporate LWIP
   struct sys_timeouts timeouts;
+  #endif
   
   	#if ( configUSE_TRACE_FACILITY == 1 )
 		unsigned portBASE_TYPE	uxTCBNumber;		/*< This is used for tracing the scheduler and making debugging easier only. */
@@ -701,7 +705,7 @@ tskTCB * pxNewTCB;
 
 
 
-
+#ifdef MAKE_CTRL_NETWORK
 /*
  * Added by MakingThings
  * Return the timeouts structure of the specified task.
@@ -712,6 +716,7 @@ struct sys_timeouts* TaskGetTimeouts( xTaskHandle pxTask )
   pxTCB = prvGetTCBFromHandle( pxTask );
   return &pxTCB->timeouts;
 }
+#endif
 
 /*-----------------------------------------------------------
  * TASK CONTROL API documented in task.h
@@ -1783,8 +1788,10 @@ static void prvInitialiseTCBVariables( tskTCB *pxTCB, const signed portCHAR * co
 	listSET_LIST_ITEM_VALUE( &( pxTCB->xEventListItem ), configMAX_PRIORITIES - ( portTickType ) uxPriority );
 	listSET_LIST_ITEM_OWNER( &( pxTCB->xEventListItem ), pxTCB );
 
+  #ifdef MAKE_CTRL_NETWORK
   // MakingThings addition - make sure the timeouts structure is initialized nicely
   pxTCB->timeouts.next = NULL;
+  #endif
 }
 /*-----------------------------------------------------------*/
 
