@@ -37,7 +37,9 @@ typedef struct
 {
   int users;
   int lastValue;
+  #ifdef OSC
   int autosend;
+  #endif
 } DipSwitchSubsystem;
 
 DipSwitchSubsystem* DipSwitch;
@@ -72,7 +74,9 @@ int DipSwitch_SetActive( int state )
       DipSwitch = MallocWait( sizeof( DipSwitchSubsystem ), 100 );
       DipSwitch->users = 0;
       DipSwitch->lastValue = 0;
+      #ifdef OSC
       DipSwitch->autosend = DipSwitch_GetAutoSend( true );
+      #endif
       return DipSwitch_Start(  );
     }
   }
