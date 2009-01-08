@@ -51,7 +51,6 @@ char emacETHADDR4 = 0x0;
 char emacETHADDR5 = 0x0;
 
 #include "network.h"
-//#include "webserver.h"
 
 typedef struct Network_
 {
@@ -1269,9 +1268,6 @@ int Network_Init( )
     Osc_StartTcpTask( );
   }
   #endif
-
-//  if( Network_GetWebServerEnabled( ) )
-//    Network_StartWebServer( );
   
   if( dhcp )
     Network_DhcpStart( &EMAC_if );
@@ -1294,7 +1290,8 @@ int Network_Init( )
     - gateway
     - valid
     - mac
-    - osc_udp_port
+    - osc_udp_listen_port
+    - osc_udp_send_port
     - dhcp
 
     \par Address
@@ -1332,7 +1329,7 @@ int Network_Init( )
     \par Valid
     The \b valid property is used to make sure the board's network settings are valid.
     If you're manually setting the \b address, \b gateway, or \b mask settings, you'll need
-		to send the valid message for them to take effect.
+    to send the valid message for them to take effect.
     \par
     To set the board's current network settings as valid, send the message
     \verbatim /network/valid 1 \endverbatim
@@ -1413,7 +1410,7 @@ static char* NetworkOsc_Name = "network";
 static char* NetworkOsc_PropertyNames[] = { "active", "address", "mask", "gateway", "valid", "mac", 
                                               "osc_udp_listen_port", "osc_tcpout_address", "osc_tcpout_port", 
                                               "osc_tcpout_connect", "osc_tcpout_auto", "dhcp", 
-                                              "webserver", "find", "osc_udp_send_port", 0 }; // must have a trailing 0
+                                              "find", "osc_udp_send_port", 0 }; // must have a trailing 0
 
 int NetworkOsc_PropertySet( int property, char* typedata, int channel );
 int NetworkOsc_PropertyGet( int property, int channel );
@@ -1591,17 +1588,7 @@ int NetworkOsc_PropertySet( int property, char* typedata, int channel )
       Network_SetDhcpEnabled( value );
       break;
     }
-    case 12: // webserver
-    {
-      int value;
-      int count = Osc_ExtractData( typedata, "i", &value );
-      if ( count != 1 )
-        return Osc_SubsystemError( channel, NetworkOsc_Name, "Incorrect data - need an int" );
-      
-      //Network_SetWebServerEnabled( value );
-      break;
-    }
-    case 14: // osc_udp_send_port
+    case 13: // osc_udp_send_port
     {
       int value;
       int count = Osc_ExtractData( typedata, "i", &value );
@@ -1700,12 +1687,7 @@ int NetworkOsc_PropertyGet( int property, int channel )
       snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       Osc_CreateMessage( channel, Network->scratch1, ",i", value );      
       break;
-    case 12: // webserver
-      value = 0; //Network_GetWebServerEnabled( );
-      snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
-      Osc_CreateMessage( channel, Network->scratch1, ",i", value );      
-      break;
-    case 13: // find
+    case 12: // find
     {
       if ( Network_GetAddress( &a0, &a1, &a2, &a3 ) == CONTROLLER_ERROR_NO_NETWORK )
         return Osc_SubsystemError( channel, NetworkOsc_Name, "No network address available - try plugging in an Ethernet cable." );
@@ -1717,7 +1699,7 @@ int NetworkOsc_PropertyGet( int property, int channel )
       Osc_CreateMessage( channel, Network->scratch1, ",siis", Network->scratch2, listen, send, sysName );      
       break;
     }
-    case 14: // osc_udp_send_port
+    case 13: // osc_udp_send_port
       value = NetworkOsc_GetUdpSendPort( );
       snprintf( Network->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", NetworkOsc_Name, NetworkOsc_PropertyNames[ property ] ); 
       Osc_CreateMessage( channel, Network->scratch1, ",i", value );         
