@@ -61,9 +61,6 @@
 #include "task.h"
 #include "portable.h"
 
-/* lwIP includes. */
-#include "lwip/api.h" 
-
 /* MAKE CODE */
 #include "config.h"
 
