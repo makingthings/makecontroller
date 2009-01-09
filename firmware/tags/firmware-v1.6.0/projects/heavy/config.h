@@ -9,7 +9,7 @@
 #include "controller.h"   // ...everybody uses the MAKE Controller Board
 #include "error.h"
 
-#define FIRMWARE_NAME          "Heavy svn"
+#define FIRMWARE_NAME          "Heavy"
 #define FIRMWARE_MAJOR_VERSION 1
 #define FIRMWARE_MINOR_VERSION 6
 #define FIRMWARE_BUILD_NUMBER  0
