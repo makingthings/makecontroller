@@ -11,10 +11,13 @@
 #include "config.h"
 #include "AT91SAM7X256.h"
 #include "ctestee.h"
+#include "io.h"
 
-#ifdef FACTORY_TESTING
-
+#if (CONTROLLER_VERSION <= 100)
 #define CTESTEE_IOS 30
+#elif (CONTROLLER_VERSION >= 200)
+#define CTESTEE_IOS 32
+#endif
 
 typedef struct CTestee_
 {
@@ -48,14 +51,14 @@ int CTestee_SetIoPattern( int ioPattern )
       for ( i = 0; i < CTESTEE_IOS; i++ )
       {
         int io = CTesteeData->Io[ i ];
-        Io_SetFalse( io ); 
+        Io_SetValue( io, false );
       }
       break;
     case 1:
       for ( i = 0; i < CTESTEE_IOS; i++ )
       {
         int io = CTesteeData->Io[ i ];
-        Io_SetTrue( io ); 
+        Io_SetValue( io, true ); 
       }
       break;
   }       
@@ -114,22 +117,22 @@ int CTestee_GetCanIn( )
 
 void CanPowerDown()
 {
-  Io_SetTrue( IO_PA07 );
+  Io_SetValue( IO_PA07, true );
 }
 
 void CanPowerUp()
 {
-  Io_SetFalse( IO_PA07 );
+  Io_SetValue( IO_PA07, false );
 }
 
 void CanSendDominant()
 {
-  Io_SetFalse( IO_PA20 );
+  Io_SetValue( IO_PA20, false );
 }
 
 void CanSendNothing()
 {
-  Io_SetTrue( IO_PA20 );
+  Io_SetValue( IO_PA20, true );
 }
 
 int CanReceive()
@@ -159,14 +162,23 @@ int CTestee_Init( )
   CTesteeData->Io[ i++ ] = IO_PA13;
   CTesteeData->Io[ i++ ] = IO_PA14;
   CTesteeData->Io[ i++ ] = IO_PA15;
+  #if (CONTROLLER_VERSION >= 200)
+  CTesteeData->Io[ i++ ] = IO_PA19;
+  CTesteeData->Io[ i++ ] = IO_PA20;
+  #endif
   CTesteeData->Io[ i++ ] = IO_PA23;
   CTesteeData->Io[ i++ ] = IO_PA24;
   CTesteeData->Io[ i++ ] = IO_PA25;
   CTesteeData->Io[ i++ ] = IO_PA26;
   CTesteeData->Io[ i++ ] = IO_PA27;
   CTesteeData->Io[ i++ ] = IO_PA28;
+  #if (CONTROLLER_VERSION <= 100)
   CTesteeData->Io[ i++ ] = IO_PA29;
   CTesteeData->Io[ i++ ] = IO_PA30;
+  #elif (CONTROLLER_VERSION <= 200)
+  CTesteeData->Io[ i++ ] = IO_PA10;
+  CTesteeData->Io[ i++ ] = IO_PA11;
+  #endif
   CTesteeData->Io[ i++ ] = IO_PB19;
   CTesteeData->Io[ i++ ] = IO_PB20;
   CTesteeData->Io[ i++ ] = IO_PB21;
@@ -181,27 +193,29 @@ int CTestee_Init( )
   
   // CAN 
   // RS - Controls speed, etc.
+  #if (CONTROLLER_VERSION <= 100)
   Io_Start( IO_PA07, true );
-  Io_PullupDisable( IO_PA07 );
-  Io_PioEnable( IO_PA07 );
-  Io_SetOutput( IO_PA07 );
-  Io_SetTrue( IO_PA07 );
+  Io_SetPullup( IO_PA07, false );
+  Io_SetPio( IO_PA07, true );
+  Io_SetDirection( IO_PA07, true );
+  Io_SetValue( IO_PA07, true );
 
   // RxD - Receive Data
   Io_Start( IO_PA19, true );
-  Io_PullupDisable( IO_PA19 );
-  Io_PioEnable( IO_PA19 );
-  Io_SetInput( IO_PA19 );
+  Io_SetPullup( IO_PA19, false );
+  Io_SetPio( IO_PA19, true );
+  Io_SetDirection( IO_PA19, false );
 
   // TxD - Transmit Data
   Io_Start( IO_PA20, true );
-  Io_PullupDisable( IO_PA20 );
-  Io_PioEnable( IO_PA20 );
-  Io_SetOutput( IO_PA20 );
-  Io_SetTrue( IO_PA20 );
+  Io_SetPullup( IO_PA20, false );
+  Io_SetPio( IO_PA20, true );
+  Io_SetDirection( IO_PA20, true );
+  Io_SetValue( IO_PA20, true );
 
   CanPowerDown();
   CanSendNothing();
+  #endif // #if (CONTROLLER_VERSION <= 100)
 
   CTesteeData->canOut = 0;
 
@@ -209,11 +223,11 @@ int CTestee_Init( )
   {
     int io = CTesteeData->Io[ i ];
     Io_Start( io, false );
-    Io_SetOutput( io ); 
-    Io_PullupDisable( io );
-    Io_SetFalse( io ); 
+    Io_SetPio( io, true );
+    Io_SetDirection( io, true ); 
+    Io_SetPullup( io, false );
+    Io_SetValue( io, false );
   }
-
   return 0;
 }
 
@@ -339,6 +353,5 @@ int CTesteeOsc_PropertyGet( int property )
   return value;
 }
 
-#endif // FACTORY_TESTING
 
 

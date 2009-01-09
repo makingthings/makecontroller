@@ -41,6 +41,7 @@
 //#define CONTROLLER_VERSION    90    // rev. 1
 //#define CONTROLLER_VERSION  95    // rev. 2
 #define CONTROLLER_VERSION  100   // modified rev. 2
+//#define CONTROLLER_VERSION  200
 
 /********************************************************
  Uncomment the revision of the MAKE Application Board you're using. 

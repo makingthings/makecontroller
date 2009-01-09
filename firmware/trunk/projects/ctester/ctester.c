@@ -16,7 +16,11 @@ int CanReceive( void );
 
 static int CTester_Init( void );
 
+#if (CONTROLLER_VERSION <= 100)
 #define CTESTER_IOS 30
+#elif (CONTROLLER_VERSION >= 200)
+#define CTESTER_IOS 32
+#endif
 
 int CTester_Io[ CTESTER_IOS ] =
 {
@@ -31,6 +35,10 @@ int CTester_Io[ CTESTER_IOS ] =
   IO_PA13,
   IO_PA14,
   IO_PA15,
+  #if (CONTROLLER_VERSION >= 200)
+  IO_PA19,
+  IO_PA20,
+  #endif
   IO_PA23,
   IO_PA24,
   IO_PA25,
@@ -260,6 +268,7 @@ int CTester_Init( )
 
   // CAN 
   // RS - Controls speed, etc.
+  #if (CONTROLLER_VERSION <= 100)
   Io_Start( IO_PA07, true );
   Io_SetPullup( IO_PA07, false );
   Io_SetPio( IO_PA07, true );
@@ -281,6 +290,7 @@ int CTester_Init( )
 
   CanPowerDown();
   CanSendNothing();
+  #endif // CONTROLLER_VERSION <= 100
 
   CTesterData.init = true;
 
@@ -290,7 +300,7 @@ int CTester_Init( )
   for ( i = 0; i < CTESTER_IOS; i++ )
   {
     int io = CTester_Io[ i ];
-    Io_Start( io, false );
+    Io_Start( io, true );
     Io_SetPio( io, true );
     Io_SetDirection( io, false ); 
     Io_SetPullup( io, false );
@@ -301,8 +311,8 @@ int CTester_Init( )
 
 int CTester_CalculateCurrent( int index )
 {
-  int a = AnalogIn_GetValue( index );
-  float c = 500 * ( 3.3 * a / 1024.0 ) / 2.5; 
+  int a = 776 - AnalogIn_GetValue( index ); // 776 is 2.5 / 3.3 * 1024
+  float c = 50 * ( 3.3 * a / 1024.0 ) / 0.2;
   return (int)c;
 }
 

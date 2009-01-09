@@ -12,7 +12,6 @@
 #include "analogin.h"
 #include "AT91SAM7X256.h"
 
-#ifdef FACTORY_TESTING
 
 static int ATestee_Init( void );
 static int ATestee_Test_All( int enable, int outputs, int lower, int upper );
@@ -200,9 +199,9 @@ int ATestee_BootFromFlash()
 void ATestee_PrepareOutput( int output )
 {
   Io_Start( output, true );
-  Io_SetOutput( output );
-  Io_PullupDisable( output );
-  Io_PioEnable( output );
+  Io_SetDirection( output, true );
+  Io_SetPullup( output, false );
+  Io_SetPio( output, false );
   Io_SetValue( output, false );
 }
 
@@ -282,5 +281,4 @@ int ATesteeOsc_PropertyGet( int property )
   return value;
 }
 
-#endif  // FACTORY_TESTING
 

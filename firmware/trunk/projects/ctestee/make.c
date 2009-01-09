@@ -5,6 +5,21 @@
 #include "stdlib.h"
 #include "config.h"
 
+// include all the libraries we're using
+#include "appled.h"
+#include "dipswitch.h"
+#include "servo.h"
+#include "digitalout.h"
+#include "digitalin.h"
+#include "motor.h"
+#include "pwmout.h"
+#include "stepper.h"
+#include "xbee.h"
+#include "webserver.h"
+
+#include "ctestee.h"
+#include "atestee.h"
+
 void BlinkTask( void* p );
 
 void Run( )
@@ -12,7 +27,7 @@ void Run( )
   TaskCreate( BlinkTask, "Blink", 400, 0, 1 );
   Usb_SetActive( 1 );
 
-  Osc_SetActive( true );
+  Osc_SetActive( true, true, true, true );
   Osc_RegisterSubsystem( AppLedOsc_GetName(), AppLedOsc_ReceiveMessage, NULL ); 
   Osc_RegisterSubsystem( DipSwitchOsc_GetName(), DipSwitchOsc_ReceiveMessage, NULL );
   Osc_RegisterSubsystem( ServoOsc_GetName(), ServoOsc_ReceiveMessage, NULL );
