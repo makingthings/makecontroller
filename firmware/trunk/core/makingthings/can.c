@@ -261,11 +261,11 @@ int Can_Init()
     return status;
   }
 
-  Io_SetOutput( CAN_TX );
-  Io_SetInput( CAN_RX );
-  Io_PullupDisable( CAN_RX );
+  Io_SetDirection( CAN_TX, true );
+  Io_SetDirection( CAN_RX, false );
+  Io_SetPullup( CAN_RX, false );
 
-  Io_SetOutput( CAN_ENABLE );
+  Io_SetDirection( CAN_ENABLE, true );
   Io_SetValue( CAN_ENABLE, false );
 
 /*
