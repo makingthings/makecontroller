@@ -16,7 +16,7 @@ void Run( )
   Usb_SetActive( 1 );
 
   // Fire up the OSC system
-  Osc_SetActive( true );
+  Osc_SetActive( true, true, true, true );
   // Add all the subsystems (make sure OSC_SUBSYSTEM_COUNT is large enough to accomodate them all)
   Osc_RegisterSubsystem( AnalogInOsc_GetName(), AnalogInOsc_ReceiveMessage, NULL );
   Osc_RegisterSubsystem( DebugOsc_GetName(), DebugOsc_ReceiveMessage, NULL );
