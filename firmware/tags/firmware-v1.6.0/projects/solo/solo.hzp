@@ -1,0 +1,139 @@
+<!DOCTYPE CrossStudio_Project_File>
+<solution version="1" Name="solo" >
+  <project file_name="" Name="solo" >
+    <configuration Target="AT91SAM7S256" property_groups_file_path="$(StudioDir)/targets/ATMEL_AT91SAM7/propertyGroups.xml" linker_memory_map_file="$(StudioDir)/targets/ATMEL_AT91SAM7/AT91SAM7S256_MemoryMap.xml" project_directory="" link_include_startup_code="No" project_type="Executable" linker_printf_width_precision_supported="Yes" Name="Common" linker_output_format="bin" />
+    <configuration target_reset_script="RAMReset()" Name="RAM" />
+    <configuration arm_target_flash_loader_file_path="$(StudioDir)/targets/ATMEL_AT91SAM7/Release/Loader.exe" target_reset_script="FLASHReset()" Name="Flash" />
+    <folder Name="Source Files" >
+      <configuration filter="c;cpp;cxx;cc;h;s;asm;inc" Name="Common" />
+      <folder Name="Solo" >
+        <file file_name="make.c" Name="make.c" />
+        <file file_name="config.h" Name="config.h" />
+      </folder>
+      <folder Name="Core" >
+        <folder Name="MakingThings" >
+          <file file_name="../../core/makingthings/analogin_isr.c" Name="analogin_isr.c" >
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
+          </file>
+          <file file_name="../../core/makingthings/analogin.c" Name="analogin.c" />
+          <file file_name="../../core/makingthings/analogin.h" Name="analogin.h" />
+          <file file_name="../../core/makingthings/analogin_internal.h" Name="analogin_internal.h" />
+          <file file_name="../../core/makingthings/debug.h" Name="debug.h" />
+          <file file_name="../../core/makingthings/controller.h" Name="controller.h" />
+          <file file_name="../../core/makingthings/eeprom.h" Name="eeprom.h" />
+          <file file_name="../../core/makingthings/debugosc.c" Name="debugosc.c" />
+          <file file_name="../../core/makingthings/eeprom.c" Name="eeprom.c" />
+          <file file_name="../../core/makingthings/FreeRTOSConfig.h" Name="FreeRTOSConfig.h" />
+          <file file_name="../../core/makingthings/led.h" Name="led.h" />
+          <file file_name="../../core/makingthings/io.c" Name="io.c" />
+          <file file_name="../../core/makingthings/io.h" Name="io.h" />
+          <file file_name="../../core/makingthings/led.c" Name="led.c" />
+          <file file_name="../../core/makingthings/lwipopts.h" Name="lwipopts.h" />
+          <file file_name="../../core/makingthings/main.c" Name="main.c" />
+          <file file_name="../../core/makingthings/osc.h" Name="osc.h" />
+          <file file_name="../../core/makingthings/network.c" Name="network.c" />
+          <file file_name="../../core/makingthings/network.h" Name="network.h" />
+          <file file_name="../../core/makingthings/osc.c" Name="osc.c" />
+          <file file_name="../../core/makingthings/pwm.h" Name="pwm.h" />
+          <file file_name="../../core/makingthings/osc_patternmatch.c" Name="osc_patternmatch.c" />
+          <file file_name="../../core/makingthings/osc_patternmatch.h" Name="osc_patternmatch.h" />
+          <file file_name="../../core/makingthings/pwm.c" Name="pwm.c" />
+          <file file_name="../../core/makingthings/serial_isr.c" Name="serial_isr.c" >
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
+          </file>
+          <file file_name="../../core/makingthings/rtos.c" Name="rtos.c" />
+          <file file_name="../../core/makingthings/rtos.h" Name="rtos.h" />
+          <file file_name="../../core/makingthings/serial.c" Name="serial.c" />
+          <file file_name="../../core/makingthings/serial.h" Name="serial.h" />
+          <file file_name="../../core/makingthings/system.h" Name="system.h" />
+          <file file_name="../../core/makingthings/spi.c" Name="spi.c" />
+          <file file_name="../../core/makingthings/spi.h" Name="spi.h" />
+          <file file_name="../../core/makingthings/system.c" Name="system.c" />
+          <file file_name="../../core/makingthings/types.h" Name="types.h" />
+          <file file_name="../../core/makingthings/timer.c" Name="timer.c" />
+          <file file_name="../../core/makingthings/timer.h" Name="timer.h" />
+          <file file_name="../../core/makingthings/timer_internal.h" Name="timer_internal.h" />
+          <file file_name="../../core/makingthings/timer_isr.c" Name="timer_isr.c" >
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
+          </file>
+          <file file_name="../../core/makingthings/USBIsr.c" Name="USBIsr.c" >
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
+          </file>
+          <file file_name="../../core/makingthings/usb.c" Name="usb.c" />
+          <file file_name="../../core/makingthings/usb.h" Name="usb.h" />
+          <file file_name="../../core/makingthings/USB-CDC.c" Name="USB-CDC.c" />
+          <file file_name="../../core/makingthings/USB-CDC.h" Name="USB-CDC.h" />
+        </folder>
+        <folder Name="FreeRTOS" >
+          <file file_name="../../core/freertos/portable/MemMang/heap_2.c" Name="heap_2.c" />
+          <file file_name="../../core/freertos/tasks.c" Name="tasks.c" />
+          <file file_name="../../core/freertos/list.c" Name="list.c" />
+          <file file_name="../../core/freertos/queue.c" Name="queue.c" />
+          <file file_name="../../core/freertos/portable/GCC/ARM7_AT91SAM7S/portISR.c" Name="portISR.c" >
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
+          </file>
+          <file file_name="../../core/freertos/portable/GCC/ARM7_AT91SAM7S/port.c" Name="port.c" />
+        </folder>
+        <folder Name="lwIP" >
+          <file file_name="../../core/lwip/src/api/api_msg.c" Name="api_msg.c" />
+          <file file_name="../../core/lwip/src/api/api_lib.c" Name="api_lib.c" />
+          <file file_name="../../core/lwip/src/api/netbuf.c" Name="netbuf.c" />
+          <file file_name="../../core/lwip/src/api/err.c" Name="err.c" />
+          <file file_name="../../core/lwip/src/netif/ethernetif.c" Name="ethernetif.c" />
+          <file file_name="../../core/lwip/src/netif/etharp.c" Name="etharp.c" />
+          <file file_name="../../core/lwip/src/core/ipv4/inet_chksum.c" Name="inet_chksum.c" />
+          <file file_name="../../core/lwip/src/core/ipv4/icmp.c" Name="icmp.c" />
+          <file file_name="../../core/lwip/src/core/ipv4/inet.c" Name="inet.c" />
+          <file file_name="../../core/lwip/src/core/ipv4/ip_frag.c" Name="ip_frag.c" />
+          <file file_name="../../core/lwip/src/core/ipv4/ip.c" Name="ip.c" />
+          <file file_name="../../core/lwip/src/core/ipv4/ip_addr.c" Name="ip_addr.c" />
+          <file file_name="../../core/lwip/src/core/pbuf.c" Name="pbuf.c" />
+          <file file_name="../../core/lwip/src/core/dhcp.c" Name="dhcp.c" />
+          <file file_name="../../core/lwip/src/core/dns.c" Name="dns.c" />
+          <file file_name="../../core/lwip/src/core/init.c" Name="init.c" />
+          <file file_name="../../core/lwip/src/core/mem.c" Name="mem.c" />
+          <file file_name="../../core/lwip/src/core/memp.c" Name="memp.c" />
+          <file file_name="../../core/lwip/src/core/netif.c" Name="netif.c" />
+          <file file_name="../../core/lwip/src/core/sys.c" Name="sys.c" />
+          <file file_name="../../core/lwip/src/core/raw.c" Name="raw.c" />
+          <file file_name="../../core/lwip/src/core/stats.c" Name="stats.c" />
+          <file file_name="../../core/lwip/src/core/tcp_out.c" Name="tcp_out.c" />
+          <file file_name="../../core/lwip/src/core/tcp.c" Name="tcp.c" />
+          <file file_name="../../core/lwip/src/core/tcp_in.c" Name="tcp_in.c" />
+          <file file_name="../../core/lwip/src/core/udp.c" Name="udp.c" />
+          <file file_name="../../core/lwip/src/api/tcpip.c" Name="tcpip.c" />
+          <file file_name="../../core/makingthings/SAM7_EMAC_ISR.c" Name="SAM7_EMAC_ISR.c" >
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
+          </file>
+          <file file_name="../../core/makingthings/SAM7_EMAC.c" Name="SAM7_EMAC.c" />
+          <file file_name="../../core/makingthings/SAM7_EMAC.h" Name="SAM7_EMAC.h" />
+          <file file_name="../../core/lwip/contrib/port/FreeRTOS/AT91SAM7X/sys_arch.c" Name="sys_arch.c" />
+        </folder>
+        <folder Name="Startup" >
+          <file file_name="../../core/startup/AT91SAM7_Target.js" Name="AT91SAM7_Target.js" />
+          <file file_name="../../core/startup/AT91SAM7_Startup.s" Name="AT91SAM7_Startup.s" />
+          <file file_name="../../core/startup/AT91SAM7S256_MemoryMap.xml" Name="AT91SAM7S256_MemoryMap.xml" />
+          <file file_name="../../core/startup/crt0.s" Name="crt0.s" />
+          <file file_name="../../core/startup/flash_placement.xml" Name="flash_placement.xml" />
+          <file file_name="../../core/freertos/portable/GCC/ARM7_AT91SAM7S/AT91SAM7X256.h" Name="AT91SAM7X256.h" />
+        </folder>
+      </folder>
+    </folder>
+    <configuration arm_target_loader_reset_after_download="Yes" arm_library_instruction_set="Thumb" Target="AT91SAM7X256" build_intermediate_directory="intermediate" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" c_user_include_directories=".;../../core/makingthings;../../core/freertos/include;../../core/lwip/src/include;../../core/lwip/contrib/port/FreeRTOS/AT91SAM7X;../../core/freertos/portable/GCC/ARM7_AT91SAM7S;../../core/lwip/src/include/ipv4" target_reset_script="FLASHReset()" build_output_directory="output" arm_target_flash_loader_type="Comms Channel Loader" Name="THUMB Flash Debug" />
+    <configuration c_user_include_directories=".;../../core/makingthings;../../core/freertos/include;../../core/lwip/src/include;../../core/lwip/contrib/port/FreeRTOS/AT91SAM7X;../../core/freertos/portable/GCC/ARM7_AT91SAM7S;../../core/lwip/src/include/ipv4" gcc_optimization_level="Level 1" build_debug_information="Yes" Name="THUMB Flash Release" />
+    <configuration Target="AT91SAM7X256" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" c_user_include_directories=".;../controller/makingthings;../appboard/makingthings;../controller/freertos/include;../controller/lwip/src/include;../controller/lwip/contrib/port/FreeRTOS/AT91SAM7X;../controller/freertos/portable/GCC/ARM7_AT91SAM7S;../controller/lwip/src/include/ipv4" Name="Debug" />
+  </project>
+  <configuration build_intermediate_directory="intermediate" build_quietly="Yes" inherited_configurations="THUMB;Flash;Debug" build_output_directory="output" Name="THUMB Flash Debug" />
+  <configuration arm_library_instruction_set="THUMB" c_preprocessor_definitions="__THUMB" arm_instruction_set="THUMB" hidden="Yes" Name="THUMB" />
+  <configuration c_preprocessor_definitions="__FLASH_BUILD" hidden="Yes" Name="Flash" />
+  <configuration c_preprocessor_definitions="DEBUG" link_include_startup_code="No" gcc_optimization_level="None" build_debug_information="Yes" Name="Debug" />
+  <configuration inherited_configurations="THUMB;Flash;Release" gcc_optimization_level="Level 2" Name="THUMB Flash Release" />
+  <configuration c_preprocessor_definitions="NDEBUG" link_include_startup_code="No" gcc_optimization_level="Level 1" build_debug_information="No" Name="Release" />
+  <configuration arm_library_instruction_set="THUMB" gcc_entry_point="0x100000" build_quietly="Yes" c_preprocessor_definitions="SAM7_GCC;THUMB_INTERWORK;SUPERVISOR_START" c_user_include_directories="." link_include_startup_code="Yes" arm_instruction_set="THUMB" c_preprocessor_undefinitions="" c_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wmissing-prototypes;-Wmissing-declarations;-Wno-strict-aliasing" arm_linker_stack_size="0" Name="Common" c_system_include_directories="$(StudioDir)/include" arm_linker_heap_size="0" />
+</solution>

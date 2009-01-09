@@ -1,0 +1,10 @@
+<!DOCTYPE mcbuilder_library>
+<library>
+  <version>1.0</version>
+  <display_name>XBee</display_name>
+  <author>MakingThings</author>
+  <reference>../../../../resources/reference/makecontroller/html/group___x_bee.html</reference>
+  <files>
+    <file type="thumb" >xbee.c</file>
+  </files>
+</library>
