@@ -11,6 +11,7 @@ void BlinkTask( void* p );
 
 void Run( )
 { 
+  Usb_SetActive(1);
   CTester_SetTesteePower( 0 );
 
   TaskCreate( BlinkTask, "Blink", 400, 0, 2 );
@@ -22,6 +23,9 @@ void Run( )
   Osc_RegisterSubsystem( LedOsc_GetName(), LedOsc_ReceiveMessage, NULL );
   Osc_RegisterSubsystem( DebugOsc_GetName(), DebugOsc_ReceiveMessage, NULL );
   Osc_RegisterSubsystem( CTesterOsc_GetName(), CTesterOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( SystemOsc_GetName(), SystemOsc_ReceiveMessage, NULL );
+  Osc_RegisterSubsystem( NetworkOsc_GetName(), NetworkOsc_ReceiveMessage, NULL );
+  Network_SetActive(1);
 }
 
 void BlinkTask( void* p )
@@ -30,9 +34,9 @@ void BlinkTask( void* p )
   
   while ( true )
   {
-    Sleep( 100 );
+    Sleep( 500 );
     Led_SetState( 0 );
-    Sleep( 900 );
+    Sleep( 500 );
     Led_SetState( 1 );
   }
 }

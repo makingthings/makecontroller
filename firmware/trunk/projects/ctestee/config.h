@@ -14,18 +14,15 @@
 // todo: make sure the code is organized so these are meaningful
 //----------------------------------------------------------------
 
-#define FACTORY_TESTING
-
 #include "controller.h"   // ...everybody uses the MAKE Controller Board
-#include "appboard.h"     // ...if you're using the MAKE Application Board
 #include "error.h"
 
-#define FIRMWARE_NAME          "Heavy"
+#define FIRMWARE_NAME          "CTestee"
 #define FIRMWARE_MAJOR_VERSION 1
-#define FIRMWARE_MINOR_VERSION 2
+#define FIRMWARE_MINOR_VERSION 6
 #define FIRMWARE_BUILD_NUMBER  0
 
-#define CONTROLLER_HEAPSIZE 23000
+#define CONTROLLER_HEAPSIZE 21000
 
 //----------------------------------------------------------------
 //  Comment out the systems that you don't want to include in your build.
