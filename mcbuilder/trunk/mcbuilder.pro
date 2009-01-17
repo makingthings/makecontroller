@@ -1,4 +1,4 @@
-MCBUILDER_VERSION = "0.5.0"
+MCBUILDER_VERSION = "0.6.0"
 TEMPLATE = app
 CONFIG += debug
 #CONFIG += release
