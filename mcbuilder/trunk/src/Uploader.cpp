@@ -56,7 +56,7 @@ bool Uploader::upload(QString boardProfileName, QString filename)
   QDir dir = QDir::current().filePath("resources/board_profiles");
   QDomDocument doc;
   QFile file(dir.filePath(boardProfileName));
-  currentFile = QDir::toNativeSeparators(filename);
+  currentFile = filename;
   if(doc.setContent(&file))
   {
 	  QDomNodeList nodes = doc.elementsByTagName("uploader");
