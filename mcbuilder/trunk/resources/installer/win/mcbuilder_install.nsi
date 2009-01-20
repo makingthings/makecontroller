@@ -1,7 +1,7 @@
 ; mcbuilder_install.nsi
 
 !ifndef VERSION
-  !define VERSION '0.5.0'
+  !define VERSION '0.6.0'
 !endif
 
 !ifndef APPNAME
@@ -76,7 +76,7 @@ Section "" ;No components page, name is not important
   File atm6124.sys
   
   SetOutPath $INSTDIR
-  File "..\..\..\bin\${APPNAME}.exe"
+  File "..\..\..\${APPNAME}.exe"
   File mingwm10.dll
   File QtCore4.dll
   File QtGui4.dll

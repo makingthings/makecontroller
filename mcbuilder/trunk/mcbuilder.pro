@@ -90,7 +90,8 @@ win32{
 	HEADERS += src/qextserialport/win_qextserialport.h
 	SOURCES += src/qextserialport/win_qextserialport.cpp
 	DEFINES += _TTY_WIN_
-	LIBS += -lSetupapi	
+	DEFINES += WINVER=0x0501
+	LIBS += -lSetupapi
 }
 
 
