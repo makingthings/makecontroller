@@ -21,6 +21,10 @@
 #include <QTextStream>
 #include "Uploader.h"
 
+#ifdef Q_WS_MAC
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 /*
   Uploader handles uploading a binary image to a board.  It reads the board profile for the 
   currently selected board to determine which uploader to use.  Then it fires up a QProcess
@@ -58,6 +62,31 @@ bool Uploader::upload(QString boardProfileName, QString filename)
 	  QDomNodeList nodes = doc.elementsByTagName("uploader");
     if(nodes.count())
       uploaderName = nodes.at(0).toElement().text();
+    
+    #ifdef Q_WS_MAC // get the path within the app bundle
+    CFURLRef pluginRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
+    CFStringRef macPath = CFURLCopyFileSystemPath(pluginRef, kCFURLPOSIXPathStyle);
+    QDir appBundle( CFStringGetCStringPtr(macPath, CFStringGetSystemEncoding()) );
+    uploaderName = (uploaderName == "sam7") ? appBundle.filePath( "Contents/Resources/sam7" ) : "";
+    #elif defined (Q_WS_WIN)
+    uploaderName = (uploaderName == "sam7") ? QDir::current().filePath("sam7") : "";
+    #else
+    QSettings settings("MakingThings", "mcbuilder");
+    uploaderName = settings.value("sam7_path", DEFAULT_SAM7_PATH).toString();
+    #endif
+    
+    int offset = 0; // escape any spaces in the filename
+    do
+    {
+      offset = filename.indexOf(" ", offset);
+      if( offset != -1 )
+      {
+        filename.insert(offset, "\\");
+        offset += 2; // step past the \ we inserted and the space we put it in front of
+      }
+    } while( offset != -1 );
+    qDebug( "uploading %s", qPrintable(filename));
+    
     QStringList uploaderArgs;
     uploaderArgs << "-e" << "set_clock";
     uploaderArgs << "-e" << "unlock_regions";
@@ -65,7 +94,7 @@ bool Uploader::upload(QString boardProfileName, QString filename)
     uploaderArgs << "-e" << "boot_from_flash";
     uploaderArgs << "-e" << "reset";
     QDir sam7dir(Preferences::sam7Path());
-    start(sam7dir.filePath(uploaderName), uploaderArgs);
+    start(sam7dir.absoluteFilePath(uploaderName), uploaderArgs);
     retval = true;
     file.close();
   }
@@ -145,25 +174,27 @@ void Uploader::uploadFinished(int exitCode, QProcess::ExitStatus exitStatus)
 void Uploader::onError(QProcess::ProcessError error)
 {
   QString msg;
+  QFileInfo up(uploaderName);
+  QString uploader = up.fileName();
   switch(error)
   {
     case QProcess::FailedToStart:
-      msg = tr("uploader failed to start.  '%1' is either missing, or doesn't have the correct permissions").arg(uploaderName);
+      msg = tr("uploader failed to start.  '%1' is either missing, or doesn't have the correct permissions").arg(uploader);
       break;
     case QProcess::Crashed:
-      msg = tr("uploader (%1) was canceled or crashed.").arg(uploaderName);
+      msg = tr("uploader (%1) was canceled or crashed.").arg(uploader);
       break;
     case QProcess::Timedout:
-      msg = tr("uploader (%1) timed out.").arg(uploaderName);
+      msg = tr("uploader (%1) timed out.").arg(uploader);
       break;
     case QProcess::WriteError:
-      msg = tr("uploader (%1) reported a write error.").arg(uploaderName);
+      msg = tr("uploader (%1) reported a write error.").arg(uploader);
       break;
     case QProcess::ReadError:
-      msg = tr("uploader (%1) reported a read error.").arg(uploaderName);
+      msg = tr("uploader (%1) reported a read error.").arg(uploader);
       break;
     case QProcess::UnknownError:
-      msg = tr("uploader (%1) - unknown error type.").arg(uploaderName);
+      msg = tr("uploader (%1) - unknown error type.").arg(uploader);
       break;
   }
   mainWindow->printOutputError(tr("Error - ") + msg);
