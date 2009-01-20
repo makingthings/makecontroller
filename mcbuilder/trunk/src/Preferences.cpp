@@ -41,6 +41,9 @@ Preferences::Preferences(MainWindow *mainWindow) : QDialog( 0 )
   connect(buttonBox, SIGNAL(accepted()), this, SLOT(applyChanges()));
   connect(browseWorkspaceButton, SIGNAL(clicked()), this, SLOT(browseWorkspace()));
   connect(fontButton, SIGNAL(clicked()), this, SLOT(getNewFont()));
+  connect(makePathButton, SIGNAL(clicked()), this, SLOT(onMakePathButton()));
+  connect(armelfPathButton, SIGNAL(clicked()), this, SLOT(onArmElfPathButton()));
+  connect(sam7PathButton, SIGNAL(clicked()), this, SLOT(onSam7Button()));
   
   // initialize the parts that the main window needs to know about
   QSettings settings("MakingThings", "mcbuilder");
@@ -190,6 +193,30 @@ void Preferences::applyChanges( )
     settings.setValue("editorFont", currentFont.family());
     settings.setValue("editorFontSize", currentFont.pointSize());
   }
+}
+
+void Preferences::onMakePathButton()
+{
+  QString newMakeDir = QFileDialog::getExistingDirectory(this, tr("Select Directory Containing Make"), 
+                                                           makePath(), QFileDialog::ShowDirsOnly);
+  if( !newMakeDir.isNull() ) // will be null if user hit cancel
+    makePathEdit->setText(newMakeDir);
+}
+
+void Preferences::onArmElfPathButton()
+{
+  QString newArmElfDir = QFileDialog::getExistingDirectory(this, tr("Select Directory Containing Arm Elf Tools"), 
+                                                           toolsPath(), QFileDialog::ShowDirsOnly);
+  if( !newArmElfDir.isNull() ) // will be null if user hit cancel
+    toolsPathEdit->setText(newArmElfDir);
+}
+
+void Preferences::onSam7Button()
+{
+  QString newSam7Dir = QFileDialog::getExistingDirectory(this, tr("Select Directory Containing Arm Elf Tools"), 
+                                                           sam7Path(), QFileDialog::ShowDirsOnly);
+  if( !newSam7Dir.isNull() ) // will be null if user hit cancel
+    sam7PathEdit->setText(newSam7Dir);
 }
 
 
