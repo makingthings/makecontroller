@@ -51,6 +51,7 @@ Preferences::Preferences(MainWindow *mainWindow) : QDialog( 0 )
   mainWindow->setEditorFont(editorFont, editorFontSize);
   fontBox->setText(QString("%1, %2pt").arg(editorFont).arg(editorFontSize));
   mainWindow->setTabWidth( settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt() );
+  resize(gridLayout->sizeHint());
 }
 
 // static

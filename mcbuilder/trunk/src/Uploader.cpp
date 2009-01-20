@@ -63,18 +63,6 @@ bool Uploader::upload(QString boardProfileName, QString filename)
     if(nodes.count())
       uploaderName = nodes.at(0).toElement().text();
     
-    #ifdef Q_WS_MAC // get the path within the app bundle
-    CFURLRef pluginRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
-    CFStringRef macPath = CFURLCopyFileSystemPath(pluginRef, kCFURLPOSIXPathStyle);
-    QDir appBundle( CFStringGetCStringPtr(macPath, CFStringGetSystemEncoding()) );
-    uploaderName = (uploaderName == "sam7") ? appBundle.filePath( "Contents/Resources/sam7" ) : "";
-    #elif defined (Q_WS_WIN)
-    uploaderName = (uploaderName == "sam7") ? QDir::current().filePath("sam7") : "";
-    #else
-    QSettings settings("MakingThings", "mcbuilder");
-    uploaderName = settings.value("sam7_path", DEFAULT_SAM7_PATH).toString();
-    #endif
-    
     int offset = 0; // escape any spaces in the filename
     do
     {
