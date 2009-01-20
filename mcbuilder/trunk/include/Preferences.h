@@ -46,6 +46,9 @@ class Preferences : public QDialog, private Ui::Preferences
 		void applyChanges( );
 		void browseWorkspace( );
     void getNewFont( );
+    void onMakePathButton();
+    void onArmElfPathButton();
+    void onSam7Button();
 };
 
 #endif // PREFERENCES_H
