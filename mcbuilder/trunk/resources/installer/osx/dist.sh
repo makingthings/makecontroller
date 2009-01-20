@@ -14,15 +14,15 @@ rm -Rf mcbuilder
 rm -Rf *.dmg
 
 #prepare the app
-cp Info.plist ../../../bin/mcbuilder.app/Contents/Info.plist
-sed -e s/@@version@@/$REVISION/g -i '' ../../../bin/mcbuilder.app/Contents/Info.plist
-strip ../../../bin/mcbuilder.app/Contents/MacOS/mcbuilder
+cp Info.plist ../../../mcbuilder.app/Contents/Info.plist
+sed -e s/@@version@@/$REVISION/g -i '' ../../../mcbuilder.app/Contents/Info.plist
+strip ../../../mcbuilder.app/Contents/MacOS/mcbuilder
 
 # put it in the right spot and create the appropriate directories
 mkdir mcbuilder
 cp ReadMe.rtf mcbuilder/ReadMe.rtf
 mkdir mcbuilder/resources
-cp -r ../../../bin/mcbuilder.app mcbuilder
+cp -r ../../../mcbuilder.app mcbuilder
 cp -r ../../examples mcbuilder/resources
 cp -r ../../board_profiles mcbuilder/resources
 cp -r ../../templates mcbuilder/resources
@@ -57,6 +57,9 @@ find mcbuilder -name ".svn" -exec rm -rf {} ';' 2> /dev/null
 mkdir mcbuilder-$REVISION
 mv mcbuilder mcbuilder-$REVISION/mcbuilder
 ln -s /Applications mcbuilder-$REVISION # add a link to the Applications directory
+
+echo adding uploader helper...
+cp -r OSXUploader.mpkg mcbuilder-$REVISION
 
 echo creating intel .dmg...
 hdiutil create -fs HFS+ -srcfolder "./mcbuilder-$REVISION/" -volname "mcbuilder-$REVISION" "mcbuilder-intel-$REVISION.dmg"
