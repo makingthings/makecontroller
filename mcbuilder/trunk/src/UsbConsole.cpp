@@ -17,7 +17,6 @@
 
 
 #include "UsbConsole.h"
-#include "qextserialenumerator.h"
 #include <QLineEdit>
 #include <QTextBlock>
 #include <QBuffer>
@@ -163,7 +162,6 @@ QString UsbConsole::strToHex(QString str)
 */
 void UsbConsole::enumerate()
 {
-  QextSerialEnumerator enumerator;
   QList<QextPortInfo> portInfos = enumerator.getPorts();
   QStringList foundPorts;
   // check for new ports...

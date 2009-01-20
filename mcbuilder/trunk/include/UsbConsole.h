@@ -23,6 +23,7 @@
 #include <QTimer>
 #include "ui_usbconsole.h"
 #include "qextserialport.h"
+#include "qextserialenumerator.h"
 
 class UsbConsole : public QDialog, private Ui::UsbConsoleUi
 {
@@ -45,6 +46,7 @@ class UsbConsole : public QDialog, private Ui::UsbConsoleUi
     
   private:
     QextSerialPort *port;
+    QextSerialEnumerator enumerator;
     QTimer enumerateTimer;
     QStringList ports;
     QStringList closedPorts;
