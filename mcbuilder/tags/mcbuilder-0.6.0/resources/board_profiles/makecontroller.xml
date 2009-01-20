@@ -1,0 +1,13 @@
+<board>
+  <name>Make Controller</name>
+  <uploader>sam7</uploader>
+  <maxsize>256000</maxsize>
+  <toolspath>arm-elf/bin</toolspath>
+  <cc>arm-elf-gcc</cc>
+  <cpp>arm-elf-g++</cpp>
+  <obj>arm-elf-obj</obj>
+  <as>arm-elf-as</as>
+  <ld>arm-elf-ld</ld>
+  <objcopy>arm-elf</objcopy>
+  <sizer>arm-elf-size</sizer>
+</board>
