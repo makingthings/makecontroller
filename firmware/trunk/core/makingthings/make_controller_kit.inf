@@ -1,19 +1,24 @@
+; Make Controller Virtual Serial Port Setup File
+; 
+; Supports Windows XP, Windows 2000 and Windows Vista (32 bit and 64 bit)
+;
+
 [Version]
 Signature="$Windows NT$"
 Class=Ports
 ClassGuid={4D36E978-E325-11CE-BFC1-08002BE10318}
 Provider=%MakingThings%
 LayoutFile=layout.inf
-DriverVer=10/15/1999,5.0.2153.1
+DriverVer=1/26/2009,5.0.3.0
 
 [MANUFACTURER]
-%MakingThings%=MakingThings
+%MakingThings%=MakingThings,NTamd64
 
 [MakingThings]
 %MakeControllerKit%=MakeControllerKit,USB\VID_EB03&PID_0920
 
-[MakeControllerKit_Install.NTx86]
-;Windows2000
+[MakingThings.NTamd64]
+%MakeControllerKit%=MakeControllerKit.NTamd64,USB\VID_EB03&PID_0920
 
 [DestinationDirs]
 DefaultDestDir=12
@@ -32,22 +37,32 @@ AddReg=MakeControllerKit.NT.HW.AddReg
 usbser.sys,,,0x20
 serenum.sys,,,0x20
 
+[MakeControllerKit.NTamd64]
+include=mdmcpq.inf
+CopyFiles=FakeModemFileCopySection
+AddReg=MakeControllerKit.NT.AddReg
+
+[MakeControllerKit.NTamd64.HW]
+AddReg=MakeControllerKit.NT.HW.AddReg
+
 [MakeControllerKit.NT.AddReg]
 HKR,,NTMPDriver,,*ntkern
 HKR,,NTMPDriver,,usbser.sys
 HKR,,EnumPropPages32,,"MsPorts.dll,SerialPortPropPageProvider"
 HKR,,PortSubClass,1,01
 
+[MakeControllerKit.NT.HW.AddReg]
+HKR,,"UpperFilters",0x00010000,"serenum"
+
 [MakeControllerKit.NT.Services]
 include=mdmcpq.inf
 AddService = usbser, 0x00000002,Service_Inst
 AddService = Serenum,,Serenum_Service_Inst
 
-[SerialEnumerator.NT.Services]
+[MakeControllerKit.NTamd64.Services]
+include=mdmcpq.inf
+AddService = usbser, 0x00000002,Service_Inst
 AddService = Serenum,,Serenum_Service_Inst
-
-[MakeControllerKit.NT.HW.AddReg]
-HKR,,"UpperFilters",0x00010000,"serenum"
 
 ; -------------- Serial Port Driver install sections
 [Service_Inst]
@@ -66,12 +81,6 @@ StartType      = 3               ; SERVICE_DEMAND_START
 ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
 ServiceBinary  = %12%\serenum.sys
 LoadOrderGroup = PNP Filter
-
-[SerialEnumerator.NT]
-CopyFiles=SerialEnumerator.NT.Copy
-
-[SerialEnumerator.NT.Copy]
-serenum.sys,,,0x20
 
 [Strings]
 MakingThings = "MakingThings"
