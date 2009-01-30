@@ -63,7 +63,7 @@ static inline unsigned char to_uchar (char ch)
   // we now have "dGVzdA==" in encode_buf, and len is 8
   \endcode
 */
-int Base64_Encode(char* dest, int dest_size, const char* src, int src_size)
+int Base64::encode(char* dest, int dest_size, const char* src, int src_size)
 {
   // our library of valid b64 chars
   static const unsigned char b64str[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -271,7 +271,7 @@ bool isbase64 (char ch)
   // we now have "test" in decode_buf, and decode_size is set to 6
   \endcode
 */
-bool Base64_Decode(char* dest, int* dest_size, const char* src, int src_size)
+bool Base64::decode(char* dest, int* dest_size, const char* src, int src_size)
 {
   int out_remaining = *dest_size;
 

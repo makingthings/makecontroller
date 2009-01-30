@@ -18,12 +18,7 @@
 #include "aes.h"
 #include <string.h>
 
-static int Aes_SetupEncrypt( unsigned long* rk, const unsigned char* key, int keybits);
-static int Aes_SetupDecrypt( unsigned long *rk, const unsigned char *key, int keybits);
-static void Aes_DoEncrypt( const unsigned long *rk, int nrounds, 
-  const unsigned char plaintext[16], unsigned char ciphertext[16]);
-static void Aes_DoDecrypt( const unsigned long *rk, int nrounds,
-  const unsigned char ciphertext[16], unsigned char plaintext[16]);
+
 
 #define FULL_UNROLL
 
@@ -765,7 +760,7 @@ static const u32 rcon[] =
  * @return the number of rounds for the given cipher key size.
  */
 // static
-int Aes_SetupEncrypt(u32 *rk, const u8 *key, int keybits)
+int Aes::setupEncrypt(u32 *rk, const u8 *key, int keybits)
 {
   int i = 0;
   u32 temp;
@@ -855,13 +850,13 @@ int Aes_SetupEncrypt(u32 *rk, const u8 *key, int keybits)
  * @return the number of rounds for the given cipher key size.
  */
 // static
-int Aes_SetupDecrypt(u32 *rk, const u8 *key, int keybits)
+int Aes::setupDecrypt(u32 *rk, const u8 *key, int keybits)
 {
   int nrounds, i, j;
   u32 temp;
 
   /* expand the cipher key: */
-  nrounds = Aes_SetupEncrypt(rk, key, keybits);
+  nrounds = Aes::setupEncrypt(rk, key, keybits);
   /* invert the order of the round keys: */
   for (i = 0, j = 4*nrounds; i < j; i += 4, j -= 4)
   {
@@ -903,7 +898,7 @@ int Aes_SetupDecrypt(u32 *rk, const u8 *key, int keybits)
  *
  * @return the number of rounds for the given cipher key size.
  */
-void Aes_DoEncrypt(const u32 *rk, int nrounds, const u8 plaintext[16],
+void Aes::doEncrypt(const u32 *rk, int nrounds, const u8 plaintext[16],
   u8 ciphertext[16])
 {
   u32 s0, s1, s2, s3, t0, t1, t2, t3;
@@ -1295,7 +1290,7 @@ void Aes_DoDecrypt(const u32 *rk, int nrounds, const u8 ciphertext[16],
   int written = Aes_Encrypt(cipherbuf, BUFF_SIZE, plaintext, 26, secret);
   \endcode
 */
-int Aes_Encrypt(unsigned char* output, int outlen, unsigned char* input, int inlen, unsigned char* password)
+int Aes::encrypt(unsigned char* output, int outlen, unsigned char* input, int inlen, unsigned char* password)
 {
   unsigned long rk[RKLENGTH(KEYBITS)];
   unsigned char key[KEYLENGTH(KEYBITS)];
@@ -1304,7 +1299,7 @@ int Aes_Encrypt(unsigned char* output, int outlen, unsigned char* input, int inl
 
   memcpy(key, password, BLOCK_SIZE); // gotta be 16 coming in
 
-  nrounds = Aes_SetupEncrypt(rk, key, KEYBITS); // initialize the encrypt buffer
+  nrounds = Aes::setupEncrypt(rk, key, KEYBITS); // initialize the encrypt buffer
   while(inlen)
   {
     unsigned char plaintext[BLOCK_SIZE];
@@ -1326,7 +1321,7 @@ int Aes_Encrypt(unsigned char* output, int outlen, unsigned char* input, int inl
     unsigned int orig_block_size = j;
     for (; j < BLOCK_SIZE; j++) // if we didn't get 16 bytes, pad plaintext
       plaintext[j] = c;
-    Aes_DoEncrypt(rk, nrounds, plaintext, ciphertext);
+    Aes::doEncrypt(rk, nrounds, plaintext, ciphertext);
     if(outlen < BLOCK_SIZE) // not enough room to write out
       return -1;
     memcpy(output, ciphertext, BLOCK_SIZE);
@@ -1336,7 +1331,7 @@ int Aes_Encrypt(unsigned char* output, int outlen, unsigned char* input, int inl
     if(orig_block_size == BLOCK_SIZE && inlen == 0) // the last chunk was 16 bytes.  encrypt another round so we know how to decrypt the padding
     {
       memset(plaintext, BLOCK_SIZE, BLOCK_SIZE); // pad 16 bytes with the value 16
-      Aes_DoEncrypt(rk, nrounds, plaintext, ciphertext);
+      Aes::doEncrypt(rk, nrounds, plaintext, ciphertext);
       if(outlen < BLOCK_SIZE) // not enough room to write out
         return -1;
       memcpy(output, ciphertext, BLOCK_SIZE);
@@ -1370,7 +1365,7 @@ int Aes_Encrypt(unsigned char* output, int outlen, unsigned char* input, int inl
   // we now have our original plaintext in plainbuf
   \endcode
 */
-int Aes_Decrypt(unsigned char* output, int outlen, unsigned char* input, int inlen, unsigned char* password)
+int Aes::decrypt(unsigned char* output, int outlen, unsigned char* input, int inlen, unsigned char* password)
 {
   unsigned long rk[RKLENGTH(KEYBITS)];
   unsigned char key[KEYLENGTH(KEYBITS)];
@@ -1379,7 +1374,7 @@ int Aes_Decrypt(unsigned char* output, int outlen, unsigned char* input, int inl
 
   memcpy(key, password, BLOCK_SIZE); // gotta be 16 coming in
   
-  nrounds = Aes_SetupDecrypt(rk, key, KEYBITS);
+  nrounds = Aes::setupDecrypt(rk, key, KEYBITS);
   while(inlen)
   {
     unsigned char plaintext[BLOCK_SIZE];

@@ -20,7 +20,12 @@
 
 #include "types.h"
 
-bool Base64_Decode(char* dest, int* dest_size, const char* src, int src_size);
-int Base64_Encode(char* dest, int dest_size, const char* src, int src_size);
+class Base64
+{
+public:
+  static bool decode(char* dest, int* dest_size, const char* src, int src_size);
+  static int encode(char* dest, int dest_size, const char* src, int src_size);
+};
+
 
 #endif // BASE_64_H
