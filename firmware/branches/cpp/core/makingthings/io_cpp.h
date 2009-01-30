@@ -44,6 +44,7 @@ public:
   int getPin( );
   
   bool getValue( );
+  bool setValue( bool onoff );
   bool on();
   bool off();
   
