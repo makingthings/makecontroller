@@ -27,6 +27,7 @@ class JsonEncoder
 {
 public:
   JsonEncoder( );
+  void reset();
   char* objectOpen(char *buf, int *remaining);
   char* objectKey(const char *key, char *buf, int *remaining);
   char* objectClose(char *buf, int *remaining);
@@ -63,6 +64,7 @@ class JsonDecoder
 {
 public:
   JsonDecoder(void* context = 0);
+  void reset(void* context = 0);
   bool go(char* text, int len);
   void setIntCallback(bool(*int_callback)(void *ctx, int val));
   void setFloatCallback(bool(*float_callback)(void *ctx, float val));
@@ -124,9 +126,6 @@ protected:
   Callbacks callbacks;
   
 };
-
-// Encode
-// void JsonEncode_Init(JsonEncode_State* state);
 
 #endif // JSON__H
 

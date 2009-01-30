@@ -123,6 +123,11 @@
 */
 JsonEncoder::JsonEncoder()
 {
+  reset();
+}
+
+void JsonEncoder::reset()
+{
   state.depth = 0;
   state.steps[0] = JSON_START;
 }
@@ -674,6 +679,11 @@ void JsonDecoder::setEndArrayCallback(bool(*end_array_callback)(void *ctx))
   pass around a known object within the callbacks.  Otherwise, just set it to 0
 */
 JsonDecoder::JsonDecoder(void* context)
+{
+  reset( context );
+}
+
+void JsonDecoder::reset(void* context)
 {
   state.depth = 0;
   state.gotcomma = false;
