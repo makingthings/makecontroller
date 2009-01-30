@@ -18,7 +18,19 @@
 #ifndef AES_H
 #define AES_H
 
-int Aes_Encrypt(unsigned char* output, int outlen, unsigned char* input, int inlen, unsigned char* key);
-int Aes_Decrypt(unsigned char* output, int outlen, unsigned char* input, int inlen, unsigned char* password);
+class Aes
+{
+public:
+  static int encrypt(unsigned char* output, int outlen, unsigned char* input, int inlen, unsigned char* key);
+  static int decrypt(unsigned char* output, int outlen, unsigned char* input, int inlen, unsigned char* password);
+
+private:
+  static int setupEncrypt( unsigned long* rk, const unsigned char* key, int keybits);
+  static int setupDecrypt( unsigned long *rk, const unsigned char *key, int keybits);
+  static void doEncrypt( const unsigned long *rk, int nrounds, 
+    const unsigned char plaintext[16], unsigned char ciphertext[16]);
+  static void doDecrypt( const unsigned long *rk, int nrounds,
+    const unsigned char ciphertext[16], unsigned char plaintext[16]);
+};
 
 #endif // AES_H
