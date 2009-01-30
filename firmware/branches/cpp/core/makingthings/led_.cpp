@@ -53,7 +53,10 @@ Led::Led( )
 
 void Led::setState( bool state )
 {
-  ledIo.setValue( state );
+  if(state)
+    ledIo.on();
+  else
+    ledIo.off();
 }
 
 bool Led::getState( )

@@ -67,26 +67,23 @@ bool Io::getValue( )
     return ( ( AT91C_BASE_PIOB->PIO_PDSR & mask ) != 0 ) ? 1 : 0;
 }
 
-bool Io::setValue( bool onoff )
+bool Io::on()
 {
-  if ( io_pin == INVALID_PIN )
-    return 0;
-
   int mask = 1 << ( io_pin & 0x1F );
   if ( io_pin < 32 ) // port A
-  {
-    if ( !onoff )
-      AT91C_BASE_PIOA->PIO_SODR = mask; // set it
-    else
-      AT91C_BASE_PIOA->PIO_CODR = mask; // clear
-  }
+    AT91C_BASE_PIOA->PIO_SODR = mask;
   else // port B
-  {
-    if ( !onoff )
-      AT91C_BASE_PIOB->PIO_SODR = mask; // set it
-    else
-      AT91C_BASE_PIOB->PIO_CODR = mask; // clear it
-  }
+    AT91C_BASE_PIOB->PIO_SODR = mask;
+  return true;
+}
+
+bool Io::off()
+{
+  int mask = 1 << ( io_pin & 0x1F );
+  if ( io_pin < 32 ) // port A
+    AT91C_BASE_PIOA->PIO_CODR = mask;
+  else // port B
+    AT91C_BASE_PIOB->PIO_CODR = mask;
   return true;
 }
 
