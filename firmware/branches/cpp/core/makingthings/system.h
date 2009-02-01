@@ -15,40 +15,49 @@
 
 *********************************************************************************/
 
-/*
-	system.h
-
-  MakingThings
-*/
-
-#ifndef SYSTEM_H
-#define SYSTEM_H
+#ifndef _SYSTEM_H
+#define _SYSTEM_H
 
 #define SYSTEM_MAX_NAME 99 
 
-/* System Interface */
 
-int System_SetActive( int state );
-int System_GetActive( void );
-int System_GetFreeMemory( void );
-int System_GetSerialNumber( void );
+class System
+{
+  public:
+    static System* get();
+    int setSamba( int sure );
+    int reset( int sure );
+    int setSerialNumber( int serial );
+    int getSerialNumber();
+    int setName( char* name );
+    char* getName( void );
+    void stackAudit( int on_off );
+    int getFreeMemory();
+  
+  protected:
+    System();
+    static System* _instance;
+//    static char[] name;
+};
 
-int System_SetSamba( int sure );
-int System_SetReset( int sure );
-int System_SetSerialNumber( int serial );
-int System_SetName( char* name );
-char* System_GetName( void );
-void System_SetAsyncDestination( int dest );
-int System_GetAsyncDestination( void );
-void System_SetAutoSendInterval( int interval );
-int System_GetAutoSendInterval( void );
-
-void System_StackAudit( int on_off );
-
-/* SystemOsc Interface */
-
-const char* SystemOsc_GetName( void );
-int SystemOsc_ReceiveMessage( int channel, char* message, int length );
-int SystemOsc_Poll( void );
+//
+//int System_SetActive( int state );
+//int System_GetActive( void );
+//int System_GetFreeMemory( void );
+//int System_GetSerialNumber( void );
+//
+//
+//void System_SetAsyncDestination( int dest );
+//int System_GetAsyncDestination( void );
+//void System_SetAutoSendInterval( int interval );
+//int System_GetAutoSendInterval( void );
+//
+//
+//
+///* SystemOsc Interface */
+//
+//const char* SystemOsc_GetName( void );
+//int SystemOsc_ReceiveMessage( int channel, char* message, int length );
+//int SystemOsc_Poll( void );
 
 #endif
