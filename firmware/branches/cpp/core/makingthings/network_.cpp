@@ -97,10 +97,10 @@ int Network::setAddress( int a0, int a1, int a2, int a3 )
 {
   if( !getValid() ) // make sure the other elements are initialized, set to defaults
   {
-    tempGateway = NETIF_IP_ADDRESS( a0, a1, a2, 1 );
-    tempMask = NETIF_IP_ADDRESS( 255, 255, 255, 0 );
+    tempGateway = IP_ADDRESS( a0, a1, a2, 1 );
+    tempMask = IP_ADDRESS( 255, 255, 255, 0 );
   }
-  tempIpAddress = NETIF_IP_ADDRESS( a0, a1, a2, a3 );
+  tempIpAddress = IP_ADDRESS( a0, a1, a2, a3 );
   setValid( 1 ); // apply the changes and save them as valid
   return CONTROLLER_OK;
 }
@@ -109,10 +109,10 @@ int Network::setMask( int m0, int m1, int m2, int m3 )
 {
   if( !getValid() ) // make sure the other elements are initialized, set to defaults
   {
-    tempGateway = NETIF_IP_ADDRESS( 192, 168, 0, 1 );
-    tempIpAddress = NETIF_IP_ADDRESS( 192, 168, 0, 200 );
+    tempGateway = IP_ADDRESS( 192, 168, 0, 1 );
+    tempIpAddress = IP_ADDRESS( 192, 168, 0, 200 );
   }
-  tempMask = NETIF_IP_ADDRESS( m0, m1, m2, m3 );
+  tempMask = IP_ADDRESS( m0, m1, m2, m3 );
   setValid( 1 ); // apply the changes and save them as valid
   return CONTROLLER_OK;
 }
@@ -121,10 +121,10 @@ int Network::setGateway( int g0, int g1, int g2, int g3 )
 {
   if( !getValid() ) // make sure the other elements are initialized, set to defaults
   {
-    tempMask = NETIF_IP_ADDRESS( 255, 255, 255, 255 );
-    tempIpAddress = NETIF_IP_ADDRESS( g0, g1, g2, 200 );
+    tempMask = IP_ADDRESS( 255, 255, 255, 255 );
+    tempIpAddress = IP_ADDRESS( g0, g1, g2, 200 );
   }
-  tempGateway = NETIF_IP_ADDRESS( g0, g1, g2, g3 );
+  tempGateway = IP_ADDRESS( g0, g1, g2, g3 );
   setValid( 1 ); // apply the changes and save them as valid
   
   return CONTROLLER_OK;
@@ -311,9 +311,9 @@ bool Network::getValid( )
 // if things aren't valid, just set the defaults
 void Network::setDefaults( )
 {
-  tempIpAddress = NETIF_IP_ADDRESS( 192, 168, 0, 200 );
-  tempGateway = NETIF_IP_ADDRESS( 192, 168, 0, 1 );
-  tempMask = NETIF_IP_ADDRESS( 255, 255, 255, 0 );
+  tempIpAddress = IP_ADDRESS( 192, 168, 0, 200 );
+  tempGateway = IP_ADDRESS( 192, 168, 0, 1 );
+  tempMask = IP_ADDRESS( 255, 255, 255, 0 );
   setValid( 1 );
 }
 
