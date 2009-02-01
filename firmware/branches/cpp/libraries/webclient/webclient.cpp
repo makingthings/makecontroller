@@ -19,7 +19,10 @@
 #ifdef MAKE_CTRL_NETWORK
 
 #include "stdlib.h"
+#include "string.h"
+#include <stdio.h>
 #include "webclient.h"
+#include "rtos_.h"
 #include "lwip/api.h"
 
 #define WEBCLIENT_INTERNAL_BUFFER_SIZE 200
@@ -42,6 +45,18 @@ char WebClient_InternalBuffer[ WEBCLIENT_INTERNAL_BUFFER_SIZE ];
 	\ingroup Libraries
 	@{
 */
+
+WebClient::WebClient(int address, int port)
+{
+  this->address = address;
+  this->port = port;
+}
+
+void WebClient::setAddress(int address, int port)
+{
+  this->address = address;
+  this->port = port;
+}
 
 /**	
 	Performs an HTTP GET operation to the path at the address / port specified.  
@@ -74,11 +89,10 @@ char WebClient_InternalBuffer[ WEBCLIENT_INTERNAL_BUFFER_SIZE ];
   \endcode
   Now we should have the results of the HTTP GET from \b www.makingthings.com/test/path in \b myBuffer.
 */
-int WebClient_Get( int address, int port, char* hostname, char* path, char* buffer, int buffer_size )
+int WebClient::get( char* hostname, char* path, char* buffer, int buffer_size )
 {
   char* b = WebClient_InternalBuffer;
-  struct netconn *s = Socket( address, port );  
-  if ( s != NULL )
+  if ( socket.connect( address, port ) )
   {
     // construct the GET request
     int send_len = snprintf( b, WEBCLIENT_INTERNAL_BUFFER_SIZE, "GET %s HTTP/1.1\r\n%s%s%s\r\n", 
@@ -88,21 +102,21 @@ int WebClient_Get( int address, int port, char* hostname, char* path, char* buff
                                 ( hostname != NULL ) ? "\r\n" : ""  );
     if ( send_len > WEBCLIENT_INTERNAL_BUFFER_SIZE )
     {
-      SocketClose( s );
+      socket.close( );
       return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
     }
     
     // send the GET request
-    if(!SocketWrite( s, b, send_len ))
+    if(!socket.write( b, send_len ))
     {
-      SocketClose( s );
+      socket.close( );
       return CONTROLLER_ERROR_WRITE_FAILED;
     }
 
     int content_length = 0;
     // read through the response header to get to the data, and pick up the content-length as we go
     int buffer_length;
-    while ( ( buffer_length = SocketReadLine( s, b, WEBCLIENT_INTERNAL_BUFFER_SIZE ) ) )
+    while ( ( buffer_length = socket.readLine( b, WEBCLIENT_INTERNAL_BUFFER_SIZE ) ) )
     {
       if ( strncmp( b, "\r\n", 2 ) == 0 )
         break;
@@ -118,14 +132,14 @@ int WebClient_Get( int address, int port, char* hostname, char* path, char* buff
       char* bp = buffer;
       while( total_bytes_read < buffer_size && total_bytes_read < content_length )
       {
-        int avail = SocketBytesAvailable(s);
+        int avail = socket.bytesAvailable();
         if(!avail) // sometimes the connection can be slooooow, sleep a bit and try again
         {
           int times = 10;
           while(times--)
           {
-            Sleep(100);
-            if((avail = SocketBytesAvailable(s)))
+            Task::sleep(100);
+            if((avail = socket.bytesAvailable()))
               break;
           }
         }
@@ -134,7 +148,7 @@ int WebClient_Get( int address, int port, char* hostname, char* path, char* buff
 
         if(avail > buf_remaining) // make sure we don't read more than can fit
           avail = buf_remaining;
-        buffer_length = SocketRead( s, bp, avail );
+        buffer_length = socket.read( bp, avail );
         if(!buffer_length) // this will be 0 when we get a read error - bail in that case
           break;
 
@@ -145,7 +159,7 @@ int WebClient_Get( int address, int port, char* hostname, char* path, char* buff
       }
     }
           
-    SocketClose( s );
+    socket.close( );
     return total_bytes_read;
   }
   else
@@ -176,13 +190,12 @@ int WebClient_Get( int address, int port, char* hostname, char* path, char* buff
                                     myBuffer, strlen("A test message to post"), bufLength );
   \endcode
 */
-int WebClient_Post( int address, int port, char* path, char* hostname, char* buffer, int buffer_length, int buffer_size )
+int WebClient::post( char* hostname, char* path, char* buffer, int buffer_length, int buffer_size )
 {
   char* b = WebClient_InternalBuffer;
   int buffer_read = 0;
   int wrote = 0;
-  void* s = Socket( address, port );  
-  if ( s != NULL )
+  if ( socket.connect( address, port ) )
   { 
     int send_len = snprintf( b, WEBCLIENT_INTERNAL_BUFFER_SIZE, 
                                 "POST %s HTTP/1.1\r\n%s%s%sContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n", 
@@ -193,33 +206,35 @@ int WebClient_Post( int address, int port, char* path, char* hostname, char* buf
                                 buffer_length );
     if ( send_len > WEBCLIENT_INTERNAL_BUFFER_SIZE )
     {
-      SocketClose( s );
+      socket.close( );
       return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
     }
 
-    wrote = SocketWrite( s, b, send_len );
-    if ( wrote == 0 )
+    if ( socket.write( b, send_len ) == 0 ) // send the headers
     {
-      SocketClose( s );
+      socket.close( );
       return CONTROLLER_ERROR_WRITE_FAILED;
     }
 
-    SocketWrite( s, buffer, buffer_length );
+    socket.write( buffer, buffer_length ); // send the body
     
+    // read back the response
     int content_length = 0;
     int b_len;
-    while ( ( b_len = SocketReadLine( s, b, WEBCLIENT_INTERNAL_BUFFER_SIZE ) ) )
+    while ( ( b_len = socket.readLine( b, WEBCLIENT_INTERNAL_BUFFER_SIZE ) ) )
     {
+      // read through the headers
       if ( strncmp( b, "\r\n", 2 ) == 0 )
         break;
       if ( strncmp( b, "Content-Length", 14 ) == 0 )
         content_length = atoi( &b[ 16 ] );
     }
-          
+    
+    // read the actual response data into the caller's buffer, if there's any to grab
     if ( content_length > 0 && b_len > 0 )
     {
       char* bp = buffer;
-      while ( ( b_len = SocketRead( s, bp, buffer_size - buffer_read ) ) )
+      while ( ( b_len = socket.read( bp, buffer_size - buffer_read ) ) )
       {
         buffer_read += b_len;
         bp += b_len;
@@ -228,7 +243,7 @@ int WebClient_Post( int address, int port, char* path, char* hostname, char* buf
       }
     }          
 
-    SocketClose( s );
+    socket.close( );
     return buffer_read;
   }
   else
