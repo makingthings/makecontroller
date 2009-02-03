@@ -110,17 +110,6 @@ int WebClient::get( char* hostname, char* path, char* buffer, int buffer_size )
       socket.close( );
       return CONTROLLER_ERROR_WRITE_FAILED;
     }
-
-    int content_length = 0;
-    // read through the response header to get to the data, and pick up the content-length as we go
-    int buffer_length;
-    while ( ( buffer_length = socket.readLine( b, WEBCLIENT_INTERNAL_BUFFER_SIZE ) ) )
-    {
-      if ( strncmp( b, "\r\n", 2 ) == 0 )
-        break;
-      if ( strncmp( b, "Content-Length", 14 ) == 0 )
-        content_length = atoi( &b[ 15 ] );
-    }
     
     // read the data into the given buffer until there's none left, or the passed in buffer is full
     int total_bytes_read = readResponse(buffer, buffer_size);
