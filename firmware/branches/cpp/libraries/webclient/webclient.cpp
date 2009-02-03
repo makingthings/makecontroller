@@ -71,8 +71,6 @@ void WebClient::setAddress(int address, int port)
   Note that this uses lots of printf style functions and may require a fair amount of memory to be allocated
   to the task calling it.  The result is returned in the specified buffer.
 
-	@param address The IP address of the server to get from.  Usually created using the IP_ADDRESS( ) macro.
-  @param port The port to connect on.  Usually 80 for HTTP.
   @param hostname A string specifying the name of the host to connect to.  When connecting to a server
   that does shared hosting, this will specify who to connect with.
   @param path The path on the server to connect to.
@@ -125,40 +123,7 @@ int WebClient::get( char* hostname, char* path, char* buffer, int buffer_size )
     }
     
     // read the data into the given buffer until there's none left, or the passed in buffer is full
-    int total_bytes_read = 0;
-    int buf_remaining = buffer_size;
-    if ( content_length > 0 && buffer_length > 0 )
-    {
-      char* bp = buffer;
-      while( total_bytes_read < buffer_size && total_bytes_read < content_length )
-      {
-        int avail = socket.bytesAvailable();
-        if(!avail) // sometimes the connection can be slooooow, sleep a bit and try again
-        {
-          int times = 10;
-          while(times--)
-          {
-            Task::sleep(100);
-            if((avail = socket.bytesAvailable()))
-              break;
-          }
-        }
-        if(!avail) // if we still didn't get anything, bail
-          break;
-
-        if(avail > buf_remaining) // make sure we don't read more than can fit
-          avail = buf_remaining;
-        buffer_length = socket.read( bp, avail );
-        if(!buffer_length) // this will be 0 when we get a read error - bail in that case
-          break;
-
-        // update counts
-        buf_remaining -= buffer_length;
-        total_bytes_read += buffer_length;
-        bp += buffer_length;
-      }
-    }
-          
+    int total_bytes_read = readResponse(buffer, buffer_size);
     socket.close( );
     return total_bytes_read;
   }
@@ -169,8 +134,6 @@ int WebClient::get( char* hostname, char* path, char* buffer, int buffer_size )
 /**	
 	Performs an HTTP POST operation to the path at the address / port specified.  The actual post contents 
   are found read from a given buffer and the result is returned in the same buffer.
-  @param address The IP address of the server to post to.
-  @param port The port on the server you're connecting to. Usually 80 for HTTP.
   @param hostname A string specifying the name of the host to connect to.  When connecting to a server
   that does shared hosting, this will specify who to connect with.
   @param path The path on the server to post to.
@@ -193,12 +156,10 @@ int WebClient::get( char* hostname, char* path, char* buffer, int buffer_size )
 int WebClient::post( char* hostname, char* path, char* buffer, int buffer_length, int buffer_size )
 {
   char* b = WebClient_InternalBuffer;
-  int buffer_read = 0;
-  int wrote = 0;
   if ( socket.connect( address, port ) )
   { 
     int send_len = snprintf( b, WEBCLIENT_INTERNAL_BUFFER_SIZE, 
-                                "POST %s HTTP/1.1\r\n%s%s%sContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n", 
+                                "POST %s HTTP/1.1\r\n%s%s%sAccept: application/json\r\nContent-Length: %d\r\n\r\n", 
                                 path, 
                                 ( hostname != NULL ) ? "Host: " : "",
                                 ( hostname != NULL ) ? hostname : "",
@@ -219,35 +180,75 @@ int WebClient::post( char* hostname, char* path, char* buffer, int buffer_length
     socket.write( buffer, buffer_length ); // send the body
     
     // read back the response
-    int content_length = 0;
-    int b_len;
-    while ( ( b_len = socket.readLine( b, WEBCLIENT_INTERNAL_BUFFER_SIZE ) ) )
-    {
-      // read through the headers
-      if ( strncmp( b, "\r\n", 2 ) == 0 )
-        break;
-      if ( strncmp( b, "Content-Length", 14 ) == 0 )
-        content_length = atoi( &b[ 16 ] );
-    }
-    
-    // read the actual response data into the caller's buffer, if there's any to grab
-    if ( content_length > 0 && b_len > 0 )
-    {
-      char* bp = buffer;
-      while ( ( b_len = socket.read( bp, buffer_size - buffer_read ) ) )
-      {
-        buffer_read += b_len;
-        bp += b_len;
-        if ( buffer_read >= content_length )
-          break;
-      }
-    }          
-
+    int buffer_read = readResponse(buffer, buffer_size);
     socket.close( );
     return buffer_read;
   }
   else
     return CONTROLLER_ERROR_BAD_ADDRESS;
+}
+
+int WebClient::readResponse( char* buf, int size )
+{
+  // read back the response
+  char* b = WebClient_InternalBuffer;
+  int content_length = 0;
+  int b_len;
+  bool chunked = true;
+  
+  // read through the headers - figure out the content length scheme
+  while ( ( b_len = socket.readLine( b, WEBCLIENT_INTERNAL_BUFFER_SIZE ) ) )
+  {
+    if ( !strncmp( b, "Content-Length", 14 ) ) // check for content length
+      content_length = atoi( &b[ 16 ] );
+    else if( !strncmp( b, "Transfer-Encoding: chunked", 26 ) ) // check to see if we're chunked
+      chunked = true;
+    else if ( strncmp( b, "\r\n", 2 ) == 0 )
+      break;
+  }
+
+  if(b_len <= 0)
+    return 0;
+  
+  int content_read = 0;
+  
+  // read the actual response data into the caller's buffer, if there's any to grab
+  if(chunked ) // first see if it's chunked
+  {
+    int len = 1;
+    while(len != 0)
+    {
+      b_len = socket.readLine( b, WEBCLIENT_INTERNAL_BUFFER_SIZE );
+      if(sscanf(b, "%x", &len) != 1) // the first part of the chunk should indicate the chunk's length (hex)
+        break;
+      if(len == 0) // an empty chunk indicates the end of the transfer
+        break;
+      content_read += socket.read(buf, len);
+      socket.readLine(b, WEBCLIENT_INTERNAL_BUFFER_SIZE); // slurp out the remaining newlines
+    }
+  }
+  else if ( content_length > 0 ) // otherwise see if we got a content length
+  {
+    while ( ( b_len = socket.read( buf, size - content_read ) ) )
+    {
+      content_read += b_len;
+      buf += b_len;
+      if ( content_read >= content_length )
+        break;
+    }
+  }
+  else // lastly, just try to read until we get cut off
+  {
+    while( content_read < size )
+    {
+      b_len = socket.read( buf, size - content_read );
+      if(b_len <= 0)
+        break;
+      content_read += b_len;
+      buf += b_len;
+    }
+  }
+  return content_read;
 }
 
 /** @}

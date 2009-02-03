@@ -37,6 +37,8 @@ protected:
   int address;
   int port;
   TcpSocket socket;
+
+  int readResponse( char* buf, int size );
 };
 
 #endif // WEBCLIENT_H
