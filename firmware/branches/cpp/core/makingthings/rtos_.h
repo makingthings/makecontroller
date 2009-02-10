@@ -18,14 +18,16 @@
 #ifndef RTOS__H
 #define RTOS__H
 
-extern "C" {
-  #include "projdefs.h"
-  #include "portmacro.h"
-  #include "queue.h"
-  #include "FreeRTOS.h"
-  #include "task.h"
-  #include "semphr.h"
-}
+// #warning hi again
+
+// #include "config.h"
+
+#include "projdefs.h"
+#include "portmacro.h"
+#include "queue.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
 
 typedef void (TaskLoop)(void*);
 
@@ -68,7 +70,7 @@ class Queue
 public:
   Queue( uint length, uint itemSize );
   ~Queue( );
-
+  
   int send( void* itemToQueue, int timeout );
   int receive( void* buffer, int timeout );
   int msgsAvailable( );
@@ -91,5 +93,7 @@ public:
 private:
   void* _sem;
 };
+
+#warning allo
 
 #endif // RTOS__H
