@@ -73,7 +73,7 @@
 
 /* Hardware specific headers. */
 #include "AT91SAM7X256.h"
-
+#include "rtos_.h"
 
 // NORMAL PROGRAMMING RESUMES
 
@@ -100,7 +100,7 @@ void MakeStarterTask( void* parameters )
 {
  (void)parameters;
   Run( );
-  TaskDelete( NULL );
+  vTaskDelete( NULL );
 }
 
 int main( void )
@@ -111,7 +111,9 @@ int main( void )
   
 
 	/* Create the make task. */
-	TaskCreate( MakeStarterTask, "Make", 1200, NULL, 4 );
+	void* taskHandle;
+  xTaskCreate( MakeStarterTask, (signed char*)"Make", ( 1200 >> 2 ), NULL, 4, &taskHandle );
+  // new Task( MakeStarterTask, "Make", 1200, NULL, 4 );
 
 	/*NOTE : Tasks run in system mode and the scheduler runs in Supervisor mode.
 	The processor MUST be in supervisor mode when vTaskStartScheduler is 
@@ -124,6 +126,8 @@ int main( void )
 	return 0;
 }
 /*-----------------------------------------------------------*/
+
+void kill( void );
 
 void kill( void )
 {
