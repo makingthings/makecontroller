@@ -6,11 +6,10 @@
 	Furthermore, only register the OSC subsystems you need - by default, we register all of them.
 */
 
-
+#include "config.h"
 
 // include all the libraries we're using
 extern "C" {
-  #include "config.h"
   //#include "appled.h"
   #include "dipswitch.h"
   #include "servo.h"
@@ -25,13 +24,14 @@ extern "C" {
 
 #include "led_cpp.h"
 #include "appled_cpp.h"
+#include "network_.h"
 #include "usb_serial.h"
 
 void blinkLoop( void* parameters );
 
 void Run( ) // this task gets called as soon as we boot up.
 {
-  Task* blink = new Task(blinkLoop, "Blink", 400, 0, 1);
+  new Task( blinkLoop, "Blink", 400, 0, 1 );
 
   // Do this right quick after booting up - otherwise we won't be recognised
   // Usb_SetActive( 1 );
@@ -61,7 +61,7 @@ void Run( ) // this task gets called as soon as we boot up.
 //  Osc_RegisterSubsystem( WebServerOsc_GetName(), WebServerOsc_ReceiveMessage, NULL );
 
   // Starts the network up.  Will not return until a network is found...
-  Network_SetActive( true );
+  // Network_SetActive( true );
 }
 
 // A very simple task...a good starting point for programming experiments.

@@ -7,13 +7,14 @@ PROJECT_NAME = heavy
 # set DEBUG to -g to include debug info, otherwise leave blank
 DEBUG = 
 # available optimization levels: -O0, -O1, -O2, -O3, -Os
-OPTIMIZATION = -O2
+OPTIMIZATION = -Os
 
 FREERTOS = ../../core/freertos
 LWIP = ../../core/lwip
 USB = ../../core/usb
 MAKINGTHINGS = ../../core/makingthings
 LIBRARIES = ../../libraries
+STARTUP = ../../core/startup
 
 # Source files that can be built in THUMB mode.
 THUMB_SRC= \
@@ -23,22 +24,6 @@ THUMB_SRC= \
   $(FREERTOS)/list.c \
   $(FREERTOS)/portable/GCC/ARM7_AT91SAM7S/port.c \
   $(FREERTOS)/portable/MemMang/heap_2.c \
-  $(MAKINGTHINGS)/main.c \
-  $(MAKINGTHINGS)/eeprom.c \
-  $(MAKINGTHINGS)/analogin.c \
-  $(MAKINGTHINGS)/pwm.c \
-  $(MAKINGTHINGS)/spi.c \
-  $(MAKINGTHINGS)/rtos.c \
-  $(MAKINGTHINGS)/io.c \
-  $(MAKINGTHINGS)/timer.c \
-  $(MAKINGTHINGS)/fasttimer.c \
-  $(LIBRARIES)/servo/servo.c \
-  $(LIBRARIES)/stepper/stepper.c \
-  $(LIBRARIES)/dipswitch/dipswitch.c \
-  $(LIBRARIES)/motor/motor.c \
-  $(LIBRARIES)/pwmout/pwmout.c \
-  $(LIBRARIES)/digitalin/digitalin.c \
-  $(LIBRARIES)/digitalout/digitalout.c \
   $(LWIP)/src/core/tcp_out.c \
   $(LWIP)/src/core/ipv4/inet.c \
   $(LWIP)/src/core/mem.c \
@@ -90,9 +75,12 @@ THUMB_SRC= \
   $(USB)/common/cdc/CDCLineCoding.c \
 
 CPP_THUMB_SRC = \
-  ../../core/startup/extras_cpp.cpp \
+  $(STARTUP)/extras_cpp.cpp \
+  $(MAKINGTHINGS)/rtos_.cpp \
+  $(MAKINGTHINGS)/main.cpp \
   $(MAKINGTHINGS)/io_cpp.cpp \
   $(MAKINGTHINGS)/led_.cpp \
+  $(MAKINGTHINGS)/usb_serial.cpp \
   $(MAKINGTHINGS)/network_.cpp \
   $(MAKINGTHINGS)/tcpsocket.cpp \
   $(MAKINGTHINGS)/udpsocket.cpp \
@@ -100,12 +88,9 @@ CPP_THUMB_SRC = \
   $(MAKINGTHINGS)/osc_cpp.cpp \
   $(MAKINGTHINGS)/osc_message.cpp \
   $(MAKINGTHINGS)/osc_pattern.cpp \
-  $(MAKINGTHINGS)/rtos_.cpp \
-  $(MAKINGTHINGS)/usb_serial.cpp \
   $(MAKINGTHINGS)/spi_cpp.cpp \
   $(MAKINGTHINGS)/eeprom_.cpp \
   $(LIBRARIES)/appled/appled_.cpp \
-  $(MAKINGTHINGS)/serial_.cpp \
   $(LIBRARIES)/json/json_.cpp \
   make_.cpp \
 
@@ -113,14 +98,10 @@ CPP_THUMB_SRC = \
 ARM_SRC= \
   $(FREERTOS)/portable/GCC/ARM7_AT91SAM7S/portISR.c \
   $(MAKINGTHINGS)/SAM7_EMAC_ISR.c \
-  $(MAKINGTHINGS)/USBIsr.c \
-  $(MAKINGTHINGS)/analogin_isr.c \
-  $(MAKINGTHINGS)/fasttimer_isr.c \
-  $(MAKINGTHINGS)/timer_isr.c \
   $(USB)/device/core/USBD_UDP.c
   
-CPP_ARM_SRC = \
-  $(MAKINGTHINGS)/serial_isr_.cpp
+# CPP_ARM_SRC = \
+
   
 # All the include directories need to be appended here
 INCLUDEDIRS = \
@@ -153,8 +134,8 @@ CC=arm-elf-gcc
 CPP=arm-elf-g++
 OBJCOPY=arm-elf-objcopy
 ARCH=arm-elf-ar
-CRT0=../../core/startup/AT91SAM7_Startup.s ../../core/startup/crt0.s
-LDSCRIPT=../../core/startup/make-controller.ld
+CRT0=$(STARTUP)/AT91SAM7_Startup.s $(STARTUP)/crt0.s
+LDSCRIPT=$(STARTUP)/make-controller.ld
 
 # flags common to both c and c++
 C_AND_CPP_FLAGS = \
