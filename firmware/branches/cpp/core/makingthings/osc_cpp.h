@@ -3,6 +3,10 @@
 #ifndef OSC_CPP_H
 #define OSC_CPP_H
 
+#include "config.h"
+
+#ifdef OSC
+
 #include "udpsocket.h"
 #include "rtos_.h"
 #include "osc_message.h"
@@ -107,5 +111,7 @@ protected:
   OscChannel* getChannel(OscTransport t);
   
 };
+
+#endif // OSC
 
 #endif // OSC_CPP_H
