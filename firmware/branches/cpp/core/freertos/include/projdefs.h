@@ -36,6 +36,10 @@
 #ifndef PROJDEFS_H
 #define PROJDEFS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Defines to prototype to which task functions must conform. */
 typedef void (*pdTASK_CODE)( void * );
 
@@ -52,6 +56,10 @@ typedef void (*pdTASK_CODE)( void * );
 #define errNO_TASK_TO_RUN						( -2 )
 #define errQUEUE_BLOCKED						( -4 )
 #define errQUEUE_YIELD							( -5 )
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PROJDEFS_H */
 

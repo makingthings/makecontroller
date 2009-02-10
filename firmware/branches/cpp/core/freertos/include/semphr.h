@@ -33,10 +33,14 @@
 	***************************************************************************
 */
 
-#include "queue.h"
-
 #ifndef SEMAPHORE_H
 #define SEMAPHORE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "queue.h"
 
 typedef xQueueHandle xSemaphoreHandle;
 
@@ -340,6 +344,9 @@ typedef xQueueHandle xSemaphoreHandle;
  */
 #define xSemaphoreCreateMutex() xQueueCreateMutex()
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SEMAPHORE_H */
 

@@ -40,6 +40,10 @@
 #ifndef PORTABLE_H
 #define PORTABLE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Include the macro file relevant to the port being used. */
 
 #ifdef OPEN_WATCOM_INDUSTRIAL_PC_PORT
@@ -236,6 +240,9 @@ portBASE_TYPE xPortStartScheduler( void );
  */
 void vPortEndScheduler( void );
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PORTABLE_H */
 

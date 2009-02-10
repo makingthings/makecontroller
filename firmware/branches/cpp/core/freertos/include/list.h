@@ -71,6 +71,10 @@
 #ifndef LIST_H
 #define LIST_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Definition of the only type of object that a list can contain.
  */
@@ -276,7 +280,9 @@ void vListInsertEnd( xList *pxList, xListItem *pxNewListItem );
  */
 void vListRemove( xListItem *pxItemToRemove );
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

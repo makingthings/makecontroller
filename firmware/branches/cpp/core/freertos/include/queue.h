@@ -36,6 +36,10 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void * xQueueHandle;
 
 /* For internal use only. */
@@ -1175,6 +1179,10 @@ signed portBASE_TYPE xQueueCRReceive( xQueueHandle pxQueue, void *pvBuffer, port
  * this function directly.
  */
 xQueueHandle xQueueCreateMutex( void );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* QUEUE_H */
 
