@@ -59,6 +59,10 @@
 #ifndef PORTMACRO_H
 #define PORTMACRO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*-----------------------------------------------------------
  * Port specific definitions.  
  *
@@ -276,6 +280,10 @@ extern void vPortExitCritical( void );
     "LDMFD SP!, {R0-R7, LR}   \n\t"   /*Restore the user environment */ \
     "NOP                      \n\t"  \
     "SUBS PC, LR, #4" );               /* Return from the interrupt */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PORTMACRO_H */
 
