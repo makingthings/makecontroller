@@ -75,6 +75,7 @@ public:
   void setEndObjCallback(bool(*end_obj_callback)(void *ctx));
   void setStartArrayCallback(bool(*start_array_callback)(void *ctx));
   void setEndArrayCallback(bool(*end_array_callback)(void *ctx));
+  void setNullCallback(bool(*null_callback)(void *ctx));
 protected:
   enum DecodeStep // state object for decoding
   {

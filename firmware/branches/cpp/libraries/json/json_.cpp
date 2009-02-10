@@ -672,6 +672,11 @@ void JsonDecoder::setEndArrayCallback(bool(*end_array_callback)(void *ctx))
   callbacks.end_array_callback = end_array_callback;
 }
 
+void JsonDecoder::setNullCallback(bool(*null_callback)(void *ctx))
+{
+  callbacks.null_callback = null_callback;
+}
+
 /**
   Initialize or reset a JsonDecode_State variable.
   Do this prior to making a call to JsonDecode().
@@ -722,8 +727,11 @@ bool JsonDecoder::go(char* text, int len)
 
   while(state.len)
   {
-    while(*state.p == ' ') // eat white space
+    while(isspace(*state.p)) // eat white space
+    {
       state.p++;
+      state.len--;
+    }
     token = getToken( state.p, state.len);
     switch(token)
     {
@@ -902,8 +910,7 @@ bool JsonDecoder::go(char* text, int len)
 
 JsonDecoder::DecodeToken JsonDecoder::getToken(char* text, int len)
 {
-  char c = text[0];
-  switch(c)
+  switch(*text)
   {
     case ':':
       return token_colon;
