@@ -19,9 +19,12 @@
 #define USB_SERIAL_H
 
 #include "config.h"
+// #warning hi there
 #include "rtos_.h"
-#include "Board.h"
+// #warning hi there2
+
 extern "C" {
+  #include "Board.h"
   #include "CDCDSerialDriver.h"
   #include "CDCDSerialDriverDescriptors.h"
 }
@@ -29,6 +32,8 @@ extern "C" {
 #define MAX_INCOMING_SLIP_PACKET 400
 #define MAX_OUTGOING_SLIP_PACKET 600
 #define USB_SER_RX_BUF_LEN BOARD_USB_ENDPOINTS_MAXPACKETSIZE(CDCDSerialDriverDescriptors_DATAIN)
+
+// class Semaphore;
 
 /**
   Virutal serial port USB communication.
@@ -50,10 +55,10 @@ extern "C" {
   COM port.  If you've installed mchelper or mcbuilder, this file is already in the right spot
   on your system.
 */
+
 class UsbSerial
 {
 public:
-  void init( );
   bool isActive();
   int read( char *buffer, int length );
   int write( const char *buffer, int length );
@@ -64,12 +69,13 @@ public:
 protected:
   UsbSerial( );
   static UsbSerial* _instance; // the only instance of UsbSerial anywhere.
-  friend void onUsbData( void *pArg, unsigned char status, unsigned int transferred, unsigned int remaining);
   Semaphore readSemaphore;
   int justGot, rxBufCount;
   char rxBuf[USB_SER_RX_BUF_LEN];
   char slipOutBuf[MAX_OUTGOING_SLIP_PACKET];
   char slipInBuf[MAX_INCOMING_SLIP_PACKET];
+  
+  friend void onUsbData( void *pArg, unsigned char status, unsigned int transferred, unsigned int remaining);
 };
 
 #endif // USB_SERIAL_H

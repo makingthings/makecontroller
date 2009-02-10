@@ -16,8 +16,11 @@
 *********************************************************************************/
 
 #include "usb_serial.h"
-#include "string.h"
-#include "AT91SAM7X256.h"
+
+extern "C" {
+  #include "string.h"
+  #include "AT91SAM7X256.h"
+}
 
 // SLIP codes
 #define END             0300    // indicates end of packet 
@@ -61,12 +64,6 @@ UsbSerial* UsbSerial::get() // static
   if( !_instance )
     _instance = new UsbSerial();
   return _instance;
-}
-
-void UsbSerial::init( ) // static
-{
-  if(!_instance)
-    _instance = new UsbSerial( );
 }
 
 /**
