@@ -32,6 +32,11 @@
 	with commercial development and support options.
 	***************************************************************************
 */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef CO_ROUTINE_H
 #define CO_ROUTINE_H
 
@@ -712,5 +717,10 @@ void vCoRoutineAddToDelayedList( portTickType xTicksToDelay, xList *pxEventList 
  */
 signed portBASE_TYPE xCoRoutineRemoveFromEventList( const xList *pxEventList );
 
-
 #endif /* CO_ROUTINE_H */
+
+#ifdef __cplusplus
+}
+#endif
+
+

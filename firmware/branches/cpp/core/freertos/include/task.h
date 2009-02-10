@@ -42,6 +42,10 @@ Changes since V4.3.1:
 #ifndef TASK_H
 #define TASK_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "portable.h"
 #include "list.h"
 
@@ -998,6 +1002,10 @@ xList* GetSuspendedTaskList( void );
  * inherited a higher priority while it was holding a semaphore.
  */
 void vTaskPriorityDisinherit( xTaskHandle * const pxMutexHolder );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* TASK_H */
 

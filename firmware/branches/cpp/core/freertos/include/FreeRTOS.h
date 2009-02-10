@@ -33,9 +33,12 @@
 	***************************************************************************
 */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef INC_FREERTOS_H
 #define INC_FREERTOS_H
-
 
 /*
  * Include the generic headers required for the FreeRTOS port being used.
@@ -127,3 +130,8 @@
 #endif
 
 #endif /* INC_FREERTOS_H */
+
+#ifdef __cplusplus
+}
+#endif
+
