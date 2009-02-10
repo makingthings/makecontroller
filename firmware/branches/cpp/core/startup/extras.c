@@ -59,6 +59,14 @@ int _fstat_r (struct _reent *r, int fd, struct stat *buf)
 	return -1;
 }
 
+int _kill_r(struct _reent* r, int pid, int sig)
+{
+  (void) r;
+  (void) pid;
+  (void) sig;
+  return -1;
+}
+
 void* malloc( size_t size )
 {
   return pvPortMalloc( size );
