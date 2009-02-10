@@ -16,11 +16,8 @@
 *********************************************************************************/
 
 /*
-	CONTROLLER.h
-
-  All the includes needed for just the Controller Board to work.
-
-  MakingThings
+  General includes for core controller functionality.
+  Be sure to avoid including c++ header files in c code.
 */
 
 #ifndef CONTROLLER_H
@@ -29,33 +26,35 @@
 #include "types.h"
 #include "config.h"
 
-#include "eeprom.h"
-#include "analogin.h"
-#include "rtos.h"
-#include "pwm.h"
-#include "io.h"
-#include "led.h"
-#include "timer.h"
-#include "fasttimer.h"
-#include "debug.h"
-#include "osc.h"
+// #include "eeprom.h"
+// #include "analogin.h"
+// #include "rtos.h"
+// #include "pwm.h"
+// #include "io.h"
+// #include "led.h"
+// #include "timer.h"
+// #include "fasttimer.h"
+// #include "debug.h"
+// #include "osc.h"
+// #include "usb.h"
+// #include "network.h"
+// #include "serial.h"
+
+#ifdef __cplusplus
+
+#include "rtos_.h"
+#include "network_.h"
+#include "usb_serial.h"
 #include "system.h"
-#include "usb.h"
-#include "network.h"
-#include "serial.h"
 
-/* Make Helper Functions */
+extern "C" {
+#endif
 
+// C-only business in here
 void Run( void );
 
-void Timer0Isr( void );
-void Timer0Init( void );
-void Timer0Set( int t );
-int Timer0Get( int* jitterTotal, int* jitterMax, int* jitterMaxAllDay );
-
-void FastIsr( void );
-
-void DisableFIQFromThumb( void );
-void EnableFIQFromThumb( void );
-
+#ifdef __cplusplus
+}
 #endif
+
+#endif // CONTROLLER_H
