@@ -94,6 +94,4 @@ private:
   void* _sem;
 };
 
-#warning allo
-
 #endif // RTOS__H

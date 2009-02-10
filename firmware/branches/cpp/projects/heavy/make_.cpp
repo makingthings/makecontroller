@@ -11,21 +11,19 @@
 // include all the libraries we're using
 extern "C" {
   //#include "appled.h"
-  #include "dipswitch.h"
-  #include "servo.h"
-  #include "digitalout.h"
-  #include "digitalin.h"
-  #include "motor.h"
-  #include "pwmout.h"
-  #include "stepper.h"
-  #include "xbee.h"
-  #include "webserver.h"
+  // #include "dipswitch.h"
+  // #include "servo.h"
+  // #include "digitalout.h"
+  // #include "digitalin.h"
+  // #include "motor.h"
+  // #include "pwmout.h"
+  // #include "stepper.h"
+  // #include "xbee.h"
+  // #include "webserver.h"
 }
 
 #include "led_cpp.h"
 #include "appled_cpp.h"
-#include "network_.h"
-#include "usb_serial.h"
 
 void blinkLoop( void* parameters );
 
@@ -33,10 +31,8 @@ void Run( ) // this task gets called as soon as we boot up.
 {
   new Task( blinkLoop, "Blink", 400, 0, 1 );
 
-  // Do this right quick after booting up - otherwise we won't be recognised
-  // Usb_SetActive( 1 );
-  // Led_SetState( );
-  // usbSerial.init();
+  UsbSerial* usb = UsbSerial::get();
+  Network* net = Network::get();
   
   // Fire up the OSC system and register the subsystems you want to use
 //  Osc_SetActive( true, true, true, true );

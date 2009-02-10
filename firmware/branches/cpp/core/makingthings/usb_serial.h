@@ -19,9 +19,10 @@
 #define USB_SERIAL_H
 
 #include "config.h"
-// #warning hi there
+#warning Before USB defined
+#ifdef MAKE_CTRL_USB
+#warning After
 #include "rtos_.h"
-// #warning hi there2
 
 extern "C" {
   #include "Board.h"
@@ -77,5 +78,7 @@ protected:
   
   friend void onUsbData( void *pArg, unsigned char status, unsigned int transferred, unsigned int remaining);
 };
+
+#endif // MAKE_CTRL_USB
 
 #endif // USB_SERIAL_H
