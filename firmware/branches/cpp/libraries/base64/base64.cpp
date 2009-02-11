@@ -268,7 +268,7 @@ bool isbase64 (char ch)
   char decode_buf[BUFF_SIZE];
   int decode_size = BUFF_SIZE;
   bool result = Base64_Decode(decode_buf, &decode_size, "dGVzdA==", 8);
-  // we now have "test" in decode_buf, and decode_size is set to 6
+  // we now have "test" in decode_buf, and decode_size is set to 4
   \endcode
 */
 bool Base64::decode(char* dest, int* dest_size, const char* src, int src_size)

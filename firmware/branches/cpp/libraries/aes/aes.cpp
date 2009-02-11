@@ -1081,7 +1081,7 @@ void Aes::doEncrypt(const u32 *rk, int nrounds, const u8 plaintext[16],
 }
 
 // static
-void Aes_DoDecrypt(const u32 *rk, int nrounds, const u8 ciphertext[16],
+void Aes::doDecrypt(const u32 *rk, int nrounds, const u8 ciphertext[16],
   u8 plaintext[16])
 {
   u32 s0, s1, s2, s3, t0, t1, t2, t3;
@@ -1385,7 +1385,7 @@ int Aes::decrypt(unsigned char* output, int outlen, unsigned char* input, int in
     memcpy(ciphertext, input, BLOCK_SIZE); // stuff a block from input in ciphertext
     input += BLOCK_SIZE;
     inlen -= BLOCK_SIZE;
-    Aes_DoDecrypt(rk, nrounds, ciphertext, plaintext);
+    Aes::doDecrypt(rk, nrounds, ciphertext, plaintext);
     if(inlen < BLOCK_SIZE) // we're on our last block.  check the padding to determine the size of the original data
     {
       int padlen = plaintext[BLOCK_SIZE-1]; // look at the last byte
