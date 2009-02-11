@@ -52,26 +52,18 @@
 	  command line GCC tools.
 */
 
-/* Library includes. */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
 
-//#include <unistd.h>
-
-/* Scheduler includes. */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "portable.h"
 
-/* lwIP includes. */
 #include "lwip/api.h" 
 
-/* MAKE CODE */
-#include "config.h"
-
-/* Hardware specific headers. */
+#include "core.h"
 #include "AT91SAM7X256.h"
 #include "rtos_.h"
 

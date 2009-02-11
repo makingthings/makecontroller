@@ -7,6 +7,7 @@
 */
 
 #include "config.h"
+#include "core.h"
 
 // include all the libraries we're using
 extern "C" {

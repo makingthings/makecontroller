@@ -19,9 +19,7 @@
 #define USB_SERIAL_H
 
 #include "config.h"
-#warning Before USB defined
 #ifdef MAKE_CTRL_USB
-#warning After
 #include "rtos_.h"
 
 extern "C" {

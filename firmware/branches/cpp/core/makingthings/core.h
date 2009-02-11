@@ -24,7 +24,7 @@
 #define CONTROLLER_H
 
 #include "types.h"
-#include "config.h"
+#include "error.h"
 
 // #include "eeprom.h"
 // #include "analogin.h"

@@ -16,6 +16,7 @@
 *********************************************************************************/
 
 #include "usb_serial.h"
+#include "error.h"
 
 extern "C" {
   #include "string.h"
