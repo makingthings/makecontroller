@@ -17,6 +17,7 @@ extern "C" {
 
 #include "eeprom_.h"
 #include "stdio.h"
+#include "error.h"
 
 // MAC address definition.  The MAC address must be unique on the network.
 char emacETHADDR0 = 0xAC;
