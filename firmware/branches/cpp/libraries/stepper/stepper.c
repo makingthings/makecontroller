@@ -26,6 +26,7 @@
 #include "io.h"
 #include "fasttimer.h"
 #include "config.h"
+#include "error.h"
 
 #include "AT91SAM7X256.h"
 

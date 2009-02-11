@@ -27,6 +27,7 @@
 #include "string.h"
 #include "queue.h"
 #include "semphr.h"
+#include "error.h"
 
 void* findTask( char *taskName, int taskID );
 void* iterateForNextTask( void** lowTask, int* lowID, void** highTask, int* highID, int currentID, xList* pxList );

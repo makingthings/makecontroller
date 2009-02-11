@@ -38,6 +38,7 @@
 #include "spi.h"
 #include "io.h"
 #include "config.h"
+#include "error.h"
 
 // Define the SPI select lines 
 // and which peripheral they are on that line

@@ -25,7 +25,7 @@
 #include "io.h"
 #include "dipswitch.h"
 #include "spi.h"
-#include "config.h"
+#include "error.h"
 #include "stdio.h"
 
 #define DIPSWITCH_DEVICE 2

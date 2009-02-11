@@ -24,7 +24,7 @@
 #include "types.h"
 #include "fasttimer.h"
 #include "fasttimer_internal.h"
-#include "config.h"
+#include "error.h"
 #include "rtos.h"
 
 #define FAST_TIMER_CYCLES_PER_US 6
