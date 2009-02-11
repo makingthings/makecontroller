@@ -24,6 +24,7 @@
 #include "io.h"
 #include "digitalout.h"
 #include "config.h"
+#include "error.h"
 
 #include "AT91SAM7X256.h"
 

@@ -26,9 +26,6 @@
 #ifndef PWMOUT_H
 #define PWMOUT_H
 
-#include "controller.h"
-
-
 int PwmOut_SetActive( int index, int state );
 int PwmOut_GetActive( int index );
 

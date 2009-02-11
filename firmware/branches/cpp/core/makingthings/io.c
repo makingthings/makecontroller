@@ -30,7 +30,7 @@
 #include "AT91SAM7X256.h"
 
 #include "io.h"
-#include "config.h"
+#include "error.h"
 
 /* Local Structures */
 

@@ -22,6 +22,7 @@
 
 #include "io.h"
 #include "config.h"
+#include "error.h"
 #include "led.h"
 
 static int Led_users;

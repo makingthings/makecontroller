@@ -25,7 +25,7 @@
 #include "types.h"
 #include "timer.h"
 #include "timer_internal.h"
-#include "config.h"
+#include "error.h"
 #include "rtos.h"
 
 #define TIMER_CYCLES_PER_MS 48

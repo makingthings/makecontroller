@@ -18,6 +18,7 @@
 #include "serial_.h"
 #include "io_cpp.h"
 #include "Board.h"
+#include "error.h"
 
 Serial::Internal Serial::internals[SERIAL_PORTS];
 extern void (Serial0Isr_Wrapper)(void);

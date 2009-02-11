@@ -26,8 +26,6 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 
-#include "controller.h"
-
 int Motor_SetActive( int index, int state );
 int Motor_GetActive( int index );
 

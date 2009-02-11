@@ -36,7 +36,6 @@
           <file file_name="../../core/makingthings/io.h" Name="io.h" />
           <file file_name="../../core/makingthings/led.c" Name="led.c" />
           <file file_name="../../core/makingthings/lwipopts.h" Name="lwipopts.h" />
-          <file file_name="../../core/makingthings/main.c" Name="main.c" />
           <file file_name="../../core/makingthings/osc_patternmatch.h" Name="osc_patternmatch.h" />
           <file file_name="../../core/makingthings/osc.c" Name="osc.c" />
           <file file_name="../../core/makingthings/osc.h" Name="osc.h" />
@@ -88,6 +87,7 @@
           <file file_name="../../core/makingthings/serial_.cpp" Name="serial_.cpp" />
           <file file_name="../../core/makingthings/serial_.h" Name="serial_.h" />
           <file file_name="../../core/makingthings/http.h" Name="http.h" />
+          <file file_name="../../core/makingthings/main.cpp" Name="main.cpp" />
         </folder>
         <folder Name="FreeRTOS" >
           <configuration c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />
@@ -203,6 +203,8 @@
         <file file_name="../../libraries/appled/appled_.cpp" Name="appled_.cpp" />
         <file file_name="../../libraries/webserver/webserver_.h" Name="webserver_.h" />
         <file file_name="../../libraries/webserver/webserver_.cpp" Name="webserver_.cpp" />
+        <file file_name="../../libraries/aes/aes_.h" Name="aes_.h" />
+        <file file_name="../../libraries/aes/aes_.cpp" Name="aes_.cpp" />
       </folder>
     </folder>
     <configuration arm_target_loader_reset_after_download="Yes" Target="AT91SAM7X256" build_intermediate_directory="intermediate" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" target_reset_script="FLASHReset()" build_output_directory="output" arm_target_flash_loader_type="Comms Channel Loader" Name="THUMB Flash Debug" />

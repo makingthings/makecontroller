@@ -33,7 +33,7 @@
 #include "AT91SAM7X256.h"
 
 #include "io.h"
-#include "config.h"
+#include "error.h"
 #include "pwm.h"
 
 int Pwm_GetChannelIo( int channel );
