@@ -7,7 +7,7 @@
 About::About( ) : QDialog( )
 {
 	setModal( true );
-	setWindowTitle( "About mchelper" );
+	setWindowTitle( tr("About mchelper") );
 	topLevelLayout = new QVBoxLayout( this );
   
 	okButton = new QPushButton( this );
@@ -23,11 +23,11 @@ About::About( ) : QDialog( )
 	icon.setPixmap( *mchelperIcon );
 	icon.setAlignment( Qt::AlignHCenter );
 	
-	title.setText( "<font size=5>Make Controller Helper</font>" );
+	title.setText( tr("<font size=5>Make Controller Helper</font>") );
 	title.setAlignment( Qt::AlignHCenter );
-	version.setText( QString( "<font size=4>Version %1</font>" ).arg( MCHELPER_VERSION ) );
+	version.setText( QString( tr("<font size=4>Version %1</font>") ).arg( MCHELPER_VERSION ) );
 	version.setAlignment( Qt::AlignHCenter );
-	description = new QLabel( "<br><b>mchelper</b> (Make Controller Helper) is part of the Make Controller Kit project - an \
+	description = new QLabel( tr("<br><b>mchelper</b> (Make Controller Helper) is part of the Make Controller Kit project - an \
     open source hardware platform for everybody.  mchelper can upload new firmware to your Make \
     Controller, and allow you to easily manage it. \
     <br><br> \
@@ -36,7 +36,7 @@ About::About( ) : QDialog( )
     Copyright (C) 2006-2008 MakingThings LLC.  <a href=\"http://www.makingthings.com\">www.makingthings.com</a> \
     <br><br> \
     This program is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE WARRANTY OF DESIGN, \
-    MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.", this );
+    MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE."), this );
 	description->setWordWrap( true );
 	description->setFixedWidth( 400 );
 	description->setOpenExternalLinks( true );
