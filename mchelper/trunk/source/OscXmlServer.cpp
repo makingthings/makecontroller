@@ -184,7 +184,7 @@ void OscXmlClient::disconnected( )
 
 void OscXmlClient::wroteBytes( qint64 bytes )
 {
-	qDebug( "XML, wrote %d bytes to %s", (int)bytes, qPrintable(peerAddress) );
+	qDebug() << tr("XML, wrote %1 bytes to %2").arg(bytes).arg(peerAddress);
 }
 
 bool OscXmlClient::isConnected( )
@@ -362,8 +362,8 @@ bool XmlHandler::fatalError (const QXmlParseException & exception)
 
 bool XmlHandler::error (const QXmlParseException & exception)
 {
-	 qDebug( "incoming XML error on line, %d, column %d : %s",
-	 					exception.lineNumber(), exception.columnNumber(), qPrintable(exception.message()) );
+	 qDebug() << tr("incoming XML error on line, %1, column %2 : %3").arg(
+	 					exception.lineNumber()).arg(exception.columnNumber()).arg(exception.message());
 	 return false;
 } 
 

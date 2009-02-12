@@ -42,6 +42,8 @@ SOURCES = source/main.cpp \
           source/PacketUsbSerial.cpp \
           source/AppUpdater.cpp
 
+TRANSLATIONS = translations/mchelper_fr.ts
+
 QT += network xml
 DEFINES += MCHELPER_VERSION=\\\"$${MCHELPER_VERSION}\\\"
 RESOURCES   += resources/mchelper.qrc

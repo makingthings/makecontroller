@@ -16,6 +16,7 @@
 *********************************************************************************/
 
 #include "PacketUsbSerial.h"
+#include <QtDebug>
 
 // SLIP codes
 #define END     0300 // indicates end of packet 
@@ -48,7 +49,10 @@ void PacketUsbSerial::processNewData( )
   {
     newData.resize(avail);
     if(port->read(newData.data(), newData.size()) < 0)
-      return qDebug("USB read failed");
+    {
+      qDebug() << tr("USB read failed");
+      return;
+    }
     else
     {
       readBuffer += newData;
@@ -56,7 +60,7 @@ void PacketUsbSerial::processNewData( )
     }
   }
   else
-    qDebug("USB bytes available error");
+    qDebug() << tr("USB bytes available error");
 }
 
 bool PacketUsbSerial::open( )

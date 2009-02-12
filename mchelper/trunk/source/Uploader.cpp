@@ -5,6 +5,7 @@
 #include "Preferences.h"
 #include <QDir>
 #include <QFileDialog>
+#include <QtDebug>
 
 #ifdef Q_WS_MAC
 #include <CoreFoundation/CoreFoundation.h>
@@ -113,7 +114,7 @@ void Uploader::filterOutput( )
     matched = true;
   }
   if(!matched)
-    qDebug("upload output: %s", qPrintable(output));
+    qDebug() << tr("upload output:") << output;
 }
 
 void Uploader::filterError( )
@@ -122,7 +123,7 @@ void Uploader::filterError( )
   if(err.startsWith("can't find boot agent"))
     mainWindow->message(tr("Couldn't find an unprogrammed board to upload to."), MsgType::Error, tr("Uploader") );
   else
-    qDebug("upload err: %s", qPrintable(err));
+    qDebug() << tr("upload err:") << err;
 }
 
 void Uploader::uploadFinished(int exitCode, QProcess::ExitStatus exitStatus)

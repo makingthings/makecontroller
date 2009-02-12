@@ -18,6 +18,8 @@
 #include "Osc.h"
 #include <QtCore/qendian.h>
 #include <QObject>
+#include <QApplication>
+#include <QtDebug>
 
 QString OscMessage::toString( )
 {
@@ -249,7 +251,7 @@ bool Osc::receivePacket( char* packet, int length, QList<OscMessage*>* oscMessag
         {
           if( length > 16384 || length <= 0 )
           {
-            qDebug("got insane length - %d, bailing.", length);
+            qDebug() << QApplication::tr("got insane length - %d, bailing.").arg(length);
             return false;
           }
           // read the length (pretend packet is a pointer to integer)
