@@ -25,6 +25,7 @@
 
 #include "types.h"
 #include "error.h"
+#include "config.h"
 
 // #include "eeprom.h"
 // #include "analogin.h"
@@ -52,6 +53,7 @@ extern "C" {
 
 // C-only business in here
 void Run( void );
+void kill( void );
 
 #ifdef __cplusplus
 }

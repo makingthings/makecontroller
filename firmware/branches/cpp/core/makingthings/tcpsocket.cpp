@@ -105,7 +105,13 @@ bool TcpSocket::connect( int address, int port )
   struct ip_addr remote_addr;
   remote_addr.addr = address;
   err_t retval = netconn_connect( _socket, &remote_addr, port );
-  return ( ERR_OK == retval ) ? true : false;
+  if(ERR_OK == retval)
+    return true;
+  else
+  {
+    close();
+    return false;
+  }
 }
 
 /**
