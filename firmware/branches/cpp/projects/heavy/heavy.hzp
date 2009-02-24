@@ -168,7 +168,6 @@
           <file file_name="../../core/usb/common/core/USBSetAddressRequest.c" Name="USBSetAddressRequest.c" />
           <file file_name="../../core/usb/device/cdc-serial/CDCDSerialDriverDescriptors.c" Name="CDCDSerialDriverDescriptors.c" />
           <file file_name="../../core/usb/device/cdc-serial/CDCDSerialDriver.c" Name="CDCDSerialDriver.c" />
-          <file file_name="../../core/usb/device/core/USBDDriverCallbacks_InterfaceSettingChanged.c" Name="USBDDriverCallbacks_InterfaceSettingChanged.c" />
           <file file_name="../../core/usb/device/core/USBD_UDP.c" Name="USBD_UDP.c" >
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
@@ -178,7 +177,8 @@
           <file file_name="../../core/usb/device/core/USBDCallbacks_Resumed.c" Name="USBDCallbacks_Resumed.c" />
           <file file_name="../../core/usb/device/core/USBDCallbacks_Suspended.c" Name="USBDCallbacks_Suspended.c" />
           <file file_name="../../core/usb/device/core/USBDDriver.c" Name="USBDDriver.c" />
-          <file file_name="../../core/usb/device/core/USBDDriverCallbacks_ConfigurationChanged.c" Name="USBDDriverCallbacks_ConfigurationChanged.c" />
+          <file file_name="../../core/usb/device/core/USBDDriverCb_IfSettingChanged.c" Name="USBDDriverCb_IfSettingChanged.c" />
+          <file file_name="../../core/usb/device/core/USBDDriverCb_CfgChanged.c" Name="USBDDriverCb_CfgChanged.c" />
         </folder>
       </folder>
       <folder Name="Libraries" >
