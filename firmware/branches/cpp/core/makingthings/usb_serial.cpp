@@ -35,10 +35,9 @@ UsbSerial* UsbSerial::_instance = 0;
 
 UsbSerial::UsbSerial( )
 {
-  AT91C_BASE_CKGR->CKGR_PLLR |= AT91C_CKGR_USBDIV_1; // Set the PLL UsbSerial Divider
   CDCDSerialDriver_Initialize();
   USBD_Connect();
-  while (USBD_GetState() < USBD_STATE_CONFIGURED); // wait for things to get set up
+  //while (USBD_GetState() < USBD_STATE_CONFIGURED); // wait for things to get set up
   readSemaphore.take( );
   justGot = 0;
   rxBufCount = 0;
