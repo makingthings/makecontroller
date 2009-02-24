@@ -32,24 +32,26 @@
 //------------------------------------------------------------------------------
 
 #include "SBCMethods.h"
-#include "MSDDriverDescriptors.h"
+#include "MSDDStateMachine.h"
 #include <usb/device/core/USBD.h>
 
 //------------------------------------------------------------------------------
 //      Global variables
 //------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------
 //! \brief  Header for the mode pages data
 //! \see    SBCModeParameterHeader6
+//------------------------------------------------------------------------------
 static const SBCModeParameterHeader6 modeParameterHeader6 = {
 
-    sizeof(SBCModeParameterHeader6) - 1,  //!< Length of mode page data is 0x03
-    SBC_MEDIUM_TYPE_DIRECT_ACCESS_BLOCK_DEVICE, //!< Direct-access block device
-    0,                                          //!< Reserved bits
-    0,                                      //!< DPO/FUA not supported
-    0,                                          //!< Reserved bits
-    0,                                      //!< Medium is not write-protected
-    0                                           //!< No block descriptor
+    sizeof(SBCModeParameterHeader6) - 1,        //! Length is 0x03
+    SBC_MEDIUM_TYPE_DIRECT_ACCESS_BLOCK_DEVICE, //! Direct-access block device
+    0,                                          //! Reserved bits
+    0,                                          //! DPO/FUA not supported
+    0,                                          //! Reserved bits
+    0,                                          //! not write-protected
+    0                                           //! No block descriptor
 };
 
 //------------------------------------------------------------------------------
@@ -61,21 +63,19 @@ static const SBCModeParameterHeader6 modeParameterHeader6 = {
 //!         The data to write is first received from the USB host and then
 //!         actually written on the media.
 //!         This function operates asynchronously and must be called multiple
-//!         times to complete. A result code of MSDDriver_STATUS_INCOMPLETE indicates
-//!         that at least another call of the method is necessary.
-//! \param  pUsb          Pointer to a S_usb instance
+//!         times to complete. A result code of MSDDriver_STATUS_INCOMPLETE
+//!         indicates that at least another call of the method is necessary.
 //! \param  lun          Pointer to the LUN affected by the command
 //! \param  commandState Current state of the command
 //! \return Operation result code (SUCCESS, ERROR, INCOMPLETE or PARAMETER)
-//! \see    S_usb
 //! \see    MSDLun
 //! \see    MSDCommandState
 //------------------------------------------------------------------------------
-static unsigned char SBC_Write10(MSDLun               *lun,
+static unsigned char SBC_Write10(MSDLun          *lun,
                                  MSDCommandState *commandState)
 {
     unsigned char  status;
-    unsigned char  result = MSDDriver_STATUS_INCOMPLETE;
+    unsigned char  result = MSDD_STATUS_INCOMPLETE;
     MSDTransfer *transfer = &(commandState->transfer);
     SBCWrite10 *command = (SBCWrite10 *) commandState->cbw.pCommand;
 
@@ -85,14 +85,16 @@ static unsigned char SBC_Write10(MSDLun               *lun,
         commandState->state = SBC_STATE_READ;
     }
 
+#if !defined(AT91C_EBI_SDRAM) && !defined(BOARD_USB_UDPHS) 
     // Convert length from bytes to blocks
     commandState->length /= lun->blockSize;
+#endif
 
     // Check if length equals 0
     if (commandState->length == 0) {
 
-        trace_LOG(trace_INFO, "End ");
-        result = MSDDriver_STATUS_SUCCESS;
+        TRACE_INFO_WP("End ");
+        result = MSDD_STATUS_SUCCESS;
     }
     else {
 
@@ -101,23 +103,32 @@ static unsigned char SBC_Write10(MSDLun               *lun,
         //------------------
         case SBC_STATE_READ:
         //------------------
-            trace_LOG(trace_INFO, "Receive ");
+            TRACE_INFO_WP("Receive ");
+#if !defined(AT91C_EBI_SDRAM) && !defined(BOARD_USB_UDPHS) 
             // Read one block of data sent by the host
-            status = USBD_Read(MSDDriverDescriptors_BULKOUT,
-                               lun->readWriteBuffer,
+            status = MSDD_Read((void*)lun->readWriteBuffer,
                                lun->blockSize,
                                (TransferCallback) MSDDriver_Callback,
                                (void *) transfer);
+#else
+            status = MSDD_Read((void*)(lun->media->baseAddress
+                                   + lun->baseAddress
+                                   + DWORDB(command->pLogicalBlockAddress) * lun->blockSize),
+                                commandState->length,
+                                (TransferCallback) MSDDriver_Callback,
+                                (void *) transfer);
+#endif
 
             // Check operation result code
             if (status != USBD_STATUS_SUCCESS) {
 
-                trace_LOG(trace_WARNING, "W: RBC_Write10: Failed to start receiving data\n\r");
+                TRACE_WARNING(
+                    "RBC_Write10: Failed to start receiving data\n\r");
                 SBC_UpdateSenseData(&(lun->requestSenseData),
                                     SBC_SENSE_KEY_HARDWARE_ERROR,
                                     0,
                                     0);
-                result = MSDDriver_STATUS_ERROR;
+                result = MSDD_STATUS_ERROR;
             }
             else {
 
@@ -129,7 +140,7 @@ static unsigned char SBC_Write10(MSDLun               *lun,
         //-----------------------
         case SBC_STATE_WAIT_READ:
         //-----------------------
-            trace_LOG(trace_INFO, "Wait ");
+            TRACE_INFO_WP("Wait ");
 
             // Check semaphore
             if (transfer->semaphore > 0) {
@@ -145,15 +156,17 @@ static unsigned char SBC_Write10(MSDLun               *lun,
             // Check the result code of the read operation
             if (transfer->status != USBD_STATUS_SUCCESS) {
 
-                trace_LOG(trace_WARNING, "W: RBC_Write10: Failed to received data\n\r");
+                TRACE_WARNING(
+                    "RBC_Write10: Failed to received data\n\r");
                 SBC_UpdateSenseData(&(lun->requestSenseData),
                                     SBC_SENSE_KEY_HARDWARE_ERROR,
                                     0,
                                     0);
-                result = MSDDriver_STATUS_ERROR;
+                result = MSDD_STATUS_ERROR;
             }
             else {
 
+#if !defined(AT91C_EBI_SDRAM) && !defined(BOARD_USB_UDPHS) 
                 // Write the block to the media
                 status = LUN_Write(lun,
                                     DWORDB(command->pLogicalBlockAddress),
@@ -161,16 +174,21 @@ static unsigned char SBC_Write10(MSDLun               *lun,
                                     1,
                                     (TransferCallback) MSDDriver_Callback,
                                     (void *) transfer);
+#else
+                MSDDriver_Callback(transfer, MED_STATUS_SUCCESS, 0, 0);
+                status = LUN_STATUS_SUCCESS;
+#endif
 
                 // Check operation result code
                 if (status != USBD_STATUS_SUCCESS) {
 
-                    trace_LOG(trace_WARNING, "W: RBC_Write10: Failed to start media write\n\r");
+                    TRACE_WARNING(
+                        "RBC_Write10: Failed to start media write\n\r");
                     SBC_UpdateSenseData(&(lun->requestSenseData),
                                         SBC_SENSE_KEY_NOT_READY,
                                         0,
                                         0);
-                    result = MSDDriver_STATUS_ERROR;
+                    result = MSDD_STATUS_ERROR;
                 }
                 else {
 
@@ -183,7 +201,7 @@ static unsigned char SBC_Write10(MSDLun               *lun,
         //------------------------
         case SBC_STATE_WAIT_WRITE:
         //------------------------
-            trace_LOG(trace_INFO, "Wait ");
+            TRACE_INFO_WP("Wait ");
 
             // Check semaphore value
             if (transfer->semaphore > 0) {
@@ -200,24 +218,29 @@ static unsigned char SBC_Write10(MSDLun               *lun,
             // Check operation result code
             if (transfer->status != USBD_STATUS_SUCCESS) {
 
-                trace_LOG(trace_WARNING, "W: RBC_Write10: Failed to write media\n\r");
+                TRACE_WARNING(
+                    "RBC_Write10: Failed to write media\n\r");
                 SBC_UpdateSenseData(&(lun->requestSenseData),
                                     SBC_SENSE_KEY_RECOVERED_ERROR,
                                     SBC_ASC_TOO_MUCH_WRITE_DATA,
                                     0);
-                result = MSDDriver_STATUS_ERROR;
+                result = MSDD_STATUS_ERROR;
             }
             else {
 
                 // Update transfer length and block address
+#if !defined(AT91C_EBI_SDRAM) && !defined(BOARD_USB_UDPHS) 
                 commandState->length--;
+#else
+                commandState->length = 0;
+#endif
                 STORE_DWORDB(DWORDB(command->pLogicalBlockAddress) + 1,
                              command->pLogicalBlockAddress);
 
                 // Check if transfer is finished
                 if (commandState->length == 0) {
 
-                    result = MSDDriver_STATUS_SUCCESS;
+                    result = MSDD_STATUS_SUCCESS;
                 }
                 else {
 
@@ -228,8 +251,10 @@ static unsigned char SBC_Write10(MSDLun               *lun,
         }
     }
 
+#if !defined(AT91C_EBI_SDRAM) && !defined(BOARD_USB_UDPHS) 
     // Convert length from blocks to bytes
     commandState->length *= lun->blockSize;
+#endif
 
     return result;
 }
@@ -239,21 +264,19 @@ static unsigned char SBC_Write10(MSDLun               *lun,
 //!
 //!         The data is first read from the media and then sent to the USB host.
 //!         This function operates asynchronously and must be called multiple
-//!         times to complete. A result code of MSDDriver_STATUS_INCOMPLETE indicates
-//!         that at least another call of the method is necessary.
-//! \param  pUsb          Pointer to a S_usb instance
+//!         times to complete. A result code of MSDDriver_STATUS_INCOMPLETE
+//!         indicates that at least another call of the method is necessary.
 //! \param  lun          Pointer to the LUN affected by the command
 //! \param  commandState Current state of the command
 //! \return Operation result code (SUCCESS, ERROR, INCOMPLETE or PARAMETER)
-//! \see    S_usb
 //! \see    MSDLun
 //! \see    MSDCommandState
 //------------------------------------------------------------------------------
-static unsigned char SBC_Read10(MSDLun               *lun,
+static unsigned char SBC_Read10(MSDLun          *lun,
                                 MSDCommandState *commandState)
 {
     unsigned char status;
-    unsigned char result = MSDDriver_STATUS_INCOMPLETE;
+    unsigned char result = MSDD_STATUS_INCOMPLETE;
     SBCRead10 *command = (SBCRead10 *) commandState->cbw.pCommand;
     MSDTransfer *transfer = &(commandState->transfer);
 
@@ -263,13 +286,15 @@ static unsigned char SBC_Read10(MSDLun               *lun,
         commandState->state = SBC_STATE_READ;
     }
 
+#if !defined(AT91C_EBI_SDRAM) && !defined(BOARD_USB_UDPHS) 
     // Convert length from bytes to blocks
     commandState->length /= lun->blockSize;
+#endif
 
     // Check length
     if (commandState->length == 0) {
 
-        result = MSDDriver_STATUS_SUCCESS;
+        result = MSDD_STATUS_SUCCESS;
     }
     else {
 
@@ -279,22 +304,27 @@ static unsigned char SBC_Read10(MSDLun               *lun,
         case SBC_STATE_READ:
         //------------------
             // Read one block of data from the media
+#if !defined(AT91C_EBI_SDRAM) && !defined(BOARD_USB_UDPHS) 
             status = LUN_Read(lun,
                                DWORDB(command->pLogicalBlockAddress),
                                lun->readWriteBuffer,
                                1,
                                (TransferCallback) MSDDriver_Callback,
                                (void *) transfer);
-
+#else
+            MSDDriver_Callback(transfer, MED_STATUS_SUCCESS, 0, 0);
+            status = LUN_STATUS_SUCCESS;
+#endif
             // Check operation result code
             if (status != LUN_STATUS_SUCCESS) {
 
-                trace_LOG(trace_WARNING, "W: RBC_Read10: Failed to start reading media\n\r");
+                TRACE_WARNING(
+                    "RBC_Read10: Failed to start reading media\n\r");
                 SBC_UpdateSenseData(&(lun->requestSenseData),
                                     SBC_SENSE_KEY_NOT_READY,
                                     SBC_ASC_LOGICAL_UNIT_NOT_READY,
                                     0);
-                result = MSDDriver_STATUS_ERROR;
+                result = MSDD_STATUS_ERROR;
             }
             else {
 
@@ -309,7 +339,7 @@ static unsigned char SBC_Read10(MSDLun               *lun,
             // Check semaphore value
             if (transfer->semaphore > 0) {
 
-                trace_LOG(trace_INFO, "Ok ");
+                TRACE_INFO_WP("Ok ");
 
                 // Take semaphore and move to next state
                 transfer->semaphore--;
@@ -323,35 +353,47 @@ static unsigned char SBC_Read10(MSDLun               *lun,
             // Check the operation result code
             if (transfer->status != USBD_STATUS_SUCCESS) {
 
-                trace_LOG(trace_WARNING, "W: RBC_Read10: Failed to read media\n\r");
+                TRACE_WARNING(
+                    "RBC_Read10: Failed to read media\n\r");
                 SBC_UpdateSenseData(&(lun->requestSenseData),
                                     SBC_SENSE_KEY_RECOVERED_ERROR,
                                     SBC_ASC_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE,
                                     0);
-                result = MSDDriver_STATUS_ERROR;
+                result = MSDD_STATUS_ERROR;
             }
             else {
 
                 // Send the block to the host
-                status = USBD_Write(MSDDriverDescriptors_BULKIN,
-                                    lun->readWriteBuffer,
+#if !defined(AT91C_EBI_SDRAM) && !defined(BOARD_USB_UDPHS) 
+                status = MSDD_Write((void*)lun->readWriteBuffer,
                                     lun->blockSize,
                                     (TransferCallback) MSDDriver_Callback,
                                     (void *) transfer);
+#else
+
+                status = MSDD_Write((void*)(lun->media->baseAddress
+                                       + lun->baseAddress
+                                       + DWORDB(command->pLogicalBlockAddress) * lun->blockSize),
+                                    commandState->length,
+                                    (TransferCallback) MSDDriver_Callback,
+                                    (void *) transfer);
+
+#endif
 
                 // Check operation result code
                 if (status != USBD_STATUS_SUCCESS) {
 
-                    trace_LOG(trace_WARNING, "W: RBC_Read10: Failed to start to send data\n\r");
+                    TRACE_WARNING(
+                        "RBC_Read10: Failed to start to send data\n\r");
                     SBC_UpdateSenseData(&(lun->requestSenseData),
                                         SBC_SENSE_KEY_HARDWARE_ERROR,
                                         0,
                                         0);
-                    result = MSDDriver_STATUS_ERROR;
+                    result = MSDD_STATUS_ERROR;
                 }
                 else {
 
-                    trace_LOG(trace_INFO, "Sending ");
+                    TRACE_INFO_WP("Sending ");
 
                     // Move to next command state
                     commandState->state = SBC_STATE_WAIT_WRITE;
@@ -365,7 +407,7 @@ static unsigned char SBC_Read10(MSDLun               *lun,
             // Check semaphore value
             if (transfer->semaphore > 0) {
 
-                trace_LOG(trace_INFO, "Sent ");
+                TRACE_INFO_WP("Sent ");
 
                 // Take semaphore and move to next state
                 transfer->semaphore--;
@@ -379,25 +421,30 @@ static unsigned char SBC_Read10(MSDLun               *lun,
             // Check operation result code
             if (transfer->status != USBD_STATUS_SUCCESS) {
 
-                trace_LOG(trace_WARNING, "W: RBC_Read10: Failed to send data\n\r");
+                TRACE_WARNING(
+                    "RBC_Read10: Failed to send data\n\r");
                 SBC_UpdateSenseData(&(lun->requestSenseData),
                                     SBC_SENSE_KEY_HARDWARE_ERROR,
                                     0,
                                     0);
-                result = MSDDriver_STATUS_ERROR;
+                result = MSDD_STATUS_ERROR;
             }
             else {
-                trace_LOG(trace_INFO, "Next ");
+                TRACE_INFO_WP("Next ");
 
                 // Update transfer length and block address
                 STORE_DWORDB(DWORDB(command->pLogicalBlockAddress) + 1,
                              command->pLogicalBlockAddress);
+#if !defined(AT91C_EBI_SDRAM) && !defined(BOARD_USB_UDPHS) 
                 commandState->length--;
+#else
+                commandState->length = 0;
+#endif
 
                 // Check if transfer is finished
                 if (commandState->length == 0) {
 
-                    result = MSDDriver_STATUS_SUCCESS;
+                    result = MSDD_STATUS_SUCCESS;
                 }
                 else {
 
@@ -408,8 +455,10 @@ static unsigned char SBC_Read10(MSDLun               *lun,
         }
     }
 
+#if !defined(AT91C_EBI_SDRAM) && !defined(BOARD_USB_UDPHS) 
     // Convert length from blocks to bytes
     commandState->length *= lun->blockSize;
+#endif
 
     return result;
 }
@@ -418,20 +467,18 @@ static unsigned char SBC_Read10(MSDLun               *lun,
 //! \brief  Performs a READ CAPACITY (10) command.
 //!
 //!         This function operates asynchronously and must be called multiple
-//!         times to complete. A result code of MSDDriver_STATUS_INCOMPLETE indicates
-//!         that at least another call of the method is necessary.
-//! \param  pUsb          Pointer to a S_usb instance
+//!         times to complete. A result code of MSDDriver_STATUS_INCOMPLETE
+//!         indicates that at least another call of the method is necessary.
 //! \param  lun          Pointer to the LUN affected by the command
 //! \param  commandState Current state of the command
 //! \return Operation result code (SUCCESS, ERROR, INCOMPLETE or PARAMETER)
-//! \see    S_usb
 //! \see    MSDLun
 //! \see    MSDCommandState
 //------------------------------------------------------------------------------
 static unsigned char SBC_ReadCapacity10(MSDLun               *lun,
                                         MSDCommandState *commandState)
 {
-    unsigned char result = MSDDriver_STATUS_INCOMPLETE;
+    unsigned char result = MSDD_STATUS_INCOMPLETE;
     unsigned char status;
     MSDTransfer *transfer = &(commandState->transfer);
 
@@ -447,8 +494,7 @@ static unsigned char SBC_ReadCapacity10(MSDLun               *lun,
     case SBC_STATE_WRITE:
     //-------------------
         // Start the write operation
-        status = USBD_Write(MSDDriverDescriptors_BULKIN,
-                            &(lun->readCapacityData),
+        status = MSDD_Write(&(lun->readCapacityData),
                             commandState->length,
                             (TransferCallback) MSDDriver_Callback,
                             (void *) transfer);
@@ -456,13 +502,14 @@ static unsigned char SBC_ReadCapacity10(MSDLun               *lun,
         // Check operation result code
         if (status != USBD_STATUS_SUCCESS) {
 
-            trace_LOG(trace_WARNING, "W: RBC_ReadCapacity: Cannot start sending data\n\r");
-            result = MSDDriver_STATUS_ERROR;
+            TRACE_WARNING(
+                "RBC_ReadCapacity: Cannot start sending data\n\r");
+            result = MSDD_STATUS_ERROR;
         }
         else {
 
             // Proceed to next command state
-            trace_LOG(trace_INFO, "Sending ");
+            TRACE_INFO_WP("Sending ");
             commandState->state = SBC_STATE_WAIT_WRITE;
         }
         break;
@@ -478,13 +525,13 @@ static unsigned char SBC_ReadCapacity10(MSDLun               *lun,
 
             if (transfer->status != USBD_STATUS_SUCCESS) {
 
-                trace_LOG(trace_WARNING, "W: RBC_ReadCapacity: Cannot send data\n\r");
-                result = MSDDriver_STATUS_ERROR;
+                TRACE_WARNING("RBC_ReadCapacity: Cannot send data\n\r");
+                result = MSDD_STATUS_ERROR;
             }
             else {
 
-                trace_LOG(trace_INFO, "Sent ");
-                result = MSDDriver_STATUS_SUCCESS;
+                TRACE_INFO_WP("Sent ");
+                result = MSDD_STATUS_SUCCESS;
             }
             commandState->length -= transfer->transferred;
         }
@@ -498,20 +545,18 @@ static unsigned char SBC_ReadCapacity10(MSDLun               *lun,
 //! \brief  Handles an INQUIRY command.
 //!
 //!         This function operates asynchronously and must be called multiple
-//!         times to complete. A result code of MSDDriver_STATUS_INCOMPLETE indicates
-//!         that at least another call of the method is necessary.
-//! \param  pUsb          Pointer to a S_usb instance
+//!         times to complete. A result code of MSDDriver_STATUS_INCOMPLETE
+//!         indicates that at least another call of the method is necessary.
 //! \param  lun          Pointer to the LUN affected by the command
 //! \param  commandState Current state of the command
 //! \return Operation result code (SUCCESS, ERROR, INCOMPLETE or PARAMETER)
-//! \see    S_usb
 //! \see    MSDLun
 //! \see    MSDCommandState
 //------------------------------------------------------------------------------
 static unsigned char SBC_Inquiry(MSDLun               *lun,
                                  MSDCommandState *commandState)
 {
-    unsigned char  result = MSDDriver_STATUS_INCOMPLETE;
+    unsigned char  result = MSDD_STATUS_INCOMPLETE;
     unsigned char  status;
     MSDTransfer *transfer = &(commandState->transfer);
 
@@ -519,7 +564,7 @@ static unsigned char SBC_Inquiry(MSDLun               *lun,
     if (commandState->length == 0) {
 
         // Nothing to do
-        result = MSDDriver_STATUS_SUCCESS;
+        result = MSDD_STATUS_SUCCESS;
     }
     // Initialize command state if needed
     else if (commandState->state == 0) {
@@ -537,8 +582,7 @@ static unsigned char SBC_Inquiry(MSDLun               *lun,
     case SBC_STATE_WRITE:
     //-------------------
         // Start write operation
-        status = USBD_Write(MSDDriverDescriptors_BULKIN,
-                            (void *) lun->inquiryData,
+        status = MSDD_Write((void *) lun->inquiryData,
                             commandState->length,
                             (TransferCallback) MSDDriver_Callback,
                             (void *) transfer);
@@ -546,13 +590,14 @@ static unsigned char SBC_Inquiry(MSDLun               *lun,
         // Check operation result code
         if (status != USBD_STATUS_SUCCESS) {
 
-            trace_LOG(trace_WARNING, "W: SPC_Inquiry: Cannot start sending data\n\r");
-            result = MSDDriver_STATUS_ERROR;
+            TRACE_WARNING(
+                "SPC_Inquiry: Cannot start sending data\n\r");
+            result = MSDD_STATUS_ERROR;
         }
         else {
 
             // Proceed to next state
-            trace_LOG(trace_INFO, "Sending ");
+            TRACE_INFO_WP("Sending ");
             commandState->state = SBC_STATE_WAIT_WRITE;
         }
         break;
@@ -568,13 +613,14 @@ static unsigned char SBC_Inquiry(MSDLun               *lun,
 
             if (transfer->status != USBD_STATUS_SUCCESS) {
 
-                trace_LOG(trace_WARNING, "W: SPC_Inquiry: Data transfer failed\n\r");
-                result = MSDDriver_STATUS_ERROR;
+                TRACE_WARNING(
+                    "SPC_Inquiry: Data transfer failed\n\r");
+                result = MSDD_STATUS_ERROR;
             }
             else {
 
-                trace_LOG(trace_INFO, "Sent ");
-                result = MSDDriver_STATUS_SUCCESS;
+                TRACE_INFO_WP("Sent ");
+                result = MSDD_STATUS_SUCCESS;
             }
 
             // Update length field
@@ -590,20 +636,18 @@ static unsigned char SBC_Inquiry(MSDLun               *lun,
 //! \brief  Performs a REQUEST SENSE command.
 //!
 //!         This function operates asynchronously and must be called multiple
-//!         times to complete. A result code of MSDDriver_STATUS_INCOMPLETE indicates
-//!         that at least another call of the method is necessary.
-//! \param  pUsb          Pointer to a S_usb instance
+//!         times to complete. A result code of MSDDriver_STATUS_INCOMPLETE
+//!         indicates that at least another call of the method is necessary.
 //! \param  lun          Pointer to the LUN affected by the command
 //! \param  commandState Current state of the command
 //! \return Operation result code (SUCCESS, ERROR, INCOMPLETE or PARAMETER)
-//! \see    S_usb
 //! \see    MSDLun
 //! \see    MSDCommandState
 //------------------------------------------------------------------------------
 static unsigned char SBC_RequestSense(MSDLun               *lun,
                                       MSDCommandState *commandState)
 {
-    unsigned char result = MSDDriver_STATUS_INCOMPLETE;
+    unsigned char result = MSDD_STATUS_INCOMPLETE;
     unsigned char status;
     MSDTransfer *transfer = &(commandState->transfer);
 
@@ -611,7 +655,7 @@ static unsigned char SBC_RequestSense(MSDLun               *lun,
     if (commandState->length == 0) {
 
         // Nothing to do
-        result = MSDDriver_STATUS_SUCCESS;
+        result = MSDD_STATUS_SUCCESS;
     }
     // Initialize command state if needed
     else if (commandState->state == 0) {
@@ -625,8 +669,7 @@ static unsigned char SBC_RequestSense(MSDLun               *lun,
     case SBC_STATE_WRITE:
     //-------------------
         // Start transfer
-        status = USBD_Write(MSDDriverDescriptors_BULKIN,
-                            &(lun->requestSenseData),
+        status = MSDD_Write(&(lun->requestSenseData),
                             commandState->length,
                             (TransferCallback) MSDDriver_Callback,
                             (void *) transfer);
@@ -634,8 +677,9 @@ static unsigned char SBC_RequestSense(MSDLun               *lun,
         // Check result code
         if (status != USBD_STATUS_SUCCESS) {
 
-            trace_LOG(trace_WARNING, "W: RBC_RequestSense: Cannot start sending data\n\r");
-            result = MSDDriver_STATUS_ERROR;
+            TRACE_WARNING(
+                "RBC_RequestSense: Cannot start sending data\n\r");
+            result = MSDD_STATUS_ERROR;
         }
         else {
 
@@ -655,11 +699,11 @@ static unsigned char SBC_RequestSense(MSDLun               *lun,
 
             if (transfer->status != USBD_STATUS_SUCCESS) {
 
-                result = MSDDriver_STATUS_ERROR;
+                result = MSDD_STATUS_ERROR;
             }
             else {
 
-                result = MSDDriver_STATUS_SUCCESS;
+                result = MSDD_STATUS_SUCCESS;
             }
 
             // Update length
@@ -675,19 +719,17 @@ static unsigned char SBC_RequestSense(MSDLun               *lun,
 //! \brief  Performs a MODE SENSE (6) command.
 //!
 //!         This function operates asynchronously and must be called multiple
-//!         times to complete. A result code of MSDDriver_STATUS_INCOMPLETE indicates
-//!         that at least another call of the method is necessary.
-//! \param  pUsb          Pointer to a S_usb instance
+//!         times to complete. A result code of MSDDriver_STATUS_INCOMPLETE
+//!         indicates that at least another call of the method is necessary.
 //! \param  lun          Pointer to the LUN affected by the command
 //! \param  commandState Current state of the command
 //! \return Operation result code (SUCCESS, ERROR, INCOMPLETE or PARAMETER)
-//! \see    S_usb
 //! \see    MSDLun
 //! \see    MSDCommandState
 //------------------------------------------------------------------------------
 static unsigned char SBC_ModeSense6(MSDCommandState *commandState)
 {
-    unsigned char      result = MSDDriver_STATUS_INCOMPLETE;
+    unsigned char      result = MSDD_STATUS_INCOMPLETE;
     unsigned char      status;
     MSDTransfer     *transfer = &(commandState->transfer);
 
@@ -695,7 +737,7 @@ static unsigned char SBC_ModeSense6(MSDCommandState *commandState)
     if (((SBCCommand *) commandState->cbw.pCommand)->modeSense6.bPageCode
         != SBC_PAGE_RETURN_ALL) {
 
-        return MSDDriver_STATUS_PARAMETER;
+        return MSDD_STATUS_PARAMETER;
     }
 
     // Initialize command state if needed
@@ -710,8 +752,7 @@ static unsigned char SBC_ModeSense6(MSDCommandState *commandState)
     case SBC_STATE_WRITE:
     //-------------------
         // Start transfer
-        status = USBD_Write(MSDDriverDescriptors_BULKIN,
-                            (void *) &modeParameterHeader6,
+        status = MSDD_Write((void *) &modeParameterHeader6,
                             commandState->length,
                             (TransferCallback) MSDDriver_Callback,
                             (void *) transfer);
@@ -719,8 +760,9 @@ static unsigned char SBC_ModeSense6(MSDCommandState *commandState)
         // Check operation result code
         if (status != USBD_STATUS_SUCCESS) {
 
-            trace_LOG(trace_WARNING, "W: SPC_ModeSense6: Cannot start data transfer\n\r");
-            result = MSDDriver_STATUS_ERROR;
+            TRACE_WARNING(
+                "SPC_ModeSense6: Cannot start data transfer\n\r");
+            result = MSDD_STATUS_ERROR;
         }
         else {
 
@@ -732,7 +774,7 @@ static unsigned char SBC_ModeSense6(MSDCommandState *commandState)
     //------------------------
     case SBC_STATE_WAIT_WRITE:
     //------------------------
-        trace_LOG(trace_INFO, "Wait ");
+        TRACE_INFO_WP("Wait ");
 
         // Check semaphore value
         if (transfer->semaphore > 0) {
@@ -742,12 +784,13 @@ static unsigned char SBC_ModeSense6(MSDCommandState *commandState)
 
             if (transfer->status != USBD_STATUS_SUCCESS) {
 
-                trace_LOG(trace_WARNING, "W: SPC_ModeSense6: Data transfer failed\n\r");
-                result = MSDDriver_STATUS_ERROR;
+                TRACE_WARNING(
+                    "SPC_ModeSense6: Data transfer failed\n\r");
+                result = MSDD_STATUS_ERROR;
             }
             else {
 
-                result = MSDDriver_STATUS_SUCCESS;
+                result = MSDD_STATUS_SUCCESS;
             }
 
             // Update length field
@@ -768,7 +811,7 @@ static unsigned char SBC_ModeSense6(MSDCommandState *commandState)
 //------------------------------------------------------------------------------
 static unsigned char SBC_TestUnitReady(MSDLun *lun)
 {
-    unsigned char result = MSDDriver_STATUS_ERROR;
+    unsigned char result = MSDD_STATUS_ERROR;
 
     // Check current media state
     switch(lun->media->state) {
@@ -776,14 +819,14 @@ static unsigned char SBC_TestUnitReady(MSDLun *lun)
     case MED_STATE_READY:
     //-------------------
         // Nothing to do
-        trace_LOG(trace_INFO, "Rdy ");
-        result = MSDDriver_STATUS_SUCCESS;
+        TRACE_INFO_WP("Rdy ");
+        result = MSDD_STATUS_SUCCESS;
         break;
 
     //------------------
     case MED_STATE_BUSY:
     //------------------
-        trace_LOG(trace_INFO, "Bsy ");
+        TRACE_INFO_WP("Bsy ");
         SBC_UpdateSenseData(&(lun->requestSenseData),
                             SBC_SENSE_KEY_NOT_READY,
                             0,
@@ -793,7 +836,7 @@ static unsigned char SBC_TestUnitReady(MSDLun *lun)
     //------
     default:
     //------
-        trace_LOG(trace_INFO, "? ");
+        TRACE_INFO_WP("? ");
         SBC_UpdateSenseData(&(lun->requestSenseData),
                             SBC_SENSE_KEY_NOT_READY,
                             SBC_ASC_MEDIUM_NOT_PRESENT,
@@ -846,7 +889,7 @@ unsigned char SBC_GetCommandInformation(void          *command,
     //---------------
     case SBC_INQUIRY:
     //---------------
-        (*type) = MSDDriver_DEVICE_TO_HOST;
+        (*type) = MSDD_DEVICE_TO_HOST;
 
         // Allocation length is stored in big-endian format
         (*length) = WORDB(sbcCommand->inquiry.pAllocationLength);
@@ -855,7 +898,7 @@ unsigned char SBC_GetCommandInformation(void          *command,
     //--------------------
     case SBC_MODE_SENSE_6:
     //--------------------
-        (*type) = MSDDriver_DEVICE_TO_HOST;
+        (*type) = MSDD_DEVICE_TO_HOST;
         if (sbcCommand->modeSense6.bAllocationLength >
             sizeof(SBCModeParameterHeader6)) {
 
@@ -870,7 +913,8 @@ unsigned char SBC_GetCommandInformation(void          *command,
         if (sbcCommand->modeSense6.bPageCode != SBC_PAGE_RETURN_ALL) {
 
             // Unsupported page
-            trace_LOG(trace_WARNING, "W: SBC_GetCommandInformation: Page code not supported (0x%02X)\n\r",
+            TRACE_WARNING(
+            "SBC_GetCommandInformation: Page code not supported(0x%02X)\n\r",
                           sbcCommand->modeSense6.bPageCode);
             isCommandSupported = 0;
             (*length) = 0;
@@ -880,33 +924,33 @@ unsigned char SBC_GetCommandInformation(void          *command,
     //------------------------------------
     case SBC_PREVENT_ALLOW_MEDIUM_REMOVAL:
     //------------------------------------
-        (*type) = MSDDriver_NO_TRANSFER;
+        (*type) = MSDD_NO_TRANSFER;
         break;
 
     //---------------------
     case SBC_REQUEST_SENSE:
     //---------------------
-        (*type) = MSDDriver_DEVICE_TO_HOST;
+        (*type) = MSDD_DEVICE_TO_HOST;
         (*length) = sbcCommand->requestSense.bAllocationLength;
         break;
 
     //-----------------------
     case SBC_TEST_UNIT_READY:
     //-----------------------
-        (*type) = MSDDriver_NO_TRANSFER;
+        (*type) = MSDD_NO_TRANSFER;
         break;
 
     //---------------------
     case SBC_READ_CAPACITY_10:
     //---------------------
-        (*type) = MSDDriver_DEVICE_TO_HOST;
+        (*type) = MSDD_DEVICE_TO_HOST;
         (*length) = sizeof(SBCReadCapacity10Data);
         break;
 
     //---------------
     case SBC_READ_10:
     //---------------
-        (*type) = MSDDriver_DEVICE_TO_HOST;
+        (*type) = MSDD_DEVICE_TO_HOST;
         (*length) = WORDB(sbcCommand->read10.pTransferLength)
                      * lun->blockSize;
         break;
@@ -914,7 +958,7 @@ unsigned char SBC_GetCommandInformation(void          *command,
     //----------------
     case SBC_WRITE_10:
     //----------------
-        (*type) = MSDDriver_HOST_TO_DEVICE;
+        (*type) = MSDD_HOST_TO_DEVICE;
         (*length) = WORDB(sbcCommand->write10.pTransferLength)
                      * lun->blockSize;
         break;
@@ -922,7 +966,7 @@ unsigned char SBC_GetCommandInformation(void          *command,
     //-----------------
     case SBC_VERIFY_10:
     //-----------------
-        (*type) = MSDDriver_NO_TRANSFER;
+        (*type) = MSDD_NO_TRANSFER;
         break;
 
     //------
@@ -934,7 +978,7 @@ unsigned char SBC_GetCommandInformation(void          *command,
     // If length is 0, no transfer is expected
     if ((*length) == 0) {
 
-        (*type) = MSDDriver_NO_TRANSFER;
+        (*type) = MSDD_NO_TRANSFER;
     }
 
     return isCommandSupported;
@@ -942,7 +986,6 @@ unsigned char SBC_GetCommandInformation(void          *command,
 
 //------------------------------------------------------------------------------
 //! \brief  Processes a SBC command by dispatching it to a subfunction.
-//! \param  pUsb          Pointer to a S_usb instance
 //! \param  lun          Pointer to the affected LUN
 //! \param  commandState Pointer to the current command state
 //! \return Operation result code
@@ -950,7 +993,7 @@ unsigned char SBC_GetCommandInformation(void          *command,
 unsigned char SBC_ProcessCommand(MSDLun               *lun,
                                  MSDCommandState *commandState)
 {
-    unsigned char result = MSDDriver_STATUS_INCOMPLETE;
+    unsigned char result = MSDD_STATUS_INCOMPLETE;
     SBCCommand *command = (SBCCommand *) commandState->cbw.pCommand;
 
     // Identify command
@@ -958,7 +1001,7 @@ unsigned char SBC_ProcessCommand(MSDLun               *lun,
     //---------------
     case SBC_READ_10:
     //---------------
-        trace_LOG(trace_INFO, "Read(10) ");
+        TRACE_INFO_WP("Read(10) ");
 
         // Perform the Read10 command
         result = SBC_Read10(lun, commandState);
@@ -967,7 +1010,7 @@ unsigned char SBC_ProcessCommand(MSDLun               *lun,
     //----------------
     case SBC_WRITE_10:
     //----------------
-        trace_LOG(trace_INFO, "Write(10) ");
+        TRACE_INFO_WP("Write(10) ");
 
         // Perform the Write10 command
         result = SBC_Write10(lun, commandState);
@@ -976,7 +1019,7 @@ unsigned char SBC_ProcessCommand(MSDLun               *lun,
     //---------------------
     case SBC_READ_CAPACITY_10:
     //---------------------
-        trace_LOG(trace_INFO, "RdCapacity(10) ");
+        TRACE_INFO_WP("RdCapacity(10) ");
 
         // Perform the ReadCapacity command
         result = SBC_ReadCapacity10(lun, commandState);
@@ -985,17 +1028,17 @@ unsigned char SBC_ProcessCommand(MSDLun               *lun,
     //---------------------
     case SBC_VERIFY_10:
     //---------------------
-        trace_LOG(trace_INFO, "Verify(10) ");
+        TRACE_INFO_WP("Verify(10) ");
 
         // Flush media
         MED_Flush(lun->media);
-        result = MSDDriver_STATUS_SUCCESS;
+        result = MSDD_STATUS_SUCCESS;
         break;
 
     //---------------
     case SBC_INQUIRY:
     //---------------
-        trace_LOG(trace_INFO, "Inquiry ");
+        TRACE_INFO_WP("Inquiry ");
 
         // Process Inquiry command
         result = SBC_Inquiry(lun, commandState);
@@ -1004,7 +1047,7 @@ unsigned char SBC_ProcessCommand(MSDLun               *lun,
     //--------------------
     case SBC_MODE_SENSE_6:
     //--------------------
-        trace_LOG(trace_INFO, "ModeSense(6) ");
+        TRACE_INFO_WP("ModeSense(6) ");
 
         // Process ModeSense6 command
         result = SBC_ModeSense6(commandState);
@@ -1013,7 +1056,7 @@ unsigned char SBC_ProcessCommand(MSDLun               *lun,
     //-----------------------
     case SBC_TEST_UNIT_READY:
     //-----------------------
-        trace_LOG(trace_INFO, "TstUnitRdy ");
+        TRACE_INFO_WP("TstUnitRdy ");
 
         // Process TestUnitReady command
         //MED_Flush(lun->media);
@@ -1023,7 +1066,7 @@ unsigned char SBC_ProcessCommand(MSDLun               *lun,
     //---------------------
     case SBC_REQUEST_SENSE:
     //---------------------
-        trace_LOG(trace_INFO, "ReqSense ");
+        TRACE_INFO_WP("ReqSense ");
 
         // Perform the RequestSense command
         result = SBC_RequestSense(lun, commandState);
@@ -1032,16 +1075,16 @@ unsigned char SBC_ProcessCommand(MSDLun               *lun,
     //------------------------------------
     case SBC_PREVENT_ALLOW_MEDIUM_REMOVAL:
     //------------------------------------
-        trace_LOG(trace_INFO, "PrevAllowRem ");
+        TRACE_INFO_WP("PrevAllowRem ");
 
         // Nothing to do
-        result = MSDDriver_STATUS_SUCCESS;
+        result = MSDD_STATUS_SUCCESS;
         break;
 
     //------
     default:
     //------
-        result = MSDDriver_STATUS_PARAMETER;
+        result = MSDD_STATUS_PARAMETER;
     }
 
     return result;

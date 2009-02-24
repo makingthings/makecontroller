@@ -32,10 +32,23 @@
 /// !Purpose
 /// 
 /// Mass Storage class definitions.
+///
+/// See
+/// - <a 
+/// href="http://www.usb.org/developers/devclass_docs/usb_msc_overview_1.2.pdf">
+/// USB Mass Storage Class Spec. Overview</a>
+/// - <a href="http://www.usb.org/developers/devclass_docs/usbmassbulk_10.pdf">
+/// USB Mass Storage Class Bulk-Only Transport</a>
 /// 
 /// !Usage
 /// 
-/// TODO
+/// -# Uses "MSD Requests" to check incoming requests from USB Host.
+/// -# Uses "MSD Subclass Codes" and "MSD Protocol Codes" to fill %device
+///    interface descriptors for a MSD %device.
+/// -# Handle the incoming Bulk data with "MSD CBW Definitions" and MSCbw
+///    structure.
+/// -# Prepare the outgoing Bulk data with "MSD CSW Definitions" and MSCsw
+///    structure.
 //------------------------------------------------------------------------------
 
 #ifndef MSD_H
@@ -44,28 +57,66 @@
 //------------------------------------------------------------------------------
 //      Definitions
 //------------------------------------------------------------------------------
-// Class-specific requests
+
+//------------------------------------------------------------------------------
+/// \page "MSD Requests"
+/// This page lists MSD-specific requests ( Actually for Bulk-only protocol ).
+///
+/// !Requests
+/// - MSD_BULK_ONLY_RESET
+/// - MSD_GET_MAX_LUN
+
+/// Reset the mass storage %device and its associated interface.
 #define MSD_BULK_ONLY_RESET                     0xFF
+/// Return the maximum LUN number supported by the %device.
 #define MSD_GET_MAX_LUN                         0xFE
+//------------------------------------------------------------------------------
 
-// Subclass codes
-// Reduced Block Commands (RBC) T10
+//------------------------------------------------------------------------------
+/// \page "MSD Subclass Codes"
+/// This page lists the Subclass Codes for bInterfaceSubClass field.
+/// (Table 2.1, USB Mass Storage Class Spec. Overview)
+///
+/// !SubClasses
+/// - MSD_SUBCLASS_RBC
+/// - MSD_SUBCLASS_SFF_MCC
+/// - MSD_SUBCLASS_QIC
+/// - MSD_SUBCLASS_UFI
+/// - MSD_SUBCLASS_SFF
+/// - MSD_SUBCLASS_SCSI
+
+/// Reduced Block Commands (RBC) T10
 #define MSD_SUBCLASS_RBC                        0x01
-// C/DVD devices
+/// C/DVD devices
 #define MSD_SUBCLASS_SFF_MCC                    0x02
-// Tape device
+/// Tape device
 #define MSD_SUBCLASS_QIC                        0x03
-// Floppy disk drive (FDD) device
+/// Floppy disk drive (FDD) device
 #define MSD_SUBCLASS_UFI                        0x04
-// Floppy disk drive (FDD) device
+/// Floppy disk drive (FDD) device
 #define MSD_SUBCLASS_SFF                        0x05
-// SCSI transparent command set
+/// SCSI transparent command set
 #define MSD_SUBCLASS_SCSI                       0x06
+//------------------------------------------------------------------------------
 
-// Table 3.1 - Mass Storage Transport Protocol (see usb_msc_overview_1.2.pdf)
+
+//------------------------------------------------------------------------------
+/// \page "MSD Protocol Codes"
+/// This page lists the Transport Protocol codes for MSD.
+/// (Table 3.1, USB Mass Storage Class Spec. Overview)
+///
+/// !Protocols
+/// - MSD_PROTOCOL_CBI_COMPLETION
+/// - MSD_PROTOCOL_CBI
+/// - MSD_PROTOCOL_BULK_ONLY
+
+/// Control/Bulk/Interrupt (CBI) Transport (with command complete interrupt)
 #define MSD_PROTOCOL_CBI_COMPLETION             0x00
+/// Control/Bulk/Interrupt (CBI) Transport (no command complete interrupt)
 #define MSD_PROTOCOL_CBI                        0x01
+/// Bulk-Only Transport
 #define MSD_PROTOCOL_BULK_ONLY                  0x50
+//------------------------------------------------------------------------------
 
 //! Test unit control:
 // TODO (jjoannic#1#): Document
@@ -73,56 +124,109 @@
 #define CTRL_GOOD                               0x01
 #define CTRL_BUSY                               0x02
 
-// Command block wrapper
-#define MSD_CBW_SIZE                            31          //!< Command Block Wrapper Size
-#define MSD_CBW_SIGNATURE                       0x43425355  //!< 'USBC' 0x43425355
+//------------------------------------------------------------------------------
+/// \page "MSD CBW Definitions"
+/// This page lists the Command Block Wrapper (CBW) definitions.
+///
+/// !Constants
+/// - MSD_CBW_SIZE
+/// - MSD_CBW_SIGNATURE
+///
+/// !Fields
+/// - MSD_CBW_DEVICE_TO_HOST
 
-// Command status wrapper
+/// Command Block Wrapper Size
+#define MSD_CBW_SIZE                            31
+/// 'USBC' 0x43425355
+#define MSD_CBW_SIGNATURE                       0x43425355
+
+/// CBW bmCBWFlags field
+#define MSD_CBW_DEVICE_TO_HOST                  (1 << 7)
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+/// \page "MSD CSW Definitions"
+/// This page lists the Command Status Wrapper (CSW) definitions.
+///
+/// !Constants
+/// - MSD_CSW_SIZE
+/// - MSD_CSW_SIGNATURE
+///
+/// !Command Block Status Values
+/// (Table 5.3 , USB Mass Storage Class Bulk-Only Transport)
+/// - MSD_CSW_COMMAND_PASSED
+/// - MSD_CSW_COMMAND_FAILED
+/// - MSD_CSW_PHASE_ERROR
+
+/// Command Status Wrapper Size
 #define MSD_CSW_SIZE                            13
+/// 'USBS' 0x53425355
 #define MSD_CSW_SIGNATURE                       0x53425355
 
-//! Table 5.3 - Command Block Status Values (usbmassbulk_10.pdf)
+/// Command Passed (good status)
 #define MSD_CSW_COMMAND_PASSED                  0
+/// Command Failed
 #define MSD_CSW_COMMAND_FAILED                  1
+/// Phase Error
 #define MSD_CSW_PHASE_ERROR                     2
+//------------------------------------------------------------------------------
 
-// CBW bmCBWFlags field
-#define MSD_CBW_DEVICE_TO_HOST                  (1 << 7)
 
 //------------------------------------------------------------------------------
 //      Structures
 //------------------------------------------------------------------------------
 
-//! Table 5.1 - Command Block Wrapper (see usbmassbulk_10.pdf)
-//! The CBW shall start on a packet boundary and shall end as a
-//! short packet with exactly 31 (1Fh) bytes transferred.
+//------------------------------------------------------------------------------
+/// Command Block Wrapper (CBW), 
+/// See Table 5.1, USB Mass Storage Class Bulk-Only Transport.
+///
+/// The CBW shall start on a packet boundary and shall end as a
+/// short packet with exactly 31 (1Fh) bytes transferred.
+//------------------------------------------------------------------------------
 typedef struct {
 
-    unsigned int  dCBWSignature;          //!< 'USBC' 0x43425355 (little endian)
-    unsigned int  dCBWTag;                //!< Must be the same as dCSWTag
-    unsigned int  dCBWDataTransferLength; //!< Number of bytes transfer
-    unsigned char bmCBWFlags;             //!< indicates the directin of the
-                                              //!< transfer: 0x80=IN=device-to-host,
-                                              //!< 0x00=OUT=host-to-device
-    unsigned char bCBWLUN   :4,           //!< bits 0->3: bCBWLUN
-                  bReserved1:4;           //!< reserved
-    unsigned char bCBWCBLength:5,         //!< bits 0->4: bCBWCBLength
-                  bReserved2  :3;         //!< reserved
-    unsigned char pCommand[16];           // Command block
+    /// 'USBC' 0x43425355 (little endian)
+    unsigned int  dCBWSignature;
+    /// Must be the same as dCSWTag
+    unsigned int  dCBWTag;
+    /// Number of bytes transfer
+    unsigned int  dCBWDataTransferLength;
+    /// Indicates the directin of the transfer:
+    /// 0x80=IN=device-to-host,
+    /// 0x00=OUT=host-to-device
+    unsigned char bmCBWFlags;
+    /// bits 0->3: bCBWLUN
+    unsigned char bCBWLUN   :4,
+                  bReserved1:4;           /// reserved
+    /// bits 0->4: bCBWCBLength
+    unsigned char bCBWCBLength:5,
+                  bReserved2  :3;         /// reserved
+    /// Command block
+    unsigned char pCommand[16];
 
 } MSCbw;
 
-//! Table 5.2 - Command Status Wrapper (CSW) (usbmassbulk_10.pdf)
+//------------------------------------------------------------------------------
+/// Command Status Wrapper (CSW),
+/// See Table 5.2, USB Mass Storage Class Bulk-Only Transport.
+//------------------------------------------------------------------------------
 typedef struct
 {
-    unsigned int  dCSWSignature;   //!< 'USBS' 0x53425355 (little endian)
-    unsigned int  dCSWTag;         //!< Must be the same as dCBWTag
-    unsigned int  dCSWDataResidue; //!< For Data-Out the device shall report in the dCSWDataResidue the difference between the amount of
-                                   // data expected as stated in the dCBWDataTransferLength, and the actual amount of data processed by
-                                   // the device. For Data-In the device shall report in the dCSWDataResidue the difference between the
-                                   // amount of data expected as stated in the dCBWDataTransferLength and the actual amount of relevant
-                                   // data sent by the device. The dCSWDataResidue shall not exceed the value sent in the dCBWDataTransferLength.
-    unsigned char bCSWStatus;     //!< Indicates the success or failure of the command.
+    /// 'USBS' 0x53425355 (little endian)
+    unsigned int  dCSWSignature;
+    /// Must be the same as dCBWTag
+    unsigned int  dCSWTag;
+    /// For Data-Out the device shall report in the dCSWDataResidue the
+    /// difference between the amount of data expected as stated in the
+    /// dCBWDataTransferLength, and the actual amount of data processed by
+    /// the device. For Data-In the device shall report in the dCSWDataResidue
+    /// the difference between the amount of data expected as stated in the
+    /// dCBWDataTransferLength and the actual amount of relevant data sent by
+    /// the device. The dCSWDataResidue shall not exceed the value sent in the
+    /// dCBWDataTransferLength.
+    unsigned int  dCSWDataResidue;
+    /// Indicates the success or failure of the command.
+    unsigned char bCSWStatus;
 
 } MSCsw;
 

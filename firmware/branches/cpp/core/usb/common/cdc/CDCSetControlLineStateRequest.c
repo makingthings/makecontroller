@@ -27,11 +27,12 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: CDCSetControlLineStateRequest implementation
+/**
+ CDCSetControlLineStateRequest.c
 
-    About: Purpose
-        Implementation of the CDCSetControlLineStateRequest class.
+ !!!Purpose
+
+ Implementation of the CDCSetControlLineStateRequest class.
 */
 
 //------------------------------------------------------------------------------
@@ -43,16 +44,12 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: CDCSetControlLineStateRequest_IsDtePresent
-        Notifies if the given request indicates that the DTE signal is present.
 
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        1 if the DTE signal is present, otherwise 0.
-*/
+//------------------------------------------------------------------------------
+/// Notifies if the given request indicates that the DTE signal is present.
+/// \param request Pointer to a USBGenericRequest instance.
+/// \return 1 if the DTE signal is present, otherwise 0.
+//------------------------------------------------------------------------------
 unsigned char CDCSetControlLineStateRequest_IsDtePresent(
     const USBGenericRequest *request)
 {
@@ -66,17 +63,12 @@ unsigned char CDCSetControlLineStateRequest_IsDtePresent(
     }
 }
 
-/*
-    Function: CDCSetControlLineStateRequest_ActivateCarrier
-        Notifies if the given request indicates that the device carrier should
-        be activated.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        1 is the device should activate its carrier, 0 otherwise.
-*/
+//------------------------------------------------------------------------------
+/// Notifies if the given request indicates that the device carrier should
+/// be activated.
+/// \param request Pointer to a USBGenericRequest instance.
+/// \return 1 is the device should activate its carrier, 0 otherwise.
+//------------------------------------------------------------------------------
 unsigned char CDCSetControlLineStateRequest_ActivateCarrier(
     const USBGenericRequest *request)
 {

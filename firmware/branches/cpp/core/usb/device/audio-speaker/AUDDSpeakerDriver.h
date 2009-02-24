@@ -27,14 +27,24 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: AUDDSpeakerDriver
+/**
+ \unit
 
-    About: Purpose
-        Definition of a USB audio speaker driver with two channels.
+ !Purpose
 
-    About: Usage
-        TODO
+    Definition of a USB Audio Speaker Driver with two playback channels and one
+    record channel.
+
+ !Usage
+
+    -# Enable and setup USB related pins (see pio & board.h).
+    -# Configure the USB Audio Speaker driver using
+       AUDDSpeakerDriver_Initialize
+    -# To get %audio stream frames from host, use
+       AUDDSpeakerDriver_Read
+    -# To send %audio sampling stream to host, use
+       AUDDSpeakerDriver_Write
+
 */
 
 #ifndef AUDDSPEAKERDRIVER_H
@@ -44,78 +54,86 @@
 //         Headers
 //------------------------------------------------------------------------------
 
+#include <board.h>
 #include <usb/common/core/USBGenericRequest.h>
 #include <usb/device/core/USBD.h>
 
 //------------------------------------------------------------------------------
 //         Definitions
 //------------------------------------------------------------------------------
-/*
-    Constants: Audio stream information
-        AUDDSpeakerDriver_SAMPLERATE - Sample rate in Hz.
-        AUDDSpeakerDriver_NUMCHANNELS - Number of channels in audio stream.
-        AUDDSpeakerDriver_BYTESPERSAMPLE - Number of bytes in one sample.
-        AUDDSpeakerDriver_BITSPERSAMPLE - Number of bits in one sample.
-        AUDDSpeakerDriver_SAMPLESPERFRAME - Number of samples in one USB frame.
-        AUDDSpeakerDriver_BYTESPERFRAME - Number of bytes in one USB frame.
-*/
-#define AUDDSpeakerDriver_SAMPLERATE        48000
-#define AUDDSpeakerDriver_NUMCHANNELS       2
-#define AUDDSpeakerDriver_BYTESPERSAMPLE    2
+
+//------------------------------------------------------------------------------
+/// \page "Audio Speaker stream information"
+///
+/// This page lists codes for USB Audio Speaker stream information.
+///
+/// !Code
+/// - AUDDSpeakerDriver_SAMPLERATE
+/// - AUDDSpeakerDriver_NUMCHANNELS
+/// - AUDDSpeakerDriver_BYTESPERSAMPLE
+/// - AUDDSpeakerDriver_BITSPERSAMPLE
+/// - AUDDSpeakerDriver_SAMPLESPERFRAME
+/// - AUDDSpeakerDriver_BYTESPERFRAME
+
+#if defined(at91sam7s)
+ /// Sample rate in Hz.
+ #define AUDDSpeakerDriver_SAMPLERATE        32000
+ /// Number of channels in audio stream.
+ #define AUDDSpeakerDriver_NUMCHANNELS       1
+ /// Number of bytes in one sample.
+ #define AUDDSpeakerDriver_BYTESPERSAMPLE    2
+#else
+ /// Sample rate in Hz.
+ #define AUDDSpeakerDriver_SAMPLERATE        48000
+ /// Number of channels in audio stream.
+ #define AUDDSpeakerDriver_NUMCHANNELS       2
+ /// Number of bytes in one sample.
+ #define AUDDSpeakerDriver_BYTESPERSAMPLE    2
+#endif
+/// Number of bits in one sample.
 #define AUDDSpeakerDriver_BITSPERSAMPLE     (AUDDSpeakerDriver_BYTESPERSAMPLE * 8)
+/// Number of bytes in one USB subframe.
 #define AUDDSpeakerDriver_BYTESPERSUBFRAME  (AUDDSpeakerDriver_NUMCHANNELS * \
                                              AUDDSpeakerDriver_BYTESPERSAMPLE)
+/// Number of samples in one USB frame.
 #define AUDDSpeakerDriver_SAMPLESPERFRAME   (AUDDSpeakerDriver_SAMPLERATE / 1000 \
                                              * AUDDSpeakerDriver_NUMCHANNELS)
+/// Number of bytes in one USB frame.
 #define AUDDSpeakerDriver_BYTESPERFRAME     (AUDDSpeakerDriver_SAMPLESPERFRAME * \
                                              AUDDSpeakerDriver_BYTESPERSAMPLE)
+//------------------------------------------------------------------------------
 
-/*
-    Constants: Channel numbers
-        AUDDSpeakerDriver_MASTERCHANNEL - Master channel.
-        AUDDSpeakerDriver_LEFTCHANNEL - Front left channel.
-        AUDDSpeakerDriver_RIGHTCHANNEL - Front right channel.
-*/
+//------------------------------------------------------------------------------
+/// \page "Audio Speaker Channel Numbers"
+///
+/// This page lists codes for USB Audio Speaker channel numbers.
+///
+/// !Playback channel numbers
+/// - AUDDSpeakerDriver_MASTERCHANNEL
+/// - AUDDSpeakerDriver_LEFTCHANNEL
+/// - AUDDSpeakerDriver_RIGHTCHANNEL
+///
+/// !Record channel number
+/// - AUDDSpeakerDriver_RECCHANNEL
+
+/// Master channel of playback.
 #define AUDDSpeakerDriver_MASTERCHANNEL     0
+/// Front left channel of playback.
 #define AUDDSpeakerDriver_LEFTCHANNEL       1
+/// Front right channel of playback.
 #define AUDDSpeakerDriver_RIGHTCHANNEL      2
+/// Channel of record.
+#define AUDDSpeakerDriver_RECCHANNEL        0
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: AUDDSpeakerDriver_Initialize
-        Initializes an USB audio speaker device driver, as well as the underlying
-        USB controller.
-*/
+
 extern void AUDDSpeakerDriver_Initialize();
 
-/*
-    Function: AUDDSpeakerDriver_RequestHandler
-        Handles USB audio-specific requests and forward standard requests to
-        <USBDDriver_RequestHandler>.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-*/
 extern void AUDDSpeakerDriver_RequestHandler(const USBGenericRequest *request);
 
-/*
-    Function: AUDDSpeakerDriver_Read
-        Reads incoming audio data sent by the USB host into the provided
-        buffer. When the transfer is complete, an optional callback function is
-        invoked.
-
-    Parameters:
-        buffer - Pointer to the data storage buffer.
-        length - Size of the buffer in bytes.
-        callback - Optional callback function.
-        argument - Optional argument to the callback function.
-
-    Returns:
-        USBD_STATUS_SUCCESS if the transfer is started successfully; otherwise
-        an error code.
-*/
 extern unsigned char AUDDSpeakerDriver_Read(void *buffer,
                                             unsigned int length,
                                             TransferCallback callback,

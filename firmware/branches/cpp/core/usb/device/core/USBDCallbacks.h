@@ -27,14 +27,15 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: USBDCallbacks
+/**
+ \unit
 
-    About: Purpose
-        Definitions of callbacks used by the USB API to notify the user
-        application of incoming events. These functions are declared as 'weak',
-        so they can be re-implemented elsewhere in the application in a
-        transparent way.
+ !!!Purpose
+
+    Definitions of callbacks used by the USBD API to notify the user
+    application of incoming events. These functions are declared as 'weak',
+    so they can be re-implemented elsewhere in the application in a
+    transparent way.
 */
 
 #ifndef USBDCALLBACKS_H
@@ -50,23 +51,15 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Functions: USB callbacks
-        USBDCallbacks_Initialized - Invoked after the USB driver has been
-            initialized. By default, configures the UDP interrupt.
-        USBDCallbacks_Reset - Invoked when the USB driver is reset. Does nothing
-            by default.
-        USBDCallbacks_Suspend - Invoked when the USB device gets suspended. By
-            default, turns off all LEDs.
-        USBDCallbacks_Resumed - Invoked when the USB device leaves the Suspended
-            state. By default, configures the LEDs.
-        USBDCallbacks_RequestReceived - Invoked when a new SETUP request is
-            received. Does nothing by default.
-*/
+
 extern void USBDCallbacks_Initialized(void);
+
 extern void USBDCallbacks_Reset(void);
+
 extern void USBDCallbacks_Suspended(void);
+
 extern void USBDCallbacks_Resumed(void);
+
 extern void USBDCallbacks_RequestReceived(const USBGenericRequest *request);
 
 #endif //#ifndef USBDCALLBACKS_H

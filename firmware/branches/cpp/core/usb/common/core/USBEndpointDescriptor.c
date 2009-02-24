@@ -43,32 +43,23 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: USBEndpointDescriptor_GetNumber
-        Returns the number of an endpoint given its descriptor.
 
-    Parameters:
-        endpoint - Pointer to a USBEndpointDescriptor instance.
-
-    Returns:
-        Endpoint number.
-*/
+//------------------------------------------------------------------------------
+/// Returns the number of an endpoint given its descriptor.
+/// \param endpoint Pointer to a USBEndpointDescriptor instance.
+/// \return Endpoint number.
+//------------------------------------------------------------------------------
 unsigned char USBEndpointDescriptor_GetNumber(
     const USBEndpointDescriptor *endpoint)
 {
     return endpoint->bEndpointAddress & 0xF;
 }
 
-/*
-    Function: USBEndpointDescriptor_GetDirection
-        Returns the direction of an endpoint given its descriptor.
-
-    Parameters:
-        endpoint - Pointer to a USBEndpointDescriptor instance.
-
-    Returns:
-        Endpoint direction (see <Endpoint directions>).
-*/
+//------------------------------------------------------------------------------
+/// Returns the direction of an endpoint given its descriptor.
+/// \param endpoint Pointer to a USBEndpointDescriptor instance.
+/// \return Endpoint direction (see <Endpoint directions>).
+//------------------------------------------------------------------------------
 unsigned char USBEndpointDescriptor_GetDirection(
     const USBEndpointDescriptor *endpoint)
 {
@@ -82,33 +73,23 @@ unsigned char USBEndpointDescriptor_GetDirection(
     }
 }
 
-/*
-    Function: USBEndpointDescriptor_GetType
-        Returns the type of an endpoint given its descriptor.
-
-    Parameters:
-        endpoint - Pointer to a USBEndpointDescriptor instance.
-
-    Returns:
-        Endpoint type (see <Endpoint types>).
-*/
+//------------------------------------------------------------------------------
+/// Returns the type of an endpoint given its descriptor.
+/// \param endpoint Pointer to a USBEndpointDescriptor instance.
+/// \return Endpoint type (see <Endpoint types>).
+//------------------------------------------------------------------------------
 unsigned char USBEndpointDescriptor_GetType(
     const USBEndpointDescriptor *endpoint)
 {
     return endpoint->bmAttributes & 0x3;
 }
 
-/*
-    Function: USBEndpointDescriptor_GetMaxPacketSize
-        Returns the maximum size of a packet (in bytes) on an endpoint given
-        its descriptor.
-
-    Parameters:
-        endpoint - Pointer to a USBEndpointDescriptor instance.
-
-    Returns:
-        Maximum packet size of endpoint.
-*/
+//------------------------------------------------------------------------------
+/// Returns the maximum size of a packet (in bytes) on an endpoint given
+/// its descriptor.
+/// \param endpoint - Pointer to a USBEndpointDescriptor instance.
+/// \return Maximum packet size of endpoint.
+//------------------------------------------------------------------------------
 unsigned short USBEndpointDescriptor_GetMaxPacketSize(
     const USBEndpointDescriptor *endpoint)
 {

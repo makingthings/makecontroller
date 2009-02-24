@@ -43,17 +43,13 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: USBGetDescriptorRequest_GetDescriptorType
-        Returns the type of the descriptor requested by the host given the
-        corresponding GET_DESCRIPTOR request.
 
-    Parameters:
-        request - Pointer to a USBGenericDescriptor instance.
-
-    Returns:
-        Type of the requested descriptor.
-*/
+//------------------------------------------------------------------------------
+/// Returns the type of the descriptor requested by the host given the
+/// corresponding GET_DESCRIPTOR request.
+/// \param request Pointer to a USBGenericDescriptor instance.
+/// \return Type of the requested descriptor.
+//------------------------------------------------------------------------------
 unsigned char USBGetDescriptorRequest_GetDescriptorType(
     const USBGenericRequest *request)
 {
@@ -61,17 +57,12 @@ unsigned char USBGetDescriptorRequest_GetDescriptorType(
     return (USBGenericRequest_GetValue(request) >> 8) & 0xFF;
 }
 
-/*
-    Function: USBGetDescriptorRequest_GetDescriptorIndex
-        Returns the index of the requested descriptor, given the corresponding
-        GET_DESCRIPTOR request.
-
-    Parameters:
-        request - Pointer to a USBGenericDescriptor instance.
-
-    Returns:
-        Index of the requested descriptor.
-*/
+//------------------------------------------------------------------------------
+/// Returns the index of the requested descriptor, given the corresponding
+/// GET_DESCRIPTOR request.
+/// \param request Pointer to a USBGenericDescriptor instance.
+/// \return Index of the requested descriptor.
+//------------------------------------------------------------------------------
 unsigned char USBGetDescriptorRequest_GetDescriptorIndex(
     const USBGenericRequest *request)
 {

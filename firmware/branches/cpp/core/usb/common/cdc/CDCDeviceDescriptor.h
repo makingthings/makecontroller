@@ -27,12 +27,13 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: CDCDeviceDescriptor
+/**
+ \unit
 
-    About: Purpose
-        Definition of several constants used when declaring USB CDC device
-        descriptors.
+ !!!Purpose
+
+ Definition of several constants used when declaring USB CDC device
+ descriptors.
 */
 
 #ifndef CDCDEVICEDESCRIPTOR_H
@@ -41,17 +42,23 @@
 //------------------------------------------------------------------------------
 //         Definitions
 //------------------------------------------------------------------------------
-/*
-    Constants: CDC device descriptor values
-        CDCDeviceDescriptor_CLASS - Device class code when using the CDC class.
-        CDCDeviceDescriptor_SUBCLASS - Device subclass code when using the CDC
-            class.
-        CDCDeviceDescriptor_PROTOCOL - Device protocol code when using the CDC
-            clas.
-*/
+
+//------------------------------------------------------------------------------
+/// \page "CDC Device Descriptor Values"
+/// This page lists the values for CDC Device Descriptor.
+///
+/// !Values
+/// - CDCDeviceDescriptor_CLASS
+/// - CDCDeviceDescriptor_SUBCLASS
+/// - CDCDeviceDescriptor_PROTOCOL
+
+/// Device class code when using the CDC class.
 #define CDCDeviceDescriptor_CLASS               0x02
+/// Device subclass code when using the CDC class.
 #define CDCDeviceDescriptor_SUBCLASS            0x00
+/// Device protocol code when using the CDC class.
 #define CDCDeviceDescriptor_PROTOCOL            0x00
+//------------------------------------------------------------------------------
 
 #endif //#ifndef CDCDEVICEDESCRIPTOR_H
 

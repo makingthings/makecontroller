@@ -27,12 +27,13 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: USBStringDescriptor
-
-    About: Purpose
-        Definition of a class for manipulating String descriptors.
-*/
+//------------------------------------------------------------------------------
+/// \unit
+///
+/// !!!Purpose
+///
+/// Definition of a class for manipulating String descriptors.
+//------------------------------------------------------------------------------
 
 #ifndef USBSTRINGDESCRIPTOR_H
 #define USBSTRINGDESCRIPTOR_H
@@ -40,21 +41,34 @@
 //------------------------------------------------------------------------------
 //         Definitions
 //------------------------------------------------------------------------------
-/*
-    Constants: Language IDs
-        USBStringDescriptor_ENGLISH_US - Language ID for US english.
-*/
+
+//------------------------------------------------------------------------------
+/// \page "USB String Descriptor definitions"
+///
+/// This page lists the codes and macros for USB string descriptor definition.
+///
+/// !Language IDs
+/// - USBStringDescriptor_ENGLISH_US
+///
+/// !String Descriptor Length
+/// - USBStringDescriptor_LENGTH
+///
+/// !ASCII to UNICODE convertion
+/// - USBStringDescriptor_UNICODE
+
+/// Language ID for US english.
 #define USBStringDescriptor_ENGLISH_US          0x09, 0x04
 
-/*
-    Macros:
-        USBStringDescriptor_LENGTH - Calculates the length of a string
-            descriptor given the number of ascii characters/language IDs in it.
-        USBStringDescriptor_UNICODE - Converts an ascii character to its
-            unicode representation.
-*/
+/// Calculates the length of a string descriptor given the number of ascii
+/// characters/language IDs in it.
+/// \param length The ascii format string length.
+/// \return The actual data length in bytes.
 #define USBStringDescriptor_LENGTH(length)      ((length) * 2 + 2)
+/// Converts an ascii character to its unicode representation.
+/// \param ascii The ASCII character to convert
+/// \return A 2-byte-array for the UNICODE based on given ASCII
 #define USBStringDescriptor_UNICODE(ascii)      (ascii), 0
+//------------------------------------------------------------------------------
 
 #endif //#ifndef USBSTRINGDESCRIPTOR_H
 

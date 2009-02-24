@@ -27,18 +27,21 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: USBInterfaceRequest
+/**
+ \unit
 
-    About: Purpose
-        Definitions for manipulating SET_INTERFACE and GET_INTERFACE request.
+ !!!Purpose
 
-    About: Usage
-        1 - After a SET_INTERFACE request has been received, retrieve the
-            target interface using <USBInterfaceRequest_GetInterface> and its
-            new alternate setting with <USBInterfaceRequest_GetAlternateSetting>.
-        2 - After a GET_INTERFACE request has been received, retrieve the target
-            interface using <USBInterfaceRequest_GetInterface>.
+    Definitions for manipulating SET_INTERFACE and GET_INTERFACE request.
+
+ !!!Usage
+
+    -# After a SET_INTERFACE request has been received, retrieve the
+       target interface using USBInterfaceRequest_GetInterface and its
+       new alternate setting with USBInterfaceRequest_GetAlternateSetting.
+    -# After a GET_INTERFACE request has been received, retrieve the target
+       interface using USBInterfaceRequest_GetInterface.
+
 */
 
 #ifndef USBINTERFACEREQUEST_H
@@ -53,31 +56,11 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: USBInterfaceRequest_GetInterface
-        Indicates which interface is targetted by a GET_INTERFACE or
-        SET_INTERFACE request.
 
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Interface number.
-*/
 extern unsigned char USBInterfaceRequest_GetInterface(
     const USBGenericRequest *request);
 
-/*
-    Function: USBInterfaceRequest_GetAlternateSetting
-        Indicates the new alternate setting that the interface targetted by a
-        SET_INTERFACE request should use.
 
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        New active setting for the interface.
-*/
 extern unsigned char USBInterfaceRequest_GetAlternateSetting(
     const USBGenericRequest *request);
 

@@ -27,11 +27,17 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: USBSetAddressRequest
+/**
+ \unit
 
-    About: Purpose
-        Definition of a class for manipulating SET_ADDRESS USB requests.
+ !!!Purpose
+
+    Definition of a class for manipulating SET_ADDRESS USB requests.
+
+ !!!Usage
+
+    - After a SET_ADDRESS request has been received, retrive the new address
+      value with USBSetAddressRequest_GetAddress.
 */
 
 #ifndef USBSETADDRESSREQUEST_H
@@ -46,17 +52,7 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: USBSetAddressRequest_GetAddress
-        Returns the address that the device must take in response to a
-        SET_ADDRESS request.
 
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        New device address.
-*/
 extern unsigned char USBSetAddressRequest_GetAddress(
     const USBGenericRequest *request);
 

@@ -27,24 +27,46 @@
  * ----------------------------------------------------------------------------
  */
 
+/*
+    Title: HIDDMouseInputReport implementation
+
+    About: Purpose
+        Implementation of the HIDDMouseInputReport class.
+*/
+
 //------------------------------------------------------------------------------
 //         Headers
 //------------------------------------------------------------------------------
 
-#include "USBDDriverCallbacks.h"
-// #include <utility/trace.h>
+#include "HIDDMouseInputReport.h"
+#include "HIDDMouseDriverDescriptors.h"
+#include <utility/assert.h>
 
 //------------------------------------------------------------------------------
-//         Global functions
+//         Exported functions
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
-/// Indicates that the current configuration of the device has changed.
-/// \param cfgnum  New device configuration index.
+/// Initializes a mouse input report instance.
+/// \param report Pointer to a HIDDMouseInputReport instance.
 //------------------------------------------------------------------------------
-void USBDDriverCallbacks_ConfigurationChanged(unsigned char cfgnum)
+void HIDDMouseInputReport_Initialize(HIDDMouseInputReport *report)
 {
-    // trace_LOG(trace_INFO, "ConfigurationChanged ");
-  (void)cfgnum;
+    report->bmButtons = 0;
+    report->bX = 0;
+    report->bY = 0;
 }
 
+/*
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+void HIDDMouseInputReport_UpdateButtons(HIDDMouseInputReport *report)
+{
+}
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+void HIDDMouseInputReport_UpdateAxis(HIDDMouseInputReport *report)
+{
+}
+*/

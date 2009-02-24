@@ -181,7 +181,7 @@ static void OTGHS_EndOfTransfer(S_usb_endpoint *pEndpoint,
     if ((pEndpoint->dState == endpointStateWrite)
         || (pEndpoint->dState == endpointStateRead)) {
 
-        TRACE_DEBUG_L("E");
+        TRACE_DEBUG_WP("E");
 
         // Endpoint returns in Idle state
         pEndpoint->dState = endpointStateIdle;
@@ -350,18 +350,18 @@ static void OTGHS_EndpointHandler(const S_usb *pUsb, unsigned char bEndpoint)
     unsigned int dStatus = pInterface->OTGHS_DEVEPTCSR[bEndpoint];
     unsigned short wPacketSize;
 
-    TRACE_DEBUG_L("Ept%d, 0x%X ", bEndpoint, dStatus);
+    TRACE_DEBUG_WP("Ept%d, 0x%X ", bEndpoint, dStatus);
 
     // Handle interrupts
     // IN packet sent
     if((ISSET(pInterface->OTGHS_DEVEPTCMR[bEndpoint], AT91C_OTGHS_TXINI))
     && (ISSET(dStatus, AT91C_OTGHS_TXINI ))) {
 
-        TRACE_DEBUG_L("Wr ");
+        TRACE_DEBUG_WP("Wr ");
 
         if (pEndpoint->dBytesBuffered > 0) {
 
-            TRACE_DEBUG_L("%d ", pEndpoint->dBytesBuffered);
+            TRACE_DEBUG_WP("%d ", pEndpoint->dBytesBuffered);
 
             pEndpoint->dBytesTransferred += pEndpoint->dBytesBuffered;
             pEndpoint->dBytesBuffered = 0;
@@ -399,7 +399,7 @@ static void OTGHS_EndpointHandler(const S_usb *pUsb, unsigned char bEndpoint)
     // OUT packet received
     if(ISSET(dStatus, AT91C_OTGHS_RXOUT)) {
 
-        TRACE_DEBUG_L("Rd ");
+        TRACE_DEBUG_WP("Rd ");
 
         // Check that the endpoint is in Read state
         if (pEndpoint->dState != endpointStateRead) {
@@ -410,7 +410,7 @@ static void OTGHS_EndpointHandler(const S_usb *pUsb, unsigned char bEndpoint)
 
                 // Control endpoint, 0 bytes received
                 // Acknowledge the data and finish the current transfer
-                TRACE_DEBUG_L("Ack ");
+                TRACE_DEBUG_WP("Ack ");
                 pInterface->OTGHS_DEVEPTCCR[bEndpoint] = AT91C_OTGHS_RXOUT;
 
                 OTGHS_EndOfTransfer(pEndpoint, USB_STATUS_SUCCESS);
@@ -419,14 +419,14 @@ static void OTGHS_EndpointHandler(const S_usb *pUsb, unsigned char bEndpoint)
 
                 // Non-control endpoint
                 // Discard stalled data
-                TRACE_DEBUG_L("Disc ");
+                TRACE_DEBUG_WP("Disc ");
                 pInterface->OTGHS_DEVEPTCCR[bEndpoint] = AT91C_OTGHS_RXOUT;
             }
             else {
 
                 // Non-control endpoint
                 // Nak data
-                TRACE_DEBUG_L("Nak ");
+                TRACE_DEBUG_WP("Nak ");
                 pInterface->OTGHS_DEVIDR = 1<<SHIFT_INTERUPT<<bEndpoint;
             }
         }
@@ -436,7 +436,7 @@ static void OTGHS_EndpointHandler(const S_usb *pUsb, unsigned char bEndpoint)
             // Retrieve data and store it into the current transfer buffer
             wPacketSize = (unsigned short) ((dStatus >> 20) & 0x7FF);
 
-            TRACE_DEBUG_L("%d ", wPacketSize);
+            TRACE_DEBUG_WP("%d ", wPacketSize);
 
             OTGHS_GetPayload(pUsb, bEndpoint, wPacketSize);
 
@@ -463,7 +463,7 @@ static void OTGHS_EndpointHandler(const S_usb *pUsb, unsigned char bEndpoint)
     // SETUP packet received
     if(ISSET(dStatus, AT91C_OTGHS_RXSTP)) {
 
-        TRACE_DEBUG_L("Stp ");
+        TRACE_DEBUG_WP("Stp ");
 
         // If a transfer was pending, complete it
         // Handle the case where during the status phase of a control write
@@ -717,7 +717,7 @@ static bool OTGHS_ConfigureEndpoint(const S_usb *pUsb,
     // Check if the configuration is ok
     if (ISCLEARED(pInterface->OTGHS_DEVEPTCSR[bEndpoint], AT91C_OTGHS_CFGOK)) {
 
-        TRACE_FATAL("F: OTGHS_ConfigureEndpoint: Cannot configure endpoint\n\r");
+        TRACE_FATAL("OTGHS_ConfigureEndpoint: Cannot configure endpoint\n\r");
         return false;
     }
 
@@ -814,7 +814,7 @@ static void OTGHS_Handler(const S_usb *pUsb)
 
         // Start Of Frame (SOF)
         if (ISSET(dStatus, AT91C_OTGHS_SOF)) {
-            TRACE_DEBUG_L("SOF ");
+            TRACE_DEBUG_WP("SOF ");
 
             // Invoke the SOF callback
             USB_StartOfFrameCallback(pUsb);
@@ -927,7 +927,7 @@ static void OTGHS_Handler(const S_usb *pUsb)
         // Handle upstream resume interrupt
         else if (dStatus & AT91C_OTGHS_UPRSM) {
 
-            TRACE_DEBUG_L("  External resume interrupt\n\r");
+            TRACE_DEBUG_WP("  External resume interrupt\n\r");
 
             // - Acknowledge the IT
             pInterface->OTGHS_DEVICR = AT91C_OTGHS_UPRSM;
@@ -969,7 +969,7 @@ static void OTGHS_Handler(const S_usb *pUsb)
 
         if (dStatus != 0) {
 
-            TRACE_DEBUG_L("  - ");
+            TRACE_DEBUG_WP("  - ");
         }
     }
 
@@ -1014,7 +1014,7 @@ static char OTGHS_Write(const S_usb   *pUsb,
         return USB_STATUS_LOCKED;
     }
 
-    TRACE_DEBUG_L("Write%d(%d) ", bEndpoint, dLength);
+    TRACE_DEBUG_WP("Write%d(%d) ", bEndpoint, dLength);
 
     // Setup the transfer descriptor
     pEndpoint->pData = (char *) pData;
@@ -1165,7 +1165,7 @@ static bool OTGHS_Halt(const S_usb   *pUsb,
     // Clear the Halt feature of the endpoint if it is enabled
     if (bRequest == USB_CLEAR_FEATURE) {
 
-        TRACE_DEBUG_L("Unhalt%d ", bEndpoint);
+        TRACE_DEBUG_WP("Unhalt%d ", bEndpoint);
 
         // Return endpoint to Idle state
         pEndpoint->dState = endpointStateIdle;
@@ -1185,7 +1185,7 @@ static bool OTGHS_Halt(const S_usb   *pUsb,
              && (pEndpoint->dState != endpointStateHalted)
              && (pEndpoint->dState != endpointStateDisabled)) {
 
-        TRACE_DEBUG_L("Halt%d ", bEndpoint);
+        TRACE_DEBUG_WP("Halt%d ", bEndpoint);
 
         // Abort the current transfer if necessary
         OTGHS_EndOfTransfer(pEndpoint, USB_STATUS_ABORTED);
@@ -1228,11 +1228,11 @@ static char OTGHS_Stall(const S_usb *pUsb,
     // Check that endpoint is in Idle state
     if (pEndpoint->dState != endpointStateIdle) {
 
-        TRACE_WARNING("W: UDP_Stall: Endpoint%d locked\n\r", bEndpoint);
+        TRACE_WARNING("UDP_Stall: Endpoint%d locked\n\r", bEndpoint);
         return USB_STATUS_LOCKED;
     }
 
-    TRACE_DEBUG_L("Stall%d ", bEndpoint);
+    TRACE_DEBUG_WP("Stall%d ", bEndpoint);
 
     pInterface->OTGHS_DEVEPTCER[bEndpoint] = AT91C_OTGHS_STALL;
     pInterface->OTGHS_DEVEPTCER[bEndpoint] = AT91C_OTGHS_STALLRQ;
@@ -1253,7 +1253,7 @@ static void OTGHS_RemoteWakeUp(const S_usb *pUsb)
     OTGHS_EnableOTGHSCK(pUsb);
     OTGHS_EnableTransceiver(pUsb);
 
-    TRACE_DEBUG_L("Remote WakeUp ");
+    TRACE_DEBUG_WP("Remote WakeUp ");
 
     //! Enable wakeup interrupt
     //pInterface->OTGHS_DEVIER = AT91C_OTGHS_UPRSM;
@@ -1273,7 +1273,7 @@ static bool OTGHS_Attach(const S_usb *pUsb)
 {
     AT91PS_OTGHS pInterface = OTGHS_GetDriverInterface(pUsb);
 
-    TRACE_DEBUG_L("Attach(");
+    TRACE_DEBUG_WP("Attach(");
 
     // Check if VBus is present
     if (!ISSET(USB_GetState(pUsb), USB_STATE_POWERED)
@@ -1349,7 +1349,7 @@ static bool OTGHS_Attach(const S_usb *pUsb)
 
     }
 
-    TRACE_DEBUG_L("%d) ", ISSET(USB_GetState(pUsb), USB_STATE_POWERED));
+    TRACE_DEBUG_WP("%d) ", ISSET(USB_GetState(pUsb), USB_STATE_POWERED));
 
     return ISSET(USB_GetState(pUsb), USB_STATE_POWERED);
 }
@@ -1367,7 +1367,7 @@ static void OTGHS_SetAddress(S_usb const *pUsb)
     unsigned short wAddress = USB_GetSetup(pUsb)->wValue;
     AT91PS_OTGHS pInterface = OTGHS_GetDriverInterface(pUsb);
 
-    TRACE_DEBUG_L("SetAddr(%d) ", wAddress);
+    TRACE_DEBUG_WP("SetAddr(%d) ", wAddress);
 
     // Set address
     pInterface->OTGHS_DEVCTRL = wAddress & AT91C_OTGHS_UADD;
@@ -1387,7 +1387,7 @@ static void OTGHS_SetConfiguration(S_usb const *pUsb)
 {
     unsigned short wValue = USB_GetSetup(pUsb)->wValue;
 
-    TRACE_DEBUG_L("SetCfg() ");
+    TRACE_DEBUG_WP("SetCfg() ");
 
     // Check the request
     if (wValue != 0) {
@@ -1416,7 +1416,7 @@ static void OTGHS_Connect(const S_usb *pUsb)
     CLEAR(OTGHS_GetDriverInterface(pUsb)->OTGHS_DEVCTRL, AT91C_OTGHS_DETACH);
 
 #elif defined(INTERNAL_PULLUP_MATRIX)
-    TRACE_DEBUG_L("PUON 1\n\r");
+    TRACE_DEBUG_WP("PUON 1\n\r");
     AT91C_BASE_MATRIX->MATRIX_USBPCR |= AT91C_MATRIX_USBPCR_PUON;
 
 #else
@@ -1437,7 +1437,7 @@ static void OTGHS_Disconnect(const S_usb *pUsb)
     SET(OTGHS_GetDriverInterface(pUsb)->OTGHS_DEVCTRL, AT91C_OTGHS_DETACH);
 
 #elif defined(INTERNAL_PULLUP_MATRIX)
-    TRACE_DEBUG_L("PUON 0\n\r");
+    TRACE_DEBUG_WP("PUON 0\n\r");
     AT91C_BASE_MATRIX->MATRIX_USBPCR &= ~AT91C_MATRIX_USBPCR_PUON;
 
 #else
@@ -1523,7 +1523,7 @@ static void OTGHS_Init(const S_usb *pUsb)
     AT91PS_OTGHS  pInterface = OTGHS_GetDriverInterface(pUsb);
     unsigned char i;
 
-    TRACE_DEBUG_L("Init()\n\r");
+    TRACE_DEBUG_WP("Init()\n\r");
 
     // Enable USB macro
     SET(OTGHS_GetDriverInterface(pUsb)->OTGHS_CTRL, AT91C_OTGHS_USBECTRL);

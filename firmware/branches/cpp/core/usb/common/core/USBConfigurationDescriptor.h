@@ -28,90 +28,97 @@
  */
 
 /**
- *  \dir
- *  !!!Purpose
- * 
- *      Definitions of descriptor and request structures
- *      described by the USB specification.
- * 
- *  !!!Usage
- * 
- *      -# Do this
- *      -# Do that
- */
+ \unit
+ !!!Purpose
+ 
+    Definitions and methods for USB configuration descriptor structures
+    described by the USB specification.
+
+ !!!Usage
+
+    -# Declare USBConfigurationDescriptor instance as a part
+       of the configuration descriptors of a USB device.
+    -# To get useful information (field values) from the defined USB device
+       configuration descriptor, use
+       - USBConfigurationDescriptor_GetTotalLength
+       - USBConfigurationDescriptor_GetNumInterfaces
+       - USBConfigurationDescriptor_IsSelfPowered
+    -# To pase the defined USB device configuration descriptor, use
+       - USBConfigurationDescriptor_Parse
+*/
 
 #ifndef USBCONFIGURATIONDESCRIPTOR_H
 #define USBCONFIGURATIONDESCRIPTOR_H
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //         Headers
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 #include "USBGenericDescriptor.h"
 #include "USBInterfaceDescriptor.h"
 #include "USBEndpointDescriptor.h"
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //         Definitions
-//------------------------------------------------------------------------------
-/*
-    Constants: Attributes
-        USBConfigurationDescriptor_BUSPOWERED_NORWAKEUP - Device is bus-powered
-            and not support remote wake-up.
-        USBConfigurationDescriptor_SELFPOWERED_NORWAKEUP - Device is self-powered
-            and not support remote wake-up.
-        USBConfigurationDescriptor_BUSPOWERED_RWAKEUP - Device is bus-powered
-            and supports remote wake-up.
-        USBConfigurationDescriptor_SELFPOWERED_RWAKEUP - Device is self-powered
-            and supports remote wake-up.
-*/
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+/// \page "USB device Attributes"
+///
+/// This page lists the codes of the usb attributes.
+///
+/// !Attributes
+/// - USBConfigurationDescriptor_BUSPOWERED_NORWAKEUP
+/// - USBConfigurationDescriptor_SELFPOWERED_NORWAKEUP
+/// - USBConfigurationDescriptor_BUSPOWERED_RWAKEUP
+/// - USBConfigurationDescriptor_SELFPOWERED_RWAKEUP
+/// - USBConfigurationDescriptor_POWER
+
+/// Device is bus-powered and not support remote wake-up.
 #define USBConfigurationDescriptor_BUSPOWERED_NORWAKEUP  0x80
+/// Device is self-powered and not support remote wake-up.
 #define USBConfigurationDescriptor_SELFPOWERED_NORWAKEUP 0xC0
+/// Device is bus-powered  and supports remote wake-up.
 #define USBConfigurationDescriptor_BUSPOWERED_RWAKEUP    0xA0
+/// Device is self-powered and supports remote wake-up.
 #define USBConfigurationDescriptor_SELFPOWERED_RWAKEUP   0xE0
 
-/*
-    Macros:
-        USBConfigurationDescriptor_POWER - Calculates the value of the power
-                                           consumption field given the value in
-                                           mA.
-*/
+/// Calculates the value of the power consumption field given the value in mA.
+/// \param power The power consumption value in mA
+/// \return The value that should be set to the field in descriptor
 #define USBConfigurationDescriptor_POWER(power)     (power / 2)
+//-----------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //         Types
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 #ifdef __ICCARM__          // IAR
 #pragma pack(1)            // IAR
 #define __attribute__(...) // IAR
 #endif                     // IAR
 
-/*
-    Type: USBConfigurationDescriptor
-        USB standard configuration descriptor structure.
-
-    Variables:
-        bLength - Size of the descriptor in bytes.
-        bDescriptorType - Descriptor type (<USBDESC_CONFIGURATION>).
-        wTotalLength - Length of all descriptors returned along with this
-                       configuration descriptor.
-        bNumInterfaces - Number of interfaces in this configuration.
-        bConfigurationValue - Value for selecting this configuration.
-        iConfiguration - Index of the configuration string descriptor.
-        bmAttributes - Configuration characteristics.
-        bMaxPower - Maximum power consumption of the device when in this
-                    configuration.
-*/
+//-----------------------------------------------------------------------------
+/// USB standard configuration descriptor structure.
+//-----------------------------------------------------------------------------
 typedef struct {
 
-   unsigned char bLength;             
-   unsigned char bDescriptorType;     
-   unsigned short wTotalLength;            
-   unsigned char bNumInterfaces;      
+   /// Size of the descriptor in bytes.
+   unsigned char bLength;
+   /// Descriptor type (USBDESC_CONFIGURATION of "USB Descriptor types").
+   unsigned char bDescriptorType;
+   /// Length of all descriptors returned along with this configuration
+   /// descriptor.
+   unsigned short wTotalLength;
+   /// Number of interfaces in this configuration.
+   unsigned char bNumInterfaces;
+   /// Value for selecting this configuration.
    unsigned char bConfigurationValue; 
-   unsigned char iConfiguration;       
-   unsigned char bmAttributes;         
+   /// Index of the configuration string descriptor.
+   unsigned char iConfiguration;
+   /// Configuration characteristics.
+   unsigned char bmAttributes;
+   /// Maximum power consumption of the device when in this configuration.
    unsigned char bMaxPower;           
                                        
 } __attribute__ ((packed)) USBConfigurationDescriptor; // GCC
@@ -120,68 +127,19 @@ typedef struct {
 #pragma pack()             // IAR
 #endif                     // IAR
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //         Exported functions
-//------------------------------------------------------------------------------
-/*
-    Function: USBConfigurationDescriptor_GetTotalLength
-        Returns the total length of a configuration, i.e. including the 
-        descriptors following it.
+//-----------------------------------------------------------------------------
 
-    Parameters:
-        configuration - Pointer to a USBConfigurationDescriptor instance.
-
-    Returns:
-        Total length (in bytes) of the configuration.
-*/
 extern unsigned int USBConfigurationDescriptor_GetTotalLength(
     const USBConfigurationDescriptor *configuration);
 
-/*
-    Function: USBConfigurationDescriptor_GetNumInterfaces
-        Returns the number of interfaces in a configuration.
-
-    Parameters:
-        configuration - Pointer to a USBConfigurationDescriptor instance.
-
-    Returns:
-        Number of interfaces in configuration.
-*/
 extern unsigned char USBConfigurationDescriptor_GetNumInterfaces(
     const USBConfigurationDescriptor *configuration);
 
-/*
-    Function: USBConfigurationDescriptor_IsSelfPowered
-        Indicates if the device is self-powered when in a given configuration.
-
-    Parameters:
-        configuration - Pointer to a USBConfigurationDescriptor instance.
-
-    Returns:
-        1 if the device is self-powered when in the given configuration;
-        otherwise 0.
-*/
 extern unsigned char USBConfigurationDescriptor_IsSelfPowered(
     const USBConfigurationDescriptor *configuration);
 
-/*
-    Function: USBConfigurationDescriptor_Parse
-        Parses the given Configuration descriptor (followed by relevant
-        interface, endpoint and class-specific descriptors) into three arrays.
-
-        *Each array must have its size equal or greater to the number of
-        descriptors it stores plus one*. A null-value is inserted after the last
-        descriptor of each type to indicate the array end.
-
-        Note that if the pointer to an array is null (0), nothing is stored in
-        it.
-
-    Parameters:
-        configuration - Pointer to the start of the whole Configuration descriptor.
-        interfaces - Pointer to the Interface descriptor array.
-        endpoints - Pointer to the Endpoint descriptor array.
-        others - Pointer to the class-specific descriptor array.
-*/
 extern void USBConfigurationDescriptor_Parse(
     const USBConfigurationDescriptor *configuration,
     USBInterfaceDescriptor **interfaces,

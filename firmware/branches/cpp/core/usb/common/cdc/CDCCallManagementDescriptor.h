@@ -27,15 +27,17 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: CDCCallManagementDescriptor
+/**
+ \unit
 
-    About: Purpose
-        Definition of a class for managing CDC call management descriptors.
+ !!!Purpose
 
-    About: Usage
-        Should be included in a list of configuration descriptors for a USB
-        device.
+ Definition of a class for managing CDC call management descriptors.
+
+ !!!Usage
+
+ Should be included in a list of configuration descriptors for a USB
+ device.
 */
 
 #ifndef CDCCALLMANAGEMENTDESCRIPTOR_H
@@ -44,15 +46,20 @@
 //------------------------------------------------------------------------------
 //         Definitions
 //------------------------------------------------------------------------------
-/*
-    Constants: Capabilities
-        CDCCallManagementDescriptor_SELFCALLMANAGEMENT - Device handles call
-            management itself.
-        CDCCallManagementDescriptor_DATACALLMANAGEMENT - Device can exchange
-            call management information over a Data class interface.
-*/
+
+//------------------------------------------------------------------------------
+/// \page "CDC CallManagement Capabilities"
+/// This page lists CDC CallManagement Capabilities.
+///
+/// !Capabilities
+/// - CDCCallManagementDescriptor_SELFCALLMANAGEMENT
+/// - CDCCallManagementDescriptor_DATACALLMANAGEMENT
+
+/// Device handles call management itself.
 #define CDCCallManagementDescriptor_SELFCALLMANAGEMENT      (1 << 0)
+/// Device can exchange call management information over a Data class interface.
 #define CDCCallManagementDescriptor_DATACALLMANAGEMENT      (1 << 1)
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //         Types
@@ -63,24 +70,21 @@
 #define __attribute__(...) // IAR
 #endif                     // IAR
 
-/*
-    Type: CDCCallManagementDescriptor
-        Describes the processing of calls for the communication class interface.
-
-    Variables:
-        bFunctionLength - Size of this descriptor in bytes.
-        bDescriptorType - Descriptor type (<CDCDescriptors_INTERFACE>).
-        bDescriptorSubtype - Descriptor sub-type (<CDCDescriptors_CALLMANAGEMENT>).
-        bmCapabilities - Configuration capabilities (see <Capabilities).
-        bDataInterface - Interface number of the data class interface used for
-            call management (optional).
-*/
+//------------------------------------------------------------------------------
+/// Describes the processing of calls for the communication class interface.
+//------------------------------------------------------------------------------
 typedef struct {
 
+    /// Size of this descriptor in bytes.
     unsigned char bFunctionLength;
+    /// Descriptor type (CDCDescriptors_INTERFACE).
     unsigned char bDescriptorType;
+    /// Descriptor sub-type (CDCDescriptors_CALLMANAGEMENT).
     unsigned char bDescriptorSubtype;
+    /// Configuration capabilities ("CDC CallManagement Capabilities").
     unsigned char bmCapabilities;
+    /// Interface number of the data class interface used for call management
+    /// (optional).
     unsigned char bDataInterface;
 
 } __attribute__ ((packed)) CDCCallManagementDescriptor; // GCC

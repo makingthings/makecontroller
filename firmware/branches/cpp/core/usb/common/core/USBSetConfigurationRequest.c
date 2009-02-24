@@ -43,17 +43,13 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: USBSetConfigurationRequest_GetConfiguration
-        Returns the number of the configuration that should be set in response
-        to the given SET_CONFIGURATION request.
 
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Number of the requested configuration.
-*/
+//------------------------------------------------------------------------------
+/// Returns the number of the configuration that should be set in response
+/// to the given SET_CONFIGURATION request.
+/// \param request Pointer to a USBGenericRequest instance.
+/// \return Number of the requested configuration.
+//------------------------------------------------------------------------------
 unsigned char USBSetConfigurationRequest_GetConfiguration(
     const USBGenericRequest *request)
 {

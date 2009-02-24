@@ -27,12 +27,13 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: CDCDataInterfaceDescriptor
+/**
+ \unit
 
-    About: Purpose
-        Definitions of constants used when declaring a CDC data class interface
-        descriptor.
+ !!!Purpose
+
+ Definitions of constants used when declaring a CDC data class interface
+ descriptor.
 */
 
 #ifndef CDCDATAINTERFACEDESCRIPTOR_H
@@ -41,18 +42,24 @@
 //------------------------------------------------------------------------------
 //         Definitions
 //------------------------------------------------------------------------------
-/*
-    Constants: Data interface values
-        CDCDataInterfaceDescriptor_CLASS - Interface class code for a data class
-            interface.
-        CDCDataInterfaceDescriptor_SUBCLASS - Interface subclass code for a data
-            class interface.
-        CDCDataInterfaceDescriptor_NOPROTOCOL - Protocol code for a data class
-            interface which does not implement any particular protocol.
-*/
+
+//------------------------------------------------------------------------------
+/// \page "CDC Data Interface Values"
+/// This page lists the values for CDC Data Interface Descriptor.
+///
+/// !Values
+/// - CDCDataInterfaceDescriptor_CLASS
+/// - CDCDataInterfaceDescriptor_SUBCLASS
+/// - CDCDataInterfaceDescriptor_NOPROTOCOL
+
+/// Interface class code for a data class interface.
 #define CDCDataInterfaceDescriptor_CLASS        0x0A
+/// Interface subclass code for a data class interface.
 #define CDCDataInterfaceDescriptor_SUBCLASS     0x00
+/// Protocol code for a data class interface which does not implement any
+/// particular protocol.
 #define CDCDataInterfaceDescriptor_NOPROTOCOL   0x00
+//------------------------------------------------------------------------------
 
 #endif //#ifndef CDCDATAINTERFACEDESCRIPTOR_H
 

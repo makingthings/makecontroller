@@ -31,11 +31,15 @@
 /// \unit
 /// !Purpose
 /// 
-/// Logical Unit Number used by the Mass Storage driver and the SCSI protocol.
-/// Represents a logical hard-drive.
+/// Logical Unit Number (LUN) used by the Mass Storage driver and the SCSI
+/// protocol. Represents a logical hard-drive.
 /// 
 /// !Usage
-/// TODO
+/// -# Initialize Memory related pins (see pio & board.h).
+/// -# Initialize a Media instance for the LUN (see memories).
+/// -# Initlalize the LUN with LUN_Init, and link to the initialized Media.
+/// -# To read data from the LUN linked media, uses LUN_Read.
+/// -# To write data to the LUN linked media, uses LUN_Write.
 //------------------------------------------------------------------------------
 
 #ifndef MSDLUN_H
@@ -60,17 +64,25 @@
 //      Structures
 //------------------------------------------------------------------------------
 
-// LUN structure
+/// LUN structure
 typedef struct {
 
-    SBCInquiryData          *inquiryData;
-    unsigned char               *readWriteBuffer;
-    SBCRequestSenseData    requestSenseData;
+    /// Pointer to a SBCInquiryData instance.
+    SBCInquiryData        *inquiryData;
+    /// Buffer for USB transfer, must be assigned.
+    unsigned char         *readWriteBuffer;
+    /// Data for the RequestSense command.
+    SBCRequestSenseData   requestSenseData;
+    /// Data for the ReadCapacity command.
     SBCReadCapacity10Data readCapacityData;
-    Media                     *media;
-    unsigned int                baseAddress;
-    unsigned int                size;
-    unsigned int                blockSize;
+    /// Pointer to Media instance for the LUN.
+    Media                 *media;
+    /// The start position of the media allocated to the LUN.
+    unsigned int          baseAddress;
+    /// The size of the media allocated to the LUN.
+    unsigned int          size;
+    /// Sector size of the media
+    unsigned int          blockSize;
 
 } MSDLun;
 

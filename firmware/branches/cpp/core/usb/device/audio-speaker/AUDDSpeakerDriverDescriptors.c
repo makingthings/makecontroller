@@ -56,16 +56,24 @@
 //         Definitions
 //------------------------------------------------------------------------------
 
-/*
-    Constants: Device IDs
-        AUDDSpeakerDriverDescriptors_VENDORID - Device vendor ID.
-        AUDDSpeakerDriverDescriptors_PRODUCTID - Device product ID.
-        AUDDSpeakerDriverDescriptors_RELEASE - Device release number in BCD
-            format.
-*/
+//------------------------------------------------------------------------------
+/// \page "Audio Speaker Device Codes"
+///
+/// This page lists the %device IDs and release number of the USB Audio Speaker
+/// %device.
+///
+/// !Codes
+/// - AUDDSpeakerDriverDescriptors_VENDORID
+/// - AUDDSpeakerDriverDescriptors_PRODUCTID
+/// - AUDDSpeakerDriverDescriptors_RELEASE
+
+/// Device vendor ID.
 #define AUDDSpeakerDriverDescriptors_VENDORID            0x03EB
+/// Device product ID.
 #define AUDDSpeakerDriverDescriptors_PRODUCTID           0x6128
+/// Device release number in BCD format.
 #define AUDDSpeakerDriverDescriptors_RELEASE             0x0100
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //         Internal types
@@ -79,11 +87,14 @@
 #define __attribute__(...) // IAR
 #endif                     // IAR
 
+//------------------------------------------------------------------------------
+/// Header descriptor with 1 interface.
+//------------------------------------------------------------------------------
 typedef struct {
 
     /// Header descriptor.
     AUDHeaderDescriptor header;
-    /// Id of the first grouped interface.
+    /// Id of the first grouped interface - Speaker.
     unsigned char bInterface0;
 
 } __attribute__ ((packed)) AUDHeaderDescriptor1; // GCC
@@ -143,6 +154,7 @@ typedef struct {
     USBInterfaceDescriptor control;
     /// Descriptors for the audio control interface.
     AUDDSpeakerDriverAudioControlDescriptors controlDescriptors;
+    //- AUDIO OUT
     /// Streaming out interface descriptor (with no endpoint, required).
     USBInterfaceDescriptor streamingOutNoIsochronous;
     /// Streaming out interface descriptor.

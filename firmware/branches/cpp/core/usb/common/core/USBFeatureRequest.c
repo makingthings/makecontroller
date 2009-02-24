@@ -43,34 +43,25 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: USBFeatureRequest_GetFeatureSelector
-        Returns the feature selector of a given CLEAR_FEATURE or SET_FEATURE
-        request.
 
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Feature selector.
-*/
+//------------------------------------------------------------------------------
+/// Returns the feature selector of a given CLEAR_FEATURE or SET_FEATURE
+/// request.
+/// \param request Pointer to a USBGenericRequest instance.
+/// \return Feature selector.
+//------------------------------------------------------------------------------
 unsigned char USBFeatureRequest_GetFeatureSelector(
     const USBGenericRequest *request)
 {
     return USBGenericRequest_GetValue(request);
 }
 
-/*
-    Function: USBFeatureRequest_GetTestSelector
-        Indicates the test that the device must undertake following a
-        SET_FEATURE request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Test selector.
-*/
+//------------------------------------------------------------------------------
+/// Indicates the test that the device must undertake following a
+/// SET_FEATURE request.
+/// \param request Pointer to a USBGenericRequest instance.
+/// \return Test selector.
+//------------------------------------------------------------------------------
 unsigned char USBFeatureRequest_GetTestSelector(
     const USBGenericRequest *request)
 {

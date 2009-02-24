@@ -27,20 +27,22 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: USBDDriverCallbacks
+/**
+ \unit
 
-    About: Purpose
-        Definition of several callbacks which are triggered by the USB software
-        driver after receiving specific requests.
+ !!!Purpose
 
-    About: Usage
-        1 - Re-implement the <USBDDriverCallbacks_ConfigurationChanged>
-            callback to know when the hosts changes the active configuration of
-            the device.
-        2 - Re-implement the <USBDDriverCallbacks_InterfaceSettingChanged>
-            callback to get notified whenever the active setting of an interface
-            is changed by the host.
+    Definition of several callbacks which are triggered by the USB software
+    driver after receiving specific requests.
+
+ !!!Usage
+
+    -# Re-implement the USBDDriverCallbacks_ConfigurationChanged
+        callback to know when the hosts changes the active configuration of
+        the device.
+    -# Re-implement the USBDDriverCallbacks_InterfaceSettingChanged
+        callback to get notified whenever the active setting of an interface
+        is changed by the host.
 */
 
 #ifndef USBDDRIVERCALLBACKS_H
@@ -49,14 +51,9 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Functions: USB driver callbacks
-        USBDDriverCallbacks_ConfigurationChanged - Indicates that the current
-            configuration of the device has changed.
-        USBDDriverCallbacks_InterfaceSettingChanged - Notifies of a change in
-            the currently active setting of an interface.
-*/
+
 extern void USBDDriverCallbacks_ConfigurationChanged(unsigned char cfgnum);
+
 extern void USBDDriverCallbacks_InterfaceSettingChanged(unsigned char interface,
                                                         unsigned char setting);
 

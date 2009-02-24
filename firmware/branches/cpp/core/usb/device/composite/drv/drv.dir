@@ -28,27 +28,18 @@
  */
 
 //------------------------------------------------------------------------------
-//         Headers
+/// \dir
+///
+/// !!!Purpose
+///
+/// This directory provides install file for 
+/// - CDC HID
+/// - CDC AUDIO
+/// - CDC MSD
+/// - CDC CDC
+///
+/// !!!Contents
+///
+/// CompositeCDCSerial.inf
+///
 //------------------------------------------------------------------------------
-
-#include "USBDDriverCallbacks.h"
-// #include <utility/trace.h>
-
-//------------------------------------------------------------------------------
-//         Global functions
-//------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------
-/// Notifies of a change in the currently active setting of an interface.
-/// \param interface  Number of the interface whose setting has changed.
-/// \param setting  New interface setting.
-//------------------------------------------------------------------------------
-void USBDDriverCallbacks_InterfaceSettingChanged(
-    unsigned char interface,
-    unsigned char setting)
-{
-    // trace_LOG(trace_INFO, "InterfaceSettingChanged ");
-  (void)interface;
-  (void)setting;
-}
-

@@ -43,33 +43,24 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: USBInterfaceRequest_GetInterface
-        Indicates which interface is targetted by a GET_INTERFACE or
-        SET_INTERFACE request.
 
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Interface number.
-*/
+//------------------------------------------------------------------------------
+/// Indicates which interface is targetted by a GET_INTERFACE or
+/// SET_INTERFACE request.
+/// \param request Pointer to a USBGenericRequest instance.
+/// \return Interface number.
+//------------------------------------------------------------------------------
 unsigned char USBInterfaceRequest_GetInterface(const USBGenericRequest *request)
 {
     return (USBGenericRequest_GetIndex(request) & 0xFF);
 }
 
-/*
-    Function: USBInterfaceRequest_GetAlternateSetting
-        Indicates the new alternate setting that the interface targetted by a
-        SET_INTERFACE request should use.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        New active setting for the interface.
-*/
+//------------------------------------------------------------------------------
+/// Indicates the new alternate setting that the interface targetted by a
+/// SET_INTERFACE request should use.
+/// \param request Pointer to a USBGenericRequest instance.
+/// \return New active setting for the interface.
+//------------------------------------------------------------------------------
 unsigned char USBInterfaceRequest_GetAlternateSetting(
     const USBGenericRequest *request)
 {

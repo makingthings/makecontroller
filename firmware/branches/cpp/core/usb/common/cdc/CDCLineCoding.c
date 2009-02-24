@@ -44,18 +44,16 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: CDCLineCoding_Initialize
-        Initializes the bitrate, number of stop bits, parity checking and
-        number of data bits of a CDCLineCoding object.
 
-    Parameters:
-        lineCoding - Pointer to a CDCLineCoding instance.
-        bitrate - Bitrate of the virtual COM connection.
-        stopbits - Number of stop bits (see <Stop bits>).
-        parity - Parity check type (see <Parity checking>).
-        databits - Number of data bits.
-*/
+//------------------------------------------------------------------------------
+/// Initializes the bitrate, number of stop bits, parity checking and
+/// number of data bits of a CDCLineCoding object.
+/// \param lineCoding Pointer to a CDCLineCoding instance.
+/// \param bitrate Bitrate of the virtual COM connection.
+/// \param stopbits Number of stop bits ("CDC LineCoding StopBits").
+/// \param parity Parity check type ("CDC LineCoding ParityChecking").
+/// \param databits Number of data bits.
+//------------------------------------------------------------------------------
 void CDCLineCoding_Initialize(CDCLineCoding *lineCoding,
                               unsigned int bitrate,
                               unsigned char stopbits,

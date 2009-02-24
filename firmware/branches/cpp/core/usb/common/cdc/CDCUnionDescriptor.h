@@ -27,15 +27,17 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: CDCUnionDescriptor
+/**
+ \unit
 
-    About: Purpose
-        Definition of a class for manipulating CDC union descriptors.
+ !!!Purpose
 
-    About: Usage
-        Should be included in the list of USB descriptor used for a device
-        configuration.
+ Definition of a class for manipulating CDC union descriptors.
+
+ !!!Usage
+
+ Should be included in the list of USB descriptor used for a device
+ configuration.
 */
 
 #ifndef CDCUNIONDESCRIPTOR_H
@@ -50,24 +52,21 @@
 #define __attribute__(...) // IAR
 #endif                     // IAR
 
-/*
-    Type: CDCUnionDescriptor
-        Describes the relationship between a group of interfaces that can
-        be considered to form a functional unit.
-
-    Variables:
-        bFunctionLength - Size of the descriptor in bytes.
-        bDescriptorType - Descriptor type (<CDCDescriptors_INTERFACE>).
-        bDescriptorSubtype - Descriptor subtype (<CDCDescriptors_UNION>).
-        bMasterInterface - Number of the master interface for this union.
-        bSlaveInterface0 - Number of the first slave interface for this union.
-*/
+//------------------------------------------------------------------------------
+/// Describes the relationship between a group of interfaces that can
+/// be considered to form a functional unit.
+//------------------------------------------------------------------------------
 typedef struct {
 
+    /// Size of the descriptor in bytes.
     unsigned char bFunctionLength;
+    /// Descriptor type (CDCDescriptors_INTERFACE).
     unsigned char bDescriptorType;
+    /// Descriptor subtype (CDCDescriptors_UNION).
     unsigned char bDescriptorSubtype;
+    /// Number of the master interface for this union.
     unsigned char bMasterInterface;
+    /// Number of the first slave interface for this union.
     unsigned char bSlaveInterface0;
 
 } __attribute__ ((packed)) CDCUnionDescriptor; // GCC

@@ -27,11 +27,18 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: USBInterfaceDescriptor
+/**
+ \unit
 
-    About: Purpose
-        Definition of a class for manipulating USB interface descriptors.
+ !!!Purpose
+
+    Definition of a class for manipulating USB interface descriptors.
+
+ !!!Usage
+
+    - Declare USBInterfaceDescriptor instance as a part of the configuration
+      descriptors of a USB device.
+
 */
 
 #ifndef USBINTERFACEDESCRIPTOR_H
@@ -46,33 +53,29 @@
 #define __attribute__(...) // IAR
 #endif                     // IAR
 
-/*
-    Type: USBInterfaceDescriptor
-        USB standard interface descriptor structure.
-
-    Variables:
-        bLength - Size of the descriptor in bytes.
-        bDescriptorType - Descriptor type (<USBDESC_INTERFACE>).
-        bInterfaceNumber - Number of the interface in its configuration.
-        bAlternateSetting - Value to select this alternate interface setting.
-        bNumEndpoints - Number of endpoints used by the inteface (excluding
-                        endpoint 0).
-        bInterfaceClass - Interface class code.
-        bInterfaceSubClass - Interface subclass code.
-        bInterfaceProtocol - Interface protocol code.
-        iInterface - Index of the interface string descriptor.
-*/
+//------------------------------------------------------------------------------
+/// USB standard interface descriptor structure.
+//------------------------------------------------------------------------------
 typedef struct {
 
-   unsigned char bLength;           
-   unsigned char bDescriptorType;   
-   unsigned char bInterfaceNumber;  
-   unsigned char bAlternateSetting; 
-   unsigned char bNumEndpoints;     
-   unsigned char bInterfaceClass;   
+   /// Size of the descriptor in bytes.
+   unsigned char bLength;
+   /// Descriptor type (USBGenericDescriptor_INTERFACE).
+   unsigned char bDescriptorType;
+   /// Number of the interface in its configuration.
+   unsigned char bInterfaceNumber;
+   /// Value to select this alternate interface setting.
+   unsigned char bAlternateSetting;
+   /// Number of endpoints used by the inteface (excluding endpoint 0).
+   unsigned char bNumEndpoints;
+   /// Interface class code.
+   unsigned char bInterfaceClass;
+   /// Interface subclass code.
    unsigned char bInterfaceSubClass;
+   /// Interface protocol code.
    unsigned char bInterfaceProtocol;
-   unsigned char iInterface;        
+   /// Index of the interface string descriptor.
+   unsigned char iInterface;
                                     
 } __attribute__ ((packed)) USBInterfaceDescriptor; // GCC
 

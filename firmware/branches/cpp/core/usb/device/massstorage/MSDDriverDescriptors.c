@@ -46,14 +46,21 @@
 //         Internal definitions
 //------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------
+/// \page "MSD Device Descriptor IDs"
+/// ...
+/// !IDs
+/// - MSDDriverDescriptors_VENDORID
+/// - MSDDriverDescriptors_PRODUCTID
+/// - MSDDriverDescriptors_RELEASE
+
 /// Vendor ID for the Mass Storage device driver.
 #define MSDDriverDescriptors_VENDORID       0x03EB
-
 /// Product ID for the Mass Storage device driver.
 #define MSDDriverDescriptors_PRODUCTID      0x6129
-
 /// Device release number for the Mass Storage device driver.
 #define MSDDriverDescriptors_RELEASE        0x0100
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //         Macros
@@ -157,7 +164,7 @@ static const MSDConfigurationDescriptors configurationDescriptorsFS = {
         USBEndpointDescriptor_BULK,
         MIN(BOARD_USB_ENDPOINTS_MAXPACKETSIZE(MSDDriverDescriptors_BULKOUT),
             USBEndpointDescriptor_MAXBULKSIZE_FS),
-        0 // No string descriptor for endpoint.
+        0 // Must be 0 for full-speed Bulk endpoints.
     },
     // Bulk-IN endpoint descriptor
     {
@@ -169,7 +176,7 @@ static const MSDConfigurationDescriptors configurationDescriptorsFS = {
         USBEndpointDescriptor_BULK,
         MIN(BOARD_USB_ENDPOINTS_MAXPACKETSIZE(MSDDriverDescriptors_BULKIN),
             USBEndpointDescriptor_MAXBULKSIZE_FS),
-        0 // No string descriptor for endpoint.
+        0 // Must be 0 for full-speed Bulk endpoints.
     }
 };
 

@@ -43,125 +43,86 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: USBGenericRequest_GetType
-        Returns the type of the given request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Request type.
-
-    See also:
-        <Types>.
-*/
+//------------------------------------------------------------------------------
+/// Returns the type of the given request.
+/// \param request Pointer to a USBGenericRequest instance.
+/// \return "USB Request Types"
+//------------------------------------------------------------------------------
 extern unsigned char USBGenericRequest_GetType(const USBGenericRequest *request)
 {
     return ((request->bmRequestType >> 5) & 0x3);
 }
 
-/*
-    Function: USBGenericRequest_GetRequest
-        Returns the request code of the given request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Request code.
-*/
+//------------------------------------------------------------------------------
+/// Returns the request code of the given request.
+/// \param request Pointer to a USBGenericRequest instance.
+/// \return Request code.
+/// \sa "USB Request Codes"
+//------------------------------------------------------------------------------
 unsigned char USBGenericRequest_GetRequest(const USBGenericRequest *request)
 {
     return request->bRequest;
 }
 
-/*
-    Function: USBGenericRequest_GetValue
-        Returns the wValue field of the given request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Request value.
-*/
+//------------------------------------------------------------------------------
+/// Returns the wValue field of the given request.
+/// \param request - Pointer to a USBGenericRequest instance.
+/// \return Request value.
+//------------------------------------------------------------------------------
 unsigned short USBGenericRequest_GetValue(const USBGenericRequest *request)
 {
     return request->wValue;
 }
 
-/*
-    Function: USBGenericRequest_GetIndex
-        Returns the wIndex field of the given request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Request index;
-*/
+//------------------------------------------------------------------------------
+/// Returns the wIndex field of the given request.
+/// \param request Pointer to a USBGenericRequest instance.
+/// \return Request index;
+//------------------------------------------------------------------------------
 unsigned short USBGenericRequest_GetIndex(const USBGenericRequest *request)
 {
     return request->wIndex;
 }
 
-/*
-    Function: USBGenericRequest_GetLength
-        Returns the expected length of the data phase following a request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Length of data phase.
-*/
+//------------------------------------------------------------------------------
+/// Returns the expected length of the data phase following a request.
+/// \param request Pointer to a USBGenericRequest instance.
+/// \return Length of data phase.
+//------------------------------------------------------------------------------
 unsigned short USBGenericRequest_GetLength(const USBGenericRequest *request)
 {
     return request->wLength;
 }
 
-/*
-    Function: USBGenericRequest_GetEndpointNumber
-        Returns the endpoint number targetted by a given request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Endpoint number.
-*/
-unsigned char USBGenericRequest_GetEndpointNumber(const USBGenericRequest *request)
+//------------------------------------------------------------------------------
+/// Returns the endpoint number targetted by a given request.
+/// \param request Pointer to a USBGenericRequest instance.
+/// \return Endpoint number.
+//------------------------------------------------------------------------------
+unsigned char USBGenericRequest_GetEndpointNumber(
+    const USBGenericRequest *request)
 {
     return USBGenericRequest_GetIndex(request) & 0xF;
 }
 
-/*
-    Function: USBGenericRequest_GetRecipient
-        Returns the intended recipient of a given request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Request recipient.
-*/
+//------------------------------------------------------------------------------
+/// Returns the intended recipient of a given request.
+/// \param request Pointer to a USBGenericRequest instance.
+/// \return Request recipient.
+/// \sa "USB Request Recipients"
+//------------------------------------------------------------------------------
 unsigned char USBGenericRequest_GetRecipient(const USBGenericRequest *request)
 {
     // Recipient is in bits [0..4] of the bmRequestType field
     return request->bmRequestType & 0xF;
 }
 
-/*
-    Function: USBGenericRequest_GetDirection
-        Returns the direction of the data transfer following the given request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Transfer direction.
-*/
+//------------------------------------------------------------------------------
+/// Returns the direction of the data transfer following the given request.
+/// \param request Pointer to a USBGenericRequest instance.
+/// \return Transfer direction.
+/// \sa "USB Request Directions"
+//------------------------------------------------------------------------------
 unsigned char USBGenericRequest_GetDirection(const USBGenericRequest *request)
 {
     // Transfer direction is located in bit D7 of the bmRequestType field

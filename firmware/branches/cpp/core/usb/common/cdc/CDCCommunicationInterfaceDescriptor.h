@@ -27,12 +27,13 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: CDCCommunicationInterfaceDescriptor
+/**
+ \unit
 
-    About: Purpose
-        Definition of several constants used when declaring a CDC communication
-        class interface descriptor.
+ !!!Purpose
+
+ Definition of several constants used when declaring a CDC communication
+ class interface descriptor.
 */
 
 #ifndef CDCCOMMUNICATIONINTERFACEDESCRIPTOR_H
@@ -41,19 +42,24 @@
 //------------------------------------------------------------------------------
 //         Definitions
 //------------------------------------------------------------------------------
-/*
-    Constants: Communication interface values
-        CDCCommunicationInterfaceDescriptor_CLASS - Interface class code for
-            a CDC communication class interface.
-        CDCCommunicationInterfaceDescriptor_ABSTRACTCONTROLMODEL - Interface
-            subclass code for an Abstract Control Model interface descriptor.
-        CDCCommunicationInterfaceDescriptor_NOPROTOCOL - Interface protocol code
-            when a CDC communication interface does not implemenent any particular
-            protocol.
-*/
+
+//------------------------------------------------------------------------------
+/// \page "CDC Communication Interface Values"
+/// This page lists the values for CDC Communication Interface Descriptor.
+///
+/// !Values
+/// - CDCCommunicationInterfaceDescriptor_CLASS
+/// - CDCCommunicationInterfaceDescriptor_ABSTRACTCONTROLMODEL
+/// - CDCCommunicationInterfaceDescriptor_NOPROTOCOL
+
+/// Interface class code for a CDC communication class interface.
 #define CDCCommunicationInterfaceDescriptor_CLASS                   0x02
+/// Interface subclass code for an Abstract Control Model interface descriptor.
 #define CDCCommunicationInterfaceDescriptor_ABSTRACTCONTROLMODEL    0x02
+/// Interface protocol code when a CDC communication interface does not
+/// implemenent any particular protocol.
 #define CDCCommunicationInterfaceDescriptor_NOPROTOCOL              0x00
+//------------------------------------------------------------------------------
 
 #endif //#ifndef CDCCOMMUNICATIONINTERFACEDESCRIPTOR_H
 

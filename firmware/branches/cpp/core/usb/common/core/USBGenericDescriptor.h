@@ -27,12 +27,22 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: USBGenericDescriptor
-
-    About: Purpose
-        Definition of a generic USB descriptor class.
-*/
+//------------------------------------------------------------------------------
+/// \unit
+///
+/// !!!Purpose
+///
+/// Definition of a generic USB descriptor class.
+///
+/// !!!Usage
+///
+/// -# Declare or access USB descriptors by USBGenericDescriptor instance.
+/// -# To get usful information (field values) from the USB descriptors, use
+///    - USBGenericDescriptor_GetLength
+///    - USBGenericDescriptor_GetType
+/// -# To scan the descriptors, use
+///    - USBGenericDescriptor_GetNextDescriptor
+//------------------------------------------------------------------------------
 
 #ifndef USBGENERICDESCRIPTOR_H
 #define USBGENERICDESCRIPTOR_H
@@ -40,26 +50,48 @@
 //------------------------------------------------------------------------------
 //         Definitions
 //------------------------------------------------------------------------------
-/*
-    Constants: Descriptor types
-        USBGenericDescriptor_DEVICE - Device descriptor type.
-        USBGenericDescriptor_CONFIGURATION - Configuration descriptor type.
-        USBGenericDescriptor_STRING - String descriptor type.
-        USBGenericDescriptor_INTERFACE - Interface descriptor type.
-        USBGenericDescriptor_ENDPOINT - Endpoint descriptor type.
-        USBGenericDescriptor_DEVICEQUALIFIER - Device qualifier descriptor type.
-        USBGenericDescriptor_OTHERSPEEDCONFIGURATION - Other speed configuration
-                                                       descriptor type.
-        USBGenericDescriptor_INTERFACEPOWER - Interface power descriptor type.
-*/
+
+//------------------------------------------------------------------------------
+/// \page "USB Descriptor types"
+///
+/// This page lists the codes of the usb descriptor types
+///
+/// !Types
+/// - USBGenericDescriptor_DEVICE
+/// - USBGenericDescriptor_CONFIGURATION
+/// - USBGenericDescriptor_STRING
+/// - USBGenericDescriptor_INTERFACE
+/// - USBGenericDescriptor_ENDPOINT
+/// - USBGenericDescriptor_DEVICEQUALIFIER
+/// - USBGenericDescriptor_OTHERSPEEDCONFIGURATION
+/// - USBGenericDescriptor_INTERFACEPOWER
+/// - USBGenericDescriptor_OTG
+/// - USBGenericDescriptor_DEBUG
+/// - USBGenericDescriptor_INTERFACEASSOCIATION
+
+/// Device descriptor type.
 #define USBGenericDescriptor_DEVICE                     1
+/// Configuration descriptor type.
 #define USBGenericDescriptor_CONFIGURATION              2
+/// String descriptor type.
 #define USBGenericDescriptor_STRING                     3
+/// Interface descriptor type.
 #define USBGenericDescriptor_INTERFACE                  4
+/// Endpoint descriptor type.
 #define USBGenericDescriptor_ENDPOINT                   5
+/// Device qualifier descriptor type.
 #define USBGenericDescriptor_DEVICEQUALIFIER            6
+/// Other speed configuration descriptor type.
 #define USBGenericDescriptor_OTHERSPEEDCONFIGURATION    7
+/// Interface power descriptor type.
 #define USBGenericDescriptor_INTERFACEPOWER             8
+/// On-The-Go descriptor type.
+#define USBGenericDescriptor_OTG                        9
+/// Debug descriptor type.
+#define USBGenericDescriptor_DEBUG                      10
+/// Interface association descriptor type.
+#define USBGenericDescriptor_INTERFACEASSOCIATION       11
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //         Types
@@ -70,17 +102,12 @@
 #define __attribute__(...) // IAR
 #endif                     // IAR
 
-/*
-    Type: USBGenericDescriptor
-        Holds the few fields shared by all USB descriptors.
-
-    Variables:
-        bLength - Length of the descriptor in bytes.
-        bDescriptorType - Descriptor type.
-*/
+/// Holds the few fields shared by all USB descriptors.
 typedef struct {
 
+    /// Length of the descriptor in bytes.
     unsigned char bLength;
+    /// Descriptor type.
     unsigned char bDescriptorType;
 
 } __attribute__ ((packed)) USBGenericDescriptor; // GCC
@@ -92,43 +119,13 @@ typedef struct {
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: USBGenericDescriptor_GetLength
-        Returns the length of a descriptor.
 
-    Parameters:
-        descriptor - Pointer to a USBGenericDescriptor instance.
-
-    Returns:
-        Length of descriptor in bytes.
-*/
 extern unsigned int USBGenericDescriptor_GetLength(
     const USBGenericDescriptor *descriptor);
 
-/*
-    Function: USBGenericDescriptor_GetType
-        Returns the type of a descriptor.
-
-    Parameters:
-        descriptor - Pointer to a USBGenericDescriptor instance.
-
-    Returns:
-        Type of descriptor.
-*/
 extern unsigned char USBGenericDescriptor_GetType(
     const USBGenericDescriptor *descriptor);
 
-/*
-    Function: USBGenericDescriptor_GetNextDescriptor
-        Returns a pointer to the descriptor right after the given one, when
-        parsing a Configuration descriptor.
-
-    Parameters:
-        descriptor - Pointer to a USBGenericDescriptor instance.
-
-    Returns:
-        Pointer to the next descriptor.
-*/
 extern USBGenericDescriptor *USBGenericDescriptor_GetNextDescriptor(
     const USBGenericDescriptor *descriptor);
 

@@ -43,48 +43,35 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: USBGenericDescriptor_GetLength
-        Returns the length of a descriptor.
 
-    Parameters:
-        descriptor - Pointer to a USBGenericDescriptor instance.
-
-    Returns:
-        Length of descriptor in bytes.
-*/
+//------------------------------------------------------------------------------
+/// Returns the length of a descriptor.
+/// \param descriptor Pointer to a USBGenericDescriptor instance.
+/// \return Length of descriptor in bytes.
+//------------------------------------------------------------------------------
 unsigned int USBGenericDescriptor_GetLength(
     const USBGenericDescriptor *descriptor)
 {
     return descriptor->bLength;
 }
 
-/*
-    Function: USBGenericDescriptor_GetType
-        Returns the type of a descriptor.
-
-    Parameters:
-        descriptor - Pointer to a USBGenericDescriptor instance.
-
-    Returns:
-        Type of descriptor.
-*/
-unsigned char USBGenericDescriptor_GetType(const USBGenericDescriptor *descriptor)
+//------------------------------------------------------------------------------
+/// Returns the type of a descriptor.
+/// \param descriptor Pointer to a USBGenericDescriptor instance.
+/// \return Type of descriptor.
+//------------------------------------------------------------------------------
+unsigned char USBGenericDescriptor_GetType(
+    const USBGenericDescriptor *descriptor)
 {
     return descriptor->bDescriptorType;
 }
 
-/*
-    Function: USBGenericDescriptor_GetNextDescriptor
-        Returns a pointer to the descriptor right after the given one, when
-        parsing a Configuration descriptor.
-
-    Parameters:
-        descriptor - Pointer to a USBGenericDescriptor instance.
-
-    Returns:
-        Pointer to the next descriptor.
-*/
+//------------------------------------------------------------------------------
+/// Returns a pointer to the descriptor right after the given one, when
+/// parsing a Configuration descriptor.
+/// \param descriptor - Pointer to a USBGenericDescriptor instance.
+/// \return Pointer to the next descriptor.
+//------------------------------------------------------------------------------
 USBGenericDescriptor *USBGenericDescriptor_GetNextDescriptor(
     const USBGenericDescriptor *descriptor)
 {

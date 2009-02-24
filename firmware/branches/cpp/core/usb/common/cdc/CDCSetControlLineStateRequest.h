@@ -27,11 +27,12 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: CDCSetControlLineStateRequest
+/**
+ \unit
 
-    About: Purpose
-        Definition of a class for manipulating SetControlLineState requests.
+ !!!Purpose
+
+ Definition of a class for manipulating SetControlLineState requests.
 */
 
 #ifndef CDCSETCONTROLLINESTATE_H
@@ -47,30 +48,11 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: CDCSetControlLineStateRequest_IsDtePresent
-        Notifies if the given request indicates that the DTE signal is present.
 
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        1 if the DTE signal is present, otherwise 0.
-*/
 extern unsigned char CDCSetControlLineStateRequest_IsDtePresent(
     const USBGenericRequest *request);
 
-/*
-    Function: CDCSetControlLineStateRequest_ActivateCarrier
-        Notifies if the given request indicates that the device carrier should
-        be activated.
 
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        1 is the device should activate its carrier, 0 otherwise.
-*/
 extern unsigned char CDCSetControlLineStateRequest_ActivateCarrier(
     const USBGenericRequest *request);
 

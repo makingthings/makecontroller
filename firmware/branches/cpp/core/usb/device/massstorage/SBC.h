@@ -35,7 +35,8 @@
 /// 
 /// !Usage
 /// 
-/// TODO
+/// -# After command block received, Access and decode the SCSI command block
+///    with SBCCommand structure.
 //------------------------------------------------------------------------------
 
 #ifndef SBC_H
@@ -45,35 +46,94 @@
 //      Definitions
 //------------------------------------------------------------------------------
 
-//! \brief  Operation codes of commands described in the SBC-3 standard
-//!
-//!         Note that most commands are actually defined in other standards,
-//!         like SPC-4. Optional commands are not included here.
-//! \see    sbc3r07.pdf - Section 5.1 - Table 12
-//! \see    spc4r06.pdf
-//! \see    SBCCommand
+//------------------------------------------------------------------------------
+/// \page "SBC Operation Codes"
+/// This page lists operation codes of commands described in the SBC-3
+/// standard.
+///
+/// \note That most commands are actually defined in other standards,
+///       like SPC-4. Optional commands are not included here.
+///
+/// \see    sbc3r07.pdf - Section 5.1 - Table 12
+/// \see    spc4r06.pdf
+/// \see    SBCCommand
+///
+/// !Codes
+/// - SBC_INQUIRY
+/// - SBC_READ_10
+/// - SBC_READ_CAPACITY_10
+/// - SBC_REQUEST_SENSE
+/// - SBC_TEST_UNIT_READY
+/// - SBC_WRITE_10
+///
+/// !Optional Codes but required by Windows
+/// - SBC_PREVENT_ALLOW_MEDIUM_REMOVAL
+/// - SBC_MODE_SENSE_6
+/// - SBC_VERIFY_10
+
+/// Request information regarding parameters of the target and Logical Unit.
 #define SBC_INQUIRY                                     0x12
+/// Request the transfer data to the host.
 #define SBC_READ_10                                     0x28
+/// Request capacities of the currently installed medium.
 #define SBC_READ_CAPACITY_10                            0x25
+/// Request that the device server transfer sense data.
 #define SBC_REQUEST_SENSE                               0x03
+/// Check if the LUN is ready
 #define SBC_TEST_UNIT_READY                             0x00
+/// Request that the device write the data transferred by the host.
 #define SBC_WRITE_10                                    0x2A
 
-// Optional according to the standard, required by Windows
+/// Request that the target enable or disable the removal of the medium in
+/// the Logical Unit.
 #define SBC_PREVENT_ALLOW_MEDIUM_REMOVAL                0x1E
+/// Report parameters.
 #define SBC_MODE_SENSE_6                                0x1A
+/// Request that the %device verify the data on the medium.
 #define SBC_VERIFY_10                                   0x2F
+//------------------------------------------------------------------------------
 
-//! \brief  Peripheral qualifier values specified in the INQUIRY data
-//! \see    spc4r06.pdf - Section 6.4.2 - Table 83
-//! \see    SBCInquiry_data
+//------------------------------------------------------------------------------
+/// \page "SBC Periph. Qualifiers"
+/// This page lists the peripheral qualifier values specified in the INQUIRY
+/// data
+/// \see    spc4r06.pdf - Section 6.4.2 - Table 83
+/// \see    SBCInquiryData
+///
+/// !Qualifiers
+/// - SBC_PERIPHERAL_DEVICE_CONNECTED
+/// - SBC_PERIPHERAL_DEVICE_NOT_CONNECTED
+/// - SBC_PERIPHERAL_DEVICE_NOT_SUPPORTED
+
 #define SBC_PERIPHERAL_DEVICE_CONNECTED                 0x00
 #define SBC_PERIPHERAL_DEVICE_NOT_CONNECTED             0x01
 #define SBC_PERIPHERAL_DEVICE_NOT_SUPPORTED             0x03
+//------------------------------------------------------------------------------
 
-//! \brief  Peripheral device types specified in the INQUIRY data
-//! \see    spc4r06.pdf - Section 6.4.2 - Table 84
-//! \see    SBCInquiry_data
+//------------------------------------------------------------------------------
+/// \page "SBC Periph. Types"
+/// This page lists peripheral device types specified in the INQUIRY data
+/// \see    spc4r06.pdf - Section 6.4.2 - Table 84
+/// \see    SBCInquiryData
+///
+/// !Types
+/// - SBC_DIRECT_ACCESS_BLOCK_DEVICE
+/// - SBC_SEQUENTIAL_ACCESS_DEVICE
+/// - SBC_PRINTER_DEVICE
+/// - SBC_PROCESSOR_DEVICE
+/// - SBC_WRITE_ONCE_DEVICE
+/// - SBC_CD_DVD_DEVICE
+/// - SBC_SCANNER_DEVICE
+/// - SBC_OPTICAL_MEMORY_DEVICE
+/// - SBC_MEDIA_CHANGER_DEVICE
+/// - SBC_COMMUNICATION_DEVICE
+/// - SBC_STORAGE_ARRAY_CONTROLLER_DEVICE
+/// - SBC_ENCLOSURE_SERVICES_DEVICE
+/// - SBC_SIMPLIFIED_DIRECT_ACCESS_DEVICE
+/// - SBC_OPTICAL_CARD_READER_WRITER_DEVICE
+/// - SBC_BRIDGE_CONTROLLER_COMMANDS
+/// - SBC_OBJECT_BASED_STORAGE_DEVICE
+
 #define SBC_DIRECT_ACCESS_BLOCK_DEVICE              0x00
 #define SBC_SEQUENTIAL_ACCESS_DEVICE                0x01
 #define SBC_PRINTER_DEVICE                          0x02
@@ -90,48 +150,116 @@
 #define SBC_OPTICAL_CARD_READER_WRITER_DEVICE       0x0F
 #define SBC_BRIDGE_CONTROLLER_COMMANDS              0x10
 #define SBC_OBJECT_BASED_STORAGE_DEVICE             0x11
+//------------------------------------------------------------------------------
 
-//! \brief  Version value for the SBC-3 specification
-//! \see    spc4r06.pdf - Section 6.4.2 - Table 85
+//------------------------------------------------------------------------------
+/// \brief  Version value for the SBC-3 specification
+/// \see    spc4r06.pdf - Section 6.4.2 - Table 85
 #define SBC_SPC_VERSION_4                           0x06
+//------------------------------------------------------------------------------
 
-//! \brief  Values for the TPGS field returned in INQUIRY data
-//! \see    spc4r06.pdf - Section 6.4.2 - Table 86
+//------------------------------------------------------------------------------
+/// \brief  Values for the TPGS field returned in INQUIRY data
+/// \see    spc4r06.pdf - Section 6.4.2 - Table 86
 #define SBC_TPGS_NONE                               0x0
 #define SBC_TPGS_ASYMMETRIC                         0x1
 #define SBC_TPGS_SYMMETRIC                          0x2
 #define SBC_TPGS_BOTH                               0x3
+//------------------------------------------------------------------------------
 
-//! \brief  Version descriptor value for the SBC-3 specification
-//! \see    spc4r06.pdf - Section 6.4.2 - Table 87
+//------------------------------------------------------------------------------
+/// \brief  Version descriptor value for the SBC-3 specification
+/// \see    spc4r06.pdf - Section 6.4.2 - Table 87
 #define SBC_VERSION_DESCRIPTOR_SBC_3                0x04C0
+//------------------------------------------------------------------------------
 
-//! \brief  Sense data response codes returned in REQUEST SENSE data
-//! \see    spc4r06.pdf - Section 4.5.1 - Table 12
+//------------------------------------------------------------------------------
+/// \page "SBC Sense Response Codes"
+/// This page lists sense data response codes returned in REQUEST SENSE data
+/// \see    spc4r06.pdf - Section 4.5.1 - Table 12
+///
+/// !Codes
+/// - SBC_SENSE_DATA_FIXED_CURRENT
+/// - SBC_SENSE_DATA_FIXED_DEFERRED
+/// - SBC_SENSE_DATA_DESCRIPTOR_CURRENT
+/// - SBC_SENSE_DATA_DESCRIPTOR_DEFERRED
+
 #define SBC_SENSE_DATA_FIXED_CURRENT                0x70
 #define SBC_SENSE_DATA_FIXED_DEFERRED               0x71
 #define SBC_SENSE_DATA_DESCRIPTOR_CURRENT           0x72
 #define SBC_SENSE_DATA_DESCRIPTOR_DEFERRED          0x73
+//------------------------------------------------------------------------------
 
-//! \brief  Sense key values returned in the REQUEST SENSE data
-//! \see    spc4r06.pdf - Section 4.5.6 - Table 27
+//------------------------------------------------------------------------------
+/// \page "SBC Sense Keys"
+/// This page lists sense key values returned in the REQUEST SENSE data
+/// \see    spc4r06.pdf - Section 4.5.6 - Table 27
+///
+/// !Keys
+/// - SBC_SENSE_KEY_NO_SENSE
+/// - SBC_SENSE_KEY_RECOVERED_ERROR
+/// - SBC_SENSE_KEY_NOT_READY
+/// - SBC_SENSE_KEY_MEDIUM_ERROR
+/// - SBC_SENSE_KEY_HARDWARE_ERROR
+/// - SBC_SENSE_KEY_ILLEGAL_REQUEST
+/// - SBC_SENSE_KEY_UNIT_ATTENTION
+/// - SBC_SENSE_KEY_DATA_PROTECT
+/// - SBC_SENSE_KEY_BLANK_CHECK
+/// - SBC_SENSE_KEY_VENDOR_SPECIFIC
+/// - SBC_SENSE_KEY_COPY_ABORTED
+/// - SBC_SENSE_KEY_ABORTED_COMMAND
+/// - SBC_SENSE_KEY_VOLUME_OVERFLOW
+/// - SBC_SENSE_KEY_MISCOMPARE
+
+/// No specific sense key. Successful command.
 #define SBC_SENSE_KEY_NO_SENSE                        0x00
+/// Command completed succesfully with some recovery action by the %device.
 #define SBC_SENSE_KEY_RECOVERED_ERROR                 0x01
+/// The device can not be accessed.
 #define SBC_SENSE_KEY_NOT_READY                       0x02
+/// Command terminated with a error condition that was probably caused by a
+/// flaw in the medium or an error in the recorded data.
 #define SBC_SENSE_KEY_MEDIUM_ERROR                    0x03
+/// Hardware failure while performing the command or during a self test.
 #define SBC_SENSE_KEY_HARDWARE_ERROR                  0x04
+/// Illegal parameter found in the command or additional parameters.
 #define SBC_SENSE_KEY_ILLEGAL_REQUEST                 0x05
+/// Removable medium may have been changed or the %device has been reset.
 #define SBC_SENSE_KEY_UNIT_ATTENTION                  0x06
+/// Write on a block that is protected.
 #define SBC_SENSE_KEY_DATA_PROTECT                    0x07
+/// Indicates that a write-once device or a sequential-access device
+/// encountered blank medium or format-defined end-of-data indication while
+/// reading or a write-once device encountered a non-blank medium while writing.
 #define SBC_SENSE_KEY_BLANK_CHECK                     0x08
+/// Reporting vendor specific conditions.
 #define SBC_SENSE_KEY_VENDOR_SPECIFIC                 0x09
+/// EXTENDED COPY command was aborted.
 #define SBC_SENSE_KEY_COPY_ABORTED                    0x0A
+/// Device aborted the command.
 #define SBC_SENSE_KEY_ABORTED_COMMAND                 0x0B
+/// A buffered peripheral device is overflow.
 #define SBC_SENSE_KEY_VOLUME_OVERFLOW                 0x0D
+/// The source data did not match the data read from the medium.
 #define SBC_SENSE_KEY_MISCOMPARE                      0x0E
+//------------------------------------------------------------------------------
 
-//! \brief  Additional sense code values returned in REQUEST SENSE data
-//! \see    spc4r06.pdf - Section 4.5.6 - Table 28
+//------------------------------------------------------------------------------
+/// \page "SBC Sense Additionals"
+/// This page lists additional sense code values returned in REQUEST SENSE data
+/// \see    spc4r06.pdf - Section 4.5.6 - Table 28
+///
+/// !Additional Codes
+/// - SBC_ASC_LOGICAL_UNIT_NOT_READY
+/// - SBC_ASC_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE
+/// - SBC_ASC_INVALID_FIELD_IN_CDB
+/// - SBC_ASC_WRITE_PROTECTED
+/// - SBC_ASC_FORMAT_CORRUPTED
+/// - SBC_ASC_INVALID_COMMAND_OPERATION_CODE
+/// - SBC_ASC_TOO_MUCH_WRITE_DATA
+/// - SBC_ASC_NOT_READY_TO_READY_CHANGE
+/// - SBC_ASC_MEDIUM_NOT_PRESENT
+
 #define SBC_ASC_LOGICAL_UNIT_NOT_READY                0x04
 #define SBC_ASC_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE    0x21
 #define SBC_ASC_INVALID_FIELD_IN_CDB                  0x24
@@ -141,13 +269,17 @@
 #define SBC_ASC_TOO_MUCH_WRITE_DATA                   0x26
 #define SBC_ASC_NOT_READY_TO_READY_CHANGE             0x28
 #define SBC_ASC_MEDIUM_NOT_PRESENT                    0x3A
+//------------------------------------------------------------------------------
 
-//! \brief  MEDIUM TYPE field value for direct-access block devices
-//! \see    sbc3r06.pdf - Section 6.3.1
+//------------------------------------------------------------------------------
+/// \brief  MEDIUM TYPE field value for direct-access block devices
+/// \see    sbc3r06.pdf - Section 6.3.1
 #define SBC_MEDIUM_TYPE_DIRECT_ACCESS_BLOCK_DEVICE    0x00
+//------------------------------------------------------------------------------
 
-//! \brief  MRIE field values
-//! \see    sbc3r06.pdf - Section 7.4.11 - Table 286
+//------------------------------------------------------------------------------
+/// \brief  MRIE field values
+/// \see    sbc3r06.pdf - Section 7.4.11 - Table 286
 #define SBC_MRIE_NO_REPORTING                         0x00
 #define SBC_MRIE_ASYNCHRONOUS                         0x01
 #define SBC_MRIE_GENERATE_UNIT_ATTENTION              0x02
@@ -155,32 +287,45 @@
 #define SBC_MRIE_UNCOND_GENERATE_RECOVERED_ERROR      0x04
 #define SBC_MRIE_GENERATE_NO_SENSE                    0x05
 #define SBC_MRIE_ON_REQUEST                           0x06
+//------------------------------------------------------------------------------
 
-//! \brief  Supported mode pages
-//! \see    sbc3r06.pdf - Section 6.3.1 - Table 115
+//------------------------------------------------------------------------------
+/// \brief  Supported mode pages
+/// \see    sbc3r06.pdf - Section 6.3.1 - Table 115
 #define SBC_PAGE_READ_WRITE_ERROR_RECOVERY            0x01
 #define SBC_PAGE_INFORMATIONAL_EXCEPTIONS_CONTROL     0x1C
 #define SBC_PAGE_RETURN_ALL                           0x3F
 #define SBC_PAGE_VENDOR_SPECIFIC                      0x00
+//------------------------------------------------------------------------------
 
-//! \brief  Converts a byte array to a word value using the big endian format
+//------------------------------------------------------------------------------
+/// \page "MSD Endian Macros"
+/// This page lists the macros for endianness conversion.
+///
+/// !Macros
+/// - WORDB
+/// - DWORDB
+/// - STORE_DWORDB
+/// - STORE_WORDB
+/// \brief  Converts a byte array to a word value using the big endian format
 #define WORDB(bytes)            ((unsigned short) ((bytes[0] << 8) | bytes[1]))
 
-//! \brief  Converts a byte array to a dword value using the big endian format
+/// \brief  Converts a byte array to a dword value using the big endian format
 #define DWORDB(bytes)   ((unsigned int) ((bytes[0] << 24) | (bytes[1] << 16) \
                                          | (bytes[2] << 8) | bytes[3]))
 
-//! \brief  Stores a dword value in a byte array, in big endian format
+/// \brief  Stores a dword value in a byte array, in big endian format
 #define STORE_DWORDB(dword, bytes) \
     bytes[0] = (unsigned char) (((dword) >> 24) & 0xFF); \
     bytes[1] = (unsigned char) (((dword) >> 16) & 0xFF); \
     bytes[2] = (unsigned char) (((dword) >> 8) & 0xFF); \
     bytes[3] = (unsigned char) ((dword) & 0xFF);
 
-//! \brief  Stores a word value in a byte array, in big endian format
+/// \brief  Stores a word value in a byte array, in big endian format
 #define STORE_WORDB(word, bytes) \
     bytes[0] = (unsigned char) (((word) >> 8) & 0xFF); \
     bytes[1] = (unsigned char) ((word) & 0xFF);
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //      Structures
@@ -191,8 +336,10 @@
 #define __attribute__(...) // IAR
 #endif                     // IAR
 
-//! \brief  Structure for the INQUIRY command
-//! \see    spc4r06.pdf - Section 6.4.1 - Table 81
+//------------------------------------------------------------------------------
+/// \brief  Structure for the INQUIRY command
+/// \see    spc4r06.pdf - Section 6.4.1 - Table 81
+//------------------------------------------------------------------------------
 typedef struct {
 
     unsigned char bOperationCode;       //!< 0x12 : SBC_INQUIRY
@@ -204,8 +351,10 @@ typedef struct {
 
 } __attribute__ ((packed)) SBCInquiry; // GCC
 
-//! \brief  Standard INQUIRY data format returned by the device
-//! \see    spc4r06.pdf - Section 6.4.2 - Table 82
+//------------------------------------------------------------------------------
+/// \brief  Standard INQUIRY data format returned by the device
+/// \see    spc4r06.pdf - Section 6.4.2 - Table 82
+//------------------------------------------------------------------------------
 typedef struct {
 
     unsigned char  bPeripheralDeviceType:5, //!< Peripheral device type
@@ -244,8 +393,10 @@ typedef struct {
 
 } __attribute__ ((packed)) SBCInquiryData; // GCC
 
-//! \brief  Data structure for the READ (10) command
-//! \see    sbc3r07.pdf - Section 5.7 - Table 34
+//------------------------------------------------------------------------------
+/// \brief  Data structure for the READ (10) command
+/// \see    sbc3r07.pdf - Section 5.7 - Table 34
+//------------------------------------------------------------------------------
 typedef struct {
 
     unsigned char bOperationCode;          //!< 0x28 : SBC_READ_10
@@ -263,8 +414,10 @@ typedef struct {
 
 } __attribute__ ((packed)) SBCRead10; // GCC
 
-//! \brief  Structure for the READ CAPACITY (10) command
-//! \see    sbc3r07.pdf - Section 5.11.1 - Table 40
+//------------------------------------------------------------------------------
+/// \brief  Structure for the READ CAPACITY (10) command
+/// \see    sbc3r07.pdf - Section 5.11.1 - Table 40
+//------------------------------------------------------------------------------
 typedef struct {
 
     unsigned char bOperationCode;          //!< 0x25 : RBC_READ_CAPACITY
@@ -278,8 +431,10 @@ typedef struct {
 
 } SBCReadCapacity10;
 
-//! \brief  Data returned by the device after a READ CAPACITY (10) command
-//! \see    sbc3r07.pdf - Section 5.11.2 - Table 41
+//------------------------------------------------------------------------------
+/// \brief  Data returned by the device after a READ CAPACITY (10) command
+/// \see    sbc3r07.pdf - Section 5.11.2 - Table 41
+//------------------------------------------------------------------------------
 typedef struct {
 
     unsigned char pLogicalBlockAddress[4]; //!< Address of last logical block
@@ -287,8 +442,10 @@ typedef struct {
 
 } SBCReadCapacity10Data;
 
-//! \brief  Structure for the REQUEST SENSE command
-//! \see    spc4r06.pdf - Section 6.26 - Table 170
+//------------------------------------------------------------------------------
+/// \brief  Structure for the REQUEST SENSE command
+/// \see    spc4r06.pdf - Section 6.26 - Table 170
+//------------------------------------------------------------------------------
 typedef struct {
 
     unsigned char bOperationCode;    //!< 0x03 : SBC_REQUEST_SENSE
@@ -300,9 +457,11 @@ typedef struct {
 
 } SBCRequestSense;
 
-//! \brief  Fixed format sense data returned after a REQUEST SENSE command has
-//!         been received with a DESC bit cleared.
-//! \see    spc4r06.pdf - Section 4.5.3 - Table 26
+//------------------------------------------------------------------------------
+/// \brief  Fixed format sense data returned after a REQUEST SENSE command has
+///         been received with a DESC bit cleared.
+/// \see    spc4r06.pdf - Section 4.5.3 - Table 26
+//------------------------------------------------------------------------------
 typedef struct {
 
     unsigned char bResponseCode:7,                //!< Sense data format
@@ -325,8 +484,10 @@ typedef struct {
 
 } SBCRequestSenseData;
 
-//! \brief  Data structure for the TEST UNIT READY command
-//! \see    spc4r06.pdf - Section 6.34 - Table 192
+//------------------------------------------------------------------------------
+/// \brief  Data structure for the TEST UNIT READY command
+/// \see    spc4r06.pdf - Section 6.34 - Table 192
+//------------------------------------------------------------------------------
 typedef struct {
 
     unsigned char bOperationCode; //!< 0x00 : SBC_TEST_UNIT_READY
@@ -335,8 +496,10 @@ typedef struct {
 
 } __attribute__ ((packed)) SBCTestUnitReady; // GCC
 
-//! \brief  Structure for the WRITE (10) command
-//! \see    sbc3r07.pdf - Section 5.26 - Table 70
+//------------------------------------------------------------------------------
+/// \brief  Structure for the WRITE (10) command
+/// \see    sbc3r07.pdf - Section 5.26 - Table 70
+//------------------------------------------------------------------------------
 typedef struct {
 
     unsigned char bOperationCode;          //!< 0x2A : SBC_WRITE_10
@@ -354,8 +517,10 @@ typedef struct {
 
 } SBCWrite10;
 
-//! \brief  Structure for the PREVENT/ALLOW MEDIUM REMOVAL command
-//! \see    sbc3r07.pdf - Section 5.5 - Table 30
+//------------------------------------------------------------------------------
+/// \brief  Structure for the PREVENT/ALLOW MEDIUM REMOVAL command
+/// \see    sbc3r07.pdf - Section 5.5 - Table 30
+//------------------------------------------------------------------------------
 typedef struct {
 
     unsigned char bOperationCode; //!< 0x1E : SBC_PREVENT_ALLOW_MEDIUM_REMOVAL
@@ -366,8 +531,10 @@ typedef struct {
 
 } __attribute__ ((packed)) SBCMediumRemoval; // GCC
 
-//! \brief  Structure for the MODE SENSE (6) command
-//! \see    spc4r06 - Section 6.9.1 - Table 98
+//------------------------------------------------------------------------------
+/// \brief  Structure for the MODE SENSE (6) command
+/// \see    spc4r06 - Section 6.9.1 - Table 98
+//------------------------------------------------------------------------------
 typedef struct {
 
     unsigned char bOperationCode;    //!< 0x1A : SBC_MODE_SENSE_6
@@ -382,8 +549,10 @@ typedef struct {
 
 } __attribute__ ((packed)) SBCModeSense6; // GCC
 
-//! \brief  Header for the data returned after a MODE SENSE (6) command
-//! \see    spc4r06.pdf - Section 7.4.3 - Table 268
+//------------------------------------------------------------------------------
+/// \brief  Header for the data returned after a MODE SENSE (6) command
+/// \see    spc4r06.pdf - Section 7.4.3 - Table 268
+//------------------------------------------------------------------------------
 typedef struct {
 
     unsigned char bModeDataLength;          //!< Length of mode data to follow
@@ -396,8 +565,10 @@ typedef struct {
 
 } __attribute__ ((packed)) SBCModeParameterHeader6; // GCC
 
-//! \brief  Informational exceptions control mode page
-//! \see    spc4r06.pdf - Section 7.4.11 - Table 285
+//------------------------------------------------------------------------------
+/// \brief  Informational exceptions control mode page
+/// \see    spc4r06.pdf - Section 7.4.11 - Table 285
+//------------------------------------------------------------------------------
 typedef struct {
 
     unsigned char bPageCode:6,       //!< 0x1C : SBC_PAGE_INFORMATIONAL_EXCEPTIONS_CONTROL
@@ -419,8 +590,10 @@ typedef struct {
 
 } __attribute__ ((packed)) SBCInformationalExceptionsControl; // GCC
 
-//! \brief  Read/write error recovery mode page
-//! \see    sbc3r07.pdf - Section 6.3.5 - Table 122
+//------------------------------------------------------------------------------
+/// \brief  Read/write error recovery mode page
+/// \see    sbc3r07.pdf - Section 6.3.5 - Table 122
+//------------------------------------------------------------------------------
 typedef struct {
 
     unsigned char bPageCode:6,           //!< 0x01 : SBC_PAGE_READ_WRITE_ERROR_RECOVERY
@@ -444,23 +617,27 @@ typedef struct {
 
 } __attribute__ ((packed)) SBCReadWriteErrorRecovery; // GCC
 
-//! \brief  Generic structure for holding information about SBC commands
-//! \see    SBCInquiry
-//! \see    SBCRead10
-//! \see    SBCReadCapacity10
-//! \see    SBCRequestSense
-//! \see    SBCTestUnitReady
-//! \see    SBCWrite10
+//------------------------------------------------------------------------------
+/// \brief  Generic structure for holding information about SBC commands
+/// \see    SBCInquiry
+/// \see    SBCRead10
+/// \see    SBCReadCapacity10
+/// \see    SBCRequestSense
+/// \see    SBCTestUnitReady
+/// \see    SBCWrite10
+/// \see    SBCMediumRemoval
+/// \see    SBCModeSense6
+//------------------------------------------------------------------------------
 typedef union {
 
-    unsigned char          bOperationCode;  //!< Operation code of the command
-    SBCInquiry          inquiry;        //!< INQUIRY command
-    SBCRead10          read10;         //!< READ (10) command
+    unsigned char     bOperationCode; //!< Operation code of the command
+    SBCInquiry        inquiry;        //!< INQUIRY command
+    SBCRead10         read10;         //!< READ (10) command
     SBCReadCapacity10 readCapacity10; //!< READ CAPACITY (10) command
-    SBCRequestSense    requestSense;   //!< REQUEST SENSE command
+    SBCRequestSense   requestSense;   //!< REQUEST SENSE command
     SBCTestUnitReady  testUnitReady;  //!< TEST UNIT READY command
-    SBCWrite10         write10;        //!< WRITE (10) command
-    SBCMediumRemoval   mediumRemoval;  //!< PREVENT/ALLOW MEDIUM REMOVAL command
+    SBCWrite10        write10;        //!< WRITE (10) command
+    SBCMediumRemoval  mediumRemoval;  //!< PREVENT/ALLOW MEDIUM REMOVAL command
     SBCModeSense6     modeSense6;     //!< MODE SENSE (6) command
 
 } SBCCommand;
