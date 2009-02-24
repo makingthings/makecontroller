@@ -57,22 +57,20 @@
 //    AUDDSpeakerChannel *channel,
 //    unsigned char muted)
 //{
-//    trace_LOG(trace_DEBUG, "MuteChanged(%d, %d) ", channel->number, muted);
+//    TRACE_DEBUG("MuteChanged(%d, %d) ", channel->number, muted);
 //}
 
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: AUDDSpeakerChannel_Initialize
-        Initializes the member variables of an AUDDSpeakerChannel object to the
-        given values.
 
-    Parameters:
-        channel - Pointer to an AUDDSpeakerChannel instance.
-        number - Channel number in the audio function.
-        muted - Indicates if the channel is muted.
-*/
+//------------------------------------------------------------------------------
+/// Initializes the member variables of an AUDDSpeakerChannel object to the
+/// given values.
+/// \param channel Pointer to an AUDDSpeakerChannel instance.
+/// \param number Channel number in the audio function.
+/// \param muted Indicates if the channel is muted.
+//------------------------------------------------------------------------------
 void AUDDSpeakerChannel_Initialize(AUDDSpeakerChannel *channel,
                                    unsigned char number,
                                    unsigned char muted)
@@ -81,29 +79,21 @@ void AUDDSpeakerChannel_Initialize(AUDDSpeakerChannel *channel,
     channel->muted = muted;
 }
 
-/*
-    Function: AUDDSpeakerChannel_GetNumber
-        Indicates the number of a channel.
-
-    Parameters:
-        channel - Pointer to an AUDDSpeakerChannel instance.
-
-    Returns:
-        Channel number.
-*/
+//------------------------------------------------------------------------------
+/// Indicates the number of a channel.
+/// \param channel Pointer to an AUDDSpeakerChannel instance.
+/// \return Channel number.
+//------------------------------------------------------------------------------
 unsigned char AUDDSpeakerChannel_GetNumber(const AUDDSpeakerChannel *channel)
 {
     return channel->number;
 }
 
-/*
-    Function: AUDDSpeakerChannel_Mute
-        Mutes the given channel and triggers the MuteChanged callback if
-        necessary.
-
-    Parameters:
-        channel - Pointer to an AUDDSpeakerChannelInstance.
-*/
+//------------------------------------------------------------------------------
+/// Mutes the given channel and triggers the MuteChanged callback if
+/// necessary.
+/// \param channel Pointer to an AUDDSpeakerChannelInstance.
+//------------------------------------------------------------------------------
 void AUDDSpeakerChannel_Mute(AUDDSpeakerChannel *channel)
 {
     if (!channel->muted) {
@@ -113,14 +103,11 @@ void AUDDSpeakerChannel_Mute(AUDDSpeakerChannel *channel)
     }
 }
 
-/*
-    Function: AUDDSpeakerChannel_Unute
-        Unmutes the given channel and triggers the MuteChanged callback if
-        necessary.
-
-    Parameters:
-        channel - Pointer to an AUDDSpeakerChannelInstance.
-*/
+//------------------------------------------------------------------------------
+/// Unmutes the given channel and triggers the MuteChanged callback if
+/// necessary.
+/// \param channel Pointer to an AUDDSpeakerChannelInstance.
+//------------------------------------------------------------------------------
 void AUDDSpeakerChannel_Unmute(AUDDSpeakerChannel *channel)
 {
     if (channel->muted) {
@@ -130,16 +117,11 @@ void AUDDSpeakerChannel_Unmute(AUDDSpeakerChannel *channel)
     }
 }
 
-/*
-    Function: AUDDSpeakerChannel_IsMuted
-        Indicates if the given channel is currently muted or not.
-
-    Parameters:
-        channel - Pointer an AUDDSpeakerChannel instance.
-
-    Returns:
-        1 if the channel is muted; otherwise 0.
-*/
+//------------------------------------------------------------------------------
+/// Indicates if the given channel is currently muted or not.
+/// \param channel Pointer an AUDDSpeakerChannel instance.
+/// \return 1 if the channel is muted; otherwise 0.
+//------------------------------------------------------------------------------
 unsigned char AUDDSpeakerChannel_IsMuted(const AUDDSpeakerChannel *channel)
 {
     return channel->muted;

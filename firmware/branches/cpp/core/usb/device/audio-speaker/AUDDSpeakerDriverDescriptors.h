@@ -27,15 +27,17 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: AUDDSpeakerDriverDescriptors
+/**
+ \unit
 
-    About: Purpose
-        Declaration of the descriptors required by a USB audio speaker driver.
+ !!!Purpose
 
-    About: Usage
-        1 - Initialize a USBDDriver instance using the
-            <auddSpeakerDriverDescriptors> list.
+    Declaration of the descriptors required by a USB audio speaker driver.
+
+ !!!Usage
+
+    -# Initialize a USBDDriver instance using the
+       auddSpeakerDriverDescriptors list.
 */
 
 #ifndef AUDDSPEAKERDRIVERDESCRIPTORS_H
@@ -51,41 +53,78 @@
 //------------------------------------------------------------------------------
 //         Definitions
 //------------------------------------------------------------------------------
-/*
-    Constants: Endpoint numbers
-        AUDDSpeakerDriverDescriptors_DATAOUT - Data out endpoint number.
-*/
-#if defined(BOARD_USB_UDPHS)
+
+//------------------------------------------------------------------------------
+/// \page "Audio Speaker Endpoint Numbers"
+///
+/// This page lists the endpoint number settings for USB Audio Speaker device.
+///
+/// !Endpoints
+/// - AUDDSpeakerDriverDescriptors_DATAOUT
+/// - AUDDSpeakerDriverDescriptors_DATAIN
+
+#if defined(BOARD_USB_UDPHS) || defined(at91sam7s)
+    /// Data out endpoint number.
     #define AUDDSpeakerDriverDescriptors_DATAOUT        0x01
+    /// Data in endpoint number.
+    #define AUDDSpeakerDriverDescriptors_DATAIN         0x02
 #else
+    /// Data out endpoint number.
     #define AUDDSpeakerDriverDescriptors_DATAOUT        0x04
+    /// Data in endpoint number.
+    #define AUDDSpeakerDriverDescriptors_DATAIN         0x05
 #endif
+//------------------------------------------------------------------------------
 
-/*  
-    Constants: Interface IDs
-        AUDDSpeakerDriverDescriptors_CONTROL - Audio control interface ID.
-        AUDDSpeakerDriverDescriptors_STREAMING - Audio streaming interface ID.
-*/
+//------------------------------------------------------------------------------
+/// \page "Audio Speaker Interface IDs"
+///
+/// This page lists the interface numbers for USB Audio Speaker device.
+///
+/// !Interfaces
+/// - AUDDSpeakerDriverDescriptors_CONTROL
+/// - AUDDSpeakerDriverDescriptors_STREAMING
+/// - AUDDSpeakerDriverDescriptors_STREAMINGIN
+
+/// Audio control interface ID.
 #define AUDDSpeakerDriverDescriptors_CONTROL            0
+/// Audio streaming interface ID (OUT, for playback).
 #define AUDDSpeakerDriverDescriptors_STREAMING          1
+/// Audio streaming interface ID (IN, for record).
+#define AUDDSpeakerDriverDescriptors_STREAMINGIN        2
+//------------------------------------------------------------------------------
 
-/*
-    Constants: Entity IDs
-        AUDDSpeakerDriverDescriptors_INPUTTERMINAL - Input terminal ID.
-        AUDDSpeakerDriverDescriptors_OUTPUTTERMINAL - Output terminal ID.
-        AUDDSpeakerDriverDescriptors_FEATUREUNIT - Feature unit ID.
-*/
+//------------------------------------------------------------------------------
+/// \page "Audio Speaker Entity IDs"
+///
+/// This page lists the entity IDs for USB Audio Speaker device.
+///
+/// !Entities
+/// - AUDDSpeakerDriverDescriptors_INPUTTERMINAL
+/// - AUDDSpeakerDriverDescriptors_OUTPUTTERMINAL
+/// - AUDDSpeakerDriverDescriptors_FEATUREUNIT
+/// - AUDDSpeakerDriverDescriptors_INPUTTERMINAL_REC
+/// - AUDDSpeakerDriverDescriptors_OUTPUTTERMINAL_REC
+/// - AUDDSpeakerDriverDescriptors_FEATUREUNIT_REC
+
+/// Playback input terminal ID.
 #define AUDDSpeakerDriverDescriptors_INPUTTERMINAL      0
+/// Playback output terminal ID.
 #define AUDDSpeakerDriverDescriptors_OUTPUTTERMINAL     1
+/// Playback feature unit ID.
 #define AUDDSpeakerDriverDescriptors_FEATUREUNIT        2
+/// Record input terminal ID.
+#define AUDDSpeakerDriverDescriptors_INPUTTERMINAL_REC  3
+/// Record output terminal ID.
+#define AUDDSpeakerDriverDescriptors_OUTPUTTERMINAL_REC 4
+/// Record feature unit ID
+#define AUDDSpeakerDriverDescriptors_FEATUREUNIT_REC    5
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //         Exported variables
 //------------------------------------------------------------------------------
-/*
-    Variable: auddSpeakerDriverDescriptors
-        List of descriptors required by an USB audio speaker device driver.
-*/
+
 extern const USBDDriverDescriptors auddSpeakerDriverDescriptors;
 
 #endif //#ifndef AUDDSPEAKERDRIVERDESCRIPTORS_H

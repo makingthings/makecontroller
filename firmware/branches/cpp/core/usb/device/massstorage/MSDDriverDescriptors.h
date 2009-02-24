@@ -35,7 +35,7 @@
 /// 
 /// !Usage
 /// 
-/// - For a USB device:
+/// - For a USB %device:
 ///     -# When initializing a USBDDriver instance, use msdDriverDescriptors as
 ///        the list of standard descriptors.
 //------------------------------------------------------------------------------
@@ -54,8 +54,8 @@
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
-/// \page "MS endpoint addresses"
-/// This page lists the addresses used by the Mass Storage driver endpoints.
+/// \page "MSD endpoint addresses"
+/// This page lists the addresses used by the Mass Storage driver %endpoints.
 /// 
 /// !Addresses
 /// 

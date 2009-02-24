@@ -35,7 +35,13 @@
 /// 
 /// !Usage
 /// 
-/// TODO
+/// -# After a CBW is received from host, use SBC_GetCommandInformation to check
+///    if the command is supported, and get the command length and type
+///    information before processing it.
+/// -# Then SBC_ProcessCommand can be used to handle a valid command, to
+///    perform the command operations.
+/// -# SBC_UpdateSenseData is used to update the sense data that will be sent
+///    to host.
 //------------------------------------------------------------------------------
 
 #ifndef SBCMETHODS_H
@@ -47,18 +53,34 @@
 
 #include "SBC.h"
 #include "MSDLun.h"
-#include "MSDDriver.h"
+#include "MSDDStateMachine.h"
 
 //------------------------------------------------------------------------------
 //      Definitions
 //------------------------------------------------------------------------------
 
-//! \brief  Possible states of a SBC command.
+//------------------------------------------------------------------------------
+/// \page "SBC Command States"
+/// This page lists the possible states of a SBC command.
+///
+/// !States
+/// - SBC_STATE_READ
+/// - SBC_STATE_WAIT_READ
+/// - SBC_STATE_WRITE
+/// - SBC_STATE_WAIT_WRITE
+/// - SBC_STATE_NEXT_BLOCK
+
+/// Start of reading bulk data
 #define SBC_STATE_READ                          0x01
+/// Waiting for the bulk data reading complete
 #define SBC_STATE_WAIT_READ                     0x02
+/// Start writing bulk data to host
 #define SBC_STATE_WRITE                         0x03
+/// Waiting for the bulk data sending complete
 #define SBC_STATE_WAIT_WRITE                    0x04
+/// Start next command block
 #define SBC_STATE_NEXT_BLOCK                    0x05
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //      Exported functions

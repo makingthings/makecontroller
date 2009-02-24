@@ -27,11 +27,18 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: USBSetConfigurationRequest
+/**
+ \unit
 
-    About: Purpose
-        Definition of a class for the Set Configuration request.
+ !!!Purpose
+
+    Definition of a class for the Set Configuration request.
+
+ !!!Usage
+
+    - After a SET_CONFIGURATION request has been received, retrive the new
+      configuration value with USBSetConfigurationRequest_GetConfiguration.
+
 */
 
 #ifndef USBSETCONFIGURATIONREQUEST_H
@@ -46,17 +53,7 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: USBSetConfigurationRequest_GetConfiguration
-        Returns the number of the configuration that should be set in response
-        to the given SET_CONFIGURATION request.
 
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Number of the requested configuration.
-*/
 extern unsigned char USBSetConfigurationRequest_GetConfiguration(
     const USBGenericRequest *request);
 

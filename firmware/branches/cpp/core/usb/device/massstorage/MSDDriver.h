@@ -31,10 +31,16 @@
 /// \unit
 /// !Purpose
 /// 
-/// Mass storage device driver implementation.
+/// Mass storage %device driver implementation.
 /// 
 /// !Usage
-/// TODO
+/// 
+/// -# Enable and setup USB related pins (see pio & board.h).
+/// -# Configure the memory interfaces used for Mass Storage LUNs
+///    (see memories, MSDLun.h).
+/// -# Configure the USB MSD %driver using MSDDriver_Initialize.
+/// -# Invoke MSDDriver_StateMachine in main loop to handle all Mass Storage
+///    operations.
 //------------------------------------------------------------------------------
 
 #ifndef MSDDRIVER_H
@@ -47,109 +53,6 @@
 #include "MSD.h"
 #include "MSDLun.h"
 #include <utility/trace.h>
-
-//------------------------------------------------------------------------------
-//      Definitions
-//------------------------------------------------------------------------------
-
-
-//! \brief  Possible states of the MSD driver
-//! \brief  Driver is expecting a command block wrapper
-#define MSDDriver_STATE_READ_CBW              (1 << 0)
-
-//! \brief  Driver is waiting for the transfer to finish
-#define MSDDriver_STATE_WAIT_CBW              (1 << 1)
-
-//! \brief  Driver is processing the received command
-#define MSDDriver_STATE_PROCESS_CBW           (1 << 2)
-
-//! \brief  Driver is starting the transmission of a command status wrapper
-#define MSDDriver_STATE_SEND_CSW              (1 << 3)
-
-//! \brief  Driver is waiting for the CSW transmission to finish
-#define MSDDriver_STATE_WAIT_CSW              (1 << 4)
-
-//! \brief  Result codes for MSD functions
-//! \brief  Method was successful
-#define MSDDriver_STATUS_SUCCESS              0x00
-
-//! \brief  There was an error when trying to perform a method
-#define MSDDriver_STATUS_ERROR                0x01
-
-//! \brief  No error was encountered but the application should call the
-//!         method again to continue the operation
-#define MSDDriver_STATUS_INCOMPLETE           0x02
-
-//! \brief  A wrong parameter has been passed to the method
-#define MSDDriver_STATUS_PARAMETER            0x03
-
-//! \brief  Actions to perform during the post-processing phase of a command
-//! \brief  Indicates that the CSW should report a phase error
-#define MSDDriver_CASE_PHASE_ERROR            (1 << 0)
-
-//! \brief  The driver should halt the Bulk IN pipe after the transfer
-#define MSDDriver_CASE_STALL_IN               (1 << 1)
-
-//! \brief  The driver should halt the Bulk OUT pipe after the transfer
-#define MSDDriver_CASE_STALL_OUT              (1 << 2)
-
-//! \brief  Possible direction values for a data transfer
-#define MSDDriver_DEVICE_TO_HOST              0
-#define MSDDriver_HOST_TO_DEVICE              1
-#define MSDDriver_NO_TRANSFER                 2
-
-//------------------------------------------------------------------------------
-//         Types
-//------------------------------------------------------------------------------
-//! \brief  Structure for holding the result of a USB transfer
-//! \see    MSD_Callback
-typedef struct {
-
-    unsigned int  transferred; //!< Number of bytes transferred
-    unsigned int  remaining;   //!< Number of bytes not transferred
-    unsigned char semaphore;        //!< Semaphore to indicate transfer completion
-    unsigned char status;           //!< Operation result code
-
-} MSDTransfer;
-
-//! \brief  Status of an executing command
-//! \see    MSDCbw
-//! \see    MSDCsw
-//! \see    MSDTransfer
-typedef struct {
-
-    MSDTransfer transfer; //!< Current transfer status
-    MSCbw      cbw;      //!< Received CBW
-    MSCsw      csw;      //!< CSW to send
-    unsigned char  state;    //!< Current command state
-    unsigned char  postprocess;     //!< Actions to perform when command is complete
-    unsigned int   length;   //!< Remaining length of command
-
-} MSDCommandState;
-
-//------------------------------------------------------------------------------
-//      Inline functions
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//! \brief  This function is to be used as a callback for USB or LUN transfers.
-//!
-//!         A S_bot_transfer structure is updated with the method results.
-//! \param  S_bot_transfer    Pointer to the transfer structure to update
-//! \param  bStatus           Operation result code
-//! \param  dBytesTransferred Number of bytes transferred by the command
-//! \param  dBytesRemaining   Number of bytes not transferred
-//------------------------------------------------------------------------------
-static inline void MSDDriver_Callback(MSDTransfer *transfer,
-                                      unsigned char status,
-                                      unsigned int transferred,
-                                      unsigned int remaining)
-{
-    trace_LOG(trace_DEBUG, "Cbk ");
-    transfer->semaphore++;
-    transfer->status = status;
-    transfer->transferred = transferred;
-    transfer->remaining = remaining;
-}
 
 //------------------------------------------------------------------------------
 //      Global functions

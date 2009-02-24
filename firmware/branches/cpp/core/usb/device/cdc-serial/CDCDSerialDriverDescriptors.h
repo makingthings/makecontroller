@@ -27,12 +27,13 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: CDCDSerialDriverDescriptors
+/**
+ \unit
 
-    About: Purpose
-        Definition of the USB descriptors required by a CDC device serial
-        driver.
+ !!!Purpose
+
+ Definition of the USB descriptors required by a CDC device serial
+ driver.
 */
 
 #ifndef CDCDSERIALDRIVERDESCRIPTORS_H
@@ -49,14 +50,22 @@
 //         Definitions
 //------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------
+/// \page "CDC Serial Endpoints"
+/// This page lists the endpoints used in CDC Serial Device.
+///
+/// !Endpoints
+/// - CDCDSerialDriverDescriptors_DATAOUT
+/// - CDCDSerialDriverDescriptors_DATAIN
+/// - CDCDSerialDriverDescriptors_NOTIFICATION
+
 /// Data OUT endpoint number.
 #define CDCDSerialDriverDescriptors_DATAOUT             1
-
 /// Data IN endpoint number.
 #define CDCDSerialDriverDescriptors_DATAIN              2
-
 /// Notification endpoint number.
 #define CDCDSerialDriverDescriptors_NOTIFICATION        3
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //         Exported variables

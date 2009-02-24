@@ -27,11 +27,12 @@
  * ----------------------------------------------------------------------------
  */
 
-/*  
-    Title: CDCGenericRequest
+/**
+ \unit
 
-    About: Purpose
-        Various definitions used for characterizing USB CDC requests.
+ !!!Purpose
+
+ Various definitions used for characterizing USB CDC requests.
 */
 
 #ifndef CDCGENERICREQUEST_H
@@ -40,15 +41,23 @@
 //------------------------------------------------------------------------------
 //         Definitions
 //------------------------------------------------------------------------------
-/*
-    Constants: CDC request codes
-        CDCGenericRequest_SETLINECODING - SetLineCoding request code.
-        CDCGenericRequest_GETLINECODING - GetLineCoding request code.
-        CDCGenericRequest_SETCONTROLLINESTATE - SetControlLineState request code.
-*/
+
+//------------------------------------------------------------------------------
+/// \page "CDC Request Codes"
+/// This page lists USB CDC Request Codes.
+///
+/// !Codes
+/// - CDCGenericRequest_SETLINECODING
+/// - CDCGenericRequest_GETLINECODING
+/// - CDCGenericRequest_SETCONTROLLINESTATE
+
+/// SetLineCoding request code.
 #define CDCGenericRequest_SETLINECODING             0x20
+/// GetLineCoding request code.
 #define CDCGenericRequest_GETLINECODING             0x21
+/// SetControlLineState request code.
 #define CDCGenericRequest_SETCONTROLLINESTATE       0x22
+//------------------------------------------------------------------------------
 
 #endif //#ifndef CDCGENERICREQUEST_H
 

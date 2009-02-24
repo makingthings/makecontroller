@@ -64,6 +64,15 @@
 //         Definitions
 //------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------
+/// \page "CDC Serial Device IDs"
+/// This page lists the IDs used in the CDC Serial Device Descriptor.
+///
+/// !IDs
+/// - CDCDSerialDriverDescriptors_PRODUCTID
+/// - CDCDSerialDriverDescriptors_VENDORID
+/// - CDCDSerialDriverDescriptors_RELEASE
+
 /// Device product ID.
 #define CDCDSerialDriverDescriptors_PRODUCTID       0x0920
 
@@ -72,6 +81,7 @@
 
 /// Device release number.
 #define CDCDSerialDriverDescriptors_RELEASE         0x0100
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //         Macros
@@ -132,7 +142,7 @@ const USBDeviceDescriptor deviceDescriptor = {
     2, // Index of manufacturer string descriptor is #2
     1, // Index of product string descriptor is #1
     0, // No string descriptor for serial number
-    1  // Device has 1 possible configuration
+    1 // Device has 1 possible configuration
 };
 
 #if defined(BOARD_USB_UDPHS)
@@ -192,8 +202,7 @@ const CDCDSerialDriverConfigurationDescriptors configurationDescriptors = {
         CDCGenericDescriptor_INTERFACE,
         CDCGenericDescriptor_CALLMANAGEMENT,
         CDCCallManagementDescriptor_SELFCALLMANAGEMENT,
-        // 0 // No associated data interface
-        0xFF // data class interface - MakingThings change
+        0 // No associated data interface
     },
     // Class-specific abstract control management functional descriptor
     {
@@ -257,7 +266,7 @@ const CDCDSerialDriverConfigurationDescriptors configurationDescriptors = {
     },
 };
 
-// Language ID string descriptor
+/// Language ID string descriptor
 const unsigned char languageIdStringDescriptor[] = {
 
     USBStringDescriptor_LENGTH(1),
@@ -577,7 +586,7 @@ const CDCDSerialDriverConfigurationDescriptors otherSpeedDescriptorsHS = {
 };
 #endif
 
-// Product string descriptor
+/// Product string descriptor
 const unsigned char productStringDescriptor[] = {
 
     USBStringDescriptor_LENGTH(19),

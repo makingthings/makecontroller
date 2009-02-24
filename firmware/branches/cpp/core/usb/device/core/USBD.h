@@ -27,16 +27,20 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: USBD
-
-    About: Purpose
-        Collection of methods for using the USB device controller on AT91
-        microcontrollers.
-
-    About: Usage
-        Please refer to the corresponding application note.
-*/
+//------------------------------------------------------------------------------
+/// \unit
+///
+/// !!!Purpose
+/// 
+/// Collection of methods for using the USB device controller on AT91
+/// microcontrollers.
+/// 
+/// !!!Usage
+/// 
+/// Please refer to the corresponding application note.
+/// - "AT91 USB device framework"
+/// - "USBD API" . "USBD API Methods"
+//------------------------------------------------------------------------------
 
 #ifndef USBD_H
 #define USBD_H
@@ -53,51 +57,79 @@
 //------------------------------------------------------------------------------
 //      Definitions
 //------------------------------------------------------------------------------
-/*
-    Constants: USB device API return values
-        USBD_STATUS_SUCCESS - Indicates the operation was successful.
-        USBD_STATUS_LOCKED - Endpoint/device is already busy.
-        USBD_STATUS_ABORTED - Operation has been aborted.
-        USBD_STATUS_RESET - Operation has been aborted because the device has
-            been reset.
-*/
+
+//------------------------------------------------------------------------------
+/// \page "USB device API return values"
+///
+/// This page lists the return values of the USB %device driver API
+///
+/// !Return codes
+/// - USBD_STATUS_SUCCESS
+/// - USBD_STATUS_LOCKED
+/// - USBD_STATUS_ABORTED
+/// - USBD_STATUS_RESET
+           
+/// Indicates the operation was successful.
 #define USBD_STATUS_SUCCESS             0
+/// Endpoint/device is already busy.
 #define USBD_STATUS_LOCKED              1
+/// Operation has been aborted.
 #define USBD_STATUS_ABORTED             2
+/// Operation has been aborted because the device has been reset.
 #define USBD_STATUS_RESET               3
+//------------------------------------------------------------------------------
 
-/*
-    Constants: USB device states
-        USBD_STATE_SUSPENDED - The device is currently suspended.
-        USBD_STATE_ATTACHED - USB cable is plugged into the device.
-        USBD_STATE_POWERED - Host is providing +5V through the USB cable.
-        USBD_STATE_DEFAULT - Device has been reset.
-        USBD_STATE_ADDRESS - The device has been given an address on the bus.
-        USBD_STATE_CONFIGURED - A valid configuration has been selected.  
-*/
+//------------------------------------------------------------------------------
+/// \page "USB device states"
+///
+/// This page lists the %device states of the USB %device driver.
+///
+/// !States
+/// - USBD_STATE_SUSPENDED
+/// - USBD_STATE_ATTACHED
+/// - USBD_STATE_POWERED
+/// - USBD_STATE_DEFAULT
+/// - USBD_STATE_ADDRESS
+/// - USBD_STATE_CONFIGURED
+
+/// The device is currently suspended.
 #define USBD_STATE_SUSPENDED            0
+/// USB cable is plugged into the device.
 #define USBD_STATE_ATTACHED             1
+/// Host is providing +5V through the USB cable.
 #define USBD_STATE_POWERED              2
+/// Device has been reset.
 #define USBD_STATE_DEFAULT              3
+/// The device has been given an address on the bus.
 #define USBD_STATE_ADDRESS              4
+/// A valid configuration has been selected.
 #define USBD_STATE_CONFIGURED           5
+//------------------------------------------------------------------------------
 
-/*
-    Constants: USB device LEDs
-        USBD_LEDPOWER - LED for indicating that the device is powered.
-        USBD_LEDUSB - LED for indicating USB activity.
-        USBD_LEDOTHER - LED for custom usage.
-*/
+//------------------------------------------------------------------------------
+/// \page "USB device LEDs"
+///
+/// This page lists the LEDs used in the USB %device driver.
+///
+/// !LEDs
+/// - USBD_LEDPOWER
+/// - USBD_LEDUSB
+/// - USBD_LEDOTHER
+
+/// LED for indicating that the device is powered.
 #define USBD_LEDPOWER                   0
+/// LED for indicating USB activity.
 #define USBD_LEDUSB                     1
+/// LED for custom usage.
 #define USBD_LEDOTHER                   2
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //         Types
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
-/// Callback used by transfer functions (<USBD_Read> & <USBD_Write>) to notify
+/// Callback used by transfer functions (USBD_Read & USBD_Write) to notify
 /// that a transaction is complete.
 //------------------------------------------------------------------------------
 typedef void (*TransferCallback)(void *pArg,
@@ -111,8 +143,6 @@ typedef void (*TransferCallback)(void *pArg,
 
 extern void USBD_InterruptHandler(void);
 
-extern void USBD_RemoteWakeUp( void );
-
 extern void USBD_Init(void);
 
 extern void USBD_Connect(void);
@@ -120,28 +150,28 @@ extern void USBD_Connect(void);
 extern void USBD_Disconnect(void);
 
 extern char USBD_Write(
-    unsigned char eptnum,
+    unsigned char bEndpoint,
     const void *pData,
     unsigned int size,
     TransferCallback callback,
     void *pArg);
 
 extern char USBD_Read(
-    unsigned char eptnum,
+    unsigned char bEndpoint,
     void *pData,
-    unsigned int size,
-    TransferCallback callback,
+    unsigned int dLength,
+    TransferCallback fCallback,
     void *pArg);
 
-extern unsigned char USBD_Stall(unsigned char eptnum);
+extern unsigned char USBD_Stall(unsigned char bEndpoint);
 
-extern void USBD_Halt(unsigned char eptnum);
+extern void USBD_Halt(unsigned char bEndpoint);
 
-extern void USBD_Unhalt(unsigned char eptnum);
+extern void USBD_Unhalt(unsigned char bEndpoint);
 
 extern void USBD_ConfigureEndpoint(const USBEndpointDescriptor *pDescriptor);
 
-extern unsigned char USBD_IsHalted(unsigned char eptnum);
+extern unsigned char USBD_IsHalted(unsigned char bEndpoint);
 
 extern void USBD_RemoteWakeUp(void);
 

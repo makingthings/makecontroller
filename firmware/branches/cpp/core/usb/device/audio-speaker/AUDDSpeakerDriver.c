@@ -43,17 +43,15 @@
 //------------------------------------------------------------------------------
 //         Internal types
 //------------------------------------------------------------------------------
-/*
-    Type: AUDDSpeakerDriver
-        Audio speaker driver internal state.
 
-    Variables:
-        usbdDriver - USB device driver instance.
-        channels - List of AUDDSpeakerChannel instances.
-*/
+//------------------------------------------------------------------------------
+/// Audio speaker driver internal state.
+//------------------------------------------------------------------------------
 typedef struct {
 
+    /// USB device driver instance.
     USBDDriver usbdDriver;
+    /// List of AUDDSpeakerChannel instances for playback.
     AUDDSpeakerChannel channels[AUDDSpeakerDriver_NUMCHANNELS+1];
 
 } AUDDSpeakerDriver;
@@ -61,30 +59,25 @@ typedef struct {
 //------------------------------------------------------------------------------
 //         Internal variables
 //------------------------------------------------------------------------------
-/*
-    Variables: Internal variables
-        auddSpeakerDriver - Global USB audio speaker driver instance.
-        auddSpeakerDriverInterfaces - Array for storing the current setting of
-            each interface.
-        muted - Intermediate storage variable for the mute status of a channel.
-*/
+
+/// Global USB audio speaker driver instance.
 static AUDDSpeakerDriver auddSpeakerDriver;
+/// Array for storing the current setting of each interface.
 static unsigned char auddSpeakerDriverInterfaces[2];
+/// Intermediate storage variable for the mute status of a channel.
 static unsigned char muted;
 
 //------------------------------------------------------------------------------
 //         Internal functions
 //------------------------------------------------------------------------------
-/*
-    Function: AUDDSpeakerDriver_MuteReceived
-        Callback triggered after the new mute status of a channel has been read
-        by <AUDDSpeakerDriver_SetFeatureCurrentValue>. Changes the mute status
-        of the given channel accordingly.
 
-    Parameters:
-        channel - Number of the channel whose mute status has changed.
-*/
-static void AUDDSpeakerDriver_MuteReceived(unsigned char channel)
+//------------------------------------------------------------------------------
+/// Callback triggered after the new mute status of a channel has been read
+/// by AUDDSpeakerDriver_SetFeatureCurrentValue. Changes the mute status
+/// of the given channel accordingly.
+/// \param channel Number of the channel whose mute status has changed.
+//------------------------------------------------------------------------------
+static void AUDDSpeakerDriver_MuteReceived(unsigned int channel)
 {
     if (muted) {
     
@@ -98,24 +91,24 @@ static void AUDDSpeakerDriver_MuteReceived(unsigned char channel)
     USBD_Write(0, 0, 0, 0, 0);
 }
 
-/*
-    Function: AUDDSpeakerDriver_SetFeatureCurrentValue
-        Sets the current value of a particular Feature control of a channel.
-
-    Parameters:
-        channel - Channel number.
-        control - Control selector value (see TODO).
-        length - Length of the data containing the new value.
-*/
-static void AUDDSpeakerDriver_SetFeatureCurrentValue(unsigned char channel,
+//------------------------------------------------------------------------------
+/// Sets the current value of a particular Feature control of a channel.
+/// \param entity Entity number.
+/// \param channel Channel number.
+/// \param control Control selector value (see TODO).
+/// \param length Length of the data containing the new value.
+//------------------------------------------------------------------------------
+static void AUDDSpeakerDriver_SetFeatureCurrentValue(unsigned char entity,
+                                                     unsigned char channel,
                                                      unsigned char control,
                                                      unsigned short length)
 {
-    trace_LOG(trace_INFO, "sFeature ");
-    trace_LOG(trace_DEBUG, "\b(CS%d, CN%d, L%d) ", control, channel, length);
+    TRACE_INFO_WP("sFeature ");
+    TRACE_DEBUG("\b(E%d, CS%d, CN%d, L%d) ",
+                           entity, control, channel, length);
 
     // Check the the requested control is supported
-    // Mute control on master channel
+    // Control/channel combination not supported
     if ((control == AUDFeatureUnitRequest_MUTE)
         && (channel < (AUDDSpeakerDriver_NUMCHANNELS+1))
         && (length == 1)) {
@@ -134,21 +127,20 @@ static void AUDDSpeakerDriver_SetFeatureCurrentValue(unsigned char channel,
     }
 }
 
-/*
-    Function: AUDDSpeakerDriver_GetFeatureCurrentValue
-        Sends the current value of a particular channel Feature to the USB host.
-
-    Parameters:
-        channel - Channel number.
-        control - Control selector value (see TODO).
-        length - Length of the data to return.
-*/
-static void AUDDSpeakerDriver_GetFeatureCurrentValue(unsigned char channel,
+//------------------------------------------------------------------------------
+/// Sends the current value of a particular channel Feature to the USB host.
+/// \param entity Entity number.
+/// \param channel Channel number.
+/// \param control Control selector value (see TODO).
+/// \param length Length of the data to return.
+//------------------------------------------------------------------------------
+static void AUDDSpeakerDriver_GetFeatureCurrentValue(unsigned char entity,
+                                                     unsigned char channel,
                                                      unsigned char control,
                                                      unsigned char length)
 {
-    trace_LOG(trace_INFO, "gFeature ");
-    trace_LOG(trace_DEBUG, "\b(CS%d, CN%d, L%d) ", control, channel, length);
+    TRACE_INFO_WP("gFeature ");
+    TRACE_DEBUG("\b(CS%d, CN%d, L%d) ", control, channel, length);
 
     // Check that the requested control is supported
     // Master channel mute control
@@ -203,14 +195,12 @@ static void AUDDSpeakerDriver_GetFeatureCurrentValue(unsigned char channel,
 //------------------------------------------------------------------------------
 //         Callback re-implementation
 //------------------------------------------------------------------------------
-/*
-    Function: USBDCallbacks_RequestReceived
-        Triggered when the USB host emits a new SETUP request. The request is
-        forward to <AUDDSpeakerDriver_RequestHandler>.
 
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-*/
+//------------------------------------------------------------------------------
+/// Triggered when the USB host emits a new SETUP request. The request is
+/// forward to <AUDDSpeakerDriver_RequestHandler>.
+/// \param request Pointer to a USBGenericRequest instance.
+//------------------------------------------------------------------------------
 #if !defined(NOAUTOCALLBACK)
 void USBDCallbacks_RequestReceived(const USBGenericRequest *request)
 {
@@ -218,15 +208,12 @@ void USBDCallbacks_RequestReceived(const USBGenericRequest *request)
 }
 #endif
 
-/*
-    Function: USBDDriverCallbacks_InterfaceSettingChanged
-        Invoked whenever the active setting of an interface is changed by the
-        host. Changes the status of the third LED accordingly.
-
-    Parameters:
-        interface - Interface number.
-        setting - Newly active setting.
-*/
+//------------------------------------------------------------------------------
+/// Invoked whenever the active setting of an interface is changed by the
+/// host. Changes the status of the third LED accordingly.
+/// \param interface Interface number.
+/// \param setting Newly active setting.
+//------------------------------------------------------------------------------
 void USBDDriverCallbacks_InterfaceSettingChanged(unsigned char interface,
                                                  unsigned char setting)
 {
@@ -244,11 +231,11 @@ void USBDDriverCallbacks_InterfaceSettingChanged(unsigned char interface,
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: AUDDSpeakerDriver_Initialize
-        Initializes an USB audio speaker device driver, as well as the underlying
-        USB controller.
-*/
+
+//------------------------------------------------------------------------------
+/// Initializes an USB audio speaker device driver, as well as the underlying
+/// USB controller.
+//------------------------------------------------------------------------------
 void AUDDSpeakerDriver_Initialize()
 {
     // Initialize speaker channels
@@ -272,20 +259,17 @@ void AUDDSpeakerDriver_Initialize()
     LED_Configure(USBD_LEDOTHER);
 }
 
-/*
-    Function: AUDDSpeakerDriver_RequestHandler
-        Handles audio-specific USB requests sent by the host, and forwards
-        standard ones to the USB device driver.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-*/
+//------------------------------------------------------------------------------
+/// Handles audio-specific USB requests sent by the host, and forwards
+/// standard ones to the USB device driver.
+/// \param request Pointer to a USBGenericRequest instance.
+//------------------------------------------------------------------------------
 void AUDDSpeakerDriver_RequestHandler(const USBGenericRequest *request)
 {
     unsigned char entity;
     unsigned char interface;
 
-    trace_LOG(trace_INFO, "NewReq ");
+    TRACE_INFO_WP("NewReq ");
 
     // Check if this is a class request
     if (USBGenericRequest_GetType(request) == USBGenericRequest_CLASS) {
@@ -294,7 +278,7 @@ void AUDDSpeakerDriver_RequestHandler(const USBGenericRequest *request)
         switch (USBGenericRequest_GetRequest(request)) {
 
             case AUDGenericRequest_SETCUR:
-                trace_LOG(trace_INFO,
+                TRACE_INFO_WP(
                           "sCur(0x%04X) ",
                           USBGenericRequest_GetIndex(request));
     
@@ -303,15 +287,16 @@ void AUDDSpeakerDriver_RequestHandler(const USBGenericRequest *request)
                 interface = AUDGenericRequest_GetInterface(request);
                 if ((entity == AUDDSpeakerDriverDescriptors_FEATUREUNIT)
                     && (interface == AUDDSpeakerDriverDescriptors_CONTROL)) {
-    
+
                     AUDDSpeakerDriver_SetFeatureCurrentValue(
+                        entity,
                         AUDFeatureUnitRequest_GetChannel(request),
                         AUDFeatureUnitRequest_GetControl(request),
                         USBGenericRequest_GetLength(request));
                 }
                 else {
     
-                    trace_LOG(trace_WARNING,
+                    TRACE_WARNING(
                               "AUDDSpeakerDriver_RequestHandler: Unsupported entity/interface combination (0x%04X)\n\r",
                               USBGenericRequest_GetIndex(request));
                     USBD_Stall(0);
@@ -319,7 +304,7 @@ void AUDDSpeakerDriver_RequestHandler(const USBGenericRequest *request)
                 break;
     
             case AUDGenericRequest_GETCUR:
-                trace_LOG(trace_INFO,
+                TRACE_INFO_WP(
                           "gCur(0x%04X) ",
                           USBGenericRequest_GetIndex(request));
     
@@ -330,13 +315,14 @@ void AUDDSpeakerDriver_RequestHandler(const USBGenericRequest *request)
                     && (interface == AUDDSpeakerDriverDescriptors_CONTROL)) {
     
                     AUDDSpeakerDriver_GetFeatureCurrentValue(
+                        entity,
                         AUDFeatureUnitRequest_GetChannel(request),
                         AUDFeatureUnitRequest_GetControl(request),
                         USBGenericRequest_GetLength(request));
                 }
                 else {
     
-                    trace_LOG(trace_WARNING,
+                    TRACE_WARNING(
                               "AUDDSpeakerDriver_RequestHandler: Unsupported entity/interface combination (0x%04X)\n\r",
                               USBGenericRequest_GetIndex(request));
                     USBD_Stall(0);
@@ -345,7 +331,7 @@ void AUDDSpeakerDriver_RequestHandler(const USBGenericRequest *request)
     
             default:
     
-                trace_LOG(trace_WARNING,
+                TRACE_WARNING(
                           "AUDDSpeakerDriver_RequestHandler: Unsupported request (%d)\n\r",
                           USBGenericRequest_GetRequest(request));
                 USBD_Stall(0);
@@ -360,29 +346,24 @@ void AUDDSpeakerDriver_RequestHandler(const USBGenericRequest *request)
     // Unsupported request type
     else {
 
-        trace_LOG(trace_WARNING,
+        TRACE_WARNING(
                   "AUDDSpeakerDriver_RequestHandler: Unsupported request type (%d)\n\r",
                   USBGenericRequest_GetType(request));
         USBD_Stall(0);
     }
 }
 
-/*
-    Function: AUDDSpeakerDriver_Read
-        Reads incoming audio data sent by the USB host into the provided
-        buffer. When the transfer is complete, an optional callback function is
-        invoked.
-
-    Parameters:
-        buffer - Pointer to the data storage buffer.
-        length - Size of the buffer in bytes.
-        callback - Optional callback function.
-        argument - Optional argument to the callback function.
-
-    Returns:
-        USBD_STATUS_SUCCESS if the transfer is started successfully; otherwise
-        an error code.
-*/
+//------------------------------------------------------------------------------
+/// Reads incoming audio data sent by the USB host into the provided
+/// buffer. When the transfer is complete, an optional callback function is
+/// invoked.
+/// \param buffer Pointer to the data storage buffer.
+/// \param length Size of the buffer in bytes.
+/// \param callback Optional callback function.
+/// \param argument Optional argument to the callback function.
+/// \return USBD_STATUS_SUCCESS if the transfer is started successfully;
+///         otherwise an error code.
+//------------------------------------------------------------------------------
 unsigned char AUDDSpeakerDriver_Read(void *buffer,
                                      unsigned int length,
                                      TransferCallback callback,

@@ -27,21 +27,23 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: CDCDSerialDriver
+/**
+ \unit
 
-    About: Purpose
-        Definition of a class for implementing a USB device CDC serial driver.
+ !!!Purpose
 
-    About: Usage
-        1 - Re-implement the <USBDCallbacks_RequestReceived> method to pass
-            received requests to <CDCDSerialDriver_RequestHandler>. *This is
-            automatically done unless the NOAUTOCALLBACK symbol is defined*.
-        2 - Initialize the CDC serial and USB drivers using
-            <CDCDSerialDriver_Initialize>.
-        3 - Logically connect the device to the host using <USBD_Connect>.
-        4 - Send serial data to the USB host using <CDCDSerialDriver_Write>.
-        5 - Receive serial data from the USB host using <CDCDSerialDriver_Read>.
+ Definition of a class for implementing a USB device CDC serial driver.
+
+ !!!Usage
+
+ -# Re-implement the USBDCallbacks_RequestReceived method to pass
+    received requests to CDCDSerialDriver_RequestHandler. *This is
+    automatically done unless the NOAUTOCALLBACK symbol is defined*.
+ -# Initialize the CDC serial and USB drivers using
+    CDCDSerialDriver_Initialize.
+ -# Logically connect the device to the host using USBD_Connect.
+ -# Send serial data to the USB host using CDCDSerialDriver_Write.
+ -# Receive serial data from the USB host using CDCDSerialDriver_Read.
 */
 
 #ifndef CDCDSERIALDRIVER_H
@@ -60,32 +62,40 @@
 //         Definitions
 //------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------
+/// \page "CDC Serial Port States"
+/// This page lists the bit map for CDC Serial Port States.
+///
+/// !BitMaps
+/// - CDCDSerialDriver_STATE_RXDRIVER
+/// - CDCDSerialDriver_STATE_TXCARRIER
+/// - CDCDSerialDriver_STATE_BREAK
+/// - CDCDSerialDriver_STATE_RINGSIGNAL
+/// - CDCDSerialDriver_STATE_FRAMING
+/// - CDCDSerialDriver_STATE_PARITY
+/// - CDCDSerialDriver_STATE_OVERRUN
+
 /// Indicates the receiver carrier signal is present.
 #define CDCDSerialDriver_STATE_RXDRIVER         (1 << 0)
-
 /// Indicates the transmission carrier signal is present.
 #define CDCDSerialDriver_STATE_TXCARRIER        (1 << 1)
-
 /// Indicates a break has been detected.
 #define CDCDSerialDriver_STATE_BREAK            (1 << 2)
-
 /// Indicates a ring signal has been detected.
 #define CDCDSerialDriver_STATE_RINGSIGNAL       (1 << 3)
-
 /// Indicates a framing error has occured.
 #define CDCDSerialDriver_STATE_FRAMING          (1 << 4)
-
 /// Indicates a parity error has occured.
 #define CDCDSerialDriver_STATE_PARITY           (1 << 5)
-
 /// Indicates a data overrun error has occured.
 #define CDCDSerialDriver_STATE_OVERRUN          (1 << 6)
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //      Exported functions
 //------------------------------------------------------------------------------
 
-extern void CDCDSerialDriver_Initialize(void);
+extern void CDCDSerialDriver_Initialize();
 
 extern void CDCDSerialDriver_RequestHandler(const USBGenericRequest *request);
 
@@ -101,7 +111,7 @@ extern unsigned char CDCDSerialDriver_Read(
     TransferCallback callback,
     void *argument);
 
-extern unsigned short CDCDSerialDriver_GetSerialState(void);
+extern unsigned short CDCDSerialDriver_GetSerialState();
 
 extern void CDCDSerialDriver_SetSerialState(unsigned short serialState);
 

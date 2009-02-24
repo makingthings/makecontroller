@@ -27,19 +27,21 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: AUDDSpeakerChannel
+/**
+    \unit
 
-    About: Purpose
+    !Purpose
+
         Manipulation of the channels of an USB audio speaker device.
 
-    About: Usage
-        1 - Initialize a AUDDSpeakerChannel instance using
-            <AUDDSpeakerChannel_Initialize>.
-        2 - Retrieves the current status of a channel with the
-            <AUDDSpeakerChannel_IsMuted> method.
-        3 - Re-implement the <AUDDSpeakerChannel_MuteChanged> callback to get
-            notified when the status of a channel changes.
+    !Usage
+
+        -# Initialize a AUDDSpeakerChannel instance using
+           AUDDSpeakerChannel_Initialize.
+        -# Retrieves the current status of a channel with the
+           AUDDSpeakerChannel_IsMuted method.
+        -# Re-implement the AUDDSpeakerChannel_MuteChanged callback to get
+           notified when the status of a channel changes.
 */
 
 #ifndef AUDDSPEAKERCHANNEL_H
@@ -48,17 +50,15 @@
 //------------------------------------------------------------------------------
 //         Types
 //------------------------------------------------------------------------------
-/*
-    Type: AUDDSpeakerChannel
-        Modelizes a channel of an USB audio speaker device.
 
-    Variables:
-        number - Zero-based channel number in the audio function.
-        muted - Indicates if the channel is currently muted.
-*/
+//------------------------------------------------------------------------------
+/// Modelizes a channel of an USB audio speaker device.
+//------------------------------------------------------------------------------
 typedef struct {
 
+    /// Zero-based channel number in the audio function.
     unsigned char number;
+    /// Indicates if the channel is currently muted.
     unsigned char muted;
 
 } AUDDSpeakerChannel;
@@ -66,78 +66,25 @@ typedef struct {
 //------------------------------------------------------------------------------
 //         Callbacks
 //------------------------------------------------------------------------------
-/*
-    Function: AUDDSpeakerChannel_MuteChanged
-        Callback triggered when the mute status of a channel changes. This is
-        a default implementation which does nothing and must be overriden.
 
-    Parameters:
-        channel - Pointer to a AUDDSpeakerChannel instance.
-        muted - Indicates the new mute status of the channel.
-*/
 extern void AUDDSpeakerChannel_MuteChanged(AUDDSpeakerChannel *channel,
                                            unsigned char muted);
 
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: AUDDSpeakerChannel_Initialize
-        Initializes the member variables of an AUDDSpeakerChannel object to the
-        given values.
 
-    Parameters:
-        channel - Pointer to an AUDDSpeakerChannel instance.
-        number - Channel number in the audio function.
-        muted - Indicates if the channel is muted.
-*/
 extern void AUDDSpeakerChannel_Initialize(AUDDSpeakerChannel *channel,
                                           unsigned char number,
                                           unsigned char muted);
 
-/*
-    Function: AUDDSpeakerChannel_GetNumber
-        Indicates the number of a channel.
-
-    Parameters:
-        channel - Pointer to an AUDDSpeakerChannel instance.
-
-    Returns:
-        Channel number.
-*/
 extern unsigned char AUDDSpeakerChannel_GetNumber(
     const AUDDSpeakerChannel *channel);
 
-/*
-    Function: AUDDSpeakerChannel_Mute
-        Mutes the given channel and triggers the MuteChanged callback if
-        necessary.
-
-    Parameters:
-        channel - Pointer to an AUDDSpeakerChannelInstance.
-*/
 extern void AUDDSpeakerChannel_Mute(AUDDSpeakerChannel *channel);
 
-/*
-    Function: AUDDSpeakerChannel_Unute
-        Unmutes the given channel and triggers the MuteChanged callback if
-        necessary.
-
-    Parameters:
-        channel - Pointer to an AUDDSpeakerChannelInstance.
-*/
 extern void AUDDSpeakerChannel_Unmute(AUDDSpeakerChannel *channel);
 
-/*
-    Function: AUDDSpeakerChannel_IsMuted
-        Indicates if the given channel is currently muted or not.
-
-    Parameters:
-        channel - Pointer an AUDDSpeakerChannel instance.
-
-    Returns:
-        1 if the channel is muted; otherwise 0.
-*/
 extern unsigned char AUDDSpeakerChannel_IsMuted(
     const AUDDSpeakerChannel *channel);
 

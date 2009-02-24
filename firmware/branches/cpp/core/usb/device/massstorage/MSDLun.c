@@ -100,7 +100,7 @@ void LUN_Init(MSDLun         *lun,
               unsigned int  blockSize)
 {
     unsigned int logicalBlockAddress = (size / blockSize) - 1;
-    trace_LOG(trace_INFO, "I: LUN init\n\r");
+    TRACE_INFO("LUN init\n\r");
 
     // Initialize LUN
     lun->media = media;
@@ -160,13 +160,13 @@ unsigned char LUN_Write(MSDLun        *lun,
     unsigned int  address;
     unsigned char status;
 
-    trace_LOG(trace_INFO, "LUNWrite(%u) ", blockAddress);
+    TRACE_INFO_WP("LUNWrite(%u) ", blockAddress);
 
     // Check that the data is not too big
     if ((length * lun->blockSize)
         > (lun->size - lun->blockSize * blockAddress)) {
 
-        trace_LOG(trace_WARNING, "W: LUN_Write: Data too big\n\r");
+        TRACE_WARNING("LUN_Write: Data too big\n\r");
         status = USBD_STATUS_ABORTED;
     }
     else {
@@ -191,7 +191,7 @@ unsigned char LUN_Write(MSDLun        *lun,
         }
         else {
 
-            trace_LOG(trace_WARNING, "W: LUN_Write: Cannot write media\n\r");
+            TRACE_WARNING("LUN_Write: Cannot write media\n\r");
             status = USBD_STATUS_ABORTED;
         }
     }
@@ -222,12 +222,12 @@ unsigned char LUN_Read(MSDLun        *lun,
     if ((length * lun->blockSize)
         > (lun->size - lun->blockSize * blockAddress)) {
 
-        trace_LOG(trace_WARNING, "W: LUN_Read: Data too big\n\r");
+        TRACE_WARNING("LUN_Read: Data too big\n\r");
         status = USBD_STATUS_ABORTED;
     }
     else {
 
-        trace_LOG(trace_INFO, "LUNRead(%u) ", blockAddress);
+        TRACE_INFO_WP("LUNRead(%u) ", blockAddress);
 
         // Compute read start address
         address = lun->media->baseAddress
@@ -249,7 +249,7 @@ unsigned char LUN_Read(MSDLun        *lun,
         }
         else {
 
-            trace_LOG(trace_WARNING, "W: LUN_Read: Cannot read media\n\r");
+            TRACE_WARNING("LUN_Read: Cannot read media\n\r");
             status = USBD_STATUS_ABORTED;
         }
     }

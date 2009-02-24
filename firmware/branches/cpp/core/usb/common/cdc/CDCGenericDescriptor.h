@@ -27,11 +27,12 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: CDCGenericDescriptor
+/**
+ \unit
 
-    About: Purpose
-        Definition of several constants for declaring CDC descriptors.
+ !!!Purpose
+
+ Definition of several constants for declaring CDC descriptors.
 */
 
 #ifndef CDCGENERICDESCRIPTOR_H
@@ -40,35 +41,51 @@
 //------------------------------------------------------------------------------
 //         Definitions
 //------------------------------------------------------------------------------
-/*
-    Constants: CDC specification release numbers
-        CDCGenericDescriptor_CDC1_10 - Identify CDC specification version 1.10.
-*/
+
+//------------------------------------------------------------------------------
+/// \page "CDC Specification Release Numbers"
+/// This page list the CDC Spec. Release Numbers.
+///
+/// !Numbers
+/// - CDCGenericDescriptor_CDC1_10
+
+/// Identify CDC specification version 1.10.
 #define CDCGenericDescriptor_CDC1_10                            0x0110
+//------------------------------------------------------------------------------
 
-/*
-    Constants: CDC descriptor types
-        CDCGenericDescriptor_INTERFACE - Indicates that a CDC descriptor applies
-            to an interface.
-        CDCGenericDescriptor_ENDPOINT - Indicates that a CDC descriptor applies
-            to an endpoint.
-*/
+//------------------------------------------------------------------------------
+/// \page "CDC Descriptro Types"
+/// This page lists CDC descriptor types.
+///
+/// !Types
+/// - CDCGenericDescriptor_INTERFACE
+/// - CDCGenericDescriptor_ENDPOINT
+
+///Indicates that a CDC descriptor applies to an interface.
 #define CDCGenericDescriptor_INTERFACE                          0x24
+/// Indicates that a CDC descriptor applies to an endpoint.
 #define CDCGenericDescriptor_ENDPOINT                           0x25
+//------------------------------------------------------------------------------
 
-/*
-    Constants: CDC descriptor subtypes
-        CDCGenericDescriptor_HEADER - Header functional descriptor subtype.
-        CDCGenericDescriptor_CALLMANAGEMENT - Call management functional descriptor
-            subtype.
-        CDCGenericDescriptor_ABSTRACTCONTROLMANAGEMENT - Abstract control management
-            descriptor subtype.
-        CDCGenericDescriptor_UNION - Union descriptor subtype.
-*/
+//------------------------------------------------------------------------------
+/// \page "CDC Descriptor Subtypes"
+/// This page lists CDC descriptor sub types
+///
+/// !Types
+/// - CDCGenericDescriptor_HEADER
+/// - CDCGenericDescriptor_CALLMANAGEMENT
+/// - CDCGenericDescriptor_ABSTRACTCONTROLMANAGEMENT
+/// - CDCGenericDescriptor_UNION
+
+/// Header functional descriptor subtype.
 #define CDCGenericDescriptor_HEADER                             0x00
+/// Call management functional descriptor subtype.
 #define CDCGenericDescriptor_CALLMANAGEMENT                     0x01
+/// Abstract control management descriptor subtype.
 #define CDCGenericDescriptor_ABSTRACTCONTROLMANAGEMENT          0x02
+/// Union descriptor subtype.
 #define CDCGenericDescriptor_UNION                              0x06
+//------------------------------------------------------------------------------
 
 #endif //#ifndef CDCGENERICDESCRIPTOR_H
 

@@ -34,59 +34,45 @@
         Implementation of the USBConfigurationDescriptor class.
 */
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //         Headers
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 #include "USBConfigurationDescriptor.h"
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //         Exported functions
-//------------------------------------------------------------------------------
-/*
-    Function: USBConfigurationDescriptor_GetTotalLength
-        Returns the total length of a configuration, i.e. including the 
-        descriptors following it.
+//-----------------------------------------------------------------------------
 
-    Parameters:
-        configuration - Pointer to a USBConfigurationDescriptor instance.
-
-    Returns:
-        Total length (in bytes) of the configuration.
-*/
+//-----------------------------------------------------------------------------
+/// Returns the total length of a configuration, i.e. including the 
+/// descriptors following it.
+/// \param configuration Pointer to a USBConfigurationDescriptor instance.
+/// \return Total length (in bytes) of the configuration.
+//-----------------------------------------------------------------------------
 unsigned int USBConfigurationDescriptor_GetTotalLength(
     const USBConfigurationDescriptor *configuration)
 {
     return configuration->wTotalLength;
 }
 
-/*
-    Function: USBConfigurationDescriptor_GetNumInterfaces
-        Returns the number of interfaces in a configuration.
-
-    Parameters:
-        configuration - Pointer to a USBConfigurationDescriptor instance.
-
-    Returns:
-        Number of interfaces in configuration.
-*/
+//-----------------------------------------------------------------------------
+/// Returns the number of interfaces in a configuration.
+/// \param configuration Pointer to a USBConfigurationDescriptor instance.
+/// \return Number of interfaces in configuration.
+//-----------------------------------------------------------------------------
 unsigned char USBConfigurationDescriptor_GetNumInterfaces(
     const USBConfigurationDescriptor *configuration)
 {
     return configuration->bNumInterfaces;
 }
 
-/*
-    Function: USBConfigurationDescriptor_IsSelfPowered
-        Indicates if the device is self-powered when in a given configuration.
-
-    Parameters:
-        configuration - Pointer to a USBConfigurationDescriptor instance.
-
-    Returns:
-        1 if the device is self-powered when in the given configuration;
-        otherwise 0.
-*/
+//-----------------------------------------------------------------------------
+/// Indicates if the device is self-powered when in a given configuration.
+/// \param configuration Pointer to a USBConfigurationDescriptor instance.
+/// \return 1 if the device is self-powered when in the given configuration;
+///         otherwise 0.
+//-----------------------------------------------------------------------------
 unsigned char USBConfigurationDescriptor_IsSelfPowered(
     const USBConfigurationDescriptor *configuration)
 {
@@ -100,24 +86,21 @@ unsigned char USBConfigurationDescriptor_IsSelfPowered(
     }
 }
 
-/*
-    Function: USBConfigurationDescriptor_Parse
-        Parses the given Configuration descriptor (followed by relevant
-        interface, endpoint and class-specific descriptors) into three arrays.
-
-        *Each array must have its size equal or greater to the number of
-        descriptors it stores plus one*. A null-value is inserted after the last
-        descriptor of each type to indicate the array end.
-
-        Note that if the pointer to an array is null (0), nothing is stored in
-        it.
-
-    Parameters:
-        configuration - Pointer to the start of the whole Configuration descriptor.
-        interfaces - Pointer to the Interface descriptor array.
-        endpoints - Pointer to the Endpoint descriptor array.
-        others - Pointer to the class-specific descriptor array.
-*/
+//-----------------------------------------------------------------------------
+/// Parses the given Configuration descriptor (followed by relevant
+/// interface, endpoint and class-specific descriptors) into three arrays.
+/// *Each array must have its size equal or greater to the number of
+/// descriptors it stores plus one*. A null-value is inserted after the last
+/// descriptor of each type to indicate the array end.
+///
+/// Note that if the pointer to an array is null (0), nothing is stored in
+/// it.
+/// \param configuration Pointer to the start of the whole Configuration 
+///                      descriptor.
+/// \param interfaces    Pointer to the Interface descriptor array.
+/// \param endpoints     Pointer to the Endpoint descriptor array.
+/// \param others        Pointer to the class-specific descriptor array.
+//-----------------------------------------------------------------------------
 void USBConfigurationDescriptor_Parse(
     const USBConfigurationDescriptor *configuration,
     USBInterfaceDescriptor **interfaces,

@@ -27,12 +27,20 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: USBFeatureRequest
+/**
+ \unit
 
-    About: Purpose
-        Definition of a class for manipulating CLEAR_FEATURE and SET_FEATURE
-        requests.
+ !!!Purpose
+
+    Definition of a class for manipulating CLEAR_FEATURE and SET_FEATURE
+    requests.
+
+ !!!Usage
+
+    - To get USB feature request information (field values) from the
+      USBGenericRequest instance, use
+       - USBFeatureRequest_GetFeatureSelector
+       - USBFeatureRequest_GetTestSelector
 */
 
 #ifndef USBFEATUREREQUEST_H
@@ -47,65 +55,80 @@
 //------------------------------------------------------------------------------
 //         Definitions
 //------------------------------------------------------------------------------
-/*
-    Constants: Feature selectors
-        USBFeatureRequest_ENDPOINTHALT - Halt feature of an endpoint.
-        USBFeatureRequest_DEVICEREMOTEWAKEUP - Remote wake-up feature of the
-                                               device.
-        USBFeatureRequest_TESTMODE - Test mode of the device.
-*/
-#define USBFeatureRequest_ENDPOINTHALT          0
-#define USBFeatureRequest_DEVICEREMOTEWAKEUP    1
-#define USBFeatureRequest_TESTMODE              2
 
-/*
-    Constants: Test mode selectors
-        USBFeatureRequest_TESTJ - Tests the high-output drive level on the D+
-                                  line.
-        USBFeatureRequest_TESTK - Tests the high-output drive level on the D-
-                                  line.
-        USBFeatureRequest_TESTSE0NAK - Tests the output impedance, low-level
-                                       output voltage and loading characteristics.
-        USBFeatureRequest_TESTPACKET - Tests rise and fall times, eye patterns
-                                       and jitter.
-        USBFeatureRequest_TESTFORCEENABLE - Tests the hub disconnect detection.
-        USBFeatureRequest_TESTSENDZLP - Send a ZLP in Test Mode.
-*/
+//------------------------------------------------------------------------------
+/// \page "USB Feature Request definitions"
+///
+/// This page lists codes of USB Feature Request
+///
+/// - USB Feature selectors
+///    - USBFeatureRequest_ENDPOINTHALT
+///    - USBFeatureRequest_DEVICEREMOTEWAKEUP
+///    - USBFeatureRequest_TESTMODE
+///
+/// - USB Test mode selectors
+///    - USBFeatureRequest_TESTJ
+///    - USBFeatureRequest_TESTK
+///    - USBFeatureRequest_TESTSE0NAK
+///    - USBFeatureRequest_TESTPACKET
+///    - USBFeatureRequest_TESTFORCEENABLE
+///    - USBFeatureRequest_TESTSENDZLP
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+/// \page "USB Feature selectors"
+///
+/// This page lists codes of USB feature selectors.
+///
+/// !Selectors
+/// - USBFeatureRequest_ENDPOINTHALT
+/// - USBFeatureRequest_DEVICEREMOTEWAKEUP
+/// - USBFeatureRequest_TESTMODE
+
+/// Halt feature of an endpoint.
+#define USBFeatureRequest_ENDPOINTHALT          0
+/// Remote wake-up feature of the device.
+#define USBFeatureRequest_DEVICEREMOTEWAKEUP    1
+/// Test mode of the device.
+#define USBFeatureRequest_TESTMODE              2
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+/// \page "USB Test mode selectors"
+///
+/// This page lists codes of USB high speed test mode selectors.
+///
+/// !Selectors
+/// - USBFeatureRequest_TESTJ
+/// - USBFeatureRequest_TESTK
+/// - USBFeatureRequest_TESTSE0NAK
+/// - USBFeatureRequest_TESTPACKET
+/// - USBFeatureRequest_TESTFORCEENABLE
+/// - USBFeatureRequest_TESTSENDZLP
+
+/// Tests the high-output drive level on the D+ line.
 #define USBFeatureRequest_TESTJ                 1
+/// Tests the high-output drive level on the D- line.
 #define USBFeatureRequest_TESTK                 2
+/// Tests the output impedance, low-level output voltage and loading
+/// characteristics.
 #define USBFeatureRequest_TESTSE0NAK            3
+/// Tests rise and fall times, eye patterns and jitter.
 #define USBFeatureRequest_TESTPACKET            4
+/// Tests the hub disconnect detection.
 #define USBFeatureRequest_TESTFORCEENABLE       5
+/// Send a ZLP in Test Mode.
 #define USBFeatureRequest_TESTSENDZLP           6
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: USBFeatureRequest_GetFeatureSelector
-        Returns the feature selector of a given CLEAR_FEATURE or SET_FEATURE
-        request.
 
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Feature selector.
-*/
 extern unsigned char USBFeatureRequest_GetFeatureSelector(
     const USBGenericRequest *request);
 
-/*
-    Function: USBFeatureRequest_GetTestSelector
-        Indicates the test that the device must undertake following a
-        SET_FEATURE request.
 
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Test selector.
-*/
 extern unsigned char USBFeatureRequest_GetTestSelector(
     const USBGenericRequest *request);
 

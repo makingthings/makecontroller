@@ -27,15 +27,17 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: CDCAbstractControlManagementDescriptor
+/**
+ \unit
 
-    About: Purpose
-        Definition of a class for manipulating CDC abstract control management
-        descriptors.
+ !!!Purpose
 
-    About: Usage
-        Should be included in a list of USB configuration descriptors.
+ Definition of a class for manipulating CDC abstract control management
+ descriptors.
+
+ !!!Usage
+
+ Should be included in a list of USB configuration descriptors.
 */
 
 #ifndef CDCABSTRACTCONTROLMANAGEMENTDESCRIPTOR_H
@@ -44,22 +46,28 @@
 //------------------------------------------------------------------------------
 //         Definitions
 //------------------------------------------------------------------------------
-/*
-    Constants: Capabilities
-        CDCAbstractControlManagementDescriptor_COMMFEATURE - Device supports the
-            request combination of SetCommFeature, ClearCommFeature and
-            GetCommFeature.
-        CDCAbstractControlManagementDescriptor_LINE - Device supports the request
-            combination of SetLineCoding, GetLineCoding and SetControlLineState.
-        CDCAbstractControlManagementDescriptor_SENDBREAK - Device supports the
-            SendBreak request.
-        CDCAbstractControlManagementDescriptor_NETWORKCONNECTION - Device supports
-            the NetworkConnection notification.
-*/
+
+//------------------------------------------------------------------------------
+/// \page "CDC ACM Capabilities"
+/// This page lists the capabilities of the CDC ACM.
+///
+/// !Capabilities
+/// - CDCAbstractControlManagementDescriptor_COMMFEATURE
+/// - CDCAbstractControlManagementDescriptor_LINE
+/// - CDCAbstractControlManagementDescriptor_SENDBREAK
+/// - CDCAbstractControlManagementDescriptor_NETWORKCONNECTION
+
+/// Device supports the request combination of SetCommFeature, ClearCommFeature
+/// and GetCommFeature.
 #define CDCAbstractControlManagementDescriptor_COMMFEATURE          (1 << 0)
+/// Device supports the request combination of SetLineCoding, GetLineCoding and
+/// SetControlLineState.
 #define CDCAbstractControlManagementDescriptor_LINE                 (1 << 1)
+/// Device supports the SendBreak request.
 #define CDCAbstractControlManagementDescriptor_SENDBREAK            (1 << 2)
+/// Device supports the NetworkConnection notification.
 #define CDCAbstractControlManagementDescriptor_NETWORKCONNECTION    (1 << 3)
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //         Types
@@ -70,23 +78,20 @@
 #define __attribute__(...) // IAR
 #endif                     // IAR
 
-/*
-    Type: CDCAbstractControlManagementDescriptor
-        Describes the command supported by the communication interface class
-        with the Abstract Control Model subclass code.
-
-    Variables:
-        bFunctionLength - Size of this descriptor in bytes.
-        bDescriptorType - Descriptor type (<CDCDescriptors_INTERFACE>).
-        bDescriptorSubtype - Descriptor subtype
-            (<CDCDescriptors_ABSTRACTCONTROLMANAGEMENT>).
-        bmCapabilities - Configuration capabilities (see <Capabilities>).
-*/
+//------------------------------------------------------------------------------
+/// Describes the command supported by the communication interface class
+/// with the Abstract Control Model subclass code.
+//------------------------------------------------------------------------------
 typedef struct {
 
+    /// Size of this descriptor in bytes.
     unsigned char bFunctionLength;
+    /// Descriptor type (CDCDescriptors_INTERFACE).
     unsigned char bDescriptorType;
+    /// Descriptor subtype (CDCDescriptors_ABSTRACTCONTROLMANAGEMENT).
     unsigned char bDescriptorSubtype;
+    /// Configuration capabilities.
+    /// \sa "CDC ACM Capabilities".
     unsigned char bmCapabilities;
 
 } __attribute__ ((packed)) CDCAbstractControlManagementDescriptor; // GCC

@@ -27,11 +27,17 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: USBDeviceQualifierDescriptor
+/**
+ \unit
 
-    About: Purpose
-        Class for manipulating USB device qualifier descriptors.
+ !!!Purpose
+
+   Class for manipulating USB device qualifier descriptors.
+
+ !!!Usage
+
+   - Declare a USBDeviceQualifierDescriptor instance as the device qualifier
+     descriptor of a USB device.
 */
 
 #ifndef USBDEVICEQUALIFIERDESCRIPTOR_H
@@ -46,34 +52,31 @@
 #define __attribute__(...) // IAR
 #endif                     // IAR
 
-/*
-    Type: USBDeviceQualifierDescriptor
-        Alternate device descriptor indicating the capabilities of the device
-        in full-speed, if currently in high-speed; or in high-speed, if it is
-        currently in full-speed. Only relevant for devices supporting the
-        high-speed mode.
-
-    Variables:
-        bLength - Size of the descriptor in bytes.
-        bDescriptorType - Descriptor type (<USBDESC_DEVICE_QUALIFIER>).
-        bcdUSB - USB specification release number (in BCD format).
-        bDeviceClass - Device class code.
-        bDeviceSubClass - Device subclass code.
-        bDeviceProtocol - Device protocol code.
-        bMaxPacketSize0 - Maximum packet size of endpoint 0.
-        bNumConfigurations - Number of possible configurations for the device.
-        bReserved - Reserved.
-*/
+//------------------------------------------------------------------------------
+/// Alternate device descriptor indicating the capabilities of the device
+/// in full-speed, if currently in high-speed; or in high-speed, if it is
+/// currently in full-speed. Only relevant for devices supporting the
+/// high-speed mode.
+//------------------------------------------------------------------------------
 typedef struct {
 
-   unsigned char bLength;           
-   unsigned char bDescriptorType;   
-   unsigned short bcdUSB;            
-   unsigned char bDeviceClass;      
-   unsigned char bDeviceSubClass;   
-   unsigned char bDeviceProtocol;   
-   unsigned char bMaxPacketSize0;   
+   /// Size of the descriptor in bytes.
+   unsigned char bLength;
+   /// Descriptor type (USBDESC_DEVICE_QUALIFIER or "USB device types").
+   unsigned char bDescriptorType;
+   /// USB specification release number (in BCD format).
+   unsigned short bcdUSB;
+   /// Device class code.
+   unsigned char bDeviceClass;
+   /// Device subclass code.
+   unsigned char bDeviceSubClass;
+   /// Device protocol code.
+   unsigned char bDeviceProtocol;
+   /// Maximum packet size of endpoint 0.
+   unsigned char bMaxPacketSize0;
+   /// Number of possible configurations for the device.
    unsigned char bNumConfigurations;
+   /// Reserved.
    unsigned char bReserved;         
 
 } __attribute__ ((packed)) USBDeviceQualifierDescriptor; // GCC

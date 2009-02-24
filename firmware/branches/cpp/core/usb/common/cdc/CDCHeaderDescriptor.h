@@ -27,14 +27,16 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: CDCHeaderDescriptor
+/**
+ \unit
 
-    About: Purpose
-        Definition of the CDCHeaderDescriptor class.
+ !!!Purpose
 
-    About: Usage
-        Should be included in a USB configuration descriptor.
+ Definition of the CDCHeaderDescriptor class.
+
+ !!!Usage
+
+ Should be included in a USB configuration descriptor.
 */
 
 #ifndef CDCHEADERDESCRIPTOR_H
@@ -49,22 +51,19 @@
 #define __attribute__(...) // IAR
 #endif                     // IAR
 
-/*
-    Type: CDCHeaderDescriptor
-        Marks the beginning of the concatenated set of functional descriptors
-        for the interface.
-
-    Variables:
-        bFunctionLength - Size of this descriptor in bytes.
-        bDescriptorType - Descriptor type (<CDCDescriptors_INTERFACE>).
-        bDescriptorSubtype - Descriptor sub-type (<CDCDescriptors_HEADER>).
-        bcdCDC - USB CDC specification release number.
-*/
+//------------------------------------------------------------------------------
+/// Marks the beginning of the concatenated set of functional descriptors
+/// for the interface.
+//------------------------------------------------------------------------------
 typedef struct {
 
+    /// Size of this descriptor in bytes.
     unsigned char bFunctionLength;
+    /// Descriptor type (CDCDescriptors_INTERFACE).
     unsigned char bDescriptorType;
+    /// Descriptor sub-type (CDCDescriptors_HEADER).
     unsigned char bDescriptorSubtype;
+    /// USB CDC specification release number.
     unsigned short bcdCDC;
 
 } __attribute__ ((packed)) CDCHeaderDescriptor; // GCC

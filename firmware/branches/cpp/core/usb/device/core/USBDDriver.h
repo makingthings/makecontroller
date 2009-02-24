@@ -27,17 +27,20 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: USBDDriver
+/**
+ \unit
 
-    About: Purpose
-        USB Device Driver class definition.
+ !!!Purpose
 
-    About: Usage
-        1 - Instanciate a USBDDriver object and initialize it using
-            <USBDDriver_Initialize>.
-        2 - When a USB SETUP request is received, forward it to the standard
-            driver using <USBDDriver_RequestHandler>.
+    USB Device Driver class definition.
+
+ !!!Usage
+
+    -# Instanciate a USBDDriver object and initialize it using
+       USBDDriver_Initialize.
+    -# When a USB SETUP request is received, forward it to the standard
+       driver using USBDDriver_RequestHandler.
+    -# Check the Remote Wakeup setting via USBDDriver_IsRemoteWakeUpEnabled.
 */
 
 #ifndef USBDDRIVER_H

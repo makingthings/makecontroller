@@ -29,6 +29,7 @@
 
 //------------------------------------------------------------------------------
 /// \unit
+///
 /// !Purpose
 /// 
 /// CCID driver
@@ -42,7 +43,6 @@
 //       Headers
 //------------------------------------------------------------------------------
 
-
 #include <board.h>
 #include <utility/trace.h>
 #include <usb/device/core/USBD.h>
@@ -51,101 +51,85 @@
 #include <usb/common/core/USBStringDescriptor.h>
 #include <usb/device/ccid/cciddriver.h>
 #include <usb/device/ccid/cciddriverdescriptors.h>
-#include <iso7816/iso7816_3.h>
 #include <iso7816/iso7816_4.h>
-
 #include <string.h>
 
-
-
 //------------------------------------------------------------------------------
-//  Constants: IDs
-//      CCIDDriverDescriptors_PRODUCTID - Device product ID.
-//      CCIDDriverDescriptors_VENDORID  - Device vendor ID.
-//      CCIDDriverDescriptors_RELEASE   - Device release number.
+//         Local definition
 //------------------------------------------------------------------------------
+
+/// Constants: IDs: Device product ID.
 #define CCIDDriverDescriptors_PRODUCTID       0x6129
+/// Constants: IDs: Device vendor ID.
 #define CCIDDriverDescriptors_VENDORID        0x03EB
+/// Constants: IDs: Device release number.
 #define CCIDDriverDescriptors_RELEASE         0x0100
-
-//------------------------------------------------------------------------------
-//         Macros
-//------------------------------------------------------------------------------
 
 /// Returns the minimum between two values.
 #define MIN(a, b)       ((a < b) ? a : b)
 
 //------------------------------------------------------------------------------
-//    Type: CCIDDriverConfigurationDescriptors
-//        List of descriptors that make up the configuration descriptors of a
-//        device using the CCID driver.
-//
-//    Variables:
-//        configuration - Configuration descriptor.
-//        interface - Interface descriptor.
-//        ccid - CCID descriptor.
-//        bulkOut - Bulk OUT endpoint descriptor.
-//        bulkIn - Bulk IN endpoint descriptor.
-//        interruptOut - Interrupt OUT endpoint descriptor.
+//         Types
 //------------------------------------------------------------------------------
+
+/// CCIDDriverConfiguration Descriptors
+/// List of descriptors that make up the configuration descriptors of a
+/// device using the CCID driver.
 typedef struct {
 
+    /// Configuration descriptor
     USBConfigurationDescriptor configuration;
+    /// Interface descriptor
     USBInterfaceDescriptor     interface;
+    /// CCID descriptor
     CCIDDescriptor             ccid;
+    /// Bulk OUT endpoint descriptor
     USBEndpointDescriptor      bulkOut;
+    /// Bulk IN endpoint descriptor
     USBEndpointDescriptor      bulkIn;
+    /// Interrupt OUT endpoint descriptor
     USBEndpointDescriptor      interruptIn;
 
 } __attribute__ ((packed)) CCIDDriverConfigurationDescriptors;
 
 //------------------------------------------------------------------------------
-//      Global variables
+//         Types
 //------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
-//  Type: CCDIDriver
-//      Driver structure for an CCID device.
-//
-//  Variables:
-//      usbdDriver - Standard USB device driver instance.
-//------------------------------------------------------------------------------
+/// Driver structure for an CCID device
 typedef struct {
 
+    /// Standard USB device driver instance
     USBDDriver             usbdDriver;
+    /// CCID message
     S_ccid_bulk_in_header  sCcidMessage;
+    /// CCID command
     S_ccid_bulk_out_header sCcidCommand;
+    /// Interrupt message answer
     unsigned char          BufferINT[4];
+    /// Buffer data of message
     unsigned char          ProtocolDataStructure[10];
+    /// Protocol used
     unsigned char          bProtocol;
+    /// SlotStatus
+    /// Bit 0 = Slot 0 current state
+    /// Bit 1 = Slot 0 changed status
+    /// Bit 2 = Slot 1 current state
+    /// Bit 3 = Slot 1 changed status
+    /// Bit 4 = Slot 2 current state
+    /// Bit 5 = Slot 2 changed status
     unsigned char          SlotStatus;
 
 } CCIDDriver;
 
-// SlotStatus
-// Bit 0 = Slot 0 current state
-// Bit 1 = Slot 0 changed status
-// Bit 2 = Slot 1 current state
-// Bit 3 = Slot 1 changed status
-// Bit 4 = Slot 2 current state
-// Bit 5 = Slot 2 changed status
-
-
-
 //------------------------------------------------------------------------------
-//         Internal variables
+//         Local variables
 //------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
-//  Variable: ccidDriver
-//      Static instance of the CCID device driver.
-//------------------------------------------------------------------------------
+/// Static instance of the CCID device driver.
 static CCIDDriver ccidDriver;
 
-//------------------------------------------------------------------------------
-//  Variable: deviceDescriptor
-//     Standard USB device descriptor.
-//------------------------------------------------------------------------------
+/// Standard USB device descriptor.
 static const USBDeviceDescriptor deviceDescriptor = {
 
     sizeof(USBDeviceDescriptor),
@@ -165,10 +149,7 @@ static const USBDeviceDescriptor deviceDescriptor = {
 };
 
 
-//------------------------------------------------------------------------------
-//  Variable: configurationDescriptors
-//      List of configuration descriptors.
-//------------------------------------------------------------------------------
+/// List of configuration descriptors.
 static const CCIDDriverConfigurationDescriptors configurationDescriptorsFS = {
 
     // Standard USB configuration descriptor
@@ -338,7 +319,7 @@ static const CCIDDriverConfigurationDescriptors configurationDescriptorsHS = {
     }
 };
 
-// Qualifier descriptor
+/// Qualifier descriptor
 const USBDeviceQualifierDescriptor deviceQualifierDescriptor = {
 
     sizeof(USBDeviceQualifierDescriptor),  // Size of this descriptor in bytes
@@ -352,6 +333,7 @@ const USBDeviceQualifierDescriptor deviceQualifierDescriptor = {
     0x00                                   // Reserved for future use, must be zero
 };
 
+/// OtherSpeed configuration descriptor in Full Speed mode
 static const CCIDDriverConfigurationDescriptors sOtherSpeedConfigurationFS = {
 
     // Standard USB configuration descriptor
@@ -436,6 +418,7 @@ static const CCIDDriverConfigurationDescriptors sOtherSpeedConfigurationFS = {
     }
 };
 
+/// OtherSpeed configuration descriptor in High Speed mode
 static const CCIDDriverConfigurationDescriptors sOtherSpeedConfigurationHS = {
 
     // Standard USB configuration descriptor
@@ -520,14 +503,8 @@ static const CCIDDriverConfigurationDescriptors sOtherSpeedConfigurationHS = {
     }
 };
 #endif
-//------------------------------------------------------------------------------
-//  Variables: String descriptors
-//      languageIdDescriptor - Language ID string descriptor.
-//      manufacturerDescriptor - Manufacturer name.
-//      productDescriptor - Product name.
-//      serialNumberDescriptor - Product serial number.
-//      stringDescriptors - Array of pointers to string descriptors.
-//------------------------------------------------------------------------------
+
+/// Language ID string descriptor.
 static const unsigned char languageIdDescriptor[] = {
 
     USBStringDescriptor_LENGTH(1),
@@ -535,6 +512,7 @@ static const unsigned char languageIdDescriptor[] = {
     USBStringDescriptor_ENGLISH_US
 };
 
+/// Manufacturer name.
 static const unsigned char manufacturerDescriptor[] = {
 
     USBStringDescriptor_LENGTH(5),
@@ -546,6 +524,7 @@ static const unsigned char manufacturerDescriptor[] = {
     USBStringDescriptor_UNICODE('L')
 };
 
+/// Product name.
 static const unsigned char productDescriptor[] = {
 
     USBStringDescriptor_LENGTH(23),
@@ -575,6 +554,7 @@ static const unsigned char productDescriptor[] = {
     USBStringDescriptor_UNICODE(' ')
 };
 
+/// Product serial number.
 static const unsigned char serialNumberDescriptor[] = {
 
     USBStringDescriptor_LENGTH(12),
@@ -593,6 +573,7 @@ static const unsigned char serialNumberDescriptor[] = {
     USBStringDescriptor_UNICODE('F')
 };
 
+/// Array of pointers to string descriptors.
 static const unsigned char *stringDescriptors[] = {
 
     languageIdDescriptor,
@@ -602,10 +583,7 @@ static const unsigned char *stringDescriptors[] = {
 };
 
 
-//------------------------------------------------------------------------------
-//  Variable: ccidDriverDescriptors
-//      List of standard descriptors for the serial driver.
-//------------------------------------------------------------------------------
+/// List of standard descriptors for the serial driver.
 const USBDDriverDescriptors ccidDriverDescriptors = {
 
     &deviceDescriptor, // FS
@@ -634,11 +612,7 @@ const USBDDriverDescriptors ccidDriverDescriptors = {
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
-//      Exported functions
-//------------------------------------------------------------------------------
-
-
-//------------------------------------------------------------------------------
+/// Response Pipe, Bulk-IN Messages
 /// Return the Slot Status to the host
 /// Answer to:
 ///   PC_to_RDR_IccPowerOff
@@ -647,11 +621,10 @@ const USBDDriverDescriptors ccidDriverDescriptors = {
 ///   PC_to_RDR_T0APDU
 ///   PC_to_RDR_Mechanical
 ///   PC_to_RDR_Abort and Class specific ABORT request
-/// \param 
 //------------------------------------------------------------------------------
 static void RDRtoPCSlotStatus( void )
 {
-    trace_LOG(trace_DEBUG, "RDRtoPCSlotStatus\n\r");
+    TRACE_DEBUG("RDRtoPCSlotStatus\n\r");
 
     // Header fields settings
     ccidDriver.sCcidMessage.bMessageType = RDR_TO_PC_SLOTSTATUS;
@@ -667,9 +640,8 @@ static void RDRtoPCSlotStatus( void )
 }
 
 //------------------------------------------------------------------------------
-/// Answer to:
-///   PC_to_RDR_IccPowerOn
-/// \param 
+/// Response Pipe, Bulk-IN Messages
+/// Answer to PC_to_RDR_IccPowerOn
 //------------------------------------------------------------------------------
 static void RDRtoPCDatablock_ATR( void )
 {
@@ -677,12 +649,12 @@ static void RDRtoPCDatablock_ATR( void )
     unsigned char Atr[ATR_SIZE_MAX];
     unsigned char length;
 
-    //trace_LOG(trace_DEBUG, "RDRtoPCDatablock\n\r");
+    //TRACE_DEBUG("RDRtoPCDatablock\n\r");
 
     ISO7816_Datablock_ATR( Atr, &length );
 
     if( length > 5 ) {
-        ccidDriver.ProtocolDataStructure[1] = Atr[5]&0x0F;           // TD(1)
+        ccidDriver.ProtocolDataStructure[1] = Atr[5]&0x0F; // TD(1)
         ccidDriver.bProtocol = Atr[5]&0x0F;           // TD(1)
     }
 
@@ -730,6 +702,7 @@ static void RDRtoPCDatablock_ATR( void )
 }
 
 //------------------------------------------------------------------------------
+/// Response Pipe, Bulk-IN Messages
 /// In other cases, the response message has the following format: 
 /// The response data will contain the optional data returned by the ICC, 
 /// followed by the 2 byte-size status words SW1-SW2.
@@ -737,11 +710,10 @@ static void RDRtoPCDatablock_ATR( void )
 /// Answer to:
 ///   PC_to_RDR_XfrBlock
 ///   PC_to_RDR_Secure
-/// \param 
 //------------------------------------------------------------------------------
 static void RDRtoPCDatablock( void )
 {
-    //trace_LOG(trace_DEBUG, "RDRtoPCDatablock\n\r");
+    //TRACE_DEBUG("RDRtoPCDatablock\n\r");
 
     // Header fields settings
     ccidDriver.sCcidMessage.bMessageType = RDR_TO_PC_DATABLOCK;
@@ -755,17 +727,17 @@ static void RDRtoPCDatablock( void )
 }
 
 //------------------------------------------------------------------------------
+/// Response Pipe, Bulk-IN Messages
 /// Answer to:
 ///   PC_to_RDR_GetParameters
 ///   PC_to_RDR_ResetParameters
 ///   PC_to_RDR_SetParameters
-/// \param 
 //------------------------------------------------------------------------------
 static void RDRtoPCParameters( void )
 {
     unsigned int i;
 
-    trace_LOG(trace_DEBUG, "RDRtoPCParameters\n\r");
+    TRACE_DEBUG("RDRtoPCParameters\n\r");
 
     // Header fields settings
     ccidDriver.sCcidMessage.bMessageType = RDR_TO_PC_PARAMETERS;
@@ -795,15 +767,15 @@ static void RDRtoPCParameters( void )
 }
 
 //------------------------------------------------------------------------------
+/// Response Pipe, Bulk-IN Messages
 /// Answer to:
 ///   PC_to_RDR_Escape
-/// \param 
 //------------------------------------------------------------------------------
 static void RDRtoPCEscape( unsigned char length, unsigned char *data_send_from_CCID )
 {
     unsigned int i;
 
-    trace_LOG(trace_DEBUG, "RDRtoPCEscape\n\r");
+    TRACE_DEBUG("RDRtoPCEscape\n\r");
 
     // Header fields settings
     ccidDriver.sCcidMessage.bMessageType = RDR_TO_PC_ESCAPE;
@@ -821,14 +793,14 @@ static void RDRtoPCEscape( unsigned char length, unsigned char *data_send_from_C
 }
 
 //------------------------------------------------------------------------------
+/// Response Pipe, Bulk-IN Messages
 /// Answer to: 
 ///   PC_to_RDR_SetDataRateAndClockFrequency
-/// \param 
 //------------------------------------------------------------------------------
 static void RDRtoPCDataRateAndClockFrequency( unsigned int dwClockFrequency, 
                                        unsigned int dwDataRate )
 {
-    trace_LOG(trace_DEBUG, "RDRtoPCDataRateAndClockFrequency\n\r");
+    TRACE_DEBUG("RDRtoPCDataRateAndClockFrequency\n\r");
 
     // Header fields settings
     ccidDriver.sCcidMessage.bMessageType = RDR_TO_PC_DATARATEANDCLOCKFREQUENCY;
@@ -846,13 +818,13 @@ static void RDRtoPCDataRateAndClockFrequency( unsigned int dwClockFrequency,
 }
 
 //------------------------------------------------------------------------------
+/// Command Pipe, Bulk-OUT Messages
 /// Power On Command - Cold Reset & Warm Reset 
 /// Return the ATR to the host
-/// \param 
 //------------------------------------------------------------------------------
 static void PCtoRDRIccPowerOn( void )
 {
-    trace_LOG(trace_DEBUG, "PCtoRDRIccPowerOn\n\r");
+    TRACE_DEBUG("PCtoRDRIccPowerOn\n\r");
 
     if( CCID_FEATURES_AUTO_VOLT == (configurationDescriptorsFS.ccid.dwFeatures & CCID_FEATURES_AUTO_VOLT) ) {
 
@@ -865,7 +837,7 @@ static void PCtoRDRIccPowerOn( void )
     // for emulation only //JCB 
     if ( ccidDriver.sCcidCommand.bSpecific_0 != VOLTS_5_0 ) {
 
-        trace_LOG(trace_ERROR, "POWER_NOT_SUPPORTED\n\r");
+        TRACE_ERROR("POWER_NOT_SUPPORTED\n\r");
     }
 
     else {
@@ -876,15 +848,15 @@ static void PCtoRDRIccPowerOn( void )
 }
 
 //------------------------------------------------------------------------------
+/// Command Pipe, Bulk-OUT Messages
 /// Power Off Command - Set the ICC in an inactive state
 /// Return the slot status to the host
-/// \param 
 //------------------------------------------------------------------------------
 static void PCtoRDRIccPowerOff( void )
 {
     unsigned char bStatus;
 
-    trace_LOG(trace_DEBUG, "PCtoRDRIccPowerOff\n\r");
+    TRACE_DEBUG("PCtoRDRIccPowerOff\n\r");
 
     ISO7816_IccPowerOff();
 
@@ -902,12 +874,12 @@ static void PCtoRDRIccPowerOff( void )
 }
 
 //------------------------------------------------------------------------------
+/// Command Pipe, Bulk-OUT Messages
 /// Get slot status
-/// \param 
 //------------------------------------------------------------------------------
 static void PCtoRDRGetSlotStatus( void )
 {
-    trace_LOG(trace_DEBUG, "PCtoRDRGetSlotStatus\n\r");
+    TRACE_DEBUG("PCtoRDRGetSlotStatus\n\r");
 
     ccidDriver.sCcidMessage.bStatus = 0;
     ccidDriver.sCcidMessage.bError = 0;
@@ -917,16 +889,16 @@ static void PCtoRDRGetSlotStatus( void )
 }
 
 //------------------------------------------------------------------------------
+/// Command Pipe, Bulk-OUT Messages
 /// If the command header is valid, an APDU command is received and can be read
 /// by the application
-/// \param 
 //------------------------------------------------------------------------------
 static void PCtoRDRXfrBlock( void )
 {
     unsigned char indexMessage = 0;
     unsigned char i;
 
-    //trace_LOG(trace_DEBUG, "PCtoRDRXfrBlock\n\r");
+    //TRACE_DEBUG("PCtoRDRXfrBlock\n\r");
 
     i = 0;
 
@@ -939,7 +911,7 @@ static void PCtoRDRXfrBlock( void )
     // check bBWI
     else if ( 0 != ccidDriver.sCcidCommand.bSpecific_0 ) {
 
-         trace_LOG(trace_ERROR, "Bad bBWI\n\r");
+         TRACE_ERROR("Bad bBWI\n\r");
     }
     else {
 
@@ -957,16 +929,16 @@ static void PCtoRDRXfrBlock( void )
                 }
                 else {
                     if (ccidDriver.ProtocolDataStructure[1] == PROTOCOL_T1) {
-                        trace_LOG(trace_INFO, "Not supported T=1\n\r");
+                        TRACE_INFO("Not supported T=1\n\r");
                     }
                     else {
-                        trace_LOG(trace_INFO, "Not supported\n\r");
+                        TRACE_INFO("Not supported\n\r");
                     }
                 }
                 break;
 
             case CCID_FEATURES_EXC_APDU:
-                trace_LOG(trace_INFO, "Not supported\n\r");
+                TRACE_INFO("Not supported\n\r");
                 break;
 
             default:
@@ -976,7 +948,7 @@ static void PCtoRDRXfrBlock( void )
     }
 
     ccidDriver.sCcidMessage.wLength = indexMessage;
-    trace_LOG(trace_DEBUG, "USB: 0x%X, 0x%X, 0x%X, 0x%X, 0x%X\n\r", ccidDriver.sCcidMessage.abData[0], 
+    TRACE_DEBUG("USB: 0x%X, 0x%X, 0x%X, 0x%X, 0x%X\n\r", ccidDriver.sCcidMessage.abData[0], 
                                                                     ccidDriver.sCcidMessage.abData[1], 
                                                                     ccidDriver.sCcidMessage.abData[2], 
                                                                     ccidDriver.sCcidMessage.abData[3],
@@ -986,12 +958,12 @@ static void PCtoRDRXfrBlock( void )
 }
 
 //------------------------------------------------------------------------------
-/// 
-/// \param 
+/// Command Pipe, Bulk-OUT Messages
+/// return parameters by the command: RDR_to_PC_Parameters
 //------------------------------------------------------------------------------
 static void PCtoRDRGetParameters( void )
 {
-    trace_LOG(trace_DEBUG, "PCtoRDRGetParameters\n\r");
+    TRACE_DEBUG("PCtoRDRGetParameters\n\r");
 
     // We support only one slot
 
@@ -1009,12 +981,12 @@ static void PCtoRDRGetParameters( void )
 }
 
 //------------------------------------------------------------------------------
+/// Command Pipe, Bulk-OUT Messages
 /// This command resets the slot parameters to their default values
-/// \param 
 //------------------------------------------------------------------------------
 static void PCtoRDRResetParameters( void )
 {
-    trace_LOG(trace_DEBUG, "PCtoRDRResetParameters\n\r");
+    TRACE_DEBUG("PCtoRDRResetParameters\n\r");
 
     ccidDriver.SlotStatus = ICC_NOT_PRESENT;
     ccidDriver.sCcidMessage.bStatus = ccidDriver.SlotStatus;
@@ -1023,12 +995,12 @@ static void PCtoRDRResetParameters( void )
 }
 
 //------------------------------------------------------------------------------
+/// Command Pipe, Bulk-OUT Messages
 /// This command is used to change the parameters for a given slot.
-/// \param 
 //------------------------------------------------------------------------------
 static void PCtoRDRSetParameters( void )
 {
-    trace_LOG(trace_DEBUG, "PCtoRDRSetParameters\n\r");
+    TRACE_DEBUG("PCtoRDRSetParameters\n\r");
 
     ccidDriver.SlotStatus = ccidDriver.sCcidCommand.bSlot;
     ccidDriver.sCcidMessage.bStatus = ccidDriver.SlotStatus;
@@ -1038,14 +1010,14 @@ static void PCtoRDRSetParameters( void )
 }
 
 //------------------------------------------------------------------------------
+/// Command Pipe, Bulk-OUT Messages
 /// This command allows the CCID manufacturer to define and access extended 
 /// features. 
 /// Information sent via this command is processed by the CCID control logic.
-/// \param 
 //------------------------------------------------------------------------------
 static void PCtoRDREscape( void )
 {
-    trace_LOG(trace_DEBUG, "PCtoRDREscape\n\r");
+    TRACE_DEBUG("PCtoRDREscape\n\r");
 
     // If needed by the user
     ISO7816_Escape();
@@ -1055,12 +1027,12 @@ static void PCtoRDREscape( void )
 }
 
 //------------------------------------------------------------------------------
+/// Command Pipe, Bulk-OUT Messages
 /// This command stops or restarts the clock.
-/// \param 
 //------------------------------------------------------------------------------
 static void PCtoRDRICCClock( void )
 {
-    trace_LOG(trace_DEBUG, "PCtoRDRICCClock\n\r");
+    TRACE_DEBUG("PCtoRDRICCClock\n\r");
 
     if( 0 == ccidDriver.sCcidCommand.bSpecific_0 ) {
         // restarts the clock
@@ -1075,9 +1047,9 @@ static void PCtoRDRICCClock( void )
 }
 
 //------------------------------------------------------------------------------
+/// Command Pipe, Bulk-OUT Messages
 /// This command changes the parameters used to perform the transportation of 
 /// APDU messages by the T=0 protocol. 
-/// \param 
 //------------------------------------------------------------------------------
 static void PCtoRDRtoAPDU( void )
 {
@@ -1085,7 +1057,7 @@ static void PCtoRDRtoAPDU( void )
     unsigned char bClassGetResponse;
     unsigned char bClassEnvelope;
 
-    trace_LOG(trace_DEBUG, "PCtoRDRtoAPDU\n\r");
+    TRACE_DEBUG("PCtoRDRtoAPDU\n\r");
 
     if( configurationDescriptorsFS.ccid.dwFeatures == (CCID_FEATURES_EXC_SAPDU|CCID_FEATURES_EXC_APDU) ) {
 
@@ -1100,57 +1072,57 @@ static void PCtoRDRtoAPDU( void )
 }
 
 //------------------------------------------------------------------------------
+/// Command Pipe, Bulk-OUT Messages
 /// This is a command message to allow entering the PIN for verification or
 /// modification.
-/// \param 
 //------------------------------------------------------------------------------
 static void PCtoRDRSecure( void )
 {
-    trace_LOG(trace_DEBUG, "PCtoRDRSecure\n\r");
+    TRACE_DEBUG("PCtoRDRSecure\n\r");
 
-    trace_LOG(trace_DEBUG, "For user\n\r");
+    TRACE_DEBUG("For user\n\r");
 }
 
 //------------------------------------------------------------------------------
+/// Command Pipe, Bulk-OUT Messages
 /// This command is used to manage motorized type CCID functionality. 
 /// The Lock Card function is used to hold the ICC. 
 /// This prevents an ICC from being easily removed from the CCID. 
 /// The Unlock Card function is used to remove the hold initiated by the Lock 
 /// Card function
-/// \param 
 //------------------------------------------------------------------------------
 static void PCtoRDRMechanical( void )
 {
-    trace_LOG(trace_DEBUG, "PCtoRDRMechanical\n\r");
-    trace_LOG(trace_DEBUG, "Not implemented\n\r");
+    TRACE_DEBUG("PCtoRDRMechanical\n\r");
+    TRACE_DEBUG("Not implemented\n\r");
 
     RDRtoPCSlotStatus();
 }
 
 //------------------------------------------------------------------------------
+/// Command Pipe, Bulk-OUT Messages
 /// This command is used with the Control pipe Abort request to tell the CCID 
 /// to stop any current transfer at the specified slot and return to a state 
 /// where the slot is ready to accept a new command pipe Bulk-OUT message.
-/// \param 
 //------------------------------------------------------------------------------
 static void PCtoRDRAbort( void )
 {
-    trace_LOG(trace_DEBUG, "PCtoRDRAbort\n\r");
+    TRACE_DEBUG("PCtoRDRAbort\n\r");
 
     RDRtoPCSlotStatus();
 }
 
 //------------------------------------------------------------------------------
+/// Command Pipe, Bulk-OUT Messages
 /// This command is used to manually set the data rate and clock frequency of 
 /// a specific slot.
-/// \param 
 //------------------------------------------------------------------------------
 static void PCtoRDRSetDataRateAndClockFrequency( void )
 {
     unsigned int dwClockFrequency;
     unsigned int dwDataRate;
 
-    trace_LOG(trace_DEBUG, "PCtoRDRSetDatarateandClockFrequency\n\r");
+    TRACE_DEBUG("PCtoRDRSetDatarateandClockFrequency\n\r");
 
     dwClockFrequency = ccidDriver.sCcidCommand.APDU[0]
                      + (ccidDriver.sCcidCommand.APDU[1]<<8)
@@ -1169,15 +1141,14 @@ static void PCtoRDRSetDataRateAndClockFrequency( void )
 }
 
 //------------------------------------------------------------------------------
-//  Subroutine: void vCCIDCommandNotSupported(void)
-//  Description: Report the CMD_NOT_SUPPORTED error to the host
+/// Report the CMD_NOT_SUPPORTED error to the host
 //------------------------------------------------------------------------------
 static void vCCIDCommandNotSupported( void )
 {
     // Command not supported
     // vCCIDReportError(CMD_NOT_SUPPORTED);
 
-    trace_LOG(trace_DEBUG, "CMD_NOT_SUPPORTED\n\r");
+    TRACE_DEBUG("CMD_NOT_SUPPORTED\n\r");
 
     // Header fields settings
     ccidDriver.sCcidMessage.bMessageType = RDR_TO_PC_SLOTSTATUS;
@@ -1191,6 +1162,7 @@ static void vCCIDCommandNotSupported( void )
 }
 
 //------------------------------------------------------------------------------
+/// Sent CCID response on USB
 //------------------------------------------------------------------------------
 static void vCCIDSendResponse( void )
 {
@@ -1205,13 +1177,13 @@ static void vCCIDSendResponse( void )
 
 
 //------------------------------------------------------------------------------
-//  Description: CCID Command dispatcher
+///  Description: CCID Command dispatcher
 //------------------------------------------------------------------------------
 static void CCIDCommandDispatcher( void )
 {
-    unsigned char MessageToSend = FALSE;
+    unsigned char MessageToSend = 0;
 
-    //trace_LOG(trace_DEBUG, "Command: 0x%X 0x%x 0x%X 0x%X 0x%X 0x%X 0x%X\n\r\n\r",
+    //TRACE_DEBUG("Command: 0x%X 0x%x 0x%X 0x%X 0x%X 0x%X 0x%X\n\r\n\r",
     //               (unsigned int)ccidDriver.sCcidCommand.bMessageType,
     //               (unsigned int)ccidDriver.sCcidCommand.wLength,
     //               (unsigned int)ccidDriver.sCcidCommand.bSlot,
@@ -1223,10 +1195,10 @@ static void CCIDCommandDispatcher( void )
     // Check the slot number
     if ( ccidDriver.sCcidCommand.bSlot > 0 ) {
 
-        trace_LOG(trace_ERROR, "BAD_SLOT_NUMBER\n\r");
+        TRACE_ERROR("BAD_SLOT_NUMBER\n\r");
     }
 
-    trace_LOG(trace_DEBUG, "typ=0x%X\n\r", ccidDriver.sCcidCommand.bMessageType);
+    TRACE_DEBUG("typ=0x%X\n\r", ccidDriver.sCcidCommand.bMessageType);
 
     ccidDriver.sCcidMessage.bStatus = 0;
 
@@ -1241,47 +1213,47 @@ static void CCIDCommandDispatcher( void )
 
         case PC_TO_RDR_ICCPOWERON:
             PCtoRDRIccPowerOn();
-            MessageToSend = TRUE;
+            MessageToSend = 1;
             break;
 
         case PC_TO_RDR_ICCPOWEROFF:
             PCtoRDRIccPowerOff();
-            MessageToSend = TRUE;
+            MessageToSend = 1;
             break;
 
         case PC_TO_RDR_GETSLOTSTATUS:
             PCtoRDRGetSlotStatus();
-            MessageToSend = TRUE;
+            MessageToSend = 1;
             break;
 
         case PC_TO_RDR_XFRBLOCK:
             PCtoRDRXfrBlock();
-            MessageToSend = TRUE;
+            MessageToSend = 1;
             break;
 
         case PC_TO_RDR_GETPARAMETERS:
             PCtoRDRGetParameters();
-            MessageToSend = TRUE;
+            MessageToSend = 1;
             break;
 
         case PC_TO_RDR_RESETPARAMETERS:
             PCtoRDRResetParameters();
-            MessageToSend = TRUE;
+            MessageToSend = 1;
             break;
 
         case PC_TO_RDR_SETPARAMETERS:
             PCtoRDRSetParameters();
-            MessageToSend = TRUE;
+            MessageToSend = 1;
             break;
 
         case PC_TO_RDR_ESCAPE:
             PCtoRDREscape();
-            MessageToSend = TRUE;
+            MessageToSend = 1;
             break;
 
         case PC_TO_RDR_ICCCLOCK:
             PCtoRDRICCClock();
-            MessageToSend = TRUE;
+            MessageToSend = 1;
             break;
 
         case PC_TO_RDR_T0APDU:
@@ -1295,101 +1267,104 @@ static void CCIDCommandDispatcher( void )
             }
             else {
                 // command not supported
-                trace_LOG(trace_DEBUG, "PC_TO_RDR_T0APDU\n\r");
+                TRACE_DEBUG("PC_TO_RDR_T0APDU\n\r");
                 vCCIDCommandNotSupported();
             }
-            MessageToSend = TRUE;
+            MessageToSend = 1;
             break;
 
         case PC_TO_RDR_SECURE:
             PCtoRDRSecure();
-            MessageToSend = TRUE;
+            MessageToSend = 1;
             break;
 
         case PC_TO_RDR_MECHANICAL:
             PCtoRDRMechanical();
-            MessageToSend = TRUE;
+            MessageToSend = 1;
             break;
 
         case PC_TO_RDR_ABORT:
             PCtoRDRAbort();
-            MessageToSend = TRUE;
+            MessageToSend = 1;
             break;
 
         case PC_TO_RDR_SETDATARATEANDCLOCKFREQUENCY:
             PCtoRDRSetDataRateAndClockFrequency();
-            MessageToSend = TRUE;
+            MessageToSend = 1;
             break;
 
         default:
-            trace_LOG(trace_DEBUG, "default: 0x%X\n\r", ccidDriver.sCcidCommand.bMessageType);
+            TRACE_DEBUG("default: 0x%X\n\r", ccidDriver.sCcidCommand.bMessageType);
             vCCIDCommandNotSupported();
-            MessageToSend = TRUE;
+            MessageToSend = 1;
             break;
 
     }
 
-    if( MessageToSend == TRUE ) {
+    if( MessageToSend == 1 ) {
         vCCIDSendResponse();
     }
 }
 
 
 //------------------------------------------------------------------------------
-//  SETUP request handler for a CCID device
-//  param:  pCcid Pointer to a S_ccid instance
-//  see:    S_ccid
+/// SETUP request handler for a CCID device
+/// \param pRequest Pointer to a USBGenericRequest instance
 //------------------------------------------------------------------------------
-static void CCID_RequestHandler(const USBGenericRequest *request)
+static void CCID_RequestHandler(const USBGenericRequest *pRequest)
 {
-    trace_LOG(trace_DEBUG, "CCID_RHl\n\r");
+    TRACE_DEBUG("CCID_RHl\n\r");
 
     // Check if this is a class request
-    if (USBGenericRequest_GetType(request) == USBGenericRequest_CLASS) {
+    if (USBGenericRequest_GetType(pRequest) == USBGenericRequest_CLASS) {
 
         // Check if the request is supported
-        switch (USBGenericRequest_GetRequest(request)) {
+        switch (USBGenericRequest_GetRequest(pRequest)) {
 
             case CCIDGenericRequest_ABORT:
-                trace_LOG(trace_DEBUG, "CCIDGenericRequest_ABORT\n\r");
+                TRACE_DEBUG("CCIDGenericRequest_ABORT\n\r");
                 break;
 
             case CCIDGenericRequest_GET_CLOCK_FREQUENCIES:
-                trace_LOG(trace_DEBUG, "Not supported\n\r");
+                TRACE_DEBUG("Not supported\n\r");
                 // A CCID with bNumClockSupported equal to 00h does not have 
                 // to support this request
                 break;
 
             case CCIDGenericRequest_GET_DATA_RATES:
-                trace_LOG(trace_DEBUG, "Not supported\n\r");
+                TRACE_DEBUG("Not supported\n\r");
                 // A CCID with bNumDataRatesSupported equal to 00h does not have 
                 // to support this request.
                 break;
 
             default:
-                trace_LOG(trace_WARNING, "CCIDDriver_RequestHandler: Unsupported request (%d)\n\r",
-                                                    USBGenericRequest_GetRequest(request));
+                TRACE_WARNING( "CCIDDriver_RequestHandler: Unsupported request (%d)\n\r",
+                                                    USBGenericRequest_GetRequest(pRequest));
                 USBD_Stall(0);
         }
     }
 
-    else if (USBGenericRequest_GetType(request) == USBGenericRequest_STANDARD) {
+    else if (USBGenericRequest_GetType(pRequest) == USBGenericRequest_STANDARD) {
 
         // Forward request to the standard handler
-        USBDDriver_RequestHandler(&(ccidDriver.usbdDriver), request);
+        USBDDriver_RequestHandler(&(ccidDriver.usbdDriver), pRequest);
     }
     else {
 
         // Unsupported request type
-        trace_LOG(trace_WARNING, "CCIDDriver_RequestHandler: Unsupported request type (%d)\n\r",
-                                                    USBGenericRequest_GetType(request));
+        TRACE_WARNING( "CCIDDriver_RequestHandler: Unsupported request type (%d)\n\r",
+                                                    USBGenericRequest_GetType(pRequest));
         USBD_Stall(0);
     }
 }
 
 
 //------------------------------------------------------------------------------
-//         Optional RequestReceived() callback re-implementation
+//      Exported functions
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+/// Optional callback re-implementation
 //------------------------------------------------------------------------------
 #if !defined(NOAUTOCALLBACK)
 // not static function
@@ -1397,12 +1372,11 @@ void USBDCallbacks_RequestReceived(const USBGenericRequest *request)
 {
     CCID_RequestHandler(request);
 }
-
 #endif
 
 
 //------------------------------------------------------------------------------
-// Handles SmartCart request
+/// Handles SmartCart request
 //------------------------------------------------------------------------------
 void CCID_SmartCardRequest( void )
 {
@@ -1420,12 +1394,11 @@ void CCID_SmartCardRequest( void )
 }
 
 //------------------------------------------------------------------------------
-//  Function: CCIDDriver_Initialize
-//      Initializes the CCID device driver.
+/// Initializes the CCID device driver.
 //------------------------------------------------------------------------------
 void CCIDDriver_Initialize( void )
 {
-    trace_LOG(trace_DEBUG, "CCID_Init\n\r");
+    TRACE_DEBUG("CCID_Init\n\r");
     USBDDriver_Initialize(&(ccidDriver.usbdDriver),
                           &ccidDriverDescriptors,
                           0); // Multiple interface settings not supported
@@ -1433,12 +1406,12 @@ void CCIDDriver_Initialize( void )
 }
 
 //------------------------------------------------------------------------------
-//   Reads data from the Data OUT endpoint
-// param:  pCcid     Pointer to a S_ccid instance
-// param:  pBuffer   Buffer in which to store the received data
-// param:  dLength   Length of data buffer
-// param:  fCallback Optional callback function
-// param:  pArgument Optional parameter for the callback function
+/// Reads data from the Data OUT endpoint
+/// \param pBuffer   Buffer to store the received data
+/// \param dLength   data buffer length
+/// \param fCallback Optional callback function
+/// \param pArgument Optional parameter for the callback function
+/// \return USBD_STATUS_LOCKED or USBD_STATUS_SUCCESS
 //------------------------------------------------------------------------------
 unsigned char CCID_Read(void *pBuffer,
                         unsigned int dLength,
@@ -1449,12 +1422,12 @@ unsigned char CCID_Read(void *pBuffer,
 }
 
 //------------------------------------------------------------------------------
-//   Sends data through the Data IN endpoint
-// param:  pCcid     Pointer to a S_ccid instance
-// param:  pBuffer   Buffer holding the data to transmit
-// param:  dLength   Length of data buffer
-// param:  fCallback Optional callback function
-// param:  pArgument Optional parameter for the callback function
+/// Sends data through the Data IN endpoint
+/// \param pBuffer   Buffer holding the data to transmit
+/// \param dLength   Length of data buffer
+/// \param fCallback Optional callback function
+/// \param pArgument Optional parameter for the callback function
+/// \return USBD_STATUS_LOCKED or USBD_STATUS_SUCCESS
 //------------------------------------------------------------------------------
 unsigned char CCID_Write(void *pBuffer,
                          unsigned int dLength,
@@ -1465,12 +1438,13 @@ unsigned char CCID_Write(void *pBuffer,
 }
 
 //------------------------------------------------------------------------------
-// Sends data through the interrupt endpoint, ICC insertion event
-// RDR_to_PC_NotifySlotChange
+/// Sends data through the interrupt endpoint, ICC insertion event
+/// RDR_to_PC_NotifySlotChange
+/// \return USBD_STATUS_LOCKED or USBD_STATUS_SUCCESS
 //------------------------------------------------------------------------------
 unsigned char CCID_Insertion( void )
 {
-    trace_LOG(trace_DEBUG, "CCID_Insertion\n\r");
+    TRACE_DEBUG("CCID_Insertion\n\r");
 
     // Build the Interrupt-IN message
     ccidDriver.BufferINT[0] = RDR_TO_PC_NOTIFYSLOTCHANGE;
@@ -1482,12 +1456,13 @@ unsigned char CCID_Insertion( void )
 }
 
 //------------------------------------------------------------------------------
-// Sends data through the interrupt endpoint, ICC removal event
-// RDR_to_PC_NotifySlotChange
+/// Sends data through the interrupt endpoint, ICC removal event
+/// RDR_to_PC_NotifySlotChange
+/// \return USBD_STATUS_LOCKED or USBD_STATUS_SUCCESS
 //------------------------------------------------------------------------------
 unsigned char CCID_Removal( void )
 {
-    trace_LOG(trace_DEBUG, "CCID_Removal\n\r");
+    TRACE_DEBUG("CCID_Removal\n\r");
 
     // Build the Interrupt-IN message
     ccidDriver.BufferINT[0] = RDR_TO_PC_NOTIFYSLOTCHANGE;
@@ -1499,21 +1474,26 @@ unsigned char CCID_Removal( void )
 }
 
 //------------------------------------------------------------------------------
-// RDR_to_PC_HardwareError
-// This message is sent when any bit in the bHardwareErrorCode field is set. 
-// If this message is sent when there is no “outstanding” command, the bSeq 
-// field will be undefined.
+/// Interrupt-IN Messages
+/// This message is sent when any bit in the bHardwareErrorCode field is set. 
+/// If this message is sent when there is no “outstanding” command, the bSeq 
+/// field will be undefined.
+/// \param bSlot ICC slot number
+/// \param bSeq  Sequence number of the bulk OUT command when the hardware error
+/// occured
+/// \param bHardwareErrorCode Hardware error code
+/// \return USBD_STATUS_LOCKED or USBD_STATUS_SUCCESS
 //------------------------------------------------------------------------------
 unsigned char RDRtoPCHardwareError( unsigned char bSlot, 
                                     unsigned char bSeq, 
                                     unsigned char bHardwareErrorCode )
 {
-    trace_LOG(trace_DEBUG, "RDRtoPCHardwareError\n\r");
+    TRACE_DEBUG("RDRtoPCHardwareError\n\r");
 
     // Build the Interrupt-IN message
     ccidDriver.BufferINT[0] = RDR_TO_PC_HARDWAREERROR;
-    ccidDriver.BufferINT[1] = bSlot;     // ICC slot number
-    ccidDriver.BufferINT[2] = bSeq;      // Sequence number of the bulk OUT command when the hardware error occured
+    ccidDriver.BufferINT[1] = bSlot;
+    ccidDriver.BufferINT[2] = bSeq;
     ccidDriver.BufferINT[3] = bHardwareErrorCode;
 
     // Notify the host that a ICC is inserted

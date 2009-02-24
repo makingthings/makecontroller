@@ -27,11 +27,21 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: USBGetDescriptorRequest
+/**
+ \unit
 
-    About: Purpose
-        Definition of the USBGetDescriptorRequest class.
+ !!!Purpose
+
+    Definition of the USBGetDescriptorRequest class.
+
+ !!!Usage
+
+    - After a GET_DESCRIPTOR request has been received, retrive the useful
+      values with following functions:
+      - USBGetDescriptorRequest_GetDescriptorType: the descriptor type
+      - USBGetDescriptorRequest_GetDescriptorIndex: the index of the requested
+        descriptor
+
 */
 
 #ifndef USBGETDESCRIPTORREQUEST_H
@@ -46,31 +56,10 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: USBGetDescriptorRequest_GetDescriptorType
-        Returns the type of the descriptor requested by the host given the
-        corresponding GET_DESCRIPTOR request.
 
-    Parameters:
-        request - Pointer to a USBGenericDescriptor instance.
-
-    Returns:
-        Type of the requested descriptor.
-*/
 extern unsigned char USBGetDescriptorRequest_GetDescriptorType(
     const USBGenericRequest *request);
 
-/*
-    Function: USBGetDescriptorRequest_GetDescriptorIndex
-        Returns the index of the requested descriptor, given the corresponding
-        GET_DESCRIPTOR request.
-
-    Parameters:
-        request - Pointer to a USBGenericDescriptor instance.
-
-    Returns:
-        Index of the requested descriptor.
-*/
 extern unsigned char USBGetDescriptorRequest_GetDescriptorIndex(
     const USBGenericRequest *request);
 

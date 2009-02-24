@@ -43,17 +43,12 @@
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: USBSetAddressRequest_GetAddress
-        Returns the address that the device must take in response to a
-        SET_ADDRESS request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        New device address.
-*/
+//------------------------------------------------------------------------------
+/// Returns the address that the device must take in response to a
+/// SET_ADDRESS request.
+/// \param request Pointer to a USBGenericRequest instance.
+/// \return New device address.
+//------------------------------------------------------------------------------
 unsigned char USBSetAddressRequest_GetAddress(const USBGenericRequest *request)
 {
     return USBGenericRequest_GetValue(request) & 0x7F;

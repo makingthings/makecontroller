@@ -55,20 +55,19 @@
 //------------------------------------------------------------------------------
 //         Types
 //------------------------------------------------------------------------------
-/*
-    Type: CDCDSerialDriver
-        USB driver for a CDC class implementing a virtual COM serial connection.
 
-    Variables:
-        usbdDriver - Standard USBDDriver instance.
-        lineCoding - Current line coding (baudrate, parity, stop bits).
-        isCarrierActivated - Indicates if the RS232 carrier is active.
-*/
+//------------------------------------------------------------------------------
+/// USB driver for a CDC class implementing a virtual COM serial connection.
+//------------------------------------------------------------------------------
 typedef struct {
 
+    /// Standard USBDDriver instance.
     USBDDriver usbdDriver;
+    /// Current line coding (baudrate, parity, stop bits).
     CDCLineCoding lineCoding;
+    /// Indicates if the RS232 carrier is active.
     unsigned char isCarrierActivated;
+    /// Current serial port states
     unsigned short serialState;
 
 } CDCDSerialDriver;
@@ -76,31 +75,28 @@ typedef struct {
 //------------------------------------------------------------------------------
 //         Internal variables
 //------------------------------------------------------------------------------
-/*
-    Variable: cdcdSerialDriver
-        Static instance of the CDC serial driver.
-*/
+
+/// Static instance of the CDC serial driver.
 static CDCDSerialDriver cdcdSerialDriver;
 
 //------------------------------------------------------------------------------
 //         Internal functions
 //------------------------------------------------------------------------------
-/*
-    Function: CDCDSerialDriver_SetLineCodingCallback
-        Callback function which should be invoked after the data of a
-        SetLineCoding request has been retrieved. Sends a zero-length packet
-        to the host for acknowledging the request.
-*/
-static void CDCDSerialDriver_SetLineCodingCallback(void)
+
+//------------------------------------------------------------------------------
+/// Callback function which should be invoked after the data of a
+/// SetLineCoding request has been retrieved. Sends a zero-length packet
+/// to the host for acknowledging the request.
+//------------------------------------------------------------------------------
+static void CDCDSerialDriver_SetLineCodingCallback()
 {
     USBD_Write(0, 0, 0, 0, 0);
 }
 
-/*
-    Function: CDCDSerialDriver_SetLineCoding
-        Receives new line coding information from the USB host.
-*/
-static void CDCDSerialDriver_SetLineCoding(void)
+//------------------------------------------------------------------------------
+/// Receives new line coding information from the USB host.
+//------------------------------------------------------------------------------
+static void CDCDSerialDriver_SetLineCoding()
 {
     // // trace_LOG(trace_INFO, "sLineCoding ");
 
@@ -111,12 +107,11 @@ static void CDCDSerialDriver_SetLineCoding(void)
               0);
 }
 
-/*
-    Function: CDCDSerialDriver_GetLineCoding
-        Sends the current line coding information to the host through Control
-        endpoint 0.
-*/
-static void CDCDSerialDriver_GetLineCoding(void)
+//------------------------------------------------------------------------------
+/// Sends the current line coding information to the host through Control
+/// endpoint 0.
+//------------------------------------------------------------------------------
+static void CDCDSerialDriver_GetLineCoding()
 {
     // trace_LOG(trace_INFO, "gLineCoding ");
 
@@ -127,12 +122,11 @@ static void CDCDSerialDriver_GetLineCoding(void)
                0);
 }
 
-/*
-    Function: CDCDSerialDriver_SetControlLineState
-        Changes the state of the serial driver according to the information
-        sent by the host via a SetControlLineState request, and acknowledges
-        the request with a zero-length packet.
-*/
+//------------------------------------------------------------------------------
+/// Changes the state of the serial driver according to the information
+/// sent by the host via a SetControlLineState request, and acknowledges
+/// the request with a zero-length packet.
+//------------------------------------------------------------------------------
 static void CDCDSerialDriver_SetControlLineState(unsigned char activateCarrier,
                                                  unsigned char isDTEPresent)
 {
@@ -140,7 +134,6 @@ static void CDCDSerialDriver_SetControlLineState(unsigned char activateCarrier,
     //           "sControlLineState(%d, %d) ",
     //           activateCarrier,
     //           isDTEPresent);
-
     (void)isDTEPresent;
     cdcdSerialDriver.isCarrierActivated = activateCarrier;
     USBD_Write(0, 0, 0, 0, 0);
@@ -151,6 +144,9 @@ static void CDCDSerialDriver_SetControlLineState(unsigned char activateCarrier,
 //------------------------------------------------------------------------------
 #if !defined(NOAUTOCALLBACK)
 
+//------------------------------------------------------------------------------
+/// Re-implemented callback, invoked when a new USB Request is received.
+//------------------------------------------------------------------------------
 void USBDCallbacks_RequestReceived(const USBGenericRequest *request)
 {
     CDCDSerialDriver_RequestHandler(request);
@@ -161,10 +157,10 @@ void USBDCallbacks_RequestReceived(const USBGenericRequest *request)
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: CDCDSerialDriver_Initialize
-        Initializes the USB device CDC serial driver.
-*/
+
+//------------------------------------------------------------------------------
+/// Initializes the USB Device CDC serial driver & USBD Driver.
+//------------------------------------------------------------------------------
 void CDCDSerialDriver_Initialize()
 {
     // trace_LOG(trace_INFO, "CDCDSerialDriver_Initialize\n\r");
@@ -187,14 +183,11 @@ void CDCDSerialDriver_Initialize()
     USBD_Init();
 }
 
-/*
-    Function: CDCDSerialDriver_RequestHandler
-        Handles CDC-specific SETUP requests. Should be called from a
-        re-implementation of USBDCallbacks_RequestReceived() method.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-*/
+//------------------------------------------------------------------------------
+/// Handles CDC-specific SETUP requests. Should be called from a
+/// re-implementation of USBDCallbacks_RequestReceived() method.
+/// \param Pointer to a USBGenericRequest instance.
+//------------------------------------------------------------------------------
 void CDCDSerialDriver_RequestHandler(const USBGenericRequest *request)
 {
     // trace_LOG(trace_INFO, "NewReq ");
@@ -227,22 +220,17 @@ void CDCDSerialDriver_RequestHandler(const USBGenericRequest *request)
     }
 }
 
-/*
-    Function: CDCDSerialDriver_Read
-        Receives data from the host through the virtual COM port created by
-        the CDC device serial driver. This function behaves like <USBD_Read>.
-
-    Parameters:
-        data - Pointer to the data buffer to send.
-        size - Size of the data buffer in bytes.
-        callback - Optional callback function to invoke when the transfer
-            finishes.
-        argument - Optional argument to the callback function.
-
-    Returns:
-        <USBD_STATUS_SUCCESS> if the read operation has been started normally;
-        otherwise, the corresponding error code.
-*/
+//------------------------------------------------------------------------------
+/// Receives data from the host through the virtual COM port created by
+/// the CDC device serial driver. This function behaves like USBD_Read.
+/// \param data Pointer to the data buffer to put received data.
+/// \param size Size of the data buffer in bytes.
+/// \param callback Optional callback function to invoke when the transfer
+///                 finishes.
+/// \param argument Optional argument to the callback function.
+/// \return USBD_STATUS_SUCCESS if the read operation has been started normally;
+///         otherwise, the corresponding error code.
+//------------------------------------------------------------------------------
 unsigned char CDCDSerialDriver_Read(void *data,
                                     unsigned int size,
                                     TransferCallback callback,
@@ -255,22 +243,17 @@ unsigned char CDCDSerialDriver_Read(void *data,
                      argument);
 }
 
-/*
-    Function: CDCDSerialDriver_Write
-        Sends a data buffer through the virtual COM port created by the CDC
-        device serial driver. This function behaves exactly like <USBD_Write>.
-
-    Parameters:
-        data - Pointer to the data buffer to send.
-        size - Size of the data buffer in bytes.
-        callback - Optional callback function to invoke when the transfer
-            finishes.
-        argument - Optional argument to the callback function.
-
-    Returns:
-        <USBD_STATUS_SUCCESS> if the write operation has been started normally;
-        otherwise, the corresponding error code.
-*/
+//------------------------------------------------------------------------------
+/// Sends a data buffer through the virtual COM port created by the CDC
+/// device serial driver. This function behaves exactly like USBD_Write.
+/// \param data Pointer to the data buffer to send.
+/// \param size Size of the data buffer in bytes.
+/// \param callback Optional callback function to invoke when the transfer
+///                 finishes.
+/// \param argument Optional argument to the callback function.
+/// \return USBD_STATUS_SUCCESS if the read operation has been started normally;
+///         otherwise, the corresponding error code.
+//------------------------------------------------------------------------------
 unsigned char CDCDSerialDriver_Write(void *data,
                                      unsigned int size,
                                      TransferCallback callback,

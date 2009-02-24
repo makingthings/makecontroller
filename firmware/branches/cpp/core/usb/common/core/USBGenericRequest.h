@@ -27,11 +27,25 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: USBGenericRequest
+/**
+ \unit
 
-    About: Purpose
-        Definition of the USBGenericRequest class and its methods.
+ !!!Purpose
+
+    Definition of the USBGenericRequest class and its methods.
+
+ !!!Usage
+
+    -# Declare or access USB requests by USBGenericRequest instance.
+    -# To get usful information (field values) from the USB requests, use
+       - USBGenericRequest_GetType
+       - USBGenericRequest_GetRequest
+       - USBGenericRequest_GetValue
+       - USBGenericRequest_GetIndex
+       - USBGenericRequest_GetLength
+       - USBGenericRequest_GetEndpointNumber
+       - USBGenericRequest_GetRecipient
+       - USBGenericRequest_GetDirection
 */
 
 #ifndef USBGENERICREQUEST_H
@@ -40,84 +54,159 @@
 //------------------------------------------------------------------------------
 //         Definitions
 //------------------------------------------------------------------------------
-/*
-    Constants: Codes
-        USBGenericRequest_GETSTATUS - GET_STATUS request code.
-        USBGenericRequest_CLEARFEATURE - CLEAR_FEATURE request code.
-        USBGenericRequest_SETFEATURE - SET_FEATURE request code.
-        USBGenericRequest_SETADDRESS - SET_ADDRESS request code.
-        USBGenericRequest_GETDESCRIPTOR - GET_DESCRIPTOR request code.
-        USBGenericRequest_SETDESCRIPTOR - SET_DESCRIPTOR request code.
-        USBGenericRequest_GETCONFIGURATION - GET_CONFIGURATION request code.
-        USBGenericRequest_SETCONFIGURATION - SET_CONFIGURATION request code.
-        USBGenericRequest_GETINTERFACE - GET_INTERFACE request code.
-        USBGenericRequest_SETINTERFACE - SET_INTERFACE request code.
-        USBGenericRequest_SYNCHFRAME - SYNCH_FRAME request code.
-*/
+
+//------------------------------------------------------------------------------
+/// \page "USB Generic Request definitions"
+///
+/// This page lists the codes of USB generic request.
+///
+/// - USB Request codes
+///    - USBGenericRequest_GETSTATUS
+///    - USBGenericRequest_CLEARFEATURE
+///    - USBGenericRequest_SETFEATURE
+///    - USBGenericRequest_SETADDRESS
+///    - USBGenericRequest_GETDESCRIPTOR
+///    - USBGenericRequest_SETDESCRIPTOR
+///    - USBGenericRequest_GETCONFIGURATION
+///    - USBGenericRequest_SETCONFIGURATION
+///    - USBGenericRequest_GETINTERFACE
+///    - USBGenericRequest_SETINTERFACE
+///    - USBGenericRequest_SYNCHFRAME
+///
+/// - USB Request Recipients
+///    - USBGenericRequest_DEVICE
+///    - USBGenericRequest_INTERFACE
+///    - USBGenericRequest_ENDPOINT
+///    - USBGenericRequest_OTHER
+///
+/// - USB Request Types
+///    - USBGenericRequest_STANDARD
+///    - USBGenericRequest_CLASS
+///    - USBGenericRequest_VENDOR
+///
+/// - USB Request Directions
+///    - USBGenericRequest_IN
+///    - USBGenericRequest_OUT
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+/// \page "USB Request codes"
+///
+/// This page lists the USB generic request codes.
+///
+/// !Codes
+/// - USBGenericRequest_GETSTATUS
+/// - USBGenericRequest_CLEARFEATURE
+/// - USBGenericRequest_SETFEATURE
+/// - USBGenericRequest_SETADDRESS
+/// - USBGenericRequest_GETDESCRIPTOR
+/// - USBGenericRequest_SETDESCRIPTOR
+/// - USBGenericRequest_GETCONFIGURATION
+/// - USBGenericRequest_SETCONFIGURATION
+/// - USBGenericRequest_GETINTERFACE
+/// - USBGenericRequest_SETINTERFACE
+/// - USBGenericRequest_SYNCHFRAME
+
+/// GET_STATUS request code.
 #define USBGenericRequest_GETSTATUS             0
+/// CLEAR_FEATURE request code.
 #define USBGenericRequest_CLEARFEATURE          1
+/// SET_FEATURE request code.
 #define USBGenericRequest_SETFEATURE            3
+/// SET_ADDRESS request code.
 #define USBGenericRequest_SETADDRESS            5
+/// GET_DESCRIPTOR request code.
 #define USBGenericRequest_GETDESCRIPTOR         6
+/// SET_DESCRIPTOR request code.
 #define USBGenericRequest_SETDESCRIPTOR         7
+/// GET_CONFIGURATION request code.
 #define USBGenericRequest_GETCONFIGURATION      8
+/// SET_CONFIGURATION request code.
 #define USBGenericRequest_SETCONFIGURATION      9
+/// GET_INTERFACE request code.
 #define USBGenericRequest_GETINTERFACE          10
+/// SET_INTERFACE request code.
 #define USBGenericRequest_SETINTERFACE          11
+/// SYNCH_FRAME request code.
 #define USBGenericRequest_SYNCHFRAME            12
+//------------------------------------------------------------------------------
 
-/*
-    Constants: Recipients
-        USBGenericRequest_DEVICE - Recipient is the whole device.
-        USBGenericRequest_INTERFACE - Recipient is an interface.
-        USBGenericRequest_ENDPOINT - Recipient is an endpoint.
-        USBGenericRequest_OTHER - Recipient is another entity.
-*/
+//------------------------------------------------------------------------------
+/// \page "USB Request Recipients"
+///
+/// This page lists codes of USB request recipients.
+///
+/// !Recipients
+/// - USBGenericRequest_DEVICE
+/// - USBGenericRequest_INTERFACE
+/// - USBGenericRequest_ENDPOINT
+/// - USBGenericRequest_OTHER
+
+/// Recipient is the whole device.
 #define USBGenericRequest_DEVICE                0
+/// Recipient is an interface.
 #define USBGenericRequest_INTERFACE             1
+/// Recipient is an endpoint.
 #define USBGenericRequest_ENDPOINT              2
+/// Recipient is another entity.
 #define USBGenericRequest_OTHER                 3
+//------------------------------------------------------------------------------
 
-/*
-    Constants: Types
-        USBGenericRequest_STANDARD - Request is standard.
-        USBGenericRequest_CLASS - Request is class-specific.
-        USBGenericRequest_VENDOR - Request is vendor-specific.      
-*/
+//------------------------------------------------------------------------------
+/// \page "USB Request Types"
+///
+/// This page lists codes of USB request types.
+///
+/// !Types
+/// - USBGenericRequest_STANDARD
+/// - USBGenericRequest_CLASS
+/// - USBGenericRequest_VENDOR
+
+/// Request is standard.
 #define USBGenericRequest_STANDARD              0
+/// Request is class-specific.
 #define USBGenericRequest_CLASS                 1
+/// Request is vendor-specific.
 #define USBGenericRequest_VENDOR                2
+//------------------------------------------------------------------------------
 
-/*
-    Constants: Directions
-        USBGenericRequest_IN - Transfer occurs from device to the host.
-        USBGenericRequest_OUT - Transfer occurs from the host to the device.
-*/
+//------------------------------------------------------------------------------
+/// \page "USB Request Directions"
+///
+/// This page lists codes of USB request directions.
+///
+/// !Directions
+/// - USBGenericRequest_IN
+/// - USBGenericRequest_OUT
+
+/// Transfer occurs from device to the host.
 #define USBGenericRequest_OUT                   0
+/// Transfer occurs from the host to the device.
 #define USBGenericRequest_IN                    1
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //         Types
 //------------------------------------------------------------------------------
 
-/*
-    Type: USBGenericRequest
-        Generic USB SETUP request sent over Control endpoints.
-
-    Variables:
-        bmRequestType - Type of request (see <Recipients>, <Types> and
-            <Direction>).
-        bRequest - Request code (see <Codes>).
-        wValue - Request-specific value parameter.
-        wIndex - Request-specific index parameter.
-        wLength - Expected length (in bytes) of the data phase.
-*/
+//------------------------------------------------------------------------------
+/// Generic USB SETUP request sent over Control endpoints.
+//------------------------------------------------------------------------------
 typedef struct {
 
+    /// Type of request
+    /// \sa "USB Request Recipients"
+    /// \sa "USB Request Types"
+    /// \sa "USB Request Directions"
     unsigned char bmRequestType:8;
+    /// Request code
+    /// \sa "USB Request Codes"
     unsigned char bRequest:8;
+    /// Request-specific value parameter.
     unsigned short wValue:16;
+    /// Request-specific index parameter.
     unsigned short wIndex:16;
+    /// Expected length (in bytes) of the data phase.
     unsigned short wLength:16;
 
 } USBGenericRequest;
@@ -125,112 +214,29 @@ typedef struct {
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-/*
-    Function: USBGenericRequest_GetType
-        Returns the type of the given request.
 
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
+extern unsigned char USBGenericRequest_GetType(
+    const USBGenericRequest *request);
 
-    Returns:
-        Request type.
 
-    See also:
-        <Types>.
-*/
-extern unsigned char USBGenericRequest_GetType(const USBGenericRequest *request);
-
-/*
-    Function: USBGenericRequest_GetRequest
-        Returns the request code of the given request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Request code.
-
-    See also:
-        <Codes>.
-*/
 extern unsigned char USBGenericRequest_GetRequest(
     const USBGenericRequest *request);
 
-/*
-    Function: USBGenericRequest_GetValue
-        Returns the wValue field of the given request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Request value.
-*/
 extern unsigned short USBGenericRequest_GetValue(
     const USBGenericRequest *request);
 
-/*
-    Function: USBGenericRequest_GetIndex
-        Returns the wIndex field of the given request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Request index;
-*/
 extern unsigned short USBGenericRequest_GetIndex(
     const USBGenericRequest *request);
 
-/*
-    Function: USBGenericRequest_GetLength
-        Returns the expected length of the data phase following a request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Length of data phase.
-*/
 extern unsigned short USBGenericRequest_GetLength(
     const USBGenericRequest *request);
 
-/*
-    Function: USBGenericRequest_GetEndpointNumber
-        Returns the endpoint number targetted by a given request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Endpoint number.
-*/
 extern unsigned char USBGenericRequest_GetEndpointNumber(
     const USBGenericRequest *request);
 
-/*
-    Function: USBGenericRequest_GetRecipient
-        Returns the intended recipient of a given request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Request recipient.
-*/
 extern unsigned char USBGenericRequest_GetRecipient(
     const USBGenericRequest *request);
 
-/*
-    Function: USBGenericRequest_GetDirection
-        Returns the direction of the data transfer following the given request.
-
-    Parameters:
-        request - Pointer to a USBGenericRequest instance.
-
-    Returns:
-        Transfer direction.
-*/
 extern unsigned char USBGenericRequest_GetDirection(
     const USBGenericRequest *request);
 

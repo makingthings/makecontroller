@@ -27,12 +27,13 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
-    Title: USBDDriverDescriptors
+/**
+ \unit
 
-    About: Purpose
-        Definition of a class for declaring USB descriptors required by the
-        device driver.
+ !!!Purpose
+
+    Definition of a class for declaring USB descriptors required by the
+    device driver.
 */
 
 #ifndef USBDDRIVERDESCRIPTORS_H
