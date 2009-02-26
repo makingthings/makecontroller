@@ -1,6 +1,6 @@
 
 
-#include "config.h"
+#include "core.h"
 #ifdef OSC
 
 #include "osc_cpp.h"
@@ -19,54 +19,25 @@ extern "C" {
 
 #include "usb_serial.h"
 
-#ifdef MAKE_CTRL_NETWORK
-void oscUdpLoop( void* parameters );
-#endif
-void oscUsbLoop( void* parameters );
 void oscAutoSendLoop( void* parameters );
 
-OSCC* OSCC::_instance = 0;
+Osc* Osc::_instance = 0;
 
-OSCC::OSCC( )
+Osc::Osc( )
 {
   #ifdef MAKE_CTRL_NETWORK
   udpTask = NULL;
   #endif
+  #ifdef MAKE_CTRL_USB
   usbTask = NULL;
+  #endif
   autoSendTask = NULL;
   handler_count = 0;
-  resetChannel( oscUDP, true, true );
-  resetChannel( oscUSB, true, true );
+  resetChannel( OscUDP, true, true );
+  resetChannel( OscUSB, true, true );
 }
 
-void OSCC::setUdpListener( bool enable, int port )
-{
-  #ifdef MAKE_CTRL_NETWORK
-  if( enable && !udpTask )
-  {
-    udpTask = new Task( oscUdpLoop, "Osc UDP", 1000, this, 3 );
-    udp_listen_port = port;
-  }
-  else if( !enable && udpTask )
-  {
-    delete udpTask;
-    udpTask = NULL;
-  }
-  #endif
-}
-
-void OSCC::setUsbListener( bool enable )
-{
-  if( enable && !usbTask )
-    usbTask = new Task( oscUsbLoop, "Osc USB", 1000, this, 3 );
-  else if( !enable && usbTask )
-  {
-    delete usbTask;
-    usbTask = NULL;
-  }
-}
-
-void OSCC::setAutoSender( bool enable )
+void Osc::setAutoSender( bool enable )
 {
   if( enable && !autoSendTask )
     autoSendTask = new Task( oscAutoSendLoop, "AutoSend", 1000, this, 3 );
@@ -77,7 +48,7 @@ void OSCC::setAutoSender( bool enable )
   }
 }
 
-bool OSCC::registerHandler( OscHandler* handler )
+bool Osc::registerHandler( OscHandler* handler )
 {
   if( handler_count >= OSC_MAX_HANDLERS )
     return false;
@@ -89,68 +60,101 @@ bool OSCC::registerHandler( OscHandler* handler )
 }
 
 /*
-  Loop that sits around waiting for UDP data to process as OSC messages.
+  Loop that sits around waiting for UDP data to process as Osc messages.
 */
 #ifdef MAKE_CTRL_NETWORK
+
+void oscUdpLoop( void* parameters );
+
 void oscUdpLoop( void* params )
 {
-  OSCC* osc = (OSCC*)params;
+  Osc* osc = (Osc*)params;
   
   // Chill until the Network is up
   // while ( !Network_GetActive() )
   //   Sleep( 100 );
-
-  UdpSocket udp_sock;
-  if( !udp_sock.valid() )
+  
+  if( !osc->udpSock.valid() )
     return;
   
-  if( !osc->send_sock.valid() )
-    return;
-  
-  udp_sock.bind( osc->udp_listen_port );  
+  osc->udpSock.bind( osc->udp_listen_port );  
   int address, port, length;
   
   while ( true )
   {
-    length = udp_sock.read( osc->udpChannel.inBuf, OSC_MAX_MESSAGE_IN, &address, &port );
+    length = osc->udpSock.read( osc->udpChannel.inBuf, OSC_MAX_MESSAGE_IN, &address, &port );
     if( length > 0 )
     {
       osc->udp_reply_address = address;
       osc->udp_reply_port = port;
-      osc->receivePacket( oscUDP, osc->udpChannel.inBuf, length );
+      osc->receivePacket( OscUDP, osc->udpChannel.inBuf, length );
     }
     Task::yield( );
   }
 }
+
+void Osc::setUdpListener( bool enable, int port )
+{
+  if( enable && !udpTask )
+  {
+    udpTask = new Task( oscUdpLoop, "Osc UDP", 1000, this, 3 );
+    udp_listen_port = port;
+  }
+  else if( !enable && udpTask )
+  {
+    delete udpTask;
+    udpTask = NULL;
+  }
+}
+
 #endif
 
 /*
-  Loop that sits around waiting for USB data to process as OSC messages.
+  Loop that sits around waiting for USB data to process as Osc messages.
 */
+
+#ifdef MAKE_CTRL_USB
+
+void oscUsbLoop( void* parameters );
+
 void oscUsbLoop( void* params )
 {
-  OSCC* osc = (OSCC*)params;
+  Osc* osc = (Osc*)params;
+  UsbSerial* usb = UsbSerial::get();
   
   // Chill until the USB connection is up
-  while ( !UsbSerial::get()->isActive() )
+  while ( !usb->isActive() )
     Task::sleep( 100 );
   
   int length;
   while ( true )
   {
-    length = UsbSerial::get()->readSlip( osc->usbChannel.inBuf, OSC_MAX_MESSAGE_IN );
+    length = usb->readSlip( osc->usbChannel.inBuf, OSC_MAX_MESSAGE_IN );
     if ( length > 0 )
-      osc->receivePacket( oscUSB, osc->usbChannel.inBuf, length );
+      osc->receivePacket( OscUSB, osc->usbChannel.inBuf, length );
     Task::sleep( 1 );
   }
 }
+
+void Osc::setUsbListener( bool enable )
+{
+  if( enable && !usbTask )
+    usbTask = new Task( oscUsbLoop, "Osc USB", 1000, this, 3 );
+  else if( !enable && usbTask )
+  {
+    delete usbTask;
+    usbTask = NULL;
+  }
+}
+
+#endif // MAKE_CTRL_USB
 
 /*
   Loop that checks if OscHandlers registered for auto sending have anything to auto send.
 */
 void oscAutoSendLoop( void* params )
 {
-  OSCC* osc = (OSCC*)params;
+  Osc* osc = (Osc*)params;
   // int channel;
   // int i;
   // OscSubsystem* sub;
@@ -182,7 +186,7 @@ void oscAutoSendLoop( void* params )
   Main entry point for processing a new packet.
   Messages are sent to receiveMessage(), recursively in the case that we received a bundle.
 */
-bool OSCC::receivePacket( OscTransport t, char* packet, int length )
+bool Osc::receivePacket( OscTransport t, char* packet, int length )
 {
   // Got a packet.  Unpacket.
   int status = -1;
@@ -215,12 +219,12 @@ bool OSCC::receivePacket( OscTransport t, char* packet, int length )
 }
 
 /*
-  Process a single OSC message.
+  Process a single Osc message.
   First check just the address string to see if it's a query.  If so, find the appropriate handler and dispatch it.
   Otherwise, process the message and populate an OscMessage structure with its data, and send that to
   any OscHandlers that have registered to hear about it.
 */
-int OSCC::receiveMessage( OscTransport t, char* message, int length )
+int Osc::receiveMessage( OscTransport t, char* message, int length )
 {
   // Confirm it's a message
   if ( *message != '/')
@@ -258,11 +262,14 @@ int OSCC::receiveMessage( OscTransport t, char* message, int length )
     if ( OscPattern::match( message + 1, handler->name() ) )
     {
       #ifdef MAKE_CTRL_NETWORK
-      if( t == oscUDP )
+      if( t == OscUDP )
         handler->onNewMsg( t, msg, udp_reply_address, udp_reply_port );
       #endif
-      if( t == oscUSB )
+
+      #ifdef MAKE_CTRL_USB
+      if( t == OscUSB )
         handler->onNewMsg( t, msg, 0, 0 );
+      #endif
     }
   }
   resetChannel(t, false, true);
@@ -274,7 +281,7 @@ int OSCC::receiveMessage( OscTransport t, char* message, int length )
   We do the OscHandler the favor of figuring out which element of the address string it was, so they
   can do whatever makes sense in their domain.
 */
-int OSCC::handleQuery( OscTransport t, char* message )
+int Osc::handleQuery( OscTransport t, char* message )
 {
   int element_count = 0;
   int root_len = 0;
@@ -306,7 +313,7 @@ int OSCC::handleQuery( OscTransport t, char* message )
   First find the type tag, then walk through the rest of the data according to it, stuffing the data
   items into the OscMessage.
 */
-OscMessage* OSCC::extractData( OscTransport t, char* message, int length )
+OscMessage* Osc::extractData( OscTransport t, char* message, int length )
 {
   char* typetag = findTypeTag( message, length );
   if(!typetag)
@@ -376,7 +383,7 @@ OscMessage* OSCC::extractData( OscTransport t, char* message, int length )
   return msg;
 }
 
-char* OSCC::findTypeTag( char* message, int length )
+char* Osc::findTypeTag( char* message, int length )
 {
   while ( *message != ',' && length-- > 0 )
     message++;
@@ -391,7 +398,7 @@ char* OSCC::findTypeTag( char* message, int length )
   If your message fills up the buffer, it will be sent immediately to make space.  Otherwise,
   you'll need to send it yourself using send().
 */
-int OSCC::createMessage( OscTransport t, const char* address, const char* format, ... )
+int Osc::createMessage( OscTransport t, const char* address, const char* format, ... )
 {
   if ( !address || !format || *format != ',' )
     return CONTROLLER_ERROR_BAD_DATA;
@@ -452,7 +459,7 @@ int OSCC::createMessage( OscTransport t, const char* address, const char* format
   return CONTROLLER_OK;
 }
 
-char* OSCC::createMessageInternal( char* bp, int* length, const char* address, const char* format, va_list args )
+char* Osc::createMessageInternal( char* bp, int* length, const char* address, const char* format, va_list args )
 {
   // do the address
   bp = writePaddedString( bp, length, address );
@@ -521,7 +528,7 @@ char* OSCC::createMessageInternal( char* bp, int* length, const char* address, c
   return ( cont ) ? bp : NULL;
 }
 
-char* OSCC::createBundle( char* buffer, int* length, int a, int b )
+char* Osc::createBundle( char* buffer, int* length, int a, int b )
 {
   char *bp = buffer;
 
@@ -538,7 +545,7 @@ char* OSCC::createBundle( char* buffer, int* length, int a, int b )
   return bp;
 }
 
-int OSCC::send( OscTransport t )
+int Osc::send( OscTransport t )
 {
   OscChannel* ch = getChannel(t);
 
@@ -550,7 +557,7 @@ int OSCC::send( OscTransport t )
   return ret;
 }
 
-int OSCC::sendInternal( OscTransport t )
+int Osc::sendInternal( OscTransport t )
 {
   OscChannel* ch = getChannel(t);
   if ( ch->outgoingMsgCount == 0 )
@@ -567,21 +574,24 @@ int OSCC::sendInternal( OscTransport t )
     length -= 20;
   }
   #ifdef MAKE_CTRL_NETWORK
-  if( t == oscUDP )
+  if( t == OscUDP )
   {
-    int retval = send_sock.write(  buffer, length, udp_reply_address, udp_reply_port );
+    int retval = udpSock.write(  buffer, length, udp_reply_address, udp_reply_port );
     return retval;
   }
   #endif
-  if( t == oscUSB )
+
+  #ifdef MAKE_CTRL_USB
+  if( t == OscUSB )
     UsbSerial::get()->writeSlip( buffer, length );
+  #endif
 
   resetChannel( t, true, false );
 
   return CONTROLLER_OK;
 }
 
-void OSCC::resetChannel( OscTransport t, bool outgoing, bool incoming )
+void Osc::resetChannel( OscTransport t, bool outgoing, bool incoming )
 {
   OscChannel* ch = getChannel(t);
   if(outgoing)
@@ -597,18 +607,20 @@ void OSCC::resetChannel( OscTransport t, bool outgoing, bool incoming )
   }
 }
 
-OscChannel* OSCC::getChannel(OscTransport t)
+OscChannel* Osc::getChannel(OscTransport t)
 {
   #ifdef MAKE_CTRL_NETWORK
-  if(t == oscUDP)
+  if(t == OscUDP)
     return &udpChannel;
   #endif
-  if(t == oscUSB)
+  #ifdef MAKE_CTRL_USB
+  if(t == OscUSB)
     return &usbChannel;
+  #endif
   return NULL;
 }
 
-int OSCC::endianSwap( int a ) // static
+int Osc::endianSwap( int a ) // static
 {
   return ( ( a & 0x000000FF ) << 24 ) |
          ( ( a & 0x0000FF00 ) << 8 )  |
@@ -617,7 +629,7 @@ int OSCC::endianSwap( int a ) // static
 
 }
 
-char* OSCC::writePaddedString( char* buffer, int* length, const char* string )
+char* Osc::writePaddedString( char* buffer, int* length, const char* string )
 {
   int tagLen = strlen( string ) + 1;
   int tagPadLen = tagLen;
@@ -641,7 +653,7 @@ char* OSCC::writePaddedString( char* buffer, int* length, const char* string )
   return buffer;
 }
 
-char* OSCC::writePaddedBlob( char* buffer, int* length, char* blob, int blen )
+char* Osc::writePaddedBlob( char* buffer, int* length, char* blob, int blen )
 {
   int i;
   int padLength = blen;
@@ -669,7 +681,7 @@ char* OSCC::writePaddedBlob( char* buffer, int* length, char* blob, int blen )
   return buffer;
 }
 
-char* OSCC::writeTimetag( char* buffer, int* length, int a, int b )
+char* Osc::writeTimetag( char* buffer, int* length, int a, int b )
 {
   if ( *length < 8 )
     return NULL;
@@ -688,7 +700,7 @@ OscRangeHelper::OscRangeHelper( OscMessage* msg, int element, int max, int min )
   single = -1;
   if( !msg->address )
     return;
-  const char* p = strchr(msg->address, '/'); // should give us the very first char of the OSC message
+  const char* p = strchr(msg->address, '/'); // should give us the very first char of the Osc message
   if( !p++ ) // step to the beginning of the address element
     return;
   int j;
@@ -701,7 +713,7 @@ OscRangeHelper::OscRangeHelper( OscMessage* msg, int element, int max, int min )
   
   int n = 0;
   int digits = 0;
-  // from OSC_NumberMatch()
+  // from Osc_NumberMatch()
   while ( isdigit( *p ) )
   {
     digits++;
@@ -745,12 +757,12 @@ OscRangeHelper::OscRangeHelper( OscMessage* msg, int element, int max, int min )
   }
 }
 
-bool OscRangeHelper::hasNextIndex( )
+bool OscRangeHelper::hasNext( )
 {
   return remaining > 0;
 }
 
-int OscRangeHelper::nextIndex( )
+int OscRangeHelper::next( )
 {
   int retval = 0;
   if( single != -1 )
@@ -785,7 +797,6 @@ int OscHandler::propertyLookup( const char* propertyList[], char* property )
   }
   return -1;
 }
-
 
 #endif // OSC
 

@@ -60,6 +60,8 @@ public:
   int getPeripheral( );
   bool setPeripheral( IoPeripheral periph, bool disableGpio = true );
   bool releasePeripherals( );
+
+  bool registerInterruptHandler( void* yourobj, void (*yourfunc)());
   
 private:
   unsigned int io_pin;

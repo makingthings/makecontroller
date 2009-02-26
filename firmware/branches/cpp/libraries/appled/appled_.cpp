@@ -162,9 +162,9 @@ int AppLedOSC::onNewMsg( OscTransport t, OscMessage* msg, int src_addr, int src_
   
   int index;
   OscRangeHelper rangeHelper(msg, 1, APPLED_COUNT); // element 1 should be our index
-  while( rangeHelper.hasNextIndex() )
+  while( rangeHelper.hasNext() )
   {
-    index = rangeHelper.nextIndex();
+    index = rangeHelper.next();
     if( index < 0 || index >= APPLED_COUNT )
       continue;
     AppLed led(index);
@@ -184,7 +184,7 @@ int AppLedOSC::onNewMsg( OscTransport t, OscMessage* msg, int src_addr, int src_
       switch( prop_index )
       {
         case 0: // state
-          Oscc->createMessage(t, msg->address, ",i", led.getState());
+          Osc::get()->createMessage(t, msg->address, ",i", led.getState());
           replies++;
           break;
       }
@@ -203,7 +203,7 @@ int AppLedOSC::onQuery( OscTransport t, char* address, int element )
       int i;
       for(i = 0; i < APPLED_COUNT; i++)
       {
-        Oscc->createMessage(t, address, ",i", i);
+        Osc::get()->createMessage(t, address, ",i", i);
         replies++;
       }
       break;
@@ -213,7 +213,7 @@ int AppLedOSC::onQuery( OscTransport t, char* address, int element )
       const char** prop = propertyList; // create message for each item in our propertyList
       while(prop)
       {
-        Oscc->createMessage(t, address, ",s", *prop);
+        Osc::get()->createMessage(t, address, ",s", *prop);
         replies++;
         prop++;
       }

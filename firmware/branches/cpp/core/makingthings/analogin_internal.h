@@ -24,7 +24,7 @@
 #ifndef ANALOGIN_INTERNAL_H
 #define ANALOGIN_INTERNAL_H
 
-#include "config.h"
+#include "core.h"
 
 #define ANALOGIN_CHANNELS 8
 
