@@ -1,7 +1,7 @@
 
 
-#ifndef OSC_CPP_H
-#define OSC_CPP_H
+#ifndef OSC_H
+#define OSC_H
 
 #include "config.h"
 
@@ -17,16 +17,14 @@
 #define OSC_MAX_MESSAGE_OUT  600
 #define OSC_SCRATCH_BUF_SIZE 100
 
-#define Oscc OSCC::instance()
-
-enum OscTransport { oscUDP, oscUSB };
+enum OscTransport { OscUDP, OscUSB };
 
 class OscRangeHelper
 {
 public:
   OscRangeHelper( OscMessage* msg, int element, int max, int min = 0 );
-  bool hasNextIndex( );
-  int nextIndex( );
+  bool hasNext( );
+  int next( );
 private:
   int remaining, bits, current, single;
 };
@@ -34,11 +32,17 @@ private:
 class OscHandler
 {
 public:
-  // mandatory
-  virtual int onNewMsg( OscTransport t, OscMessage* msg, int src_addr, int src_port ) = 0;
-  virtual int onQuery( OscTransport t, char* address, int element ) = 0;
-  virtual const char* name( ) = 0;
-  // optional
+  int onNewMsg( OscTransport t, OscMessage* msg, int src_addr, int src_port )
+  {
+    (void)t; (void)msg; (void)src_addr; (void)src_port;
+    return 0;
+  }
+  int onQuery( OscTransport t, char* address, int element )
+  {
+    (void)t; (void)address; (void)element;
+    return 0;
+  }
+  const char* name( ) { return ""; }
   bool autoSend( OscTransport t ) { (void)t; return false; }
 protected:
   int propertyLookup( const char* propertyList[], char* property );
@@ -57,7 +61,7 @@ typedef struct OscChannel
   int (*sendMessage)( char* packet, int length, int replyAddress, int replyPort );
 };
 
-class OSCC
+class Osc
 {
 public:
   void setUsbListener( bool enable );
@@ -69,16 +73,16 @@ public:
   int createMessage( OscTransport t, const char* address, const char* format, ... );
   static int endianSwap( int a );
   
-  static OSCC* instance( )
+  static Osc* get( )
   {
     if( !_instance )
-      _instance = new OSCC( );
+      _instance = new Osc( );
     return _instance;
   }
   
 protected:
-  OSCC( );
-  static OSCC* _instance;
+  Osc( );
+  static Osc* _instance;
   bool receivePacket( OscTransport t, char* packet, int length );
   int receiveMessage( OscTransport t, char* message, int length );
   int handleQuery( OscTransport t, char* message );
@@ -90,28 +94,31 @@ protected:
   char* writePaddedBlob( char* buffer, int* length, char* blob, int blen );
   char* writeTimetag( char* buffer, int* length, int a, int b );
   int sendInternal( OscTransport t );
-  int usbPacketSend( char* packet, int length );
   void resetChannel( OscTransport t, bool outgoing, bool incoming );
+  OscChannel* getChannel(OscTransport t);
   
-  Task* usbTask;
   Task* autoSendTask;
   friend void oscUdpLoop( void* parameters );
   friend void oscUsbLoop( void* parameters );
   friend void oscAutoSendLoop( void* parameters );
   OscHandler* handlers[OSC_MAX_HANDLERS];
   int handler_count;
+
   #ifdef MAKE_CTRL_NETWORK
   Task* udpTask;
-  UdpSocket send_sock;
+  UdpSocket udpSock;
   OscChannel udpChannel;
   int udp_listen_port, udp_reply_port, udp_reply_address;
   int udpPacketSend( char* packet, int length, int replyAddress, int replyPort );
   #endif // MAKE_CTRL_NETWORK
+
+  #ifdef MAKE_CTRL_USB
+  Task* usbTask;
   OscChannel usbChannel;
-  OscChannel* getChannel(OscTransport t);
-  
+  int usbPacketSend( char* packet, int length );
+  #endif // MAKE_CTRL_USB
 };
 
 #endif // OSC
 
-#endif // OSC_CPP_H
+#endif // OSC_H

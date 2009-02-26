@@ -24,7 +24,7 @@
 
 #include "motor.h"
 #include "pwmout.h"
-#include "config.h"
+#include "core.h"
 
 #define MOTOR_COUNT 4
 

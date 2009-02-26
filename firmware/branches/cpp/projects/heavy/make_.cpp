@@ -6,11 +6,10 @@
 	Furthermore, only register the OSC subsystems you need - by default, we register all of them.
 */
 
-#include "config.h"
 #include "core.h"
 
 // include all the libraries we're using
-extern "C" {
+//extern "C" {
   //#include "appled.h"
   // #include "dipswitch.h"
   // #include "servo.h"
@@ -21,7 +20,7 @@ extern "C" {
   // #include "stepper.h"
   // #include "xbee.h"
   // #include "webserver.h"
-}
+//}
 
 #include "led_cpp.h"
 #include "appled_cpp.h"

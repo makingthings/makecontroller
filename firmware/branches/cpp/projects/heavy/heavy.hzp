@@ -12,15 +12,7 @@
       </folder>
       <folder Name="Core" >
         <folder Name="MakingThings" >
-          <file file_name="../../core/makingthings/analogin_isr.c" Name="analogin_isr.c" >
-            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
-            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
-          </file>
-          <file file_name="../../core/makingthings/analogin.c" Name="analogin.c" />
-          <file file_name="../../core/makingthings/analogin.h" Name="analogin.h" />
-          <file file_name="../../core/makingthings/analogin_internal.h" Name="analogin_internal.h" />
           <file file_name="../../core/makingthings/controller.h" Name="controller.h" />
-          <file file_name="../../core/makingthings/debugosc.c" Name="debugosc.c" />
           <file file_name="../../core/makingthings/error.h" Name="error.h" />
           <file file_name="../../core/makingthings/FreeRTOSConfig.h" Name="FreeRTOSConfig.h" />
           <file file_name="../../core/makingthings/fasttimer.c" Name="fasttimer.c" />
@@ -31,14 +23,10 @@
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
           </file>
           <file file_name="../../core/freertos/portable/MemMang/heap_2.c" Name="heap_2.c" />
-          <file file_name="../../core/makingthings/led.h" Name="led.h" />
           <file file_name="../../core/makingthings/io.c" Name="io.c" />
           <file file_name="../../core/makingthings/io.h" Name="io.h" />
-          <file file_name="../../core/makingthings/led.c" Name="led.c" />
           <file file_name="../../core/makingthings/lwipopts.h" Name="lwipopts.h" />
           <file file_name="../../core/makingthings/osc_patternmatch.h" Name="osc_patternmatch.h" />
-          <file file_name="../../core/makingthings/osc.c" Name="osc.c" />
-          <file file_name="../../core/makingthings/osc.h" Name="osc.h" />
           <file file_name="../../core/makingthings/osc_patternmatch.c" Name="osc_patternmatch.c" />
           <file file_name="../../core/makingthings/rtos.h" Name="rtos.h" />
           <file file_name="../../core/makingthings/pwm.c" Name="pwm.c" />
@@ -182,29 +170,12 @@
         </folder>
       </folder>
       <folder Name="Libraries" >
-        <file file_name="../../libraries/appled/appled.h" Name="appled.h" />
-        <file file_name="../../libraries/appled/appled.c" Name="appled.c" />
-        <file file_name="../../libraries/digitalin/digitalin.h" Name="digitalin.h" />
-        <file file_name="../../libraries/digitalin/digitalin.c" Name="digitalin.c" />
-        <file file_name="../../libraries/digitalout/digitalout.h" Name="digitalout.h" />
-        <file file_name="../../libraries/digitalout/digitalout.c" Name="digitalout.c" />
         <file file_name="../../libraries/dipswitch/dipswitch.h" Name="dipswitch.h" />
         <file file_name="../../libraries/dipswitch/dipswitch.c" Name="dipswitch.c" />
-        <file file_name="../../libraries/motor/motor.h" Name="motor.h" />
-        <file file_name="../../libraries/motor/motor.c" Name="motor.c" />
-        <file file_name="../../libraries/pwmout/pwmout.h" Name="pwmout.h" />
-        <file file_name="../../libraries/pwmout/pwmout.c" Name="pwmout.c" />
-        <file file_name="../../libraries/servo/servo_internal.h" Name="servo_internal.h" />
-        <file file_name="../../libraries/servo/servo.c" Name="servo.c" />
-        <file file_name="../../libraries/servo/servo.h" Name="servo.h" />
-        <file file_name="../../libraries/stepper/stepper.h" Name="stepper.h" />
-        <file file_name="../../libraries/stepper/stepper.c" Name="stepper.c" />
         <file file_name="../../libraries/appled/appled_cpp.h" Name="appled_cpp.h" />
         <file file_name="../../libraries/appled/appled_.cpp" Name="appled_.cpp" />
         <file file_name="../../libraries/webserver/webserver_.h" Name="webserver_.h" />
         <file file_name="../../libraries/webserver/webserver_.cpp" Name="webserver_.cpp" />
-        <file file_name="../../libraries/aes/aes_.h" Name="aes_.h" />
-        <file file_name="../../libraries/aes/aes_.cpp" Name="aes_.cpp" />
       </folder>
     </folder>
     <configuration arm_target_loader_reset_after_download="Yes" Target="AT91SAM7X256" build_intermediate_directory="intermediate" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" target_reset_script="FLASHReset()" build_output_directory="output" arm_target_flash_loader_type="Comms Channel Loader" Name="THUMB Flash Debug" />

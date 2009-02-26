@@ -24,7 +24,7 @@
 
 #include "pwmout.h"
 #include "pwm.h"
-#include "config.h"
+#include "core.h"
 
 #include "AT91SAM7X256.h"
 
