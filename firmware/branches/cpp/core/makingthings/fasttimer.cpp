@@ -297,8 +297,8 @@ int FastTimer::managerInit(int timer)
 
 	AT91C_BASE_PMC->PMC_PCER = 1 << channel_id;
                                     
-  unsigned int mask ;
-  mask = 0x1 << AT91C_ID_TC2 | 0x01;
+  unsigned int mask;
+  mask = 0x1 << channel_id | 0x01;
 
   /* Disable the interrupt on the interrupt controller */
   AT91C_BASE_AIC->AIC_IDCR = mask;
