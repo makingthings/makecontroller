@@ -15,17 +15,8 @@
 
 *********************************************************************************/
 
-/* 
-  BASIC INTERRUPT DRIVEN DRIVER FOR MAKE BOARD. 
-*/
-
-/* Scheduler includes. */
-
 #include "FreeRTOS.h"
-#include "types.h"
 #include "fasttimer.h"
-#include "fasttimer_internal.h"
-#include "AT91SAM7X256.h"
 
 void DisableFIQFromThumb( void )
 {
@@ -47,79 +38,78 @@ void EnableFIQFromThumb( void )
 	asm volatile ( "BX		R14" );				/* Return back to thumb.					*/
 }
 
-extern struct FastTimer_ FastTimer;
-
 // At the moment, the FastTimer ISR or callbacks, very importantly, can't call any OS stuff since
 // the IRQ might happen any old where
 
 void FastTimer_Isr( void ) __attribute__ ((naked));
 
 // Made non-local for debugging
-FastTimerEntry* te;
+FastTimer* te;
 int jitter;
 int timeReference;
 
 void FastTimer_Isr( void )
 {
   portENTER_FIQ( );
-  int status = AT91C_BASE_TC2->TC_SR;
+  FastTimer::Manager* manager = &FastTimer::manager;
+  int status = manager->tc->TC_SR;
   if ( status & AT91C_TC_CPCS )
   {
-    FastTimer.servicing = true;
+    manager->servicing = true;
 
     //AT91C_BASE_TC2->TC_CCR = AT91C_TC_CLKDIS;
 
     // make sure there's not another IRQ while we're processing
-    timeReference = AT91C_BASE_TC2->TC_RC;
-    AT91C_BASE_TC2->TC_RC = 0xFF00;
+    timeReference = manager->tc->TC_RC;
+    manager->tc->TC_RC = 0xFF00;
 
 #ifdef FASTIRQ_MONITOR_IO
     Io_SetTrue( FASTIRQ_MONITOR_IO );
 #endif
 
 #ifdef FASTIRQ_STATS
-    int startCount = AT91C_BASE_TC2->TC_CV;
+    int startCount = manager->tc->TC_CV;
 
     // moved outside for debugging
     //int jitter;
-    jitter = AT91C_BASE_TC2->TC_CV;
+    jitter = manager->tc->TC_CV;
 
-    if ( ++FastTimer.count == 1000 )
+    if ( ++manager->count == 1000 )
     {
       // need to not do division here... takes too long
-      //FastTimer.jitterTotal = FastTimer.jitterTotal / FastTimer.count;
-      FastTimer.jitterTotal = 0;
-      FastTimer.jitterMax = 0;
+      //manager->jitterTotal = manager->jitterTotal / manager->count;
+      manager->jitterTotal = 0;
+      manager->jitterMax = 0;
       // need to not do division here... takes too long
-      // FastTimer.durationTotal = FastTimer.durationTotal / FastTimer.count;
-      FastTimer.durationTotal = 0;
-      FastTimer.durationMax = 0;
-      FastTimer.count = 1;
+      // manager->durationTotal = manager->durationTotal / manager->count;
+      manager->durationTotal = 0;
+      manager->durationMax = 0;
+      manager->count = 1;
     }
     
-    FastTimer.jitterTotal += jitter;
+    manager->jitterTotal += jitter;
         
-    if ( jitter > FastTimer.jitterMax )
-      FastTimer.jitterMax = jitter;
-    if ( jitter > FastTimer.jitterMaxAllDay )
-      FastTimer.jitterMaxAllDay = jitter;
+    if ( jitter > manager->jitterMax )
+      manager->jitterMax = jitter;
+    if ( jitter > manager->jitterMaxAllDay )
+      manager->jitterMaxAllDay = jitter;
 
 #endif
 
-    //FastTimerEntry* te = FastTimer.first;
+    //FastTimerEntry* te = manager->first;
     // Use this during debuggin
-    te = FastTimer.first;
+    te = manager->first;
 
-    FastTimer.next = NULL;
-    FastTimer.previous = NULL;
-    FastTimer.nextTime = 0xFF00;
+    manager->next = NULL;
+    manager->previous = NULL;
+    manager->nextTime = 0xFF00;
     int removed = false;
     // timeReference = AT91C_BASE_TC2->TC_CV;
 
     while ( te != NULL )
     {
-      FastTimer.next = te->next;
-      te->timeCurrent -= ( timeReference + AT91C_BASE_TC2->TC_CV );
+      manager->next = te->next;
+      te->timeCurrent -= ( timeReference + manager->tc->TC_CV );
       if ( te->timeCurrent <= FASTTIMER_MINCOUNT )
       {
         // Watch out for gross errors
@@ -133,10 +123,10 @@ void FastTimer_Isr( void )
         else
         {
           // remove it if necessary (do this first!)
-          if ( FastTimer.previous == NULL )
-            FastTimer.first = FastTimer.next;
+          if ( manager->previous == NULL )
+            manager->first = manager->next;
           else
-            FastTimer.previous->next = FastTimer.next;  
+            manager->previous->next = manager->next;  
           removed = true;
         }
 
@@ -154,39 +144,39 @@ void FastTimer_Isr( void )
       // at all.
       if ( !removed )
       {
-        if ( FastTimer.nextTime == -1 || te->timeCurrent < FastTimer.nextTime )
+        if ( manager->nextTime == -1 || te->timeCurrent < manager->nextTime )
         {
-          FastTimer.nextTime = te->timeCurrent;
+          manager->nextTime = te->timeCurrent;
         }
-        FastTimer.previous = te;
+        manager->previous = te;
       }
 
-      te = FastTimer.next;
+      te = manager->next;
     }
 
-    if ( FastTimer.first != NULL )
+    if ( manager->first != NULL )
     {
       // Make sure it's not too big
-      if ( FastTimer.nextTime > 0xFF00 )
-        FastTimer.nextTime = 0xFF00;
+      if ( manager->nextTime > 0xFF00 )
+        manager->nextTime = 0xFF00;
       // Make sure it's not too small
-      if ( FastTimer.nextTime < (int)AT91C_BASE_TC2->TC_CV + 20 )
-        FastTimer.nextTime = AT91C_BASE_TC2->TC_CV + 20;
-      AT91C_BASE_TC2->TC_RC = FastTimer.nextTime;
+      if ( manager->nextTime < (int)manager->tc->TC_CV + 20 )
+        manager->nextTime = manager->tc->TC_CV + 20;
+      manager->tc->TC_RC = manager->nextTime;
     }
     else
     {
-      AT91C_BASE_TC2->TC_CCR = AT91C_TC_CLKDIS;
-      FastTimer.running = false;
+      manager->tc->TC_CCR = AT91C_TC_CLKDIS;
+      manager->running = false;
     }
 
 #ifdef FASTIRQ_STATS    
-    int duration = AT91C_BASE_TC2->TC_CV - startCount;
-    FastTimer.durationTotal += duration;  
-    if ( duration > FastTimer.durationMax )
-      FastTimer.durationMax = duration;
-    if ( duration > FastTimer.durationMaxAllDay )
-      FastTimer.durationMaxAllDay = duration;
+    int duration = manager->tc->TC_CV - startCount;
+    manager->durationTotal += duration;  
+    if ( duration > manager->durationMax )
+      manager->durationMax = duration;
+    if ( duration > manager->durationMaxAllDay )
+      manager->durationMaxAllDay = duration;
 #endif
 
 #ifdef FASTIRQ_MONITOR_IO    
@@ -194,7 +184,7 @@ void FastTimer_Isr( void )
 #endif
 
     // AT91C_BASE_TC2->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
-    FastTimer.servicing = false;
+    manager->servicing = false;
   }
   portEXIT_FIQ( );
 }
