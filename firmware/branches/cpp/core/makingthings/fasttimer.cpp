@@ -15,31 +15,17 @@
 
 *********************************************************************************/
 
-/** \file fasttimer.c	
-	FastTimer.
-	Functions to use the fast timer on the Make Controller Board. 
-*/
-
-#include "AT91SAM7X256.h"
-#include "types.h"
 #include "fasttimer.h"
-#include "fasttimer_internal.h"
 #include "error.h"
-#include "rtos.h"
+#include "rtos_.h"
 
 #define FAST_TIMER_CYCLES_PER_US 6
 
-struct FastTimer_ FastTimer;
+// statics
+bool FastTimer::manager_init = false;
+FastTimer::Manager FastTimer::manager;
 
-static int FastTimer_Init( void );
-static int FastTimer_Deinit( void );
-//static int FastTimer_GetCount( void );
-static int FastTimer_GetTimeTarget( void );
-static int FastTimer_GetTime( void );
-static void FastTimer_SetTimeTarget( int );
-static void FastTimer_Enable( void );
-
-void FastTimer_Isr( void );
+void FastTimer_Isr( );
 
 /** \defgroup FastTimer Fast Timer
   The FastTimer subsystem provides a high resolution timer in a microsecond context.
@@ -62,38 +48,13 @@ void FastTimer_Isr( void );
 	@return Zero on success.
 	@see FastTimer_Set, FastTimer_Cancel
 */
-int FastTimer_SetActive( bool active )
+FastTimer::FastTimer( int timer )
 {
-  if ( active )
+  if(!manager_init)
   {
-    if ( FastTimer.users++ == 0 )
-    {
-      int status;
-  
-      status = FastTimer_Init();  
-      if ( status != CONTROLLER_OK )
-      {
-        FastTimer.users--;
-        return status;
-      }
-    }
+    managerInit(timer);
+    manager_init = true;
   }
-  else
-  {
-    if ( --FastTimer.users == 0 )
-      FastTimer_Deinit();
-  }
-  return CONTROLLER_OK;
-}
-
-/**	
-  Returns whether the timer subsystem is active or not
-	@return active.
-	@see FastTimer_Set, FastTimer_Cancel
-*/
-int FastTimer_GetActive( )
-{
-  return FastTimer.users > 0;
 }
 
 /**	
@@ -123,17 +84,15 @@ int FastTimer_GetActive( )
   }
   \endcode
 */
-void FastTimer_InitializeEntry( FastTimerEntry* fastTimerEntry, void (*timerCallback)( int id ), int id, int timeUs, bool repeat )
+void FastTimer::setHandler( FastTimerHandler handler, int id, int micros, bool repeat )
 {
-  int time = timeUs * FAST_TIMER_CYCLES_PER_US;
-
   // Set the details into the free dude
-  fastTimerEntry->callback = timerCallback;
-  fastTimerEntry->id = id;
-  fastTimerEntry->timeCurrent = 0;
-  fastTimerEntry->timeInitial = time;
-  fastTimerEntry->repeat = repeat;
-  fastTimerEntry->next = NULL;
+  callback = handler;
+  id = id;
+  timeCurrent = 0;
+  timeInitial = micros * FAST_TIMER_CYCLES_PER_US;
+  repeat = repeat;
+  next = NULL;
 }
 
 /**
@@ -144,12 +103,12 @@ void FastTimer_InitializeEntry( FastTimerEntry* fastTimerEntry, void (*timerCall
   @param fastTimerEntry A pointer to the FastTimerEntry to be intialized. 
   @param timeUs The time in microseconds desired for the callback.
   */
-void FastTimer_SetTime( FastTimerEntry* fastTimerEntry, int timeUs )
-{
-  int time = timeUs * FAST_TIMER_CYCLES_PER_US;
-  fastTimerEntry->timeCurrent = time;
-  fastTimerEntry->timeInitial = time;
-}
+//void FastTimer_SetTime( FastTimerEntry* fastTimerEntry, int timeUs )
+//{
+//  int time = timeUs * FAST_TIMER_CYCLES_PER_US;
+//  fastTimerEntry->timeCurrent = time;
+//  fastTimerEntry->timeInitial = time;
+//}
 
 /** Sets the requested entry to run.
   This routine adds the entry to the running queue and then decides if it needs
@@ -157,46 +116,41 @@ void FastTimer_SetTime( FastTimerEntry* fastTimerEntry, int timeUs )
   period.
   @param fastTimerEntry A pointer to the FastTimerEntry to be run. 
   */
-int FastTimer_Set( FastTimerEntry* fastTimerEntry )
+int FastTimer::start( )
 {
   // this could be a lot smarter - for example, modifying the current period?
-  if ( !FastTimer.servicing ) 
-    TaskEnterCritical();
+  if ( !manager.servicing ) 
+    Task::enterCritical();
 
-  if ( !FastTimer.running )
+  if ( !manager.running )
   {
-    FastTimer_SetActive( true );
-    FastTimer_SetTimeTarget( fastTimerEntry->timeInitial );
-    FastTimer_Enable();
+    setTimeTarget( this->timeInitial );
+    enable();
   }  
 
-  // Calculate how long remaining
-  int target = FastTimer_GetTimeTarget();
-  int timeCurrent = FastTimer_GetTime();
-  int remaining = target - timeCurrent;
-
-  // Get the entry ready to roll
-  fastTimerEntry->timeCurrent = fastTimerEntry->timeInitial;
+  int target = getTimeTarget();
+  int remaining = target - getTime(); // Calculate how long remaining
+  this->timeCurrent = this->timeInitial; // Get the entry ready to roll
 
   // Add entry
-  FastTimerEntry* first = FastTimer.first;
-  FastTimer.first = fastTimerEntry;
-  fastTimerEntry->next = first;
+  FastTimer* first = manager.first;
+  manager.first = this;
+  this->next = first;
 
   // Are we actually servicing an interupt right now?
-  if ( !FastTimer.servicing )
+  if ( !manager.servicing )
   {
     // No - so does the time requested by this new timer make the time need to come earlier?
-    if ( fastTimerEntry->timeCurrent < ( remaining - FASTTIMER_MARGIN ) )
+    if ( this->timeCurrent < ( remaining - FASTTIMER_MARGIN ) )
     {
       // Damn it!  Reschedule the next callback
-      FastTimer_SetTimeTarget( target - ( remaining - fastTimerEntry->timeCurrent ));
+      setTimeTarget( target - ( remaining - this->timeCurrent ));
     }
     else
     {
       // pretend that the existing time has been with us for the whole slice so that when the 
       // IRQ happens it credits the correct (reduced) time.
-      fastTimerEntry->timeCurrent += timeCurrent;
+      this->timeCurrent += timeCurrent;
     }
   }
   else
@@ -206,18 +160,18 @@ int FastTimer_Set( FastTimerEntry* fastTimerEntry )
     // Make sure the previous pointer is OK.  This comes up if we were servicing the first item
     // and it subsequently wants to delete itself, it would need to alter the next pointer of the 
     // the new head... err... kind of a pain, this
-    if ( FastTimer.previous == NULL )
-      FastTimer.previous = fastTimerEntry;
+    if ( manager.previous == NULL )
+      manager.previous = this;
 
     // Need to make sure that if this new time is the lowest yet, that the IRQ routine 
     // knows that.  Since we added this entry onto the beginning of the list, the IRQ
     // won't look at it again
-    if ( FastTimer.nextTime == -1 || FastTimer.nextTime > fastTimerEntry->timeCurrent )
-        FastTimer.nextTime = fastTimerEntry->timeCurrent;
+    if ( manager.nextTime == -1 || manager.nextTime > this->timeCurrent )
+        manager.nextTime = this->timeCurrent;
   }
 
-  if ( !FastTimer.servicing ) 
-    TaskExitCritical();
+  if ( !manager.servicing ) 
+    Task::exitCritical();
 
   return CONTROLLER_OK;
 }
@@ -226,32 +180,32 @@ int FastTimer_Set( FastTimerEntry* fastTimerEntry )
   Stops the requested fast timer entry from running.
   @param fastTimerEntry pointer to the FastTimerEntry to be cancelled.
   */
-int FastTimer_Cancel( FastTimerEntry* fastTimerEntry )
+int FastTimer::stop( )
 {
-  if ( !FastTimer.servicing ) 
-    TaskEnterCritical();
+  if ( !manager.servicing ) 
+    Task::enterCritical();
 
   // Look through the running list - clobber the entry
-  FastTimerEntry* te = FastTimer.first;
-  FastTimerEntry* previousEntry = NULL;
+  FastTimer* te = manager.first;
+  FastTimer* previousEntry = NULL;
   while ( te != NULL )
   {
     // check for the requested entry
-    if ( te == fastTimerEntry )
+    if ( te == this )
     {
       // remove the entry from the list
-      if ( te == FastTimer.first )
-        FastTimer.first = te->next;
+      if ( te == manager.first )
+        manager.first = te->next;
       else
         previousEntry->next = te->next;
       
       // make sure the in-IRQ pointers are all OK
-      if ( FastTimer.servicing )
+      if ( manager.servicing )
       {
-        if ( FastTimer.previous == fastTimerEntry )
-          FastTimer.previous = previousEntry;
-        if ( FastTimer.next == fastTimerEntry )
-          FastTimer.next = te->next;
+        if ( manager.previous == this )
+          manager.previous = previousEntry;
+        if ( manager.next == this )
+          manager.next = te->next;
       }
 
       // update the pointers - leave previous where it is
@@ -264,8 +218,8 @@ int FastTimer_Cancel( FastTimerEntry* fastTimerEntry )
     }
   }
 
-  if ( !FastTimer.servicing ) 
-    TaskExitCritical();
+  if ( !manager.servicing ) 
+    Task::exitCritical();
 
   return CONTROLLER_OK;
 }
@@ -290,42 +244,58 @@ int FastTimer_GetCount()
 */
 
 // Enable the timer.  Disable is performed by the ISR when timer is at an end
-void FastTimer_Enable( )
+void FastTimer::enable( )
 {
   // Enable the device
   // AT91C_BASE_TC0->TC_CCR = AT91C_TC_SWTRG;
-  AT91C_BASE_TC2->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
-  FastTimer.running = true;
+  manager.tc->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
+  manager.running = true;
 }
 
-int FastTimer_GetTimeTarget( )
+int FastTimer::getTimeTarget( )
 {
-  return AT91C_BASE_TC2->TC_RC;
+  return manager.tc->TC_RC;
 }
 
-int FastTimer_GetTime( )
+int FastTimer::getTime( )
 {
-  return AT91C_BASE_TC0->TC_CV;
+  return manager.tc->TC_CV;
 }
 
-void FastTimer_SetTimeTarget( int target )
+void FastTimer::setTimeTarget( int target )
 {
-  AT91C_BASE_TC2->TC_RC = ( target < FASTTIMER_MAXCOUNT ) ? target : FASTTIMER_MAXCOUNT;
+  manager.tc->TC_RC = ( target < FASTTIMER_MAXCOUNT ) ? target : FASTTIMER_MAXCOUNT;
 }
 
-int FastTimer_Init()
+int FastTimer::managerInit(int timer)
 {
-  FastTimer.first = NULL;
+  unsigned int channel_id;
+  switch(timer)
+  {
+    case 0:
+      manager.tc = AT91C_BASE_TC0;
+      channel_id = AT91C_ID_TC0;
+      break;
+    case 1:
+      manager.tc = AT91C_BASE_TC1;
+      channel_id = AT91C_ID_TC1;
+      break;
+    default:
+      manager.tc = AT91C_BASE_TC2;
+      channel_id = AT91C_ID_TC2;
+      break;
+  }
+  
+  manager.first = NULL;
 
-  FastTimer.count = 0;
-  FastTimer.jitterTotal = 0;
-  FastTimer.jitterMax = 0;  
-  FastTimer.jitterMaxAllDay = 0;
+  manager.count = 0;
+  manager.jitterTotal = 0;
+  manager.jitterMax = 0;  
+  manager.jitterMaxAllDay = 0;
+  manager.running = false;
+  manager.servicing = false;
 
-  FastTimer.running = false;
-  FastTimer.servicing = false;
-
-	AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_TC2;
+	AT91C_BASE_PMC->PMC_PCER = 1 << channel_id;
                                     
   unsigned int mask ;
   mask = 0x1 << AT91C_ID_TC2 | 0x01;
@@ -336,7 +306,7 @@ int FastTimer_Init()
   AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_FIQ ] = (unsigned int)FastTimer_Isr;
 
   /* Store the Source Mode Register */
-  AT91C_BASE_AIC->AIC_SMR[ AT91C_ID_TC2 ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 7  ;
+  AT91C_BASE_AIC->AIC_SMR[ channel_id ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 7  ;
   /* Clear the interrupt on the interrupt controller */
   AT91C_BASE_AIC->AIC_ICCR = mask ;
 
@@ -354,23 +324,23 @@ int FastTimer_Init()
   // This makes every tick every 2.671us
   // DIV5: A tick MCK/1024 times a second
   // This makes every tick every 21.368us
-  AT91C_BASE_TC2->TC_CMR = AT91C_TC_CLKS_TIMER_DIV2_CLOCK |  AT91C_TC_CPCTRG;
+  manager.tc->TC_CMR = AT91C_TC_CLKS_TIMER_DIV2_CLOCK |  AT91C_TC_CPCTRG;
                    
   // Only interested in interrupts when the RC happens
-  AT91C_BASE_TC2->TC_IDR = 0xFF; 
-  AT91C_BASE_TC2->TC_IER = AT91C_TC_CPCS; 
+  manager.tc->TC_IDR = 0xFF; 
+  manager.tc->TC_IER = AT91C_TC_CPCS; 
 
   // load the RC value with something
-  AT91C_BASE_TC2->TC_RC = FASTTIMER_MAXCOUNT;
+  manager.tc->TC_RC = FASTTIMER_MAXCOUNT;
 
   // Make it fast forcing
-  AT91C_BASE_AIC->AIC_FFER = 0x1 << AT91C_ID_TC2;
+  AT91C_BASE_AIC->AIC_FFER = 0x1 << channel_id;
 
   // Enable the interrupt
   AT91C_BASE_AIC->AIC_IECR = mask;
 
   // Enable the device
-  AT91C_BASE_TC2->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
+  manager.tc->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
 
   /// Finally, prep the IO flag if it's being used
 #ifdef FASTIRQ_MONITOR_IO

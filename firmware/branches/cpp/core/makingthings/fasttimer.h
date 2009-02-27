@@ -15,33 +15,66 @@
 
 *********************************************************************************/
 
-/*
-	timer.h
-
-  MakingThings
-*/
-
 #ifndef FASTTIMER_H
 #define FASTTIMER_H
 
-int FastTimer_SetActive( bool active );
-int FastTimer_GetActive( void );
+#include "AT91SAM7X256.h"
+#define FASTTIMER_COUNT 8
+#define FASTTIMER_MARGIN 2
+#define FASTTIMER_MAXCOUNT 0xFF00
+#define FASTTIMER_MINCOUNT 20
 
-typedef struct FastTimerEntryS
+typedef void (*FastTimerHandler)( int id );
+
+class FastTimer
 {
-  void (*callback)( int id );
+public:
+  FastTimer(int timer = 2);
+  ~FastTimer();
+  void setHandler(FastTimerHandler handler, int id, int micros, bool repeat = true);
+  int start( );
+  int stop( );
+
+protected:
   short id;
   int   timeCurrent;
   int   timeInitial;
   bool  repeat;
-  struct FastTimerEntryS* next;
-} FastTimerEntry;
+  FastTimerHandler callback;
+  FastTimer* next;
+  static bool manager_init; // has the manager been set up?
 
-void FastTimer_InitializeEntry( FastTimerEntry* fastTimerEntry, void (*timer_callback)( int id ), int id, int timeUs, bool repeat );
-void FastTimer_SetTime( FastTimerEntry* timerEntry, int timeUs );
+  int getTimeTarget( );
+  int getTime( );
+  void setTimeTarget( int target );
+  int managerInit(int timerindex);
+  void enable( );
 
-int FastTimer_Set( FastTimerEntry* fastTimerEntry );
-int FastTimer_Cancel( FastTimerEntry* fastTimerEntry );
+  friend void FastTimer_Isr( );
+
+  typedef struct
+  {
+    char users;
+    short count;
+  
+    int jitterTotal;
+    int jitterMax;
+    int jitterMaxAllDay;
+  
+    char running;
+    char servicing;
+  
+    int nextTime;
+    int temp;
+    
+    FastTimer* first;
+    FastTimer* next;
+    FastTimer* previous;
+    FastTimer* lastAdded;
+    AT91S_TC* tc;
+  } Manager;
+  static Manager manager;
+};
 
 void DisableFIQFromThumb( void );
 void EnableFIQFromThumb( void );

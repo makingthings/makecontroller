@@ -15,25 +15,35 @@
 
 *********************************************************************************/
 
-/** \file timer.c	
-	Functions to use the timer on the Make Controller Board.
-  This uses the regular interrupt mechanism and as such may be blocked by other
-  routines for significant numbers of milliseconds. 
-*/
-
-
 #include "types.h"
 #include "timer.h"
-//#include "timer_internal.h"
 #include "error.h"
 #include "rtos_.h"
 
 #define TIMER_CYCLES_PER_MS 48
 
+// statics
 bool Timer::manager_init = false;
 Timer::Manager Timer::manager;
-
+// extern
 void Timer_Isr( );
+
+/** \defgroup Timer Timer
+  The Timer subsystem provides a timer in a millisecond timeframe.
+  For higher resolution timing, check the \ref FastTimer
+
+  The Timer subsystem is based on a collection of \b TimerEntries.  To start a new timer, create a new
+  \b TimerEntry structure, initialize it with Timer_InitializeEntry( ), and start it with Timer_Set( ).
+
+  There are currently a couple of limitations to the Timer system:
+  - In your callback function, you must not sleep or make any FreeRTOS-related calls.
+  - To modify an existing TimerEntry, you must cancel the timer with Timer_Cancel( ), and reinitialize the TimerEntry.
+
+  \todo Allow the timer callbacks to cooperate with the \ref RTOS
+  \todo Allow existing timer entries to be modified (repeat or not, modify the period, etc.)
+  \ingroup Core
+  @{
+*/
 
 /**
   Make a new timer.
@@ -50,7 +60,7 @@ Timer::Timer(int timer)
 
 Timer::~Timer()
 {
-//  return CONTROLLER_OK;
+  stop();
 }
 
 void Timer::setHandler(TimerHandler handler, int id, int millis, bool repeat)
@@ -185,42 +195,9 @@ int Timer::stop( )
   return CONTROLLER_OK;
 }
 
+/** @}
+*/
 
-//#define TIMER_CYCLES_PER_MS 48
-//
-//struct Timer_ Timer;
-//
-//static int Timer_Init( void );
-//static int Timer_Deinit( void );
-////static int Timer_GetCount( void );
-//static int Timer_GetTimeTarget( void );
-//static int Timer_GetTime( void );
-//static void Timer_SetTimeTarget( int );
-//static void Timer_Enable( void );
-//
-//void Timer_Isr( void );
-//
-///** \defgroup Timer Timer
-//* The Timer subsystem provides a timer in a millisecond timeframe.
-//  For higher resolution timing, check the \ref FastTimer
-//
-//  The Timer subsystem is based on a collection of \b TimerEntries.  To start a new timer, create a new
-//  \b TimerEntry structure, initialize it with Timer_InitializeEntry( ), and start it with Timer_Set( ).
-//
-//  There are currently a couple of limitations to the Timer system:
-//  - In your callback function, you must not sleep or make any FreeRTOS-related calls.
-//  - To modify an existing TimerEntry, you must cancel the timer with Timer_Cancel( ), and reinitialize the TimerEntry.
-//
-//  \todo Allow the timer callbacks to cooperate with the \ref RTOS
-//  \todo Allow existing timer entries to be modified (repeat or not, modify the period, etc.)
-//* \ingroup Core
-//* @{
-//*/
-//
-//
-///** @}
-//*/
-//
 // Enable the timer.  Disable is performed by the ISR when timer is at an end
 void Timer::enable( )
 {

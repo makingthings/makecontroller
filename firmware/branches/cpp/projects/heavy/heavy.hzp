@@ -12,7 +12,6 @@
       </folder>
       <folder Name="Core" >
         <folder Name="MakingThings" >
-          <file file_name="../../core/makingthings/controller.h" Name="controller.h" />
           <file file_name="../../core/makingthings/error.h" Name="error.h" />
           <file file_name="../../core/makingthings/FreeRTOSConfig.h" Name="FreeRTOSConfig.h" />
           <file file_name="../../core/freertos/portable/MemMang/heap_2.c" Name="heap_2.c" />
@@ -65,6 +64,12 @@
           <file file_name="../../core/makingthings/timer_isr.cpp" Name="timer_isr.cpp" >
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
           </file>
+          <file file_name="../../core/makingthings/fasttimer.h" Name="fasttimer.h" />
+          <file file_name="../../core/makingthings/fasttimer_isr.cpp" Name="fasttimer_isr.cpp" >
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+          </file>
+          <file file_name="../../core/makingthings/core.h" Name="core.h" />
+          <file file_name="../../core/makingthings/fasttimer.cpp" Name="fasttimer.cpp" />
         </folder>
         <folder Name="FreeRTOS" >
           <configuration c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />

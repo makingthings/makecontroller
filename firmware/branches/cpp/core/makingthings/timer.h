@@ -36,9 +36,9 @@ public:
 
 protected:
   short id;
-  int   timeCurrent;
-  int   timeInitial;
-  bool  repeat;
+  int timeCurrent;
+  int timeInitial;
+  bool repeat;
   TimerHandler callback;
   Timer* next;
   static bool manager_init; // has the manager been set up?
