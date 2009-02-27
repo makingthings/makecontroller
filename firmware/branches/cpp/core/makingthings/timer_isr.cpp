@@ -15,24 +15,9 @@
 
 *********************************************************************************/
 
-/* 
-  BASIC INTERRUPT DRIVEN DRIVER FOR MAKE BOARD. 
-*/
-
-/* Scheduler includes. */
 
 #include "FreeRTOS.h"
-
-#include "types.h"
-
 #include "timer.h"
-#include "timer_internal.h"
-
-#include "io.h"
-
-#include "AT91SAM7X256.h"
-
-extern struct Timer_ Timer;
 
 // At the moment, the Timer ISR or callbacks, very importantly, can't call any OS stuff since
 // the IRQ might happen any old where
@@ -47,30 +32,32 @@ void Timer_Isr( void )
 	stack variable declarations. */
 	// portENTER_SWITCHING_ISR();
 
-  int status = AT91C_BASE_TC0->TC_SR;
+  Timer::Manager* manager = &Timer::manager;
+
+  int status = manager->tc->TC_SR;
   if ( status & AT91C_TC_CPCS )
   {
-    Timer.servicing = true;
+    manager->servicing = true;
 
     int jitter;
-    Timer.count++;
-    jitter = AT91C_BASE_TC0->TC_CV;
+    manager->count++;
+    jitter = manager->tc->TC_CV;
 
-    Timer.jitterTotal += jitter;
-    if ( jitter > Timer.jitterMax )
-      Timer.jitterMax = jitter;
-    if ( jitter > Timer.jitterMaxAllDay )
-      Timer.jitterMaxAllDay = jitter;
+    manager->jitterTotal += jitter;
+    if ( jitter > manager->jitterMax )
+      manager->jitterMax = jitter;
+    if ( jitter > manager->jitterMaxAllDay )
+      manager->jitterMaxAllDay = jitter;
 
     // Run through once to make the callback calls
-    TimerEntry* te = Timer.first;
-    Timer.next = NULL;
-    Timer.previous = NULL;
-    Timer.nextTime = -1;
+    Timer* te = manager->first;
+    manager->next = NULL;
+    manager->previous = NULL;
+    manager->nextTime = -1;
     while ( te != NULL )
     {
-      Timer.next = te->next;
-      te->timeCurrent -= AT91C_BASE_TC0->TC_RC + AT91C_BASE_TC0->TC_CV;
+      manager->next = te->next;
+      te->timeCurrent -= manager->tc->TC_RC + manager->tc->TC_CV;
       if ( te->timeCurrent <= 0 )
       {
         if ( te->repeat )
@@ -80,10 +67,10 @@ void Timer_Isr( void )
         else
         {
           // remove it if necessary (do this first!)
-          if ( Timer.previous == NULL )
-            Timer.first = Timer.next;
+          if ( manager->previous == NULL )
+            manager->first = manager->next;
           else
-            Timer.previous->next = Timer.next;     
+            manager->previous->next = manager->next;     
         }
 
         if ( te->callback != NULL )
@@ -96,39 +83,39 @@ void Timer_Isr( void )
 
         // Assuming we're still on the list (if we were removed, then re-added, we'd be on the beggining of
         // the list with this task already performed) see whether our time is the next to run
-        if ( ( Timer.previous == NULL && Timer.first == te ) ||
-             ( Timer.previous != NULL && Timer.previous->next == te ) )
+        if ( ( manager->previous == NULL && manager->first == te ) ||
+             ( manager->previous != NULL && manager->previous->next == te ) )
         {
-          if ( Timer.nextTime == -1 || te->timeCurrent < Timer.nextTime )
-            Timer.nextTime = te->timeCurrent;
+          if ( manager->nextTime == -1 || te->timeCurrent < manager->nextTime )
+            manager->nextTime = te->timeCurrent;
         }
       } 
       else
       {
-        Timer.previous = te;
+        manager->previous = te;
       }
 
-      te = Timer.next;
+      te = manager->next;
     }
 
-    if ( Timer.first != NULL )
+    if ( manager->first != NULL )
     {
       // Add in whatever we're at now
-      Timer.nextTime += AT91C_BASE_TC0->TC_CV;
+      manager->nextTime += manager->tc->TC_CV;
       // Make sure it's not too big
-      if ( Timer.nextTime > 0xFFFF )
-        Timer.nextTime = 0xFFFF;
-      AT91C_BASE_TC0->TC_RC = Timer.nextTime;
+      if ( manager->nextTime > 0xFFFF )
+        manager->nextTime = 0xFFFF;
+      manager->tc->TC_RC = manager->nextTime;
     }
     else
     {
-      AT91C_BASE_TC0->TC_CCR = AT91C_TC_CLKDIS;
-      Timer.running = false;
+      manager->tc->TC_CCR = AT91C_TC_CLKDIS;
+      manager->running = false;
     }
 
-    jitter = AT91C_BASE_TC0->TC_CV;
+    jitter = manager->tc->TC_CV;
 
-    Timer.servicing = false;
+    manager->servicing = false;
   }
 
 	/* Clear AIC to complete ISR processing */
