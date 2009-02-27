@@ -15,33 +15,17 @@
           <file file_name="../../core/makingthings/controller.h" Name="controller.h" />
           <file file_name="../../core/makingthings/error.h" Name="error.h" />
           <file file_name="../../core/makingthings/FreeRTOSConfig.h" Name="FreeRTOSConfig.h" />
-          <file file_name="../../core/makingthings/fasttimer.c" Name="fasttimer.c" />
-          <file file_name="../../core/makingthings/fasttimer.h" Name="fasttimer.h" />
-          <file file_name="../../core/makingthings/fasttimer_internal.h" Name="fasttimer_internal.h" />
-          <file file_name="../../core/makingthings/fasttimer_isr.c" Name="fasttimer_isr.c" >
-            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
-            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
-          </file>
           <file file_name="../../core/freertos/portable/MemMang/heap_2.c" Name="heap_2.c" />
           <file file_name="../../core/makingthings/io.c" Name="io.c" />
           <file file_name="../../core/makingthings/io.h" Name="io.h" />
           <file file_name="../../core/makingthings/lwipopts.h" Name="lwipopts.h" />
           <file file_name="../../core/makingthings/osc_patternmatch.h" Name="osc_patternmatch.h" />
           <file file_name="../../core/makingthings/osc_patternmatch.c" Name="osc_patternmatch.c" />
-          <file file_name="../../core/makingthings/rtos.h" Name="rtos.h" />
           <file file_name="../../core/makingthings/pwm.c" Name="pwm.c" />
           <file file_name="../../core/makingthings/pwm.h" Name="pwm.h" />
-          <file file_name="../../core/makingthings/rtos.c" Name="rtos.c" />
           <file file_name="../../core/makingthings/spi.c" Name="spi.c" />
           <file file_name="../../core/makingthings/spi.h" Name="spi.h" />
           <file file_name="../../core/makingthings/types.h" Name="types.h" />
-          <file file_name="../../core/makingthings/timer.c" Name="timer.c" />
-          <file file_name="../../core/makingthings/timer.h" Name="timer.h" />
-          <file file_name="../../core/makingthings/timer_internal.h" Name="timer_internal.h" />
-          <file file_name="../../core/makingthings/timer_isr.c" Name="timer_isr.c" >
-            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
-            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
-          </file>
           <file file_name="../../core/makingthings/udpsocket.h" Name="udpsocket.h" />
           <file file_name="../../core/makingthings/io_cpp.cpp" Name="io_cpp.cpp" />
           <file file_name="../../core/makingthings/io_cpp.h" Name="io_cpp.h" />
@@ -76,6 +60,11 @@
           <file file_name="../../core/makingthings/serial_.h" Name="serial_.h" />
           <file file_name="../../core/makingthings/http.h" Name="http.h" />
           <file file_name="../../core/makingthings/main.cpp" Name="main.cpp" />
+          <file file_name="../../core/makingthings/timer.h" Name="timer.h" />
+          <file file_name="../../core/makingthings/timer.cpp" Name="timer.cpp" />
+          <file file_name="../../core/makingthings/timer_isr.cpp" Name="timer_isr.cpp" >
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+          </file>
         </folder>
         <folder Name="FreeRTOS" >
           <configuration c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />
@@ -170,8 +159,6 @@
         </folder>
       </folder>
       <folder Name="Libraries" >
-        <file file_name="../../libraries/dipswitch/dipswitch.h" Name="dipswitch.h" />
-        <file file_name="../../libraries/dipswitch/dipswitch.c" Name="dipswitch.c" />
         <file file_name="../../libraries/appled/appled_cpp.h" Name="appled_cpp.h" />
         <file file_name="../../libraries/appled/appled_.cpp" Name="appled_.cpp" />
         <file file_name="../../libraries/webserver/webserver_.h" Name="webserver_.h" />

@@ -15,31 +15,64 @@
 
 *********************************************************************************/
 
-/*
-	timer.h
-
-  MakingThings
-*/
-
 #ifndef TIMER_H
 #define TIMER_H
 
-int Timer_SetActive( bool active );
-int Timer_GetActive( void );
+#include "AT91SAM7X256.h"
 
-typedef struct TimerEntryS
+#define TIMER_COUNT 8
+#define TIMER_MARGIN 2
+
+typedef void (*TimerHandler)( int id );
+
+class Timer
 {
-  void (*callback)( int id );
+public:
+  Timer(int timer = 0);
+  ~Timer();
+  void setHandler(TimerHandler handler, int id, int millis, bool repeat = true);
+  int start( );
+  int stop( );
+
+protected:
   short id;
   int   timeCurrent;
   int   timeInitial;
   bool  repeat;
-  struct TimerEntryS* next;
-} TimerEntry;
+  TimerHandler callback;
+  Timer* next;
+  static bool manager_init; // has the manager been set up?
 
-void Timer_InitializeEntry( TimerEntry* timerEntry, void (*timer_callback)( int id ), int id, int timeMs, bool repeat );
+  int getTimeTarget( );
+  int getTime( );
+  void setTimeTarget( int target );
+  int managerInit(int timerindex);
+  void enable( );
 
-int Timer_Set( TimerEntry* timerEntry );
-int Timer_Cancel( TimerEntry* timerEntry );
+  friend void Timer_Isr( );
+
+  typedef struct
+  {
+    char users;
+    short count;
+  
+    int jitterTotal;
+    int jitterMax;
+    int jitterMaxAllDay;
+  
+    char running;
+    char servicing;
+  
+    int nextTime;
+    int temp;
+    
+    Timer* first;
+    Timer* next;
+    Timer* previous;
+    Timer* lastAdded;
+    AT91S_TC* tc;
+  } Manager;
+  static Manager manager;
+};
 
 #endif
