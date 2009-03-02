@@ -70,6 +70,11 @@
           </file>
           <file file_name="../../core/makingthings/core.h" Name="core.h" />
           <file file_name="../../core/makingthings/fasttimer.cpp" Name="fasttimer.cpp" />
+          <file file_name="../../core/makingthings/analogin.h" Name="analogin.h" />
+          <file file_name="../../core/makingthings/analogin_isr.cpp" Name="analogin_isr.cpp" >
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+          </file>
+          <file file_name="../../core/makingthings/analogin.cpp" Name="analogin.cpp" />
         </folder>
         <folder Name="FreeRTOS" >
           <configuration c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />

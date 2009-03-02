@@ -15,29 +15,8 @@
 
 *********************************************************************************/
 
-/* 
-  BASIC INTERRUPT DRIVEN DRIVER FOR USB. 
-
-  This file contains all the usb components that must be compiled
-  to ARM mode.  The components that can be compiled to either ARM or THUMB
-  mode are contained in analogin.C
-
-*/
-
-/* Scheduler includes. */
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
-#include "semphr.h"
-
-/* Demo application includes. */
-#include "Board.h"
-
-#include "analogin_internal.h"
-
-/*-----------------------------------------------------------*/
-
-extern struct AnalogIn_* AnalogIn;
+#include "analogin.h"
+#include "rtos_.h"
 
 /*-----------------------------------------------------------*/
 
@@ -46,18 +25,19 @@ void AnalogInIsr_Wrapper( void ) __attribute__ ((naked));
 
 /* The interrupt handler function must be separate from the entry function
 to ensure the correct stack frame is set up. */
-void AnalogInIsr_Handler( void );
+void AnalogIn_Isr( void );
 
 /*-----------------------------------------------------------*/
 
 
-void AnalogInIsr_Handler( void )
+void AnalogIn_Isr( void )
 {
   portCHAR cTaskWokenByPost = pdFALSE; 
-
+  
+  AnalogIn::Manager* manager = &AnalogIn::manager;
   int status = AT91C_BASE_ADC->ADC_SR;
   if ( status & AT91C_ADC_DRDY )
-  	cTaskWokenByPost = xSemaphoreGiveFromISR( AnalogIn->doneSemaphore, cTaskWokenByPost );
+  	cTaskWokenByPost = manager->semaphore.giveFromISR( cTaskWokenByPost );
 
   int value = AT91C_BASE_ADC->ADC_LCDR;
   (void)value;
@@ -82,7 +62,7 @@ void  AnalogInIsr_Wrapper( void )
 
 	/* Call the handler to do the work.  This must be a separate
 	function to ensure the stack frame is set up correctly. */
-	AnalogInIsr_Handler();
+	AnalogIn_Isr();
 
 	/* Restore the context of whichever task will execute next. */
 	portRESTORE_CONTEXT();

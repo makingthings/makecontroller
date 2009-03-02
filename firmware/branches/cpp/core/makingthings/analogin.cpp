@@ -25,40 +25,22 @@
 #include <string.h>
 #include <stdio.h>
 
-/* Scheduler includes. */
-#include "FreeRTOS.h"
-#include "task.h"
-#include "semphr.h"
-
-/* Hardware specific headers. */
-#include "Board.h"
-#include "AT91SAM7X256.h"
-
 #include "error.h"
-
-#include "io.h"
-
+#include "io_cpp.h"
 #include "analogin.h"
-#include "analogin_internal.h"
 
 #define ANALOGIN_0_IO IO_PB27
 #define ANALOGIN_1_IO IO_PB28
 #define ANALOGIN_2_IO IO_PB29
 #define ANALOGIN_3_IO IO_PB30
-
+#define ANALOGIN_CHANNELS 8
 #define AUTOSENDSAVE 0xDF
 
-static int AnalogIn_Start( int index );
-static int AnalogIn_Stop( int index );
+// extern
+void AnalogInIsr_Wrapper( );
 
-static int AnalogIn_Init( void );
-static int AnalogIn_Deinit( void );
-
-static int AnalogIn_GetIo( int index );
-
-extern void ( AnalogInIsr_Wrapper )( void );
-
-struct AnalogIn_* AnalogIn;
+// statics
+AnalogIn::Manager AnalogIn::manager;
 
 /** \defgroup AnalogIn Analog Inputs
 	The AnalogIn subsystem converts 0-3.3V signals to 10-bit digital values.
@@ -101,52 +83,32 @@ struct AnalogIn_* AnalogIn;
 		// some error occurred
   \endcode
 */
-int AnalogIn_SetActive( int index, int state )
+AnalogIn::AnalogIn( int channel )
 {
-  if ( index < 0 || index >= ANALOGIN_CHANNELS )
-    return CONTROLLER_ERROR_ILLEGAL_INDEX;
-
-  if ( state )
+  if ( channel < 0 || channel >= ANALOGIN_CHANNELS )
   {
-    if( AnalogIn == NULL )
-    {
-      AnalogIn = MallocWait( sizeof( struct AnalogIn_ ), 100 );
-      AnalogIn->users = 0;
-      int i;
-      for( i = 0; i < ANALOGIN_CHANNELS; i++ )
-        AnalogIn->channelUsers[ i ] = 0;
-      #ifdef OSC
-      AnalogIn_AutoSendInit( );
-      #endif
-    }
-
-    return AnalogIn_Start( index );
+    index = -1;
+    return;
   }
-  else
+  index = channel;
+  if(!manager.initialized)
+    managerInit();
+
+  // The lower four channel pins are shared with other subsystems, so no locking
+  if ( index < 4 )
   {
-    // TODO: check if any channels are still active and if not, Free( ) the AnalogIn struct
-    return AnalogIn_Stop( index );
+    Io pin( getIo( index ), GPIO, IO_INPUT );
+    pin.setPullup( false );
   }
 }
 
-/**
-	Returns the active state of a channel.
-	@param index An integer specifying the ANALOGIN channel (0 - 7).
-	@return State - 1/non-zero (active) or 0 (inactive).
-	
-	\par Example
-  \code
-  int active = AnalogIn_GetActive( 0 ) // check whether analogin 0 is active
-  \endcode
-*/
-int AnalogIn_GetActive( int index )
+AnalogIn::~AnalogIn()
 {
-  if( AnalogIn == NULL )
-    return 0;
-
-  if ( index < 0 || index >= ANALOGIN_CHANNELS )
-    return false;
-  return AnalogIn->channelUsers[ index ] > 0;
+  if ( index < 4 )
+  {
+//    int io = getIo( index );
+//    Io_Stop( io );
+  }
 }
 
 /**	
@@ -159,22 +121,10 @@ int AnalogIn_GetActive( int index )
   int analogin1 = AnalogIn_GetValue( 1 );
   \endcode
 */
-int AnalogIn_GetValue( int index )
+int AnalogIn::value( )
 {
-  AnalogIn_SetActive( index, 1 );
-  if ( index < 0 || index >= ANALOGIN_CHANNELS )
-    return CONTROLLER_ERROR_ILLEGAL_INDEX;
-
-  if ( AnalogIn->channelUsers[ index ] < 1 )
-  {
-    int status = AnalogIn_Start( index );
-    if ( status != CONTROLLER_OK )
-      return status;
-  }
-
   int value;
-
-  if ( !xSemaphoreTake( AnalogIn->semaphore, 1000 ) )
+  if ( !manager.semaphore.take( 1000 ) )
     return -1;
 
   /* Third Step: Select the active channel */
@@ -185,15 +135,12 @@ int AnalogIn_GetValue( int index )
   /* Fourth Step: Start the conversion */
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START;
 
-  /* Busy wait */
-  // while ( !( AT91C_BASE_ADC->ADC_CHSR  & ( 1 << index ) ) );
-
-  if ( !xSemaphoreTake( AnalogIn->doneSemaphore, 1000 ) )
+  if ( !manager.semaphore.take( 1000 ) )
     return -1;
 
   value = AT91C_BASE_ADC->ADC_LCDR & 0xFFFF;
 
-  xSemaphoreGive( AnalogIn->semaphore );
+  manager.semaphore.give( );
 
   return value;
 }
@@ -213,51 +160,51 @@ int AnalogIn_GetValue( int index )
 	AnalogIn_GetValueMulti( mask, samples ); // now samples is filled with all the analogin values
   \endcode
 */
-int AnalogIn_GetValueMulti( int mask, int values[] )
-{
-  //AnalogIn_SetActive( 1 );
-  if ( mask < 0 || mask > 255 ) // check the value is a valid 8-bit mask
-    return CONTROLLER_ERROR_ILLEGAL_INDEX;
-
-  int i; // Is this the best way to make sure everything is started up properly?
-  for( i = 0; i < 8; i++ )
-  {
-    if( mask >> i & 1 )
-    {
-      if ( AnalogIn->channelUsers[ i ] < 1 )
-      {
-        int status = AnalogIn_Start( i );
-        if ( status != CONTROLLER_OK )
-        return status;
-      }
-    }
-  }
-
-  if ( !xSemaphoreTake( AnalogIn->semaphore, 1000 ) )
-    return -1;
-
-  /* Third Step: Select the active channels */
-  AT91C_BASE_ADC->ADC_CHDR = ~mask;
-  AT91C_BASE_ADC->ADC_CHER = mask;
-  
-  /* Fourth Step: Start the conversion */
-  AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START;
-
-  if ( !xSemaphoreTake( AnalogIn->doneSemaphore, 1000 ) )
-    return -1;
-
-  //Figure out which of the channels we want to read
-  volatile uint* reg = &AT91C_BASE_ADC->ADC_CDR0; // the address of the first ADC result register
-  for( i = 0; i < 8; i++ )
-  {
-    if( mask >> i & 1 )
-      values[ i ] = *reg++ & 0xFFFF;
-  }
-
-  xSemaphoreGive( AnalogIn->semaphore );
-
-  return CONTROLLER_OK;
-}
+//int AnalogIn_GetValueMulti( int mask, int values[] )
+//{
+//  //AnalogIn_SetActive( 1 );
+//  if ( mask < 0 || mask > 255 ) // check the value is a valid 8-bit mask
+//    return CONTROLLER_ERROR_ILLEGAL_INDEX;
+//
+//  int i; // Is this the best way to make sure everything is started up properly?
+//  for( i = 0; i < 8; i++ )
+//  {
+//    if( mask >> i & 1 )
+//    {
+//      if ( AnalogIn->channelUsers[ i ] < 1 )
+//      {
+//        int status = AnalogIn_Start( i );
+//        if ( status != CONTROLLER_OK )
+//        return status;
+//      }
+//    }
+//  }
+//
+//  if ( !xSemaphoreTake( AnalogIn->semaphore, 1000 ) )
+//    return -1;
+//
+//  /* Third Step: Select the active channels */
+//  AT91C_BASE_ADC->ADC_CHDR = ~mask;
+//  AT91C_BASE_ADC->ADC_CHER = mask;
+//  
+//  /* Fourth Step: Start the conversion */
+//  AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START;
+//
+//  if ( !xSemaphoreTake( AnalogIn->doneSemaphore, 1000 ) )
+//    return -1;
+//
+//  //Figure out which of the channels we want to read
+//  volatile uint* reg = &AT91C_BASE_ADC->ADC_CDR0; // the address of the first ADC result register
+//  for( i = 0; i < 8; i++ )
+//  {
+//    if( mask >> i & 1 )
+//      values[ i ] = *reg++ & 0xFFFF;
+//  }
+//
+//  xSemaphoreGive( AnalogIn->semaphore );
+//
+//  return CONTROLLER_OK;
+//}
 
 /**	
 	Read the value of an analog input without the use of any OS services.
@@ -271,49 +218,30 @@ int AnalogIn_GetValueMulti( int mask, int values[] )
   int analogin1 = AnalogIn_GetValueWait( 1 );
   \endcode
 */
-int AnalogIn_GetValueWait( int index )
+int AnalogIn::valueWait( )
 {
-  AnalogIn_SetActive( index, 1 );
-  if ( index < 0 || index >= ANALOGIN_CHANNELS )
-    return CONTROLLER_ERROR_ILLEGAL_INDEX;
-
-  if ( AnalogIn->channelUsers[ index ] < 1 )
-  {
-    int status = AnalogIn_Start( index );
-    if ( status != CONTROLLER_OK )
-      return status;
-  }
-
-  int value = 0;
-
-  // Third Step: Select the active channel
+  // select the active channel
   int mask = 1 << index; 
   AT91C_BASE_ADC->ADC_CHDR = ~mask;
   AT91C_BASE_ADC->ADC_CHER = mask;
   
   AT91C_BASE_ADC->ADC_IDR = AT91C_ADC_DRDY; 
 
-  // Fourth Step: Start the conversion
+  // start the conversion
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START;
 
-  value++;
-  value++;
-
   // Busy wait
-  while ( !( AT91C_BASE_ADC->ADC_SR & AT91C_ADC_DRDY ) )
-    value++;
+  while ( !( AT91C_BASE_ADC->ADC_SR & AT91C_ADC_DRDY ) );
 
   AT91C_BASE_ADC->ADC_IDR = AT91C_ADC_DRDY; 
 
-  value = AT91C_BASE_ADC->ADC_LCDR & 0xFFFF;
-
-  return value;
+  return AT91C_BASE_ADC->ADC_LCDR & 0xFFFF;
 }
 
 /** @}
 */
 
-#ifdef OSC
+#ifdef OSC___
 void AnalogIn_AutoSendInit( )
 {
   int autosend;
@@ -325,59 +253,7 @@ void AnalogIn_AutoSendInit( )
 }
 #endif
 
-int AnalogIn_Start( int index )
-{
-  if ( index < 0 || index >= ANALOGIN_CHANNELS )
-    return CONTROLLER_ERROR_ILLEGAL_INDEX;
-  if ( AnalogIn->channelUsers[ index ]++ == 0 )
-  {
-    int status;
-
-    // The lower four channel pins are shared with other subsystems, so no locking
-    if ( index < 4 )
-    {
-      int io = AnalogIn_GetIo( index );
-      status = Io_Start( io, false );
-      if ( status != CONTROLLER_OK )
-      {
-        AnalogIn->channelUsers[ index ]--;
-        return status;
-      }
-
-      Io_SetPullup( io, false );
-    }
-
-    if ( AnalogIn->users++ == 0 )
-    {
-      AnalogIn_Init();  
-    }
-  }
-  
-  return CONTROLLER_OK;
-}
-
-int AnalogIn_Stop( int index )
-{
-  if ( index < 0 || index >= ANALOGIN_CHANNELS )
-    return CONTROLLER_ERROR_ILLEGAL_INDEX;
-  if ( AnalogIn->channelUsers[ index ] <= 0 )
-    return CONTROLLER_ERROR_TOO_MANY_STOPS;
-  if ( --AnalogIn->channelUsers[ index ] == 0 )
-  {
-    if ( index < 4 )
-    {
-      int io = AnalogIn_GetIo( index );
-      Io_Stop( io );
-    }
-    if ( --AnalogIn->users == 0 )
-    {
-      AnalogIn_Deinit();
-    }
-  }
-  return CONTROLLER_OK;
-}
-
-int AnalogIn_Init()
+int AnalogIn::managerInit()
 {
   // Enable the peripheral clock
   AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_ADC;
@@ -400,11 +276,12 @@ int AnalogIn_Init()
 
   // Do the OS stuff
 
-  vSemaphoreCreateBinary( AnalogIn->semaphore );
-
-  // Create the sempahore that will be used to wake the calling process up 
-  vSemaphoreCreateBinary( AnalogIn->doneSemaphore );
-  xSemaphoreTake( AnalogIn->doneSemaphore, 0 );
+//  vSemaphoreCreateBinary( AnalogIn->semaphore );
+//
+//  // Create the sempahore that will be used to wake the calling process up 
+//  vSemaphoreCreateBinary( AnalogIn->doneSemaphore );
+//  xSemaphoreTake( AnalogIn->doneSemaphore, 0 );
+  manager.doneSemaphore.take();
 
   // Initialize the interrupts
   // WAS AT91F_AIC_ConfigureIt( AT91C_ID_ADC, 3, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL, ( void (*)( void ) ) AnalogInIsr_Wrapper );
@@ -425,37 +302,29 @@ int AnalogIn_Init()
   AT91C_BASE_ADC->ADC_IER = AT91C_ADC_DRDY; 
 
 	AT91C_BASE_AIC->AIC_IECR = mask;
+  manager.initialized = true;
 
   return CONTROLLER_OK;
 }
 
-int AnalogIn_Deinit()
+int AnalogIn::getIo( int index )
 {
-  return CONTROLLER_OK;
-}
-
-int AnalogIn_GetIo( int index )
-{
-  int io = -1;
   switch ( index )
   {
     case 0:
-      io = ANALOGIN_0_IO;
-      break;
+      return ANALOGIN_0_IO;
     case 1:
-      io = ANALOGIN_1_IO;
-      break;
+      return ANALOGIN_1_IO;
     case 2:
-      io = ANALOGIN_2_IO;
-      break;
+      return ANALOGIN_2_IO;
     case 3:
-      io = ANALOGIN_3_IO;
-      break;
+      return ANALOGIN_3_IO;
+    default:
+      return -1;
   }
-  return io;
 }
 
-#ifdef OSC
+#ifdef OSC___
 
 /**	
 	Read whether a particular channel is enabled to check for and send new values automatically.
