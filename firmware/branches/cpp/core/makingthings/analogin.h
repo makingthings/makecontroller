@@ -24,20 +24,36 @@
 #ifndef ANALOGIN_H
 #define ANALOGIN_H
 
-int AnalogIn_SetActive( int index, int state );
-int AnalogIn_GetActive( int index );
+#include "rtos_.h"
+#include "AT91SAM7X256.h"
 
-int AnalogIn_GetValue( int index );
-int AnalogIn_GetValueMulti( int mask, int values[] );
-int AnalogIn_GetValueWait( int index );
+class AnalogIn
+{
+public:
+  AnalogIn(int channel);
+  ~AnalogIn();
+  int value();
+  int valueWait( );
+  static bool multi(int values[]);
 
-void AnalogIn_AutoSendInit( void );
-bool AnalogIn_GetAutoSend( int index );
-void AnalogIn_SetAutoSend( int index, bool onoff );
+protected:
+  int index;
+  int getIo( int index );
+  int managerInit();
 
-/* OSC Interface */
-const char* AnalogInOsc_GetName( void );
-int AnalogInOsc_ReceiveMessage( int channel, char* message, int length );
-int AnalogInOsc_Async( int channel );
+  friend void AnalogIn_Isr();
+
+  typedef struct {
+    Semaphore semaphore;
+    Semaphore doneSemaphore;
+    bool initialized;
+  } Manager;
+  static Manager manager;
+};
+
+///* OSC Interface */
+//const char* AnalogInOsc_GetName( void );
+//int AnalogInOsc_ReceiveMessage( int channel, char* message, int length );
+//int AnalogInOsc_Async( int channel );
 
 #endif
