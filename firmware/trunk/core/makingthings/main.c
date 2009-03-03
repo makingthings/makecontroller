@@ -139,8 +139,7 @@ static void prvSetupHardware( void )
     AT91C_BASE_PIOB->PIO_PER = 1 << 17; // Set PB17 - the EEPROM ~enable - in PIO mode
   	AT91C_BASE_PIOB->PIO_OER = 1 << 17; // Configure in Output
 	  AT91C_BASE_PIOB->PIO_SODR = 1 << 17; // Set Output
-  #endif
-  #if ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 )
+  #elif ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 || CONTROLLER_VERSION == 200 )
     AT91C_BASE_PIOA->PIO_PER = 1 << 9; // Set PA9 - the EEPROM ~enable - in PIO mode
 	  AT91C_BASE_PIOA->PIO_OER = 1 << 9; // Configure in Output
 	  AT91C_BASE_PIOA->PIO_SODR = 1 << 9; // Set Output
@@ -151,8 +150,7 @@ static void prvSetupHardware( void )
     AT91C_BASE_PIOB->PIO_PER = 1 << 16; // Set PB16 - the CAN ~enable - in PIO mode
     AT91C_BASE_PIOB->PIO_OER = 1 << 16; // Configure in Output
     AT91C_BASE_PIOB->PIO_SODR = 1 << 16; // Set Output
-  #endif
-  #if ( CONTROLLER_VERSION == 95  || CONTROLLER_VERSION == 100 )
+  #elif ( CONTROLLER_VERSION == 95  || CONTROLLER_VERSION == 100 || CONTROLLER_VERSION == 200 )
     AT91C_BASE_PIOA->PIO_PER = 1 << 7; // Set PA7 - the CAN ~enable - in PIO mode
     AT91C_BASE_PIOA->PIO_OER = 1 << 7; // Configure in Output
     AT91C_BASE_PIOA->PIO_SODR = 1 << 7; // Set Output
@@ -183,14 +181,17 @@ static void prvSetupHardware( void )
     
   /* Turn the USB line into an input, kill the pull up */
   #if ( CONTROLLER_VERSION == 90 )
-    AT91C_BASE_PIOB->PIO_PER = 1 << 10;	
-    AT91C_BASE_PIOB->PIO_ODR = 1 << 10;
-    AT91C_BASE_PIOB->PIO_PPUDR = 1 << 10;
-  #endif
-  #if ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 )
-    AT91C_BASE_PIOA->PIO_PER = 1 << 10;	
-    AT91C_BASE_PIOA->PIO_ODR = 1 << 10;
-    AT91C_BASE_PIOA->PIO_PPUDR = 1 << 10;
+    AT91C_BASE_PIOB->PIO_PER = AT91C_PIO_PB10;	
+    AT91C_BASE_PIOB->PIO_ODR = AT91C_PIO_PB10;
+    AT91C_BASE_PIOB->PIO_PPUDR = AT91C_PIO_PB10;
+  #elif ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 )
+    AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA10;	
+    AT91C_BASE_PIOA->PIO_ODR = AT91C_PIO_PA10;
+    AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PIO_PA10;
+  #elif ( CONTROLLER_VERSION == 200 )
+    AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA29;	
+    AT91C_BASE_PIOA->PIO_ODR = AT91C_PIO_PA29;
+    AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PIO_PA29;
   #endif
 
   /* Setup the PIO for the USB pull up resistor. */
@@ -199,11 +200,14 @@ static void prvSetupHardware( void )
 		AT91C_BASE_PIOB->PIO_PER = AT91C_PIO_PB11;
     AT91C_BASE_PIOB->PIO_OER = AT91C_PIO_PB11;
     AT91C_BASE_PIOB->PIO_SODR = AT91C_PIO_PB11;
-	#endif
-	#if ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 )
+	#elif ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 )
 		AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA11;
 		AT91C_BASE_PIOA->PIO_OER = AT91C_PIO_PA11;
     AT91C_BASE_PIOA->PIO_CODR = AT91C_PIO_PA11; // had this round the wrong way...
+  #elif ( CONTROLLER_VERSION == 200 )
+		AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA30;
+		AT91C_BASE_PIOA->PIO_OER = AT91C_PIO_PA30;
+    AT91C_BASE_PIOA->PIO_CODR = AT91C_PIO_PA30;
 	#endif
 }
 /*-----------------------------------------------------------*/

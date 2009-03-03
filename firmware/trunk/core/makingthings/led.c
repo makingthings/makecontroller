@@ -28,11 +28,9 @@ static int Led_users;
 
 #if ( CONTROLLER_VERSION == 50 )
   #define LED_IO IO_PB25
-#endif
-#if ( CONTROLLER_VERSION == 90 )
+#elif ( CONTROLLER_VERSION == 90 )
   #define LED_IO IO_PB12
-#endif
-#if ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 )
+#elif ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 || CONTROLLER_VERSION == 200 )
   #define LED_IO IO_PA12
 #endif
 

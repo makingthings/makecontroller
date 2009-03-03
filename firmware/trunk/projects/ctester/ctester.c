@@ -311,8 +311,18 @@ int CTester_Init( )
 
 int CTester_CalculateCurrent( int index )
 {
-  int a = 776 - AnalogIn_GetValue( index ); // 776 is 2.5 / 3.3 * 1024
-  float c = 50 * ( 3.3 * a / 1024.0 ) / 0.2;
+  /*
+    A/D Converter Reference voltage is 3.3V
+    Current Sense Reference voltage (that from which the actual voltage output is subtracted) is 2.5V
+    Gain is 50V/V
+
+    So current is:
+    Vad4 = 3.3 * ad4 / 1024
+    I = ( 2.5 - Vad4 ) / 50 / 0.1
+    = ( 2.5 - Vad4 ) / 5
+  */
+  float voltage = ( 3.3 * AnalogIn_GetValue( index ) / 1024.0 );
+  float c = ((2.5 - voltage) / 5) * 1000; // * 1000 for milliamps
   return (int)c;
 }
 
