@@ -15,15 +15,9 @@
           <file file_name="../../core/makingthings/error.h" Name="error.h" />
           <file file_name="../../core/makingthings/FreeRTOSConfig.h" Name="FreeRTOSConfig.h" />
           <file file_name="../../core/freertos/portable/MemMang/heap_2.c" Name="heap_2.c" />
-          <file file_name="../../core/makingthings/io.c" Name="io.c" />
-          <file file_name="../../core/makingthings/io.h" Name="io.h" />
           <file file_name="../../core/makingthings/lwipopts.h" Name="lwipopts.h" />
           <file file_name="../../core/makingthings/osc_patternmatch.h" Name="osc_patternmatch.h" />
           <file file_name="../../core/makingthings/osc_patternmatch.c" Name="osc_patternmatch.c" />
-          <file file_name="../../core/makingthings/pwm.c" Name="pwm.c" />
-          <file file_name="../../core/makingthings/pwm.h" Name="pwm.h" />
-          <file file_name="../../core/makingthings/spi.c" Name="spi.c" />
-          <file file_name="../../core/makingthings/spi.h" Name="spi.h" />
           <file file_name="../../core/makingthings/types.h" Name="types.h" />
           <file file_name="../../core/makingthings/udpsocket.h" Name="udpsocket.h" />
           <file file_name="../../core/makingthings/io_cpp.cpp" Name="io_cpp.cpp" />
@@ -75,6 +69,8 @@
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
           </file>
           <file file_name="../../core/makingthings/analogin.cpp" Name="analogin.cpp" />
+          <file file_name="../../core/makingthings/pwm.h" Name="pwm.h" />
+          <file file_name="../../core/makingthings/pwm.cpp" Name="pwm.cpp" />
         </folder>
         <folder Name="FreeRTOS" >
           <configuration c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />

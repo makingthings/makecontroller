@@ -24,22 +24,46 @@
 #ifndef PWM_H
 #define PWM_H
 
-int Pwm_Start( int channel );
-int Pwm_Stop( int channel );
-int Pwm_Set( int index, int duty );
-int Pwm_Get( int index );
+class Pwm
+{
+public:
+  Pwm( int channel );
+  ~Pwm();
+  
+  void setWaveform( bool left_aligned, bool starts_low );
 
-int Pwm_SetDividerA(int val);
-int Pwm_GetDividerA( void );
+  void setDuty(int duty);
+  int getDuty();
 
-int Pwm_SetDividerB(int val);
-int Pwm_GetDividerB( void );
+  void setFrequency(int freq);
+  int getFrequency();
 
-int Pwm_SetClockSource(int channel, int val);
-int Pwm_GetClockSource(int channel);
+protected:
+  int channel, duty;
+  int getIo( int channel );
+  int baseInit();
+  int baseDeinit();
+  int findClockConfiguration(int frequency);
+  static int activeChannels;
 
-int Pwm_SetWaveformProperties(int channel, int val);
-int Pwm_GetWaveformProperties(int channel);
+};
+
+//int Pwm_Start( int channel );
+//int Pwm_Stop( int channel );
+//int Pwm_Set( int index, int duty );
+//int Pwm_Get( int index );
+//
+//int Pwm_SetDividerA(int val);
+//int Pwm_GetDividerA( void );
+//
+//int Pwm_SetDividerB(int val);
+//int Pwm_GetDividerB( void );
+//
+//int Pwm_SetClockSource(int channel, int val);
+//int Pwm_GetClockSource(int channel);
+//
+//int Pwm_SetWaveformProperties(int channel, int val);
+//int Pwm_GetWaveformProperties(int channel);
 
 
 #endif
