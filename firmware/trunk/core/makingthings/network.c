@@ -1203,13 +1203,12 @@ int Network_AddressConvert( char* address, int* a0, int* a1, int* a2, int* a3 )
   return ( sscanf( address, "%d.%d.%d.%d", a0, a1, a2, a3 ) == 4 ) ? CONTROLLER_OK : CONTROLLER_ERROR_NO_ADDRESS;
 }
 
-#if ( CONTROLLER_VERSION == 50 || CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 )
+#if ( CONTROLLER_VERSION == 50 || CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 || CONTROLLER_VERSION == 200 )
 #define NETWORK_BITS IO_PB00_BIT | IO_PB01_BIT | IO_PB02_BIT | IO_PB03_BIT | IO_PB04_BIT | \
                      IO_PB05_BIT | IO_PB06_BIT | IO_PB07_BIT | IO_PB08_BIT | IO_PB09_BIT | \
                      IO_PB10_BIT | IO_PB11_BIT | IO_PB12_BIT | IO_PB13_BIT | IO_PB14_BIT | \
                      IO_PB15_BIT | IO_PB16_BIT | IO_PB17_BIT | IO_PB18_BIT | IO_PB26_BIT
-#endif
-#if ( CONTROLLER_VERSION == 90 )
+#elif ( CONTROLLER_VERSION == 90 )
 #define NETWORK_BITS IO_PB00_BIT | IO_PB01_BIT | IO_PB02_BIT | IO_PB03_BIT | IO_PB04_BIT | \
                      IO_PB05_BIT | IO_PB06_BIT | IO_PB07_BIT | IO_PB08_BIT | IO_PB09_BIT | \
                      IO_PB15_BIT | IO_PB26_BIT
