@@ -37,7 +37,6 @@ UsbSerial::UsbSerial( )
 {
   CDCDSerialDriver_Initialize();
   USBD_Connect();
-  //while (USBD_GetState() < USBD_STATE_CONFIGURED); // wait for things to get set up
   readSemaphore.take( );
   justGot = 0;
   rxBufCount = 0;

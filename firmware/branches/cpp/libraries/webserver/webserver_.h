@@ -18,6 +18,9 @@
 #ifndef WEB_SERVER__H
 #define WEB_SERVER__H
 
+#include "config.h"
+#ifdef MAKE_CTRL_NETWORK
+
 #include "string.h"
 #include "stdio.h"
 #include "rtos_.h"
@@ -151,6 +154,8 @@ class WebServer
     char* getRequestAddress( char* request, int length, HttpMethod* method );
     int getBody( TcpSocket* socket, char* requestBuffer, int maxSize );
 };
+
+#endif // MAKE_CTRL_NETWORK
 
 #endif  // WEB_SERVER_H
 

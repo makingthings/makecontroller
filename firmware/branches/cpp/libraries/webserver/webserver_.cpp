@@ -17,6 +17,8 @@
 
 #include "webserver_.h"
 
+#ifdef MAKE_CTRL_NETWORK
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -368,6 +370,8 @@ bool WebResponder::addHeader( const char* type, const char* value, bool lastone 
   int written = response->write(temp, strlen(temp));
   return (written != 0) ? true : false;
 }
+
+#endif // MAKE_CTRL_NETWORK
 
 
 

@@ -135,7 +135,8 @@
           <file file_name="../../core/startup/flash_placement.xml" Name="flash_placement.xml" />
           <file file_name="../../core/freertos/portable/GCC/ARM7_AT91SAM7S/AT91SAM7X256.h" Name="AT91SAM7X256.h" />
           <file file_name="../../core/startup/extras_cpp.cpp" Name="extras_cpp.cpp" />
-          <file file_name="../../core/startup/Cstartup_SAM7.c" Name="Cstartup_SAM7.c" />
+          <file file_name="../../core/startup/AT91SAM7_Startup.s" Name="AT91SAM7_Startup.s" />
+          <file file_name="../../core/startup/crt0.s" Name="crt0.s" />
         </folder>
         <folder Name="USB" >
           <file file_name="../../core/usb/common/cdc/CDCSetControlLineStateRequest.c" Name="CDCSetControlLineStateRequest.c" />
