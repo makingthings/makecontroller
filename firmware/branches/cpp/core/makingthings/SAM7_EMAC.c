@@ -90,10 +90,9 @@ Changes from V4.0.4
 /* USE_RMII_INTERFACE must be defined as 1 to use an RMII interface, or 0
 to use an MII interface. */
 /* MAKINGTHINGS: Make Sure we're using RMII for Version 90 */
-#if ( CONTROLLER_VERSION == 50 || CONTROLLER_VERSION == 100 )
+#if ( CONTROLLER_VERSION == 50 || CONTROLLER_VERSION == 100 || CONTROLLER_VERSION == 200 )
  #define USE_RMII_INTERFACE 0
-#endif
-#if ( CONTROLLER_VERSION == 90 || CONTROLLER_VERSION == 95 )
+#elif ( CONTROLLER_VERSION == 90 || CONTROLLER_VERSION == 95 )
   #define USE_RMII_INTERFACE 1
 #endif
 
@@ -121,7 +120,7 @@ one not be immediately available when trying to transmit a frame. */
 /* Peripheral setup for the EMAC. */
 
 /* MAKINGTHINGS: ADDITION */
-#if ( CONTROLLER_VERSION == 50 || CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 )
+#if ( CONTROLLER_VERSION == 50 || CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 || CONTROLLER_VERSION == 200 )
   #define emacPERIPHERAL_A_SETUP 		\
       ( ( unsigned portLONG ) AT91C_PB2_ETX0 ) | \
       ( ( unsigned portLONG ) AT91C_PB3_ETX1			) | \
@@ -504,7 +503,7 @@ xSemaphoreHandle xEMACInit( void )
 
   /* MAKINGTHINGS: ADDITION */
 	/* Clear PB18 <=> PHY power up. */
-  #if ( CONTROLLER_VERSION == 50 || CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 )
+  #if ( CONTROLLER_VERSION == 50 || CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 || CONTROLLER_VERSION == 200 )
    	AT91C_BASE_PIOB->PIO_PER = 1 << 18;
 	AT91C_BASE_PIOB->PIO_OER = 1 << 18;
 	AT91C_BASE_PIOB->PIO_CODR = 1 << 18;

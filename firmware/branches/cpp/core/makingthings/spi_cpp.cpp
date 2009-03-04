@@ -16,8 +16,7 @@
   #define SPI_SEL2_PERIPHERAL_A 0 
   #define SPI_SEL3_IO           IO_PA09
   #define SPI_SEL3_PERIPHERAL_A 0
-#endif
-#if ( CONTROLLER_VERSION == 90 )
+#elif ( CONTROLLER_VERSION == 90 )
   #define SPI_SEL0_IO           IO_PA12
   #define SPI_SEL0_PERIPHERAL_A 1 
   #define SPI_SEL1_IO           IO_PA13
@@ -26,8 +25,7 @@
   #define SPI_SEL2_PERIPHERAL_A 0 
   #define SPI_SEL3_IO           IO_PB17
   #define SPI_SEL3_PERIPHERAL_A 0
-#endif
-#if ( CONTROLLER_VERSION >= 95 )
+#elif ( CONTROLLER_VERSION >= 95 )
   #define SPI_SEL0_IO           IO_PA12
   #define SPI_SEL0_PERIPHERAL_A 1 
   #define SPI_SEL1_IO           IO_PA13
