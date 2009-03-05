@@ -25,7 +25,6 @@
 #define ANALOGIN_H
 
 #include "rtos_.h"
-#include "AT91SAM7X256.h"
 
 class AnalogIn
 {
@@ -39,7 +38,7 @@ public:
 protected:
   int index;
   int getIo( int index );
-  int managerInit();
+  static int managerInit();
 
   friend void AnalogIn_Isr();
 

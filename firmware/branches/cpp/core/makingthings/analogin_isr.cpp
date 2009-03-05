@@ -17,6 +17,7 @@
 
 #include "analogin.h"
 #include "rtos_.h"
+#include "AT91SAM7X256.h"
 
 /*-----------------------------------------------------------*/
 
@@ -34,10 +35,9 @@ void AnalogIn_Isr( void )
 {
   portCHAR cTaskWokenByPost = pdFALSE; 
   
-  AnalogIn::Manager* manager = &AnalogIn::manager;
   int status = AT91C_BASE_ADC->ADC_SR;
   if ( status & AT91C_ADC_DRDY )
-  	cTaskWokenByPost = manager->semaphore.giveFromISR( cTaskWokenByPost );
+  	cTaskWokenByPost = AnalogIn::manager.doneSemaphore.giveFromISR( cTaskWokenByPost );
 
   int value = AT91C_BASE_ADC->ADC_LCDR;
   (void)value;

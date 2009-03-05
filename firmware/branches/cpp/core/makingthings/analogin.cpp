@@ -28,6 +28,7 @@
 #include "error.h"
 #include "io_cpp.h"
 #include "analogin.h"
+#include "AT91SAM7X256.h"
 
 #define ANALOGIN_0_IO IO_PB27
 #define ANALOGIN_1_IO IO_PB28
@@ -127,18 +128,16 @@ int AnalogIn::value( )
   if ( !manager.semaphore.take( 1000 ) )
     return -1;
 
-  /* Third Step: Select the active channel */
+  // disable other channels, and enable the one we want
   int mask = 1 << index; 
   AT91C_BASE_ADC->ADC_CHDR = ~mask;
   AT91C_BASE_ADC->ADC_CHER = mask;
-  
-  /* Fourth Step: Start the conversion */
-  AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START;
+  AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // Start the conversion
 
-  if ( !manager.semaphore.take( 1000 ) )
+  if ( !manager.doneSemaphore.take( 1000 ) ) // wait for the ISR
     return -1;
 
-  value = AT91C_BASE_ADC->ADC_LCDR & 0xFFFF;
+  value = AT91C_BASE_ADC->ADC_LCDR & 0xFFFF; // grab the last converted value
 
   manager.semaphore.give( );
 
@@ -160,51 +159,43 @@ int AnalogIn::value( )
 	AnalogIn_GetValueMulti( mask, samples ); // now samples is filled with all the analogin values
   \endcode
 */
-//int AnalogIn_GetValueMulti( int mask, int values[] )
-//{
-//  //AnalogIn_SetActive( 1 );
-//  if ( mask < 0 || mask > 255 ) // check the value is a valid 8-bit mask
-//    return CONTROLLER_ERROR_ILLEGAL_INDEX;
-//
-//  int i; // Is this the best way to make sure everything is started up properly?
-//  for( i = 0; i < 8; i++ )
-//  {
-//    if( mask >> i & 1 )
-//    {
-//      if ( AnalogIn->channelUsers[ i ] < 1 )
-//      {
-//        int status = AnalogIn_Start( i );
-//        if ( status != CONTROLLER_OK )
-//        return status;
-//      }
-//    }
-//  }
-//
-//  if ( !xSemaphoreTake( AnalogIn->semaphore, 1000 ) )
-//    return -1;
-//
-//  /* Third Step: Select the active channels */
-//  AT91C_BASE_ADC->ADC_CHDR = ~mask;
-//  AT91C_BASE_ADC->ADC_CHER = mask;
-//  
-//  /* Fourth Step: Start the conversion */
-//  AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START;
-//
-//  if ( !xSemaphoreTake( AnalogIn->doneSemaphore, 1000 ) )
-//    return -1;
-//
-//  //Figure out which of the channels we want to read
-//  volatile uint* reg = &AT91C_BASE_ADC->ADC_CDR0; // the address of the first ADC result register
-//  for( i = 0; i < 8; i++ )
-//  {
-//    if( mask >> i & 1 )
-//      values[ i ] = *reg++ & 0xFFFF;
-//  }
-//
-//  xSemaphoreGive( AnalogIn->semaphore );
-//
-//  return CONTROLLER_OK;
-//}
+bool AnalogIn::multi( int values[] ) // static
+{
+  if(!manager.initialized)
+    managerInit();
+
+  if ( !manager.semaphore.take(1000) ) // lock the channel
+    return false;
+  
+  // enable all the channels
+  AT91C_BASE_ADC->ADC_CHER = AT91C_ADC_CH0 |
+                              AT91C_ADC_CH1 |
+                              AT91C_ADC_CH2 |
+                              AT91C_ADC_CH3 |
+                              AT91C_ADC_CH4 |
+                              AT91C_ADC_CH5 |
+                              AT91C_ADC_CH6 |
+                              AT91C_ADC_CH7;
+
+  AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // start the conversion
+
+  if ( !manager.doneSemaphore.take(1000) )
+    return false;
+
+  // read all the data channels into the passed in array
+  *values++ = AT91C_BASE_ADC->ADC_CDR0;
+  *values++ = AT91C_BASE_ADC->ADC_CDR1;
+  *values++ = AT91C_BASE_ADC->ADC_CDR2;
+  *values++ = AT91C_BASE_ADC->ADC_CDR3;
+  *values++ = AT91C_BASE_ADC->ADC_CDR4;
+  *values++ = AT91C_BASE_ADC->ADC_CDR5;
+  *values++ = AT91C_BASE_ADC->ADC_CDR6;
+  *values++ = AT91C_BASE_ADC->ADC_CDR7;
+
+  manager.semaphore.give(); // free up the channel
+
+  return true;
+}
 
 /**	
 	Read the value of an analog input without the use of any OS services.
@@ -222,20 +213,15 @@ int AnalogIn::valueWait( )
 {
   // select the active channel
   int mask = 1 << index; 
-  AT91C_BASE_ADC->ADC_CHDR = ~mask;
-  AT91C_BASE_ADC->ADC_CHER = mask;
+  AT91C_BASE_ADC->ADC_CHDR = ~mask; // disable all other channels
+  AT91C_BASE_ADC->ADC_CHER = mask;  // enable our channel
   
-  AT91C_BASE_ADC->ADC_IDR = AT91C_ADC_DRDY; 
+  AT91C_BASE_ADC->ADC_IDR = AT91C_ADC_DRDY;
+  AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // start the conversion
+  while ( !( AT91C_BASE_ADC->ADC_SR & AT91C_ADC_DRDY ) ); // Busy wait till it's done
+  AT91C_BASE_ADC->ADC_IDR = AT91C_ADC_DRDY;
 
-  // start the conversion
-  AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START;
-
-  // Busy wait
-  while ( !( AT91C_BASE_ADC->ADC_SR & AT91C_ADC_DRDY ) );
-
-  AT91C_BASE_ADC->ADC_IDR = AT91C_ADC_DRDY; 
-
-  return AT91C_BASE_ADC->ADC_LCDR & 0xFFFF;
+  return AT91C_BASE_ADC->ADC_LCDR & 0xFFFF; // last converted value
 }
 
 /** @}
@@ -273,22 +259,12 @@ int AnalogIn::managerInit()
        ( ( 127 << 24 ) & AT91C_ADC_SHTIM ); // Sample and Hold Time
 
   //TODO: Will need to fine-tune these timings.
-
-  // Do the OS stuff
-
-//  vSemaphoreCreateBinary( AnalogIn->semaphore );
-//
-//  // Create the sempahore that will be used to wake the calling process up 
-//  vSemaphoreCreateBinary( AnalogIn->doneSemaphore );
-//  xSemaphoreTake( AnalogIn->doneSemaphore, 0 );
   manager.doneSemaphore.take();
 
   // Initialize the interrupts
   // WAS AT91F_AIC_ConfigureIt( AT91C_ID_ADC, 3, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL, ( void (*)( void ) ) AnalogInIsr_Wrapper );
   // Which is defined at the bottom of the AT91SAM7X256.h file
-  unsigned int mask ;													
-																			
-  mask = 0x1 << AT91C_ID_ADC;		
+  unsigned int mask = 0x1 << AT91C_ID_ADC;													
                         
   /* Disable the interrupt on the interrupt controller */					
   AT91C_BASE_AIC->AIC_IDCR = mask ;										
