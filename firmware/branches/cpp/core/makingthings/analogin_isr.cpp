@@ -34,16 +34,32 @@ void AnalogIn_Isr( void );
 void AnalogIn_Isr( void )
 {
   portCHAR cTaskWokenByPost = pdFALSE; 
-  
+  AnalogIn::Manager* manager = &AnalogIn::manager;
   int status = AT91C_BASE_ADC->ADC_SR;
-  if ( status & AT91C_ADC_DRDY )
-  	cTaskWokenByPost = AnalogIn::manager.doneSemaphore.giveFromISR( cTaskWokenByPost );
+  if(manager->waitingForMulti)
+  {
+    unsigned int i;
+    // check if we got an End Of Conversion in any of our channels
+    for( i = 0; i < ANALOGIN_CHANNELS; i++ )
+    {
+      unsigned int mask = ( 0x01 << i );
+      if( status &  mask )
+        manager->multiConversionsComplete |= mask;
+    }
+    // if we got End Of Conversion in all our channels, indicate we're done
+    if( manager->multiConversionsComplete == 0xFF )
+    {
+      status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
+      manager->doneSemaphore.giveFromISR( cTaskWokenByPost );
+    }
+  }
+  else if ( status & AT91C_ADC_DRDY )
+  {
+  	cTaskWokenByPost = manager->doneSemaphore.giveFromISR( cTaskWokenByPost );
+    status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
+  }
 
-  int value = AT91C_BASE_ADC->ADC_LCDR;
-  (void)value;
-
-	/* Clear AIC to complete ISR processing */
-	AT91C_BASE_AIC->AIC_EOICR = 0;
+	AT91C_BASE_AIC->AIC_EOICR = 0; // Clear AIC to complete ISR processing
 
 	/* If a task was woken by either a frame being received then we may need to 
 	switch to another task.  If the unblocked task was of higher priority then

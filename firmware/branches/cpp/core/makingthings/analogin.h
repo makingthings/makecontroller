@@ -26,6 +26,8 @@
 
 #include "rtos_.h"
 
+#define ANALOGIN_CHANNELS 8
+
 class AnalogIn
 {
 public:
@@ -39,13 +41,16 @@ protected:
   int index;
   int getIo( int index );
   static int managerInit();
+  static void managerDeinit();
 
   friend void AnalogIn_Isr();
 
   typedef struct {
     Semaphore semaphore;
     Semaphore doneSemaphore;
-    bool initialized;
+    int activeChannels;
+    bool waitingForMulti; // are we waiting for a multi conversion or just a single channel
+    int multiConversionsComplete; // mask of which conversions have been completed
   } Manager;
   static Manager manager;
 };
