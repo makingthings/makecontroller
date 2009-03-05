@@ -47,6 +47,8 @@
 #include "network_.h"
 #include "usb_serial.h"
 #include "system.h"
+#include "analogin.h"
+#include "led_cpp.h"
 
 extern "C" {
 #endif

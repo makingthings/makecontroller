@@ -34,7 +34,6 @@
 #define ANALOGIN_1_IO IO_PB28
 #define ANALOGIN_2_IO IO_PB29
 #define ANALOGIN_3_IO IO_PB30
-#define ANALOGIN_CHANNELS 8
 #define AUTOSENDSAVE 0xDF
 
 // extern
@@ -62,26 +61,23 @@ AnalogIn::Manager AnalogIn::manager;
   different options - different converter speeds, DMA access, etc.  We've chosen something pretty simple here.
   More ambitious users may wish to alter the implementation.
 
-  \todo Provide multi-channel conversion routines
-
 	\ingroup Core
 	@{
 */
 
 /**
-	Sets whether the specified channel is active.
-	This initializes the AnalogIn system and gets a lock on its IO lines.  It only needs to be called once.
+	Create a new AnalogIn object.
+  There are 8 analog ins on the Make Controller - pass in which channel this
+  AnalogIn should read from.
 	@param index An integer specifying the channel (0 - 7).
-	@param state An integer specifying the active state - 1 (active) or 0 (inactive).
-	@return Zero on success.
-	
 	
   \par Example
   \code
-  if( AnalogIn_SetActive( 0, 1 )  == CONTROLLER_OK ) // set analogin 0 to active
-		// then continue processing
-	else
-		// some error occurred
+  // we can create an AnalogIn locally (faster since it doesn't allocate any memory)
+  AnalogIn ain0(0);
+
+  // or allocate a new one
+  AnalogIn* ain0 = new AnalogIn(0);
   \endcode
 */
 AnalogIn::AnalogIn( int channel )
@@ -92,10 +88,13 @@ AnalogIn::AnalogIn( int channel )
     return;
   }
   index = channel;
-  if(!manager.initialized)
+  if(!manager.activeChannels)
+  {
     managerInit();
+    manager.activeChannels |= (1 << index); // mark it as used
+  }
 
-  // The lower four channel pins are shared with other subsystems, so no locking
+  // The lower four channel pins are shared with other subsystems, so config as GPIO inputs
   if ( index < 4 )
   {
     Io pin( getIo( index ), GPIO, IO_INPUT );
@@ -105,21 +104,27 @@ AnalogIn::AnalogIn( int channel )
 
 AnalogIn::~AnalogIn()
 {
-  if ( index < 4 )
-  {
-//    int io = getIo( index );
-//    Io_Stop( io );
-  }
+  int c = 1 << index;
+  manager.activeChannels &= ~c; // mark it as unused
+  if(!manager.activeChannels) // if that was our last channel, turn everything off
+    managerDeinit();
 }
 
 /**	
 	Read the value of an analog input.
-	@param index An integer specifying which input (0-7).
 	@return The value as an integer (0 - 1023).
 	
 	\par Example
   \code
-  int analogin1 = AnalogIn_GetValue( 1 );
+  AnalogIn ain0(0);
+  if( ain0.value() > 500 )
+  {
+     // then do this
+  }
+  else
+  {
+    // then do that
+  }
   \endcode
 */
 int AnalogIn::value( )
@@ -145,23 +150,24 @@ int AnalogIn::value( )
 }
 
 /**	
-  Read the value of several of the analog inputs.
-  Due to the current ISR handling, this isn't too much quicker than making
-	calls to each of the channels individually.
-  @param mask A bit mask specifying which channels to read.
+  Read the value of all the analog inputs.
+  If you want to read all the anaog ins, this is quicker than reading them all 
+  separately.  Make sure to provide an array of 8 ints, as this does not do
+  any checking about where it's writing to.
+
   @param values A pointer to an int array to be filled with the values.
   @return 0 on success, otherwise non-zero.
 	
 	\par Example
   \code
-  int mask = 0xFF;
 	int samples[8];
-	AnalogIn_GetValueMulti( mask, samples ); // now samples is filled with all the analogin values
+	AnalogIn::multi( samples );
+   // now samples is filled with all the analogin values
   \endcode
 */
 bool AnalogIn::multi( int values[] ) // static
 {
-  if(!manager.initialized)
+  if(!manager.activeChannels)
     managerInit();
 
   if ( !manager.semaphore.take(1000) ) // lock the channel
@@ -177,6 +183,8 @@ bool AnalogIn::multi( int values[] ) // static
                               AT91C_ADC_CH6 |
                               AT91C_ADC_CH7;
 
+  manager.waitingForMulti = true;
+  manager.multiConversionsComplete = 0;
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // start the conversion
 
   if ( !manager.doneSemaphore.take(1000) )
@@ -191,7 +199,8 @@ bool AnalogIn::multi( int values[] ) // static
   *values++ = AT91C_BASE_ADC->ADC_CDR5;
   *values++ = AT91C_BASE_ADC->ADC_CDR6;
   *values++ = AT91C_BASE_ADC->ADC_CDR7;
-
+  
+  manager.waitingForMulti = false;
   manager.semaphore.give(); // free up the channel
 
   return true;
@@ -199,14 +208,16 @@ bool AnalogIn::multi( int values[] ) // static
 
 /**	
 	Read the value of an analog input without the use of any OS services.
-  Note that this is not thread safe and shouldn't be used if another 
-  part of the code might be using it or the thread safe versions.
+  This will busy wait until the read has completed.  Note that this is not 
+  thread safe and shouldn't be used if another part of the code might be 
+  using it or the thread safe versions.
 	@param index An integer specifying which input (0-7).
 	@return The value as an integer (0 - 1023).
 	
 	\par Example
   \code
-  int analogin1 = AnalogIn_GetValueWait( 1 );
+  AnalogIn ain0(0);
+  int value = ain0.valueWait( );
   \endcode
 */
 int AnalogIn::valueWait( )
@@ -216,10 +227,10 @@ int AnalogIn::valueWait( )
   AT91C_BASE_ADC->ADC_CHDR = ~mask; // disable all other channels
   AT91C_BASE_ADC->ADC_CHER = mask;  // enable our channel
   
-  AT91C_BASE_ADC->ADC_IDR = AT91C_ADC_DRDY;
+  AT91C_BASE_ADC->ADC_IDR = AT91C_ADC_DRDY; // turn off data ready interrupt
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // start the conversion
   while ( !( AT91C_BASE_ADC->ADC_SR & AT91C_ADC_DRDY ) ); // Busy wait till it's done
-  AT91C_BASE_ADC->ADC_IDR = AT91C_ADC_DRDY;
+  AT91C_BASE_ADC->ADC_IER = AT91C_ADC_DRDY;
 
   return AT91C_BASE_ADC->ADC_LCDR & 0xFFFF; // last converted value
 }
@@ -241,8 +252,8 @@ void AnalogIn_AutoSendInit( )
 
 int AnalogIn::managerInit()
 {
-  // Enable the peripheral clock
-  AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_ADC;
+  AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_ADC; // enable the peripheral clock
+  AT91C_BASE_ADC->ADC_CR = AT91C_ADC_SWRST;     // reset to clear out previous settings
 
   // Set up
   AT91C_BASE_ADC->ADC_MR =
@@ -262,25 +273,24 @@ int AnalogIn::managerInit()
   manager.doneSemaphore.take();
 
   // Initialize the interrupts
-  // WAS AT91F_AIC_ConfigureIt( AT91C_ID_ADC, 3, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL, ( void (*)( void ) ) AnalogInIsr_Wrapper );
-  // Which is defined at the bottom of the AT91SAM7X256.h file
   unsigned int mask = 0x1 << AT91C_ID_ADC;													
                         
-  /* Disable the interrupt on the interrupt controller */					
+  // Disable the interrupt controller & register our interrupt handler
   AT91C_BASE_AIC->AIC_IDCR = mask ;										
-  /* Save the interrupt handler routine pointer and the interrupt priority */	
   AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_ADC ] = (unsigned int)AnalogInIsr_Wrapper;			
-  /* Store the Source Mode Register */									
   AT91C_BASE_AIC->AIC_SMR[ AT91C_ID_ADC ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;				
-  /* Clear the interrupt on the interrupt controller */					
   AT91C_BASE_AIC->AIC_ICCR = mask ;					
-
   AT91C_BASE_ADC->ADC_IER = AT91C_ADC_DRDY; 
-
 	AT91C_BASE_AIC->AIC_IECR = mask;
-  manager.initialized = true;
 
   return CONTROLLER_OK;
+}
+
+void AnalogIn::managerDeinit() // static
+{
+  unsigned int mask = 0x1 << AT91C_ID_ADC;		
+  AT91C_BASE_PMC->PMC_PCDR = mask; // Disable the peripheral clock
+  AT91C_BASE_AIC->AIC_IDCR = mask; // disable interrupts for the ADC
 }
 
 int AnalogIn::getIo( int index )
