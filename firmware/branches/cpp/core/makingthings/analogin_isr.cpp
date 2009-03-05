@@ -38,11 +38,11 @@ void AnalogIn_Isr( void )
   int status = AT91C_BASE_ADC->ADC_SR;
   if(manager->waitingForMulti)
   {
-    unsigned int i;
+    unsigned int i, mask;
     // check if we got an End Of Conversion in any of our channels
     for( i = 0; i < ANALOGIN_CHANNELS; i++ )
     {
-      unsigned int mask = ( 0x01 << i );
+      mask = ( 0x01 << i );
       if( status &  mask )
         manager->multiConversionsComplete |= mask;
     }
