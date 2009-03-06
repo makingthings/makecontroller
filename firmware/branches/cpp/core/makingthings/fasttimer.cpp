@@ -22,102 +22,77 @@
 #define FAST_TIMER_CYCLES_PER_US 6
 
 // statics
-bool FastTimer::manager_init = false;
 FastTimer::Manager FastTimer::manager;
-
+// extern
 void FastTimer_Isr( );
 
-/** \defgroup FastTimer Fast Timer
-  The FastTimer subsystem provides a high resolution timer in a microsecond context.
-  If you don't need such high resolution timing, check the \ref Timer
-
-  The Fast Timer subsystem is based on a collection of \b FastTimerEntries.  To start a new timer, create a new
-  \b FastTimerEntry structure, initialize it with FastTimer_InitializeEntry( ), and start it with FastTimer_Set( ).
-
-  There are currently one main limitation to the Fast Timer system:
-  - In your callback function, you must not sleep or make any FreeRTOS-related calls.
-
-  \todo Allow the fast timer callbacks to cooperate with the \ref RTOS
-* \ingroup Core
-* @{
-*/
-
 /**	
-  Controls the active state of the Fast Timer system
-  @param active whether the FastTimer subsystem is active or not
-	@return Zero on success.
-	@see FastTimer_Set, FastTimer_Cancel
+  Create a new FastTimer
+
+  Note - the timer index selected will be used for all subsequent timers created.
+  @param timer The hardware timer to use - valid options are 0, 1 and 2.  2 is the default.
 */
 FastTimer::FastTimer( int timer )
 {
-  if(!manager_init)
-  {
+  if(!manager.timer_count++)
     managerInit(timer);
-    manager_init = true;
-  }
+}
+
+FastTimer::~FastTimer()
+{
+  stop();
+  if(--manager.timer_count == 0)
+    managerDeinit( );
 }
 
 /**	
-  Initializes a fast timer entry structure.  
-	The event is signified by a callback to the function provided, after the interval specified.  
-	The specified ID is passed back to the function to permit one function to work for many events.  
-	Pass repeat = true to make the event continue to create callbacks until it is canceled.
-  Note that the timer entry structure needs to be created and managed by the caller.
+  Register a handler for this timer.
+  Specify a handler function that should be called back at
+  an interval specified in start().  If you have a handler registered with
+  more than one timer, use the \b id to distinguish which timer is calling
+  it at a given time.
+
   The longest period for a fast timer entry is 2^32 / 1000000 = 4294s.
-  @param fastTimerEntry pointer to the FastTimerEntry to be intialized. 
-  @param timerCallback pointer to the callback function.  The function must
-         be of the form \verbatim void callback( int id ) \endverbatim
-  @param id An integer specifying the ID the callback function is to be provided with.
-  @param timeUs The time in microseconds desired for the callback.
-  @param repeat Set whether the timer repeats or is a one-time event.
-	@see FastTimer_Cancel
 
   \par Example
   \code
-  TimerEntry myTimer; // our TimerEntry
-  FastTimer_InitializeEntry( &myTimer, myCallback, 0, 250, true );
-  FastTimer_Set( &myTimer ); // start our timer
+  FastTimer myTimer;
+  myTimer.setHandler( myHandler, 0 );
+  myTimer.start( 250 ); // start our timer
 
-  void myCallback( int id ) // our code that will get called by the timer every 250 microseconds.
+  void myHandler( int id ) // our code that will get called by the timer every 250 microseconds.
   {
     // do something here
   }
   \endcode
 */
-void FastTimer::setHandler( FastTimerHandler handler, int id, int micros, bool repeat )
+void FastTimer::setHandler( FastTimerHandler handler, int id )
 {
-  // Set the details into the free dude
   callback = handler;
-  id = id;
-  timeCurrent = 0;
-  timeInitial = micros * FAST_TIMER_CYCLES_PER_US;
-  repeat = repeat;
-  next = NULL;
+  this->id = id;
 }
 
 /**
-  * Change the requeted time of an entry.
-  * This must only be called within a callback caused by the Entry specified or when the 
-  * entry is not being used.  If you need to change the duration of a timer, you need to cancel it
-  * and re-add it, or alter the time inside a callback.
-  @param fastTimerEntry A pointer to the FastTimerEntry to be intialized. 
-  @param timeUs The time in microseconds desired for the callback.
-  */
-//void FastTimer_SetTime( FastTimerEntry* fastTimerEntry, int timeUs )
-//{
-//  int time = timeUs * FAST_TIMER_CYCLES_PER_US;
-//  fastTimerEntry->timeCurrent = time;
-//  fastTimerEntry->timeInitial = time;
-//}
-
-/** Sets the requested entry to run.
+  Sets the requested entry to run.
   This routine adds the entry to the running queue and then decides if it needs
   to start the timer (if it's not running) or alter the timer's clock for a shorter
   period.
-  @param fastTimerEntry A pointer to the FastTimerEntry to be run. 
+  @param micros The interval (in microseconds) at which the handler should be called.
+  @param repeat Whether to call the handler repeatedly.  True by default.
+
+  \b Example
+  \code
+  FastTimer t;
+  t.setHandler( myHandler, 345 );
+  t.start(250); // call myHandler every 250 microseconds
+  \endcode
   */
-int FastTimer::start( )
+int FastTimer::start( int micros, bool repeat )
 {
+  timeCurrent = 0;
+  timeInitial = micros * FAST_TIMER_CYCLES_PER_US;
+  this->repeat = repeat;
+  next = NULL;
   // this could be a lot smarter - for example, modifying the current period?
   if ( !manager.servicing ) 
     Task::enterCritical();
@@ -177,10 +152,17 @@ int FastTimer::start( )
 }
 
 /**
-  Stops the requested fast timer entry from running.
-  @param fastTimerEntry pointer to the FastTimerEntry to be cancelled.
-  */
-int FastTimer::stop( )
+  Stops a fast timer.
+  You should always stop the timer, then start() it again
+  if you need to change its interval.
+
+  \code
+  FastTimer t;
+  t.start(250);
+  t.stop();
+  \endcode
+*/
+void FastTimer::stop( )
 {
   if ( !manager.servicing ) 
     Task::enterCritical();
@@ -220,28 +202,7 @@ int FastTimer::stop( )
 
   if ( !manager.servicing ) 
     Task::exitCritical();
-
-  return CONTROLLER_OK;
 }
-
-/** @}
-*/
-
-//
-// INTERNAL
-//
-
-/*
-int FastTimer_GetCount()
-{
-  int count;
-  TaskEnterCritical();
-  count = FastTimer.count;
-  FastTimer.count = 0;
-  TaskExitCritical();
-  return count;
-}
-*/
 
 // Enable the timer.  Disable is performed by the ISR when timer is at an end
 void FastTimer::enable( )
@@ -269,45 +230,37 @@ void FastTimer::setTimeTarget( int target )
 
 int FastTimer::managerInit(int timer)
 {
-  unsigned int channel_id;
   switch(timer)
   {
     case 0:
       manager.tc = AT91C_BASE_TC0;
-      channel_id = AT91C_ID_TC0;
+      manager.channel_id = AT91C_ID_TC0;
       break;
     case 1:
       manager.tc = AT91C_BASE_TC1;
-      channel_id = AT91C_ID_TC1;
+      manager.channel_id = AT91C_ID_TC1;
       break;
     default:
       manager.tc = AT91C_BASE_TC2;
-      channel_id = AT91C_ID_TC2;
+      manager.channel_id = AT91C_ID_TC2;
       break;
   }
   
   manager.first = NULL;
-
   manager.count = 0;
   manager.jitterTotal = 0;
   manager.jitterMax = 0;  
   manager.jitterMaxAllDay = 0;
   manager.running = false;
   manager.servicing = false;
-
-	AT91C_BASE_PMC->PMC_PCER = 1 << channel_id;
                                     
-  unsigned int mask;
-  mask = 0x1 << channel_id | 0x01;
+  unsigned int mask = 0x1 << manager.channel_id;
+  AT91C_BASE_PMC->PMC_PCER = mask;
 
-  /* Disable the interrupt on the interrupt controller */
+  // Disable the interrupt, configure it, reenable it
   AT91C_BASE_AIC->AIC_IDCR = mask;
-
   AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_FIQ ] = (unsigned int)FastTimer_Isr;
-
-  /* Store the Source Mode Register */
-  AT91C_BASE_AIC->AIC_SMR[ channel_id ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 7  ;
-  /* Clear the interrupt on the interrupt controller */
+  AT91C_BASE_AIC->AIC_SMR[ manager.channel_id ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 7  ;
   AT91C_BASE_AIC->AIC_ICCR = mask ;
 
   // Set the timer up.  We want just the basics, except when the timer compares 
@@ -329,18 +282,10 @@ int FastTimer::managerInit(int timer)
   // Only interested in interrupts when the RC happens
   manager.tc->TC_IDR = 0xFF; 
   manager.tc->TC_IER = AT91C_TC_CPCS; 
-
-  // load the RC value with something
-  manager.tc->TC_RC = FASTTIMER_MAXCOUNT;
-
-  // Make it fast forcing
-  AT91C_BASE_AIC->AIC_FFER = 0x1 << channel_id;
-
-  // Enable the interrupt
-  AT91C_BASE_AIC->AIC_IECR = mask;
-
-  // Enable the device
-  manager.tc->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
+  manager.tc->TC_RC = FASTTIMER_MAXCOUNT; // load the RC value with something
+  AT91C_BASE_AIC->AIC_FFER = 0x1 << manager.channel_id; // Make it fast forcing
+  AT91C_BASE_AIC->AIC_IECR = mask; // Enable the interrupt
+  manager.tc->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG; // Enable the device
 
   /// Finally, prep the IO flag if it's being used
 #ifdef FASTIRQ_MONITOR_IO
@@ -352,7 +297,8 @@ int FastTimer::managerInit(int timer)
   return CONTROLLER_OK;
 }
 
-int FastTimer_Deinit()
+void FastTimer::managerDeinit( )
 {
-  return CONTROLLER_OK;
+  AT91C_BASE_AIC->AIC_IDCR = manager.channel_id; // disable the interrupt
+  AT91C_BASE_PMC->PMC_PCDR = manager.channel_id; // power down
 }

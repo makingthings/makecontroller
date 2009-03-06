@@ -23,7 +23,7 @@
 #define TIMER_COUNT 8
 #define TIMER_MARGIN 2
 
-typedef void (*TimerHandler)( int id ); /**< \typedef A handler for timers. */
+typedef void (*TimerHandler)( int id ); /**< A handler for timers. */
 
 /**
   Provides a timer in a millisecond timeframe.
@@ -61,7 +61,8 @@ typedef void (*TimerHandler)( int id ); /**< \typedef A handler for timers. */
   - To modify an existing Timer, stop() it and then start() it again.  Modifying it while running is not recommended.
   - There are 3 identical hardware timers on the Make Controller.  The first Timer that you create
   will specify which of them to use, and it will be used for all subsequent timers created.  
-  If you don't specify a channel, 0 is used which is usually fine.  
+  If you don't specify a channel, 0 is used which is usually fine.  Specifically, the \ref FastTimer is on 
+  channel 2 by default, so make sure to keep them separate if you're using them at the same time.
   
   For higher resolution timing, check the \ref FastTimer
 */
