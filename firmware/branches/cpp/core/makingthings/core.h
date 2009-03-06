@@ -50,6 +50,7 @@
 #include "analogin.h"
 #include "led_cpp.h"
 #include "timer.h"
+#include "fasttimer.h"
 
 extern "C" {
 #endif

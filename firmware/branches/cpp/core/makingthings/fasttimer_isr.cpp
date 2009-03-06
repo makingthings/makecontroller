@@ -44,7 +44,7 @@ void EnableFIQFromThumb( void )
 void FastTimer_Isr( void ) __attribute__ ((naked));
 
 // Made non-local for debugging
-FastTimer* te;
+FastTimer* ftimer;
 int jitter;
 int timeReference;
 
@@ -96,30 +96,27 @@ void FastTimer_Isr( void )
 
 #endif
 
-    //FastTimerEntry* te = manager->first;
+    //FastTimerEntry* ftimer = manager->first;
     // Use this during debuggin
-    te = manager->first;
-
+    ftimer = manager->first;
     manager->next = NULL;
     manager->previous = NULL;
     manager->nextTime = 0xFF00;
     int removed = false;
     // timeReference = AT91C_BASE_TC2->TC_CV;
 
-    while ( te != NULL )
+    while ( ftimer != NULL )
     {
-      manager->next = te->next;
-      te->timeCurrent -= ( timeReference + manager->tc->TC_CV );
-      if ( te->timeCurrent <= FASTTIMER_MINCOUNT )
+      manager->next = ftimer->next;
+      ftimer->timeCurrent -= ( timeReference + manager->tc->TC_CV );
+      if ( ftimer->timeCurrent <= FASTTIMER_MINCOUNT )
       {
         // Watch out for gross errors
-        //if ( te->timeCurrent < -FASTTIMER_MINCOUNT)
-        //  te->timeCurrent = -FASTTIMER_MINCOUNT;
+        //if ( ftimer->timeCurrent < -FASTTIMER_MINCOUNT)
+        //  ftimer->timeCurrent = -FASTTIMER_MINCOUNT;
 
-        if ( te->repeat )
-        {
-          te->timeCurrent += te->timeInitial;
-        }
+        if ( ftimer->repeat )
+          ftimer->timeCurrent += ftimer->timeInitial;
         else
         {
           // remove it if necessary (do this first!)
@@ -130,12 +127,12 @@ void FastTimer_Isr( void )
           removed = true;
         }
 
-        if ( te->callback != NULL )
+        if ( ftimer->callback != NULL )
         {
           // in this callback, the callee is free to add and remove any members of this list
           // which might effect the first, next and previous pointers
           // so don't assume any of those local variables are good anymore
-          (*te->callback)( te->id );
+          (*ftimer->callback)( ftimer->id );
         }
       }
       
@@ -144,14 +141,12 @@ void FastTimer_Isr( void )
       // at all.
       if ( !removed )
       {
-        if ( manager->nextTime == -1 || te->timeCurrent < manager->nextTime )
-        {
-          manager->nextTime = te->timeCurrent;
-        }
-        manager->previous = te;
+        if ( manager->nextTime == -1 || ftimer->timeCurrent < manager->nextTime )
+          manager->nextTime = ftimer->timeCurrent;
+        manager->previous = ftimer;
       }
 
-      te = manager->next;
+      ftimer = manager->next;
     }
 
     if ( manager->first != NULL )
