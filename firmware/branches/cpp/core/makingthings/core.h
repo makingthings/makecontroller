@@ -51,6 +51,7 @@
 #include "led_cpp.h"
 #include "timer.h"
 #include "fasttimer.h"
+#include "pwm.h"
 
 extern "C" {
 #endif

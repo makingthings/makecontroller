@@ -23,6 +23,7 @@
 
 #define PWM_DUTY_MAX 1024
 #define PWM_COUNT 4
+#define PWM_DEFAULT_FREQ 350
 #define PWM_CHANNEL_0_IO IO_PB19
 #define PWM_CHANNEL_1_IO IO_PB20
 #define PWM_CHANNEL_2_IO IO_PB21
@@ -30,6 +31,7 @@
 
 // statics
 int Pwm::activeChannels = 0;
+int Pwm::_frequency = 0;
 
 /**
   Create a new PWM channel.
@@ -47,15 +49,32 @@ Pwm::Pwm( int channel )
   this->channel = channel; // might as well write this in here so it's invalid instead of possibly defaulting to 0
   if ( channel < 0 || channel >= PWM_COUNT )
     return;
-  _frequency = _duty = _period = 0;
+  _duty = _period = 0;
   // IO line should use peripheral A
   Io pwmPin( getIo( channel ), IO_A );
 
-  // Enable the current channel
-  AT91C_BASE_PWMC->PWMC_ENA = 1 << channel;
-  if(!activeChannels)
-    baseInit();
-  activeChannels |= (1 << channel); // mark it as used
+  unsigned int mask = 1 << channel;
+  if( !(activeChannels & mask) )
+  {
+    if(!activeChannels)
+      baseInit();
+    
+    AT91S_PWMC_CH *pwm = &AT91C_BASE_PWMC->PWMC_CH[ channel ];
+    pwm->PWMC_CMR =
+      // AT91C_PWMC_CPRE_MCK |  // Divider Clock ? 
+         AT91C_PWMC_CPRE_MCKA |    //Divider Clock A
+      // AT91C_PWMC_CPRE_MCKB;  //Divider Clock B
+      // AT91C_PWMC_CPD;  // Channel Update Period 
+         AT91C_PWMC_CPOL; // Channel Polarity Invert
+      // AT91C_PWMC_CALG ; // Channel Alignment Center
+
+    pwm->PWMC_CPRDR = PWM_DUTY_MAX; // Set the Period register (sample size bit fied )
+    pwm->PWMC_CDTYR = 0;            // Set the duty cycle register (output value)
+    pwm->PWMC_CUPDR = 0 ;           // Initialise the Update register write only
+
+    AT91C_BASE_PWMC->PWMC_ENA = mask; // enable this channel
+    activeChannels |= mask; // mark it as used
+  }
 }
 
 Pwm::~Pwm( )
@@ -63,7 +82,7 @@ Pwm::~Pwm( )
   Io pwmPin( getIo( channel ) );
   pwmPin.off(); // turn it off
 
-  int c = 1 << channel;
+  unsigned int c = 1 << channel;
   AT91C_BASE_PWMC->PWMC_DIS = c; // disable this channel
   activeChannels &= ~c; // mark it as unused
   if(!activeChannels) // if that was our last channel, turn everything off
@@ -111,33 +130,10 @@ int Pwm::duty( )
 
 int Pwm::baseInit()
 {
-  // Configure PMC by enabling PWM clock
+  // turn on pwm power, disable all channels and configure clock A
   AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_PWMC;
-
-  // Initially they're stopped
   AT91C_BASE_PWMC->PWMC_DIS = AT91C_PWMC_CHID0 | AT91C_PWMC_CHID1 | AT91C_PWMC_CHID2 | AT91C_PWMC_CHID3;
-  
-  // Set the Clock A divider
-  AT91C_BASE_PWMC->PWMC_MR = (( 4 << 8 ) | 0x08 );  // MCK selection or'ed with Divider
-
-  // Set the Clock
-  int i;
-  for ( i = 0; i < 4; i++ )
-  {
-    AT91S_PWMC_CH *pwm = &AT91C_BASE_PWMC->PWMC_CH[ i ];
-
-    pwm->PWMC_CMR =
-      // AT91C_PWMC_CPRE_MCK |  // Divider Clock ? 
-         AT91C_PWMC_CPRE_MCKA |    //Divider Clock A
-      // AT91C_PWMC_CPRE_MCKB;  //Divider Clock B
-      // AT91C_PWMC_CPD;  // Channel Update Period 
-         AT91C_PWMC_CPOL; // Channel Polarity Invert
-      // AT91C_PWMC_CALG ; // Channel Alignment Center
-
-    pwm->PWMC_CPRDR = PWM_DUTY_MAX; // Set the Period register (sample size bit fied )
-    pwm->PWMC_CDTYR = 0;            // Set the duty cycle register (output value)
-    pwm->PWMC_CUPDR = 0 ;           // Initialise the Update register write only
-  }
+  setFrequency(PWM_DEFAULT_FREQ);
   return CONTROLLER_OK;
 }
 
@@ -197,24 +193,25 @@ void Pwm::setWaveform( bool left_aligned, bool starts_low )
 }
 
 /**
-  Set the frequency of a PWM channel.
+  Set the frequency of the PWM system.
+  Note that this will change the frequency for all PWM channels
 
   @param freq The frequency in Hz (cycles per second).
   @return True if the frequency was set successfully, false if not.
 
   \b Example
   \code
-  Pwm p(2);
-  p.setFrequency(7000); // set it to 7 kHz
+  Pwm::setFrequency(500); // set it to 500 Hz
   \endcode
 */
-bool Pwm::setFrequency(int freq)
+bool Pwm::setFrequency(int freq) // static
 {
   unsigned int mode = 0;
-  unsigned int result = findClockConfiguration( freq );
+  unsigned int result = findClockConfiguration( freq * 1000 );
   if(!result)
     return false;
   mode |= result;
+  _frequency = freq;
   /*
     All channels use clock divider A currently, so we can just set the frequency there
     and be done with it.  If we also wanted to configure channel B, we'd do something like
@@ -232,11 +229,10 @@ bool Pwm::setFrequency(int freq)
 
   \b Example
   \code
-  Pwm pwm(2);
-  int freq = pwm.frequency( );
+  int freq = Pwm::frequency( );
   \endcode
 */
-int Pwm::frequency()
+int Pwm::frequency() // static
 {
   return _frequency;
 }

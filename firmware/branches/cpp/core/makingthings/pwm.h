@@ -50,15 +50,16 @@ public:
   void setDuty(int duty);
   int duty();
 
-  bool setFrequency(int freq);
-  int frequency();
+  static bool setFrequency(int freq);
+  static int frequency();
 
 protected:
-  int channel, _duty, _period, _frequency;
+  int channel, _duty, _period;
+  static int _frequency;
   int getIo( int channel );
   int baseInit();
   int baseDeinit();
-  int findClockConfiguration(int frequency);
+  static int findClockConfiguration(int frequency);
   static int activeChannels;
 };
 
