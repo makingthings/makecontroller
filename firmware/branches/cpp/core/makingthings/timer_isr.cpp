@@ -19,21 +19,12 @@
 #include "FreeRTOS.h"
 #include "timer.h"
 
-// At the moment, the Timer ISR or callbacks, very importantly, can't call any OS stuff since
-// the IRQ might happen any old where
-
-void Timer_Isr( void ) __attribute__ ((interrupt("IRQ")));
-//void Timer_Isr( void ) __attribute__ ((interrupt(naked)));
+void TimerIsr_Wrapper( void ) __attribute__ ((naked));
+void Timer_Isr( );
 
 void Timer_Isr( void )
 {
-	/* This ISR can cause a context switch.  Therefore a call to the 
-	portENTER_SWITCHING_ISR() macro is made.  This must come BEFORE any 
-	stack variable declarations. */
-	// portENTER_SWITCHING_ISR();
-
   Timer::Manager* manager = &Timer::manager;
-
   int status = manager->tc->TC_SR;
   if ( status & AT91C_TC_CPCS )
   {
@@ -50,20 +41,18 @@ void Timer_Isr( void )
       manager->jitterMaxAllDay = jitter;
 
     // Run through once to make the callback calls
-    Timer* te = manager->first;
+    Timer* timer = manager->first;
     manager->next = NULL;
     manager->previous = NULL;
     manager->nextTime = -1;
-    while ( te != NULL )
+    while ( timer != NULL )
     {
-      manager->next = te->next;
-      te->timeCurrent -= manager->tc->TC_RC + manager->tc->TC_CV;
-      if ( te->timeCurrent <= 0 )
+      manager->next = timer->next;
+      timer->timeCurrent -= (manager->tc->TC_RC + manager->tc->TC_CV);
+      if ( timer->timeCurrent <= 0 )
       {
-        if ( te->repeat )
-        {
-          te->timeCurrent += te->timeInitial;
-        }
+        if ( timer->repeat )
+          timer->timeCurrent += timer->timeInitial;
         else
         {
           // remove it if necessary (do this first!)
@@ -73,29 +62,27 @@ void Timer_Isr( void )
             manager->previous->next = manager->next;     
         }
 
-        if ( te->callback != NULL )
+        if ( timer->callback != NULL )
         {
           // in this callback, the callee is free to add and remove any members of this list
           // which might effect the first, next and previous pointers
           // so don't assume any of those local variables are good anymore
-          (*te->callback)( te->id );
+          (*timer->callback)( timer->id );
         }
 
         // Assuming we're still on the list (if we were removed, then re-added, we'd be on the beggining of
         // the list with this task already performed) see whether our time is the next to run
-        if ( ( manager->previous == NULL && manager->first == te ) ||
-             ( manager->previous != NULL && manager->previous->next == te ) )
+        if ( ( manager->previous == NULL && manager->first == timer ) ||
+             ( manager->previous != NULL && manager->previous->next == timer ) )
         {
-          if ( manager->nextTime == -1 || te->timeCurrent < manager->nextTime )
-            manager->nextTime = te->timeCurrent;
+          if ( manager->nextTime == -1 || timer->timeCurrent < manager->nextTime )
+            manager->nextTime = timer->timeCurrent;
         }
       } 
       else
-      {
-        manager->previous = te;
-      }
-
-      te = manager->next;
+        manager->previous = timer;
+      
+      timer = manager->next;
     }
 
     if ( manager->first != NULL )
@@ -114,14 +101,22 @@ void Timer_Isr( void )
     }
 
     jitter = manager->tc->TC_CV;
-
     manager->servicing = false;
   }
 
-	/* Clear AIC to complete ISR processing */
-	AT91C_BASE_AIC->AIC_EOICR = 0;
+	AT91C_BASE_AIC->AIC_EOICR = 0; // Clear AIC to complete ISR processing
+}
 
-	/* Do a task switch if needed */
-	// portEXIT_SWITCHING_ISR( false );
+void TimerIsr_Wrapper( void )
+{
+	/* Save the context of the interrupted task. */
+	portSAVE_CONTEXT();
+
+	/* Call the handler to do the work.  This must be a separate
+	function to ensure the stack frame is set up correctly. */
+	Timer_Isr();
+
+	/* Restore the context of whichever task will execute next. */
+	portRESTORE_CONTEXT();
 }
 
