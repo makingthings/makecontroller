@@ -15,18 +15,7 @@
 
 *********************************************************************************/
 
-/** \file appled.c	
-	MAKE Application Board LED control.
-	Library of functions for the Make Application Board's LED subsystem.
-*/
-
-#include "io_cpp.h"
 #include "appled_cpp.h"
-
-extern "C" {
-  #include "config.h"
-}
-
 #include "AT91SAM7X256.h"
 
 #define APPLED_COUNT 4 
@@ -36,56 +25,82 @@ extern "C" {
   #define APPLED_1_IO IO_PB20
   #define APPLED_2_IO IO_PB21
   #define APPLED_3_IO IO_PB22
-#endif
-#if ( APPBOARD_VERSION == 90 )
+#elif ( APPBOARD_VERSION == 90 )
   #define APPLED_0_IO IO_PA10
   #define APPLED_1_IO IO_PA11
   #define APPLED_2_IO IO_PA13
   #define APPLED_3_IO IO_PA15
-#endif
-#if ( APPBOARD_VERSION == 95 || APPBOARD_VERSION == 100 )
+#elif ( APPBOARD_VERSION == 95 || APPBOARD_VERSION == 100 )
   #define APPLED_0_IO IO_PA15
   #define APPLED_1_IO IO_PA13
   #define APPLED_2_IO IO_PA28
   #define APPLED_3_IO IO_PA27
 #endif
 
-/** \defgroup AppLed Application Board LEDs
-* The Application Board LED subsystem controls the 4 LEDs on the Application Board, for status and program feedback.
-* \ingroup Libraries
-* @{
-*/
-
 Io* AppLed::leds[] = {0, 0, 0, 0};
-#ifdef OSC
-AppLedOSC* AppLed::oscHandler;
-#endif
+//#ifdef OSC
+//AppLedOSC* AppLed::oscHandler;
+//#endif
 
+/**
+  Create a new AppLed
+  @param index Which AppLed - valid options are 0, 1, 2, and 3
+
+  \b Example
+  \code
+  AppLed a(1); // controlling AppLed 1
+  a.setState(1); // turn it on
+  a.setState(0); // turn it off
+  \endcode
+*/
 AppLed::AppLed( int index )
 {
+  _index = index;
   if( index < 0 || index >= APPLED_COUNT )
     return;
-  
-  _index = index;
-  Io* io = leds[_index];
-  if( !io )
-    io = new Io( getIo(_index), GPIO, IO_OUTPUT );
-  #ifdef OSC
-  oscHandler = new AppLedOSC();
-  #endif
+  if( !leds[_index] )
+    leds[_index] = new Io( getIo(_index), GPIO, IO_OUTPUT );
+//  #ifdef OSC
+//  oscHandler = new AppLedOSC();
+//  #endif
 }
 
+/**
+  Turn an AppLed on or off.
+  @param state True to turn it on, false to turn it off.
+
+  \b Example
+  \code
+  AppLed* a = new AppLed(0); // allocate a new AppLed 0
+  a->setState(1); // turn it on
+  a->setState(0); // turn it off
+  \endcode
+*/
 void AppLed::setState( bool state )
 {
-  if(!leds[_index])
-    return;
   leds[_index]->setValue( state );
 }
 
+/**
+  Read whether an AppLed is currently on or not.
+
+  @return true if it's on, false if it's not.
+
+  \b Example
+  \code
+  AppLed appled(2);
+  if( appled.getState() )
+  {
+    // then do this
+  }
+  else
+  {
+    // then do that
+  }
+  \endcode
+*/
 bool AppLed::getState( )
 {
-  if(!leds[_index])
-    return false;
   return leds[_index]->getValue( );
 }
 
@@ -108,23 +123,23 @@ int AppLed::getIo(int index)
 
 #ifdef OSC
 
-/** \defgroup AppLEDOSC App LED - OSC
+/**
+  \defgroup AppLEDOSC App LED - OSC
   Control the Application Board's Status LEDs via OSC.
-  \ingroup OSC
 	
 	\section devices Devices
 	There are 4 LEDs on the Make Application Board, numbered 0 - 3.
 	
 	\section properties Properties
-	The LEDs have two properties:
+	The LEDs have the following properties:
   - state
   - active
 
 	\par State
 	The \b state property corresponds to the on/off state of a given LED.
 	For example, to turn on the first LED, send a message like
-	\verbatim /appled/0/state 1\endverbatim
-	To turn it off, send the message \verbatim /appled/0/state 0\endverbatim
+	\code /appled/0/state 1 \endcode
+	To turn it off, send the message \code /appled/0/state 0 \endcode
 	
 	\par Active
 	The \b active property corresponds to the active state of an LED.
@@ -132,10 +147,10 @@ int AppLed::getIo(int index)
 	write to it.  If you're not seeing appropriate
 	responses to your messages to the LED, check the whether it's 
 	locked by sending a message like
-	\verbatim /appled/0/active \endverbatim
+	\code /appled/0/active \endcode
 	\par
 	You can set the active flag by sending
-	\verbatim /appled/0/active 1 \endverbatim
+	\code /appled/0/active 1 \endcode
 */
 
 #include "osc.h"
@@ -168,8 +183,6 @@ int AppLedOSC::onNewMsg( OscTransport t, OscMessage* msg, int src_addr, int src_
     if( index < 0 || index >= APPLED_COUNT )
       continue;
     AppLed led(index);
-    if(!led.valid())
-      return replies;
     if( msg->data_count ) // setter...write the value to the led
     {
       switch( prop_index )
