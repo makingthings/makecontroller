@@ -49,6 +49,7 @@
 #include "system.h"
 #include "analogin.h"
 #include "led_cpp.h"
+#include "timer.h"
 
 extern "C" {
 #endif

@@ -23,65 +23,61 @@
 #define TIMER_CYCLES_PER_MS 48
 
 // statics
-bool Timer::manager_init = false;
 Timer::Manager Timer::manager;
 // extern
-void Timer_Isr( );
-
-/** \defgroup Timer Timer
-  The Timer subsystem provides a timer in a millisecond timeframe.
-  For higher resolution timing, check the \ref FastTimer
-
-  The Timer subsystem is based on a collection of \b TimerEntries.  To start a new timer, create a new
-  \b TimerEntry structure, initialize it with Timer_InitializeEntry( ), and start it with Timer_Set( ).
-
-  There are currently a couple of limitations to the Timer system:
-  - In your callback function, you must not sleep or make any FreeRTOS-related calls.
-  - To modify an existing TimerEntry, you must cancel the timer with Timer_Cancel( ), and reinitialize the TimerEntry.
-
-  \todo Allow the timer callbacks to cooperate with the \ref RTOS
-  \todo Allow existing timer entries to be modified (repeat or not, modify the period, etc.)
-  \ingroup Core
-  @{
-*/
+void TimerIsr_Wrapper( );
 
 /**
   Make a new timer.
   Note - the timer index selected will be used for all subsequent timers created.
+  @param timer The hardware timer to use - valid options are 0, 1 and 2.  0 is the default.
 */
 Timer::Timer(int timer)
 {
-  if(!manager_init)
-  {
+  if(!manager.timer_count++)
     managerInit(timer);
-    manager_init = true;
-  }
 }
 
 Timer::~Timer()
 {
   stop();
-}
-
-void Timer::setHandler(TimerHandler handler, int id, int millis, bool repeat)
-{
-  callback = handler;
-  id = id;
-  timeCurrent = 0;
-  timeInitial = millis * TIMER_CYCLES_PER_MS;
-  repeat = repeat;
-  next = NULL;
+  if(--manager.timer_count == 0)
+    managerDeinit( );
 }
 
 /**
-  Sets a given TimerEntry to run.
-  This routine adds the entry to the running queue and then decides if it needs
-  to start the timer (if it's not running) or alter the timer's clock for a shorter
-  period.
-  @param timerEntry pointer to the FastTimerEntry to be run. 
+  Register a handler for this timer.
+  Specify a handler function that should be called back at
+  an interval specified in start().  If you have a handler registered with
+  more than one timer, use the \b id to distinguish which timer is calling
+  it at a given time.
+
+  @param handler A function of the form \code void myHandler( int id ); \endcode
+  @param id An id that will be passed into your handler, telling it which timer is calling it.
 */
-int Timer::start( )
+void Timer::setHandler(TimerHandler handler, int id )
 {
+  callback = handler;
+  this->id = id;
+}
+
+/**
+  Start a timer.
+  Specify if you'd like the timer to repeat and, if so, the interval at which 
+  you'd like it to repeat.  If you have set up a handler with setHandler() then your 
+  handler function will get called at the specified interval.  If the timer is already
+  running, this will reset it.
+  
+  @param millis The number of milliseconds 
+  @param repeat Whether or not to repeat - true by default.
+*/
+int Timer::start( int millis, bool repeat )
+{
+  timeCurrent = 0;
+  timeInitial = millis * TIMER_CYCLES_PER_MS;
+  this->repeat = repeat;
+  next = NULL;
+
   // this could be a lot smarter - for example, modifying the current period?
   if ( !manager.servicing ) 
     Task::enterCritical();
@@ -146,10 +142,8 @@ int Timer::start( )
 }
 
 /**	
-  Cancel a timer event.
-  @param timerEntry The entry to be removed.
+  Stop a timer.
   @return 0 on success.
-	@see Timer_Set
 */
 int Timer::stop( )
 {
@@ -195,49 +189,45 @@ int Timer::stop( )
   return CONTROLLER_OK;
 }
 
-/** @}
-*/
-
 // Enable the timer.  Disable is performed by the ISR when timer is at an end
 void Timer::enable( )
 {
   // Enable the device
   // AT91C_BASE_TC0->TC_CCR = AT91C_TC_SWTRG;
-  AT91C_BASE_TC0->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
+  manager.tc->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
   manager.running = true;
 }
 
 int Timer::getTimeTarget( )
 {
-  return AT91C_BASE_TC0->TC_RC;
+  return manager.tc->TC_RC;
 }
 
 int Timer::getTime( )
 {
-  return AT91C_BASE_TC0->TC_CV;
+  return manager.tc->TC_CV;
 }
 
 void Timer::setTimeTarget( int target )
 {
-  AT91C_BASE_TC0->TC_RC = ( target < 0xFFFF ) ? target : 0xFFFF;
+  manager.tc->TC_RC = ( target < 0xFFFF ) ? target : 0xFFFF;
 }
 
 int Timer::managerInit(int timerindex)
 {
-  unsigned int channel_id;
   switch(timerindex)
   {
     case 1:
       manager.tc = AT91C_BASE_TC1;
-      channel_id = AT91C_ID_TC1;
+      manager.channel_id = AT91C_ID_TC1;
       break;
     case 2:
       manager.tc = AT91C_BASE_TC2;
-      channel_id = AT91C_ID_TC2;
+      manager.channel_id = AT91C_ID_TC2;
       break;
     default:
       manager.tc = AT91C_BASE_TC0;
-      channel_id = AT91C_ID_TC0;
+      manager.channel_id = AT91C_ID_TC0;
       break;
   }
   
@@ -249,23 +239,14 @@ int Timer::managerInit(int timerindex)
   manager.running = false;
   manager.servicing = false;
 
-  // Configure TC by enabling PWM clock
-	AT91C_BASE_PMC->PMC_PCER = 1 << channel_id;
-                                    
-  unsigned int mask;
-  mask = 0x1 << channel_id;
+  unsigned int mask = 0x1 << manager.channel_id;
+	AT91C_BASE_PMC->PMC_PCER = mask; // power up the selected channel
    
-  /* Disable the interrupt on the interrupt controller */
+  // disable the interrupt, configure interrupt handler and re-enable
   AT91C_BASE_AIC->AIC_IDCR = mask;
-
-  /* Save the interrupt handler routine pointer */	
-  AT91C_BASE_AIC->AIC_SVR[ channel_id ] = (unsigned int)Timer_Isr;
-
-  /* Store the Source Mode Register */
-  // 4 PRIORITY is random
-  AT91C_BASE_AIC->AIC_SMR[ channel_id ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;
-  /* Clear the interrupt on the interrupt controller */
-  AT91C_BASE_AIC->AIC_ICCR = mask ;
+  AT91C_BASE_AIC->AIC_SVR[ manager.channel_id ] = (unsigned int)TimerIsr_Wrapper;
+  AT91C_BASE_AIC->AIC_SMR[ manager.channel_id ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;
+  AT91C_BASE_AIC->AIC_ICCR = mask;
 
   // Set the timer up.  We want just the basics, except when the timer compares 
   // with RC, retrigger
@@ -295,6 +276,12 @@ int Timer::managerInit(int timerindex)
   AT91C_BASE_AIC->AIC_IECR = mask;
 
   return CONTROLLER_OK;
+}
+
+void Timer::managerDeinit( )
+{
+  AT91C_BASE_AIC->AIC_IDCR = manager.channel_id; // disable the interrupt
+  AT91C_BASE_PMC->PMC_PCDR = manager.channel_id; // power down
 }
 
 
