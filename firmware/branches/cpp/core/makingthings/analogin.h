@@ -15,12 +15,6 @@
 
 *********************************************************************************/
 
-/*
-	adc.h
-
-  MakingThings
-*/
-
 #ifndef ANALOGIN_H
 #define ANALOGIN_H
 
@@ -28,6 +22,21 @@
 
 #define ANALOGIN_CHANNELS 8
 
+/**
+  10-bit analog inputs.
+  The analog to digital converters read incoming signals from 0 - 3.3V.  They are rated as 5V tolerant, 
+  but will not return meaningful values for anything above 3.3V.
+  
+  \section Values
+  Analog inputs will return a value between 0 and 1023, corresponding to 0 to 3.3V on the input.
+  
+  If you want to convert this to the actual voltage, you can use the following conversion:
+  \code float voltage = 3.3 * ( ainValue / 1023.0 ) \endcode
+  where \b ainValue is the AnalogIn value.
+  
+  A quicker version that doesn't use floating point, but will be slightly less precise:
+  \code int voltage = ( 100 * ainValue ) / 1023 \endcode
+*/
 class AnalogIn
 {
 public:

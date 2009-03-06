@@ -16,6 +16,8 @@ extern "C" {
   #include "portable.h"
 }
 
+void* __dso_handle = (void*) &__dso_handle;
+
 void * operator new (size_t  size) throw()
 {
   return pvPortMalloc( size );

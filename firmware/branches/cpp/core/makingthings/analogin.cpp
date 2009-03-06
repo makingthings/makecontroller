@@ -15,13 +15,6 @@
 
 *********************************************************************************/
 
-// MakingThings - Make Controller Board - 2006
-
-/** \file analogin.c	
-	Functions for reading the analog inputs on the MAKE Application Board.
-*/
-
-/* Library includes. */
 #include <string.h>
 #include <stdio.h>
 
@@ -42,35 +35,12 @@ void AnalogInIsr_Wrapper( );
 // statics
 AnalogIn::Manager AnalogIn::manager;
 
-/** \defgroup AnalogIn Analog Inputs
-	The AnalogIn subsystem converts 0-3.3V signals to 10-bit digital values.
-	The analog to digital converters read incoming signals from 0 - 3.3V.  They are rated as 5V tolerant, 
-  and indeed can momentarily withstand higher voltages, but will not return meaningful values for anything 
-  above 3.3V.\n
-	
-  Converting the 0 - 1023 reading of the AnalogIn channel into a voltage is performed as follows:
-   \verbatim v = 3.3 * ( a / 1023.0 ) \endverbatim
-    where a is the AnalogIn value
-
-  This is of course a floating point operation (slowish) using a division (slowish).  Fixed point 
-  versions may be more suitable for some applications.  Where reduced accuracy is acceptable, the following 
-  can be used to get the input as a percentage of 3.3V:
-  \verbatim  p = ( 100 * a ) / 1023 \endverbatim
-
-  Initializing the controller's AnalogIn system is pretty involved (see AnalogIn_Init() in AnalogIn->c).  There are a lot of 
-  different options - different converter speeds, DMA access, etc.  We've chosen something pretty simple here.
-  More ambitious users may wish to alter the implementation.
-
-	\ingroup Core
-	@{
-*/
-
 /**
-	Create a new AnalogIn object.
+  Create a new AnalogIn object.
   There are 8 analog ins on the Make Controller - pass in which channel this
   AnalogIn should read from.
-	@param index An integer specifying the channel (0 - 7).
-	
+  @param index An integer specifying the channel (0 - 7).
+  
   \par Example
   \code
   // we can create an AnalogIn locally (faster since it doesn't allocate any memory)
@@ -110,11 +80,11 @@ AnalogIn::~AnalogIn()
     managerDeinit();
 }
 
-/**	
-	Read the value of an analog input.
-	@return The value as an integer (0 - 1023).
-	
-	\par Example
+/** 
+  Read the value of an analog input.
+  @return The value as an integer (0 - 1023).
+  
+  \par Example
   \code
   AnalogIn ain0(0);
   if( ain0.value() > 500 )
@@ -149,7 +119,7 @@ int AnalogIn::value( )
   return value;
 }
 
-/**	
+/** 
   Read the value of all the analog inputs.
   If you want to read all the anaog ins, this is quicker than reading them all 
   separately.  Make sure to provide an array of 8 ints, as this does not do
@@ -157,11 +127,11 @@ int AnalogIn::value( )
 
   @param values A pointer to an int array to be filled with the values.
   @return 0 on success, otherwise non-zero.
-	
-	\par Example
+  
+  \par Example
   \code
-	int samples[8];
-	AnalogIn::multi( samples );
+  int samples[8];
+  AnalogIn::multi( samples );
    // now samples is filled with all the analogin values
   \endcode
 */
@@ -206,15 +176,15 @@ bool AnalogIn::multi( int values[] ) // static
   return true;
 }
 
-/**	
-	Read the value of an analog input without the use of any OS services.
+/** 
+  Read the value of an analog input without the use of any OS services.
   This will busy wait until the read has completed.  Note that this is not 
   thread safe and shouldn't be used if another part of the code might be 
   using it or the thread safe versions.
-	@param index An integer specifying which input (0-7).
-	@return The value as an integer (0 - 1023).
-	
-	\par Example
+  @param index An integer specifying which input (0-7).
+  @return The value as an integer (0 - 1023).
+  
+  \par Example
   \code
   AnalogIn ain0(0);
   int value = ain0.valueWait( );
@@ -235,8 +205,6 @@ int AnalogIn::valueWait( )
   return AT91C_BASE_ADC->ADC_LCDR & 0xFFFF; // last converted value
 }
 
-/** @}
-*/
 
 #ifdef OSC___
 void AnalogIn_AutoSendInit( )
@@ -273,22 +241,22 @@ int AnalogIn::managerInit()
   manager.doneSemaphore.take();
 
   // Initialize the interrupts
-  unsigned int mask = 0x1 << AT91C_ID_ADC;													
+  unsigned int mask = 0x1 << AT91C_ID_ADC;                          
                         
   // Disable the interrupt controller & register our interrupt handler
-  AT91C_BASE_AIC->AIC_IDCR = mask ;										
-  AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_ADC ] = (unsigned int)AnalogInIsr_Wrapper;			
-  AT91C_BASE_AIC->AIC_SMR[ AT91C_ID_ADC ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;				
-  AT91C_BASE_AIC->AIC_ICCR = mask ;					
+  AT91C_BASE_AIC->AIC_IDCR = mask ;                   
+  AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_ADC ] = (unsigned int)AnalogInIsr_Wrapper;      
+  AT91C_BASE_AIC->AIC_SMR[ AT91C_ID_ADC ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;       
+  AT91C_BASE_AIC->AIC_ICCR = mask ;         
   AT91C_BASE_ADC->ADC_IER = AT91C_ADC_DRDY; 
-	AT91C_BASE_AIC->AIC_IECR = mask;
+  AT91C_BASE_AIC->AIC_IECR = mask;
 
   return CONTROLLER_OK;
 }
 
 void AnalogIn::managerDeinit() // static
 {
-  unsigned int mask = 0x1 << AT91C_ID_ADC;		
+  unsigned int mask = 0x1 << AT91C_ID_ADC;    
   AT91C_BASE_PMC->PMC_PCDR = mask; // Disable the peripheral clock
   AT91C_BASE_AIC->AIC_IDCR = mask; // disable interrupts for the ADC
 }
@@ -312,10 +280,10 @@ int AnalogIn::getIo( int index )
 
 #ifdef OSC___
 
-/**	
-	Read whether a particular channel is enabled to check for and send new values automatically.
-	@param index An integer specifying which input (0-7).
-	@return True if enabled, false if disabled.
+/** 
+  Read whether a particular channel is enabled to check for and send new values automatically.
+  @param index An integer specifying which input (0-7).
+  @return True if enabled, false if disabled.
 */
 bool AnalogIn_GetAutoSend( int index )
 {
@@ -323,10 +291,10 @@ bool AnalogIn_GetAutoSend( int index )
   return (AnalogIn->autosend >> index) & 0x01;
 }
 
-/**	
-	Set whether a particular channel is enabled to check for and send new values automatically.
-	@param index An integer specifying which input (0-7).
-	@param onoff A boolean specifying whether to turn atuosending on or off.
+/** 
+  Set whether a particular channel is enabled to check for and send new values automatically.
+  @param index An integer specifying which input (0-7).
+  @param onoff A boolean specifying whether to turn atuosending on or off.
 */
 void AnalogIn_SetAutoSend( int index, bool onoff )
 {
@@ -346,53 +314,53 @@ void AnalogIn_SetAutoSend( int index, bool onoff )
 /** \defgroup AnalogInOSC Analog In - OSC
   Read the Application Board's Analog Inputs via OSC.
   \ingroup OSC
-	
-	\section devices Devices
-	There are 8 Analog Inputs on the Make Application Board, numbered 0 - 7.
-	
-	\section properties Properties
-	The Analog Ins have three properties:
+  
+  \section devices Devices
+  There are 8 Analog Inputs on the Make Application Board, numbered 0 - 7.
+  
+  \section properties Properties
+  The Analog Ins have three properties:
   - value
   - active
-	- autosend
+  - autosend
 
-	\par Value
-	The \b value property corresponds to the incoming signal of an Analog In.
-	The range of values you can expect to get back are from 0 - 1023.
-	Because you can only ever \em read the value of an input, you'll never
-	want to include an argument at the end of your OSC message to read the value.\n
-	To read the sixth Analog In, send the message
-	\verbatim /analogin/5/value \endverbatim
-	The board will then respond by sending back an OSC message with the Analog In value.
-	
-	\par Autosend
-	The \b autosend property corresponds to whether an analogin will automatically send a message
-	when its incoming value changes.
-	To tell the Controller to automatically send messages from analogin 4, send the message
-	\verbatim /analogin/5/autosend 1 \endverbatim
-	To have the Controller stop sending messages from analogin 4, send the message
-	\verbatim /analogin/5/autosend 0 \endverbatim
-	All autosend messages send at the same interval.  You can set this interval, in 
-	milliseconds, by sending the message
-	\verbatim /system/autosend-interval 10 \endverbatim
-	so that messages will be sent every 10 milliseconds.  This can be anywhere from 1 to 5000 milliseconds.
+  \par Value
+  The \b value property corresponds to the incoming signal of an Analog In.
+  The range of values you can expect to get back are from 0 - 1023.
+  Because you can only ever \em read the value of an input, you'll never
+  want to include an argument at the end of your OSC message to read the value.\n
+  To read the sixth Analog In, send the message
+  \verbatim /analogin/5/value \endverbatim
+  The board will then respond by sending back an OSC message with the Analog In value.
+  
+  \par Autosend
+  The \b autosend property corresponds to whether an analogin will automatically send a message
+  when its incoming value changes.
+  To tell the Controller to automatically send messages from analogin 4, send the message
+  \verbatim /analogin/5/autosend 1 \endverbatim
+  To have the Controller stop sending messages from analogin 4, send the message
+  \verbatim /analogin/5/autosend 0 \endverbatim
+  All autosend messages send at the same interval.  You can set this interval, in 
+  milliseconds, by sending the message
+  \verbatim /system/autosend-interval 10 \endverbatim
+  so that messages will be sent every 10 milliseconds.  This can be anywhere from 1 to 5000 milliseconds.
   \par
   You also need to select whether the board should send to you over USB or Ethernet.  Send
   \verbatim /system/autosend-usb 1 \endverbatim
   to send via USB, and 
   \verbatim /system/autosend-udp 1 \endverbatim
   to send via Ethernet.  Via Ethernet, the board will send messages to the last address it received a message from.
-	
-	\par Active
-	The \b active property corresponds to the active state of an Analog In.
-	If an Analog In is set to be active, no other tasks will be able to
-	read from it as an Analog In.  If you're not seeing appropriate
-	responses to your messages to the Analog In, check the whether it's 
-	locked by sending a message like
-	\verbatim /analogin/0/active \endverbatim
-	\par
-	You can set the active flag by sending
-	\verbatim /analogin/0/active 1 \endverbatim
+  
+  \par Active
+  The \b active property corresponds to the active state of an Analog In.
+  If an Analog In is set to be active, no other tasks will be able to
+  read from it as an Analog In.  If you're not seeing appropriate
+  responses to your messages to the Analog In, check the whether it's 
+  locked by sending a message like
+  \verbatim /analogin/0/active \endverbatim
+  \par
+  You can set the active flag by sending
+  \verbatim /analogin/0/active 1 \endverbatim
 */
 
 #include "osc.h"
