@@ -15,18 +15,10 @@
 
 *********************************************************************************/
 
-/*
-	appled.h
-
-*/
-
 #ifndef APPLED_CPP_H
 #define APPLED_CPP_H
 
-extern "C" {
-  #include "config.h"
-}
-
+#include "config.h"
 #include "io_cpp.h"
 
 #ifdef OSC
@@ -43,19 +35,22 @@ public:
 };
 #endif // OSC
 
+/**
+  Status LEDs for program feedback.
+  App LEDs (Application Board LED) are great for providing some information about how your
+  program is running.  
+*/
 class AppLed
 {
 public:
   AppLed( int index );
-  ~AppLed( ) { }
-  bool valid( ) { return leds[_index] != NULL; }
   void setState( bool state );
   bool getState( );
-  #ifdef OSC
-  static AppLedOSC* oscHandler;
-  #endif
+//  #ifdef OSC
+//  static AppLedOSC* oscHandler;
+//  #endif
   
-private:
+protected:
   int getIo(int index);
   int _index;
   static Io* leds[4]; // only ever want to make 4 of these, to allow for multiple instances using the same Io*
