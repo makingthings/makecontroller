@@ -15,15 +15,27 @@
 
 *********************************************************************************/
 
-/*
-	PWM.h
-
-  MakingThings
-*/
-
 #ifndef PWM_H
 #define PWM_H
 
+/**
+	Control the 4 Pulse Width Modulation outputs.
+
+  The Make Controller has 4 PWM lines.  These can each be configured separately and can control
+  up to 2 output lines directly, the 2 lines running either parallel or inverted.  For a very simple
+  start, just see Pwm_Set( ) and Pwm_Get( ) as these will start driving your PWMs immediately with
+  very little hassle.
+
+  \section Hardware
+  The PWM lines on the Make Controller are located on the following signal lines:
+  - channel 0 is PB19
+  - channel 1 is PB20
+  - channel 2 is PB21
+  - channel 3 is PB22
+	
+  The PWM subsystem of the Controller Board can be used independently from the \ref PwmOut 
+  library, since the \ref PwmOut library relies on the core PWM.
+*/
 class Pwm
 {
 public:
@@ -31,39 +43,23 @@ public:
   ~Pwm();
   
   void setWaveform( bool left_aligned, bool starts_low );
+  
+  bool setPeriod( int period );
+  int period( );
 
   void setDuty(int duty);
-  int getDuty();
+  int duty();
 
-  void setFrequency(int freq);
-  int getFrequency();
+  bool setFrequency(int freq);
+  int frequency();
 
 protected:
-  int channel, duty;
+  int channel, _duty, _period, _frequency;
   int getIo( int channel );
   int baseInit();
   int baseDeinit();
   int findClockConfiguration(int frequency);
   static int activeChannels;
-
 };
-
-//int Pwm_Start( int channel );
-//int Pwm_Stop( int channel );
-//int Pwm_Set( int index, int duty );
-//int Pwm_Get( int index );
-//
-//int Pwm_SetDividerA(int val);
-//int Pwm_GetDividerA( void );
-//
-//int Pwm_SetDividerB(int val);
-//int Pwm_GetDividerB( void );
-//
-//int Pwm_SetClockSource(int channel, int val);
-//int Pwm_GetClockSource(int channel);
-//
-//int Pwm_SetWaveformProperties(int channel, int val);
-//int Pwm_GetWaveformProperties(int channel);
-
 
 #endif

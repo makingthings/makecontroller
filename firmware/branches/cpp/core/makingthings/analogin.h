@@ -28,7 +28,7 @@
   but will not return meaningful values for anything above 3.3V.
   
   \section Values
-  Analog inputs will return a value between 0 and 1023, corresponding to 0 to 3.3V on the input.
+  Analog inputs will return a value between 0 and 1023, corresponding to the range of \b 0 to \b 3.3V on the input.
   
   If you want to convert this to the actual voltage, you can use the following conversion:
   \code float voltage = 3.3 * ( ainValue / 1023.0 ) \endcode

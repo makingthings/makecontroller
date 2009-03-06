@@ -39,7 +39,7 @@ AnalogIn::Manager AnalogIn::manager;
   Create a new AnalogIn object.
   There are 8 analog ins on the Make Controller - pass in which channel this
   AnalogIn should read from.
-  @param index An integer specifying the channel (0 - 7).
+  @param channel Which analog in channel - valid options are from 0 to 7.
   
   \par Example
   \code
@@ -123,9 +123,9 @@ int AnalogIn::value( )
   Read the value of all the analog inputs.
   If you want to read all the anaog ins, this is quicker than reading them all 
   separately.  Make sure to provide an array of 8 ints, as this does not do
-  any checking about where it's writing to.
+  any checking about the size of the array it's writing to.
 
-  @param values A pointer to an int array to be filled with the values.
+  @param values An array of ints to be filled with the values.
   @return 0 on success, otherwise non-zero.
   
   \par Example
@@ -181,7 +181,6 @@ bool AnalogIn::multi( int values[] ) // static
   This will busy wait until the read has completed.  Note that this is not 
   thread safe and shouldn't be used if another part of the code might be 
   using it or the thread safe versions.
-  @param index An integer specifying which input (0-7).
   @return The value as an integer (0 - 1023).
   
   \par Example

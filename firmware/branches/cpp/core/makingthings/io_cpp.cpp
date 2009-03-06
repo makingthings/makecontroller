@@ -15,15 +15,8 @@
 
 *********************************************************************************/
 
-
-/** \file io.c	
-	Subsystem for manipulating the general purpose IO lines.
-*/
-
-/* Hardware specific headers */
 #include "Board.h"
 #include "AT91SAM7X256.h" 
-
 #include "io_cpp.h"
 #include "config.h"
 
