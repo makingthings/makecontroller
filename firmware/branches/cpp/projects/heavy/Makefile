@@ -59,8 +59,8 @@ THUMB_SRC= \
   $(USB)/device/core/USBDCallbacks_Reset.c \
   $(USB)/device/core/USBDCallbacks_Resumed.c \
   $(USB)/device/core/USBDCallbacks_Suspended.c \
-  $(USB)/device/core/USBDDriverCallbacks_ConfigurationChanged.c \
-  $(USB)/device/core/USBDDriverCallbacks_InterfaceSettingChanged.c \
+  $(USB)/device/core/USBDDriverCb_CfgChanged.c \
+  $(USB)/device/core/USBDDriverCb_IfSettingChanged.c \
   $(USB)/device/core/USBDDriver.c \
   $(USB)/common/core/USBSetAddressRequest.c \
   $(USB)/common/core/USBGenericDescriptor.c \
@@ -90,6 +90,10 @@ CPP_THUMB_SRC = \
   $(MAKINGTHINGS)/osc_pattern.cpp \
   $(MAKINGTHINGS)/spi_cpp.cpp \
   $(MAKINGTHINGS)/eeprom_.cpp \
+  $(MAKINGTHINGS)/timer.cpp \
+  $(MAKINGTHINGS)/fasttimer.cpp \
+  $(MAKINGTHINGS)/analogin.cpp \
+  $(MAKINGTHINGS)/pwm.cpp \
   $(LIBRARIES)/appled/appled_.cpp \
   $(LIBRARIES)/json/json_.cpp \
   make_.cpp \
@@ -100,7 +104,10 @@ ARM_SRC= \
   $(MAKINGTHINGS)/SAM7_EMAC_ISR.c \
   $(USB)/device/core/USBD_UDP.c
   
-# CPP_ARM_SRC = \
+CPP_ARM_SRC = \
+  $(MAKINGTHINGS)/analogin_isr.cpp \
+  $(MAKINGTHINGS)/fasttimer_isr.cpp \
+  $(MAKINGTHINGS)/timer_isr.cpp
 
   
 # All the include directories need to be appended here
