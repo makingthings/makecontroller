@@ -207,7 +207,7 @@ QextSerialEnumerator::~QextSerialEnumerator( )
     portInfo->enumName = getDeviceProperty(devInfo, devData, SPDRP_ENUMERATOR_NAME);
     QString hardwareIDs = getDeviceProperty(devInfo, devData, SPDRP_HARDWAREID);
     HKEY devKey = SetupDiOpenDevRegKey(devInfo, devData, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
-    portInfo->portName = getRegKeyValue(devKey, TEXT("PortName"));
+    portInfo->portName = getRegKeyValue(devKey, TEXT("PortName")).toAscii();
     QRegExp rx("COM(\\d+)");
     if(portInfo->portName.contains(rx))
     {
