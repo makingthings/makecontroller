@@ -5,6 +5,7 @@
 #include <QReadWriteLock>
 #include "win_qextserialport.h"
 #include <QMutexLocker>
+#include <QtDebug>
 
 
 /*!
@@ -126,6 +127,7 @@ void Win_QextSerialPort::init()
 	overlap.Offset = 0;
 	overlap.OffsetHigh = 0;
 	overlap.hEvent = CreateEvent(NULL, true, false, NULL);
+  overlapWrite.hEvent = CreateEvent(NULL, true, false, NULL);
 	overlapThread = new Win_QextSerialThread(this);
 	bytesToWriteLock = new QReadWriteLock;
 }
@@ -408,15 +410,18 @@ qint64 Win_QextSerialPort::writeData(const char *data, qint64 maxSize)
 		overlapWrite.InternalHigh = 0;
 		overlapWrite.Offset = 0;
 		overlapWrite.OffsetHigh = 0;
-		overlapWrite.hEvent = CreateEvent(NULL, true, false, NULL);
 		if (!WriteFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, & overlapWrite)) {
-			lastErr = E_WRITE_FAILED;
-			retVal = (DWORD)-1;
-	   	} else
-	   		retVal = maxSize;
+      // since we're in overlapped mode, IO_PENDING simply indicates
+      //the write will be performed asynchronously
+      if(GetLastError() != ERROR_IO_PENDING) {
+        lastErr = E_WRITE_FAILED;
+        retVal = (DWORD)-1;
+      }
+    } else
+      retVal = maxSize;
     } else if (!WriteFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, NULL)) {
-		lastErr = E_WRITE_FAILED;
-		retVal = (DWORD)-1;
+      lastErr = E_WRITE_FAILED;
+      retVal = (DWORD)-1;
    	}
    	
     return (qint64)retVal;
@@ -970,7 +975,8 @@ void Win_QextSerialPort::monitorCommEvent()
 		}
 		if (eventMask & EV_TXEMPTY) {
 			DWORD numBytes;
-			GetOverlappedResult(Win_Handle, & overlapWrite, & numBytes, true);
+      if (!GetOverlappedResult(Win_Handle, & overlapWrite, & numBytes, true))
+        qWarning("CommEvent overlapped write error %ld", GetLastError());
 			bytesToWriteLock->lockForWrite();
 			if (sender() != this)
 				emit bytesWritten(bytesToWrite());
