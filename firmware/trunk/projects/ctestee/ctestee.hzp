@@ -6,7 +6,7 @@
     <configuration arm_target_flash_loader_file_path="$(StudioDir)/targets/ATMEL_AT91SAM7/Release/Loader.exe" target_reset_script="FLASHReset()" Name="Flash" />
     <folder Name="Source Files" >
       <configuration filter="c;cpp;cxx;cc;h;s;asm;inc" Name="Common" />
-      <folder Name="Controller" >
+      <folder Name="Core" >
         <folder Name="MakingThings" >
           <file file_name="../../core/makingthings/osc_patternmatch.h" Name="osc_patternmatch.h" />
           <file file_name="../../core/makingthings/osc.c" Name="osc.c" />
