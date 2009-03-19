@@ -32,21 +32,11 @@
 #define NETWORK_TCP_CONNS        4    // the number of possible Socket instances
 #define NETWORK_TCP_LISTEN_CONNS 2    // the number of possible ServerSocket instances
 
-//----------------------------------------------------------------
-//  Uncomment the revision of the MAKE Controller Board you're using.
-//----------------------------------------------------------------
-//#define CONTROLLER_VERSION  50    // Atmel SAM7X eval. board
-//#define CONTROLLER_VERSION  90     
-//#define CONTROLLER_VERSION  95       
-#define CONTROLLER_VERSION  100        
+//  The version of the MAKE Controller Board you're using.
+#define CONTROLLER_VERSION  200    // valid options: 50, 90, 95, 100, 200
 
-//----------------------------------------------------------------
-//  Uncomment the revision of the MAKE Application Board you're using.
-//----------------------------------------------------------------
-//#define APPBOARD_VERSION  50    // Atmel SAM7X eval. board
-//#define APPBOARD_VERSION  90   
-//#define APPBOARD_VERSION  95    
-#define APPBOARD_VERSION  100   
+//  The version of the MAKE Application Board you're using.
+#define APPBOARD_VERSION  100    // valid options: 50, 90, 95, 100, 200
 
 #endif // CONFIG_H
 

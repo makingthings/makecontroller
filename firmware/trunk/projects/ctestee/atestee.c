@@ -87,7 +87,7 @@ int ATestee_GetTestResult( )
       break;
     case 2:
       // Enable on and outputs off should give near zero
-      result = ATestee_Test_All( 1, 0, 20, 40 );
+      result = ATestee_Test_All( 1, 0, 0, 40 );
       break;
     case 3:
       // Enable on and outputs on should give 275 - being ( 4.6V * 0.19 ) / 3.3V * 1024
