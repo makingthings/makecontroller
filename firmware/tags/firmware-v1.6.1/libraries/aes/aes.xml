@@ -1,0 +1,10 @@
+<!DOCTYPE mcbuilder_library>
+<library>
+  <version>1.0</version>
+  <display_name>AES</display_name>
+  <author>MakingThings</author>
+  <reference>../../../../resources/reference/makecontroller/html/group__aes.html</reference>
+  <files>
+    <file type="thumb" >aes.c</file>
+  </files>
+</library>

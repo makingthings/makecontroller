@@ -1,0 +1,10 @@
+<!DOCTYPE mcbuilder_library>
+<library>
+  <version>1.0</version>
+  <author>MakingThings</author>
+  <display_name>App LED</display_name>
+  <reference>../../../../resources/reference/makecontroller/html/group___app_led.html</reference>
+  <files>
+    <file type="thumb" >appled.c</file>
+  </files>
+</library>
