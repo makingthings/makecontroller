@@ -1,0 +1,10 @@
+<!DOCTYPE mcbuilder_library>
+<library>
+  <version>1.0</version>
+  <display_name>Servo</display_name>
+  <author>MakingThings</author>
+  <reference>../../../../resources/reference/makecontroller/html/group___servo.html</reference>
+  <files>
+    <file type="thumb" >servo.c</file>
+  </files>
+</library>

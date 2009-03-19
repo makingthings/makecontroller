@@ -1,0 +1,59 @@
+/*********************************************************************************
+
+ Copyright 2006-2008 MakingThings
+
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
+
+*********************************************************************************/
+
+/** @defgroup Core Core
+	Functions available to the Make Controller Board.
+	
+	\b Core provides the basic functionality of the Make Controller.  The \ref Libraries module extends the Core module to provide
+	additional functionality.
+*/
+
+/**
+ \mainpage Make Controller Kit - Firmware API
+ 
+ \section overview Overview
+  
+  The Make Controller firmware API provides a simple software interface to the Make Controller.  The main features
+  include an \b OS (operating system), a full \b Ethernet system, a \b USB (virtual serial port) system, and many others.
+  
+  The \ref Core module provides the basic capabilities of the Controller and a variety of \ref Libraries provide
+  additional functionality that can easily be added/removed based on the needs of a particular project.
+  
+  The \ref OSC module provides a reference for all the OSC commands that the Make Controller can respond to.
+
+  To jump right into browsing the entire API, click on \b Modules above.  For general info, check the <a href="http://www.makingthings.com/documentation/tutorial/programming-the-make-controller-kit">
+  Programming the Make Controller</a> tutorial on the MakingThings site.
+  
+  \subsection toolssection Tools
+  The Make Controller Kit is supported by great open source \ref Tools - a free simple IDE, toolchain, and more.
+  
+  \subsection licensessection Licenses
+  The Make Controller codebase is subject to various \ref Licenses - make sure to check them out if you're going to be releasing your own code or selling it.
+
+	\section Community
+	As you begin to create projects with the Make Controller, please consider contributing any potentially helpful material you generate
+	or come across.  This could be anything from source code, to schematics, to instructions on how to interface with a particular device.  Particularly good for sharing are additional libraries that provide further functionality.
+
+	The best places to get in touch are:
+	- MakingThings forums: http://www.makingthings.com/forum
+	- MakingThings bug tracker & development wiki: http://dev.makingthings.com
+	- MakingThings IRC channel: \b makingthings on \b irc.freenode.net.  You can chat through the web at http://www.mibbit.com
+
+	We look forward to hearing about your projects!
+*/
+
+
