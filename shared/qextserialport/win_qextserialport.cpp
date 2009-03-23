@@ -52,7 +52,6 @@ Win_QextSerialPort::Win_QextSerialPort(const Win_QextSerialPort& s):
     bytesToWriteLock = new QReadWriteLock;
     overlapThread = new Win_QextSerialThread(this);
     memcpy(& overlap, & s.overlap, sizeof(OVERLAPPED));
-    memcpy(& overlapWrite, & s.overlapWrite, sizeof(OVERLAPPED));
     setOpenMode(s.openMode());
     lastErr=s.lastErr;
     port = s.port;
@@ -127,7 +126,6 @@ void Win_QextSerialPort::init()
 	overlap.Offset = 0;
 	overlap.OffsetHigh = 0;
 	overlap.hEvent = CreateEvent(NULL, true, false, NULL);
-  overlapWrite.hEvent = CreateEvent(NULL, true, false, NULL);
 	overlapThread = new Win_QextSerialThread(this);
 	bytesToWriteLock = new QReadWriteLock;
 }
@@ -156,7 +154,6 @@ Win_QextSerialPort& Win_QextSerialPort::operator=(const Win_QextSerialPort& s) {
     bytesToWriteLock = new QReadWriteLock;
     overlapThread = new Win_QextSerialThread(this);
     memcpy(& overlap, & s.overlap, sizeof(OVERLAPPED));
-    memcpy(& overlapWrite, & s.overlapWrite, sizeof(OVERLAPPED));
     lastErr=s.lastErr;
     port = s.port;
     Settings.FlowControl=s.Settings.FlowControl;
@@ -265,7 +262,14 @@ void Win_QextSerialPort::close()
             Win_Handle = INVALID_HANDLE_VALUE;
 		_bytesToWrite = 0;
 		QIODevice::close();
+    if(!overlappedWrites.isEmpty()) {
+      foreach(OVERLAPPED* o, overlappedWrites) {
+        CancelIo(o->hEvent);
+        CloseHandle(o->hEvent);
+      }
+      qDeleteAll(overlappedWrites);
     }
+  }
 }
 
 /*!
@@ -392,6 +396,15 @@ Writes a block of data to the serial port.  This function will write len bytes
 from the buffer pointed to by data to the serial port.  Return value is the number
 of bytes actually written, or -1 on error.
 
+Note - If the port is configured in QextSerialBase::EventDriven mode, this may
+return 0 indicating the write is in progress, but has not completed yet.  Connect
+to the bytesWritten() signal to be informed of when the bytes are actually written out.
+
+Also in QextSerialBase::EventDriven mode on Windows, bytesWritten() is only emitted
+when \b all the bytes in the system buffer have been written out, not on a per-write
+basis.  The number of bytes requested to be written since the last bytesWritten()
+signal can be obtained by calling bytesToWrite().
+
 \warning before calling this function ensure that serial port associated with this class
 is currently open (use isOpen() function to check if port is open).
 */
@@ -403,27 +416,34 @@ qint64 Win_QextSerialPort::writeData(const char *data, qint64 maxSize)
 
     retVal = 0;
     if (queryMode() == QextSerialBase::EventDriven) {
-    	bytesToWriteLock->lockForWrite();
-    	_bytesToWrite += maxSize;
-    	bytesToWriteLock->unlock();
-		overlapWrite.Internal = 0;
-		overlapWrite.InternalHigh = 0;
-		overlapWrite.Offset = 0;
-		overlapWrite.OffsetHigh = 0;
-		if (!WriteFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, & overlapWrite)) {
-      // since we're in overlapped mode, IO_PENDING simply indicates
-      //the write will be performed asynchronously
-      if(GetLastError() != ERROR_IO_PENDING) {
+
+      OVERLAPPED *newOverlapWrite = new OVERLAPPED;
+      ZeroMemory(newOverlapWrite, sizeof(OVERLAPPED));
+      newOverlapWrite->hEvent = CreateEvent(NULL, true, false, NULL);
+
+      bool success = WriteFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, newOverlapWrite);
+      if(success) {
+        CloseHandle(newOverlapWrite->hEvent);
+        delete newOverlapWrite;
+      } else if (!success && (GetLastError() == ERROR_IO_PENDING)) {
+        // writing asynchronously...not an error
+        // keep track of the OVERLAPPED structure so we can delete it when the write is complete
+        QWriteLocker writelocker(bytesToWriteLock);
+        _bytesToWrite += maxSize;
+        overlappedWrites.append(newOverlapWrite);
+      } else {
+        qDebug() << "serialport write error:" << GetLastError();
         lastErr = E_WRITE_FAILED;
         retVal = (DWORD)-1;
+        if(!CancelIo(newOverlapWrite->hEvent))
+          qDebug() << "serialport: couldn't cancel IO";
+        CloseHandle(newOverlapWrite->hEvent);
+        delete newOverlapWrite;
       }
-    } else
-      retVal = maxSize;
     } else if (!WriteFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, NULL)) {
       lastErr = E_WRITE_FAILED;
       retVal = (DWORD)-1;
    	}
-   	
     return (qint64)retVal;
 }
 
@@ -950,45 +970,70 @@ bool Win_QextSerialPort::waitForReadyRead(int msecs)
 
 qint64 Win_QextSerialPort::bytesToWrite() const
 {
-	return _bytesToWrite;
+  QReadLocker readlocker(bytesToWriteLock);
+  return _bytesToWrite;
 }
 
 void Win_QextSerialPort::monitorCommEvent()
 {
-	DWORD eventMask = 0;
+  DWORD eventMask = 0;
+  ResetEvent(overlap.hEvent);
+  if (!WaitCommEvent(Win_Handle, & eventMask, & overlap))
+    if (GetLastError() != ERROR_IO_PENDING)
+      qCritical("WaitCommEvent error %ld\n", GetLastError());
 
-	ResetEvent(overlap.hEvent);
-	if (!WaitCommEvent(Win_Handle, & eventMask, & overlap))
-		if (GetLastError() != ERROR_IO_PENDING)
-			qCritical("WaitCommEvent error %ld\n", GetLastError());
+  if ( WaitForSingleObject(overlap.hEvent, INFINITE) == WAIT_OBJECT_0 ) {
+    //overlap event occured
+    DWORD undefined;
+    if (!GetOverlappedResult(Win_Handle, & overlap, & undefined, false)) {
+      qWarning("CommEvent overlapped error %ld", GetLastError());
+      return;
+    }
 
-	if (WaitForSingleObject(overlap.hEvent, INFINITE) == WAIT_OBJECT_0) {
-		//overlap event occured
-		DWORD undefined;
-		if (!GetOverlappedResult(Win_Handle, & overlap, & undefined, false)) {
-			qWarning("CommEvent overlapped error %ld", GetLastError());
-			return;
-		}
-		if (eventMask & EV_RXCHAR) {
-			if (sender() != this)
-				emit readyRead();
-		}
-		if (eventMask & EV_TXEMPTY) {
-			DWORD numBytes;
-      if (!GetOverlappedResult(Win_Handle, & overlapWrite, & numBytes, true))
-        qWarning("CommEvent overlapped write error %ld", GetLastError());
-			bytesToWriteLock->lockForWrite();
-			if (sender() != this)
-				emit bytesWritten(bytesToWrite());
-			_bytesToWrite = 0;
-			bytesToWriteLock->unlock();
-		}
-		if (eventMask & EV_DSR)
-			if (lineStatus() & LS_DSR)
-				emit dsrChanged(true);
-			else
-				emit dsrChanged(false);
-	}
+    if (eventMask & EV_RXCHAR) {
+      if (sender() != this)
+        emit readyRead();
+    }
+    if (eventMask & EV_TXEMPTY) {
+      /*
+        A write completed.  Run through the list of OVERLAPPED writes, and if
+        they completed successfully, take them off the list and delete them.
+        Otherwise, leave them on there so they can finish.
+      */
+      qint64 totalBytesWritten = 0;
+      QWriteLocker writelocker(bytesToWriteLock);
+      QList<OVERLAPPED*> overlapsToDelete;
+      int numOverlaps = overlappedWrites.size();
+      for(int i = 0; i < numOverlaps; i++ ) {
+        DWORD numBytes = 0;
+        if (GetOverlappedResult(Win_Handle, overlappedWrites.at(i), & numBytes, false)) {
+          overlapsToDelete.append(overlappedWrites.at(i));
+          totalBytesWritten += numBytes;
+        } else if( GetLastError() != ERROR_IO_INCOMPLETE ) {
+          overlapsToDelete.append(overlappedWrites.at(i));
+          qWarning("CommEvent overlapped write error %ld", GetLastError());
+        }
+      }
+
+      if (sender() != this && totalBytesWritten > 0) {
+        emit bytesWritten(totalBytesWritten);
+        _bytesToWrite = 0;
+      }
+
+      foreach(OVERLAPPED* o, overlapsToDelete) {
+        OVERLAPPED *toDelete = overlappedWrites.takeAt(overlappedWrites.indexOf(o));
+        CloseHandle(toDelete->hEvent);
+        delete toDelete;
+      }
+    }
+    if (eventMask & EV_DSR)
+    {
+      if (lineStatus() & LS_DSR)
+        emit dsrChanged(true);
+      else
+        emit dsrChanged(false);
+    }
+  }
 }
 
 void Win_QextSerialPort::terminateCommWait()

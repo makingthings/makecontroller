@@ -49,12 +49,14 @@ class Win_QextSerialPort: public QextSerialBase
 		HANDLE threadStartEvent;
 		HANDLE threadTerminateEvent;
 		OVERLAPPED overlap;
-	    OVERLAPPED overlapWrite;
 		COMMCONFIG Win_CommConfig;
 		COMMTIMEOUTS Win_CommTimeouts;
 		QReadWriteLock * bytesToWriteLock;	///< @todo maybe move to QextSerialBase.
 		qint64 _bytesToWrite;		///< @todo maybe move to QextSerialBase (and implement in POSIX).
 		Win_QextSerialThread * overlapThread; ///< @todo maybe move to QextSerialBase (and implement in POSIX).
+    QList<OVERLAPPED*> overlappedWrites;
+
+
 		 	
 		void monitorCommEvent();
 		void terminateCommWait();
