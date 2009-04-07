@@ -39,7 +39,7 @@ public:
   int getHostByName( const char *name );
   void setDhcp(bool enabled);
   bool getDhcp();
-  static bool addressToString( char* data, int address );
+  static int addressToString( char* data, int address );
   
 protected:
   Network( );

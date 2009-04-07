@@ -18,42 +18,49 @@
 #ifndef _SYSTEM_H
 #define _SYSTEM_H
 
+#include "core.h"
+
 #define SYSTEM_MAX_NAME 99 
 
+/** 
+  Monitors and controls several aspects of the system. 
 
+*/
 class System
 {
   public:
     static System* get();
-    int setSamba( int sure );
+
+    int samba( int sure );
     int reset( int sure );
+
+    int serialNumber();
     int setSerialNumber( int serial );
-    int getSerialNumber();
+
+    char* name( );
     int setName( char* name );
-    char* getName( void );
+    
     void stackAudit( int on_off );
-    int getFreeMemory();
+    int freeMemory();
+
+    int autosendDestination( );
+    void setAutosendDestination( int dest );
+    
+    int autosendInterval( );
+    void setAutosendInterval( int interval );
   
   protected:
     System();
     static System* _instance;
-//    static char[] name;
+    char _name[SYSTEM_MAX_NAME + 1];
+    Task* stackAuditTask;
+    #ifdef OSC
+//    char scratch1[ OSC_SCRATCH_SIZE ];
+    int _autoDestination;
+    int _autoInterval;
+    #endif
 };
 
-//
-//int System_SetActive( int state );
-//int System_GetActive( void );
-//int System_GetFreeMemory( void );
-//int System_GetSerialNumber( void );
-//
-//
-//void System_SetAsyncDestination( int dest );
-//int System_GetAsyncDestination( void );
-//void System_SetAutoSendInterval( int interval );
-//int System_GetAutoSendInterval( void );
-//
-//
-//
 ///* SystemOsc Interface */
 //
 //const char* SystemOsc_GetName( void );
