@@ -15,15 +15,10 @@
 
 *********************************************************************************/
 
-/** \file system.c	
-  System Control.
-	Functions for monitoring and controlling the system.
-*/
-
-#include "config.h"
+#include "core.h"
 #include "system.h"
 
-#include <stdio.h>
+#include <ctype.h>
 #include <string.h>
 #include "io_cpp.h"
 #include "eeprom_.h"
@@ -32,7 +27,6 @@ extern "C" {
   #include "AT91SAM7X256.h"
   #include "portmacro.h"
   #include "FreeRTOSConfig.h"
-  #include "network_.h"
 }
 
 /* the Atmel header file doesn't define these. */
@@ -45,92 +39,31 @@ extern "C" {
 
 int PortFreeMemory( void );
 void StackAuditTask( void* p );
-void kill( void );
-void vPortDisableAllInterrupts( void );
+extern "C" void vPortDisableAllInterrupts( void );
 #define ASYNC_INIT -10
 #define ASYNC_INACTIVE -1
 
-//typedef struct System_
-//{
-//  char name[ SYSTEM_MAX_NAME + 1 ]; // allotted EEPROM space is 100, but leave room for \0!
-//  int users;
-//  void* StackAuditPtr;
-//  #ifdef OSC
-//  char scratch1[ OSC_SCRATCH_SIZE ];
-//  int asyncDestination;
-//  int autoInterval;
-//  #endif // OSC
-//} SystemS;
-//
-//SystemS* System_;
+// static
+System* System::_instance = 0;
 
-/** \defgroup System System
-    The System subsystem monitors and controls several aspects of the system. 
+System::System( )
+{
+  stackAuditTask = 0;
+  _name[0] = 0;
+  #ifdef OSC
+  _autoDestination = ASYNC_INIT;
+  _autoDestination = autosendDestination( );
+  _autoInterval = ASYNC_INIT;
+  _autoInterval = autosendInterval( );
+  #endif // OSC
+}
 
-* \ingroup Core
-* @{
-*/
-
-/**
-	Sets whether the System subsystem is active.
-	@param state An integer specifying the state system
-	@return Zero on success.
-	
-	\b Example
-	\code
-	// enable the System subsystem
-	System_SetActive(1);
-	\endcode
-*/
-//int System_SetActive( int state )
-//{
-//  if( state )
-//  {
-//    if( System == NULL )
-//    {
-//      System = MallocWait( sizeof( SystemS ), 100 );
-//      System->name[0] = 0;
-//      System->StackAuditPtr = NULL;
-//      #ifdef OSC
-//      System->asyncDestination = ASYNC_INIT;
-//      System->asyncDestination = System_GetAsyncDestination( );
-//      System->autoInterval = ASYNC_INIT;
-//      System->autoInterval = System_GetAutoSendInterval( );
-//      #endif
-//    }
-//    return CONTROLLER_OK;
-//  }
-//  else
-//  {
-//    if ( System != NULL )
-//    {
-//      Free( System );
-//      System = NULL;
-//    }
-//    return CONTROLLER_OK;
-//  }
-//}
-
-/**
-	Returns the active state of the subsystem.
-	@return The active state of the subsystem - 1 (active) or 0 (inactive).
-	
-	\b Example
-	\code
-	if(System_GetActive())
-	{
-	  // System is active
-	}
-	else
-	{
-	  // System is inactive
-	}
-	\endcode
-*/
-//int System_GetActive( )
-//{
-//  return System != NULL;
-//}
+System* System::get()
+{
+  if(!_instance)
+    _instance = new System();
+  return _instance;
+}
 
 /**
 	Returns the free size of the heap.
@@ -145,7 +78,7 @@ void vPortDisableAllInterrupts( void );
 	int freemem = System_GetFreeMemory();
 	\endcode
 */
-int System::getFreeMemory( )
+int System::freeMemory( )
 {
   return PortFreeMemory();
 }
@@ -165,7 +98,7 @@ int System::getFreeMemory( )
 	int sernum = System_GetSerialNumber();
 	\endcode
 */
-int System::getSerialNumber( void )
+int System::serialNumber( void )
 {
   Eeprom* ep = Eeprom::get();
   int serial = ep->read(EEPROM_SYSTEM_SERIAL_NUMBER);
@@ -209,7 +142,7 @@ int System::setSerialNumber( int serial )
 	System_SetSamba(1);
 	\endcode
 */
-int System::setSamba( int sure )
+int System::samba( int sure )
 {
   if ( sure )
   {
@@ -221,7 +154,7 @@ int System::setSamba( int sure )
     AT91C_BASE_PIOB->PIO_OER = AT91C_PIO_PB11;
     AT91C_BASE_PIOB->PIO_SODR = AT91C_PIO_PB11;
 #endif
-#if ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 )
+#if ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 || CONTROLLER_VERSION == 200 )
     AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA11;
     AT91C_BASE_PIOA->PIO_OER = AT91C_PIO_PA11;
     AT91C_BASE_PIOA->PIO_CODR = AT91C_PIO_PA11;
@@ -318,18 +251,15 @@ int System::setSamba( int sure )
 */
 int System::setName( char* name )
 {
-//  System_SetActive( 1 );
-//  Eeprom* ep = Eeprom::get();
-//  int length = strlen( name );
-//  if( length > SYSTEM_MAX_NAME )
-//    return CONTROLLER_ERROR_STRING_TOO_LONG;
-//  
-//  strcpy( System->name, name ); // update the name in our buffer
-//  int i;
-//  char* ptr = name;
-//  for( i = 0; i <= length; i++ ) // have to do this because Eeprom_Write can only go 32 at a time.
-//    ep->writeBlock( EEPROM_SYSTEM_NAME + i, (uchar*)ptr++, 1 );
-//
+  Eeprom* ep = Eeprom::get();
+  int length = strlen( name );
+  if( length > SYSTEM_MAX_NAME )
+    length = SYSTEM_MAX_NAME;
+  
+  strncpy( _name, name, length ); // update the name in our buffer
+  for( int i = 0; i <= length; i++ ) // have to do this because Eeprom_Write can only go 32 at a time.
+    ep->writeBlock( EEPROM_SYSTEM_NAME + i, (uchar*)name++, 1 );
+
   return CONTROLLER_OK;
 }
 
@@ -342,41 +272,35 @@ int System::setName( char* name )
 	char* board_name = System_GetName();
 	\endcode
 */
-char* System::getName( )
+char* System::name( )
 {
-//  System_SetActive( 1 );
-//  if( System->name[0] == 0 )
-//  {
-//    char* ptr;
-//    ptr = System->name;
-//    int i;
-//    bool legal = false;
-//    for( i = 0; i <= SYSTEM_MAX_NAME; i++ )
-//    {
-//      Eeprom_Read( EEPROM_SYSTEM_NAME + i, (uchar*)ptr, 1 );
-//      if( *ptr == 0 )
-//        break;
-//      if( !isalnum( *ptr ) && *ptr != ' ' )
-//      {
-//        legal = false;
-//        break;
-//      }
-//      legal = true;
-//      
-//      if( i == SYSTEM_MAX_NAME && *ptr != 0 )
-//        *ptr = 0;
-//      ptr++;
-//    }
-//
-//    if( !legal )
-//    {
-//      strcpy( System->name, "Make Controller Kit" );
-//      System_SetName( System->name );
-//    }
-//  }
-//
-//  return System->name;
-  return "";
+  if( _name[0] == 0 )
+  {
+    char* ptr = _name;
+    bool legal = false;
+    Eeprom* ep = Eeprom::get();
+    int i;
+    for( i = 0; i <= SYSTEM_MAX_NAME; i++ )
+    {
+      ep->readBlock( EEPROM_SYSTEM_NAME + i, (uchar*)ptr, 1 );
+      if( *ptr == 0 )
+        break;
+      if( !isalnum( *ptr ) && *ptr != ' ' )
+      {
+        legal = false;
+        break;
+      }
+      legal = true;
+      ptr++;
+    }
+    
+    if( !legal )
+      setName( "Make Controller Kit" );
+    else
+      _name[i] = 0; // make sure we're null terminated
+  }
+
+  return _name;
 }
 
 /**
@@ -397,14 +321,6 @@ int System::reset( int sure )
     kill( );
 
   return 1;
-}
-
-/** @}
-*/
-
-extern void kill( void )
-{
-  AT91C_BASE_RSTC->RSTC_RCR = ( AT91C_RSTC_EXTRST | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | (0xA5 << 24 ) );
 }
 
 #ifdef OSC
@@ -447,67 +363,54 @@ extern void kill( void )
 //    Sleep( 5 );
 //  }
 //}
-//
-//void System_SetAsyncDestination( int dest )
-//{
-//  System_SetActive( 1 );
-//  if( dest < ASYNC_INACTIVE || dest > (OSC_CHANNEL_COUNT-1) )
-//    return;
-//  else
-//  {
-//    if( System->asyncDestination != dest )
-//    {
-//      System->asyncDestination = dest;
-//      Eeprom_Write( EEPROM_OSC_ASYNC_DEST, (uchar*)&dest, 4 );
-//    }
-//  }
-//}
-//
-//int System_GetAsyncDestination( )
-//{
-//  System_SetActive( 1 );
-//  if( System->asyncDestination == ASYNC_INIT )
-//  {
-//    int async;
-//    Eeprom_Read( EEPROM_OSC_ASYNC_DEST, (uchar*)&async, 4 );
-//    if( async >= 0 && async <= (OSC_CHANNEL_COUNT-1) )
-//      System->asyncDestination = async;
-//    else
-//      System->asyncDestination = ASYNC_INACTIVE;
-//  }
-//  return System->asyncDestination;
-//}
-//
-//void System_SetAutoSendInterval( int interval )
-//{
-//  System_SetActive( 1 );
-//  if( interval < 0 || interval > 5000 )
-//    return;
-//  else
-//  {
-//    if( System->autoInterval != interval )
-//    {
-//      System->autoInterval = interval;
-//      Eeprom_Write( EEPROM_OSC_ASYNC_INTERVAL, (uchar*)&interval, 4 );
-//    }
-//  }
-//}
-//
-//int System_GetAutoSendInterval( )
-//{
-//  System_SetActive( 1 );
-//  if( System->autoInterval == ASYNC_INIT )
-//  {
-//    int interval;
-//    Eeprom_Read( EEPROM_OSC_ASYNC_INTERVAL, (uchar*)&interval, 4 );
-//    if( interval >= 0 && interval <= 5000 )
-//      System->autoInterval = interval;
-//    else
-//      System->autoInterval = 10;
-//  }
-//  return System->autoInterval;
-//}
-//
+
+void System::setAutosendDestination( int dest )
+{
+  if( _autoDestination != dest )
+  {
+    _autoDestination = dest;
+    Eeprom::get()->write( EEPROM_OSC_ASYNC_DEST, _autoDestination );
+  }
+}
+
+int System::autosendDestination( )
+{
+  if( _autoDestination == ASYNC_INIT )
+  {
+    int async = Eeprom::get()->read( EEPROM_OSC_ASYNC_DEST );
+    if( async >= 0 && async <= 1 ) // either usb or udp
+      _autoDestination = async;
+    else
+      _autoDestination = ASYNC_INACTIVE;
+  }
+  return _autoDestination;
+}
+
+void System::setAutosendInterval( int interval )
+{
+  if( interval < 0 || interval > 5000 )
+    return;
+  
+  if( _autoInterval != interval )
+  {
+    _autoInterval = interval;
+    Eeprom::get()->write( EEPROM_OSC_ASYNC_INTERVAL, interval );
+  }
+}
+
+int System::autosendInterval( )
+{
+  if( _autoInterval == ASYNC_INIT )
+  {
+    int interval = Eeprom::get()->read( EEPROM_OSC_ASYNC_INTERVAL );
+    if( interval >= 0 && interval <= 5000 )
+      _autoInterval = interval;
+    else
+      _autoInterval = 10;
+  }
+  return _autoInterval;
+}
+
 ///** \defgroup SystemOSC System - OSC
 //  System controls many of the logistics of the Controller Board via OSC.
 //  \ingroup OSC
@@ -516,7 +419,7 @@ extern void kill( void )
 //    There's only one System, so a device index is not used in OSC messages to it.
 //   
 //    \section properties Properties
-//    System has eight properties:
+//    System has the following properties:
 //    - name
 //    - freememory
 //    - samba

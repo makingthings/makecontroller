@@ -19,6 +19,10 @@ extern "C" {
 #include "stdio.h"
 #include "error.h"
 
+#define MC_DEFAULT_IP_ADDRESS IP_ADDRESS( 192, 168, 0, 200 )
+#define MC_DEFAULT_GATEWAY    IP_ADDRESS( 192, 168, 0, 1 )
+#define MC_DEFAULT_NETMASK    IP_ADDRESS( 255, 255, 255, 0 )
+
 // MAC address definition.  The MAC address must be unique on the network.
 char emacETHADDR0 = 0xAC;
 char emacETHADDR1 = 0xDE;
@@ -99,7 +103,7 @@ int Network::setAddress( int a0, int a1, int a2, int a3 )
   if( !getValid() ) // make sure the other elements are initialized, set to defaults
   {
     tempGateway = IP_ADDRESS( a0, a1, a2, 1 );
-    tempMask = IP_ADDRESS( 255, 255, 255, 0 );
+    tempMask = MC_DEFAULT_NETMASK;
   }
   tempIpAddress = IP_ADDRESS( a0, a1, a2, a3 );
   setValid( 1 ); // apply the changes and save them as valid
@@ -110,8 +114,8 @@ int Network::setMask( int m0, int m1, int m2, int m3 )
 {
   if( !getValid() ) // make sure the other elements are initialized, set to defaults
   {
-    tempGateway = IP_ADDRESS( 192, 168, 0, 1 );
-    tempIpAddress = IP_ADDRESS( 192, 168, 0, 200 );
+    tempGateway = MC_DEFAULT_GATEWAY;
+    tempIpAddress = MC_DEFAULT_IP_ADDRESS;
   }
   tempMask = IP_ADDRESS( m0, m1, m2, m3 );
   setValid( 1 ); // apply the changes and save them as valid
@@ -122,7 +126,7 @@ int Network::setGateway( int g0, int g1, int g2, int g3 )
 {
   if( !getValid() ) // make sure the other elements are initialized, set to defaults
   {
-    tempMask = IP_ADDRESS( 255, 255, 255, 255 );
+    tempMask = MC_DEFAULT_NETMASK;
     tempIpAddress = IP_ADDRESS( g0, g1, g2, 200 );
   }
   tempGateway = IP_ADDRESS( g0, g1, g2, g3 );
@@ -137,21 +141,23 @@ int Network::getAddress( )
   //   return CONTROLLER_ERROR_NO_NETWORK;
 
   // we specify our network interface as en0 when we init
-  struct netif* mc_netif = netif_find( (char*)"en0" );
-  if( mc_netif != NULL )
-    return mc_netif->ip_addr.addr;
-  else // if the Ethernet interface is not up, we'll just get garbage back
-    return -1;
+  struct netif* mc_netif = netif_find( "en0" );
+  return ( mc_netif ) ? mc_netif->ip_addr.addr : -1;
 }
 
-bool Network::addressToString( char* data, int address )
+/**
+  Convert a network address into string format.
+  Will result in a string of the form
+  \code xxx.xxx.xxx.xxx \endcode
+  @return The length of the address string.
+*/
+int Network::addressToString( char* data, int address )
 {
-  int a0 = IP_ADDRESS_A( address );
-  int a1 = IP_ADDRESS_B( address );
-  int a2 = IP_ADDRESS_C( address );
-  int a3 = IP_ADDRESS_D( address );
-  sprintf( data, "%d.%d.%d.%d", a0, a1, a2, a3 );
-  return true;
+  return sprintf( data, "%d.%d.%d.%d", 
+                  IP_ADDRESS_A( address ),
+                  IP_ADDRESS_B( address ),
+                  IP_ADDRESS_C( address ),
+                  IP_ADDRESS_D( address ));
 }
 
 int Network::getMask( )
@@ -160,30 +166,23 @@ int Network::getMask( )
   //   return CONTROLLER_ERROR_NO_NETWORK;
   
   // we specify our network interface as en0 when we init
-  struct netif* mc_netif = netif_find( (char*)"en0" );
-  if( mc_netif != NULL )
-    return mc_netif->netmask.addr;
-  else // if the Ethernet interface is not up, we'll just get garbage back
-    return -1;
+  struct netif* mc_netif = netif_find( "en0" );
+  return ( mc_netif ) ? mc_netif->netmask.addr : -1;
 }
 
 int Network::getGateway( )
 {
   // we specify our network interface as en0 when we init
-  struct netif* mc_netif = netif_find( (char*)"en0" );
-  if( mc_netif != NULL )
-    return mc_netif->gw.addr;
-  else // if the Ethernet interface is not up, we'll just get garbage back
-    return -1;
+  struct netif* mc_netif = netif_find( "en0" );
+  return ( mc_netif ) ? mc_netif->gw.addr : -1;
 }
 
 void Network::setDhcp(bool enabled)
 {
   if( enabled && !getDhcp() )
   {
-    struct netif* mc_netif;
     // we specify our network interface as en0 when we init
-    mc_netif = netif_find( (char*)"en0" );
+    struct netif* mc_netif = netif_find( "en0" );
     if( mc_netif != NULL )
       dhcpStart( mc_netif );
       
@@ -192,9 +191,8 @@ void Network::setDhcp(bool enabled)
   
   if( !enabled && getDhcp() )
   {
-    struct netif* mc_netif;
     // we specify our network interface as en0 when we init
-    mc_netif = netif_find( (char*)"en0" );
+    struct netif* mc_netif = netif_find( "en0" );
     if( mc_netif != NULL )
       dhcpStop( mc_netif );
     EEPROM->write( EEPROM_DHCP_ENABLED, enabled );
@@ -204,8 +202,7 @@ void Network::setDhcp(bool enabled)
 
 bool Network::getDhcp()
 {
-  int state = EEPROM->read( EEPROM_DHCP_ENABLED );
-  return (state == 1) ? 1 : 0;
+  return (EEPROM->read( EEPROM_DHCP_ENABLED ) == 1);
 }
 
 void Network::dhcpStart( struct netif* netif )
@@ -275,7 +272,7 @@ int Network::setValid( int v )
     if( !getDhcp() ) // only actually change the address if we're not using DHCP
     {
       // we specify our network interface as en0 when we init
-      mc_netif = netif_find( (char*)"en0" );
+      mc_netif = netif_find( "en0" );
       if( mc_netif != NULL )
         netif_set_addr( mc_netif, &ip, &mask, &gw );
     }
@@ -306,15 +303,14 @@ bool Network::getValid( )
   int mask = EEPROM->read( EEPROM_SYSTEM_NET_MASK );
   int gateway = EEPROM->read( EEPROM_SYSTEM_NET_GATEWAY );
   int total = EEPROM->read( EEPROM_SYSTEM_NET_CHECK );
-  return ( total == address + mask + gateway ) ? true : false;
+  return ( total == address + mask + gateway );
 }
 
-// if things aren't valid, just set the defaults
 void Network::setDefaults( )
 {
-  tempIpAddress = IP_ADDRESS( 192, 168, 0, 200 );
-  tempGateway = IP_ADDRESS( 192, 168, 0, 1 );
-  tempMask = IP_ADDRESS( 255, 255, 255, 0 );
+  tempIpAddress = MC_DEFAULT_IP_ADDRESS;
+  tempGateway = MC_DEFAULT_GATEWAY;
+  tempMask = MC_DEFAULT_NETMASK;
   setValid( 1 );
 }
 
