@@ -21,8 +21,9 @@
 /**
 	Control the 4 Pulse Width Modulation outputs.
 
-  The Make Controller has 4 PWM lines.  These can each be configured separately and can control
-  up to 2 output lines directly, the 2 lines running either parallel or inverted.  For a very simple
+  The Make Controller has 4 PWM signals.  Each be configured separately, and can control
+  up to 2 output lines.  These lines can be driven with the pwm signal in parallel or they can
+  be inverted from one another.  , the 2 lines running either parallel or inverted.  For a very simple
   start, just see Pwm_Set( ) and Pwm_Get( ) as these will start driving your PWMs immediately with
   very little hassle.
 
@@ -33,8 +34,8 @@
   - channel 2 is PB21
   - channel 3 is PB22
 	
-  The PWM subsystem of the Controller Board can be used independently from the \ref PwmOut 
-  library, since the \ref PwmOut library relies on the core PWM.
+  The \ref PwmOut system relies on the Pwm system, and provides control of the output lines associated with
+  a given Pwm signal.
 */
 class Pwm
 {
