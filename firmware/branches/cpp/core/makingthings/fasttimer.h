@@ -52,6 +52,7 @@ public:
   ~FastTimer();
   void setHandler( FastTimerHandler handler, int id );
   int start( int micros, bool repeat = true );
+  bool setPeriod( int micros );
   void stop( );
 
 protected:

@@ -152,6 +152,22 @@ int FastTimer::start( int micros, bool repeat )
 }
 
 /**
+  Change the requeted time of an entry.
+  This must only be called within a callback caused by the Entry specified or when the
+  entry is not being used.  If you need to change the duration of a timer, you need to cancel it
+  and re-add it, or alter the time inside a callback.
+
+  @param micros The time in microseconds desired for the callback.
+*/
+bool FastTimer::setPeriod( int micros )
+{
+  int time = micros * FAST_TIMER_CYCLES_PER_US;
+  timeCurrent = time;
+  timeInitial = time;
+  return true;
+}
+
+/**
   Stops a fast timer.
   You should always stop the timer, then start() it again
   if you need to change its interval.
