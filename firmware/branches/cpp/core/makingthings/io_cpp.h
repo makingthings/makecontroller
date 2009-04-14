@@ -15,11 +15,6 @@
 
 *********************************************************************************/
 
-/*
-	io.h
-
-  MakingThings
-*/
 
 #ifndef IO_CPP_H
 #define IO_CPP_H
@@ -41,23 +36,23 @@ public:
   bool valid( ) { return io_pin != INVALID_PIN; }
   
   bool setPin( int pin );
-  int getPin( );
+  int pin( );
   
-  bool getValue( );
+  bool value( );
   bool setValue( bool onoff );
   bool on();
   bool off();
   
-  bool getDirection( );
+  bool direction( );
   bool setDirection( bool output );
   
-  bool getPullup( );
+  bool pullup( );
   bool setPullup( bool enabled );
   
-  bool getFilter( );
+  bool filter( );
   bool setFilter( bool enabled );
   
-  int getPeripheral( );
+  int peripheral( );
   bool setPeripheral( IoPeripheral periph, bool disableGpio = true );
   bool releasePeripherals( );
 

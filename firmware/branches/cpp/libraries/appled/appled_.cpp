@@ -101,7 +101,7 @@ void AppLed::setState( bool state )
 */
 bool AppLed::getState( )
 {
-  return leds[_index]->getValue( );
+  return leds[_index]->value( );
 }
 
 int AppLed::getIo(int index)

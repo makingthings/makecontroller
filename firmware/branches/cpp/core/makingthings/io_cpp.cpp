@@ -43,12 +43,12 @@ bool Io::setPin( int pin )
   return true;
 }
 
-int Io::getPin( )
+int Io::pin( )
 {
   return ( io_pin == INVALID_PIN ) ? -1 : io_pin;
 }
 
-bool Io::getValue( )
+bool Io::value( )
 {
   if ( io_pin == INVALID_PIN )
     return 0;
@@ -103,7 +103,7 @@ bool Io::off()
   return true;
 }
 
-bool Io::getDirection( )
+bool Io::direction( )
 {
   if ( io_pin == INVALID_PIN )
     return 0;
@@ -136,7 +136,7 @@ bool Io::setDirection( bool output )
   return true;
 }
 
-bool Io::getPullup( )
+bool Io::pullup( )
 {
   if ( io_pin == INVALID_PIN )
     return 0;
@@ -171,7 +171,7 @@ bool Io::setPullup( bool enabled )
   return true;
 }
 
-bool Io::getFilter( )
+bool Io::filter( )
 {
   if ( io_pin == INVALID_PIN )
     return 0;
@@ -205,7 +205,7 @@ bool Io::setFilter( bool enabled )
   return true;
 }
 
-int Io::getPeripheral( )
+int Io::peripheral( )
 {
   if ( io_pin == INVALID_PIN )
     return 0;
