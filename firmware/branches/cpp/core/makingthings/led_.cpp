@@ -53,7 +53,7 @@ void Led::setState( bool state )
 
 bool Led::getState( )
 {
-  return ledIo.getValue( );
+  return ledIo.value( );
 }
 
 /** @}
