@@ -55,6 +55,8 @@ class PwmOut
     bool invertedB();
     bool setInvertedB(bool invert);
 
+    bool setAll( int duty, bool invertA, bool invertB );
+
   protected:
     int _index;
     typedef struct {

@@ -166,6 +166,15 @@ bool PwmOut::invertedB( )
   return pwmouts[_index]->ioB->value( );
 }
 
+bool PwmOut::setAll( int duty, bool invertA, bool invertB )
+{
+  PwmOutInternal* internal = pwmouts[_index];
+  internal->pwm->setDuty(duty);
+  internal->ioA->setValue( !invertA );
+  internal->ioB->setValue( !invertB );
+  return true;
+}
+
 void PwmOut::getIos( int* ioA, int* ioB )
 { 
   switch( _index )
