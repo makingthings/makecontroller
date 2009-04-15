@@ -15,7 +15,7 @@ extern "C" {
   #include "SAM7_EMAC.h"
 }
 
-#include "eeprom_.h"
+#include "eeprom.h"
 #include "stdio.h"
 #include "error.h"
 
