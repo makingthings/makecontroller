@@ -15,7 +15,7 @@
 
 *********************************************************************************/
 
-#include "appled_cpp.h"
+#include "appled.h"
 #include "AT91SAM7X256.h"
 
 #define APPLED_COUNT 4 
