@@ -15,22 +15,31 @@
 
 *********************************************************************************/
 
-/*
-	led.h
+#ifndef LED_CPP_H
+#define LED_CPP_H
 
-*/
+#include "io.h"
 
-#ifndef LED_H
-#define LED_H
+class Led
+{
+public:
+  Led( );
+  ~Led( ) { }
+  void setState( bool value );
+  bool getState( );
+  
+private:
+  Io ledIo;
+};
 
-int Led_SetActive( int state );
-int Led_GetActive( void );
-
-int Led_SetState( int state );
-int Led_GetState( void );
-
-/* OSC Interface */
-const char* LedOsc_GetName( void );
-int LedOsc_ReceiveMessage( int channel, char* message, int length );
+// int Led_SetActive( int state );
+// int Led_GetActive( void );
+// 
+// int Led_SetState( int state );
+// int Led_GetState( void );
+// 
+// /* OSC Interface */
+// const char* LedOsc_GetName( void );
+// int LedOsc_ReceiveMessage( int channel, char* message, int length );
 
 #endif

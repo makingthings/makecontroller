@@ -16,7 +16,7 @@
 *********************************************************************************/
 
 #include "config.h"
-#include "led_cpp.h"
+#include "led.h"
 
 #if ( CONTROLLER_VERSION == 50 )
   #define LED_IO IO_PB25
