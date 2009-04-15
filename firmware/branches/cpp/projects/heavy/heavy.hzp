@@ -39,16 +39,19 @@
           <file file_name="../../core/makingthings/timer.cpp" Name="timer.cpp" />
           <file file_name="../../core/makingthings/timer_isr.cpp" Name="timer_isr.cpp" >
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
           </file>
           <file file_name="../../core/makingthings/fasttimer.h" Name="fasttimer.h" />
           <file file_name="../../core/makingthings/fasttimer_isr.cpp" Name="fasttimer_isr.cpp" >
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
           </file>
           <file file_name="../../core/makingthings/core.h" Name="core.h" />
           <file file_name="../../core/makingthings/fasttimer.cpp" Name="fasttimer.cpp" />
           <file file_name="../../core/makingthings/analogin.h" Name="analogin.h" />
           <file file_name="../../core/makingthings/analogin_isr.cpp" Name="analogin_isr.cpp" >
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
           </file>
           <file file_name="../../core/makingthings/analogin.cpp" Name="analogin.cpp" />
           <file file_name="../../core/makingthings/pwm.h" Name="pwm.h" />
@@ -67,6 +70,7 @@
           <file file_name="../../core/makingthings/network.h" Name="network.h" />
           <file file_name="../../core/makingthings/serial_isr.cpp" Name="serial_isr.cpp" >
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
           </file>
           <file file_name="../../core/makingthings/serial.cpp" Name="serial.cpp" />
           <file file_name="../../core/makingthings/serial.h" Name="serial.h" />
