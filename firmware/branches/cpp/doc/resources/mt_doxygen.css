@@ -123,6 +123,38 @@ a.codeRef {
 
 /* @end */
 
+
+/* Table Listings */
+
+table.listing  {
+  border: 0px;
+  background: #EEE;
+  border-collapse: collapse;
+  margin: auto;
+}
+
+table.listing td {
+  border: 0px;
+  padding-left: 50px;
+  vertical-align: top;
+}
+
+table.listing tr {
+  border: 0;
+}
+
+table.listing th {
+  border: 0;
+  background-color: #45B2EA;
+}
+
+table.listing ul {
+  margin: 0;
+  padding: 0px 0px 8px 0px;
+}
+
+/* table listing end */
+
 dl.el {
 	margin-left: -1cm;
 }
@@ -180,16 +212,16 @@ body {
 }
 
 td.indexkey {
-	background-color: #e8eef2;
+	background-color: #f0f0f0;
 	font-weight: bold;
-	border: 1px solid #CCCCCC;
+/*  border: 1px solid #CCCCCC;*/
 	margin: 2px 0px 2px 0;
 	padding: 2px 10px;
 }
 
 td.indexvalue {
-	background-color: #e8eef2;
-	border: 1px solid #CCCCCC;
+	background-color: #f0f0f0;
+/*  border: 1px solid #CCCCCC;*/
 	padding: 2px 10px;
 	margin: 2px 0px;
 }
@@ -225,7 +257,7 @@ span.keywordflow {
 }
 
 span.comment {
-	color: #666666
+	color: #999
 }
 
 span.preprocessor {
@@ -233,7 +265,7 @@ span.preprocessor {
 }
 
 span.stringliteral {
-	color: #B3935C
+	color: #DD7937
 }
 
 span.charliteral {
@@ -301,10 +333,10 @@ hr {
 .mdescLeft, .mdescRight,
 .memItemLeft, .memItemRight,
 .memTemplItemLeft, .memTemplItemRight, .memTemplParams {
-	background-color: #FAFAFA;
+	background-color: #F5F5F5;
 	border: none;
 	margin: 4px;
-	padding: 1px 0 0 8px;
+	padding: 1px 8px 0 8px;
 }
 
 .mdescLeft, .mdescRight {

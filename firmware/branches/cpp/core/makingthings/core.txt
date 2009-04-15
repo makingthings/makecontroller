@@ -16,44 +16,75 @@
 *********************************************************************************/
 
 /** @defgroup Core Core
-	Functions available to the Make Controller Board.
-	
-	\b Core provides the basic functionality of the Make Controller.  The \ref Libraries module extends the Core module to provide
-	additional functionality.
+  Functions available to the Make Controller Board.
+  
+  \b Core provides the basic functionality of the Make Controller.  The \ref Libraries module extends the Core module to provide
+  additional functionality.
 */
 
 /**
  \mainpage Make Controller Kit - Firmware API
  
- \section overview Overview
-  
-  The Make Controller firmware API provides a simple software interface to the Make Controller.  The main features
-  include an \b OS (operating system), a full \b Ethernet system, a \b USB (virtual serial port) system, and many others.
-  
-  The \ref Core module provides the basic capabilities of the Controller and a variety of \ref Libraries provide
-  additional functionality that can easily be added/removed based on the needs of a particular project.
-  
-  The \ref OSC module provides a reference for all the OSC commands that the Make Controller can respond to.
-
-  To jump right into browsing the entire API, click on \b Modules above.  For general info, check the <a href="http://www.makingthings.com/documentation/tutorial/programming-the-make-controller-kit">
-  Programming the Make Controller</a> tutorial on the MakingThings site.
-  
-  \subsection toolssection Tools
-  The Make Controller Kit is supported by great open source \ref Tools - a free simple IDE, toolchain, and more.
-  
-  \subsection licensessection Licenses
-  The Make Controller codebase is subject to various \ref Licenses - make sure to check them out if you're going to be releasing your own code or selling it.
-
-	\section Community
-	As you begin to create projects with the Make Controller, please consider contributing any potentially helpful material you generate
-	or come across.  This could be anything from source code, to schematics, to instructions on how to interface with a particular device.  Particularly good for sharing are additional libraries that provide further functionality.
-
-	The best places to get in touch are:
-	- MakingThings forums: http://www.makingthings.com/forum
-	- MakingThings bug tracker & development wiki: http://dev.makingthings.com
-	- MakingThings IRC channel: \b makingthings on \b irc.freenode.net.  You can chat through the web at http://www.mibbit.com
-
-	We look forward to hearing about your projects!
+ 
+ <table width="90%" class="listing">
+  <tr>
+    <th width="33%">Getting Started</th>
+    <th width="33%">Core Features</th>
+    <th width="33%">Resources</th>
+  </tr>
+  <tr>
+    <td>
+      <ul>
+        <li><a href="http://www.makingthings.com/documentation/tutorial/programming-the-make-controller-kit">Programming the Make Controller</a></li>
+        <li><a href="http://www.makingthings.com/documentation/tutorial/osc">OSC</a></li>
+        <li>\ref crashcourse</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li>\ref networking</li>
+        <li>\ref realtimeos</li>
+        <li>\ref io</li>
+        <li>\ref dataformats</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="http://www.makingthings.com/forum">Support Forums</a></li>
+        <li><a href="http://dev.makingthings.com">Issue Tracking and Dev Wiki</a></li>
+        <li><a href="irc://irc.freenode.net/makingthings">IRC - live chat</a></li>
+        <li><a href="https://www.makingthings.com/svn">Source Code Access</a></li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Tools</th>
+    <th>Licenses</th>
+    <th></th>
+  </tr>
+  <tr>
+    <td>
+      <ul>
+        <li>mcbuilder</li>
+        <li>mchelper</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li>Overview</li>
+        <li><a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache 2.0</a> (MakingThings)</li>
+        <li><a href="http://www.freertos.org/a00114.html">Modified GPL</a> (FreeRTOS)</li>
+        <li><a href="http://www.xfree86.org/3.3.6/COPYRIGHT2.html#5">Modified BSD</a> (lwIP)</li>
+      </ul>
+    </td>
+    <td></td>
+  </tr>
+ </table>
+ <br/>
+ <br/>
+ <br/>
+ <br/>
+ <br/>
 */
 
 
