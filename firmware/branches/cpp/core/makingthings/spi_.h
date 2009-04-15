@@ -20,7 +20,7 @@
 
 #include "config.h"
 #include "rtos_.h"
-#include "io_cpp.h"
+#include "io.h"
 
 /** 
   Communicate with peripheral devices via SPI.

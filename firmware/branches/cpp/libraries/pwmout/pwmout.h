@@ -18,7 +18,7 @@
 #ifndef PWMOUT_H
 #define PWMOUT_H
 
-#include "io_cpp.h"
+#include "io.h"
 #include "pwm.h"
 
 /**

@@ -20,7 +20,7 @@
 
 #include <ctype.h>
 #include <string.h>
-#include "io_cpp.h"
+#include "io.h"
 #include "eeprom.h"
 
 extern "C" {

@@ -15,15 +15,10 @@
 
 *********************************************************************************/
 
-/*
-	led.h
-
-*/
-
 #ifndef LED_CPP_H
 #define LED_CPP_H
 
-#include "io_cpp.h"
+#include "io.h"
 
 class Led
 {

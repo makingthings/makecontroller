@@ -19,7 +19,7 @@
 #define APPLED_CPP_H
 
 #include "config.h"
-#include "io_cpp.h"
+#include "io.h"
 
 #ifdef OSC
 #include "osc_cpp.h"
