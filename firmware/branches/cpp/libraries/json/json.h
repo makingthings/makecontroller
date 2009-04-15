@@ -15,84 +15,119 @@
 
 *********************************************************************************/
 
-#ifndef JSON_H
-#define JSON_H
+#ifndef JSON__H
+#define JSON__H
 
-#include "types.h"
-
-#define JSON_MAX_DEPTH 32
-
-// state object for encoding
-typedef enum
-{
-  JSON_START,
-  JSON_OBJ_START,
-  JSON_OBJ_KEY,
-  JSON_OBJ_VALUE,
-  JSON_ARRAY_START,
-  JSON_IN_ARRAY
-} JsonEncode_Step;
+#define JSON_MAX_DEPTH 20
 
 /**
-  The structure used to maintain the state of a JSON encode process.
-  You'll need to have one of these for each JSON string you want to encode.
-  The same variable can be reused after resetting it with a call to JsonEncode_Init().
-  \ingroup json
- */
-typedef struct
+  Encode JSON strings.
+*/
+class JsonEncoder
 {
-  JsonEncode_Step steps[JSON_MAX_DEPTH]; /**< An array to keep track of the state of each step in the encoder. */
-  int depth;                             /**< The current depth of the encoder (how many elements have been opened). */
-} JsonEncode_State;
-
-// state object for decoding
-typedef enum {
-  JSON_DECODE_OBJECT_START,
-  JSON_DECODE_IN_OBJECT,
-  JSON_DECODE_IN_ARRAY
-} JsonDecode_Step;
+public:
+  JsonEncoder( );
+  void reset();
+  char* objectOpen(char *buf, int *remaining);
+  char* objectKey(const char *key, char *buf, int *remaining);
+  char* objectClose(char *buf, int *remaining);
+  char* arrayOpen(char *buf, int *remaining);
+  char* arrayClose(char *buf, int *remaining);
+  char* string(const char *string, char *buf, int *remaining);
+  char* integer(int value, char *buf, int *remaining);
+  char* boolean(bool value, char *buf, int *remaining);
+  // todo - char* floating(char *buf, bool value, int *remaining);
+  
+protected:
+  enum EncodeStep // state object for encoding
+  {
+    JSON_START,
+    JSON_OBJ_START,
+    JSON_OBJ_KEY,
+    JSON_OBJ_VALUE,
+    JSON_ARRAY_START,
+    JSON_IN_ARRAY
+  };
+  struct EncodeState
+  {
+    EncodeStep steps[JSON_MAX_DEPTH]; // An array to keep track of the state of each step in the encoder.
+    int depth; // The current depth of the encoder (how many elements have been opened).
+  };
+  void appendedAtom( );
+  EncodeState state;
+};
 
 /**
-  The structure used to maintain the state of a JSON decode process.
-  You'll need to have one of these for each JSON string you want to encode.
-  The same variable can be reused after resetting it with a call to JsonDecode_Init().
-  \ingroup json
- */
-typedef struct {
-  JsonDecode_Step steps[JSON_MAX_DEPTH]; /**< An array to keep track of each step of the decoder. */
-  int depth;                             /**< The current depth of the decoder (how many elements have been opened). */
-  bool gotcomma;                         /**< Used internally by the decoder. */
-  void* context;                         /**< A pointer to the user context. */
-  char* p;                               /**< A pointer to the data. */
-  int len;                               /**< The current length. */
-} JsonDecode_State;
+  Decode JSON strings.
+*/
+class JsonDecoder
+{
+public:
+  JsonDecoder(void* context = 0);
+  void reset(void* context = 0);
+  bool go(char* text, int len);
+  void setIntCallback(bool(*int_callback)(void *ctx, int val));
+  void setFloatCallback(bool(*float_callback)(void *ctx, float val));
+  void setBoolCallback(bool(*bool_callback)(void *ctx, bool val));
+  void setStringCallback(bool(*string_callback)(void *ctx, char *string, int len));
+  void setStartObjCallback(bool(*start_obj_callback)(void *ctx));
+  void setObjKeyCallback(bool(*obj_key_callback)(void *ctx, char *key, int len));
+  void setEndObjCallback(bool(*end_obj_callback)(void *ctx));
+  void setStartArrayCallback(bool(*start_array_callback)(void *ctx));
+  void setEndArrayCallback(bool(*end_array_callback)(void *ctx));
+  void setNullCallback(bool(*null_callback)(void *ctx));
+protected:
+  enum DecodeStep // state object for decoding
+  {
+    JSON_DECODE_OBJECT_START,
+    JSON_DECODE_IN_OBJECT,
+    JSON_DECODE_IN_ARRAY
+  };
+  struct DecodeState {
+    DecodeStep steps[JSON_MAX_DEPTH]; // An array to keep track of each step of the decoder.
+    int depth;                        // The current depth of the decoder (how many elements have been opened).
+    bool gotcomma;                    // Used internally by the decoder.
+    void* context;                    // A pointer to the user context.
+    char* p;                          // A pointer to the data.
+    int len;                          // The current length.
+  };
+  enum DecodeToken
+  {
+    token_true,
+    token_false,
+    token_colon,
+    token_comma,
+    token_eof,
+    token_error,
+    token_left_brace,
+    token_left_bracket,
+    token_null,
+    token_right_brace,
+    token_right_bracket,
+    token_number,
+    token_maybe_negative,
+    token_string,
+    token_unknown
+  };
+  struct Callbacks
+  {
+    bool(*null_callback)(void*);
+    bool(*bool_callback)(void*, bool);
+    bool(*int_callback)(void*, int);
+    bool(*float_callback)(void*, float);
+    bool(*string_callback)(void*, char*, int);
+    bool(*start_obj_callback)(void*);
+    bool(*obj_key_callback)(void*, char*, int);
+    bool(*end_obj_callback)(void*);
+    bool(*start_array_callback)(void*);
+    bool(*end_array_callback)(void*);
+  };
+  DecodeToken getToken(char* text, int len);
+  DecodeState state;
+  Callbacks callbacks;
+  
+};
 
-// Encode
-void JsonEncode_Init(JsonEncode_State* state);
-
-char* JsonEncode_ObjectOpen(JsonEncode_State* state, char *buf, int *remaining);
-char* JsonEncode_ObjectKey(JsonEncode_State* state, char *buf, const char *key, int *remaining);
-char* JsonEncode_ObjectClose(JsonEncode_State* state, char *buf, int *remaining);
-char* JsonEncode_ArrayOpen(JsonEncode_State* state, char *buf, int *remaining);
-char* JsonEncode_ArrayClose(JsonEncode_State* state, char *buf, int *remaining);
-char* JsonEncode_String(JsonEncode_State* state, char *buf, const char *string, int *remaining);
-char* JsonEncode_Int(JsonEncode_State* state, char *buf, int value, int *remaining);
-char* JsonEncode_Bool(JsonEncode_State* state, char *buf, bool value, int *remaining);
-
-// Decode
-void JsonDecode_SetIntCallback(bool(*int_callback)(void *ctx, int val));
-void JsonDecode_SetFloatCallback(bool(*float_callback)(void *ctx, float val));
-void JsonDecode_SetBoolCallback(bool(*bool_callback)(void *ctx, bool val));
-void JsonDecode_SetStringCallback(bool(*string_callback)(void *ctx, char *string, int len));
-void JsonDecode_SetStartObjCallback(bool(*start_obj_callback)(void *ctx));
-void JsonDecode_SetObjKeyCallback(bool(*obj_key_callback)(void *ctx, char *key, int len));
-void JsonDecode_SetEndObjCallback(bool(*end_obj_callback)(void *ctx));
-void JsonDecode_SetStartArrayCallback(bool(*start_array_callback)(void *ctx));
-void JsonDecode_SetEndArrayCallback(bool(*end_array_callback)(void *ctx));
-
-void JsonDecode_Init(JsonDecode_State* state, void* context);
-bool JsonDecode(JsonDecode_State* state, char* text, int len);
-
-#endif /* JSON_H */
+#endif // JSON__H
 
 
