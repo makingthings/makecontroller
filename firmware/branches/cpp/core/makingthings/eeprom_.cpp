@@ -32,7 +32,7 @@ Eeprom* Eeprom::_instance = 0;
 
 Eeprom::Eeprom( )
 {
-  spi = new SPI( EEPROM_DEVICE );
+  spi = new Spi( EEPROM_DEVICE );
   spi->configure( 8, 4, 0, 1 );
 }
 
