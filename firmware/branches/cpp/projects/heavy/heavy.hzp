@@ -20,8 +20,6 @@
           <file file_name="../../core/makingthings/osc_patternmatch.c" Name="osc_patternmatch.c" />
           <file file_name="../../core/makingthings/types.h" Name="types.h" />
           <file file_name="../../core/makingthings/udpsocket.h" Name="udpsocket.h" />
-          <file file_name="../../core/makingthings/led_.cpp" Name="led_.cpp" />
-          <file file_name="../../core/makingthings/led_cpp.h" Name="led_cpp.h" />
           <file file_name="../../core/makingthings/osc_cpp.cpp" Name="osc_cpp.cpp" />
           <file file_name="../../core/makingthings/osc_cpp.h" Name="osc_cpp.h" />
           <file file_name="../../core/makingthings/rtos_.cpp" Name="rtos_.cpp" />
@@ -73,6 +71,8 @@
           <file file_name="../../core/makingthings/eeprom.h" Name="eeprom.h" />
           <file file_name="../../core/makingthings/io.cpp" Name="io.cpp" />
           <file file_name="../../core/makingthings/io.h" Name="io.h" />
+          <file file_name="../../core/makingthings/led.cpp" Name="led.cpp" />
+          <file file_name="../../core/makingthings/led.h" Name="led.h" />
         </folder>
         <folder Name="FreeRTOS" >
           <configuration c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />
