@@ -15,16 +15,34 @@
 
 *********************************************************************************/
 
-/*
-	dipswitch.h
-
-  MakingThings
-*/
 
 #ifndef DIPSWITCH_H
 #define DIPSWITCH_H
 
-/* DipSwitch Interface */
+#include "spi_.h"
+
+/**
+  The DIP Switch subsystem reads values in from the 8 position DIP Switch (0 - 255) on the Application Board.
+  Mask off the appropriate bits in the value returned from the DIP switch to determine whether a particular channel is on or off.
+  
+  See the <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/user-interface">
+  Application Board overview</a> for details.
+  \ingroup Libraries
+*/
+class DipSwitch
+{
+  public:
+    DipSwitch();
+    ~DipSwitch();
+
+    int value( );
+    bool value( int channel );
+
+  protected:
+    static Spi* spi;
+    static int refcount;
+    
+};
 
 int DipSwitch_SetActive( int state );
 int DipSwitch_GetActive( void );
