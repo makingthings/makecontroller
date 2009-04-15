@@ -35,12 +35,6 @@
           <file file_name="../../core/makingthings/osc_pattern.cpp" Name="osc_pattern.cpp" />
           <file file_name="../../core/makingthings/spi_.h" Name="spi_.h" />
           <file file_name="../../core/makingthings/spi_cpp.cpp" Name="spi_cpp.cpp" />
-          <file file_name="../../core/makingthings/serial_isr_.cpp" Name="serial_isr_.cpp" >
-            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
-            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
-          </file>
-          <file file_name="../../core/makingthings/serial_.cpp" Name="serial_.cpp" />
-          <file file_name="../../core/makingthings/serial_.h" Name="serial_.h" />
           <file file_name="../../core/makingthings/http.h" Name="http.h" />
           <file file_name="../../core/makingthings/main.cpp" Name="main.cpp" />
           <file file_name="../../core/makingthings/timer.h" Name="timer.h" />
@@ -73,6 +67,11 @@
           <file file_name="../../core/makingthings/rtos.h" Name="rtos.h" />
           <file file_name="../../core/makingthings/network.cpp" Name="network.cpp" />
           <file file_name="../../core/makingthings/network.h" Name="network.h" />
+          <file file_name="../../core/makingthings/serial_isr.cpp" Name="serial_isr.cpp" >
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+          </file>
+          <file file_name="../../core/makingthings/serial.cpp" Name="serial.cpp" />
+          <file file_name="../../core/makingthings/serial.h" Name="serial.h" />
         </folder>
         <folder Name="FreeRTOS" >
           <configuration c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />
