@@ -18,7 +18,7 @@
 #ifndef ANALOGIN_H
 #define ANALOGIN_H
 
-#include "rtos_.h"
+#include "rtos.h"
 
 #define ANALOGIN_CHANNELS 8
 

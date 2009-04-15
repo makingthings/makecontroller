@@ -22,8 +22,6 @@
           <file file_name="../../core/makingthings/udpsocket.h" Name="udpsocket.h" />
           <file file_name="../../core/makingthings/osc_cpp.cpp" Name="osc_cpp.cpp" />
           <file file_name="../../core/makingthings/osc_cpp.h" Name="osc_cpp.h" />
-          <file file_name="../../core/makingthings/rtos_.cpp" Name="rtos_.cpp" />
-          <file file_name="../../core/makingthings/rtos_.h" Name="rtos_.h" />
           <file file_name="../../core/makingthings/tcpserver.cpp" Name="tcpserver.cpp" />
           <file file_name="../../core/makingthings/tcpserver.h" Name="tcpserver.h" />
           <file file_name="../../core/makingthings/tcpsocket.cpp" Name="tcpsocket.cpp" />
@@ -73,6 +71,8 @@
           <file file_name="../../core/makingthings/io.h" Name="io.h" />
           <file file_name="../../core/makingthings/led.cpp" Name="led.cpp" />
           <file file_name="../../core/makingthings/led.h" Name="led.h" />
+          <file file_name="../../core/makingthings/rtos.cpp" Name="rtos.cpp" />
+          <file file_name="../../core/makingthings/rtos.h" Name="rtos.h" />
         </folder>
         <folder Name="FreeRTOS" >
           <configuration c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />

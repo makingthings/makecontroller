@@ -15,55 +15,80 @@
 
 *********************************************************************************/
 
-/*
-	RTOS.H
-
-  MakingThings
-*/
-
 #ifndef RTOS_H
 #define RTOS_H
 
 #include "types.h"
+#include "projdefs.h"
+#include "portmacro.h"
+#include "queue.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
 
-void  Sleep( int timems );
-void* TaskCreate(  void (taskCode)(void*), const char* name, int stackDepth, void* parameters, int priority );
-void  TaskYield( void );
-void  TaskDelete( void* task );
-void  TaskEnterCritical( void );
-void  TaskExitCritical( void );
-int TaskGetRemainingStack( void* task );
-void* getTaskByName( char *taskName );
-void* getTaskByID( int taskID );
-int TaskGetPriority( void* task );
-void TaskSetPriority( void* task, int priority );
-int TaskGetIDNumber( void* task );
-char* TaskGetName( void* task );
-int TaskGetStackAllocated( void* task );
-void* TaskGetCurrent( void );
-void* TaskGetNext( void* task );
-int GetNumberOfTasks( void );
-int TaskGetTopPriorityUsed( void );
-int TaskGetTickCount( void );
+typedef void (TaskLoop)(void*);
 
-void* Malloc( int size );
-void* MallocWait( int size, int interval );
-void Free( void* memory );
+class Task
+{
+public:
+  Task( TaskLoop loop, const char* name, int stackDepth, void* params, int priority );
+  Task( void* taskPtr );
+  Task operator=(const Task t);
+  ~Task( );
+  static void sleep( int ms );
+  static void yield( );
+  static void enterCritical( );
+  static void exitCritical( );
+  int getRemainingStack( );
+  int getPriority( );
+  void setPriority( int priority );
+  int getIDNumber( );
+  char* getName( );
+  int getStackAllocated( );
+  Task getNext( );
+private:
+  void* _task;
+  bool observer; // flag to signify that only tasks created with the full constructor should delete the internal task on deletion
+};
 
-void* QueueCreate( uint length, uint itemSize );
-int QueueSendToFront( void* queue, void* itemToQueue, int msToWait );
-int QueueSendToBack( void* queue, void* itemToQueue, int msToWait );
-int QueueReceive( void* queue, void* buffer, int msToWait );
-int QueueMessagesWaiting( void* queue );
-void QueueDelete( void* queue );
-int QueueSendToFrontFromISR( void* queue, void* itemToSend, int taskPreviouslyWoken );
-int QueueSendToBackFromISR( void* queue, void* itemToSend, int taskPreviouslyWoken );
-int QueueReceiveFromISR( void* queue, void* buffer, long* taskWoken );
+class RTOS
+{
+public:
+  static Task getTaskByName( const char* name );
+  static Task getTaskByID( int id );
+  static Task getCurrentTask( );
+  static int numberOfTasks( );
+  static int topTaskPriority( );
+  static int ticksSinceBoot( );
+};
 
-void* SemaphoreCreate( void );
-void* MutexCreate( void );
-int SemaphoreTake( void* semaphore, int blockTime );
-int SemaphoreGive( void* semaphore );
-int SemaphoreGiveFromISR( void* semaphore, int taskPreviouslyWoken );
+class Queue
+{
+public:
+  Queue( uint length, uint itemSize );
+  ~Queue( );
+  
+  int send( void* itemToQueue, int timeout );
+  int receive( void* buffer, int timeout );
+  int msgsAvailable( );
+  int sendFromISR( void* itemToSend, int taskPreviouslyWoken );
+  int sendToFrontFromISR( void* itemToSend, int taskPreviouslyWoken );
+  int sendToBackFromISR( void* itemToSend, int taskPreviouslyWoken );
+  int receiveFromISR( void* buffer, long* taskWoken );
+private:
+  void* _q;
+};
 
-#endif
+class Semaphore
+{
+public:
+  Semaphore( );
+  ~Semaphore( );
+  int take( int timeout = -1 );
+  int give( );
+  int giveFromISR( int taskPreviouslyWoken );
+private:
+  void* _sem;
+};
+
+#endif // RTOS__H

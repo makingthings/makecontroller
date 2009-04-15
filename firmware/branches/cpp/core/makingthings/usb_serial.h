@@ -20,7 +20,7 @@
 
 #include "config.h"
 #ifdef MAKE_CTRL_USB
-#include "rtos_.h"
+#include "rtos.h"
 
 extern "C" {
   #include "Board.h"

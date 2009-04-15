@@ -19,7 +19,7 @@
 #define SPI__H
 
 #include "config.h"
-#include "rtos_.h"
+#include "rtos.h"
 #include "io.h"
 
 /** 
