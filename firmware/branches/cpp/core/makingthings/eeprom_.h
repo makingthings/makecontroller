@@ -52,7 +52,7 @@ class Eeprom
 
   protected:
     Eeprom( );
-    SPI* spi;
+    Spi* spi;
     static Eeprom* _instance; // the only instance of Eeprom anywhere.
     void writeEnable( );
     void ready( );

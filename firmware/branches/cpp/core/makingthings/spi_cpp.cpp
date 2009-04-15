@@ -1,4 +1,19 @@
+/*********************************************************************************
 
+ Copyright 2006-2008 MakingThings
+
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
+
+*********************************************************************************/
 
 #include "spi_.h"
 #include "error.h"
@@ -36,19 +51,22 @@
   #define SPI_SEL3_PERIPHERAL_A 0
 #endif
 
-SPI::SPI( int channel )
+// static
+int Spi::refcount = 0;
+
+Spi::Spi( int channel )
 {
-  chan = 0;
   if( channel < 0 || channel > 3 )
     return;
 
   _channel = channel;
-  init();
+  if(refcount++ == 0)
+    init();
   IoPeripheral io_type = getChannelPeripheralA( channel ) ? IO_A : IO_B;
   chan = new Io( getIO(channel), io_type );
 }
 
-void SPI::init( )
+void Spi::init( )
 {
   // Reset it
   AT91C_BASE_SPI0->SPI_CR = AT91C_SPI_SWRST;
@@ -98,12 +116,13 @@ void SPI::init( )
   return;
 }
 
-SPI::~SPI( )
+Spi::~Spi( )
 {
-  AT91C_BASE_SPI0->SPI_CR = AT91C_SPI_SPIDIS;
+  if(--refcount <= 0)
+    AT91C_BASE_SPI0->SPI_CR = AT91C_SPI_SPIDIS;
 }
 
-int SPI::configure( int bits, int clockDivider, int delayBeforeSPCK, int delayBetweenTransfers )
+int Spi::configure( int bits, int clockDivider, int delayBeforeSPCK, int delayBetweenTransfers )
 {
   if( !valid())
     return 0;
@@ -132,7 +151,7 @@ int SPI::configure( int bits, int clockDivider, int delayBeforeSPCK, int delayBe
 }
 
 
-int SPI::readWriteBlock( unsigned char* buffer, int count )
+int Spi::readWriteBlock( unsigned char* buffer, int count )
 {
   if( !valid())
     return 0;
@@ -172,36 +191,26 @@ int SPI::readWriteBlock( unsigned char* buffer, int count )
   return 0;
 }
 
-int SPI::getIO( int channel ) // static
+int Spi::getIO( int channel )
 {
   switch ( channel )
   {
-    case 0:
-      return SPI_SEL0_IO;
-    case 1:
-      return SPI_SEL1_IO;
-    case 2:
-      return SPI_SEL2_IO;
-    case 3:
-      return SPI_SEL3_IO;
-    default:
-      return 0;
+    case 0: return SPI_SEL0_IO;
+    case 1: return SPI_SEL1_IO;
+    case 2: return SPI_SEL2_IO;
+    case 3: return SPI_SEL3_IO;
+    default: return 0;
   }
 }
 
-int SPI::getChannelPeripheralA( int channel ) // static 
+int Spi::getChannelPeripheralA( int channel )
 {  
   switch ( channel )
   {
-    case 0:
-      return SPI_SEL0_PERIPHERAL_A;
-    case 1:
-      return SPI_SEL1_PERIPHERAL_A;
-    case 2:
-      return SPI_SEL2_PERIPHERAL_A;
-    case 3:
-      return SPI_SEL3_PERIPHERAL_A;
-    default:
-      return -1;
+    case 0: return SPI_SEL0_PERIPHERAL_A;
+    case 1: return SPI_SEL1_PERIPHERAL_A;
+    case 2: return SPI_SEL2_PERIPHERAL_A;
+    case 3: return SPI_SEL3_PERIPHERAL_A;
+    default: return -1;
   }
 }
