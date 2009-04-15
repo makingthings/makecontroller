@@ -18,7 +18,7 @@
 #include "types.h"
 #include "timer.h"
 #include "error.h"
-#include "rtos_.h"
+#include "rtos.h"
 
 #define TIMER_CYCLES_PER_MS 48
 

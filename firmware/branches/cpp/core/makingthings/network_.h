@@ -5,7 +5,7 @@
 
 #include "config.h"
 #ifdef MAKE_CTRL_NETWORK
-#include "rtos_.h"
+#include "rtos.h"
 
 /**
   \def IP_ADDRESS( a, b, c, d )

@@ -17,7 +17,7 @@
 
 #include "fasttimer.h"
 #include "error.h"
-#include "rtos_.h"
+#include "rtos.h"
 
 #define FAST_TIMER_CYCLES_PER_US 6
 

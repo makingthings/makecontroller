@@ -19,7 +19,7 @@
 #define SERIAL__H
 
 #include "types.h"
-#include "rtos_.h"
+#include "rtos.h"
 #include "AT91SAM7X256.h"
 
 #define SERIAL_PORTS 2

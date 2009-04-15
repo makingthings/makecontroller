@@ -65,7 +65,7 @@
 
 #include "core.h"
 #include "AT91SAM7X256.h"
-#include "rtos_.h"
+#include "rtos.h"
 
 // NORMAL PROGRAMMING RESUMES
 

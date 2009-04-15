@@ -8,7 +8,7 @@
 #ifdef OSC
 
 #include "udpsocket.h"
-#include "rtos_.h"
+#include "rtos.h"
 #include "osc_message.h"
 #include <stdarg.h>
 

@@ -16,7 +16,7 @@
 *********************************************************************************/
 
 #include "serial_.h"
-#include "rtos_.h"
+#include "rtos.h"
 
 // The interrupt entry point is naked so we can control the context saving.
 void Serial0Isr_Wrapper( void ) __attribute__ ((naked));
