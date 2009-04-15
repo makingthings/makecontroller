@@ -15,7 +15,7 @@
 
 *********************************************************************************/
 
-#include "serial_.h"
+#include "serial.h"
 #include "rtos.h"
 
 // The interrupt entry point is naked so we can control the context saving.
