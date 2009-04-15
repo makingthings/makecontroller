@@ -167,8 +167,6 @@
         </folder>
       </folder>
       <folder Name="Libraries" >
-        <file file_name="../../libraries/webserver/webserver_.h" Name="webserver_.h" />
-        <file file_name="../../libraries/webserver/webserver_.cpp" Name="webserver_.cpp" />
         <file file_name="../../libraries/motor/motor.h" Name="motor.h" />
         <file file_name="../../libraries/motor/motor.cpp" Name="motor.cpp" />
         <file file_name="../../libraries/pwmout/pwmout.h" Name="pwmout.h" />
@@ -181,6 +179,8 @@
         <file file_name="../../libraries/dipswitch/dipswitch.cpp" Name="dipswitch.cpp" />
         <file file_name="../../libraries/appled/appled.h" Name="appled.h" />
         <file file_name="../../libraries/appled/appled.cpp" Name="appled.cpp" />
+        <file file_name="../../libraries/webserver/webserver.h" Name="webserver.h" />
+        <file file_name="../../libraries/webserver/webserver.cpp" Name="webserver.cpp" />
       </folder>
     </folder>
     <configuration arm_target_loader_reset_after_download="Yes" Target="AT91SAM7X256" build_intermediate_directory="intermediate" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" target_reset_script="FLASHReset()" build_output_directory="output" arm_target_flash_loader_type="Comms Channel Loader" Name="THUMB Flash Debug" />
