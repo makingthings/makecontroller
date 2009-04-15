@@ -15,13 +15,11 @@
 
 *********************************************************************************/
 
-#ifndef EEPROM__H
-#define EEPROM__H
+#ifndef EEPROM_H
+#define EEPROM_H
 
 #include "types.h"
-#include "spi_.h"
-
-#define EEPROM Eeprom::get()
+#include "spi.h"
 
 /**
   Persistent storage of 32k bytes of data.

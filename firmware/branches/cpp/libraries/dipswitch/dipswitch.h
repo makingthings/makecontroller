@@ -19,7 +19,7 @@
 #ifndef DIPSWITCH_H
 #define DIPSWITCH_H
 
-#include "spi_.h"
+#include "spi.h"
 
 /**
   The DIP Switch subsystem reads values in from the 8 position DIP Switch (0 - 255) on the Application Board.

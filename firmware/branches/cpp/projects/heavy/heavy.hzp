@@ -33,8 +33,6 @@
           <file file_name="../../core/makingthings/osc_message.cpp" Name="osc_message.cpp" />
           <file file_name="../../core/makingthings/osc_message.h" Name="osc_message.h" />
           <file file_name="../../core/makingthings/osc_pattern.cpp" Name="osc_pattern.cpp" />
-          <file file_name="../../core/makingthings/spi_.h" Name="spi_.h" />
-          <file file_name="../../core/makingthings/spi_cpp.cpp" Name="spi_cpp.cpp" />
           <file file_name="../../core/makingthings/http.h" Name="http.h" />
           <file file_name="../../core/makingthings/main.cpp" Name="main.cpp" />
           <file file_name="../../core/makingthings/timer.h" Name="timer.h" />
@@ -72,6 +70,8 @@
           </file>
           <file file_name="../../core/makingthings/serial.cpp" Name="serial.cpp" />
           <file file_name="../../core/makingthings/serial.h" Name="serial.h" />
+          <file file_name="../../core/makingthings/spi.h" Name="spi.h" />
+          <file file_name="../../core/makingthings/spi.cpp" Name="spi.cpp" />
         </folder>
         <folder Name="FreeRTOS" >
           <configuration c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />
