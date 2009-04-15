@@ -42,9 +42,10 @@ Network::Network( )
     setDefaults( );
   else // load the values from EEPROM
   {
-    tempIpAddress = EEPROM->read( EEPROM_SYSTEM_NET_ADDRESS );
-    tempGateway = EEPROM->read( EEPROM_SYSTEM_NET_GATEWAY );
-    tempMask = EEPROM->read( EEPROM_SYSTEM_NET_MASK );
+    Eeprom* ep = Eeprom::get();
+    tempIpAddress = ep->read( EEPROM_SYSTEM_NET_ADDRESS );
+    tempGateway = ep->read( EEPROM_SYSTEM_NET_GATEWAY );
+    tempMask = ep->read( EEPROM_SYSTEM_NET_MASK );
   }
   
   emacETHADDR0 = 0xAC;
@@ -186,7 +187,7 @@ void Network::setDhcp(bool enabled)
     if( mc_netif != NULL )
       dhcpStart( mc_netif );
       
-    EEPROM->write( EEPROM_DHCP_ENABLED, enabled );
+    Eeprom::get()->write( EEPROM_DHCP_ENABLED, enabled );
   }
   
   if( !enabled && getDhcp() )
@@ -195,14 +196,14 @@ void Network::setDhcp(bool enabled)
     struct netif* mc_netif = netif_find( "en0" );
     if( mc_netif != NULL )
       dhcpStop( mc_netif );
-    EEPROM->write( EEPROM_DHCP_ENABLED, enabled );
+    Eeprom::get()->write( EEPROM_DHCP_ENABLED, enabled );
     setValid( 1 );
   }
 }
 
 bool Network::getDhcp()
 {
-  return (EEPROM->read( EEPROM_DHCP_ENABLED ) == 1);
+  return (Eeprom::get()->read( EEPROM_DHCP_ENABLED ) == 1);
 }
 
 void Network::dhcpStart( struct netif* netif )
@@ -278,19 +279,20 @@ int Network::setValid( int v )
     }
     
     // but write the addresses to memory regardless, so we can use them next time we boot up without DHCP
-    EEPROM->write( EEPROM_SYSTEM_NET_ADDRESS, ip.addr );
-    EEPROM->write( EEPROM_SYSTEM_NET_MASK, mask.addr );
-    EEPROM->write( EEPROM_SYSTEM_NET_GATEWAY, gw.addr );
+    Eeprom* ep = Eeprom::get();
+    ep->write( EEPROM_SYSTEM_NET_ADDRESS, ip.addr );
+    ep->write( EEPROM_SYSTEM_NET_MASK, mask.addr );
+    ep->write( EEPROM_SYSTEM_NET_GATEWAY, gw.addr );
 
     int total = tempIpAddress + tempMask + tempGateway;
-    EEPROM->write( EEPROM_SYSTEM_NET_CHECK, total );
+    ep->write( EEPROM_SYSTEM_NET_CHECK, total );
 
     // Network_Valid = NET_VALID;
   }
   else
   {
     // int value = 0;
-    EEPROM->write( EEPROM_SYSTEM_NET_CHECK, 0 );
+    Eeprom::get()->write( EEPROM_SYSTEM_NET_CHECK, 0 );
     // Network_Valid = NET_INVALID;
   }
 
@@ -299,10 +301,11 @@ int Network::setValid( int v )
 
 bool Network::getValid( )
 {
-  int address = EEPROM->read( EEPROM_SYSTEM_NET_ADDRESS );
-  int mask = EEPROM->read( EEPROM_SYSTEM_NET_MASK );
-  int gateway = EEPROM->read( EEPROM_SYSTEM_NET_GATEWAY );
-  int total = EEPROM->read( EEPROM_SYSTEM_NET_CHECK );
+  Eeprom* ep = Eeprom::get();
+  int address = ep->read( EEPROM_SYSTEM_NET_ADDRESS );
+  int mask = ep->read( EEPROM_SYSTEM_NET_MASK );
+  int gateway = ep->read( EEPROM_SYSTEM_NET_GATEWAY );
+  int total = ep->read( EEPROM_SYSTEM_NET_CHECK );
   return ( total == address + mask + gateway );
 }
 
