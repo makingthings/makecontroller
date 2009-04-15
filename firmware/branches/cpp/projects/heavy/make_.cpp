@@ -7,23 +7,8 @@
 */
 
 #include "core.h"
-
-// include all the libraries we're using
-//extern "C" {
-  //#include "appled.h"
-  // #include "dipswitch.h"
-  // #include "servo.h"
-  // #include "digitalout.h"
-  // #include "digitalin.h"
-  // #include "motor.h"
-  // #include "pwmout.h"
-  // #include "stepper.h"
-  // #include "xbee.h"
-  // #include "webserver.h"
-//}
-
-#include "led_cpp.h"
-#include "appled_cpp.h"
+#include "led.h"
+#include "appled.h"
 
 void blinkLoop( void* parameters );
 

@@ -76,26 +76,25 @@ THUMB_SRC= \
 
 CPP_THUMB_SRC = \
   $(STARTUP)/extras_cpp.cpp \
-  $(MAKINGTHINGS)/rtos_.cpp \
+  $(MAKINGTHINGS)/rtos.cpp \
   $(MAKINGTHINGS)/main.cpp \
-  $(MAKINGTHINGS)/io_cpp.cpp \
-  $(MAKINGTHINGS)/led_.cpp \
+  $(MAKINGTHINGS)/io.cpp \
+  $(MAKINGTHINGS)/led.cpp \
   $(MAKINGTHINGS)/usb_serial.cpp \
-  $(MAKINGTHINGS)/network_.cpp \
+  $(MAKINGTHINGS)/network.cpp \
   $(MAKINGTHINGS)/tcpsocket.cpp \
   $(MAKINGTHINGS)/udpsocket.cpp \
   $(MAKINGTHINGS)/tcpserver.cpp \
   $(MAKINGTHINGS)/osc_cpp.cpp \
   $(MAKINGTHINGS)/osc_message.cpp \
   $(MAKINGTHINGS)/osc_pattern.cpp \
-  $(MAKINGTHINGS)/spi_cpp.cpp \
-  $(MAKINGTHINGS)/eeprom_.cpp \
+  $(MAKINGTHINGS)/spi.cpp \
+  $(MAKINGTHINGS)/eeprom.cpp \
   $(MAKINGTHINGS)/timer.cpp \
   $(MAKINGTHINGS)/fasttimer.cpp \
   $(MAKINGTHINGS)/analogin.cpp \
   $(MAKINGTHINGS)/pwm.cpp \
-  $(LIBRARIES)/appled/appled_.cpp \
-  $(LIBRARIES)/json/json_.cpp \
+  $(LIBRARIES)/appled/appled.cpp \
   make_.cpp \
 
 # Source files that must be built in ARM mode.
