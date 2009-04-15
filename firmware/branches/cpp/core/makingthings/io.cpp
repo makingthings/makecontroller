@@ -17,7 +17,7 @@
 
 #include "Board.h"
 #include "AT91SAM7X256.h" 
-#include "io_cpp.h"
+#include "io.h"
 #include "config.h"
 
 #define IO_PIN_COUNT_ 64

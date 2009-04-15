@@ -19,7 +19,7 @@
 #include <stdio.h>
 
 #include "error.h"
-#include "io_cpp.h"
+#include "io.h"
 #include "analogin.h"
 #include "AT91SAM7X256.h"
 

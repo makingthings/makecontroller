@@ -21,7 +21,7 @@
 
 #include "fasttimer.h"
 #include "pwm.h"
-#include "io_cpp.h"
+#include "io.h"
 
 #define STEPPER_COUNT 2
 

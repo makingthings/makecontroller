@@ -17,7 +17,7 @@
 
 #include "AT91SAM7X256.h"
 #include "Board.h"
-#include "io_cpp.h"
+#include "io.h"
 #include "pwm.h"
 #include "error.h"
 

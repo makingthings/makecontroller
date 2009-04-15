@@ -15,61 +15,49 @@
 
 *********************************************************************************/
 
-/*
-	io.h
-
-  MakingThings
-*/
 
 #ifndef IO_H
 #define IO_H
 
-#include "types.h"
+#define IO_OUTPUT true
+#define IO_INPUT false
+#define INVALID_PIN 1024 // a value too large for any pin
 
-#define IO_OUTPUT 1
-#define IO_INPUT 0
+enum IoPeripheral { IO_A, IO_B, GPIO };
 
-int Io_Start( int index, bool lock );
-int Io_Stop( int index );
-bool Io_GetActive( int index );
-int Io_StartBits( longlong bits, bool lock );
-int Io_StopBits( longlong bits );
+class Io
+{
+public:
+  Io( int pin = INVALID_PIN, IoPeripheral = GPIO, bool direction = IO_OUTPUT );
+  ~Io( ) { releasePeripherals( ); }
+  bool valid( ) { return io_pin != INVALID_PIN; }
+  
+  bool setPin( int pin );
+  int pin( );
+  
+  bool value( );
+  bool setValue( bool onoff );
+  bool on();
+  bool off();
+  
+  bool direction( );
+  bool setDirection( bool output );
+  
+  bool pullup( );
+  bool setPullup( bool enabled );
+  
+  bool filter( );
+  bool setFilter( bool enabled );
+  
+  int peripheral( );
+  bool setPeripheral( IoPeripheral periph, bool disableGpio = true );
+  bool releasePeripherals( );
 
-int Io_SetDirection( int index, bool output );
-bool Io_GetDirection( int index );
-
-int Io_SetPortA( int value );
-int Io_GetPortA( void );
-int Io_SetPortB( int value );
-int Io_GetPortB( void );
-int Io_SetPortAMask( int value );
-int Io_GetPortAMask( void );
-int Io_SetPortBMask( int value );
-int Io_GetPortBMask( void );
-
-int Io_SetValue( int index, bool value );
-bool Io_GetValue( int index );
-int Io_SetPeripheralA( int index );
-int Io_SetPeripheralB( int index );
-int Io_SetPio( int index, bool enable );
-bool Io_GetPio( int index );
-int Io_SetPullup( int index, bool enable );
-bool Io_GetPullup( int index );
-
-void Io_SetDirectionBits( longlong bits, bool output );
-void Io_SetValueBits( longlong bits, longlong value );
-int Io_SetPeripheralABits( longlong bits );
-int Io_SetPeripheralBBits( longlong bits );
-void Io_SetPioBits( longlong bits, bool enable );
-void Io_SetPullupBits( longlong bits, bool enable );
-
-longlong Io_GetValueBits( void );
-longlong Io_GetPullupBits( void );
-longlong Io_GetPioBits( void );
-longlong Io_GetDirectionBits( void );
-
-const char* IoOsc_GetName( void );
-int IoOsc_ReceiveMessage( int channel, char* message, int length );
+  bool registerInterruptHandler( void* yourobj, void (*yourfunc)());
+  
+private:
+  unsigned int io_pin;
+};
 
 /**
 	\defgroup IoIndices IO Indices
@@ -359,9 +347,6 @@ int IoOsc_ReceiveMessage( int channel, char* message, int length );
 /** IO 31, Port B */
 #define IO_PB31_BIT 1LL<<0x3F
 
-
-/**
-@}
-*/
+/** @} */
 
 #endif
