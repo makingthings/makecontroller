@@ -181,6 +181,8 @@
         <file file_name="../../libraries/appled/appled.cpp" Name="appled.cpp" />
         <file file_name="../../libraries/webserver/webserver.h" Name="webserver.h" />
         <file file_name="../../libraries/webserver/webserver.cpp" Name="webserver.cpp" />
+        <file file_name="../../libraries/xbee/xbee.h" Name="xbee.h" />
+        <file file_name="../../libraries/xbee/xbee.cpp" Name="xbee.cpp" />
       </folder>
     </folder>
     <configuration arm_target_loader_reset_after_download="Yes" Target="AT91SAM7X256" build_intermediate_directory="intermediate" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" target_reset_script="FLASHReset()" build_output_directory="output" arm_target_flash_loader_type="Comms Channel Loader" Name="THUMB Flash Debug" />
