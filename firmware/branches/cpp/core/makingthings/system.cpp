@@ -21,7 +21,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "io_cpp.h"
-#include "eeprom_.h"
+#include "eeprom.h"
 
 extern "C" {
   #include "AT91SAM7X256.h"

@@ -43,8 +43,6 @@
           <file file_name="../../core/makingthings/osc_pattern.cpp" Name="osc_pattern.cpp" />
           <file file_name="../../core/makingthings/spi_.h" Name="spi_.h" />
           <file file_name="../../core/makingthings/spi_cpp.cpp" Name="spi_cpp.cpp" />
-          <file file_name="../../core/makingthings/eeprom_.h" Name="eeprom_.h" />
-          <file file_name="../../core/makingthings/eeprom_.cpp" Name="eeprom_.cpp" />
           <file file_name="../../core/makingthings/serial_isr_.cpp" Name="serial_isr_.cpp" >
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
             <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
@@ -71,6 +69,10 @@
           <file file_name="../../core/makingthings/analogin.cpp" Name="analogin.cpp" />
           <file file_name="../../core/makingthings/pwm.h" Name="pwm.h" />
           <file file_name="../../core/makingthings/pwm.cpp" Name="pwm.cpp" />
+          <file file_name="../../core/makingthings/system.h" Name="system.h" />
+          <file file_name="../../core/makingthings/system.cpp" Name="system.cpp" />
+          <file file_name="../../core/makingthings/eeprom.cpp" Name="eeprom.cpp" />
+          <file file_name="../../core/makingthings/eeprom.h" Name="eeprom.h" />
         </folder>
         <folder Name="FreeRTOS" >
           <configuration c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />
@@ -170,6 +172,16 @@
         <file file_name="../../libraries/appled/appled_.cpp" Name="appled_.cpp" />
         <file file_name="../../libraries/webserver/webserver_.h" Name="webserver_.h" />
         <file file_name="../../libraries/webserver/webserver_.cpp" Name="webserver_.cpp" />
+        <file file_name="../../libraries/motor/motor.h" Name="motor.h" />
+        <file file_name="../../libraries/motor/motor.cpp" Name="motor.cpp" />
+        <file file_name="../../libraries/pwmout/pwmout.h" Name="pwmout.h" />
+        <file file_name="../../libraries/pwmout/pwmout.cpp" Name="pwmout.cpp" />
+        <file file_name="../../libraries/stepper/stepper.h" Name="stepper.h" />
+        <file file_name="../../libraries/stepper/stepper.cpp" Name="stepper.cpp" />
+        <file file_name="../../libraries/servo/servo.cpp" Name="servo.cpp" />
+        <file file_name="../../libraries/servo/servo.h" Name="servo.h" />
+        <file file_name="../../libraries/dipswitch/dipswitch.h" Name="dipswitch.h" />
+        <file file_name="../../libraries/dipswitch/dipswitch.cpp" Name="dipswitch.cpp" />
       </folder>
     </folder>
     <configuration arm_target_loader_reset_after_download="Yes" Target="AT91SAM7X256" build_intermediate_directory="intermediate" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" target_reset_script="FLASHReset()" build_output_directory="output" arm_target_flash_loader_type="Comms Channel Loader" Name="THUMB Flash Debug" />

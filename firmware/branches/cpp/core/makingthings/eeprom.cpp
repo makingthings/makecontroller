@@ -15,7 +15,7 @@
 
 *********************************************************************************/
 
-#include "eeprom_.h"
+#include "eeprom.h"
 #include "error.h"
 
 #define EEPROM_INSTRUCTION_WREN 0x06
