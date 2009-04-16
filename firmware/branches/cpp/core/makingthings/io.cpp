@@ -87,9 +87,9 @@ bool Io::on()
 {
   int mask = 1 << ( io_pin & 0x1F );
   if ( io_pin < 32 ) // port A
-    AT91C_BASE_PIOA->PIO_SODR = mask;
+    AT91C_BASE_PIOA->PIO_CODR = mask;
   else // port B
-    AT91C_BASE_PIOB->PIO_SODR = mask;
+    AT91C_BASE_PIOB->PIO_CODR = mask;
   return true;
 }
 
@@ -97,9 +97,9 @@ bool Io::off()
 {
   int mask = 1 << ( io_pin & 0x1F );
   if ( io_pin < 32 ) // port A
-    AT91C_BASE_PIOA->PIO_CODR = mask;
+    AT91C_BASE_PIOA->PIO_SODR = mask;
   else // port B
-    AT91C_BASE_PIOB->PIO_CODR = mask;
+    AT91C_BASE_PIOB->PIO_SODR = mask;
   return true;
 }
 
