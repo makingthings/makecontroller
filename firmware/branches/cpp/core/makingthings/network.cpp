@@ -142,7 +142,7 @@ int Network::getAddress( )
   //   return CONTROLLER_ERROR_NO_NETWORK;
 
   // we specify our network interface as en0 when we init
-  struct netif* mc_netif = netif_find( "en0" );
+  struct netif* mc_netif = netif_find( (char*)"en0" );
   return ( mc_netif ) ? mc_netif->ip_addr.addr : -1;
 }
 
@@ -167,14 +167,14 @@ int Network::getMask( )
   //   return CONTROLLER_ERROR_NO_NETWORK;
   
   // we specify our network interface as en0 when we init
-  struct netif* mc_netif = netif_find( "en0" );
+  struct netif* mc_netif = netif_find( (char*)"en0" );
   return ( mc_netif ) ? mc_netif->netmask.addr : -1;
 }
 
 int Network::getGateway( )
 {
   // we specify our network interface as en0 when we init
-  struct netif* mc_netif = netif_find( "en0" );
+  struct netif* mc_netif = netif_find( (char*)"en0" );
   return ( mc_netif ) ? mc_netif->gw.addr : -1;
 }
 
@@ -183,7 +183,7 @@ void Network::setDhcp(bool enabled)
   if( enabled && !getDhcp() )
   {
     // we specify our network interface as en0 when we init
-    struct netif* mc_netif = netif_find( "en0" );
+    struct netif* mc_netif = netif_find( (char*)"en0" );
     if( mc_netif != NULL )
       dhcpStart( mc_netif );
       
@@ -193,7 +193,7 @@ void Network::setDhcp(bool enabled)
   if( !enabled && getDhcp() )
   {
     // we specify our network interface as en0 when we init
-    struct netif* mc_netif = netif_find( "en0" );
+    struct netif* mc_netif = netif_find( (char*)"en0" );
     if( mc_netif != NULL )
       dhcpStop( mc_netif );
     Eeprom::get()->write( EEPROM_DHCP_ENABLED, enabled );
@@ -273,7 +273,7 @@ int Network::setValid( int v )
     if( !getDhcp() ) // only actually change the address if we're not using DHCP
     {
       // we specify our network interface as en0 when we init
-      mc_netif = netif_find( "en0" );
+      mc_netif = netif_find( (char*)"en0" );
       if( mc_netif != NULL )
         netif_set_addr( mc_netif, &ip, &mask, &gw );
     }
