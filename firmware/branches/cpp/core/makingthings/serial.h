@@ -52,37 +52,37 @@ class Serial
   public:
     Serial( int channel, int q_size = 100 );
     void setBaud( int rate );
-    int getBaud( );
+    int baud( );
 
     void setDataBits( int bits );
-    int getDataBits( );
+    int dataBits( );
 
     void setParity( int parity );
-    int getParity( );
+    int parity( );
 
     void setStopBits( int bits );
-    int getStopBits( );
+    int stopBits( );
 
     void setHandshaking( bool enable );
-    bool getHandshaking( );
+    bool handshaking( );
 
     int write( char character );
     int write( char* data, int length, int timeout = 0);
     int writeDMA(void *data, int length);
     int bytesAvailable( );
-    bool bytesAvailableBool();
+    bool anyBytesAvailable();
     int read( char* data, int length, int timeout = 0 );
     char read( int timeout = 0 );
     int readDMA( char* data, int length, int timeout = 0 );
 
     void flush( );
     void clearErrors( );
-    bool getErrors( bool* overrun = 0, bool* frame = 0, bool* parity = 0 );
+    bool errors( bool* overrun = 0, bool* frame = 0, bool* parity = 0 );
     void startBreak( );
     void stopBreak( );
 
   protected:
-    int _channel, baud, bits, parity, stopBits, handshaking;
+    int _channel, _baud, bits, _parity, _stopBits, _handshaking;
     void setDetails( );
     
     // static stuff
