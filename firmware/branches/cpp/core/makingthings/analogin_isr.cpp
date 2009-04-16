@@ -33,7 +33,7 @@ void AnalogIn_Isr( void );
 
 void AnalogIn_Isr( void )
 {
-  portCHAR cTaskWokenByPost = pdFALSE; 
+  int cTaskWokenByPost = pdFALSE; 
   AnalogIn::Manager* manager = &AnalogIn::manager;
   int status = AT91C_BASE_ADC->ADC_SR;
   if(manager->waitingForMulti)
@@ -50,12 +50,12 @@ void AnalogIn_Isr( void )
     if( manager->multiConversionsComplete == 0xFF )
     {
       status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
-      manager->doneSemaphore.giveFromISR( cTaskWokenByPost );
+      manager->doneSemaphore.giveFromISR( &cTaskWokenByPost );
     }
   }
   else if ( status & AT91C_ADC_DRDY )
   {
-  	cTaskWokenByPost = manager->doneSemaphore.giveFromISR( cTaskWokenByPost );
+  	manager->doneSemaphore.giveFromISR( &cTaskWokenByPost );
     status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
   }
 
