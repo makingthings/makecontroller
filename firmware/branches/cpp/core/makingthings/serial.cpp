@@ -66,11 +66,11 @@ Serial::Serial( int channel, int q_size )
   }
   
   AT91C_BASE_PMC->PMC_PCER = 1 << id;   // Enable the peripheral clock
-  baud = SERIAL_DEFAULT_BAUD;
+  _baud = SERIAL_DEFAULT_BAUD;
   bits = SERIAL_DEFAULT_BITS;
-  stopBits = SERIAL_DEFAULT_STOPBITS;
-  parity = SERIAL_DEFAULT_PARITY;
-  handshaking = SERIAL_DEFAULT_HANDSHAKING;
+  _stopBits = SERIAL_DEFAULT_STOPBITS;
+  _parity = SERIAL_DEFAULT_PARITY;
+  _handshaking = SERIAL_DEFAULT_HANDSHAKING;
   si->uart->US_IDR = (unsigned int) -1; // Disable interrupts
   si->uart->US_TTGR = 0;                // Timeguard disabled
   Io rx( rxPin, IO_A );
@@ -102,7 +102,7 @@ void Serial::setDetails( )
 
   // MCK is 47923200 for the Make Controller Kit
   // Calculate ( * 10 )
-  int baudValue = ( MCK * 10 ) / ( baud * 16 );
+  int baudValue = ( MCK * 10 ) / ( _baud * 16 );
   // Round (and / 10)
   if ( ( baudValue % 10 ) >= 5 ) 
     baudValue = ( baudValue / 10 ) + 1; 
@@ -112,11 +112,11 @@ void Serial::setDetails( )
   sp->uart->US_BRGR = baudValue;
 //  sp->uart->US_BRGR = (MCK / baud) / 16;  ...from Atmel example code...does this work?
   sp->uart->US_MR = 
-    ( ( handshaking ) ? AT91C_US_USMODE_HWHSH : AT91C_US_USMODE_NORMAL ) |
+    ( ( _handshaking ) ? AT91C_US_USMODE_HWHSH : AT91C_US_USMODE_NORMAL ) |
     ( AT91C_US_CLKS_CLOCK ) |
     ( ( ( bits - 5 ) << 6 ) & AT91C_US_CHRL ) |
-    ( ( stopBits == 2 ) ? AT91C_US_NBSTOP_2_BIT : AT91C_US_NBSTOP_1_BIT ) |
-    ( ( parity == 0 ) ? AT91C_US_PAR_NONE : ( ( parity == -1 ) ? AT91C_US_PAR_ODD : AT91C_US_PAR_EVEN ) );
+    ( ( _stopBits == 2 ) ? AT91C_US_NBSTOP_2_BIT : AT91C_US_NBSTOP_1_BIT ) |
+    ( ( _parity == 0 ) ? AT91C_US_PAR_NONE : ( ( _parity == -1 ) ? AT91C_US_PAR_ODD : AT91C_US_PAR_EVEN ) );
     // 2 << 14; // this last thing puts it in loopback mode
 
   sp->uart->US_CR = AT91C_US_RXEN | AT91C_US_TXEN;
@@ -133,7 +133,7 @@ void Serial::setDetails( )
 */
 void Serial::setBaud( int rate )
 {
-  baud = rate;
+  _baud = rate;
   setDetails( );
 }
 
@@ -147,9 +147,9 @@ void Serial::setBaud( int rate )
   int baudrate = ser.getBaud();
   \endcode
 */
-int Serial::getBaud( )
+int Serial::baud( )
 {
-  return baud;
+  return _baud;
 }
 
 /**
@@ -182,7 +182,7 @@ void Serial::setDataBits( int bits )
   int dbits = ser.getDataBits();
   \endcode
 */
-int Serial::getDataBits( )
+int Serial::dataBits( )
 {
   return bits;
 }
@@ -201,9 +201,9 @@ int Serial::getDataBits( )
 void Serial::setParity( int parity )
 {
   if ( parity >= -1 && parity <= 1 )
-    this->parity = parity;
+    _parity = parity;
   else
-    this->parity = 1;
+    _parity = 1;
   setDetails( );
 }
 
@@ -218,9 +218,9 @@ void Serial::setParity( int parity )
   int par = getParity();
   \endcode
 */
-int Serial::getParity( )
+int Serial::parity( )
 {
-  return parity;
+  return _parity;
 }
 
 /**
@@ -237,9 +237,9 @@ int Serial::getParity( )
 void Serial::setStopBits( int bits )
 {
   if ( bits == 1 || bits == 2 )
-    stopBits = bits;
+    _stopBits = bits;
   else
-    stopBits = 1;
+    _stopBits = 1;
   setDetails( );
 }
 
@@ -253,9 +253,9 @@ void Serial::setStopBits( int bits )
   int sbits = ser.getStopBits();
   \endcode
 */
-int Serial::getStopBits( )
+int Serial::stopBits( )
 {
-  return stopBits;
+  return _stopBits;
 }
 
 /**
@@ -270,7 +270,7 @@ int Serial::getStopBits( )
 */
 void Serial::setHandshaking( bool enable )
 {
-  handshaking = enable;
+  _handshaking = enable;
   setDetails( );
 }
 
@@ -287,9 +287,9 @@ void Serial::setHandshaking( bool enable )
   }
   \endcode
 */
-bool Serial::getHandshaking( )
+bool Serial::handshaking( )
 {
-  return handshaking;
+  return _handshaking;
 }
 
 /**
@@ -353,7 +353,7 @@ int Serial::bytesAvailable( )
   return sp->rxQueue->msgsAvailable( );
 }
 
-bool Serial::bytesAvailableBool()
+bool Serial::anyBytesAvailable()
 {
   Internal* sp = &internals[ _channel ];
   return ((sp->uart->US_CSR & AT91C_US_RXRDY) != 0);
@@ -475,7 +475,7 @@ void Serial::clearErrors( )
   \code
   Serial ser(1);
   bool over, fr, par;
-  if( ser.getErrors( &over, &fr, &par ) )
+  if( ser.errors( &over, &fr, &par ) )
   {
     // if we wanted, we could just clear them all right here with clearErrors()
     // but here we'll check to see what kind of errors we got for the sake of the example
@@ -498,7 +498,7 @@ void Serial::clearErrors( )
   }
   \endcode
 */
-bool Serial::getErrors( bool* overrun, bool* frame, bool* parity )
+bool Serial::errors( bool* overrun, bool* frame, bool* parity )
 {
   bool retval = false;
   Internal* sp = &internals[ _channel ];
