@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006-2008 MakingThings
+ Copyright 2006-2009 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -28,6 +28,9 @@
 
 typedef void (TaskLoop)(void*);
 
+/**
+  A run loop, or thread, that can run simultaneously with many others.
+*/
 class Task
 {
 public:
@@ -51,17 +54,24 @@ private:
   bool observer; // flag to signify that only tasks created with the full constructor should delete the internal task on deletion
 };
 
+/**
+  The Real Time Operating System at the heart of the Make Controller.
+*/
 class RTOS
 {
 public:
   static Task getTaskByName( const char* name );
   static Task getTaskByID( int id );
-  static Task getCurrentTask( );
+  static Task currentTask( );
   static int numberOfTasks( );
   static int topTaskPriority( );
   static int ticksSinceBoot( );
 };
 
+/**
+  An inter-task mechanism to pass data.
+  
+*/
 class Queue
 {
 public:
@@ -79,6 +89,9 @@ private:
   void* _q;
 };
 
+/**
+  A way to synchronize between different tasks.
+*/
 class Semaphore
 {
 public:
