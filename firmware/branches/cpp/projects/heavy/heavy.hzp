@@ -94,6 +94,7 @@
           <file file_name="../../core/freertos/include/semphr.h" Name="semphr.h" />
           <file file_name="../../core/freertos/include/task.h" Name="task.h" />
           <file file_name="../../core/freertos/portable/GCC/ARM7_AT91SAM7S/AT91SAM7X256.h" Name="AT91SAM7X256.h" />
+          <file file_name="../../core/freertos/include/StackMacros.h" Name="StackMacros.h" />
         </folder>
         <folder Name="lwIP" >
           <file file_name="../../core/lwip/src/api/api_msg.c" Name="api_msg.c" />

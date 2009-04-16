@@ -19,10 +19,10 @@
 #define RTOS_H
 
 #include "types.h"
+#include "FreeRTOS.h"
 #include "projdefs.h"
 #include "portmacro.h"
 #include "queue.h"
-#include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
 
@@ -35,23 +35,21 @@ class Task
 {
 public:
   Task( TaskLoop loop, const char* name, int stackDepth, void* params, int priority );
-  Task( void* taskPtr );
-  Task operator=(const Task t);
   ~Task( );
   static void sleep( int ms );
   static void yield( );
   static void enterCritical( );
   static void exitCritical( );
-  int getRemainingStack( );
-  int getPriority( );
+  int remainingStack( );
+  int priority( );
   void setPriority( int priority );
-  int getIDNumber( );
-  char* getName( );
-  int getStackAllocated( );
-  Task getNext( );
-private:
+  int id( );
+  char* name( );
+  int stackAllocated( );
+  Task* nextTask( );
+protected:
   void* _task;
-  bool observer; // flag to signify that only tasks created with the full constructor should delete the internal task on deletion
+
 };
 
 /**
@@ -60,12 +58,21 @@ private:
 class RTOS
 {
 public:
-  static Task getTaskByName( const char* name );
-  static Task getTaskByID( int id );
-  static Task currentTask( );
+  static Task* findTaskByName( const char* name );
+  static Task* findTaskByID( int id );
+  static Task* currentTask( );
   static int numberOfTasks( );
   static int topTaskPriority( );
   static int ticksSinceBoot( );
+
+protected:
+  static void* getNextTaskControlBlock( void* task );
+  static void* findTask( char *taskName, int taskID );
+  static void* iterateByID( int id, xList* pxList );
+  static void* iterateByName( char* taskName, xList* pxList );
+  static void* iterateForNextTask( void** lowTask, int* lowID, void** highTask, int* highID, int currentID, xList* pxList );
+
+  friend class Task;
 };
 
 /**
@@ -81,9 +88,9 @@ public:
   int send( void* itemToQueue, int timeout );
   int receive( void* buffer, int timeout );
   int msgsAvailable( );
-  int sendFromISR( void* itemToSend, int taskPreviouslyWoken );
-  int sendToFrontFromISR( void* itemToSend, int taskPreviouslyWoken );
-  int sendToBackFromISR( void* itemToSend, int taskPreviouslyWoken );
+  bool sendFromISR( void* itemToSend, int* taskWoken );
+  bool sendToFrontFromISR( void* itemToSend, int* taskWoken );
+  bool sendToBackFromISR( void* itemToSend, int* taskWoken );
   int receiveFromISR( void* buffer, long* taskWoken );
 private:
   void* _q;
@@ -99,7 +106,7 @@ public:
   ~Semaphore( );
   int take( int timeout = -1 );
   int give( );
-  int giveFromISR( int taskPreviouslyWoken );
+  bool giveFromISR( int* taskWoken );
 private:
   void* _sem;
 };

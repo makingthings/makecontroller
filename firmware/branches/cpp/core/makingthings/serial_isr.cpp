@@ -30,7 +30,7 @@ void SerialIsr_Handler( int index )
 {
   signed portCHAR cChar;
   long xTaskWokenByTx = false;
-  long xTaskWokenByPost = false;
+  int xTaskWokenByPost = false;
   long xTaskWokenByTxThis = false;
   long xTaskWokenByPostThis = false;
   Serial::Internal* si = &Serial::internals[index];
@@ -56,7 +56,7 @@ void SerialIsr_Handler( int index )
     characters. */ 
     int t = si->uart->US_RHR;
     cChar = t & 0xFF; 
-    xTaskWokenByPost = si->rxQueue->sendFromISR( &cChar, xTaskWokenByPost );
+    si->rxQueue->sendFromISR( &cChar, &xTaskWokenByPost );
   }
 
   xTaskWokenByTx = xTaskWokenByTx || xTaskWokenByTxThis; 
