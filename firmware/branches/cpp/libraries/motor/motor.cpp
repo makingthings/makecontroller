@@ -22,6 +22,18 @@
 // static 
 Motor::MotorInternal* Motor::motors[] = {0, 0, 0, 0};
 
+/**
+  Create a new motor.
+  
+  @param index Which motor to control - valid options are 0, 1, 2, 3
+  
+  \b Example
+  \code
+  Motor m(1);
+  // or...
+  Motor* m = new Motor(1);
+  \endcode
+*/
 Motor::Motor( int index )
 {
   if ( index < 0 || index >= MOTOR_COUNT )
@@ -55,14 +67,14 @@ Motor::~Motor()
 
 /** 
   Set the speed of a DC motor.
-  @param index An integer specifying which DC Motor (0-3).
   @param duty An integer (0 - 1023) specifying the speed.
-  @returns Zero on success.
+  @returns True on success, false on failure.
   
   \b Example
   \code
   // Set the speed of motor 3 to %75
-  Motor_SetSpeed(3, 768);
+  Motor m(3);
+  m.setSpeed(768);
   \endcode
 */
 bool Motor::setSpeed( int duty )
@@ -75,14 +87,14 @@ bool Motor::setSpeed( int duty )
 
 /** 
   Set the direction of a DC motor.
-  @param index An integer specifying which DC Motor (0-3).
-  @param forward A character specifying direction - 1/non-zero (forward) or 0 (reverse).
-  @return Zero on success.
+  @param forward True for forward, false for reverse
+  @return True on success, false on failure
   
   \b Example
   \code
   // Set the direction of motor 2 to reverse.
-  Motor_SetDirection(2, 0);
+  Motor* m = new Motor(2);
+  m->setDirection(false);
   \endcode
 */
 bool Motor::setDirection( bool forward )
@@ -95,13 +107,13 @@ bool Motor::setDirection( bool forward )
 
 /** 
   Read the speed of a DC motor.
-  @param index An integer specifying which DC Motor (0-3).
   @return the speed (0 - 1023)
   
   \b Example
   \code
   // check the current speed of motor 1
-  int motor1_speed = Motor_GetSpeed(1);
+  Motor m(1);
+  int motor1_speed = m.speed();
   \endcode
 */
 int Motor::speed( )
@@ -111,12 +123,12 @@ int Motor::speed( )
 
 /** 
   Read the direction of a DC motor.
-  @param index An integer specifying which DC Motor (0-3).
-  @return Direction - non-zero (forward) or 0 (reverse).
+  @return True for forward, false for reverse
   
   \b Example
   \code
-  if( Motor_GetDirection(0) )
+  Motor m(0);
+  if( m.direction() )
   {
     // Motor 0 is going forward
   }

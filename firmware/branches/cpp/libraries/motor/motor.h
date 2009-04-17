@@ -21,15 +21,28 @@
 #include "pwmout.h"
 
 /**
-  The Motor subsystem provides forward/reverse and speed control for up to 4 DC motors across the 8 high current outputs.
+  Forward/reverse and speed control for up to 4 DC motors.
+  
+  \b Note - this library is intended for use with the Make Application Board.
+  
+  \section Usage
+  To get started, create a motor object and start controlling it.  Other output devices 
+  cannot be used simultaneously since they use the same output signals.  For example, 
+  the DigitalOuts cannot be called without first setting overlapping the DC motor I/O
+  lines to inactive.
+  
+  \code
+  Motor moto(3); // create a new motor object, on channel 3
+  moto.setDirection(false); // set the motor to go backwards
+  moto.setSpeed(1023); // full steam ahead
+  \endcode
+  
+  \section Setup
   Each motor controller is composed of 2 adjacent Digital Outs on the Make Application Board:
   - motor 0 - Digital Outs 0 and 1.
   - motor 1 - Digital Outs 2 and 3.
   - motor 2 - Digital Outs 4 and 5.
   - motor 3 - Digital Outs 6 and 7.
-  
-  Other output devices cannot be used simultaneously - for example, the DigitalOuts cannot be called without
-  first setting overlapping the DC motor I/O lines to inactive.
   
   See the digital out section of the 
   <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/digital-outputs">
