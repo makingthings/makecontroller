@@ -103,9 +103,9 @@ PwmOut::~PwmOut( )
   }
 }
 
-/**	
-	Set the speed of a PWM device.
-	@param duty An integer (0 - 1023) specifying the duty.
+/** 
+  Set the speed of a PWM device.
+  @param duty An integer (0 - 1023) specifying the duty.
   @return Zero on success.
 */
 bool PwmOut::setDuty( int duty )
@@ -114,8 +114,8 @@ bool PwmOut::setDuty( int duty )
   return true;
 }
 
-/**	
-	Read the current duty of a PWM device.
+/** 
+  Read the current duty of a PWM device.
   @return The duty (0 - 1023).
 */
 int PwmOut::duty( )
@@ -123,8 +123,8 @@ int PwmOut::duty( )
   return pwmouts[_index]->pwm->duty();
 }
 
-/**	
-	Set whether the A channel associated with a PWM out should be inverted.
+/** 
+  Set whether the A channel associated with a PWM out should be inverted.
   @param invert A character specifying the inversion - 1/non-zero (inverted) 0 (normal).
   @return Zero on success.
 */
@@ -134,9 +134,9 @@ bool PwmOut::setInvertedA( bool invert )
   return true;
 }
 
-/**	
-	Read whether the A channel of a PWM device is inverted.
-	@param index An integer specifying which PWM device (0-3).
+/** 
+  Read whether the A channel of a PWM device is inverted.
+  @param index An integer specifying which PWM device (0-3).
   @return The inversion - 1/non-zero (inverted) or 0 (normal).
 */
 bool PwmOut::invertedA( )
@@ -144,9 +144,9 @@ bool PwmOut::invertedA( )
   return pwmouts[_index]->ioA->value( );
 }
 
-/**	
-	Read whether the B channel of a PWM out is inverted.
-	@param index An integer specifying which PWM device (0-3).
+/** 
+  Read whether the B channel of a PWM out is inverted.
+  @param index An integer specifying which PWM device (0-3).
   @param invert A character specifying the inversion - 1/non-zero (inverted) 0 (normal).
   @return Zero on success.
 */
@@ -156,9 +156,9 @@ bool PwmOut::setInvertedB( bool invert )
   return true;
 }
 
-/**	
-	Read whether the B channel of a PWM device is inverted.
-	@param index An integer specifying which PWM device (0-3).
+/** 
+  Read whether the B channel of a PWM device is inverted.
+  @param index An integer specifying which PWM device (0-3).
   @return The inversion - 1/non-zero (inverted) or 0 (normal).
 */
 bool PwmOut::invertedB( )
@@ -207,20 +207,20 @@ void PwmOut::getIos( int* ioA, int* ioB )
 /** \defgroup pwmout_osc PWM Out - OSC
   Generate PWM signals with the Application Board via OSC.
   \ingroup OSC
-	
-	\section devices Devices
-	There are 4 PWM controllers available on the Application Board, numbered 0 - 3.
-	
-	Each PWM Out controls a pair of Digital Outs - an A and a B channel:
-	- PwmOut 0 - Digital Outs 0 (A) and 1 (B).
-	- PwmOut 1 - Digital Outs 2 (A) and 3 (B).
-	- PwmOut 2 - Digital Outs 4 (A) and 5 (B).
-	- PwmOut 3 - Digital Outs 6 (A) and 7 (B).
-	
-	Each channel can also be set to invert the given PWM signal.
-	
-	\section properties Properties
-	Each PWM Out has the following properties:
+  
+  \section devices Devices
+  There are 4 PWM controllers available on the Application Board, numbered 0 - 3.
+  
+  Each PWM Out controls a pair of Digital Outs - an A and a B channel:
+  - PwmOut 0 - Digital Outs 0 (A) and 1 (B).
+  - PwmOut 1 - Digital Outs 2 (A) and 3 (B).
+  - PwmOut 2 - Digital Outs 4 (A) and 5 (B).
+  - PwmOut 3 - Digital Outs 6 (A) and 7 (B).
+  
+  Each channel can also be set to invert the given PWM signal.
+  
+  \section properties Properties
+  Each PWM Out has the following properties:
   - duty
   - invA
   - invB
@@ -233,53 +233,53 @@ void PwmOut::getIos( int* ioA, int* ioB )
   - alignment
   - polarity
 
-	\subsection Duty
-	The \b duty property corresponds to the duty at which a load connected to the output is being driven.
-	This value can be both read and written.  The range of values expected by the board
-	is from 0 - 1023.
+  \subsection Duty
+  The \b duty property corresponds to the duty at which a load connected to the output is being driven.
+  This value can be both read and written.  The range of values expected by the board
+  is from 0 - 1023.
 
   To generate a 75% on PWM signal, send a message like
-	\verbatim /pwmout/1/duty 768 \endverbatim
-	Leave the argument value off to read the duty:
-	\verbatim /pwmout/1/duty \endverbatim
-	
-	\subsection invA
-	The \b invA property corresponds to the inversion of the A channel of a PWM Out.
-	This value can be both read and written, and the range of values expected is simply 
-	0 or 1.  1 means inverted and 0 means normal.  0 is the default.
-	
-	To set the A channel of the second PWM Out as inverted, send the message
-	\verbatim /pwmout/1/invA 1 \endverbatim
-	Note that the A channel of PWM Out 1 is Digital Out 2.
-	
-	\subsection invB
-	The \b invB property corresponds to the inversion of the B channel of a PWM Out.
-	This value can be both read and written, and the range of values expected is simply 
-	0 or 1.  1 means inverted and 0 means normal.  0 is the default.
-	
-	To set the B channel of the fourth PWM Out back to normal, send the message
-	\verbatim /pwmout/1/invB 0 \endverbatim
-	Note that the A channel of PWM Out 1 is Digital Out 7.
-	
-	\subsection Active
-	The \b active property corresponds to the active state of the PWM Out.
-	If the device is set to be active, no other tasks will be able to
-	use its 2 digital out lines.  If you're not seeing appropriate
-	responses to your messages to the PWM Out, check the whether it's 
-	locked by sending a message like
-	\verbatim /pwmout/0/active \endverbatim
-	
-	If you're no longer using the PWM Out, it's a good idea to free the 2 Digital Outs by 
-	sending the message
-	\verbatim /pwmout/0/active 0 \endverbatim
+  \verbatim /pwmout/1/duty 768 \endverbatim
+  Leave the argument value off to read the duty:
+  \verbatim /pwmout/1/duty \endverbatim
+  
+  \subsection invA
+  The \b invA property corresponds to the inversion of the A channel of a PWM Out.
+  This value can be both read and written, and the range of values expected is simply 
+  0 or 1.  1 means inverted and 0 means normal.  0 is the default.
+  
+  To set the A channel of the second PWM Out as inverted, send the message
+  \verbatim /pwmout/1/invA 1 \endverbatim
+  Note that the A channel of PWM Out 1 is Digital Out 2.
+  
+  \subsection invB
+  The \b invB property corresponds to the inversion of the B channel of a PWM Out.
+  This value can be both read and written, and the range of values expected is simply 
+  0 or 1.  1 means inverted and 0 means normal.  0 is the default.
+  
+  To set the B channel of the fourth PWM Out back to normal, send the message
+  \verbatim /pwmout/1/invB 0 \endverbatim
+  Note that the A channel of PWM Out 1 is Digital Out 7.
+  
+  \subsection Active
+  The \b active property corresponds to the active state of the PWM Out.
+  If the device is set to be active, no other tasks will be able to
+  use its 2 digital out lines.  If you're not seeing appropriate
+  responses to your messages to the PWM Out, check the whether it's 
+  locked by sending a message like
+  \verbatim /pwmout/0/active \endverbatim
+  
+  If you're no longer using the PWM Out, it's a good idea to free the 2 Digital Outs by 
+  sending the message
+  \verbatim /pwmout/0/active 0 \endverbatim
 
-	\section p_adjust Period adjustment of the PWM unit
+  \section p_adjust Period adjustment of the PWM unit
 
-	The below values allow you to adjust the period length to all possible values as supported
-	by the physical limits of the Make Controller.  Before altering the values, it is good to understand
-	a little about the subsustem of the PWM module.  Please see the general introduction in the \ref Pwm section.
+  The below values allow you to adjust the period length to all possible values as supported
+  by the physical limits of the Make Controller.  Before altering the values, it is good to understand
+  a little about the subsustem of the PWM module.  Please see the general introduction in the \ref Pwm section.
 
-	\subsection DividerBValue
+  \subsection DividerBValue
   The \b dividerXValue property corresponds to the linear divider value within clock divider module X of the 
   PWM Out.  This value can be between 0 and 255, and linearly divides the clock that is fed into it.  You can 
   change the incomming clock value by altering the DividerAMux parameter.  Higher linear divider values mean 
@@ -287,7 +287,7 @@ void PwmOut::getIos( int* ioA, int* ioB )
   
   Default value of DividerA is 4. Default value of DividerB is 0.
 
-	\subsection divs DividerAMux & DividerBMux
+  \subsection divs DividerAMux & DividerBMux
   The \b dividerAMux and \b dividerBMux properties select the incoming clock value for divider module A or B (respectively)
   of the PWM Out.  This value ranges between 0 and 10.  This is similar to the clock source value, eg. a DividerAMux 
   value of 5 = a clock rate of MasterClock/(2^5)
@@ -295,9 +295,9 @@ void PwmOut::getIos( int* ioA, int* ioB )
   Increasing this value will substantially increase the period of the PWM.  Use the DividerXValue parameter 
   to more finely tune the value of the period.  
   
-  Default value of MuxA is 4.  Default value of MuxB is 0.		    
+  Default value of MuxA is 4.  Default value of MuxB is 0.        
 
-	\subsection ClockSource
+  \subsection ClockSource
   The \b clockSource property selects the incoming clock value for the specified PWM channel. A clock 
   source of \b 0-10 represents the Master clock divided by 2 to the power of the Clock Source Value, eg. a clock 
   source value of 5 = a clock rate of MasterClock/(2^5).  A value of \b 11 sets the Clock source to be 
@@ -305,7 +305,7 @@ void PwmOut::getIos( int* ioA, int* ioB )
   
   The default value is 11 (Divider A).
 
-	\subsection WaveformAlignment
+  \subsection WaveformAlignment
   The \b waveformAlignment property chooses whether the channel is left aligned or center aligned.
   The following values are valid:
    - 0 = Left aligned
@@ -314,7 +314,7 @@ void PwmOut::getIos( int* ioA, int* ioB )
   A left aligned channel counts up to the maximum duty cycle, then resets the counter.  A center aligned 
   channel counts up to the maximum duty cycle, then counts down to zero, etc. The default is left aligned.
 
-	\subsection WaveformPolarity
+  \subsection WaveformPolarity
   The \b polarity property chooses whether the channel begins its period high or low.  The following values are valid:
    - 0 = Normal Polarity
    - 1 = Inverted Polarity
@@ -330,11 +330,11 @@ void PwmOut::getIos( int* ioA, int* ioB )
 //// MUST end in zero
 //static char* PwmOutOsc_Name = "pwmout";
 //static char* PwmOutOsc_PropertyNames[] = { "active", "duty", "invA", "invB", 
-//					   "dividerAValue", "dividerAMux",
-//					   "dividerBValue", "dividerBMux",
-//					   "clockSource", "alignment",
-//					   "polarity",
-//					   0 }; // must have a trailing 0
+//             "dividerAValue", "dividerAMux",
+//             "dividerBValue", "dividerBMux",
+//             "clockSource", "alignment",
+//             "polarity",
+//             0 }; // must have a trailing 0
 //
 //int PwmOutOsc_PropertySet( int index, int property, int value );
 //int PwmOutOsc_PropertyGet( int index, int property );
