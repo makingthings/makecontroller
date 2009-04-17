@@ -25,14 +25,12 @@ Spi* DipSwitch::spi = 0;
 int DipSwitch::refcount = 0;
 
 /**
-  Sets whether the DIP Switch is active.
-  @param state An integer specifying the state of the DIP Switch - 1 (on) or 0 (off).
-  @return Zero on success.
+  Create a new DipSwitch object.
   
   \b Example
   \code
-  // enable the DIP switch
-  DipSwitch_SetActive(1);
+  DipSwitch dip;
+  // that's all there is to it.
   \endcode
 */
 DipSwitch::DipSwitch( )
@@ -56,7 +54,8 @@ DipSwitch::~DipSwitch()
   
   \b Example
   \code
-  int dip_switch = DipSwitch_GetValue();
+  DipSwitch dip;
+  int dip_switch = dip.value();
   // now dip_switch has a bitmask of all 8 channels of the DIP switch
   \endcode
 */
@@ -78,15 +77,17 @@ int DipSwitch::value( )
 
 /**
   Read a single channel's value.
-  This is a convenience function that relies on DipSwitch_GetValue()
-  internally, but extracts the value for a given channel.
+  
+  If you pass a channel number into value() it will
+  return the state of just that channel.
+  
   @param channel The channel (0-7) you'd like to read.
   return true if the channel is on, false if it's off.
-  @see DipSwitch_GetValue( )
   
   \b Example
   \code
-  if(DipSwitch_GetValueChannel(4) )
+  DipSwitch dip;
+  if(dip.value(4))
   {
     // DIP switch channel 4 is on
   }
@@ -94,7 +95,6 @@ int DipSwitch::value( )
   {
     // DIP switch channel 4 is off
   }
-  // now dip_switch has a bitmask of all 8 channels of the DIP switch
   \endcode
 */
 bool DipSwitch::value( int channel )
