@@ -25,15 +25,15 @@ Spi* DipSwitch::spi = 0;
 int DipSwitch::refcount = 0;
 
 /**
-	Sets whether the DIP Switch is active.
-	@param state An integer specifying the state of the DIP Switch - 1 (on) or 0 (off).
-	@return Zero on success.
-	
-	\b Example
-	\code
-	// enable the DIP switch
-	DipSwitch_SetActive(1);
-	\endcode
+  Sets whether the DIP Switch is active.
+  @param state An integer specifying the state of the DIP Switch - 1 (on) or 0 (off).
+  @return Zero on success.
+  
+  \b Example
+  \code
+  // enable the DIP switch
+  DipSwitch_SetActive(1);
+  \endcode
 */
 DipSwitch::DipSwitch( )
 {
@@ -50,15 +50,15 @@ DipSwitch::~DipSwitch()
     delete spi;
 }
 
-/**	
-	Read the current configuration of the on-board DIP switch.
-	@return An integer from 0-255 indicating the current configuration of the DIP switch.
-	
-	\b Example
-	\code
-	int dip_switch = DipSwitch_GetValue();
-	// now dip_switch has a bitmask of all 8 channels of the DIP switch
-	\endcode
+/** 
+  Read the current configuration of the on-board DIP switch.
+  @return An integer from 0-255 indicating the current configuration of the DIP switch.
+  
+  \b Example
+  \code
+  int dip_switch = DipSwitch_GetValue();
+  // now dip_switch has a bitmask of all 8 channels of the DIP switch
+  \endcode
 */
 int DipSwitch::value( )
 {
@@ -85,17 +85,17 @@ int DipSwitch::value( )
   @see DipSwitch_GetValue( )
   
   \b Example
-	\code
-	if(DipSwitch_GetValueChannel(4) )
-	{
-	  // DIP switch channel 4 is on
-	}
-	else
-	{
-	  // DIP switch channel 4 is off
-	}
-	// now dip_switch has a bitmask of all 8 channels of the DIP switch
-	\endcode
+  \code
+  if(DipSwitch_GetValueChannel(4) )
+  {
+    // DIP switch channel 4 is on
+  }
+  else
+  {
+    // DIP switch channel 4 is off
+  }
+  // now dip_switch has a bitmask of all 8 channels of the DIP switch
+  \endcode
 */
 bool DipSwitch::value( int channel )
 {
@@ -111,56 +111,56 @@ bool DipSwitch::value( int channel )
 /** \defgroup DIPSwitchOSC DIP Switch - OSC
   Read the Application Board's DIP Switch via OSC.
   \ingroup OSC
-	
-	\section devices Devices
-	There's a single DIP Switch the Make Application Board. Because there's
-	only one device, a device index is not included in any OSC messages to the
-	DIP Switch.
-	
-	\section properties Properties
-	The DIP Switch has the following properties
+  
+  \section devices Devices
+  There's a single DIP Switch the Make Application Board. Because there's
+  only one device, a device index is not included in any OSC messages to the
+  DIP Switch.
+  
+  \section properties Properties
+  The DIP Switch has the following properties
   - value
   - autosend
   - active
 
-	\par Value
-	The \b value property corresponds to current configuration of the DIP Switch.
-	The DIP switch is 8-position, which means that it will send a value from 0-255
-	depending on the orientation of each of the switches. Mask off the appropriate bits to 
+  \par Value
+  The \b value property corresponds to current configuration of the DIP Switch.
+  The DIP switch is 8-position, which means that it will send a value from 0-255
+  depending on the orientation of each of the switches. Mask off the appropriate bits to 
   determine the value of a particular channel.
-	\par
-	Because you can only ever \em read the value of an input, you'll never
-	want to include an argument at the end of your OSC message to read the value.\n
-	To read from the DIP Switch, send the message
-	\verbatim /dipswitch/value \endverbatim
+  \par
+  Because you can only ever \em read the value of an input, you'll never
+  want to include an argument at the end of your OSC message to read the value.\n
+  To read from the DIP Switch, send the message
+  \verbatim /dipswitch/value \endverbatim
 
   \par Autosend
-	The \b autosend property corresponds to whether the DIP Switch will automatically send a message
-	when its value changes.
-	To tell the DIP Swtich to automatically send messages, send the message
-	\verbatim /dipswitch/autosend 1 \endverbatim
-	To have the DIP Switch stop sending messages automatically, send the message
-	\verbatim /dipswitch/autosend 0 \endverbatim
-	All autosend messages send at the same interval.  You can set this interval, in 
-	milliseconds, by sending the message
-	\verbatim /system/autosend-interval 10 \endverbatim
-	so that messages will be sent every 10 milliseconds.  This can be anywhere from 1 to 5000 milliseconds.
+  The \b autosend property corresponds to whether the DIP Switch will automatically send a message
+  when its value changes.
+  To tell the DIP Swtich to automatically send messages, send the message
+  \verbatim /dipswitch/autosend 1 \endverbatim
+  To have the DIP Switch stop sending messages automatically, send the message
+  \verbatim /dipswitch/autosend 0 \endverbatim
+  All autosend messages send at the same interval.  You can set this interval, in 
+  milliseconds, by sending the message
+  \verbatim /system/autosend-interval 10 \endverbatim
+  so that messages will be sent every 10 milliseconds.  This can be anywhere from 1 to 5000 milliseconds.
   You also need to select whether the board should send to you over USB or Ethernet.  Send
   \verbatim /system/autosend-usb 1 \endverbatim
   to send via USB, and 
   \verbatim /system/autosend-udp 1 \endverbatim
   to send via Ethernet.  Via Ethernet, the board will send messages to the last address it received a message from.
-	
-	\par Active
-	The \b active property corresponds to the active state of the DIP Switch.
-	If the DIP Switch is set to be active, no other tasks will be able to
-	use its I/O lines.  If you're not seeing appropriate
-	responses to your messages to the DIP Switch, check whether it's 
-	locked by sending the message
-	\verbatim /dipswitch/active \endverbatim
-	\par
-	You can set the active flag by sending
-	\verbatim /dipswitch/active 1 \endverbatim
+  
+  \par Active
+  The \b active property corresponds to the active state of the DIP Switch.
+  If the DIP Switch is set to be active, no other tasks will be able to
+  use its I/O lines.  If you're not seeing appropriate
+  responses to your messages to the DIP Switch, check whether it's 
+  locked by sending the message
+  \verbatim /dipswitch/active \endverbatim
+  \par
+  You can set the active flag by sending
+  \verbatim /dipswitch/active 1 \endverbatim
 */
 
 //#include "osc.h"

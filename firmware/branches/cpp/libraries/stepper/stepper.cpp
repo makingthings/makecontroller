@@ -50,16 +50,16 @@ Stepper::StepperInternal* Stepper::steppers[STEPPER_COUNT] = {0, 0};
 void Stepper_IRQCallback( int id );
 
 /**
-	Sets whether the specified Stepper is active.
-	@param index An integer specifying which stepper (0 or 1).
-	@param state An integer specifying the active state - 1 (active) or 0 (inactive).
-	@return Zero on success.
-	
-	\b Example
-	\code
-	// enable stepper 1
-	Stepper_SetActive(1, 1);
-	\endcode
+  Sets whether the specified Stepper is active.
+  @param index An integer specifying which stepper (0 or 1).
+  @param state An integer specifying the active state - 1 (active) or 0 (inactive).
+  @return Zero on success.
+  
+  \b Example
+  \code
+  // enable stepper 1
+  Stepper_SetActive(1, 1);
+  \endcode
 */
 Stepper::Stepper( int index )
 {
@@ -128,20 +128,20 @@ Stepper::~Stepper( )
   }
 }
 
-/**	
-	Set the position of the specified stepper motor.
-	Note that this will not ask the stepper to move.  It will simply update
-	the position that the stepper thinks it's at.  To move the stepper, see
-	Stepper_SetPositionRequested() or Stepper_Step().
-	@param index An integer specifying which stepper (0 or 1).
-	@param position An integer specifying the stepper position.
+/** 
+  Set the position of the specified stepper motor.
+  Note that this will not ask the stepper to move.  It will simply update
+  the position that the stepper thinks it's at.  To move the stepper, see
+  Stepper_SetPositionRequested() or Stepper_Step().
+  @param index An integer specifying which stepper (0 or 1).
+  @param position An integer specifying the stepper position.
   @return status (0 = OK).
   
   \b Example
-	\code
-	// reset stepper 1 to call its current position 0
-	Stepper_SetPosition(1, 0);
-	\endcode
+  \code
+  // reset stepper 1 to call its current position 0
+  Stepper_SetPosition(1, 0);
+  \endcode
 */
 bool Stepper::resetPosition( int position )
 {
@@ -154,22 +154,22 @@ bool Stepper::resetPosition( int position )
   return true;
 }
 
-/**	
-	Set the destination position for a stepper motor.
-	This will start the stepper moving the given number of
-	steps at the current speed, as set by Stepper_SetSpeed().
-	
-	While it's moving, you can call Stepper_GetPosition() to read
-	its current position.
-	@param index An integer specifying which stepper (0 or 1).
-	@param positionRequested An integer specifying the desired stepper position.
+/** 
+  Set the destination position for a stepper motor.
+  This will start the stepper moving the given number of
+  steps at the current speed, as set by Stepper_SetSpeed().
+  
+  While it's moving, you can call Stepper_GetPosition() to read
+  its current position.
+  @param index An integer specifying which stepper (0 or 1).
+  @param positionRequested An integer specifying the desired stepper position.
   @return status (0 = OK).
   
   \b Example
-	\code
-	// start moving stepper 0 1500 steps
-	Stepper_SetPositionRequested(0, 1500);
-	\endcode
+  \code
+  // start moving stepper 0 1500 steps
+  Stepper_SetPositionRequested(0, 1500);
+  \endcode
 */
 int Stepper::stepTo( int position )
 {
@@ -181,20 +181,20 @@ int Stepper::stepTo( int position )
   return CONTROLLER_OK;
 }
 
-/**	
-	Set the speed at which a stepper will move.
+/** 
+  Set the speed at which a stepper will move.
   This is a number of ms per step, rather than the more common steps per second.  
   Arranging it this way makes it easier to express as an integer.  
   Fastest speed is 1ms / step (1000 steps per second) and slowest is many seconds.
-	@param index An integer specifying which stepper (0 or 1).
-	@param speed An integer specifying the stepper speed in ms per step
+  @param index An integer specifying which stepper (0 or 1).
+  @param speed An integer specifying the stepper speed in ms per step
   @return status (0 = OK).
   
   \b Example
-	\code
-	// set the speed to 1ms / step (1000 steps per second)
-	Stepper_SetSpeed(0, 1);
-	\endcode
+  \code
+  // set the speed to 1ms / step (1000 steps per second)
+  Stepper_SetSpeed(0, 1);
+  \endcode
 */
 bool Stepper::setSpeed( int speed )
 { 
@@ -208,69 +208,69 @@ bool Stepper::setSpeed( int speed )
   return true;
 }
 
-/**	
-	Get the speed at which a stepper will move.
-	Read the value previously set for the speed parameter.
-	@param index An integer specifying which stepper (0 or 1).
+/** 
+  Get the speed at which a stepper will move.
+  Read the value previously set for the speed parameter.
+  @param index An integer specifying which stepper (0 or 1).
   @return The speed (0 - 1023), or 0 on error.
   
   \b Example
-	\code
-	int step0_speed = Stepper_GetSpeed(0);
-	// now step0_speed has the speed of stepper 0
-	\endcode
+  \code
+  int step0_speed = Stepper_GetSpeed(0);
+  // now step0_speed has the speed of stepper 0
+  \endcode
 */
 int Stepper::speed( )
 {
   return steppers[_index]->speed;
 }
 
-/**	
-	Read the current position of a stepper motor.
-	@param index An integer specifying which stepper (0 or 1).
+/** 
+  Read the current position of a stepper motor.
+  @param index An integer specifying which stepper (0 or 1).
   @return The position, 0 on error.
   
   \b Example
-	\code
-	int step0_pos = Stepper_GetPosition(0);
-	// now step0_pos has the current position of stepper 0
-	\endcode
+  \code
+  int step0_pos = Stepper_GetPosition(0);
+  // now step0_pos has the current position of stepper 0
+  \endcode
 */
 int Stepper::position( )
 {
   return steppers[_index]->position;
 }
 
-/**	
-	Read the destination position of a stepper motor.
-	This indicates where the stepper is ultimately headed.  To see
-	where it actually is, see Stepper_GetPosition().
-	@param index An integer specifying which stepper (0 or 1).
+/** 
+  Read the destination position of a stepper motor.
+  This indicates where the stepper is ultimately headed.  To see
+  where it actually is, see Stepper_GetPosition().
+  @param index An integer specifying which stepper (0 or 1).
   @return The position and 0 on error
   
   \b Example
-	\code
-	int step1_destination = Stepper_GetPositionRequested(1);
-	// step1_destination has the requested position for stepper 1
-	\endcode
+  \code
+  int step1_destination = Stepper_GetPositionRequested(1);
+  // step1_destination has the requested position for stepper 1
+  \endcode
 */
 int Stepper::destination( )
 {
   return steppers[_index]->destination;
 }
 
-/**	
-	Simply take a number of steps from wherever the motor is currently positioned.
+/** 
+  Simply take a number of steps from wherever the motor is currently positioned.
   This function will move the motor a given number of steps from the current position.
-	@param index An integer specifying which stepper (0 or 1).
-	@param steps An integer specifying the number of steps.  Can be negative to go in reverse.
+  @param index An integer specifying which stepper (0 or 1).
+  @param steps An integer specifying the number of steps.  Can be negative to go in reverse.
   @return status (0 = OK).
   
   \b Example
-	\code
-	// take 1200 steps forward from our current position
-	Stepper_Step(0, 1200);
-	\endcode
+  \code
+  // take 1200 steps forward from our current position
+  Stepper_Step(0, 1200);
+  \endcode
 */
 bool Stepper::step( int steps )
 {
@@ -283,17 +283,17 @@ bool Stepper::step( int steps )
   return true;
 }
 
-/**	
-	Set the duty - from 0 to 1023.  The default is for 100% power (1023).
-	@param index An integer specifying which stepper (0 or 1).
-	@param duty An integer specifying the stepper duty (0 - 1023).
+/** 
+  Set the duty - from 0 to 1023.  The default is for 100% power (1023).
+  @param index An integer specifying which stepper (0 or 1).
+  @param duty An integer specifying the stepper duty (0 - 1023).
   @return status (0 = OK).
   
   \b Example
-	\code
-	// set stepper 0 to half power
-	Stepper_SetDuty(0, 512);
-	\endcode
+  \code
+  // set stepper 0 to half power
+  Stepper_SetDuty(0, 512);
+  \endcode
 */
 bool Stepper::setDuty( int duty )
 {
@@ -305,35 +305,35 @@ bool Stepper::setDuty( int duty )
   return true;
 }
 
-/**	
-	Get the duty 
+/** 
+  Get the duty 
   Read the value previously set for the duty.
-	@param index An integer specifying which stepper (0 or 1).
+  @param index An integer specifying which stepper (0 or 1).
   @return The duty (0 - 1023), or 0 on error.
   
   \b Example
-	\code
-	int step1_duty = Stepper_GetDuty(1);
-	// step1_duty has the current duty for stepper 1
-	\endcode
+  \code
+  int step1_duty = Stepper_GetDuty(1);
+  // step1_duty has the current duty for stepper 1
+  \endcode
 */
 int Stepper::duty( )
 {
   return steppers[_index]->duty;
 }
 
-/**	
-	Declare whether the stepper is bipolar or not.  
-	Default is bipolar.
-	@param index An integer specifying which stepper (0 or 1).
-	@param bipolar An integer 1 for bipolar, 0 for unipolar
+/** 
+  Declare whether the stepper is bipolar or not.  
+  Default is bipolar.
+  @param index An integer specifying which stepper (0 or 1).
+  @param bipolar An integer 1 for bipolar, 0 for unipolar
   @return status (0 = OK).
   
   \b Example
-	\code
-	// set stepper 1 to unipolar
-	Stepper_SetBipolar(1, 0);
-	\endcode
+  \code
+  // set stepper 1 to unipolar
+  Stepper_SetBipolar(1, 0);
+  \endcode
 */
 bool Stepper::setBipolar( bool bipolar )
 {
@@ -341,41 +341,41 @@ bool Stepper::setBipolar( bool bipolar )
   return true;
 }
 
-/**	
-	Get the bipolar setting
+/** 
+  Get the bipolar setting
   Read the value previously set for bipolar.
-	@param index An integer specifying which stepper (0 or 1).
+  @param index An integer specifying which stepper (0 or 1).
   @return 1 for bipolar or 0 for unipolar.
   
   \b Example
-	\code
-	if( Stepper_GetBipolar(1) )
-	{
-	  // stepper 1 is bipolar
-	}
-	else
-	{
-	  // stepper 1 is unipolar
-	}
-	\endcode
+  \code
+  if( Stepper_GetBipolar(1) )
+  {
+    // stepper 1 is bipolar
+  }
+  else
+  {
+    // stepper 1 is unipolar
+  }
+  \endcode
 */
 bool Stepper::bipolar( )
 {
   return steppers[_index]->bipolar;
 }
 
-/**	
-	Declare whether the stepper is in half stepping mode or not.  
-	Default is not - i.e. in full step mode.
-	@param index An integer specifying which stepper (0 or 1).
-	@param halfStep An integer specifying 1 for half step, 0 for full step
+/** 
+  Declare whether the stepper is in half stepping mode or not.  
+  Default is not - i.e. in full step mode.
+  @param index An integer specifying which stepper (0 or 1).
+  @param halfStep An integer specifying 1 for half step, 0 for full step
   @return status (0 = OK).
   
   \b Example
-	\code
-	// set stepper 1 to half step mode
-	Stepper_SetHalfStep(1, 1);
-	\endcode
+  \code
+  // set stepper 1 to half step mode
+  Stepper_SetHalfStep(1, 1);
+  \endcode
 */
 bool Stepper::setHalfStep( bool halfStep )
 {
@@ -383,22 +383,22 @@ bool Stepper::setHalfStep( bool halfStep )
   return true;
 }
 
-/**	
-	Read whether the stepper is in half stepping mode or not.
-	@param index An integer specifying which stepper (0 or 1).
+/** 
+  Read whether the stepper is in half stepping mode or not.
+  @param index An integer specifying which stepper (0 or 1).
   @return the HalfStep setting.
   
   \b Example
-	\code
-	if( Stepper_GetHalfStep(1) )
-	{
-	  // stepper 1 is in half step mode
-	}
-	else
-	{
-	  // stepper 1 is in full step mode
-	}
-	\endcode
+  \code
+  if( Stepper_GetHalfStep(1) )
+  {
+    // stepper 1 is in half step mode
+  }
+  else
+  {
+    // stepper 1 is in full step mode
+  }
+  \endcode
 */
 bool Stepper::halfStep( )
 {
@@ -768,14 +768,14 @@ void Stepper::StepperInternal::setAll( int portAOn, int portBOn, int portAOff, i
   keeps an internal count of how many steps the motor has taken in order to keep track of where it is.
 
   For relative positioning, use the \b step property to simply move a number of steps from the current position.
-	
-	\section devices Devices
-	There are 2 Stepper controllers available on the Application Board, numbered 0 & 1.
-	See the Stepper section in the Application Board user's guide for more information
-	on hooking steppers up to the board.
-	
-	\section properties Properties
-	Each stepper has the following properties:
+  
+  \section devices Devices
+  There are 2 Stepper controllers available on the Application Board, numbered 0 & 1.
+  See the Stepper section in the Application Board user's guide for more information
+  on hooking steppers up to the board.
+  
+  \section properties Properties
+  Each stepper has the following properties:
   - position
   - positionrequested
   - speed
@@ -785,76 +785,76 @@ void Stepper::StepperInternal::setAll( int portAOn, int portBOn, int portAOff, i
   - step
   - active
 
-	\par Step
-	The \b step property simply tells the motor to take a certain number of steps.
-	This is a write-only value.
-	\par
-	To take 1000 steps with the first stepper, send the message
-	\verbatim /stepper/0/step 1000\endverbatim
+  \par Step
+  The \b step property simply tells the motor to take a certain number of steps.
+  This is a write-only value.
+  \par
+  To take 1000 steps with the first stepper, send the message
+  \verbatim /stepper/0/step 1000\endverbatim
   
   \par Position
-	The \b position property corresponds to the current step position of the stepper motor
-	This value can be both read and written.  Writing this value changes where the motor thinks it is.
+  The \b position property corresponds to the current step position of the stepper motor
+  This value can be both read and written.  Writing this value changes where the motor thinks it is.
   The initial value of this parameter is 0.
-	\par
-	To set the first stepper to step position 10000, send the message
-	\verbatim /stepper/0/position 10000\endverbatim
-	Leave the argument value off to read the position of the stepper:
-	\verbatim /stepper/0/position \endverbatim
+  \par
+  To set the first stepper to step position 10000, send the message
+  \verbatim /stepper/0/position 10000\endverbatim
+  Leave the argument value off to read the position of the stepper:
+  \verbatim /stepper/0/position \endverbatim
 
   \par PositionRequested
-	The \b positionrequested property describes the desired step position of the stepper motor
-	This value can be both read and written.  Writing this value changes the motor's destination.
-	\par
-	To set the first stepper to go to position 10000, send the message
-	\verbatim /stepper/0/positionrequested 10000\endverbatim
-	Leave the argument value off to read the last requested position of the stepper:
-	\verbatim /stepper/0/positionrequested \endverbatim
+  The \b positionrequested property describes the desired step position of the stepper motor
+  This value can be both read and written.  Writing this value changes the motor's destination.
+  \par
+  To set the first stepper to go to position 10000, send the message
+  \verbatim /stepper/0/positionrequested 10000\endverbatim
+  Leave the argument value off to read the last requested position of the stepper:
+  \verbatim /stepper/0/positionrequested \endverbatim
 
-	\par Speed
-	The \b speed property corresponds to the speed with which the stepper responds to changes 
-	of position.  This value is the number of milliseconds between each step.  So, a speed of one
+  \par Speed
+  The \b speed property corresponds to the speed with which the stepper responds to changes 
+  of position.  This value is the number of milliseconds between each step.  So, a speed of one
   would be a step every millisecond, or 1000 steps a second.  
   \par
-	Note that not all stepper motors can be stepped quite that fast.  If you find your stepper motor acting strangely, 
+  Note that not all stepper motors can be stepped quite that fast.  If you find your stepper motor acting strangely, 
   experiment with slowing down the speed a bit.
-	\par
-	To set the speed of the first stepper to step at 100ms per step, send a message like
-	\verbatim /stepper/0/speed 100 \endverbatim
-	Adjust the argument value to one that suits your application.\n
-	Leave the argument value off to read the speed of the stepper:
-	\verbatim /stepper/0/speed \endverbatim
-	
+  \par
+  To set the speed of the first stepper to step at 100ms per step, send a message like
+  \verbatim /stepper/0/speed 100 \endverbatim
+  Adjust the argument value to one that suits your application.\n
+  Leave the argument value off to read the speed of the stepper:
+  \verbatim /stepper/0/speed \endverbatim
+  
   \par Duty
-	The \b duty property corresponds to the how much of the power supply is to be sent to the
+  The \b duty property corresponds to the how much of the power supply is to be sent to the
   stepper.  This is handy for when the stepper is static and not being required to perform too
   much work and reducing its power helps reduce heat dissipation.
-	This value can be both read and written, and the range of values is 0 - 1023.  A duty of 0
-	means the stepper gets no power, and the value of 1023 means the stepper gets full power.  
+  This value can be both read and written, and the range of values is 0 - 1023.  A duty of 0
+  means the stepper gets no power, and the value of 1023 means the stepper gets full power.  
   \par
-	To set the duty of the first stepper to 500, send a message like
-	\verbatim /stepper/0/duty 500 \endverbatim
-	Adjust the argument value to one that suits your application.\n
-	Leave the argument value off to read the duty of the stepper:
-	\verbatim /stepper/0/duty \endverbatim
+  To set the duty of the first stepper to 500, send a message like
+  \verbatim /stepper/0/duty 500 \endverbatim
+  Adjust the argument value to one that suits your application.\n
+  Leave the argument value off to read the duty of the stepper:
+  \verbatim /stepper/0/duty \endverbatim
 
   \par Bipolar
-	The \b bipolar property is set to the style of stepper being used.  A value of 1 specifies bipolar
+  The \b bipolar property is set to the style of stepper being used.  A value of 1 specifies bipolar
   (the default) and 0 specifies a unipolar stepper.
-	This value can be both read and written.
+  This value can be both read and written.
 
   \par HalfStep
-	The \b halfstep property controls whether the stepper is being half stepped or not.  A 0 here implies full stepping
+  The \b halfstep property controls whether the stepper is being half stepped or not.  A 0 here implies full stepping
   (the default) and 1 implies a half stepping.
-	This value can be both read and written.
+  This value can be both read and written.
 
-	\par Active
-	The \b active property corresponds to the active state of the stepper.
-	If the stepper is set to be active, no other tasks will be able to
-	write to the same I/O lines.  If you're not seeing appropriate
-	responses to your messages to a stepper, check the whether it's 
-	locked by sending a message like
-	\verbatim /stepper/1/active \endverbatim
+  \par Active
+  The \b active property corresponds to the active state of the stepper.
+  If the stepper is set to be active, no other tasks will be able to
+  write to the same I/O lines.  If you're not seeing appropriate
+  responses to your messages to a stepper, check the whether it's 
+  locked by sending a message like
+  \verbatim /stepper/1/active \endverbatim
 */
 
 //#include "osc.h"
