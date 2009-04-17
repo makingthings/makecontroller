@@ -26,15 +26,31 @@
 #include "task.h"
 #include "semphr.h"
 
+/**
+  A run loop.
+*/
 typedef void (TaskLoop)(void*);
 
 /**
   A run loop, or thread, that can run simultaneously with many others.
+  
+  \section Usage
+  Tasks are usually...
+  
+  \section Memory
+  Memory is a pain...
+  
+  \section Priority
+  A few words on priority...
+  
+  \section Synchronization
+  To synchronize...
+  
 */
 class Task
 {
 public:
-  Task( TaskLoop loop, const char* name, int stackDepth, void* params, int priority );
+  Task( TaskLoop loop, const char* name, int stackDepth, int priority, void* params = 0 );
   ~Task( );
   static void sleep( int ms );
   static void yield( );
@@ -45,7 +61,6 @@ public:
   void setPriority( int priority );
   int id( );
   char* name( );
-  int stackAllocated( );
   Task* nextTask( );
 protected:
   void* _task;
