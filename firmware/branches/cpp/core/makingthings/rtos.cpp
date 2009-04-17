@@ -24,7 +24,24 @@
                                   Task
                                   
 **********************************************************************************/
-Task::Task( TaskLoop loop, const char* name, int stackDepth, void* params, int priority )
+
+/**
+  Create a new Task.
+  
+  A task is the basic unit that runs a program on the Make Controller.  
+  
+  @param loop The loop that will run this task.
+  @param name A name for your task.
+  @param stackDepth How many bytes of memory this task can use.
+  @param priority This task's priority, relative to other tasks.  Valid options are from 1-9, 9 being highest priority.
+  @param params (optional) A value that will be passed into your task when it's created.
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
+Task::Task( TaskLoop loop, const char* name, int stackDepth, int priority, void* params )
 {
   if( xTaskCreate( loop, (const signed char*)name, ( stackDepth >> 2 ), params, priority, &_task ) != 1 )
     _task = NULL;
@@ -39,26 +56,127 @@ Task::~Task( )
     vTaskDelete( _task );
 }
 
+/**
+  Delay your task for a number of milliseconds.
+  
+  It's important to always include some sleep, or a yield() in your
+  task so that other tasks in the system have a chance to run.
+  
+  @param ms How many milliseconds to sleep.
+  @see yield()
+  
+  \b Example
+  \code
+  void myLoop(void* p)
+  {
+    while(1) // looping forever
+    {
+      // ...some other processing here...
+      
+      Task::sleep(10); // wait 10 millis each time through the loop
+    }
+  }
+  \endcode
+*/
 void Task::sleep( int ms ) // static
 {
   vTaskDelay( ms / portTICK_RATE_MS );
 }
 
+/**
+  Stop processing the current task, giving time to other tasks.
+  
+  \b Example
+  \code
+  void myLoop(void* p)
+  {
+    while(1) // looping forever
+    {
+      // ...some other processing here...
+      
+      Task::yield(); // wait 10 millis each time through the loop
+    }
+  }
+  \endcode
+*/
 void Task::yield( ) // static
 {
   taskYIELD(); 
 }
 
+/**
+  Start a section that prevents other tasks from interrupting you.
+  
+  If you have some very time sensitive operations that all need to be
+  performed at once, you may want to make sure that no other tasks
+  interrupt you.  You can place this code in a 'critical' section enterCritical().
+  
+  Make sure to always match your calls to enterCritical() with a follow
+  up call to exitCritical(), otherwise nothing else in the system will
+  be able to run.
+  
+  @see exitCritical()
+  
+  \b Example
+  \code
+  void myLoop(void* p)
+  {
+    while(1) // looping forever
+    {
+      Task::enterCritical()
+      // ...some very time sensitive processing here...
+      Task::exitCritical() // now we're done
+    }
+  }
+  \endcode
+*/
 void Task::enterCritical( ) // static
 {
   taskENTER_CRITICAL();
 }
 
+/**
+  Complete a section that prevents others from interrupting you.
+  
+  If you're in a time sensitive section of code that that uses
+  enterCritical(), be sure to call this when you're done so that
+  other tasks can continue to run.
+  
+  @see enterCritical()
+  
+  \b Example
+  \code
+  void myLoop(void* p)
+  {
+    while(1) // looping forever
+    {
+      Task::enterCritical()
+      // ...some very time sensitive processing here...
+      Task::exitCritical() // now we're done
+    }
+  }
+  \endcode
+*/
 void Task::exitCritical( ) // static
 {
   taskEXIT_CRITICAL();
 }
 
+/**
+  How much memory is available on this task's stack.
+  
+  When you created your task, you specified the amount of memory available
+  to it.  You can check how much of that memory is remaining at any time
+  with a call to remainingStack().
+  
+  @return How many bytes of free memory are remaining.
+  
+  \b Example
+  \code
+  Task* myTask = new Task( myLoop, "Me!", 1000, 1);
+  int stack = myTask->remainingStack();
+  \endcode
+*/
 int Task::remainingStack( )
 {
   if( !_task )
@@ -67,31 +185,115 @@ int Task::remainingStack( )
     return usVoidTaskCheckFreeStackSpace( _task );
 }
 
+/**
+  Get a task's priority
+  
+  Each task is assigned a priority, relative to other tasks, when it's created.  
+  You can check a task's priority with this method.
+  
+  @return The task's priority, from 1-9
+  
+  \b Example
+  \code
+  Task* myTask = new Task( myLoop, "Me!", 1000, 1);
+  int priority = myTask->priority();
+  \endcode
+*/
 int Task::priority( )
 {
   return xTaskGetPriority( _task );
 }
 
+/**
+  Set a task's priority.
+  
+  Each task is assigned a priority, relative to other tasks, when it's created.  
+  You can modify an existing task's priority with this method.
+  
+  @param priority The new priority for this task.
+  
+  \b Example
+  \code
+  Task* myTask = new Task( myLoop, "Me!", 1000, 1);
+  void myLoop(void* p)
+  {
+    while(1) // looping forever
+    {
+      // ...normal task processing...
+      if(need_to_be_more_important)
+        myTask->setPriority(9);
+    }
+  }
+  \endcode
+*/
 void Task::setPriority( int priority )
 {
   vTaskPrioritySet( _task, priority );
 }
 
+/**
+  Get a task's ID number.
+  
+  Each task is internally assigned an ID number by the operating system.
+  You can read a task's ID number by calling its id() method.
+  
+  @return The task's ID number
+  
+  \b Example
+  \code
+  Task* myTask = new Task( myLoop, "Me!", 1000, 1);
+  int some_id = myTask->id();
+  \endcode
+*/
 int Task::id( )
 {
   return xTaskGetIDNumber( _task );
 }
 
+/**
+  Get a task's name.
+  
+  Each task is given a name when it's created.  You can check a 
+  task's name with this method.
+  
+  @return The task's name
+  
+  \b Example
+  \code
+  Task* myTask = new Task( myLoop, "Me!", 1000, 1);
+  char* name = myTask->name();
+  // now name should be "Me!"
+  \endcode
+*/
 char* Task::name( )
 {
   return (char*)xTaskGetName( _task );
 }
 
-int Task::stackAllocated( )
-{
-  return xTaskGetStackAllocated( _task );
-}
-
+/**
+  Get the next task in the system.
+  
+  You can loop through all the tasks in the system using the nextTask()
+  method.  Once it has reached the last task, it will wrap back around
+  and return the first task in the list.
+  
+  @return The next Task
+  
+  \b Example
+  \code
+  // find the task with the highest priority
+  Task* t = RTOS::currentTask();
+  int tasks_to_find = 5; // adjust for the number of tasks you want to check
+  int highest = 0;
+  while(tasks_to_find--)
+  {
+    t = t->nextTask();
+    if(t->priority() > highest)
+      highest = t->priority();
+  }
+  
+  \endcode
+*/
 Task* Task::nextTask( )
 {
   void* tcb = NULL;
@@ -109,6 +311,16 @@ Task* Task::nextTask( )
                                   
 **********************************************************************************/
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 Task* RTOS::findTaskByName( const char* name ) // static
 {
   void *tcb = NULL;
@@ -120,6 +332,16 @@ Task* RTOS::findTaskByName( const char* name ) // static
   return (tcb) ? (Task*)xTaskGetContext(tcb) : NULL;
 }
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 Task* RTOS::findTaskByID( int id ) // static
 {
   void* tcb = NULL;
@@ -131,6 +353,16 @@ Task* RTOS::findTaskByID( int id ) // static
   return (tcb) ? (Task*)xTaskGetContext(tcb) : NULL;
 }
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 Task* RTOS::currentTask( ) // static
 {
   return (Task*)xTaskGetContext(xTaskGetCurrentTaskHandle());
@@ -141,11 +373,31 @@ int RTOS::numberOfTasks( ) // static
   return uxTaskGetNumberOfTasks( );
 }
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 int RTOS::topTaskPriority( ) // static
 {
   return xTaskGetTopUsedPriority( );
 }
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 int RTOS::ticksSinceBoot( ) // static
 {
   return xTaskGetTickCount( );
@@ -353,6 +605,16 @@ void* RTOS::iterateForNextTask( void** lowTask, int* lowID, void** highTask, int
                                   
 **********************************************************************************/
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 Queue::Queue( uint length, uint itemSize )
 {
   _q = xQueueCreate( length, itemSize );
@@ -363,36 +625,106 @@ Queue::~Queue( )
   vQueueDelete( _q );
 }
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 int Queue::send( void* itemToQueue, int timeout )
 {
   return xQueueSend( _q, itemToQueue, timeout / portTICK_RATE_MS );
 }
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 int Queue::receive( void* buffer, int timeout )
 {
   return xQueueReceive( _q, buffer, timeout / portTICK_RATE_MS );
 }
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 int Queue::msgsAvailable( )
 {
   return uxQueueMessagesWaiting( _q );
 }
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 bool Queue::sendFromISR( void* itemToSend, int* taskWoken )
 {
   return xQueueSendFromISR( _q, itemToSend, (long int*)taskWoken );
 }
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 bool Queue::sendToFrontFromISR( void* itemToSend, int* taskWoken )
 {
   return xQueueSendToFrontFromISR( _q, itemToSend, (long int*)taskWoken );
 }
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 bool Queue::sendToBackFromISR( void* itemToSend, int* taskWoken )
 {
   return xQueueSendToBackFromISR( _q, itemToSend, (long int*)taskWoken );
 }
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 int Queue::receiveFromISR( void* buffer, long* taskWoken )
 {
   return xQueueReceiveFromISR( _q, buffer, taskWoken );
@@ -404,6 +736,16 @@ int Queue::receiveFromISR( void* buffer, long* taskWoken )
                                   
 **********************************************************************************/
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 Semaphore::Semaphore( )
 {
   vSemaphoreCreateBinary( _sem );
@@ -414,6 +756,16 @@ Semaphore::~Semaphore( )
   vQueueDelete( _sem );
 }
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 int Semaphore::take( int timeout )
 {
   if( timeout < 0 )
@@ -422,11 +774,31 @@ int Semaphore::take( int timeout )
     return xSemaphoreTake( _sem, timeout / portTICK_RATE_MS );
 }
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 int Semaphore::give( )
 {
   return xSemaphoreGive( _sem );
 }
 
+/**
+  
+  
+  @param 
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 bool Semaphore::giveFromISR( int* taskWoken )
 {
   return xSemaphoreGiveFromISR( _sem, (long int*)taskWoken );

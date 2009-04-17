@@ -2082,15 +2082,6 @@ signed portCHAR *xTaskGetName( void* task )
     return NULL;
 }
 
-unsigned portSHORT xTaskGetStackAllocated( void* task )
-{
-  tskTCB* tcb = (tskTCB*)task;
-  if( tcb != NULL )
-    return 0; //tcb->usStackDepth;
-  else
-    return -1;
-}
-
 unsigned portBASE_TYPE xTaskGetTopUsedPriority( )
 {
   return uxTopUsedPriority;
