@@ -15,21 +15,37 @@
 
 *********************************************************************************/
 
-/*
-	digitalout.h
-
-  MakingThings
-*/
-
 #ifndef DIGITALOUT_H
 #define DIGITALOUT_H
 
-int DigitalOut_SetActive( int index, int state );
-int DigitalOut_GetActive( int index );
+#include "io.h"
 
-int DigitalOut_SetValue( int index, int value );
-int DigitalOut_GetValue( int index );
-int DigitalOut_SetAll( int value );
+/**
+  Control the 8 high current outputs on the Application Board.
+  
+  If you've previously used any of the other systems on the outputs (steppers, motors, etc.), you'll need
+  to set them to \b inactive to unlock the IO lines and use the Digital Outs.
+  
+  See the <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/digital-outputs">
+  Digital Out section</a> of the Application Board overview for more details.
+*/
+class DigitalOut
+{
+public:
+  DigitalOut(int index);
+  ~DigitalOut();
+
+  bool setValue(bool on);
+  bool value();
+
+protected:
+  short _index;
+  int getIo( int index );
+  int getEnableIo( int enableIndex );
+
+  static Io* ios[];
+  static short refcounts[];
+};
 
 /* OSC Interface */
 const char* DigitalOutOsc_GetName( void );
