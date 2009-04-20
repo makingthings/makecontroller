@@ -32,7 +32,7 @@ static inline unsigned char to_uchar (char ch)
 }
 
 /** \defgroup base64 Base 64
-	The Make Controller Base 64 library provides a way to decode and encode base 64 data.
+  The Make Controller Base 64 library provides a way to decode and encode base 64 data.
 
   This is often handy when you need to send raw/binary data (as opposed to text) through a 
   text based format, like XML or JSON.
@@ -40,8 +40,8 @@ static inline unsigned char to_uchar (char ch)
   Most code lifted from gnulib - http://savannah.gnu.org/projects/gnulib - and written by Simon Josefsson.
   \par
 
-	\ingroup Libraries
-	@{
+  \ingroup Libraries
+  @{
 */
 
 /**
@@ -73,13 +73,13 @@ int Base64::encode(char* dest, int dest_size, const char* src, int src_size)
   {
     *dest++ = b64str[(to_uchar (src[0]) >> 2) & 0x3f];
     if(!--dest_size)
-	    break;
+      break;
 
     *dest++ = b64str[((to_uchar (src[0]) << 4)
                 + (--src_size ? to_uchar (src[1]) >> 4 : 0))
                 & 0x3f];
     if(!--dest_size)
-	    break;
+      break;
 
     *dest++ = (src_size ? b64str[((to_uchar (src[1]) << 2)
                 + (--src_size ? to_uchar (src[2]) >> 6 : 0)) & 0x3f] : '=');
@@ -88,12 +88,12 @@ int Base64::encode(char* dest, int dest_size, const char* src, int src_size)
 
     *dest++ = src_size ? b64str[to_uchar (src[2]) & 0x3f] : '=';
     if(!--dest_size)
-	    break;
+      break;
 
     if(src_size)
-	    src_size--;
+      src_size--;
     if(src_size)
-	    src += 3;
+      src += 3;
   }
   if(dest_size)
     *dest = '\0';
@@ -109,71 +109,71 @@ int Base64::encode(char* dest, int dest_size, const char* src, int src_size)
 
    IBM C V6 for AIX mishandles "#define B64(x) ...'x'...", so use "_"
    as the formal parameter rather than "x".  */
-#define B64(_)					\
-  ((_) == 'A' ? 0				\
-   : (_) == 'B' ? 1				\
-   : (_) == 'C' ? 2				\
-   : (_) == 'D' ? 3				\
-   : (_) == 'E' ? 4				\
-   : (_) == 'F' ? 5				\
-   : (_) == 'G' ? 6				\
-   : (_) == 'H' ? 7				\
-   : (_) == 'I' ? 8				\
-   : (_) == 'J' ? 9				\
-   : (_) == 'K' ? 10				\
-   : (_) == 'L' ? 11				\
-   : (_) == 'M' ? 12				\
-   : (_) == 'N' ? 13				\
-   : (_) == 'O' ? 14				\
-   : (_) == 'P' ? 15				\
-   : (_) == 'Q' ? 16				\
-   : (_) == 'R' ? 17				\
-   : (_) == 'S' ? 18				\
-   : (_) == 'T' ? 19				\
-   : (_) == 'U' ? 20				\
-   : (_) == 'V' ? 21				\
-   : (_) == 'W' ? 22				\
-   : (_) == 'X' ? 23				\
-   : (_) == 'Y' ? 24				\
-   : (_) == 'Z' ? 25				\
-   : (_) == 'a' ? 26				\
-   : (_) == 'b' ? 27				\
-   : (_) == 'c' ? 28				\
-   : (_) == 'd' ? 29				\
-   : (_) == 'e' ? 30				\
-   : (_) == 'f' ? 31				\
-   : (_) == 'g' ? 32				\
-   : (_) == 'h' ? 33				\
-   : (_) == 'i' ? 34				\
-   : (_) == 'j' ? 35				\
-   : (_) == 'k' ? 36				\
-   : (_) == 'l' ? 37				\
-   : (_) == 'm' ? 38				\
-   : (_) == 'n' ? 39				\
-   : (_) == 'o' ? 40				\
-   : (_) == 'p' ? 41				\
-   : (_) == 'q' ? 42				\
-   : (_) == 'r' ? 43				\
-   : (_) == 's' ? 44				\
-   : (_) == 't' ? 45				\
-   : (_) == 'u' ? 46				\
-   : (_) == 'v' ? 47				\
-   : (_) == 'w' ? 48				\
-   : (_) == 'x' ? 49				\
-   : (_) == 'y' ? 50				\
-   : (_) == 'z' ? 51				\
-   : (_) == '0' ? 52				\
-   : (_) == '1' ? 53				\
-   : (_) == '2' ? 54				\
-   : (_) == '3' ? 55				\
-   : (_) == '4' ? 56				\
-   : (_) == '5' ? 57				\
-   : (_) == '6' ? 58				\
-   : (_) == '7' ? 59				\
-   : (_) == '8' ? 60				\
-   : (_) == '9' ? 61				\
-   : (_) == '+' ? 62				\
-   : (_) == '/' ? 63				\
+#define B64(_)          \
+  ((_) == 'A' ? 0       \
+   : (_) == 'B' ? 1       \
+   : (_) == 'C' ? 2       \
+   : (_) == 'D' ? 3       \
+   : (_) == 'E' ? 4       \
+   : (_) == 'F' ? 5       \
+   : (_) == 'G' ? 6       \
+   : (_) == 'H' ? 7       \
+   : (_) == 'I' ? 8       \
+   : (_) == 'J' ? 9       \
+   : (_) == 'K' ? 10        \
+   : (_) == 'L' ? 11        \
+   : (_) == 'M' ? 12        \
+   : (_) == 'N' ? 13        \
+   : (_) == 'O' ? 14        \
+   : (_) == 'P' ? 15        \
+   : (_) == 'Q' ? 16        \
+   : (_) == 'R' ? 17        \
+   : (_) == 'S' ? 18        \
+   : (_) == 'T' ? 19        \
+   : (_) == 'U' ? 20        \
+   : (_) == 'V' ? 21        \
+   : (_) == 'W' ? 22        \
+   : (_) == 'X' ? 23        \
+   : (_) == 'Y' ? 24        \
+   : (_) == 'Z' ? 25        \
+   : (_) == 'a' ? 26        \
+   : (_) == 'b' ? 27        \
+   : (_) == 'c' ? 28        \
+   : (_) == 'd' ? 29        \
+   : (_) == 'e' ? 30        \
+   : (_) == 'f' ? 31        \
+   : (_) == 'g' ? 32        \
+   : (_) == 'h' ? 33        \
+   : (_) == 'i' ? 34        \
+   : (_) == 'j' ? 35        \
+   : (_) == 'k' ? 36        \
+   : (_) == 'l' ? 37        \
+   : (_) == 'm' ? 38        \
+   : (_) == 'n' ? 39        \
+   : (_) == 'o' ? 40        \
+   : (_) == 'p' ? 41        \
+   : (_) == 'q' ? 42        \
+   : (_) == 'r' ? 43        \
+   : (_) == 's' ? 44        \
+   : (_) == 't' ? 45        \
+   : (_) == 'u' ? 46        \
+   : (_) == 'v' ? 47        \
+   : (_) == 'w' ? 48        \
+   : (_) == 'x' ? 49        \
+   : (_) == 'y' ? 50        \
+   : (_) == 'z' ? 51        \
+   : (_) == '0' ? 52        \
+   : (_) == '1' ? 53        \
+   : (_) == '2' ? 54        \
+   : (_) == '3' ? 55        \
+   : (_) == '4' ? 56        \
+   : (_) == '5' ? 57        \
+   : (_) == '6' ? 58        \
+   : (_) == '7' ? 59        \
+   : (_) == '8' ? 60        \
+   : (_) == '9' ? 61        \
+   : (_) == '+' ? 62        \
+   : (_) == '/' ? 63        \
    : -1)
 
 static const signed char b64[0x100] = {
@@ -278,48 +278,48 @@ bool Base64::decode(char* dest, int* dest_size, const char* src, int src_size)
   while(src_size >= 2)
   {
     if(!isbase64 (src[0]) || !isbase64 (src[1]))
-	    break;
+      break;
     if(out_remaining)
-	  {
-	    *dest++ = ((b64[to_uchar (src[0])] << 2) | (b64[to_uchar (src[1])] >> 4)); 
+    {
+      *dest++ = ((b64[to_uchar (src[0])] << 2) | (b64[to_uchar (src[1])] >> 4)); 
       out_remaining--;
-	  }
+    }
     if(src_size == 2)
-	    break;
+      break;
     if(src[2] == '=')
-	  {
-	    if(src_size != 4)
-	      break;
-	    if(src[3] != '=')
-	      break;
-	  }
+    {
+      if(src_size != 4)
+        break;
+      if(src[3] != '=')
+        break;
+    }
     else
-	  {
-	    if(!isbase64 (src[2]))
-	      break;
-	    if(out_remaining)
-	    {
-	      *dest++ = (((b64[to_uchar (src[1])] << 4) & 0xf0) | (b64[to_uchar (src[2])] >> 2));
-	      out_remaining--;
-	    }
-	    if(src_size == 3)
-	      break;
-	    if(src[3] == '=')
-	    {
-	      if(src_size != 4)
-	 	      break;
-	    }
-	    else
-	    {
-	      if(!isbase64 (src[3]))
-		      break;
-	      if(out_remaining)
-		    {
-		      *dest++ = (((b64[to_uchar (src[2])] << 6) & 0xc0) | b64[to_uchar (src[3])]);
-		      out_remaining--;
-		    }
-	    }
-	  }
+    {
+      if(!isbase64 (src[2]))
+        break;
+      if(out_remaining)
+      {
+        *dest++ = (((b64[to_uchar (src[1])] << 4) & 0xf0) | (b64[to_uchar (src[2])] >> 2));
+        out_remaining--;
+      }
+      if(src_size == 3)
+        break;
+      if(src[3] == '=')
+      {
+        if(src_size != 4)
+          break;
+      }
+      else
+      {
+        if(!isbase64 (src[3]))
+          break;
+        if(out_remaining)
+        {
+          *dest++ = (((b64[to_uchar (src[2])] << 6) & 0xc0) | b64[to_uchar (src[3])]);
+          out_remaining--;
+        }
+      }
+    }
     src += 4;
     src_size -= 4;
   }
