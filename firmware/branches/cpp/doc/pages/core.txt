@@ -71,7 +71,7 @@
     </td>
     <td>
       <ul>
-        <li>Overview</li>
+        <li>\ref licenses</li>
         <li><a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache 2.0</a> (MakingThings)</li>
         <li><a href="http://www.freertos.org/a00114.html">Modified GPL</a> (FreeRTOS)</li>
         <li><a href="http://www.xfree86.org/3.3.6/COPYRIGHT2.html#5">Modified BSD</a> (lwIP)</li>
