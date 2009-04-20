@@ -15,20 +15,33 @@
 
 *********************************************************************************/
 
-/*
-	digitalin.h
-
-  MakingThings
-*/
-
 #ifndef DIGITALIN_H
 #define DIGITALIN_H
 
-int DigitalIn_SetActive( int index, int state );
-int DigitalIn_GetActive( int index );
+#include "io.h"
+#include "analogin.h"
 
-int DigitalIn_GetValue( int index );
-int DigitalIn_GetAll( void );
+/**
+  Read the 8 inputs on the Make Controller as digital values - 1 (on) or 0 (off).  
+  The 8 inputs can be either read as digital inputs by DigitalIn or as \ref AnalogIn.  
+  Because inputs 4-7 are actually AnalogIn lines, there's no performance gain to reading
+  those as DigitalIns.
+*/
+class DigitalIn
+{
+public:
+  DigitalIn(int index);
+  ~DigitalIn();
+
+  bool value();
+
+protected:
+  short _index;
+  int getIo( int index );
+  static AnalogIn* ains[];
+  static Io* ios[];
+  static short refcounts[];
+};
 
 /* OSC Interface */
 const char* DigitalInOsc_GetName( void );
