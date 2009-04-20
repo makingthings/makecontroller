@@ -43,16 +43,16 @@ Io* DigitalIn::ios[] = { 0, 0, 0, 0 };
 short DigitalIn::refcounts[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 /**
-	Sets whether the specified Digital In is active.
-	@param index An integer specifying which Digital In (0-7).
-	@param state An integer specifying the state - 1 (active) or 0 (inactive).
-	@return Zero on success.
-	
-	\b Example
-	\code
-	// Enable DigitalIn 3
-	DigitalIn_SetActive(3, 1);
-	\endcode
+  Sets whether the specified Digital In is active.
+  @param index An integer specifying which Digital In (0-7).
+  @param state An integer specifying the state - 1 (active) or 0 (inactive).
+  @return Zero on success.
+  
+  \b Example
+  \code
+  // Enable DigitalIn 3
+  DigitalIn_SetActive(3, 1);
+  \endcode
 */
 DigitalIn::DigitalIn( int index )
 {
@@ -88,23 +88,23 @@ DigitalIn::~DigitalIn()
   }
 }
 
-/**	
-	Read the value of a Digital Input on the MAKE Application Board.
-	If the voltage on the input is greater than ~0.6V, the Digital In will read high.
-	@param index An integer specifying which Digital In (0-7).
+/** 
+  Read the value of a Digital Input on the MAKE Application Board.
+  If the voltage on the input is greater than ~0.6V, the Digital In will read high.
+  @param index An integer specifying which Digital In (0-7).
   @return Non-zero when high, 0 when low
   
   \b Example
-	\code
-	if( DigitalIn_GetValue(5) )
-	{
-	  // DigitalIn 5 is high
-	}
-	else
-	{
-	  // DigitalIn 5 is low
-	}
-	\endcode
+  \code
+  if( DigitalIn_GetValue(5) )
+  {
+    // DigitalIn 5 is high
+  }
+  else
+  {
+    // DigitalIn 5 is low
+  }
+  \endcode
 */
 bool DigitalIn::value( )
 {
@@ -135,38 +135,38 @@ int DigitalIn::getIo( int index )
 /** \defgroup DigitalInOSC Digital In - OSC
   Read the Application Board's Digital Inputs via OSC.
   \ingroup OSC
-	
-	\section devices Devices
-	There are 8 Digital Inputs on the Make Application Board, numbered <b>0 - 7</b>.
+  
+  \section devices Devices
+  There are 8 Digital Inputs on the Make Application Board, numbered <b>0 - 7</b>.
 
-	The Digital Ins are physically the same as the Analog Ins - they're on the same 
-	signal lines and the same connectors - but reading them as Digital Ins is 
-	slightly more efficient/quicker.
+  The Digital Ins are physically the same as the Analog Ins - they're on the same 
+  signal lines and the same connectors - but reading them as Digital Ins is 
+  slightly more efficient/quicker.
 
-	If the voltage on the input is greater than <b>~0.6V</b>, the Digital In will read high.
-	
-	\section properties Properties
-	The Digital Ins have two properties
+  If the voltage on the input is greater than <b>~0.6V</b>, the Digital In will read high.
+  
+  \section properties Properties
+  The Digital Ins have two properties
   - value
   - active
 
-	\par Value
-	The \b value property corresponds to the on/off value of a Digital In.
-	Because you can only ever \b read the value of an input, you'll never
-	want to include an argument at the end of your OSC message to read the value.
-	To read the third Digital In, send the message
-	\verbatim /digitalin/2/value \endverbatim
-	
-	\par Active
-	The \b active property corresponds to the active state of a Digital In.
-	If a Digital In is set to be active, no other tasks will be able to
-	read from it as an Analog In.  If you're not seeing appropriate
-	responses to your messages to the Digital In, check the whether it's 
-	locked by sending a message like
-	\verbatim /digitalin/0/active \endverbatim
-	\par
-	You can set the active flag by sending
-	\verbatim /digitalin/0/active 0 \endverbatim
+  \par Value
+  The \b value property corresponds to the on/off value of a Digital In.
+  Because you can only ever \b read the value of an input, you'll never
+  want to include an argument at the end of your OSC message to read the value.
+  To read the third Digital In, send the message
+  \verbatim /digitalin/2/value \endverbatim
+  
+  \par Active
+  The \b active property corresponds to the active state of a Digital In.
+  If a Digital In is set to be active, no other tasks will be able to
+  read from it as an Analog In.  If you're not seeing appropriate
+  responses to your messages to the Digital In, check the whether it's 
+  locked by sending a message like
+  \verbatim /digitalin/0/active \endverbatim
+  \par
+  You can set the active flag by sending
+  \verbatim /digitalin/0/active 0 \endverbatim
 */
 
 //#include "osc.h"
