@@ -50,15 +50,14 @@ Stepper::StepperInternal* Stepper::steppers[STEPPER_COUNT] = {0, 0};
 void Stepper_IRQCallback( int id );
 
 /**
-  Sets whether the specified Stepper is active.
+  Create a new stepper object.
   @param index An integer specifying which stepper (0 or 1).
-  @param state An integer specifying the active state - 1 (active) or 0 (inactive).
-  @return Zero on success.
   
   \b Example
   \code
-  // enable stepper 1
-  Stepper_SetActive(1, 1);
+  // stepper 1
+  Stepper step(1);
+  // that's it!
   \endcode
 */
 Stepper::Stepper( int index )
@@ -129,18 +128,23 @@ Stepper::~Stepper( )
 }
 
 /** 
-  Set the position of the specified stepper motor.
+  Reset where the stepper motor thinks it is.
+  
   Note that this will not ask the stepper to move.  It will simply update
   the position that the stepper thinks it's at.  To move the stepper, see
-  Stepper_SetPositionRequested() or Stepper_Step().
-  @param index An integer specifying which stepper (0 or 1).
+  stepTo() or step().
+  
+  If the stepper is currently moving it will stop, since it will now
+  be at the newly specified destination.
+  
   @param position An integer specifying the stepper position.
-  @return status (0 = OK).
+  @return True on success, false on failure.
   
   \b Example
   \code
   // reset stepper 1 to call its current position 0
-  Stepper_SetPosition(1, 0);
+  Stepper s(1);
+  s.resetPosition(0);
   \endcode
 */
 bool Stepper::resetPosition( int position )
@@ -155,30 +159,29 @@ bool Stepper::resetPosition( int position )
 }
 
 /** 
-  Set the destination position for a stepper motor.
+  Step to a certain position.
   This will start the stepper moving the given number of
-  steps at the current speed, as set by Stepper_SetSpeed().
+  steps at the current speed, as set by setSpeed().
   
-  While it's moving, you can call Stepper_GetPosition() to read
-  its current position.
-  @param index An integer specifying which stepper (0 or 1).
-  @param positionRequested An integer specifying the desired stepper position.
-  @return status (0 = OK).
+  While it's moving, you can call position() to read its current position.
+  @param position An integer specifying the desired destination.
+  @return True on success, false on failure.
   
   \b Example
   \code
-  // start moving stepper 0 1500 steps
-  Stepper_SetPositionRequested(0, 1500);
+  // start moving stepper 0 to position 1500
+  Stepper s(0);
+  s.stepTo(1500);
   \endcode
 */
-int Stepper::stepTo( int position )
+bool Stepper::stepTo( int position )
 {
   DisableFIQFromThumb();
   steppers[_index]->destination = position;
   EnableFIQFromThumb();
 
   setDetails( );
-  return CONTROLLER_OK;
+  return true;
 }
 
 /** 
@@ -186,14 +189,14 @@ int Stepper::stepTo( int position )
   This is a number of ms per step, rather than the more common steps per second.  
   Arranging it this way makes it easier to express as an integer.  
   Fastest speed is 1ms / step (1000 steps per second) and slowest is many seconds.
-  @param index An integer specifying which stepper (0 or 1).
-  @param speed An integer specifying the stepper speed in ms per step
-  @return status (0 = OK).
+  @param speed The speed in millis per step
+  @return True on success, false on failure.
   
   \b Example
   \code
   // set the speed to 1ms / step (1000 steps per second)
-  Stepper_SetSpeed(0, 1);
+  Stepper step(0);
+  step.setSpeed(1);
   \endcode
 */
 bool Stepper::setSpeed( int speed )
@@ -210,13 +213,12 @@ bool Stepper::setSpeed( int speed )
 
 /** 
   Get the speed at which a stepper will move.
-  Read the value previously set for the speed parameter.
-  @param index An integer specifying which stepper (0 or 1).
-  @return The speed (0 - 1023), or 0 on error.
+  @return The speed (0 - 1023)
   
   \b Example
   \code
-  int step0_speed = Stepper_GetSpeed(0);
+  Stepper s(0);
+  int step0_speed = s.speed(0);
   // now step0_speed has the speed of stepper 0
   \endcode
 */
@@ -227,12 +229,16 @@ int Stepper::speed( )
 
 /** 
   Read the current position of a stepper motor.
-  @param index An integer specifying which stepper (0 or 1).
-  @return The position, 0 on error.
+  
+  If you've told the motor to step to a certain position
+  via stepTo(), you can check how far along it is with this method.
+  
+  @return The position
   
   \b Example
   \code
-  int step0_pos = Stepper_GetPosition(0);
+  Stepper s(0);
+  int step0_pos = s.position(0);
   // now step0_pos has the current position of stepper 0
   \endcode
 */
@@ -243,15 +249,19 @@ int Stepper::position( )
 
 /** 
   Read the destination position of a stepper motor.
-  This indicates where the stepper is ultimately headed.  To see
-  where it actually is, see Stepper_GetPosition().
-  @param index An integer specifying which stepper (0 or 1).
-  @return The position and 0 on error
+  
+  When you use stepTo() you set the destination for the stepper.
+  You can check position() along the way, or use this method destination()
+  to determine where the stepper is headed.
+  @return The destination.
   
   \b Example
   \code
-  int step1_destination = Stepper_GetPositionRequested(1);
-  // step1_destination has the requested position for stepper 1
+  Stepper s(1);
+  s.stepTo(5000);
+  Task::sleep(10); // wait a moment while it steps
+  int pos = s.position(); // how far along is it
+  int dest = s.destination(); // destination should be 5000
   \endcode
 */
 int Stepper::destination( )
@@ -262,14 +272,15 @@ int Stepper::destination( )
 /** 
   Simply take a number of steps from wherever the motor is currently positioned.
   This function will move the motor a given number of steps from the current position.
-  @param index An integer specifying which stepper (0 or 1).
-  @param steps An integer specifying the number of steps.  Can be negative to go in reverse.
-  @return status (0 = OK).
+  
+  @param steps How many steps to take.  Can be negative to go in reverse.
+  @return True on success, false on failure.
   
   \b Example
   \code
   // take 1200 steps forward from our current position
-  Stepper_Step(0, 1200);
+  Stepper steppy(1);
+  steppy.step(1200);
   \endcode
 */
 bool Stepper::step( int steps )
@@ -285,14 +296,15 @@ bool Stepper::step( int steps )
 
 /** 
   Set the duty - from 0 to 1023.  The default is for 100% power (1023).
-  @param index An integer specifying which stepper (0 or 1).
-  @param duty An integer specifying the stepper duty (0 - 1023).
-  @return status (0 = OK).
+  
+  @param duty The duty 0 (off) - 1023 (full on).
+  @return True on success, false on failure.
   
   \b Example
   \code
   // set stepper 0 to half power
-  Stepper_SetDuty(0, 512);
+  Stepper* s = new Stepper(0);
+  s->setDuty(512);
   \endcode
 */
 bool Stepper::setDuty( int duty )
@@ -308,12 +320,12 @@ bool Stepper::setDuty( int duty )
 /** 
   Get the duty 
   Read the value previously set for the duty.
-  @param index An integer specifying which stepper (0 or 1).
-  @return The duty (0 - 1023), or 0 on error.
+  @return The duty (0 - 1023).
   
   \b Example
   \code
-  int step1_duty = Stepper_GetDuty(1);
+  Stepper* s = new Stepper(1);
+  int step1_duty = s->duty();
   // step1_duty has the current duty for stepper 1
   \endcode
 */
@@ -324,15 +336,15 @@ int Stepper::duty( )
 
 /** 
   Declare whether the stepper is bipolar or not.  
-  Default is bipolar.
-  @param index An integer specifying which stepper (0 or 1).
-  @param bipolar An integer 1 for bipolar, 0 for unipolar
-  @return status (0 = OK).
+  Default is bipolar.  If not biploar, then it's unipolar.
+  @param bipolar True for bipolar, false for unipolar
+  @return True on success, false on failure.
   
   \b Example
   \code
   // set stepper 1 to unipolar
-  Stepper_SetBipolar(1, 0);
+  Stepper s(1);
+  s.setBipolar(true);
   \endcode
 */
 bool Stepper::setBipolar( bool bipolar )
@@ -342,14 +354,14 @@ bool Stepper::setBipolar( bool bipolar )
 }
 
 /** 
-  Get the bipolar setting
-  Read the value previously set for bipolar.
-  @param index An integer specifying which stepper (0 or 1).
-  @return 1 for bipolar or 0 for unipolar.
+  Read whether this stepper is in bipolar mode.
+  
+  @return True if it's bipolar or false for unipolar.
   
   \b Example
   \code
-  if( Stepper_GetBipolar(1) )
+  Stepper s(0);
+  if( s.bipolar() )
   {
     // stepper 1 is bipolar
   }
@@ -367,14 +379,14 @@ bool Stepper::bipolar( )
 /** 
   Declare whether the stepper is in half stepping mode or not.  
   Default is not - i.e. in full step mode.
-  @param index An integer specifying which stepper (0 or 1).
-  @param halfStep An integer specifying 1 for half step, 0 for full step
-  @return status (0 = OK).
+  @param halfStep True for half step, false for full step
+  @return status True on success, false on failure.
   
   \b Example
   \code
   // set stepper 1 to half step mode
-  Stepper_SetHalfStep(1, 1);
+  Stepper s(1);
+  s.setHalfStep(true);
   \endcode
 */
 bool Stepper::setHalfStep( bool halfStep )
@@ -385,12 +397,12 @@ bool Stepper::setHalfStep( bool halfStep )
 
 /** 
   Read whether the stepper is in half stepping mode or not.
-  @param index An integer specifying which stepper (0 or 1).
   @return the HalfStep setting.
   
   \b Example
   \code
-  if( Stepper_GetHalfStep(1) )
+  Stepper s(1);
+  if( s.halfStep() )
   {
     // stepper 1 is in half step mode
   }
