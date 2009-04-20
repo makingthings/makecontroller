@@ -20,22 +20,22 @@
 
 void DisableFIQFromThumb( void )
 {
-	asm volatile ( "STMDB	SP!, {R0}" );		/* Push R0.									*/
-	asm volatile ( "MRS		R0, CPSR" );		/* Get CPSR.								*/
-	asm volatile ( "ORR		R0, R0, #0x40" );	/* Disable FIQ.						*/
-	asm volatile ( "MSR		CPSR, R0" );		/* Write back modified value.				*/
-	asm volatile ( "LDMIA	SP!, {R0}" );		/* Pop R0.									*/
-	asm volatile ( "BX		R14" );				/* Return back to thumb.					*/
+  asm volatile ( "STMDB SP!, {R0}" );   /* Push R0.                 */
+  asm volatile ( "MRS   R0, CPSR" );    /* Get CPSR.                */
+  asm volatile ( "ORR   R0, R0, #0x40" ); /* Disable FIQ.           */
+  asm volatile ( "MSR   CPSR, R0" );    /* Write back modified value.       */
+  asm volatile ( "LDMIA SP!, {R0}" );   /* Pop R0.                  */
+  asm volatile ( "BX    R14" );       /* Return back to thumb.          */
 }
-		
+    
 void EnableFIQFromThumb( void )
 {
-	asm volatile ( "STMDB	SP!, {R0}" );		/* Push R0.									*/	
-	asm volatile ( "MRS		R0, CPSR" );		/* Get CPSR.								*/	
-	asm volatile ( "BIC		R0, R0, #0x40" );	/* Enable FIQ.							*/	
-	asm volatile ( "MSR		CPSR, R0" );		/* Write back modified value.				*/	
-	asm volatile ( "LDMIA	SP!, {R0}" );		/* Pop R0.									*/
-	asm volatile ( "BX		R14" );				/* Return back to thumb.					*/
+  asm volatile ( "STMDB SP!, {R0}" );   /* Push R0.                 */  
+  asm volatile ( "MRS   R0, CPSR" );    /* Get CPSR.                */  
+  asm volatile ( "BIC   R0, R0, #0x40" ); /* Enable FIQ.              */  
+  asm volatile ( "MSR   CPSR, R0" );    /* Write back modified value.       */  
+  asm volatile ( "LDMIA SP!, {R0}" );   /* Pop R0.                  */
+  asm volatile ( "BX    R14" );       /* Return back to thumb.          */
 }
 
 // At the moment, the FastTimer ISR or callbacks, very importantly, can't call any OS stuff since

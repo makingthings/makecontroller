@@ -19,7 +19,7 @@
 #define PWM_H
 
 /**
-	Control the 4 Pulse Width Modulation outputs.
+  Control the 4 Pulse Width Modulation outputs.
 
   The Make Controller has 4 PWM signals.  Each be configured separately, and can control
   up to 2 output lines.  These lines can be driven with the pwm signal in parallel or they can
@@ -33,7 +33,7 @@
   - channel 1 is PB20
   - channel 2 is PB21
   - channel 3 is PB22
-	
+  
   The \ref PwmOut system relies on the Pwm system, and provides control of the output lines associated with
   a given Pwm signal.
 */
