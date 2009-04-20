@@ -682,7 +682,7 @@ Queue::~Queue( )
   
   @param itemToQueue
   @param timeout (optional) The number of milliseconds to wait if the queue is full 
-  or not available immediately.  If this is less than 0, it will wait indefinitely.
+  or not available immediately.  If this is omitted or less than 0, it will wait indefinitely.
   @return True if the item was successfully sent, false if not.
   
   \b Example
@@ -710,7 +710,7 @@ bool Queue::send( void* itemToQueue, int timeout )
   
   @param buffer Where to place the received item.
   @param timeout (optional) The number of milliseconds to wait if the queue is empty.
-  If this is less than 0, it will wait indefinitely.
+  If this is omitted or less than 0, it will wait indefinitely.
   @return True if an item was received, false if not.
   
   \b Example
@@ -808,13 +808,13 @@ bool Queue::receiveFromISR( void* buffer, int* taskWoken )
 **********************************************************************************/
 
 /**
-  
-  
-  @param 
+  Create a new Semaphore.
   
   \b Example
   \code
-  
+  Semaphore sem;
+  // or allocate from the heap
+  Semaphore* sem = new Semaphore();
   \endcode
 */
 Semaphore::Semaphore( )
@@ -828,51 +828,77 @@ Semaphore::~Semaphore( )
 }
 
 /**
+  Lock a semaphore.
   
+  If a semaphore is already locked by something else, this method will wait
+  until it's released.
   
-  @param 
+  @param timeout (optional) How long to wait if the Semaphore is already locked.
+  If this is omitted or less than 0, it will wait indefinitely.
+  @return True if it was successfully taken in the timeout specified, false if not.
   
   \b Example
   \code
-  
+  Semaphore s;
+  if( s.take() )
+  {
+    // then we successfully got the lock
+  }
   \endcode
 */
-int Semaphore::take( int timeout )
+bool Semaphore::take( int timeout )
 {
-  if( timeout < 0 )
-    return xSemaphoreTake( _sem, portMAX_DELAY );
-  else
-    return xSemaphoreTake( _sem, timeout / portTICK_RATE_MS );
+  timeout = ( timeout < 0 ) ? portMAX_DELAY : timeout / portTICK_RATE_MS;
+  return xSemaphoreTake( _sem, timeout ) == pdTRUE;
 }
 
 /**
+  Release a Sempahore.
   
+  If you want to release the semaphore from within an interrupt handler, use
+  giveFromISR() instead.
   
-  @param 
+  @return True if it was successfully given, false if not.
   
   \b Example
   \code
-  
+  Semaphore s;
+  if( s.give() )
+  {
+    // then we successfully released the lock
+  }
   \endcode
 */
-int Semaphore::give( )
+bool Semaphore::give( )
 {
-  return xSemaphoreGive( _sem );
+  return xSemaphoreGive( _sem ) == pdTRUE;
 }
 
 /**
+  Release a Semaphore from within an interrupt handler.
   
+  Same as give() but suitable for use within an interrupt handler.  Because of this,
+  no timeout can be specified.
   
-  @param 
+  @param taskWoken Did this receive cause another task to be woken up?  This is required
+  in cases where multiple calls to giveFromISR() might happen in the same interrupt.
+  @return True if it was released successfully, false if not.
   
   \b Example
   \code
+  Semaphore sem;
   
+  void myISRHandler()
+  {
+    int woken = 0;
+    if( ready_to_release )
+      sem.giveFromISR(&woken);
+  }
   \endcode
 */
 bool Semaphore::giveFromISR( int* taskWoken )
 {
-  return xSemaphoreGiveFromISR( _sem, (long int*)taskWoken );
+  return xSemaphoreGiveFromISR( _sem, (long int*)taskWoken ) == pdTRUE;
 }
 
 

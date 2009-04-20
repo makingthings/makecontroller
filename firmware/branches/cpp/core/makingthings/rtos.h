@@ -117,8 +117,8 @@ class Semaphore
 public:
   Semaphore( );
   ~Semaphore( );
-  int take( int timeout = -1 );
-  int give( );
+  bool take( int timeout = -1 );
+  bool give( );
   bool giveFromISR( int* taskWoken );
 private:
   void* _sem;
