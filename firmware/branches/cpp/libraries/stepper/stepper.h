@@ -27,20 +27,34 @@
 
 /**
   Provides speed and position control for one or two stepper motors.
-  Up to 2 stepper motors can be controlled with the Make Application Board.
-  Specify settings for your stepper motor by setting whether it's:
-  - bipolar or unipolar
-  - normal of half-stepping
+  Up to 2 stepper motors can be controlled with the Make Application Board.  Stepper 0 uses
+  digital outs 0-3 and stepper 1 uses digital outs 4-7.
+  
+  \section Usage
+  To get started using the Stepper system, create a stepper object specifying which stepper you'd
+  like to control, 0 or 1.  You can then drive it around using the step() and stepTo() methods
+  as described below.  You can also specify whether the motor is bipolar() or should be in
+  halfStep() mode.
+  
+  \code
+  Stepper s(0); // create an object for Stepper 0
+  
+  s.step(100); // take 100 steps
+  int pos = s.position(); // should be 100
+  s.stepTo(150); // should only take 50 more steps
+  \endcode
   
   \section Positioning
   You can generally use the stepper motor in 2 modes - \b absolute positioning or \b relative positioning.
 
-  For absolute positioning, call Stepper_SetPositionRequested() with the desired position, and the motor will move there.
-  You can read back the stepper's position at any point along the way to determine where it is at a given moment.  The board
-  keeps an internal count of how many steps the motor has taken in order to keep track of where it is.
+  For absolute positioning, call stepTo( ) with the desired position, and the motor will move there.
+  You can read back the stepper's current position at any point along the way with the position() method.
+  The board keeps an internal count of how many steps the motor has taken in order to keep track of 
+  where it is.
 
-  For relative positioning, use Stepper_Step( ) to simply move a number of steps from the current position.
+  For relative positioning, use step( ) to simply move a number of steps from the current position.
   
+  \section moreinfo More Info
   See the <a href="http://www.makingthings.com/documentation/how-to/stepper-motor">Stepper Motor how-to</a>
   for more detailed info on hooking up a stepper motor to the Make Controller.
   \ingroup Libraries
@@ -53,7 +67,7 @@ class Stepper
 
     int position();
     int destination();
-    int stepTo(int pos);
+    bool stepTo(int pos);
     bool step(int steps);
     bool resetPosition(int pos = 0);
 
@@ -64,7 +78,7 @@ class Stepper
     bool setBipolar(bool bipolar);
 
     bool halfStep();
-    bool setHalfStep(bool halfstep);
+    bool setHalfStep(bool halfStep);
 
     int speed();
     bool setSpeed(int speed);
