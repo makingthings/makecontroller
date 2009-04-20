@@ -62,15 +62,14 @@ Servo::ServoInternal* Servo::servos[] = {0, 0, 0, 0};
 Servo::Base Servo::servoBase;
 
 /**
-  Lock or unlock the I/O lines used by the servos.  
-  Sets whether the specified Servo I/O is active.
-  @param state An integer specifying the active state - 1 (active) or 0 (inactive).
-  @return Zero on success.
+  Create a new Servo object.
+  @param index Which servo to control - valid options are 0, 1, 2, 3
   
   \b Example
   \code
-  // enable servo 2
-  Servo_SetActive(2, 1);
+  Servo srv(2);
+  // or allocate from the heap...
+  Servo* srv = new Servo(2);
   \endcode
 */
 Servo::Servo( int index )
@@ -111,24 +110,27 @@ Servo::~Servo( )
 
 /** 
   Set the position of the specified servo motor.
-  Most servos like to be driven within a "safe range" which usually ends up being somewhere around 110-120
-  degrees range of motion, or thereabouts.  Some servos don't mind being driven all the way to their 180
-  degree range of motion limit.  With this in mind, the range of values you can send to servos connected
-  to the Make Controller Kit is as follows:
+  
+  Most servos like to be driven within a "safe range" which usually ends up being somewhere 
+  around 110-120 degrees range of motion, or thereabouts.  Some servos don't mind being 
+  driven all the way to their 180 degree range of motion limit.  With this in mind, the 
+  range of values you can send to servos connected to the Make Controller Kit is as follows:
   - Values from 0-1023 correspond to the normal, or "safe", range of motion.  
   - You can also send values from -512 all the way up to 1536 to drive the servo through its full
   range of motion.
   
-  Note that it is sometimes possible to damage your servo by driving it too far, so proceed with a bit of
-  caution when using the extended range until you know your servos can handle it.
+  Note that it is sometimes possible to damage your servo by driving it too far, so 
+  proceed with a bit of caution when using the extended range until you know your servos 
+  can handle it.
 
   @param position An integer specifying the servo position (0 - 1023).
-  @return status (0 = OK).
+  @return True on success, false on failure.
   
   \b Example
   \code
   // set servo 1 to midway through the "safe" range
-  Servo_SetPosition(1, 512);
+  Servo srv(1);
+  srv.setPosition(512);
   \endcode
 */
 bool Servo::setPosition( int position )
@@ -148,16 +150,21 @@ bool Servo::setPosition( int position )
 }
 
 /** 
-  Set the speed at which a servo will move in response to a call to Servo_SetPosition().
-  Higher values will result in a more immediate response, while lower values will more slowly step through
-  all the intermediate values, achieving a smoother motion.  
+  Set a servo's speed.
+  
+  After setting the speed, calls to setPosition() will react at the specified speed.
+  
+  Higher values will result in a more immediate response, while lower values will more 
+  slowly step through all the intermediate values, achieving a smoother motion.
+  
   @param speed An integer specifying the servo speed (0 - 1023).
-  @return status (0 = OK).
+  @return True on success, false on failure.
   
   \b Example
   \code
   // set servo 1 half speed
-  Servo_SetSpeed(1, 512);
+  Servo* srv = new Servo(1);
+  srv->setSpeed(512);
   \endcode
 */
 bool Servo::setSpeed( int speed )
@@ -174,13 +181,18 @@ bool Servo::setSpeed( int speed )
 
 /** 
   Read the current position of a servo motor.
-  @param index An integer specifying which servo (0 - 3).
+  
+  You can call this while a servo is moving towards its final
+  destination to see where it is along the way.
+  
   @return The position (0 - 1023), or 0 on error.
   
   \b Example
   \code
-  int srv0_pos = Servo_GetPosition(0);
-  // now srv0_pos is the current position
+  Servo srv(3);
+  int pos = srv.position(); // should be 0
+  srv.step(100);
+  pos = srv.position(); // should be 100
   \endcode
 */
 int Servo::position( )
@@ -189,15 +201,14 @@ int Servo::position( )
 }
 
 /** 
-  Get the speed at which a servo will move in response to a call to Servo_SetPosition().
-  Read the value previously set for the speed parameter.
-  @param index An integer specifying which servo (0 - 3).
+  Read a servo's speed.
+  This is 1023 by default.
   @return The speed (0 - 1023), or 0 on error.
   
   \b Example
   \code
-  int srv0_speed = Servo_GetSpeed(0);
-  // now srv0_speed is the current speed
+  Servo srv(2);
+  int speed = srv.speed(); // should be 1023
   \endcode
 */
 int Servo::speed( )

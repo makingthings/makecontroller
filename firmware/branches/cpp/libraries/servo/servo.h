@@ -25,7 +25,26 @@
   Speed and position control for up to 4 standard servo motors.
   Standard servos have a range of motion of approximately 180 degrees, although this varies from motor to motor.
   Be sure to plug in the connector with the correct orientation with regard to the GND/5V signals on the board.
-
+  
+  \section Usage
+  To get started controlling Servos, create a Servo object, optionally set the speed, and then
+  start moving it around using setPosition() as desired.
+  \code
+  Servo srv(1); // create a servo object controlling servo 1
+  
+  // inside a task...make the servo rock back and forth
+  while(true) // forever
+  {
+    srv.setPosition(1023); // go all the way to one side
+    while(srv.position() < 1023) // wait till we get there
+      Task::sleep(10);
+    srv.setPosition(0); // now go back the other way
+    while(srv.position() > 0)
+      Task::sleep(10);
+  }
+  \endcode
+  
+  \section range Range of Motion
   Because not all servo motors are created equal, and not all of them can be safely driven across all 180 degrees,
   the default (safe) range of motion is from values 0 to 1023.  The full range of motion is from -512 to 1536, but use this
   extra range cautiously if you don't know how your motor can handle it.  A little gentle experimentation should do the trick.
