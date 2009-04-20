@@ -43,15 +43,15 @@ Io* DigitalIn::ios[] = { 0, 0, 0, 0 };
 short DigitalIn::refcounts[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 /**
-  Sets whether the specified Digital In is active.
-  @param index An integer specifying which Digital In (0-7).
-  @param state An integer specifying the state - 1 (active) or 0 (inactive).
-  @return Zero on success.
+  Create a new DigitalIn object.
+  @param index Which DigitalIn to control (0-7)
   
   \b Example
   \code
-  // Enable DigitalIn 3
-  DigitalIn_SetActive(3, 1);
+  // create a new DigitalIn 3
+  DigitalIn din(3);
+  // or allocate one...
+  DigitalIn* din = new DigitalIn(3);
   \endcode
 */
 DigitalIn::DigitalIn( int index )
@@ -91,12 +91,12 @@ DigitalIn::~DigitalIn()
 /** 
   Read the value of a Digital Input on the MAKE Application Board.
   If the voltage on the input is greater than ~0.6V, the Digital In will read high.
-  @param index An integer specifying which Digital In (0-7).
-  @return Non-zero when high, 0 when low
+  @return True when high, false when low.
   
   \b Example
   \code
-  if( DigitalIn_GetValue(5) )
+  DigitalIn di(5);
+  if( di.value(5) )
   {
     // DigitalIn 5 is high
   }
