@@ -31,7 +31,7 @@ WebServer::WebServer()
 {
   responder_count = hits = 0;
   listenPort = newListenPort = HTTP_PORT;
-  webServerTask = new Task(webServerLoop, "WebServ", 800, this, 3);
+  webServerTask = new Task(webServerLoop, "WebServ", 800, 3, this);
 }
 
 WebServer* WebServer::get()

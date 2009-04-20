@@ -20,26 +20,12 @@
   Be sure to avoid including c++ header files in c code.
 */
 
-#ifndef CONTROLLER_H
-#define CONTROLLER_H
+#ifndef CORE_H
+#define CORE_H
 
 #include "types.h"
 #include "error.h"
 #include "config.h"
-
-// #include "eeprom.h"
-// #include "analogin.h"
-// #include "rtos.h"
-// #include "pwm.h"
-// #include "io.h"
-// #include "led.h"
-// #include "timer.h"
-// #include "fasttimer.h"
-// #include "debug.h"
-// #include "osc.h"
-// #include "usb.h"
-// #include "network.h"
-// #include "serial.h"
 
 #ifdef __cplusplus
 
@@ -64,4 +50,4 @@ void kill( void );
 }
 #endif
 
-#endif // CONTROLLER_H
+#endif // CORE_H

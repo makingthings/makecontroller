@@ -29,7 +29,7 @@ void SerialIsr_Handler( int index );
 void SerialIsr_Handler( int index )
 {
   signed portCHAR cChar;
-  long xTaskWokenByTx = false;
+  int xTaskWokenByTx = false;
   int xTaskWokenByPost = false;
   long xTaskWokenByTxThis = false;
   long xTaskWokenByPostThis = false;
