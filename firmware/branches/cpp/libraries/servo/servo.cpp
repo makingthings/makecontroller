@@ -62,16 +62,16 @@ Servo::ServoInternal* Servo::servos[] = {0, 0, 0, 0};
 Servo::Base Servo::servoBase;
 
 /**
-	Lock or unlock the I/O lines used by the servos.  
-	Sets whether the specified Servo I/O is active.
-	@param state An integer specifying the active state - 1 (active) or 0 (inactive).
-	@return Zero on success.
-	
-	\b Example
-	\code
-	// enable servo 2
-	Servo_SetActive(2, 1);
-	\endcode
+  Lock or unlock the I/O lines used by the servos.  
+  Sets whether the specified Servo I/O is active.
+  @param state An integer specifying the active state - 1 (active) or 0 (inactive).
+  @return Zero on success.
+  
+  \b Example
+  \code
+  // enable servo 2
+  Servo_SetActive(2, 1);
+  \endcode
 */
 Servo::Servo( int index )
 {
@@ -109,9 +109,9 @@ Servo::~Servo( )
   }
 }
 
-/**	
-	Set the position of the specified servo motor.
-	Most servos like to be driven within a "safe range" which usually ends up being somewhere around 110-120
+/** 
+  Set the position of the specified servo motor.
+  Most servos like to be driven within a "safe range" which usually ends up being somewhere around 110-120
   degrees range of motion, or thereabouts.  Some servos don't mind being driven all the way to their 180
   degree range of motion limit.  With this in mind, the range of values you can send to servos connected
   to the Make Controller Kit is as follows:
@@ -122,14 +122,14 @@ Servo::~Servo( )
   Note that it is sometimes possible to damage your servo by driving it too far, so proceed with a bit of
   caution when using the extended range until you know your servos can handle it.
 
-	@param position An integer specifying the servo position (0 - 1023).
+  @param position An integer specifying the servo position (0 - 1023).
   @return status (0 = OK).
   
   \b Example
-	\code
-	// set servo 1 to midway through the "safe" range
-	Servo_SetPosition(1, 512);
-	\endcode
+  \code
+  // set servo 1 to midway through the "safe" range
+  Servo_SetPosition(1, 512);
+  \endcode
 */
 bool Servo::setPosition( int position )
 {
@@ -147,18 +147,18 @@ bool Servo::setPosition( int position )
   return true;
 }
 
-/**	
-	Set the speed at which a servo will move in response to a call to Servo_SetPosition().
-	Higher values will result in a more immediate response, while lower values will more slowly step through
-	all the intermediate values, achieving a smoother motion.  
-	@param speed An integer specifying the servo speed (0 - 1023).
+/** 
+  Set the speed at which a servo will move in response to a call to Servo_SetPosition().
+  Higher values will result in a more immediate response, while lower values will more slowly step through
+  all the intermediate values, achieving a smoother motion.  
+  @param speed An integer specifying the servo speed (0 - 1023).
   @return status (0 = OK).
   
   \b Example
-	\code
-	// set servo 1 half speed
-	Servo_SetSpeed(1, 512);
-	\endcode
+  \code
+  // set servo 1 half speed
+  Servo_SetSpeed(1, 512);
+  \endcode
 */
 bool Servo::setSpeed( int speed )
 {
@@ -172,33 +172,33 @@ bool Servo::setSpeed( int speed )
   return true;
 }
 
-/**	
-	Read the current position of a servo motor.
-	@param index An integer specifying which servo (0 - 3).
+/** 
+  Read the current position of a servo motor.
+  @param index An integer specifying which servo (0 - 3).
   @return The position (0 - 1023), or 0 on error.
   
   \b Example
-	\code
-	int srv0_pos = Servo_GetPosition(0);
-	// now srv0_pos is the current position
-	\endcode
+  \code
+  int srv0_pos = Servo_GetPosition(0);
+  // now srv0_pos is the current position
+  \endcode
 */
 int Servo::position( )
 {
   return (servos[_index]->position >> 6) - SERVO_OFFSET;
 }
 
-/**	
-	Get the speed at which a servo will move in response to a call to Servo_SetPosition().
-	Read the value previously set for the speed parameter.
-	@param index An integer specifying which servo (0 - 3).
+/** 
+  Get the speed at which a servo will move in response to a call to Servo_SetPosition().
+  Read the value previously set for the speed parameter.
+  @param index An integer specifying which servo (0 - 3).
   @return The speed (0 - 1023), or 0 on error.
   
   \b Example
-	\code
-	int srv0_speed = Servo_GetSpeed(0);
-	// now srv0_speed is the current speed
-	\endcode
+  \code
+  int srv0_speed = Servo_GetSpeed(0);
+  // now srv0_speed is the current speed
+  \endcode
 */
 int Servo::speed( )
 {
@@ -294,21 +294,21 @@ void Servo_IRQCallback( int id )
 /** \defgroup ServoOSC Servo - OSC
   Control Servo motors with the Application Board via OSC.
   \ingroup OSC
-	
-	\section devices Devices
-	There are 4 Servo controllers available on the Application Board, numbered 0 - 3.\n
-	See the servo section in the Application Board user's guide for more information
-	on hooking up servos to the board.
-	
-	\section properties Properties
-	Each servo controller has three properties:
+  
+  \section devices Devices
+  There are 4 Servo controllers available on the Application Board, numbered 0 - 3.\n
+  See the servo section in the Application Board user's guide for more information
+  on hooking up servos to the board.
+  
+  \section properties Properties
+  Each servo controller has three properties:
   - position
   - speed
   - active
 
-	\par Position
-	The \b position property corresponds to the position of the servo motor within its range of motion.
-	This value can be both read and written.  
+  \par Position
+  The \b position property corresponds to the position of the servo motor within its range of motion.
+  This value can be both read and written.  
   \par 
   Most servos like to be driven within a "safe range" which usually ends up being somewhere around 110-120
   degrees range of motion, or thereabouts.  Some servos don't mind being driven all the way to their 180
@@ -320,31 +320,31 @@ void Servo_IRQCallback( int id )
   \par
   Note that it is sometimes possible to damage your servo by driving it too far, so proceed with a bit of
   caution when using the extended range until you know your servos can handle it.
-	\par
-	To set the first servo to one quarter its position, send the message
-	\verbatim /servo/0/position 256 \endverbatim
-	Leave the argument value off to read the position of the servo:
-	\verbatim /servo/0/position \endverbatim
-	
-	\par Speed
-	The \b speed property corresponds to the speed with which the servo responds to changes 
-	of position.
-	This value can be both read and written, and the range of values is 0 - 1023.  A speed of 1023
-	means the servo responds immediately, and lower values will result in slower, and smoother, responses.  
-	\par
-	To set the speed of the first servo to just under full speed, send a message like
-	\verbatim /servo/0/speed 975 \endverbatim
-	Adjust the argument value to one that suits your application.\n
-	Leave the argument value off to read the position of the servo:
-	\verbatim /servo/0/speed \endverbatim
-	
-	\par Active
-	The \b active property corresponds to the active state of the servo.
-	If the servo is set to be active, no other tasks will be able to
-	write to the same I/O lines.  If you're not seeing appropriate
-	responses to your messages to a servo, check the whether it's 
-	locked by sending a message like
-	\verbatim /servo/3/active \endverbatim
+  \par
+  To set the first servo to one quarter its position, send the message
+  \verbatim /servo/0/position 256 \endverbatim
+  Leave the argument value off to read the position of the servo:
+  \verbatim /servo/0/position \endverbatim
+  
+  \par Speed
+  The \b speed property corresponds to the speed with which the servo responds to changes 
+  of position.
+  This value can be both read and written, and the range of values is 0 - 1023.  A speed of 1023
+  means the servo responds immediately, and lower values will result in slower, and smoother, responses.  
+  \par
+  To set the speed of the first servo to just under full speed, send a message like
+  \verbatim /servo/0/speed 975 \endverbatim
+  Adjust the argument value to one that suits your application.\n
+  Leave the argument value off to read the position of the servo:
+  \verbatim /servo/0/speed \endverbatim
+  
+  \par Active
+  The \b active property corresponds to the active state of the servo.
+  If the servo is set to be active, no other tasks will be able to
+  write to the same I/O lines.  If you're not seeing appropriate
+  responses to your messages to a servo, check the whether it's 
+  locked by sending a message like
+  \verbatim /servo/3/active \endverbatim
 */
 
 //#include "osc.h"
