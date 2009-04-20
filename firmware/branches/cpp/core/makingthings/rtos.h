@@ -100,13 +100,11 @@ public:
   Queue( uint length, uint itemSize );
   ~Queue( );
   
-  int send( void* itemToQueue, int timeout );
-  int receive( void* buffer, int timeout );
+  bool send( void* itemToQueue, int timeout = -1 );
+  bool receive( void* buffer, int timeout = -1 );
   int msgsAvailable( );
   bool sendFromISR( void* itemToSend, int* taskWoken );
-  bool sendToFrontFromISR( void* itemToSend, int* taskWoken );
-  bool sendToBackFromISR( void* itemToSend, int* taskWoken );
-  int receiveFromISR( void* buffer, long* taskWoken );
+  bool receiveFromISR( void* buffer, int* taskWoken );
 private:
   void* _q;
 };

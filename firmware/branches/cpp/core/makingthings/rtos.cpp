@@ -312,13 +312,21 @@ Task* Task::nextTask( )
 **********************************************************************************/
 
 /**
+  Find a Task by its name.
   
+  Each Task is given a name when it's created.  If you have the name, but
+  not a pointer to the Task, use this method to look it up.
   
-  @param 
+  @param name The name of the Task.
+  @return The Task, or NULL if not found.
   
   \b Example
   \code
-  
+  Task* t = RTOS::findTaskByName("myGreatTask");
+  if(t != NULL)
+  {
+    // then we found the task successfully.
+  }
   \endcode
 */
 Task* RTOS::findTaskByName( const char* name ) // static
@@ -333,13 +341,23 @@ Task* RTOS::findTaskByName( const char* name ) // static
 }
 
 /**
+  Find a Task by its ID.
   
+  Each Task is assigned an ID number by the RTOS.  If you have an ID,
+  but not a pointer to the Task, use this method to look it up.
   
-  @param 
+  @param id The ID of the Task you're looking for.
+  @return A pointer to the Task, or NULL if not found.
   
   \b Example
   \code
+  // get the ID for the current task so we can look it up later if we want to
+  Task* current = RTOS::currentTask();
+  int id = current->id();
   
+  // ... so some other things for a while...
+  
+  Task* earlier = RTOS::findTaskByID(id);
   \endcode
 */
 Task* RTOS::findTaskByID( int id ) // static
@@ -354,13 +372,13 @@ Task* RTOS::findTaskByID( int id ) // static
 }
 
 /**
+  Get the task that's currently running.
   
-  
-  @param 
+  @return A pointer to the currently running Task
   
   \b Example
   \code
-  
+  Task* current = RTOS::currentTask();
   \endcode
 */
 Task* RTOS::currentTask( ) // static
@@ -368,19 +386,29 @@ Task* RTOS::currentTask( ) // static
   return (Task*)xTaskGetContext(xTaskGetCurrentTaskHandle());
 }
 
+/**
+  Get the number of tasks that have been created.
+  
+  @return The number of tasks.
+  
+  \b Example
+  \code
+  int total_tasks = RTOS::numberOfTasks( );
+  \endcode
+*/
 int RTOS::numberOfTasks( ) // static
 {
   return uxTaskGetNumberOfTasks( );
 }
 
 /**
+  Check the highest priority assigned to any task.
   
-  
-  @param 
+  @return The highest priority of any task, 1-9.
   
   \b Example
   \code
-  
+  int top_dog = RTOS::topTaskPriority( );
   \endcode
 */
 int RTOS::topTaskPriority( ) // static
@@ -389,13 +417,22 @@ int RTOS::topTaskPriority( ) // static
 }
 
 /**
+  The number of ticks that have happened since the board last booted.
   
+  A tick in the RTOS is roughly equivalent to 1 millisecond.  This value
+  will wrap once it exceeds 4,294,967,296 (2^32).
   
-  @param 
+  @return The number of ticks since boot. 
   
   \b Example
   \code
-  
+  // record how long it takes to perform some task
+  int start_time = RTOS::ticksSinceBoot( );
+  while(doingsometask)
+  {
+    // do something in here you want to measure...
+  }
+  int elapsed_time = RTOS::ticksSinceBoot( ) - start_time;
   \endcode
 */
 int RTOS::ticksSinceBoot( ) // static
@@ -606,13 +643,21 @@ void* RTOS::iterateForNextTask( void** lowTask, int* lowID, void** highTask, int
 **********************************************************************************/
 
 /**
+  Create a new Queue.
   
+  When you create a Queue, you specify both the size of the items that it will
+  contain, and how many of them to make room for.  This means that all the items
+  in the list should be the same kind, or the same size at the very least.  
+  It's usually most convenient to use the sizeof() function to determine the 
+  size of the items you want to keep in the Queue.  
   
-  @param 
+  @param length How many items to make room for.
+  @param itemSize The size of each item.
   
   \b Example
   \code
-  
+  // create a Queue for 100 ints
+  Queue* q = new Queue( 100, sizeof(int) );
   \endcode
 */
 Queue::Queue( uint length, uint itemSize )
@@ -626,43 +671,74 @@ Queue::~Queue( )
 }
 
 /**
+  Add an item to the Queue.
   
+  If the Queue is full, this method will wait as long as you specify
+  in the \b timeout parameter for it to become available.  The size of
+  the item that you add must match the size that you specified when
+  you created the Queue.
   
-  @param 
+  If you want to do this from within an ISR, use sendFromISR() instead.
+  
+  @param itemToQueue
+  @param timeout (optional) The number of milliseconds to wait if the queue is full 
+  or not available immediately.  If this is less than 0, it will wait indefinitely.
+  @return True if the item was successfully sent, false if not.
   
   \b Example
   \code
-  
+  // add an integer to this Queue
+  Queue q( 50, sizeof(int) );
+  int to_be_queued = 512;
+  q.send( &to_be_queued );
   \endcode
 */
-int Queue::send( void* itemToQueue, int timeout )
+bool Queue::send( void* itemToQueue, int timeout )
 {
-  return xQueueSend( _q, itemToQueue, timeout / portTICK_RATE_MS );
+  timeout = (timeout < 0) ? portMAX_DELAY : (timeout/portTICK_RATE_MS);
+  return xQueueSend( _q, itemToQueue, timeout ) == pdTRUE;
 }
 
 /**
+  Receive an item from the Queue.
   
+  If the Queue is empty, this method will wait as long as you specify 
+  in the \b timeout parameter for some data to arrive.  The size of the item
+  will be what you specified when you created the Queue.
   
-  @param 
+  If you want to do this from within an ISR, use receiveFromISR() instead.
+  
+  @param buffer Where to place the received item.
+  @param timeout (optional) The number of milliseconds to wait if the queue is empty.
+  If this is less than 0, it will wait indefinitely.
+  @return True if an item was received, false if not.
   
   \b Example
   \code
-  
+  // pull an integer off the Queue
+  // assume our Queue q was already created...
+  int to_be_received;
+  if( q.receive(&to_be_received) )
+  {
+    // then we received successfully
+  }
   \endcode
 */
-int Queue::receive( void* buffer, int timeout )
+bool Queue::receive( void* buffer, int timeout )
 {
-  return xQueueReceive( _q, buffer, timeout / portTICK_RATE_MS );
+  timeout = (timeout < 0) ? portMAX_DELAY : (timeout/portTICK_RATE_MS);
+  return xQueueReceive( _q, buffer, timeout ) == pdTRUE;
 }
 
 /**
+  Check the number of messages available in a Queue.
   
-  
-  @param 
+  @return The number of messages currently in the Queue.
   
   \b Example
   \code
-  
+  Queue q( 50, sizeof(int) );
+  int msgs = q.msgsAvailable();
   \endcode
 */
 int Queue::msgsAvailable( )
@@ -671,63 +747,58 @@ int Queue::msgsAvailable( )
 }
 
 /**
+  Put an item on the Queue from within an interrupt handler.
   
+  Same as send() except suitable for use within an interrupt handler.  Because
+  this is used in an interrupt handler, there can be no timeout parameter.
   
-  @param 
+  @param itemToSend The item to send on the Queue.
+  @param taskWoken Did this send cause another task to be woken up?  This is required
+  in cases where multiple calls to sendFromISR() might happen in the same interrupt.
+  @return True if the item was sent successfully, false if not.
   
   \b Example
   \code
+  Queue q( 50, sizeof(int) );
   
+  void myISRHandler()
+  {
+    int woken = 0;
+    q.sendFromISR( 34, &woken );
+  }
   \endcode
 */
 bool Queue::sendFromISR( void* itemToSend, int* taskWoken )
 {
-  return xQueueSendFromISR( _q, itemToSend, (long int*)taskWoken );
+  return xQueueSendFromISR( _q, itemToSend, (long int*)taskWoken ) == pdTRUE;
 }
 
 /**
+  Receive an item from a Queue within an interrupt handler.
   
+  Same as receive() except suitable for use within an interrupt handler.  Because
+  this is used in an interrupt handler, there can be no timeout parameter.
   
-  @param 
-  
-  \b Example
-  \code
-  
-  \endcode
-*/
-bool Queue::sendToFrontFromISR( void* itemToSend, int* taskWoken )
-{
-  return xQueueSendToFrontFromISR( _q, itemToSend, (long int*)taskWoken );
-}
-
-/**
-  
-  
-  @param 
+  @param buffer Where to place the received item
+  @param taskWoken Did this receive cause another task to be woken up?  This is required
+  in cases where multiple calls to receiveFromISR() might happen in the same interrupt.
+  @return True if the item was received successfully, false if not.
   
   \b Example
   \code
+  Queue q(50, sizeof(int));
   
+  void myISRHandler()
+  {
+    int woken = 0;
+    int to_be_received;
+    q.receiveFromISR( &to_be_received, &woken );
+  }
   \endcode
 */
-bool Queue::sendToBackFromISR( void* itemToSend, int* taskWoken )
+bool Queue::receiveFromISR( void* buffer, int* taskWoken )
 {
-  return xQueueSendToBackFromISR( _q, itemToSend, (long int*)taskWoken );
-}
-
-/**
-  
-  
-  @param 
-  
-  \b Example
-  \code
-  
-  \endcode
-*/
-int Queue::receiveFromISR( void* buffer, long* taskWoken )
-{
-  return xQueueReceiveFromISR( _q, buffer, taskWoken );
+  return xQueueReceiveFromISR( _q, buffer, (long int*)taskWoken ) == pdTRUE;
 }
 
 /**********************************************************************************
