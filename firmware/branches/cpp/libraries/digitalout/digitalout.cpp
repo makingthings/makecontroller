@@ -76,18 +76,18 @@ short DigitalOut::refcounts[] = {0, 0, 0, 0, 0, 0, 0, 0};
 //int DigitalOut_enableUsers[ DIGITALOUT_COUNT >> 1 ];
 
 /**
-	Enable or disable a DigitalOut.
-	This is automatically called, setting the channel active, the first time DigitalOut_SetValue() is called.
-	However, the channel must be explicitly set to inactive in order for any other devices to access the I/O lines. 
-	@param index An integer specifying which Digital Out (0-7).
-	@param state An integer specifying the state - on (1) or off (0).
-	@return Zero on success.
-	
-	\b Example
-	\code
-	// Enable DigitalOut 6
-	DigitalOut_SetActive( 6, 1 );
-	\endcode
+  Enable or disable a DigitalOut.
+  This is automatically called, setting the channel active, the first time DigitalOut_SetValue() is called.
+  However, the channel must be explicitly set to inactive in order for any other devices to access the I/O lines. 
+  @param index An integer specifying which Digital Out (0-7).
+  @param state An integer specifying the state - on (1) or off (0).
+  @return Zero on success.
+  
+  \b Example
+  \code
+  // Enable DigitalOut 6
+  DigitalOut_SetActive( 6, 1 );
+  \endcode
 */
 DigitalOut::DigitalOut( int index)
 {
@@ -121,16 +121,16 @@ DigitalOut::~DigitalOut()
   }
 }
 
-/**	
-	Turn a DigitalOut on or off.
-	@param state True to turn it on, false to turn it off.
+/** 
+  Turn a DigitalOut on or off.
+  @param state True to turn it on, false to turn it off.
   @return True on success, false on failure.
   
   \b Example
-	\code
-	// Turn digital out 2 on
-	DigitalOut_SetValue( 2, 1 );
-	\endcode
+  \code
+  // Turn digital out 2 on
+  DigitalOut_SetValue( 2, 1 );
+  \endcode
 */
 bool DigitalOut::setValue( bool on )
 {
@@ -138,22 +138,22 @@ bool DigitalOut::setValue( bool on )
   return true;
 }
 
-/**	
-	Read whether a DigitalOut is on or off.
-	@param index An integer specifying which Digital Out (0-7).
+/** 
+  Read whether a DigitalOut is on or off.
+  @param index An integer specifying which Digital Out (0-7).
   @return The value - on (1) or off (0).
   
   \b Example
-	\code
-	if( DigitalOut_GetValue( 2 ) )
-	{
-	  // DigitalOut 2 is high
-	}
-	else
-	{
-	  // DigitalOut 2 is low
-	}
-	\endcode
+  \code
+  if( DigitalOut_GetValue( 2 ) )
+  {
+    // DigitalOut 2 is high
+  }
+  else
+  {
+    // DigitalOut 2 is low
+  }
+  \endcode
 */
 bool DigitalOut::value( )
 {
@@ -193,31 +193,31 @@ int DigitalOut::getEnableIo( int enableIndex )
 /** \defgroup DigitalOutOSC Digital Out - OSC
   Control the Application Board's Digital Outs via OSC.
   \ingroup OSC
-	
-	\section devices Devices
-	There are 8 Digital Outs on the Make Application Board, numbered <b>0 - 7</b>.
-	
-	\section properties Properties
-	The Digital Outs have two properties:
+  
+  \section devices Devices
+  There are 8 Digital Outs on the Make Application Board, numbered <b>0 - 7</b>.
+  
+  \section properties Properties
+  The Digital Outs have two properties:
   - value
   - active
 
-	\par Value
-	The \b value property corresponds to the on/off value of a given Digital Out.
-	For example, to turn on the fifth Digital Out, send a message like
-	\verbatim /digitalout/6/value 1\endverbatim
-	Turn it off by sending the message \verbatim /digitalout/6/value 0\endverbatim
-	
-	\par Active
-	The \b active property corresponds to the active state of a Digital Out.
-	If a Digital Out is set to be active, no other tasks will be able to
-	write to that Digital Out.  If you're not seeing appropriate
-	responses to your messages to the Digital Out, check the whether a Digital Out is 
-	locked by sending a message like
-	\verbatim /digitalout/0/active \endverbatim
-	\par
-	You can set the active flag by sending
-	\verbatim /digitalout/0/active 1 \endverbatim
+  \par Value
+  The \b value property corresponds to the on/off value of a given Digital Out.
+  For example, to turn on the fifth Digital Out, send a message like
+  \verbatim /digitalout/6/value 1\endverbatim
+  Turn it off by sending the message \verbatim /digitalout/6/value 0\endverbatim
+  
+  \par Active
+  The \b active property corresponds to the active state of a Digital Out.
+  If a Digital Out is set to be active, no other tasks will be able to
+  write to that Digital Out.  If you're not seeing appropriate
+  responses to your messages to the Digital Out, check the whether a Digital Out is 
+  locked by sending a message like
+  \verbatim /digitalout/0/active \endverbatim
+  \par
+  You can set the active flag by sending
+  \verbatim /digitalout/0/active 1 \endverbatim
 */
 
 //#include "osc.h"
