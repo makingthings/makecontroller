@@ -31,19 +31,6 @@ static inline unsigned char to_uchar (char ch)
   return ch;
 }
 
-/** \defgroup base64 Base 64
-  The Make Controller Base 64 library provides a way to decode and encode base 64 data.
-
-  This is often handy when you need to send raw/binary data (as opposed to text) through a 
-  text based format, like XML or JSON.
-
-  Most code lifted from gnulib - http://savannah.gnu.org/projects/gnulib - and written by Simon Josefsson.
-  \par
-
-  \ingroup Libraries
-  @{
-*/
-
 /**
   Base 64 encode a block of data.
   Provide a buffer to write into and to read from.  As Base64 encoding results in 
@@ -59,7 +46,7 @@ static inline unsigned char to_uchar (char ch)
   \code
   #define BUFF_SIZE 256
   char encode_buf[BUFF_SIZE];
-  int len = Base64_Encode(encode_buf, BUFF_SIZE, "test", 4);
+  int len = Base64::encode(encode_buf, BUFF_SIZE, "test", 4);
   // we now have "dGVzdA==" in encode_buf, and len is 8
   \endcode
 */
@@ -267,7 +254,7 @@ bool isbase64 (char ch)
   #define BUFF_SIZE 256
   char decode_buf[BUFF_SIZE];
   int decode_size = BUFF_SIZE;
-  bool result = Base64_Decode(decode_buf, &decode_size, "dGVzdA==", 8);
+  bool result = Base64::decode(decode_buf, &decode_size, "dGVzdA==", 8);
   // we now have "test" in decode_buf, and decode_size is set to 4
   \endcode
 */
@@ -330,8 +317,6 @@ bool Base64::decode(char* dest, int* dest_size, const char* src, int src_size)
   return true;
 }
 
-/** @}
-*/
 
 
 

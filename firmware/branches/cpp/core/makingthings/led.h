@@ -20,24 +20,27 @@
 
 #include "io.h"
 
+/**
+  Controls the single green LED on the MAKE Controller Board.
+  There are two LEDs on the MAKE Controller Board - one green and one red.  The red LED is simply
+  a power indicator and cannot be controlled by the Controller.  The green LED can be used for
+  program feedback.  In many MakingThings applications, for example, it is set to blink once a
+  second, showing the board's "heartbeat" and letting the user know that the board is running.
+  
+  If you're looking to control the LEDs on the Application Board, check \ref AppLed.
+*/
 class Led
 {
 public:
   Led( );
   ~Led( ) { }
   void setState( bool value );
-  bool getState( );
+  bool state( );
   
 private:
   Io ledIo;
 };
 
-// int Led_SetActive( int state );
-// int Led_GetActive( void );
-// 
-// int Led_SetState( int state );
-// int Led_GetState( void );
-// 
 // /* OSC Interface */
 // const char* LedOsc_GetName( void );
 // int LedOsc_ReceiveMessage( int channel, char* message, int length );

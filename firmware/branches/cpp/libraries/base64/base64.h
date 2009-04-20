@@ -20,6 +20,15 @@
 
 #include "types.h"
 
+/**
+  Decode and encode base 64 data.
+
+  This is often handy when you need to send raw/binary data (as opposed to text) through a 
+  text based format, like XML or JSON.
+
+  Most code lifted from gnulib - http://savannah.gnu.org/projects/gnulib - and written by Simon Josefsson.
+  \par
+*/
 class Base64
 {
 public:

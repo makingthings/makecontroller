@@ -26,16 +26,15 @@
   #define LED_IO IO_PA12
 #endif
 
-/** \defgroup Led LED
-  Controls the single green LED on the MAKE Controller Board.
-  There are two LEDs on the MAKE Controller Board - one green and one red.  The red LED is simply
-  a power indicator and cannot be controlled by the Controller.  The green LED can be used for
-  program feedback.  In many MakingThings applications, for example, it is set to blink once a
-  second, showing the board's "heartbeat" and letting the user know that the board is running.
-* \ingroup Core
-* @{
+/**
+  Create a new LED object.
+  
+  \b Example
+  \code
+  Led led;
+  // that's it!
+  \endcode
 */
-
 Led::Led( )
 {
   ledIo.setPin( LED_IO );
@@ -43,6 +42,17 @@ Led::Led( )
   ledIo.setPeripheral( GPIO );
 }
 
+/**
+  Turn the LED on or off.
+  
+  @param state True to turn it on, false to turn it off.
+  
+  \b Example
+  \code
+  Led led;
+  led.setState(true); // turn it on
+  \endcode
+*/
 void Led::setState( bool state )
 {
   if(state)
@@ -51,13 +61,22 @@ void Led::setState( bool state )
     ledIo.off();
 }
 
-bool Led::getState( )
+/**
+  Read whether the LED is on or off.
+  
+  \b Example
+  \code
+  Led led;
+  if(led.state())
+  {
+    // then it's on
+  }
+  \endcode
+*/
+bool Led::state( )
 {
   return ledIo.value( );
 }
-
-/** @}
-*/
 
 #ifdef OSC
 
