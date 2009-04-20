@@ -31,10 +31,10 @@ extern "C" {
 
 /* the Atmel header file doesn't define these. */
 #ifdef AT91SAM7X256_H
-# define AT91C_RSTC_KEY_PASSWORD	(0xa5 << 24)
+# define AT91C_RSTC_KEY_PASSWORD  (0xa5 << 24)
 
-# define AT91C_IROM			((char *)(0x3 << 20))
-# define AT91C_IROM_SIZE		(8 << 10)
+# define AT91C_IROM     ((char *)(0x3 << 20))
+# define AT91C_IROM_SIZE    (8 << 10)
 #endif
 
 int PortFreeMemory( void );
@@ -66,17 +66,17 @@ System* System::get()
 }
 
 /**
-	Returns the free size of the heap.
-	The heap size is set in config.h in the constant CONTROLLER_HEAPSIZE.
-	Any calls to Malloc will take their memory from the heap.  This allows
-	you to check how much heap is remaining.
-	@return The size free memory.
-	
-	\b Example
-	\code
-	// see how much memory is available
-	int freemem = System_GetFreeMemory();
-	\endcode
+  Returns the free size of the heap.
+  The heap size is set in config.h in the constant CONTROLLER_HEAPSIZE.
+  Any calls to Malloc will take their memory from the heap.  This allows
+  you to check how much heap is remaining.
+  @return The size free memory.
+  
+  \b Example
+  \code
+  // see how much memory is available
+  int freemem = System_GetFreeMemory();
+  \endcode
 */
 int System::freeMemory( )
 {
@@ -84,19 +84,19 @@ int System::freeMemory( )
 }
 
 /**
-	Gets the board's Serial Number.
-	Each board has a serial number, although it's not necessarily unique
-	as you can reset it as you please.
-	
-	The serial number is used to determine the Ethernet MAC address, so boards
-	on the same network need to have unique serial numbers.
-	@return CONTROLLER_OK ( = 0 ).
-	
-	\b Example
-	\code
-	// get this board's serial number
-	int sernum = System_GetSerialNumber();
-	\endcode
+  Gets the board's Serial Number.
+  Each board has a serial number, although it's not necessarily unique
+  as you can reset it as you please.
+  
+  The serial number is used to determine the Ethernet MAC address, so boards
+  on the same network need to have unique serial numbers.
+  @return CONTROLLER_OK ( = 0 ).
+  
+  \b Example
+  \code
+  // get this board's serial number
+  int sernum = System_GetSerialNumber();
+  \endcode
 */
 int System::serialNumber( void )
 {
@@ -106,18 +106,18 @@ int System::serialNumber( void )
 }
 
 /**
-	Sets the Serial Number. 
-	Note that this can be changed by the user at 
+  Sets the Serial Number. 
+  Note that this can be changed by the user at 
   any time, but that it is used in the \ref Network subsystem to form the last 
   two bytes of the network MAC address, so ideally units on the same network
   should have unique serial numbers.
-	@return 0 on success.
-	
-	\b Example
-	\code
-	// set the serial number to 12345
-	System_SetSerialNumber(12345);
-	\endcode
+  @return 0 on success.
+  
+  \b Example
+  \code
+  // set the serial number to 12345
+  System_SetSerialNumber(12345);
+  \endcode
 */
 int System::setSerialNumber( int serial )
 {
@@ -128,19 +128,19 @@ int System::setSerialNumber( int serial )
 }
 
 /**
-	Returns the board to SAM-BA mode.
-	When a board is in SAM-BA mode, it is ready to have new firmware uploaded to it. 
-	Upon successful completion, the board will be reset and begin running SAM-BA.  
-	This function does not clear the GPNVM2 bit, so if you unplug/replug you'll be running
-	your old code again.
+  Returns the board to SAM-BA mode.
+  When a board is in SAM-BA mode, it is ready to have new firmware uploaded to it. 
+  Upon successful completion, the board will be reset and begin running SAM-BA.  
+  This function does not clear the GPNVM2 bit, so if you unplug/replug you'll be running
+  your old code again.
   @param sure Confirm you're sure you want to do this.
-	@return nonzero on failure.  Successful completion does not return.
-	
-	\b Example
-	\code
-	// prepare to be uploaded
-	System_SetSamba(1);
-	\endcode
+  @return nonzero on failure.  Successful completion does not return.
+  
+  \b Example
+  \code
+  // prepare to be uploaded
+  System_SetSamba(1);
+  \endcode
 */
 int System::samba( int sure )
 {
@@ -177,8 +177,8 @@ int System::samba( int sure )
     while(AT91C_BASE_RSTC->RSTC_RSR & AT91C_RSTC_SRCMP);
     AT91C_BASE_RSTC->RSTC_RMR = AT91C_RSTC_KEY_PASSWORD;
     AT91C_BASE_RSTC->RSTC_RCR = AT91C_RSTC_KEY_PASSWORD
-	| AT91C_RSTC_PERRST
-    	| AT91C_RSTC_EXTRST
+  | AT91C_RSTC_PERRST
+      | AT91C_RSTC_EXTRST
     ;
     while(AT91C_BASE_RSTC->RSTC_RSR & AT91C_RSTC_SRCMP);
 
@@ -202,23 +202,23 @@ int System::samba( int sure )
     /* From here on, we have to be in asm to prevent the compiler from trying to use RAM in any way. */
     __asm__ __volatile__ (
     /* Copy the ROM image to RAM. */
-    "	mov	r6, %0		\n"	/* save ROM address for later */
-    "	b	2f		\n"
-    "1:				\n"
-    "	ldmia	%0!, {r7}	\n"
-    "	str	r7, [%2]	\n"
-    "	add	%2, %2, #4	\n"
-    "2:				\n"
-    "	cmp	%0, %1		\n"
-    "	bmi	1b		\n"
+    " mov r6, %0    \n" /* save ROM address for later */
+    " b 2f    \n"
+    "1:       \n"
+    " ldmia %0!, {r7} \n"
+    " str r7, [%2]  \n"
+    " add %2, %2, #4  \n"
+    "2:       \n"
+    " cmp %0, %1    \n"
+    " bmi 1b    \n"
 
     /* Remap so that image copy in SAM-BA is RAM to RAM. */
     /* We know that the remap page is not currently remapped because we just did an AT91C_RSTC_PERRST. */
-    "	mov	r7, %4 		\n"
-    "	str	r7, %3		\n"
+    " mov r7, %4    \n"
+    " str r7, %3    \n"
 
     /* Start running the ROM. */
-    "	bx	r6		\n"
+    " bx  r6    \n"
     :
     :
     "r"(AT91C_IROM),
@@ -236,18 +236,18 @@ int System::samba( int sure )
 }
 
 /**
-	Gives the board a name.
+  Gives the board a name.
   The name must be alpha-numeric - only letters and numbers.  It can help you
   determine one board from another when there are more than one connected to 
   your system.
   @param name A string specifying the board's name
-	@return 0 on success.
-	
-	\b Example
-	\code
-	// give the board a special name
-	System_SetName("my very special controller");
-	\endcode
+  @return 0 on success.
+  
+  \b Example
+  \code
+  // give the board a special name
+  System_SetName("my very special controller");
+  \endcode
 */
 int System::setName( char* name )
 {
@@ -264,13 +264,13 @@ int System::setName( char* name )
 }
 
 /**
-	Read the board's name.
-	@return The board's name as a string.
-	
-	\b Example
-	\code
-	char* board_name = System_GetName();
-	\endcode
+  Read the board's name.
+  @return The board's name as a string.
+  
+  \b Example
+  \code
+  char* board_name = System_GetName();
+  \endcode
 */
 char* System::name( )
 {
@@ -304,16 +304,16 @@ char* System::name( )
 }
 
 /**
-	Reset the board.
+  Reset the board.
   Will reboot the board if the parameter sure is true.
   @param sure confirms the request is true.
-	@return 0 on success.
-	
-	\b Example
-	\code
-	// reboot
-	System_SetReset(1);
-	\endcode
+  @return 0 on success.
+  
+  \b Example
+  \code
+  // reboot
+  System_SetReset(1);
+  \endcode
 */
 int System::reset( int sure )
 {
@@ -684,54 +684,54 @@ int System::autosendInterval( )
 //    case 8: // info
 //    {
 //      int a0, a1, a2, a3;
-//			{ // put these in their own context so the local variables aren't lying around on the stack for the whole message
-//				char ipAddr[25];
-//				char* sysName = System_GetName( );
-//				int serialnum = System_GetSerialNumber( );
-//				char sysVersion[25];
-//				snprintf( sysVersion, 25, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER );
-//				int freemem = System_GetFreeMemory( );
-//				#ifdef MAKE_CTRL_NETWORK
-//				if( Network_GetAddress( &a0, &a1, &a2, &a3 ) != CONTROLLER_OK )
-//					a0 = a1 = a2 = a3 = -1;
-//				#else
-//				a0 = a1 = a2 = a3 = -1;
-//				#endif // MAKE_CTRL_NETWORK
-//				snprintf( ipAddr, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
-//				snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s-a", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-//				Osc_CreateMessage( channel, System->scratch1, ",sissi", sysName, serialnum, ipAddr, sysVersion, freemem );
-//			}
-//			{
-//			char gateway[25];
+//      { // put these in their own context so the local variables aren't lying around on the stack for the whole message
+//        char ipAddr[25];
+//        char* sysName = System_GetName( );
+//        int serialnum = System_GetSerialNumber( );
+//        char sysVersion[25];
+//        snprintf( sysVersion, 25, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER );
+//        int freemem = System_GetFreeMemory( );
+//        #ifdef MAKE_CTRL_NETWORK
+//        if( Network_GetAddress( &a0, &a1, &a2, &a3 ) != CONTROLLER_OK )
+//          a0 = a1 = a2 = a3 = -1;
+//        #else
+//        a0 = a1 = a2 = a3 = -1;
+//        #endif // MAKE_CTRL_NETWORK
+//        snprintf( ipAddr, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
+//        snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s-a", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+//        Osc_CreateMessage( channel, System->scratch1, ",sissi", sysName, serialnum, ipAddr, sysVersion, freemem );
+//      }
+//      {
+//      char gateway[25];
 //      char mask[25];
-//			int dhcp;
+//      int dhcp;
 //      int webserver;
-//			int oscUdpListen;
-//			int oscUdpSend; 
+//      int oscUdpListen;
+//      int oscUdpSend; 
 //      #ifdef MAKE_CTRL_NETWORK
 //      if( Network_GetGateway( &a0, &a1, &a2, &a3 ) != CONTROLLER_OK )
 //        a0 = a1 = a2 = a3 = -1;
-//			snprintf( gateway, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
+//      snprintf( gateway, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
 //      if( Network_GetMask( &a0, &a1, &a2, &a3 ) != CONTROLLER_OK )
 //        a0 = a1 = a2 = a3 = -1;
-//			snprintf( mask, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
+//      snprintf( mask, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
 //      dhcp = Network_GetDhcpEnabled( );
 //      webserver = 0; // webserver no longer in core. TODO - update system-info to not use webserver
 //      oscUdpListen = NetworkOsc_GetUdpListenPort( );
 //      oscUdpSend = NetworkOsc_GetUdpSendPort( );
 //      #else
 //      a0 = a1 = a2 = a3 = -1;
-//			snprintf( gateway, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
-//			snprintf( mask, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
+//      snprintf( gateway, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
+//      snprintf( mask, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
 //      dhcp = 0;
 //      webserver = 0;
 //      oscUdpListen = 0;
 //      oscUdpSend = 0;
 //      #endif // MAKE_CTRL_NETWORK
 //      
-//			snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s-b", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
+//      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s-b", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
 //      Osc_CreateMessage( channel, System->scratch1, ",iissii", dhcp, webserver, gateway, mask, oscUdpListen, oscUdpSend );
-//			}
+//      }
 //      break;
 //    }
 //    case 9: // stack-audit
@@ -752,10 +752,10 @@ int System::autosendInterval( )
 //      
 //      for( i = 0; i < numOfTasks; i++ )
 //      {
-//      	task = TaskGetNext( task );
-//      	value = TaskGetRemainingStack( task );
-//      	taskName = TaskGetName( task );
-//      	Osc_CreateMessage( channel, System->scratch1, ",si", taskName, value ); 
+//        task = TaskGetNext( task );
+//        value = TaskGetRemainingStack( task );
+//        taskName = TaskGetName( task );
+//        Osc_CreateMessage( channel, System->scratch1, ",si", taskName, value ); 
 //      }
 //      break;
 //    }

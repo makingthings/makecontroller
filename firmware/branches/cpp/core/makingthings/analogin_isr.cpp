@@ -55,32 +55,32 @@ void AnalogIn_Isr( void )
   }
   else if ( status & AT91C_ADC_DRDY )
   {
-  	manager->doneSemaphore.giveFromISR( &cTaskWokenByPost );
+    manager->doneSemaphore.giveFromISR( &cTaskWokenByPost );
     status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
   }
 
-	AT91C_BASE_AIC->AIC_EOICR = 0; // Clear AIC to complete ISR processing
+  AT91C_BASE_AIC->AIC_EOICR = 0; // Clear AIC to complete ISR processing
 
-	/* If a task was woken by either a frame being received then we may need to 
-	switch to another task.  If the unblocked task was of higher priority then
-	the interrupted task it will then execute immediately that the ISR
-	completes. */
-	if( cTaskWokenByPost )
-	{
-		portYIELD_FROM_ISR();
-	}
+  /* If a task was woken by either a frame being received then we may need to 
+  switch to another task.  If the unblocked task was of higher priority then
+  the interrupted task it will then execute immediately that the ISR
+  completes. */
+  if( cTaskWokenByPost )
+  {
+    portYIELD_FROM_ISR();
+  }
 }
 
 void  AnalogInIsr_Wrapper( void )
 {
-	/* Save the context of the interrupted task. */
-	portSAVE_CONTEXT();
+  /* Save the context of the interrupted task. */
+  portSAVE_CONTEXT();
 
-	/* Call the handler to do the work.  This must be a separate
-	function to ensure the stack frame is set up correctly. */
-	AnalogIn_Isr();
+  /* Call the handler to do the work.  This must be a separate
+  function to ensure the stack frame is set up correctly. */
+  AnalogIn_Isr();
 
-	/* Restore the context of whichever task will execute next. */
-	portRESTORE_CONTEXT();
+  /* Restore the context of whichever task will execute next. */
+  portRESTORE_CONTEXT();
 }
 
