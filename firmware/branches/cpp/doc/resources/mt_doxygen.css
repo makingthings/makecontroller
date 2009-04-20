@@ -116,6 +116,7 @@ a.elRef {
 }
 
 a.code {
+  color: #89BDFF;
 }
 
 a.codeRef {
@@ -139,9 +140,7 @@ table.listing td {
   vertical-align: top;
 }
 
-table.listing tr {
-  border: 0;
-}
+table.listing tr { border: 0; }
 
 table.listing th {
   border: 0;
@@ -152,6 +151,8 @@ table.listing ul {
   margin: 0;
   padding: 0px 0px 8px 0px;
 }
+
+table.listing a { font-weight: normal; }
 
 /* table listing end */
 
