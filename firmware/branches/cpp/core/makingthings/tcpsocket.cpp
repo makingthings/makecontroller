@@ -289,7 +289,8 @@ int TcpSocket::read( char* data, int length )
 
 /**
   Read a single line from a TCP socket, as terminated by CR LF (0x0D 0x0A).
-  Make sure you have an open socket before trying to read from it.
+  Make sure you have an open socket before trying to read from it.  The line
+  endings are not included in the data returned.
   @param data Where to store the incoming data.
   @param length How many bytes to read.
   @return The number of bytes of data successfully read.
