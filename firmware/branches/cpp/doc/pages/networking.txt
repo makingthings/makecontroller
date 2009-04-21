@@ -32,13 +32,12 @@
   
   \section Breakdown
   
-  If you want your board to head out onto the internet and connect to other sites or services, 
-  check the WebClient class.
+  Check the WebClient class if you want your board to head out onto the internet and 
+  connect to other sites or services.
   
-  To provide access to your board from the internet or from a web browser, 
-  check the WebServer class.
+  Check the WebServer class to provide access to your board from the internet or from a web browser.
   
-  To make socket level connections, check the TcpSocket, TcpServer and UdpSocket classes.
+  Check the TcpSocket, TcpServer and UdpSocket classes to make socket level connections.
   
-  To configure your board's network settings (address, gateway, dhcp, dns), check the Network class.
+  Check the Network class to configure your board's network settings (address, gateway, dhcp, dns).
 */
