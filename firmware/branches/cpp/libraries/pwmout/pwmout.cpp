@@ -55,6 +55,18 @@
 // static 
 PwmOut::PwmOutInternal* PwmOut::pwmouts[] = {0, 0, 0, 0};
 
+/**
+  Create a new PwmOut object
+  
+  @param index Which channel to control - valid options are 0, 1, 2, 3
+  
+  \b Example
+  \code
+  PwmOut pwmout;
+  // or allocate one...
+  PwmOut* p = new PwmOut();
+  \endcode
+*/
 PwmOut::PwmOut( int index )
 {
   if ( index < 0 || index > 3 )
@@ -104,9 +116,15 @@ PwmOut::~PwmOut( )
 }
 
 /** 
-  Set the speed of a PWM device.
+  Set the speed of a PwmOut.
   @param duty An integer (0 - 1023) specifying the duty.
-  @return Zero on success.
+  @return True on success, false on failure.
+  
+  \b Example
+  \code
+  PwmOut p(1);
+  p.setDuty(512);
+  \endcode
 */
 bool PwmOut::setDuty( int duty )
 {
@@ -115,8 +133,14 @@ bool PwmOut::setDuty( int duty )
 }
 
 /** 
-  Read the current duty of a PWM device.
+  Read the current duty of a PwmOut.
   @return The duty (0 - 1023).
+  
+  \b Example
+  \code
+  PwmOut p(1);
+  int duty = p.duty();
+  \endcode
 */
 int PwmOut::duty( )
 {
@@ -124,9 +148,15 @@ int PwmOut::duty( )
 }
 
 /** 
-  Set whether the A channel associated with a PWM out should be inverted.
+  Set whether the A channel associated with a PwmOut should be inverted.
   @param invert A character specifying the inversion - 1/non-zero (inverted) 0 (normal).
-  @return Zero on success.
+  @return True on success, false on failure;
+  
+  \b Example
+  \code
+  PwmOut p(1);
+  p.setInvertedA(false); // channel A not inverted
+  \endcode
 */
 bool PwmOut::setInvertedA( bool invert )
 {
@@ -135,9 +165,14 @@ bool PwmOut::setInvertedA( bool invert )
 }
 
 /** 
-  Read whether the A channel of a PWM device is inverted.
-  @param index An integer specifying which PWM device (0-3).
-  @return The inversion - 1/non-zero (inverted) or 0 (normal).
+  Read whether the A channel of a PwmOut is inverted.
+  @return True if inverted, false if not.
+  
+  \b Example
+  \code
+  PwmOut p(1);
+  bool is_A_inverted = p.invertedA();
+  \endcode
 */
 bool PwmOut::invertedA( )
 {
@@ -145,10 +180,15 @@ bool PwmOut::invertedA( )
 }
 
 /** 
-  Read whether the B channel of a PWM out is inverted.
-  @param index An integer specifying which PWM device (0-3).
+  Read whether the B channel of a PwmOut is inverted.
   @param invert A character specifying the inversion - 1/non-zero (inverted) 0 (normal).
-  @return Zero on success.
+  @return True on success, false on failure.
+  
+  \b Example
+  \code
+  PwmOut p(1);
+  p.setInvertedB(false); // channel B not inverted
+  \endcode
 */
 bool PwmOut::setInvertedB( bool invert )
 {
@@ -157,15 +197,33 @@ bool PwmOut::setInvertedB( bool invert )
 }
 
 /** 
-  Read whether the B channel of a PWM device is inverted.
-  @param index An integer specifying which PWM device (0-3).
-  @return The inversion - 1/non-zero (inverted) or 0 (normal).
+  Read whether the B channel of a PwmOut is inverted.
+  @return True if inverted, false if not.
+  
+  \b Example
+  \code
+  PwmOut p(1);
+  bool is_B_inverted = p.invertedB();
+  \endcode
 */
 bool PwmOut::invertedB( )
 {
   return pwmouts[_index]->ioB->value( );
 }
 
+/** 
+  Set all the parameters of a PwmOut at once.
+  @param duty The duty (0-1023)
+  @param invertA Whether channel A should be inverted
+  @param invertB Whether channel B should be inverted
+  @return True on success, otherwise false.
+  
+  \b Example
+  \code
+  PwmOut p(1);
+  p.setAll(1023, false, true);
+  \endcode
+*/
 bool PwmOut::setAll( int duty, bool invertA, bool invertB )
 {
   PwmOutInternal* internal = pwmouts[_index];
