@@ -35,7 +35,6 @@ class TcpSocket
 {
 public:
   TcpSocket( );
-  TcpSocket( void* sock );
   ~TcpSocket( );
   bool valid( );
   
@@ -48,9 +47,12 @@ public:
   int read( char* data, int length );
   int readLine( char* data, int length );
   
-private:
+protected:
   struct netconn* _socket;
   bool getNewSocket( );
+  TcpSocket( void* sock );
+  
+  friend class TcpServer;
 };
 
 #endif // MAKE_CTRL_NETWORK
