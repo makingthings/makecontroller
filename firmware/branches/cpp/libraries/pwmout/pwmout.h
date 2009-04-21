@@ -22,23 +22,29 @@
 #include "pwm.h"
 
 /**
-	The PWM Out subsystem underlies the DC Motor subsystem and controls the 4 PWM signals on the SAM7X.
-	Each PWM device controls a pair of Digital Outs - an A and a B channel:
-	- PwmOut 0 - Digital Outs 0 (A) and 1 (B).
-	- PwmOut 1 - Digital Outs 2 (A) and 3 (B).
-	- PwmOut 2 - Digital Outs 4 (A) and 5 (B).
-	- PwmOut 3 - Digital Outs 6 (A) and 7 (B).
-	
-	The A and B channels of a PWM device can be set independently to be inverted, or not, from one another
-	in order to control motors, lights, etc.
-	
-	The simplest way to get started is simply with a call to PwmOut_SetActive() and then to 
-	PwmOut_SetDuty() - this will allow you to control simple dimming and motors.  If you need to adjust timing, 
-	inversion or other parameters, delve a bit deeper into the API above.
-	
-	PwmOut relies on the internal \ref Pwm system.  See that page for more info on the timing issues 
-	involved with the PWM Out system.
-	\ingroup Libraries
+  Control the 4 PWM signals on the Application Board.
+  
+  The PWM signals on the Controller Board are connected on the Application Board to high current
+  drivers.  Each driver has 2 PWM signals, which control a pair of Digital Outs - an A and a B channel:
+  - PwmOut 0 - Digital Outs 0 (A) and 1 (B).
+  - PwmOut 1 - Digital Outs 2 (A) and 3 (B).
+  - PwmOut 2 - Digital Outs 4 (A) and 5 (B).
+  - PwmOut 3 - Digital Outs 6 (A) and 7 (B).
+  
+  The A and B channels of a PWM device can be set independently to be inverted, or not, from one another
+  in order to control motors, lights, etc.
+  
+  \section Usage
+  To get started, create a new PwmOut object specifying the channel you want to control.  
+  
+  \code
+  PwmOut pout(2); // create a new PwmOut object on channel 2
+  pout.setDuty(1023); // turn it on full blast
+  \endcode
+  
+  \section Note
+  Each PwmOut is built on top of a Pwm instance.  If you need to adjust timing, 
+  inversion or other parameters, check the Pwm system.
 */
 class PwmOut
 {
@@ -71,7 +77,7 @@ class PwmOut
 };
 
 /* OSC Interface */
-const char* PwmOutOsc_GetName( void );
-int PwmOutOsc_ReceiveMessage( int channel, char* message, int length );
+// const char* PwmOutOsc_GetName( void );
+// int PwmOutOsc_ReceiveMessage( int channel, char* message, int length );
 
 #endif
