@@ -46,6 +46,7 @@ typedef void (TaskLoop)(void*);
   \section Synchronization
   To synchronize...
   
+  \ingroup rtos
 */
 class Task
 {
@@ -69,6 +70,8 @@ protected:
 
 /**
   The Real Time Operating System at the heart of the Make Controller.
+  
+  \ingroup rtos
 */
 class RTOS
 {
@@ -93,6 +96,7 @@ protected:
 /**
   An inter-task mechanism to pass data.
   
+  \ingroup rtos
 */
 class Queue
 {
@@ -111,6 +115,8 @@ private:
 
 /**
   A way to synchronize between different tasks.
+  
+  \ingroup rtos
 */
 class Semaphore
 {
