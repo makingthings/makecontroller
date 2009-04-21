@@ -38,7 +38,7 @@
         <li><a href="http://www.makingthings.com/documentation/tutorial/programming-the-make-controller-kit">Programming the Make Controller</a></li>
         <li><a href="http://www.makingthings.com/documentation/tutorial/osc">OSC</a></li>
         <li>\ref crashcourse</li>
-        <li><a href="./annotated.html">Full Class List</a></li>
+        <li><a href="./annotated.html">List of All Classes</a></li>
       </ul>
     </td>
     <td>
