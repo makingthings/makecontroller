@@ -38,7 +38,7 @@
   
   \section SPI
   The Make Controller has 4 SPI (Serial Peripheral Interface) channels, but only 2 are available
-  for general use, due to the use of signals on the Controller Board.  Check the SPI class for
+  for general use, due to the use of signals on the Controller Board.  Check the Spi class for
   more details.
   
   \section TWI
