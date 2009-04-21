@@ -27,6 +27,8 @@
 
 /**
   Connect to sites and other services on the internet or local network.
+  
+  \ingroup networking
 */
 class WebClient
 {

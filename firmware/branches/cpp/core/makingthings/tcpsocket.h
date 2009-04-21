@@ -58,6 +58,8 @@
   
   If you're looking to make connections to web servers check the WebClient instead, which
   builds on top of TcpSocket.
+  
+  \ingroup networking
 */
 class TcpSocket
 {

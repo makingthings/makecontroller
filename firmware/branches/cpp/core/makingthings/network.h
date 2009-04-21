@@ -14,7 +14,6 @@
   \code
   void* sock = Socket( IP_ADDRESS( 192, 168, 0, 200 ), 80 );
   \endcode
-  \ingroup Sockets
 */
 #define IP_ADDRESS( a, b, c, d ) ( ( (int)d << 24 ) + ( (int)c << 16 ) + ( (int)b << 8 ) + (int)a )
 #define IP_ADDRESS_D( address )  ( ( (int)address >> 24 ) & 0xFF )
@@ -24,7 +23,7 @@
 
 /**
   The network system on the Controller.  
-  \ingroup Network
+  \ingroup networking
 */
 class Network
 {
