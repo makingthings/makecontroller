@@ -47,7 +47,13 @@ UdpSocket::UdpSocket( int port )
 
 UdpSocket::~UdpSocket( )
 {
-  close();
+  if( _socket )
+  {
+    netconn_close( _socket );
+    netconn_delete(_socket);
+    if ( _socket->readingbuf != NULL )
+      netbuf_delete( _socket->readingbuf );
+  }
 }
 
 /**
@@ -55,6 +61,7 @@ UdpSocket::~UdpSocket( )
   You need to bind to a port before trying to read.  If you're only
   going to be writing, you don't need to bother binding.
   @param port An integer specifying the port to bind to.
+  @return True on success, false on failure.
   
   \b Example
   \code
@@ -68,18 +75,7 @@ bool UdpSocket::bind( int port )
   if( !_socket )
     return false;
   else
-    return (ERR_OK == netconn_bind( _socket, IP_ADDR_ANY, port )) ? true : false;
-}
-
-bool UdpSocket::close( )
-{
-  if( _socket )
-  {
-    netconn_close( _socket );
-    netconn_delete(_socket);
-    if ( _socket->readingbuf != NULL )
-      netbuf_delete( _socket->readingbuf );
-  }
+    return (ERR_OK == netconn_bind( _socket, IP_ADDR_ANY, port ));
 }
 
 /**
@@ -93,8 +89,9 @@ bool UdpSocket::close( )
   \b Example
   \code
   UdpSocket udp; // create a new socket without binding
-  const char* mydata = "some data";
-  int written = udp.write(mydata, strlen(mydata), IP_ADDRESS(192,168,0,210), 10000);
+  int address = IP_ADDRESS(192,168,0,210); // where to send
+  int port = 10000; // which port to send on
+  int written = udp.write("some data", strlen("some data"), address, port);
   \endcode
 */
 int UdpSocket::write( const char* data, int length, int address, int port )
@@ -125,7 +122,10 @@ int UdpSocket::write( const char* data, int length, int address, int port )
 
 /**
   Read data.
-  Be sure to bind to a port before trying to read.  
+  Be sure to bind to a port before trying to read.  If you want to know which
+  address the message came from, supply arguments for \b src_address and \b src_port,
+  otherwise you can omit those parameters.
+  
   @param data Where to store the incoming data.
   @param length How many bytes of data to read.
   @param src_address  (optional) An int that will be set to the address of the sender.
@@ -149,11 +149,9 @@ int UdpSocket::read( char* data, int length, int* src_address, int* src_port )
 {
   if( !_socket )
     return 0;
-  struct netbuf *buf;
-  struct ip_addr *addr;
-  int buflen = 0;
 
-  buf = netconn_recv( _socket );
+  int buflen = 0;
+  struct netbuf* buf = netconn_recv( _socket );
   if( buf != NULL )
   {
     buflen = netbuf_len( buf );
@@ -167,7 +165,7 @@ int UdpSocket::read( char* data, int length, int* src_address, int* src_port )
       *src_port = netbuf_fromport(buf);
     if( src_address )
     {
-      addr = netbuf_fromaddr(buf);
+      struct ip_addr *addr = netbuf_fromaddr(buf);
       *src_address = addr->addr;
     }
     netbuf_delete(buf);
