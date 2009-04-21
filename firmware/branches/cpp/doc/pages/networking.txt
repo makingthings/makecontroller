@@ -16,7 +16,7 @@
 *********************************************************************************/
 
 /**
-  \page networking Networking
+  \defgroup networking Networking
   
   \section Overview 
   The Make Controller comes with a fully loaded network system, including:

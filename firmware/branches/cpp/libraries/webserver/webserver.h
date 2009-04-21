@@ -101,7 +101,6 @@ typedef struct
       }
   };
   \endcode
-  \ingroup Network
 */
 class WebResponder
 {
@@ -127,7 +126,7 @@ class WebResponder
 /**
   A simple webserver.
   Also see \ref WebResponder.
-  \ingroup Network
+  \ingroup networking
 */
 class WebServer
 {

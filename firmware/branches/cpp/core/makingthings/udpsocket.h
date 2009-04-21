@@ -47,6 +47,8 @@
     }
   }
   \endcode
+  
+  \ingroup networking
 */
 class UdpSocket
 {

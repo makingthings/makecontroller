@@ -57,6 +57,8 @@ class TcpSocket;
   
   If you're looking to serve HTTP requests check the WebServer instead, which is built on
   the TcpServer.
+  
+  \ingroup networking
 */
 class TcpServer
 {
