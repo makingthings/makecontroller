@@ -44,7 +44,7 @@
     <td>
       <ul>
         <li>\ref networking</li>
-        <li>\ref realtimeos</li>
+        <li>\ref rtos</li>
         <li>\ref io</li>
         <li>\ref dataformats</li>
         <li>\ref interfacing</li>
