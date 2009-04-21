@@ -25,6 +25,9 @@
 
 #include "tcpsocket.h"
 
+/**
+  Connect to sites and other services on the internet or local network.
+*/
 class WebClient
 {
 public:

@@ -27,6 +27,9 @@
 
 class TcpSocket;
 
+/**
+  Listen for incoming TCP connections.
+*/
 class TcpServer
 {
 public:
