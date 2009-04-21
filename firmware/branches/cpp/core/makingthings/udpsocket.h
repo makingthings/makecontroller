@@ -25,9 +25,28 @@
 
 /**
   Read and write Ethernet data via UDP.
-  UDP is a lightweight network protocol that's great for streaming lots of data
-  at quick rates.  Unlike \ref TcpSocket you're not always guaranteed that each and every message
+  UDP is a lightweight network protocol that's great for sending lots of data
+  at quick rates.  Unlike TcpSocket you're not always guaranteed that each and every message
   you send will ultimately reach its destination, but the ones that do will get there very quickly.
+  
+  \section Usage
+  To get started with a UdpSocket, create a new UdpSocket object.  If you're only going to be 
+  writing, all you need is the write() method.  If you're reading, first call bind() to bind to
+  a given port, and then read() from it as desired.
+  
+  \code
+  UdpSocket sock; // create a new socket
+  sock.write("hi there", strlen("hi there"), IP_ADDRESS(192,168,0,5), 10000); // can write immediately
+  if(sock.bind(10000))
+  {
+    char buffer[128];
+    int bytes_read = sock.read(buffer, 128); // this will wait for data to show up
+    if(bytes_read) // did we read successfully?
+    {
+      // ...handle new data here...
+    }
+  }
+  \endcode
 */
 class UdpSocket
 {
@@ -43,7 +62,6 @@ public:
   
 protected:
   struct netconn* _socket;
-  bool close( );
 };
 
 #endif // MAKE_CTRL_NETWORK
