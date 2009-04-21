@@ -45,6 +45,10 @@
   \section Note
   Each PwmOut is built on top of a Pwm instance.  If you need to adjust timing, 
   inversion or other parameters, check the Pwm system.
+  
+  See the digital out section of the 
+  <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/digital-outputs">
+  Application Board overview</a> for more details.
 */
 class PwmOut
 {
