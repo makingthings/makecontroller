@@ -16,8 +16,29 @@
 *********************************************************************************/
 
 /**
- \page networking Networking
- 
-  The Make Controller provides...
+  \page networking Networking
   
+  \section Overview 
+  The Make Controller comes with a fully loaded network system, including:
+  - TCP sockets
+  - TCP server sockets
+  - UDP sockets
+  - DHCP
+  - DNS name resolution
+  
+  On top of these, additional services are provided:
+  - simple web server
+  - web client
+  
+  \section Breakdown
+  
+  If you want your board to head out onto the internet and connect to other sites or services, 
+  check the WebClient class.
+  
+  To provide access to your board from the internet or from a web browser, 
+  check the WebServer class.
+  
+  To make socket level connections, check the TcpSocket, TcpServer and UdpSocket classes.
+  
+  To configure your board's network settings (address, gateway, dhcp, dns), check the Network class.
 */
