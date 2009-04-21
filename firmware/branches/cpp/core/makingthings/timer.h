@@ -56,8 +56,8 @@ typedef void (*TimerHandler)( int id ); /**< A handler for timers. */
   
   \section notes Notes
   A few things to be aware of when using Timers:
-  - In your handler, you must not sleep or make any RTOS-related calls.  Your handler should be as quick as possible
-  so that other handlers don't get delayed.
+  - In your handler, you must not sleep or make any calls that will take a long time.  You may, however, use
+  the Queue and Semaphore calls that end in \b fromISR in order to synchronize with running tasks.
   - To modify an existing Timer, stop() it and then start() it again.  Modifying it while running is not recommended.
   - There are 3 identical hardware timers on the Make Controller.  The first Timer that you create
   will specify which of them to use, and it will be used for all subsequent timers created.  
