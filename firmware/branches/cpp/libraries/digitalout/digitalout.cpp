@@ -72,38 +72,32 @@
 Io* DigitalOut::ios[] = {0, 0, 0, 0, 0, 0, 0, 0};
 short DigitalOut::refcounts[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-//int DigitalOut_users[ DIGITALOUT_COUNT ];
-//int DigitalOut_enableUsers[ DIGITALOUT_COUNT >> 1 ];
-
 /**
-  Enable or disable a DigitalOut.
+  Create a new DigitalOut object.
   This is automatically called, setting the channel active, the first time DigitalOut_SetValue() is called.
   However, the channel must be explicitly set to inactive in order for any other devices to access the I/O lines. 
-  @param index An integer specifying which Digital Out (0-7).
-  @param state An integer specifying the state - on (1) or off (0).
-  @return Zero on success.
+  @param index Which DigitalOut to control (0-7)
   
   \b Example
   \code
-  // Enable DigitalOut 6
-  DigitalOut_SetActive( 6, 1 );
+  DigitalOut dout(6);
+  // or allocate one...
+  DigitalOut* dout = new DigitalOut(6);
   \endcode
 */
 DigitalOut::DigitalOut( int index)
 {
   if ( index < 0 || index >= DIGITALOUT_COUNT )
     return;
-
   _index = index;
-  int enableIndex = index >> 1;
-
+  
   if( refcounts[_index]++ == 0 )
   {
+    int enableIndex = index >> 1;
     Io enabler(getEnableIo( enableIndex )); // just create this locally to configure it
-    enabler.on();                           // don't need to hold onto it
+    enabler.on();
 
-    int io = getIo( _index );
-    ios[_index] = new Io(io);
+    ios[_index] = new Io(getIo( _index ));
     ios[_index]->off();
   }
 }
@@ -123,13 +117,14 @@ DigitalOut::~DigitalOut()
 
 /** 
   Turn a DigitalOut on or off.
-  @param state True to turn it on, false to turn it off.
+  @param on True to turn it on, false to turn it off.
   @return True on success, false on failure.
   
   \b Example
   \code
   // Turn digital out 2 on
-  DigitalOut_SetValue( 2, 1 );
+  DigitalOut dout(2);
+  dout.setValue( true );
   \endcode
 */
 bool DigitalOut::setValue( bool on )
@@ -140,12 +135,12 @@ bool DigitalOut::setValue( bool on )
 
 /** 
   Read whether a DigitalOut is on or off.
-  @param index An integer specifying which Digital Out (0-7).
-  @return The value - on (1) or off (0).
+  @return True if it's on, false if it's off.
   
   \b Example
   \code
-  if( DigitalOut_GetValue( 2 ) )
+  DigitalOut dout(2);
+  if( dout.value() )
   {
     // DigitalOut 2 is high
   }
