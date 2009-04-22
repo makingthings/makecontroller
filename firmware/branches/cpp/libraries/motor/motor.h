@@ -47,7 +47,7 @@
   See the digital out section of the 
   <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/digital-outputs">
   Application Board overview</a> for more details.
-  \ingroup Libraries
+  \ingroup io
 */
 class Motor
 {

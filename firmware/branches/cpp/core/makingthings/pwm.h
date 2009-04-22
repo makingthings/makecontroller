@@ -36,6 +36,8 @@
   
   The \ref PwmOut system relies on the Pwm system, and provides control of the output lines associated with
   a given Pwm signal.
+  
+  \ingroup io
 */
 class Pwm
 {
