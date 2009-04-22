@@ -20,10 +20,8 @@
 #define IO_H
 
 #define IO_OUTPUT true
-#define IO_INPUT false
+#define IO_INPUT false /**< for output */
 #define INVALID_PIN 1024 // a value too large for any pin
-
-enum IoPeripheral { IO_A, IO_B, GPIO };
 
 /**
   Control any of the 35 Input/Output signals on the Make Controller.
@@ -33,7 +31,16 @@ enum IoPeripheral { IO_A, IO_B, GPIO };
 class Io
 {
 public:
-  Io( int pin = INVALID_PIN, IoPeripheral = GPIO, bool direction = IO_OUTPUT );
+  /**
+    Available options for peripheral config.
+  */
+  enum Peripheral { 
+    int A,    /**< Peripheral A */
+    int B,    /**< Peripheral B */
+    int GPIO  /**< General Purpose IO */
+  };
+  
+  Io( int pin = INVALID_PIN, Peripheral = GPIO, bool output = IO_OUTPUT );
   ~Io( ) { releasePeripherals( ); }
   bool valid( ) { return io_pin != INVALID_PIN; }
   
@@ -55,7 +62,7 @@ public:
   bool setFilter( bool enabled );
   
   int peripheral( );
-  bool setPeripheral( IoPeripheral periph, bool disableGpio = true );
+  bool setPeripheral( Peripheral periph, bool disableGpio = true );
   bool releasePeripherals( );
 
   bool registerInterruptHandler( void* yourobj, void (*yourfunc)());
@@ -65,11 +72,11 @@ private:
 };
 
 /**
-	\defgroup IoIndices IO Indices
+  \defgroup IoIndices IO Indices
   Indices (0-63) for each of the processor's IO lines.  PA0-PA31 are represented
   by indices 0 - 31, PB0-PB31 by indices 32 - 63.
-	\ingroup Io
-	@{
+  \ingroup Io
+  @{
 */
 
 /** IO 0, Port A */

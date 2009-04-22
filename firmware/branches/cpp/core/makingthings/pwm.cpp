@@ -51,7 +51,7 @@ Pwm::Pwm( int channel )
     return;
   _duty = _period = 0;
   // IO line should use peripheral A
-  Io pwmPin( getIo( channel ), IO_A );
+  Io pwmPin( getIo( channel ), Io::A );
 
   unsigned int mask = 1 << channel;
   if( !(activeChannels & mask) )
