@@ -26,7 +26,7 @@
   Create a new Io object.
   
   @param index Which pin to control - see IoIndices
-  @param peripheral (optional) Which peripheral to configure the Io as - defaults to GPIO.
+  @param peripheral (optional) Which Peripheral to configure the Io as - defaults to GPIO.
   @param output (optional) If peripheral is GPIO, set whether it's an input or an output - 
   defaults to output.
   
@@ -36,7 +36,7 @@
   io.on(); // turn the output on
   
   // or specify more config info
-  Io io(IO_PA08, GPIO, false); // control pin PA08, as an input
+  Io io(IO_PA08, Io::GPIO, false); // control pin PA08, as an input
   bool is_pa08_on = io.value(); // is it on?
   \endcode
 */
