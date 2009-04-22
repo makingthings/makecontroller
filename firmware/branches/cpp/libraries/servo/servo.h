@@ -54,7 +54,7 @@
   
   See the servo section in the <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/servos">
   Application Board overview</a> for more detailed info.
-  \ingroup Libraries
+  \ingroup io
 */
 class Servo
 {

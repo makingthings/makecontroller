@@ -57,7 +57,7 @@
   \section moreinfo More Info
   See the <a href="http://www.makingthings.com/documentation/how-to/stepper-motor">Stepper Motor how-to</a>
   for more detailed info on hooking up a stepper motor to the Make Controller.
-  \ingroup Libraries
+  \ingroup io
 */
 class Stepper
 {

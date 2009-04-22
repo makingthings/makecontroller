@@ -28,7 +28,7 @@
   
   See the <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/user-interface">
   Application Board overview</a> for details.
-  \ingroup Libraries
+  \ingroup io
 */
 class DipSwitch
 {

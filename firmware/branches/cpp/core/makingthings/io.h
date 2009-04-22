@@ -25,6 +25,11 @@
 
 enum IoPeripheral { IO_A, IO_B, GPIO };
 
+/**
+  Control any of the 35 Input/Output signals on the Make Controller.
+  
+  \ingroup io
+*/
 class Io
 {
 public:

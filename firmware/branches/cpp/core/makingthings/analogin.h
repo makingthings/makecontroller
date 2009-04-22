@@ -36,6 +36,8 @@
   
   A quicker version that doesn't use floating point, but will be slightly less precise:
   \code int voltage = ( 100 * ainValue ) / 1023 \endcode
+  
+  \ingroup io
 */
 class AnalogIn
 {

@@ -39,6 +39,8 @@
   
   See the <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/digital-outputs">
   Digital Out section</a> of the Application Board overview for more details.
+  
+  \ingroup io
 */
 class DigitalOut
 {

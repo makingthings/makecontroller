@@ -43,6 +43,8 @@
   Internally, the 8 inputs on the Application Board consist of 4 dedicated analog inputs, and 4 lines which can
   be configured either as digitial ins or outs. Because digital ins 4-7 are always AnalogIn lines, there's no 
   performance gain to reading those as DigitalIns as opposed to AnalogIns.
+  
+  \ingroup io
 */
 class DigitalIn
 {
