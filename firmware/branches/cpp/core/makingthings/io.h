@@ -19,14 +19,50 @@
 #ifndef IO_H
 #define IO_H
 
-#define IO_OUTPUT true
-#define IO_INPUT false /**< for output */
+#define OUTPUT true
+#define INPUT false
 #define INVALID_PIN 1024 // a value too large for any pin
 
 /**
   Control any of the 35 Input/Output signals on the Make Controller.
   
-  See the \ref IoIndices list for possible signals.
+  Each of the signals on the Make Controller can be used as a digital in/out, and many
+  can be used as part of one of the peripherals on the board (serial, usb, etc).  The Io 
+  class allows you to easily control these signals.
+  
+  \section Usage
+  The most common way to use the Io system is to control pins as GPIO (general purpose in/out).
+  To do this, create a new Io object, specifying that you want it to be a GPIO and whether it should
+  be an input or an output.  Check the list of signal names at \ref IoIndices.
+  
+  \code
+  Io mysensor(IO_PA08, Io::GPIO, INPUT); // a new digital in on PA08, as a GPIO input
+  bool isOn = mysensor.value(); // now read the input with the value() method
+  \endcode
+  
+  You can just as easily set it up as a digital out, and turn it on and off:
+  \code
+  Io myLED(IO_PA08, Io::GPIO, OUTPUT); // a new digital in on PA08, as a GPIO output
+  myLED.on(); // turn it on
+  myLED.off(); // turn it off
+  // or do it with setValue if you want to keep the state in a variable
+  bool state = true;
+  myLED.setValue(state); // turn it on
+  state = false;
+  myLED.setValue(state); // turn it off
+  
+  // we can even change it back into an input
+  myLED.setDirection(INTPUT);
+  // hmm...the myLED name doesn't make so much sense now...oh well
+  \endcode
+  
+  \section settings Additional Settings
+  Each Io pin also has some additional settings that can optionally be configured.
+  - \b Pullup - each signal has an optional pullup resistor that can be enabled.  To 
+  configure this, use the pullup() and setPullup() methods.
+  - <b>Glitch Filter</b> - each signal also has a glitch filter that can help reject 
+  short signals (most signals less than a master clock cycle, which is roughly 20 ns).
+  Check the filter() and setFilter() methods.
   
   \ingroup io
 */
@@ -39,13 +75,12 @@ public:
     can be part of a peripheral (such as a serial port, etc.)
   */
   enum Peripheral { 
-    A,    /**< Peripheral A */
-    B,    /**< Peripheral B */
-    GPIO  /**< General Purpose IO */
+    A,    /**< Peripheral A - refer to as Io::A */
+    B,    /**< Peripheral B - refer to as Io::B */
+    GPIO  /**< General Purpose IO - refer to as Io::GPIO */
   };
   
-  Io( int pin = INVALID_PIN, Peripheral = GPIO, bool output = IO_OUTPUT );
-  ~Io( ) { releasePeripherals( ); }
+  Io( int pin = INVALID_PIN, Peripheral = GPIO, bool output = OUTPUT );
   bool valid( ) { return io_pin != INVALID_PIN; }
   
   bool setPin( int pin );
