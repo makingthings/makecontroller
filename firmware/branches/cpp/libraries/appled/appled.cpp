@@ -59,7 +59,7 @@ AppLed::AppLed( int index )
   if( index < 0 || index >= APPLED_COUNT )
     return;
   if( !leds[_index] )
-    leds[_index] = new Io( getIo(_index), GPIO, IO_OUTPUT );
+    leds[_index] = new Io( getIo(_index), Io::GPIO, IO_OUTPUT );
 //  #ifdef OSC
 //  oscHandler = new AppLedOSC();
 //  #endif

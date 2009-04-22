@@ -67,7 +67,7 @@ AnalogIn::AnalogIn( int channel )
   // The lower four channel pins are shared with other subsystems, so config as GPIO inputs
   if ( index < 4 )
   {
-    Io pin( getIo( index ), GPIO, IO_INPUT );
+    Io pin( getIo( index ), Io::GPIO, IO_INPUT );
     pin.setPullup( false );
   }
 }

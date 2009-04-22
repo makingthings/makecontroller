@@ -62,7 +62,7 @@ Spi::Spi( int channel )
   _channel = channel;
   if(refcount++ == 0)
     init();
-  IoPeripheral io_type = getChannelPeripheralA( channel ) ? IO_A : IO_B;
+  Io::Peripheral io_type = getChannelPeripheralA( channel ) ? Io::A : Io::B;
   chan = new Io( getIO(channel), io_type );
 }
 

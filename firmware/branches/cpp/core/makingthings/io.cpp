@@ -22,7 +22,25 @@
 
 #define IO_PIN_COUNT_ 64
 
-Io::Io( int index, IoPeripheral peripheral, bool direction  )
+/**
+  Create a new Io object.
+  
+  @param index Which pin to control - see IoIndices
+  @param peripheral (optional) Which peripheral to configure the Io as - defaults to GPIO.
+  @param output (optional) If peripheral is GPIO, set whether it's an input or an output - 
+  defaults to output.
+  
+  \b Example
+  \code
+  Io io(IO_PA07); // control pin PA07, defaults to GPIO configured as an output
+  io.on(); // turn the output on
+  
+  // or specify more config info
+  Io io(IO_PA08, GPIO, false); // control pin PA08, as an input
+  bool is_pa08_on = io.value(); // is it on?
+  \endcode
+*/
+Io::Io( int index, Peripheral peripheral, bool output  )
 {
   io_pin = INVALID_PIN;
   if ( index < 0 || index > IO_PIN_COUNT_ )
@@ -32,9 +50,17 @@ Io::Io( int index, IoPeripheral peripheral, bool direction  )
   io_pin = index;
   setPeripheral( peripheral );
   if( peripheral == GPIO )
-    setDirection( direction );
+    setDirection( output );
 }
 
+/**
+  Set which pin an Io is controlling.
+  
+  \b Example
+  \code
+  
+  \endcode
+*/
 bool Io::setPin( int pin )
 {
   if ( pin < 0 || pin > IO_PIN_COUNT_ )
@@ -43,11 +69,27 @@ bool Io::setPin( int pin )
   return true;
 }
 
+/**
+  Read which pin an Io is controlling.
+  
+  \b Example
+  \code
+
+  \endcode
+*/
 int Io::pin( )
 {
   return ( io_pin == INVALID_PIN ) ? -1 : io_pin;
 }
 
+/**
+  Read whether an Io is on or off.
+  
+  \b Example
+  \code
+
+  \endcode
+*/
 bool Io::value( )
 {
   if ( io_pin == INVALID_PIN )
@@ -60,6 +102,16 @@ bool Io::value( )
     return ( ( AT91C_BASE_PIOB->PIO_PDSR & mask ) != 0 ) ? 1 : 0;
 }
 
+/**
+  Turn an Io on or off.
+  
+  The Io must be configured as an output to turn it on/off.
+  
+  \b Example
+  \code
+
+  \endcode
+*/
 bool Io::setValue( bool onoff )
 {
   if ( io_pin == INVALID_PIN )
@@ -83,6 +135,14 @@ bool Io::setValue( bool onoff )
   return true;
 }
 
+/**
+  Turn on Io on.
+  
+  \b Example
+  \code
+
+  \endcode
+*/
 bool Io::on()
 {
   int mask = 1 << ( io_pin & 0x1F );
@@ -93,6 +153,14 @@ bool Io::on()
   return true;
 }
 
+/**
+  Turn an Io off.
+  
+  \b Example
+  \code
+
+  \endcode
+*/
 bool Io::off()
 {
   int mask = 1 << ( io_pin & 0x1F );
@@ -103,6 +171,14 @@ bool Io::off()
   return true;
 }
 
+/**
+  Read whether an Io is an input or an output.
+  
+  \b Example
+  \code
+
+  \endcode
+*/
 bool Io::direction( )
 {
   if ( io_pin == INVALID_PIN )
@@ -114,6 +190,14 @@ bool Io::direction( )
     return ( AT91C_BASE_PIOB->PIO_OSR & ( 1 << ( io_pin & 0x1F ) ) ) != 0;
 }
 
+/**
+  Set an Io as an input or an output
+  
+  \b Example
+  \code
+
+  \endcode
+*/
 bool Io::setDirection( bool output )
 {
   if ( io_pin == INVALID_PIN )
@@ -136,6 +220,14 @@ bool Io::setDirection( bool output )
   return true;
 }
 
+/**
+  Read whether the pullup is enabled for an Io.
+  
+  \b Example
+  \code
+
+  \endcode
+*/
 bool Io::pullup( )
 {
   if ( io_pin == INVALID_PIN )
@@ -148,6 +240,14 @@ bool Io::pullup( )
     return ( AT91C_BASE_PIOB->PIO_PPUSR & ( 1 << ( io_pin & 0x1F ) ) ) == 0;
 }
 
+/**
+  Set whether the pullup is enabled for an Io.
+  
+  \b Example
+  \code
+
+  \endcode
+*/
 bool Io::setPullup( bool enabled )
 {
   if ( io_pin == INVALID_PIN )
@@ -171,6 +271,14 @@ bool Io::setPullup( bool enabled )
   return true;
 }
 
+/**
+  Read whether the glitch filter is enabled for an Io.
+  
+  \b Example
+  \code
+
+  \endcode
+*/
 bool Io::filter( )
 {
   if ( io_pin == INVALID_PIN )
@@ -182,6 +290,14 @@ bool Io::filter( )
     return AT91C_BASE_PIOB->PIO_IFSR & ( 1 << ( io_pin & 0x1F ) );
 }
 
+/**
+  Set whether the glitch filter is enabled for an Io.
+  
+  \b Example
+  \code
+
+  \endcode
+*/
 bool Io::setFilter( bool enabled )
 {
   if ( io_pin == INVALID_PIN )
@@ -205,6 +321,14 @@ bool Io::setFilter( bool enabled )
   return true;
 }
 
+/**
+  Read which perihperal an Io has been configured as.
+  
+  \b Example
+  \code
+
+  \endcode
+*/
 int Io::peripheral( )
 {
   if ( io_pin == INVALID_PIN )
@@ -216,7 +340,15 @@ int Io::peripheral( )
     return ( AT91C_BASE_PIOB->PIO_PSR & ( 1 << ( io_pin & 0x1F ) ) ) != 0;
 }
 
-bool Io::setPeripheral( IoPeripheral periph, bool disableGpio )
+/**
+  Set the peripheral an Io should be configured as.
+  
+  \b Example
+  \code
+
+  \endcode
+*/
+bool Io::setPeripheral( Peripheral periph, bool disableGpio )
 {
   if ( io_pin == INVALID_PIN )
     return 0;
@@ -224,7 +356,7 @@ bool Io::setPeripheral( IoPeripheral periph, bool disableGpio )
   int mask = 1 << ( io_pin & 0x1F );
   switch( periph )
   {
-    case IO_A: // disable pio for each
+    case A: // disable pio for each
       if ( io_pin < 32 )
       {
         if( disableGpio )
@@ -238,7 +370,7 @@ bool Io::setPeripheral( IoPeripheral periph, bool disableGpio )
         AT91C_BASE_PIOB->PIO_ASR = mask;
       }
       break;
-    case IO_B:
+    case B:
       if ( io_pin < 32 )
       {
         if( disableGpio )
