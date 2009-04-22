@@ -38,7 +38,7 @@
 Led::Led( )
 {
   ledIo.setPin( LED_IO );
-  ledIo.setDirection( IO_OUTPUT );
+  ledIo.setDirection( OUTPUT );
   ledIo.setPeripheral( Io::GPIO );
 }
 
