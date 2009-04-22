@@ -52,7 +52,7 @@
   myLED.setValue(state); // turn it off
   
   // we can even change it back into an input
-  myLED.setDirection(INTPUT);
+  myLED.setDirection(INPUT);
   // hmm...the myLED name doesn't make so much sense now...oh well
   \endcode
   
