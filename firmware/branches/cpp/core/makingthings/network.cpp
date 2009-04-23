@@ -374,8 +374,7 @@ void Network::dhcpStop( struct netif* netif )
   Up to 4 DNS entries are cached, so if you make successive calls to this function, 
   you won't incur a whole lookup roundtrip - you'll just get the cached value.
   The cached values are maintained internally, so if one of them becomes invalid, a
-  new lookup will be fired off the next time it's asked for.  The timeout for this
-  operation is 30 seconds.
+  new lookup will be fired off the next time it's asked for.
   @param name The domain to look up.
   @param timeout (optional) The number of seconds to wait for this operation to 
   complete - defaults to 30 seconds.
