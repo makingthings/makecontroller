@@ -123,4 +123,7 @@ void vEMACWaitForInput( void );
  */
 unsigned portLONG ulEMACInputLength( void );
 
+#include "lwip/api.h"
+err_t ethernetif_init( struct netif *netif ); // MakingThings
+
 #endif

@@ -1,139 +1,156 @@
 #
-# MAKINGTHINGS MAKE FILE FOR THE MAKE CONTROLLER
-# Each project may be named uniquely 
-# (See Output variable below) and possibly have different source files
-# Dependencies are automatically created by the compiler (into .d files) and 
-# included in the makefile 
+# MakingThings -  Makefile for the Make Controller
 #
 
-# Name the output files here
-OUTPUT = heavy
+# the name for your project...will result in PROJECT_NAME.bin
+PROJECT_NAME = heavy
+# set DEBUG to -g to include debug info, otherwise leave blank
+DEBUG = 
+# available optimization levels: -O0, -O1, -O2, -O3, -Os
+OPTIMIZATION = -Os
 
-# this rule says that when "make" is typed the bin file is created 		       
-all: output/$(OUTPUT).bin
+FREERTOS = ../../core/freertos
+LWIP = ../../core/lwip
+USB = ../../core/usb
+MAKINGTHINGS = ../../core/makingthings
+LIBRARIES = ../../libraries
+STARTUP = ../../core/startup
 
 # Source files that can be built in THUMB mode.
 THUMB_SRC= \
-  make.c \
-  ../../core/freertos/tasks.c \
-  ../../core/freertos/queue.c \
-  ../../core/freertos/list.c \
-  ../../core/freertos/portable/GCC/ARM7_AT91SAM7S/port.c \
   ../../core/startup/extras.c \
-  ../../core/freertos/portable/MemMang/heap_2.c \
-  ../../core/makingthings/main.c \
-  ../../core/makingthings/eeprom.c \
-  ../../core/makingthings/analogin.c \
-  ../../core/makingthings/serial.c \
-  ../../core/makingthings/pwm.c \
-  ../../core/makingthings/spi.c \
-  ../../core/makingthings/USB-CDC.c \
-  ../../core/makingthings/rtos.c \
-  ../../core/makingthings/usb.c \
-  ../../core/makingthings/network.c \
-  ../../core/makingthings/system.c \
-  ../../libraries/xbee/xbee.c \
-  ../../libraries/servo/servo.c \
-  ../../libraries/stepper/stepper.c \
-  ../../libraries/dipswitch/dipswitch.c \
-  ../../libraries/motor/motor.c \
-  ../../libraries/appled/appled.c \
-  ../../libraries/pwmout/pwmout.c \
-  ../../libraries/digitalin/digitalin.c \
-  ../../libraries/digitalout/digitalout.c \
-  ../../libraries/webserver/webserver.c \
-  ../../core/makingthings/io.c \
-  ../../core/makingthings/led.c \
-  ../../core/makingthings/timer.c \
-  ../../core/makingthings/fasttimer.c \
-  ../../core/makingthings/debugosc.c \
-  ../../core/lwip/src/core/tcp_out.c \
-  ../../core/lwip/src/core/ipv4/inet.c \
-  ../../core/lwip/src/core/mem.c \
-  ../../core/lwip/src/core/memp.c \
-  ../../core/lwip/src/core/netif.c \
-  ../../core/lwip/src/core/pbuf.c \
-  ../../core/lwip/src/core/raw.c \
-  ../../core/lwip/src/core/stats.c \
-  ../../core/lwip/src/core/sys.c \
-  ../../core/lwip/src/core/tcp.c \
-  ../../core/lwip/src/core/tcp_in.c \
-  ../../core/lwip/src/core/init.c \
-  ../../core/lwip/src/core/ipv4/ip.c \
-  ../../core/lwip/src/core/ipv4/ip_addr.c \
-  ../../core/lwip/src/core/ipv4/icmp.c \
-  ../../core/lwip/src/core/ipv4/inet_chksum.c \
-  ../../core/lwip/src/core/dhcp.c \
-  ../../core/lwip/src/core/dns.c \
-  ../../core/lwip/src/api/tcpip.c \
-  ../../core/lwip/src/api/api_msg.c \
-  ../../core/lwip/src/api/err.c \
-  ../../core/lwip/src/api/netbuf.c \
-  ../../core/lwip/src/api/api_lib.c \
-  ../../core/lwip/src/netif/etharp.c \
-  ../../core/lwip/contrib/port/FreeRTOS/AT91SAM7X/sys_arch.c \
-  ../../core/lwip/src/netif/ethernetif.c \
-  ../../core/makingthings/SAM7_EMAC.c \
-  ../../core/lwip/src/core/udp.c \
-  ../../core/lwip/src/core/ipv4/ip_frag.c \
-  ../../core/makingthings/osc.c \
-  ../../core/makingthings/osc_patternmatch.c
-  
+  $(FREERTOS)/tasks.c \
+  $(FREERTOS)/queue.c \
+  $(FREERTOS)/list.c \
+  $(FREERTOS)/portable/GCC/ARM7_AT91SAM7S/port.c \
+  $(FREERTOS)/portable/MemMang/heap_2.c \
+  $(LWIP)/src/core/tcp_out.c \
+  $(LWIP)/src/core/ipv4/inet.c \
+  $(LWIP)/src/core/mem.c \
+  $(LWIP)/src/core/memp.c \
+  $(LWIP)/src/core/netif.c \
+  $(LWIP)/src/core/pbuf.c \
+  $(LWIP)/src/core/raw.c \
+  $(LWIP)/src/core/stats.c \
+  $(LWIP)/src/core/sys.c \
+  $(LWIP)/src/core/tcp.c \
+  $(LWIP)/src/core/tcp_in.c \
+  $(LWIP)/src/core/init.c \
+  $(LWIP)/src/core/ipv4/ip.c \
+  $(LWIP)/src/core/ipv4/ip_addr.c \
+  $(LWIP)/src/core/ipv4/icmp.c \
+  $(LWIP)/src/core/ipv4/inet_chksum.c \
+  $(LWIP)/src/core/dhcp.c \
+  $(LWIP)/src/core/dns.c \
+  $(LWIP)/src/api/tcpip.c \
+  $(LWIP)/src/api/api_msg.c \
+  $(LWIP)/src/api/err.c \
+  $(LWIP)/src/api/netbuf.c \
+  $(LWIP)/src/api/api_lib.c \
+  $(LWIP)/src/netif/etharp.c \
+  $(LWIP)/contrib/port/FreeRTOS/AT91SAM7X/sys_arch.c \
+  $(LWIP)/src/netif/ethernetif.c \
+  $(MAKINGTHINGS)/SAM7_EMAC.c \
+  $(LWIP)/src/core/udp.c \
+  $(LWIP)/src/core/ipv4/ip_frag.c \
+  $(USB)/device/cdc-serial/CDCDSerialDriver.c \
+  $(USB)/device/cdc-serial/CDCDSerialDriverDescriptors.c \
+  $(USB)/device/core/USBDCallbacks_Initialized.c \
+  $(USB)/device/core/USBDCallbacks_Reset.c \
+  $(USB)/device/core/USBDCallbacks_Resumed.c \
+  $(USB)/device/core/USBDCallbacks_Suspended.c \
+  $(USB)/device/core/USBDDriverCb_CfgChanged.c \
+  $(USB)/device/core/USBDDriverCb_IfSettingChanged.c \
+  $(USB)/device/core/USBDDriver.c \
+  $(USB)/common/core/USBSetAddressRequest.c \
+  $(USB)/common/core/USBGenericDescriptor.c \
+  $(USB)/common/core/USBGenericRequest.c \
+  $(USB)/common/core/USBGetDescriptorRequest.c \
+  $(USB)/common/core/USBSetConfigurationRequest.c \
+  $(USB)/common/core/USBFeatureRequest.c \
+  $(USB)/common/core/USBEndpointDescriptor.c \
+  $(USB)/common/core/USBConfigurationDescriptor.c \
+  $(USB)/common/core/USBInterfaceRequest.c \
+  $(USB)/common/cdc/CDCSetControlLineStateRequest.c \
+  $(USB)/common/cdc/CDCLineCoding.c \
+
+CPP_THUMB_SRC = \
+  $(STARTUP)/extras_cpp.cpp \
+  $(MAKINGTHINGS)/rtos.cpp \
+  $(MAKINGTHINGS)/main.cpp \
+  $(MAKINGTHINGS)/io.cpp \
+  $(MAKINGTHINGS)/led.cpp \
+  $(MAKINGTHINGS)/usb_serial.cpp \
+  $(MAKINGTHINGS)/network.cpp \
+  $(MAKINGTHINGS)/tcpsocket.cpp \
+  $(MAKINGTHINGS)/udpsocket.cpp \
+  $(MAKINGTHINGS)/tcpserver.cpp \
+  $(MAKINGTHINGS)/osc_cpp.cpp \
+  $(MAKINGTHINGS)/osc_message.cpp \
+  $(MAKINGTHINGS)/osc_pattern.cpp \
+  $(MAKINGTHINGS)/spi.cpp \
+  $(MAKINGTHINGS)/eeprom.cpp \
+  $(MAKINGTHINGS)/timer.cpp \
+  $(MAKINGTHINGS)/fasttimer.cpp \
+  $(MAKINGTHINGS)/analogin.cpp \
+  $(MAKINGTHINGS)/pwm.cpp \
+  $(LIBRARIES)/appled/appled.cpp \
+  $(LIBRARIES)/dipswitch/dipswitch.cpp \
+  make.cpp \
+
 # Source files that must be built in ARM mode.
 ARM_SRC= \
-  ../../core/freertos/portable/GCC/ARM7_AT91SAM7S/portISR.c \
-  ../../core/makingthings/SAM7_EMAC_ISR.c \
-  ../../core/makingthings/USBIsr.c \
-  ../../core/makingthings/analogin_isr.c \
-  ../../core/makingthings/fasttimer_isr.c \
-  ../../core/makingthings/serial_isr.c \
-  ../../core/makingthings/timer_isr.c \
-  ../../core/makingthings/can_isr.c
+  $(FREERTOS)/portable/GCC/ARM7_AT91SAM7S/portISR.c \
+  $(MAKINGTHINGS)/SAM7_EMAC_ISR.c \
+  $(USB)/device/core/USBD_UDP.c
+  
+CPP_ARM_SRC = \
+  $(MAKINGTHINGS)/analogin_isr.cpp \
+  $(MAKINGTHINGS)/fasttimer_isr.cpp \
+  $(MAKINGTHINGS)/timer_isr.cpp
+
   
 # All the include directories need to be appended here
 INCLUDEDIRS = \
 -I.  \
--I../../libraries/appled  \
--I../../libraries/digitalin  \
--I../../libraries/digitalout  \
--I../../libraries/dipswitch  \
--I../../libraries/motor  \
--I../../libraries/pwmout  \
--I../../libraries/servo  \
--I../../libraries/stepper  \
--I../../libraries/webserver  \
--I../../libraries/xbee  \
--I../../core/makingthings  \
--I../../core/makingthings/testing  \
--I../../core/lwip/src/include  \
--I../../core/lwip/contrib/port/FreeRTOS/AT91SAM7X  \
--I../../core/freertos/include  \
--I../../core/freertos/portable/GCC/ARM7_AT91SAM7S  \
--I../../core/lwip/src/include/ipv4 \
+-I$(LIBRARIES)/appled  \
+-I$(LIBRARIES)/digitalin  \
+-I$(LIBRARIES)/digitalout  \
+-I$(LIBRARIES)/dipswitch  \
+-I$(LIBRARIES)/motor  \
+-I$(LIBRARIES)/pwmout  \
+-I$(LIBRARIES)/servo  \
+-I$(LIBRARIES)/stepper  \
+-I$(LIBRARIES)/webserver  \
+-I$(LIBRARIES)/xbee  \
+-I$(MAKINGTHINGS)  \
+-I$(LWIP)/src/include  \
+-I$(LWIP)/contrib/port/FreeRTOS/AT91SAM7X  \
+-I$(FREERTOS)/include  \
+-I$(FREERTOS)/portable/GCC/ARM7_AT91SAM7S  \
+-I$(LWIP)/src/include/ipv4 \
+-I$(USB)/device/cdc-serial \
+-I$(USB)/device/core \
+-I$(USB)/common/core \
+-I$(USB)/common/cdc
 
 ############################################################################
 # Below here should not change from project to project
 
 CC=arm-elf-gcc
+CPP=arm-elf-g++
 OBJCOPY=arm-elf-objcopy
 ARCH=arm-elf-ar
-CRT0=../../core/startup/AT91SAM7_Startup.s ../../core/startup/crt0.s
-DEBUG=
-OPTIM=-O2
-LDSCRIPT=../../core/startup/make-controller.ld
+CRT0=$(STARTUP)/AT91SAM7_Startup.s $(STARTUP)/crt0.s
+LDSCRIPT=$(STARTUP)/make-controller.ld
 
-#
-# CFLAGS common to both the THUMB and ARM mode builds
-#
-
-CFLAGS= \
+# flags common to both c and c++
+C_AND_CPP_FLAGS = \
 $(INCLUDEDIRS) \
 -Wall  \
 -Wextra  \
--Wstrict-prototypes  \
--Wmissing-prototypes  \
--Wmissing-declarations  \
 -Wno-strict-aliasing  \
+-fno-builtin-printf \
 -D SAM7_GCC  \
 -D THUMB_INTERWORK \
 -D__FLASH_BUILD \
@@ -144,29 +161,47 @@ $(INCLUDEDIRS) \
 $(DEBUG)  \
 $(OPTIM)
 
+CFLAGS = ${C_AND_CPP_FLAGS}
+CFLAGS += -Wmissing-prototypes -Wmissing-declarations
+
+CPPFLAGS = ${C_AND_CPP_FLAGS}
+CPPFLAGS += -fno-rtti -fno-exceptions -fno-unwind-tables
+
 THUMB_FLAGS=-mthumb
-LINKER_FLAGS=-Xlinker -ooutput/$(OUTPUT).elf -Xlinker -M -Xlinker -Map=output/$(OUTPUT)_o.map
+LINKER_FLAGS=-Xlinker -ooutput/$(PROJECT_NAME).elf -Xlinker -M -Xlinker -Map=output/$(PROJECT_NAME)_o.map
 
 ARM_OBJ = $(ARM_SRC:.c=.o)
 THUMB_OBJ = $(THUMB_SRC:.c=.o)
+CPP_THUMB_OBJ = $(CPP_THUMB_SRC:.cpp=.o)
+CPP_ARM_OBJ = $(CPP_ARM_SRC:.cpp=.o)
 
-output/$(OUTPUT).bin : output/$(OUTPUT).elf
-	$(OBJCOPY) output/$(OUTPUT).elf -O binary output/$(OUTPUT).bin
+all: output/$(PROJECT_NAME).bin
+  
+output/$(PROJECT_NAME).bin : output/$(PROJECT_NAME).elf
+	$(OBJCOPY) output/$(PROJECT_NAME).elf -O binary output/$(PROJECT_NAME).bin
 	
-output/$(OUTPUT).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CRT0)
-	$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles -x assembler-with-cpp $(CRT0) $(LINKER_FLAGS)
+output/$(PROJECT_NAME).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CPP_ARM_OBJ) $(CPP_THUMB_OBJ) $(CRT0)
+	$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) $(CPP_ARM_OBJ) $(CPP_THUMB_OBJ) -nostartfiles -x assembler-with-cpp $(CRT0) $(LINKER_FLAGS)
 
 $(THUMB_OBJ) : %.o : %.c config.h
 	$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@
 
+$(CPP_THUMB_OBJ) : %.o : %.cpp config.h
+	$(CPP) -c $(THUMB_FLAGS) $(CPPFLAGS) $< -o $@
+
 $(ARM_OBJ) : %.o : %.c config.h
 	$(CC) -c $(CFLAGS) $< -o $@
-  	    
+
+$(CPP_ARM_OBJ) : %.o : %.cpp config.h
+	$(CPP) -c $(CPPFLAGS) $< -o $@
+
 clean :
 	rm -f $(ARM_OBJ)
 	rm -f $(THUMB_OBJ)
-	rm -f output/$(OUTPUT).elf     
-	rm -f output/$(OUTPUT).bin     
-	rm -f output/$(OUTPUT)_o.map     
+	rm -f $(CPP_ARM_OBJ)
+	rm -f $(CPP_THUMB_OBJ)
+	rm -f output/$(PROJECT_NAME).elf
+	rm -f output/$(PROJECT_NAME).bin
+	rm -f output/$(PROJECT_NAME)_o.map
 
 

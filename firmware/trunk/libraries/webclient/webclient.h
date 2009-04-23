@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006-2008 MakingThings
+ Copyright 2006-2009 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -23,10 +23,27 @@
 #ifndef WEBCLIENT_H
 #define WEBCLIENT_H
 
-#include "string.h"
-#include <stdio.h>
+#include "tcpsocket.h"
 
-int WebClient_Get( int address, int port, char* path, char* hostname, char* buffer, int buffer_size );
-int WebClient_Post( int address, int port, char* path, char* hostname, char* buffer, int buffer_length, int buffer_size );
+/**
+  Connect to sites and other services on the internet or local network.
+  
+  \ingroup networking
+*/
+class WebClient
+{
+public:
+  WebClient(int address = 0, int port = 80);
+  void setAddress(int address, int port = 80);
+  int get( char* hostname, char* path, char* buffer, int size );
+  int post( char* hostname, char* path, char* buffer, int post_length, int response_length );
+
+protected:
+  int address;
+  int port;
+  TcpSocket socket;
+
+  int readResponse( char* buf, int size );
+};
 
 #endif // WEBCLIENT_H

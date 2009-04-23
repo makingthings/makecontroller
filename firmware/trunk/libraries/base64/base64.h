@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006-2008 MakingThings
+ Copyright 2006-2009 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -20,7 +20,21 @@
 
 #include "types.h"
 
-bool Base64_Decode(char* dest, int* dest_size, const char* src, int src_size);
-int Base64_Encode(char* dest, int dest_size, const char* src, int src_size);
+/**
+  Decode and encode base 64 data.
+
+  This is often handy when you need to send raw/binary data (as opposed to text) through a 
+  text based format, like XML or JSON.
+
+  Most code lifted from gnulib - http://savannah.gnu.org/projects/gnulib - and written by Simon Josefsson.
+  \par
+*/
+class Base64
+{
+public:
+  static bool decode(char* dest, int* dest_size, const char* src, int src_size);
+  static int encode(char* dest, int dest_size, const char* src, int src_size);
+};
+
 
 #endif // BASE_64_H

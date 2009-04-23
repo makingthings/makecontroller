@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006-2008 MakingThings
+ Copyright 2006-2009 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -15,55 +15,119 @@
 
 *********************************************************************************/
 
-/*
-	RTOS.H
-
-  MakingThings
-*/
-
 #ifndef RTOS_H
 #define RTOS_H
 
 #include "types.h"
+#include "FreeRTOS.h"
+#include "projdefs.h"
+#include "portmacro.h"
+#include "queue.h"
+#include "task.h"
+#include "semphr.h"
 
-void  Sleep( int timems );
-void* TaskCreate(  void (taskCode)(void*), char* name, int stackDepth, void* parameters, int priority );
-void  TaskYield( void );
-void  TaskDelete( void* task );
-void  TaskEnterCritical( void );
-void  TaskExitCritical( void );
-int TaskGetRemainingStack( void* task );
-void* getTaskByName( char *taskName );
-void* getTaskByID( int taskID );
-int TaskGetPriority( void* task );
-void TaskSetPriority( void* task, int priority );
-int TaskGetIDNumber( void* task );
-char* TaskGetName( void* task );
-int TaskGetStackAllocated( void* task );
-void* TaskGetCurrent( void );
-void* TaskGetNext( void* task );
-int GetNumberOfTasks( void );
-int TaskGetTopPriorityUsed( void );
-int TaskGetTickCount( void );
+/**
+  A run loop.
+*/
+typedef void (TaskLoop)(void*);
 
-void* Malloc( int size );
-void* MallocWait( int size, int interval );
-void Free( void* memory );
+/**
+  A run loop, or thread, that can run simultaneously with many others.
+  
+  \section Usage
+  Tasks are usually...
+  
+  \section Memory
+  Memory is a pain...
+  
+  \section Priority
+  A few words on priority...
+  
+  \section Synchronization
+  To synchronize...
+  
+  \ingroup rtos
+*/
+class Task
+{
+public:
+  Task( TaskLoop loop, const char* name, int stackDepth, int priority, void* params = 0 );
+  ~Task( );
+  static void sleep( int ms );
+  static void yield( );
+  static void enterCritical( );
+  static void exitCritical( );
+  int remainingStack( );
+  int priority( );
+  void setPriority( int priority );
+  int id( );
+  char* name( );
+  Task* nextTask( );
+protected:
+  void* _task;
 
-void* QueueCreate( uint length, uint itemSize );
-int QueueSendToFront( void* queue, void* itemToQueue, int msToWait );
-int QueueSendToBack( void* queue, void* itemToQueue, int msToWait );
-int QueueReceive( void* queue, void* buffer, int msToWait );
-int QueueMessagesWaiting( void* queue );
-void QueueDelete( void* queue );
-int QueueSendToFrontFromISR( void* queue, void* itemToSend, int taskPreviouslyWoken );
-int QueueSendToBackFromISR( void* queue, void* itemToSend, int taskPreviouslyWoken );
-int QueueReceiveFromISR( void* queue, void* buffer, long* taskWoken );
+};
 
-void* SemaphoreCreate( void );
-void* MutexCreate( void );
-int SemaphoreTake( void* semaphore, int blockTime );
-int SemaphoreGive( void* semaphore );
-int SemaphoreGiveFromISR( void* semaphore, int taskPreviouslyWoken );
+/**
+  The Real Time Operating System at the heart of the Make Controller.
+  
+  \ingroup rtos
+*/
+class RTOS
+{
+public:
+  static Task* findTaskByName( const char* name );
+  static Task* findTaskByID( int id );
+  static Task* currentTask( );
+  static int numberOfTasks( );
+  static int topTaskPriority( );
+  static int ticksSinceBoot( );
 
-#endif
+protected:
+  static void* getNextTaskControlBlock( void* task );
+  static void* findTask( char *taskName, int taskID );
+  static void* iterateByID( int id, xList* pxList );
+  static void* iterateByName( char* taskName, xList* pxList );
+  static void* iterateForNextTask( void** lowTask, int* lowID, void** highTask, int* highID, int currentID, xList* pxList );
+
+  friend class Task;
+};
+
+/**
+  An inter-task mechanism to pass data.
+  
+  \ingroup rtos
+*/
+class Queue
+{
+public:
+  Queue( uint length, uint itemSize );
+  ~Queue( );
+  
+  bool send( void* itemToQueue, int timeout = -1 );
+  bool receive( void* buffer, int timeout = -1 );
+  int msgsAvailable( );
+  bool sendFromISR( void* itemToSend, int* taskWoken );
+  bool receiveFromISR( void* buffer, int* taskWoken );
+private:
+  void* _q;
+};
+
+/**
+  A way to synchronize between different tasks.
+  
+  \ingroup rtos
+*/
+class Semaphore
+{
+public:
+  Semaphore( );
+  ~Semaphore( );
+  bool take( int timeout = -1 );
+  bool give( );
+  bool giveFromISR( int* taskWoken );
+private:
+  void* _sem;
+};
+
+#endif // RTOS__H

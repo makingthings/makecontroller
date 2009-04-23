@@ -1,0 +1,41 @@
+/*********************************************************************************
+
+ Copyright 2006-2009 MakingThings
+
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
+
+*********************************************************************************/
+
+/**
+  \page dataformats Data Formats & Protocols
+  
+  \section OSC
+  The Make Controller has great support for OSC (Open Sound Control).  Don't let the name fool you - 
+  OSC is not actually audio-specific, but is a nice general data format and is widely supported
+  in most programming environments.  Most systems on the Make Controller are exposed via OSC
+  so they can be controlled remotely, giving you the option to write & run your program on your laptop
+  instead of on the Make Controller directly.
+  
+  \section JSON
+  The Make Controller also has great support for JSON (JavaScript Object Notation).  Many web services
+  exchange information in the JSON format, and you can work with it seamlessly on the Make Controller.
+  Check the JsonEncoder and JsonDecoder classes for more info.
+  
+  \section base64 Base 64
+  If you need to encode or decode any data as base 64 (http://en.wikipedia.org/wiki/Base64) then check out
+  the Base64 class.  This is often handy for transmitting binary data through text-based formats like XML
+  or JSON.
+  
+  \section AES
+  If you need to encrypt your data, such that only those with the password can decipher it, check out the
+  Aes class.  AES is such a strong cipher that it's certified for use by the National Security Agency!
+*/
