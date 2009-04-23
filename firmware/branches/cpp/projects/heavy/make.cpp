@@ -14,7 +14,7 @@ void blinkLoop( void* parameters );
 
 void Run( ) // this task gets called as soon as we boot up.
 {
-  new Task( blinkLoop, "Blink", 400, 0, 1 );
+  new Task( blinkLoop, "Blink", 400, 1 );
 
   UsbSerial* usb = UsbSerial::get();
   Network* net = Network::get();
