@@ -63,8 +63,8 @@ Network::Network( )
   
   static struct netif EMAC_if;
   int address, mask, gateway;
-  bool dhcp = true ; //getDhcp();
-  if( dhcp )
+  bool dhcp_enabled = dhcp();
+  if( dhcp_enabled )
   {
     address = 0;
     mask = 0;
@@ -86,7 +86,7 @@ Network::Network( )
   EMAC_if.name[1] = 'n';
   EMAC_if.num = 0;
   
-  if( dhcp )
+  if( dhcp_enabled )
     dhcpStart( &EMAC_if );
   
   // Network_SetPending( 0 );
