@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006-2008 MakingThings
+ Copyright 2006-2009 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -15,31 +15,55 @@
 
 *********************************************************************************/
 
-/*
-	PWM.h
-
-  MakingThings
-*/
-
 #ifndef PWM_H
 #define PWM_H
 
-int Pwm_Start( int channel );
-int Pwm_Stop( int channel );
-int Pwm_Set( int index, int duty );
-int Pwm_Get( int index );
+/**
+  Control the 4 Pulse Width Modulation outputs.
 
-int Pwm_SetDividerA(int val);
-int Pwm_GetDividerA( void );
+  The Make Controller has 4 PWM signals.  Each be configured separately, and can control
+  up to 2 output lines.  These lines can be driven with the pwm signal in parallel or they can
+  be inverted from one another.  , the 2 lines running either parallel or inverted.  For a very simple
+  start, just see Pwm_Set( ) and Pwm_Get( ) as these will start driving your PWMs immediately with
+  very little hassle.
 
-int Pwm_SetDividerB(int val);
-int Pwm_GetDividerB( void );
+  \section Hardware
+  The PWM lines on the Make Controller are located on the following signal lines:
+  - channel 0 is PB19
+  - channel 1 is PB20
+  - channel 2 is PB21
+  - channel 3 is PB22
+  
+  The \ref PwmOut system relies on the Pwm system, and provides control of the output lines associated with
+  a given Pwm signal.
+  
+  \ingroup io
+*/
+class Pwm
+{
+public:
+  Pwm( int channel );
+  ~Pwm();
+  
+  void setWaveform( bool left_aligned, bool starts_low );
+  
+  bool setPeriod( int period );
+  int period( );
 
-int Pwm_SetClockSource(int channel, int val);
-int Pwm_GetClockSource(int channel);
+  void setDuty(int duty);
+  int duty();
 
-int Pwm_SetWaveformProperties(int channel, int val);
-int Pwm_GetWaveformProperties(int channel);
+  static bool setFrequency(int freq);
+  static int frequency();
 
+protected:
+  int channel, _duty, _period;
+  static int _frequency;
+  int getIo( int channel );
+  int baseInit();
+  int baseDeinit();
+  static int findClockConfiguration(int frequency);
+  static int activeChannels;
+};
 
 #endif

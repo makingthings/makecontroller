@@ -1,48 +1,43 @@
-/*
-	FreeRTOS V4.0.1 - copyright (C) 2003-2006 Richard Barry.
+/*********************************************************************************
 
-	This file is part of the FreeRTOS distribution.
+ Copyright 2006-2009 MakingThings
 
-	FreeRTOS is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
 
-	FreeRTOS is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
 
-	You should have received a copy of the GNU General Public License
-	along with FreeRTOS; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*********************************************************************************/
 
-	A special exception to the GPL can be applied should you wish to distribute
-	a combined work that includes FreeRTOS, without being obliged to provide
-	the source code for any proprietary components.  See the licensing section
-	of http://www.FreeRTOS.org for full details of how and when the exception
-	can be applied.
+#ifndef WEB_SERVER__H
+#define WEB_SERVER__H
 
-	***************************************************************************
-	See http://www.FreeRTOS.org for documentation, latest information, license
-	and contact details.  Please ensure to read the configuration and relevant
-	port sections of the online documentation.
-	***************************************************************************
-*/
-
-#ifndef WEB_SERVER_H
-#define WEB_SERVER_H
+#include "config.h"
+#ifdef MAKE_CTRL_NETWORK
 
 #include "string.h"
 #include "stdio.h"
+#include "rtos.h"
+#include "tcpserver.h"
+#include "tcpsocket.h"
+#include "http.h"
 
 #define MAX_FORM_ELEMENTS 10
+#define MAX_WEB_RESPONDERS  5
+#define REQUEST_SIZE_MAX  256
+#define RESPONSE_SIZE_MAX 1000
 
 /**
   A structure that represents a key-value pair in an HTML form.
   This structure only points at the data received by the web server - it does not copy it.  So be sure
   to note that this structure becomes invalid as soon as the data used to create is gone.
-  \ingroup webserver
+  \ingroup Network
 */
 typedef struct
 {
@@ -53,7 +48,7 @@ typedef struct
 /**
   A structure that represents a collection of HtmlFormElement structures.
   If you need a larger form, you can adjust \b MAX_FORM_ELEMENTS in webserver.h it accommodates 10 by default.
-  \ingroup webserver
+  \ingroup Network
 */
 typedef struct
 {
@@ -61,30 +56,105 @@ typedef struct
   int count;                                   /**< The number of form elements contained in this form. */
 } HtmlForm;
 
-// Web Server Task
-int WebServer_SetActive( int active );
-int WebServer_GetActive( void );
-int WebServer_SetListenPort( int port );
-int WebServer_GetListenPort( void );
+/**
+  Helper class to respond to WebServer requests.
+  To respond to requests from the WebSever, subclass WebResponder and re-implement the 
+  methods need for your application.
+  
+  \section Usage
+  The WebServer will call your responder when it receives a request whose first element 
+  matches the name returned by address().  So if the request looked like <b>192.168.0.200/monkey/yak/tuba</b>
+  the WebServer will call the WebResponder whose address() method returns "monkey".
+  
+  Depending on the type of request, the WebServer will call one of 4 methods, get(), put(), post(), del(),
+  which correspond to the main HTTP verbs.  Web browsers send GET requests when they ask to view 
+  a page, so that's the most common type, but other applications may require the other methods as well.
+  
+  To respond, your first call should be to setResponseCode() and then 1 or more calls to addHeader().  
+  After that, write out whatever data you like in the body via the \ref response socket and you're all set.  
+  Remember that you can write it out a chunk at a time - you don't need to send it all at once.  
+  If you have responded to a request, return true from your handler and the WebServer will stop 
+  processing the request.  Otherwise, it will continue to look for other responders.
+  
+  For more info about HTTP, check the Wikipedia article - 
+  
+  Here's a very simple example of a class that inherits from WebResponder and get respond to HTTP
+  GET requests:
+  \code
+  class MyResponder : public WebResponder // inherit from WebResponder
+  {
+    public:
+      const char* address()
+      {
+        return "myresponder"; // match all requests that start with "/myresponder"
+      }
+      // in this simple example, we only ever care about HTTP GETs,
+      bool get( char* path ) // so that's the only one we implement
+      {
+        setResponseCode(200); // everything's OK
+        addHeader("Content-type", "text/plain"); // just sending some text back
+        if( strcmp(path, "/myresponder/test") == 0 ) // check the path to see what was requested
+          response->write("here's a response", strlen("here's a response")); // the actual text
+        else
+          response->write("unknown path", strlen("unknown path"));
+        return true; // indicate that we responded and 
+      }
+  };
+  \endcode
+*/
+class WebResponder
+{
+  public:
+    /**
+      The top level element that your responder matches.
+    */
+    virtual const char* address() = 0;
+    virtual bool get( char* path );
+    virtual bool post( char* path, char* body, int len );
+    virtual bool put( char* path, char* body, int len );
+    virtual bool del( char* path );
+    void setResponseSocket( TcpSocket* socket ) { response = socket; }
+    virtual ~WebResponder( ) { }
 
-int WebServer_Route( char* address, int (*handler)( char* requestType, char* request, char* requestBuffer, int request_maxsize, void* socket, char* responseBuffer, int len )  );
+  protected:
+    bool setResponseCode( int code );
+    bool addHeader( const char* type, const char* value, bool lastone = true );
+    TcpSocket* response; /**< The TcpSocket to respond on. The WebServer sets this to the appropriate 
+    value while you're inside a response handler. */
+};
 
-// HTTP Helpers
-int WebServer_WriteResponseOkHTML( void* socket );
-int WebServer_WriteResponseOkPlain( void* socket );
+/**
+  A simple webserver.
+  Also see \ref WebResponder.
+  \ingroup networking
+*/
+class WebServer
+{
+  public:
+    static WebServer* get();
+    bool route(WebResponder* handler);
+    bool setListenPort(int port);
+    int getListenPort();
+    void sendResponse();
+  
+  protected:
+    WebServer( );
+    virtual ~WebServer( ) { }
+    static WebServer* _instance; // the only instance of WebServer anywhere.
+    friend void webServerLoop( void *parameters );
+    Task* webServerTask;
+    TcpServer tcpServer;
+    int listenPort, newListenPort, hits, responder_count;
+    char requestBuf[ REQUEST_SIZE_MAX ];
+    char responseBuf[ RESPONSE_SIZE_MAX ];
 
-// HTML Helpers
-int WebServer_WriteHeader( int includeCSS, void* socket, char* buffer, int len );
-int WebServer_WriteBodyStart( char* reloadAddress, void* socket, char* buffer, int len );
-int WebServer_WriteBodyEnd( void* socket );
+    virtual void processRequest( TcpSocket* request, HttpMethod method, char* path );
+    WebResponder* responders[MAX_WEB_RESPONDERS];
+    char* getRequestAddress( char* request, int length, HttpMethod* method );
+    int getBody( TcpSocket* socket, char* requestBuffer, int maxSize );
+};
 
-bool WebServer_GetPostData( void *socket, char *requestBuffer, int maxSize );
-int WebServer_ParseFormElements( char *request, HtmlForm *form );
-
-// OSC interface
-const char* WebServerOsc_GetName( void );
-int WebServerOsc_ReceiveMessage( int channel, char* message, int length );
-int WebServerOsc_Async( int channel );
+#endif // MAKE_CTRL_NETWORK
 
 #endif  // WEB_SERVER_H
 

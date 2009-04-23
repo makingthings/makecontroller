@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006-2008 MakingThings
+ Copyright 2006-2009 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -15,20 +15,52 @@
 
 *********************************************************************************/
 
-/*
-	digitalin.h
-
-  MakingThings
-*/
-
 #ifndef DIGITALIN_H
 #define DIGITALIN_H
 
-int DigitalIn_SetActive( int index, int state );
-int DigitalIn_GetActive( int index );
+#include "io.h"
+#include "analogin.h"
 
-int DigitalIn_GetValue( int index );
-int DigitalIn_GetAll( void );
+/**
+  Read the 8 inputs on the Application Board as digital values - on or off.
+  
+  \section Usage
+  To get started reading a DigitalIn, create a DigitialIn object and call its value() method.
+  \code
+  DigitalIn din(3);
+  bool din3_is_on = din.value();
+  if(din3_is_on)
+  {
+    // then do this
+  }
+  else
+  {
+    // then do that
+  }
+  \endcode
+  
+  \section Notes
+  Internally, the 8 inputs on the Application Board consist of 4 dedicated analog inputs, and 4 lines which can
+  be configured either as digitial ins or outs. Because digital ins 4-7 are always AnalogIn lines, there's no 
+  performance gain to reading those as DigitalIns as opposed to AnalogIns.
+  
+  \ingroup io
+*/
+class DigitalIn
+{
+public:
+  DigitalIn(int index);
+  ~DigitalIn();
+
+  bool value();
+
+protected:
+  short _index;
+  int getIo( int index );
+  static AnalogIn* ains[];
+  static Io* ios[];
+  static short refcounts[];
+};
 
 /* OSC Interface */
 const char* DigitalInOsc_GetName( void );

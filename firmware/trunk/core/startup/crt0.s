@@ -207,7 +207,9 @@ ctor_loop:
   ldr r2, [r0], #+4
   stmfd sp!, {r0-r1}
   mov lr, pc
-  mov pc, r2
+/*  mov pc, r2 *MakingThings* - make sure global contructors are called in Thumb mode, not ARM mode */
+  bx r2
+/* end MakingThings */
   ldmfd sp!, {r0-r1}
   b ctor_loop
 ctor_end:

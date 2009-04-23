@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006-2008 MakingThings
+ Copyright 2006-2009 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -15,57 +15,75 @@
 
 *********************************************************************************/
 
-/*
-	pwmout.h
-
-  Includes, etc. so make users don't have to
-
-  MakingThings
-*/
-
 #ifndef PWMOUT_H
 #define PWMOUT_H
 
-#include "controller.h"
+#include "io.h"
+#include "pwm.h"
 
+/**
+  Control the 4 PWM signals on the Application Board.
+  
+  The PWM signals on the Controller Board are connected on the Application Board to high current
+  drivers.  Each driver has 2 PWM signals, which control a pair of Digital Outs - an A and a B channel:
+  - PwmOut 0 - Digital Outs 0 (A) and 1 (B).
+  - PwmOut 1 - Digital Outs 2 (A) and 3 (B).
+  - PwmOut 2 - Digital Outs 4 (A) and 5 (B).
+  - PwmOut 3 - Digital Outs 6 (A) and 7 (B).
+  
+  The A and B channels of a PWM device can be set independently to be inverted, or not, from one another
+  in order to control motors, lights, etc.
+  
+  \section Usage
+  To get started, create a new PwmOut object specifying the channel you want to control.  
+  
+  \code
+  PwmOut pout(2); // create a new PwmOut object on channel 2
+  pout.setDuty(1023); // turn it on full blast
+  \endcode
+  
+  \section Note
+  Each PwmOut is built on top of a Pwm instance.  If you need to adjust timing, 
+  inversion or other parameters, check the Pwm system.
+  
+  See the digital out section of the 
+  <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/digital-outputs">
+  Application Board overview</a> for more details.
+  
+  \ingroup io
+*/
+class PwmOut
+{
+  public:
+    PwmOut(int index);
+    ~PwmOut();
 
-int PwmOut_SetActive( int index, int state );
-int PwmOut_GetActive( int index );
+    int duty();
+    bool setDuty(int duty);
 
-int PwmOut_SetDuty( int motor, int duty );
-int PwmOut_GetDuty( int motor );
+    bool invertedA();
+    bool setInvertedA(bool invert);
 
-int PwmOut_SetInvertA( int motor, char invertA);
-int PwmOut_GetInvertA( int motor );
+    bool invertedB();
+    bool setInvertedB(bool invert);
 
-int PwmOut_SetInvertB( int motor, char invertB );
-int PwmOut_GetInvertB( int motor );
+    bool setAll( int duty, bool invertA, bool invertB );
 
-int PwmOut_SetInvert( int index, char invertA, char invertB );
-int PwmOut_SetAll( int motor, int duty, char invertA, char invertB );
-
-// Divider A is used by default to setup the clock period.
-// Read the notes in controll/makingthings/pwm.c before changing these.
-int PwmOut_SetDividerAValue(int val);
-int PwmOut_GetDividerAValue( void );
-
-int PwmOut_SetDividerAMux(int mux);
-int PwmOut_GetDividerAMux( void );
-
-int PwmOut_SetDividerBValue(int val);
-int PwmOut_GetDividerBValue( void );
-
-int PwmOut_SetDividerBMux(int mux);
-int PwmOut_GetDividerBMux( void );
-
-int PwmOut_SetWaveformAlignment(int index, int val);
-int PwmOut_GetWaveformAlignment(int index);
-
-int PwmOut_SetWaveformPolarity(int index, int val);
-int PwmOut_GetWaveformPolarity(int index);
+  protected:
+    int _index;
+    typedef struct {
+      Io* ioA;
+      Io* ioB;
+      Pwm* pwm;
+      short count;
+    } PwmOutInternal;
+    static PwmOutInternal* pwmouts[]; // only ever want to make 4 of these
+    
+    void getIos( int* ioA, int* ioB );
+};
 
 /* OSC Interface */
-const char* PwmOutOsc_GetName( void );
-int PwmOutOsc_ReceiveMessage( int channel, char* message, int length );
+// const char* PwmOutOsc_GetName( void );
+// int PwmOutOsc_ReceiveMessage( int channel, char* message, int length );
 
 #endif

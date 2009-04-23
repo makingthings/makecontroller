@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006-2008 MakingThings
+ Copyright 2006-2009 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -15,14 +15,11 @@
 
 *********************************************************************************/
 
-/** @file xbee.h
-  XBee defines
-*/
-
 #ifndef XBEE_H
 #define XBEE_H
 
 #include "types.h"
+#include "serial.h"
 
 // states for receiving packets
 #define XBEE_PACKET_RX_START 0
@@ -159,21 +156,10 @@ typedef struct
 }  XBee_IO16;
 
 /**
-  Possible API IDs for different kinds of packets.
-  In the main XBeePacket structure, its \b apiId member will be set to one of these values,
-  indicating which kind of packet it is.
-
-  \b Example
-  \code
-  XBeePacket* xbp;
-  if( xbp->apiId == XBEE_IO16 )
-  {
-    // then we have an XBee_IO16 packet,
-    // accessible at xbp->io16
-  }
-  \endcode
+  Possible XBeePacket types.
+  You can easily check a XBeePacket's type by calling its type() method.
 */
-enum XBeeApiId
+enum XBeePacketType
 { 
   XBEE_TX64 = 0x00,               /**< An outgoing data packet with a 64-bit address. */
   XBEE_TX16 = 0x01,               /**< An outgoing data packet with a 16-bit address. */
@@ -191,23 +177,7 @@ enum XBeeApiId
 */
 
 /**
-  Representation of an XBee packet.
-  The XBeePacket structure consists of an API ID, indicating the kind of packet it is, as well as 
-  providing the structure for that particular packet.  Only one packet type will be valid at a time,
-  as indicated by the \b apiId:
-  
-  \b Example
-  \code
-  XBeePacket* xbp;
-  if( xbp->apiId == XBEE_IO16 )
-  {
-    int signalStrength = xbp->io16.rssi;
-    // and so on...
-  }
-  \endcode
-  See \ref XBeeApiId for a list of valid API IDs.
-
-  \ingroup XBee
+  Internal representation of packet data.
 */
 typedef struct
 {
@@ -231,57 +201,84 @@ typedef struct
   int rxState;     /**< Used internally by XBee_GetPacket() to keep track of the parse state. */
   int length;      /**< The length of a packet - only useful after a successful call to XBee_GetPacket().  */
   int index;       /**< Used internally by XBee_GetPacket() to keep track of the current length.  */
-} __attribute__((packed)) XBeePacket;
+} __attribute__((packed)) PacketData;
 
-int XBee_SetActive( int state );
-int XBee_GetActive( void );
-int XBee_GetPacket( XBeePacket* packet, int timeout );
-int XBee_SendPacket( XBeePacket* packet, int datalength );
-void XBee_ResetPacket( XBeePacket* packet );
-int XBee_Write( uchar *buffer, int count, int timeout );
-int XBee_Read( uchar* buffer, int count, int timeout );
-int XBee_IsBusyPacket( XBeePacket* packet );
+/**
+  Communicate with XBee (Zigbee) wireless modules via the Make Controller's serial port.
 
-// packet creators and unpackers
-bool XBee_CreateTX16Packet( XBeePacket* xbp, uint8 frameID, uint16 destination, uint8 options, uint8* data, uint8 datalength );
-bool XBee_CreateTX64Packet( XBeePacket* xbp, uint8 frameID, uint64 destination, uint8 options, uint8* data, uint8 datalength );
-bool XBee_ReadRX16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrength, uint8* options, uint8** data, uint8* datalength );
-bool XBee_ReadRX64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrength, uint8* options, uint8** data, uint8* datalength  );
-bool XBee_ReadIO16Packet( XBeePacket* xbp, uint16* srcAddress, uint8* sigstrength, uint8* options, int* samples );
-bool XBee_ReadIO64Packet( XBeePacket* xbp, uint64* srcAddress, uint8* sigstrength, uint8* options, int* samples );
-void XBee_CreateATCommandPacket( XBeePacket* packet, uint8 frameID, char* cmd, uint8* params, uint8 datalength );
-bool XBee_ReadAtResponsePacket( XBeePacket* xbp, uint8* frameID, char** command, uint8* status, int* datavalue );
-bool XBee_ReadTXStatusPacket( XBeePacket* xbp, uint8* frameID, uint8* status );
+  XBee modules from \b MaxStream are small, cheap ($19 each), wireless \b RF (radio frequency) modules that
+  can easily be used with the Make Controller Kit to create projects that require wireless communication.  Check
+  http://www.maxstream.net/products/xbee/xbee-oem-rf-module-zigbee.php for more info.
 
-// XBee Config stuff
-void XBeeConfig_SetPacketApiMode( int value );
-int XBeeConfig_RequestPacketApiMode( void );
-void XBeeConfig_WriteStateToMemory( void );
-void XBeeConfig_SetAddress( uint16 address );
-int XBeeConfig_RequestAddress( void );
-void XBeeConfig_SetPanID( uint16 id );
-int XBeeConfig_RequestPanID( void );
-void XBeeConfig_SetChannel( uint8 channel );
-int XBeeConfig_RequestChannel( void );
-void XBeeConfig_SetSampleRate( uint16 rate );
-int XBeeConfig_RequestSampleRate( void );
-void XBeeConfig_SetIO( int index, int value );
-int XBeeConfig_RequestIO( int pin );
-int XBeeConfig_RequestATResponse( char* cmd );
+  \section Overview
+  XBee modules are <b>ZigBee/IEEE 802.15.4</b> compliant and can operate in several modes:
+  - Transparent serial port.  Messages in one side magically end up at the other endpoint.  Great for enabling wireless
+  communication between 2 Make Controllers.
+  - AT command mode.  Send traditional AT commands to configure the module itself (as opposed to having
+  the data go straight through via serial mode.
+  - Packet (API) mode.  Lower level communication that doesn't have to wait for the module to be in
+  AT command mode.  Check the \ref XBeePacketTypes for a description of how these packets are laid out.  
+  Be sure to call setPacketApiMode() before trying to do anything in this mode.
 
-bool XBee_GetAutoSend( bool init );
-void XBee_SetAutoSend( int onoff );
+  The general idea is that you have one XBee module connected directly to your Make Controller Kit, and then
+  any number of other XBee modules that can communicate with it in order to get information to and from the
+  Make Controller.  Or, several Make Controllers can each have an XBee module connected in order to
+  communicate wirelessly among themselves.
 
-void XBee_IntToBigEndianArray( int value, uint8* array );
+  XBee modules also have some digital and analog I/O right on them, which means you can directly connect
+  sensors to the XBee modules which will both read the values and send them wirelessly.  Check the XBee doc
+  for the appropriate commands to send in order to set this up.
 
+  \section serialmode Serial Mode
+  The Make Controller API for working with the XBee modules makes use of the XBee Packet API.  If you simply want to make use
+  of the transparent serial port functionality, you can just use the \ref Serial port directly.
+
+  Bytes sent in this way are broadcast to all XBee modules on the same chanel and with the same PAN ID.  All similarly
+  configured modules will receive all bytes sent.  However, because these bytes are broadcast, there is no message
+  reliability, so there's no guarantee that the messages will actually get there.
+  
+  \section packetapimode Packet API Mode
+  The XBee Packet API allows for much more flexible and powerful communication with the modules.  With the Packet API
+  you can address messages to a specific module, detect where messages came from, check signal strength, and
+  packets are sent with a send / acknowledges / retry scheme which greatly increases message reliability.
+
+  The packet API uses commands to configure the XBee module itself, and then a handful of Zigbee specified packet types can be sent and received.  
+  See \ref XBeePacketTypes for details on these packet types.
+*/
+class XBeePacket
+{
+public:
+  XBeePacket( );
+  void tx16( uint8 frameID, uint16 destination, uint8 options, uint8* data, uint8 datalength );
+  void tx64( uint8 frameID, uint64 destination, uint8 options, uint8* data, uint8 datalength );
+  void atCmd( uint8 frameID, char* cmd, int value = 0 );
+  ~XBeePacket( );
+  bool get( int timeout = 0 );
+  bool send( int datalength = 0 );
+  void reset( );
+  XBeePacketType type();
+  bool setPacketApiMode( bool enabled );
+  bool unpackRX16( uint16* srcAddress, uint8* sigstrength = 0, uint8* options = 0, uint8** data = 0, uint8* datalength = 0 );
+  bool unpackRX64( uint64* srcAddress, uint8* sigstrength = 0, uint8* options = 0, uint8** data = 0, uint8* datalength = 0  );
+  bool unpackIO16( uint16* srcAddress, uint8* sigstrength = 0, uint8* options = 0, int* samples = 0 );
+  bool unpackIO64( uint64* srcAddress, uint8* sigstrength = 0, uint8* options = 0, int* samples = 0 );
+  bool unpackAtResponse( uint8* frameID, char** command = 0, uint8* status = 0, int* datavalue = 0 );
+  bool unpackTXStatus( uint8* frameID, uint8* status = 0 );
+  PacketData packetData; /**< Internal representation of the packet data. */
+
+protected:
+  Serial* ser;
+  bool getIOValues( int *inputs );
+};
 
 // XBee OSC stuff
-const char* XBeeOsc_GetName( void );
-int XBeeOsc_ReceiveMessage( int channel, char* message, int length );
-int XBeeOsc_Async( int channel );
-int XBeeOsc_HandleNewPacket( XBeePacket* xbp, int channel );
-
-const char* XBeeConfigOsc_GetName( void );
-int XBeeConfigOsc_ReceiveMessage( int channel, char* message, int length );
+//const char* XBeeOsc_GetName( void );
+//int XBeeOsc_ReceiveMessage( int channel, char* message, int length );
+//int XBeeOsc_Async( int channel );
+//int XBeeOsc_HandleNewPacket( XBeePacket* xbp, int channel );
+//bool XBee_GetAutoSend( bool init );
+//void XBee_SetAutoSend( int onoff );
+//const char* XBeeConfigOsc_GetName( void );
+//int XBeeConfigOsc_ReceiveMessage( int channel, char* message, int length );
 
 #endif // XBEE_H

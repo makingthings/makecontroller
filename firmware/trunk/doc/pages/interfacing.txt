@@ -1,0 +1,51 @@
+/*********************************************************************************
+
+ Copyright 2006-2009 MakingThings
+
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
+
+*********************************************************************************/
+
+/**
+  \page interfacing Interface Options
+ 
+  \section Overview
+  The Make Controller has a great variety of peripherals that make it easy to 
+  interface with other devices.
+  
+  \section USB
+  The Make Controller has USB 2.0 'full speed' support and can act as a virtual serial
+  port, making it easy to connect to your desktop or laptop for reading and writing.
+  Check the UsbSerial class for more info.
+  
+  Note - The Make Controller also has the capacity to present itself as different USB devices,
+  but the virtual serial port is the only one we have firmware support for at the moment.
+  In the future we may be able to take advantage of HID and Mass Storage interfaces.
+  
+  \section Serial
+  There are 2 full UART/serial ports available, each with hardware handshaking capabilities, and
+  a third 'debug' port with no hardware handshake.  The Serial class provides support for the
+  2 full serial ports.
+  
+  \section SPI
+  The Make Controller has 4 SPI (Serial Peripheral Interface) channels, but only 2 are available
+  for general use, due to the use of signals on the Controller Board.  Check the Spi class for
+  more details.
+  
+  \section TWI
+  The Make Controller has a TWI interface, but there's not much firmware support at the moment.
+  Patches gladly accepted!
+  
+  \section CAN
+  The Make Controller has a CAN interface but, as with TWI, there's not much firmware support at the moment.
+  Patches also gladly accepted!
+*/

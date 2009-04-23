@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006-2008 MakingThings
+ Copyright 2006-2009 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -15,17 +15,13 @@
 
 *********************************************************************************/
 
-/*
-	TYPES.h
-
-  MakingThings
-*/
-
 #ifndef TYPES_H
 #define TYPES_H
 
 /* some types */
+#ifndef __cplusplus
 typedef unsigned char bool;
+#endif
 typedef unsigned char uchar;
 typedef unsigned char uint8;
 typedef unsigned int uint;
@@ -36,8 +32,13 @@ typedef long long int longlong;
 typedef unsigned long long int ullong;
 typedef unsigned long long int ulonglong;
 
+#ifndef true
 #define true 1
+#endif
+
+#ifndef false
 #define false 0
+#endif
 
 #ifndef NULL
 #define NULL 0

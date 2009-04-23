@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006-2008 MakingThings
+ Copyright 2006-2009 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -15,40 +15,56 @@
 
 *********************************************************************************/
 
-/*
-	system.h
+#ifndef _SYSTEM_H
+#define _SYSTEM_H
 
-  MakingThings
-*/
-
-#ifndef SYSTEM_H
-#define SYSTEM_H
+#include "core.h"
 
 #define SYSTEM_MAX_NAME 99 
 
-/* System Interface */
+/** 
+  Monitors and controls several aspects of the system. 
 
-int System_SetActive( int state );
-int System_GetActive( void );
-int System_GetFreeMemory( void );
-int System_GetSerialNumber( void );
+*/
+class System
+{
+  public:
+    static System* get();
 
-int System_SetSamba( int sure );
-int System_SetReset( int sure );
-int System_SetSerialNumber( int serial );
-int System_SetName( char* name );
-char* System_GetName( void );
-void System_SetAsyncDestination( int dest );
-int System_GetAsyncDestination( void );
-void System_SetAutoSendInterval( int interval );
-int System_GetAutoSendInterval( void );
+    int samba( int sure );
+    int reset( int sure );
 
-void System_StackAudit( int on_off );
+    int serialNumber();
+    int setSerialNumber( int serial );
 
-/* SystemOsc Interface */
+    char* name( );
+    int setName( char* name );
+    
+    void stackAudit( int on_off );
+    int freeMemory();
 
-const char* SystemOsc_GetName( void );
-int SystemOsc_ReceiveMessage( int channel, char* message, int length );
-int SystemOsc_Poll( void );
+    int autosendDestination( );
+    void setAutosendDestination( int dest );
+    
+    int autosendInterval( );
+    void setAutosendInterval( int interval );
+  
+  protected:
+    System();
+    static System* _instance;
+    char _name[SYSTEM_MAX_NAME + 1];
+    Task* stackAuditTask;
+    #ifdef OSC
+//    char scratch1[ OSC_SCRATCH_SIZE ];
+    int _autoDestination;
+    int _autoInterval;
+    #endif
+};
+
+///* SystemOsc Interface */
+//
+//const char* SystemOsc_GetName( void );
+//int SystemOsc_ReceiveMessage( int channel, char* message, int length );
+//int SystemOsc_Poll( void );
 
 #endif
