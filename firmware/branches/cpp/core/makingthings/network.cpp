@@ -92,6 +92,18 @@ Network::Network( )
   // Network_SetPending( 0 );
 }
 
+/**
+  Get a reference to the Network system.
+  
+  Since there's only one Network object in the system, you access it
+  through get().
+  @return A reference to the Network system.
+  
+  \b Example
+  \code
+  Network* net = Network::get();
+  \endcode
+*/
 Network* Network::get( ) // static
 {
   if( !_instance )
@@ -99,7 +111,24 @@ Network* Network::get( ) // static
   return _instance;
 }
 
-int Network::setAddress( int a0, int a1, int a2, int a3 )
+/**
+  Manually set the board's IP address.
+  Specify the address as the 4 numbers that make up the address - like 192.168.0.100.
+  If DHCP is enabled this will have no effect, but the values will be stored and
+  used the next time DHCP is disabled.
+  @param a0 First element of the address.
+  @param a1 Second element of the address.
+  @param a2 Third element of the address.
+  @param a3 Fourth element of the address.
+  @return True on success, false on failure.
+  
+  \b Example
+  \code
+  Network* net = Network::get();
+  net->setAddress(192, 168, 0, 100);
+  \endcode
+*/
+bool Network::setAddress( int a0, int a1, int a2, int a3 )
 {
   if( !getValid() ) // make sure the other elements are initialized, set to defaults
   {
@@ -107,11 +136,28 @@ int Network::setAddress( int a0, int a1, int a2, int a3 )
     tempMask = MC_DEFAULT_NETMASK;
   }
   tempIpAddress = IP_ADDRESS( a0, a1, a2, a3 );
-  setValid( 1 ); // apply the changes and save them as valid
-  return CONTROLLER_OK;
+  setValid( true ); // apply the changes and save them as valid
+  return true;
 }
 
-int Network::setMask( int m0, int m1, int m2, int m3 )
+/**
+  Manually set the board's network mask.
+  Specify the mask as the 4 numbers that it's composed of - like 255.255.255.0.
+  If DHCP is enabled this will have no effect, but the values will be stored and
+  used the next time DHCP is disabled.
+  @param m0 First element of the mask.
+  @param m1 Second element of the mask.
+  @param m2 Third element of the mask.
+  @param m3 Fourth element of the mask.
+  @return True on success, false on failure.
+  
+  \b Example
+  \code
+  Network* net = Network::get();
+  net->setMask(255, 255, 255, 0);
+  \endcode
+*/
+bool Network::setMask( int m0, int m1, int m2, int m3 )
 {
   if( !getValid() ) // make sure the other elements are initialized, set to defaults
   {
@@ -120,10 +166,27 @@ int Network::setMask( int m0, int m1, int m2, int m3 )
   }
   tempMask = IP_ADDRESS( m0, m1, m2, m3 );
   setValid( 1 ); // apply the changes and save them as valid
-  return CONTROLLER_OK;
+  return true;
 }
 
-int Network::setGateway( int g0, int g1, int g2, int g3 )
+/**
+  Manually set the board's gateway.
+  Specify the gateway as the 4 numbers that it's composed of - like 192.168.0.1.
+  If DHCP is enabled this will have no effect, but the values will be stored and
+  used the next time DHCP is disabled.
+  @param g0 First element of the gateway.
+  @param g1 Second element of the gateway.
+  @param g2 Third element of the gateway.
+  @param g3 Fourth element of the gateway.
+  @return True on success, false on failure.
+
+  \b Example
+  \code
+  Network* net = Network::get();
+  net->setGateway(192, 168, 0, 1);
+  \endcode
+*/
+bool Network::setGateway( int g0, int g1, int g2, int g3 )
 {
   if( !getValid() ) // make sure the other elements are initialized, set to defaults
   {
@@ -132,11 +195,23 @@ int Network::setGateway( int g0, int g1, int g2, int g3 )
   }
   tempGateway = IP_ADDRESS( g0, g1, g2, g3 );
   setValid( 1 ); // apply the changes and save them as valid
-  
-  return CONTROLLER_OK;
+  return true;
 }
 
-int Network::getAddress( )
+/**
+  Read the board's IP address.
+  @return The board's address as an integer.  If you need to convert it
+  to a string, see addressToString().
+  
+  \b Example
+  \code
+  int addr = Network::get()->address();
+  // now convert it to a string
+  char address[50];
+  net->addressToString(address, addr);
+  \endcode
+*/
+int Network::address( )
 {
   // if( Network_GetPending() )
   //   return CONTROLLER_ERROR_NO_NETWORK;
@@ -150,7 +225,15 @@ int Network::getAddress( )
   Convert a network address into string format.
   Will result in a string of the form
   \code xxx.xxx.xxx.xxx \endcode
+  @param data Where to write the string
+  @param address The value, as obtained by IP_ADDRESS() or address(), mask() or gateway()
   @return The length of the address string.
+  
+  \b Example
+  \code
+  char addr[50];
+  Network::addressToString(addr, IP_ADDRESS(192, 168, 0, 100));
+  \endcode
 */
 int Network::addressToString( char* data, int address )
 {
@@ -161,7 +244,20 @@ int Network::addressToString( char* data, int address )
                   IP_ADDRESS_D( address ));
 }
 
-int Network::getMask( )
+/**
+  Read the board's network mask.
+  @return The board's mask as an integer.  If you need to convert it
+  to a string, see addressToString().
+
+  \b Example
+  \code
+  int mask = Network::get()->mask();
+  // now convert it to a string
+  char maskString[50];
+  net->addressToString(maskString, mask);
+  \endcode
+*/
+int Network::mask( )
 {
   // if( Network_GetPending() )
   //   return CONTROLLER_ERROR_NO_NETWORK;
@@ -171,16 +267,39 @@ int Network::getMask( )
   return ( mc_netif ) ? mc_netif->netmask.addr : -1;
 }
 
-int Network::getGateway( )
+/**
+  Read the board's gateway.
+  @return The board's gateway as an integer.  If you need to convert it
+  to a string, see addressToString().
+
+  \b Example
+  \code
+  int gateway = Network::get()->gateway();
+  // now convert it to a string
+  char gateString[50];
+  net->addressToString(gateString, gateway);
+  \endcode
+*/
+int Network::gateway( )
 {
   // we specify our network interface as en0 when we init
   struct netif* mc_netif = netif_find( (char*)"en0" );
   return ( mc_netif ) ? mc_netif->gw.addr : -1;
 }
 
+/**
+  Turn DHCP on or off.
+  @param enabled True to turn DHCP on, false to turn it off.
+  
+  \b Example
+  \code
+  Network* net = Network::get(); // get a reference to the Network system
+  net->setDhcp(true); // turn it on
+  \endcode
+*/
 void Network::setDhcp(bool enabled)
 {
-  if( enabled && !getDhcp() )
+  if( enabled && !dhcp() )
   {
     // we specify our network interface as en0 when we init
     struct netif* mc_netif = netif_find( (char*)"en0" );
@@ -190,7 +309,7 @@ void Network::setDhcp(bool enabled)
     Eeprom::get()->write( EEPROM_DHCP_ENABLED, enabled );
   }
   
-  if( !enabled && getDhcp() )
+  if( !enabled && dhcp() )
   {
     // we specify our network interface as en0 when we init
     struct netif* mc_netif = netif_find( (char*)"en0" );
@@ -201,7 +320,24 @@ void Network::setDhcp(bool enabled)
   }
 }
 
-bool Network::getDhcp()
+/**
+  Read whether DHCP is enabled.
+  @return True if DHCP is enabled, false if not.
+  
+  \b Example
+  \code
+  Network* net = Network::get();
+  if( net->dhcp() )
+  {
+    // then DHCP is enabled
+  }
+  else
+  {
+    // DHCP is not enabled
+  }
+  \endcode
+*/
+bool Network::dhcp()
 {
   return (Eeprom::get()->read( EEPROM_DHCP_ENABLED ) == 1);
 }
@@ -233,7 +369,32 @@ void Network::dhcpStop( struct netif* netif )
   return;
 }
 
-int Network::getHostByName( const char *name )
+/**
+  Resolve the IP address for a domain name via DNS.
+  Up to 4 DNS entries are cached, so if you make successive calls to this function, 
+  you won't incur a whole lookup roundtrip - you'll just get the cached value.
+  The cached values are maintained internally, so if one of them becomes invalid, a
+  new lookup will be fired off the next time it's asked for.  The timeout for this
+  operation is 30 seconds.
+  @param name The domain to look up.
+  @param timeout (optional) The number of seconds to wait for this operation to 
+  complete - defaults to 30 seconds.
+  @return The IP address of the host, or -1 on error.
+
+  \b Example
+  \code
+  Network* net = Network::get();
+  int makingthings = net->getHostByName("www.makingthings.com");
+  // Now we can make a new connection to this host
+  TcpSocket sock;
+  if(sock.connect(makingthings, 80))
+  {
+    // now we can communicate
+    sock.close();
+  }
+  \endcode
+*/
+int Network::getHostByName( const char *name, int timeout )
 {
   struct ip_addr addr;
   int retval = -1;
@@ -242,7 +403,7 @@ int Network::getHostByName( const char *name )
     retval = addr.addr;
   else if(result == ERR_INPROGRESS) // a lookup is in progress - wait for the callback to signal that we've gotten a response
   {
-    if(dnsSemaphore.take(30000)) // timeout is 30 seconds by default
+    if(dnsSemaphore.take(timeout * 1000))
       retval = dnsResolvedAddress;
   }
   return retval;
@@ -260,20 +421,18 @@ void dnsCallback(const char *name, struct ip_addr *addr, void *arg)
   network->dnsSemaphore.give();
 }
 
-int Network::setValid( int v )
+int Network::setValid( bool v )
 {
   if ( v )
   {
     struct ip_addr ip, gw, mask;
-    struct netif* mc_netif;
-
     ip.addr = tempIpAddress; // these should each have been set previously
     mask.addr = tempMask;  // by Network_SetAddress(), etc.
     gw.addr = tempGateway;
-    if( !getDhcp() ) // only actually change the address if we're not using DHCP
+    if( !dhcp() ) // only actually change the address if we're not using DHCP
     {
       // we specify our network interface as en0 when we init
-      mc_netif = netif_find( (char*)"en0" );
+      struct netif* mc_netif = netif_find( (char*)"en0" );
       if( mc_netif != NULL )
         netif_set_addr( mc_netif, &ip, &mask, &gw );
     }
@@ -290,11 +449,7 @@ int Network::setValid( int v )
     // Network_Valid = NET_VALID;
   }
   else
-  {
-    // int value = 0;
     Eeprom::get()->write( EEPROM_SYSTEM_NET_CHECK, 0 );
-    // Network_Valid = NET_INVALID;
-  }
 
   return CONTROLLER_OK;
 }
