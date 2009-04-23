@@ -15,12 +15,6 @@
 
 *********************************************************************************/
 
-/*
-	TYPES.h
-
-  MakingThings
-*/
-
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -38,8 +32,13 @@ typedef long long int longlong;
 typedef unsigned long long int ullong;
 typedef unsigned long long int ulonglong;
 
+#ifndef true
 #define true 1
+#endif
+
+#ifndef false
 #define false 0
+#endif
 
 #ifndef NULL
 #define NULL 0

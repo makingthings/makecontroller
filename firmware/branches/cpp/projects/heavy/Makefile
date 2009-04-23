@@ -95,7 +95,8 @@ CPP_THUMB_SRC = \
   $(MAKINGTHINGS)/analogin.cpp \
   $(MAKINGTHINGS)/pwm.cpp \
   $(LIBRARIES)/appled/appled.cpp \
-  make_.cpp \
+  $(LIBRARIES)/dipswitch/dipswitch.cpp \
+  make.cpp \
 
 # Source files that must be built in ARM mode.
 ARM_SRC= \
