@@ -43,6 +43,14 @@ extern "C" {
   There's only one UsbSerial object in the system, so you never create your own.  You can access
   it through the get() method.
   
+  \code
+  UsbSerial* usb = UsbSerial::get(); // first get a reference to the central UsbSerial object
+  usb->write("hello", 5); // write a little something
+  
+  char buffer[128];
+  int got = usb->read(buffer, 128); // and read
+  \endcode
+  
   \section Drivers
   On OS X, the system driver is used - no external drivers are needed.
   An entry in \b /dev is created - similar to <b>/dev/cu.usbmodem.xxxx</b>.  It may be opened for reading and 
