@@ -1,0 +1,10 @@
+<!DOCTYPE mcbuilder_library>
+<library>
+  <version>1.0</version>
+  <display_name>PWM Out</display_name>
+  <author>MakingThings</author>
+  <reference>../../../../resources/reference/makecontroller/html/group___pwm_out.html</reference>
+  <files>
+    <file type="thumb" >pwmout.c</file>
+  </files>
+</library>
