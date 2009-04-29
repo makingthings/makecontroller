@@ -657,10 +657,10 @@ int Serial_Init( int index )
 
   // default to SERIAL_0 values
   int id = AT91C_ID_US0;
-  int rxPin = IO_PA00_BIT;
-  int txPin = IO_PA01_BIT;
-  long rxPinBit = IO_PA00;
-  long txPinBit = IO_PA01;
+  int rxPin = IO_PA00;
+  int txPin = IO_PA01;
+  long rxPinBit = IO_PA00_BIT;
+  long txPinBit = IO_PA01_BIT;
   switch( index )
   {
     case SERIAL_0:
