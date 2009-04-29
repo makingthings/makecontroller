@@ -33,7 +33,7 @@
 
 #include "USBDCallbacks.h"
 #include "USBD.h"
-#include <board.h>
+#include <Board.h>
 // #include <aic/aic.h>
 
 extern void ( UsbIsr_Wrapper )( void );
