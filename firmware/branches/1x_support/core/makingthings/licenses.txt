@@ -1,0 +1,39 @@
+/*********************************************************************************
+
+ Copyright 2006-2008 MakingThings
+
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
+
+*********************************************************************************/
+
+
+/**
+ \page Licenses Licenses
+  Licenses for the use of Make Controller code.
+  
+  This page is really only relevant if you're planning on publicly releasing or selling code/programs that you create with the
+  Make Controller.  The Make Controller software environment is a fusion of four main bodies of code:
+	- User code: the applications that you create.
+  - MakingThings library: code that MakingThings has contributed to make it easier to work with the Make Controller Kit.
+	- FreeRTOS: an open source Real Time Operating System for the SAM7X.  See http://www.freertos.org
+	- lwIP: a complete and open source TCIP/IP code library.  See http://www.sics.se/~adam/lwip/
+
+	This software is all open source, and thus subject to the licensing of each module 
+	of code.  All MakingThings specific code is licensed under the Apache 2.0 license, which is quite flexible for
+	both open source and commercial projects.  Be sure to acquaint yourself with the licenses for the main 
+	bodies of code in the Make Controller firmware codebase:
+	- MakingThings: http://www.apache.org/licenses/LICENSE-2.0.html
+	- FreeRTOS: http://www.freertos.org/a00114.html
+	- lwIP: http://www.xfree86.org/3.3.6/COPYRIGHT2.html#5
+*/
+
+
