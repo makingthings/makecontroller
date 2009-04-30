@@ -104,19 +104,19 @@ void Timer_Isr( void )
     manager->servicing = false;
   }
 
-	AT91C_BASE_AIC->AIC_EOICR = 0; // Clear AIC to complete ISR processing
+  AT91C_BASE_AIC->AIC_EOICR = 0; // Clear AIC to complete ISR processing
 }
 
 void TimerIsr_Wrapper( void )
 {
-	/* Save the context of the interrupted task. */
-	portSAVE_CONTEXT();
+  /* Save the context of the interrupted task. */
+  portSAVE_CONTEXT();
 
-	/* Call the handler to do the work.  This must be a separate
-	function to ensure the stack frame is set up correctly. */
-	Timer_Isr();
+  /* Call the handler to do the work.  This must be a separate
+  function to ensure the stack frame is set up correctly. */
+  Timer_Isr();
 
-	/* Restore the context of whichever task will execute next. */
-	portRESTORE_CONTEXT();
+  /* Restore the context of whichever task will execute next. */
+  portRESTORE_CONTEXT();
 }
 
