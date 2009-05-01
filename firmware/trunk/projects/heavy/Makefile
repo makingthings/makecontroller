@@ -107,7 +107,8 @@ ARM_SRC= \
 CPP_ARM_SRC = \
   $(MAKINGTHINGS)/analogin_isr.cpp \
   $(MAKINGTHINGS)/fasttimer_isr.cpp \
-  $(MAKINGTHINGS)/timer_isr.cpp
+  $(MAKINGTHINGS)/timer_isr.cpp \
+  $(MAKINGTHINGS)/io_isr.cpp
 
   
 # All the include directories need to be appended here
