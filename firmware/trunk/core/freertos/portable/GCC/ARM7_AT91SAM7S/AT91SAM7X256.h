@@ -2930,7 +2930,7 @@ typedef struct _AT91S_ADC {
     AT91C_BASE_AIC->AIC_ICCR = mask ;										\
 }
 
-void AIC_ConfigureIT(unsigned int source, unsigned int mode, void (*handler)( void ));
+//void AIC_ConfigureIT(unsigned int source, unsigned int mode, void (*handler)( void ));
 void AIC_EnableIT(unsigned int source);
 void AIC_DisableIT(unsigned int source);
 

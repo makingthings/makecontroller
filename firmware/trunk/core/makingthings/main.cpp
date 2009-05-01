@@ -124,6 +124,14 @@ void kill( void )
   AT91C_BASE_RSTC->RSTC_RCR = ( AT91C_RSTC_EXTRST | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | (0xA5 << 24 ) );
 }
 
+void AIC_ConfigureIT(unsigned int source, unsigned int mode, void (*handler)( void ))
+{
+  AT91C_BASE_AIC->AIC_IDCR = 1 << source; // Disable the interrupt first
+  AT91C_BASE_AIC->AIC_SMR[source] = mode; // Configure mode
+  AT91C_BASE_AIC->AIC_SVR[source] = (unsigned int) handler; // and handler
+  AT91C_BASE_AIC->AIC_ICCR = 1 << source; // Clear interrupt
+}
+
 static void prvSetupHardware( void )
 {
   /* When using the JTAG debugger the hardware is not always initialised to

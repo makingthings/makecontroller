@@ -19,6 +19,8 @@
 #ifndef IO_H
 #define IO_H
 
+#include "AT91SAM7X256.h"
+
 #define OUTPUT true
 #define INPUT false
 #define INVALID_PIN 1024 // a value too large for any pin
@@ -80,6 +82,8 @@ public:
     GPIO  /**< General Purpose IO - refer to as Io::GPIO */
   };
   
+  typedef void (*handler) (void*);
+  
   Io( int pin = INVALID_PIN, Peripheral = GPIO, bool output = OUTPUT );
   bool valid( ) { return io_pin != INVALID_PIN; }
   
@@ -104,10 +108,26 @@ public:
   bool setPeripheral( Peripheral periph, bool disableGpio = true );
   bool releasePeripherals( );
 
-  bool registerInterruptHandler( void* yourobj, void (*yourfunc)());
+  bool addInterruptHandler(handler h, void* context = 0 );
+  bool removeInterruptHandler( );
   
 private:
   unsigned int io_pin;
+  void initInterrupts(bool a, unsigned int priority);
+  
+  typedef struct
+  {
+    void* context;
+    void (*handler)(void*);
+    bool channel;
+    unsigned int mask;
+  } InterruptSource;
+  
+  static InterruptSource isrSources[]; /// List of interrupt sources.
+  static unsigned int isrSourceCount; /// Number of currently defined interrupt sources.
+  static bool isrAInit;
+  static bool isrBInit;
+  friend void Io_Isr(bool channel_a, AT91S_PIO* basePio);
 };
 
 /**
