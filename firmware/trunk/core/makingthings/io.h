@@ -58,6 +58,12 @@
   // hmm...the myLED name doesn't make so much sense now...oh well
   \endcode
   
+  \section Interrupts
+  You can also register to get notified automatically, when the status on an Io
+  line changes, rather than constantly reading the value to see if it has changed.  
+  This can be much more efficient - see addInterruptHandler() and removeInterruptHandler() 
+  for details.
+  
   \section settings Additional Settings
   Each Io pin also has some additional settings that can optionally be configured.
   - \b Pullup - each signal has an optional pullup resistor that can be enabled.  To 

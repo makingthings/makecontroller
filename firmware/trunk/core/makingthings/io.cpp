@@ -364,8 +364,43 @@ bool Io::setPeripheral( Peripheral periph, bool disableGpio )
 // }
 
 /**
-  Add an interrupt handler for this signal
-
+  Add an interrupt handler for this signal.
+  If you want to get notified when the signal on this pin changes,
+  you can register an interrupt handler, instead of constantly reading the pin.
+  To do this, define a function you want to be called when the pin changes, and
+  then register it with the Io you want to monitor.  The function has to have a
+  specific signature - it must be of the form:
+  \code void myHandler(void* context) \endcode
+  
+  This function will be called any time the signal on the Io pin changes.  When you 
+  register the handler, you can provide a pointer to some context that will be passed
+  into your handler.  This can be an instance of a class, if you want to 
+  
+  \b Example
+  \code
+  void myHandler(void* context); // declare our handler
+  
+  void myTask(void* p)
+  {
+    Io io(IO_PB27, Io::GPIO, INPUT);   // Io on AnalogIn 0 - as digital input
+    io.addInterruptHandler(myHandler); // register our handler
+    
+    while(true)
+    {
+      // do the rest of my task...
+    }
+  }
+  
+  int count = 0; // how many times has our interrupt triggered?
+  // now this will get called every time the value on PB27 changes
+  void myHandler(void* context)
+  {
+    count++;
+    if(count > 100)
+      count = 0;
+  }
+  \endcode
+  
   @param h The function to be called when there's an interrupt
   @param context (optional) Context that will be passed into your handler, if desired.
   @return True if the handler was registered successfully, false if not.
@@ -394,6 +429,23 @@ bool Io::addInterruptHandler(handler h, void* context)
   return true;
 }
 
+/**
+  Disable the interrupt handler for this io line.
+  If you've already registered an interrupt with addInterruptHandler()
+  this will disable it.
+  
+  \b Example
+  \code
+  Io io(IO_PB27, Io::GPIO, INPUT);
+  io.addInterruptHandler(myHandler); // start notifications
+  
+  // ... some time later, we want to stop getting notified
+  
+  io.removeInterruptHandler( ); // stop notifications
+  \endcode
+  
+  @return True on success, false on failure.
+*/
 bool Io::removeInterruptHandler( )
 {
   basePort->PIO_IDR = mask;
