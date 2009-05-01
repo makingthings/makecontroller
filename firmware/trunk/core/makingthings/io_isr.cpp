@@ -20,11 +20,11 @@
 
 void IoAIsr_Wrapper( ) __attribute__ ((naked));
 void IoBIsr_Wrapper( ) __attribute__ ((naked));
-void Io_Isr( bool channel, AT91S_PIO* basePio );
+void Io_Isr( AT91S_PIO* basePio );
 
 unsigned int status;
 
-void Io_Isr(bool channel, AT91S_PIO* basePio)
+void Io_Isr( AT91S_PIO* basePio )
 {
   status = basePio->PIO_ISR;
   status &= basePio->PIO_IMR;
@@ -37,7 +37,7 @@ void Io_Isr(bool channel, AT91S_PIO* basePio)
     while( status != 0  && i < Io::isrSourceCount )
     {
       is = &(Io::isrSources[i]);
-      if( is->channel == channel) // Source is configured on the same controller
+      if( is->port == basePio) // Source is configured on the same controller
       {
         if ((status & is->mask) != 0) // Source has PIOs whose statuses have changed
         {
@@ -52,16 +52,16 @@ void Io_Isr(bool channel, AT91S_PIO* basePio)
 
 void IoAIsr_Wrapper( )
 {
-  portSAVE_CONTEXT();            // Save the context of the interrupted task.
-  Io_Isr(true, AT91C_BASE_PIOA); // execute the handler
-  portRESTORE_CONTEXT();         // Restore the context of whichever task will execute next.
+  portSAVE_CONTEXT();        // Save the context of the interrupted task.
+  Io_Isr( AT91C_BASE_PIOA ); // execute the handler
+  portRESTORE_CONTEXT();     // Restore the context of whichever task will execute next.
 }
 
 void IoBIsr_Wrapper( )
 {
-  portSAVE_CONTEXT();             // Save the context of the interrupted task.
-  Io_Isr(false, AT91C_BASE_PIOB); // execute the handler
-  portRESTORE_CONTEXT();          // Restore the context of whichever task will execute next.
+  portSAVE_CONTEXT();        // Save the context of the interrupted task.
+  Io_Isr( AT91C_BASE_PIOB ); // execute the handler
+  portRESTORE_CONTEXT();     // Restore the context of whichever task will execute next.
 }
 
 

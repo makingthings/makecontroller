@@ -55,12 +55,9 @@ extern void IoBIsr_Wrapper( );
 */
 Io::Io( int index, Peripheral peripheral, bool output  )
 {
-  io_pin = INVALID_PIN;
-  if ( index < 0 || index > IO_PIN_COUNT )
+  io_pin = INVALID_PIN;  
+  if( !setPin( index ) )
     return;
-  AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_PIOA; // maybe only assert these once...?
-  AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_PIOB;
-  io_pin = index;
   setPeripheral( peripheral );
   if( peripheral == GPIO )
     setDirection( output );
@@ -82,6 +79,16 @@ bool Io::setPin( int pin )
   if ( pin < 0 || pin > IO_PIN_COUNT )
     return false;
   io_pin = pin;
+  if( io_pin < 32 )
+  {
+    basePort = AT91C_BASE_PIOA;
+    mask = 1 << io_pin;
+  }
+  else
+  {
+    basePort = AT91C_BASE_PIOB;
+    mask = 1 << ( io_pin & 0x1F );
+  }
   return true;
 }
 
@@ -115,14 +122,7 @@ int Io::pin( )
 */
 bool Io::value( )
 {
-  if ( io_pin == INVALID_PIN )
-    return 0;
-  
-  int mask = 1 << ( io_pin & 0x1F );
-  if ( io_pin < 32 )
-    return ( ( AT91C_BASE_PIOA->PIO_PDSR & mask ) != 0 );
-  else
-    return ( ( AT91C_BASE_PIOB->PIO_PDSR & mask ) != 0 );
+  return ( ( basePort->PIO_PDSR & mask ) != 0 );
 }
 
 /**
@@ -140,15 +140,10 @@ bool Io::value( )
 */
 bool Io::setValue( bool onoff )
 {
-  if ( io_pin == INVALID_PIN )
-    return 0;
-
-  int mask = 1 << ( io_pin & 0x1F );
-  AT91S_PIO* basePio = ( io_pin < 32 ) ? AT91C_BASE_PIOA : AT91C_BASE_PIOB;
   if ( !onoff )
-    basePio->PIO_SODR = mask; // set it
+    basePort->PIO_SODR = mask; // set it
   else
-    basePio->PIO_CODR = mask; // clear
+    basePort->PIO_CODR = mask; // clear
   return true;
 }
 
@@ -168,11 +163,7 @@ bool Io::setValue( bool onoff )
 */
 bool Io::on()
 {
-  int mask = 1 << ( io_pin & 0x1F );
-  if ( io_pin < 32 ) // port A
-    AT91C_BASE_PIOA->PIO_CODR = mask;
-  else // port B
-    AT91C_BASE_PIOB->PIO_CODR = mask;
+  basePort->PIO_CODR = mask;
   return true;
 }
 
@@ -192,11 +183,7 @@ bool Io::on()
 */
 bool Io::off()
 {
-  int mask = 1 << ( io_pin & 0x1F );
-  if ( io_pin < 32 ) // port A
-    AT91C_BASE_PIOA->PIO_SODR = mask;
-  else // port B
-    AT91C_BASE_PIOB->PIO_SODR = mask;
+  basePort->PIO_SODR = mask;
   return true;
 }
 
@@ -220,13 +207,7 @@ bool Io::off()
 */
 bool Io::direction( )
 {
-  if ( io_pin == INVALID_PIN )
-    return 0;
-
-  if ( io_pin < 32 ) // port A
-    return ( AT91C_BASE_PIOA->PIO_OSR & ( 1 << io_pin ) ) != 0;
-  else // port B
-    return ( AT91C_BASE_PIOB->PIO_OSR & ( 1 << ( io_pin & 0x1F ) ) ) != 0;
+  return ( basePort->PIO_OSR & mask ) != 0;
 }
 
 /**
@@ -245,23 +226,10 @@ bool Io::direction( )
 */
 bool Io::setDirection( bool output )
 {
-  if ( io_pin == INVALID_PIN )
-    return 0;
-  
   if( output ) // set as output
-  {
-    if ( io_pin < 32 ) // port A
-      AT91C_BASE_PIOA->PIO_OER = 1 << io_pin;
-    else // port B
-      AT91C_BASE_PIOB->PIO_OER = 1 << ( io_pin & 0x1F );
-  }
+    basePort->PIO_OER = mask;
   else // set as input
-  {
-    if ( io_pin < 32 ) // port A
-      AT91C_BASE_PIOA->PIO_ODR = 1 << io_pin;
-    else // port B
-      AT91C_BASE_PIOB->PIO_ODR = 1 << ( io_pin & 0x1F );
-  }
+    basePort->PIO_ODR = mask;
   return true;
 }
 
@@ -277,14 +245,7 @@ bool Io::setDirection( bool output )
 */
 bool Io::pullup( )
 {
-  if ( io_pin == INVALID_PIN )
-    return 0;
-
-  // The PullUp status register is inverted.
-  if ( io_pin < 32 ) 
-    return ( AT91C_BASE_PIOA->PIO_PPUSR & ( 1 << io_pin ) ) == 0;
-  else
-    return ( AT91C_BASE_PIOB->PIO_PPUSR & ( 1 << ( io_pin & 0x1F ) ) ) == 0;
+  return ( basePort->PIO_PPUSR & mask ) == 0; // The PullUp status register is inverted.
 }
 
 /**
@@ -299,15 +260,10 @@ bool Io::pullup( )
 */
 bool Io::setPullup( bool enabled )
 {
-  if ( io_pin == INVALID_PIN )
-    return 0;
-    
-  int mask = 1 << ( io_pin & 0x1F );
-  AT91S_PIO* basePio = ( io_pin < 32 ) ? AT91C_BASE_PIOA : AT91C_BASE_PIOB;
   if( enabled ) // turn it on
-    basePio->PIO_PPUER = mask;
+    basePort->PIO_PPUER = mask;
   else // turn it off
-    basePio->PIO_PPUDR = mask;
+    basePort->PIO_PPUDR = mask;
   return true;
 }
 
@@ -323,13 +279,7 @@ bool Io::setPullup( bool enabled )
 */
 bool Io::filter( )
 {
-  if ( io_pin == INVALID_PIN )
-    return 0;
-    
-  if ( io_pin < 32 ) 
-    return AT91C_BASE_PIOA->PIO_IFSR & ( 1 << io_pin );
-  else
-    return AT91C_BASE_PIOB->PIO_IFSR & ( 1 << ( io_pin & 0x1F ) );
+  return basePort->PIO_IFSR & mask;
 }
 
 /**
@@ -344,15 +294,10 @@ bool Io::filter( )
 */
 bool Io::setFilter( bool enabled )
 {
-  if ( io_pin == INVALID_PIN )
-    return 0;
-  
-  int mask = 1 << ( io_pin & 0x1F );
-  AT91S_PIO* basePio = ( io_pin < 32 ) ? AT91C_BASE_PIOA : AT91C_BASE_PIOB;
   if( enabled ) // turn it on
-    basePio->PIO_IFER = mask;
+    basePort->PIO_IFER = mask;
   else // turn it off
-    basePio->PIO_IFDR = mask;
+    basePort->PIO_IFDR = mask;
   return true;
 }
 
@@ -390,25 +335,20 @@ bool Io::setFilter( bool enabled )
 */
 bool Io::setPeripheral( Peripheral periph, bool disableGpio )
 {
-  if ( io_pin == INVALID_PIN )
-    return 0;
-  
-  int mask = 1 << ( io_pin & 0x1F );
-  AT91S_PIO* basePio = ( io_pin < 32 ) ? AT91C_BASE_PIOA : AT91C_BASE_PIOB;
   switch( periph )
   {
     case A: // disable pio for each
       if( disableGpio )
-        basePio->PIO_PDR = mask;
-      basePio->PIO_ASR = mask;
+        basePort->PIO_PDR = mask;
+      basePort->PIO_ASR = mask;
       break;
     case B:
       if( disableGpio )
-        basePio->PIO_PDR = mask;
-      basePio->PIO_BSR = mask;
+        basePort->PIO_PDR = mask;
+      basePort->PIO_BSR = mask;
       break;
     case GPIO:
-      basePio->PIO_PER = mask;
+      basePort->PIO_PER = mask;
       break;
   }
   return true;
@@ -435,25 +375,18 @@ bool Io::addInterruptHandler(handler h, void* context)
   if(isrSourceCount >= MAX_INTERRUPT_SOURCES)
     return false;
   
-  if( io_pin < 32 )
-  {
-    isrSources[isrSourceCount].channel = true;
-    isrSources[isrSourceCount].mask = (1 << io_pin);
-  }
-  else
-  {
-    isrSources[isrSourceCount].channel = false;
-    isrSources[isrSourceCount].mask = (1 << ( io_pin & 0x1F ));
-  }
+  isrSources[isrSourceCount].port = basePort;
+  isrSources[isrSourceCount].mask = mask;
   
   // if this is the first time for either channel, set it up
-  bool ch = isrSources[isrSourceCount].channel;
-  if( (!isrAInit && ch) || (!isrBInit && !ch) )
-    initInterrupts(ch, (AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 1) );
+  if( (!isrAInit && basePort == AT91C_BASE_PIOA) || 
+      (!isrBInit && basePort == AT91C_BASE_PIOB) )
+  {
+    initInterrupts(basePort, (AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 3) );
+  }
   
-  AT91S_PIO* basePio = (io_pin < 32) ? AT91C_BASE_PIOA : AT91C_BASE_PIOB;
-  basePio->PIO_ISR;                                   // clear the status register
-  basePio->PIO_IER = isrSources[isrSourceCount].mask; // enable our channel
+  basePort->PIO_ISR;                                   // clear the status register
+  basePort->PIO_IER = isrSources[isrSourceCount].mask; // enable our channel
 
   isrSources[isrSourceCount].handler = h;
   isrSources[isrSourceCount++].context = context; // make sure to increment our handler count
@@ -463,20 +396,7 @@ bool Io::addInterruptHandler(handler h, void* context)
 
 bool Io::removeInterruptHandler( )
 {
-  AT91S_PIO* basePio;
-  unsigned int mask;
-  if( io_pin < 32 )
-  {
-    basePio = AT91C_BASE_PIOA;
-    mask = (1 << io_pin);
-  }
-  else
-  {
-    basePio = AT91C_BASE_PIOB;
-    mask = (1 << ( io_pin & 0x1F ));
-  }
-  
-  basePio->PIO_IDR = mask;
+  basePort->PIO_IDR = mask;
   return true;
 }
 
@@ -484,29 +404,28 @@ bool Io::removeInterruptHandler( )
   Turn on interrupts for a pio channel - a or b
   at a given priority.
 */
-void Io::initInterrupts(bool a, unsigned int priority)
+void Io::initInterrupts(AT91S_PIO* pio, unsigned int priority)
 {
   unsigned int chan;
-  AT91S_PIO* basePio;
   void (*isr_handler)( );
   
-  if(a)
+  if( pio == AT91C_BASE_PIOA )
   {
     chan = AT91C_ID_PIOA;
-    basePio = AT91C_BASE_PIOA;
     isr_handler = IoAIsr_Wrapper;
     isrAInit = true;
   }
-  else // we're b
+  else if( pio == AT91C_BASE_PIOB )
   {
     chan = AT91C_ID_PIOB;
-    basePio = AT91C_BASE_PIOB;
     isr_handler = IoBIsr_Wrapper;
     isrBInit = true;
   }
+  else
+    return;
   
-  basePio->PIO_ISR;                         // clear with a read
-  basePio->PIO_IDR = 0xFFFFFFFF;            // disable all by default
+  pio->PIO_ISR;                         // clear with a read
+  pio->PIO_IDR = 0xFFFFFFFF;            // disable all by default
   AIC_ConfigureIT(chan, priority, isr_handler); // set it up
   AT91C_BASE_AIC->AIC_IECR = 1 << chan;     // enable it
 }

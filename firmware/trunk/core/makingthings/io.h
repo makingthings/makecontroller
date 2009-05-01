@@ -113,21 +113,24 @@ public:
   
 private:
   unsigned int io_pin;
-  void initInterrupts(bool a, unsigned int priority);
+  AT91S_PIO* basePort;
+  unsigned int mask;
+
+  void initInterrupts(AT91S_PIO* pio, unsigned int priority);
   
   typedef struct
   {
     void* context;
     void (*handler)(void*);
-    bool channel;
     unsigned int mask;
+    AT91S_PIO* port;
   } InterruptSource;
   
   static InterruptSource isrSources[]; /// List of interrupt sources.
   static unsigned int isrSourceCount; /// Number of currently defined interrupt sources.
   static bool isrAInit;
   static bool isrBInit;
-  friend void Io_Isr(bool channel_a, AT91S_PIO* basePio);
+  friend void Io_Isr( AT91S_PIO* basePio );
 };
 
 /**
