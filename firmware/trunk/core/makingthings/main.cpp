@@ -1,91 +1,27 @@
-/*
-  FreeRTOS V3.2.4 - copyright (C) 2003-2005 Richard Barry.
+/*********************************************************************************
 
-  This file is part of the FreeRTOS distribution.
+ Copyright 2006-2009 MakingThings
 
-  FreeRTOS is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
 
-  FreeRTOS is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
 
-  You should have received a copy of the GNU General Public License
-  along with FreeRTOS; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-  A special exception to the GPL can be applied should you wish to distribute
-  a combined work that includes FreeRTOS, without being obliged to provide
-  the source code for any proprietary components.  See the licensing section
-  of http://www.FreeRTOS.org for full details of how and when the exception
-  can be applied.
-
-  ***************************************************************************
-  See http://www.FreeRTOS.org for documentation, latest information, license
-  and contact details.  Please ensure to read the configuration and relevant
-  port sections of the online documentation.
-  ***************************************************************************
-*/
-
-/* 
-  NOTE : Tasks run in system mode and the scheduler runs in Supervisor mode.
-  The processor MUST be in supervisor mode when vTaskStartScheduler is 
-  called.  The demo applications included in the FreeRTOS.org download switch
-  to supervisor mode prior to main being called.  If you are not using one of
-  these demo application projects then ensure Supervisor mode is used.
-*/
-
-
-/*
- * Creates all the application tasks, then starts the scheduler.
- * Main.c includes an idle hook function that simply periodically sends data
- * to the USB task for transmission.
- */
-
-/*
-  Changes from V3.2.2
-
-  + Modified the stack sizes used by some tasks to permit use of the 
-    command line GCC tools.
-*/
-
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
+*********************************************************************************/
 
 #include "FreeRTOS.h"
 #include "task.h"
-#include "portable.h"
-
-#include "lwip/api.h" 
-
 #include "core.h"
 #include "AT91SAM7X256.h"
-#include "rtos.h"
 
-// NORMAL PROGRAMMING RESUMES
-
-/*-----------------------------------------------------------*/
-
-/*
- * Configure the processor for use with the Atmel demo board.  This is very
- * minimal as most of the setup is performed in the startup code.
- */
 static void prvSetupHardware( void );
-
-/*
- * The idle hook.
- */
 void vApplicationIdleHook( void );
-/*-----------------------------------------------------------*/
-
-/*
- * Setup hardware then start all the demo application tasks.
- */
 void MakeStarterTask( void* parameters );
 
 void MakeStarterTask( void* parameters )
@@ -97,12 +33,7 @@ void MakeStarterTask( void* parameters )
 
 int main( void )
 {
-//  __libc_init_array();
-  /* Setup the ports. */
   prvSetupHardware();
-  
-
-  /* Create the make task. */
   void* taskHandle;
   xTaskCreate( MakeStarterTask, (signed char*)"Make", ( 1200 >> 2 ), NULL, 4, &taskHandle );
   // new Task( MakeStarterTask, "Make", 1200, NULL, 4 );
@@ -113,11 +44,9 @@ int main( void )
   to supervisor mode prior to main being called.  If you are not using one of
   these demo application projects then ensure Supervisor mode is used here. */
   vTaskStartScheduler();
-
-  /* Should never get here! */
-  return 0;
+  
+  return 0; // Should never get here!
 }
-/*-----------------------------------------------------------*/
 
 void kill( void )
 {
@@ -134,9 +63,11 @@ void AIC_ConfigureIT(unsigned int source, unsigned int mode, void (*handler)( vo
 
 static void prvSetupHardware( void )
 {
-  /* When using the JTAG debugger the hardware is not always initialised to
-  the correct default state.  This line just ensures that this does not
-  cause all interrupts to be masked at the start. */
+  /* 
+    When using the JTAG debugger the hardware is not always initialised to
+    the correct default state.  This line just ensures that this does not
+    cause all interrupts to be masked at the start.
+  */
   
   // Unstack nested interrupts
   unsigned int i;
@@ -146,8 +77,10 @@ static void prvSetupHardware( void )
   // Enable Protection mode
   AT91C_BASE_AIC->AIC_DCR = AT91C_AIC_DCR_PROT;
   
-  /* Most setup is performed by the low level init function called from the
-  startup asm file.*/
+  /* 
+    Note - Most setup is performed by the low level init function called from the
+    startup asm file.
+  */
 
   // ENABLE HARDWARE RESET
   while((AT91C_BASE_RSTC->RSTC_RSR & (AT91C_RSTC_SRCMP | AT91C_RSTC_NRSTL)) != (AT91C_RSTC_NRSTL));
@@ -158,24 +91,24 @@ static void prvSetupHardware( void )
 
   // EEPROM DISABLE
   #if ( CONTROLLER_VERSION == 90 )
-    AT91C_BASE_PIOB->PIO_PER = 1 << 17; // Set PB17 - the EEPROM ~enable - in PIO mode
-    AT91C_BASE_PIOB->PIO_OER = 1 << 17; // Configure in Output
+    AT91C_BASE_PIOB->PIO_PER = 1 << 17;  // Set PB17 - the EEPROM ~enable - in PIO mode
+    AT91C_BASE_PIOB->PIO_OER = 1 << 17;  // Configure in Output
     AT91C_BASE_PIOB->PIO_SODR = 1 << 17; // Set Output
   #elif ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 || CONTROLLER_VERSION == 200 )
-    AT91C_BASE_PIOA->PIO_PER = 1 << 9; // Set PA9 - the EEPROM ~enable - in PIO mode
-    AT91C_BASE_PIOA->PIO_OER = 1 << 9; // Configure in Output
-    AT91C_BASE_PIOA->PIO_SODR = 1 << 9; // Set Output
+    AT91C_BASE_PIOA->PIO_PER = 1 << 9;   // Set PA9 - the EEPROM ~enable - in PIO mode
+    AT91C_BASE_PIOA->PIO_OER = 1 << 9;   // Configure in Output
+    AT91C_BASE_PIOA->PIO_SODR = 1 << 9;  // Set Output
   #endif
 
   // CAN DISABLE
   #if ( CONTROLLER_VERSION == 90 )
-    AT91C_BASE_PIOB->PIO_PER = 1 << 16; // Set PB16 - the CAN ~enable - in PIO mode
-    AT91C_BASE_PIOB->PIO_OER = 1 << 16; // Configure in Output
+    AT91C_BASE_PIOB->PIO_PER = 1 << 16;  // Set PB16 - the CAN ~enable - in PIO mode
+    AT91C_BASE_PIOB->PIO_OER = 1 << 16;  // Configure in Output
     AT91C_BASE_PIOB->PIO_SODR = 1 << 16; // Set Output
   #elif ( CONTROLLER_VERSION == 95  || CONTROLLER_VERSION == 100 || CONTROLLER_VERSION == 200 )
-    AT91C_BASE_PIOA->PIO_PER = 1 << 7; // Set PA7 - the CAN ~enable - in PIO mode
-    AT91C_BASE_PIOA->PIO_OER = 1 << 7; // Configure in Output
-    AT91C_BASE_PIOA->PIO_SODR = 1 << 7; // Set Output
+    AT91C_BASE_PIOA->PIO_PER = 1 << 7;   // Set PA7 - the CAN ~enable - in PIO mode
+    AT91C_BASE_PIOA->PIO_OER = 1 << 7;   // Configure in Output
+    AT91C_BASE_PIOA->PIO_SODR = 1 << 7;  // Set Output
   #endif
 
   /* Enable the peripheral clock. */
@@ -201,7 +134,7 @@ static void prvSetupHardware( void )
     AT91C_BASE_PIOB->PIO_CODR = outputBMask;
   #endif
     
-  /* Turn the USB line into an input, kill the pull up */
+  // Turn the USB line into an input, kill the pull up
   #if ( CONTROLLER_VERSION == 90 )
     AT91C_BASE_PIOB->PIO_PER = 1 << 10; 
     AT91C_BASE_PIOB->PIO_ODR = 1 << 10;
@@ -216,8 +149,7 @@ static void prvSetupHardware( void )
     AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PIO_PA29;
   #endif
 
-  /* Setup the PIO for the USB pull up resistor. */
-  /* Start low: no USB */
+  // Setup the PIO for the USB pull up resistor - Start low: no USB
   #if ( CONTROLLER_VERSION == 90 )
     AT91C_BASE_PIOB->PIO_PER = AT91C_PIO_PB11;
     AT91C_BASE_PIOB->PIO_OER = AT91C_PIO_PB11;
@@ -225,24 +157,18 @@ static void prvSetupHardware( void )
   #elif ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 )
     AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA11;
     AT91C_BASE_PIOA->PIO_OER = AT91C_PIO_PA11;
-    AT91C_BASE_PIOA->PIO_CODR = AT91C_PIO_PA11; // had this round the wrong way...
+    AT91C_BASE_PIOA->PIO_CODR = AT91C_PIO_PA11;
   #elif ( CONTROLLER_VERSION == 200 )
     AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA30;
     AT91C_BASE_PIOA->PIO_OER = AT91C_PIO_PA30;
     AT91C_BASE_PIOA->PIO_CODR = AT91C_PIO_PA30;
   #endif
 }
-/*-----------------------------------------------------------*/
-
-/*-----------------------------------------------------------*/
 
 int toggle;
 void vApplicationIdleHook( void )
 {
-  // prevent the function from being optimized away?
-  toggle = !toggle;
+  toggle = !toggle; // prevent the function from being optimized away?
 }
-
-/*----------------------------------------------------------------------*/
 
 
