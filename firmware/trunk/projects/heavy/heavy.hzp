@@ -8,7 +8,7 @@
       <configuration filter="c;cpp;cxx;cc;h;s;asm;inc" Name="Common" />
       <folder Name="Heavy" >
         <file file_name="config.h" Name="config.h" />
-        <file file_name="../../../firmware_cpp/projects/heavy/make.cpp" Name="make.cpp" />
+        <file file_name="make.cpp" Name="make.cpp" />
       </folder>
       <folder Name="Core" >
         <folder Name="MakingThings" >
@@ -76,6 +76,10 @@
           <file file_name="../../core/makingthings/serial.h" Name="serial.h" />
           <file file_name="../../core/makingthings/spi.h" Name="spi.h" />
           <file file_name="../../core/makingthings/spi.cpp" Name="spi.cpp" />
+          <file file_name="../../core/makingthings/io_isr.cpp" Name="io_isr.cpp" >
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Debug" />
+            <configuration arm_instruction_set="ARM" Name="THUMB Flash Release" />
+          </file>
         </folder>
         <folder Name="FreeRTOS" >
           <configuration c_additional_options="-D CROSSWORKS_BUILD" Name="THUMB Flash Debug" />
@@ -190,6 +194,8 @@
         <file file_name="../../libraries/xbee/xbee.cpp" Name="xbee.cpp" />
         <file file_name="../../libraries/digitalin/digitalin.h" Name="digitalin.h" />
         <file file_name="../../libraries/digitalin/digitalin.cpp" Name="digitalin.cpp" />
+        <file file_name="../../libraries/webclient/webclient.h" Name="webclient.h" />
+        <file file_name="../../libraries/webclient/webclient.cpp" Name="webclient.cpp" />
       </folder>
     </folder>
     <configuration arm_target_loader_reset_after_download="Yes" Target="AT91SAM7X256" build_intermediate_directory="intermediate" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" target_reset_script="FLASHReset()" build_output_directory="output" arm_target_flash_loader_type="Comms Channel Loader" Name="THUMB Flash Debug" />

@@ -45,6 +45,7 @@ extern "C" {
 // C-only business in here
 void Run( void );
 void kill( void );
+void AIC_ConfigureIT(unsigned int source, unsigned int mode, void (*handler)( void ));
 
 #ifdef __cplusplus
 }
