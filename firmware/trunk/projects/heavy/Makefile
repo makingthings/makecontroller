@@ -160,7 +160,7 @@ $(INCLUDEDIRS) \
 -mcpu=arm7tdmi  \
 -T$(LDSCRIPT) \
 $(DEBUG)  \
-$(OPTIM)
+$(OPTIMIZATION)
 
 CFLAGS = ${C_AND_CPP_FLAGS}
 CFLAGS += -Wmissing-prototypes -Wmissing-declarations
