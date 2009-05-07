@@ -42,12 +42,11 @@
 #define XBEE_IO_DIGOUT_LOW 5
 
 /** \defgroup XBeePacketTypes XBee Packet Types
-	The different types of packet that can be used with the \ref XBee subsystem.
+  The different types of XBeePacket.
 
   These structures are to be used when the module has already been set into packet (API) mode
   with a call to XBee_SetPacketApiMode( )
-
-  \ingroup XBee
+  
   @{
 */
 
@@ -219,7 +218,8 @@ typedef struct
   - Packet (API) mode.  Lower level communication that doesn't have to wait for the module to be in
   AT command mode.  Check the \ref XBeePacketTypes for a description of how these packets are laid out.  
   Be sure to call setPacketApiMode() before trying to do anything in this mode.
-
+  
+  \section Usage
   The general idea is that you have one XBee module connected directly to your Make Controller Kit, and then
   any number of other XBee modules that can communicate with it in order to get information to and from the
   Make Controller.  Or, several Make Controllers can each have an XBee module connected in order to
@@ -228,10 +228,42 @@ typedef struct
   XBee modules also have some digital and analog I/O right on them, which means you can directly connect
   sensors to the XBee modules which will both read the values and send them wirelessly.  Check the XBee doc
   for the appropriate commands to send in order to set this up.
+  
+  To get started, create an XBeePacket object and start reading & writing with it.  \b Note - this system is
+  designed to reuse an existing XBeePacket object, as opposed to making a new one each read/write.  Calling reset()
+  between operations will clear everything out.
+  
+  Once you've received a packet, you can extract the details with unpackRX16(), unpackRX64(), 
+  unpackIO16() and unpackIO64(), depending on the type of packet.  To create a new packet to send out, use
+  tx16(), tx64(), and atCmd() depending on the kind of message you want to send.
+  
+  \b Example
+  \code
+  XBeePacket xb; // create our object
+  xb.setPacketApiMode(true); // turn on packet mode - always do this first
+  
+  while(true) // forever...assuming we're in a task loop here
+  {
+    if(xb.get())
+    {
+      // ... process the newly received packet here
+      if(xb.type() == XBEE_RX16) // check what kind of packet it is
+      {
+        uint16 source;  // variable to read the source address into
+        uint8 strength; // variable to read the signal strength into
+        xb.unpackRX16( &source, &strength );
+        // now source and strength are set to the values received in our packet
+        // ... do something here if you like depending on what we got ...
+      }
+      xb.reset(); // and reset it before our next round through the loop
+    }
+    Task::sleep(5); // always sleep a little bit in our loop
+  }
+  \endcode
 
   \section serialmode Serial Mode
   The Make Controller API for working with the XBee modules makes use of the XBee Packet API.  If you simply want to make use
-  of the transparent serial port functionality, you can just use the \ref Serial port directly.
+  of the transparent serial port functionality, you can just use the Serial port directly.
 
   Bytes sent in this way are broadcast to all XBee modules on the same chanel and with the same PAN ID.  All similarly
   configured modules will receive all bytes sent.  However, because these bytes are broadcast, there is no message
@@ -248,11 +280,11 @@ typedef struct
 class XBeePacket
 {
 public:
-  XBeePacket( );
+  XBeePacket( int serialChannel = 0 );
+  ~XBeePacket( );
   void tx16( uint8 frameID, uint16 destination, uint8 options, uint8* data, uint8 datalength );
   void tx64( uint8 frameID, uint64 destination, uint8 options, uint8* data, uint8 datalength );
-  void atCmd( uint8 frameID, char* cmd, int value = 0 );
-  ~XBeePacket( );
+  void atCmd( uint8 frameID, const char* cmd, int value = 0 );
   bool get( int timeout = 0 );
   bool send( int datalength = 0 );
   void reset( );

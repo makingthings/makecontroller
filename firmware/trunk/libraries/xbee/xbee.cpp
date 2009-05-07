@@ -6,9 +6,23 @@
 #include <stdio.h>
 #include <string.h>
 
-XBeePacket::XBeePacket( )
+/**
+  Create a new XBeePacket object.
+  Once you've created a new XBeePacket, it's recommended to reuse it across read and write
+  operations, instead of creating a new one each time.
+  
+  @param serialChannel (optional) Which serial port to use - valid options are 0 or 1.  Defaults to 0.
+  
+  \b Example
+  \code
+  XBeePacket xb; // don't specify a serial channel, defaults to 0
+  // or allocate one
+  XBeePacket* xb = new XBeePacket(1); // use serial channel 1
+  \endcode
+*/
+XBeePacket::XBeePacket( int serialChannel )
 {
-  ser = new Serial(0);
+  ser = new Serial(serialChannel);
   reset();
 }
 
@@ -57,7 +71,7 @@ void XBeePacket::tx16( uint8 frameID, uint16 destination, uint8 options, uint8* 
   // now use get() to receive the response packet
   \endcode
 */
-void XBeePacket::atCmd( uint8 frameID, char* cmd, int value )
+void XBeePacket::atCmd( uint8 frameID, const char* cmd, int value )
 {
   packetData.apiId = XBEE_ATCOMMAND;
   packetData.atCommand.frameID = frameID;
