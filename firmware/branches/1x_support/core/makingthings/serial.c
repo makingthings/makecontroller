@@ -679,14 +679,8 @@ int Serial_Init( int index )
 
   // Enable the peripheral clock
   AT91C_BASE_PMC->PMC_PCER = 1 << id;
-
-  // If there are no default values, get some
-  if ( !sp->detailsInitialized )
-    Serial_SetDefault( index );
-
-  int status;
    
-  status = Io_StartBits( rxPinBit | txPinBit, false  );
+  int status = Io_StartBits( rxPinBit | txPinBit, false  );
   if ( status != CONTROLLER_OK )
     return status;
 
@@ -710,10 +704,6 @@ int Serial_Init( int index )
   // Timeguard disabled
   sp->at91UARTRegs->US_TTGR = 0;
 
-  // Most of the detail setting is done in here
-  // Also Resets TXRX and re-enables RX
-  Serial_SetDetails( index );
-
   unsigned int mask = 0x1 << id;		
                         
   /* Disable the interrupt on the interrupt controller */					
@@ -730,6 +720,13 @@ int Serial_Init( int index )
   sp->at91UARTRegs->US_IER = AT91C_US_RXRDY; 
 
   sp->active = true;
+
+  // If there are no default values, get some
+  if ( !sp->detailsInitialized )
+    Serial_SetDefault( index );
+  // Most of the detail setting is done in here
+  // Also Resets TXRX and re-enables RX
+  Serial_SetDetails( index );
 
   return CONTROLLER_OK;
 }
