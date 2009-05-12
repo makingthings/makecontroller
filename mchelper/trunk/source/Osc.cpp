@@ -24,10 +24,9 @@
 QString OscMessage::toString( )
 {
   QString msgString = this->addressPattern;
-  for( int j = 0; j < data.size( ); j++ )
+  foreach( OscData* dataElement, data)
   {
     msgString.append( " " );
-    OscData *dataElement = data.at( j );
     switch( dataElement->type )
     {
       case OscData::Blob:
@@ -65,28 +64,27 @@ QString OscMessage::toString( )
 
 QByteArray OscMessage::toByteArray( )
 {
-  QByteArray msg;
-  msg += Osc::writePaddedString( this->addressPattern );
+  QByteArray msg = Osc::writePaddedString( this->addressPattern );
   QString typetag( "," );
   QList<QByteArray> args; // intermediate spot for arguments until we've assembled the typetag
-  for( int i = 0; i < data.size( ); i++ )
+  foreach( OscData* dataElement, data )
   {
-    switch( data.at(i)->type )
+    switch( dataElement->type )
     {
       case OscData::String:
         typetag.append( 's' );
-        args.append( Osc::writePaddedString( data.at(i)->s() ) );
+        args.append( Osc::writePaddedString( dataElement->s() ) );
         break;
       case OscData::Blob: // need to pad the blob
         typetag.append( 'b' );
-        args.append( Osc::writePaddedString( data.at(i)->s() ) );
+        args.append( Osc::writePaddedString( dataElement->s() ) );
         break;
       case OscData::Int:
       {
         typetag.append( 'i' );
         QByteArray intarg;
         intarg.resize( sizeof( int ) );
-        *(int*)intarg.data() = qToBigEndian( data.at(i)->i() );
+        *(int*)intarg.data() = qToBigEndian( dataElement->i() );
         args.append( intarg );
         break;
       }
@@ -95,15 +93,15 @@ QByteArray OscMessage::toByteArray( )
         typetag.append( 'f' );
         QByteArray floatarg;
         floatarg.resize( sizeof( int ) );
-        *(int*)floatarg.data() = qToBigEndian( (int)data.at(i)->f() );
+        *(int*)floatarg.data() = qToBigEndian( (int)dataElement->f() );
         args.append( floatarg );
         break;
       }
     }
   }
   msg += Osc::writePaddedString( typetag );
-  for( int i = 0; i < args.size(); i++ )
-    msg += args.at( i );
+  foreach( QByteArray arg, args )
+    msg += arg;
   Q_ASSERT( ( msg.size( ) % 4 ) == 0 );
   return msg;
 }
@@ -141,10 +139,10 @@ QByteArray Osc::createPacket( QString msg )
 QByteArray Osc::createPacket( QStringList strings )
 {
   QList<OscMessage*> oscMsgs;
-  for( int i = 0; i < strings.size( ); i++ )
+  foreach( QString str, strings )
   {
     OscMessage *msg = new OscMessage( );
-    if( createMessage( strings.at( i ), msg ) )
+    if( createMessage( str, msg ) )
       oscMsgs.append( msg );
     else
       delete msg;
@@ -296,7 +294,7 @@ void Osc::receiveMessage( char* in, int length, QList<OscMessage*>* oscMessageLi
     //messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
     delete oscMessage;
   }
-  else		//Otherwise, step through the type tag and print the data out accordingly.
+  else  //Otherwise, step through the type tag and print the data out accordingly.
   {
     //We get a count back from extractData() of how many items were included - if this
     //doesn't match the length of the type tag, something funky is happening.
@@ -392,8 +390,7 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
 
 QByteArray Osc::createOneRequest( const char* message )
 {
-  QByteArray oneRequest;
-  oneRequest += Osc::writePaddedString( message );
+  QByteArray oneRequest = Osc::writePaddedString( message );
   oneRequest += Osc::writePaddedString( "," );
   Q_ASSERT( ( oneRequest.size( ) % 4 ) == 0 );
   return oneRequest;

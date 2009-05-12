@@ -27,7 +27,7 @@
 class OscData
 {
 public:
-  enum type { String, Int, Float, Blob };
+  enum { String, Int, Float, Blob } type;
   OscData( int i );
   OscData( float f );
   OscData( QString s );
