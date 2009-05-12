@@ -1,6 +1,6 @@
 /*********************************************************************************
 
- Copyright 2006-2008 MakingThings
+ Copyright 2006-2009 MakingThings
 
  Licensed under the Apache License, 
  Version 2.0 (the "License"); you may not use this file except in compliance 
@@ -27,7 +27,7 @@
 class OscData
 {
 public:
-  enum { String, Int, Float, Blob } type;
+  enum type { String, Int, Float, Blob };
   OscData( int i );
   OscData( float f );
   OscData( QString s );
