@@ -111,7 +111,7 @@ OscData::OscData( QByteArray b )
   data.setValue(b);
 }
 
-QByteArray Osc::createPacket( QString msg )
+QByteArray Osc::createPacket( const QString & msg )
 {
   OscMessage oscMsg;
   if( createMessage( msg, &oscMsg ) )
@@ -120,7 +120,7 @@ QByteArray Osc::createPacket( QString msg )
     return QByteArray( );
 }
 
-QByteArray Osc::createPacket( QStringList strings )
+QByteArray Osc::createPacket( const QStringList & strings )
 {
   QList<OscMessage*> oscMsgs;
   foreach( QString str, strings )
@@ -136,7 +136,7 @@ QByteArray Osc::createPacket( QStringList strings )
   return packet;
 }
 
-QByteArray Osc::createPacket( QList<OscMessage*> msgs )
+QByteArray Osc::createPacket( const QList<OscMessage*> & msgs )
 {
   QByteArray bundle;
   if( msgs.size( ) == 0 )
@@ -377,7 +377,7 @@ QByteArray Osc::createOneRequest( const char* message )
   return oneRequest;
 }
 
-QByteArray Osc::writePaddedString( QString str )
+QByteArray Osc::writePaddedString( const QString & str )
 {
   return writePaddedString( str.toAscii().data() );
 }
@@ -407,7 +407,7 @@ QByteArray Osc::writeTimetag( int a, int b )
 
 // we expect an address pattern followed by some number of arguments,
 // delimited by spaces
-bool Osc::createMessage( QString msg, OscMessage *oscMsg )
+bool Osc::createMessage( const QString & msg, OscMessage *oscMsg )
 {
   QStringList msgElements = msg.split( " " );
   if( !msgElements.at( 0 ).startsWith( "/" ) )
