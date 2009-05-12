@@ -14,24 +14,24 @@
 #define DEFAULT_CHECK_UPDATES true
 #define DEFAULT_NETWORK_DISCOVERY true
 
-#define DEFAULT_SAM7_PATH "/usr/bin/sam7" // only relevant for *nix 
+#define DEFAULT_SAM7_PATH "/usr/bin/sam7" // only relevant for *nix
 
 class MainWindow;
 
 class Preferences : public QDialog, private Ui::PreferencesUi
 {
-	Q_OBJECT
+  Q_OBJECT
 public:
   Preferences(MainWindow *mw, NetworkMonitor *nm, OscXmlServer *oxs);
-  
+
 private:
   MainWindow *mainWindow;
   NetworkMonitor *networkMonitor;
   OscXmlServer *oscXmlServer;
-  
+
 public slots:
   void loadAndShow( );
-  
+
 private slots:
   void applyChanges( );
   void restoreDefaults( );

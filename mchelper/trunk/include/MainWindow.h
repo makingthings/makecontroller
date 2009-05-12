@@ -32,7 +32,7 @@ class Board;
 class DeviceList : public QListWidget
 {
   Q_OBJECT
-public: 
+public:
   DeviceList(QWidget *parent = 0) : QListWidget(0)
   {
     setParent(parent);
@@ -44,7 +44,7 @@ public:
 
 class MainWindow : public QMainWindow, private Ui::MainWindowUi
 {
-	Q_OBJECT
+  Q_OBJECT
 public:
   MainWindow(bool no_ui);
   bool noUi() {return no_ui;}
@@ -58,7 +58,7 @@ public:
   QAction* sambaAction() { return actionEraseBoard; }
   void statusMsg(QString msg, int duration = 3500);
   void newXmlPacketReceived( QList<OscMessage*> msgs, QString destination );
-  
+
 public slots:
   void onEthernetDeviceArrived(PacketInterface* pi);
   void onUsbDeviceArrived(QStringList keys, BoardType::Type type);
@@ -67,7 +67,7 @@ public slots:
   void message(QStringList msgs, MsgType::Type type, QString from = "mchelper");
   void setBoardName( QString key, QString name );
   void updateBoardInfo(Board *board);
-  
+
 private:
   Inspector *inspector;
   NetworkMonitor *networkMonitor;
@@ -91,7 +91,7 @@ private:
   #endif
   void addMessage( QString time, QString msg, QString tofrom, QTextBlockFormat bkgnd );
   bool messagesEnabled( MsgType::Type type );
-  
+
 private slots:
   void onDeviceSelectionChanged();
   void onCommandLine();
@@ -102,10 +102,10 @@ private slots:
   void onCheckForUpdates(bool inBackground = false);
   void onHelp();
   void onOscTutorial();
-  
+
 signals:
   void boardInfoUpdate(Board* board);
-  
+
   #ifdef MCHELPER_TEST_SUITE
   friend class TestXmlServer;
   #endif
