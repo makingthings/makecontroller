@@ -12,21 +12,21 @@
 #endif
 
 /*
-	Uploader handles uploading a binary image to a board.  It fires up a QProcess
-	and runs the uploader with flags determined by settings in Preferences.
+  Uploader handles uploading a binary image to a board.  It fires up a QProcess
+  and runs the uploader with flags determined by settings in Preferences.
 */
 Uploader::Uploader(MainWindow *mainWindow) : QDialog( 0 )
 {
-	this->mainWindow = mainWindow;
+  this->mainWindow = mainWindow;
   setupUi(this);
   connect(this, SIGNAL(finished(int)), this, SLOT(onDialogClosed()));
   connect(&uploader, SIGNAL(readyReadStandardOutput()), this, SLOT(filterOutput()));
   connect(&uploader, SIGNAL(readyReadStandardError()), this, SLOT(filterError()));
-	connect(&uploader, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(uploadFinished(int, QProcess::ExitStatus)));
+  connect(&uploader, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(uploadFinished(int, QProcess::ExitStatus)));
   connect(&uploader, SIGNAL(error(QProcess::ProcessError)), this, SLOT(onError(QProcess::ProcessError)));
   connect(browseButton, SIGNAL(clicked()), this, SLOT(onBrowseButton()));
   connect(uploadButton, SIGNAL(clicked()), this, SLOT(onUploadButton()));
-  
+
   QSettings settings("MakingThings", "mchelper");
   QString lastFilePath = settings.value("last_firmware_upload", QDir::homePath()).toString();
   browseEdit->setText(lastFilePath);
@@ -44,7 +44,7 @@ void Uploader::onBrowseButton()
   QSettings settings("MakingThings", "mchelper");
   QString lastFilePath = settings.value("last_firmware_upload", QDir::homePath()).toString();
   QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), lastFilePath, tr("Binaries (*.bin)"));
-	if(!fileName.isNull()) // user canceled
+  if(!fileName.isNull()) // user canceled
   {
     settings.setValue("last_firmware_upload", fileName);
     browseEdit->setText(fileName);
@@ -56,10 +56,10 @@ void Uploader::onUploadButton()
   QFileInfo fi(browseEdit->text());
   if(!fi.exists())
     return mainWindow->message( tr("%1 can't be found.").arg(fi.fileName()), MsgType::Error, tr("Uploader") );
-  
+
   if( uploader.state() != QProcess::NotRunning )
     return mainWindow->message( tr("Uploader is currently busy...give it a second, then try again"), MsgType::Error, tr("Uploader") );
-  
+
   upload(fi.filePath());
 }
 
@@ -87,7 +87,7 @@ void Uploader::upload(QString filename)
     }
   } while( offset != -1 );
   qDebug( "uploading %s", qPrintable(filename));
-  
+
   QStringList uploaderArgs;
   uploaderArgs << "-e" << "set_clock";
   uploaderArgs << "-e" << "unlock_regions";
@@ -110,7 +110,7 @@ void Uploader::filterOutput( )
     int progress = re.cap(1).toInt();
     if(progress != progressBar->value())
       progressBar->setValue(progress);
-	  pos += re.matchedLength();
+    pos += re.matchedLength();
     matched = true;
   }
   if(!matched)
@@ -132,7 +132,7 @@ void Uploader::uploadFinished(int exitCode, QProcess::ExitStatus exitStatus)
     mainWindow->message(tr("Upload complete"), MsgType::Notice, tr("Uploader") );
   else
     mainWindow->message(tr("Upload failed"), MsgType::Warning, tr("Uploader") );
-	progressBar->reset();
+  progressBar->reset();
   hide();
   setWindowTitle(tr("Uploader"));
 }

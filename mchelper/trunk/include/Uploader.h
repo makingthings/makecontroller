@@ -9,21 +9,21 @@ class MainWindow;
 
 class Uploader : public QDialog, private Ui::UploaderUi
 {
-	Q_OBJECT
-	public:
-		Uploader(MainWindow *mainWindow);
-		~Uploader( );
-		void upload(QString filename);
+  Q_OBJECT
+  public:
+    Uploader(MainWindow *mainWindow);
+    ~Uploader( );
+    void upload(QString filename);
     QProcess::ProcessState state() { return uploader.state(); }
-		
-	private:
-		MainWindow *mainWindow;
+
+  private:
+    MainWindow *mainWindow;
     QProcess uploader;
-		
-	private slots:
-		void filterOutput();
-		void filterError();
-		void uploadFinished(int exitCode, QProcess::ExitStatus exitStatus);
+
+  private slots:
+    void filterOutput();
+    void filterError();
+    void uploadFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void onError(QProcess::ProcessError error);
     void onBrowseButton();
     void onUploadButton();
