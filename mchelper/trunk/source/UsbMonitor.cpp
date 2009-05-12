@@ -2,12 +2,12 @@
 
  Copyright 2006-2009 MakingThings
 
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
+ Licensed under the Apache License,
+ Version 2.0 (the "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0 
- 
+ http://www.apache.org/licenses/LICENSE-2.0
+
  Unless required by applicable law or agreed to in writing, software distributed
  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  CONDITIONS OF ANY KIND, either express or implied. See the License for
@@ -28,9 +28,9 @@
 */
 UsbMonitor::UsbMonitor(MainWindow* mw) : QThread()
 {
-	mainWindow = mw;
+  mainWindow = mw;
   qRegisterMetaType<BoardType::Type>("BoardType::Type"); // silly Qt thing to communicate via signal across a thread
-  connect(this, SIGNAL(newBoards(QStringList, BoardType::Type)), 
+  connect(this, SIGNAL(newBoards(QStringList, BoardType::Type)),
                        mainWindow, SLOT(onUsbDeviceArrived(QStringList, BoardType::Type)));
   connect(this, SIGNAL(boardsRemoved(QString)), mainWindow, SLOT(onDeviceRemoved(QString)));
   connect( &enumerator, SIGNAL(deviceDiscovered(QextPortInfo)), this, SLOT(onDeviceDiscovered(QextPortInfo)));
@@ -62,11 +62,11 @@ void UsbMonitor::run( )
     QStringList newSerialPorts;
     QStringList newSambaPorts;
     QStringList portNames;
-    
+
     // first check if there are any new boards
     foreach(QextPortInfo port, ports)
     {
-      // the portname needs to be tweeked 
+      // the portname needs to be tweeked
       if( !usbSerialList.contains(port.portName) )
       {
         if( isMakeController( &port ) )
@@ -75,7 +75,7 @@ void UsbMonitor::run( )
           newSerialPorts.append(port.portName); // on the list to be posted to the UI
         }
       }
-      
+
       if( !usbSambaList.contains(port.portName) )
       {
         if( isSamBa( &port ) )
@@ -87,12 +87,12 @@ void UsbMonitor::run( )
       // check for samba boards...
       portNames << port.portName;
     }
-    
+
     if(newSerialPorts.count())
       emit newBoards(newSerialPorts, BoardType::UsbSerial);
     if(newSambaPorts.count())
       emit newBoards(newSambaPorts, BoardType::UsbSamba);
-      
+
     // if any boards we know about are no longer in the list, they've been removed
     foreach(QString key, usbSerialList)
     {
@@ -102,7 +102,7 @@ void UsbMonitor::run( )
         emit boardsRemoved(key);
       }
     }
-    
+
     // same thing for the samba boards
     foreach(QString key, usbSambaList)
     {
@@ -112,7 +112,7 @@ void UsbMonitor::run( )
         emit boardsRemoved(key);
       }
     }
-    
+
     sleep(1); // scan once per second
   }
 }
