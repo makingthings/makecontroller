@@ -300,22 +300,22 @@ void OscXmlClient::sendXmlPacket( QList<OscMessage*> messageList, QString srcAdd
 			QDomElement argument = doc.createElement( "ARGUMENT" );
 			switch( data->type )
 			{
-				case OscData::OscString:
+        case OscData::String:
 					argument.setAttribute( "TYPE", "s" );
-					argument.setAttribute( "VALUE", QString( data->s ) );
+          argument.setAttribute( "VALUE", data->s());
 					break;
-				case OscData::OscInt:
+        case OscData::Int:
 					argument.setAttribute( "TYPE", "i" );
-					argument.setAttribute( "VALUE", QString::number( data->i ) );
+          argument.setAttribute( "VALUE", QString::number( data->i() ) );
 					break;
-				case OscData::OscFloat:
+        case OscData::Float:
 					argument.setAttribute( "TYPE", "f" );
-					argument.setAttribute( "VALUE", QString::number( data->f ) );
+          argument.setAttribute( "VALUE", QString::number( data->f() ) );
 					break;
-				case OscData::OscBlob:
+        case OscData::Blob:
 				{
 					QString blobstring;
-					unsigned char* blob = (unsigned char*)data->b.data( );
+          unsigned char* blob = (unsigned char*)data->b().data( );
 					int blob_len = qFromBigEndian( *(int*)blob );  // the first int should give us the length of the blob
 					blob += sizeof(int); // step past the length
 					while( blob_len-- )
@@ -394,27 +394,15 @@ bool XmlHandler::startElement( const QString & namespaceURI, const QString & loc
 
 		if( type == "i" || type == "f" || type == "s" || type == "b" )
 		{
-			OscData *msgData = new OscData( );
+      OscData *msgData;
 			if( type == "i" )
-			{
-				msgData->type = OscData::OscInt;
-				msgData->i = val.toInt( );
-			}
+        msgData = new OscData(val.toInt());
 			else if( type == "f" )
-			{
-				msgData->type = OscData::OscFloat;
-				msgData->f = val.toFloat( );
-			}
+        msgData = new OscData(val.toFloat());
 			else if( type == "s" )
-			{
-				msgData->type = OscData::OscString;
-				msgData->s = val;
-			}
+        msgData = new OscData(val);
 			else if( type == "b" )
-			{
-				msgData->type = OscData::OscBlob;
-				msgData->b = val.toAscii( );
-			}
+        msgData = new OscData( val.toAscii() );
 			currentMessage->data.append( msgData );
 		}
 	}

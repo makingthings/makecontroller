@@ -112,38 +112,38 @@ bool Board::extractSystemInfoA( OscMessage* msg )
 		switch( i ) // we're counting on the board to send the pieces of data in this order
 		{
 			case 0:
-				if( name != msgData.at( i )->s )
+        if( name != msgData.at( i )->s() )
 				{
-					name = msgData.at( i )->s; //name
+          name = msgData.at( i )->s(); //name
 					emit newBoardName(_key, name);
           newInfo = true;
 				}
 				break;
 			case 1:
-        if(serialNumber != QString::number( msgData.at(i)->i ))
+        if(serialNumber != QString::number( msgData.at(i)->i() ))
         {
-          serialNumber = QString::number( msgData.at(i)->i ); // serial number
+          serialNumber = QString::number( msgData.at(i)->i() ); // serial number
           newInfo = true;
         }
 				break;
 			case 2:
-        if(ip_address != msgData.at( i )->s)
+        if(ip_address != msgData.at( i )->s())
         {
-          ip_address = msgData.at( i )->s; // IP address
+          ip_address = msgData.at( i )->s(); // IP address
           newInfo = true;
         }
 				break;
 			case 3:
-        if(firmwareVersion != msgData.at(i)->s)
+        if(firmwareVersion != msgData.at(i)->s())
         {
-          firmwareVersion = msgData.at(i)->s;
+          firmwareVersion = msgData.at(i)->s();
           newInfo = true;
         }
 				break;
 			case 4:
-        if(freeMemory != QString::number( msgData.at(i)->i ))
+        if(freeMemory != QString::number( msgData.at(i)->i() ))
         {
-          freeMemory = QString::number( msgData.at(i)->i );
+          freeMemory = QString::number( msgData.at(i)->i() );
           newInfo = true;
         }
 				break;
@@ -164,44 +164,44 @@ bool Board::extractSystemInfoB( OscMessage* msg )
 		switch( j ) // we're counting on the board to send the pieces of data in this order
 		{
 			case 0:
-        if(dhcp != msgData.at( j )->i)
+        if(dhcp != msgData.at( j )->i())
         {
-          dhcp = msgData.at( j )->i;
+          dhcp = msgData.at( j )->i();
           newInfo = true;
         }
 				break;
 			case 1:
-				if(webserver != msgData.at( j )->i)
+        if(webserver != msgData.at( j )->i())
         {
-          webserver = msgData.at( j )->i;
+          webserver = msgData.at( j )->i();
           newInfo = true;
         }
 				break;
 			case 2:
-				if(gateway != msgData.at( j )->s)
+        if(gateway != msgData.at( j )->s())
         {
-          gateway = msgData.at( j )->s;
+          gateway = msgData.at( j )->s();
           newInfo = true;
         }
 				break;
 			case 3:
-				if(netMask != msgData.at( j )->s)
+        if(netMask != msgData.at( j )->s())
         {
-          netMask = msgData.at( j )->s;
+          netMask = msgData.at( j )->s();
           newInfo = true;
         }
 				break;
 			case 4:
-        if(udp_listen_port != QString::number( msgData.at( j )->i ))
+        if(udp_listen_port != QString::number( msgData.at( j )->i() ))
         {
-          udp_listen_port = QString::number( msgData.at( j )->i );
+          udp_listen_port = QString::number( msgData.at( j )->i() );
           newInfo = true;
         }
 				break;
 			case 5:
-        if(udp_send_port != QString::number( msgData.at( j )->i ))
+        if(udp_send_port != QString::number( msgData.at( j )->i() ))
 				{
-          udp_send_port = QString::number( msgData.at( j )->i );
+          udp_send_port = QString::number( msgData.at( j )->i() );
           newInfo = true;
         }
 				break;
@@ -222,30 +222,30 @@ bool Board::extractNetworkFind( OscMessage* msg )
 		switch( j ) // we're counting on the board to send the pieces of data in this order
 		{
 			case 0:
-				if( ip_address != QString( msgData.at( j )->s ) )
+        if( ip_address != QString( msgData.at( j )->s() ) )
 				{
-					ip_address = QString( msgData.at( j )->s ); // IP address
+          ip_address = QString( msgData.at( j )->s() ); // IP address
 					newInfo = true;
 				}
 				break;
 			case 1:
-				if( udp_listen_port != QString::number( msgData.at( j )->i ) )
+        if( udp_listen_port != QString::number( msgData.at( j )->i() ) )
 				{
-					udp_listen_port = QString::number( msgData.at( j )->i );
+          udp_listen_port = QString::number( msgData.at( j )->i() );
 					newInfo = true;
 				}
 				break;
 			case 2:
-				if( udp_send_port != QString::number( msgData.at( j )->i ) )
+        if( udp_send_port != QString::number( msgData.at( j )->i() ) )
 				{
-					udp_send_port = QString::number( msgData.at( j )->i );
+          udp_send_port = QString::number( msgData.at( j )->i() );
 					newInfo = true;
 				}
 				break;
 			case 3:
-				if( name != QString( msgData.at( j )->s ) )
+        if( name != QString( msgData.at( j )->s() ) )
 				{
-					name = QString( msgData.at( j )->s );
+          name = QString( msgData.at( j )->s() );
           emit newBoardName(_key, name);
 					newInfo = true;
 				}
