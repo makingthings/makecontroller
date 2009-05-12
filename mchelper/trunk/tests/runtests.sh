@@ -2,7 +2,7 @@
 
 # first build the test
 cd ..
-qmake "CONFIG += test_suite" mchelper.pro
+qmake -spec macx-g++ "CONFIG += test_suite" mchelper.pro
 make
 if [ "$?" -ne "0" ]; then
   # don't run the tests if the build didn't even succeed
