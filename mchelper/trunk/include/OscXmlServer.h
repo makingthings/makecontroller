@@ -2,12 +2,12 @@
 
  Copyright 2006-2009 MakingThings
 
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
+ Licensed under the Apache License,
+ Version 2.0 (the "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0 
- 
+ http://www.apache.org/licenses/LICENSE-2.0
+
  Unless required by applicable law or agreed to in writing, software distributed
  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  CONDITIONS OF ANY KIND, either express or implied. See the License for
@@ -42,93 +42,93 @@ class Board;
 
 class XmlHandler : public QObject, public QXmlDefaultHandler
 {
-	Q_OBJECT
-	public:
-		XmlHandler( MainWindow *mainWindow, OscXmlClient *xmlClient );
-		bool endElement( const QString & namespaceURI, const QString & localName, const QString & qName );
-		bool startElement( const QString & namespaceURI, const QString & localName, 
-												const QString & qName, const QXmlAttributes & atts );
-		bool error (const QXmlParseException & exception);
-		bool fatalError (const QXmlParseException & exception);
-    
+  Q_OBJECT
+  public:
+    XmlHandler( MainWindow *mainWindow, OscXmlClient *xmlClient );
+    bool endElement( const QString & namespaceURI, const QString & localName, const QString & qName );
+    bool startElement( const QString & namespaceURI, const QString & localName,
+                        const QString & qName, const QXmlAttributes & atts );
+    bool error (const QXmlParseException & exception);
+    bool fatalError (const QXmlParseException & exception);
+
   signals:
-		void msg(QStringList msg, MsgType::Type, QString from);
-    
-	private:
-		MainWindow *mainWindow;
-		OscXmlClient *xmlClient;
-		OscMessage* currentMessage;
-		QString currentDestination;
-		int currentPort;
-		QList<OscMessage*> oscMessageList;
+    void msg(QStringList msg, MsgType::Type, QString from);
+
+  private:
+    MainWindow *mainWindow;
+    OscXmlClient *xmlClient;
+    OscMessage* currentMessage;
+    QString currentDestination;
+    int currentPort;
+    QList<OscMessage*> oscMessageList;
 };
 
 class OscXmlClient : public QThread
 {
-	Q_OBJECT
-	public:
-		OscXmlClient( QTcpSocket *socket, MainWindow *mainWindow, QObject *parent = 0 );
-		~OscXmlClient( ) { }
+  Q_OBJECT
+  public:
+    OscXmlClient( QTcpSocket *socket, MainWindow *mainWindow, QObject *parent = 0 );
+    ~OscXmlClient( ) { }
     void run();
     void sendCrossDomainPolicy();
     void resetParser() { lastParseComplete = true; }
-	
-	public slots:
-		void boardListUpdate( QList<Board*> boardList, bool arrived );
-		void boardInfoUpdate( Board* board );
-		void wroteBytes( qint64 bytes );
-		void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress );
-    
-  signals:
-		void msg(QString msg, MsgType::Type, QString from);
 
-	private:
+  public slots:
+    void boardListUpdate( QList<Board*> boardList, bool arrived );
+    void boardInfoUpdate( Board* board );
+    void wroteBytes( qint64 bytes );
+    void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress );
+
+  signals:
+    void msg(QString msg, MsgType::Type, QString from);
+
+  private:
     int socketDescriptor;
-		MainWindow *mainWindow;
-		bool lastParseComplete;
-		QXmlSimpleReader xml;
-		QXmlInputSource xmlInput;
-		XmlHandler *handler;
-		QTcpSocket *socket;
-		QList<QString> uiMessages;
-		QString peerAddress;
-		bool shuttingDown;
-		
-		bool isConnected( );
-		void writeXmlDoc( QDomDocument doc );
-	
-	private slots:
-		void processData( );
-		void disconnected( );
-	
-	#ifdef MCHELPER_TEST_SUITE
+    MainWindow *mainWindow;
+    bool lastParseComplete;
+    QXmlSimpleReader xml;
+    QXmlInputSource xmlInput;
+    XmlHandler *handler;
+    QTcpSocket *socket;
+    QList<QString> uiMessages;
+    QString peerAddress;
+    bool shuttingDown;
+
+    bool isConnected( );
+    void writeXmlDoc( QDomDocument doc );
+
+  private slots:
+    void processData( );
+    void disconnected( );
+
+  #ifdef MCHELPER_TEST_SUITE
   friend class TestXmlServer;
   #endif
 };
 
 class OscXmlServer : public QTcpServer
 {
-	Q_OBJECT
-	public:
-		OscXmlServer( MainWindow *mainWindow, QObject *parent = 0 );
-		bool setListenPort( int port );
+  Q_OBJECT
+  public:
+    OscXmlServer( MainWindow *mainWindow, QObject *parent = 0 );
+    bool setListenPort( int port );
     void sendPacket(QList<OscMessage*> msgs, QString srcAddress);
     void sendBoardListUpdate(QList<Board*> boardList, bool arrived);
-  
+
   signals:
-		void msg(QString msg, MsgType::Type, QString from);
+    void msg(QString msg, MsgType::Type, QString from);
     void newXmlPacket(QList<OscMessage*> messageList, QString srcAddress);
     void boardInfoUpdate(Board *board);
     void boardListUpdated(QList<Board*> boardList, bool arrived);
-	
-	private slots:
-		void openNewConnection( );
-				
-	private:
-		MainWindow *mainWindow;
-		int listenPort;
 
-	#ifdef MCHELPER_TEST_SUITE
+  private slots:
+    void openNewConnection( );
+
+  private:
+    MainWindow *mainWindow;
+    int listenPort;
+
+  #ifdef MCHELPER_TEST_SUITE
   friend class TestXmlServer;
   #endif
 };
