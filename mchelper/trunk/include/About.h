@@ -9,7 +9,7 @@
 
 class About : public QDialog
 {
-	Q_OBJECT
+  Q_OBJECT
 public:
   About();
 private:
