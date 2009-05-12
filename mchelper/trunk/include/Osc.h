@@ -55,19 +55,19 @@ public:
 class Osc
 {
   public:
-    Osc( ) { };
+    Osc( ) { }
     static QByteArray writePaddedString( const char *string );
-    static QByteArray writePaddedString( QString str );
+    static QByteArray writePaddedString( const QString & str );
     static QByteArray writeTimetag( int a, int b );
     static QByteArray createOneRequest( const char* message );
     QList<OscMessage*> processPacket( char* data, int size );
-    QByteArray createPacket( QStringList strings );
-    QByteArray createPacket( QList<OscMessage*> msgs );
-    QByteArray createPacket( QString msg );
+    QByteArray createPacket( const QStringList & strings );
+    QByteArray createPacket( const QList<OscMessage*> & msgs );
+    QByteArray createPacket( const QString & msg );
 
     void setPreamble( QString preamble ) { this->preamble = preamble; }
     QString getPreamble( );
-    bool createMessage( QString msg, OscMessage *oscMsg );
+    bool createMessage( const QString & msg, OscMessage *oscMsg );
 
   private:
     char* findDataTag( char* message, int length );
