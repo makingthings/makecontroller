@@ -39,7 +39,7 @@ QString OscMessage::toString( )
 
           QString blobString( "[ " );
           while( blob_len-- )
-            blobString.append( "%1 " ).arg( QString::number( *blob++, 16  ) );
+            blobString.append( QString::number( *blob++, 16 ) + " ");
           blobString.append( "]" );
 
           msgString.append( blobString );
@@ -49,13 +49,9 @@ QString OscMessage::toString( )
         break;
       }
       case OscData::String:
-        msgString.append( dataElement->s() );
-        break;
       case OscData::Int:
-        msgString.append( QString::number( dataElement->i() ) );
-        break;
       case OscData::Float:
-        msgString.append( QString::number( dataElement->f()) );
+        msgString.append( dataElement->s() );
         break;
     }
   }
@@ -82,19 +78,13 @@ QByteArray OscMessage::toByteArray( )
       case OscData::Int:
       {
         typetag.append( 'i' );
-        QByteArray intarg;
-        intarg.resize( sizeof( int ) );
-        *(int*)intarg.data() = qToBigEndian( dataElement->i() );
-        args.append( intarg );
+        args.append( QByteArray::number( qToBigEndian(dataElement->i()) ));
         break;
       }
       case OscData::Float:
       {
         typetag.append( 'f' );
-        QByteArray floatarg;
-        floatarg.resize( sizeof( int ) );
-        *(int*)floatarg.data() = qToBigEndian( (int)dataElement->f() );
-        args.append( floatarg );
+        args.append( QByteArray::number( qToBigEndian((int)dataElement->f()) ) );
         break;
       }
     }
@@ -163,14 +153,11 @@ QByteArray Osc::createPacket( QList<OscMessage*> msgs )
   {
     bundle += Osc::writePaddedString( "#bundle" ); // indicate that this is indeed a bundle
     bundle += Osc::writeTimetag( 0, 0 ); // we don't do much with timetags
-    for( int i = 0; i < msgs.count( ); i++ ) // then write out the messages
+    foreach(OscMessage* msg, msgs) // int i = 0; i < msgs.count( ); i++ ) // then write out the messages
     {
-      QByteArray msg = msgs.at(i)->toByteArray( );
-      QByteArray msgSize;
-      msgSize.resize( sizeof( int ) );
-      *(int*)msgSize.data() = qToBigEndian( msg.size() );
-      bundle += msgSize; // each message in a bundle is preceded by its int32 size
-      bundle += msg;
+      QByteArray m = msg->toByteArray();
+      bundle += QByteArray::number(qToBigEndian(m.size())); // each message in a bundle is preceded by its int32 size
+      bundle += m;
     }
   }
   Q_ASSERT( ( bundle.size( ) % 4 ) == 0 );
@@ -418,15 +405,8 @@ QByteArray Osc::writePaddedString( const char *string )
 
 QByteArray Osc::writeTimetag( int a, int b )
 {
-  QByteArray tag;
-  QByteArray bits;
-
-  bits.resize( sizeof( int ) );
-  *(int*)bits.data() = qToBigEndian( a );
-  tag += bits;
-
-  *(int*)bits.data() = qToBigEndian( b );
-  tag += bits;
+  QByteArray tag = QByteArray::number(qToBigEndian(a));
+  tag += QByteArray::number(qToBigEndian(b));
   Q_ASSERT( tag.size( ) == 8 );
   return tag;
 }
@@ -439,27 +419,26 @@ bool Osc::createMessage( QString msg, OscMessage *oscMsg )
   if( !msgElements.at( 0 ).startsWith( "/" ) )
     return false;
 
-  oscMsg->addressPattern = msgElements.takeAt( 0 );
+  oscMsg->addressPattern = msgElements.takeFirst();
 
   // now do our best to guess the type of arguments
-  int count = 0;
-  while( count < msgElements.size( ) )
+  while( msgElements.size( ) )
   {
-    QString elmnt = msgElements.at( count++ );
+    QString elmnt = msgElements.takeFirst();
     if( elmnt.startsWith( "\"" ) ) // see if it's a quoted string, presumably with spaces in it
     {
       if( !elmnt.endsWith( "\"" ) )
       {
         // we got a quote...zip through successive elements and find a matching end quote
-        while( count < msgElements.size( ) )
+        while( msgElements.size( ) )
         {
-          if( msgElements.at( count ).endsWith( "\"" ) )
+          if( msgElements.first().endsWith( "\"" ) )
           {
-            elmnt += QString( " %1" ).arg( msgElements.at( count++ ) );
+            elmnt += QString( " %1" ).arg( msgElements.takeFirst() );
             break;
           }
           else
-            elmnt += msgElements.at( count++ );
+            elmnt += msgElements.takeFirst();
         }
       }
       oscMsg->data.append( new OscData( elmnt.remove( "\"" ) ) ); // TODO, only remove first and last quotes
