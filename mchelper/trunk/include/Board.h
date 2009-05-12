@@ -1,18 +1,18 @@
 /*********************************************************************************
- 
+
  Copyright 2006-2009 MakingThings
- 
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
+
+ Licensed under the Apache License,
+ Version 2.0 (the "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
- 
- http://www.apache.org/licenses/LICENSE-2.0 
- 
+
+ http://www.apache.org/licenses/LICENSE-2.0
+
  Unless required by applicable law or agreed to in writing, software distributed
  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  CONDITIONS OF ANY KIND, either express or implied. See the License for
  the specific language governing permissions and limitations under the License.
- 
+
  *********************************************************************************/
 
 #ifndef BOARD_H_
@@ -48,20 +48,20 @@ public:
   BoardType::Type type( ) { return _type; }
   QString key() { return _key; }
   QString location( );
-  
+
   // System properties
   QString name, serialNumber, firmwareVersion, freeMemory;
-  
+
   // Network properties
   QString ip_address, netMask, gateway, udp_listen_port, udp_send_port;
   bool dhcp, webserver;
-  
+
 signals:
   void msg(QString msg, MsgType::Type type, QString from);
   void msgs(QStringList msg, MsgType::Type type, QString from);
   void newBoardName(QString key, QString name);
   void newInfo(Board *board);
-  
+
 private:
   MainWindow *mainWindow;
   PacketInterface* packetInterface;
@@ -69,9 +69,9 @@ private:
   OscXmlServer *oscXmlServer;
   QStringList messagesToPost;
   QTimer messagePostTimer;
-  QString _key; 
+  QString _key;
   BoardType::Type _type;
-  
+
   bool extractSystemInfoA( OscMessage* msg );
   bool extractSystemInfoB( OscMessage* msg );
   bool extractNetworkFind( OscMessage* msg );

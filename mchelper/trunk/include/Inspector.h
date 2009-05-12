@@ -11,12 +11,12 @@ class Board;
 
 class Inspector : public QDialog, private Ui::InspectorUi
 {
-	Q_OBJECT
+  Q_OBJECT
 public:
   Inspector(MainWindow *mainWindow);
   void setData(Board* board);
   void clear( );
-  
+
 public slots:
   void loadAndShow();
 
@@ -26,7 +26,7 @@ private slots:
   void onApply();
   void onRevert();
   void onAnyValueEdited();
-  
+
 private:
   MainWindow *mainWindow;
   QTimer infoTimer;
