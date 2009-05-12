@@ -12,31 +12,31 @@
 #include "PacketUsbSerial.h"
 
 /**
-	MainWindow represents, not surprisingly, the main window of the application.
-	It handles all the menu items and the UI.
+  MainWindow represents, not surprisingly, the main window of the application.
+  It handles all the menu items and the UI.
 */
 MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
 {
-	setupUi(this);
+  setupUi(this);
   this->no_ui = no_ui;
   appUpdater = new AppUpdater();
   readSettings( );
-  
+
   // add an item to the list as a UI cue that no boards were found.
   // remove when boards have been discovered
   deviceListPlaceholder = QListWidgetItem( tr("No Make Controllers found...") );
   deviceListPlaceholder.setData( Qt::ForegroundRole, Qt::gray );
   deviceList->addItem( &deviceListPlaceholder );
-  
+
   // default these to off until we see a board
   actionUpload->setEnabled(false);
   actionInspector->setEnabled(false);
   actionResetBoard->setEnabled(false);
   actionEraseBoard->setEnabled(false);
-  
+
   grayText.setForeground( Qt::gray );
   blackText.setForeground( Qt::black );
-  
+
   // initializations
   inspector = new Inspector(this);
   oscXmlServer = new OscXmlServer(this);
@@ -45,11 +45,11 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   preferences = new Preferences(this, networkMonitor, oscXmlServer);
   uploader = new Uploader(this);
   about = new About();
-  
+
   // device list connections
   connect( deviceList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(onDoubleClick()));
   connect( deviceList, SIGNAL(itemSelectionChanged()), this, SLOT(onDeviceSelectionChanged()));
-  
+
   // menu connections
   connect( actionInspector, SIGNAL(triggered()), inspector, SLOT(loadAndShow()));
   connect( actionPreferences, SIGNAL(triggered()), preferences, SLOT(loadAndShow()));
@@ -62,11 +62,11 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   connect( actionCheckForUpdates, SIGNAL(triggered()), this, SLOT(onCheckForUpdates()));
   connect( actionHelp, SIGNAL(triggered()), this, SLOT(onHelp()));
   connect( actionOscTutorial, SIGNAL(triggered()), this, SLOT(onOscTutorial()));
-  
+
   // command line connections
   connect( commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onCommandLine()));
   connect( sendButton, SIGNAL(clicked()), this, SLOT(onCommandLine()));
-  
+
   #if !defined (Q_WS_WIN) && !defined (Q_WS_MAC)
   // the USB monitor runs in a separate thread...start it up.
   // only need to do this on non-Windows/OSX machines since automatic device detection is not implemented
@@ -76,25 +76,25 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
 
 void MainWindow::readSettings()
 {
-	QSettings settings("MakingThings", "mchelper");
-	
-	QSize size = settings.value( "size" ).toSize( );
-	if( size.isValid( ) )
-		resize( size );
-  
+  QSettings settings("MakingThings", "mchelper");
+
+  QSize size = settings.value( "size" ).toSize( );
+  if( size.isValid( ) )
+    resize( size );
+
   QPoint mainWinPos = settings.value("mainwindow_pos").toPoint();
   if(!mainWinPos.isNull())
     move(mainWinPos);
-	
-	QList<QVariant> splitterSettings = settings.value( "splitterSizes" ).toList( );
-	if( !splitterSettings.isEmpty( ) )
-	{
-		QList<int> splitterSizes;
+
+  QList<QVariant> splitterSettings = settings.value( "splitterSizes" ).toList( );
+  if( !splitterSettings.isEmpty( ) )
+  {
+    QList<int> splitterSizes;
     foreach( QVariant setting, splitterSettings )
-			splitterSizes << setting.toInt( );
-		splitter->setSizes( splitterSizes );
-	}
-  
+      splitterSizes << setting.toInt( );
+    splitter->setSizes( splitterSizes );
+  }
+
   QStringList commands = settings.value( "commands" ).toStringList( );
   foreach( QString cmd, commands )
     commandLine->addItem(cmd);
@@ -102,12 +102,12 @@ void MainWindow::readSettings()
     commandLine->addItem( "" );
   else
     commandLine->setCurrentIndex(commandLine->count() - 1 );
-  
+
   hideOscMsgs = settings.value("hideOscMsgs", false ).toBool();
   actionHide_OSC->setChecked(hideOscMsgs);
-  
+
   setMaxMessages(settings.value("max_messages", DEFAULT_ACTIVITY_MESSAGES).toInt( ));
-  
+
   bool checkForUpdates = settings.value("checkForUpdatesOnStartup", DEFAULT_CHECK_UPDATES).toBool( );
   if( checkForUpdates )
     appUpdater->checkForUpdates(true);
@@ -120,23 +120,23 @@ void MainWindow::setMaxMessages(int msgs)
 
 void MainWindow::writeSettings()
 {
-	QSettings settings("MakingThings", "mchelper");
+  QSettings settings("MakingThings", "mchelper");
 
-	settings.setValue("size", size() );
+  settings.setValue("size", size() );
   settings.setValue("mainwindow_pos", pos());
   settings.setValue("inspector_pos", inspector->pos());
-  
-	QList<QVariant> splitterSettings;
-	QList<int> splitterSizes = splitter->sizes();
-	foreach( int splitterSize, splitterSizes )
-		splitterSettings << splitterSize;
-	settings.setValue("splitterSizes", splitterSettings );
-  
+
+  QList<QVariant> splitterSettings;
+  QList<int> splitterSizes = splitter->sizes();
+  foreach( int splitterSize, splitterSizes )
+    splitterSettings << splitterSize;
+  settings.setValue("splitterSizes", splitterSettings );
+
   QStringList commands;
   for( int i = 0; i < commandLine->count(); i++ )
     commands << commandLine->itemText(i);
   settings.setValue("commands", commands );
-  
+
   settings.setValue("hideOscMsgs", hideOscMsgs );
 }
 
@@ -146,7 +146,7 @@ void MainWindow::writeSettings()
 */
 void MainWindow::closeEvent( QCloseEvent *qcloseevent )
 {
-	writeSettings( );
+  writeSettings( );
   qcloseevent->accept();
   qApp->quit(); // in case the inspector or anything else is still open
 }
@@ -252,13 +252,13 @@ void MainWindow::onEthernetDeviceArrived(PacketInterface* pi)
   board->setText(pi->key());
   board->setIcon(QIcon(":icons/network_icon.gif"));
   board->setToolTip(tr("Ethernet Device: ") + pi->key());
-  
+
   if(noUi())
   {
     QTextStream out(stdout);
     out << tr("network device discovered: ") + pi->key() << endl;
   }
-  
+
   boardInit(board);
   boardList.append(board);
   oscXmlServer->sendBoardListUpdate(boardList, true);
@@ -266,7 +266,7 @@ void MainWindow::onEthernetDeviceArrived(PacketInterface* pi)
 
 /*
   A USB device has arrived.  It could be a UsbSerial or a Samba device.
-  Because the UsbMonitor runs in a separate thread, we want to 
+  Because the UsbMonitor runs in a separate thread, we want to
   create the packet interfaces here, in the main thread.
 */
 void MainWindow::onUsbDeviceArrived(QStringList keys, BoardType::Type type)
@@ -294,13 +294,13 @@ void MainWindow::onUsbDeviceArrived(QStringList keys, BoardType::Type type)
       board->setToolTip(tr("Unprogrammed device"));
       noUiString = tr("sam-ba device discovered: ") + board->location();
     }
-    
+
     if(noUi())
     {
       QTextStream out(stdout);
       out << noUiString << endl;
     }
-    
+
     boardInit(board);
     boardList.append(board);
   }
@@ -389,10 +389,10 @@ void MainWindow::message(QString msg, MsgType::Type type, QString from)
     QTextBlockFormat format;
     format.setBackground(msgColor(type));
     QString tofrom = tr("from");
-    
+
     if(type == MsgType::Command)
       tofrom = tr("to");
-    
+
     outputConsole->setUpdatesEnabled(false);
     addMessage( QTime::currentTime().toString(), msg, QString("%1 %2").arg(tofrom).arg(from), format);
     outputConsole->setUpdatesEnabled(true);
@@ -479,21 +479,21 @@ void MainWindow::setBoardName( QString key, QString name )
 */
 Board* MainWindow::getCurrentBoard( )
 {
-	if( deviceList->currentItem( ) == &deviceListPlaceholder )
-		return 0;
-	else
-		return (Board*)deviceList->currentItem( );
+  if( deviceList->currentItem( ) == &deviceListPlaceholder )
+    return 0;
+  else
+    return (Board*)deviceList->currentItem( );
 }
 
 QList<Board*> MainWindow::getConnectedBoards( )
 {
-	QList<Board*> boardList;
-	for( int i = 0; i < deviceList->count( ); i++ )
-	{
-		if( deviceList->item( i ) != &deviceListPlaceholder )
-			boardList.append( (Board*)deviceList->item( i ) );
-	}
-	return boardList;
+  QList<Board*> boardList;
+  for( int i = 0; i < deviceList->count( ); i++ )
+  {
+    if( deviceList->item( i ) != &deviceListPlaceholder )
+      boardList.append( (Board*)deviceList->item( i ) );
+  }
+  return boardList;
 }
 
 /*
@@ -509,14 +509,14 @@ void MainWindow::onCommandLine()
     return;
   message(cmd, MsgType::Command, brd->location()); // print it to screen
   brd->sendMessage(cmd); // send it to the board
-  
+
   // in order to get a readline-style history of commands via up/down arrows
   // we need to keep an empty item at the end of the list so we have a context from which to up-arrow
   if( commandLine->count() >= commandLine->maxCount() )
     commandLine->removeItem( 0 );
   commandLine->insertItem( commandLine->count() - 1, cmd );
   commandLine->setCurrentIndex( commandLine->count() - 1 );
-  
+
   commandLine->clearEditText();
 }
 

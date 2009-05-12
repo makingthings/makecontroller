@@ -2,12 +2,12 @@
 
  Copyright 2008 MakingThings
 
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
+ Licensed under the Apache License,
+ Version 2.0 (the "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0 
- 
+ http://www.apache.org/licenses/LICENSE-2.0
+
  Unless required by applicable law or agreed to in writing, software distributed
  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  CONDITIONS OF ANY KIND, either express or implied. See the License for
@@ -40,7 +40,7 @@ void TestXmlServer::clientConnect()
 {
   updateSpy = new QSignalSpy(mainWindow->oscXmlServer, SIGNAL(boardListUpdated(QList<Board*>, bool)));
   QSignalSpy client1DataSpy(&xmlClient1, SIGNAL(readyRead()));
-  
+
   xmlClient1.connectToHost(QHostAddress::LocalHost, serverPort);
   int count = 0;
   while( xmlClient1.state() != QAbstractSocket::ConnectedState )
@@ -50,7 +50,7 @@ void TestXmlServer::clientConnect()
       QFAIL("client 1 couldn't connect to server.");
   }
   QTest::qWait(10);
-  
+
   //QCOMPARE(updateSpy->count(), 1 );
   QCOMPARE(client1DataSpy.count(), 1 );
   QList<QByteArray> newDocuments = xmlClient1.readAll( ).split( '\0' );
@@ -74,7 +74,7 @@ void TestXmlServer::clientConnect()
 void TestXmlServer::clientConnect2()
 {
   QSignalSpy client2DataSpy(&xmlClient2, SIGNAL(readyRead()));
-  
+
   xmlClient2.connectToHost(QHostAddress::LocalHost, serverPort);
   int count = 0;
   while( xmlClient2.state() != QAbstractSocket::ConnectedState )
@@ -83,7 +83,7 @@ void TestXmlServer::clientConnect2()
     if(count++ > 10)
       QFAIL("client 2 couldn't connect to server.");
   }
-  
+
   //QCOMPARE(updateSpy->count(), 2 );
   QCOMPARE(client2DataSpy.count(), 1 );
   xmlClient2.readAll();
@@ -100,10 +100,10 @@ void TestXmlServer::dataFromBoard()
   Osc osc;
   osc.createMessage("/tester 23", msg);
   msgs << msg;
-  
+
   QSignalSpy client1DataSpy(&xmlClient1, SIGNAL(readyRead()));
   QSignalSpy client2DataSpy(&xmlClient2, SIGNAL(readyRead()));
-  
+
   mainWindow->oscXmlServer->sendPacket(msgs, "192.168.0.10");
   QTest::qWait(5); // give it a moment
   QCOMPARE(client1DataSpy.count(), 1 );
