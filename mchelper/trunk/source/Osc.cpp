@@ -17,9 +17,9 @@
 
 #include "Osc.h"
 #include <QtCore/qendian.h>
-#include <QObject>
 #include <QApplication>
 #include <QtDebug>
+#include <QBuffer>
 
 QString OscMessage::toString( )
 {
@@ -31,21 +31,15 @@ QString OscMessage::toString( )
     {
       case OscData::Blob:
       {
-        unsigned char* blob = (unsigned char*)dataElement->b().data();
-        if( blob == NULL )
-        {
-          int blob_len = qFromBigEndian( *(int*)blob );  // the first int should give us the length of the blob
-          blob += sizeof( int ); // step past the blob_len
-
-          QString blobString( "[ " );
-          while( blob_len-- )
-            blobString.append( QString::number( *blob++, 16 ) + " ");
-          blobString.append( "]" );
-
-          msgString.append( blobString );
-        }
-        else
-          msgString.append( "[ ]" );
+        QBuffer buf;
+        buf.setData(dataElement->b());
+        if(!buf.seek(sizeof(qint32))) // step past the length
+          break;
+        msgString.append("[ ");
+        char c;
+        while(buf.getChar(&c))
+          msgString.append( QString::number( c, 16 ) + " "); // as hex string
+        msgString.append( "]");
         break;
       }
       case OscData::String:
