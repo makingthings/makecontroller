@@ -22,20 +22,24 @@
 #include <QList>
 #include <QByteArray>
 #include <QStringList>
+#include <QVariant>
 
 class OscData
 {
 public:
-  enum { OscString, OscInt, OscFloat, OscBlob } type;
-  OscData( ) { };
+  enum { String, Int, Float, Blob } type;
   OscData( int i );
   OscData( float f );
   OscData( QString s );
   OscData( QByteArray b );
-  QString s;
-  QByteArray b;
-  int i;
-  float f;
+  
+  QString s() { return data.toString(); }
+  QByteArray b() { return data.toByteArray(); }
+  int i() { return data.toInt(); }
+  float f() { return data.toDouble(); }
+  
+protected:
+  QVariant data;
 };
 
 class OscMessage

@@ -30,9 +30,9 @@ QString OscMessage::toString( )
 		OscData *dataElement = data.at( j );
 		switch( dataElement->type )
 		{
-			case OscData::OscBlob:
+			case OscData::Blob:
 			{
-				unsigned char* blob = (unsigned char*)dataElement->b.data();
+				unsigned char* blob = (unsigned char*)dataElement->b().data();
 				if( blob == NULL )
 				{
           int blob_len = qFromBigEndian( *(int*)blob );  // the first int should give us the length of the blob
@@ -49,14 +49,14 @@ QString OscMessage::toString( )
 					msgString.append( "[ ]" );
 				break;
 			}
-			case OscData::OscString:
-				msgString.append( dataElement->s );
+			case OscData::String:
+				msgString.append( dataElement->s() );
 				break;
-			case OscData::OscInt:
-				msgString.append( QString::number( dataElement->i ) );
+			case OscData::Int:
+				msgString.append( QString::number( dataElement->i() ) );
 				break;
-			case OscData::OscFloat:
-				msgString.append( QString::number( dataElement->f) );
+			case OscData::Float:
+				msgString.append( QString::number( dataElement->f()) );
 				break;
 		}
 	}
@@ -73,29 +73,29 @@ QByteArray OscMessage::toByteArray( )
 	{
 		switch( data.at(i)->type )
 		{
-			case OscData::OscString:
+			case OscData::String:
 				typetag.append( 's' );
-				args.append( Osc::writePaddedString( data.at(i)->s ) );
+				args.append( Osc::writePaddedString( data.at(i)->s() ) );
 				break;
-			case OscData::OscBlob: // need to pad the blob
+			case OscData::Blob: // need to pad the blob
 				typetag.append( 'b' );
-				args.append( Osc::writePaddedString( data.at(i)->s ) );
+				args.append( Osc::writePaddedString( data.at(i)->s() ) );
 				break;
-			case OscData::OscInt:
+			case OscData::Int:
 			{
 				typetag.append( 'i' );
 				QByteArray intarg;
 				intarg.resize( sizeof( int ) );
-				*(int*)intarg.data() = qToBigEndian( data.at(i)->i );
+				*(int*)intarg.data() = qToBigEndian( data.at(i)->i() );
 				args.append( intarg );
 				break;
 			}
-			case OscData::OscFloat:
+			case OscData::Float:
 			{
 				typetag.append( 'f' );
 				QByteArray floatarg;
 				floatarg.resize( sizeof( int ) );
-				*(int*)floatarg.data() = qToBigEndian( (int)data.at(i)->f );
+				*(int*)floatarg.data() = qToBigEndian( (int)data.at(i)->f() );
 				args.append( floatarg );
 				break;
 			}
@@ -110,23 +110,23 @@ QByteArray OscMessage::toByteArray( )
 
 OscData::OscData( int i )
 {
-	type = OscInt;
-	this->i = i;
+	type = Int;
+	data.setValue(i);
 }
 OscData::OscData( float f )
 {
-	type = OscFloat;
-	this->f = f;
+	type = Float;
+	data.setValue(f);
 }
 OscData::OscData( QString s )
 {
-	type = OscString;
-	this->s = s;
+	type = String;
+	data.setValue(s);
 }
 OscData::OscData( QByteArray b )
 {
-	type = OscBlob;
-	this->b = b;
+	type = Blob;
+	data.setValue(b);
 }
 
 QByteArray Osc::createPacket( QString msg )
@@ -343,12 +343,7 @@ int Osc::extractData( char* buffer, OscMessage* oscMessage )
 				data += 4;
 				count++;
 				if ( oscMessage )
-				{
-					OscData* omdata = new OscData( );
-					omdata->i = i;
-					omdata->type = OscData::OscInt;
-					oscMessage->data.append( omdata );
-				}
+          oscMessage->data.append( new OscData(i) );
 				cont = true;
         break;
       }
