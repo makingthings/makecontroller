@@ -30,12 +30,8 @@ QString OscMessage::toString( )
     switch( dataElement->type )
     {
       case OscData::Blob:
-      {
-        QByteArray t(dataElement->b()); // make a copy
-        t.remove(0, sizeof(int)); // step past the length
-        msgString.append("[ " + t.toHex() + " ]");
+        msgString.append("[ " + dataElement->b().toHex() + " ]");
         break;
-      }
       case OscData::String:
       case OscData::Int:
       case OscData::Float:
