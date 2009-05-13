@@ -56,8 +56,8 @@ public:
   QAction* inspectorAction() { return actionInspector; }
   QAction* resetAction() { return actionResetBoard; }
   QAction* sambaAction() { return actionEraseBoard; }
-  void statusMsg(QString msg, int duration = 3500);
-  void newXmlPacketReceived( QList<OscMessage*> msgs, QString destination );
+  void statusMsg(const QString & msg, int duration = 3500);
+  void newXmlPacketReceived( const QList<OscMessage*> & msgs, const QString & destination );
 
 public slots:
   void onEthernetDeviceArrived(PacketInterface* pi);
@@ -89,7 +89,7 @@ private:
   #ifdef Q_WS_WIN
   bool winEvent( MSG* msg, long* result );
   #endif
-  void addMessage( QString time, QString msg, QString tofrom, QTextBlockFormat bkgnd );
+  void addMessage( const QString & time, const QString & msg, const QString & tofrom, const QTextBlockFormat & bkgnd );
   bool messagesEnabled( MsgType::Type type );
 
 private slots:

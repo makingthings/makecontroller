@@ -399,7 +399,8 @@ void MainWindow::message(QString msg, MsgType::Type type, QString from)
   }
 }
 
-void MainWindow::addMessage( QString time, QString msg, QString tofrom, QTextBlockFormat bkgnd )
+void MainWindow::addMessage( const QString & time, const QString & msg,
+                              const QString & tofrom, const QTextBlockFormat & bkgnd )
 {
   outputConsole->setCurrentCharFormat(grayText);
   outputConsole->appendPlainText(time + "   ");
@@ -421,7 +422,7 @@ bool MainWindow::messagesEnabled( MsgType::Type type )
   return retval;
 }
 
-void MainWindow::statusMsg(QString msg, int duration)
+void MainWindow::statusMsg(const QString & msg, int duration)
 {
   statusBar()->showMessage(msg, duration);
 }
@@ -447,7 +448,7 @@ QColor MainWindow::msgColor(MsgType::Type type)
   }
 }
 
-void MainWindow::newXmlPacketReceived( QList<OscMessage*> msgs, QString destination )
+void MainWindow::newXmlPacketReceived( const QList<OscMessage*> & msgs, const QString & destination )
 {
   QList<Board*> boardList = getConnectedBoards( );
   foreach(Board *board, boardList)
