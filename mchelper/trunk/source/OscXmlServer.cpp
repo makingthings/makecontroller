@@ -73,7 +73,7 @@ bool OscXmlServer::setListenPort( int port )
   A packet has been received from a board.
   Send it to all connected TCP clients.
 */
-void OscXmlServer::sendPacket(QList<OscMessage*> msgs, QString srcAddress)
+void OscXmlServer::sendPacket(const QList<OscMessage*> & msgs, const QString & srcAddress)
 {
   emit newXmlPacket(msgs, srcAddress);
 }
@@ -161,7 +161,7 @@ void OscXmlClient::processData( )
         // there was a problem parsing.  now the next time we come through, it will start
         // a new parse, discarding anything that was left from the last socket read
         lastParseComplete = true;
-        qDebug( "XML parse error: %s", qPrintable(handler->errorString()) );
+        qDebug() <<  "XML parse error:" << handler->errorString();
       }
     }
   }
@@ -219,7 +219,7 @@ void OscXmlClient::boardInfoUpdate( Board* board )
   Called when boards have arrived or been removed.
   Pass the info on to our TCP peer.
 */
-void OscXmlClient::boardListUpdate( QList<Board*> boardList, bool arrived )
+void OscXmlClient::boardListUpdate( const QList<Board*> & boardList, bool arrived )
 {
   if(!boardList.count())
     return;
@@ -244,7 +244,7 @@ void OscXmlClient::boardListUpdate( QList<Board*> boardList, bool arrived )
   writeXmlDoc( doc );
 }
 
-void OscXmlClient::writeXmlDoc( QDomDocument doc )
+void OscXmlClient::writeXmlDoc( const QDomDocument & doc )
 {
   if( isConnected( ) )
   {
@@ -273,10 +273,9 @@ void OscXmlClient::sendCrossDomainPolicy()
   writeXmlDoc(doc);
 }
 
-void OscXmlClient::sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress )
+void OscXmlClient::sendXmlPacket( const QList<OscMessage*> & messageList, const QString & srcAddress )
 {
-  int msgCount = messageList.count( );
-  if( !isConnected( ) || msgCount < 1 )
+  if( !isConnected( ) || messageList.count() < 1 )
     return;
 
   QDomDocument doc;
@@ -285,18 +284,14 @@ void OscXmlClient::sendXmlPacket( QList<OscMessage*> messageList, QString srcAdd
   oscPacket.setAttribute( "TIME", 0 );
   doc.appendChild( oscPacket );
 
-  for( int i = 0; i < msgCount; i++ )
+  foreach( OscMessage* oscMsg, messageList )
   {
-    OscMessage *oscMsg = messageList.at( i );
-    int dataCount = oscMsg->data.count( );
-
     QDomElement msg = doc.createElement( "MESSAGE" );
     msg.setAttribute( "NAME", oscMsg->addressPattern );
     oscPacket.appendChild( msg );
 
-    for( int j = 0; j < dataCount; j++ )
+    foreach( OscData* data, oscMsg->data )
     {
-      OscData *data = oscMsg->data.at( j );
       QDomElement argument = doc.createElement( "ARGUMENT" );
       switch( data->type )
       {
@@ -306,11 +301,11 @@ void OscXmlClient::sendXmlPacket( QList<OscMessage*> messageList, QString srcAdd
           break;
         case OscData::Int:
           argument.setAttribute( "TYPE", "i" );
-          argument.setAttribute( "VALUE", QString::number( data->i() ) );
+          argument.setAttribute( "VALUE", data->s() );
           break;
         case OscData::Float:
           argument.setAttribute( "TYPE", "f" );
-          argument.setAttribute( "VALUE", QString::number( data->f() ) );
+          argument.setAttribute( "VALUE", data->s() );
           break;
         case OscData::Blob:
         {

@@ -74,10 +74,10 @@ class OscXmlClient : public QThread
     void resetParser() { lastParseComplete = true; }
 
   public slots:
-    void boardListUpdate( QList<Board*> boardList, bool arrived );
+    void boardListUpdate( const QList<Board*> & boardList, bool arrived );
     void boardInfoUpdate( Board* board );
     void wroteBytes( qint64 bytes );
-    void sendXmlPacket( QList<OscMessage*> messageList, QString srcAddress );
+    void sendXmlPacket( const QList<OscMessage*> & messageList, const QString & srcAddress );
 
   signals:
     void msg(QString msg, MsgType::Type, QString from);
@@ -95,7 +95,7 @@ class OscXmlClient : public QThread
     bool shuttingDown;
 
     bool isConnected( );
-    void writeXmlDoc( QDomDocument doc );
+    void writeXmlDoc( const QDomDocument & doc );
 
   private slots:
     void processData( );
@@ -112,12 +112,12 @@ class OscXmlServer : public QTcpServer
   public:
     OscXmlServer( MainWindow *mainWindow, QObject *parent = 0 );
     bool setListenPort( int port );
-    void sendPacket(QList<OscMessage*> msgs, QString srcAddress);
+    void sendPacket(const QList<OscMessage*> & msgs, const QString & srcAddress);
     void sendBoardListUpdate(QList<Board*> boardList, bool arrived);
 
   signals:
     void msg(QString msg, MsgType::Type, QString from);
-    void newXmlPacket(QList<OscMessage*> messageList, QString srcAddress);
+    void newXmlPacket(const QList<OscMessage*> & messageList, const QString & srcAddress);
     void boardInfoUpdate(Board *board);
     void boardListUpdated(QList<Board*> boardList, bool arrived);
 
