@@ -42,6 +42,7 @@ private slots:
   void strings();
   void mixed();
   void roundtrip();
+  void bundle();
 };
 
 #endif // TEST_OSC_H

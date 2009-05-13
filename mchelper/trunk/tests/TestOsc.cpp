@@ -16,6 +16,7 @@
 *********************************************************************************/
 
 #include "TestOsc.h"
+#include <QtDebug>
 
 /*
   simple test of creating an OscMessage
@@ -36,10 +37,10 @@ void TestOsc::numbers()
   OscMessage msg;
   osc.createMessage("/test 12 34.5 -3 -23.6", &msg);
   QVERIFY(msg.data.count() == 4);
-  QVERIFY(msg.data.at(0)->i == 12);
-  QVERIFY(msg.data.at(1)->f == 34.5f);
-  QVERIFY(msg.data.at(2)->i == -3);
-  QVERIFY(msg.data.at(3)->f == -23.6f);
+  QVERIFY(msg.data.at(0)->i() == 12);
+  QVERIFY(msg.data.at(1)->f() == 34.5f);
+  QVERIFY(msg.data.at(2)->i() == -3);
+  QVERIFY(msg.data.at(3)->f() == -23.6f);
 }
 
 /*
@@ -50,8 +51,8 @@ void TestOsc::strings()
   OscMessage msg;
   osc.createMessage("/test string \"test spaces\"", &msg);
   QVERIFY(msg.data.count() == 2);
-  QVERIFY(msg.data.at(0)->s == "string");
-  QVERIFY(msg.data.at(1)->s == "test spaces");
+  QVERIFY(msg.data.at(0)->s() == "string");
+  QVERIFY(msg.data.at(1)->s() == "test spaces");
 }
 
 /*
@@ -62,11 +63,11 @@ void TestOsc::mixed()
   OscMessage msg;
   osc.createMessage("/test 23 \"space this\" -34.5 anotherstring 56", &msg);
   QVERIFY(msg.data.count() == 5);
-  QVERIFY(msg.data.at(0)->i == 23);
-  QVERIFY(msg.data.at(1)->s == "space this");
-  QVERIFY(msg.data.at(2)->f == -34.5);
-  QVERIFY(msg.data.at(3)->s == "anotherstring");
-  QVERIFY(msg.data.at(4)->i == 56);
+  QVERIFY(msg.data.at(0)->i() == 23);
+  QVERIFY(msg.data.at(1)->s() == "space this");
+  QVERIFY(msg.data.at(2)->f() == -34.5);
+  QVERIFY(msg.data.at(3)->s() == "anotherstring");
+  QVERIFY(msg.data.at(4)->i() == 56);
 }
 
 /*
@@ -75,7 +76,48 @@ void TestOsc::mixed()
 */
 void TestOsc::roundtrip()
 {
+  OscMessage om;
+  osc.createMessage("/roundtrip 23 34 45", &om);
+  QByteArray ba = om.toByteArray();
+  QList<OscMessage*> msgs = osc.processPacket( ba.data(), ba.size() );
+  QCOMPARE(msgs.size(), 1);
+  OscMessage* omm = msgs.first();
+  QCOMPARE(omm->data.size(), om.data.size());
+  for( int i = 0; i < omm->data.size(); i++ )
+    QCOMPARE(omm->data.at(i)->i(), om.data.at(i)->i());
+}
 
+/*
+  Create a few OscMessages, put them in a bundle
+  and make sure we get the right stuff back.
+*/
+void TestOsc::bundle()
+{
+  QStringList strings;
+  strings << "/test number 1 -2 3";
+  strings << "/test2 donkey good";
+  strings << "/test3 34.6 twelve";
+
+  QByteArray bundle = osc.createPacket(strings);
+  QList<OscMessage*> msgs = osc.processPacket( bundle.data(), bundle.size() );
+  QCOMPARE(msgs.size(), 3);
+
+  OscMessage* m = msgs.at(0);
+  QVERIFY(m->addressPattern == "/test");
+  QVERIFY(m->data.at(0)->s() == "number");
+  QCOMPARE(m->data.at(1)->i(), 1);
+  QCOMPARE(m->data.at(2)->i(), -2);
+  QCOMPARE(m->data.at(3)->i(), 3);
+
+  m = msgs.at(1);
+  QVERIFY(m->addressPattern == "/test2");
+  QVERIFY(m->data.at(0)->s() == "donkey");
+  QVERIFY(m->data.at(1)->s() == "good");
+
+  m = msgs.at(2);
+  QVERIFY(m->addressPattern == "/test3");
+  QVERIFY(m->data.at(0)->f() == 34.6f);
+  QVERIFY(m->data.at(1)->s() == "twelve");
 }
 
 
