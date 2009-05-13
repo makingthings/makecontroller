@@ -30,13 +30,13 @@ public:
   enum { String, Int, Float, Blob } type;
   OscData( int i );
   OscData( float f );
-  OscData( QString s );
-  OscData( QByteArray b );
+  OscData( const QString & s );
+  OscData( const QByteArray & b );
 
   QString s() { return data.toString(); }
   QByteArray b() { return data.toByteArray(); }
   int i() { return data.toInt(); }
-  float f() { return data.toDouble(); }
+  float f() { return data.value<float>(); }
 
 protected:
   QVariant data;
@@ -56,7 +56,6 @@ class Osc
 {
   public:
     Osc( ) { }
-    static QByteArray writePaddedString( const char *string );
     static QByteArray writePaddedString( const QString & str );
     static QByteArray writeTimetag( int a, int b );
     static QByteArray createOneRequest( const char* message );
@@ -64,18 +63,15 @@ class Osc
     QByteArray createPacket( const QStringList & strings );
     QByteArray createPacket( const QList<OscMessage*> & msgs );
     QByteArray createPacket( const QString & msg );
-
-    void setPreamble( QString preamble ) { this->preamble = preamble; }
-    QString getPreamble( );
     bool createMessage( const QString & msg, OscMessage *oscMsg );
 
   private:
-    char* findDataTag( char* message, int length );
-    QString getTypeTag( char* message );
-    bool receivePacket( char* packet, int length,  QList<OscMessage*>* oscMessageList );
-    void receiveMessage( char* message, int length, QList<OscMessage*>* oscMessageList );
-    int extractData( char* buffer, OscMessage* message );
+    QString getTypeTag( QByteArray* msg );
+    bool receivePacket( QByteArray* pkt,  QList<OscMessage*>* oscMessageList );
+    OscMessage* receiveMessage( QByteArray* msg );
+    bool extractData( const QString & typetag, QByteArray* buffer, OscMessage* message );
     QString preamble;
+    int paddedLength( const QString & str );
 };
 
 #endif

@@ -31,15 +31,9 @@ QString OscMessage::toString( )
     {
       case OscData::Blob:
       {
-        QBuffer buf;
-        buf.setData(dataElement->b());
-        if(!buf.seek(sizeof(qint32))) // step past the length
-          break;
-        msgString.append("[ ");
-        char c;
-        while(buf.getChar(&c))
-          msgString.append( QString::number( c, 16 ) + " "); // as hex string
-        msgString.append( "]");
+        QByteArray t(dataElement->b()); // make a copy
+        t.remove(0, sizeof(int)); // step past the length
+        msgString.append("[ " + t.toHex() + " ]");
         break;
       }
       case OscData::String:
@@ -56,7 +50,7 @@ QByteArray OscMessage::toByteArray( )
 {
   QByteArray msg = Osc::writePaddedString( this->addressPattern );
   QString typetag( "," );
-  QList<QByteArray> args; // intermediate spot for arguments until we've assembled the typetag
+  QByteArray args; // intermediate spot for arguments until we've assembled the typetag
   foreach( OscData* dataElement, data )
   {
     switch( dataElement->type )
@@ -72,20 +66,24 @@ QByteArray OscMessage::toByteArray( )
       case OscData::Int:
       {
         typetag.append( 'i' );
-        args.append( QByteArray::number( qToBigEndian(dataElement->i()) ));
+        QByteArray intarg(sizeof(int), 0);
+        *(int*)intarg.data() = qToBigEndian( dataElement->i() );
+        args.append( intarg );
         break;
       }
       case OscData::Float:
       {
         typetag.append( 'f' );
-        args.append( QByteArray::number( qToBigEndian((int)dataElement->f()) ) );
+        QByteArray floatarg(sizeof(int), 0);
+        *(int*)floatarg.data() = qToBigEndian( (int)dataElement->f() );
+        args.append( floatarg );
         break;
       }
     }
   }
   msg += Osc::writePaddedString( typetag );
-  foreach( QByteArray arg, args )
-    msg += arg;
+  msg += args;
+
   Q_ASSERT( ( msg.size( ) % 4 ) == 0 );
   return msg;
 }
@@ -100,12 +98,12 @@ OscData::OscData( float f )
   type = Float;
   data.setValue(f);
 }
-OscData::OscData( QString s )
+OscData::OscData( const QString & s )
 {
   type = String;
   data.setValue(s);
 }
-OscData::OscData( QByteArray b )
+OscData::OscData( const QByteArray & b )
 {
   type = Blob;
   data.setValue(b);
@@ -142,15 +140,17 @@ QByteArray Osc::createPacket( const QList<OscMessage*> & msgs )
   if( msgs.size( ) == 0 )
     return bundle;
   else if( msgs.size( ) == 1 ) // if there's only one message in the bundle, send it as a normal message
-    bundle = msgs.at( 0 )->toByteArray( );
+    bundle = msgs.first()->toByteArray( );
   else // we have more than one message, and it's worth sending a real bundle
   {
     bundle += Osc::writePaddedString( "#bundle" ); // indicate that this is indeed a bundle
     bundle += Osc::writeTimetag( 0, 0 ); // we don't do much with timetags
-    foreach(OscMessage* msg, msgs) // int i = 0; i < msgs.count( ); i++ ) // then write out the messages
+    foreach(OscMessage* msg, msgs) // then write out the messages
     {
       QByteArray m = msg->toByteArray();
-      bundle += QByteArray::number(qToBigEndian(m.size())); // each message in a bundle is preceded by its int32 size
+      QByteArray bundlesize(sizeof(int), 0);
+      *(int*)bundlesize.data() = qToBigEndian( m.size() );
+      bundle += bundlesize; // each message in a bundle is preceded by its int32 size
       bundle += m;
     }
   }
@@ -158,22 +158,13 @@ QByteArray Osc::createPacket( const QList<OscMessage*> & msgs )
   return bundle;
 }
 
-QString Osc::getPreamble( )
-{
-  return preamble;
-}
-
 QList<OscMessage*> Osc::processPacket( char* data, int size )
 {
   QList<OscMessage*> msgList;
-  receivePacket( data, size, &msgList );
+  QByteArray packet = QByteArray(data, size);
+  receivePacket( &packet, &msgList );
   return msgList;
 }
-
-//void Osc::setInterfaces( MessageInterface* messageInterface )
-//{
-//  this->messageInterface = messageInterface;
-//}
 
 /*
   An OSC Type Tag String is an OSC-string beginning with the character ',' (comma) followed by a sequence
@@ -182,75 +173,56 @@ QList<OscMessage*> Osc::processPacket( char* data, int size )
   (The requirement for OSC Type Tag Strings to start with a comma makes it easier for the recipient of an OSC Message
   to determine whether that OSC Message is lacking an OSC Type Tag String.)
 
-  OSC Type Tag		Type of corresponding argument
-      i						int32
-      f						float32
-      s						Osc-string
-      b						Osc-blob
+  OSC Type Tag  Type of corresponding argument
+      i         int32
+      f         float32
+      s         Osc-string
+      b         Osc-blob
 */
-char* Osc::findDataTag( char* message, int length )
+QString Osc::getTypeTag( QByteArray* msg )
 {
-  while ( *message != ',' && length-- > 0 )
-    message++;
-  if ( length <= 0 )
-    return NULL;
-  else
-    return message;
-}
-
-QString Osc::getTypeTag( char *message )
-{
-  QString tag( message );
-  int tagIndex = tag.indexOf( ',' );
-  if( tagIndex < 0 )
-    return QString( );
-  else
-  {
-    tag = tag.remove( 0, tagIndex );
-    return tag;
-  }
+  // get rid of everything up until the beginning of the typetag, which is indicated by ','
+  while(msg->at(0) != ',' && msg->size())
+    msg->remove(0, 1);
+  QString tag( msg->data() );
+  msg->remove(0, paddedLength(tag)); // remove the tag and trailing nulls from the buffer
+  return tag;
 }
 
 // When we receive a packet, check to see whether it is a message or a bundle.
-bool Osc::receivePacket( char* packet, int length, QList<OscMessage*>* oscMessageList )
+bool Osc::receivePacket( QByteArray* pkt, QList<OscMessage*>* oscMessageList )
 {
-  //qDebug( "Raw: %s, Length: %d\n", packet, length );
-  switch( *packet )
+  if(pkt->startsWith('/')) // single message
   {
-    case '/':		// the '/' in front tells us this is an Osc message.
-      receiveMessage( packet, length, oscMessageList );
-      break;
-    case '#':		// the '#' tells us this is an Osc bundle, and we check for "#bundle" just to be sure.
-      if ( strcmp( packet, "#bundle" ) == 0 )
+    OscMessage* om = receiveMessage( pkt );
+    if(om)
+      oscMessageList->append(om);
+  }
+  else if(pkt->startsWith("#bundle")) // bundle
+  {
+    pkt->remove(0, 16); // skip bundle text and timetag
+    while( pkt->size() )
+    {
+      if( pkt->size() > 16384 || pkt->size() <= 0 )
       {
-        // skip bundle text and timetag
-        packet += 16;
-        length -= 16;
-        while ( length > 0 )
-        {
-          if( length > 16384 || length <= 0 )
-          {
-            qDebug() << QApplication::tr("got insane length - %d, bailing.").arg(length);
-            return false;
-          }
-          // read the length (pretend packet is a pointer to integer)
-          int messageLength = qFromBigEndian( *((int*)packet) );
-          packet += 4;
-          length -= 4;
-          if ( messageLength <= length )
-          {
-            if( !receivePacket( packet, messageLength, oscMessageList ) )
-              return false;
-          }
-          length -= messageLength;
-          packet += messageLength;
-        }
+        qDebug() << QApplication::tr("got insane length - %d, bailing.").arg(pkt->size());
+        return false;
       }
-      break;
-    default:
-      // something we don't recognize...
-      QString msg = QObject::tr( "Error - Osc packets must start with either a '/' (message) or '[' (bundle).");
-      //messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
+      int messageLength = qFromBigEndian( *(int*)pkt->data() );
+      pkt->remove(0, sizeof(int));
+      if ( messageLength <= pkt->size() )
+      {
+        QByteArray msg = pkt->left(messageLength);
+        if( !receivePacket( &msg, oscMessageList ) )
+          return false;
+      }
+      pkt->remove(0, messageLength);
+    }
+  }
+  else // something we don't recognize...
+  {
+    QString msg = QObject::tr( "Error - Osc packets must start with either a '/' (message) or '[' (bundle).");
+    //messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
   }
   return true;
 }
@@ -259,35 +231,33 @@ bool Osc::receivePacket( char* packet, int length, QList<OscMessage*>* oscMessag
   Once we receive a message, we need to make sure it's in the right format,
   and then send it off to be interpreted (via extractData() ).
 */
-void Osc::receiveMessage( char* in, int length, QList<OscMessage*>* oscMessageList )
+OscMessage* Osc::receiveMessage( QByteArray* msg )
 {
   OscMessage* oscMessage = new OscMessage( );
-  oscMessage->addressPattern = QString( in );
+  oscMessage->addressPattern = QString( msg->data() );
+  msg->remove(0, paddedLength(oscMessage->addressPattern));
 
-  // QString typetag = getTypeTag( in );
-  // typetagLength = Osc::writePaddedString( typetag ).size( );
-
-  // Then try to find the type tag
-  char* type = findDataTag( in, length );
-  if ( type == NULL )		//If there was no type tag, say so and stop processing this message.
+  QString typetag = getTypeTag( msg );
+  if ( typetag.isEmpty() || !typetag.startsWith(',') ) //If there was no type tag, say so and stop processing this message.
   {
     QString msg = QObject::tr( "Error - No type tag.");
     //messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
     delete oscMessage;
+    return 0;
   }
-  else  //Otherwise, step through the type tag and print the data out accordingly.
+  else
   {
     //We get a count back from extractData() of how many items were included - if this
     //doesn't match the length of the type tag, something funky is happening.
-    int count = extractData( type, oscMessage );
-    if ( count != (int)( strlen(type) - 1 ) )
+    if(!extractData( typetag, msg, oscMessage ) || oscMessage->data.size() != typetag.size() - 1)
     {
       QString msg = QObject::tr( "Error extracting data from packet - type tag doesn't correspond to data included.");
       //messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
       delete oscMessage;
+      return 0;
     }
     else
-      oscMessageList->append( oscMessage );
+      return oscMessage;
   }
 }
 
@@ -296,77 +266,57 @@ void Osc::receiveMessage( char* in, int length, QList<OscMessage*>* oscMessageLi
   This means we need to step through the type tag, and then step the corresponding number of bytes
   through the data, depending on the type specified in the tag.
 */
-int Osc::extractData( char* buffer, OscMessage* oscMessage )
+bool Osc::extractData( const QString & typetag, QByteArray* msg, OscMessage* oscMessage )
 {
-  int count = 0;
-
-  // figure out where the data starts
-  int tagLen = strlen( buffer ) + 1;
-  int pad = tagLen % 4;
-  if ( pad != 0 )
-    tagLen += ( 4 - pad );
-  char* data = buffer + tagLen;
-
-  // Going to be walking through the type tag, and the data.
-  char* tp; // need to skip the comma ','
-  bool cont = true;
-  for ( tp = buffer + 1; *tp && cont; tp++ )
+  QBuffer buf(msg);
+  buf.open(QIODevice::ReadOnly);
+  int typeIdx = 1; // start after the comma
+  while(!buf.atEnd() && typeIdx < typetag.size())
   {
-    cont = false;
-    switch ( *tp )
+    switch( typetag.at(typeIdx++).toAscii() )
     {
       case 'i':
       {
-        int i = *(int*)data;
-        i = qFromBigEndian( i );
-        data += 4;
-        count++;
-        if ( oscMessage )
-          oscMessage->data.append( new OscData(i) );
-        cont = true;
+        QByteArray i(sizeof(int), 0);
+        if(buf.read(i.data(), i.size()) < 1)
+          return false;
+        int val = qFromBigEndian( *(int*)i.data() );
+        oscMessage->data.append( new OscData((val)) );
         break;
       }
       case 'f':
       {
-        int i = *(int*)data;
-        i = qFromBigEndian( i );
-        float f = *(float*)&i;
-        if ( oscMessage)
-          oscMessage->data.append( new OscData( f ) );
-
-        data += 4;
-        count++;
-        cont = true;
+        QByteArray i(sizeof(int), 0);
+        if(buf.read(i.data(), i.size()) < 1)
+          return false;
+        int val = qFromBigEndian( *(int*)i.data() );
+        float f = *(float*)&val;
+        oscMessage->data.append( new OscData(f) );
         break;
       }
       case 's':
       {
-        if ( oscMessage)
-          oscMessage->data.append( new OscData( QString( data ) ) );
-
-        int len = strlen( data ) + 1;
-        int pad = len % 4;
-        if ( pad != 0 )
-          len += ( 4 - pad );
-        data += len;
-        count++;
-        cont = true;
-          break;
+        QString str(buf.buffer().mid(buf.pos()).data());
+        oscMessage->data.append( new OscData(str) );
+        buf.read(paddedLength(str)); // pull it out of the buffer
+        break;
       }
       case 'b':
       {
-        // the first int should give us the length of the blob, but also account for the blob_len itself
-        int	blob_len = qFromBigEndian( *(int*)data ) + 4;
-        if ( oscMessage)
-          oscMessage->data.append( new OscData( QByteArray::fromRawData( data, blob_len ) ) );
-        data += blob_len;
-        count++;
-        cont = true;
+        QByteArray blob(sizeof(int), 0); // first read the int32 blob length
+        if(buf.read(blob.data(), blob.size()) < 1)
+          return false;
+        int blob_len = qFromBigEndian( *(int*)blob.data() );
+        blob.resize(blob_len);
+        if(buf.read(blob.data(), blob_len) < 1) // then get the blob data
+          return false;
+        oscMessage->data.append( new OscData( blob ) );
         break;
       }
     }
   }
-  return count;
+  buf.close();
+  return true;
 }
 
 QByteArray Osc::createOneRequest( const char* message )
@@ -379,17 +329,11 @@ QByteArray Osc::createOneRequest( const char* message )
 
 QByteArray Osc::writePaddedString( const QString & str )
 {
-  return writePaddedString( str.toAscii().data() );
-}
-
-QByteArray Osc::writePaddedString( const char *string )
-{
-  QByteArray paddedString( string );
-  paddedString.append( '\0' ); // OSC requires that strings be null-terminated
+  QByteArray paddedString = str.toAscii() + '\0'; // OSC requires that strings be null-terminated
   int pad = 4 - ( paddedString.size( ) % 4 );
   if( pad < 4 ) // if we had 4 - 0, that means we don't need to add any padding
   {
-    for( int i = 0; i < pad; i++ )
+    while(pad--)
       paddedString.append( '\0' );
   }
 
@@ -397,10 +341,28 @@ QByteArray Osc::writePaddedString( const char *string )
   return paddedString;
 }
 
+/*
+  What is the total length of string plus padding?
+*/
+int Osc::paddedLength( const QString & str )
+{
+  int len = str.size() + 1; // size() doesn't count terminator
+  int pad = len % 4;
+  if ( pad != 0 )
+    len += ( 4 - pad );
+  return len;
+}
+
 QByteArray Osc::writeTimetag( int a, int b )
 {
-  QByteArray tag = QByteArray::number(qToBigEndian(a));
-  tag += QByteArray::number(qToBigEndian(b));
+  QByteArray tag;
+  QByteArray bytes(sizeof(int), 0);
+  *(int*)bytes.data() = qToBigEndian( a );
+  tag += bytes;
+
+  *(int*)bytes.data() = qToBigEndian( b );
+  tag += bytes;
+
   Q_ASSERT( tag.size( ) == 8 );
   return tag;
 }
