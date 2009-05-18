@@ -176,7 +176,7 @@ int WebClient_Get( int address, int port, char* hostname, char* path, char* buff
                                     myBuffer, strlen("A test message to post"), bufLength );
   \endcode
 */
-int WebClient_Post( int address, int port, char* path, char* hostname, char* buffer, int buffer_length, int buffer_size )
+int WebClient_Post( int address, int port, char* hostname, char* path, char* buffer, int buffer_length, int buffer_size )
 {
   char* b = WebClient_InternalBuffer;
   int buffer_read = 0;
