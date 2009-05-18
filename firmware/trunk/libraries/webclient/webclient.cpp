@@ -60,25 +60,32 @@ WebClient::WebClient()
   \endcode
   Now we should have the results of the HTTP GET from \b www.makingthings.com/test/path in \b myBuffer.
 */
-int WebClient::get( char* hostname, char* path, char* response, int response_size, int port )
+int WebClient::get( char* hostname, int port, char* path, char* response, int response_size, const char* headers[] )
 {
-  Network* net = Network::get();
-  if ( socket.connect( net->getHostByName(hostname), port ) )
+  if ( socket.connect( Network::get()->getHostByName(hostname), port ) )
   {
     // construct the GET request
-    int send_len = snprintf( buffer, WEBCLIENT_INTERNAL_BUFFER_SIZE, "GET %s HTTP/1.1\r\n%s%s%s\r\n", 
+    int send_len = snprintf( buffer, WEBCLIENT_INTERNAL_BUFFER_SIZE, "GET %s HTTP/1.1\r\n%s%s%s", 
                                 path,
                                 ( hostname != NULL ) ? "Host: " : "",
                                 ( hostname != NULL ) ? hostname : "",
                                 ( hostname != NULL ) ? "\r\n" : ""  );
-    if ( send_len > WEBCLIENT_INTERNAL_BUFFER_SIZE )
+    if(!socket.write( buffer, send_len ))
     {
       socket.close( );
-      return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
+      return CONTROLLER_ERROR_WRITE_FAILED;
     }
-    
-    // send the GET request
-    if(!socket.write( buffer, send_len ))
+
+    if(headers)
+    {
+      while(*headers != 0)
+      {
+        socket.write(*headers, strlen(*headers));
+        socket.write("\r\n", 2);
+        headers++;
+      }
+    }
+    if(!socket.write( "\r\n", 2 )) // all done with headers
     {
       socket.close( );
       return CONTROLLER_ERROR_WRITE_FAILED;
@@ -114,25 +121,42 @@ int WebClient::get( char* hostname, char* path, char* response, int response_siz
   wc.post("www.makingthings.com", "/post/path", myBuffer, datalength, bufLength);
   \endcode
 */
-int WebClient::post( char* hostname, char* path, char* data, int data_length, int response_size, int port )
+int WebClient::post( char* hostname, int port, char* path, char* data, int data_length, int response_size, const char* headers[] )
 {
   Network* net = Network::get();
   if ( socket.connect( net->getHostByName(hostname), port ) )
   { 
     int send_len = snprintf( buffer, WEBCLIENT_INTERNAL_BUFFER_SIZE, 
-                                "POST %s HTTP/1.1\r\n%s%s%sAccept: application/json\r\nContent-Length: %d\r\n\r\n", 
+                                "POST %s HTTP/1.1\r\n%s%s%s\r\n", 
                                 path, 
                                 ( hostname != NULL ) ? "Host: " : "",
                                 ( hostname != NULL ) ? hostname : "",
                                 ( hostname != NULL ) ? "\r\n" : "",
                                 data_length );
-    if ( send_len > WEBCLIENT_INTERNAL_BUFFER_SIZE )
+    if ( socket.write( buffer, send_len ) == 0 ) // send the headers
     {
       socket.close( );
-      return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
+      return CONTROLLER_ERROR_WRITE_FAILED;
     }
 
+    send_len = snprintf( buffer, WEBCLIENT_INTERNAL_BUFFER_SIZE,
+                          "Content-Length: %d\r\n", data_length);
     if ( socket.write( buffer, send_len ) == 0 ) // send the headers
+    {
+      socket.close( );
+      return CONTROLLER_ERROR_WRITE_FAILED;
+    }
+    
+    if(headers)
+    {
+      while(*headers != 0)
+      {
+        socket.write(*headers, strlen(*headers));
+        socket.write("\r\n", 2);
+        headers++;
+      }
+    }
+    if(!socket.write( "\r\n", 2 )) // all done with headers
     {
       socket.close( );
       return CONTROLLER_ERROR_WRITE_FAILED;
