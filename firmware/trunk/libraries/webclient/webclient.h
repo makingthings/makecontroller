@@ -37,8 +37,8 @@ class WebClient
 {
 public:
   WebClient();
-  int get( char* hostname, char* path, char* response, int response_size, int port = 80 );
-  int post( char* hostname, char* path, char* data, int post_length, int response_size, int port = 80 );
+  int get( char* hostname, int port, char* path, char* response, int response_size, const char* headers[] = 0 );
+  int post( char* hostname, int port, char* path, char* data, int post_length, int response_size, const char* headers[] = 0 );
 
 protected:
   TcpSocket socket;
