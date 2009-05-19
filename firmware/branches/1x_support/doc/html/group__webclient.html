@@ -87,9 +87,9 @@ window.onload = initDynSections;
 <tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__webclient.html#ge6d303d67a7adfe38b34873dba7e2e39">WebClient_Get</a> (int address, int port, char *hostname, char *path, char *buffer, int buffer_size)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Performs an HTTP GET operation to the path at the address / port specified.  <a href="#ge6d303d67a7adfe38b34873dba7e2e39"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__webclient.html#gac46f29396f4689c6d7e2b0cbfa13b4f">WebClient_Post</a> (int address, int port, char *path, char *hostname, char *buffer, int buffer_length, int buffer_size)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__webclient.html#g25277009eb01658be3d2661a9d8f7c51">WebClient_Post</a> (int address, int port, char *hostname, char *path, char *buffer, int buffer_length, int buffer_size)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Performs an HTTP POST operation to the path at the address / port specified.  <a href="#gac46f29396f4689c6d7e2b0cbfa13b4f"></a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Performs an HTTP POST operation to the path at the address / port specified.  <a href="#g25277009eb01658be3d2661a9d8f7c51"></a><br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 A very simple web client for HTTP operations. 
@@ -174,7 +174,7 @@ Note that this uses lots of printf style functions and may require a fair amount
 
 </div>
 </div><p>
-<a class="anchor" name="gac46f29396f4689c6d7e2b0cbfa13b4f"></a><!-- doxytag: member="webclient.c::WebClient_Post" ref="gac46f29396f4689c6d7e2b0cbfa13b4f" args="(int address, int port, char *path, char *hostname, char *buffer, int buffer_length, int buffer_size)" -->
+<a class="anchor" name="g25277009eb01658be3d2661a9d8f7c51"></a><!-- doxytag: member="webclient.c::WebClient_Post" ref="g25277009eb01658be3d2661a9d8f7c51" args="(int address, int port, char *hostname, char *path, char *buffer, int buffer_length, int buffer_size)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -194,13 +194,13 @@ Note that this uses lots of printf style functions and may require a fair amount
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">char *&nbsp;</td>
-          <td class="paramname"> <em>path</em>, </td>
+          <td class="paramname"> <em>hostname</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">char *&nbsp;</td>
-          <td class="paramname"> <em>hostname</em>, </td>
+          <td class="paramname"> <em>path</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -249,7 +249,7 @@ The actual post contents are found read from a given buffer and the result is re
   <span class="keywordtype">int</span> bufLength = 100;
   <span class="keywordtype">char</span> myBuffer[bufLength];
   sprintf( myBuffer, <span class="stringliteral">"A test message to post"</span> );
-  <span class="keywordtype">int</span> result = <a class="code" href="group__webclient.html#gac46f29396f4689c6d7e2b0cbfa13b4f" title="Performs an HTTP POST operation to the path at the address / port specified.">WebClient_Post</a>( addr, 80, <span class="stringliteral">"www.makingthings.com"</span>, <span class="stringliteral">"/post/path"</span>, 
+  <span class="keywordtype">int</span> result = <a class="code" href="group__webclient.html#g25277009eb01658be3d2661a9d8f7c51" title="Performs an HTTP POST operation to the path at the address / port specified.">WebClient_Post</a>( addr, 80, <span class="stringliteral">"www.makingthings.com"</span>, <span class="stringliteral">"/post/path"</span>, 
                                     myBuffer, strlen(<span class="stringliteral">"A test message to post"</span>), bufLength );
 </pre></div> </dd></dl>
 
@@ -264,7 +264,7 @@ The actual post contents are found read from a given buffer and the result is re
   <p id="footer">The Make Controller Kit is an open source project maintained by <a href="http://www.makingthings.com">MakingThings</a>.<br />
     MakingThings code is released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 license</a>.<br />
     Bug tracker, development wiki and status can be found at <a href="http://dev.makingthings.com">http://dev.makingthings.com</a>.<br />
-    This document was last updated on 8 Jan 2009.
+    This document was last updated on 18 May 2009.
   </p>
 </div>
 <!-- Google Analytics Code -->

@@ -738,10 +738,10 @@ window.onload = initDynSections;
 <a name="l00657"></a>00657 
 <a name="l00658"></a>00658   <span class="comment">// default to SERIAL_0 values</span>
 <a name="l00659"></a>00659   <span class="keywordtype">int</span> <span class="keywordtype">id</span> = AT91C_ID_US0;
-<a name="l00660"></a>00660   <span class="keywordtype">int</span> rxPin = <a class="code" href="group___io_bits.html#g20c5433a9bcaf775de653112a1d5d154" title="IO 0, Port A.">IO_PA00_BIT</a>;
-<a name="l00661"></a>00661   <span class="keywordtype">int</span> txPin = <a class="code" href="group___io_bits.html#g103883dca0a9904770966564a471ef55" title="IO 1, Port A.">IO_PA01_BIT</a>;
-<a name="l00662"></a>00662   <span class="keywordtype">long</span> rxPinBit = <a class="code" href="group___io_indices.html#g4b4eeed896a729a5d9486c8b5ab5e7d2" title="IO 0, Port A.">IO_PA00</a>;
-<a name="l00663"></a>00663   <span class="keywordtype">long</span> txPinBit = <a class="code" href="group___io_indices.html#gd091a284381793316e217ae060cc12f5" title="IO 1, Port A.">IO_PA01</a>;
+<a name="l00660"></a>00660   <span class="keywordtype">int</span> rxPin = <a class="code" href="group___io_indices.html#g4b4eeed896a729a5d9486c8b5ab5e7d2" title="IO 0, Port A.">IO_PA00</a>;
+<a name="l00661"></a>00661   <span class="keywordtype">int</span> txPin = <a class="code" href="group___io_indices.html#gd091a284381793316e217ae060cc12f5" title="IO 1, Port A.">IO_PA01</a>;
+<a name="l00662"></a>00662   <span class="keywordtype">long</span> rxPinBit = <a class="code" href="group___io_bits.html#g20c5433a9bcaf775de653112a1d5d154" title="IO 0, Port A.">IO_PA00_BIT</a>;
+<a name="l00663"></a>00663   <span class="keywordtype">long</span> txPinBit = <a class="code" href="group___io_bits.html#g103883dca0a9904770966564a471ef55" title="IO 1, Port A.">IO_PA01_BIT</a>;
 <a name="l00664"></a>00664   <span class="keywordflow">switch</span>( index )
 <a name="l00665"></a>00665   {
 <a name="l00666"></a>00666     <span class="keywordflow">case</span> <a class="code" href="group__serial.html#g23fd4730a5f1e2919f884ed9d71d339e" title="Index to be used to specify serial port 0.">SERIAL_0</a>:
@@ -760,340 +760,337 @@ window.onload = initDynSections;
 <a name="l00679"></a>00679 
 <a name="l00680"></a>00680   <span class="comment">// Enable the peripheral clock</span>
 <a name="l00681"></a>00681   AT91C_BASE_PMC-&gt;PMC_PCER = 1 &lt;&lt; id;
-<a name="l00682"></a>00682 
-<a name="l00683"></a>00683   <span class="comment">// If there are no default values, get some</span>
-<a name="l00684"></a>00684   <span class="keywordflow">if</span> ( !sp-&gt;detailsInitialized )
-<a name="l00685"></a>00685     Serial_SetDefault( index );
+<a name="l00682"></a>00682    
+<a name="l00683"></a>00683   <span class="keywordtype">int</span> status = Io_StartBits( rxPinBit | txPinBit, <span class="keyword">false</span>  );
+<a name="l00684"></a>00684   <span class="keywordflow">if</span> ( status != <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a> )
+<a name="l00685"></a>00685     <span class="keywordflow">return</span> status;
 <a name="l00686"></a>00686 
-<a name="l00687"></a>00687   <span class="keywordtype">int</span> status;
-<a name="l00688"></a>00688    
-<a name="l00689"></a>00689   status = Io_StartBits( rxPinBit | txPinBit, <span class="keyword">false</span>  );
-<a name="l00690"></a>00690   <span class="keywordflow">if</span> ( status != <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a> )
-<a name="l00691"></a>00691     <span class="keywordflow">return</span> status;
-<a name="l00692"></a>00692 
-<a name="l00693"></a>00693   <a class="code" href="group___io.html#g314b983c9309e27a7a84da6176fd4f64" title="Configure an IO line to be part of its peripheral A.">Io_SetPeripheralA</a>( rxPin );
-<a name="l00694"></a>00694   <a class="code" href="group___io.html#g314b983c9309e27a7a84da6176fd4f64" title="Configure an IO line to be part of its peripheral A.">Io_SetPeripheralA</a>( txPin );
-<a name="l00695"></a>00695   <a class="code" href="group___io.html#g3f552473766adcaa6d7d5410cee32e11" title="Configure an IO line to be a general purpose IO.">Io_SetPio</a>( rxPin, <span class="keyword">false</span> );
-<a name="l00696"></a>00696   <a class="code" href="group___io.html#g3f552473766adcaa6d7d5410cee32e11" title="Configure an IO line to be a general purpose IO.">Io_SetPio</a>( txPin, <span class="keyword">false</span> );
-<a name="l00697"></a>00697   
-<a name="l00698"></a>00698   <span class="comment">// Create the queues</span>
-<a name="l00699"></a>00699   <span class="keywordflow">if</span>( sp-&gt;rxQSize == 0 )
-<a name="l00700"></a>00700    sp-&gt;rxQSize = DEFAULT_SERIAL_Q_LEN;
-<a name="l00701"></a>00701   sp-&gt;receiveQueue = xQueueCreate( sp-&gt;rxQSize, 1 );
-<a name="l00702"></a>00702 
-<a name="l00703"></a>00703   <span class="keywordflow">if</span>( sp-&gt;txQSize == 0 )
-<a name="l00704"></a>00704      sp-&gt;txQSize = DEFAULT_SERIAL_Q_LEN;
-<a name="l00705"></a>00705   sp-&gt;transmitQueue = xQueueCreate( sp-&gt;txQSize, 1 );
+<a name="l00687"></a>00687   <a class="code" href="group___io.html#g314b983c9309e27a7a84da6176fd4f64" title="Configure an IO line to be part of its peripheral A.">Io_SetPeripheralA</a>( rxPin );
+<a name="l00688"></a>00688   <a class="code" href="group___io.html#g314b983c9309e27a7a84da6176fd4f64" title="Configure an IO line to be part of its peripheral A.">Io_SetPeripheralA</a>( txPin );
+<a name="l00689"></a>00689   <a class="code" href="group___io.html#g3f552473766adcaa6d7d5410cee32e11" title="Configure an IO line to be a general purpose IO.">Io_SetPio</a>( rxPin, <span class="keyword">false</span> );
+<a name="l00690"></a>00690   <a class="code" href="group___io.html#g3f552473766adcaa6d7d5410cee32e11" title="Configure an IO line to be a general purpose IO.">Io_SetPio</a>( txPin, <span class="keyword">false</span> );
+<a name="l00691"></a>00691   
+<a name="l00692"></a>00692   <span class="comment">// Create the queues</span>
+<a name="l00693"></a>00693   <span class="keywordflow">if</span>( sp-&gt;rxQSize == 0 )
+<a name="l00694"></a>00694    sp-&gt;rxQSize = DEFAULT_SERIAL_Q_LEN;
+<a name="l00695"></a>00695   sp-&gt;receiveQueue = xQueueCreate( sp-&gt;rxQSize, 1 );
+<a name="l00696"></a>00696 
+<a name="l00697"></a>00697   <span class="keywordflow">if</span>( sp-&gt;txQSize == 0 )
+<a name="l00698"></a>00698      sp-&gt;txQSize = DEFAULT_SERIAL_Q_LEN;
+<a name="l00699"></a>00699   sp-&gt;transmitQueue = xQueueCreate( sp-&gt;txQSize, 1 );
+<a name="l00700"></a>00700 
+<a name="l00701"></a>00701   <span class="comment">// Disable interrupts</span>
+<a name="l00702"></a>00702   sp-&gt;at91UARTRegs-&gt;US_IDR = (<span class="keywordtype">unsigned</span> int) -1;
+<a name="l00703"></a>00703 
+<a name="l00704"></a>00704   <span class="comment">// Timeguard disabled</span>
+<a name="l00705"></a>00705   sp-&gt;at91UARTRegs-&gt;US_TTGR = 0;
 <a name="l00706"></a>00706 
-<a name="l00707"></a>00707   <span class="comment">// Disable interrupts</span>
-<a name="l00708"></a>00708   sp-&gt;at91UARTRegs-&gt;US_IDR = (<span class="keywordtype">unsigned</span> int) -1;
-<a name="l00709"></a>00709 
-<a name="l00710"></a>00710   <span class="comment">// Timeguard disabled</span>
-<a name="l00711"></a>00711   sp-&gt;at91UARTRegs-&gt;US_TTGR = 0;
-<a name="l00712"></a>00712 
-<a name="l00713"></a>00713   <span class="comment">// Most of the detail setting is done in here</span>
-<a name="l00714"></a>00714   <span class="comment">// Also Resets TXRX and re-enables RX</span>
-<a name="l00715"></a>00715   Serial_SetDetails( index );
-<a name="l00716"></a>00716 
-<a name="l00717"></a>00717   <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> mask = 0x1 &lt;&lt; id;    
-<a name="l00718"></a>00718                         
-<a name="l00719"></a>00719   <span class="comment">/* Disable the interrupt on the interrupt controller */</span>         
-<a name="l00720"></a>00720   AT91C_BASE_AIC-&gt;AIC_IDCR = mask ;                   
-<a name="l00721"></a>00721   <span class="comment">/* Save the interrupt handler routine pointer and the interrupt priority */</span> 
-<a name="l00722"></a>00722   AT91C_BASE_AIC-&gt;AIC_SVR[ id ] = (<span class="keywordtype">unsigned</span> int)SerialIsr_Wrapper;      
-<a name="l00723"></a>00723   <span class="comment">/* Store the Source Mode Register */</span>                  
-<a name="l00724"></a>00724   AT91C_BASE_AIC-&gt;AIC_SMR[ id ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;       
-<a name="l00725"></a>00725   <span class="comment">/* Clear the interrupt on the interrupt controller */</span>         
-<a name="l00726"></a>00726   AT91C_BASE_AIC-&gt;AIC_ICCR = mask ;         
-<a name="l00727"></a>00727 
-<a name="l00728"></a>00728   AT91C_BASE_AIC-&gt;AIC_IECR = mask;
-<a name="l00729"></a>00729 
-<a name="l00730"></a>00730   sp-&gt;at91UARTRegs-&gt;US_IER = AT91C_US_RXRDY; 
-<a name="l00731"></a>00731 
-<a name="l00732"></a>00732   sp-&gt;active = <span class="keyword">true</span>;
+<a name="l00707"></a>00707   <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> mask = 0x1 &lt;&lt; id;    
+<a name="l00708"></a>00708                         
+<a name="l00709"></a>00709   <span class="comment">/* Disable the interrupt on the interrupt controller */</span>         
+<a name="l00710"></a>00710   AT91C_BASE_AIC-&gt;AIC_IDCR = mask ;                   
+<a name="l00711"></a>00711   <span class="comment">/* Save the interrupt handler routine pointer and the interrupt priority */</span> 
+<a name="l00712"></a>00712   AT91C_BASE_AIC-&gt;AIC_SVR[ id ] = (<span class="keywordtype">unsigned</span> int)SerialIsr_Wrapper;      
+<a name="l00713"></a>00713   <span class="comment">/* Store the Source Mode Register */</span>                  
+<a name="l00714"></a>00714   AT91C_BASE_AIC-&gt;AIC_SMR[ id ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4  ;       
+<a name="l00715"></a>00715   <span class="comment">/* Clear the interrupt on the interrupt controller */</span>         
+<a name="l00716"></a>00716   AT91C_BASE_AIC-&gt;AIC_ICCR = mask ;         
+<a name="l00717"></a>00717 
+<a name="l00718"></a>00718   AT91C_BASE_AIC-&gt;AIC_IECR = mask;
+<a name="l00719"></a>00719 
+<a name="l00720"></a>00720   sp-&gt;at91UARTRegs-&gt;US_IER = AT91C_US_RXRDY; 
+<a name="l00721"></a>00721 
+<a name="l00722"></a>00722   sp-&gt;active = <span class="keyword">true</span>;
+<a name="l00723"></a>00723 
+<a name="l00724"></a>00724   <span class="comment">// If there are no default values, get some</span>
+<a name="l00725"></a>00725   <span class="keywordflow">if</span> ( !sp-&gt;detailsInitialized )
+<a name="l00726"></a>00726     Serial_SetDefault( index );
+<a name="l00727"></a>00727   <span class="comment">// Most of the detail setting is done in here</span>
+<a name="l00728"></a>00728   <span class="comment">// Also Resets TXRX and re-enables RX</span>
+<a name="l00729"></a>00729   Serial_SetDetails( index );
+<a name="l00730"></a>00730 
+<a name="l00731"></a>00731   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
+<a name="l00732"></a>00732 }
 <a name="l00733"></a>00733 
-<a name="l00734"></a>00734   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
-<a name="l00735"></a>00735 }
-<a name="l00736"></a>00736 
-<a name="l00737"></a>00737 <span class="keywordtype">int</span> Serial_Deinit( <span class="keywordtype">int</span> index )
-<a name="l00738"></a>00738 {
-<a name="l00739"></a>00739   <span class="keywordflow">if</span> ( index &lt; 0 || index &gt;= SERIAL_PORTS )
-<a name="l00740"></a>00740     <span class="keywordflow">return</span> <a class="code" href="group___error.html#g097f40c958abccd892d08f31b53c4dde" title="The requested index is not valid.">CONTROLLER_ERROR_ILLEGAL_INDEX</a>;
-<a name="l00741"></a>00741 
-<a name="l00742"></a>00742   Serial_* sp = &amp;Serial[ index ];
-<a name="l00743"></a>00743   vQueueDelete( sp-&gt;receiveQueue );
-<a name="l00744"></a>00744   vQueueDelete( sp-&gt;transmitQueue );
-<a name="l00745"></a>00745   sp-&gt;active = <span class="keyword">false</span>;
-<a name="l00746"></a>00746   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
-<a name="l00747"></a>00747 }
-<a name="l00748"></a>00748 
-<a name="l00749"></a>00749 <span class="keywordtype">int</span> Serial_SetDetails( <span class="keywordtype">int</span> index )
-<a name="l00750"></a>00750 {
-<a name="l00751"></a>00751   <span class="keywordflow">if</span> ( index &lt; 0 || index &gt;= SERIAL_PORTS )
-<a name="l00752"></a>00752     <span class="keywordflow">return</span> <a class="code" href="group___error.html#g097f40c958abccd892d08f31b53c4dde" title="The requested index is not valid.">CONTROLLER_ERROR_ILLEGAL_INDEX</a>;
-<a name="l00753"></a>00753 
-<a name="l00754"></a>00754   Serial_* sp = &amp;Serial[ index ];
-<a name="l00755"></a>00755 
-<a name="l00756"></a>00756   <span class="keywordflow">if</span> ( sp-&gt;active )
-<a name="l00757"></a>00757   {
-<a name="l00758"></a>00758      <span class="comment">// Reset receiver and transmitter</span>
-<a name="l00759"></a>00759     sp-&gt;at91UARTRegs-&gt;US_CR = AT91C_US_RSTRX | AT91C_US_RSTTX | AT91C_US_RXDIS | AT91C_US_TXDIS; 
-<a name="l00760"></a>00760 
-<a name="l00761"></a>00761     <span class="comment">// MCK is 47923200 for the Make Controller Kit</span>
-<a name="l00762"></a>00762 
-<a name="l00763"></a>00763     <span class="comment">// Calculate ( * 10 )</span>
-<a name="l00764"></a>00764     <span class="keywordtype">int</span> baudValue = ( MCK * 10 ) / ( sp-&gt;baud * 16 );
-<a name="l00765"></a>00765     <span class="comment">// Round (and / 10)</span>
-<a name="l00766"></a>00766     <span class="keywordflow">if</span> ( ( baudValue % 10 ) &gt;= 5 ) 
-<a name="l00767"></a>00767       baudValue = ( baudValue / 10 ) + 1; 
-<a name="l00768"></a>00768     <span class="keywordflow">else</span> 
-<a name="l00769"></a>00769       baudValue /= 10;
-<a name="l00770"></a>00770 
-<a name="l00771"></a>00771     sp-&gt;at91UARTRegs-&gt;US_BRGR = baudValue; 
-<a name="l00772"></a>00772 
-<a name="l00773"></a>00773     sp-&gt;at91UARTRegs-&gt;US_MR = 
-<a name="l00774"></a>00774       ( ( sp-&gt;hardwareHandshake ) ? AT91C_US_USMODE_HWHSH : AT91C_US_USMODE_NORMAL ) |
-<a name="l00775"></a>00775       ( AT91C_US_CLKS_CLOCK ) |
-<a name="l00776"></a>00776       ( ( ( sp-&gt;bits - 5 ) &lt;&lt; 6 ) &amp; AT91C_US_CHRL ) |
-<a name="l00777"></a>00777       ( ( sp-&gt;stopBits == 2 ) ? AT91C_US_NBSTOP_2_BIT : AT91C_US_NBSTOP_1_BIT ) |
-<a name="l00778"></a>00778       ( ( sp-&gt;parity == 0 ) ? AT91C_US_PAR_NONE : ( ( sp-&gt;parity == -1 ) ? AT91C_US_PAR_ODD : AT91C_US_PAR_EVEN ) );
-<a name="l00779"></a>00779       <span class="comment">// 2 &lt;&lt; 14; // this last thing puts it in loopback mode</span>
-<a name="l00780"></a>00780 
-<a name="l00781"></a>00781 
-<a name="l00782"></a>00782     sp-&gt;at91UARTRegs-&gt;US_CR = AT91C_US_RXEN | AT91C_US_TXEN; 
-<a name="l00783"></a>00783   }
-<a name="l00784"></a>00784   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
-<a name="l00785"></a>00785 }
-<a name="l00786"></a>00786 
-<a name="l00787"></a>00787 <span class="keywordtype">int</span> Serial_SetDefault( <span class="keywordtype">int</span> index )
-<a name="l00788"></a>00788 {
-<a name="l00789"></a>00789   <span class="keywordflow">if</span> ( index &lt; 0 || index &gt;= SERIAL_PORTS )
-<a name="l00790"></a>00790     <span class="keywordflow">return</span> <a class="code" href="group___error.html#g097f40c958abccd892d08f31b53c4dde" title="The requested index is not valid.">CONTROLLER_ERROR_ILLEGAL_INDEX</a>;
-<a name="l00791"></a>00791 
-<a name="l00792"></a>00792   Serial_* sp = &amp;Serial[ index ];
-<a name="l00793"></a>00793 
-<a name="l00794"></a>00794   sp-&gt;baud = 9600;
-<a name="l00795"></a>00795   sp-&gt;bits = 8;
-<a name="l00796"></a>00796   sp-&gt;stopBits = 1;
-<a name="l00797"></a>00797   sp-&gt;parity = 0;
-<a name="l00798"></a>00798   sp-&gt;hardwareHandshake = 0;
-<a name="l00799"></a>00799 
-<a name="l00800"></a>00800   sp-&gt;detailsInitialized = <span class="keyword">true</span>;
-<a name="l00801"></a>00801   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
-<a name="l00802"></a>00802 }
-<a name="l00803"></a>00803 
-<a name="l00804"></a>00804 <span class="preprocessor">#ifdef OSC</span>
-<a name="l00805"></a>00805 <span class="preprocessor"></span><span class="comment">/** \defgroup SerialOSC Serial - OSC</span>
-<a name="l00806"></a>00806 <span class="comment">  Configure the Serial Port and Read Characters via OSC.</span>
-<a name="l00807"></a>00807 <span class="comment">  \ingroup OSC</span>
-<a name="l00808"></a>00808 <span class="comment"></span>
-<a name="l00809"></a>00809 <span class="comment">  \section devices Devices</span>
-<a name="l00810"></a>00810 <span class="comment">  There are 2 serial ports, so use 0 or 1 as an index.</span>
-<a name="l00811"></a>00811 <span class="comment">  </span>
-<a name="l00812"></a>00812 <span class="comment">  \section properties Properties</span>
-<a name="l00813"></a>00813 <span class="comment">  The Serial Subsystem has the following properties:</span>
-<a name="l00814"></a>00814 <span class="comment">  - baud</span>
-<a name="l00815"></a>00815 <span class="comment">  - bits</span>
-<a name="l00816"></a>00816 <span class="comment">  - stopbits</span>
-<a name="l00817"></a>00817 <span class="comment">  - parity</span>
-<a name="l00818"></a>00818 <span class="comment">  - hardwarehandshake</span>
-<a name="l00819"></a>00819 <span class="comment">  - readable</span>
-<a name="l00820"></a>00820 <span class="comment">  - char</span>
-<a name="l00821"></a>00821 <span class="comment">  - block</span>
-<a name="l00822"></a>00822 <span class="comment"></span>
-<a name="l00823"></a>00823 <span class="comment">  \subsection Baud</span>
-<a name="l00824"></a>00824 <span class="comment">  The Baud rate of the device. Valid from 110 baud to &gt;2M baud.</span>
-<a name="l00825"></a>00825 <span class="comment">  To set baud rate to 115200 on the first serial port, for example, send the message</span>
-<a name="l00826"></a>00826 <span class="comment">  \verbatim /serial/0/baud 112500\endverbatim</span>
-<a name="l00827"></a>00827 <span class="comment">  </span>
-<a name="l00828"></a>00828 <span class="comment">  \subsection Bits</span>
-<a name="l00829"></a>00829 <span class="comment">  The number of bits per character.  Can range from 5 to 8.</span>
-<a name="l00830"></a>00830 <span class="comment">  To set the number of bits to 7 on the first serial port, for example, send the message</span>
-<a name="l00831"></a>00831 <span class="comment">  \verbatim /serial/0/bits 7\endverbatim</span>
-<a name="l00832"></a>00832 <span class="comment">  </span>
-<a name="l00833"></a>00833 <span class="comment">  \subsection StopBits</span>
-<a name="l00834"></a>00834 <span class="comment">  The number of stop bits per character.  Can be 1 or 2\n</span>
-<a name="l00835"></a>00835 <span class="comment">  To set the number of stop bits to 2 on the second serial port, for example, send the message</span>
-<a name="l00836"></a>00836 <span class="comment">  \verbatim /serial/1/stopbits 2\endverbatim</span>
-<a name="l00837"></a>00837 <span class="comment"></span>
-<a name="l00838"></a>00838 <span class="comment">  \subsection Parity</span>
-<a name="l00839"></a>00839 <span class="comment">  The parity of the character.  Can be -1 for odd, 0 for none or 1 for even.</span>
-<a name="l00840"></a>00840 <span class="comment">  To set the parity to even, for example, send the message</span>
-<a name="l00841"></a>00841 <span class="comment">  \verbatim /serial/0/parity 1\endverbatim</span>
-<a name="l00842"></a>00842 <span class="comment"></span>
-<a name="l00843"></a>00843 <span class="comment">  \subsection HardwareHandshake</span>
-<a name="l00844"></a>00844 <span class="comment">  Whether hardware handshaking (i.e. CTS RTS) is being employed.</span>
-<a name="l00845"></a>00845 <span class="comment">  To set hardware handshaking on, for example, send the message</span>
-<a name="l00846"></a>00846 <span class="comment">  \verbatim /serial/0/hardwarehandshake 1\endverbatim</span>
-<a name="l00847"></a>00847 <span class="comment"></span>
-<a name="l00848"></a>00848 <span class="comment">  \subsection Readable</span>
-<a name="l00849"></a>00849 <span class="comment">  How many characters are presently available to read.</span>
-<a name="l00850"></a>00850 <span class="comment">  To check, for example, send the message</span>
-<a name="l00851"></a>00851 <span class="comment">  \verbatim /serial/0/readable\endverbatim</span>
-<a name="l00852"></a>00852 <span class="comment"></span>
-<a name="l00853"></a>00853 <span class="comment">  \subsection Char</span>
-<a name="l00854"></a>00854 <span class="comment">  Send and receive individual characters with the char property.</span>
-<a name="l00855"></a>00855 <span class="comment">  To send a character 32 (a space), for example, send the message</span>
-<a name="l00856"></a>00856 <span class="comment">  \verbatim /serial/0/char 32\endverbatim</span>
-<a name="l00857"></a>00857 <span class="comment">  To get a character send the message</span>
-<a name="l00858"></a>00858 <span class="comment">  \verbatim /serial/0/char\endverbatim</span>
-<a name="l00859"></a>00859 <span class="comment">  In this case the reply will be an unsigned value between 0 and 255 or -1 if there is </span>
-<a name="l00860"></a>00860 <span class="comment">  no character available.</span>
-<a name="l00861"></a>00861 <span class="comment"></span>
-<a name="l00862"></a>00862 <span class="comment">  \subsection Block</span>
-<a name="l00863"></a>00863 <span class="comment">  This property allows for reading or writing a block of characters to/from the serial port.  If you're</span>
-<a name="l00864"></a>00864 <span class="comment">  writing a block, you must send the block you want to write as an OSC blob.</span>
-<a name="l00865"></a>00865 <span class="comment">  </span>
-<a name="l00866"></a>00866 <span class="comment">  For example, to send a block:</span>
-<a name="l00867"></a>00867 <span class="comment">  \verbatim /serial/1/block blockofchars\endverbatim</span>
-<a name="l00868"></a>00868 <span class="comment">  To get a block, send the message</span>
-<a name="l00869"></a>00869 <span class="comment">  \verbatim /serial/1/block\endverbatim</span>
-<a name="l00870"></a>00870 <span class="comment">  In this case the reply will be a block of up to 100 unsigned chars, or the chars currently available to read</span>
-<a name="l00871"></a>00871 <span class="comment">  from the serial port.</span>
-<a name="l00872"></a>00872 <span class="comment"></span>
-<a name="l00873"></a>00873 <span class="comment">*/</span>
-<a name="l00874"></a>00874 
-<a name="l00875"></a>00875 <span class="preprocessor">#include "osc.h"</span>
-<a name="l00876"></a>00876 <span class="preprocessor">#include "string.h"</span>
-<a name="l00877"></a>00877 <span class="preprocessor">#include "stdio.h"</span>
-<a name="l00878"></a>00878 
-<a name="l00879"></a>00879 <span class="preprocessor">#include "types.h"</span>
-<a name="l00880"></a>00880 
-<a name="l00881"></a>00881 <span class="comment">// Need a list of property names</span>
-<a name="l00882"></a>00882 <span class="comment">// MUST end in zero</span>
-<a name="l00883"></a>00883 <span class="keyword">static</span> <span class="keywordtype">char</span>* SerialOsc_Name = <span class="stringliteral">"serial"</span>;
-<a name="l00884"></a>00884 <span class="keyword">static</span> <span class="keywordtype">char</span>* SerialOsc_IntPropertyNames[] = { <span class="stringliteral">"active"</span>, <span class="stringliteral">"char"</span>, <span class="stringliteral">"baud"</span>, <span class="stringliteral">"bits"</span>, <span class="stringliteral">"stopbits"</span>, <span class="stringliteral">"parity"</span>, <span class="stringliteral">"hardwarehandshake"</span>, <span class="stringliteral">"readable"</span>, 0  }; <span class="comment">// must have a trailing 0</span>
-<a name="l00885"></a>00885 <span class="keyword">static</span> <span class="keywordtype">char</span>* SerialOsc_BlobPropertyNames[] = { <span class="stringliteral">"block"</span>, 0  }; <span class="comment">// must have a trailing 0</span>
+<a name="l00734"></a>00734 <span class="keywordtype">int</span> Serial_Deinit( <span class="keywordtype">int</span> index )
+<a name="l00735"></a>00735 {
+<a name="l00736"></a>00736   <span class="keywordflow">if</span> ( index &lt; 0 || index &gt;= SERIAL_PORTS )
+<a name="l00737"></a>00737     <span class="keywordflow">return</span> <a class="code" href="group___error.html#g097f40c958abccd892d08f31b53c4dde" title="The requested index is not valid.">CONTROLLER_ERROR_ILLEGAL_INDEX</a>;
+<a name="l00738"></a>00738 
+<a name="l00739"></a>00739   Serial_* sp = &amp;Serial[ index ];
+<a name="l00740"></a>00740   vQueueDelete( sp-&gt;receiveQueue );
+<a name="l00741"></a>00741   vQueueDelete( sp-&gt;transmitQueue );
+<a name="l00742"></a>00742   sp-&gt;active = <span class="keyword">false</span>;
+<a name="l00743"></a>00743   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
+<a name="l00744"></a>00744 }
+<a name="l00745"></a>00745 
+<a name="l00746"></a>00746 <span class="keywordtype">int</span> Serial_SetDetails( <span class="keywordtype">int</span> index )
+<a name="l00747"></a>00747 {
+<a name="l00748"></a>00748   <span class="keywordflow">if</span> ( index &lt; 0 || index &gt;= SERIAL_PORTS )
+<a name="l00749"></a>00749     <span class="keywordflow">return</span> <a class="code" href="group___error.html#g097f40c958abccd892d08f31b53c4dde" title="The requested index is not valid.">CONTROLLER_ERROR_ILLEGAL_INDEX</a>;
+<a name="l00750"></a>00750 
+<a name="l00751"></a>00751   Serial_* sp = &amp;Serial[ index ];
+<a name="l00752"></a>00752 
+<a name="l00753"></a>00753   <span class="keywordflow">if</span> ( sp-&gt;active )
+<a name="l00754"></a>00754   {
+<a name="l00755"></a>00755      <span class="comment">// Reset receiver and transmitter</span>
+<a name="l00756"></a>00756     sp-&gt;at91UARTRegs-&gt;US_CR = AT91C_US_RSTRX | AT91C_US_RSTTX | AT91C_US_RXDIS | AT91C_US_TXDIS; 
+<a name="l00757"></a>00757 
+<a name="l00758"></a>00758     <span class="comment">// MCK is 47923200 for the Make Controller Kit</span>
+<a name="l00759"></a>00759 
+<a name="l00760"></a>00760     <span class="comment">// Calculate ( * 10 )</span>
+<a name="l00761"></a>00761     <span class="keywordtype">int</span> baudValue = ( MCK * 10 ) / ( sp-&gt;baud * 16 );
+<a name="l00762"></a>00762     <span class="comment">// Round (and / 10)</span>
+<a name="l00763"></a>00763     <span class="keywordflow">if</span> ( ( baudValue % 10 ) &gt;= 5 ) 
+<a name="l00764"></a>00764       baudValue = ( baudValue / 10 ) + 1; 
+<a name="l00765"></a>00765     <span class="keywordflow">else</span> 
+<a name="l00766"></a>00766       baudValue /= 10;
+<a name="l00767"></a>00767 
+<a name="l00768"></a>00768     sp-&gt;at91UARTRegs-&gt;US_BRGR = baudValue; 
+<a name="l00769"></a>00769 
+<a name="l00770"></a>00770     sp-&gt;at91UARTRegs-&gt;US_MR = 
+<a name="l00771"></a>00771       ( ( sp-&gt;hardwareHandshake ) ? AT91C_US_USMODE_HWHSH : AT91C_US_USMODE_NORMAL ) |
+<a name="l00772"></a>00772       ( AT91C_US_CLKS_CLOCK ) |
+<a name="l00773"></a>00773       ( ( ( sp-&gt;bits - 5 ) &lt;&lt; 6 ) &amp; AT91C_US_CHRL ) |
+<a name="l00774"></a>00774       ( ( sp-&gt;stopBits == 2 ) ? AT91C_US_NBSTOP_2_BIT : AT91C_US_NBSTOP_1_BIT ) |
+<a name="l00775"></a>00775       ( ( sp-&gt;parity == 0 ) ? AT91C_US_PAR_NONE : ( ( sp-&gt;parity == -1 ) ? AT91C_US_PAR_ODD : AT91C_US_PAR_EVEN ) );
+<a name="l00776"></a>00776       <span class="comment">// 2 &lt;&lt; 14; // this last thing puts it in loopback mode</span>
+<a name="l00777"></a>00777 
+<a name="l00778"></a>00778 
+<a name="l00779"></a>00779     sp-&gt;at91UARTRegs-&gt;US_CR = AT91C_US_RXEN | AT91C_US_TXEN; 
+<a name="l00780"></a>00780   }
+<a name="l00781"></a>00781   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
+<a name="l00782"></a>00782 }
+<a name="l00783"></a>00783 
+<a name="l00784"></a>00784 <span class="keywordtype">int</span> Serial_SetDefault( <span class="keywordtype">int</span> index )
+<a name="l00785"></a>00785 {
+<a name="l00786"></a>00786   <span class="keywordflow">if</span> ( index &lt; 0 || index &gt;= SERIAL_PORTS )
+<a name="l00787"></a>00787     <span class="keywordflow">return</span> <a class="code" href="group___error.html#g097f40c958abccd892d08f31b53c4dde" title="The requested index is not valid.">CONTROLLER_ERROR_ILLEGAL_INDEX</a>;
+<a name="l00788"></a>00788 
+<a name="l00789"></a>00789   Serial_* sp = &amp;Serial[ index ];
+<a name="l00790"></a>00790 
+<a name="l00791"></a>00791   sp-&gt;baud = 9600;
+<a name="l00792"></a>00792   sp-&gt;bits = 8;
+<a name="l00793"></a>00793   sp-&gt;stopBits = 1;
+<a name="l00794"></a>00794   sp-&gt;parity = 0;
+<a name="l00795"></a>00795   sp-&gt;hardwareHandshake = 0;
+<a name="l00796"></a>00796 
+<a name="l00797"></a>00797   sp-&gt;detailsInitialized = <span class="keyword">true</span>;
+<a name="l00798"></a>00798   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
+<a name="l00799"></a>00799 }
+<a name="l00800"></a>00800 
+<a name="l00801"></a>00801 <span class="preprocessor">#ifdef OSC</span>
+<a name="l00802"></a>00802 <span class="preprocessor"></span><span class="comment">/** \defgroup SerialOSC Serial - OSC</span>
+<a name="l00803"></a>00803 <span class="comment">  Configure the Serial Port and Read Characters via OSC.</span>
+<a name="l00804"></a>00804 <span class="comment">  \ingroup OSC</span>
+<a name="l00805"></a>00805 <span class="comment"></span>
+<a name="l00806"></a>00806 <span class="comment">  \section devices Devices</span>
+<a name="l00807"></a>00807 <span class="comment">  There are 2 serial ports, so use 0 or 1 as an index.</span>
+<a name="l00808"></a>00808 <span class="comment">  </span>
+<a name="l00809"></a>00809 <span class="comment">  \section properties Properties</span>
+<a name="l00810"></a>00810 <span class="comment">  The Serial Subsystem has the following properties:</span>
+<a name="l00811"></a>00811 <span class="comment">  - baud</span>
+<a name="l00812"></a>00812 <span class="comment">  - bits</span>
+<a name="l00813"></a>00813 <span class="comment">  - stopbits</span>
+<a name="l00814"></a>00814 <span class="comment">  - parity</span>
+<a name="l00815"></a>00815 <span class="comment">  - hardwarehandshake</span>
+<a name="l00816"></a>00816 <span class="comment">  - readable</span>
+<a name="l00817"></a>00817 <span class="comment">  - char</span>
+<a name="l00818"></a>00818 <span class="comment">  - block</span>
+<a name="l00819"></a>00819 <span class="comment"></span>
+<a name="l00820"></a>00820 <span class="comment">  \subsection Baud</span>
+<a name="l00821"></a>00821 <span class="comment">  The Baud rate of the device. Valid from 110 baud to &gt;2M baud.</span>
+<a name="l00822"></a>00822 <span class="comment">  To set baud rate to 115200 on the first serial port, for example, send the message</span>
+<a name="l00823"></a>00823 <span class="comment">  \verbatim /serial/0/baud 112500\endverbatim</span>
+<a name="l00824"></a>00824 <span class="comment">  </span>
+<a name="l00825"></a>00825 <span class="comment">  \subsection Bits</span>
+<a name="l00826"></a>00826 <span class="comment">  The number of bits per character.  Can range from 5 to 8.</span>
+<a name="l00827"></a>00827 <span class="comment">  To set the number of bits to 7 on the first serial port, for example, send the message</span>
+<a name="l00828"></a>00828 <span class="comment">  \verbatim /serial/0/bits 7\endverbatim</span>
+<a name="l00829"></a>00829 <span class="comment">  </span>
+<a name="l00830"></a>00830 <span class="comment">  \subsection StopBits</span>
+<a name="l00831"></a>00831 <span class="comment">  The number of stop bits per character.  Can be 1 or 2\n</span>
+<a name="l00832"></a>00832 <span class="comment">  To set the number of stop bits to 2 on the second serial port, for example, send the message</span>
+<a name="l00833"></a>00833 <span class="comment">  \verbatim /serial/1/stopbits 2\endverbatim</span>
+<a name="l00834"></a>00834 <span class="comment"></span>
+<a name="l00835"></a>00835 <span class="comment">  \subsection Parity</span>
+<a name="l00836"></a>00836 <span class="comment">  The parity of the character.  Can be -1 for odd, 0 for none or 1 for even.</span>
+<a name="l00837"></a>00837 <span class="comment">  To set the parity to even, for example, send the message</span>
+<a name="l00838"></a>00838 <span class="comment">  \verbatim /serial/0/parity 1\endverbatim</span>
+<a name="l00839"></a>00839 <span class="comment"></span>
+<a name="l00840"></a>00840 <span class="comment">  \subsection HardwareHandshake</span>
+<a name="l00841"></a>00841 <span class="comment">  Whether hardware handshaking (i.e. CTS RTS) is being employed.</span>
+<a name="l00842"></a>00842 <span class="comment">  To set hardware handshaking on, for example, send the message</span>
+<a name="l00843"></a>00843 <span class="comment">  \verbatim /serial/0/hardwarehandshake 1\endverbatim</span>
+<a name="l00844"></a>00844 <span class="comment"></span>
+<a name="l00845"></a>00845 <span class="comment">  \subsection Readable</span>
+<a name="l00846"></a>00846 <span class="comment">  How many characters are presently available to read.</span>
+<a name="l00847"></a>00847 <span class="comment">  To check, for example, send the message</span>
+<a name="l00848"></a>00848 <span class="comment">  \verbatim /serial/0/readable\endverbatim</span>
+<a name="l00849"></a>00849 <span class="comment"></span>
+<a name="l00850"></a>00850 <span class="comment">  \subsection Char</span>
+<a name="l00851"></a>00851 <span class="comment">  Send and receive individual characters with the char property.</span>
+<a name="l00852"></a>00852 <span class="comment">  To send a character 32 (a space), for example, send the message</span>
+<a name="l00853"></a>00853 <span class="comment">  \verbatim /serial/0/char 32\endverbatim</span>
+<a name="l00854"></a>00854 <span class="comment">  To get a character send the message</span>
+<a name="l00855"></a>00855 <span class="comment">  \verbatim /serial/0/char\endverbatim</span>
+<a name="l00856"></a>00856 <span class="comment">  In this case the reply will be an unsigned value between 0 and 255 or -1 if there is </span>
+<a name="l00857"></a>00857 <span class="comment">  no character available.</span>
+<a name="l00858"></a>00858 <span class="comment"></span>
+<a name="l00859"></a>00859 <span class="comment">  \subsection Block</span>
+<a name="l00860"></a>00860 <span class="comment">  This property allows for reading or writing a block of characters to/from the serial port.  If you're</span>
+<a name="l00861"></a>00861 <span class="comment">  writing a block, you must send the block you want to write as an OSC blob.</span>
+<a name="l00862"></a>00862 <span class="comment">  </span>
+<a name="l00863"></a>00863 <span class="comment">  For example, to send a block:</span>
+<a name="l00864"></a>00864 <span class="comment">  \verbatim /serial/1/block blockofchars\endverbatim</span>
+<a name="l00865"></a>00865 <span class="comment">  To get a block, send the message</span>
+<a name="l00866"></a>00866 <span class="comment">  \verbatim /serial/1/block\endverbatim</span>
+<a name="l00867"></a>00867 <span class="comment">  In this case the reply will be a block of up to 100 unsigned chars, or the chars currently available to read</span>
+<a name="l00868"></a>00868 <span class="comment">  from the serial port.</span>
+<a name="l00869"></a>00869 <span class="comment"></span>
+<a name="l00870"></a>00870 <span class="comment">*/</span>
+<a name="l00871"></a>00871 
+<a name="l00872"></a>00872 <span class="preprocessor">#include "osc.h"</span>
+<a name="l00873"></a>00873 <span class="preprocessor">#include "string.h"</span>
+<a name="l00874"></a>00874 <span class="preprocessor">#include "stdio.h"</span>
+<a name="l00875"></a>00875 
+<a name="l00876"></a>00876 <span class="preprocessor">#include "types.h"</span>
+<a name="l00877"></a>00877 
+<a name="l00878"></a>00878 <span class="comment">// Need a list of property names</span>
+<a name="l00879"></a>00879 <span class="comment">// MUST end in zero</span>
+<a name="l00880"></a>00880 <span class="keyword">static</span> <span class="keywordtype">char</span>* SerialOsc_Name = <span class="stringliteral">"serial"</span>;
+<a name="l00881"></a>00881 <span class="keyword">static</span> <span class="keywordtype">char</span>* SerialOsc_IntPropertyNames[] = { <span class="stringliteral">"active"</span>, <span class="stringliteral">"char"</span>, <span class="stringliteral">"baud"</span>, <span class="stringliteral">"bits"</span>, <span class="stringliteral">"stopbits"</span>, <span class="stringliteral">"parity"</span>, <span class="stringliteral">"hardwarehandshake"</span>, <span class="stringliteral">"readable"</span>, 0  }; <span class="comment">// must have a trailing 0</span>
+<a name="l00882"></a>00882 <span class="keyword">static</span> <span class="keywordtype">char</span>* SerialOsc_BlobPropertyNames[] = { <span class="stringliteral">"block"</span>, 0  }; <span class="comment">// must have a trailing 0</span>
+<a name="l00883"></a>00883 
+<a name="l00884"></a>00884 <span class="keywordtype">int</span> SerialOsc_IntPropertySet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> value );
+<a name="l00885"></a>00885 <span class="keywordtype">int</span> SerialOsc_IntPropertyGet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property );
 <a name="l00886"></a>00886 
-<a name="l00887"></a>00887 <span class="keywordtype">int</span> SerialOsc_IntPropertySet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> value );
-<a name="l00888"></a>00888 <span class="keywordtype">int</span> SerialOsc_IntPropertyGet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property );
+<a name="l00887"></a>00887 <span class="keywordtype">int</span> SerialOsc_BlobPropertySet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property, uchar* blob, <span class="keywordtype">int</span> length );
+<a name="l00888"></a>00888 <span class="keywordtype">int</span> SerialOsc_BlobPropertyGet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property, uchar* blob, <span class="keywordtype">int</span> size );
 <a name="l00889"></a>00889 
-<a name="l00890"></a>00890 <span class="keywordtype">int</span> SerialOsc_BlobPropertySet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property, uchar* blob, <span class="keywordtype">int</span> length );
-<a name="l00891"></a>00891 <span class="keywordtype">int</span> SerialOsc_BlobPropertyGet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property, uchar* blob, <span class="keywordtype">int</span> size );
-<a name="l00892"></a>00892 
-<a name="l00893"></a>00893 <span class="comment">// Returns the name of the subsystem</span>
-<a name="l00894"></a>00894 <span class="keyword">const</span> <span class="keywordtype">char</span>* SerialOsc_GetName( )
-<a name="l00895"></a>00895 {
-<a name="l00896"></a>00896   <span class="keywordflow">return</span> SerialOsc_Name;
-<a name="l00897"></a>00897 }
-<a name="l00898"></a>00898 
-<a name="l00899"></a>00899 <span class="comment">// Now getting a message.  This is actually a part message, with the first</span>
-<a name="l00900"></a>00900 <span class="comment">// part (the subsystem) already parsed off.</span>
-<a name="l00901"></a>00901 <span class="keywordtype">int</span> SerialOsc_ReceiveMessage( <span class="keywordtype">int</span> channel, <span class="keywordtype">char</span>* message, <span class="keywordtype">int</span> length )
-<a name="l00902"></a>00902 {
-<a name="l00903"></a>00903   <span class="keywordtype">int</span> status = <a class="code" href="group___o_s_c_a_p_i.html#gdaa5a3868eeedcf785c3d52f6b36ef34" title="Receive integers for a subsystem with multiple indexes.">Osc_IndexIntReceiverHelper</a>( channel, message, length, SERIAL_PORTS,
-<a name="l00904"></a>00904                                       SerialOsc_Name,
-<a name="l00905"></a>00905                                       SerialOsc_IntPropertySet, SerialOsc_IntPropertyGet, 
-<a name="l00906"></a>00906                                       SerialOsc_IntPropertyNames );
-<a name="l00907"></a>00907 
-<a name="l00908"></a>00908   <span class="keywordflow">if</span> ( status != <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a> )
-<a name="l00909"></a>00909     status = <a class="code" href="group___o_s_c_a_p_i.html#gd6d4ee5a60624c22a31e0b59e560326c" title="Receive an OSC blob for a subsystem with indexes.">Osc_IndexBlobReceiverHelper</a>( channel, message, length, SERIAL_PORTS,
-<a name="l00910"></a>00910                                       SerialOsc_Name,
-<a name="l00911"></a>00911                                       SerialOsc_BlobPropertySet, SerialOsc_BlobPropertyGet, 
-<a name="l00912"></a>00912                                       SerialOsc_BlobPropertyNames );                        
-<a name="l00913"></a>00913 
-<a name="l00914"></a>00914   <span class="keywordflow">if</span> ( status != <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a> )
-<a name="l00915"></a>00915     <span class="keywordflow">return</span> Osc_SendError( channel, SerialOsc_Name, status );
-<a name="l00916"></a>00916   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
-<a name="l00917"></a>00917 }
-<a name="l00918"></a>00918 <span class="comment">// Set the index LED, property with the value</span>
-<a name="l00919"></a>00919 <span class="keywordtype">int</span> SerialOsc_IntPropertySet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> value )
-<a name="l00920"></a>00920 {
-<a name="l00921"></a>00921   <span class="keywordflow">switch</span> ( property )
-<a name="l00922"></a>00922   {
-<a name="l00923"></a>00923     <span class="keywordflow">case</span> 0: 
-<a name="l00924"></a>00924       <a class="code" href="group__serial.html#g1b4e8029502b5426460f0bab5bb2ee9e" title="Set the active state of a serial port.">Serial_SetActive</a>( index, value );
+<a name="l00890"></a>00890 <span class="comment">// Returns the name of the subsystem</span>
+<a name="l00891"></a>00891 <span class="keyword">const</span> <span class="keywordtype">char</span>* SerialOsc_GetName( )
+<a name="l00892"></a>00892 {
+<a name="l00893"></a>00893   <span class="keywordflow">return</span> SerialOsc_Name;
+<a name="l00894"></a>00894 }
+<a name="l00895"></a>00895 
+<a name="l00896"></a>00896 <span class="comment">// Now getting a message.  This is actually a part message, with the first</span>
+<a name="l00897"></a>00897 <span class="comment">// part (the subsystem) already parsed off.</span>
+<a name="l00898"></a>00898 <span class="keywordtype">int</span> SerialOsc_ReceiveMessage( <span class="keywordtype">int</span> channel, <span class="keywordtype">char</span>* message, <span class="keywordtype">int</span> length )
+<a name="l00899"></a>00899 {
+<a name="l00900"></a>00900   <span class="keywordtype">int</span> status = <a class="code" href="group___o_s_c_a_p_i.html#gdaa5a3868eeedcf785c3d52f6b36ef34" title="Receive integers for a subsystem with multiple indexes.">Osc_IndexIntReceiverHelper</a>( channel, message, length, SERIAL_PORTS,
+<a name="l00901"></a>00901                                       SerialOsc_Name,
+<a name="l00902"></a>00902                                       SerialOsc_IntPropertySet, SerialOsc_IntPropertyGet, 
+<a name="l00903"></a>00903                                       SerialOsc_IntPropertyNames );
+<a name="l00904"></a>00904 
+<a name="l00905"></a>00905   <span class="keywordflow">if</span> ( status != <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a> )
+<a name="l00906"></a>00906     status = <a class="code" href="group___o_s_c_a_p_i.html#gd6d4ee5a60624c22a31e0b59e560326c" title="Receive an OSC blob for a subsystem with indexes.">Osc_IndexBlobReceiverHelper</a>( channel, message, length, SERIAL_PORTS,
+<a name="l00907"></a>00907                                       SerialOsc_Name,
+<a name="l00908"></a>00908                                       SerialOsc_BlobPropertySet, SerialOsc_BlobPropertyGet, 
+<a name="l00909"></a>00909                                       SerialOsc_BlobPropertyNames );                        
+<a name="l00910"></a>00910 
+<a name="l00911"></a>00911   <span class="keywordflow">if</span> ( status != <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a> )
+<a name="l00912"></a>00912     <span class="keywordflow">return</span> Osc_SendError( channel, SerialOsc_Name, status );
+<a name="l00913"></a>00913   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
+<a name="l00914"></a>00914 }
+<a name="l00915"></a>00915 <span class="comment">// Set the index LED, property with the value</span>
+<a name="l00916"></a>00916 <span class="keywordtype">int</span> SerialOsc_IntPropertySet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property, <span class="keywordtype">int</span> value )
+<a name="l00917"></a>00917 {
+<a name="l00918"></a>00918   <span class="keywordflow">switch</span> ( property )
+<a name="l00919"></a>00919   {
+<a name="l00920"></a>00920     <span class="keywordflow">case</span> 0: 
+<a name="l00921"></a>00921       <a class="code" href="group__serial.html#g1b4e8029502b5426460f0bab5bb2ee9e" title="Set the active state of a serial port.">Serial_SetActive</a>( index, value );
+<a name="l00922"></a>00922       <span class="keywordflow">break</span>;      
+<a name="l00923"></a>00923     <span class="keywordflow">case</span> 1: 
+<a name="l00924"></a>00924       <a class="code" href="group__serial.html#g02fdf1c9d47551dbc5a1b4055a70b941" title="Sends a character (in the range of 0 to 255) to the write queue.">Serial_SetChar</a>( index, value );
 <a name="l00925"></a>00925       <span class="keywordflow">break</span>;      
-<a name="l00926"></a>00926     <span class="keywordflow">case</span> 1: 
-<a name="l00927"></a>00927       <a class="code" href="group__serial.html#g02fdf1c9d47551dbc5a1b4055a70b941" title="Sends a character (in the range of 0 to 255) to the write queue.">Serial_SetChar</a>( index, value );
+<a name="l00926"></a>00926     <span class="keywordflow">case</span> 2: 
+<a name="l00927"></a>00927       <a class="code" href="group__serial.html#g1f6aba7eb096e58461c2b872d497ba6f" title="Sets the serial baud rate.">Serial_SetBaud</a>( index, value );
 <a name="l00928"></a>00928       <span class="keywordflow">break</span>;      
-<a name="l00929"></a>00929     <span class="keywordflow">case</span> 2: 
-<a name="l00930"></a>00930       <a class="code" href="group__serial.html#g1f6aba7eb096e58461c2b872d497ba6f" title="Sets the serial baud rate.">Serial_SetBaud</a>( index, value );
-<a name="l00931"></a>00931       <span class="keywordflow">break</span>;      
-<a name="l00932"></a>00932     <span class="keywordflow">case</span> 3: 
-<a name="l00933"></a>00933       <a class="code" href="group__serial.html#gfc77f3de711cb225e9dc9ec728b951bc" title="Sets the number of bits per character.">Serial_SetBits</a>( index, value );
-<a name="l00934"></a>00934       <span class="keywordflow">break</span>;    
-<a name="l00935"></a>00935     <span class="keywordflow">case</span> 4: 
-<a name="l00936"></a>00936       <a class="code" href="group__serial.html#g77ecf57b8c85a2cd191ddc4a5bc9e5c2" title="Sets the stop bits per character.">Serial_SetStopBits</a>( index, value );
-<a name="l00937"></a>00937       <span class="keywordflow">break</span>;
-<a name="l00938"></a>00938     <span class="keywordflow">case</span> 5: 
-<a name="l00939"></a>00939       <a class="code" href="group__serial.html#g556ef982a4ecc2cfd67b538ca32b58fd" title="Sets the parity.">Serial_SetParity</a>( index, value );
+<a name="l00929"></a>00929     <span class="keywordflow">case</span> 3: 
+<a name="l00930"></a>00930       <a class="code" href="group__serial.html#gfc77f3de711cb225e9dc9ec728b951bc" title="Sets the number of bits per character.">Serial_SetBits</a>( index, value );
+<a name="l00931"></a>00931       <span class="keywordflow">break</span>;    
+<a name="l00932"></a>00932     <span class="keywordflow">case</span> 4: 
+<a name="l00933"></a>00933       <a class="code" href="group__serial.html#g77ecf57b8c85a2cd191ddc4a5bc9e5c2" title="Sets the stop bits per character.">Serial_SetStopBits</a>( index, value );
+<a name="l00934"></a>00934       <span class="keywordflow">break</span>;
+<a name="l00935"></a>00935     <span class="keywordflow">case</span> 5: 
+<a name="l00936"></a>00936       <a class="code" href="group__serial.html#g556ef982a4ecc2cfd67b538ca32b58fd" title="Sets the parity.">Serial_SetParity</a>( index, value );
+<a name="l00937"></a>00937       <span class="keywordflow">break</span>;    
+<a name="l00938"></a>00938     <span class="keywordflow">case</span> 6: 
+<a name="l00939"></a>00939       <a class="code" href="group__serial.html#g0c88bab7d2eb3164cefae1befcfcf6fb" title="Sets whether hardware handshaking is being used.">Serial_SetHardwareHandshake</a>( index, value );
 <a name="l00940"></a>00940       <span class="keywordflow">break</span>;    
-<a name="l00941"></a>00941     <span class="keywordflow">case</span> 6: 
-<a name="l00942"></a>00942       <a class="code" href="group__serial.html#g0c88bab7d2eb3164cefae1befcfcf6fb" title="Sets whether hardware handshaking is being used.">Serial_SetHardwareHandshake</a>( index, value );
-<a name="l00943"></a>00943       <span class="keywordflow">break</span>;    
-<a name="l00944"></a>00944   }
-<a name="l00945"></a>00945   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
-<a name="l00946"></a>00946 }
-<a name="l00947"></a>00947 
-<a name="l00948"></a>00948 <span class="comment">// Get the index, property</span>
-<a name="l00949"></a>00949 <span class="keywordtype">int</span> SerialOsc_IntPropertyGet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property )
-<a name="l00950"></a>00950 {
-<a name="l00951"></a>00951   <span class="keywordtype">int</span> value = 0;
-<a name="l00952"></a>00952   <span class="keywordflow">switch</span> ( property )
-<a name="l00953"></a>00953   {
-<a name="l00954"></a>00954     <span class="keywordflow">case</span> 0:
-<a name="l00955"></a>00955       value = <a class="code" href="group__serial.html#g7df7858e94ad7605bbd8d071321f0c03" title="Read the active state of the Serial subsystem.">Serial_GetActive</a>( index );
+<a name="l00941"></a>00941   }
+<a name="l00942"></a>00942   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
+<a name="l00943"></a>00943 }
+<a name="l00944"></a>00944 
+<a name="l00945"></a>00945 <span class="comment">// Get the index, property</span>
+<a name="l00946"></a>00946 <span class="keywordtype">int</span> SerialOsc_IntPropertyGet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property )
+<a name="l00947"></a>00947 {
+<a name="l00948"></a>00948   <span class="keywordtype">int</span> value = 0;
+<a name="l00949"></a>00949   <span class="keywordflow">switch</span> ( property )
+<a name="l00950"></a>00950   {
+<a name="l00951"></a>00951     <span class="keywordflow">case</span> 0:
+<a name="l00952"></a>00952       value = <a class="code" href="group__serial.html#g7df7858e94ad7605bbd8d071321f0c03" title="Read the active state of the Serial subsystem.">Serial_GetActive</a>( index );
+<a name="l00953"></a>00953       <span class="keywordflow">break</span>;
+<a name="l00954"></a>00954     <span class="keywordflow">case</span> 1:
+<a name="l00955"></a>00955       value = <a class="code" href="group__serial.html#ge1e68642844831927d466dee5e52fefe" title="Returns a single character from the receive queue if available.">Serial_GetChar</a>( index );
 <a name="l00956"></a>00956       <span class="keywordflow">break</span>;
-<a name="l00957"></a>00957     <span class="keywordflow">case</span> 1:
-<a name="l00958"></a>00958       value = <a class="code" href="group__serial.html#ge1e68642844831927d466dee5e52fefe" title="Returns a single character from the receive queue if available.">Serial_GetChar</a>( index );
+<a name="l00957"></a>00957     <span class="keywordflow">case</span> 2:
+<a name="l00958"></a>00958       value = <a class="code" href="group__serial.html#g5dacc19917685070c5689a92ba5c0fe2" title="Returns the current baud rate.">Serial_GetBaud</a>( index );
 <a name="l00959"></a>00959       <span class="keywordflow">break</span>;
-<a name="l00960"></a>00960     <span class="keywordflow">case</span> 2:
-<a name="l00961"></a>00961       value = <a class="code" href="group__serial.html#g5dacc19917685070c5689a92ba5c0fe2" title="Returns the current baud rate.">Serial_GetBaud</a>( index );
+<a name="l00960"></a>00960     <span class="keywordflow">case</span> 3:
+<a name="l00961"></a>00961       value = <a class="code" href="group__serial.html#g21ce239cf06821e52dd61abc70dd45b7" title="Returns the number of bits for each character.">Serial_GetBits</a>( index );
 <a name="l00962"></a>00962       <span class="keywordflow">break</span>;
-<a name="l00963"></a>00963     <span class="keywordflow">case</span> 3:
-<a name="l00964"></a>00964       value = <a class="code" href="group__serial.html#g21ce239cf06821e52dd61abc70dd45b7" title="Returns the number of bits for each character.">Serial_GetBits</a>( index );
+<a name="l00963"></a>00963     <span class="keywordflow">case</span> 4:
+<a name="l00964"></a>00964       value = <a class="code" href="group__serial.html#gb3d6ddecebf076b687f5e77d29dd67e6" title="Returns the number of stop bits.">Serial_GetStopBits</a>( index );
 <a name="l00965"></a>00965       <span class="keywordflow">break</span>;
-<a name="l00966"></a>00966     <span class="keywordflow">case</span> 4:
-<a name="l00967"></a>00967       value = <a class="code" href="group__serial.html#gb3d6ddecebf076b687f5e77d29dd67e6" title="Returns the number of stop bits.">Serial_GetStopBits</a>( index );
+<a name="l00966"></a>00966     <span class="keywordflow">case</span> 5:
+<a name="l00967"></a>00967       value = <a class="code" href="group__serial.html#ga991c6bc4e90ed262fca42484716fa85" title="Returns the current parity.">Serial_GetParity</a>( index );
 <a name="l00968"></a>00968       <span class="keywordflow">break</span>;
-<a name="l00969"></a>00969     <span class="keywordflow">case</span> 5:
-<a name="l00970"></a>00970       value = <a class="code" href="group__serial.html#ga991c6bc4e90ed262fca42484716fa85" title="Returns the current parity.">Serial_GetParity</a>( index );
+<a name="l00969"></a>00969     <span class="keywordflow">case</span> 6:
+<a name="l00970"></a>00970       value = <a class="code" href="group__serial.html#gbac6acb15f80e5cdf622673c73691d72" title="Returns whether hardware handshaking is being employed or not.">Serial_GetHardwareHandshake</a>( index );
 <a name="l00971"></a>00971       <span class="keywordflow">break</span>;
-<a name="l00972"></a>00972     <span class="keywordflow">case</span> 6:
-<a name="l00973"></a>00973       value = <a class="code" href="group__serial.html#gbac6acb15f80e5cdf622673c73691d72" title="Returns whether hardware handshaking is being employed or not.">Serial_GetHardwareHandshake</a>( index );
+<a name="l00972"></a>00972     <span class="keywordflow">case</span> 7:
+<a name="l00973"></a>00973       value = <a class="code" href="group__serial.html#gc9c7891624c9f4afe235f2a032af758e" title="Returns the number of bytes in the queue waiting to be read.">Serial_GetReadable</a>( index );
 <a name="l00974"></a>00974       <span class="keywordflow">break</span>;
-<a name="l00975"></a>00975     <span class="keywordflow">case</span> 7:
-<a name="l00976"></a>00976       value = <a class="code" href="group__serial.html#gc9c7891624c9f4afe235f2a032af758e" title="Returns the number of bytes in the queue waiting to be read.">Serial_GetReadable</a>( index );
-<a name="l00977"></a>00977       <span class="keywordflow">break</span>;
-<a name="l00978"></a>00978   }
-<a name="l00979"></a>00979   
-<a name="l00980"></a>00980   <span class="keywordflow">return</span> value;
-<a name="l00981"></a>00981 }
-<a name="l00982"></a>00982 
-<a name="l00983"></a>00983 <span class="comment">// Get the index, property</span>
-<a name="l00984"></a>00984 <span class="keywordtype">int</span> SerialOsc_BlobPropertyGet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property, uchar* blob, <span class="keywordtype">int</span> maxSize )
-<a name="l00985"></a>00985 {
-<a name="l00986"></a>00986   <span class="keywordtype">int</span> xfer = 0;
-<a name="l00987"></a>00987   <span class="keywordflow">switch</span> ( property )
-<a name="l00988"></a>00988   {
-<a name="l00989"></a>00989     <span class="keywordflow">case</span> 0:
-<a name="l00990"></a>00990     {
-<a name="l00991"></a>00991       <span class="keywordtype">int</span> length = <a class="code" href="group__serial.html#gc9c7891624c9f4afe235f2a032af758e" title="Returns the number of bytes in the queue waiting to be read.">Serial_GetReadable</a>( index );
-<a name="l00992"></a>00992       xfer = ( length &lt; maxSize ) ? length : maxSize;
-<a name="l00993"></a>00993       <span class="keywordflow">if</span> ( xfer &gt; 0 )
-<a name="l00994"></a>00994         <a class="code" href="group__serial.html#g06dc840f81d99f3877868bfd269dc6fb" title="Read data from the Serial port.">Serial_Read</a>( index, blob, xfer, 100 );
-<a name="l00995"></a>00995       <span class="keywordflow">break</span>;
-<a name="l00996"></a>00996     }
-<a name="l00997"></a>00997   }
-<a name="l00998"></a>00998   
-<a name="l00999"></a>00999   <span class="keywordflow">return</span> xfer;
-<a name="l01000"></a>01000 }
-<a name="l01001"></a>01001 
-<a name="l01002"></a>01002 
-<a name="l01003"></a>01003 <span class="comment">// Set the index LED, property with the value</span>
-<a name="l01004"></a>01004 <span class="keywordtype">int</span> SerialOsc_BlobPropertySet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property, uchar* blob, <span class="keywordtype">int</span> length )
-<a name="l01005"></a>01005 {
-<a name="l01006"></a>01006   <span class="keywordflow">switch</span> ( property )
-<a name="l01007"></a>01007   {
-<a name="l01008"></a>01008     <span class="keywordflow">case</span> 0: 
-<a name="l01009"></a>01009       <a class="code" href="group__serial.html#g16cb3d898e0ece4b4ee49c72ad6b1a36" title="Write a block of data to the Serial port.">Serial_Write</a>( index, blob, length, 100 );
-<a name="l01010"></a>01010       <span class="keywordflow">break</span>;      
-<a name="l01011"></a>01011   }
-<a name="l01012"></a>01012   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
-<a name="l01013"></a>01013 }
-<a name="l01014"></a>01014 
-<a name="l01015"></a>01015 <span class="preprocessor">#endif</span>
+<a name="l00975"></a>00975   }
+<a name="l00976"></a>00976   
+<a name="l00977"></a>00977   <span class="keywordflow">return</span> value;
+<a name="l00978"></a>00978 }
+<a name="l00979"></a>00979 
+<a name="l00980"></a>00980 <span class="comment">// Get the index, property</span>
+<a name="l00981"></a>00981 <span class="keywordtype">int</span> SerialOsc_BlobPropertyGet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property, uchar* blob, <span class="keywordtype">int</span> maxSize )
+<a name="l00982"></a>00982 {
+<a name="l00983"></a>00983   <span class="keywordtype">int</span> xfer = 0;
+<a name="l00984"></a>00984   <span class="keywordflow">switch</span> ( property )
+<a name="l00985"></a>00985   {
+<a name="l00986"></a>00986     <span class="keywordflow">case</span> 0:
+<a name="l00987"></a>00987     {
+<a name="l00988"></a>00988       <span class="keywordtype">int</span> length = <a class="code" href="group__serial.html#gc9c7891624c9f4afe235f2a032af758e" title="Returns the number of bytes in the queue waiting to be read.">Serial_GetReadable</a>( index );
+<a name="l00989"></a>00989       xfer = ( length &lt; maxSize ) ? length : maxSize;
+<a name="l00990"></a>00990       <span class="keywordflow">if</span> ( xfer &gt; 0 )
+<a name="l00991"></a>00991         <a class="code" href="group__serial.html#g06dc840f81d99f3877868bfd269dc6fb" title="Read data from the Serial port.">Serial_Read</a>( index, blob, xfer, 100 );
+<a name="l00992"></a>00992       <span class="keywordflow">break</span>;
+<a name="l00993"></a>00993     }
+<a name="l00994"></a>00994   }
+<a name="l00995"></a>00995   
+<a name="l00996"></a>00996   <span class="keywordflow">return</span> xfer;
+<a name="l00997"></a>00997 }
+<a name="l00998"></a>00998 
+<a name="l00999"></a>00999 
+<a name="l01000"></a>01000 <span class="comment">// Set the index LED, property with the value</span>
+<a name="l01001"></a>01001 <span class="keywordtype">int</span> SerialOsc_BlobPropertySet( <span class="keywordtype">int</span> index, <span class="keywordtype">int</span> property, uchar* blob, <span class="keywordtype">int</span> length )
+<a name="l01002"></a>01002 {
+<a name="l01003"></a>01003   <span class="keywordflow">switch</span> ( property )
+<a name="l01004"></a>01004   {
+<a name="l01005"></a>01005     <span class="keywordflow">case</span> 0: 
+<a name="l01006"></a>01006       <a class="code" href="group__serial.html#g16cb3d898e0ece4b4ee49c72ad6b1a36" title="Write a block of data to the Serial port.">Serial_Write</a>( index, blob, length, 100 );
+<a name="l01007"></a>01007       <span class="keywordflow">break</span>;      
+<a name="l01008"></a>01008   }
+<a name="l01009"></a>01009   <span class="keywordflow">return</span> <a class="code" href="group___error.html#gaa42bc036fbba18487ae9a15cd1f2f94" title="All&amp;#39;s well here.">CONTROLLER_OK</a>;
+<a name="l01010"></a>01010 }
+<a name="l01011"></a>01011 
+<a name="l01012"></a>01012 <span class="preprocessor">#endif</span>
 </pre></div></div>
 
 <hr size="1">
@@ -1101,7 +1098,7 @@ window.onload = initDynSections;
   <p id="footer">The Make Controller Kit is an open source project maintained by <a href="http://www.makingthings.com">MakingThings</a>.<br />
     MakingThings code is released under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 license</a>.<br />
     Bug tracker, development wiki and status can be found at <a href="http://dev.makingthings.com">http://dev.makingthings.com</a>.<br />
-    This document was last updated on 8 Jan 2009.
+    This document was last updated on 18 May 2009.
   </p>
 </div>
 <!-- Google Analytics Code -->
