@@ -70,11 +70,7 @@ int WebClient::get( char* hostname, int port, char* path, char* response, int re
                                 ( hostname != NULL ) ? "Host: " : "",
                                 ( hostname != NULL ) ? hostname : "",
                                 ( hostname != NULL ) ? "\r\n" : ""  );
-    if(!socket.write( buffer, send_len ))
-    {
-      socket.close( );
-      return CONTROLLER_ERROR_WRITE_FAILED;
-    }
+    socket.write( buffer, send_len );
 
     if(headers)
     {
@@ -85,7 +81,7 @@ int WebClient::get( char* hostname, int port, char* path, char* response, int re
         headers++;
       }
     }
-    if(!socket.write( "\r\n", 2 )) // all done with headers
+    if(!socket.write( "\r\n", 2 )) // all done with headers...just check our last write here...
     {
       socket.close( );
       return CONTROLLER_ERROR_WRITE_FAILED;
@@ -127,25 +123,14 @@ int WebClient::post( char* hostname, int port, char* path, char* data, int data_
   if ( socket.connect( net->getHostByName(hostname), port ) )
   { 
     int send_len = snprintf( buffer, WEBCLIENT_INTERNAL_BUFFER_SIZE, 
-                                "POST %s HTTP/1.1\r\n%s%s%s\r\n", 
-                                path, 
+                                "POST %s HTTP/1.1\r\nContent-Length: %d\r\n%s%s%s", 
+                                path,
+                                data_length,
                                 ( hostname != NULL ) ? "Host: " : "",
                                 ( hostname != NULL ) ? hostname : "",
                                 ( hostname != NULL ) ? "\r\n" : "",
                                 data_length );
-    if ( socket.write( buffer, send_len ) == 0 ) // send the headers
-    {
-      socket.close( );
-      return CONTROLLER_ERROR_WRITE_FAILED;
-    }
-
-    send_len = snprintf( buffer, WEBCLIENT_INTERNAL_BUFFER_SIZE,
-                          "Content-Length: %d\r\n", data_length);
-    if ( socket.write( buffer, send_len ) == 0 ) // send the headers
-    {
-      socket.close( );
-      return CONTROLLER_ERROR_WRITE_FAILED;
-    }
+    socket.write( buffer, send_len );
     
     if(headers)
     {
@@ -156,7 +141,7 @@ int WebClient::post( char* hostname, int port, char* path, char* data, int data_
         headers++;
       }
     }
-    if(!socket.write( "\r\n", 2 )) // all done with headers
+    if(!socket.write( "\r\n", 2 )) // all done with headers...just check our last write here...
     {
       socket.close( );
       return CONTROLLER_ERROR_WRITE_FAILED;
