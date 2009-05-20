@@ -36,6 +36,7 @@ public:
   char* string(const char *string, char *buf, int *remaining);
   char* integer(int value, char *buf, int *remaining);
   char* boolean(bool value, char *buf, int *remaining);
+  char* null(char* buf, int* remaining);
   // todo - char* floating(char *buf, bool value, int *remaining);
   
 protected:
