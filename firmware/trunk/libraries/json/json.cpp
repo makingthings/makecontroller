@@ -20,6 +20,7 @@
 #include "stdio.h"
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdarg.h>
 
 /**
   The Make Controller JSON library provides a very small and very fast library for parsing and 
@@ -484,6 +485,90 @@ char* JsonEncoder::null(char* buf, int* remaining)
   appendedAtom();
   (*remaining) -= null_str_len;
   return buf + null_str_len;
+}
+
+/*
+  Create a JSON string in one hit.
+  
+  This is no different than using each of the methods individually to build up
+  a string, but can be slightly more convenient.
+
+  @param buf Where to store the JSON
+  @param remaining Pointer to the length remaining in the json buffer
+  @param format The format string that specifies the types of each of the arguments
+  @param ... A variable list of arguments to be entered into the string
+  @return A pointer to the JSON buffer after this element has been added, or NULL if there was no room.
+  
+  Specify type of args with format string:
+  b - boolean
+  s - string
+  i - int
+  f - float
+  n - null
+  { - open object
+  } - close object
+  [ - array
+  ] - close array
+
+  \b Example
+  \code
+  #define MAX_JSON_LEN 256
+  char jsonbuf[MAX_JSON_LEN];
+  int remaining = MAX_JSON_LEN;
+  char* jp = jsonbuf; // pointer to our buffer
+
+  JsonEncoder jEncoder;
+  jp = jEncoder.encode( jp, &remaining, "{si}", "key", 4567);
+  // Now we have {"key":4567} in jsonbuf
+  // we can get a little trickier
+  jEncoder.reset();
+  jp = jEncoder.encode( jp, &remaining, "{sis[{si}{si}]}", "key", 4567, "a", "nested", 12, "nested2", 89);
+  // Now we have {"key":4567,"a":[{"nested":12},{"nested2", 89}]} in jsonbuf
+  \endcode
+
+*/
+char* JsonEncoder::encode( char* buf, int* remaining, const char* format,  ... )
+{
+  va_list arglist;
+  va_start(arglist, format);
+  int len = strlen(format);
+  for(int i = 0; i < len; i++)
+  {
+    switch(*format++)
+    {
+      case 's': // string
+        buf = string(va_arg(arglist, char*), buf, remaining);
+        break;
+      case 'i': // int
+        buf = integer(va_arg(arglist, int), buf, remaining);
+        break;
+      case 'f': // float
+//        buf = floating(va_arg(arglist, float), buf, remaining);
+        break;
+      case 'n': // null
+        buf = null(buf, remaining);
+        break;
+      case 'b': // bool
+        buf = boolean(va_arg(arglist, unsigned int), buf, remaining);
+        break;
+      case '{': // open object
+        buf = objectOpen(buf, remaining);
+        break;
+      case '}': // close object
+        buf = objectClose(buf, remaining);
+        break;
+      case '[': // open array
+        buf = arrayOpen(buf, remaining);
+        break;
+      case ']': // close array
+        buf = arrayClose(buf, remaining);
+        break;
+      default:
+        break;
+    }
+  }
+  va_end(arglist);
+  return buf;
 }
 
 /*

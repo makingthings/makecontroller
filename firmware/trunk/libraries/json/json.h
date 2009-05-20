@@ -38,6 +38,7 @@ public:
   char* boolean(bool value, char *buf, int *remaining);
   char* null(char* buf, int* remaining);
   // todo - char* floating(char *buf, bool value, int *remaining);
+  char* encode( char* buf, int* remaining, const char* fmt,  ... );
   
 protected:
   enum EncodeStep // state object for encoding
