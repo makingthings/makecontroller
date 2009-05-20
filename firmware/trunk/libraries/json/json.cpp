@@ -353,8 +353,7 @@ char* JsonEncoder::integer(int value, char *buf, int *remaining)
     case JSON_ARRAY_START:
     {
       char temp[int_as_str_len+1];
-      snprintf(temp, int_as_str_len+1, "%d", value);
-      int_len = strlen(temp);
+      int_len = snprintf(temp, int_as_str_len+1, "%d", value);
       if(*remaining < int_len)
         return NULL;
       memcpy(buf, temp, int_len);
@@ -364,8 +363,7 @@ char* JsonEncoder::integer(int value, char *buf, int *remaining)
     {
       int_as_str_len += 1; // for ,
       char temp[int_as_str_len+1];
-      snprintf(temp, int_as_str_len+1, ",%d", value);
-      int_len = strlen(temp);
+      int_len = snprintf(temp, int_as_str_len+1, ",%d", value);
       if(*remaining < int_len)
         return NULL;
       memcpy(buf, temp, int_len);
@@ -375,8 +373,7 @@ char* JsonEncoder::integer(int value, char *buf, int *remaining)
     {
       int_as_str_len += 1; // for :
       char temp[int_as_str_len+1];
-      snprintf(temp, int_as_str_len+1, ":%d", value);
-      int_len = strlen(temp);
+      int_len = snprintf(temp, int_as_str_len+1, ":%d", value);
       if(*remaining < int_len)
         return NULL;
       memcpy(buf, temp, int_len);
@@ -402,17 +399,17 @@ char* JsonEncoder::boolean(bool value, char *buf, int *remaining)
 {
   if( !buf )
     return 0;
-  const char* boolval = (value) ? "true" : "false";
-  int bool_len = strlen(boolval);
+  int bool_len = (value) ? 4 /* true */ : 5 /* false */;
   switch(state.steps[state.depth])
   {
     case JSON_ARRAY_START:
     {
       if(*remaining < bool_len)
         return NULL;
-      char temp[bool_len+1];
-      snprintf(temp, bool_len+1, "%s", boolval);
-      memcpy(buf, temp, bool_len);
+      if(value)
+        memcpy(buf, "true", 4);
+      else
+        memcpy(buf, "false", 5);
       break;
     }
     case JSON_IN_ARRAY:
@@ -420,9 +417,10 @@ char* JsonEncoder::boolean(bool value, char *buf, int *remaining)
       bool_len += 1; // for ,
       if(*remaining < bool_len)
         return NULL;
-      char temp[bool_len+1];
-      snprintf(temp, bool_len+1, ",%s", boolval);
-      memcpy(buf, temp, bool_len);
+      if(value)
+        memcpy(buf, ",true", 5);
+      else
+        memcpy(buf, ",false", 6);
       break;
     }
     case JSON_OBJ_VALUE:
@@ -430,9 +428,10 @@ char* JsonEncoder::boolean(bool value, char *buf, int *remaining)
       bool_len += 1; // for :
       if(*remaining < bool_len)
         return NULL;
-      char temp[bool_len+1];
-      snprintf(temp, bool_len+1, ":%s", boolval);
-      memcpy(buf, temp, bool_len);
+      if(value)
+        memcpy(buf, ":true", 5);
+      else
+        memcpy(buf, ":false", 6);
       break;
     }
     default:
@@ -441,6 +440,50 @@ char* JsonEncoder::boolean(bool value, char *buf, int *remaining)
   appendedAtom();
   (*remaining) -= bool_len;
   return buf + bool_len;
+}
+
+/**
+  Add a 'null' value to a JSON string.
+
+  @param buf A pointer to the buffer containing the JSON string.
+  @param remaining A pointer to the count of bytes remaining in the JSON buffer.
+  @return A pointer to the JSON buffer after this element has been added, or NULL if there was no room.
+*/
+char* JsonEncoder::null(char* buf, int* remaining)
+{
+  if( !buf ) return 0;
+  int null_str_len = 4;
+  switch(state.steps[state.depth])
+  {
+    case JSON_ARRAY_START:
+    {
+      if(*remaining < null_str_len)
+        return NULL;
+      memcpy(buf, "null", null_str_len);
+      break;
+    }
+    case JSON_IN_ARRAY:
+    {
+      null_str_len += 1; // for ,
+      if(*remaining < null_str_len)
+        return NULL;
+      memcpy(buf, ",null", null_str_len);
+      break;
+    }
+    case JSON_OBJ_VALUE:
+    {
+      null_str_len += 1; // for :
+      if(*remaining < null_str_len)
+        return NULL;
+      memcpy(buf, ":null", null_str_len);
+      break;
+    }
+    default:
+      return NULL; // bogus state
+  }
+  appendedAtom();
+  (*remaining) -= null_str_len;
+  return buf + null_str_len;
 }
 
 /*
