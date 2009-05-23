@@ -15,30 +15,78 @@
 
 *********************************************************************************/
 
-#ifndef JSON__H
-#define JSON__H
+#ifndef JSON_H
+#define JSON_H
 
 #define JSON_MAX_DEPTH 20
 
 /**
   Encode JSON strings.
+  For decoding JSON, see JsonDecoder.
+  
+  From http://www.json.org: "JSON (JavaScript Object Notation) 
+  is a lightweight data-interchange format. It is easy for humans to read and write. It is easy for 
+  machines to parse and generate."
+
+  JSON is quite widely used when communicating with web servers, or other network enabled devices.
+  It's nice and small, and easy to work with.  It's quite well supported in many programming
+  environments, so it's not a bad option for a communication format when you need to talk to other
+  devices from the Make Controller.  
+
+  \section Generating
+  To generate JSON, create a JsonEncoder and use its API to add elements to the JSON string.  You need to provide
+  a buffer to store the data in - specify this with a call to reset(), which should be called before each
+  round of JSON generation.
+
+  Each call to the encoder will return a pointer into the buffer, corresponding to the point
+  right after the most recently added data.  If this is null, there was a problem (probably ran out of
+  room in the buffer) and the JSON string is probably incomplete.
+
+  \code
+  #define MAX_JSON_LEN 256
+  char jsonbuf[MAX_JSON_LEN];
+  JsonEncoder encoder;
+  encoder.reset(jsonbuf, MAX_JSON_LEN);
+
+  encoder.objectOpen( );
+  encoder.string("hello");
+  encoder.integer(234);
+  if(!encoder.objectClose())
+  {
+    // problem - we probably ran out of room in the buffer
+  }
+  int json_length = encoder.length(); // how long is the string we made?
+  // otherwise, the string in jsonbuf looks like {"hello":234} - beautifully formatted JSON
+  \endcode
+
+  \b Note - the library will add the appropriate separators (: or , usually) to the string, 
+  depending on the context of the objects and arrays you've opened, or other data you've inserted.
+
+  \b Disclaimer - in an attempt to keep it as small and as simple as possible, this library is not 
+  completely full featured.  It doesn't process escaped strings for you, and doesn't deal
+  with some of the more exotic numeric representations outlined in the JSON specification.  
+  It does, however, work quite well for most other JSON tasks.
+
+  Thanks to YAJL (http://code.google.com/p/yajl-c) for some design inspiration.
+  \par
 */
 class JsonEncoder
 {
 public:
   JsonEncoder( );
-  void reset();
-  char* objectOpen(char *buf, int *remaining);
-  char* objectKey(const char *key, char *buf, int *remaining);
-  char* objectClose(char *buf, int *remaining);
-  char* arrayOpen(char *buf, int *remaining);
-  char* arrayClose(char *buf, int *remaining);
-  char* string(const char *string, char *buf, int *remaining);
-  char* integer(int value, char *buf, int *remaining);
-  char* boolean(bool value, char *buf, int *remaining);
-  char* null(char* buf, int* remaining);
+  void reset(char* buffer, int size);
+  char* objectOpen( );
+  char* objectKey( const char *key );
+  char* objectClose( );
+  char* arrayOpen( );
+  char* arrayClose( );
+  char* string( const char *string );
+  char* integer( int value );
+  char* boolean( bool value );
+  char* null( );
   // todo - char* floating(char *buf, bool value, int *remaining);
-  char* encode( char* buf, int* remaining, const char* fmt,  ... );
+  char* encode( const char* fmt,  ... );
+  int length();
   
 protected:
   enum EncodeStep // state object for encoding
@@ -57,17 +105,104 @@ protected:
   };
   void appendedAtom( );
   EncodeState state;
+  char* buf;
+  int remaining;
+  int original_buf_size;
 };
+
+
+class JsonHandler;
 
 /**
   Decode JSON strings.
+  To generate JSON, see JsonEncoder.
+
+  JSON parsing is done using an event-based mechanism.  This means you can register for any parse events you care
+  to hear about, and then be called back with their value as they're encountered in the JSON string.  There are 2 
+  options for getting callbacks - either register individual functions, or use an object that inherits from JsonHandler.
+  In each case, return true to continue parsing, or return false and parsing will stop.  
+  
+  \section inherit JsonHandler
+  If you already have an object that should handle incoming JSON, it might be best to have it inherit from JsonHandler.
+  Then, reimplement the methods on JsonHandler that you're interested in and you're all set.  Pass your class into
+  the go() method and your methods will be called back.
+
+  \code
+  class MyHandler : public JsonHandler // descend from JsonHandler
+  {
+    JsonDecoder decoder; // decoder object
+    bool onJsonInt(int val);
+    bool onJsonObjStart();
+    bool onJsonObjEnd();
+  };
+  
+  bool MyHandler::onJsonInt(int val)
+  {
+    // do whatever you need to when you get an int from the decoder...
+  }
+  
+  // this method might be called when we've gotten new JSON from somewhere...
+  // maybe the web, maybe via USB...
+  void MyHandler::onNewJsonData(char* data, int length)
+  {
+    // kick off the decoder, and pass ourselves in as the handler to be called back
+    // now onJsonInt() will be called for each int in the JSON data
+    decoder.go(data, length, this);
+  }
+  \endcode
+
+  \section individual Individual Functions
+  If you just want individual functions to be called back, rather than an object, you can register them
+  directly with the JsonDecoder.  Then when you call go() you don't need to pass in a handler, and your functions
+  will be called back appropriately.
+
+  If you need to pass around some context that you would like available in each of the callbacks, 
+  you can pass it to the JsonDecoder constructor and it will be passed to each of the callbacks you've registered.
+  Otherwise, just leave it out if you don't need it.
+
+  \code
+  // first, define the functions that we want to be called back on
+  bool on_obj_opened(void* ctx)
+  {
+    // will be called when an object has been opened...
+    return true; // keep parsing
+  }
+  
+  bool on_int(void *ctx, int val)
+  {
+    iny my_json_int = val;
+    // called when an int is encountered...
+    return true; // keep parsing
+  }
+  
+  bool on_string(void *ctx, char *string, int len)
+  {
+    // called when a string is encountered...
+    return true; // keep parsing
+  }
+
+  // Now, register these callbacks with the JSON decoder.
+  JsonDecoder decoder; // create our decoder object
+  decoder.setStartObjCallback(on_obj_opened);
+  decoder.setIntCallback(on_int);
+  decoder.setStringCallback(on_string);
+
+  // Finally, run the decoder
+  char jsonstr[] = "[{\"label\":\"value\",\"label2\":{\"nested\":234}}]";
+  decoder.go(jsonstr, strlen(jsonstr));
+  // now each of our callbacks will be triggered at the appropriate time
+  \endcode
+
+  Thanks to YAJL (http://code.google.com/p/yajl-c) for some design inspiration.
+  \par
 */
 class JsonDecoder
 {
 public:
   JsonDecoder(void* context = 0);
   void reset(void* context = 0);
-  bool go(char* text, int len);
+  void setContext(void* context);
+  bool go(char* text, int len, JsonHandler* handler = 0);
   void setIntCallback(bool(*int_callback)(void *ctx, int val));
   void setFloatCallback(bool(*float_callback)(void *ctx, float val));
   void setBoolCallback(bool(*bool_callback)(void *ctx, bool val));
@@ -124,12 +259,124 @@ protected:
     bool(*start_array_callback)(void*);
     bool(*end_array_callback)(void*);
   };
-  DecodeToken getToken(char* text, int len);
+  DecodeToken getToken(char* text);
   DecodeState state;
   Callbacks callbacks;
-  
 };
 
-#endif // JSON__H
+/**
+  Interface for handling JSON parsing.
+  Inherit from this class and reimplement any of the methods you want to be called by the 
+  JsonDecoder.  Return false from any method to stop parsing.
+
+  For convenience, copy and paste any of the following methods into your class definition:
+  \code
+  bool onJsonInt(void* ctx, int val);
+  bool onJsonFloat(void* ctx, float val);
+  bool onJsonBool(void* ctx, bool val);
+  bool onJsonString(void* ctx, char *string, int len);
+  bool onJsonStartObj(void* ctx);
+  bool onJsonObjKey(void* ctx, char *key, int len);
+  bool onJsonEndObj(void* ctx);
+  bool onJsonStartArray(void* ctx);
+  bool onJsonEndArray(void* ctx);
+  bool onJsonNull(void* ctx);
+  \endcode
+*/
+class JsonHandler
+{
+public:
+  JsonHandler() {}
+  virtual ~JsonHandler() {}
+protected:
+  /**
+    An int has been decoded.
+    @param val The decoded integer.
+  */
+  virtual bool onJsonInt(void* ctx, int val) {
+    (void)ctx;
+    (void)val;
+    return true;
+  }
+  /**
+    A float has been decoded.
+    @param val The decoded float.
+  */
+  virtual bool onJsonFloat(void* ctx, float val) {
+    (void)ctx;
+    (void)val;
+    return true;
+  }
+  /**
+    A bool has been decoded.
+    @param val The decoded bool.
+  */
+  virtual bool onJsonBool(void* ctx, bool val) {
+    (void)ctx;
+    (void)val;
+    return true;
+  }
+  /**
+    A string has been decoded.
+    @param string A pointer to the string.
+    @param len The length of the string.
+  */
+  virtual bool onJsonString(void* ctx, char *string, int len) {
+    (void)ctx;
+    (void)string;
+    (void)len;
+    return true;
+  }
+  /**
+    A left bracket '{' has been decoded.
+  */
+  virtual bool onJsonStartObj(void* ctx) {
+    (void)ctx;
+    return true;
+  }
+  /**
+    The key of an object has been decoded - in JSON, all keys are strings.
+    @param key A pointer to the key string.
+    @param len The length of the key string.
+  */
+  virtual bool onJsonObjKey(void* ctx, char *key, int len) {
+    (void)ctx;
+    (void)key;
+    (void)len;
+    return true;
+  }
+  /**
+    A right bracket '}' has been decoded.
+  */
+  virtual bool onJsonEndObj(void* ctx) {
+    (void)ctx;
+    return true;
+  }
+  /**
+    A left brace '[' has been decoded.
+  */
+  virtual bool onJsonStartArray(void* ctx) {
+    (void)ctx;
+    return true;
+  }
+  /**
+    A right brace ']' has been decoded.
+  */
+  virtual bool onJsonEndArray(void* ctx) {
+    (void)ctx;
+    return true;
+  }
+  /**
+    A null has been decoded.
+  */
+  virtual bool onJsonNull(void* ctx) {
+    (void)ctx;
+    return true;
+  }
+
+  friend class JsonDecoder;
+};
+
+#endif // JSON_H
 
 

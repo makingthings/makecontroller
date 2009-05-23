@@ -23,124 +23,34 @@
 #include <stdarg.h>
 
 /**
-  The Make Controller JSON library provides a very small and very fast library for parsing and 
-  generating json. 
-  
-  From http://www.json.org: "JSON (JavaScript Object Notation) 
-  is a lightweight data-interchange format. It is easy for humans to read and write. It is easy for 
-  machines to parse and generate."
-
-  JSON is quite widely used when communicating with web servers, or other network enabled devices.
-  It's nice and small, and easy to work with.  It's quite well supported in many programming
-  environments, so it's not a bad option for a communication format when you need to talk to other
-  devices from the Make Controller.  
-  
-  \b Disclaimer - in an attempt to keep it as small and as simple as possible, this library is not 
-  completely full featured at the moment.  It doesn't process escaped strings for you, and doesn't deal
-  with some of the more exotic numeric representations outlined in the JSON specification.  
-  It does, however, work quite well for most other JSON tasks.
-
-  \section Generating
-  Generating JSON is pretty simple - just make successive calls to the API to add the desired
-  elements to your string.  
-  
-  You need to provide a few things:
-   - a JsonEncode_State variable
-   - the buffer in which to store the JSON string being built
-   - a count of how many bytes are left in that buffer  
-   The API will update that count, so it's not too much trouble.
-
-  \code
-  #define MAX_JSON_LEN 256
-  char jsonbuf[MAX_JSON_LEN];
-  int remaining = MAX_JSON_LEN;
-  JsonEncode_State s;
-
-  char *p = jsonbuf; // keep a pointer to the current location
-  JsonEncode_Init(&s); // initialize our state variable
-  p = JsonEncode_ObjectOpen(&s, p, &remaining);
-  p = JsonEncode_String(&s, p, "hello", &remaining);
-  p = JsonEncode_Int(&s, p, 234, &remaining);
-  p = JsonEncode_ObjectClose(&s, p, &remaining);
-  // now the string in jsonbuf looks like {"hello":234} - beautifully formatted JSON
-  int json_len = MAX_JSON_LEN - remaining; // this is the total length of the string in jsonbuf
-  \endcode
-
-  \b Note - the library will add the appropriate separators (: or , usually) to the string, 
-  depending on the context of the objects and arrays you've opened, or other data you've inserted.
-
-  \section Parsing
-  Parsing is done using an event-based mechanism.  This means you can register for any parse events you care
-  to hear about, and then be called back with their value as they're encountered in the JSON string.
-  Each parse process needs its own JsonDecode_State variable to keep track of where it is.
-
-  In each callback, return true to continue parsing, or return false and parsing will stop.  
-
-  If you need to pass around some context that you would like available in each of the callbacks, 
-  you can pass it to JsonDecode_Init() and it will be passed to each of the callbacks you've registered.
-  Otherwise, just pass 0 if you don't need it.
-
-  \code
-  // first, define the functions that we want to be called back on
-  bool on_obj_opened(void* ctx)
-  {
-    // will be called when an object has been opened...
-    return true; // keep parsing
-  }
-  
-  bool on_int(void *ctx, int val)
-  {
-    iny my_json_int = val;
-    // called when an int is encountered...
-    return true; // keep parsing
-  }
-  
-  bool on_string(void *ctx, char *string, int len)
-  {
-    // called when a string is encountered...
-    return true; // keep parsing
-  }
-
-  // Now, register these callbacks with the JSON parser.
-  JsonDecode_SetStartObjCallback(on_obj_opened);
-  JsonDecode_SetIntCallback(on_int);
-  JsonDecode_SetStringCallback(on_string);
-
-  // Finally, run the parser.
-  JsonDecode_State s;
-  JsonDecode_Init(&s, 0); // pass 0 if you don't need to use any special context
-  char jsonstr[] = "[{\"label\":\"value\",\"label2\":{\"nested\":234}}]";
-  JsonDecode(&s, jsonstr, strlen(jsonstr));
-  // now each of our callbacks will be triggered at the appropriate time
-  \endcode
-
-  Thanks to YAJL (http://code.google.com/p/yajl-c) for some design inspiration.
-  \par
-*/
-
-/**
-  Initialize or reset the state of a JsonEncode_State variable.
-  Be sure to do this each time before you start parsing.
+  Create a new JsonEncoder object.
+  Be sure to call reset() before starting to build your JSON.
 */
 JsonEncoder::JsonEncoder()
 {
-  reset();
+
 }
 
-void JsonEncoder::reset()
+/**
+  Reset the JsonEncoder, and specify where it should write the JSON it generates.
+  Call this each time you want to start generating a new chunk of JSON.
+  @param buffer The buffer to store the JSON in.
+  @param size The total size of the buffer
+*/
+void JsonEncoder::reset(char* buffer, int size)
 {
   state.depth = 0;
   state.steps[0] = JSON_START;
+  buf = buffer;
+  remaining = original_buf_size = size;
 }
 
 /**
   Open up a new JSON object.
   This adds an opening '{' to the json string.
-  @param buf A pointer to the buffer holding the JSON string.
-  @param remaining A pointer to the count of how many bytes are left in your JSON buffer.
   @return A pointer to the location in the JSON buffer after this element has been added, or NULL if there was no room.
 */
-char* JsonEncoder::objectOpen(char *buf, int *remaining)
+char* JsonEncoder::objectOpen( )
 {
   if( !buf )
     return 0;
@@ -151,7 +61,7 @@ char* JsonEncoder::objectOpen(char *buf, int *remaining)
     case JSON_OBJ_START:
     case JSON_START:
     {
-      if(*remaining < len)
+      if(remaining < len)
         return NULL;
       memcpy(buf, "{", len);
       break;
@@ -160,7 +70,7 @@ char* JsonEncoder::objectOpen(char *buf, int *remaining)
     case JSON_IN_ARRAY:
     {
       len += 1; // for ,
-      if(*remaining < len)
+      if(remaining < len)
         return NULL;
       memcpy(buf, ",{", len);
       break;
@@ -168,7 +78,7 @@ char* JsonEncoder::objectOpen(char *buf, int *remaining)
     case JSON_OBJ_VALUE:
     {
       len += 1; // for :
-      if(*remaining < len)
+      if(remaining < len)
         return NULL;
       memcpy(buf, ":{", len);
       break;
@@ -178,8 +88,9 @@ char* JsonEncoder::objectOpen(char *buf, int *remaining)
   if(++state.depth > JSON_MAX_DEPTH)
     return NULL;
   state.steps[state.depth] = JSON_OBJ_START;
-  (*remaining) -= len;
-  return buf + len;
+  remaining -= len;
+  buf += len;
+  return buf;
 }
 
 /**
@@ -187,39 +98,36 @@ char* JsonEncoder::objectOpen(char *buf, int *remaining)
   This is a convenience function that simply calls JsonEncode_String().
   It is provided to help enforce the idea that the first member of a JSON
   object pair must be a string.
-  @see JsonEncode_String()
+  @see string()
 */
-char* JsonEncoder::objectKey(const char *key, char *buf, int *remaining)
+char* JsonEncoder::objectKey(const char *key)
 {
-  return string(key, buf, remaining);
+  return string(key);
 }
 
 /**
   Close a JSON object.
   Adds a closing '}' to the string.
-  @param buf A pointer to the buffer which contains your JSON string.
-  @param remaining A pointer to an integer keeping track of how many bytes are left in your JSON buffer.
   @return A pointer to the location in the JSON buffer after this element has been added, or NULL if there was no room.
 */
-char* JsonEncoder::objectClose(char *buf, int *remaining)
+char* JsonEncoder::objectClose( )
 {
-  if(*remaining < 1 || !buf )
+  if(remaining < 1 || !buf )
     return NULL;
   memcpy(buf, "}", 1);
   state.depth--;
   appendedAtom();
-  (*remaining)--;
-  return buf + 1;
+  remaining--;
+  buf += 1;
+  return buf;
 }
 
 /**
   Open up a new JSON array.
   This adds an opening '[' to the json string.
-  @param buf A pointer to the buffer holding the JSON string.
-  @param remaining A pointer to the count of how many bytes are left in your JSON buffer.
   @return A pointer to the location in the JSON buffer after this element has been added, or NULL if there was no room.
 */
-char* JsonEncoder::arrayOpen(char *buf, int *remaining)
+char* JsonEncoder::arrayOpen( )
 {
   if( !buf )
     return 0;
@@ -230,7 +138,7 @@ char* JsonEncoder::arrayOpen(char *buf, int *remaining)
     case JSON_OBJ_START:
     case JSON_START:
     {
-      if(*remaining < len)
+      if(remaining < len)
         return NULL;
       memcpy(buf, "[", len);
       break;
@@ -239,7 +147,7 @@ char* JsonEncoder::arrayOpen(char *buf, int *remaining)
     case JSON_IN_ARRAY:
     {
       len += 1; // for ,
-      if(*remaining < len)
+      if(remaining < len)
         return NULL;
       memcpy(buf, ",[", len);
       break;
@@ -247,7 +155,7 @@ char* JsonEncoder::arrayOpen(char *buf, int *remaining)
     case JSON_OBJ_VALUE:
     {
       len += 1; // for :
-      if(*remaining < len)
+      if(remaining < len)
         return NULL;
       memcpy(buf, ":[", len);
       break;
@@ -256,26 +164,26 @@ char* JsonEncoder::arrayOpen(char *buf, int *remaining)
   if(++state.depth > JSON_MAX_DEPTH)
     return NULL;
   state.steps[state.depth] = JSON_ARRAY_START;
-  (*remaining) -= len;
-  return buf + len;
+  remaining -= len;
+  buf += len;
+  return buf;
 }
 
 /**
   Close an array.
   Adds a closing ']' to the string.
-  @param buf A pointer to the buffer which contains your JSON string.
-  @param remaining A pointer to the count of how many bytes are left in your JSON buffer.
   @return A pointer to the JSON buffer after this element has been added, or NULL if there was no room.
 */
-  char* JsonEncoder::arrayClose(char *buf, int *remaining)
+  char* JsonEncoder::arrayClose( )
 {
-  if(*remaining < 1 || !buf )
+  if(remaining < 1 || !buf )
     return NULL;
   memcpy(buf, "]", 1);
   state.depth--;
   appendedAtom();
-  (*remaining)--;
-  return buf + 1;
+  remaining--;
+  buf += 1;
+  return buf;
 }
 
 /**
@@ -284,11 +192,9 @@ char* JsonEncoder::arrayOpen(char *buf, int *remaining)
   other data, the approprate separating symbols will be added to the string.
 
   @param string The string to be added.
-  @param buf A pointer to the buffer containing the JSON string.
-  @param remaining A pointer to the count of bytes remaining in the JSON buffer.
   @return A pointer to the JSON buffer after this element has been added, or NULL if there was no room.
 */
-char* JsonEncoder::string(const char *string, char *buf, int *remaining)
+char* JsonEncoder::string( const char *string )
 {
   if( !buf )
     return 0;
@@ -299,7 +205,7 @@ char* JsonEncoder::string(const char *string, char *buf, int *remaining)
     case JSON_ARRAY_START:
     case JSON_OBJ_START:
     {
-      if(*remaining < string_len)
+      if(remaining < string_len)
         return NULL;
       char temp[string_len+1];
       snprintf(temp, string_len+1, "\"%s\"", string);
@@ -310,7 +216,7 @@ char* JsonEncoder::string(const char *string, char *buf, int *remaining)
     case JSON_IN_ARRAY:
     {
       string_len += 1; // for ,
-      if(*remaining < string_len)
+      if(remaining < string_len)
         return NULL;
       char temp[string_len+1];
       snprintf(temp, string_len+1, ",\"%s\"", string);
@@ -320,7 +226,7 @@ char* JsonEncoder::string(const char *string, char *buf, int *remaining)
     case JSON_OBJ_VALUE:
     {
       string_len += 1; // for :
-      if(*remaining < string_len)
+      if(remaining < string_len)
         return NULL;
       char temp[string_len+1];
       snprintf(temp, string_len+1, ":\"%s\"", string);
@@ -331,19 +237,18 @@ char* JsonEncoder::string(const char *string, char *buf, int *remaining)
       return NULL;
   }
   appendedAtom();
-  (*remaining) -= string_len;
-  return buf + string_len;
+  remaining -= string_len;
+  buf += string_len;
+  return buf;
 }
 
 /**
   Add an int to a JSON string.
 
   @param value The integer to be added.
-  @param buf A pointer to the buffer containing the JSON string.
-  @param remaining A pointer to the count of bytes remaining in the JSON buffer.
   @return A pointer to the JSON buffer after this element has been added, or NULL if there was no room.
 */
-char* JsonEncoder::integer(int value, char *buf, int *remaining)
+char* JsonEncoder::integer( int value )
 {
   if( !buf )
     return 0;
@@ -355,7 +260,7 @@ char* JsonEncoder::integer(int value, char *buf, int *remaining)
     {
       char temp[int_as_str_len+1];
       int_len = snprintf(temp, int_as_str_len+1, "%d", value);
-      if(*remaining < int_len)
+      if(remaining < int_len)
         return NULL;
       memcpy(buf, temp, int_len);
       break;
@@ -365,7 +270,7 @@ char* JsonEncoder::integer(int value, char *buf, int *remaining)
       int_as_str_len += 1; // for ,
       char temp[int_as_str_len+1];
       int_len = snprintf(temp, int_as_str_len+1, ",%d", value);
-      if(*remaining < int_len)
+      if(remaining < int_len)
         return NULL;
       memcpy(buf, temp, int_len);
       break;
@@ -375,7 +280,7 @@ char* JsonEncoder::integer(int value, char *buf, int *remaining)
       int_as_str_len += 1; // for :
       char temp[int_as_str_len+1];
       int_len = snprintf(temp, int_as_str_len+1, ":%d", value);
-      if(*remaining < int_len)
+      if(remaining < int_len)
         return NULL;
       memcpy(buf, temp, int_len);
       break;
@@ -384,19 +289,18 @@ char* JsonEncoder::integer(int value, char *buf, int *remaining)
       return NULL; // bogus state
   }
   appendedAtom();
-  (*remaining) -= int_len;
-  return buf + int_len;
+  remaining -= int_len;
+  buf += int_len;
+  return buf;
 }
 
 /**
   Add a boolean value to a JSON string.
 
   @param value The boolean value to be added.
-  @param buf A pointer to the buffer containing the JSON string.
-  @param remaining A pointer to the count of bytes remaining in the JSON buffer.
   @return A pointer to the JSON buffer after this element has been added, or NULL if there was no room.
 */
-char* JsonEncoder::boolean(bool value, char *buf, int *remaining)
+char* JsonEncoder::boolean( bool value )
 {
   if( !buf )
     return 0;
@@ -405,7 +309,7 @@ char* JsonEncoder::boolean(bool value, char *buf, int *remaining)
   {
     case JSON_ARRAY_START:
     {
-      if(*remaining < bool_len)
+      if(remaining < bool_len)
         return NULL;
       if(value)
         memcpy(buf, "true", 4);
@@ -416,7 +320,7 @@ char* JsonEncoder::boolean(bool value, char *buf, int *remaining)
     case JSON_IN_ARRAY:
     {
       bool_len += 1; // for ,
-      if(*remaining < bool_len)
+      if(remaining < bool_len)
         return NULL;
       if(value)
         memcpy(buf, ",true", 5);
@@ -427,7 +331,7 @@ char* JsonEncoder::boolean(bool value, char *buf, int *remaining)
     case JSON_OBJ_VALUE:
     {
       bool_len += 1; // for :
-      if(*remaining < bool_len)
+      if(remaining < bool_len)
         return NULL;
       if(value)
         memcpy(buf, ":true", 5);
@@ -439,18 +343,17 @@ char* JsonEncoder::boolean(bool value, char *buf, int *remaining)
       return NULL; // bogus state
   }
   appendedAtom();
-  (*remaining) -= bool_len;
-  return buf + bool_len;
+  remaining -= bool_len;
+  buf += bool_len;
+  return buf;
 }
 
 /**
   Add a 'null' value to a JSON string.
-
-  @param buf A pointer to the buffer containing the JSON string.
-  @param remaining A pointer to the count of bytes remaining in the JSON buffer.
+  
   @return A pointer to the JSON buffer after this element has been added, or NULL if there was no room.
 */
-char* JsonEncoder::null(char* buf, int* remaining)
+char* JsonEncoder::null( )
 {
   if( !buf ) return 0;
   int null_str_len = 4;
@@ -458,7 +361,7 @@ char* JsonEncoder::null(char* buf, int* remaining)
   {
     case JSON_ARRAY_START:
     {
-      if(*remaining < null_str_len)
+      if(remaining < null_str_len)
         return NULL;
       memcpy(buf, "null", null_str_len);
       break;
@@ -466,7 +369,7 @@ char* JsonEncoder::null(char* buf, int* remaining)
     case JSON_IN_ARRAY:
     {
       null_str_len += 1; // for ,
-      if(*remaining < null_str_len)
+      if(remaining < null_str_len)
         return NULL;
       memcpy(buf, ",null", null_str_len);
       break;
@@ -474,7 +377,7 @@ char* JsonEncoder::null(char* buf, int* remaining)
     case JSON_OBJ_VALUE:
     {
       null_str_len += 1; // for :
-      if(*remaining < null_str_len)
+      if(remaining < null_str_len)
         return NULL;
       memcpy(buf, ":null", null_str_len);
       break;
@@ -483,85 +386,84 @@ char* JsonEncoder::null(char* buf, int* remaining)
       return NULL; // bogus state
   }
   appendedAtom();
-  (*remaining) -= null_str_len;
-  return buf + null_str_len;
+  remaining -= null_str_len;
+  buf += null_str_len;
+  return buf;
 }
 
-/*
+/**
   Create a JSON string in one hit.
   
   This is no different than using each of the methods individually to build up
   a string, but can be slightly more convenient.
 
-  @param buf Where to store the JSON
-  @param remaining Pointer to the length remaining in the json buffer
   @param format The format string that specifies the types of each of the arguments
   @param ... A variable list of arguments to be entered into the string
   @return A pointer to the JSON buffer after this element has been added, or NULL if there was no room.
   
   Specify type of args with format string:
-  b - boolean
-  s - string
-  i - int
-  f - float
-  n - null
-  { - open object
-  } - close object
-  [ - array
-  ] - close array
+  - b - boolean
+  - s - string
+  - i - int
+  - f - float
+  - n - null
+  - { - open object
+  - } - close object
+  - [ - array
+  - ] - close array
 
   \b Example
   \code
   #define MAX_JSON_LEN 256
   char jsonbuf[MAX_JSON_LEN];
-  int remaining = MAX_JSON_LEN;
-  char* jp = jsonbuf; // pointer to our buffer
+  JsonEncoder encoder;
+  encoder.reset(jsonbuf, MAX_JSON_LEN);
 
-  JsonEncoder jEncoder;
-  jp = jEncoder.encode( jp, &remaining, "{si}", "key", 4567);
+  encoder.encode( "{si}", "key", 4567);
   // Now we have {"key":4567} in jsonbuf
+
   // we can get a little trickier
-  jEncoder.reset();
-  jp = jEncoder.encode( jp, &remaining, "{sis[{si}{si}]}", "key", 4567, "a", "nested", 12, "nested2", 89);
+  encoder.reset(jsonbuf, MAX_JSON_LEN);
+  encoder.encode("{sis[{si}{si}]}", "key", 4567, "a", "nested", 12, "nested2", 89);
   // Now we have {"key":4567,"a":[{"nested":12},{"nested2", 89}]} in jsonbuf
   \endcode
 
 */
-char* JsonEncoder::encode( char* buf, int* remaining, const char* format,  ... )
+char* JsonEncoder::encode( const char* format,  ... )
 {
   va_list arglist;
   va_start(arglist, format);
   int len = strlen(format);
-  for(int i = 0; i < len; i++)
+  while(buf && len--)
   {
     switch(*format++)
     {
       case 's': // string
-        buf = string(va_arg(arglist, char*), buf, remaining);
+        buf = string(va_arg(arglist, char*));
         break;
       case 'i': // int
-        buf = integer(va_arg(arglist, int), buf, remaining);
+        buf = integer(va_arg(arglist, int));
         break;
       case 'f': // float
 //        buf = floating(va_arg(arglist, float), buf, remaining);
         break;
       case 'n': // null
-        buf = null(buf, remaining);
+        buf = null();
         break;
       case 'b': // bool
-        buf = boolean(va_arg(arglist, unsigned int), buf, remaining);
+        buf = boolean(va_arg(arglist, unsigned int));
         break;
       case '{': // open object
-        buf = objectOpen(buf, remaining);
+        buf = objectOpen();
         break;
       case '}': // close object
-        buf = objectClose(buf, remaining);
+        buf = objectClose();
         break;
       case '[': // open array
-        buf = arrayOpen(buf, remaining);
+        buf = arrayOpen();
         break;
       case ']': // close array
-        buf = arrayClose(buf, remaining);
+        buf = arrayClose();
         break;
       default:
         break;
@@ -569,6 +471,16 @@ char* JsonEncoder::encode( char* buf, int* remaining, const char* format,  ... )
   }
   va_end(arglist);
   return buf;
+}
+
+/**
+  Get the length of the JSON string so far.
+  This is faster than doing a strlen() since we keep track of the length as we go.
+  @return The size of the string.
+*/
+int JsonEncoder::length()
+{
+  return original_buf_size - remaining;
 }
 
 /*
@@ -826,12 +738,22 @@ void JsonDecoder::reset(void* context)
 }
 
 /**
+  Explicitly set the context object that will be handed to callbacks.
+  @param context The object to pass as context.
+*/
+void JsonDecoder::setContext(void* context)
+{
+  state.context = context;
+}
+
+/**
   Parse a JSON string.
   The JSON parser is event based, meaning that you will receive any callbacks
   you registered for as the elements are encountered in the JSON string.
 
   @param text The JSON string to parse.
   @param len The length of the JSON string.
+  @param handler (optional) A JsonHandler instance to be called back with relevant data.
   @return True on a successful parse, false on failure.
 
   \par Example
@@ -844,7 +766,7 @@ void JsonDecoder::reset(void* context)
   // now we expect to be called back on any callbacks we registered.
   \endcode
 */
-bool JsonDecoder::go(char* text, int len)
+bool JsonDecoder::go(char* text, int len, JsonHandler* handler)
 {
   DecodeToken token;
   // if these haven't been initialized, do it
@@ -860,13 +782,18 @@ bool JsonDecoder::go(char* text, int len)
       state.p++;
       state.len--;
     }
-    token = getToken( state.p, state.len);
+    token = getToken( state.p );
     switch(token)
     {
       case token_true:
         if(callbacks.bool_callback)
         {
           if(!callbacks.bool_callback(state.context, true))
+            return false;
+        }
+        if(handler)
+        {
+          if(!handler->onJsonBool(state.context, true))
             return false;
         }
         state.p += 4;
@@ -878,6 +805,11 @@ bool JsonDecoder::go(char* text, int len)
           if(!callbacks.bool_callback(state.context, false))
             return false;
         }
+        if(handler)
+        {
+          if(!handler->onJsonBool(state.context, false))
+            return false;
+        }
         state.p += 5;
         state.len -= 5;
         break;
@@ -885,6 +817,11 @@ bool JsonDecoder::go(char* text, int len)
         if(callbacks.null_callback)
         {
           if(!callbacks.null_callback(state.context))
+            return false;
+        }
+        if(handler)
+        {
+          if(!handler->onJsonNull(state.context))
             return false;
         }
         state.p += 4;
@@ -904,6 +841,11 @@ bool JsonDecoder::go(char* text, int len)
           if(!callbacks.start_obj_callback(state.context))
             return false;
         }
+        if(handler)
+        {
+          if(!handler->onJsonStartObj(state.context))
+            return false;
+        }
         state.p++;
         state.len--;
         break;
@@ -912,6 +854,11 @@ bool JsonDecoder::go(char* text, int len)
         if(callbacks.end_obj_callback)
         {
           if(!callbacks.end_obj_callback(state.context))
+            return false;
+        }
+        if(handler)
+        {
+          if(!handler->onJsonEndObj(state.context))
             return false;
         }
         state.p++;
@@ -924,6 +871,11 @@ bool JsonDecoder::go(char* text, int len)
           if(!callbacks.start_array_callback(state.context))
             return false;
         }
+        if(handler)
+        {
+          if(!handler->onJsonStartArray(state.context))
+            return false;
+        }
         state.p++;
         state.len--;
         break;
@@ -932,6 +884,11 @@ bool JsonDecoder::go(char* text, int len)
         if(callbacks.end_array_callback)
         {
           if(!callbacks.end_array_callback(state.context))
+            return false;
+        }
+        if(handler)
+        {
+          if(!handler->onJsonEndArray(state.context))
             return false;
         }
         state.p++;
@@ -964,12 +921,22 @@ bool JsonDecoder::go(char* text, int len)
             if(!callbacks.float_callback(state.context, atof(state.p)))
               return false;
           }
+          if(handler)
+          {
+            if(!handler->onJsonFloat(state.context, atof(state.p)))
+              return false;
+          }
         }
         else
         {
           if(callbacks.int_callback)
           {
             if(!callbacks.int_callback(state.context, atoi(state.p)))
+              return false;
+          }
+          if(handler)
+          {
+            if(!handler->onJsonInt(state.context, atoi(state.p)))
               return false;
           }
         }
@@ -979,7 +946,7 @@ bool JsonDecoder::go(char* text, int len)
       }
       case token_string:
       {
-        char* p = ++state.p; // move past the opening "
+        char* p = ++(state.p); // move past the opening "
         state.len--;
         bool keepgoing = true;
         while(keepgoing)
@@ -1014,12 +981,22 @@ bool JsonDecoder::go(char* text, int len)
             if(!callbacks.obj_key_callback(state.context, state.p, size))
               return false;
           }
+          if(handler)
+          {
+            if(!handler->onJsonObjKey(state.context, state.p, size))
+              return false;
+          }
         }
         else // just a normal string
         {
           if(callbacks.string_callback)
           {
             if(!callbacks.string_callback(state.context, state.p, size))
+              return false;
+          }
+          if(handler)
+          {
+            if(!handler->onJsonString(state.context, state.p, size))
               return false;
           }
         }
@@ -1036,7 +1013,7 @@ bool JsonDecoder::go(char* text, int len)
   return true;
 }
 
-JsonDecoder::DecodeToken JsonDecoder::getToken(char* text, int len)
+JsonDecoder::DecodeToken JsonDecoder::getToken(char* text)
 {
   switch(*text)
   {
@@ -1060,32 +1037,11 @@ JsonDecoder::DecodeToken JsonDecoder::getToken(char* text, int len)
     case '-':
       return token_maybe_negative;
     case 't':
-    {
-      if(len < 4) // not enough space;
-        return token_unknown;
-      if(!strncmp(text, "true", 4))
-        return token_true;
-      else 
-        return token_unknown;
-    }
+      return strncmp(text, "true", 4) ? token_unknown : token_true;
     case 'f':
-    {
-      if(len < 5) // not enough space;
-        return token_unknown;
-      if(!strncmp(text, "false", 5))
-        return token_false;
-      else
-        return token_unknown;
-    }
+      return strncmp(text, "false", 5) ? token_unknown : token_false;
     case 'n':
-    {
-      if(len < 4) // not enough space;
-        return token_unknown;
-      if(!strncmp(text, "null", 4))
-        return token_null;
-      else
-        return token_unknown;
-    }
+      return strncmp(text, "null", 4) ? token_unknown : token_null;
     case '\0':
       return token_eof;
     default:
