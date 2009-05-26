@@ -34,7 +34,7 @@ QString PacketUdp::key( )
 /*
  A board wants to send a message via UDP.
 */
-bool PacketUdp::sendPacket( char* packet, int length )
+bool PacketUdp::sendPacket( const char* packet, int length )
 {
   qint64 result = writeDatagram( (const char*)packet, (qint64)length, remoteAddress, send_port);
   if( result < 0 )
@@ -49,7 +49,7 @@ bool PacketUdp::sendPacket( char* packet, int length )
  Called when new data has been received.
  Send it on to the board.
  */
-void PacketUdp::newMessage( QByteArray message )
+void PacketUdp::newMessage( const QByteArray & message )
 {
   pingTimer.start( PING_TIMEOUT ); // reset our timer
   if(board != NULL)

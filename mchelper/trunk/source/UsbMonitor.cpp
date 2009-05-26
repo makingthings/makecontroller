@@ -130,7 +130,7 @@ void UsbMonitor::onDeviceDiscovered(QextPortInfo info)
   msleep(50); // not quite sure why this is necessary...only really need it when a port has been
   // opened, closed and then re-opened...
   #endif
-  qDebug() << tr("device discovered at %s").arg(info.portName);
+  qDebug() << tr("device discovered at") << info.portName;
   if( isMakeController(&info) )
   {
     QStringList ports = QStringList() << info.portName.toAscii();

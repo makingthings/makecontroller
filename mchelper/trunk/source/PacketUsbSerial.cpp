@@ -17,6 +17,7 @@
 
 #include "PacketUsbSerial.h"
 #include <QtDebug>
+#include <QBuffer>
 
 // SLIP codes
 #define END     0300 // indicates end of packet
@@ -60,7 +61,7 @@ void PacketUsbSerial::processNewData( )
     }
   }
   else
-    qDebug() << tr("USB bytes available error");
+    qDebug() << tr("USB bytes available error:") << avail;
 }
 
 bool PacketUsbSerial::open( )
@@ -74,7 +75,7 @@ bool PacketUsbSerial::open( )
 /*
  SLIP encode the packet and send it out.
 */
-bool PacketUsbSerial::sendPacket( char* packet, int length )
+bool PacketUsbSerial::sendPacket( const char* packet, int length )
 {
   QByteArray out;
   out.append( END ); // Flush out any spurious data that may have accumulated
@@ -120,9 +121,12 @@ bool PacketUsbSerial::sendPacket( char* packet, int length )
 */
 void PacketUsbSerial::slipDecode( )
 {
-  while( readBuffer.size() )
+  char c;
+  QBuffer buf(&readBuffer);
+  buf.open(QBuffer::ReadOnly);
+  while( !buf.atEnd() )
   {
-    char c = *readBuffer.data();
+    buf.getChar(&c);
     switch( c )
     {
       case END:
@@ -139,8 +143,7 @@ void PacketUsbSerial::slipDecode( )
         // we got an ESC character - get the next byte.
         // if it's not an ESC_END or ESC_ESC, it's a malformed packet.
         // http://tools.ietf.org/html/rfc1055 says just drop it in the packet in this case
-        readBuffer.remove( 0, 1 );
-        c = *(readBuffer.data());
+        buf.getChar(&c);
         if( pkt_started )
         {
           if( c == (char)ESC_END )
@@ -160,8 +163,8 @@ void PacketUsbSerial::slipDecode( )
           currentPacket.append( c );
         break;
     }
-    readBuffer.remove( 0, 1 );
   }
+  buf.close();
 }
 
 
