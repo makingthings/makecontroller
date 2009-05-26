@@ -154,7 +154,7 @@ QByteArray Osc::createPacket( const QList<OscMessage*> & msgs )
   return bundle;
 }
 
-QList<OscMessage*> Osc::processPacket( char* data, int size )
+QList<OscMessage*> Osc::processPacket( const char* data, int size )
 {
   QList<OscMessage*> msgList;
   QByteArray packet = QByteArray(data, size);

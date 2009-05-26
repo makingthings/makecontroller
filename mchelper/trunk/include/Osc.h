@@ -59,7 +59,7 @@ class Osc
     static QByteArray writePaddedString( const QString & str );
     static QByteArray writeTimetag( int a, int b );
     static QByteArray createOneRequest( const char* message );
-    QList<OscMessage*> processPacket( char* data, int size );
+    QList<OscMessage*> processPacket( const char* data, int size );
     QByteArray createPacket( const QStringList & strings );
     QByteArray createPacket( const QList<OscMessage*> & msgs );
     QByteArray createPacket( const QString & msg );
