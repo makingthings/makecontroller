@@ -40,11 +40,11 @@ public:
   enum Type { UsbSerial, UsbSamba, Ethernet };
   Board(MainWindow *mw, PacketInterface *pi,  OscXmlServer *oxs, BoardType::Type type, QString key);
   ~Board();
-  void sendMessage( QString rawMessage );
-  void sendMessage( QList<OscMessage*> messageList );
-  void sendMessage( QStringList messageList );
-  void msgReceived( QByteArray msg);
-  MainWindow* mainWindowRef() { return mainWindow; } // this is to the device list can have the context of the main window
+  void sendMessage( const QString & rawMessage );
+  void sendMessage( const QList<OscMessage*> & messageList );
+  void sendMessage( const QStringList & messageList );
+  void msgReceived( const QByteArray & msg);
+  MainWindow* mainWindowRef() { return mainWindow; } // so the device list can have the context of the main window
   BoardType::Type type( ) { return _type; }
   QString key() { return _key; }
   QString location( );

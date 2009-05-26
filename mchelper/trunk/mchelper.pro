@@ -67,7 +67,6 @@ win32{
   DEFINES += WINVER=0x0501
   LIBS += -lSetupapi
   RC_FILE = resources/icons/mchelper.rc # for application icon
-  debug:CONFIG += console
 }
 
 
