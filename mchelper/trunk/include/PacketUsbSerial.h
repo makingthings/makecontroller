@@ -34,7 +34,7 @@ public:
   ~PacketUsbSerial( );
   bool open( );
   void close( ) { port->close( ); }
-  bool sendPacket( char* packet, int length );
+  bool sendPacket( const char* packet, int length );
   void setBoard( Board *board ) {this->board = board;}
   bool isOpen( ) { return port->isOpen(); }
   QString key( ) { return port->portName(); }
@@ -49,7 +49,7 @@ private:
   MainWindow *mainWindow;
   QextSerialPort *port;
   bool pkt_started;
-  void slipDecode();
+  void slipDecode( );
 };
 
 #endif // PACKET_USB_SERIAL_H

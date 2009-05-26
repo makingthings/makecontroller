@@ -37,9 +37,9 @@ public:
   PacketUdp(QHostAddress remoteAddress, int send_port);
 
   // From PacketInterface
-  bool sendPacket( char* packet, int length );
+  bool sendPacket( const char* packet, int length );
   QString key( void );
-  void newMessage( QByteArray message );
+  void newMessage( const QByteArray & message );
   void setBoard(Board *b) {this->board = b;}
 
   void setSendPort(int port) {send_port = port;}

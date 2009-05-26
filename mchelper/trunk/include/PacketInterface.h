@@ -24,7 +24,7 @@
 class PacketInterface
 {
 public:
-  virtual bool sendPacket( char* packet, int length ) = 0;
+  virtual bool sendPacket( const char* packet, int length ) = 0;
   virtual QString key( ) = 0;
   virtual void setBoard(Board *board) = 0;
   virtual ~PacketInterface( ) {}
