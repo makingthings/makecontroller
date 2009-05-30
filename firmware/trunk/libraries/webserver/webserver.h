@@ -15,8 +15,8 @@
 
 *********************************************************************************/
 
-#ifndef WEB_SERVER__H
-#define WEB_SERVER__H
+#ifndef WEB_SERVER_H
+#define WEB_SERVER_H
 
 #include "config.h"
 #ifdef MAKE_CTRL_NETWORK
@@ -28,10 +28,9 @@
 #include "tcpsocket.h"
 #include "http.h"
 
-#define MAX_FORM_ELEMENTS 10
-#define MAX_WEB_RESPONDERS  5
-#define REQUEST_SIZE_MAX  256
-#define RESPONSE_SIZE_MAX 1000
+#define MAX_FORM_ELEMENTS 5
+#define MAX_WEB_HANDLERS 5
+#define REQUEST_SIZE_MAX 256
 
 /**
   A structure that represents a key-value pair in an HTML form.
@@ -102,25 +101,22 @@ typedef struct
   };
   \endcode
 */
-class WebResponder
+class WebHandler
 {
   public:
     /**
       The top level element that your responder matches.
     */
     virtual const char* address() = 0;
-    virtual bool get( char* path );
-    virtual bool post( char* path, char* body, int len );
-    virtual bool put( char* path, char* body, int len );
-    virtual bool del( char* path );
-    void setResponseSocket( TcpSocket* socket ) { response = socket; }
-    virtual ~WebResponder( ) { }
+    virtual bool get( TcpSocket* client, char* path );
+    virtual bool post( TcpSocket* client, char* path, char* body, int len );
+    virtual bool put( TcpSocket* client, char* path, char* body, int len );
+    virtual bool del( TcpSocket* client, char* path );
+    virtual ~WebHandler( ) { }
 
   protected:
-    bool setResponseCode( int code );
-    bool addHeader( const char* type, const char* value, bool lastone = true );
-    TcpSocket* response; /**< The TcpSocket to respond on. The WebServer sets this to the appropriate 
-    value while you're inside a response handler. */
+    bool setResponseCode( TcpSocket* client, int code );
+//    bool addHeader( const char* type, const char* value, bool lastone = true );
 };
 
 /**
@@ -132,7 +128,7 @@ class WebServer
 {
   public:
     static WebServer* get();
-    bool route(WebResponder* handler);
+    bool route(WebHandler* handler);
     bool setListenPort(int port);
     int getListenPort();
     void sendResponse();
@@ -144,12 +140,11 @@ class WebServer
     friend void webServerLoop( void *parameters );
     Task* webServerTask;
     TcpServer tcpServer;
-    int listenPort, newListenPort, hits, responder_count;
+    int listenPort, newListenPort, hits, handler_count;
     char requestBuf[ REQUEST_SIZE_MAX ];
-    char responseBuf[ RESPONSE_SIZE_MAX ];
 
     virtual void processRequest( TcpSocket* request, HttpMethod method, char* path );
-    WebResponder* responders[MAX_WEB_RESPONDERS];
+    WebHandler* handlers[MAX_WEB_HANDLERS];
     char* getRequestAddress( char* request, int length, HttpMethod* method );
     int getBody( TcpSocket* socket, char* requestBuffer, int maxSize );
 };

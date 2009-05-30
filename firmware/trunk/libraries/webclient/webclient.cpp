@@ -27,13 +27,20 @@
 #include "network.h"
 #include "error.h"
 
+#define WEBCLIENT_INTERNAL_BUFFER_SIZE 200
+
 /**
   Create a new WebClient
-
 */
 WebClient::WebClient()
 {
-  
+  buffer = (char*)malloc(WEBCLIENT_INTERNAL_BUFFER_SIZE);
+}
+
+WebClient::~WebClient()
+{
+  if(buffer)
+    delete buffer;
 }
 
 /** 
@@ -45,10 +52,11 @@ WebClient::WebClient()
   to the task calling it.  The result is returned in the specified buffer.
 
   @param hostname The name of the host to connect to.
+  @param port The port to connect on - standard http port is 80
   @param path The path on the server to connect to.
   @param response The buffer read the response back into.  
   @param response_size An integer specifying the size of the response buffer.
-  @param port (optional) The port to connect on - defaults to 80
+  @param headers (optional) An array of strings to be sent as headers - last element in the array must be 0.
   @return the number of bytes read, or < 0 on error.
 
   \par Example
@@ -100,11 +108,12 @@ int WebClient::get( char* hostname, int port, char* path, char* response, int re
   Performs an HTTP POST operation to the path at the address / port specified.  The actual post contents 
   are found read from a given buffer and the result is returned in the same buffer.
   @param hostname The name of the host to connect to.
+  @param port The port to connect on - standard http port is 80
   @param path The path on the server to post to.
   @param data The buffer to write from, and then read the response back into
   @param data_length The number of bytes to write from \b data
   @param response_size How many bytes of the response to read back into \b data
-  @param port (optional) The port to connect on - defaults to 80
+  @param headers (optional) An array of strings to be sent as headers - last element in the array must be 0.
   @return status.
 
   \par Example
@@ -141,13 +150,12 @@ int WebClient::post( char* hostname, int port, char* path, char* data, int data_
         headers++;
       }
     }
-    if(!socket.write( "\r\n", 2 )) // all done with headers...just check our last write here...
+    socket.write( "\r\n", 2 ); // all done with headers
+    if(!socket.write( data, data_length )) // send the body...just check our last write here...
     {
       socket.close( );
       return CONTROLLER_ERROR_WRITE_FAILED;
     }
-
-    socket.write( data, data_length ); // send the body
     
     // read back the response
     int buffer_read = readResponse(data, response_size);

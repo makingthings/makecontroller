@@ -20,8 +20,6 @@
 
 #include "tcpsocket.h"
 
-#define WEBCLIENT_INTERNAL_BUFFER_SIZE 200
-
 /**
   Connect to sites and other services on the internet or local network via HTTP.
 
@@ -37,12 +35,13 @@ class WebClient
 {
 public:
   WebClient();
+  ~WebClient();
   int get( char* hostname, int port, char* path, char* response, int response_size, const char* headers[] = 0 );
   int post( char* hostname, int port, char* path, char* data, int post_length, int response_size, const char* headers[] = 0 );
 
 protected:
   TcpSocket socket;
-  char buffer[WEBCLIENT_INTERNAL_BUFFER_SIZE];
+  char* buffer;
 
   int readResponse( char* buf, int size );
 };
