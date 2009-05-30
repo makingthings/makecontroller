@@ -29,7 +29,7 @@ WebServer* WebServer::_instance = 0;
 
 WebServer::WebServer()
 {
-  responder_count = hits = 0;
+  handler_count = hits = 0;
   listenPort = newListenPort = HTTP_PORT;
   webServerTask = new Task(webServerLoop, "WebServ", 800, 3, this);
 }
@@ -41,11 +41,11 @@ WebServer* WebServer::get()
   return _instance;
 }
 
-bool WebServer::route(WebResponder* handler)
+bool WebServer::route(WebHandler* handler)
 {
-  if( responder_count < MAX_WEB_RESPONDERS )
+  if( handler_count < MAX_WEB_HANDLERS )
   {
-    responders[responder_count++] = handler;
+    handlers[handler_count++] = handler;
     return true;
   }
   else
@@ -102,35 +102,34 @@ void webServerLoop(void* parameters)
 void WebServer::processRequest( TcpSocket* request, HttpMethod method, char* path )
 {
   bool responded = false;
-  if ( responder_count )
+  if ( handler_count )
   {
     int i;
-    for ( i = 0; i < responder_count; i++ )
+    for ( i = 0; i < handler_count; i++ )
     {
-      WebResponder* hp = responders[ i ];
+      WebHandler* hp = handlers[ i ];
       const char* t = hp->address();
       if ( !strncmp( t, (path + 1), strlen( t ) ) )
       {
-        hp->setResponseSocket(request);
         switch(method)
         {
           case HTTP_GET:
-            responded = hp->get(path);
+            responded = hp->get(request, path);
             break;
           case HTTP_POST:
           {
             int content_len = getBody( request, requestBuf, REQUEST_SIZE_MAX );
-            responded = hp->post(path, requestBuf, content_len);
+            responded = hp->post(request, path, requestBuf, content_len);
             break;
           }
           case HTTP_PUT:
           {
             int content_len = getBody( request, requestBuf, REQUEST_SIZE_MAX );
-            responded = hp->put(path, requestBuf, content_len);
+            responded = hp->put(request, path, requestBuf, content_len);
             break;
           }
           case HTTP_DELETE:
-            responded = hp->del(path);
+            responded = hp->del(request, path);
             break;
           default:
             break;
@@ -244,8 +243,9 @@ int WebServer::getBody( TcpSocket* socket, char* requestBuffer, int maxSize )
   @param path This is the request path.  If the entire URL looked like
   192.168.0.200/first/second/34, then path is "/first/second/34"
 */
-bool WebResponder::get( char* path )
+bool WebHandler::get( TcpSocket* client, char* path )
 {
+ (void)client;
  (void)path;
  return false;
 }
@@ -260,8 +260,9 @@ bool WebResponder::get( char* path )
   @param body The body data of the POST request.
   @param len How many bytes of data are in the body.
 */
-bool WebResponder::post( char* path, char* body, int len )
+bool WebHandler::post( TcpSocket* client, char* path, char* body, int len )
 {
+  (void)client;
   (void)path;
   (void)body;
   (void)len;
@@ -278,8 +279,9 @@ bool WebResponder::post( char* path, char* body, int len )
   @param body The body data of the PUT request.
   @param len How many bytes of data are in the body.
 */
-bool WebResponder::put( char* path, char* body, int len )
+bool WebHandler::put( TcpSocket* client, char* path, char* body, int len )
 {
+  (void)client;
   (void)path;
   (void)body;
   (void)len;
@@ -299,8 +301,9 @@ bool WebResponder::put( char* path, char* body, int len )
   
   \endcode
 */
-bool WebResponder::del( char* path )
+bool WebHandler::del( TcpSocket* client, char* path )
 {
+ (void)client;
  (void)path;
  return false;
 }
@@ -323,14 +326,12 @@ bool WebResponder::del( char* path )
   }
   \endcode
 */
-bool WebResponder::setResponseCode( int code )
+bool WebHandler::setResponseCode( TcpSocket* client, int code )
 {
-  if(response == NULL)
-    return false;
   char temp[26];
   sprintf(temp, "HTTP/1.0 %d OK\r\n", code);
-  int written = response->write(temp, strlen(temp));
-  return (written != 0) ? true : false;
+  int written = client->write(temp, strlen(temp));
+  return (written != 0);
 }
 
 /**
@@ -357,19 +358,19 @@ bool WebResponder::setResponseCode( int code )
   }
   \endcode
 */
-bool WebResponder::addHeader( const char* type, const char* value, bool lastone )
-{
-  if(response == NULL)
-    return false;
-  int len = strlen(type) + strlen(value);
-  char temp[len + 6];
-  if( lastone )
-    sprintf(temp, "%s: %s\r\n\r\n", type, value);
-  else
-    sprintf(temp, "%s: %s\r\n", type, value);
-  int written = response->write(temp, strlen(temp));
-  return (written != 0) ? true : false;
-}
+//bool WebHandler::addHeader( const char* type, const char* value, bool lastone )
+//{
+//  if(response == NULL)
+//    return false;
+//  int len = strlen(type) + strlen(value);
+//  char temp[len + 6];
+//  if( lastone )
+//    sprintf(temp, "%s: %s\r\n\r\n", type, value);
+//  else
+//    sprintf(temp, "%s: %s\r\n", type, value);
+//  int written = response->write(temp, strlen(temp));
+//  return (written != 0) ? true : false;
+//}
 
 #endif // MAKE_CTRL_NETWORK
 

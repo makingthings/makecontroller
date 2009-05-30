@@ -37,6 +37,17 @@
   #define APPLED_3_IO IO_PA27
 #endif
 
+#define APPBOARD_20 1
+
+#ifdef APPBOARD_20
+  #undef APPLED_2_IO
+  #undef APPLED_3_IO
+  #define APPLED_2_IO IO_PA27
+  #define APPLED_3_IO IO_PA28
+#endif
+
+
+
 Io* AppLed::leds[] = {0, 0, 0, 0};
 //#ifdef OSC
 //AppLedOSC* AppLed::oscHandler;
@@ -60,6 +71,7 @@ AppLed::AppLed( int index )
     return;
   if( !leds[_index] )
     leds[_index] = new Io( getIo(_index), Io::GPIO, OUTPUT );
+  setState(false);
 //  #ifdef OSC
 //  oscHandler = new AppLedOSC();
 //  #endif
