@@ -7,7 +7,7 @@
 #include <QFileDialog>
 #include <QtDebug>
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
@@ -65,28 +65,8 @@ void Uploader::onUploadButton()
 
 void Uploader::upload(QString filename)
 {
-  #ifdef Q_WS_MAC // get the path within the app bundle
-  CFURLRef pluginRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
-  CFStringRef macPath = CFURLCopyFileSystemPath(pluginRef, kCFURLPOSIXPathStyle);
-  QDir appBundle( CFStringGetCStringPtr(macPath, CFStringGetSystemEncoding()) );
-  QString uploaderName = appBundle.filePath( "Contents/Resources/sam7" );
-  #elif defined (Q_WS_WIN)
-  QString uploaderName = QDir::current().filePath("sam7");
-  #else
-  QSettings settings;
-  QString uploaderName = settings.value("sam7_path", DEFAULT_SAM7_PATH).toString();
-  #endif
-  int offset = 0; // escape any spaces in the filename
-  do
-  {
-    offset = filename.indexOf(" ", offset);
-    if( offset != -1 )
-    {
-      filename.insert(offset, "\\");
-      offset += 2; // step past the \ we inserted and the space we put it in front of
-    }
-  } while( offset != -1 );
-  qDebug( "uploading %s", qPrintable(filename));
+  filename.replace(" ", "\\ "); // escape any spaces in the filename
+  qDebug() << "uploading" << filename;
 
   QStringList uploaderArgs;
   uploaderArgs << "-e" << "set_clock";
@@ -94,9 +74,27 @@ void Uploader::upload(QString filename)
   uploaderArgs << "-e" << QString("flash -show_progress %1").arg(filename);
   uploaderArgs << "-e" << "boot_from_flash";
   uploaderArgs << "-e" << "reset";
-  uploader.start(uploaderName, uploaderArgs);
+  uploader.start(sam7Path(), uploaderArgs);
   QFileInfo fi(filename);
   setWindowTitle(tr("Uploader - uploading %1").arg(fi.fileName()));
+}
+
+QString Uploader::sam7Path( )
+{
+  QString uploaderName;
+  #ifdef Q_OS_MAC // get the path within the app bundle
+  CFURLRef pluginRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
+  CFStringRef macPath = CFURLCopyFileSystemPath(pluginRef, kCFURLPOSIXPathStyle);
+  QDir appBundle( CFStringGetCStringPtr(macPath, CFStringGetSystemEncoding()) );
+  uploaderName = appBundle.filePath( "Contents/Resources/sam7" );
+  #elif defined (Q_OS_WIN)
+  uploaderName = QDir::current().filePath("sam7");
+  #else
+  QSettings settings;
+  QDir dir( settings.value("sam7_path", DEFAULT_SAM7_PATH).toString() );
+  uploaderName = dir.filePath("sam7");
+  #endif
+  return uploaderName;
 }
 
 void Uploader::filterOutput( )
