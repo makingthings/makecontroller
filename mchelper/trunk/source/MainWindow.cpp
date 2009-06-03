@@ -67,7 +67,7 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   connect( commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onCommandLine()));
   connect( sendButton, SIGNAL(clicked()), this, SLOT(onCommandLine()));
 
-  #if !defined (Q_WS_WIN) && !defined (Q_WS_MAC)
+  #if !defined (Q_OS_WIN) && !defined (Q_OS_MAC)
   // the USB monitor runs in a separate thread...start it up.
   // only need to do this on non-Windows/OSX machines since automatic device detection is not implemented
   usbMonitor->start();
@@ -76,8 +76,7 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
 
 void MainWindow::readSettings()
 {
-  QSettings settings("MakingThings", "mchelper");
-
+  QSettings settings;
   QSize size = settings.value( "size" ).toSize( );
   if( size.isValid( ) )
     resize( size );
@@ -120,8 +119,7 @@ void MainWindow::setMaxMessages(int msgs)
 
 void MainWindow::writeSettings()
 {
-  QSettings settings("MakingThings", "mchelper");
-
+  QSettings settings;
   settings.setValue("size", size() );
   settings.setValue("mainwindow_pos", pos());
   settings.setValue("inspector_pos", inspector->pos());
@@ -269,7 +267,7 @@ void MainWindow::onEthernetDeviceArrived(PacketInterface* pi)
   Because the UsbMonitor runs in a separate thread, we want to
   create the packet interfaces here, in the main thread.
 */
-void MainWindow::onUsbDeviceArrived(QStringList keys, BoardType::Type type)
+void MainWindow::onUsbDeviceArrived(const QStringList & keys, BoardType::Type type)
 {
   Board *board;
   QList<Board*> boardList;
@@ -335,7 +333,7 @@ void MainWindow::updateBoardInfo(Board *board)
   inspector->setData(board);
 }
 
-void MainWindow::onDeviceRemoved(QString key)
+void MainWindow::onDeviceRemoved(const QString & key)
 {
   QList<Board*> boards = getConnectedBoards();
   foreach(Board *board, boards)
@@ -357,7 +355,7 @@ void MainWindow::onDeviceRemoved(QString key)
     deviceList->addItem( &deviceListPlaceholder );
 }
 
-void MainWindow::message(QStringList msgs, MsgType::Type type, QString from)
+void MainWindow::message(const QStringList & msgs, MsgType::Type type, const QString & from)
 {
   if( !messagesEnabled( type ) )
     return;
@@ -375,7 +373,7 @@ void MainWindow::message(QStringList msgs, MsgType::Type type, QString from)
   outputConsole->setUpdatesEnabled(true);
 }
 
-void MainWindow::message(QString msg, MsgType::Type type, QString from)
+void MainWindow::message(const QString & msg, MsgType::Type type, const QString & from)
 {
   if(noUi())
   {
@@ -461,7 +459,7 @@ void MainWindow::newXmlPacketReceived( const QList<OscMessage*> & msgs, const QS
   }
 }
 
-void MainWindow::setBoardName( QString key, QString name )
+void MainWindow::setBoardName( const QString & key, const QString & name )
 {
   QList<Board*> boardList = getConnectedBoards( );
   foreach(Board *board, boardList)
@@ -480,10 +478,16 @@ void MainWindow::setBoardName( QString key, QString name )
 */
 Board* MainWindow::getCurrentBoard( )
 {
-  if( deviceList->currentItem( ) == &deviceListPlaceholder )
-    return 0;
-  else
-    return (Board*)deviceList->currentItem( );
+  QListWidgetItem* item = deviceList->currentItem( );
+  if( item == &deviceListPlaceholder )
+    item = 0;
+  // sometimes the board can become unselected - it might not be the one that
+  // was most recently selected, but give it a shot and grab the last one in this case
+  else if(item == 0 && deviceList->count() != 0) {
+    deviceList->setCurrentRow(deviceList->count()-1);
+    item = deviceList->currentItem( );
+  }
+  return (Board*)item;
 }
 
 QList<Board*> MainWindow::getConnectedBoards( )

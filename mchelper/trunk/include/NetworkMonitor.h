@@ -58,7 +58,7 @@ private slots:
   void sendPing( );
 
 public slots:
-  void onDeviceRemoved(QString key);
+  void onDeviceRemoved(const QString & key);
 
 signals:
   void deviceArrived(PacketInterface* pi);
