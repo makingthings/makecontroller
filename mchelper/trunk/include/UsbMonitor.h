@@ -32,7 +32,7 @@ class UsbMonitor : public QThread
 public:
   UsbMonitor(MainWindow* mw);
   void run();
-  #ifdef Q_WS_WIN
+  #ifdef Q_OS_WIN
   void onDeviceChangeEventWin( WPARAM wParam, LPARAM lParam );
   #endif
 
@@ -41,16 +41,16 @@ signals:
   void boardsRemoved(QString key);
 
 private slots:
-  void onDeviceDiscovered(QextPortInfo info);
-  void onDeviceTerminated(QextPortInfo info);
+  void onDeviceDiscovered(const QextPortInfo & info);
+  void onDeviceTerminated(const QextPortInfo & info);
 
 private:
   QStringList usbSerialList;
   QStringList usbSambaList;
   MainWindow* mainWindow;
   QextSerialEnumerator enumerator;
-  bool isMakeController(QextPortInfo* info);
-  bool isSamBa(QextPortInfo* info);
+  bool isMakeController(const QextPortInfo & info);
+  bool isSamBa(const QextPortInfo & info);
 };
 
 #endif // USB_MONITOR_H_

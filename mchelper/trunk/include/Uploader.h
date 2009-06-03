@@ -19,6 +19,7 @@ class Uploader : public QDialog, private Ui::UploaderUi
   private:
     MainWindow *mainWindow;
     QProcess uploader;
+    QString sam7Path( );
 
   private slots:
     void filterOutput();
