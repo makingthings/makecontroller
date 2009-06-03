@@ -27,7 +27,7 @@ Uploader::Uploader(MainWindow *mainWindow) : QDialog( 0 )
   connect(browseButton, SIGNAL(clicked()), this, SLOT(onBrowseButton()));
   connect(uploadButton, SIGNAL(clicked()), this, SLOT(onUploadButton()));
 
-  QSettings settings("MakingThings", "mchelper");
+  QSettings settings;
   QString lastFilePath = settings.value("last_firmware_upload", QDir::homePath()).toString();
   browseEdit->setText(lastFilePath);
   progressBar->reset();
@@ -41,7 +41,7 @@ Uploader::~Uploader( )
 
 void Uploader::onBrowseButton()
 {
-  QSettings settings("MakingThings", "mchelper");
+  QSettings settings;
   QString lastFilePath = settings.value("last_firmware_upload", QDir::homePath()).toString();
   QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), lastFilePath, tr("Binaries (*.bin)"));
   if(!fileName.isNull()) // user canceled
@@ -73,7 +73,7 @@ void Uploader::upload(QString filename)
   #elif defined (Q_WS_WIN)
   QString uploaderName = QDir::current().filePath("sam7");
   #else
-  QSettings settings("MakingThings", "mchelper");
+  QSettings settings;
   QString uploaderName = settings.value("sam7_path", DEFAULT_SAM7_PATH).toString();
   #endif
   int offset = 0; // escape any spaces in the filename

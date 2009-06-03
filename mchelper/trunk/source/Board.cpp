@@ -117,7 +117,7 @@ bool Board::extractSystemInfoA( OscMessage* msg )
         if( name != data->s() )
         {
           name = data->s(); //name
-          emit newBoardName(_key, name);
+          emit newBoardName(_key, (name + " : " + location()));
           newInfo = true;
         }
         break;
@@ -252,7 +252,7 @@ bool Board::extractNetworkFind( OscMessage* msg )
         if( name != data->s() )
         {
           name = data->s();
-          emit newBoardName(_key, name);
+          emit newBoardName(_key, (name + " : " + location()));
           newInfo = true;
         }
         break;

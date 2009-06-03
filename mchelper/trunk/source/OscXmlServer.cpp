@@ -27,7 +27,7 @@ OscXmlServer::OscXmlServer( MainWindow *mainWindow, QObject *parent ) : QTcpServ
   this->mainWindow = mainWindow;
   connect( this, SIGNAL( newConnection() ), this, SLOT( openNewConnection( ) ) );
   connect(this, SIGNAL(msg(QString, MsgType::Type, QString)), mainWindow, SLOT(message(QString, MsgType::Type, QString)));
-  QSettings settings("MakingThings", "mchelper");
+  QSettings settings;
   listenPort = settings.value("xml_listen_port", DEFAULT_XML_LISTEN_PORT).toInt();
   if(!listen(QHostAddress::Any, listenPort))
     emit msg( tr("Error - can't listen on port %1.  Make sure it's available.").arg(listenPort), MsgType::Error, FROM_STRING );

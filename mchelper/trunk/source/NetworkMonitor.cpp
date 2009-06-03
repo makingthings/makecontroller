@@ -26,7 +26,7 @@
 */
 NetworkMonitor::NetworkMonitor( MainWindow* mainWindow ) : QUdpSocket( )
 {
-  QSettings settings("MakingThings", "mchelper");
+  QSettings settings;
   listen_port = settings.value("udp_listen_port", DEFAULT_UDP_LISTEN_PORT).toInt();
   send_port = settings.value("udp_send_port", DEFAULT_UDP_SEND_PORT).toInt();
   sendDiscoveryPackets = settings.value("networkDiscovery", DEFAULT_NETWORK_DISCOVERY).toBool();
@@ -35,7 +35,7 @@ NetworkMonitor::NetworkMonitor( MainWindow* mainWindow ) : QUdpSocket( )
   QHostInfo::lookupHost( QHostInfo::localHostName(), this, SLOT(lookedUp(QHostInfo)));
 
   connect( this, SIGNAL(deviceArrived(PacketInterface*)), mainWindow, SLOT(onEthernetDeviceArrived(PacketInterface*)));
-  connect( this, SIGNAL(deviceRemoved(QString)), mainWindow, SLOT(onDeviceRemoved(QString)));
+  connect( this, SIGNAL(deviceRemoved(QString)), mainWindow, SLOT(onDeviceRemoved(const QString &)));
   connect( this, SIGNAL(readyRead()), this, SLOT( processPendingDatagrams() ) );
   connect( this, SIGNAL(msg(QString, MsgType::Type, QString)), mainWindow, SLOT(message(QString, MsgType::Type, QString)));
   connect( &pingTimer, SIGNAL( timeout() ), this, SLOT( sendPing() ) );
@@ -64,7 +64,7 @@ bool NetworkMonitor::setListenPort( int port )
   else
   {
     listen_port = port;
-    QSettings settings("MakingThings", "mchelper");
+    QSettings settings;
     settings.setValue("udp_listen_port", listen_port);
     QString str = tr( "Now listening on port %1 for UDP messages.").arg( listen_port );
     emit msg( str, MsgType::Notice, "Ethernet" );
@@ -139,7 +139,7 @@ void NetworkMonitor::lookedUp(const QHostInfo &host)
   Called when a board has been removed.
   Remove it from our internal list, and remove it from the UI.
 */
-void NetworkMonitor::onDeviceRemoved(QString key)
+void NetworkMonitor::onDeviceRemoved(const QString & key)
 {
   if(connectedDevices.contains(key))
   {

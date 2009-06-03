@@ -61,11 +61,11 @@ public:
 
 public slots:
   void onEthernetDeviceArrived(PacketInterface* pi);
-  void onUsbDeviceArrived(QStringList keys, BoardType::Type type);
-  void onDeviceRemoved(QString key);
-  void message(QString msg, MsgType::Type type, QString from = "mchelper");
-  void message(QStringList msgs, MsgType::Type type, QString from = "mchelper");
-  void setBoardName( QString key, QString name );
+  void onUsbDeviceArrived(const QStringList & keys, BoardType::Type type);
+  void onDeviceRemoved(const QString & key);
+  void message(const QString & msg, MsgType::Type type, const QString & from = "mchelper");
+  void message(const QStringList & msgs, MsgType::Type type, const QString & from = "mchelper");
+  void setBoardName( const QString & key, const QString & name );
   void updateBoardInfo(Board *board);
 
 private:
@@ -86,7 +86,7 @@ private:
   void closeEvent( QCloseEvent *qcloseevent );
   void boardInit(Board *board);
   QColor msgColor(MsgType::Type type);
-  #ifdef Q_WS_WIN
+  #ifdef Q_OS_WIN
   bool winEvent( MSG* msg, long* result );
   #endif
   void addMessage( const QString & time, const QString & msg, const QString & tofrom, const QTextBlockFormat & bkgnd );

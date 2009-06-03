@@ -22,7 +22,7 @@ Preferences::Preferences(MainWindow *mw, NetworkMonitor *nm, OscXmlServer *oxs) 
 // read the current settings, load them into the preferences form and then display it
 void Preferences::loadAndShow( )
 {
-  QSettings settings("MakingThings", "mchelper");
+  QSettings settings;
   udpListenEdit->setText(QString::number(settings.value("udp_listen_port", DEFAULT_UDP_LISTEN_PORT).toInt()));
   udpSendEdit->setText(QString::number(settings.value("udp_send_port", DEFAULT_UDP_SEND_PORT).toInt()));
   xmlListenEdit->setText(QString::number(settings.value("xml_listen_port", DEFAULT_XML_LISTEN_PORT).toInt()));
@@ -39,8 +39,7 @@ void Preferences::loadAndShow( )
 // and call the mainwindow back if it needs to be updated
 void Preferences::applyChanges( )
 {
-  QSettings settings("MakingThings", "mchelper");
-
+  QSettings settings;
   int udp_listen_port = udpListenEdit->text().toInt();
   settings.setValue("udp_listen_port", udp_listen_port);
   networkMonitor->setListenPort(udp_listen_port);
