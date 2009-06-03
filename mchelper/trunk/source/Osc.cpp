@@ -61,7 +61,7 @@ QByteArray OscMessage::toByteArray( )
       }
       case OscData::Blob: // need to pad the blob
         typetag.append( 'b' );
-        // datastream packs this as an int32 followed by raw data, just like OSC wants
+        // datastream packs this as an int32 len followed by raw data, just like OSC wants
         dstream << dataElement->b();
         break;
       case OscData::Int:
@@ -262,20 +262,21 @@ bool Osc::extractData( const QString & typetag, QByteArray* msg, OscMessage* osc
   int typeIdx = 1; // start after the comma
   while(!dstream.atEnd() && typeIdx < typetag.size())
   {
+    OscData* newdata = 0;
     switch( typetag.at(typeIdx++).toAscii() )
     {
       case 'i':
       {
         int val;
         dstream >> val;
-        oscMessage->data.append( new OscData(val) );
+        newdata = new OscData(val);
         break;
       }
       case 'f':
       {
         float f;
         dstream >> f;
-        oscMessage->data.append( new OscData(f) );
+        newdata = new OscData(f);
         break;
       }
       case 's':
@@ -295,7 +296,7 @@ bool Osc::extractData( const QString & typetag, QByteArray* msg, OscMessage* osc
           else
             str.append(c);
         }
-        oscMessage->data.append( new OscData(str) );
+        newdata = new OscData(str);
         dstream.skipRawData(paddedLength(str) - str.size() - 1); // step past any extra padding
         break;
       }
@@ -303,12 +304,18 @@ bool Osc::extractData( const QString & typetag, QByteArray* msg, OscMessage* osc
       {
         QByteArray blob;
         dstream >> blob; // data stream unpacks this as an int32 len followed by data, just like OSC wants
-        oscMessage->data.append( new OscData( blob ) );
+        newdata = new OscData( blob );
         break;
       }
     }
-    if(dstream.status() != QDataStream::Ok)
+
+    if(dstream.status() == QDataStream::Ok && newdata)
+      oscMessage->data.append( newdata );
+    else
+    {
+      if(newdata) delete newdata;
       return false;
+    }
   }
   return true;
 }
@@ -363,44 +370,26 @@ bool Osc::createMessage( const QString & msg, OscMessage *oscMsg )
   if( !msg.startsWith( "/" ) )
     return false;
   QStringList msgElements = msg.split( " " );
-
   oscMsg->addressPattern = msgElements.takeFirst();
-
   // now do our best to guess the type of arguments
-  while( msgElements.size( ) )
+  while( !msgElements.isEmpty() )
   {
     QString elmnt = msgElements.takeFirst();
-    if( elmnt.startsWith( "\"" ) ) // see if it's a quoted string, presumably with spaces in it
+    // see if it's a quoted string, presumably with spaces in it
+    if( elmnt.startsWith( "\"" ) && !elmnt.endsWith("\"") )
     {
-      if( !elmnt.endsWith( "\"" ) )
+      elmnt.remove(0,1); // remove opening quote
+      while( !msgElements.isEmpty() )
       {
-        // we got a quote...zip through successive elements and find a matching end quote
-        while( msgElements.size( ) )
-        {
-          elmnt += QString(" " + msgElements.takeFirst());
-          if( elmnt.endsWith( "\"" ) )
-            break;
+        elmnt += QString(" " + msgElements.takeFirst());
+        if( elmnt.endsWith( "\"" ) ) {
+          elmnt.remove(elmnt.size() - 1, 1); // remove the trailing quote
+          break;
         }
       }
-      oscMsg->data.append( new OscData( elmnt.remove( "\"" ) ) ); // TODO, only remove first and last quotes
+      oscMsg->data.append( new OscData( elmnt ) );
     }
-    else if( elmnt.startsWith( "-" ) ) // see if it's a negative number
-    {
-      bool ok;
-      if( elmnt.contains( "." ) )
-      {
-        float f = elmnt.toFloat( &ok );
-        if( ok )
-          oscMsg->data.append( new OscData( f ) );
-      }
-      else
-      {
-        int i = elmnt.toInt( &ok );
-        if( ok )
-          oscMsg->data.append( new OscData( i ) );
-      }
-    }
-    else // no more special cases.  see if it's a number and if not, assume it's a string
+    else // see if it's a number and if not, assume it's a string
     {
       bool ok = false;
       if( elmnt.count( "." ) == 1) // might be a float, with exactly one .
@@ -416,7 +405,7 @@ bool Osc::createMessage( const QString & msg, OscMessage *oscMsg )
         if( ok )
           oscMsg->data.append( new OscData( i ) );
         else
-          oscMsg->data.append( new OscData( elmnt ) ); // a string
+          oscMsg->data.append( new OscData( elmnt ) ); // string
       }
     }
   }
