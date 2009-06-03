@@ -105,7 +105,7 @@ void TestXmlServer::dataFromBoard()
   QSignalSpy client2DataSpy(&xmlClient2, SIGNAL(readyRead()));
 
   mainWindow->oscXmlServer->sendPacket(msgs, "192.168.0.10");
-  QTest::qWait(5); // give it a moment
+  QTest::qWait(50); // give it a moment
   QCOMPARE(client1DataSpy.count(), 1 );
   QCOMPARE(client2DataSpy.count(), 1 );
   QVERIFY(xmlClient1.readAll() == xmlClient2.readAll()); // make sure they both got the same thing

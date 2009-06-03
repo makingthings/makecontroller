@@ -76,15 +76,19 @@ void TestOsc::mixed()
 */
 void TestOsc::roundtrip()
 {
-  OscMessage om;
-  osc.createMessage("/roundtrip 23 34 45", &om);
-  QByteArray ba = om.toByteArray();
+  OscMessage original;
+  osc.createMessage("/roundtrip 23 34 5.6 walrus", &original);
+  QByteArray ba = original.toByteArray();
   QList<OscMessage*> msgs = osc.processPacket( ba.data(), ba.size() );
   QCOMPARE(msgs.size(), 1);
-  OscMessage* omm = msgs.first();
-  QCOMPARE(omm->data.size(), om.data.size());
-  for( int i = 0; i < omm->data.size(); i++ )
-    QCOMPARE(omm->data.at(i)->i(), om.data.at(i)->i());
+  OscMessage* processed = msgs.first();
+  QCOMPARE(processed->data.size(), original.data.size());
+//  for( int i = 0; i < processed->data.size(); i++ )
+
+  QCOMPARE(processed->data.at(0)->i(), original.data.at(0)->i());
+  QCOMPARE(processed->data.at(1)->i(), original.data.at(1)->i());
+  QCOMPARE(processed->data.at(2)->f(), original.data.at(2)->f());
+  QCOMPARE(processed->data.at(3)->s(), original.data.at(3)->s());
 }
 
 /*
@@ -100,7 +104,7 @@ void TestOsc::bundle()
 
   QByteArray bundle = osc.createPacket(strings);
   QList<OscMessage*> msgs = osc.processPacket( bundle.data(), bundle.size() );
-  QCOMPARE(msgs.size(), 3);
+  QCOMPARE(msgs.size(), strings.size());
 
   OscMessage* m = msgs.at(0);
   QVERIFY(m->addressPattern == "/test");

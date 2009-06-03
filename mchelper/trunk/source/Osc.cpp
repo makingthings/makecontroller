@@ -16,10 +16,9 @@
 *********************************************************************************/
 
 #include "Osc.h"
-#include <QtCore/qendian.h>
 #include <QApplication>
 #include <QtDebug>
-#include <QBuffer>
+#include <QDataStream>
 
 QString OscMessage::toString( )
 {
@@ -47,32 +46,34 @@ QByteArray OscMessage::toByteArray( )
   QByteArray msg = Osc::writePaddedString( this->addressPattern );
   QString typetag( "," );
   QByteArray args; // intermediate spot for arguments until we've assembled the typetag
+  QDataStream dstream(&args, QIODevice::WriteOnly);
   foreach( OscData* dataElement, data )
   {
     switch( dataElement->type )
     {
       case OscData::String:
+      {
         typetag.append( 's' );
-        args.append( Osc::writePaddedString( dataElement->s() ) );
+        QByteArray ba = Osc::writePaddedString( dataElement->s() );
+        // need to write this as raw data so it doesn't stick a length in there for us
+        dstream.writeRawData(ba.constData(), ba.size());
         break;
+      }
       case OscData::Blob: // need to pad the blob
         typetag.append( 'b' );
-        args.append( Osc::writePaddedString( dataElement->s() ) );
+        // datastream packs this as an int32 followed by raw data, just like OSC wants
+        dstream << dataElement->b();
         break;
       case OscData::Int:
       {
         typetag.append( 'i' );
-        QByteArray intarg(sizeof(int), 0);
-        *(int*)intarg.data() = qToBigEndian( dataElement->i() );
-        args.append( intarg );
+        dstream << dataElement->i();
         break;
       }
       case OscData::Float:
       {
         typetag.append( 'f' );
-        QByteArray floatarg(sizeof(int), 0);
-        *(int*)floatarg.data() = qToBigEndian( (int)dataElement->f() );
-        args.append( floatarg );
+        dstream << dataElement->f();
         break;
       }
     }
@@ -141,14 +142,11 @@ QByteArray Osc::createPacket( const QList<OscMessage*> & msgs )
   {
     bundle += Osc::writePaddedString( "#bundle" ); // indicate that this is indeed a bundle
     bundle += Osc::writeTimetag( 0, 0 ); // we don't do much with timetags
+
+    QDataStream dstream(&bundle, QIODevice::WriteOnly);
+    dstream.skipRawData(bundle.size()); // make sure we're at the end of the data
     foreach(OscMessage* msg, msgs) // then write out the messages
-    {
-      QByteArray m = msg->toByteArray();
-      QByteArray bundlesize(sizeof(int), 0);
-      *(int*)bundlesize.data() = qToBigEndian( m.size() );
-      bundle += bundlesize; // each message in a bundle is preceded by its int32 size
-      bundle += m;
-    }
+      dstream << msg->toByteArray(); // datastream packs this as an int32 followed by raw data, just like OSC wants
   }
   Q_ASSERT( ( bundle.size( ) % 4 ) == 0 );
   return bundle;
@@ -196,23 +194,19 @@ bool Osc::receivePacket( QByteArray* pkt, QList<OscMessage*>* oscMessageList )
   }
   else if(pkt->startsWith("#bundle")) // bundle
   {
-    pkt->remove(0, 16); // skip bundle text and timetag
-    while( pkt->size() )
+    QDataStream dstream(pkt, QIODevice::ReadOnly);
+    dstream.skipRawData(16); // skip bundle text and timetag
+    QByteArray msg;
+    while( !dstream.atEnd() && dstream.status() == QDataStream::Ok )
     {
-      if( pkt->size() > 16384 || pkt->size() <= 0 )
+      dstream >> msg; // unpacks as int32 len followed by raw data, just like OSC wants
+      if( msg.size() > 16384 || msg.size() <= 0 )
       {
-        qDebug() << QApplication::tr("got insane length - %d, bailing.").arg(pkt->size());
+        qDebug() << QApplication::tr("got insane length - %d, bailing.").arg(msg.size());
         return false;
       }
-      int messageLength = qFromBigEndian( *(int*)pkt->data() );
-      pkt->remove(0, sizeof(int));
-      if ( messageLength <= pkt->size() )
-      {
-        QByteArray msg = pkt->left(messageLength);
-        if( !receivePacket( &msg, oscMessageList ) )
-          return false;
-      }
-      pkt->remove(0, messageLength);
+      if( !receivePacket( &msg, oscMessageList ) )
+        return false;
     }
   }
   else // something we don't recognize...
@@ -264,54 +258,58 @@ OscMessage* Osc::receiveMessage( QByteArray* msg )
 */
 bool Osc::extractData( const QString & typetag, QByteArray* msg, OscMessage* oscMessage )
 {
-  QBuffer buf(msg);
-  buf.open(QIODevice::ReadOnly);
+  QDataStream dstream(msg, QIODevice::ReadOnly);
   int typeIdx = 1; // start after the comma
-  while(!buf.atEnd() && typeIdx < typetag.size())
+  while(!dstream.atEnd() && typeIdx < typetag.size())
   {
     switch( typetag.at(typeIdx++).toAscii() )
     {
       case 'i':
       {
-        QByteArray i(sizeof(int), 0);
-        if(buf.read(i.data(), i.size()) < 1)
-          return false;
-        int val = qFromBigEndian( *(int*)i.data() );
-        oscMessage->data.append( new OscData((val)) );
+        int val;
+        dstream >> val;
+        oscMessage->data.append( new OscData(val) );
         break;
       }
       case 'f':
       {
-        QByteArray i(sizeof(int), 0);
-        if(buf.read(i.data(), i.size()) < 1)
-          return false;
-        int val = qFromBigEndian( *(int*)i.data() );
-        float f = *(float*)&val;
+        float f;
+        dstream >> f;
         oscMessage->data.append( new OscData(f) );
         break;
       }
       case 's':
       {
-        QString str(buf.buffer().mid(buf.pos()).data());
+        /*
+          normally data stream wants to store int32 then string data, but
+          that's not how OSC wants it so just pull out chars until we get a null
+          then skip any remaining nulls
+        */
+        QString str;
+        quint8 c;
+        while(!dstream.atEnd())
+        {
+          dstream >> c;
+          if(c == 0)
+            break;
+          else
+            str.append(c);
+        }
         oscMessage->data.append( new OscData(str) );
-        buf.read(paddedLength(str)); // pull it out of the buffer
+        dstream.skipRawData(paddedLength(str) - str.size() - 1); // step past any extra padding
         break;
       }
       case 'b':
       {
-        QByteArray blob(sizeof(int), 0); // first read the int32 blob length
-        if(buf.read(blob.data(), blob.size()) < 1)
-          return false;
-        int blob_len = qFromBigEndian( *(int*)blob.data() );
-        blob.resize(blob_len);
-        if(buf.read(blob.data(), blob_len) < 1) // then get the blob data
-          return false;
+        QByteArray blob;
+        dstream >> blob; // data stream unpacks this as an int32 len followed by data, just like OSC wants
         oscMessage->data.append( new OscData( blob ) );
         break;
       }
     }
+    if(dstream.status() != QDataStream::Ok)
+      return false;
   }
-  buf.close();
   return true;
 }
 
@@ -352,13 +350,8 @@ int Osc::paddedLength( const QString & str )
 QByteArray Osc::writeTimetag( int a, int b )
 {
   QByteArray tag;
-  QByteArray bytes(sizeof(int), 0);
-  *(int*)bytes.data() = qToBigEndian( a );
-  tag += bytes;
-
-  *(int*)bytes.data() = qToBigEndian( b );
-  tag += bytes;
-
+  QDataStream dstream(&tag, QIODevice::WriteOnly);
+  dstream << a << b;
   Q_ASSERT( tag.size( ) == 8 );
   return tag;
 }
@@ -367,9 +360,9 @@ QByteArray Osc::writeTimetag( int a, int b )
 // delimited by spaces
 bool Osc::createMessage( const QString & msg, OscMessage *oscMsg )
 {
-  QStringList msgElements = msg.split( " " );
-  if( !msgElements.at( 0 ).startsWith( "/" ) )
+  if( !msg.startsWith( "/" ) )
     return false;
+  QStringList msgElements = msg.split( " " );
 
   oscMsg->addressPattern = msgElements.takeFirst();
 
@@ -384,13 +377,9 @@ bool Osc::createMessage( const QString & msg, OscMessage *oscMsg )
         // we got a quote...zip through successive elements and find a matching end quote
         while( msgElements.size( ) )
         {
-          if( msgElements.first().endsWith( "\"" ) )
-          {
-            elmnt += QString( " %1" ).arg( msgElements.takeFirst() );
+          elmnt += QString(" " + msgElements.takeFirst());
+          if( elmnt.endsWith( "\"" ) )
             break;
-          }
-          else
-            elmnt += msgElements.takeFirst();
         }
       }
       oscMsg->data.append( new OscData( elmnt.remove( "\"" ) ) ); // TODO, only remove first and last quotes
@@ -410,7 +399,6 @@ bool Osc::createMessage( const QString & msg, OscMessage *oscMsg )
         if( ok )
           oscMsg->data.append( new OscData( i ) );
       }
-
     }
     else // no more special cases.  see if it's a number and if not, assume it's a string
     {
