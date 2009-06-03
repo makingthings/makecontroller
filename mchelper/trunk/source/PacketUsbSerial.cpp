@@ -16,8 +16,7 @@
 *********************************************************************************/
 
 #include "PacketUsbSerial.h"
-#include <QtDebug>
-#include <QBuffer>
+#include <QDebug>
 
 // SLIP codes
 #define END     0300 // indicates end of packet
@@ -79,11 +78,10 @@ bool PacketUsbSerial::sendPacket( const char* packet, int length )
 {
   QByteArray out;
   out.append( END ); // Flush out any spurious data that may have accumulated
-  int size = length;
-
-  while( size-- )
+  while( length-- )
   {
-    switch(*packet)
+    const char c = *packet++;
+    switch(c)
     {
       // if it's the same code as an END character, we send a special
       //two character code so as not to make the receiver think we sent an END
@@ -97,12 +95,10 @@ bool PacketUsbSerial::sendPacket( const char* packet, int length )
         out.append( ESC );
         out.append( ESC_ESC );
         break;
-
         //otherwise, just send the character
       default:
-        out.append( *packet );
+        out.append( c );
     }
-    packet++;
   }
   // tell the receiver that we're done sending the packet
   out.append( END );
@@ -121,12 +117,10 @@ bool PacketUsbSerial::sendPacket( const char* packet, int length )
 */
 void PacketUsbSerial::slipDecode( )
 {
-  char c;
-  QBuffer buf(&readBuffer);
-  buf.open(QBuffer::ReadOnly);
-  while( !buf.atEnd() )
+  while(!readBuffer.isEmpty())
   {
-    buf.getChar(&c);
+    unsigned char c = *(readBuffer.data());
+    readBuffer.remove(0, 1);
     switch( c )
     {
       case END:
@@ -143,18 +137,23 @@ void PacketUsbSerial::slipDecode( )
         // we got an ESC character - get the next byte.
         // if it's not an ESC_END or ESC_ESC, it's a malformed packet.
         // http://tools.ietf.org/html/rfc1055 says just drop it in the packet in this case
-        buf.getChar(&c);
-        if( pkt_started )
-        {
-          if( c == (char)ESC_END )
+        if(readBuffer.isEmpty())
+          return;
+        else {
+          c = *(readBuffer.data());
+          readBuffer.remove(0, 1);
+          if( pkt_started )
           {
-            currentPacket.append(END);
-            break;
-          }
-          else if( c == (char)ESC_ESC )
-          {
-            currentPacket.append(ESC);
-            break;
+            if( c == ESC_END )
+            {
+              currentPacket.append(END);
+              break;
+            }
+            else if( c == ESC_ESC )
+            {
+              currentPacket.append(ESC);
+              break;
+            }
           }
         }
         // no break here
@@ -164,7 +163,6 @@ void PacketUsbSerial::slipDecode( )
         break;
     }
   }
-  buf.close();
 }
 
 
