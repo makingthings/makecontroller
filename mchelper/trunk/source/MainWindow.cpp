@@ -149,7 +149,7 @@ void MainWindow::closeEvent( QCloseEvent *qcloseevent )
   qApp->quit(); // in case the inspector or anything else is still open
 }
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 bool MainWindow::winEvent( MSG* msg, long* result )
 {
   if ( msg->message == WM_DEVICECHANGE )
