@@ -2,10 +2,8 @@
 #define ABOUT_H
 
 #include <QDialog>
-#include <QVBoxLayout>
-#include <QPushButton>
-#include <QHBoxLayout>
-#include <QLabel>
+#include <QTextBrowser>
+#include "ui_about.h"
 
 class About : public QDialog
 {
@@ -13,12 +11,8 @@ class About : public QDialog
 public:
   About();
 private:
-  QPushButton *okButton;
-  QLabel title, version, icon;
-  QLabel *description;
-  QPixmap *mchelperIcon;
-  QVBoxLayout *topLevelLayout;
-  QHBoxLayout *buttonLayout;
+  QTextBrowser body;
+  Ui::AboutUi ui;
 };
 
 #endif // ABOUT_H

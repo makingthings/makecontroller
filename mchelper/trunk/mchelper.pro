@@ -8,7 +8,8 @@ CONFIG += qt debug
 FORMS = layouts/mainwindow.ui \
         layouts/inspector.ui \
         layouts/preferences.ui \
-        layouts/uploader.ui
+        layouts/uploader.ui \
+        layouts/about.ui
 
 HEADERS = include/MainWindow.h \
           include/OscXmlServer.h \
