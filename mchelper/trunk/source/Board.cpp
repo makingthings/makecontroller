@@ -42,6 +42,15 @@ Board::~Board()
   delete packetInterface;
 }
 
+QString Board::key( )
+{
+  QString k = _key;
+  #ifdef Q_OS_WIN
+  k.remove("\\\\.\\"); // in case it's above com9
+  #endif
+  return k;
+}
+
 QString Board::location( )
 {
   switch( _type )
@@ -50,10 +59,11 @@ QString Board::location( )
       return tr("Unprogrammed Board");
     case BoardType::UsbSerial:
     {
-      QString k = _key;
-      if( k.startsWith("\\\\.\\"))
-         k.remove("\\\\.\\");
-      return QString( "USB (%1)" ).arg(k);
+      #ifdef Q_OS_WIN
+        return QString( "USB (%1)" ).arg(key());
+      #else
+        return "USB";
+      #endif
     }
     case BoardType::Ethernet:
       return _key;
