@@ -52,7 +52,7 @@ class XmlHandler : public QObject, public QXmlDefaultHandler
     bool fatalError (const QXmlParseException & exception);
 
   signals:
-    void msg(QStringList msg, MsgType::Type, QString from);
+    void msg(const QStringList & msg, MsgType::Type, const QString & from);
 
   private:
     MainWindow *mainWindow;
@@ -80,7 +80,7 @@ class OscXmlClient : public QThread
     void sendXmlPacket( const QList<OscMessage*> & messageList, const QString & srcAddress );
 
   signals:
-    void msg(QString msg, MsgType::Type, QString from);
+    void msg(const QString & msg, MsgType::Type, const QString & from);
 
   private:
     int socketDescriptor;
@@ -111,7 +111,7 @@ class OscXmlServer : public QTcpServer
   Q_OBJECT
   public:
     OscXmlServer( MainWindow *mainWindow, QObject *parent = 0 );
-    bool setListenPort( int port );
+    bool setListenPort( int port, bool announce = true );
     void sendPacket(const QList<OscMessage*> & msgs, const QString & srcAddress);
     void sendBoardListUpdate(QList<Board*> boardList, bool arrived);
 
