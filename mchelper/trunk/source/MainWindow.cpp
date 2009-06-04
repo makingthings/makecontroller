@@ -281,7 +281,7 @@ void MainWindow::onUsbDeviceArrived(const QStringList & keys, BoardType::Type ty
       usb->open();
       board->setText(key);
       board->setIcon(QIcon(":icons/usb_icon.gif"));
-      board->setToolTip(tr("USB Serial Device: ") + board->location());
+      board->setToolTip(tr("USB Serial Device: ") + board->key());
       noUiString = tr("usb device discovered: ") + board->location();
     }
     else if(type == BoardType::UsbSamba)
@@ -341,7 +341,8 @@ void MainWindow::onDeviceRemoved(const QString & key)
     if( board->key() == key )
     {
       Board* brd = (Board*)deviceList->takeItem(deviceList->row(board));
-      brd->deleteLater();
+      delete brd;
+      // NOTE - brd->deleteLater() doesn't actually end up deleting the board here.  wtf?
       if(noUi())
       {
         QTextStream out(stdout);
@@ -512,7 +513,7 @@ void MainWindow::onCommandLine()
   Board* brd = getCurrentBoard();
   if(cmd.isEmpty() || brd == NULL)
     return;
-  message(cmd, MsgType::Command, brd->location()); // print it to screen
+  message(cmd, MsgType::Command, brd->key()); // print it to screen
   brd->sendMessage(cmd); // send it to the board
 
   // in order to get a readline-style history of commands via up/down arrows

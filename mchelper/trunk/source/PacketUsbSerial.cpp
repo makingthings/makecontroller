@@ -34,7 +34,7 @@ PacketUsbSerial::PacketUsbSerial(QString portName)
 PacketUsbSerial::~PacketUsbSerial( )
 {
   port->close();
-  port->deleteLater();
+  delete port;
 }
 
 /*
@@ -59,8 +59,6 @@ void PacketUsbSerial::processNewData( )
       slipDecode();
     }
   }
-  else
-    qDebug() << tr("USB bytes available error:") << avail;
 }
 
 bool PacketUsbSerial::open( )
