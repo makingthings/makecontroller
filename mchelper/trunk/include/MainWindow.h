@@ -42,7 +42,7 @@ public:
 
 #include "ui_mainwindow.h"
 
-class MainWindow : public QMainWindow, private Ui::MainWindowUi
+class MainWindow : public QMainWindow
 {
   Q_OBJECT
 public:
@@ -52,10 +52,10 @@ public:
   Board* getCurrentBoard();
   QList<Board*> getConnectedBoards();
   // make these available to the device list
-  QAction* uploadAction() { return actionUpload; }
-  QAction* inspectorAction() { return actionInspector; }
-  QAction* resetAction() { return actionResetBoard; }
-  QAction* sambaAction() { return actionEraseBoard; }
+  QAction* uploadAction() { return ui.actionUpload; }
+  QAction* inspectorAction() { return ui.actionInspector; }
+  QAction* resetAction() { return ui.actionResetBoard; }
+  QAction* sambaAction() { return ui.actionEraseBoard; }
   void statusMsg(const QString & msg, int duration = 3500);
   void newXmlPacketReceived( const QList<OscMessage*> & msgs, const QString & destination );
 
@@ -69,6 +69,7 @@ public slots:
   void updateBoardInfo(Board *board);
 
 private:
+  Ui::MainWindowUi ui;
   Inspector *inspector;
   NetworkMonitor *networkMonitor;
   UsbMonitor *usbMonitor;
