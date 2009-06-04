@@ -17,7 +17,7 @@
 */
 MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
 {
-  setupUi(this);
+  ui.setupUi(this);
   this->no_ui = no_ui;
   appUpdater = new AppUpdater();
   readSettings( );
@@ -26,13 +26,13 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   // remove when boards have been discovered
   deviceListPlaceholder = QListWidgetItem( tr("No Make Controllers found...") );
   deviceListPlaceholder.setData( Qt::ForegroundRole, Qt::gray );
-  deviceList->addItem( &deviceListPlaceholder );
+  ui.deviceList->addItem( &deviceListPlaceholder );
 
   // default these to off until we see a board
-  actionUpload->setEnabled(false);
-  actionInspector->setEnabled(false);
-  actionResetBoard->setEnabled(false);
-  actionEraseBoard->setEnabled(false);
+  ui.actionUpload->setEnabled(false);
+  ui.actionInspector->setEnabled(false);
+  ui.actionResetBoard->setEnabled(false);
+  ui.actionEraseBoard->setEnabled(false);
 
   grayText.setForeground( Qt::gray );
   blackText.setForeground( Qt::black );
@@ -47,25 +47,25 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   about = new About();
 
   // device list connections
-  connect( deviceList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(onDoubleClick()));
-  connect( deviceList, SIGNAL(itemSelectionChanged()), this, SLOT(onDeviceSelectionChanged()));
+  connect( ui.deviceList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(onDoubleClick()));
+  connect( ui.deviceList, SIGNAL(itemSelectionChanged()), this, SLOT(onDeviceSelectionChanged()));
 
   // menu connections
-  connect( actionInspector, SIGNAL(triggered()), inspector, SLOT(loadAndShow()));
-  connect( actionPreferences, SIGNAL(triggered()), preferences, SLOT(loadAndShow()));
-  connect( actionUpload, SIGNAL(triggered()), uploader, SLOT(show()));
-  connect( actionClearConsole, SIGNAL(triggered()), outputConsole, SLOT(clear()));
-  connect( actionAbout, SIGNAL(triggered()), about, SLOT(show()));
-  connect( actionResetBoard, SIGNAL(triggered()), this, SLOT(onDeviceResetRequest()));
-  connect( actionEraseBoard, SIGNAL(triggered()), this, SLOT(onEraseRequest()));
-  connect( actionHide_OSC, SIGNAL(triggered(bool)), this, SLOT(onHideOsc(bool)));
-  connect( actionCheckForUpdates, SIGNAL(triggered()), this, SLOT(onCheckForUpdates()));
-  connect( actionHelp, SIGNAL(triggered()), this, SLOT(onHelp()));
-  connect( actionOscTutorial, SIGNAL(triggered()), this, SLOT(onOscTutorial()));
+  connect( ui.actionInspector, SIGNAL(triggered()), inspector, SLOT(loadAndShow()));
+  connect( ui.actionPreferences, SIGNAL(triggered()), preferences, SLOT(loadAndShow()));
+  connect( ui.actionUpload, SIGNAL(triggered()), uploader, SLOT(show()));
+  connect( ui.actionClearConsole, SIGNAL(triggered()), ui.outputConsole, SLOT(clear()));
+  connect( ui.actionAbout, SIGNAL(triggered()), about, SLOT(show()));
+  connect( ui.actionResetBoard, SIGNAL(triggered()), this, SLOT(onDeviceResetRequest()));
+  connect( ui.actionEraseBoard, SIGNAL(triggered()), this, SLOT(onEraseRequest()));
+  connect( ui.actionHide_OSC, SIGNAL(triggered(bool)), this, SLOT(onHideOsc(bool)));
+  connect( ui.actionCheckForUpdates, SIGNAL(triggered()), this, SLOT(onCheckForUpdates()));
+  connect( ui.actionHelp, SIGNAL(triggered()), this, SLOT(onHelp()));
+  connect( ui.actionOscTutorial, SIGNAL(triggered()), this, SLOT(onOscTutorial()));
 
   // command line connections
-  connect( commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onCommandLine()));
-  connect( sendButton, SIGNAL(clicked()), this, SLOT(onCommandLine()));
+  connect( ui.commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onCommandLine()));
+  connect( ui.sendButton, SIGNAL(clicked()), this, SLOT(onCommandLine()));
 
   #if !defined (Q_OS_WIN) && !defined (Q_OS_MAC)
   // the USB monitor runs in a separate thread...start it up.
@@ -86,24 +86,23 @@ void MainWindow::readSettings()
     move(mainWinPos);
 
   QList<QVariant> splitterSettings = settings.value( "splitterSizes" ).toList( );
-  if( !splitterSettings.isEmpty( ) )
-  {
+  if( !splitterSettings.isEmpty( ) ) {
     QList<int> splitterSizes;
     foreach( QVariant setting, splitterSettings )
       splitterSizes << setting.toInt( );
-    splitter->setSizes( splitterSizes );
+    ui.splitter->setSizes( splitterSizes );
   }
 
   QStringList commands = settings.value( "commands" ).toStringList( );
   foreach( QString cmd, commands )
-    commandLine->addItem(cmd);
-  if(!commandLine->count()) // always want to have a space on the end of our list of commands
-    commandLine->addItem( "" );
+    ui.commandLine->addItem(cmd);
+  if(!ui.commandLine->count()) // always want to have a space on the end of our list of commands
+    ui.commandLine->addItem( "" );
   else
-    commandLine->setCurrentIndex(commandLine->count() - 1 );
+    ui.commandLine->setCurrentIndex(ui.commandLine->count() - 1 );
 
   hideOscMsgs = settings.value("hideOscMsgs", false ).toBool();
-  actionHide_OSC->setChecked(hideOscMsgs);
+  ui.actionHide_OSC->setChecked(hideOscMsgs);
 
   setMaxMessages(settings.value("max_messages", DEFAULT_ACTIVITY_MESSAGES).toInt( ));
 
@@ -114,7 +113,7 @@ void MainWindow::readSettings()
 
 void MainWindow::setMaxMessages(int msgs)
 {
-  outputConsole->setMaximumBlockCount(msgs);
+  ui.outputConsole->setMaximumBlockCount(msgs);
 }
 
 void MainWindow::writeSettings()
@@ -125,14 +124,14 @@ void MainWindow::writeSettings()
   settings.setValue("inspector_pos", inspector->pos());
 
   QList<QVariant> splitterSettings;
-  QList<int> splitterSizes = splitter->sizes();
+  QList<int> splitterSizes = ui.splitter->sizes();
   foreach( int splitterSize, splitterSizes )
     splitterSettings << splitterSize;
   settings.setValue("splitterSizes", splitterSettings );
 
   QStringList commands;
-  for( int i = 0; i < commandLine->count(); i++ )
-    commands << commandLine->itemText(i);
+  for( int i = 0; i < ui.commandLine->count(); i++ )
+    commands << ui.commandLine->itemText(i);
   settings.setValue("commands", commands );
 
   settings.setValue("hideOscMsgs", hideOscMsgs );
@@ -166,14 +165,12 @@ bool MainWindow::winEvent( MSG* msg, long* result )
 void DeviceList::contextMenuEvent(QContextMenuEvent *event)
 {
   Board *brd = (Board*)itemAt(event->pos());
-  if(brd)
-  {
+  if(brd) {
     QMenu menu(this);
     MainWindow *mw = brd->mainWindowRef();
     if(brd->type() == BoardType::UsbSamba)
       menu.addAction(mw->uploadAction());
-    else if(brd->type() == BoardType::Ethernet || brd->type() == BoardType::UsbSerial)
-    {
+    else if(brd->type() == BoardType::Ethernet || brd->type() == BoardType::UsbSerial) {
       menu.addAction(mw->inspectorAction());
       menu.addAction(mw->resetAction());
       menu.addAction(mw->sambaAction());
@@ -190,17 +187,14 @@ void DeviceList::contextMenuEvent(QContextMenuEvent *event)
 void MainWindow::onDoubleClick()
 {
   Board *brd = getCurrentBoard( );
-  if( brd )
-  {
-    if( brd->type() == BoardType::UsbSamba )
-    {
+  if( brd ) {
+    if( brd->type() == BoardType::UsbSamba ) {
       if(!uploader->isVisible())
         uploader->show();
       uploader->raise();
       uploader->activateWindow();
     }
-    else
-    {
+    else {
       if(!inspector->isVisible())
         inspector->loadAndShow();
       inspector->raise();
@@ -217,22 +211,19 @@ void MainWindow::onDoubleClick()
 void MainWindow::onDeviceSelectionChanged()
 {
   Board *brd = getCurrentBoard( );
-  if(brd)
-  {
-    if(brd->type() == BoardType::UsbSamba)
-    {
-      actionUpload->setEnabled(true);
-      actionInspector->setEnabled(false);
-      actionResetBoard->setEnabled(false);
-      actionEraseBoard->setEnabled(false);
+  if(brd) {
+    if(brd->type() == BoardType::UsbSamba) {
+      ui.actionUpload->setEnabled(true);
+      ui.actionInspector->setEnabled(false);
+      ui.actionResetBoard->setEnabled(false);
+      ui.actionEraseBoard->setEnabled(false);
     }
-    else
-    {
+    else {
       inspector->setData(brd);
-      actionInspector->setEnabled(true);
-      actionUpload->setEnabled(false);
-      actionResetBoard->setEnabled(true);
-      actionEraseBoard->setEnabled(true);
+      ui.actionInspector->setEnabled(true);
+      ui.actionUpload->setEnabled(false);
+      ui.actionResetBoard->setEnabled(true);
+      ui.actionEraseBoard->setEnabled(true);
     }
   }
   else
@@ -251,8 +242,7 @@ void MainWindow::onEthernetDeviceArrived(PacketInterface* pi)
   board->setIcon(QIcon(":icons/network_icon.gif"));
   board->setToolTip(tr("Ethernet Device: ") + pi->key());
 
-  if(noUi())
-  {
+  if(noUi()) {
     QTextStream out(stdout);
     out << tr("network device discovered: ") + pi->key() << endl;
   }
@@ -272,10 +262,8 @@ void MainWindow::onUsbDeviceArrived(const QStringList & keys, BoardType::Type ty
   Board *board;
   QList<Board*> boardList;
   QString noUiString;
-  foreach(QString key, keys)
-  {
-    if( type == BoardType::UsbSerial)
-    {
+  foreach(QString key, keys) {
+    if( type == BoardType::UsbSerial){
       PacketUsbSerial *usb = new PacketUsbSerial(key);
       board = new Board(this, usb, oscXmlServer, type, key);
       usb->open();
@@ -284,8 +272,7 @@ void MainWindow::onUsbDeviceArrived(const QStringList & keys, BoardType::Type ty
       board->setToolTip(tr("USB Serial Device: ") + board->key());
       noUiString = tr("usb device discovered: ") + board->location();
     }
-    else if(type == BoardType::UsbSamba)
-    {
+    else if(type == BoardType::UsbSamba) {
       board = new Board(this, 0, 0, type, key);
       board->setText(tr("Unprogrammed Board"));
       board->setIcon(QIcon(":icons/usb_icon.gif"));
@@ -293,8 +280,7 @@ void MainWindow::onUsbDeviceArrived(const QStringList & keys, BoardType::Type ty
       noUiString = tr("sam-ba device discovered: ") + board->location();
     }
 
-    if(noUi())
-    {
+    if(noUi()) {
       QTextStream out(stdout);
       out << noUiString << endl;
     }
@@ -312,13 +298,13 @@ void MainWindow::boardInit(Board *board)
 {
   connect(board, SIGNAL(newInfo(Board*)), this, SLOT(updateBoardInfo(Board*)));
   // if the placeholder is in there, get rid of it
-  int placeholderRow = deviceList->row( &deviceListPlaceholder );
+  int placeholderRow = ui.deviceList->row( &deviceListPlaceholder );
   if( placeholderRow >= 0 )
-    deviceList->takeItem( placeholderRow );
-  deviceList->addItem(board);
+    ui.deviceList->takeItem( placeholderRow );
+  ui.deviceList->addItem(board);
   // if no other boards are selected, select this new one
   if( !getCurrentBoard() )
-    deviceList->setCurrentRow (deviceList->count()-1);
+    ui.deviceList->setCurrentRow (ui.deviceList->count()-1);
   board->sendMessage("/system/info-internal"); // get the board's info
   onDeviceSelectionChanged(); // make sure menus get updated
 }
@@ -336,15 +322,12 @@ void MainWindow::updateBoardInfo(Board *board)
 void MainWindow::onDeviceRemoved(const QString & key)
 {
   QList<Board*> boards = getConnectedBoards();
-  foreach(Board *board, boards)
-  {
-    if( board->key() == key )
-    {
-      Board* brd = (Board*)deviceList->takeItem(deviceList->row(board));
+  foreach(Board *board, boards) {
+    if( board->key() == key ) {
+      Board* brd = (Board*)ui.deviceList->takeItem(ui.deviceList->row(board));
       delete brd;
       // NOTE - brd->deleteLater() doesn't actually end up deleting the board here.  wtf?
-      if(noUi())
-      {
+      if(noUi()) {
         QTextStream out(stdout);
         out << tr("network device removed: ") + key;
       }
@@ -352,8 +335,8 @@ void MainWindow::onDeviceRemoved(const QString & key)
     }
   }
   // if no boards are left, put the placeholder back in
-  if( !deviceList->count( ) )
-    deviceList->addItem( &deviceListPlaceholder );
+  if( !ui.deviceList->count( ) )
+    ui.deviceList->addItem( &deviceListPlaceholder );
 }
 
 void MainWindow::message(const QStringList & msgs, MsgType::Type type, const QString & from)
@@ -367,22 +350,20 @@ void MainWindow::message(const QStringList & msgs, MsgType::Type type, const QSt
   if(type == MsgType::Command)
     tofrom = "to";
 
-  outputConsole->setUpdatesEnabled(false);
+  ui.outputConsole->setUpdatesEnabled(false);
   QString tf = QString("%1 %2").arg(tofrom).arg(from);
   foreach(QString msg, msgs)
     addMessage( currentTime, msg, tf, format);
-  outputConsole->setUpdatesEnabled(true);
+  ui.outputConsole->setUpdatesEnabled(true);
 }
 
 void MainWindow::message(const QString & msg, MsgType::Type type, const QString & from)
 {
-  if(noUi())
-  {
+  if(noUi()) {
     QTextStream out(stdout);
     out << from + ": " + msg << endl;
   }
-  else
-  {
+  else {
     if( !messagesEnabled( type ) )
       return;
     QTextBlockFormat format;
@@ -392,29 +373,28 @@ void MainWindow::message(const QString & msg, MsgType::Type type, const QString 
     if(type == MsgType::Command)
       tofrom = tr("to");
 
-    outputConsole->setUpdatesEnabled(false);
+    ui.outputConsole->setUpdatesEnabled(false);
     addMessage( QTime::currentTime().toString(), msg, QString("%1 %2").arg(tofrom).arg(from), format);
-    outputConsole->setUpdatesEnabled(true);
+    ui.outputConsole->setUpdatesEnabled(true);
   }
 }
 
 void MainWindow::addMessage( const QString & time, const QString & msg,
                               const QString & tofrom, const QTextBlockFormat & bkgnd )
 {
-  outputConsole->setCurrentCharFormat(grayText);
-  outputConsole->appendPlainText(time + "   ");
-  outputConsole->setCurrentCharFormat(blackText);
-  outputConsole->insertPlainText(msg);
-  outputConsole->setCurrentCharFormat(grayText);
-  outputConsole->insertPlainText(" " + tofrom);
-  outputConsole->textCursor().setBlockFormat(bkgnd);
+  ui.outputConsole->setCurrentCharFormat(grayText);
+  ui.outputConsole->appendPlainText(time + "   ");
+  ui.outputConsole->setCurrentCharFormat(blackText);
+  ui.outputConsole->insertPlainText(msg);
+  ui.outputConsole->setCurrentCharFormat(grayText);
+  ui.outputConsole->insertPlainText(" " + tofrom);
+  ui.outputConsole->textCursor().setBlockFormat(bkgnd);
 }
 
 bool MainWindow::messagesEnabled( MsgType::Type type )
 {
   bool retval = true;
-  if(type == MsgType::Command || type == MsgType::XMLMessage || type == MsgType::Response || type == MsgType::Warning)
-  {
+  if(type == MsgType::Command || type == MsgType::XMLMessage || type == MsgType::Response || type == MsgType::Warning) {
     if( hideOscMsgs )
       retval = false;
   }
@@ -450,10 +430,8 @@ QColor MainWindow::msgColor(MsgType::Type type)
 void MainWindow::newXmlPacketReceived( const QList<OscMessage*> & msgs, const QString & destination )
 {
   QList<Board*> boardList = getConnectedBoards( );
-  foreach(Board *board, boardList)
-  {
-    if( board->key() == destination )
-    {
+  foreach(Board *board, boardList) {
+    if( board->key() == destination ) {
       board->sendMessage( msgs );
       break;
     }
@@ -463,11 +441,9 @@ void MainWindow::newXmlPacketReceived( const QList<OscMessage*> & msgs, const QS
 void MainWindow::setBoardName( const QString & key, const QString & name )
 {
   QList<Board*> boardList = getConnectedBoards( );
-  foreach(Board *board, boardList)
-  {
-    if( board->key() == key )
-    {
-      deviceList->item(deviceList->row(board))->setText(name);
+  foreach(Board *board, boardList) {
+    if( board->key() == key ) {
+      ui.deviceList->item(ui.deviceList->row(board))->setText(name);
       break;
     }
   }
@@ -479,14 +455,14 @@ void MainWindow::setBoardName( const QString & key, const QString & name )
 */
 Board* MainWindow::getCurrentBoard( )
 {
-  QListWidgetItem* item = deviceList->currentItem( );
+  QListWidgetItem* item = ui.deviceList->currentItem( );
   if( item == &deviceListPlaceholder )
     item = 0;
   // sometimes the board can become unselected - it might not be the one that
   // was most recently selected, but give it a shot and grab the last one in this case
-  else if(item == 0 && deviceList->count() != 0) {
-    deviceList->setCurrentRow(deviceList->count()-1);
-    item = deviceList->currentItem( );
+  else if(item == 0 && ui.deviceList->count() != 0) {
+    ui.deviceList->setCurrentRow(ui.deviceList->count()-1);
+    item = ui.deviceList->currentItem( );
   }
   return (Board*)item;
 }
@@ -494,10 +470,9 @@ Board* MainWindow::getCurrentBoard( )
 QList<Board*> MainWindow::getConnectedBoards( )
 {
   QList<Board*> boardList;
-  for( int i = 0; i < deviceList->count( ); i++ )
-  {
-    if( deviceList->item( i ) != &deviceListPlaceholder )
-      boardList.append( (Board*)deviceList->item( i ) );
+  for( int i = 0; i < ui.deviceList->count( ); i++ ) {
+    if( ui.deviceList->item( i ) != &deviceListPlaceholder )
+      boardList.append( (Board*)ui.deviceList->item( i ) );
   }
   return boardList;
 }
@@ -509,7 +484,7 @@ QList<Board*> MainWindow::getConnectedBoards( )
 */
 void MainWindow::onCommandLine()
 {
-  QString cmd = commandLine->currentText();
+  QString cmd = ui.commandLine->currentText();
   Board* brd = getCurrentBoard();
   if(cmd.isEmpty() || brd == NULL)
     return;
@@ -518,19 +493,17 @@ void MainWindow::onCommandLine()
 
   // in order to get a readline-style history of commands via up/down arrows
   // we need to keep an empty item at the end of the list so we have a context from which to up-arrow
-  if( commandLine->count() >= commandLine->maxCount() )
-    commandLine->removeItem( 0 );
-  commandLine->insertItem( commandLine->count() - 1, cmd );
-  commandLine->setCurrentIndex( commandLine->count() - 1 );
-
-  commandLine->clearEditText();
+  if( ui.commandLine->count() >= ui.commandLine->maxCount() )
+    ui.commandLine->removeItem( 0 );
+  ui.commandLine->insertItem( ui.commandLine->count() - 1, cmd );
+  ui.commandLine->setCurrentIndex( ui.commandLine->count() - 1 );
+  ui.commandLine->clearEditText();
 }
 
 void MainWindow::onDeviceResetRequest()
 {
   Board* brd = getCurrentBoard();
-  if(brd)
-  {
+  if(brd) {
     brd->sendMessage("/system/reset 1");
     message (tr("Resetting Board"), MsgType::Notice, "mchelper");
   }
@@ -539,8 +512,7 @@ void MainWindow::onDeviceResetRequest()
 void MainWindow::onEraseRequest()
 {
   Board* brd = getCurrentBoard();
-  if(brd)
-  {
+  if(brd) {
     brd->sendMessage("/system/samba 1");
     message (tr("Erasing Board"), MsgType::Notice, "mchelper");
   }
