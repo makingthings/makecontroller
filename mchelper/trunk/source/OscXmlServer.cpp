@@ -56,13 +56,11 @@ bool OscXmlServer::setListenPort( int port )
   if(listenPort == port) // don't need to do anything
     return true;
   close( );
-  if( !listen( QHostAddress::Any, port ) )
-  {
+  if( !listen( QHostAddress::Any, port ) ) {
     emit msg( tr("Error - can't listen on port %1.  Make sure it's available.").arg(port), MsgType::Error, FROM_STRING );
     return false;
   }
-  else
-  {
+  else {
     listenPort = port;
     emit msg( tr("Now listening on port %1 for XML connections.").arg(port), MsgType::Notice, FROM_STRING );
     return true;
@@ -142,22 +140,17 @@ void OscXmlClient::processData( )
   QList<QByteArray> newDocuments = socket->readAll( ).split( '\0' );
   bool status;
 
-  foreach( QByteArray document, newDocuments )
-  {
-    if( document.size( ) )
-    {
+  foreach( QByteArray document, newDocuments ) {
+    if( document.size( ) ) {
       xmlInput.setData( document );
-
-      if( lastParseComplete )
-      {
+      if( lastParseComplete ) {
         lastParseComplete = false; // this will get reset in the parsing process if we get a complete message
         status = xml.parse( &xmlInput, true );
       }
       else
         status = xml.parseContinue( );
 
-      if( !status )
-      {
+      if( !status ) {
         // there was a problem parsing.  now the next time we come through, it will start
         // a new parse, discarding anything that was left from the last socket read
         lastParseComplete = true;
@@ -231,12 +224,11 @@ void OscXmlClient::boardListUpdate( const QList<Board*> & boardList, bool arrive
     boardUpdate = doc.createElement( "BOARD_REMOVAL" );
 
   doc.appendChild( boardUpdate );
-  foreach( Board *board, boardList)
-  {
+  foreach( Board *board, boardList) {
     QDomElement boardElem = doc.createElement( "BOARD" );
     if( board->type() == BoardType::UsbSerial )
       boardElem.setAttribute( "TYPE", "USB" );
-    if( board->type() == BoardType::Ethernet )
+    else if( board->type() == BoardType::Ethernet )
       boardElem.setAttribute( "TYPE", "Ethernet" );
     boardElem.setAttribute( "LOCATION", board->key() );
     boardUpdate.appendChild( boardElem );
@@ -290,8 +282,7 @@ void OscXmlClient::sendXmlPacket( const QList<OscMessage*> & messageList, const 
     msg.setAttribute( "NAME", oscMsg->addressPattern );
     oscPacket.appendChild( msg );
 
-    foreach( OscData* data, oscMsg->data )
-    {
+    foreach( OscData* data, oscMsg->data ) {
       QDomElement argument = doc.createElement( "ARGUMENT" );
       switch( data->type )
       {
@@ -313,8 +304,7 @@ void OscXmlClient::sendXmlPacket( const QList<OscMessage*> & messageList, const 
           unsigned char* blob = (unsigned char*)data->b().data( );
           int blob_len = qFromBigEndian( *(int*)blob );  // the first int should give us the length of the blob
           blob += sizeof(int); // step past the length
-          while( blob_len-- )
-          {
+          while( blob_len-- ) {
             // break each byte into 4-bit chunks so they don't get misinterpreted
             // by any casts to ASCII, etc. and send a string composed of single chars from 0-f
             blobstring.append( QString::number( (*blob >> 4) & 0x0f, 16 ) );
@@ -368,27 +358,23 @@ bool XmlHandler::startElement( const QString & namespaceURI, const QString & loc
   (void) namespaceURI;
   (void) qName;
 
-  if( localName == "OSCPACKET" )
-  {
+  if( localName == "OSCPACKET" ) {
     currentDestination = atts.value( "ADDRESS" );
     currentPort = atts.value( "PORT" ).toInt( );
     if( currentDestination.isEmpty( ) )
       return false;
   }
-  else if( localName == "MESSAGE" )
-  {
+  else if( localName == "MESSAGE" ) {
     currentMessage = new OscMessage( );
     currentMessage->addressPattern = atts.value( "NAME" );
   }
-  else if( localName == "ARGUMENT" )
-  {
+  else if( localName == "ARGUMENT" ) {
     QString type = atts.value( "TYPE" );
     QString val = atts.value( "VALUE" );
     if( type.isEmpty( ) || val.isEmpty( ) )
       return false;
 
-    if( type == "i" || type == "f" || type == "s" || type == "b" )
-    {
+    if( type == "i" || type == "f" || type == "s" || type == "b" ) {
       OscData *msgData;
       if( type == "i" )
         msgData = new OscData(val.toInt());
@@ -401,7 +387,6 @@ bool XmlHandler::startElement( const QString & namespaceURI, const QString & loc
       currentMessage->data.append( msgData );
     }
   }
-
   return true;
 }
 
@@ -410,8 +395,7 @@ bool XmlHandler::endElement( const QString & namespaceURI, const QString & local
   (void) namespaceURI;
   (void) qName;
 
-  if( localName == "OSCPACKET" )
-  {
+  if( localName == "OSCPACKET" ) {
     mainWindow->newXmlPacketReceived( oscMessageList, currentDestination );
     QStringList strings;
     foreach( OscMessage* msg, oscMessageList )

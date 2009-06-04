@@ -23,8 +23,7 @@
 QString OscMessage::toString( )
 {
   QString msgString = this->addressPattern;
-  foreach( OscData* dataElement, data)
-  {
+  foreach( OscData* dataElement, data) {
     msgString.append( " " );
     switch( dataElement->type )
     {
@@ -47,8 +46,7 @@ QByteArray OscMessage::toByteArray( )
   QString typetag( "," );
   QByteArray args; // intermediate spot for arguments until we've assembled the typetag
   QDataStream dstream(&args, QIODevice::WriteOnly);
-  foreach( OscData* dataElement, data )
-  {
+  foreach( OscData* dataElement, data ) {
     switch( dataElement->type )
     {
       case OscData::String:
@@ -118,8 +116,7 @@ QByteArray Osc::createPacket( const QString & msg )
 QByteArray Osc::createPacket( const QStringList & strings )
 {
   QList<OscMessage*> oscMsgs;
-  foreach( QString str, strings )
-  {
+  foreach( QString str, strings ) {
     OscMessage *msg = new OscMessage( );
     if( createMessage( str, msg ) )
       oscMsgs.append( msg );
@@ -138,8 +135,7 @@ QByteArray Osc::createPacket( const QList<OscMessage*> & msgs )
     return bundle;
   else if( msgs.size( ) == 1 ) // if there's only one message in the bundle, send it as a normal message
     bundle = msgs.first()->toByteArray( );
-  else // we have more than one message, and it's worth sending a real bundle
-  {
+  else { // we have more than one message, and it's worth sending a real bundle
     bundle += Osc::writePaddedString( "#bundle" ); // indicate that this is indeed a bundle
     bundle += Osc::writeTimetag( 0, 0 ); // we don't do much with timetags
 
@@ -186,22 +182,18 @@ QString Osc::getTypeTag( QByteArray* msg )
 // When we receive a packet, check to see whether it is a message or a bundle.
 bool Osc::receivePacket( QByteArray* pkt, QList<OscMessage*>* oscMessageList )
 {
-  if(pkt->startsWith('/')) // single message
-  {
+  if(pkt->startsWith('/')) { // single message
     OscMessage* om = receiveMessage( pkt );
     if(om)
       oscMessageList->append(om);
   }
-  else if(pkt->startsWith("#bundle")) // bundle
-  {
+  else if(pkt->startsWith("#bundle")) { // bundle
     QDataStream dstream(pkt, QIODevice::ReadOnly);
     dstream.skipRawData(16); // skip bundle text and timetag
     QByteArray msg;
-    while( !dstream.atEnd() && dstream.status() == QDataStream::Ok )
-    {
+    while( !dstream.atEnd() && dstream.status() == QDataStream::Ok ) {
       dstream >> msg; // unpacks as int32 len followed by raw data, just like OSC wants
-      if( msg.size() > 16384 || msg.size() <= 0 )
-      {
+      if( msg.size() > 16384 || msg.size() <= 0 ) {
         qDebug() << QApplication::tr("got insane length - %d, bailing.").arg(msg.size());
         return false;
       }
@@ -209,8 +201,7 @@ bool Osc::receivePacket( QByteArray* pkt, QList<OscMessage*>* oscMessageList )
         return false;
     }
   }
-  else // something we don't recognize...
-  {
+  else { // something we don't recognize...
     QString msg = QObject::tr( "Error - Osc packets must start with either a '/' (message) or '[' (bundle).");
     //messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
   }
@@ -228,19 +219,16 @@ OscMessage* Osc::receiveMessage( QByteArray* msg )
   msg->remove(0, paddedLength(oscMessage->addressPattern));
 
   QString typetag = getTypeTag( msg );
-  if ( typetag.isEmpty() || !typetag.startsWith(',') ) //If there was no type tag, say so and stop processing this message.
-  {
+  if ( typetag.isEmpty() || !typetag.startsWith(',') ) { //If there was no type tag, say so and stop processing this message.
     QString msg = QObject::tr( "Error - No type tag.");
     //messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
     delete oscMessage;
     return 0;
   }
-  else
-  {
+  else {
     //We get a count back from extractData() of how many items were included - if this
     //doesn't match the length of the type tag, something funky is happening.
-    if(!extractData( typetag, msg, oscMessage ) || oscMessage->data.size() != typetag.size() - 1)
-    {
+    if(!extractData( typetag, msg, oscMessage ) || oscMessage->data.size() != typetag.size() - 1) {
       QString msg = QObject::tr( "Error extracting data from packet - type tag doesn't correspond to data included.");
       //messageInterface->messageThreadSafe( msg, MessageEvent::Error, preamble );
       delete oscMessage;
@@ -260,8 +248,7 @@ bool Osc::extractData( const QString & typetag, QByteArray* msg, OscMessage* osc
 {
   QDataStream dstream(msg, QIODevice::ReadOnly);
   int typeIdx = 1; // start after the comma
-  while(!dstream.atEnd() && typeIdx < typetag.size())
-  {
+  while(!dstream.atEnd() && typeIdx < typetag.size()) {
     OscData* newdata = 0;
     switch( typetag.at(typeIdx++).toAscii() )
     {
@@ -288,16 +275,16 @@ bool Osc::extractData( const QString & typetag, QByteArray* msg, OscMessage* osc
         */
         QString str;
         quint8 c;
-        while(!dstream.atEnd())
-        {
+        while(!dstream.atEnd()) {
           dstream >> c;
-          if(c == 0)
+          if(c == 0) {
+            newdata = new OscData(str);
+            dstream.skipRawData(paddedLength(str) - str.size() - 1); // step past any extra padding
             break;
+          }
           else
             str.append(c);
         }
-        newdata = new OscData(str);
-        dstream.skipRawData(paddedLength(str) - str.size() - 1); // step past any extra padding
         break;
       }
       case 'b':
@@ -311,8 +298,7 @@ bool Osc::extractData( const QString & typetag, QByteArray* msg, OscMessage* osc
 
     if(dstream.status() == QDataStream::Ok && newdata)
       oscMessage->data.append( newdata );
-    else
-    {
+    else {
       if(newdata) delete newdata;
       return false;
     }
@@ -332,8 +318,7 @@ QByteArray Osc::writePaddedString( const QString & str )
 {
   QByteArray paddedString = str.toAscii() + '\0'; // OSC requires that strings be null-terminated
   int pad = 4 - ( paddedString.size( ) % 4 );
-  if( pad < 4 ) // if we had 4 - 0, that means we don't need to add any padding
-  {
+  if( pad < 4 ) { // if we had 4 - 0, that means we don't need to add any padding
     while(pad--)
       paddedString.append( '\0' );
   }
@@ -372,15 +357,12 @@ bool Osc::createMessage( const QString & msg, OscMessage *oscMsg )
   QStringList msgElements = msg.split( " " );
   oscMsg->addressPattern = msgElements.takeFirst();
   // now do our best to guess the type of arguments
-  while( !msgElements.isEmpty() )
-  {
+  while( !msgElements.isEmpty() ) {
     QString elmnt = msgElements.takeFirst();
     // see if it's a quoted string, presumably with spaces in it
-    if( elmnt.startsWith( "\"" ) && !elmnt.endsWith("\"") )
-    {
+    if( elmnt.startsWith( "\"" ) && !elmnt.endsWith("\"") ) {
       elmnt.remove(0,1); // remove opening quote
-      while( !msgElements.isEmpty() )
-      {
+      while( !msgElements.isEmpty() ) {
         elmnt += QString(" " + msgElements.takeFirst());
         if( elmnt.endsWith( "\"" ) ) {
           elmnt.remove(elmnt.size() - 1, 1); // remove the trailing quote
@@ -389,18 +371,15 @@ bool Osc::createMessage( const QString & msg, OscMessage *oscMsg )
       }
       oscMsg->data.append( new OscData( elmnt ) );
     }
-    else // see if it's a number and if not, assume it's a string
-    {
+    else { // see if it's a number and if not, assume it's a string
       bool ok = false;
-      if( elmnt.count( "." ) == 1) // might be a float, with exactly one .
-      {
+      if( elmnt.count( "." ) == 1) { // might be a float, with exactly one .
         float f = elmnt.toFloat( &ok );
         if( ok )
           oscMsg->data.append( new OscData( f ) );
       }
       // it's either an int or a string
-      if( !ok )
-      {
+      if( !ok ) {
         int i = elmnt.toInt( &ok );
         if( ok )
           oscMsg->data.append( new OscData( i ) );
