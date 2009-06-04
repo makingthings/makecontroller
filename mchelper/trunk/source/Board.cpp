@@ -100,8 +100,7 @@ void Board::msgReceived(const QByteArray & packet)
     else
       messageList.append( oscMsg->toString( ) );
   }
-  if( messageList.count( ) > 0 )
-  {
+  if( messageList.count( ) > 0 ) {
     oscXmlServer->sendPacket( oscMessageList, key() );
     emit msgs( messageList, MsgType::Response, location() );
   }
@@ -124,37 +123,32 @@ bool Board::extractSystemInfoA( OscMessage* msg )
     switch( i ) // we're counting on the board to send the pieces of data in this order
     {
       case 0:
-        if( name != data->s() )
-        {
+        if( name != data->s() ) {
           name = data->s(); //name
           emit newBoardName(_key, (name + " : " + location()));
           newInfo = true;
         }
         break;
       case 1:
-        if(serialNumber != data->s())
-        {
+        if(serialNumber != data->s()) {
           serialNumber = data->s(); // serial number
           newInfo = true;
         }
         break;
       case 2:
-        if(ip_address != data->s())
-        {
+        if(ip_address != data->s()) {
           ip_address = data->s(); // IP address
           newInfo = true;
         }
         break;
       case 3:
-        if(firmwareVersion != data->s())
-        {
+        if(firmwareVersion != data->s()) {
           firmwareVersion = data->s();
           newInfo = true;
         }
         break;
       case 4:
-        if(freeMemory != data->s())
-        {
+        if(freeMemory != data->s()) {
           freeMemory = data->s();
           newInfo = true;
         }
@@ -178,43 +172,37 @@ bool Board::extractSystemInfoB( OscMessage* msg )
     switch( j ) // we're counting on the board to send the pieces of data in this order
     {
       case 0:
-        if(dhcp != data->i())
-        {
+        if(dhcp != data->i()) {
           dhcp = data->i();
           newInfo = true;
         }
         break;
       case 1:
-        if(webserver != data->i())
-        {
+        if(webserver != data->i()) {
           webserver = data->i();
           newInfo = true;
         }
         break;
       case 2:
-        if(gateway != data->s())
-        {
+        if(gateway != data->s()) {
           gateway = data->s();
           newInfo = true;
         }
         break;
       case 3:
-        if(netMask != data->s())
-        {
+        if(netMask != data->s()) {
           netMask = data->s();
           newInfo = true;
         }
         break;
       case 4:
-        if(udp_listen_port != data->s())
-        {
+        if(udp_listen_port != data->s()) {
           udp_listen_port = data->s();
           newInfo = true;
         }
         break;
       case 5:
-        if(udp_send_port != data->s())
-        {
+        if(udp_send_port != data->s()) {
           udp_send_port = data->s();
           newInfo = true;
         }
@@ -238,29 +226,25 @@ bool Board::extractNetworkFind( OscMessage* msg )
     switch( j ) // we're counting on the board to send the pieces of data in this order
     {
       case 0:
-        if( ip_address != data->s() )
-        {
+        if( ip_address != data->s() ) {
           ip_address = data->s(); // IP address
           newInfo = true;
         }
         break;
       case 1:
-        if( udp_listen_port != data->s() )
-        {
+        if( udp_listen_port != data->s() ) {
           udp_listen_port = data->s();
           newInfo = true;
         }
         break;
       case 2:
-        if( udp_send_port != data->s() )
-        {
+        if( udp_send_port != data->s() ) {
           udp_send_port = data->s();
           newInfo = true;
         }
         break;
       case 3:
-        if( name != data->s() )
-        {
+        if( name != data->s() ) {
           name = data->s();
           emit newBoardName(_key, (name + " : " + location()));
           newInfo = true;
@@ -278,8 +262,7 @@ bool Board::extractNetworkFind( OscMessage* msg )
 */
 void Board::sendMessage( const QString & rawMessage )
 {
-  if( packetInterface && !rawMessage.isEmpty() )
-  {
+  if( packetInterface && !rawMessage.isEmpty() ) {
     QByteArray packet = osc.createPacket( rawMessage );
     if( !packet.isEmpty( ) )
       packetInterface->sendPacket( packet.data( ), packet.size( ) );
@@ -288,8 +271,7 @@ void Board::sendMessage( const QString & rawMessage )
 
 void Board::sendMessage( const QList<OscMessage*> & messageList )
 {
-  if( packetInterface && messageList.count() )
-  {
+  if( packetInterface && messageList.count() ) {
     QByteArray packet = osc.createPacket( messageList );
     if( !packet.isEmpty( ) )
       packetInterface->sendPacket( packet.data( ), packet.size( ) );
@@ -298,8 +280,7 @@ void Board::sendMessage( const QList<OscMessage*> & messageList )
 
 void Board::sendMessage( const QStringList & messageList )
 {
-  if( packetInterface && messageList.count() )
-  {
+  if( packetInterface && messageList.count() ) {
     QByteArray packet = osc.createPacket( messageList );
     if( !packet.isEmpty( ) )
       packetInterface->sendPacket( packet.data( ), packet.size( ) );

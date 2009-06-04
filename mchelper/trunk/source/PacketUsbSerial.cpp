@@ -45,16 +45,9 @@ void PacketUsbSerial::processNewData( )
 {
   QByteArray newData;
   int avail = port->bytesAvailable();
-  if(avail > 0 )
-  {
+  if(avail > 0 ) {
     newData.resize(avail);
-    if(port->read(newData.data(), newData.size()) < 0)
-    {
-      qDebug() << tr("USB read failed");
-      return;
-    }
-    else
-    {
+    if(port->read(newData.data(), newData.size()) > 0) {
       readBuffer += newData;
       slipDecode();
     }
@@ -63,10 +56,7 @@ void PacketUsbSerial::processNewData( )
 
 bool PacketUsbSerial::open( )
 {
-  if(port->open(QIODevice::ReadWrite))
-    return true;
-  else
-    return false;
+  return port->open(QIODevice::ReadWrite);
 }
 
 /*
@@ -100,8 +90,7 @@ bool PacketUsbSerial::sendPacket( const char* packet, int length )
   }
   // tell the receiver that we're done sending the packet
   out.append( END );
-  if(port->write(out) < 0)
-  {
+  if(port->write(out) < 0) {
     //monitor->deviceRemoved( port->portName() ); // shut ourselves down
     return false;
   }
@@ -122,8 +111,7 @@ void PacketUsbSerial::slipDecode( )
     switch( c )
     {
       case END:
-        if( pkt_started && currentPacket.size() ) // it was the END byte
-        {
+        if( pkt_started && currentPacket.size() ) { // it was the END byte
           board->msgReceived(currentPacket);
           currentPacket.clear();
           pkt_started = false;
@@ -140,15 +128,12 @@ void PacketUsbSerial::slipDecode( )
         else {
           c = *(readBuffer.data());
           readBuffer.remove(0, 1);
-          if( pkt_started )
-          {
-            if( c == ESC_END )
-            {
+          if( pkt_started ) {
+            if( c == ESC_END ) {
               currentPacket.append(END);
               break;
             }
-            else if( c == ESC_ESC )
-            {
+            else if( c == ESC_ESC ) {
               currentPacket.append(ESC);
               break;
             }
