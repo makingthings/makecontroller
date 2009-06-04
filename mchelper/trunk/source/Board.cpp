@@ -42,7 +42,7 @@ Board::~Board()
   delete packetInterface;
 }
 
-QString Board::key( )
+QString Board::friendlyKey( )
 {
   QString k = _key;
   #ifdef Q_OS_WIN
@@ -60,7 +60,7 @@ QString Board::location( )
     case BoardType::UsbSerial:
     {
       #ifdef Q_OS_WIN
-        return QString( "USB (%1)" ).arg(key());
+        return QString( "USB (%1)" ).arg(friendlyKey());
       #else
         return "USB";
       #endif

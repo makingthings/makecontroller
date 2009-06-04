@@ -46,7 +46,8 @@ public:
   void msgReceived( const QByteArray & msg);
   MainWindow* mainWindowRef() { return mainWindow; } // so the device list can have the context of the main window
   BoardType::Type type( ) { return _type; }
-  QString key();
+  QString key() { return _key; }
+  QString friendlyKey( );
   QString location( );
 
   // System properties
