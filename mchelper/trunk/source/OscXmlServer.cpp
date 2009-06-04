@@ -28,9 +28,7 @@ OscXmlServer::OscXmlServer( MainWindow *mainWindow, QObject *parent ) : QTcpServ
   connect( this, SIGNAL( newConnection() ), this, SLOT( openNewConnection( ) ) );
   connect(this, SIGNAL(msg(QString, MsgType::Type, QString)), mainWindow, SLOT(message(QString, MsgType::Type, QString)));
   QSettings settings;
-  listenPort = settings.value("xml_listen_port", DEFAULT_XML_LISTEN_PORT).toInt();
-  if(!listen(QHostAddress::Any, listenPort))
-    emit msg( tr("Error - can't listen on port %1.  Make sure it's available.").arg(listenPort), MsgType::Error, FROM_STRING );
+  setListenPort( settings.value("xml_listen_port", DEFAULT_XML_LISTEN_PORT).toInt(), false );
 }
 
 /*
@@ -51,7 +49,7 @@ void OscXmlServer::openNewConnection( )
   client->boardListUpdate(mainWindow->getConnectedBoards( ), true);
 }
 
-bool OscXmlServer::setListenPort( int port )
+bool OscXmlServer::setListenPort( int port, bool announce )
 {
   if(listenPort == port) // don't need to do anything
     return true;
@@ -62,7 +60,8 @@ bool OscXmlServer::setListenPort( int port )
   }
   else {
     listenPort = port;
-    emit msg( tr("Now listening on port %1 for XML connections.").arg(port), MsgType::Notice, FROM_STRING );
+    if(announce)
+      emit msg( tr("Now listening on port %1 for XML connections.").arg(port), MsgType::Notice, FROM_STRING );
     return true;
   }
 }
@@ -302,8 +301,7 @@ void OscXmlClient::sendXmlPacket( const QList<OscMessage*> & messageList, const 
         {
           QString blobstring;
           unsigned char* blob = (unsigned char*)data->b().data( );
-          int blob_len = qFromBigEndian( *(int*)blob );  // the first int should give us the length of the blob
-          blob += sizeof(int); // step past the length
+          int blob_len = data->b().size();
           while( blob_len-- ) {
             // break each byte into 4-bit chunks so they don't get misinterpreted
             // by any casts to ASCII, etc. and send a string composed of single chars from 0-f
@@ -374,18 +372,23 @@ bool XmlHandler::startElement( const QString & namespaceURI, const QString & loc
     if( type.isEmpty( ) || val.isEmpty( ) )
       return false;
 
-    if( type == "i" || type == "f" || type == "s" || type == "b" ) {
-      OscData *msgData;
-      if( type == "i" )
+    OscData *msgData = 0;
+    switch(type.at(0).toAscii())
+    {
+      case 'i':
         msgData = new OscData(val.toInt());
-      else if( type == "f" )
+        break;
+      case 'f':
         msgData = new OscData(val.toFloat());
-      else if( type == "s" )
+        break;
+      case 's':
         msgData = new OscData(val);
-      else if( type == "b" )
+        break;
+      case 'b': // TODO, unpack this appropriately
         msgData = new OscData( val.toAscii() );
-      currentMessage->data.append( msgData );
+        break;
     }
+    if(msgData) currentMessage->data.append( msgData );
   }
   return true;
 }
