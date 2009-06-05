@@ -35,7 +35,7 @@ class NetworkMonitor : public QUdpSocket
 public:
   NetworkMonitor( MainWindow* mainWindow );
   ~NetworkMonitor( ) {}
-  bool setListenPort( int port );
+  bool setListenPort( int port, bool announce = true );
   int listenPort( ) { return listen_port; }
   void setSendPort( int port ) { send_port = port; }
   int sendPort( ) { return send_port; }
@@ -62,7 +62,7 @@ public slots:
 
 signals:
   void deviceArrived(PacketInterface* pi);
-  void deviceRemoved(QString key);
+  void deviceRemoved(const QString & key);
   void msg(QString msg, MsgType::Type type, QString from);
 };
 

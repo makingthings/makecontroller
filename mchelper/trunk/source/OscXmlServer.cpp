@@ -16,7 +16,6 @@
 *********************************************************************************/
 
 #include "OscXmlServer.h"
-#include <QtCore/qendian.h>
 #include <QSettings>
 #include "Preferences.h" // for the DEFAULT_XML_LISTEN_PORT
 
