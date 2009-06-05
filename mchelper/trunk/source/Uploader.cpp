@@ -104,7 +104,10 @@ QString Uploader::sam7Path( )
   QDir appBundle( CFStringGetCStringPtr(macPath, CFStringGetSystemEncoding()) );
   uploaderName = appBundle.filePath( "Contents/Resources/sam7" );
   #elif defined (Q_OS_WIN)
-  uploaderName = QDir::current().filePath("sam7");
+  QDir d = QDir::current();
+  if(!d.exists("sam7")) // in dev mode, we're one dir down in 'bin'
+    d.cdUp();
+  uploaderName = d.filePath("sam7");
   #else
   QSettings settings;
   QDir dir( settings.value("sam7_path", DEFAULT_SAM7_PATH).toString() );
@@ -179,6 +182,7 @@ void Uploader::onError(QProcess::ProcessError error)
       msg = tr("uploader (sam7) - unknown error type");
       break;
   }
+  setWindowTitle(tr("Uploader"));
   mainWindow->message( msg, MsgType::Error, tr("Uploader"));
   hide();
 }
