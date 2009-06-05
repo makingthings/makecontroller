@@ -44,7 +44,7 @@ Builder::Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *build
 /*
   Prepare the build process for the given project, then fire it off.
 */
-void Builder::build(QString projectName)
+void Builder::build(const QString & projectName)
 {
   currentProjectPath = projectName;
   QDir dir(projectName);
@@ -70,7 +70,7 @@ void Builder::build(QString projectName)
 /*
   Remove all the object files from the build directory.
 */
-void Builder::clean(QString projectName)
+void Builder::clean(const QString & projectName)
 {
   QDir buildDir(ensureBuildDirExists(projectName));
   setWorkingDirectory(buildDir.path());
@@ -98,7 +98,7 @@ void Builder::stop()
   If there's no build directory within a project, create one.
   Return the build dir's path.
 */
-QString Builder::ensureBuildDirExists(QString projPath)
+QString Builder::ensureBuildDirExists(const QString & projPath)
 {
   QDir dir(projPath);
   if(!dir.exists("build"))
@@ -167,7 +167,7 @@ void Builder::resetBuildProcess()
   stuff in the project properties,
   add the boilerplate info and we're all set.
 */
-bool Builder::createMakefile(QString projectPath)
+bool Builder::createMakefile(const QString & projectPath)
 {
   bool retval = true;
   QDir buildDir( ensureBuildDirExists(projectPath) );
@@ -336,7 +336,7 @@ bool Builder::createMakefile(QString projectPath)
   This file specifies several build conditions and is set
   up in the UI via the project properties.
 */
-bool Builder::createConfigFile(QString projectPath)
+bool Builder::createConfigFile(const QString & projectPath)
 {
   QDir dir(projectPath);
   QFile configFile(dir.filePath("config.h"));
@@ -392,7 +392,7 @@ bool Builder::createConfigFile(QString projectPath)
   If they don't match or config.h doesn't exist, return true.
   If we don't need to update/create config.h, return false.
 */
-bool Builder::compareConfigFile(QString projectPath)
+bool Builder::compareConfigFile(const QString & projectPath)
 {
   bool retval = false;
   QDir dir(projectPath);
@@ -658,7 +658,7 @@ void Builder::filterErrorOutput()
   Try to match an output message from gcc in the form of "filepath:linenumber: error|warning: errormessage"
   If we get one, format it nicely, highlight the line, and pop it into the UI.
 */
-bool Builder::matchErrorOrWarning(QString error)
+bool Builder::matchErrorOrWarning(const QString & error)
 {
   bool matched = false;
   QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+):(\\d+): (error|warning): (.+)");
@@ -698,7 +698,7 @@ bool Builder::matchErrorOrWarning(QString error)
   Try to match an output message from gcc in the form of "filepath: In function: msg"
   If we get one, format it nicely, and pop it into the UI.
 */
-bool Builder::matchInFunction(QString error)
+bool Builder::matchInFunction(const QString & error)
 {
   bool matched = false;
   QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+): In function (.+)");
@@ -722,7 +722,7 @@ bool Builder::matchInFunction(QString error)
   Try to match an output message from gcc in the form of "file: undefined reference to function"
   If we get one, format it nicely, and pop it into the UI.
 */
-bool Builder::matchUndefinedRef(QString error)
+bool Builder::matchUndefinedRef(const QString & error)
 {
   // match output in the form of "filepath: In function: msg"
   bool matched = false;
@@ -749,7 +749,7 @@ bool Builder::matchUndefinedRef(QString error)
   directives and see if any of them match the libs in our libraries directory.
   Create a Library structure for each library and store it in our class member "libraries"
 */
-void Builder::loadDependencies(QString libsDir, QString project)
+void Builder::loadDependencies(const QString & libsDir, const QString & project)
 {
   QDir projDir(project);
   QStringList srcFiles = projDir.entryList(QStringList() << "*.c" << "*.h");
@@ -791,7 +791,7 @@ void Builder::loadDependencies(QString libsDir, QString project)
   Read a library's spec file to determine its source files
   and append those to the lists of THUMB and ARM files passed in.
 */
-void Builder::getLibrarySources(QString libdir, QStringList *thmb, QStringList *arm)
+void Builder::getLibrarySources(const QString & libdir, QStringList *thmb, QStringList *arm)
 {
   QDir dir(libdir);
   QFile libfile(dir.filePath(dir.dirName() + ".xml"));
@@ -817,7 +817,7 @@ void Builder::getLibrarySources(QString libdir, QStringList *thmb, QStringList *
     1. check to see if it's in our cores dir
     2. assume it's relative to the current project
 */
-QString Builder::filteredPath(QString path)
+QString Builder::filteredPath(const QString & path)
 {
   // would be good to be able to do something about file paths with spaces
   // but not quite sure how to deal at the moment...

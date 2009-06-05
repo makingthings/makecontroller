@@ -63,7 +63,7 @@ ProjectInfo::ProjectInfo(MainWindow *mainWindow) : QDialog( 0 )
   Read the project's ProjectInfo from the project file
   and load them into the UI.
 */
-bool ProjectInfo::load( QString projectPath )
+bool ProjectInfo::load( const QString & projectPath )
 {
   if(projectPath.isEmpty())
     return false;
@@ -156,7 +156,7 @@ void ProjectInfo::applyChanges( )
   different than the existing project, optionally saving the
   values currently in the UI to the project file.
 */
-bool ProjectInfo::diffProjects( QString newProjectPath, bool saveUiToFile )
+bool ProjectInfo::diffProjects( const QString & newProjectPath, bool saveUiToFile )
 {
   if(versionEdit->text().isEmpty()) // check the version box as a sample...if this is empty, we don't have anything loaded so don't bother checking
     return false;
@@ -258,7 +258,7 @@ bool ProjectInfo::diffProjects( QString newProjectPath, bool saveUiToFile )
   Return the path of the project file
   for the current project.
 */
-QString ProjectInfo::projectFilePath( QString projectPath )
+QString ProjectInfo::projectFilePath( const QString & projectPath )
 {
   QDir projectDir(projectPath);
   return projectDir.filePath(projectDir.dirName() + ".xml");
@@ -353,7 +353,7 @@ void FileBrowser::onSetBuildType()
   Remove the file in the current project's project file.
   The file has already been removed from the filebrowser UI.
 */
-void ProjectInfo::onRemoveFileRequest(QString filename)
+void ProjectInfo::onRemoveFileRequest(const QString & filename)
 {
   QFile projectFile(projectFilePath(mainWindow->currentProjectPath()));
   QDir projectDir(mainWindow->currentProjectPath());
@@ -365,7 +365,7 @@ void ProjectInfo::onRemoveFileRequest(QString filename)
   Toggle the file's build type in the project file.
   The filebrowser UI has already been updated.
 */
-void ProjectInfo::onChangeBuildType(QString filename, QString newtype)
+void ProjectInfo::onChangeBuildType(const QString & filename, const QString & newtype)
 {
   projectManager.setFileBuildType(mainWindow->currentProjectPath(), filename, newtype);
 }

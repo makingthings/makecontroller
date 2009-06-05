@@ -27,7 +27,7 @@ class BuildLog : public QDialog, private Ui::BuildLogUi
   Q_OBJECT
 public:
   BuildLog();
-  void append(QString msg);
+  void append(const QString & msg);
   void clear( );
 
 private:

@@ -42,8 +42,8 @@ class Builder : public QProcess
 
 public:
   Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog );
-  void build(QString projectName);
-  void clean(QString projectName);
+  void build(const QString & projectName);
+  void clean(const QString & projectName);
   void stop();
 
 private:
@@ -64,17 +64,17 @@ private:
   QString currentProcess;
   QList<Library> libraries;
   void resetBuildProcess();
-  bool createMakefile(QString projectPath);
-  bool createConfigFile(QString projectPath);
-  bool compareConfigFile(QString projectPath);
-  bool matchErrorOrWarning(QString msg);
-  bool matchInFunction(QString msg);
-  bool matchUndefinedRef(QString msg);
-  QString ensureBuildDirExists(QString projPath);
+  bool createMakefile(const QString & projectPath);
+  bool createConfigFile(const QString & projectPath);
+  bool compareConfigFile(const QString & projectPath);
+  bool matchErrorOrWarning(const QString & msg);
+  bool matchInFunction(const QString & msg);
+  bool matchUndefinedRef(const QString & msg);
+  QString ensureBuildDirExists(const QString & projPath);
   bool parseVersionNumber( int *maj, int *min, int *bld );
-  void loadDependencies(QString libsDir, QString project);
-  void getLibrarySources(QString libdir, QStringList *thmb, QStringList *arm);
-  QString filteredPath(QString path);
+  void loadDependencies(const QString & libsDir, const QString & project);
+  void getLibrarySources(const QString & libdir, QStringList *thmb, QStringList *arm);
+  QString filteredPath(const QString & path);
 
 private slots:
   void nextStep( int exitCode, QProcess::ExitStatus exitStatus );
