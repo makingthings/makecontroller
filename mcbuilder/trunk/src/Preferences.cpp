@@ -2,12 +2,12 @@
 
  Copyright 2008 MakingThings
 
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
+ Licensed under the Apache License,
+ Version 2.0 (the "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0 
- 
+ http://www.apache.org/licenses/LICENSE-2.0
+
  Unless required by applicable law or agreed to in writing, software distributed
  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  CONDITIONS OF ANY KIND, either express or implied. See the License for
@@ -44,7 +44,7 @@ Preferences::Preferences(MainWindow *mainWindow) : QDialog( 0 )
   connect(makePathButton, SIGNAL(clicked()), this, SLOT(onMakePathButton()));
   connect(armelfPathButton, SIGNAL(clicked()), this, SLOT(onArmElfPathButton()));
   connect(sam7PathButton, SIGNAL(clicked()), this, SLOT(onSam7Button()));
-  
+
   // initialize the parts that the main window needs to know about
   QSettings settings("MakingThings", "mcbuilder");
   QString editorFont = settings.value("editorFont", DEFAULT_FONT).toString();
@@ -126,10 +126,10 @@ void Preferences::loadAndShow( )
   makePathEdit->setText(QDir::toNativeSeparators(makePath()));
   toolsPathEdit->setText(QDir::toNativeSeparators(toolsPath()));
   sam7PathEdit->setText(QDir::toNativeSeparators(sam7Path()));
-  
+
   Qt::CheckState state = (settings.value("checkForUpdates", true).toBool()) ? Qt::Checked : Qt::Unchecked;
   updaterBox->setCheckState(state);
-  
+
   fontBox->setText(QString("%1, %2pt").arg(currentFont.family()).arg(currentFont.pointSize()));
   tabWidth->setText(QString::number(settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt()));
   show( );
@@ -141,7 +141,7 @@ void Preferences::loadAndShow( )
 */
 void Preferences::browseWorkspace( )
 {
-  QString newProjDir = QFileDialog::getExistingDirectory(this, tr("Select Workspace Directory"), 
+  QString newProjDir = QFileDialog::getExistingDirectory(this, tr("Select Workspace Directory"),
                                                            Preferences::workspace(), QFileDialog::ShowDirsOnly);
   if( !newProjDir.isNull() ) // will be null if user hit cancel
     workspaceEdit->setText(newProjDir);
@@ -165,26 +165,26 @@ void Preferences::getNewFont( )
 
 /*
   The "ok" button has been clicked.
-  Rip through the preferences items, see if any have changed 
+  Rip through the preferences items, see if any have changed
   and call the mainwindow back if it needs to be updated.
 */
 void Preferences::applyChanges( )
 {
   QSettings settings("MakingThings", "mcbuilder");
-  
+
   settings.setValue("workspace", workspaceEdit->text());
   settings.setValue("makePath", makePathEdit->text());
   settings.setValue("toolsPath", toolsPathEdit->text());
   settings.setValue("sam7Path", sam7PathEdit->text());
   settings.setValue("checkForUpdates", (updaterBox->checkState() == Qt::Checked));
-	
+
   int oldTabWidth = settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt();
   if( oldTabWidth != tabWidth->text().toInt() )
   {
     settings.setValue("tabWidth", tabWidth->text().toInt());
     mainWindow->setTabWidth( tabWidth->text().toInt() );
   }
-  
+
   if(tempFont.family() != currentFont.family() || tempFont.pointSize() != currentFont.pointSize())
   {
     currentFont.setFamily(tempFont.family());
@@ -197,7 +197,7 @@ void Preferences::applyChanges( )
 
 void Preferences::onMakePathButton()
 {
-  QString newMakeDir = QFileDialog::getExistingDirectory(this, tr("Select Directory Containing Make"), 
+  QString newMakeDir = QFileDialog::getExistingDirectory(this, tr("Select Directory Containing Make"),
                                                            makePath(), QFileDialog::ShowDirsOnly);
   if( !newMakeDir.isNull() ) // will be null if user hit cancel
     makePathEdit->setText(newMakeDir);
@@ -205,7 +205,7 @@ void Preferences::onMakePathButton()
 
 void Preferences::onArmElfPathButton()
 {
-  QString newArmElfDir = QFileDialog::getExistingDirectory(this, tr("Select Directory Containing Arm Elf Tools"), 
+  QString newArmElfDir = QFileDialog::getExistingDirectory(this, tr("Select Directory Containing Arm Elf Tools"),
                                                            toolsPath(), QFileDialog::ShowDirsOnly);
   if( !newArmElfDir.isNull() ) // will be null if user hit cancel
     toolsPathEdit->setText(newArmElfDir);
@@ -213,7 +213,7 @@ void Preferences::onArmElfPathButton()
 
 void Preferences::onSam7Button()
 {
-  QString newSam7Dir = QFileDialog::getExistingDirectory(this, tr("Select Directory Containing Arm Elf Tools"), 
+  QString newSam7Dir = QFileDialog::getExistingDirectory(this, tr("Select Directory Containing Arm Elf Tools"),
                                                            sam7Path(), QFileDialog::ShowDirsOnly);
   if( !newSam7Dir.isNull() ) // will be null if user hit cancel
     sam7PathEdit->setText(newSam7Dir);

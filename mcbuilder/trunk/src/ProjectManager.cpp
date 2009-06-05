@@ -2,12 +2,12 @@
 
  Copyright 2008 MakingThings
 
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
+ Licensed under the Apache License,
+ Version 2.0 (the "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0 
- 
+ http://www.apache.org/licenses/LICENSE-2.0
+
  Unless required by applicable law or agreed to in writing, software distributed
  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  CONDITIONS OF ANY KIND, either express or implied. See the License for
@@ -33,11 +33,11 @@ QString ProjectManager::createNewFile(QString projectPath, QString filePath)
   QFileInfo fi(filePath);
   if(fi.exists()) // if it already exists, don't do anything
     return "";
-  
+
   QString newFileName;
   confirmValidFileName(&fi);
   QFile file(fi.filePath());
-      
+
   if(file.exists()) // don't do anything if this file's already there
     return fi.filePath();
   if(file.open(QIODevice::WriteOnly | QFile::Text))
@@ -60,12 +60,12 @@ QString ProjectManager::saveFileAs(QString projectPath, QString existingFilePath
   QFileInfo fi(newFilePath);
   if(fi.exists()) // if it already exists, don't do anything
     return fi.filePath();
-  
+
   confirmValidFileName(&fi);
   QFile file(existingFilePath);
-	if(!file.copy(fi.filePath()))
+  if(!file.copy(fi.filePath()))
     return QString();
-  	
+
   if(addToProjectFile(projectPath, fi.filePath(), "thumb"))
     return fi.filePath();
   else
@@ -118,15 +118,15 @@ QString ProjectManager::createNewProject(QString newProjectPath)
   newProjectDir.mkpath(newProjectPath);
   newProjectDir.setPath(newProjectPath);
   QString newProjName = newProjectDir.dirName();
-  
+
   // grab the templates for a new project
   QDir templatesDir = QDir::current().filePath("resources/templates");
-    
+
   // create the project file from our template
   QFile templateFile(templatesDir.filePath("project_template.xml"));
   templateFile.copy(newProjectDir.filePath(newProjName + ".xml"));
   templateFile.close();
-  
+
   templateFile.setFileName(templatesDir.filePath("source_template.txt"));
   if( templateFile.open(QIODevice::ReadOnly | QFile::Text) )
   {
@@ -166,7 +166,7 @@ bool ProjectManager::addToProjectFile(QString projectPath, QString newFilePath, 
     QDomText newFilePathElement = newProjectDoc.createTextNode(projectDir.relativeFilePath(newFilePath));
     newFileElement.appendChild(newFilePathElement);
     newProjectDoc.elementsByTagName("files").at(0).toElement().appendChild(newFileElement);
-    
+
     // write our newly manipulated file
     if(projectFile.open(QIODevice::WriteOnly | QFile::Text)) // reopen as WriteOnly
     {
@@ -221,12 +221,12 @@ QString ProjectManager::saveCurrentProjectAs(QString currentProjectPath, QString
   confirmValidProjectName(&newProjectPath);
   if(newProjectPath.contains(" ")) // if there are still spaces elsewhere in the path, we have problems
     return "";
-    
+
   QDir newProjectDir;
   newProjectDir.mkpath(newProjectPath);
   newProjectDir.setPath(newProjectPath);
   QString newProjectName = newProjectDir.dirName();
-  
+
   QFileInfoList fileList = currentProjectDir.entryInfoList();
   foreach(QFileInfo fi, fileList)
   {
@@ -245,7 +245,7 @@ QString ProjectManager::saveCurrentProjectAs(QString currentProjectPath, QString
       tocopy.copy(newProjectDir.filePath(fi.fileName()));
     }
   }
-  
+
   // update the contents of the project file
   QDomDocument projectDoc;
   QFile projFile(newProjectDir.filePath(newProjectName + ".xml"));

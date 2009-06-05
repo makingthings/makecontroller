@@ -2,12 +2,12 @@
 
  Copyright 2008 MakingThings
 
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
+ Licensed under the Apache License,
+ Version 2.0 (the "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0 
- 
+ http://www.apache.org/licenses/LICENSE-2.0
+
  Unless required by applicable law or agreed to in writing, software distributed
  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  CONDITIONS OF ANY KIND, either express or implied. See the License for
@@ -26,7 +26,7 @@
 #endif
 
 /*
-  Uploader handles uploading a binary image to a board.  It reads the board profile for the 
+  Uploader handles uploading a binary image to a board.  It reads the board profile for the
   currently selected board to determine which uploader to use.  Then it fires up a QProcess
   and runs the uploader with flags determined by settings in Preferences.  It prints output
   from the upload process back to the console output in the MainWindow.
@@ -46,7 +46,7 @@ Uploader::Uploader(MainWindow *mainWindow) : QProcess( )
 
 /*
   Upload a file to a board based on the given boardProfile.
-  Extract the name of the uploader to use, then fire it off in a 
+  Extract the name of the uploader to use, then fire it off in a
   separate process with the appropriate arguments.
 */
 bool Uploader::upload(QString boardProfileName, QString filename)
@@ -59,10 +59,10 @@ bool Uploader::upload(QString boardProfileName, QString filename)
   currentFile = filename;
   if(doc.setContent(&file))
   {
-	  QDomNodeList nodes = doc.elementsByTagName("uploader");
+    QDomNodeList nodes = doc.elementsByTagName("uploader");
     if(nodes.count())
       uploaderName = nodes.at(0).toElement().text();
-    
+
     int offset = 0; // escape any spaces in the filename
     do
     {
@@ -74,7 +74,7 @@ bool Uploader::upload(QString boardProfileName, QString filename)
       }
     } while( offset != -1 );
     qDebug( "uploading %s", qPrintable(filename));
-    
+
     QStringList uploaderArgs;
     uploaderArgs << "-e" << "set_clock";
     uploaderArgs << "-e" << "unlock_regions";
@@ -107,7 +107,7 @@ void Uploader::filterOutput( )
     int progress = re.cap(1).toInt();
     if(progress != uploaderProgress->value())
       uploaderProgress->setValue(progress);
-	  pos += re.matchedLength();
+    pos += re.matchedLength();
     matched = true;
   }
   if(!matched)
