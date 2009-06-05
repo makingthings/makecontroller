@@ -79,8 +79,7 @@ void AppUpdater::finishedRead( int id, bool errors )
   QString err;
   int line, col;
 
-  if (!doc.setContent(http.readAll(), true, &err, &line, &col))
-  {
+  if (!doc.setContent(http.readAll(), true, &err, &line, &col)) {
     headline.setText( tr("<font size=4>Couldn't contact the update server...</font>") );
     details.setText( QString( tr("Make sure you're connected to the internet.") ) );
     acceptButton.setText( tr("OK") );
@@ -98,15 +97,13 @@ void AppUpdater::finishedRead( int id, bool errors )
   QPair<QString, QString> latest(MCHELPER_VERSION, "");
   bool updateAvailable = false;
 
-  for (int i=0, j=items.size(); i<j; i++)
-  {
+  for (int i=0, j=items.size(); i<j; i++) {
     QDomElement item = items.item(i).toElement();
     if( item.isNull() )
       continue;
     QDomNodeList enclosures = item.elementsByTagName("enclosure");
 
-    for (int k=0, l=enclosures.size(); k<l; k++)
-    {
+    for (int k=0, l=enclosures.size(); k<l; k++) {
       QDomElement enclosure = enclosures.item(k).toElement();
       if (enclosure.isNull()) continue;
       QString version = enclosure.attributeNS(
@@ -116,8 +113,7 @@ void AppUpdater::finishedRead( int id, bool errors )
       // should have a version field
       if (version == "not-found") continue;
 
-      if( versionCompare(version, latest.first) > 0 )
-      {
+      if( versionCompare(version, latest.first) > 0 ) {
         latest.first = version;
         QDomNodeList descs = item.elementsByTagName("description");
         //I(descs.size() == 1);
@@ -130,8 +126,7 @@ void AppUpdater::finishedRead( int id, bool errors )
   }
 
   // add the appropriate elements/info depending on whether an update is available
-  if( updateAvailable )
-  {
+  if( updateAvailable ) {
     headline.setText( tr("<font size=4>A new version of mchelper is available!</font>") );
     QString d = QString( tr("mchelper %1 is now available (you have %2).  Would you like to download it?") )
                           .arg(latest.first).arg( MCHELPER_VERSION );
@@ -149,8 +144,7 @@ void AppUpdater::finishedRead( int id, bool errors )
 
     this->show( );
   }
-  else
-  {
+  else {
     headline.setText( tr("<font size=4>You're up to date!</font>") );
     details.setText( QString( tr("You're running the latest version of mchelper, version %1.") ).arg( MCHELPER_VERSION ) );
     acceptButton.setText( tr("OK") );
@@ -182,16 +176,15 @@ int AppUpdater::versionCompare(const QString & left, const QString & right)
     int rightCount = rightParts.size();
     int maxCount = leftCount > rightCount ? leftCount : rightCount;
 
-    for (int i=0, j=maxCount; i<j; i++)
-    {
-        unsigned int l = 0;
-        if (i < leftCount) { l = leftParts.at(i).toUInt(); }
-        unsigned int r = 0;
-        if (i < rightCount) { r = rightParts.at(i).toUInt(); }
+    for (int i=0, j=maxCount; i<j; i++) {
+      unsigned int l = 0;
+      if (i < leftCount) { l = leftParts.at(i).toUInt(); }
+      unsigned int r = 0;
+      if (i < rightCount) { r = rightParts.at(i).toUInt(); }
 
-        if (l == r) continue;
-        if (l > r) return 1;
-        return -1;
+      if (l == r) continue;
+      if (l > r) return 1;
+      return -1;
     }
 
     return 0;

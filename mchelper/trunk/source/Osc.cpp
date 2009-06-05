@@ -63,22 +63,17 @@ QByteArray OscMessage::toByteArray( )
         dstream << dataElement->b();
         break;
       case OscData::Int:
-      {
         typetag.append( 'i' );
         dstream << dataElement->i();
         break;
-      }
       case OscData::Float:
-      {
         typetag.append( 'f' );
         dstream << dataElement->f();
         break;
-      }
     }
   }
   msg += Osc::writePaddedString( typetag );
   msg += args;
-
   Q_ASSERT( ( msg.size( ) % 4 ) == 0 );
   return msg;
 }
