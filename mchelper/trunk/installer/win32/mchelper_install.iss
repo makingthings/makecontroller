@@ -32,6 +32,8 @@ Source: "QtCore4.dll"; DestDir: "{app}"; Flags: replacesameversion
 Source: "QtGui4.dll"; DestDir: "{app}"; Flags: replacesameversion
 Source: "QtNetwork4.dll"; DestDir: "{app}"; Flags: replacesameversion
 Source: "QtXml4.dll"; DestDir: "{app}"; Flags: replacesameversion
+Source: "sam7.exe"; DestDir: "{app}"; Flags: replacesameversion
+Source: "readline5.dll"; DestDir: "{app}"; Flags: replacesameversion
 Source: "make_controller_kit.inf"; DestDir: "{win}\inf"; Flags: replacesameversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
