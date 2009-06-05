@@ -30,7 +30,7 @@ class Uploader : public QProcess
   Q_OBJECT
   public:
     Uploader(MainWindow *mainWindow);
-    bool upload(QString boardProfileName, QString filename);
+    bool upload(const QString & boardProfileName, QString filename);
 
   private:
     MainWindow *mainWindow;

@@ -86,7 +86,7 @@ void UsbConsole::onCommandLine( )
  If the view has changed, update the contents of the
  output console accordingly.
 */
-void UsbConsole::onView(QString view)
+void UsbConsole::onView(const QString & view)
 {
   if(view == currentView) // we haven't changed
     return;
@@ -199,7 +199,7 @@ void UsbConsole::enumerate()
   Open the USB port with the given name
   Update the UI accordingly.
 */
-void UsbConsole::openDevice(QString name)
+void UsbConsole::openDevice(const QString & name)
 {
   if(port->isOpen())
     port->close();
