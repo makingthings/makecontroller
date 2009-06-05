@@ -27,7 +27,7 @@
 NetworkMonitor::NetworkMonitor( MainWindow* mainWindow ) : QUdpSocket( )
 {
   QSettings settings;
-  listen_port = settings.value("udp_listen_port", DEFAULT_UDP_LISTEN_PORT).toInt();
+  int listen = settings.value("udp_listen_port", DEFAULT_UDP_LISTEN_PORT).toInt();
   send_port = settings.value("udp_send_port", DEFAULT_UDP_SEND_PORT).toInt();
   sendDiscoveryPackets = settings.value("networkDiscovery", DEFAULT_NETWORK_DISCOVERY).toBool();
   this->mainWindow = mainWindow;
@@ -40,7 +40,7 @@ NetworkMonitor::NetworkMonitor( MainWindow* mainWindow ) : QUdpSocket( )
   connect( this, SIGNAL(msg(QString, MsgType::Type, QString)), mainWindow, SLOT(message(QString, MsgType::Type, QString)));
   connect( &pingTimer, SIGNAL( timeout() ), this, SLOT( sendPing() ) );
   broadcastPing = Osc::createOneRequest( "/network/find" ); // our constant OSC ping
-  setListenPort( listen_port, false );
+  setListenPort( listen, false );
   pingTimer.start(1000);
 }
 
