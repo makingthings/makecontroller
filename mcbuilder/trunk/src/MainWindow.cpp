@@ -2,12 +2,12 @@
 
  Copyright 2008 MakingThings
 
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
+ Licensed under the Apache License,
+ Version 2.0 (the "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0 
- 
+ http://www.apache.org/licenses/LICENSE-2.0
+
  Unless required by applicable law or agreed to in writing, software distributed
  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  CONDITIONS OF ANY KIND, either express or implied. See the License for
@@ -32,13 +32,13 @@
 
 
 /**
-	MainWindow represents, not surprisingly, the main window of the application.
-	It handles all the menu items and the UI.
+  MainWindow represents, not surprisingly, the main window of the application.
+  It handles all the menu items and the UI.
 */
 MainWindow::MainWindow( ) : QMainWindow( 0 )
 {
   setupUi(this);
-  
+
   // add the file dropdown to the toolbar...can't do this in Designer for some reason
   QWidget *stretch = new QWidget(toolBar);
   stretch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -48,7 +48,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   toolBar->addWidget(currentFileDropDown);
   QWidget *pad = new QWidget(toolBar); // this doesn't pad as much as it should...to be fixed...
   toolBar->addWidget(pad);
-  
+
   //initialization
   buildLog = new BuildLog();
   highlighter = new Highlighter( editor->document() );
@@ -60,7 +60,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   findReplace = new FindReplace(this);
   about = new About();
   updater = new AppUpdater();
-  
+
   // load
   boardTypeGroup = new QActionGroup(menuBoard_Type);
   loadBoardProfiles( );
@@ -68,7 +68,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   loadLibraries( );
   loadRecentProjects( );
   readSettings( );
-  
+
   // misc. signals
   connect(editor, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorMoved()));
   connect(actionPreferences, SIGNAL(triggered()), prefs, SLOT(loadAndShow()));
@@ -76,8 +76,8 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   connect(currentFileDropDown, SIGNAL(currentIndexChanged(int)), this, SLOT(onFileSelection(int)));
   connect(editor->document(), SIGNAL(contentsChanged()),this, SLOT(onDocumentModified()));
   connect(outputConsole, SIGNAL(itemDoubleClicked(QListWidgetItem*)),this, SLOT(onConsoleDoubleClick(QListWidgetItem*)));
-  
-  // menu actions 
+
+  // menu actions
   connect(actionNew,					SIGNAL(triggered()), this,		SLOT(onNewFile()));
   connect(actionAdd_Existing_File, SIGNAL(triggered()), this,		SLOT(onAddExistingFile()));
   connect(actionNew_Project,	SIGNAL(triggered()), this,		SLOT(onNewProject()));
@@ -115,29 +115,29 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 */
 void MainWindow::readSettings()
 {
-	QSettings settings("MakingThings", "mcbuilder");
-	settings.beginGroup("MainWindow");
-	
-	QSize size = settings.value( "size" ).toSize( );
-	if( size.isValid( ) )
-		resize( size );
-	
-	QList<QVariant> splitterSettings = settings.value( "splitterSizes" ).toList( );
-	QList<int> splitterSizes;
-	if( !splitterSettings.isEmpty( ) )
-	{
-		for( int i = 0; i < splitterSettings.count( ); i++ )
-			splitterSizes.append( splitterSettings.at(i).toInt( ) );
-		splitter->setSizes( splitterSizes );
-	}
-  
+  QSettings settings("MakingThings", "mcbuilder");
+  settings.beginGroup("MainWindow");
+
+  QSize size = settings.value( "size" ).toSize( );
+  if( size.isValid( ) )
+    resize( size );
+
+  QList<QVariant> splitterSettings = settings.value( "splitterSizes" ).toList( );
+  QList<int> splitterSizes;
+  if( !splitterSettings.isEmpty( ) )
+  {
+    for( int i = 0; i < splitterSettings.count( ); i++ )
+      splitterSizes.append( splitterSettings.at(i).toInt( ) );
+    splitter->setSizes( splitterSizes );
+  }
+
   if(settings.value("checkForUpdates", true).toBool())
     updater->checkForUpdates(APPUPDATE_BACKGROUND);
-  
+
   QString lastProject = settings.value("lastOpenProject").toString();
   if(!lastProject.isEmpty())
     openProject(lastProject);
-	settings.endGroup();
+  settings.endGroup();
   QPoint mainWinPos = settings.value("mainwindow_pos").toPoint();
   if(!mainWinPos.isNull())
     move(mainWinPos);
@@ -181,7 +181,7 @@ void MainWindow::closeEvent( QCloseEvent *qcloseevent )
   If it's a return or an enter, insert the spaces on the previous
   line so the cursor ends up in the same spot on the new line.
 */
-void Editor::keyPressEvent(QKeyEvent* event) 
+void Editor::keyPressEvent(QKeyEvent* event)
 {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return)
   {
@@ -191,7 +191,7 @@ void Editor::keyPressEvent(QKeyEvent* event)
     int count = 0;
     while(count < line.size() && line.at(count).isSpace())
       whitespace += line.at(count++);
-      
+
     c.beginEditBlock();
     c.insertBlock();
     c.insertText(whitespace);
@@ -219,7 +219,7 @@ void MainWindow::onCursorMoved( )
   QList<QTextEdit::ExtraSelection> extras;
   extras << highlight;
   editor->setExtraSelections( extras );
-  
+
   statusBar()->showMessage( tr("Line: %1  Column: %2").arg(c.blockNumber()+1).arg(c.columnNumber()));
 }
 
@@ -244,7 +244,7 @@ bool MainWindow::findText(QString text, QTextDocument::FindFlags flags, bool for
       editor->moveCursor(QTextCursor::Start);
     else
       editor->moveCursor(QTextCursor::End);
-      
+
     if(editor->find(text, flags)) // now try again
       success = true;
   }
@@ -288,8 +288,8 @@ void MainWindow::setEditorFont(QString family, int pointSize)
 
 void MainWindow::setTabWidth( int width )
 {
-	QFontMetrics fm(editor->font());
-	editor->setTabStopWidth( fm.width(" ") * width );
+  QFontMetrics fm(editor->font());
+  editor->setTabStopWidth( fm.width(" ") * width );
 }
 
 /*
@@ -342,7 +342,7 @@ void MainWindow::onNewFile( )
     {
       QFileInfo fi(newFile);
       editorLoadFile(fi.filePath());
-      currentFileDropDown->addItem(fi.fileName(), fi.filePath()); // store the filepath on the combo box item 
+      currentFileDropDown->addItem(fi.fileName(), fi.filePath()); // store the filepath on the combo box item
       currentFileDropDown->setCurrentIndex(currentFileDropDown->count()-1);
     }
     else
@@ -418,7 +418,7 @@ void MainWindow::createNewFile(QString path)
   if(fi.suffix().isEmpty())
     fi.setFile(fi.filePath() + ".c");
   QFile file(fi.filePath());
-    
+
   if(file.exists()) // don't do anything if this file's already there
     return;
   if(file.open(QIODevice::WriteOnly | QFile::Text))
@@ -428,7 +428,7 @@ void MainWindow::createNewFile(QString path)
     out << tr("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl << endl;
     file.close();
     editorLoadFile(fi.filePath());
-    currentFileDropDown->addItem(fi.fileName(), fi.filePath()); // store the filepath on the combo box item 
+    currentFileDropDown->addItem(fi.fileName(), fi.filePath()); // store the filepath on the combo box item
     currentFileDropDown->setCurrentIndex(currentFileDropDown->count()-1);
     projectManager.addToProjectFile(currentProject, fi.filePath(), "thumb");
   }
@@ -460,7 +460,7 @@ void MainWindow::onFileSelection(int index)
   Create a new project directory and project file within it.
 */
 void MainWindow::onNewProject( )
-{	
+{
   QString workspace = Preferences::workspace();
   QString newProjPath = QFileDialog::getSaveFileName(this, tr("Create Project"), workspace, "", 0, QFileDialog::ShowDirsOnly);
   if(!newProjPath.isNull())
@@ -470,7 +470,7 @@ void MainWindow::onNewProject( )
       openProject(newProject);
     else
       return statusBar()->showMessage(tr("Couldn't create new project.  Make sure there are no spaces in the path specified."), 3000);
-  }  
+  }
 }
 
 /*
@@ -479,10 +479,10 @@ void MainWindow::onNewProject( )
 */
 void MainWindow::onOpen( )
 {
-	QString projectPath = QFileDialog::getExistingDirectory(this, tr("Open Project"), 
-																					Preferences::workspace(), QFileDialog::ShowDirsOnly);
-	if( !projectPath.isNull() ) // user cancelled
-		openProject(projectPath);
+  QString projectPath = QFileDialog::getExistingDirectory(this, tr("Open Project"),
+                                          Preferences::workspace(), QFileDialog::ShowDirsOnly);
+  if( !projectPath.isNull() ) // user cancelled
+    openProject(projectPath);
 }
 
 /*
@@ -516,7 +516,7 @@ void MainWindow::openProject(QString projectPath)
           currentFileDropDown->addItem(fi.fileName(), fi.filePath());
         else
           currentFileDropDown->addItem(fi.fileName(), projectDir.filePath(fi.filePath()));
-          
+
         // if this is the main project file, load it into the editor
         if(fi.baseName() == pathname)
         {
@@ -533,8 +533,8 @@ void MainWindow::openProject(QString projectPath)
     if(clean)
       builder->clean(projectPath);
     buildLog->clear();
-	}
-	else
+  }
+  else
     return statusBar()->showMessage( tr("Couldn't find main file for %1.").arg(projectName), 3500 );
 }
 
@@ -544,32 +544,32 @@ void MainWindow::openProject(QString projectPath)
 */
 void MainWindow::updateRecentProjects(QString newProject)
 {
-	QList<QAction*> recentProjects = menuRecent_Projects->actions();
-	QStringList recentProjectPaths;
-	foreach(QAction* a, recentProjects)
-		recentProjectPaths << a->data().toString();
-	if(!recentProjectPaths.contains(newProject)) // only need to update if this project is not already included
-	{
-		if(recentProjects.count() >= RECENT_FILES ) // make room in the list if we need to
+  QList<QAction*> recentProjects = menuRecent_Projects->actions();
+  QStringList recentProjectPaths;
+  foreach(QAction* a, recentProjects)
+    recentProjectPaths << a->data().toString();
+  if(!recentProjectPaths.contains(newProject)) // only need to update if this project is not already included
+  {
+    if(recentProjects.count() >= RECENT_FILES ) // make room in the list if we need to
     {
-			menuRecent_Projects->removeAction(recentProjects.first());
+      menuRecent_Projects->removeAction(recentProjects.first());
       recentProjectPaths.removeAll(newProject);
     }
-      
+
     QDir dir(newProject); // make the new action, and add it to the menu
     QAction* action = new QAction(dir.dirName(), menuRecent_Projects);
     action->setData(newProject);
-		menuRecent_Projects->addAction(action);
+    menuRecent_Projects->addAction(action);
     recentProjectPaths.append(newProject);
 
-		QSettings settings("MakingThings", "mcbuilder");
-		settings.setValue("recentProjects", recentProjectPaths);
-	}	
+    QSettings settings("MakingThings", "mcbuilder");
+    settings.setValue("recentProjects", recentProjectPaths);
+  }
 }
 
 void MainWindow::openRecentProject(QAction* project)
 {
-	openProject(project->data().toString());
+  openProject(project->data().toString());
 }
 
 /*
@@ -577,9 +577,9 @@ void MainWindow::openRecentProject(QAction* project)
 */
 void MainWindow::onSave( )
 {
-	if(currentFile.isEmpty())
-		return statusBar()->showMessage( tr("Need to open a file or project first.  Open or create a new one from the File menu."), 3500 );
-	save( );
+  if(currentFile.isEmpty())
+    return statusBar()->showMessage( tr("Need to open a file or project first.  Open or create a new one from the File menu."), 3500 );
+  save( );
 }
 
 /*
@@ -588,8 +588,8 @@ void MainWindow::onSave( )
 bool MainWindow::save( )
 {
   QFile file(currentFile);
-	if(file.open(QFile::WriteOnly | QFile::Text))
-	{
+  if(file.open(QFile::WriteOnly | QFile::Text))
+  {
     QTextStream out(&file);
     QApplication::setOverrideCursor(Qt::WaitCursor);
     out << editor->toPlainText();
@@ -597,7 +597,7 @@ bool MainWindow::save( )
     editor->document()->setModified(false);
     setWindowModified(false);
     return true;
-	}
+  }
   else
   {
     statusBar()->showMessage( tr("Couldn't save...maybe the current file has been moved or deleted."), 3500 );
@@ -628,25 +628,25 @@ bool MainWindow::maybeSave()
 
 /*
   Called when the "save as" action has been triggered.
-  Create a new file with the contents of the current one, 
+  Create a new file with the contents of the current one,
   rename it and load it into the editor.
 */
 void MainWindow::onSaveAs( )
 {
-	if(currentFile.isEmpty())
-		return statusBar()->showMessage( tr("Need to open a project first.  Open or create a new one from the File menu."), 3500 );
-		
-	QString newFileName = QFileDialog::getSaveFileName(this, tr("Save As"), 
-																			currentProject, tr("C Files (*.c)"));
-	if(!newFileName.isNull()) // user cancelled
+  if(currentFile.isEmpty())
+    return statusBar()->showMessage( tr("Need to open a project first.  Open or create a new one from the File menu."), 3500 );
+
+  QString newFileName = QFileDialog::getSaveFileName(this, tr("Save As"),
+                                      currentProject, tr("C Files (*.c)"));
+  if(!newFileName.isNull()) // user cancelled
   {
     QString newFile = projectManager.saveFileAs(currentProject, currentFile, newFileName);
     if(!newFile.isEmpty())
     {
       QFileInfo fi(newFile);
       editorLoadFile(newFile);
-	    currentFileDropDown->addItem(fi.fileName(), fi.filePath());
-	    currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
+      currentFileDropDown->addItem(fi.fileName(), fi.filePath());
+      currentFileDropDown->setCurrentIndex(currentFileDropDown->findText(fi.fileName()));
     }
     else
     {
@@ -661,11 +661,11 @@ void MainWindow::onSaveAs( )
 */
 void MainWindow::onSaveProjectAs( )
 {
-	if(currentProject.isEmpty())
+  if(currentProject.isEmpty())
     return statusBar()->showMessage( tr("Need to open a project first.  Open or create a new one from the File menu."), 3500 );
-    
+
   QString workspace = Preferences::workspace();
-  QString newProjectPath = QFileDialog::getSaveFileName(this, tr("Save Project As"), workspace, 
+  QString newProjectPath = QFileDialog::getSaveFileName(this, tr("Save Project As"), workspace,
                                                         "", 0, QFileDialog::ShowDirsOnly);
   if(!newProjectPath.isNull()) // user canceled
   {
@@ -685,17 +685,17 @@ void MainWindow::onSaveProjectAs( )
 void MainWindow::onBuild( )
 {
   if(currentProject.isEmpty())
-		return statusBar()->showMessage( tr("Open a project to build, or create a new one from the File menu."), 3500 );
+    return statusBar()->showMessage( tr("Open a project to build, or create a new one from the File menu."), 3500 );
   if(!maybeSave( ))
     return;
-	if(builder->state() == QProcess::NotRunning) 
+  if(builder->state() == QProcess::NotRunning)
   {
-		outputConsole->clear();
+    outputConsole->clear();
     actionStop->setEnabled(true);
     builder->build(currentProject);
   }
-	else
-		return statusBar()->showMessage( tr("Builder is currently busy...give it a second, then try again."), 3500 );
+  else
+    return statusBar()->showMessage( tr("Builder is currently busy...give it a second, then try again."), 3500 );
 }
 
 /*
@@ -709,7 +709,7 @@ void MainWindow::onStop( )
 
 /*
   The build has completed.
-  Add a line to the output console indicating success or failure, 
+  Add a line to the output console indicating success or failure,
   and set the status bar as well.
 */
 void MainWindow::onBuildComplete(bool success)
@@ -767,8 +767,8 @@ void MainWindow::onClean( )
     return;
   if(builder->state() == QProcess::NotRunning)
     builder->clean(currentProject);
-	else
-		return statusBar()->showMessage( tr("Builder is currently busy...give it a second, then try again."), 3500 );
+  else
+    return statusBar()->showMessage( tr("Builder is currently busy...give it a second, then try again."), 3500 );
 }
 
 /*
@@ -777,13 +777,13 @@ void MainWindow::onClean( )
 */
 void MainWindow::onProperties( )
 {
-	if(currentProject.isEmpty())
-		return statusBar()->showMessage( tr("Open a project first, or create a new one from the File menu."), 3500 );
-	if( !projInfo->load(currentProject) )
-	{
-		QDir dir(currentProject);
-		return statusBar()->showMessage( tr("Couldn't find/open project properties for ") + dir.dirName(), 3500 );
-	}
+  if(currentProject.isEmpty())
+    return statusBar()->showMessage( tr("Open a project first, or create a new one from the File menu."), 3500 );
+  if( !projInfo->load(currentProject) )
+  {
+    QDir dir(currentProject);
+    return statusBar()->showMessage( tr("Couldn't find/open project properties for ") + dir.dirName(), 3500 );
+  }
   else
     projInfo->show();
 }
@@ -844,37 +844,37 @@ void MainWindow::uploadFile(QString filename)
 // read the available board files and load them into the UI
 void MainWindow::loadBoardProfiles( )
 {
-	QDir dir = QDir::current().filePath("resources/board_profiles");
-	QStringList boardProfiles = dir.entryList(QStringList("*.xml"));
-	QDomDocument doc;
-	// get a list of the names of the actions we already have
-	QList<QAction*> boardActions = menuBoard_Type->actions( );
-	QStringList actionNames;
-	foreach(QAction *a, boardActions)
-		actionNames << a->text();
-	
-	foreach(QString filename, boardProfiles)
-	{
-		QFile file(dir.filePath(filename));
-		if(file.open(QIODevice::ReadOnly))
-		{
-			if(doc.setContent(&file))
-			{
-				QString boardName = doc.elementsByTagName("name").at(0).toElement().text();
-				if(!actionNames.contains(boardName))
-				{
-					QAction *boardAction = new QAction(boardName, this);
-					boardAction->setCheckable(true);
-					if(boardName == Preferences::boardType( ))
-						boardAction->setChecked(true);
+  QDir dir = QDir::current().filePath("resources/board_profiles");
+  QStringList boardProfiles = dir.entryList(QStringList("*.xml"));
+  QDomDocument doc;
+  // get a list of the names of the actions we already have
+  QList<QAction*> boardActions = menuBoard_Type->actions( );
+  QStringList actionNames;
+  foreach(QAction *a, boardActions)
+    actionNames << a->text();
+
+  foreach(QString filename, boardProfiles)
+  {
+    QFile file(dir.filePath(filename));
+    if(file.open(QIODevice::ReadOnly))
+    {
+      if(doc.setContent(&file))
+      {
+        QString boardName = doc.elementsByTagName("name").at(0).toElement().text();
+        if(!actionNames.contains(boardName))
+        {
+          QAction *boardAction = new QAction(boardName, this);
+          boardAction->setCheckable(true);
+          if(boardName == Preferences::boardType( ))
+            boardAction->setChecked(true);
           boardAction->setData(filename);         // hang onto the filename so we don't have to look it up again later
-					menuBoard_Type->addAction(boardAction); // add the action to the actual menu
-					boardTypeGroup->addAction(boardAction); // and to the group that maintains an exclusive selection within the menu
-				}
-			}
-			file.close();
-		}
-	}
+          menuBoard_Type->addAction(boardAction); // add the action to the actual menu
+          boardTypeGroup->addAction(boardAction); // and to the group that maintains an exclusive selection within the menu
+        }
+      }
+      file.close();
+    }
+  }
 }
 
 /*
@@ -883,21 +883,21 @@ void MainWindow::loadBoardProfiles( )
 */
 void MainWindow::loadExamples( )
 {
-	QDir dir = QDir::current().filePath("resources/examples");
-	QStringList exampleCategories = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
-	foreach(QString category, exampleCategories)
-	{
-		QMenu *exampleMenu = new QMenu(category, this);
-		menuExamples->addMenu(exampleMenu);
-		QDir exampleDir(dir.filePath(category));
-		QFileInfoList examples = exampleDir.entryInfoList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
-		foreach(QFileInfo example, examples)
-		{
-			QAction *a = new QAction(example.baseName(), exampleMenu); // use the base name for the name in the menu
+  QDir dir = QDir::current().filePath("resources/examples");
+  QStringList exampleCategories = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
+  foreach(QString category, exampleCategories)
+  {
+    QMenu *exampleMenu = new QMenu(category, this);
+    menuExamples->addMenu(exampleMenu);
+    QDir exampleDir(dir.filePath(category));
+    QFileInfoList examples = exampleDir.entryInfoList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
+    foreach(QFileInfo example, examples)
+    {
+      QAction *a = new QAction(example.baseName(), exampleMenu); // use the base name for the name in the menu
       a->setData(example.filePath()); // store the path in the action's data
-			exampleMenu->addAction(a);
-		}
-	}
+      exampleMenu->addAction(a);
+    }
+  }
 }
 
 /*
@@ -906,7 +906,7 @@ void MainWindow::loadExamples( )
 */
 void MainWindow::onExample(QAction *example)
 {
-	openProject(example->data().toString());
+  openProject(example->data().toString());
 }
 
 /*
@@ -933,14 +933,14 @@ void MainWindow::loadLibraries( )
         QDomNodeList nodes = doc.elementsByTagName("display_name");
         if(nodes.count())
           libname = nodes.at(0).toElement().text();
-        
+
         // create a menu that allows us to import the library, view its documentation, etc
         QMenu *menu = new QMenu(libname, menuLibraries);
         menuLibraries->addMenu(menu);
         QAction *a = new QAction(tr("Import to Current Project"), menu);
         a->setData(library);
         menu->addAction(a);
-        
+
         nodes = doc.elementsByTagName("reference");
         if(nodes.count())
         {
@@ -1041,7 +1041,7 @@ void MainWindow::highlightLine(QString filepath, int linenumber, ConsoleItem::Ty
     c.movePosition(QTextCursor::Start);
     while(c.blockNumber() < linenumber-1) // blockNumber is 0 based, lineNumber starts at 1
       c.movePosition(QTextCursor::NextBlock);
-    
+
     QTextEdit::ExtraSelection es;
     es.cursor = c;
     es.format.setProperty(QTextFormat::FullWidthSelection, true);

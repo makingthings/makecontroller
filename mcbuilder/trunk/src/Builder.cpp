@@ -2,12 +2,12 @@
 
  Copyright 2008 MakingThings
 
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
+ Licensed under the Apache License,
+ Version 2.0 (the "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0 
- 
+ http://www.apache.org/licenses/LICENSE-2.0
+
  Unless required by applicable law or agreed to in writing, software distributed
  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  CONDITIONS OF ANY KIND, either express or implied. See the License for
@@ -25,8 +25,8 @@
 #define LIBRARIES_DIR "cores/makecontroller/libraries"
 
 /*
-	Builder takes a project and turns it into a binary executable.
-	We need to generate a Makefile based on the general Preferences 
+  Builder takes a project and turns it into a binary executable.
+  We need to generate a Makefile based on the general Preferences
   and Properties for this project.
 */
 Builder::Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog ) : QProcess( 0 )
@@ -34,7 +34,7 @@ Builder::Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *build
   this->mainWindow = mainWindow;
   this->projInfo = projInfo;
   this->buildLog = buildLog;
-  
+
   connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(filterOutput()));
   connect(this, SIGNAL(readyReadStandardError()), this, SLOT(filterErrorOutput()));
   connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(nextStep(int, QProcess::ExitStatus)));
@@ -42,7 +42,7 @@ Builder::Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *build
 }
 
 /*
-	Prepare the build process for the given project, then fire it off.
+  Prepare the build process for the given project, then fire it off.
 */
 void Builder::build(QString projectName)
 {
@@ -107,8 +107,8 @@ QString Builder::ensureBuildDirExists(QString projPath)
 }
 
 /*
-	This handles the end of each step of the build process.  Maintain which state we're
-	in and fire off the next process as appropriate.
+  This handles the end of each step of the build process.  Maintain which state we're
+  in and fire off the next process as appropriate.
 */
 void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
 {
@@ -118,7 +118,7 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
     resetBuildProcess();
       return;
   }
-  
+
   switch(buildStep)
   {
     case BUILD: // the build has just completed.  check the size of the .bin
@@ -184,7 +184,7 @@ bool Builder::createMakefile(QString projectPath)
 
     tofile << "OUTPUT = " + projectDir.dirName().toLower() << endl << endl;
     tofile << "all: $(OUTPUT).bin" << endl << endl;
-    
+
     // read the project file in to get a list of the files we want to build, and include dirs
     QFile projectFile(projectDir.filePath(projectDir.dirName() + ".xml"));
     if(projectFile.open(QIODevice::ReadOnly|QFile::Text))
@@ -196,7 +196,7 @@ bool Builder::createMakefile(QString projectPath)
         {
           QString projName = projectDir.dirName();
           QDir currentDir = QDir::current();
-          
+
           // extract all the files for this project from the project file
           QStringList thmbFiles, armFiles;
           QDomNodeList allFiles = projectDoc.elementsByTagName("files").at(0).childNodes();
@@ -234,12 +234,12 @@ bool Builder::createMakefile(QString projectPath)
 
           tofile << "INCLUDEDIRS = \\" << endl;
           tofile << "  -I" << filteredPath(projectDir.path()) << " \\" << endl; // always include the project directory
-          
+
           // add in the directories for the required libraries
           QDir libdir(QDir::current().filePath(LIBRARIES_DIR));
           foreach(Library lib, libraries)
             tofile << "  -I" << filteredPath(libdir.filePath(lib.name)) << " \\" << endl;
-          
+
           QDomNodeList include_dirs = projectDoc.elementsByTagName("include_dirs").at(0).childNodes();
           for(int i = 0; i < include_dirs.count(); i++)
           {
@@ -260,7 +260,7 @@ bool Builder::createMakefile(QString projectPath)
           tofile << "DEBUG=" + debug << endl;
           QString optLevel = projInfo->optLevel();
           if(optLevel.contains("-O1"))
-            optLevel = "-O1";	
+            optLevel = "-O1";
           else if(optLevel.contains("-O2"))
             optLevel = "-O2";
           else if(optLevel.contains("-O3"))
@@ -307,7 +307,7 @@ bool Builder::createMakefile(QString projectPath)
 
           tofile << "$(ARM_OBJ) : %.o : %.c ../config.h" << endl;
           tofile << "\t" << "$(CC) -c $(CFLAGS) $< -o $@" << endl << endl;
-                  
+
           tofile << "clean :" << endl;
           tofile << "\t" << "rm -f $(ARM_OBJ)" << endl;
           tofile << "\t" << "rm -f $(THUMB_OBJ)" << endl;
@@ -349,11 +349,11 @@ bool Builder::createConfigFile(QString projectPath)
     tofile << tr("  Generated automatically by mcbuilder - ") << QDateTime::currentDateTime().toString("MMM d, yyyy h:m ap") << endl;
     tofile << tr("  Any manual changes made to this file will be overwritten the next time mcbuilder builds.") << endl << endl;
     tofile << "******************************************************************************************/" << endl << endl;
-    
+
     tofile << "#ifndef CONFIG_H" << endl << "#define CONFIG_H" << endl << endl;
-    
+
     tofile << "#include \"controller.h\"" << endl << "#include \"error.h\"" << endl << endl;
-    
+
     tofile << "#define CONTROLLER_HEAPSIZE " << projInfo->heapsize() << endl;
     tofile << "#define FIRMWARE_NAME " << "\"" + dir.dirName() + "\"" << endl;
     int maj, min, bld;
@@ -361,13 +361,13 @@ bool Builder::createConfigFile(QString projectPath)
     tofile << "#define FIRMWARE_MAJOR_VERSION " << maj << endl;
     tofile << "#define FIRMWARE_MINOR_VERSION " << min << endl;
     tofile << "#define FIRMWARE_BUILD_NUMBER " << bld << endl << endl;
-    
+
     if(projInfo->includeOsc())
       tofile << "#define OSC" << endl;
-    
+
     if(projInfo->includeUsb())
       tofile << "#define MAKE_CTRL_USB" << endl;
-      
+
     if(projInfo->includeNetwork())
     {
       tofile << "#define MAKE_CTRL_NETWORK" << endl;
@@ -377,9 +377,9 @@ bool Builder::createConfigFile(QString projectPath)
       tofile << "#define NETWORK_TCP_LISTEN_CONNS " << projInfo->tcpServers() << endl;
     }
     tofile << endl;
-      
+
     tofile << "#define CONTROLLER_VERSION  100" << endl << "#define APPBOARD_VERSION  100" << endl << endl;
-    
+
     tofile << "#endif // CONFIG_H" << endl;
     configFile.close();
   }
@@ -402,23 +402,23 @@ bool Builder::compareConfigFile(QString projectPath)
     QTextStream in(&configFile);
     int maj, min, bld;
     parseVersionNumber( &maj, &min, &bld );
-    
+
     bool network = false;
     bool osc = false;
     bool usb = false;
-    
+
     QRegExp majorVersionExp("#define FIRMWARE_MAJOR_VERSION (\\d+)");
     QRegExp minorVersionExp("#define FIRMWARE_MINOR_VERSION (\\d+)");
     QRegExp buildVersionExp("#define FIRMWARE_BUILD_NUMBER (\\d+)");
-    
+
     QRegExp heapExp("#define CONTROLLER_HEAPSIZE (\\d+)");
     QRegExp nameExp("#define FIRMWARE_NAME \"(.+)\"");
-    
+
     QRegExp mempoolExp("#define NETWORK_MEM_POOL (\\d+)");
     QRegExp udpExp("#define NETWORK_UDP_CONNS (\\d+)");
     QRegExp tcpExp("#define NETWORK_TCP_CONNS (\\d+)");
     QRegExp tcpListenExp("#define NETWORK_TCP_LISTEN_CONNS (\\d+)");
-    
+
     QString line = in.readLine();
     while(!line.isNull())
     {
@@ -482,17 +482,17 @@ bool Builder::compareConfigFile(QString projectPath)
         if( tcpListen != projInfo->tcpServers() )
           retval = true;
       }
-      
+
       line = in.readLine();
     }
-    
+
     if(usb != projInfo->includeUsb() )
       retval = true;
     if(osc != projInfo->includeOsc() )
       retval = true;
     if(network != projInfo->includeNetwork() )
       retval = true;
-    
+
     configFile.close();
   }
   else
@@ -569,7 +569,7 @@ void Builder::onBuildError(QProcess::ProcessError error)
 /*
   Filter the output of the build process
   and only show the most important parts to the user.
-  
+
   Read line by line...we're only really looking for which file is being compiled at the moment.
 */
 void Builder::filterOutput()
@@ -604,7 +604,7 @@ void Builder::filterOutput()
 /*
   Filter the error messages of the build process
   and only show the most important parts to the user.
-  
+
   Try and match the output with some common patterns so we can highlight errors/warnings
   in the editor.
 */
@@ -669,7 +669,7 @@ bool Builder::matchErrorOrWarning(QString error)
     int linenumber = errExp.cap(2).toInt();
     QString severity(errExp.cap(3));
     QString msg(errExp.cap(4));
-    
+
     //qDebug("cap! %s: %s, %d - %s", qPrintable(severity), qPrintable(filepath), linenumber, qPrintable(msg));
     QFileInfo fi(filepath);
     ConsoleItem *item;
@@ -707,7 +707,7 @@ bool Builder::matchInFunction(QString error)
   {
     QString filepath(errExp.cap(1));
     QString func(errExp.cap(2));
-    
+
     //qDebug("cap! %s: In function %s", qPrintable(filepath), qPrintable(func));
     QFileInfo fi(filepath);
     QString fullmsg = tr("%1: In function %2").arg(fi.fileName()).arg(func);
@@ -732,7 +732,7 @@ bool Builder::matchUndefinedRef(QString error)
   {
     QString filepath(errExp.cap(1));
     QString func(errExp.cap(2));
-    
+
     //qDebug("cap! %s: In function %s", qPrintable(filepath), qPrintable(func));
     QFileInfo fi(filepath);
     QString fullmsg = tr("Error - in %1: Undefined reference to %2").arg(fi.fileName()).arg(func);
@@ -755,7 +755,7 @@ void Builder::loadDependencies(QString libsDir, QString project)
   QStringList srcFiles = projDir.entryList(QStringList() << "*.c" << "*.h");
   QDir libDir(QDir::current().filePath(libsDir));
   QStringList libDirs = libDir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
-  
+
   foreach(QString filename, srcFiles)
   {
     QFile file(projDir.filePath(filename));
@@ -765,7 +765,7 @@ void Builder::loadDependencies(QString libsDir, QString project)
       QRegExp rx("#include [\"|<]([a-zA-Z0-9]*)\\.h[\"|>]");
       QString fileContents = file.readAll();
       int pos = 0;
-      
+
       // gather all the matching directives
       while((pos = rx.indexIn(fileContents, pos)) != -1)
       {
@@ -819,8 +819,8 @@ void Builder::getLibrarySources(QString libdir, QStringList *thmb, QStringList *
 */
 QString Builder::filteredPath(QString path)
 {
-	// would be good to be able to do something about file paths with spaces
-	// but not quite sure how to deal at the moment...
+  // would be good to be able to do something about file paths with spaces
+  // but not quite sure how to deal at the moment...
   QString filtered = path;
   if(!QDir::isAbsolutePath(path))
   {

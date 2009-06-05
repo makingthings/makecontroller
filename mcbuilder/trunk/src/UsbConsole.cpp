@@ -2,12 +2,12 @@
 
  Copyright 2008 MakingThings
 
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
+ Licensed under the Apache License,
+ Version 2.0 (the "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0 
- 
+ http://www.apache.org/licenses/LICENSE-2.0
+
  Unless required by applicable law or agreed to in writing, software distributed
  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  CONDITIONS OF ANY KIND, either express or implied. See the License for
@@ -34,12 +34,12 @@ UsbConsole::UsbConsole( ) : QDialog( )
   connect( &enumerateTimer, SIGNAL(timeout()), this, SLOT(enumerate()));
   connect(this, SIGNAL(finished(int)), this, SLOT(onFinished()));
   currentView = viewList->currentText();
-  
+
   port = new QextSerialPort("", QextSerialPort::EventDriven);
   connect(port, SIGNAL(readyRead()), this, SLOT(processNewData()));
 }
 
-/* 
+/*
  Scan the available ports & populate the list.
  If one of the ports is the one that was last open, open it up.
  Otherwise, wait for the user to select one then open that one.
@@ -83,7 +83,7 @@ void UsbConsole::onCommandLine( )
 }
 
 /*
- If the view has changed, update the contents of the 
+ If the view has changed, update the contents of the
  output console accordingly.
 */
 void UsbConsole::onView(QString view)
@@ -138,7 +138,7 @@ void UsbConsole::charToHex(QTextCursor *c)
     hexes += strToHex(str.left(1));
     str.remove(0,1);
   }
-  while(!c->atBlockEnd()) // remove 
+  while(!c->atBlockEnd()) // remove
     c->deleteChar();
   c->insertText(hexes);
 }
@@ -169,15 +169,15 @@ void UsbConsole::enumerate()
   {
     QString asciiname = port->portName().toAscii();
     //qDebug("enumerated: %s", qPrintable(portInfo.friendName));
-	if(portInfo.friendName.startsWith("Make Controller Ki")
-        && !ports.contains(asciiname) 
+  if(portInfo.friendName.startsWith("Make Controller Ki")
+        && !ports.contains(asciiname)
         && !closedPorts.contains(asciiname)) // found a new port
     {
       openDevice(portInfo.portName);
     }
     foundPorts << portInfo.portName.toAscii();
   }
-  
+
   // now check for ports that have gone away
   foreach(QString portname, ports)
   {
@@ -206,8 +206,8 @@ void UsbConsole::openDevice(QString name)
   port->setPortName(name);
   if(port->open(QIODevice::ReadWrite))
   {
-	qDebug("UsbConsole: opened %s", qPrintable(name));
-	QString asciiname = name.toAscii();
+  qDebug("UsbConsole: opened %s", qPrintable(name));
+  QString asciiname = name.toAscii();
     ports.append(asciiname);
     if(portList->findText(asciiname) < 0)
       portList->addItem(asciiname);

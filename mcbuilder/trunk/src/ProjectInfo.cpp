@@ -2,11 +2,11 @@
 
   Copyright 2008 MakingThings
 
-  Licensed under the Apache License, 
-  Version 2.0 (the "License"); you may not use this file except in compliance 
+  Licensed under the Apache License,
+  Version 2.0 (the "License"); you may not use this file except in compliance
   with the License. You may obtain a copy of the License at
 
-  http://www.apache.org/licenses/LICENSE-2.0 
+  http://www.apache.org/licenses/LICENSE-2.0
 
   Unless required by applicable law or agreed to in writing, software distributed
   under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
@@ -62,7 +62,7 @@ ProjectInfo::ProjectInfo(MainWindow *mainWindow) : QDialog( 0 )
 /*
   Read the project's ProjectInfo from the project file
   and load them into the UI.
-*/  
+*/
 bool ProjectInfo::load( QString projectPath )
 {
   if(projectPath.isEmpty())
@@ -161,7 +161,7 @@ bool ProjectInfo::diffProjects( QString newProjectPath, bool saveUiToFile )
   if(versionEdit->text().isEmpty()) // check the version box as a sample...if this is empty, we don't have anything loaded so don't bother checking
     return false;
   bool changed = false;
-  
+
   QFile file(projectFilePath(newProjectPath));
   if(file.open(QIODevice::ReadWrite|QFile::Text))
   {
@@ -242,7 +242,7 @@ bool ProjectInfo::diffProjects( QString newProjectPath, bool saveUiToFile )
         projectFile.elementsByTagName("network_tcp_servers").at(0).firstChild().setNodeValue(tcpServerEdit->text());
         changed = true;
       }
-      
+
       if(saveUiToFile)
       {
         file.resize(0); // clear out the current contents so we can update them, since we opened as read/write
@@ -261,7 +261,7 @@ bool ProjectInfo::diffProjects( QString newProjectPath, bool saveUiToFile )
 QString ProjectInfo::projectFilePath( QString projectPath )
 {
   QDir projectDir(projectPath);
-  return projectDir.filePath(projectDir.dirName() + ".xml"); 
+  return projectDir.filePath(projectDir.dirName() + ".xml");
 }
 
 void ProjectInfo::restoreDefaults( )

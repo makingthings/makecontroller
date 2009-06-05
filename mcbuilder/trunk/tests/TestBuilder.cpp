@@ -2,12 +2,12 @@
 
  Copyright 2008 MakingThings
 
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
+ Licensed under the Apache License,
+ Version 2.0 (the "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0 
- 
+ http://www.apache.org/licenses/LICENSE-2.0
+
  Unless required by applicable law or agreed to in writing, software distributed
  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  CONDITIONS OF ANY KIND, either express or implied. See the License for
@@ -75,7 +75,7 @@ void TestBuilder::testMakefile()
   QDir projDir(currentProjectPath());
   QFile makefile(projDir.filePath("build/Makefile"));
   QVERIFY(makefile.exists());
-  
+
   QStringList projectFiles; // a list of all the files in the project file
   QFile projectFile(projDir.filePath(projDir.dirName() + ".xml"));
   QDomDocument projectDoc;
@@ -86,7 +86,7 @@ void TestBuilder::testMakefile()
       projectFiles.append(builder->filteredPath(files.at(i).toElement().text()));
   }
   QVERIFY(projectFiles.size()); // make sure we got something
-  
+
   QStringList makeFiles; // list of files in the Makefile
   QStringList makeFileDirs; // list of include dirs in the Makefile
   QVERIFY(makefile.open(QFile::ReadOnly | QFile::Text));
@@ -120,7 +120,7 @@ void TestBuilder::testMakefile()
   }
   QVERIFY(makeFiles.size()); // make sure we got something
   QVERIFY(makeFileDirs.size());
-  
+
   // now, let's compare our lists
   // it's possible (probable) that the list of files in the makefiles list will be
   // longer since it will have libraries files added as part of the build process
@@ -136,14 +136,14 @@ void TestBuilder::testMakefile()
   }
   //qDebug("makefiles: %d, projectfiles: %d, matches: %d", makeFiles.size(), projectFiles.size(), matches);
   QVERIFY( matches == (makeFiles.size() - libraryFiles));
-  
+
   // now check that the appropriate include directories have been added
   QDomNodeList dirs = projectDoc.elementsByTagName("include_dirs").at(0).childNodes();
   QStringList includeDirs;
   for(int i = 0; i < dirs.count(); i++)
     includeDirs.append(builder->filteredPath(dirs.at(i).toElement().text()));
   QVERIFY(includeDirs.size()); // make sure we got something
-  
+
   matches = 0;
   int libraryDirs = 0;
   foreach( QString dir, makeFileDirs )
@@ -153,9 +153,9 @@ void TestBuilder::testMakefile()
     else if(dir.contains("cores/makecontroller/libraries"))
       libraryDirs++;
   }
-  //qDebug("makefile dirs: %d, project file dirs: %d, matches: %d, library dirs: %d", 
+  //qDebug("makefile dirs: %d, project file dirs: %d, matches: %d, library dirs: %d",
   //         makeFileDirs.size(), includeDirs.size(), matches, libraryDirs);
-  
+
   // one additional difference is that the Makefile should include the project dir itself as an include dir
   // whereas this is not specificed in the project file
   QVERIFY(matches == (makeFileDirs.size() - libraryDirs - 1));
@@ -163,26 +163,26 @@ void TestBuilder::testMakefile()
 
 /*
   Create a config file.
-  Make sure it includes the appropriate elements, based on the 
+  Make sure it includes the appropriate elements, based on the
   ProjectInfo.
 */
 void TestBuilder::testConfigFile()
 {
   QDir projDir(currentProjectPath());
   QFile configFile(projDir.filePath("config.h"));
-  
+
   if( configFile.exists() )
     projDir.remove("config.h"); // get rid of the file, so we can test creating it
 
   builder->createConfigFile(currentProjectPath());
   // we haven't changed anything in the file yet, so this should return false
   QVERIFY( builder->compareConfigFile(currentProjectPath()) == false );
-  
+
   // now let's change a few things in the config file, and confirm that we need to update it
   ProjectInfo* pi = window->projInfo;
   pi->setHeapSize( pi->heapsize() + 100 );
   QVERIFY( builder->compareConfigFile(currentProjectPath()) == true );
-  
+
 }
 
 void TestBuilder::testClean()
@@ -191,11 +191,11 @@ void TestBuilder::testClean()
   qRegisterMetaType<QProcess::ProcessError>("QProcess::ProcessError");
   QSignalSpy finishedSpy(builder, SIGNAL(finished(int, QProcess::ExitStatus)));
   QSignalSpy errorSpy(builder, SIGNAL(error(QProcess::ProcessError)));
-  
+
   builder->clean(currentProjectPath());
   while(builder->state() != QProcess::NotRunning) // wait until the clean is complete
     QTest::qWait(100);
-  
+
   QVERIFY( errorSpy.count() == 0); // make sure we didn't get any errors
   for( int i = 0; i < finishedSpy.count(); i++ )
   {
@@ -204,7 +204,7 @@ void TestBuilder::testClean()
     if( exitcode != 0 || exitstatus != QProcess::NormalExit )
       QFAIL("make/clean exited unhappily.");
   }
-  
+
   QDir projDir(currentProjectPath());
   QString shortname = projDir.dirName().toLower();
   projDir.cd("build");
@@ -217,11 +217,11 @@ void TestBuilder::testBuild( )
 {
   QSignalSpy finishedSpy(builder, SIGNAL(finished(int, QProcess::ExitStatus)));
   QSignalSpy errorSpy(builder, SIGNAL(error(QProcess::ProcessError)));
-  
+
   builder->build(currentProjectPath());
   while(builder->state() != QProcess::NotRunning) // wait until the build is complete
     QTest::qWait(100);
-  
+
   QVERIFY( errorSpy.count() == 0); // make sure we didn't get any errors
   for( int i = 0; i < finishedSpy.count(); i++ )
   {
@@ -233,7 +233,7 @@ void TestBuilder::testBuild( )
       QFAIL("make/build exited unhappily.");
     }
   }
-  
+
   // now let's make sure our .bin and friends are where we expect them
   QDir projDir(currentProjectPath());
   QString shortname = projDir.dirName().toLower();

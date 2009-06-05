@@ -2,12 +2,12 @@
 
  Copyright 2008 MakingThings
 
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
+ Licensed under the Apache License,
+ Version 2.0 (the "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0 
- 
+ http://www.apache.org/licenses/LICENSE-2.0
+
  Unless required by applicable law or agreed to in writing, software distributed
  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  CONDITIONS OF ANY KIND, either express or implied. See the License for
@@ -35,7 +35,7 @@
 class FileBrowser : public QTreeWidget
 {
   Q_OBJECT
-public: 
+public:
   FileBrowser(QWidget *parent = 0) : QTreeWidget(0)
   {
     setParent(parent);
@@ -49,11 +49,11 @@ public:
 private:
   QAction *actionRemoveFromProject;
   QAction *actionSetBuildType;
-  
+
 private slots:
   void onRemoveRequest();
   void onSetBuildType();
-  
+
 signals:
   void removeFileRequest(QString filename);
   void changeBuildType(QString filename, QString newtype);
@@ -81,10 +81,10 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
     int tcpServers() { return tcpServerEdit->text().toInt(); }
     bool load( QString projectPath );
     bool diffProjects( QString newProjectPath, bool saveUiToFile = false );
-  
+
   signals:
     void projectInfoUpdated();
-    
+
   private:
     MainWindow *mainWindow;
     ProjectManager projectManager;
@@ -102,14 +102,14 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
     void setIncludeOsc(bool osc);
     void setIncludeUsb(bool usb);
     void setIncludeNetwork(bool network);
-    
+
   private slots:
     void applyChanges( );
     void restoreDefaults( );
     void onNetworkChanged(int state);
     void onRemoveFileRequest(QString filename);
     void onChangeBuildType(QString filename, QString newtype);
-  
+
   #ifdef MCBUILDER_TEST_SUITE
   friend class TestBuilder;
   friend class TestProjectInfo;

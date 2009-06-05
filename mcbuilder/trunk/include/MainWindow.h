@@ -2,12 +2,12 @@
 
  Copyright 2008 MakingThings
 
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
+ Licensed under the Apache License,
+ Version 2.0 (the "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0 
- 
+ http://www.apache.org/licenses/LICENSE-2.0
+
  Unless required by applicable law or agreed to in writing, software distributed
  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  CONDITIONS OF ANY KIND, either express or implied. See the License for
@@ -49,12 +49,12 @@ class FindReplace;
 class Editor : public QPlainTextEdit
 {
   Q_OBJECT
-public: 
+public:
   Editor(QWidget *parent = 0) : QPlainTextEdit(0)
   {
     setParent(parent);
   }
-  
+
 private:
   void keyPressEvent( QKeyEvent* event );
 };
@@ -82,7 +82,7 @@ public:
   void buildingNow(QString file);
   void highlightLine(QString filepath, int linenumber, ConsoleItem::Type type);
   void removeFileFromProject(QString file);
-		
+
 private:
   void openFile( const QString &path );
   void loadBoardProfiles( );
@@ -114,7 +114,7 @@ private:
   void uploadFile(QString filename);
   bool maybeSave( );
   bool save( );
-	
+
 private slots:
   void onCursorMoved( );
   void onDocumentModified( );
@@ -140,7 +140,7 @@ private slots:
   void onConsoleDoubleClick(QListWidgetItem *item);
   void onUpdate();
   void onVisitForum();
-  
+
   #ifdef MCBUILDER_TEST_SUITE
   friend class TestBuilder;
   friend class TestProjectInfo;
