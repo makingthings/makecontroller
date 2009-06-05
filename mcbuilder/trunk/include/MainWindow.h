@@ -67,21 +67,21 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 public:
   MainWindow( );
   void setTabWidth( int width );
-  void setEditorFont(QString family, int pointSize);
-  void printOutput(QString text);
-  void printOutputError(QString text);
+  void setEditorFont(const QString & family, int pointSize);
+  void printOutput(const QString & text);
+  void printOutputError(const QString & text);
   void printOutputError(ConsoleItem *item);
   QString currentProjectPath( ) { return currentProject; }
   QString currentBoardProfile( );
-  bool findText(QString text, QTextDocument::FindFlags flags, bool forward);
-  void replaceAll(QString find, QString replace, QTextDocument::FindFlags flags);
-  void replace(QString rep);
+  bool findText(const QString & text, QTextDocument::FindFlags flags, bool forward);
+  void replaceAll(const QString & find, const QString & replace, QTextDocument::FindFlags flags);
+  void replace(const QString & rep);
   void onBuildComplete(bool success);
   void onUploadComplete(bool success);
   void onCleanComplete();
-  void buildingNow(QString file);
-  void highlightLine(QString filepath, int linenumber, ConsoleItem::Type type);
-  void removeFileFromProject(QString file);
+  void buildingNow(const QString & file);
+  void highlightLine(const QString & filepath, int linenumber, ConsoleItem::Type type);
+  void removeFileFromProject(const QString & file);
 
 private:
   void openFile( const QString &path );
@@ -107,11 +107,11 @@ private:
   QActionGroup *boardTypeGroup;
   QString currentFile; // path of the file in the editor
   QString currentProject; // path of the current project directory
-  void editorLoadFile( QString filepath );
-  void createNewFile(QString path);
-  void openProject(QString projectPath);
-  void updateRecentProjects(QString newProject);
-  void uploadFile(QString filename);
+  void editorLoadFile( const QString & filepath );
+  void createNewFile(const QString & path);
+  void openProject(const QString & projectPath);
+  void updateRecentProjects(const QString & newProject);
+  void uploadFile(const QString & filename);
   bool maybeSave( );
   bool save( );
 

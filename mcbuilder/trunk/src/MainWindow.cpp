@@ -235,7 +235,7 @@ void MainWindow::onDocumentModified( )
 /*
   Find text in the file currently open in the editor.
 */
-bool MainWindow::findText(QString text, QTextDocument::FindFlags flags, bool forward)
+bool MainWindow::findText(const QString & text, QTextDocument::FindFlags flags, bool forward)
 {
   bool success = false;
   if(!editor->find(text, flags)) // if we didn't find it, try wrapping around
@@ -256,7 +256,7 @@ bool MainWindow::findText(QString text, QTextDocument::FindFlags flags, bool for
 /*
   Replace all occurrences of the given text with the given replacement.
 */
-void MainWindow::replaceAll(QString find, QString replace, QTextDocument::FindFlags flags)
+void MainWindow::replaceAll(const QString & find, const QString & replace, QTextDocument::FindFlags flags)
 {
   editor->textCursor().beginEditBlock(); // make sure all replaces are performed as a single edit step, for undos etc.
   bool keepgoing = true;
@@ -275,13 +275,13 @@ void MainWindow::replaceAll(QString find, QString replace, QTextDocument::FindFl
   Replace the selected text with the replace string.
   Presumably, text has been selected as the result of a find operation.
 */
-void MainWindow::replace(QString rep)
+void MainWindow::replace(const QString & rep)
 {
   if(!editor->textCursor().selectedText().isEmpty())
     editor->textCursor().insertText(rep);
 }
 
-void MainWindow::setEditorFont(QString family, int pointSize)
+void MainWindow::setEditorFont(const QString & family, int pointSize)
 {
   editor->setFont(QFont(family, pointSize));
 }
@@ -308,7 +308,7 @@ QString MainWindow::currentBoardProfile( )
 /*
   Load a source file into the editor.
 */
-void MainWindow::editorLoadFile( QString filepath )
+void MainWindow::editorLoadFile( const QString & filepath )
 {
   Q_ASSERT(!currentProject.isEmpty());
   QFile file(filepath);
@@ -385,7 +385,7 @@ void MainWindow::onAddExistingFile( )
   Close it if it's open in the editor, and remove it from the list
   of project files in the dropdown.
 */
-void MainWindow::removeFileFromProject(QString file)
+void MainWindow::removeFileFromProject(const QString & file)
 {
   QFileInfo fi(file);
   int idx = currentFileDropDown->findData(fi.filePath());
@@ -412,7 +412,7 @@ void MainWindow::removeFileFromProject(QString file)
   Fill it with some default text,
   add it to the file dropdown and load it into the editor.
 */
-void MainWindow::createNewFile(QString path)
+void MainWindow::createNewFile(const QString & path)
 {
   QFileInfo fi(path);
   if(fi.suffix().isEmpty())
@@ -489,7 +489,7 @@ void MainWindow::onOpen( )
   Open an existing project.
   Read the project file and load the appropriate files into the UI.
 */
-void MainWindow::openProject(QString projectPath)
+void MainWindow::openProject(const QString & projectPath)
 {
   QDir projectDir(projectPath);
   QString projectName = projectDir.dirName();
@@ -542,7 +542,7 @@ void MainWindow::openProject(QString projectPath)
   A new project has been opened.
   If this project isn't already in our recent projects list, stick it in there.
 */
-void MainWindow::updateRecentProjects(QString newProject)
+void MainWindow::updateRecentProjects(const QString & newProject)
 {
   QList<QAction*> recentProjects = menuRecent_Projects->actions();
   QStringList recentProjectPaths;
@@ -752,7 +752,7 @@ void MainWindow::onCleanComplete()
   statusBar()->showMessage(tr("Clean succeeded."));
 }
 
-void MainWindow::buildingNow(QString file)
+void MainWindow::buildingNow(const QString & file)
 {
   statusBar()->showMessage(tr("Building...") + file);
 }
@@ -823,7 +823,7 @@ void MainWindow::onUploadFile( )
   Actually upload the file to the board.
   Pass in the board config file name to upload a project to that kind of board
 */
-void MainWindow::uploadFile(QString filename)
+void MainWindow::uploadFile(const QString & filename)
 {
   // get the board type so the uploader can check which upload mechanism to use
   QFileInfo fi(filename);
@@ -997,13 +997,13 @@ void MainWindow::loadRecentProjects( )
   }
 }
 
-void MainWindow::printOutput(QString text)
+void MainWindow::printOutput(const QString & text)
 {
   outputConsole->addItem(text.trimmed());
   outputConsole->scrollToBottom();
 }
 
-void MainWindow::printOutputError(QString text)
+void MainWindow::printOutputError(const QString & text)
 {
   if(text.startsWith(tr("Warning")))
     outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/warning.png"), text.trimmed(), outputConsole));
@@ -1033,7 +1033,7 @@ void MainWindow::onConsoleDoubleClick(QListWidgetItem *item)
 /*
   Highlight a line in the editor to indicate either an error or warning.
 */
-void MainWindow::highlightLine(QString filepath, int linenumber, ConsoleItem::Type type)
+void MainWindow::highlightLine(const QString & filepath, int linenumber, ConsoleItem::Type type)
 {
   if(QDir::toNativeSeparators(filepath) == QDir::toNativeSeparators(currentFile))
   {
