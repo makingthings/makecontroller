@@ -37,12 +37,12 @@ class UsbConsole : public QDialog, private Ui::UsbConsoleUi
 
   private slots:
     void onCommandLine( );
-    void onView(QString view);
+    void onView(const QString & view);
     void enumerate();
     void onOpenClose();
     void onFinished();
     void processNewData();
-    void openDevice(QString name);
+    void openDevice(const QString & name);
 
   private:
     QextSerialPort *port;

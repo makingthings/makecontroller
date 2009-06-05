@@ -19,6 +19,7 @@
 #include <QDir>
 #include <QDomDocument>
 #include <QTextStream>
+#include <QDebug>
 #include "Uploader.h"
 
 #ifdef Q_WS_MAC
@@ -49,7 +50,7 @@ Uploader::Uploader(MainWindow *mainWindow) : QProcess( )
   Extract the name of the uploader to use, then fire it off in a
   separate process with the appropriate arguments.
 */
-bool Uploader::upload(QString boardProfileName, QString filename)
+bool Uploader::upload(const QString & boardProfileName, QString filename)
 {
   bool retval = false;
   // read the board profile and find which uploader we should use
@@ -63,17 +64,8 @@ bool Uploader::upload(QString boardProfileName, QString filename)
     if(nodes.count())
       uploaderName = nodes.at(0).toElement().text();
 
-    int offset = 0; // escape any spaces in the filename
-    do
-    {
-      offset = filename.indexOf(" ", offset);
-      if( offset != -1 )
-      {
-        filename.insert(offset, "\\");
-        offset += 2; // step past the \ we inserted and the space we put it in front of
-      }
-    } while( offset != -1 );
-    qDebug( "uploading %s", qPrintable(filename));
+    filename.replace(" ", "\\ ");
+    qDebug() << "uploading" << filename;
 
     QStringList uploaderArgs;
     uploaderArgs << "-e" << "set_clock";
@@ -111,7 +103,7 @@ void Uploader::filterOutput( )
     matched = true;
   }
   if(!matched)
-    qDebug("upload output: %s", qPrintable(output));
+    qDebug() << "upload output:" << output;
 }
 
 /*
@@ -127,7 +119,7 @@ void Uploader::filterError( )
     mainWindow->printOutputError(tr("  Make sure you've erased and unplugged/replugged your board."));
   }
   else
-    qDebug("upload err: %s", qPrintable(err));
+    qDebug() << "upload err" << err;
   //mainWindow->printOutputError(readAllStandardError());
 }
 
