@@ -105,9 +105,9 @@ QString Uploader::sam7Path( )
   uploaderName = appBundle.filePath( "Contents/Resources/sam7" );
   #elif defined (Q_OS_WIN)
   QDir d = QDir::current();
-  if(!d.exists("sam7")) // in dev mode, we're one dir down in 'bin'
+  if(!d.exists("sam7.exe")) // in dev mode, we're one dir down in 'bin'
     d.cdUp();
-  uploaderName = d.filePath("sam7");
+  uploaderName = d.filePath("sam7.exe");
   #else
   QSettings settings;
   QDir dir( settings.value("sam7_path", DEFAULT_SAM7_PATH).toString() );
