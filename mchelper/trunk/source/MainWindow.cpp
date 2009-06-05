@@ -255,7 +255,7 @@ void MainWindow::onEthernetDeviceArrived(PacketInterface* pi)
   QList<Board*> boardList;
   Board *board = new Board(this, pi, oscXmlServer, BoardType::Ethernet, pi->key());
   board->setText(pi->key());
-  board->setIcon(QIcon(":icons/network_icon.gif"));
+  board->setIcon(QIcon(":/icons/network_icon.png"));
   board->setToolTip(tr("Ethernet Device: ") + pi->key());
 
   if(noUi()) {
@@ -284,14 +284,14 @@ void MainWindow::onUsbDeviceArrived(const QStringList & keys, BoardType::Type ty
       board = new Board(this, usb, oscXmlServer, type, key);
       usb->open();
       board->setText(key);
-      board->setIcon(QIcon(":icons/usb_icon.gif"));
+      board->setIcon(QIcon(":/icons/usb_icon.png"));
       board->setToolTip(tr("USB Serial Device: ") + board->location());
       noUiString = tr("usb device discovered: ") + board->location();
     }
     else if(type == BoardType::UsbSamba) {
       board = new Board(this, 0, 0, type, key);
       board->setText(tr("Unprogrammed Board"));
-      board->setIcon(QIcon(":icons/usb_icon.gif"));
+      board->setIcon(QIcon(":/icons/usb_icon.png"));
       board->setToolTip(tr("Unprogrammed device"));
       noUiString = tr("sam-ba device discovered: ") + board->location();
     }
