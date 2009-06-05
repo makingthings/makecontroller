@@ -28,7 +28,7 @@
   creating and modifying mcbuilder projects.
 */
 
-QString ProjectManager::createNewFile(QString projectPath, QString filePath)
+QString ProjectManager::createNewFile(const QString & projectPath, const QString & filePath)
 {
   QFileInfo fi(filePath);
   if(fi.exists()) // if it already exists, don't do anything
@@ -55,7 +55,7 @@ QString ProjectManager::createNewFile(QString projectPath, QString filePath)
 /*
   Save an existing file with a new name.
 */
-QString ProjectManager::saveFileAs(QString projectPath, QString existingFilePath, QString newFilePath)
+QString ProjectManager::saveFileAs(const QString & projectPath, const QString & existingFilePath, const QString & newFilePath)
 {
   QFileInfo fi(newFilePath);
   if(fi.exists()) // if it already exists, don't do anything
@@ -91,14 +91,16 @@ void ProjectManager::confirmValidFileName(QFileInfo* fi)
   Make sure a given project name is valid, and modify it if necessary.
   Spaces are not allowed since make is unhappy with file paths with spaces.
 */
-void ProjectManager::confirmValidProjectName(QString* name)
+QString ProjectManager::confirmValidProjectName(const QString & name)
 {
-  if(name->contains(" ")) // make sure the project name doesn't have any spaces
+  QString validname = name;
+  if(name.contains(" ")) // make sure the project name doesn't have any spaces
   {
-    QStringList elems = name->split(QDir::separator());
+    QStringList elems = name.split(QDir::separator());
     elems.last().remove(" ");
-    *name = elems.join(QDir::separator());
+    validname = elems.join(QDir::separator());
   }
+  return validname;
 }
 
 /*
@@ -109,14 +111,12 @@ void ProjectManager::confirmValidProjectName(QString* name)
   Make sure the path name doesn't have any spaces in it, so make can work happily.
   Return the new project's name, or an empty string on failure.
 */
-QString ProjectManager::createNewProject(QString newProjectPath)
+QString ProjectManager::createNewProject(const QString & newProjectPath)
 {
-  confirmValidProjectName(&newProjectPath);
-  if(newProjectPath.contains(" ")) // if there are still spaces in the path, we have problems
-    return "";
+  QString projectPath = confirmValidProjectName(newProjectPath);
   QDir newProjectDir;
-  newProjectDir.mkpath(newProjectPath);
-  newProjectDir.setPath(newProjectPath);
+  newProjectDir.mkpath(projectPath);
+  newProjectDir.setPath(projectPath);
   QString newProjName = newProjectDir.dirName();
 
   // grab the templates for a new project
@@ -151,7 +151,7 @@ QString ProjectManager::createNewProject(QString newProjectPath)
   Add a filepath to this project's file list.
   It's path should be relative to the project directory.
 */
-bool ProjectManager::addToProjectFile(QString projectPath, QString newFilePath, QString buildtype)
+bool ProjectManager::addToProjectFile(const QString & projectPath, const QString & newFilePath, const QString & buildtype)
 {
   bool retval = false;
   QDomDocument newProjectDoc;
@@ -182,7 +182,7 @@ bool ProjectManager::addToProjectFile(QString projectPath, QString newFilePath, 
   Remove a file from the project file.
   Don't delete the file.
 */
-bool ProjectManager::removeFromProjectFile(QString projectPath, QString filePath)
+bool ProjectManager::removeFromProjectFile(const QString & projectPath, const QString & filePath)
 {
   bool retval = false;
   QDomDocument doc;
@@ -214,17 +214,15 @@ bool ProjectManager::removeFromProjectFile(QString projectPath, QString filePath
   Any files in the project with the name of the project should be changed,
   others are simply copied over.
 */
-QString ProjectManager::saveCurrentProjectAs(QString currentProjectPath, QString newProjectPath)
+QString ProjectManager::saveCurrentProjectAs(const QString & currentProjectPath, const QString & newProjectPath)
 {
   QDir currentProjectDir(currentProjectPath);
   QString currentProjectName = currentProjectDir.dirName();
-  confirmValidProjectName(&newProjectPath);
-  if(newProjectPath.contains(" ")) // if there are still spaces elsewhere in the path, we have problems
-    return "";
+  QString newProjPath = confirmValidProjectName(newProjectPath);
 
   QDir newProjectDir;
-  newProjectDir.mkpath(newProjectPath);
-  newProjectDir.setPath(newProjectPath);
+  newProjectDir.mkpath(newProjPath);
+  newProjectDir.setPath(newProjPath);
   QString newProjectName = newProjectDir.dirName();
 
   QFileInfoList fileList = currentProjectDir.entryInfoList();
@@ -278,7 +276,7 @@ QString ProjectManager::saveCurrentProjectAs(QString currentProjectPath, QString
 /*
   Set the build type of a file in the project file to either thumb or arm.
 */
-bool ProjectManager::setFileBuildType(QString projectPath, QString filename, QString buildtype)
+bool ProjectManager::setFileBuildType(const QString & projectPath, const QString & filename, const QString & buildtype)
 {
   bool retval = false;
   QDir dir(projectPath);
@@ -307,7 +305,7 @@ bool ProjectManager::setFileBuildType(QString projectPath, QString filename, QSt
 /*
   Return the buildtype of a file in the project file.
 */
-QString ProjectManager::fileBuildType(QString projectPath, QString filename)
+QString ProjectManager::fileBuildType(const QString & projectPath, const QString & filename)
 {
   QString buildtype;
   QDir dir(projectPath);

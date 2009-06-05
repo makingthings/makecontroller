@@ -24,19 +24,19 @@
 class ProjectManager
 {
   public:
-    ProjectManager( ) { };
-    QString createNewFile(QString projectPath, QString filePath);
-    QString saveFileAs(QString projectPath, QString existingFilePath, QString newFilePath);
-    bool addToProjectFile(QString projectPath, QString newFilePath, QString buildtype);
-    bool removeFromProjectFile(QString projectPath, QString filePath);
-    QString createNewProject(QString newProjectPath);
-    QString saveCurrentProjectAs(QString currentProjectPath, QString newProjectPath);
-    bool setFileBuildType(QString projectPath, QString filename, QString buildtype);
-    QString fileBuildType(QString projectPath, QString filename);
+    ProjectManager( ) { }
+    QString createNewFile(const QString & projectPath, const QString & filePath);
+    QString saveFileAs(const QString & projectPath, const QString & existingFilePath, const QString & newFilePath);
+    bool addToProjectFile(const QString & projectPath, const QString & newFilePath, const QString & buildtype);
+    bool removeFromProjectFile(const QString & projectPath, const QString & filePath);
+    QString createNewProject(const QString & newProjectPath);
+    QString saveCurrentProjectAs(const QString & currentProjectPath, const QString & newProjectPath);
+    bool setFileBuildType(const QString & projectPath, const QString & filename, const QString & buildtype);
+    QString fileBuildType(const QString & projectPath, const QString & filename);
 
   private:
     void confirmValidFileName(QFileInfo* fi);
-    void confirmValidProjectName(QString* name);
+    QString confirmValidProjectName(const QString & name);
 };
 
 #endif // PROJECT_MANAGER_H

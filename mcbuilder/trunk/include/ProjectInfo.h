@@ -55,8 +55,8 @@ private slots:
   void onSetBuildType();
 
 signals:
-  void removeFileRequest(QString filename);
-  void changeBuildType(QString filename, QString newtype);
+  void removeFileRequest(const QString & filename);
+  void changeBuildType(const QString & filename, const QString & newtype);
 };
 
 #include "ui_projectinfo.h"
@@ -79,8 +79,8 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
     int udpSockets() { return udpSocketEdit->text().toInt(); }
     int tcpSockets() { return tcpSocketEdit->text().toInt(); }
     int tcpServers() { return tcpServerEdit->text().toInt(); }
-    bool load( QString projectPath );
-    bool diffProjects( QString newProjectPath, bool saveUiToFile = false );
+    bool load( const QString & projectPath );
+    bool diffProjects( const QString & newProjectPath, bool saveUiToFile = false );
 
   signals:
     void projectInfoUpdated();
@@ -88,7 +88,7 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
   private:
     MainWindow *mainWindow;
     ProjectManager projectManager;
-    QString projectFilePath( QString projectPath );
+    QString projectFilePath( const QString & projectPath );
     bool configChanged;
     void setNetworkSectionEnabled(bool state);
     void loadFileBrowser(QDir *projectDir, QDomDocument *projectFile);
@@ -107,8 +107,8 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
     void applyChanges( );
     void restoreDefaults( );
     void onNetworkChanged(int state);
-    void onRemoveFileRequest(QString filename);
-    void onChangeBuildType(QString filename, QString newtype);
+    void onRemoveFileRequest(const QString & filename);
+    void onChangeBuildType(const QString & filename, const QString & newtype);
 
   #ifdef MCBUILDER_TEST_SUITE
   friend class TestBuilder;
