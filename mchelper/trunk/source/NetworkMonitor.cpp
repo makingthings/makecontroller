@@ -40,34 +40,28 @@ NetworkMonitor::NetworkMonitor( MainWindow* mainWindow ) : QUdpSocket( )
   connect( this, SIGNAL(msg(QString, MsgType::Type, QString)), mainWindow, SLOT(message(QString, MsgType::Type, QString)));
   connect( &pingTimer, SIGNAL( timeout() ), this, SLOT( sendPing() ) );
   broadcastPing = Osc::createOneRequest( "/network/find" ); // our constant OSC ping
-
-  if (!bind(listen_port))
-  {
-    abort();
-    QString str = tr("Error: Can't listen on port %1 - make sure it's not already in use.").arg( listen_port );
-    emit msg( str, MsgType::Error, "Ethernet" );
-  }
+  setListenPort( listen_port, false );
   pingTimer.start(1000);
 }
 
-bool NetworkMonitor::setListenPort( int port )
+bool NetworkMonitor::setListenPort( int port, bool announce )
 {
   if(listen_port == port) // don't need to do anything
     return true;
   close( );
-  if( !bind( port, QUdpSocket::ShareAddress ) )
-  {
+  if( !bind( port, QUdpSocket::ShareAddress ) ) {
     QString str = tr( "Error: Can't listen on port %1 - make sure it's not already in use.").arg( port );
     emit msg( str, MsgType::Error, "Ethernet" );
     return false;
   }
-  else
-  {
+  else {
     listen_port = port;
     QSettings settings;
     settings.setValue("udp_listen_port", listen_port);
-    QString str = tr( "Now listening on port %1 for UDP messages.").arg( listen_port );
-    emit msg( str, MsgType::Notice, "Ethernet" );
+    if( announce ) {
+      QString str = tr( "Now listening on port %1 for UDP messages.").arg( listen_port );
+      emit msg( str, MsgType::Notice, "Ethernet" );
+    }
     return true;
   }
 }
@@ -79,8 +73,7 @@ bool NetworkMonitor::setListenPort( int port )
 */
 void NetworkMonitor::processPendingDatagrams()
 {
-  while( hasPendingDatagrams() )
-  {
+  while( hasPendingDatagrams() ) {
     QByteArray datagram;
     QHostAddress remoteClient;
     datagram.resize( pendingDatagramSize() );
@@ -92,8 +85,7 @@ void NetworkMonitor::processPendingDatagrams()
     QString sender = remoteClient.toString();
     if( connectedDevices.contains( sender ) ) // pass the packet through to the packet interface
       connectedDevices.value( sender )->newMessage( datagram );
-    else
-    {
+    else {
       PacketUdp *udp = new PacketUdp(remoteClient, send_port);
       connectedDevices.insert( sender, udp );
       connect(udp, SIGNAL(timeout(QString)), this, SLOT(onDeviceRemoved(QString)));
@@ -104,13 +96,11 @@ void NetworkMonitor::processPendingDatagrams()
 
 void NetworkMonitor::sendPing( )
 {
-  if( sendDiscoveryPackets )
-  {
+  if( sendDiscoveryPackets ) {
     // normally we'll be set to send on QHostAddress::Broadcast, but if that fails, just try
     // to send on the local broadcast address
     QHostAddress dest = ( sendLocal ) ? localBroadcastAddress : QHostAddress::Broadcast;
-    if( writeDatagram( broadcastPing.data(), broadcastPing.size(), dest, send_port ) < 0 && !sendLocal )
-    {
+    if( writeDatagram( broadcastPing.data(), broadcastPing.size(), dest, send_port ) < 0 && !sendLocal ) {
       writeDatagram( broadcastPing.data(), broadcastPing.size(), localBroadcastAddress, send_port );
       sendLocal = true;
     }
@@ -122,17 +112,15 @@ void NetworkMonitor::lookedUp(const QHostInfo &host)
   if (host.error() != QHostInfo::NoError) // lookup failed
     return;
 
-    // find out our address, and then replace the last byte with 0xFF
-    // this will be a local broadcast address
-    foreach(QHostAddress addr, host.addresses())
-    {
-      QStringList addrlist = addr.toString( ).split( "." );
-      if(addrlist.count() == 4) // expecting an address string in the form of xxx.xxx.xxx.xxx
-      {
-        addrlist.replace( 3, "255" );
-        localBroadcastAddress = addrlist.join( "." );
-      }
+  // find out our address, and then replace the last byte with 0xFF
+  // this will be a local broadcast address
+  foreach(QHostAddress addr, host.addresses()) {
+    QStringList addrlist = addr.toString( ).split( "." );
+    if(addrlist.count() == 4) { // expecting an address string in the form of xxx.xxx.xxx.xxx
+      addrlist.replace( 3, "255" );
+      localBroadcastAddress = addrlist.join( "." );
     }
+  }
 }
 
 /*
@@ -141,8 +129,7 @@ void NetworkMonitor::lookedUp(const QHostInfo &host)
 */
 void NetworkMonitor::onDeviceRemoved(const QString & key)
 {
-  if(connectedDevices.contains(key))
-  {
+  if(connectedDevices.contains(key)) {
     connectedDevices.remove(key);
     emit deviceRemoved(key);
   }
