@@ -45,10 +45,10 @@ void Preferences::loadAndShow( )
   xmlListenEdit->setText(QString::number(settings.value("xml_listen_port", DEFAULT_XML_LISTEN_PORT).toInt()));
   maxMsgsEdit->setText(QString::number(settings.value("max_messages", DEFAULT_ACTIVITY_MESSAGES).toInt()));
   uploaderEdit->setText(settings.value("sam7_path", DEFAULT_SAM7_PATH).toString());
-  Qt::CheckState cs = (settings.value("check_updates", DEFAULT_CHECK_UPDATES).toBool()) ? Qt::Checked: Qt::Unchecked;
-  updatesCheckBox->setCheckState(cs);
-  cs = (settings.value("networkDiscovery", DEFAULT_NETWORK_DISCOVERY).toBool()) ? Qt::Checked: Qt::Unchecked;
-  netDiscoveryCheckBox->setCheckState(cs);
+  bool cs = settings.value("check_updates", DEFAULT_CHECK_UPDATES).toBool();
+  updatesCheckBox->setChecked(cs);
+  cs = settings.value("networkDiscovery", DEFAULT_NETWORK_DISCOVERY).toBool();
+  netDiscoveryCheckBox->setChecked(cs);
   this->show( );
 }
 
@@ -75,10 +75,9 @@ void Preferences::applyChanges( )
 
   settings.setValue("sam7_path", uploaderEdit->text());
 
-  bool cs = (updatesCheckBox->checkState() == Qt::Checked) ? true : false;
-  settings.setValue("checkForUpdatesOnStartup", cs);
+  settings.setValue("checkForUpdatesOnStartup", updatesCheckBox->isChecked());
 
-  cs = (netDiscoveryCheckBox->checkState() == Qt::Checked) ? true : false;
+  bool cs = netDiscoveryCheckBox->isChecked();
   settings.setValue("networkDiscovery", cs);
   networkMonitor->setDiscoveryMode( cs );
 }
@@ -94,7 +93,7 @@ void Preferences::restoreDefaults( )
   xmlListenEdit->setText(QString::number(DEFAULT_XML_LISTEN_PORT));
   maxMsgsEdit->setText(QString::number(DEFAULT_ACTIVITY_MESSAGES));
   uploaderEdit->setText(DEFAULT_SAM7_PATH);
-  updatesCheckBox->setCheckState(Qt::Checked);
+  updatesCheckBox->setChecked(true);
 }
 
 
