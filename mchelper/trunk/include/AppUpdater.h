@@ -23,7 +23,7 @@
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QLabel>
-#include <QHttp>
+#include <QNetworkAccessManager>
 #include <QTextEdit>
 
 #define APPUPDATE_BACKGROUND true
@@ -46,13 +46,12 @@ class AppUpdater : public QDialog
     QVBoxLayout textLayout;
     QHBoxLayout buttonLayout, topLevelLayout;
     QTextEdit browser;
-    QHttp http;
-    int httpGetID;
+    QNetworkAccessManager netAccess;
     int versionCompare(const QString & left, const QString & right);
     void removeBrowserAndIgnoreButton( );
 
   private slots:
-    void finishedRead( int id, bool errors );
+    void finishedRead( QNetworkReply* reply );
     void visitDownloadsPage( );
 };
 
