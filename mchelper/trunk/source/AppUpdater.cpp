@@ -27,6 +27,10 @@
 #include <QFile>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+
+#define UPDATE_URL "http://www.makingthings.com/updates/mchelper.xml"
 
 AppUpdater::AppUpdater( ) : QDialog( )
 {
@@ -56,30 +60,26 @@ AppUpdater::AppUpdater( ) : QDialog( )
 
   this->setLayout( &topLevelLayout );
   checkingOnStartup = true; // hide the dialog by default
-  connect( &http, SIGNAL( requestFinished( int, bool ) ), this, SLOT( finishedRead( int, bool ) ) );
+  connect( &netAccess, SIGNAL(finished(QNetworkReply*)), this, SLOT(finishedRead(QNetworkReply*)) );
 }
 
 void AppUpdater::checkForUpdates( bool inBackground )
 {
   checkingOnStartup = inBackground;
-  http.setHost("www.makingthings.com");
-  httpGetID = http.get("/updates/mchelper.xml");
+  netAccess.get(QNetworkRequest(QUrl(UPDATE_URL)));
 }
 
 
-void AppUpdater::finishedRead( int id, bool errors )
+void AppUpdater::finishedRead(QNetworkReply* reply)
 {
-  (void)errors;
-  // we'll get called here alternately by the setHost( ) request and the actual GET request
-  // we don't care about setHost, so just return and wait for the GET response
-  if( id != httpGetID )
-    return;
-
   QDomDocument doc;
   QString err;
   int line, col;
 
-  if (!doc.setContent(http.readAll(), true, &err, &line, &col)) {
+  if( reply->error() != QNetworkReply::NoError ||
+      reply->url().toString() != UPDATE_URL ||
+      !doc.setContent(reply->readAll(), true, &err, &line, &col) )
+  {
     headline.setText( tr("<font size=4>Couldn't contact the update server...</font>") );
     details.setText( QString( tr("Make sure you're connected to the internet.") ) );
     acceptButton.setText( tr("OK") );
@@ -89,8 +89,10 @@ void AppUpdater::finishedRead( int id, bool errors )
 
     if(!checkingOnStartup)
       this->show( );
+    delete reply;
     return;
   }
+  delete reply;
 
   QDomElement channel = doc.documentElement().firstChild().toElement();
   QDomNodeList items = channel.elementsByTagName("item");
