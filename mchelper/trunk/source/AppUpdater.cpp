@@ -24,7 +24,6 @@
 #include "AppUpdater.h"
 
 #include <QDomDocument>
-#include <QFile>
 #include <QDesktopServices>
 #include <QUrl>
 #include <QNetworkRequest>
@@ -78,7 +77,7 @@ void AppUpdater::finishedRead(QNetworkReply* reply)
 
   if( reply->error() != QNetworkReply::NoError ||
       reply->url().toString() != UPDATE_URL ||
-      !doc.setContent(reply->readAll(), true, &err, &line, &col) )
+      !doc.setContent(reply, true, &err, &line, &col) )
   {
     headline.setText( tr("<font size=4>Couldn't contact the update server...</font>") );
     details.setText( QString( tr("Make sure you're connected to the internet.") ) );
