@@ -1,0 +1,235 @@
+<ui version="4.0" >
+ <class>MainWindowUi</class>
+ <widget class="QMainWindow" name="MainWindowUi" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>801</width>
+    <height>565</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>mchelper</string>
+  </property>
+  <widget class="QWidget" name="centralwidget" >
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>22</y>
+     <width>801</width>
+     <height>521</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" >
+    <item row="0" column="0" >
+     <widget class="QSplitter" name="splitter" >
+      <property name="orientation" >
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="childrenCollapsible" >
+       <bool>false</bool>
+      </property>
+      <widget class="QGroupBox" name="groupBox" >
+       <property name="title" >
+        <string>Boards</string>
+       </property>
+       <layout class="QGridLayout" >
+        <item row="0" column="0" >
+         <widget class="DeviceList" name="deviceList" >
+          <property name="focusPolicy" >
+           <enum>Qt::WheelFocus</enum>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_2" >
+       <property name="title" >
+        <string>Activity</string>
+       </property>
+       <layout class="QGridLayout" >
+        <item row="0" column="0" >
+         <layout class="QVBoxLayout" >
+          <item>
+           <widget class="QPlainTextEdit" name="outputConsole" >
+            <property name="undoRedoEnabled" >
+             <bool>false</bool>
+            </property>
+            <property name="readOnly" >
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" >
+            <item>
+             <widget class="QComboBox" name="commandLine" >
+              <property name="sizePolicy" >
+               <sizepolicy vsizetype="Fixed" hsizetype="Expanding" >
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="editable" >
+               <bool>true</bool>
+              </property>
+              <property name="maxCount" >
+               <number>10</number>
+              </property>
+              <property name="insertPolicy" >
+               <enum>QComboBox::NoInsert</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="sendButton" >
+              <property name="text" >
+               <string>Send</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar" >
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>801</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile" >
+    <property name="title" >
+     <string>File</string>
+    </property>
+    <addaction name="actionPreferences" />
+   </widget>
+   <widget class="QMenu" name="menuView" >
+    <property name="title" >
+     <string>View</string>
+    </property>
+    <addaction name="actionClearConsole" />
+    <addaction name="actionHide_OSC" />
+   </widget>
+   <widget class="QMenu" name="menuDevice" >
+    <property name="title" >
+     <string>Board</string>
+    </property>
+    <addaction name="actionInspector" />
+    <addaction name="actionUpload" />
+    <addaction name="actionResetBoard" />
+    <addaction name="actionEraseBoard" />
+   </widget>
+   <widget class="QMenu" name="menuHelp" >
+    <property name="title" >
+     <string>Help</string>
+    </property>
+    <addaction name="actionHelp" />
+    <addaction name="actionOscTutorial" />
+    <addaction name="separator" />
+    <addaction name="actionAbout" />
+    <addaction name="actionCheckForUpdates" />
+   </widget>
+   <addaction name="menuFile" />
+   <addaction name="menuView" />
+   <addaction name="menuDevice" />
+   <addaction name="menuHelp" />
+  </widget>
+  <widget class="QStatusBar" name="statusbar" >
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>543</y>
+     <width>801</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <action name="actionPreferences" >
+   <property name="text" >
+    <string>Preferences...</string>
+   </property>
+  </action>
+  <action name="actionClearConsole" >
+   <property name="text" >
+    <string>Clear Activity Window</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+X</string>
+   </property>
+  </action>
+  <action name="actionHide_OSC" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="text" >
+    <string>Hide OSC Messages</string>
+   </property>
+  </action>
+  <action name="actionAbout" >
+   <property name="text" >
+    <string>About mchelper</string>
+   </property>
+  </action>
+  <action name="actionInspector" >
+   <property name="text" >
+    <string>View Inspector...</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+I</string>
+   </property>
+  </action>
+  <action name="actionUpload" >
+   <property name="text" >
+    <string>Upload New Firmware...</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+U</string>
+   </property>
+  </action>
+  <action name="actionResetBoard" >
+   <property name="text" >
+    <string>Reset Board</string>
+   </property>
+  </action>
+  <action name="actionEraseBoard" >
+   <property name="text" >
+    <string>Erase Board</string>
+   </property>
+  </action>
+  <action name="actionCheckForUpdates" >
+   <property name="text" >
+    <string>Check For Updates...</string>
+   </property>
+  </action>
+  <action name="actionHelp" >
+   <property name="text" >
+    <string>mchelper Help</string>
+   </property>
+  </action>
+  <action name="actionOscTutorial" >
+   <property name="text" >
+    <string>OSC Tutorial</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>DeviceList</class>
+   <extends>QListWidget</extends>
+   <header>MainWindow.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

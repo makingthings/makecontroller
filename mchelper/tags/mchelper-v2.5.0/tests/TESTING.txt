@@ -1,0 +1,13 @@
+Testing mchelper
+
+Info
+----------------------------------------------
+This test suite uses the Qt QTestLib module to provide unit testing for mchelper.  Coverage is preliminary at the moment but we plan to expand.  See http://doc.trolltech.com/4.3/qtestlib-manual.html for details on QTestLib.
+
+Running
+----------------------------------------------
+To run the tests, use the runtests.sh script - this creates a test app and runs it.  Right now the script is geared towards use on OS X, but any additions are welcome.
+
+When you're done, you can run cleanup.sh to clear out all the temp files created in the testing process
+
+

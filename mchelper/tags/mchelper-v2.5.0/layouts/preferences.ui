@@ -1,0 +1,231 @@
+<ui version="4.0" >
+ <class>PreferencesUi</class>
+ <widget class="QDialog" name="PreferencesUi" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>590</width>
+    <height>321</height>
+   </rect>
+  </property>
+  <property name="sizePolicy" >
+   <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize" >
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="maximumSize" >
+   <size>
+    <width>5000</width>
+    <height>5000</height>
+   </size>
+  </property>
+  <property name="windowTitle" >
+   <string>mchelper Preferences</string>
+  </property>
+  <layout class="QVBoxLayout" >
+   <item>
+    <widget class="QGroupBox" name="groupBox" >
+     <property name="title" >
+      <string/>
+     </property>
+     <layout class="QHBoxLayout" >
+      <item>
+       <layout class="QGridLayout" >
+        <item row="0" column="0" >
+         <widget class="QLabel" name="label" >
+          <property name="toolTip" >
+           <string/>
+          </property>
+          <property name="text" >
+           <string>Listen for incoming UDP messages on port:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>udpListenEdit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1" >
+         <widget class="QLineEdit" name="udpListenEdit" />
+        </item>
+        <item row="2" column="0" >
+         <widget class="QLabel" name="label_2" >
+          <property name="toolTip" >
+           <string>mchelper's OSC-to-XML server listens for new connections on this port.</string>
+          </property>
+          <property name="text" >
+           <string>Listen for XML server connections on port:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>xmlListenEdit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1" >
+         <widget class="QLineEdit" name="xmlListenEdit" />
+        </item>
+        <item row="4" column="0" >
+         <widget class="QLabel" name="label_3" >
+          <property name="toolTip" >
+           <string/>
+          </property>
+          <property name="text" >
+           <string>Max number of messages in activity window:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>maxMsgsEdit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1" >
+         <widget class="QLineEdit" name="maxMsgsEdit" />
+        </item>
+        <item row="7" column="1" >
+         <widget class="QCheckBox" name="updatesCheckBox" >
+          <property name="text" >
+           <string>Check for updates on startup</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0" >
+         <widget class="QLabel" name="label_4" >
+          <property name="text" >
+           <string>Send UDP messages on port:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1" >
+         <widget class="QLineEdit" name="udpSendEdit" />
+        </item>
+        <item row="5" column="1" >
+         <widget class="QLineEdit" name="uploaderEdit" />
+        </item>
+        <item row="5" column="0" >
+         <widget class="QLabel" name="uploaderLabel" >
+          <property name="text" >
+           <string>Path to sam7:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1" >
+         <widget class="Line" name="line" >
+          <property name="orientation" >
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="1" >
+         <widget class="QCheckBox" name="netDiscoveryCheckBox" >
+          <property name="text" >
+           <string>Find network boards automatically</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" >
+     <item>
+      <widget class="QPushButton" name="defaultsButton" >
+       <property name="text" >
+        <string>Restore Defaults</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer>
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0" >
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QDialogButtonBox" name="okButton" >
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons" >
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>udpListenEdit</tabstop>
+  <tabstop>udpSendEdit</tabstop>
+  <tabstop>xmlListenEdit</tabstop>
+  <tabstop>maxMsgsEdit</tabstop>
+  <tabstop>updatesCheckBox</tabstop>
+  <tabstop>defaultsButton</tabstop>
+  <tabstop>okButton</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>okButton</sender>
+   <signal>rejected()</signal>
+   <receiver>PreferencesUi</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>537</x>
+     <y>233</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>286</x>
+     <y>245</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>okButton</sender>
+   <signal>accepted()</signal>
+   <receiver>PreferencesUi</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>404</x>
+     <y>214</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>218</x>
+     <y>206</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
