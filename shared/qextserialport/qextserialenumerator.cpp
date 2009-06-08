@@ -304,10 +304,17 @@ bool QextSerialEnumerator::createSambaMatchingDict( CFMutableDictionaryRef* matc
   SInt32 idProduct = SAMBA_PID;
   CFNumberRef numberRef;
   
-  if( !(*matchingDictionary = IOServiceNameMatching("AppleUSBCDC")) )
-  {
-    qWarning( "could not create matching dictionary\n" );
-    return false;
+  if(QSysInfo::MacintoshVersion < QSysInfo::MV_LEOPARD) {
+    if( !(*matchingDictionary = IOServiceMatching(kIOUSBDeviceClassName)) ) {
+      qWarning( "could not create matching dictionary\n" );
+      return false;
+    }
+  }
+  else {
+    if( !(*matchingDictionary = IOServiceNameMatching("AppleUSBCDC")) ) {
+      qWarning( "could not create matching dictionary\n" );
+      return false;
+    }
   }
   
   if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idVendor)) )
