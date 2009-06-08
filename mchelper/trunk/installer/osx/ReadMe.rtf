@@ -1,0 +1,58 @@
+{\rtf1\ansi\ansicpg1252\cocoartf949\cocoasubrtf460
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;\f1\fnil\fcharset0 TrebuchetMS;}
+{\colortbl;\red255\green255\blue255;}
+\vieww12000\viewh14480\viewkind0
+\deftab720
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\qc
+
+\f0\fs40 \cf0 mchelper 2.5.0
+\fs36 \
+
+\fs32 Make Controller Helper
+\fs40 \
+\
+\pard\pardeftab709\ql\qnatural
+
+\f1\fs24 \cf0 mchelper is an application that makes it easy to upload new code to the MAKE Controller Kit, get info about it, send manual messages to it, and connect to it from Flash (or any other XML client).\
+\
+
+\b\fs28 Installing
+\b0\fs24 \
+Simply drag mchelper.app into your Applications directory, or anywhere else you'd like to keep it.\
+\
+On OS X 10.5 (Leopard), there has been a change to the way uploading works.  In order to upload new firmware to your board successfully, run the 
+\b OSXUploader
+\b0  installer included in this package.  This only needs to be run once, and will configure your system to allow firmware uploads.\
+\
+
+\b\fs28 Uploading
+\b0\fs24 \
+To upload new code to your Make Controller, you'll need to download a 
+\b .bin 
+\b0 file from www.makingthings.com/resources/downloads, or write and compile one yourself.  The default firmware is a file called 
+\b heavy.bin
+\b0 .  \
+\
+Then:\
+\pard\tx220\tx720\pardeftab709\li720\fi-720\ql\qnatural
+\cf0 	\'95	If you're running heavy.bin (or anything with OSC support), right click the board from the mchelper window and select "Erase Board".  You may need to unplug/replug your board.\
+	\'95	You should now see an "
+\b Unprogrammed Board
+\b0 " entry in the list of boards.  Double click it, or select "
+\b Upload New Firmware
+\b0 " from the 
+\b Board
+\b0  menu.\
+	\'95	Browse for the .bin file you want to upload, then press "
+\b Upload
+\b0 " to send it to the board\
+\pard\pardeftab709\ql\qnatural
+\cf0 \
+
+\b\fs28 Sending Commands
+\b0\fs24 \
+You can easily send manual commands to the MAKE Controller Kit over Ethernet or USB, using OSC messages (check the OSC tutorial online, accessible via the 
+\b Help
+\b0  menu item).  Sending manual OSC messages is great for quickly checking if your board is doing what you think it should be doing, using nothing more than an Ethernet or USB cable.\
+\
+Check {\field{\*\fldinst{HYPERLINK "http://www.makingthings.com"}}{\fldrslt www.makingthings.com}} for more details, and post your questions in the {\field{\*\fldinst{HYPERLINK "http://www.makingthings.com/forum"}}{\fldrslt forum}}.  }

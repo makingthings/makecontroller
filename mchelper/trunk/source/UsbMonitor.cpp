@@ -130,7 +130,7 @@ void UsbMonitor::onDeviceDiscovered(const QextPortInfo & info)
   msleep(50); // not quite sure why this is necessary...only really need it when a port has been
   // opened, closed and then re-opened...
   #endif
-  qDebug() << tr("device discovered at") << info.portName;
+  qDebug() << tr("device discovered:") << info.portName << info.productID << info.vendorID;
   if( isMakeController(info) )
   {
     QStringList ports = QStringList() << info.portName.toAscii();
@@ -159,6 +159,13 @@ bool UsbMonitor::isMakeController(const QextPortInfo & info)
 
 bool UsbMonitor::isSamBa(const QextPortInfo & info)
 {
+  // yikes - this is nasty, but a sam-ba board is an unholy not-quite-cdc device
+  // that looks different on different versions of OS X.  Not many other devices will be
+  // completely devoid of info, so we'll just look for one of those...ugh.
+#ifdef Q_OS_MAC
+  if(QSysInfo::MacintoshVersion < QSysInfo::MV_LEOPARD)
+    return (info.vendorID == 0 && info.productID == 0 && info.portName.isEmpty() && info.friendName.isEmpty());
+#endif
   return (info.vendorID == SAM_BA_VID && info.productID == SAM_BA_PID);
 }
 

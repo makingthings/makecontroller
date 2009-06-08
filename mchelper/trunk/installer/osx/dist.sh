@@ -16,9 +16,10 @@ strip ../../bin/mchelper.app/Contents/MacOS/mchelper
 
 # put it in the right spot
 mkdir mchelper
+cp ../../resources/osx/sam7 ../../bin/mchelper.app/Contents/Resources
 cp -r ../../bin/mchelper.app mchelper
-cp ../../ReadMe.rtf mchelper
-cp -r ../../../uploader/OSXUploader.mpkg mchelper
+cp ReadMe.rtf mchelper
+cp -r ../../../osx-uploader/OSXUploader.mpkg mchelper
 
 # add a link to the Applications directory
 ln -s /Applications mchelper
