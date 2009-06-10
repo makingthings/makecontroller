@@ -114,6 +114,8 @@ bool UsbSerial::isActive()
 */
 int UsbSerial::read( char *buffer, int length, int timeout )
 {
+  if( USBD_GetState() != USBD_STATE_CONFIGURED )
+    return 0;
   int length_to_go = length;
   if( rxBufCount ) // do we already have some lying around?
   {
@@ -170,8 +172,12 @@ void onUsbData(void *pArg, unsigned char status, unsigned int received, unsigned
 */
 int UsbSerial::write( const char *buffer, int length )
 {
-  unsigned char result = USBD_Write(CDCDSerialDriverDescriptors_DATAIN, buffer, length, 0, 0);
-  return (result == USBD_STATUS_SUCCESS) ? 0 : -1;
+  int rv = 0;
+  if( USBD_GetState() == USBD_STATE_CONFIGURED ) {
+    if( USBD_Write(CDCDSerialDriverDescriptors_DATAIN, buffer, length, 0, 0) == USBD_STATUS_SUCCESS )
+      rv = length;
+  }
+  return rv;
 }
 
 /**
