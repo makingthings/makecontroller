@@ -67,7 +67,7 @@ class UsbSerial
 {
 public:
   bool isActive();
-  int read( char *buffer, int length );
+  int read( char *buffer, int length, int timeout = -1 );
   int write( const char *buffer, int length );
   int readSlip( char *buffer, int length );
   int writeSlip( const char *buffer, int length );

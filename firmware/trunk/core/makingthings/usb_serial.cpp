@@ -93,6 +93,7 @@ bool UsbSerial::isActive()
   If nothing is ready to be read, this will not return until new data arrives.
   @param buffer Where to store the incoming data.
   @param length How many bytes to read. 64 is the max that can be read at one time.
+  @param timeout The number of milliseconds to wait if no data is available.  -1 means wait forever.
   @return The number of bytes successfully read.
   
   \b Example
@@ -111,7 +112,7 @@ bool UsbSerial::isActive()
   }
   \endcode
 */
-int UsbSerial::read( char *buffer, int length )
+int UsbSerial::read( char *buffer, int length, int timeout )
 {
   int length_to_go = length;
   if( rxBufCount ) // do we already have some lying around?
@@ -128,7 +129,7 @@ int UsbSerial::read( char *buffer, int length )
                                   rxBuf, USB_SER_RX_BUF_LEN, onUsbData, this);
     if(result == USBD_STATUS_SUCCESS)
     {
-      if( readSemaphore.take( ) )
+      if( readSemaphore.take( timeout ) )
       {
         int copylen = (justGot > length_to_go) ? length_to_go : justGot;
         memcpy( buffer, rxBuf, copylen );
