@@ -244,15 +244,7 @@ void Win_QextSerialPort::close()
   QMutexLocker locker( mutex );
 
     if (isOpen()) {
-//		flush();
-    /*
-      A couple problems with calling flush() here:
-      a) we've already taken the mutex, which flush then tries to take, so that'll never work
-      b) sometimes it goes away forever, specifically when it's called as the app
-      is closing.  From MSDN: "If Win_Handle is a handle to the server end of a named pipe,
-      the function does not return until the client has read all buffered data from the pipe."
-      Even if we read all the data before flushing, this doesn't seem to work.
-    */
+        flush();
 		if (overlapThread->isRunning()) {
 			overlapThread->stop();
 			if (QThread::currentThread() != overlapThread)
@@ -268,6 +260,7 @@ void Win_QextSerialPort::close()
         CloseHandle(o->hEvent);
       }
       qDeleteAll(overlappedWrites);
+      overlappedWrites.clear();
     }
   }
 }
