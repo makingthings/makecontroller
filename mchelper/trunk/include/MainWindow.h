@@ -104,9 +104,6 @@ private:
   void closeEvent( QCloseEvent *qcloseevent );
   void boardInit(Board *board);
   QColor msgColor(MsgType::Type type);
-  #ifdef Q_OS_WIN
-  bool winEvent( MSG* msg, long* result );
-  #endif
   void addMessage( const QString & time, const QString & msg, const QString & tofrom, const QTextBlockFormat & bkgnd );
   bool messagesEnabled( MsgType::Type type );
 
