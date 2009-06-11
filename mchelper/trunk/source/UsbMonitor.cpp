@@ -45,7 +45,7 @@ UsbMonitor::UsbMonitor(MainWindow* mw) : QThread()
     foreach( QextPortInfo port, ports )
       onDeviceDiscovered( port );
   }
-  enumerator.setUpNotifications(mainWindow);
+  enumerator.setUpNotifications();
   #endif
 }
 
@@ -116,13 +116,6 @@ void UsbMonitor::run( )
     sleep(1); // scan once per second
   }
 }
-
-#ifdef Q_OS_WIN
-void UsbMonitor::onDeviceChangeEventWin( WPARAM wParam, LPARAM lParam )
-{
-  enumerator.onDeviceChangeWin( wParam, lParam );
-}
-#endif
 
 void UsbMonitor::onDeviceDiscovered(const QextPortInfo & info)
 {

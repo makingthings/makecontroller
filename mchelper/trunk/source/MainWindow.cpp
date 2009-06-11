@@ -164,15 +164,6 @@ void MainWindow::closeEvent( QCloseEvent *qcloseevent )
   qApp->quit(); // in case the inspector or anything else is still open
 }
 
-#ifdef Q_OS_WIN
-bool MainWindow::winEvent( MSG* msg, long* result )
-{
-  if ( msg->message == WM_DEVICECHANGE )
-    usbMonitor->onDeviceChangeEventWin( msg->wParam, msg->lParam );
-  return false;
-}
-#endif
-
 /*
  Called back when we get a right click on the device list.
  If it's a SAMBA device, offer to upload firmware,
