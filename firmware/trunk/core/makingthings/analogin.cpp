@@ -142,7 +142,9 @@ bool AnalogIn::multi( int values[] ) // static
 
   if ( !manager.semaphore.take(1000) ) // lock the channel
     return false;
-  
+
+  manager.activeChannels |= 0xFF;
+
   // enable all the channels
   AT91C_BASE_ADC->ADC_CHER = AT91C_ADC_CH0 |
                               AT91C_ADC_CH1 |
