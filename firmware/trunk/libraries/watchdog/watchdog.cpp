@@ -20,7 +20,7 @@ void Watchdog::enable( int millis )
   AT91C_BASE_WDTC->WDTC_WDMR =  AT91C_WDTC_WDRSTEN |        // enable reset on timeout
                                 AT91C_WDTC_WDDBGHLT |       // respect debug mode
                                 AT91C_WDTC_WDIDLEHLT |      // respect idle mode
-                                (period & AT91C_WDTC_WDD) | // delta is as wide as the period, so we can restart anytime
+                                ( (period << 16 ) & AT91C_WDTC_WDD ) | // delta is as wide as the period, so we can restart anytime
                                 (period & AT91C_WDTC_WDV);  // set the period
 }
 
