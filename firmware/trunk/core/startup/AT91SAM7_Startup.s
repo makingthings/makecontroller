@@ -111,10 +111,6 @@ __reset_handler:
   ldr r0, =(50 << MC_FMR_FMCN_BIT_OFFSET) | MC_FMR_FWS_1FWS
   str r0, [r10, #MC_FMR_OFFSET]
 
-  /* Disable Watchdog */
-  ldr r0, =WDT_MR_WDDIS
-  str r0, [r10, #WDT_MR_OFFSET]
-
   /* Enable the main oscillator */
   ldr r0, =(6 << CKGR_MOR_OSCOUNT_BIT_OFFSET) | CKGR_MOR_MOSCEN
   str r0, [r10, #CKGR_MOR_OFFSET]
