@@ -30,7 +30,7 @@ TestProjectInfo::TestProjectInfo( MainWindow* mw )
 */
 void TestProjectInfo::includeSystem()
 {
-  QCheckBox* u = projectInfo->usbBox;
+  QCheckBox* u = projectInfo->ui.usbBox;
   bool originalState = (u->checkState() == Qt::Checked);
   QString projectPath = projectInfo->projectFilePath(mainWindow->currentProjectPath());
   projectInfo->load(projectPath);

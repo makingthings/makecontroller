@@ -35,6 +35,8 @@ class Preferences : public QDialog
     static QString toolsPath( );
     static QString makePath( );
     static QString sam7Path( );
+    QString ctrlBoardVersion() { return ui.mcVersionComboBox->currentText(); }
+    QString appBoardVersion() { return ui.appVersionComboBox->currentText(); }
 
   private:
     MainWindow *mainWindow;

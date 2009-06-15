@@ -29,11 +29,12 @@
   We need to generate a Makefile based on the general Preferences
   and Properties for this project.
 */
-Builder::Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog ) : QProcess( 0 )
+Builder::Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog, Preferences* prefs ) : QProcess( 0 )
 {
   this->mainWindow = mainWindow;
   this->projInfo = projInfo;
   this->buildLog = buildLog;
+  this->prefs = prefs;
 
   connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(filterOutput()));
   connect(this, SIGNAL(readyReadStandardError()), this, SLOT(filterErrorOutput()));
@@ -365,12 +366,23 @@ bool Builder::createConfigFile(const QString & projectPath)
     }
     tofile << endl;
 
-    tofile << "#define CONTROLLER_VERSION  100" << endl << "#define APPBOARD_VERSION  100" << endl << endl;
+    tofile << "#define CONTROLLER_VERSION " << getCtrlBoardVersionNumber() << endl;
+    tofile << "#define APPBOARD_VERSION " << getAppBoardVersionNumber() << endl << endl;
 
     tofile << "#endif // CONFIG_H" << endl;
     configFile.close();
   }
   return true;
+}
+
+int Builder::getCtrlBoardVersionNumber()
+{
+  return prefs->ctrlBoardVersion().contains("2.0") ? 200 : 100;
+}
+
+int Builder::getAppBoardVersionNumber()
+{
+  return prefs->appBoardVersion().contains("2.0") ? 200 : 100;
 }
 
 /*
