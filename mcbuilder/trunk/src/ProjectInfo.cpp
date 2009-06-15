@@ -24,10 +24,10 @@
 #define DEFAULT_VERSION "0.1.0"
 #define DEFAULT_HEAPSIZE 18000
 #define DEFAULT_OPTLEVEL "Optimize For Size (-Os)"
-#define DEFAULT_INCLUDE_DEBUG Qt::Unchecked
-#define DEFAULT_INCLUDE_OSC Qt::Unchecked
-#define DEFAULT_INCLUDE_USB Qt::Unchecked
-#define DEFAULT_INCLUDE_NETWORK Qt::Unchecked
+#define DEFAULT_INCLUDE_DEBUG false
+#define DEFAULT_INCLUDE_OSC false
+#define DEFAULT_INCLUDE_USB false
+#define DEFAULT_INCLUDE_NETWORK false
 #define DEFAULT_NETWORK_MEMPOOL 2000
 #define DEFAULT_UDP_SOCKETS 4
 #define DEFAULT_TCP_SOCKETS 4
@@ -81,18 +81,18 @@ bool ProjectInfo::load( const QString & projectPath )
       heapSizeEdit->setText(projectFile.elementsByTagName("heapsize").at(0).toElement().text());
       QString optlevel = projectFile.elementsByTagName("optlevel").at(0).toElement().text();
       optLevelBox->setCurrentIndex(optLevelBox->findText(optlevel));
-      Qt::CheckState state = (projectFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
-      debugInfoCheckbox->setCheckState(state);
+      bool state = (projectFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true");
+      debugInfoCheckbox->setChecked(state);
 
-      state = (projectFile.elementsByTagName("include_osc").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
-      oscBox->setCheckState(state);
+      state = (projectFile.elementsByTagName("include_osc").at(0).toElement().text() == "true");
+      oscBox->setChecked(state);
 
-      state = (projectFile.elementsByTagName("include_usb").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
-      usbBox->setCheckState(state);
+      state = (projectFile.elementsByTagName("include_usb").at(0).toElement().text() == "true");
+      usbBox->setChecked(state);
 
-      state = (projectFile.elementsByTagName("include_network").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
-      networkBox->setCheckState(state);
-      setNetworkSectionEnabled(state == Qt::Checked);
+      state = (projectFile.elementsByTagName("include_network").at(0).toElement().text() == "true");
+      networkBox->setChecked(state);
+      setNetworkSectionEnabled(state);
 
       networkMempoolEdit->setText(projectFile.elementsByTagName("network_mempool").at(0).toElement().text());
       udpSocketEdit->setText(projectFile.elementsByTagName("network_udp_sockets").at(0).toElement().text());
@@ -187,34 +187,34 @@ bool ProjectInfo::diffProjects( const QString & newProjectPath, bool saveUiToFil
         changed = true;
       }
 
-      Qt::CheckState state = (projectFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
+      bool state = (projectFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true");
       if(debugInfoCheckbox->checkState() != state)
       {
-        QString debugstr = (debugInfoCheckbox->checkState() == Qt::Checked) ? "true" : "false";
+        QString debugstr = debugInfoCheckbox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("debuginfo").at(0).firstChild().setNodeValue(debugstr);
         changed = true;
       }
 
-      state = (projectFile.elementsByTagName("include_osc").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
-      if(oscBox->checkState() != state)
+      state = (projectFile.elementsByTagName("include_osc").at(0).toElement().text() == "true");
+      if(oscBox->isChecked() != state)
       {
-        QString str = (oscBox->checkState() == Qt::Checked) ? "true" : "false";
+        QString str = oscBox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("include_osc").at(0).firstChild().setNodeValue(str);
         changed = true;
       }
 
-      state = (projectFile.elementsByTagName("include_usb").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
-      if(usbBox->checkState() != state)
+      state = (projectFile.elementsByTagName("include_usb").at(0).toElement().text() == "true");
+      if(usbBox->isChecked() != state)
       {
-        QString str = (usbBox->checkState() == Qt::Checked) ? "true" : "false";
+        QString str = usbBox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("include_usb").at(0).firstChild().setNodeValue(str);
         changed = true;
       }
 
-      state = (projectFile.elementsByTagName("include_network").at(0).toElement().text() == "true") ? Qt::Checked : Qt::Unchecked;
-      if(networkBox->checkState() != state)
+      state = (projectFile.elementsByTagName("include_network").at(0).toElement().text() == "true");
+      if(networkBox->isChecked() != state)
       {
-        QString str = (networkBox->checkState() == Qt::Checked) ? "true" : "false";
+        QString str = networkBox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("include_network").at(0).firstChild().setNodeValue(str);
         changed = true;
       }
@@ -269,10 +269,10 @@ void ProjectInfo::restoreDefaults( )
   versionEdit->setText(DEFAULT_VERSION);
   heapSizeEdit->setText(QString::number(DEFAULT_HEAPSIZE));
   optLevelBox->setCurrentIndex(optLevelBox->findText(DEFAULT_OPTLEVEL));
-  debugInfoCheckbox->setCheckState(DEFAULT_INCLUDE_DEBUG);
-  oscBox->setCheckState(DEFAULT_INCLUDE_OSC);
-  usbBox->setCheckState(DEFAULT_INCLUDE_USB);
-  networkBox->setCheckState(DEFAULT_INCLUDE_NETWORK);
+  debugInfoCheckbox->setChecked(DEFAULT_INCLUDE_DEBUG);
+  oscBox->setChecked(DEFAULT_INCLUDE_OSC);
+  usbBox->setChecked(DEFAULT_INCLUDE_USB);
+  networkBox->setChecked(DEFAULT_INCLUDE_NETWORK);
   networkMempoolEdit->setText(QString::number(DEFAULT_NETWORK_MEMPOOL));
   udpSocketEdit->setText(QString::number(DEFAULT_UDP_SOCKETS));
   tcpSocketEdit->setText(QString::number(DEFAULT_TCP_SOCKETS));
@@ -372,26 +372,17 @@ void ProjectInfo::onChangeBuildType(const QString & filename, const QString & ne
 
 void ProjectInfo::setIncludeOsc(bool osc)
 {
-  if(osc)
-    oscBox->setCheckState(Qt::Checked);
-  else
-    oscBox->setCheckState(Qt::Unchecked);
+  oscBox->setChecked(osc);
 }
 
 void ProjectInfo::setIncludeUsb(bool usb)
 {
-  if(usb)
-    usbBox->setCheckState(Qt::Checked);
-  else
-    usbBox->setCheckState(Qt::Unchecked);
+  usbBox->setChecked(usb);
 }
 
 void ProjectInfo::setIncludeNetwork(bool network)
 {
-  if(network)
-    networkBox->setCheckState(Qt::Checked);
-  else
-    networkBox->setCheckState(Qt::Unchecked);
+  networkBox->setChecked(network);
 }
 
 
