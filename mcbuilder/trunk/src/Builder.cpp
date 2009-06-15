@@ -112,8 +112,7 @@ QString Builder::ensureBuildDirExists(const QString & projPath)
 */
 void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
 {
-  if( exitCode != 0 || exitStatus != QProcess::NormalExit) // something didn't finish happily
-  {
+  if( exitCode != 0 || exitStatus != QProcess::NormalExit) { // something didn't finish happily
     mainWindow->onBuildComplete(false);
     resetBuildProcess();
       return;
@@ -129,17 +128,15 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
       dir.setNameFilters(QStringList() << "*.bin");
       QFileInfoList bins = dir.entryInfoList();
       bool success = false;
-      if(bins.count())
-      {
+      if(bins.count()) {
         int filesize = bins.first().size();
-        if(filesize <= (256 * 1024) )
-        {
-          mainWindow->printOutput(tr("%1.bin is %2 out of a possible 256000 bytes.").arg(projectName).arg(filesize));
+        if(filesize <= (256 * 1024) ) {
+          mainWindow->printOutput(tr("%1.bin is %2 out of a possible 256K bytes.").arg(projectName).arg(filesize));
           mainWindow->onBuildComplete(true);
           success = true;
         }
         else
-          mainWindow->printOutputError(tr("Error - %1.bin is too big!  %2 out of a possible 256000 bytes.").arg(projectName).arg(filesize));
+          mainWindow->printOutputError(tr("Error - %1.bin is too big!  %2 out of a possible 256K bytes.").arg(projectName).arg(filesize));
       }
       if(!success)
         mainWindow->onBuildComplete(false);
@@ -172,8 +169,7 @@ bool Builder::createMakefile(const QString & projectPath)
   bool retval = true;
   QDir buildDir( ensureBuildDirExists(projectPath) );
   QFile makefile(buildDir.filePath("Makefile"));
-  if(makefile.open(QIODevice::WriteOnly | QFile::Text))
-  {
+  if(makefile.open(QIODevice::WriteOnly | QFile::Text)) {
     QDir projectDir(projectPath);
     QTextStream tofile(&makefile);
     tofile << "##################################################################################################" << endl;
@@ -187,21 +183,17 @@ bool Builder::createMakefile(const QString & projectPath)
 
     // read the project file in to get a list of the files we want to build, and include dirs
     QFile projectFile(projectDir.filePath(projectDir.dirName() + ".xml"));
-    if(projectFile.open(QIODevice::ReadOnly|QFile::Text))
-    {
+    if(projectFile.open(QIODevice::ReadOnly|QFile::Text)) {
       QDomDocument projectDoc;
-      if(projectDoc.setContent(&projectFile))
-      {
-        if(projectDoc.doctype().name() == "mcbuilder_project_file")
-        {
+      if(projectDoc.setContent(&projectFile)) {
+        if(projectDoc.doctype().name() == "mcbuilder_project_file") {
           QString projName = projectDir.dirName();
           QDir currentDir = QDir::current();
 
           // extract all the files for this project from the project file
           QStringList thmbFiles, armFiles;
           QDomNodeList allFiles = projectDoc.elementsByTagName("files").at(0).childNodes();
-          for(int i = 0; i < allFiles.count(); i++)
-          {
+          for(int i = 0; i < allFiles.count(); i++) {
             if(allFiles.at(i).toElement().attribute("type") == "thumb")
               thmbFiles << allFiles.at(i).toElement().text();
             else if(allFiles.at(i).toElement().attribute("type") == "arm")
@@ -210,8 +202,7 @@ bool Builder::createMakefile(const QString & projectPath)
 
           tofile << "THUMB_SRC= \\" << endl;
           // add in all the sources from the required libraries
-          foreach(Library lib, libraries)
-          {
+          foreach(Library lib, libraries) {
             foreach(QString filepath, lib.thumb_src)
               tofile << "  " << filteredPath(filepath) << " \\" << endl;
           }
@@ -222,8 +213,7 @@ bool Builder::createMakefile(const QString & projectPath)
 
           tofile << "ARM_SRC= \\" << endl;
           // add in all the sources from the required libraries
-          foreach(Library lib, libraries)
-          {
+          foreach(Library lib, libraries) {
             foreach(QString filepath, lib.arm_src)
               tofile << "  " << filteredPath(filepath) << " \\" << endl;
           }
@@ -241,8 +231,7 @@ bool Builder::createMakefile(const QString & projectPath)
             tofile << "  -I" << filteredPath(libdir.filePath(lib.name)) << " \\" << endl;
 
           QDomNodeList include_dirs = projectDoc.elementsByTagName("include_dirs").at(0).childNodes();
-          for(int i = 0; i < include_dirs.count(); i++)
-          {
+          for(int i = 0; i < include_dirs.count(); i++) {
             QString include_dir = include_dirs.at(i).toElement().text();
             tofile << "  -I" << filteredPath(include_dir) << " \\" << endl;
           }
@@ -340,8 +329,7 @@ bool Builder::createConfigFile(const QString & projectPath)
 {
   QDir dir(projectPath);
   QFile configFile(dir.filePath("config.h"));
-  if(configFile.open(QIODevice::WriteOnly|QFile::Text))
-  {
+  if(configFile.open(QIODevice::WriteOnly|QFile::Text)) {
     qDebug("builder - creating/updating config file");
     QTextStream tofile(&configFile);
     tofile << "/*****************************************************************************************" << endl << endl;
@@ -368,8 +356,7 @@ bool Builder::createConfigFile(const QString & projectPath)
     if(projInfo->includeUsb())
       tofile << "#define MAKE_CTRL_USB" << endl;
 
-    if(projInfo->includeNetwork())
-    {
+    if(projInfo->includeNetwork()) {
       tofile << "#define MAKE_CTRL_NETWORK" << endl;
       tofile << "#define NETWORK_MEM_POOL " << projInfo->networkMempool() << endl;
       tofile << "#define NETWORK_UDP_CONNS " << projInfo->udpSockets() << endl;
@@ -397,8 +384,7 @@ bool Builder::compareConfigFile(const QString & projectPath)
   bool retval = false;
   QDir dir(projectPath);
   QFile configFile(dir.filePath("config.h"));
-  if(configFile.open(QIODevice::ReadOnly|QFile::Text))
-  {
+  if(configFile.open(QIODevice::ReadOnly|QFile::Text)) {
     QTextStream in(&configFile);
     int maj, min, bld;
     parseVersionNumber( &maj, &min, &bld );
@@ -420,34 +406,28 @@ bool Builder::compareConfigFile(const QString & projectPath)
     QRegExp tcpListenExp("#define NETWORK_TCP_LISTEN_CONNS (\\d+)");
 
     QString line = in.readLine();
-    while(!line.isNull())
-    {
-      if( line.contains(majorVersionExp) ) // major version number
-      {
+    while(!line.isNull()) {
+      if( line.contains(majorVersionExp) ) { // major version number
         int majVer = majorVersionExp.cap(1).toInt();
         if(majVer != maj)
           retval = true;
       }
-      else if( line.contains(minorVersionExp) ) // minor version number
-      {
+      else if( line.contains(minorVersionExp) ) { // minor version number
         int minVer = minorVersionExp.cap(1).toInt();
         if(minVer != min)
           retval = true;
       }
-      else if( line.contains(buildVersionExp) ) // build version number
-      {
+      else if( line.contains(buildVersionExp) ) { // build version number{
         int bldVer = buildVersionExp.cap(1).toInt();
         if(bldVer != bld)
           retval = true;
       }
-      else if( line.contains(heapExp) ) // heap size
-      {
+      else if( line.contains(heapExp) ) { // heap size
         int heap = heapExp.cap(1).toInt();
         if(heap != projInfo->heapsize())
           retval = true;
       }
-      else if( line.contains(nameExp) ) // project name
-      {
+      else if( line.contains(nameExp) ) { // project name
         QString firmwareName = nameExp.cap(1);
         if(firmwareName != dir.dirName())
           retval = true;
@@ -458,26 +438,22 @@ bool Builder::compareConfigFile(const QString & projectPath)
         osc = true;
       else if( line.contains("#define MAKE_CTRL_NETWORK") ) // include network
         network = true;
-      else if( line.contains(mempoolExp) ) // network memory pool size
-      {
+      else if( line.contains(mempoolExp) ) { // network memory pool size
         int mempool = mempoolExp.cap(1).toInt();
         if( mempool != projInfo->networkMempool() )
           retval = true;
       }
-      else if( line.contains(udpExp) ) // number of UDP connections
-      {
+      else if( line.contains(udpExp) ) { // number of UDP connections
         int udp = udpExp.cap(1).toInt();
         if( udp != projInfo->udpSockets() )
           retval = true;
       }
-      else if( line.contains(tcpExp) ) // number of TCP sockets
-      {
+      else if( line.contains(tcpExp) ) { // number of TCP sockets
         int tcp = tcpExp.cap(1).toInt();
         if( tcp != projInfo->tcpSockets() )
           retval = true;
       }
-      else if( line.contains(tcpListenExp) ) // number of TCP server sockets
-      {
+      else if( line.contains(tcpListenExp) ) { // number of TCP server sockets
         int tcpListen = tcpListenExp.cap(1).toInt();
         if( tcpListen != projInfo->tcpServers() )
           retval = true;
@@ -508,8 +484,7 @@ bool Builder::parseVersionNumber( int *maj, int *min, int *bld )
 {
   QStringList versions = projInfo->version().split(".");
   bool success = true;
-  if(versions.count() == 3)
-  {
+  if(versions.count() == 3) {
     bool ok = false;
     int temp;
     temp = versions.takeFirst().toInt(&ok);
@@ -528,8 +503,7 @@ bool Builder::parseVersionNumber( int *maj, int *min, int *bld )
     else
       success = false;
   }
-  if(versions.count() != 3 || !success) // just use the default
-  {
+  if(versions.count() != 3 || !success) { // just use the default
     *maj = 0;
     *min = 1;
     *bld = 0;
@@ -583,12 +557,10 @@ void Builder::filterOutput()
       buildLog->append(output);
       QTextStream outstream(&output); // use QTextStream to deal with \r\n or \n line endings for us
       QString outline = outstream.readLine();
-      while(!outline.isNull())
-      {
+      while(!outline.isNull()) {
         //qDebug("msg: %s", qPrintable(outline));
         QStringList sl = outline.split(" ");
-        if(sl.first().endsWith("arm-elf-gcc") && sl.at(1) == "-c")
-        {
+        if(sl.first().endsWith("arm-elf-gcc") && sl.at(1) == "-c") {
           QFileInfo srcFile(sl.last());
           mainWindow->buildingNow(srcFile.baseName() + ".c");
         }
@@ -621,8 +593,7 @@ void Builder::filterErrorOutput()
       QTextStream outstream(&errMsg); // use QTextStream to deal with \r\n or \n line endings for us
       QString outline = outstream.readLine();
       bool matched = false;
-      while(!outline.isNull())
-      {
+      while(!outline.isNull()) {
         //qDebug("err: %s", qPrintable(outline));
         QString line = outline;
         outline = outstream.readLine();
@@ -663,8 +634,7 @@ bool Builder::matchErrorOrWarning(const QString & error)
   bool matched = false;
   QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+):(\\d+): (error|warning): (.+)");
   int pos = 0;
-  while((pos = errExp.indexIn(error, pos)) != -1)
-  {
+  while((pos = errExp.indexIn(error, pos)) != -1) {
     QString filepath(errExp.cap(1));
     int linenumber = errExp.cap(2).toInt();
     QString severity(errExp.cap(3));
@@ -674,14 +644,12 @@ bool Builder::matchErrorOrWarning(const QString & error)
     QFileInfo fi(filepath);
     ConsoleItem *item;
     QString fullmsg = tr("%1 (line %2): %3").arg(fi.fileName()).arg(linenumber).arg(msg);
-    if(severity == "error")
-    {
+    if(severity == "error") {
       item = new ConsoleItem(filepath, linenumber, ConsoleItem::Error);
       item->setIcon(QIcon(":/icons/error.png"));
       mainWindow->highlightLine(filepath, linenumber, ConsoleItem::Error);
     }
-    else
-    {
+    else {
       item = new ConsoleItem(filepath, linenumber, ConsoleItem::Warning);
       mainWindow->highlightLine(filepath, linenumber, ConsoleItem::Warning);
       item->setIcon(QIcon(":/icons/warning.png"));
@@ -703,8 +671,7 @@ bool Builder::matchInFunction(const QString & error)
   bool matched = false;
   QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+): In function (.+)");
   int pos = 0;
-  while((pos = errExp.indexIn(error, pos)) != -1)
-  {
+  while((pos = errExp.indexIn(error, pos)) != -1) {
     QString filepath(errExp.cap(1));
     QString func(errExp.cap(2));
 
@@ -728,8 +695,7 @@ bool Builder::matchUndefinedRef(const QString & error)
   bool matched = false;
   QRegExp errExp("(.+):.+: undefined reference to (.+)");
   int pos = 0;
-  while((pos = errExp.indexIn(error, pos)) != -1)
-  {
+  while((pos = errExp.indexIn(error, pos)) != -1) {
     QString filepath(errExp.cap(1));
     QString func(errExp.cap(2));
 
@@ -756,24 +722,20 @@ void Builder::loadDependencies(const QString & libsDir, const QString & project)
   QDir libDir(QDir::current().filePath(libsDir));
   QStringList libDirs = libDir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
 
-  foreach(QString filename, srcFiles)
-  {
+  foreach(QString filename, srcFiles) {
     QFile file(projDir.filePath(filename));
-    if(file.open(QIODevice::ReadOnly|QFile::Text))
-    {
+    if(file.open(QIODevice::ReadOnly|QFile::Text)) {
       // match anything in the form of #include "*.h" or <*.h>
       QRegExp rx("#include [\"|<]([a-zA-Z0-9]*)\\.h[\"|>]");
       QString fileContents = file.readAll();
       int pos = 0;
 
       // gather all the matching directives
-      while((pos = rx.indexIn(fileContents, pos)) != -1)
-      {
+      while((pos = rx.indexIn(fileContents, pos)) != -1) {
         QString match(rx.cap(1));
         //qDebug("match: %s", qPrintable(match));
         // only list it as a dependency if it's in our list of libraries
-        if(libDirs.contains(match))
-        {
+        if(libDirs.contains(match)) {
           Library lib;
           lib.name = match;
           // extract the lists of source files specified in the library's spec file
@@ -796,11 +758,10 @@ void Builder::getLibrarySources(const QString & libdir, QStringList *thmb, QStri
   QDir dir(libdir);
   QFile libfile(dir.filePath(dir.dirName() + ".xml"));
   QDomDocument libDoc;
-  if(libDoc.setContent(&libfile))
-  {
+  if(libDoc.setContent(&libfile)) {
     QDomNodeList files = libDoc.elementsByTagName("files").at(0).childNodes();
-    for(int i = 0; i < files.count(); i++)
-    {
+    int filescount = files.count();
+    for(int i = 0; i < filescount; i++) {
       if(files.at(i).toElement().attribute("type") == "thumb")
         thmb->append(dir.filePath(files.at(i).toElement().text()));
       else if(files.at(i).toElement().attribute("type") == "arm")
@@ -822,8 +783,7 @@ QString Builder::filteredPath(const QString & path)
   // would be good to be able to do something about file paths with spaces
   // but not quite sure how to deal at the moment...
   QString filtered = path;
-  if(!QDir::isAbsolutePath(path))
-  {
+  if(!QDir::isAbsolutePath(path)) {
     if(path.startsWith("cores"))
       filtered = QDir::current().filePath(path);
     else

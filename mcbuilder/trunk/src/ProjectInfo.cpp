@@ -72,11 +72,9 @@ bool ProjectInfo::load( const QString & projectPath )
 
   // read the ProjectInfo file
   QFile file(projectFilePath(projectPath));
-  if(file.open(QIODevice::ReadOnly|QFile::Text))
-  {
+  if(file.open(QIODevice::ReadOnly|QFile::Text)) {
     QDomDocument projectFile;
-    if(projectFile.setContent(&file))
-    {
+    if(projectFile.setContent(&file)) {
       versionEdit->setText(projectFile.elementsByTagName("version").at(0).toElement().text());
       heapSizeEdit->setText(projectFile.elementsByTagName("heapsize").at(0).toElement().text());
       QString optlevel = projectFile.elementsByTagName("optlevel").at(0).toElement().text();
@@ -123,13 +121,10 @@ void ProjectInfo::loadFileBrowser(QDir *projectDir, QDomDocument *projectFile)
 
   // only deals with files in the top level directory at the moment
   QFileIconProvider ip;
-  for(int i = 0; i < allFiles.count(); i++)
-  {
+  for(int i = 0; i < allFiles.count(); i++) {
     QFileInfo fi(projectDir->filePath(allFiles.at(i).toElement().text()));
-    if(!fi.fileName().isEmpty())
-    {
-      if(projectDir->exists(fi.fileName()))
-      {
+    if(!fi.fileName().isEmpty()) {
+      if(projectDir->exists(fi.fileName())) {
         QString buildtype = allFiles.at(i).toElement().attribute("type");
         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << fi.fileName() << buildtype);
         child->setData(FILENAME_COLUMN, FULLPATH_ROLE, fi.filePath());
@@ -163,88 +158,74 @@ bool ProjectInfo::diffProjects( const QString & newProjectPath, bool saveUiToFil
   bool changed = false;
 
   QFile file(projectFilePath(newProjectPath));
-  if(file.open(QIODevice::ReadWrite|QFile::Text))
-  {
+  if(file.open(QIODevice::ReadWrite|QFile::Text)) {
     QDomDocument projectFile;
-    if(projectFile.setContent(&file))
-    {
+    if(projectFile.setContent(&file)) {
       // to get at the actual text of an element, you need to grab its child, which will be a QDomText node
-      if(versionEdit->text() != projectFile.elementsByTagName("version").at(0).toElement().text())
-      {
+      if(versionEdit->text() != projectFile.elementsByTagName("version").at(0).toElement().text()) {
         projectFile.elementsByTagName("version").at(0).firstChild().setNodeValue(versionEdit->text());
         changed = true;
       }
 
-      if(heapSizeEdit->text() != projectFile.elementsByTagName("heapsize").at(0).toElement().text())
-      {
+      if(heapSizeEdit->text() != projectFile.elementsByTagName("heapsize").at(0).toElement().text()) {
         projectFile.elementsByTagName("heapsize").at(0).firstChild().setNodeValue(heapSizeEdit->text());
         changed = true;
       }
 
-      if(optLevelBox->currentText() != projectFile.elementsByTagName("optlevel").at(0).toElement().text())
-      {
+      if(optLevelBox->currentText() != projectFile.elementsByTagName("optlevel").at(0).toElement().text()) {
         projectFile.elementsByTagName("optlevel").at(0).firstChild().setNodeValue(optLevelBox->currentText());
         changed = true;
       }
 
       bool state = (projectFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true");
-      if(debugInfoCheckbox->checkState() != state)
-      {
+      if(debugInfoCheckbox->checkState() != state) {
         QString debugstr = debugInfoCheckbox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("debuginfo").at(0).firstChild().setNodeValue(debugstr);
         changed = true;
       }
 
       state = (projectFile.elementsByTagName("include_osc").at(0).toElement().text() == "true");
-      if(oscBox->isChecked() != state)
-      {
+      if(oscBox->isChecked() != state) {
         QString str = oscBox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("include_osc").at(0).firstChild().setNodeValue(str);
         changed = true;
       }
 
       state = (projectFile.elementsByTagName("include_usb").at(0).toElement().text() == "true");
-      if(usbBox->isChecked() != state)
-      {
+      if(usbBox->isChecked() != state) {
         QString str = usbBox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("include_usb").at(0).firstChild().setNodeValue(str);
         changed = true;
       }
 
       state = (projectFile.elementsByTagName("include_network").at(0).toElement().text() == "true");
-      if(networkBox->isChecked() != state)
-      {
+      if(networkBox->isChecked() != state) {
         QString str = networkBox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("include_network").at(0).firstChild().setNodeValue(str);
         changed = true;
       }
 
-      if(networkMempoolEdit->text() != projectFile.elementsByTagName("network_mempool").at(0).toElement().text())
-      {
+      if(networkMempoolEdit->text() != projectFile.elementsByTagName("network_mempool").at(0).toElement().text()) {
         projectFile.elementsByTagName("network_mempool").at(0).firstChild().setNodeValue(networkMempoolEdit->text());
         changed = true;
       }
 
-      if(udpSocketEdit->text() != projectFile.elementsByTagName("network_udp_sockets").at(0).toElement().text())
-      {
+      if(udpSocketEdit->text() != projectFile.elementsByTagName("network_udp_sockets").at(0).toElement().text()) {
         projectFile.elementsByTagName("network_udp_sockets").at(0).firstChild().setNodeValue(udpSocketEdit->text());
         changed = true;
       }
 
-      if(tcpSocketEdit->text() != projectFile.elementsByTagName("network_tcp_sockets").at(0).toElement().text())
-      {
+      if(tcpSocketEdit->text() != projectFile.elementsByTagName("network_tcp_sockets").at(0).toElement().text()) {
         projectFile.elementsByTagName("network_tcp_sockets").at(0).firstChild().setNodeValue(tcpSocketEdit->text());
         changed = true;
       }
 
-      if(tcpServerEdit->text() != projectFile.elementsByTagName("network_tcp_servers").at(0).toElement().text())
-      {
+      if(tcpServerEdit->text() != projectFile.elementsByTagName("network_tcp_servers").at(0).toElement().text()) {
         projectFile.elementsByTagName("network_tcp_servers").at(0).firstChild().setNodeValue(tcpServerEdit->text());
         changed = true;
       }
 
-      if(saveUiToFile)
-      {
+      if(saveUiToFile) {
         file.resize(0); // clear out the current contents so we can update them, since we opened as read/write
         file.write(projectFile.toByteArray(2));
       }
@@ -304,8 +285,7 @@ void ProjectInfo::setNetworkSectionEnabled(bool state)
 void FileBrowser::contextMenuEvent(QContextMenuEvent *event)
 {
   QTreeWidgetItem *item = itemAt(event->pos());
-  if(item)
-  {
+  if(item) {
     if(item->childCount()) // files shouldn't have any children
       return;
     setCurrentItem(item); // make sure we have the right item selected

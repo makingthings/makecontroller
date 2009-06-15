@@ -74,8 +74,7 @@ QString Preferences::workspace( )
   workspace = settings.value("workspace", workspace).toString();
   // always make sure the workspace directory exists
   QDir dir(workspace);
-  if(!dir.exists())
-  {
+  if(!dir.exists()) {
     dir.cdUp();
     #ifdef Q_WS_WIN
     dir.mkdir("workspace");
@@ -161,8 +160,7 @@ void Preferences::getNewFont( )
 {
   bool ok = false;
   QFont newFont = QFontDialog::getFont(&ok, QFont(currentFont.family(), currentFont.pointSize()), this);
-  if(ok) // the user clicked OK and font is set to the font the user selected
-  {
+  if(ok) { // the user clicked OK and font is set to the font the user selected
     tempFont = newFont;
     fontBox->setText(QString("%1, %2pt").arg(tempFont.family()).arg(tempFont.pointSize()));
   }
@@ -184,14 +182,12 @@ void Preferences::applyChanges( )
   settings.setValue("checkForUpdates", (updaterBox->checkState() == Qt::Checked));
 
   int oldTabWidth = settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt();
-  if( oldTabWidth != tabWidth->text().toInt() )
-  {
+  if( oldTabWidth != tabWidth->text().toInt() ) {
     settings.setValue("tabWidth", tabWidth->text().toInt());
     mainWindow->setTabWidth( tabWidth->text().toInt() );
   }
 
-  if(tempFont.family() != currentFont.family() || tempFont.pointSize() != currentFont.pointSize())
-  {
+  if(tempFont.family() != currentFont.family() || tempFont.pointSize() != currentFont.pointSize()) {
     currentFont.setFamily(tempFont.family());
     currentFont.setPointSize(tempFont.pointSize());
     mainWindow->setEditorFont(currentFont.family(), currentFont.pointSize());

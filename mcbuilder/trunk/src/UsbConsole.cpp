@@ -20,6 +20,7 @@
 #include <QLineEdit>
 #include <QTextBlock>
 #include <QBuffer>
+#include <QDebug>
 
 #define ENUM_FREQUENCY 1000 // check once a second for new USB connections
 
@@ -60,12 +61,10 @@ bool UsbConsole::loadAndShow( )
 */
 void UsbConsole::onCommandLine( )
 {
-  if(port->isOpen() && !commandLine->currentText().isEmpty())
-  {
+  if(port->isOpen() && !commandLine->currentText().isEmpty()) {
     if(port->write(commandLine->currentText().toUtf8()) < 0)
       closeDevice();
-    else
-    {
+    else {
       QTextBlockFormat format;
       format.setBackground(QColor(229, 237, 247, 255)); // light blue
       if(currentView == "Characters")
@@ -97,8 +96,7 @@ void UsbConsole::onView(const QString & view)
   QTextCursor c = outputConsole->textCursor();
   c.movePosition(QTextCursor::Start);
   bool keepgoing = true;
-  while(keepgoing)
-  {
+  while(keepgoing) {
     if(view == "Characters")
       hexToChar(&c);
     else if(view == "Hex")
@@ -114,8 +112,7 @@ void UsbConsole::hexToChar(QTextCursor *c)
 {
   QStringList hexes = c->block().text().split(" ");
   QString chars;
-  foreach(QString hex, hexes)
-  {
+  foreach(QString hex, hexes) {
     if(!hex.isEmpty())
       chars += QChar::fromAscii(hex.toInt(0, 0));
   }
@@ -132,8 +129,7 @@ void UsbConsole::charToHex(QTextCursor *c)
   QString str = c->block().text();
   QString hexes;
   int len = str.length();
-  for(int i = 0; i < len; i++)
-  {
+  for(int i = 0; i < len; i++) {
     c->deleteChar();
     hexes += strToHex(str.left(1));
     str.remove(0,1);
@@ -147,8 +143,7 @@ QString UsbConsole::strToHex(QString str)
 {
   QString hex;
   int len = str.size();
-  for(int i = 0; i < len; i++)
-  {
+  for(int i = 0; i < len; i++) {
     hex += QString("0x%1 ").arg(QString::number(*(str.toUtf8().data()), 16));
     str.remove(0,1);
   }
@@ -165,8 +160,7 @@ void UsbConsole::enumerate()
   QList<QextPortInfo> portInfos = enumerator.getPorts();
   QStringList foundPorts;
   // check for new ports...
-  foreach(QextPortInfo portInfo, portInfos)
-  {
+  foreach(QextPortInfo portInfo, portInfos) {
     QString asciiname = port->portName().toAscii();
     //qDebug("enumerated: %s", qPrintable(portInfo.friendName));
   if(portInfo.friendName.startsWith("Make Controller Ki")
@@ -179,10 +173,8 @@ void UsbConsole::enumerate()
   }
 
   // now check for ports that have gone away
-  foreach(QString portname, ports)
-  {
-    if(!foundPorts.contains(portname))
-    {
+  foreach(QString portname, ports) {
+    if(!foundPorts.contains(portname)) {
       QString asciiname = port->portName().toAscii();
       closedPorts.removeAll(asciiname);
       ports.removeAll(asciiname);
@@ -204,10 +196,9 @@ void UsbConsole::openDevice(const QString & name)
   if(port->isOpen())
     port->close();
   port->setPortName(name);
-  if(port->open(QIODevice::ReadWrite))
-  {
-  qDebug("UsbConsole: opened %s", qPrintable(name));
-  QString asciiname = name.toAscii();
+  if(port->open(QIODevice::ReadWrite)) {
+    qDebug() << "UsbConsole: opened:" << name;
+    QString asciiname = name.toAscii();
     ports.append(asciiname);
     if(portList->findText(asciiname) < 0)
       portList->addItem(asciiname);
@@ -224,8 +215,7 @@ void UsbConsole::openDevice(const QString & name)
 */
 void UsbConsole::closeDevice()
 {
-  if(port->isOpen())
-  {
+  if(port->isOpen()) {
     port->close();
     if(portList->count())
       portList->setItemIcon( portList->currentIndex(), QIcon(":/icons/red_dot.png"));
@@ -240,18 +230,15 @@ void UsbConsole::closeDevice()
 */
 void UsbConsole::onOpenClose()
 {
-  if(port->isOpen())
-  {
+  if(port->isOpen()) {
     // put this port name on the list of ports manually closed by the user
     // so it doesn't get added into the UI multiple times when it's subsequently opened
     closedPorts.append(port->portName().toAscii());
     portList->setItemIcon( portList->currentIndex(), QIcon(":/icons/red_dot.png"));
     closeDevice();
   }
-  else
-  {
-    if(!portList->currentText().isEmpty())
-    {
+  else {
+    if(!portList->currentText().isEmpty()) {
       openDevice(portList->currentText());
       portList->setItemIcon( portList->currentIndex(), QIcon(":/icons/green_dot.png"));
     }
@@ -279,13 +266,11 @@ void UsbConsole::processNewData()
   if(!port->isOpen())
     return;
   int avail = port->bytesAvailable();
-  if(avail > 0 )
-  {
+  if(avail > 0 ) {
     newData.resize(avail);
     if(port->read(newData.data(), newData.size()) < 0)
       return;
-    else
-    {
+    else {
       outputConsole->moveCursor(QTextCursor::End);
       if(currentView == "Characters") // just pop it in there
         outputConsole->insertPlainText(newData);

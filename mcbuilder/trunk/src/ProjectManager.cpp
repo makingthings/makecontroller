@@ -40,8 +40,7 @@ QString ProjectManager::createNewFile(const QString & projectPath, const QString
 
   if(file.exists()) // don't do anything if this file's already there
     return fi.filePath();
-  if(file.open(QIODevice::WriteOnly | QFile::Text))
-  {
+  if(file.open(QIODevice::WriteOnly | QFile::Text)) {
     QTextStream out(&file);
     out << QString("// %1").arg(fi.fileName()) << endl;
     out << QString("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl << endl;
@@ -78,8 +77,7 @@ QString ProjectManager::saveFileAs(const QString & projectPath, const QString & 
 */
 void ProjectManager::confirmValidFileName(QFileInfo* fi)
 {
-  if(fi->baseName().contains(" "))
-  {
+  if(fi->baseName().contains(" ")) {
     QString newBaseName = fi->baseName().remove(" ");
     fi->setFile(fi->path() + "/" + newBaseName + "." + fi->suffix());
   }
@@ -94,8 +92,7 @@ void ProjectManager::confirmValidFileName(QFileInfo* fi)
 QString ProjectManager::confirmValidProjectName(const QString & name)
 {
   QString validname = name;
-  if(name.contains(" ")) // make sure the project name doesn't have any spaces
-  {
+  if(name.contains(" ")) { // make sure the project name doesn't have any spaces
     QStringList elems = name.split(QDir::separator());
     elems.last().remove(" ");
     validname = elems.join(QDir::separator());
@@ -128,12 +125,10 @@ QString ProjectManager::createNewProject(const QString & newProjectPath)
   templateFile.close();
 
   templateFile.setFileName(templatesDir.filePath("source_template.txt"));
-  if( templateFile.open(QIODevice::ReadOnly | QFile::Text) )
-  {
+  if( templateFile.open(QIODevice::ReadOnly | QFile::Text) ) {
     // and create the main file
     QFile mainFile(newProjectDir.filePath(newProjName + ".c"));
-    if( mainFile.open(QIODevice::WriteOnly | QFile::Text) )
-    {
+    if( mainFile.open(QIODevice::WriteOnly | QFile::Text) ) {
       QTextStream out(&mainFile);
       out << QString("// %1.c").arg(newProjName) << endl;
       out << QString("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl;
@@ -158,8 +153,7 @@ bool ProjectManager::addToProjectFile(const QString & projectPath, const QString
   QDir projectDir(projectPath);
   QFile projectFile(projectDir.filePath(projectDir.dirName() + ".xml"));
   // read in the existing file, and add a node to the "files" section
-  if(newProjectDoc.setContent(&projectFile))
-  {
+  if(newProjectDoc.setContent(&projectFile)) {
     projectFile.close();
     QDomElement newFileElement = newProjectDoc.createElement("file");
     newFileElement.setAttribute("type", buildtype);
@@ -168,8 +162,7 @@ bool ProjectManager::addToProjectFile(const QString & projectPath, const QString
     newProjectDoc.elementsByTagName("files").at(0).toElement().appendChild(newFileElement);
 
     // write our newly manipulated file
-    if(projectFile.open(QIODevice::WriteOnly | QFile::Text)) // reopen as WriteOnly
-    {
+    if(projectFile.open(QIODevice::WriteOnly | QFile::Text)) { // reopen as WriteOnly
       projectFile.write(newProjectDoc.toByteArray(2));
       projectFile.close();
       retval = true;
@@ -188,18 +181,14 @@ bool ProjectManager::removeFromProjectFile(const QString & projectPath, const QS
   QDomDocument doc;
   QDir dir(projectPath);
   QFile projectFile(dir.filePath(dir.dirName() + ".xml"));
-  if(doc.setContent(&projectFile))
-  {
+  if(doc.setContent(&projectFile)) {
     projectFile.close();
     QDomNodeList files = doc.elementsByTagName("files").at(0).childNodes();
-    for(int i = 0; i < files.count(); i++)
-    {
-      if(files.at(i).toElement().text() == dir.relativeFilePath(filePath))
-      {
+    for(int i = 0; i < files.count(); i++) {
+      if(files.at(i).toElement().text() == dir.relativeFilePath(filePath)) {
         QDomNode parent = files.at(i).parentNode();
         parent.removeChild(files.at(i));
-        if(projectFile.open(QIODevice::WriteOnly|QFile::Text))
-        {
+        if(projectFile.open(QIODevice::WriteOnly|QFile::Text)) {
           projectFile.write(doc.toByteArray(2));
           retval = true;
         }
@@ -226,19 +215,15 @@ QString ProjectManager::saveCurrentProjectAs(const QString & currentProjectPath,
   QString newProjectName = newProjectDir.dirName();
 
   QFileInfoList fileList = currentProjectDir.entryInfoList();
-  foreach(QFileInfo fi, fileList)
-  {
+  foreach(QFileInfo fi, fileList) {
     // give any project-specific files the new project's name
-    if(fi.baseName() == currentProjectName)
-    {
-      if(fi.suffix() != "o") // don't need to copy obj files
-      {
+    if(fi.baseName() == currentProjectName) {
+      if(fi.suffix() != "o") { // don't need to copy obj files
         QFile tocopy(fi.filePath());
         tocopy.copy(newProjectDir.filePath(newProjectName + "." + fi.suffix()));
       }
     }
-    else // just copy the file over
-    {
+    else { // just copy the file over
       QFile tocopy(fi.filePath());
       tocopy.copy(newProjectDir.filePath(fi.fileName()));
     }
@@ -247,25 +232,20 @@ QString ProjectManager::saveCurrentProjectAs(const QString & currentProjectPath,
   // update the contents of the project file
   QDomDocument projectDoc;
   QFile projFile(newProjectDir.filePath(newProjectName + ".xml"));
-  if(projectDoc.setContent(&projFile))
-  {
+  if(projectDoc.setContent(&projFile)) {
     projFile.close();
     QDomNodeList allFiles = projectDoc.elementsByTagName("files").at(0).childNodes();
-    for(int i = 0; i < allFiles.count(); i++)
-    {
-      if(!allFiles.at(i).toElement().text().startsWith("resources/cores"))
-      {
+    for(int i = 0; i < allFiles.count(); i++) {
+      if(!allFiles.at(i).toElement().text().startsWith("resources/cores")) {
         QFileInfo fi(allFiles.at(i).toElement().text());
-        if(fi.baseName() == currentProjectName)
-        {
+        if(fi.baseName() == currentProjectName) {
           fi.setFile(fi.path() + "/" + newProjectName + "." + fi.suffix());
           allFiles.at(i).firstChild().setNodeValue(QDir::cleanPath(fi.filePath()));
         }
       }
     }
     // reopen with WriteOnly
-    if(projFile.open(QIODevice::WriteOnly|QFile::Text))
-    {
+    if(projFile.open(QIODevice::WriteOnly|QFile::Text)) {
       projFile.write(projectDoc.toByteArray(2));
       projFile.close();
     }
@@ -282,17 +262,13 @@ bool ProjectManager::setFileBuildType(const QString & projectPath, const QString
   QDir dir(projectPath);
   QFile projectFile(dir.filePath(dir.dirName() + ".xml"));
   QDomDocument doc;
-  if(doc.setContent(&projectFile))
-  {
+  if(doc.setContent(&projectFile)) {
     projectFile.close();
     QDomNodeList files = doc.elementsByTagName("files").at(0).childNodes();
-    for(int i = 0; i < files.count(); i++)
-    {
-      if(files.at(i).toElement().text() == dir.relativeFilePath(filename))
-      {
+    for(int i = 0; i < files.count(); i++) {
+      if(files.at(i).toElement().text() == dir.relativeFilePath(filename)) {
         files.at(i).toElement().setAttribute("type", buildtype);
-        if(projectFile.open(QIODevice::WriteOnly|QFile::Text))
-        {
+        if(projectFile.open(QIODevice::WriteOnly|QFile::Text)) {
           projectFile.write(doc.toByteArray(2));
           retval = true;
         }
@@ -311,12 +287,10 @@ QString ProjectManager::fileBuildType(const QString & projectPath, const QString
   QDir dir(projectPath);
   QFile projectFile(dir.filePath(dir.dirName() + ".xml"));
   QDomDocument doc;
-  if(doc.setContent(&projectFile))
-  {
+  if(doc.setContent(&projectFile)) {
     projectFile.close();
     QDomNodeList files = doc.elementsByTagName("files").at(0).childNodes();
-    for(int i = 0; i < files.count(); i++)
-    {
+    for(int i = 0; i < files.count(); i++) {
       if(files.at(i).toElement().text() == dir.relativeFilePath(filename))
         buildtype = files.at(i).toElement().attribute("type");
     }

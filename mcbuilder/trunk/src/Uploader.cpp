@@ -22,10 +22,6 @@
 #include <QDebug>
 #include "Uploader.h"
 
-#ifdef Q_WS_MAC
-#include <CoreFoundation/CoreFoundation.h>
-#endif
-
 /*
   Uploader handles uploading a binary image to a board.  It reads the board profile for the
   currently selected board to determine which uploader to use.  Then it fires up a QProcess
@@ -58,8 +54,7 @@ bool Uploader::upload(const QString & boardProfileName, QString filename)
   QDomDocument doc;
   QFile file(dir.filePath(boardProfileName));
   currentFile = filename;
-  if(doc.setContent(&file))
-  {
+  if(doc.setContent(&file)) {
     QDomNodeList nodes = doc.elementsByTagName("uploader");
     if(nodes.count())
       uploaderName = nodes.at(0).toElement().text();
@@ -94,8 +89,7 @@ void Uploader::filterOutput( )
   QRegExp re("upload progress: (\\d+)%");
   int pos = 0;
   bool matched = false;
-  while((pos = re.indexIn(output, pos)) != -1)
-  {
+  while((pos = re.indexIn(output, pos)) != -1) {
     int progress = re.cap(1).toInt();
     if(progress != uploaderProgress->value())
       uploaderProgress->setValue(progress);
@@ -113,8 +107,7 @@ void Uploader::filterOutput( )
 void Uploader::filterError( )
 {
   QString err(readAllStandardError());
-  if(err.startsWith("can't find boot agent"))
-  {
+  if(err.startsWith("can't find boot agent")) {
     mainWindow->printOutputError(tr("Error - couldn't find an unprogrammed board to upload to."));
     mainWindow->printOutputError(tr("  Make sure you've erased and unplugged/replugged your board."));
   }
