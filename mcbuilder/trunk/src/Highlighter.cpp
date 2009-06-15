@@ -85,12 +85,10 @@ void Highlighter::highlightBlock(const QString &text)
 {
   // search the block for each of our highlight rules, and if we find a match
   // apply the format for that rule
-  foreach (HighlightingRule rule, highlightingRules)
-  {
+  foreach (HighlightingRule rule, highlightingRules) {
     QRegExp expression(rule.pattern);
     int index = text.indexOf(expression);
-    while (index >= 0)
-    {
+    while (index >= 0) {
       int length = expression.matchedLength();
       setFormat(index, length, rule.format);
       index = text.indexOf(expression, index + length);
@@ -104,12 +102,10 @@ void Highlighter::highlightBlock(const QString &text)
   if (previousBlockState() != IN_COMMENT)
     startIndex = text.indexOf(commentStartExpression);
 
-  while (startIndex >= 0)
-  {
+  while (startIndex >= 0) {
     int endIndex = text.indexOf(commentEndExpression, startIndex);
     int commentLength;
-    if (endIndex == -1)
-    {
+    if (endIndex == -1) {
       setCurrentBlockState(IN_COMMENT);
       commentLength = text.length() - startIndex;
     }
