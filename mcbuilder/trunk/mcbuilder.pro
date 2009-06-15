@@ -84,7 +84,12 @@ unix:HEADERS  += src/qextserialport/posix_qextserialport.h
 unix:SOURCES  += src/qextserialport/posix_qextserialport.cpp
 unix:DEFINES  += _TTY_POSIX_
 macx: LIBS += -framework IOKit # use IOKit on OS X
-unix{ !macx: LIBS += -lusb } # use libusb on other unices
+unix{
+  !macx{
+    CONFIG += link_pkgconfig
+    PKGCONFIG += dbus-1 hal
+  }
+}
 
 win32{
 	HEADERS += src/qextserialport/win_qextserialport.h
