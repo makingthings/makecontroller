@@ -63,22 +63,22 @@ signals:
 
 class MainWindow;
 
-class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
+class ProjectInfo : public QDialog
 {
   Q_OBJECT
   public:
     ProjectInfo(MainWindow *mainWindow);
-    QString version() { return versionEdit->text(); }
-    QString optLevel() { return optLevelBox->currentText(); }
-    bool debug() { return debugInfoCheckbox->isChecked(); }
-    int heapsize() { return heapSizeEdit->text().toInt(); }
-    bool includeOsc() { return oscBox->isChecked(); }
-    bool includeUsb() { return usbBox->isChecked(); }
-    bool includeNetwork() { return networkBox->isChecked(); }
-    int networkMempool() { return networkMempoolEdit->text().toInt(); }
-    int udpSockets() { return udpSocketEdit->text().toInt(); }
-    int tcpSockets() { return tcpSocketEdit->text().toInt(); }
-    int tcpServers() { return tcpServerEdit->text().toInt(); }
+    QString version() { return ui.versionEdit->text(); }
+    QString optLevel() { return ui.optLevelBox->currentText(); }
+    bool debug() { return ui.debugInfoCheckbox->isChecked(); }
+    int heapsize() { return ui.heapSizeEdit->text().toInt(); }
+    bool includeOsc() { return ui.oscBox->isChecked(); }
+    bool includeUsb() { return ui.usbBox->isChecked(); }
+    bool includeNetwork() { return ui.networkBox->isChecked(); }
+    int networkMempool() { return ui.networkMempoolEdit->text().toInt(); }
+    int udpSockets() { return ui.udpSocketEdit->text().toInt(); }
+    int tcpSockets() { return ui.tcpSocketEdit->text().toInt(); }
+    int tcpServers() { return ui.tcpServerEdit->text().toInt(); }
     bool load( const QString & projectPath );
     bool diffProjects( const QString & newProjectPath, bool saveUiToFile = false );
 
@@ -87,18 +87,19 @@ class ProjectInfo : public QDialog, private Ui::ProjectInfoUi
 
   private:
     MainWindow *mainWindow;
+    Ui::ProjectInfoUi ui;
     ProjectManager projectManager;
     QString projectFilePath( const QString & projectPath );
     bool configChanged;
     void setNetworkSectionEnabled(bool state);
     void loadFileBrowser(QDir *projectDir, QDomDocument *projectFile);
     // mostly for testing...
-    void setVersion(QString version) { versionEdit->setText(version); }
-    void setHeapSize(int heap) { heapSizeEdit->setText(QString::number(heap)); }
-    void setMempool(int mempool) { networkMempoolEdit->setText(QString::number(mempool)); }
-    void setUdp(int udp) { udpSocketEdit->setText(QString::number(udp)); }
-    void setTcp(int tcp) { tcpSocketEdit->setText(QString::number(tcp)); }
-    void setTcpListen(int tcplisten) { tcpServerEdit->setText(QString::number(tcplisten)); }
+    void setVersion(QString version) { ui.versionEdit->setText(version); }
+    void setHeapSize(int heap) { ui.heapSizeEdit->setText(QString::number(heap)); }
+    void setMempool(int mempool) { ui.networkMempoolEdit->setText(QString::number(mempool)); }
+    void setUdp(int udp) { ui.udpSocketEdit->setText(QString::number(udp)); }
+    void setTcp(int tcp) { ui.tcpSocketEdit->setText(QString::number(tcp)); }
+    void setTcpListen(int tcplisten) { ui.tcpServerEdit->setText(QString::number(tcplisten)); }
     void setIncludeOsc(bool osc);
     void setIncludeUsb(bool usb);
     void setIncludeNetwork(bool network);
