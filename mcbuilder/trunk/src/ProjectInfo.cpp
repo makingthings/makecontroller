@@ -45,15 +45,15 @@
 ProjectInfo::ProjectInfo(MainWindow *mainWindow) : QDialog( 0 )
 {
   this->mainWindow = mainWindow;
-  setupUi(this);
-  connect(buttonBox, SIGNAL(accepted()), this, SLOT(applyChanges()));
-  connect(buttonBox, SIGNAL(rejected()), this, SLOT(accept()));
-  connect(defaultsButton, SIGNAL(clicked()), this, SLOT(restoreDefaults()));
-  connect(networkBox, SIGNAL(stateChanged(int)), this, SLOT(onNetworkChanged(int)));
-  connect(fileBrowser, SIGNAL(removeFileRequest(QString)), this, SLOT(onRemoveFileRequest(QString)));
-  connect(fileBrowser, SIGNAL(changeBuildType(QString, QString)), this, SLOT(onChangeBuildType(QString, QString)));
+  ui.setupUi(this);
+  connect(ui.buttonBox, SIGNAL(accepted()), this, SLOT(applyChanges()));
+  connect(ui.buttonBox, SIGNAL(rejected()), this, SLOT(accept()));
+  connect(ui.defaultsButton, SIGNAL(clicked()), this, SLOT(restoreDefaults()));
+  connect(ui.networkBox, SIGNAL(stateChanged(int)), this, SLOT(onNetworkChanged(int)));
+  connect(ui.fileBrowser, SIGNAL(removeFileRequest(QString)), this, SLOT(onRemoveFileRequest(QString)));
+  connect(ui.fileBrowser, SIGNAL(changeBuildType(QString, QString)), this, SLOT(onChangeBuildType(QString, QString)));
 
-  QHeaderView *header = fileBrowser->header();
+  QHeaderView *header = ui.fileBrowser->header();
   header->setResizeMode(FILENAME_COLUMN, QHeaderView::Stretch);
   header->setResizeMode(BUILDTYPE_COLUMN, QHeaderView::ResizeToContents);
   header->setStretchLastSection(false);
@@ -75,27 +75,27 @@ bool ProjectInfo::load( const QString & projectPath )
   if(file.open(QIODevice::ReadOnly|QFile::Text)) {
     QDomDocument projectFile;
     if(projectFile.setContent(&file)) {
-      versionEdit->setText(projectFile.elementsByTagName("version").at(0).toElement().text());
-      heapSizeEdit->setText(projectFile.elementsByTagName("heapsize").at(0).toElement().text());
+      ui.versionEdit->setText(projectFile.elementsByTagName("version").at(0).toElement().text());
+      ui.heapSizeEdit->setText(projectFile.elementsByTagName("heapsize").at(0).toElement().text());
       QString optlevel = projectFile.elementsByTagName("optlevel").at(0).toElement().text();
-      optLevelBox->setCurrentIndex(optLevelBox->findText(optlevel));
+      ui.optLevelBox->setCurrentIndex(ui.optLevelBox->findText(optlevel));
       bool state = (projectFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true");
-      debugInfoCheckbox->setChecked(state);
+      ui.debugInfoCheckbox->setChecked(state);
 
       state = (projectFile.elementsByTagName("include_osc").at(0).toElement().text() == "true");
-      oscBox->setChecked(state);
+      ui.oscBox->setChecked(state);
 
       state = (projectFile.elementsByTagName("include_usb").at(0).toElement().text() == "true");
-      usbBox->setChecked(state);
+      ui.usbBox->setChecked(state);
 
       state = (projectFile.elementsByTagName("include_network").at(0).toElement().text() == "true");
-      networkBox->setChecked(state);
+      ui.networkBox->setChecked(state);
       setNetworkSectionEnabled(state);
 
-      networkMempoolEdit->setText(projectFile.elementsByTagName("network_mempool").at(0).toElement().text());
-      udpSocketEdit->setText(projectFile.elementsByTagName("network_udp_sockets").at(0).toElement().text());
-      tcpSocketEdit->setText(projectFile.elementsByTagName("network_tcp_sockets").at(0).toElement().text());
-      tcpServerEdit->setText(projectFile.elementsByTagName("network_tcp_servers").at(0).toElement().text());
+      ui.networkMempoolEdit->setText(projectFile.elementsByTagName("network_mempool").at(0).toElement().text());
+      ui.udpSocketEdit->setText(projectFile.elementsByTagName("network_udp_sockets").at(0).toElement().text());
+      ui.tcpSocketEdit->setText(projectFile.elementsByTagName("network_tcp_sockets").at(0).toElement().text());
+      ui.tcpServerEdit->setText(projectFile.elementsByTagName("network_tcp_servers").at(0).toElement().text());
 
       loadFileBrowser( &projectDir, &projectFile);
     }
@@ -113,11 +113,11 @@ bool ProjectInfo::load( const QString & projectPath )
 void ProjectInfo::loadFileBrowser(QDir *projectDir, QDomDocument *projectFile)
 {
   // setup the file browser
-  fileBrowser->clear(); // get rid of anything previously in there
+  ui.fileBrowser->clear(); // get rid of anything previously in there
   QDomNodeList allFiles = projectFile->elementsByTagName("files").at(0).childNodes();
   QTreeWidgetItem *top = new QTreeWidgetItem(QStringList() << projectDir->dirName());
   top->setIcon(0, QApplication::style()->standardIcon(QStyle::SP_DirIcon));
-  fileBrowser->addTopLevelItem(top);
+  ui.fileBrowser->addTopLevelItem(top);
 
   // only deals with files in the top level directory at the moment
   QFileIconProvider ip;
@@ -153,7 +153,7 @@ void ProjectInfo::applyChanges( )
 */
 bool ProjectInfo::diffProjects( const QString & newProjectPath, bool saveUiToFile )
 {
-  if(versionEdit->text().isEmpty()) // check the version box as a sample...if this is empty, we don't have anything loaded so don't bother checking
+  if(ui.versionEdit->text().isEmpty()) // check the version box as a sample...if this is empty, we don't have anything loaded so don't bother checking
     return false;
   bool changed = false;
 
@@ -162,66 +162,66 @@ bool ProjectInfo::diffProjects( const QString & newProjectPath, bool saveUiToFil
     QDomDocument projectFile;
     if(projectFile.setContent(&file)) {
       // to get at the actual text of an element, you need to grab its child, which will be a QDomText node
-      if(versionEdit->text() != projectFile.elementsByTagName("version").at(0).toElement().text()) {
-        projectFile.elementsByTagName("version").at(0).firstChild().setNodeValue(versionEdit->text());
+      if(ui.versionEdit->text() != projectFile.elementsByTagName("version").at(0).toElement().text()) {
+        projectFile.elementsByTagName("version").at(0).firstChild().setNodeValue(ui.versionEdit->text());
         changed = true;
       }
 
-      if(heapSizeEdit->text() != projectFile.elementsByTagName("heapsize").at(0).toElement().text()) {
-        projectFile.elementsByTagName("heapsize").at(0).firstChild().setNodeValue(heapSizeEdit->text());
+      if(ui.heapSizeEdit->text() != projectFile.elementsByTagName("heapsize").at(0).toElement().text()) {
+        projectFile.elementsByTagName("heapsize").at(0).firstChild().setNodeValue(ui.heapSizeEdit->text());
         changed = true;
       }
 
-      if(optLevelBox->currentText() != projectFile.elementsByTagName("optlevel").at(0).toElement().text()) {
-        projectFile.elementsByTagName("optlevel").at(0).firstChild().setNodeValue(optLevelBox->currentText());
+      if(ui.optLevelBox->currentText() != projectFile.elementsByTagName("optlevel").at(0).toElement().text()) {
+        projectFile.elementsByTagName("optlevel").at(0).firstChild().setNodeValue(ui.optLevelBox->currentText());
         changed = true;
       }
 
       bool state = (projectFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true");
-      if(debugInfoCheckbox->checkState() != state) {
-        QString debugstr = debugInfoCheckbox->isChecked() ? "true" : "false";
+      if(ui.debugInfoCheckbox->checkState() != state) {
+        QString debugstr = ui.debugInfoCheckbox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("debuginfo").at(0).firstChild().setNodeValue(debugstr);
         changed = true;
       }
 
       state = (projectFile.elementsByTagName("include_osc").at(0).toElement().text() == "true");
-      if(oscBox->isChecked() != state) {
-        QString str = oscBox->isChecked() ? "true" : "false";
+      if(ui.oscBox->isChecked() != state) {
+        QString str = ui.oscBox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("include_osc").at(0).firstChild().setNodeValue(str);
         changed = true;
       }
 
       state = (projectFile.elementsByTagName("include_usb").at(0).toElement().text() == "true");
-      if(usbBox->isChecked() != state) {
-        QString str = usbBox->isChecked() ? "true" : "false";
+      if(ui.usbBox->isChecked() != state) {
+        QString str = ui.usbBox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("include_usb").at(0).firstChild().setNodeValue(str);
         changed = true;
       }
 
       state = (projectFile.elementsByTagName("include_network").at(0).toElement().text() == "true");
-      if(networkBox->isChecked() != state) {
-        QString str = networkBox->isChecked() ? "true" : "false";
+      if(ui.networkBox->isChecked() != state) {
+        QString str = ui.networkBox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("include_network").at(0).firstChild().setNodeValue(str);
         changed = true;
       }
 
-      if(networkMempoolEdit->text() != projectFile.elementsByTagName("network_mempool").at(0).toElement().text()) {
-        projectFile.elementsByTagName("network_mempool").at(0).firstChild().setNodeValue(networkMempoolEdit->text());
+      if(ui.networkMempoolEdit->text() != projectFile.elementsByTagName("network_mempool").at(0).toElement().text()) {
+        projectFile.elementsByTagName("network_mempool").at(0).firstChild().setNodeValue(ui.networkMempoolEdit->text());
         changed = true;
       }
 
-      if(udpSocketEdit->text() != projectFile.elementsByTagName("network_udp_sockets").at(0).toElement().text()) {
-        projectFile.elementsByTagName("network_udp_sockets").at(0).firstChild().setNodeValue(udpSocketEdit->text());
+      if(ui.udpSocketEdit->text() != projectFile.elementsByTagName("network_udp_sockets").at(0).toElement().text()) {
+        projectFile.elementsByTagName("network_udp_sockets").at(0).firstChild().setNodeValue(ui.udpSocketEdit->text());
         changed = true;
       }
 
-      if(tcpSocketEdit->text() != projectFile.elementsByTagName("network_tcp_sockets").at(0).toElement().text()) {
-        projectFile.elementsByTagName("network_tcp_sockets").at(0).firstChild().setNodeValue(tcpSocketEdit->text());
+      if(ui.tcpSocketEdit->text() != projectFile.elementsByTagName("network_tcp_sockets").at(0).toElement().text()) {
+        projectFile.elementsByTagName("network_tcp_sockets").at(0).firstChild().setNodeValue(ui.tcpSocketEdit->text());
         changed = true;
       }
 
-      if(tcpServerEdit->text() != projectFile.elementsByTagName("network_tcp_servers").at(0).toElement().text()) {
-        projectFile.elementsByTagName("network_tcp_servers").at(0).firstChild().setNodeValue(tcpServerEdit->text());
+      if(ui.tcpServerEdit->text() != projectFile.elementsByTagName("network_tcp_servers").at(0).toElement().text()) {
+        projectFile.elementsByTagName("network_tcp_servers").at(0).firstChild().setNodeValue(ui.tcpServerEdit->text());
         changed = true;
       }
 
@@ -247,17 +247,17 @@ QString ProjectInfo::projectFilePath( const QString & projectPath )
 
 void ProjectInfo::restoreDefaults( )
 {
-  versionEdit->setText(DEFAULT_VERSION);
-  heapSizeEdit->setText(QString::number(DEFAULT_HEAPSIZE));
-  optLevelBox->setCurrentIndex(optLevelBox->findText(DEFAULT_OPTLEVEL));
-  debugInfoCheckbox->setChecked(DEFAULT_INCLUDE_DEBUG);
-  oscBox->setChecked(DEFAULT_INCLUDE_OSC);
-  usbBox->setChecked(DEFAULT_INCLUDE_USB);
-  networkBox->setChecked(DEFAULT_INCLUDE_NETWORK);
-  networkMempoolEdit->setText(QString::number(DEFAULT_NETWORK_MEMPOOL));
-  udpSocketEdit->setText(QString::number(DEFAULT_UDP_SOCKETS));
-  tcpSocketEdit->setText(QString::number(DEFAULT_TCP_SOCKETS));
-  tcpServerEdit->setText(QString::number(DEFAULT_TCP_SERVERS));
+  ui.versionEdit->setText(DEFAULT_VERSION);
+  ui.heapSizeEdit->setText(QString::number(DEFAULT_HEAPSIZE));
+  ui.optLevelBox->setCurrentIndex(ui.optLevelBox->findText(DEFAULT_OPTLEVEL));
+  ui.debugInfoCheckbox->setChecked(DEFAULT_INCLUDE_DEBUG);
+  ui.oscBox->setChecked(DEFAULT_INCLUDE_OSC);
+  ui.usbBox->setChecked(DEFAULT_INCLUDE_USB);
+  ui.networkBox->setChecked(DEFAULT_INCLUDE_NETWORK);
+  ui.networkMempoolEdit->setText(QString::number(DEFAULT_NETWORK_MEMPOOL));
+  ui.udpSocketEdit->setText(QString::number(DEFAULT_UDP_SOCKETS));
+  ui.tcpSocketEdit->setText(QString::number(DEFAULT_TCP_SOCKETS));
+  ui.tcpServerEdit->setText(QString::number(DEFAULT_TCP_SERVERS));
 }
 
 void ProjectInfo::onNetworkChanged(int state)
@@ -267,14 +267,14 @@ void ProjectInfo::onNetworkChanged(int state)
 
 void ProjectInfo::setNetworkSectionEnabled(bool state)
 {
-  networkMempoolEdit->setEnabled(state);
-  networkMempoolLabel->setEnabled(state);
-  udpSocketEdit->setEnabled(state);
-  udpSocketLabel->setEnabled(state);
-  tcpSocketEdit->setEnabled(state);
-  tcpSocketLabel->setEnabled(state);
-  tcpServerEdit->setEnabled(state);
-  tcpServerLabel->setEnabled(state);
+  ui.networkMempoolEdit->setEnabled(state);
+  ui.networkMempoolLabel->setEnabled(state);
+  ui.udpSocketEdit->setEnabled(state);
+  ui.udpSocketLabel->setEnabled(state);
+  ui.tcpSocketEdit->setEnabled(state);
+  ui.tcpSocketLabel->setEnabled(state);
+  ui.tcpServerEdit->setEnabled(state);
+  ui.tcpServerLabel->setEnabled(state);
 }
 
 /*
@@ -352,17 +352,17 @@ void ProjectInfo::onChangeBuildType(const QString & filename, const QString & ne
 
 void ProjectInfo::setIncludeOsc(bool osc)
 {
-  oscBox->setChecked(osc);
+  ui.oscBox->setChecked(osc);
 }
 
 void ProjectInfo::setIncludeUsb(bool usb)
 {
-  usbBox->setChecked(usb);
+  ui.usbBox->setChecked(usb);
 }
 
 void ProjectInfo::setIncludeNetwork(bool network)
 {
-  networkBox->setChecked(network);
+  ui.networkBox->setChecked(network);
 }
 
 
