@@ -61,7 +61,7 @@ private:
 
 #include "ui_mainwindow.h"
 
-class MainWindow : public QMainWindow, private Ui::MainWindow
+class MainWindow : public QMainWindow
 {
   Q_OBJECT
 public:
@@ -92,6 +92,7 @@ private:
   void writeSettings();
   void readSettings();
   void closeEvent( QCloseEvent *qcloseevent );
+  Ui::MainWindow ui;
   Highlighter *highlighter;
   Preferences *prefs;
   ProjectInfo *projInfo;
