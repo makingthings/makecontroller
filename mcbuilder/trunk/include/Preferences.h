@@ -25,7 +25,7 @@
 
 class MainWindow;
 
-class Preferences : public QDialog, private Ui::Preferences
+class Preferences : public QDialog
 {
   Q_OBJECT
   public:
@@ -38,6 +38,7 @@ class Preferences : public QDialog, private Ui::Preferences
 
   private:
     MainWindow *mainWindow;
+    Ui::Preferences ui;
     QFont currentFont, tempFont;
 
   public slots:
