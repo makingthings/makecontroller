@@ -24,8 +24,8 @@
 */
 BuildLog::BuildLog( ) : QDialog( )
 {
-  setupUi(this);
-  connect(clearButton, SIGNAL(clicked()), logConsole, SLOT(clear()));
+  ui.setupUi(this);
+  connect(ui.clearButton, SIGNAL(clicked()), ui.logConsole, SLOT(clear()));
   QSettings settings;
   QSize dialogSize = settings.value("build_log_size").toSize();
   if(dialogSize.isValid())
@@ -42,13 +42,13 @@ void BuildLog::append(const QString & msg)
   else
     fmt.setForeground(QColor(75, 75, 75)); // gray
 
-  logConsole->textCursor().setBlockCharFormat(fmt);
+  ui.logConsole->textCursor().setBlockCharFormat(fmt);
   // for some reason, block coloring only seems to happen with new lines...shrug
-  logConsole->appendPlainText(msg + (!msg.endsWith("\n") ? "\n" : ""));
+  ui.logConsole->appendPlainText(msg + (!msg.endsWith("\n") ? "\n" : ""));
 
   // scroll to the bottom
-  logConsole->moveCursor(QTextCursor::End);
-  logConsole->ensureCursorVisible();
+  ui.logConsole->moveCursor(QTextCursor::End);
+  ui.logConsole->ensureCursorVisible();
 }
 
 /*
@@ -56,7 +56,7 @@ void BuildLog::append(const QString & msg)
 */
 void BuildLog::clear( )
 {
-  logConsole->clear();
+  ui.logConsole->clear();
 }
 
 
