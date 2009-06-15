@@ -26,6 +26,7 @@
 #include <QUrl>
 #include <QMessageBox>
 #include <QCloseEvent>
+#include <QDebug>
 #include "MainWindow.h"
 
 #define RECENT_FILES 5
@@ -55,7 +56,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   prefs = new Preferences(this);
   projInfo = new ProjectInfo(this);
   uploader = new Uploader(this);
-  builder = new Builder(this, projInfo, buildLog);
+  builder = new Builder(this, projInfo, buildLog, prefs);
   usbConsole = new UsbConsole();
   findReplace = new FindReplace(this);
   about = new About();
@@ -816,22 +817,26 @@ void MainWindow::loadBoardProfiles( )
 
   foreach(QString filename, boardProfiles) {
     QFile file(dir.filePath(filename));
-    if(file.open(QIODevice::ReadOnly)) {
-      if(doc.setContent(&file)) {
-        QString boardName = doc.elementsByTagName("name").at(0).toElement().text();
+    if(doc.setContent(&file)) {
+      QDomNodeList boardElements = doc.elementsByTagName("board");
+      int len = boardElements.size();
+      QString preferredBoard = Preferences::boardType();
+      for( int i = 0; i < len; i++ ) {
+        QString boardName = boardElements.at(i).firstChildElement("name").text();
         if(!actionNames.contains(boardName)) {
-          QAction *boardAction = new QAction(boardName, this);
+          QAction *boardAction = new QAction(boardName, boardTypeGroup);
           boardAction->setCheckable(true);
-          if(boardName == Preferences::boardType( ))
+          if(boardName == preferredBoard)
             boardAction->setChecked(true);
           boardAction->setData(filename);         // hang onto the filename so we don't have to look it up again later
           ui.menuBoard_Type->addAction(boardAction); // add the action to the actual menu
-          boardTypeGroup->addAction(boardAction); // and to the group that maintains an exclusive selection within the menu
         }
       }
-      file.close();
     }
   }
+  boardActions = ui.menuBoard_Type->actions(); // refresh this, to get added entries
+  if( ui.menuBoard_Type->activeAction() == 0 && boardActions.count() )
+    boardActions.at(0)->setChecked(true);
 }
 
 /*

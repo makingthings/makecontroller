@@ -29,7 +29,6 @@
 #define DEFAULT_FONT_SIZE 10
 #endif
 #define DEFAULT_TAB_WIDTH 2
-#define DEFAULT_BOARDTYPE "Make Controller"
 
 /*
   The dialog that pops up when "preferences" is clicked in the menu.
@@ -54,6 +53,21 @@ Preferences::Preferences(MainWindow *mainWindow) : QDialog( 0 )
   mainWindow->setEditorFont(editorFont, editorFontSize);
   ui.fontBox->setText(QString("%1, %2pt").arg(editorFont).arg(editorFontSize));
   mainWindow->setTabWidth( settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt() );
+
+  ui.mcVersionComboBox->addItem("Version 1.x");
+  ui.mcVersionComboBox->addItem("Version 2.0");
+  QString version = settings.value("mcVersion").toString();
+  int idx = ui.mcVersionComboBox->findText( version );
+  if( idx > 0 )
+    ui.mcVersionComboBox->setCurrentIndex(idx);
+
+  ui.appVersionComboBox->addItem("Version 1.0");
+  ui.appVersionComboBox->addItem("Version 2.0");
+  version = settings.value("appVersion").toString();
+  idx = ui.appVersionComboBox->findText( version );
+  if( idx > 0 )
+    ui.appVersionComboBox->setCurrentIndex(idx);
+
   resize(ui.gridLayout->sizeHint());
 }
 
@@ -89,7 +103,7 @@ QString Preferences::workspace( )
 QString Preferences::boardType( )
 {
   QSettings settings;
-  return settings.value("boardType", DEFAULT_BOARDTYPE).toString();
+  return settings.value("boardType").toString();
 }
 
 /*
@@ -180,6 +194,9 @@ void Preferences::applyChanges( )
   settings.setValue("toolsPath", ui.toolsPathEdit->text());
   settings.setValue("sam7Path", ui.sam7PathEdit->text());
   settings.setValue("checkForUpdates", (ui.updaterBox->isChecked()));
+
+  settings.setValue("mcVersion", ui.mcVersionComboBox->itemText(ui.mcVersionComboBox->currentIndex()));
+  settings.setValue("appVersion", ui.appVersionComboBox->itemText(ui.appVersionComboBox->currentIndex()));
 
   int oldTabWidth = settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt();
   if( oldTabWidth != ui.tabWidth->text().toInt() ) {

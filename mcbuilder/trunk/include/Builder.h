@@ -24,6 +24,7 @@
 #include "MainWindow.h"
 #include "ProjectInfo.h"
 #include "BuildLog.h"
+#include "Preferences.h"
 
 #ifdef MCBUILDER_TEST_SUITE
 #include "TestBuilder.h"
@@ -31,6 +32,7 @@
 
 class MainWindow;
 class ProjectInfo;
+class Preferences;
 
 class Builder : public QProcess
 {
@@ -41,7 +43,7 @@ class Builder : public QProcess
   #endif
 
 public:
-  Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog );
+  Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog, Preferences* prefs );
   void build(const QString & projectName);
   void clean(const QString & projectName);
   void stop();
@@ -56,6 +58,7 @@ private:
   MainWindow *mainWindow;
   ProjectInfo *projInfo;
   BuildLog *buildLog;
+  Preferences* prefs;
   QString errMsg;
   QString currentProjectPath;
   enum BuildStep { BUILD, CLEAN };
@@ -75,6 +78,8 @@ private:
   void loadDependencies(const QString & libsDir, const QString & project);
   void getLibrarySources(const QString & libdir, QStringList *thmb, QStringList *arm);
   QString filteredPath(const QString & path);
+  int getCtrlBoardVersionNumber();
+  int getAppBoardVersionNumber();
 
 private slots:
   void nextStep( int exitCode, QProcess::ExitStatus exitStatus );
