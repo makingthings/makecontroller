@@ -37,21 +37,21 @@
 */
 MainWindow::MainWindow( ) : QMainWindow( 0 )
 {
-  setupUi(this);
+  ui.setupUi(this);
 
   // add the file dropdown to the toolbar...can't do this in Designer for some reason
-  QWidget *stretch = new QWidget(toolBar);
+  QWidget *stretch = new QWidget(ui.toolBar);
   stretch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  toolBar->addWidget(stretch);
-  currentFileDropDown = new QComboBox(toolBar);
+  ui.toolBar->addWidget(stretch);
+  currentFileDropDown = new QComboBox(ui.toolBar);
   currentFileDropDown->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-  toolBar->addWidget(currentFileDropDown);
-  QWidget *pad = new QWidget(toolBar); // this doesn't pad as much as it should...to be fixed...
-  toolBar->addWidget(pad);
+  ui.toolBar->addWidget(currentFileDropDown);
+  QWidget *pad = new QWidget(ui.toolBar); // this doesn't pad as much as it should...to be fixed...
+  ui.toolBar->addWidget(pad);
 
   //initialization
   buildLog = new BuildLog();
-  highlighter = new Highlighter( editor->document() );
+  highlighter = new Highlighter( ui.editor->document() );
   prefs = new Preferences(this);
   projInfo = new ProjectInfo(this);
   uploader = new Uploader(this);
@@ -62,7 +62,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   updater = new AppUpdater();
 
   // load
-  boardTypeGroup = new QActionGroup(menuBoard_Type);
+  boardTypeGroup = new QActionGroup(ui.menuBoard_Type);
   loadBoardProfiles( );
   loadExamples( );
   loadLibraries( );
@@ -70,44 +70,44 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   readSettings( );
 
   // misc. signals
-  connect(editor, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorMoved()));
-  connect(actionPreferences, SIGNAL(triggered()), prefs, SLOT(loadAndShow()));
-  connect(actionUsb_Monitor, SIGNAL(triggered()), usbConsole, SLOT(loadAndShow()));
+  connect(ui.editor, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorMoved()));
+  connect(ui.actionPreferences, SIGNAL(triggered()), prefs, SLOT(loadAndShow()));
+  connect(ui.actionUsb_Monitor, SIGNAL(triggered()), usbConsole, SLOT(loadAndShow()));
   connect(currentFileDropDown, SIGNAL(currentIndexChanged(int)), this, SLOT(onFileSelection(int)));
-  connect(editor->document(), SIGNAL(contentsChanged()),this, SLOT(onDocumentModified()));
-  connect(outputConsole, SIGNAL(itemDoubleClicked(QListWidgetItem*)),this, SLOT(onConsoleDoubleClick(QListWidgetItem*)));
+  connect(ui.editor->document(), SIGNAL(contentsChanged()),this, SLOT(onDocumentModified()));
+  connect(ui.outputConsole, SIGNAL(itemDoubleClicked(QListWidgetItem*)),this, SLOT(onConsoleDoubleClick(QListWidgetItem*)));
 
   // menu actions
-  connect(actionNew,                SIGNAL(triggered()), this,		SLOT(onNewFile()));
-  connect(actionAdd_Existing_File,  SIGNAL(triggered()), this,		SLOT(onAddExistingFile()));
-  connect(actionNew_Project,        SIGNAL(triggered()), this,		SLOT(onNewProject()));
-  connect(actionOpen,               SIGNAL(triggered()), this,		SLOT(onOpen()));
-  connect(actionSave,               SIGNAL(triggered()), this,		SLOT(onSave()));
-  connect(actionSave_As,            SIGNAL(triggered()), this,		SLOT(onSaveAs()));
-  connect(actionBuild,              SIGNAL(triggered()), this,		SLOT(onBuild()));
-  connect(actionStop,               SIGNAL(triggered()), this,		SLOT(onStop()));
-  connect(actionClean,              SIGNAL(triggered()), this,		SLOT(onClean()));
-  connect(actionProperties,         SIGNAL(triggered()), this,		SLOT(onProperties()));
-  connect(actionUpload,             SIGNAL(triggered()), this,		SLOT(onUpload()));
-  connect(actionUndo,               SIGNAL(triggered()), editor,	SLOT(undo()));
-  connect(actionRedo,               SIGNAL(triggered()), editor,	SLOT(redo()));
-  connect(actionCut,                SIGNAL(triggered()), editor,	SLOT(cut()));
-  connect(actionCopy,               SIGNAL(triggered()), editor,	SLOT(copy()));
-  connect(actionPaste,              SIGNAL(triggered()), editor,	SLOT(paste()));
-  connect(actionSelect_All,         SIGNAL(triggered()), editor,	SLOT(selectAll()));
-  connect(actionFind,               SIGNAL(triggered()), findReplace,	SLOT(show()));
-  connect(actionAbout,              SIGNAL(triggered()), about,   SLOT(show()));
-  connect(actionUpdate,             SIGNAL(triggered()), this,   SLOT(onUpdate()));
-  connect(actionBuildLog,           SIGNAL(triggered()), buildLog, SLOT(show()));
-  connect(actionVisitForum,         SIGNAL(triggered()), this,   SLOT(onVisitForum()));
-  connect(actionClear_Output_Console, SIGNAL(triggered()), outputConsole,	SLOT(clear()));
-  connect(actionUpload_File_to_Board, SIGNAL(triggered()), this,	SLOT(onUploadFile()));
-  connect(actionMake_Controller_Reference, SIGNAL(triggered()), this, SLOT(openMCReference()));
-  connect(actionMcbuilder_User_Manual, SIGNAL(triggered()), this, SLOT(openManual()));
-  connect(menuExamples,             SIGNAL(triggered(QAction*)), this, SLOT(onExample(QAction*)));
-  connect(menuLibraries,            SIGNAL(triggered(QAction*)), this, SLOT(onLibrary(QAction*)));
-  connect(actionSave_Project_As,    SIGNAL(triggered()), this, SLOT(onSaveProjectAs()));
-  connect(menuRecent_Projects,      SIGNAL(triggered(QAction*)), this, SLOT(openRecentProject(QAction*)));
+  connect(ui.actionNew,                SIGNAL(triggered()), this,		SLOT(onNewFile()));
+  connect(ui.actionAdd_Existing_File,  SIGNAL(triggered()), this,		SLOT(onAddExistingFile()));
+  connect(ui.actionNew_Project,        SIGNAL(triggered()), this,		SLOT(onNewProject()));
+  connect(ui.actionOpen,               SIGNAL(triggered()), this,		SLOT(onOpen()));
+  connect(ui.actionSave,               SIGNAL(triggered()), this,		SLOT(onSave()));
+  connect(ui.actionSave_As,            SIGNAL(triggered()), this,		SLOT(onSaveAs()));
+  connect(ui.actionBuild,              SIGNAL(triggered()), this,		SLOT(onBuild()));
+  connect(ui.actionStop,               SIGNAL(triggered()), this,		SLOT(onStop()));
+  connect(ui.actionClean,              SIGNAL(triggered()), this,		SLOT(onClean()));
+  connect(ui.actionProperties,         SIGNAL(triggered()), this,		SLOT(onProperties()));
+  connect(ui.actionUpload,             SIGNAL(triggered()), this,		SLOT(onUpload()));
+  connect(ui.actionUndo,               SIGNAL(triggered()), ui.editor,	SLOT(undo()));
+  connect(ui.actionRedo,               SIGNAL(triggered()), ui.editor,	SLOT(redo()));
+  connect(ui.actionCut,                SIGNAL(triggered()), ui.editor,	SLOT(cut()));
+  connect(ui.actionCopy,               SIGNAL(triggered()), ui.editor,	SLOT(copy()));
+  connect(ui.actionPaste,              SIGNAL(triggered()), ui.editor,	SLOT(paste()));
+  connect(ui.actionSelect_All,         SIGNAL(triggered()), ui.editor,	SLOT(selectAll()));
+  connect(ui.actionFind,               SIGNAL(triggered()), findReplace,	SLOT(show()));
+  connect(ui.actionAbout,              SIGNAL(triggered()), about,   SLOT(show()));
+  connect(ui.actionUpdate,             SIGNAL(triggered()), this,   SLOT(onUpdate()));
+  connect(ui.actionBuildLog,           SIGNAL(triggered()), buildLog, SLOT(show()));
+  connect(ui.actionVisitForum,         SIGNAL(triggered()), this,   SLOT(onVisitForum()));
+  connect(ui.actionClear_Output_Console, SIGNAL(triggered()), ui.outputConsole,	SLOT(clear()));
+  connect(ui.actionUpload_File_to_Board, SIGNAL(triggered()), this,	SLOT(onUploadFile()));
+  connect(ui.actionMake_Controller_Reference, SIGNAL(triggered()), this, SLOT(openMCReference()));
+  connect(ui.actionMcbuilder_User_Manual, SIGNAL(triggered()), this, SLOT(openManual()));
+  connect(ui.menuExamples,             SIGNAL(triggered(QAction*)), this, SLOT(onExample(QAction*)));
+  connect(ui.menuLibraries,            SIGNAL(triggered(QAction*)), this, SLOT(onLibrary(QAction*)));
+  connect(ui.actionSave_Project_As,    SIGNAL(triggered()), this, SLOT(onSaveProjectAs()));
+  connect(ui.menuRecent_Projects,      SIGNAL(triggered(QAction*)), this, SLOT(openRecentProject(QAction*)));
 }
 
 /*
@@ -127,7 +127,7 @@ void MainWindow::readSettings()
   if( !splitterSettings.isEmpty( ) ) {
     for( int i = 0; i < splitterSettings.count( ); i++ )
       splitterSizes.append( splitterSettings.at(i).toInt( ) );
-    splitter->setSizes( splitterSizes );
+    ui.splitter->setSizes( splitterSizes );
   }
 
   if(settings.value("checkForUpdates", true).toBool())
@@ -151,7 +151,7 @@ void MainWindow::writeSettings()
   settings.beginGroup("MainWindow");
   settings.setValue("size", size() );
   QList<QVariant> splitterSettings;
-  QList<int> splitterSizes = splitter->sizes();
+  QList<int> splitterSizes = ui.splitter->sizes();
   for( int i = 0; i < splitterSizes.count( ); i++ )
     splitterSettings.append( splitterSizes.at(i) );
   settings.setValue("splitterSizes", splitterSettings );
@@ -205,9 +205,9 @@ void Editor::keyPressEvent(QKeyEvent* event)
 */
 void MainWindow::onCursorMoved( )
 {
-  QTextCursor c = editor->textCursor();
+  QTextCursor c = ui.editor->textCursor();
   if(c.hasSelection()) // don't highlight the line if text is selected
-    return editor->setExtraSelections(QList<QTextEdit::ExtraSelection>());
+    return ui.editor->setExtraSelections(QList<QTextEdit::ExtraSelection>());
   QTextEdit::ExtraSelection highlight;
   highlight.cursor = c;
   highlight.format.setProperty(QTextFormat::FullWidthSelection, true);
@@ -215,7 +215,7 @@ void MainWindow::onCursorMoved( )
 
   QList<QTextEdit::ExtraSelection> extras;
   extras << highlight;
-  editor->setExtraSelections( extras );
+  ui.editor->setExtraSelections( extras );
 
   statusBar()->showMessage( tr("Line: %1  Column: %2").arg(c.blockNumber()+1).arg(c.columnNumber()));
 }
@@ -226,7 +226,7 @@ void MainWindow::onCursorMoved( )
 */
 void MainWindow::onDocumentModified( )
 {
-  setWindowModified(editor->document()->isModified());
+  setWindowModified(ui.editor->document()->isModified());
 }
 
 /*
@@ -235,13 +235,13 @@ void MainWindow::onDocumentModified( )
 bool MainWindow::findText(const QString & text, QTextDocument::FindFlags flags, bool forward)
 {
   bool success = false;
-  if(!editor->find(text, flags)) { // if we didn't find it, try wrapping around
+  if(!ui.editor->find(text, flags)) { // if we didn't find it, try wrapping around
     if(forward)
-      editor->moveCursor(QTextCursor::Start);
+      ui.editor->moveCursor(QTextCursor::Start);
     else
-      editor->moveCursor(QTextCursor::End);
+      ui.editor->moveCursor(QTextCursor::End);
 
-    if(editor->find(text, flags)) // now try again
+    if(ui.editor->find(text, flags)) // now try again
       success = true;
   }
   else
@@ -254,17 +254,16 @@ bool MainWindow::findText(const QString & text, QTextDocument::FindFlags flags, 
 */
 void MainWindow::replaceAll(const QString & find, const QString & replace, QTextDocument::FindFlags flags)
 {
-  editor->textCursor().beginEditBlock(); // make sure all replaces are performed as a single edit step, for undos etc.
+  ui.editor->textCursor().beginEditBlock(); // make sure all replaces are performed as a single edit step, for undos etc.
   bool keepgoing = true;
-  editor->moveCursor(QTextCursor::Start);
-  do
-  {
-    if(editor->find(find, flags))
-      editor->textCursor().insertText(replace);
+  ui.editor->moveCursor(QTextCursor::Start);
+  do {
+    if(ui.editor->find(find, flags))
+      ui.editor->textCursor().insertText(replace);
     else
       keepgoing = false;
   } while(keepgoing);
-  editor->textCursor().endEditBlock();
+  ui.editor->textCursor().endEditBlock();
 }
 
 /*
@@ -273,19 +272,19 @@ void MainWindow::replaceAll(const QString & find, const QString & replace, QText
 */
 void MainWindow::replace(const QString & rep)
 {
-  if(!editor->textCursor().selectedText().isEmpty())
-    editor->textCursor().insertText(rep);
+  if(!ui.editor->textCursor().selectedText().isEmpty())
+    ui.editor->textCursor().insertText(rep);
 }
 
 void MainWindow::setEditorFont(const QString & family, int pointSize)
 {
-  editor->setFont(QFont(family, pointSize));
+  ui.editor->setFont(QFont(family, pointSize));
 }
 
 void MainWindow::setTabWidth( int width )
 {
-  QFontMetrics fm(editor->font());
-  editor->setTabStopWidth( fm.width(" ") * width );
+  QFontMetrics fm(ui.editor->font());
+  ui.editor->setTabStopWidth( fm.width(" ") * width );
 }
 
 /*
@@ -310,9 +309,9 @@ void MainWindow::editorLoadFile( const QString & filepath )
   QFile file(filepath);
   if(file.open(QIODevice::ReadOnly|QFile::Text)) {
     currentFile = file.fileName();
-    editor->setPlainText(file.readAll());
+    ui.editor->setPlainText(file.readAll());
     file.close();
-    editor->document()->setModified(false);
+    ui.editor->document()->setModified(false);
     setWindowModified(false);
   }
 }
@@ -386,7 +385,7 @@ void MainWindow::removeFileFromProject(const QString & file)
       editorLoadFile(newfile);
     else {
       currentFile = "";
-      editor->clear();
+      ui.editor->clear();
       setWindowModified(false);
     }
   }
@@ -522,20 +521,20 @@ void MainWindow::openProject(const QString & projectPath)
 */
 void MainWindow::updateRecentProjects(const QString & newProject)
 {
-  QList<QAction*> recentProjects = menuRecent_Projects->actions();
+  QList<QAction*> recentProjects = ui.menuRecent_Projects->actions();
   QStringList recentProjectPaths;
   foreach(QAction* a, recentProjects)
     recentProjectPaths << a->data().toString();
   if(!recentProjectPaths.contains(newProject)) { // only need to update if this project is not already included
     if(recentProjects.count() >= RECENT_FILES ) { // make room in the list if we need to
-      menuRecent_Projects->removeAction(recentProjects.first());
+      ui.menuRecent_Projects->removeAction(recentProjects.first());
       recentProjectPaths.removeAll(newProject);
     }
 
     QDir dir(newProject); // make the new action, and add it to the menu
-    QAction* action = new QAction(dir.dirName(), menuRecent_Projects);
+    QAction* action = new QAction(dir.dirName(), ui.menuRecent_Projects);
     action->setData(newProject);
-    menuRecent_Projects->addAction(action);
+    ui.menuRecent_Projects->addAction(action);
     recentProjectPaths.append(newProject);
 
     QSettings settings;
@@ -567,9 +566,9 @@ bool MainWindow::save( )
   if(file.open(QFile::WriteOnly | QFile::Text)) {
     QTextStream out(&file);
     QApplication::setOverrideCursor(Qt::WaitCursor);
-    out << editor->toPlainText();
+    out << ui.editor->toPlainText();
     QApplication::restoreOverrideCursor();
-    editor->document()->setModified(false);
+    ui.editor->document()->setModified(false);
     setWindowModified(false);
     return true;
   }
@@ -585,7 +584,7 @@ bool MainWindow::save( )
 */
 bool MainWindow::maybeSave()
 {
-  if(editor->document()->isModified()) {
+  if(ui.editor->document()->isModified()) {
     QMessageBox::StandardButton ret;
     ret = QMessageBox::warning(this, tr("mcbuilder"),
                                tr("This document has been modified.\n"
@@ -658,8 +657,8 @@ void MainWindow::onBuild( )
   if(!maybeSave( ))
     return;
   if(builder->state() == QProcess::NotRunning) {
-    outputConsole->clear();
-    actionStop->setEnabled(true);
+    ui.outputConsole->clear();
+    ui.actionStop->setEnabled(true);
     builder->build(currentProject);
   }
   else
@@ -683,36 +682,36 @@ void MainWindow::onStop( )
 void MainWindow::onBuildComplete(bool success)
 {
   if(success) {
-    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), tr("Build succeeded."), outputConsole));
-    outputConsole->scrollToBottom();
+    ui.outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), tr("Build succeeded."), ui.outputConsole));
+    ui.outputConsole->scrollToBottom();
     statusBar()->showMessage(tr("Build succeeded."));
   }
   else {
-    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), tr("Build failed."), outputConsole));
-    outputConsole->scrollToBottom();
+    ui.outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), tr("Build failed."), ui.outputConsole));
+    ui.outputConsole->scrollToBottom();
     statusBar()->showMessage(tr("Build failed."));
   }
-  actionStop->setEnabled(false);
+  ui.actionStop->setEnabled(false);
 }
 
 void MainWindow::onUploadComplete(bool success)
 {
   if(success) {
-    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), tr("Upload succeeded."), outputConsole));
-    outputConsole->scrollToBottom();
+    ui.outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), tr("Upload succeeded."), ui.outputConsole));
+    ui.outputConsole->scrollToBottom();
     statusBar()->showMessage(tr("Upload succeeded."));
   }
   else {
-    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), tr("Upload failed."), outputConsole));
-    outputConsole->scrollToBottom();
+    ui.outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), tr("Upload failed."), ui.outputConsole));
+    ui.outputConsole->scrollToBottom();
     statusBar()->showMessage(tr("Upload failed."));
   }
 }
 
 void MainWindow::onCleanComplete()
 {
-  outputConsole->clear();
-  outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), tr("Clean succeeded."), outputConsole));
+  ui.outputConsole->clear();
+  ui.outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), tr("Clean succeeded."), ui.outputConsole));
   statusBar()->showMessage(tr("Clean succeeded."));
 }
 
@@ -810,7 +809,7 @@ void MainWindow::loadBoardProfiles( )
   QStringList boardProfiles = dir.entryList(QStringList("*.xml"));
   QDomDocument doc;
   // get a list of the names of the actions we already have
-  QList<QAction*> boardActions = menuBoard_Type->actions( );
+  QList<QAction*> boardActions = ui.menuBoard_Type->actions( );
   QStringList actionNames;
   foreach(QAction *a, boardActions)
     actionNames << a->text();
@@ -826,7 +825,7 @@ void MainWindow::loadBoardProfiles( )
           if(boardName == Preferences::boardType( ))
             boardAction->setChecked(true);
           boardAction->setData(filename);         // hang onto the filename so we don't have to look it up again later
-          menuBoard_Type->addAction(boardAction); // add the action to the actual menu
+          ui.menuBoard_Type->addAction(boardAction); // add the action to the actual menu
           boardTypeGroup->addAction(boardAction); // and to the group that maintains an exclusive selection within the menu
         }
       }
@@ -845,7 +844,7 @@ void MainWindow::loadExamples( )
   QStringList exampleCategories = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
   foreach(QString category, exampleCategories) {
     QMenu *exampleMenu = new QMenu(category, this);
-    menuExamples->addMenu(exampleMenu);
+    ui.menuExamples->addMenu(exampleMenu);
     QDir exampleDir(dir.filePath(category));
     QFileInfoList examples = exampleDir.entryInfoList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
     foreach(QFileInfo example, examples) {
@@ -888,8 +887,8 @@ void MainWindow::loadLibraries( )
           libname = nodes.at(0).toElement().text();
 
         // create a menu that allows us to import the library, view its documentation, etc
-        QMenu *menu = new QMenu(libname, menuLibraries);
-        menuLibraries->addMenu(menu);
+        QMenu *menu = new QMenu(libname, ui.menuLibraries);
+        ui.menuLibraries->addMenu(menu);
         QAction *a = new QAction(tr("Import to Current Project"), menu);
         a->setData(library);
         menu->addAction(a);
@@ -921,9 +920,9 @@ void MainWindow::onLibrary(QAction *example)
     QString includeString = QString("#include \"%1.h\"").arg(example->data().toString());
     // only add if it isn't already in there
     // find() moves the cursor and highlights the found text
-    if(!editor->find(includeString) && !editor->find(includeString, QTextDocument::FindBackward)) {
-      editor->moveCursor(QTextCursor::Start);
-      editor->insertPlainText(includeString + "\n");
+    if(!ui.editor->find(includeString) && !ui.editor->find(includeString, QTextDocument::FindBackward)) {
+      ui.editor->moveCursor(QTextCursor::Start);
+      ui.editor->insertPlainText(includeString + "\n");
     }
   }
   else if(example->text() == tr("View Documentation"))
@@ -940,32 +939,32 @@ void MainWindow::loadRecentProjects( )
   projects = projects.mid(0,RECENT_FILES); // just in case there are extras
   foreach(QString project, projects) {
     QDir dir(project);
-    QAction* a = new QAction(dir.dirName(), menuRecent_Projects); // set the project name as the text
+    QAction* a = new QAction(dir.dirName(), ui.menuRecent_Projects); // set the project name as the text
     a->setData(project); // store the full path in data
-    menuRecent_Projects->addAction(a);
+    ui.menuRecent_Projects->addAction(a);
   }
 }
 
 void MainWindow::printOutput(const QString & text)
 {
-  outputConsole->addItem(text.trimmed());
-  outputConsole->scrollToBottom();
+  ui.outputConsole->addItem(text.trimmed());
+  ui.outputConsole->scrollToBottom();
 }
 
 void MainWindow::printOutputError(const QString & text)
 {
   if(text.startsWith(tr("Warning")))
-    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/warning.png"), text.trimmed(), outputConsole));
+    ui.outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/warning.png"), text.trimmed(), ui.outputConsole));
   else if(text.startsWith(tr("Error")))
-    outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), text.trimmed(), outputConsole));
+    ui.outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), text.trimmed(), ui.outputConsole));
   else
-    outputConsole->addItem(text.trimmed());
-  outputConsole->scrollToBottom();
+    ui.outputConsole->addItem(text.trimmed());
+  ui.outputConsole->scrollToBottom();
 }
 
 void MainWindow::printOutputError(ConsoleItem *item)
 {
-  outputConsole->addItem(item);
+  ui.outputConsole->addItem(item);
 }
 
 /*
@@ -985,7 +984,7 @@ void MainWindow::onConsoleDoubleClick(QListWidgetItem *item)
 void MainWindow::highlightLine(const QString & filepath, int linenumber, ConsoleItem::Type type)
 {
   if(QDir::toNativeSeparators(filepath) == QDir::toNativeSeparators(currentFile)) {
-    QTextCursor c(editor->document());
+    QTextCursor c(ui.editor->document());
     c.movePosition(QTextCursor::Start);
     while(c.blockNumber() < linenumber-1) // blockNumber is 0 based, lineNumber starts at 1
       c.movePosition(QTextCursor::NextBlock);
@@ -998,7 +997,7 @@ void MainWindow::highlightLine(const QString & filepath, int linenumber, Console
     else
       es.format.setBackground(QColor("#FFDE49")); // light yellow
 
-    editor->setExtraSelections( editor->extraSelections() << es );
+    ui.editor->setExtraSelections( ui.editor->extraSelections() << es );
   }
 }
 
