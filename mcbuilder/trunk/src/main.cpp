@@ -26,6 +26,10 @@ int main( int argc, char *argv[] )
 {
   QApplication app(argc, argv);
   
+  QCoreApplication::setOrganizationName("MakingThings");
+  QCoreApplication::setOrganizationDomain("makingthings.com");
+  QCoreApplication::setApplicationName("mcbuilder");
+  
   QString locale = QLocale::system().name();
 
   QTranslator qtTranslator;

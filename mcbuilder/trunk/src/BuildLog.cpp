@@ -26,7 +26,7 @@ BuildLog::BuildLog( ) : QDialog( )
 {
   setupUi(this);
   connect(clearButton, SIGNAL(clicked()), logConsole, SLOT(clear()));
-  QSettings settings("MakingThings", "mcbuilder");
+  QSettings settings;
   QSize dialogSize = settings.value("build_log_size").toSize();
   if(dialogSize.isValid())
     resize(dialogSize);

@@ -46,7 +46,7 @@ Preferences::Preferences(MainWindow *mainWindow) : QDialog( 0 )
   connect(sam7PathButton, SIGNAL(clicked()), this, SLOT(onSam7Button()));
 
   // initialize the parts that the main window needs to know about
-  QSettings settings("MakingThings", "mcbuilder");
+  QSettings settings;
   QString editorFont = settings.value("editorFont", DEFAULT_FONT).toString();
   int editorFontSize = settings.value("editorFontSize", DEFAULT_FONT_SIZE).toInt();
   currentFont = QFont(editorFont, editorFontSize);
@@ -60,7 +60,7 @@ Preferences::Preferences(MainWindow *mainWindow) : QDialog( 0 )
 // static
 QString Preferences::workspace( )
 {
-  QSettings settings("MakingThings", "mcbuilder");
+  QSettings settings;
   #ifdef Q_WS_MAC
   QString workspace = QDir::home().filePath("Documents/mcbuilder");
   #else
@@ -89,7 +89,7 @@ QString Preferences::workspace( )
 // static
 QString Preferences::boardType( )
 {
-  QSettings settings("MakingThings", "mcbuilder");
+  QSettings settings;
   return settings.value("boardType", DEFAULT_BOARDTYPE).toString();
 }
 
@@ -100,13 +100,13 @@ QString Preferences::boardType( )
 */
 QString Preferences::toolsPath( ) // static
 {
-  QSettings settings("MakingThings", "mcbuilder");
+  QSettings settings;
   return settings.value("toolsPath", QDir::current().filePath("resources/tools/arm-elf/bin")).toString();
 }
 
 QString Preferences::makePath( ) // static
 {
-  QSettings settings("MakingThings", "mcbuilder");
+  QSettings settings;
   #if (defined Q_OS_MAC) || (defined Q_OS_WIN)
   QString _makepath = "resources/tools";
   #else
@@ -117,7 +117,7 @@ QString Preferences::makePath( ) // static
 
 QString Preferences::sam7Path( ) // static
 {
-  QSettings settings("MakingThings", "mcbuilder");
+  QSettings settings;
   return settings.value("sam7Path", QDir::current().filePath("resources/tools")).toString();
 }
 
@@ -126,7 +126,7 @@ QString Preferences::sam7Path( ) // static
 */
 void Preferences::loadAndShow( )
 {
-  QSettings settings("MakingThings", "mcbuilder");
+  QSettings settings;
   workspaceEdit->setText(QDir::toNativeSeparators(workspace()));
   makePathEdit->setText(QDir::toNativeSeparators(makePath()));
   toolsPathEdit->setText(QDir::toNativeSeparators(toolsPath()));
@@ -175,7 +175,7 @@ void Preferences::getNewFont( )
 */
 void Preferences::applyChanges( )
 {
-  QSettings settings("MakingThings", "mcbuilder");
+  QSettings settings;
 
   settings.setValue("workspace", workspaceEdit->text());
   settings.setValue("makePath", makePathEdit->text());

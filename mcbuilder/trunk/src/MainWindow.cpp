@@ -115,7 +115,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 */
 void MainWindow::readSettings()
 {
-  QSettings settings("MakingThings", "mcbuilder");
+  QSettings settings;
   settings.beginGroup("MainWindow");
 
   QSize size = settings.value( "size" ).toSize( );
@@ -148,7 +148,7 @@ void MainWindow::readSettings()
 */
 void MainWindow::writeSettings()
 {
-  QSettings settings("MakingThings", "mcbuilder");
+  QSettings settings;
   settings.beginGroup("MainWindow");
   settings.setValue("size", size() );
   QList<QVariant> splitterSettings;
@@ -562,7 +562,7 @@ void MainWindow::updateRecentProjects(const QString & newProject)
     menuRecent_Projects->addAction(action);
     recentProjectPaths.append(newProject);
 
-    QSettings settings("MakingThings", "mcbuilder");
+    QSettings settings;
     settings.setValue("recentProjects", recentProjectPaths);
   }
 }
@@ -985,7 +985,7 @@ void MainWindow::onLibrary(QAction *example)
 */
 void MainWindow::loadRecentProjects( )
 {
-  QSettings settings("MakingThings", "mcbuilder");
+  QSettings settings;
   QStringList projects = settings.value("recentProjects").toStringList();
   projects = projects.mid(0,RECENT_FILES); // just in case there are extras
   foreach(QString project, projects)
