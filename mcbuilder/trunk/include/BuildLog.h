@@ -22,7 +22,7 @@
 #include <QDialog>
 #include "ui_buildlog.h"
 
-class BuildLog : public QDialog, private Ui::BuildLogUi
+class BuildLog : public QDialog
 {
   Q_OBJECT
 public:
@@ -32,6 +32,7 @@ public:
 
 private:
   QTextCharFormat fmt;
+  Ui::BuildLogUi ui;
 };
 
 #endif // BUILD_LOG_H
