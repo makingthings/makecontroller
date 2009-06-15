@@ -81,7 +81,8 @@ void ProjectManager::confirmValidFileName(QFileInfo* fi)
     QString newBaseName = fi->baseName().remove(" ");
     fi->setFile(fi->path() + "/" + newBaseName + "." + fi->suffix());
   }
-  if(fi->suffix() != "c" && fi->suffix() != "h") // default to a .c suffix if not provided
+  QStringList validSuffixes = QStringList() << "c" << "cpp" << "cxx" << "cc" << "h" << "hpp";
+  if(!validSuffixes.contains(fi->suffix())) // default to a .c suffix if not provided
     fi->setFile(fi->path() + "/" + fi->baseName() + ".c");
 }
 
