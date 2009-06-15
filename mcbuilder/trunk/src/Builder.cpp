@@ -36,6 +36,8 @@ Builder::Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *build
   this->buildLog = buildLog;
   this->prefs = prefs;
 
+  cppSuffixes << "cpp" << "cxx" << "cc";
+
   connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(filterOutput()));
   connect(this, SIGNAL(readyReadStandardError()), this, SLOT(filterErrorOutput()));
   connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(nextStep(int, QProcess::ExitStatus)));
@@ -192,36 +194,42 @@ bool Builder::createMakefile(const QString & projectPath)
           QDir currentDir = QDir::current();
 
           // extract all the files for this project from the project file
-          QStringList thmbFiles, armFiles;
+          QStringList thmbFiles, thmbCppFiles, armFiles, armCppFiles;
           QDomNodeList allFiles = projectDoc.elementsByTagName("files").at(0).childNodes();
           for(int i = 0; i < allFiles.count(); i++) {
-            if(allFiles.at(i).toElement().attribute("type") == "thumb")
-              thmbFiles << allFiles.at(i).toElement().text();
-            else if(allFiles.at(i).toElement().attribute("type") == "arm")
-              armFiles << allFiles.at(i).toElement().text();
+            QString filepath = allFiles.at(i).toElement().text();
+            QFileInfo fi(filepath);
+            if(allFiles.at(i).toElement().attribute("type") == "thumb") {
+              if(cppSuffixes.contains(fi.suffix()))
+                thmbCppFiles << filepath;
+              else
+                thmbFiles << filepath;
+            }
+            else if(allFiles.at(i).toElement().attribute("type") == "arm") {
+              if(cppSuffixes.contains(fi.suffix()))
+                armCppFiles << filepath;
+              else
+                armFiles << filepath;
+            }
           }
 
           tofile << "THUMB_SRC= \\" << endl;
           // add in all the sources from the required libraries
-          foreach(Library lib, libraries) {
-            foreach(QString filepath, lib.thumb_src)
-              tofile << "  " << filteredPath(filepath) << " \\" << endl;
-          }
+          foreach(Library lib, libraries)
+            writeFileListToMakefile(tofile, lib.thumb_src);
+
           // now extract the source files from the project file
-          foreach(QString filepath, thmbFiles)
-            tofile << "  " << filteredPath(filepath) << " \\" << endl;
-          tofile << endl;
+          writeFileListToMakefile(tofile, thmbFiles);
+
+          tofile << "CPP_THUMB_SRC= \\" << endl;
+          writeFileListToMakefile(tofile, thmbCppFiles);
 
           tofile << "ARM_SRC= \\" << endl;
           // add in all the sources from the required libraries
-          foreach(Library lib, libraries) {
-            foreach(QString filepath, lib.arm_src)
-              tofile << "  " << filteredPath(filepath) << " \\" << endl;
-          }
+          foreach(Library lib, libraries)
+            writeFileListToMakefile(tofile, lib.arm_src);
           // add the files from the main project file.
-          foreach(QString filepath, armFiles)
-            tofile << "  " << filteredPath(filepath) << " \\" << endl;
-          tofile << endl;
+          writeFileListToMakefile(tofile, armFiles);
 
           tofile << "INCLUDEDIRS = \\" << endl;
           tofile << "  -I" << filteredPath(projectDir.path()) << " \\" << endl; // always include the project directory
@@ -239,12 +247,11 @@ bool Builder::createMakefile(const QString & projectPath)
           tofile << endl;
 
           // tools
-          QString toolsPath = Preferences::toolsPath();
-          if(!toolsPath.isEmpty() && !toolsPath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
-            toolsPath += "/";
-          tofile << "CC=" << QDir::toNativeSeparators(toolsPath + "arm-elf-gcc") << endl;
-          tofile << "OBJCOPY=" << QDir::toNativeSeparators(toolsPath + "arm-elf-objcopy") << endl;
-          tofile << "ARCH=" << QDir::toNativeSeparators(toolsPath + "arm-elf-ar") << endl;
+          QDir toolsDir( Preferences::toolsPath() );
+          tofile << "CC=" << QDir::toNativeSeparators(toolsDir.filePath("arm-elf-gcc")) << endl;
+          tofile << "CPP=" << QDir::toNativeSeparators(toolsDir.filePath("arm-elf-g++")) << endl;
+          tofile << "OBJCOPY=" << QDir::toNativeSeparators(toolsDir.filePath("arm-elf-objcopy")) << endl;
+          tofile << "ARCH=" << QDir::toNativeSeparators(toolsDir.filePath("arm-elf-ar")) << endl;
           tofile << "CRT0=" + filteredPath("cores/makecontroller/core/startup/boot.s") << endl;
           QString debug = (projInfo->debug()) ? "-g" : "";
           tofile << "DEBUG=" + debug << endl;
@@ -260,10 +267,10 @@ bool Builder::createMakefile(const QString & projectPath)
           else
             optLevel = "-O0";
           tofile << "OPTIM=" + optLevel << endl;
-          tofile << "LDSCRIPT=" + filteredPath("cores/makecontroller/core/startup/atmel-rom.ld") << endl << endl;
+          tofile << "LDSCRIPT=" + filteredPath("cores/makecontroller/core/startup/make-controller.ld") << endl << endl;
 
           // the rest is always the same...
-          tofile << "CFLAGS= \\" << endl;
+          tofile << "C_AND_CPP_FLAGS= \\" << endl;
           tofile << "$(INCLUDEDIRS) \\" << endl;
           tofile << "-Wall \\" << endl;
           tofile << "-Wextra \\" << endl;
@@ -279,28 +286,44 @@ bool Builder::createMakefile(const QString & projectPath)
           tofile << "$(DEBUG) \\" << endl;
           tofile << "$(OPTIM)" << endl << endl;
 
+          tofile << "CFLAGS = ${C_AND_CPP_FLAGS}" << endl;
+          tofile << "CFLAGS += -Wmissing-prototypes -Wmissing-declarations" << endl;
+
+          tofile << "CPPFLAGS = ${C_AND_CPP_FLAGS}" << endl;
+          tofile << "CPPFLAGS += -fno-rtti -fno-exceptions -fno-unwind-tables" << endl;
+
           tofile << "THUMB_FLAGS=-mthumb" << endl;
           tofile << "LINKER_FLAGS=-Xlinker -o$(OUTPUT).elf -Xlinker -M -Xlinker -Map=$(OUTPUT)_o.map" << endl << endl;
 
           tofile << "ARM_OBJ = $(ARM_SRC:.c=.o)" << endl;
-          tofile << "THUMB_OBJ = $(THUMB_SRC:.c=.o)" << endl << endl;
+          tofile << "THUMB_OBJ = $(THUMB_SRC:.c=.o)" << endl;
+          tofile << "CPP_THUMB_OBJ = $(CPP_THUMB_SRC:.cpp=.o)" << endl;
+          tofile << "CPP_ARM_OBJ = $(CPP_ARM_SRC:.cpp=.o)" << endl << endl;
 
           // rules
           tofile << "$(OUTPUT).bin : $(OUTPUT).elf" << endl;
           tofile << "\t" << "$(OBJCOPY) $(OUTPUT).elf -O binary $(OUTPUT).bin" << endl << endl;
 
-          tofile << "$(OUTPUT).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CRT0)" << endl;
+          tofile << "$(OUTPUT).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CPP_ARM_OBJ) $(CPP_THUMB_OBJ) $(CRT0)" << endl;
           tofile << "\t" << "$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles $(CRT0) $(LINKER_FLAGS)" << endl << endl;
 
           tofile << "$(THUMB_OBJ) : %.o : %.c ../config.h" << endl;
           tofile << "\t" << "$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@" << endl << endl;
 
+          tofile << "$(CPP_THUMB_OBJ) : %.o : %.cpp config.h" << endl;
+          tofile << "\t" << "$(CPP) -c $(THUMB_FLAGS) $(CPPFLAGS) $< -o $@" << endl;
+
           tofile << "$(ARM_OBJ) : %.o : %.c ../config.h" << endl;
           tofile << "\t" << "$(CC) -c $(CFLAGS) $< -o $@" << endl << endl;
+
+          tofile << "$(CPP_ARM_OBJ) : %.o : %.cpp config.h" << endl;
+          tofile << "\t" << "$(CPP) -c $(CPPFLAGS) $< -o $@" << endl;
 
           tofile << "clean :" << endl;
           tofile << "\t" << "rm -f $(ARM_OBJ)" << endl;
           tofile << "\t" << "rm -f $(THUMB_OBJ)" << endl;
+          tofile << "\t" << "rm -f $(CPP_ARM_OBJ)" << endl;
+          tofile << "\t" << "rm -f $(CPP_THUMB_OBJ)" << endl;
           tofile << "\t" << "rm -f $(OUTPUT).elf" << endl;
           tofile << "\t" << "rm -f $(OUTPUT).bin" << endl;
           tofile << "\t" << "rm -f $(OUTPUT)_o.map" << endl << endl;
@@ -319,6 +342,13 @@ bool Builder::createMakefile(const QString & projectPath)
   else
     retval = false;
   return retval;
+}
+
+void Builder::writeFileListToMakefile(QTextStream & stream, const QStringList & files)
+{
+  foreach(QString filepath, files)
+    stream << "  " << filteredPath(filepath) << " \\" << endl;
+  stream << endl;
 }
 
 /*
@@ -751,21 +781,20 @@ void Builder::loadDependencies(const QString & libsDir, const QString & project)
           Library lib;
           lib.name = match;
           // extract the lists of source files specified in the library's spec file
-          getLibrarySources( libDir.filePath(match), &lib.thumb_src, &lib.arm_src);
+          getLibrarySources( libDir.filePath(match), lib );
           libraries.append(lib);
         }
         pos += rx.matchedLength(); // step the index past the match so we can continue looking
       }
-      file.close();
     }
   }
 }
 
 /*
   Read a library's spec file to determine its source files
-  and append those to the lists of THUMB and ARM files passed in.
+  and append those to its file lists.
 */
-void Builder::getLibrarySources(const QString & libdir, QStringList *thmb, QStringList *arm)
+void Builder::getLibrarySources(const QString & libdir, Library & lib)
 {
   QDir dir(libdir);
   QFile libfile(dir.filePath(dir.dirName() + ".xml"));
@@ -774,12 +803,21 @@ void Builder::getLibrarySources(const QString & libdir, QStringList *thmb, QStri
     QDomNodeList files = libDoc.elementsByTagName("files").at(0).childNodes();
     int filescount = files.count();
     for(int i = 0; i < filescount; i++) {
-      if(files.at(i).toElement().attribute("type") == "thumb")
-        thmb->append(dir.filePath(files.at(i).toElement().text()));
-      else if(files.at(i).toElement().attribute("type") == "arm")
-        arm->append(dir.filePath(files.at(i).toElement().text()));
+      QString filepath = dir.filePath(files.at(i).toElement().text());
+      QFileInfo fi(filepath);
+      if(files.at(i).toElement().attribute("type") == "thumb") {
+        if(cppSuffixes.contains(fi.suffix()))
+          lib.thumb_cpp_src.append(filepath);
+        else
+          lib.thumb_src.append(filepath);
+      }
+      else if(files.at(i).toElement().attribute("type") == "arm") {
+        if(cppSuffixes.contains(fi.suffix()))
+          lib.arm_cpp_src.append(filepath);
+        else
+          lib.arm_src.append(filepath);
+      }
     }
-    libfile.close();
   }
 }
 

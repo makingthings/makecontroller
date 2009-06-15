@@ -53,7 +53,9 @@ private:
   {
     QString name;
     QStringList thumb_src;
+    QStringList thumb_cpp_src;
     QStringList arm_src;
+    QStringList arm_cpp_src;
   };
   MainWindow *mainWindow;
   ProjectInfo *projInfo;
@@ -61,6 +63,7 @@ private:
   Preferences* prefs;
   QString errMsg;
   QString currentProjectPath;
+  QStringList cppSuffixes;
   enum BuildStep { BUILD, CLEAN };
   BuildStep buildStep;
   int maxsize;
@@ -76,10 +79,11 @@ private:
   QString ensureBuildDirExists(const QString & projPath);
   bool parseVersionNumber( int *maj, int *min, int *bld );
   void loadDependencies(const QString & libsDir, const QString & project);
-  void getLibrarySources(const QString & libdir, QStringList *thmb, QStringList *arm);
+  void getLibrarySources(const QString & libdir, Library & lib);
   QString filteredPath(const QString & path);
   int getCtrlBoardVersionNumber();
   int getAppBoardVersionNumber();
+  void writeFileListToMakefile(QTextStream & stream, const QStringList & files);
 
 private slots:
   void nextStep( int exitCode, QProcess::ExitStatus exitStatus );
