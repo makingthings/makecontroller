@@ -107,7 +107,12 @@ QString Preferences::toolsPath( ) // static
 QString Preferences::makePath( ) // static
 {
   QSettings settings("MakingThings", "mcbuilder");
-  return settings.value("makePath", QDir::current().filePath("resources/tools")).toString();
+  #if (defined Q_OS_MAC) || (defined Q_OS_WIN)
+  QString _makepath = "resources/tools";
+  #else
+  QString _makepath = "";
+  #endif
+  return settings.value("makePath", QDir::current().filePath(_makepath)).toString();
 }
 
 QString Preferences::sam7Path( ) // static
