@@ -23,7 +23,7 @@
 #include "ui_findreplace.h"
 #include "MainWindow.h"
 
-class FindReplace : public QDialog, private Ui::FindReplaceUi
+class FindReplace : public QDialog
 {
   Q_OBJECT
 
@@ -31,6 +31,7 @@ class FindReplace : public QDialog, private Ui::FindReplaceUi
     FindReplace( MainWindow *mw );
   private:
     MainWindow *mainWindow;
+    Ui::FindReplaceUi ui;
     QTextDocument::FindFlags getFlags(bool forward = true);
 
   private slots:

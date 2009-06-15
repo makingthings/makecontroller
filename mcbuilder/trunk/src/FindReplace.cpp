@@ -23,14 +23,15 @@
 */
 FindReplace::FindReplace( MainWindow *mw ) : QDialog( )
 {
-  setupUi(this);
+  ui.setupUi(this);
   mainWindow = mw;
-  connect( nextButton, SIGNAL(clicked()), this, SLOT(onNext()));
-  connect( previousButton, SIGNAL(clicked()), this, SLOT(onPrevious()));
-  connect( replaceButton, SIGNAL(clicked()), this, SLOT(onReplace()));
-  connect( replaceAllButton, SIGNAL(clicked()), this, SLOT(onReplaceAll()));
-  connect( findBox->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onNext()));
-  connect( replaceBox->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onReplace()));
+  connect( ui.nextButton, SIGNAL(clicked()), this, SLOT(onNext()));
+  connect( ui.previousButton, SIGNAL(clicked()), this, SLOT(onPrevious()));
+  connect( ui.replaceButton, SIGNAL(clicked()), this, SLOT(onReplace()));
+  connect( ui.replaceAllButton, SIGNAL(clicked()), this, SLOT(onReplaceAll()));
+  connect( ui.findBox->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onNext()));
+  connect( ui.replaceBox->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onReplace()));
+  resize( ui.gridLayout->sizeHint() );
 }
 
 /*
@@ -39,8 +40,8 @@ FindReplace::FindReplace( MainWindow *mw ) : QDialog( )
 */
 void FindReplace::onNext( )
 {
-  if(!findBox->lineEdit()->text().isEmpty())
-    mainWindow->findText(findBox->lineEdit()->text(), getFlags(true), true);
+  if(!ui.findBox->lineEdit()->text().isEmpty())
+    mainWindow->findText(ui.findBox->lineEdit()->text(), getFlags(true), true);
 }
 
 /*
@@ -49,8 +50,8 @@ void FindReplace::onNext( )
 */
 void FindReplace::onPrevious( )
 {
-  if(!findBox->lineEdit()->text().isEmpty())
-    mainWindow->findText(findBox->lineEdit()->text(), getFlags(false), false);
+  if(!ui.findBox->lineEdit()->text().isEmpty())
+    mainWindow->findText(ui.findBox->lineEdit()->text(), getFlags(false), false);
 }
 
 /*
@@ -59,7 +60,7 @@ void FindReplace::onPrevious( )
 */
 void FindReplace::onReplace( )
 {
-  mainWindow->replace(replaceBox->lineEdit()->text());
+  mainWindow->replace(ui.replaceBox->lineEdit()->text());
 }
 
 /*
@@ -69,7 +70,7 @@ void FindReplace::onReplace( )
 */
 void FindReplace::onReplaceAll( )
 {
-  mainWindow->replaceAll(findBox->lineEdit()->text(), replaceBox->lineEdit()->text(), getFlags());
+  mainWindow->replaceAll(ui.findBox->lineEdit()->text(), ui.replaceBox->lineEdit()->text(), getFlags());
 }
 
 /*
@@ -81,9 +82,9 @@ QTextDocument::FindFlags FindReplace::getFlags(bool forward)
   QTextDocument::FindFlags flags;
   if(!forward)
     flags |= QTextDocument::FindBackward;
-  if(ignoreCaseCheckBox->checkState() != Qt::Checked)
+  if(!ui.ignoreCaseCheckBox->isChecked())
     flags |= QTextDocument::FindCaseSensitively;
-  if(wholeWordCheckBox->checkState() == Qt::Checked)
+  if(ui.wholeWordCheckBox->isChecked())
     flags |= QTextDocument::FindWholeWords;
   return flags;
 }
