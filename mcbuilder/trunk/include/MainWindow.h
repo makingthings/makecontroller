@@ -82,6 +82,7 @@ public:
   void buildingNow(const QString & file);
   void highlightLine(const QString & filepath, int linenumber, ConsoleItem::Type type);
   void removeFileFromProject(const QString & file);
+  static QDir appDirectory();
 
 private:
   void openFile( const QString &path );

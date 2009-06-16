@@ -19,6 +19,7 @@
 #include <QDir>
 #include <QTextStream>
 #include <QDateTime>
+#include <QDebug>
 #include "Builder.h"
 #include "ConsoleItem.h"
 
@@ -118,7 +119,7 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
   if( exitCode != 0 || exitStatus != QProcess::NormalExit) { // something didn't finish happily
     mainWindow->onBuildComplete(false);
     resetBuildProcess();
-      return;
+    return;
   }
 
   switch(buildStep)
@@ -186,158 +187,124 @@ bool Builder::createMakefile(const QString & projectPath)
 
     // read the project file in to get a list of the files we want to build, and include dirs
     QFile projectFile(projectDir.filePath(projectDir.dirName() + ".xml"));
-    if(projectFile.open(QIODevice::ReadOnly|QFile::Text)) {
-      QDomDocument projectDoc;
-      if(projectDoc.setContent(&projectFile)) {
-        if(projectDoc.doctype().name() == "mcbuilder_project_file") {
-          QString projName = projectDir.dirName();
-          QDir currentDir = QDir::current();
+    QDomDocument projectDoc;
+    if(projectDoc.setContent(&projectFile)) {
+      if(projectDoc.doctype().name() == "mcbuilder_project_file") {
+        QString projName = projectDir.dirName();
 
-          // extract all the files for this project from the project file
-          QStringList thmbFiles, thmbCppFiles, armFiles, armCppFiles;
-          QDomNodeList allFiles = projectDoc.elementsByTagName("files").at(0).childNodes();
-          for(int i = 0; i < allFiles.count(); i++) {
-            QString filepath = allFiles.at(i).toElement().text();
-            QFileInfo fi(filepath);
-            if(allFiles.at(i).toElement().attribute("type") == "thumb") {
-              if(cppSuffixes.contains(fi.suffix()))
-                thmbCppFiles << filepath;
-              else
-                thmbFiles << filepath;
-            }
-            else if(allFiles.at(i).toElement().attribute("type") == "arm") {
-              if(cppSuffixes.contains(fi.suffix()))
-                armCppFiles << filepath;
-              else
-                armFiles << filepath;
-            }
+        // extract all the files for this project from the project file
+        QStringList thmbFiles, thmbCppFiles, armFiles, armCppFiles;
+        QDomNodeList allFiles = projectDoc.elementsByTagName("files").at(0).childNodes();
+        for(int i = 0; i < allFiles.count(); i++) {
+          QString filepath = allFiles.at(i).toElement().text();
+          QFileInfo fi(filepath);
+          if(allFiles.at(i).toElement().attribute("type") == "thumb") {
+            if(cppSuffixes.contains(fi.suffix()))
+              thmbCppFiles << filepath;
+            else
+              thmbFiles << filepath;
           }
+          else if(allFiles.at(i).toElement().attribute("type") == "arm") {
+            if(cppSuffixes.contains(fi.suffix()))
+              armCppFiles << filepath;
+            else
+              armFiles << filepath;
+          }
+        }
 
-          tofile << "THUMB_SRC= \\" << endl;
-          // add in all the sources from the required libraries
-          foreach(Library lib, libraries)
-            writeFileListToMakefile(tofile, lib.thumb_src);
+        tofile << "THUMB_SRC= \\" << endl;
+        // add in all the sources from the required libraries
+        foreach(Library lib, libraries)
+          writeFileListToMakefile(tofile, lib.thumb_src);
+        writeFileListToMakefile(tofile, thmbFiles);
+        tofile << endl;
 
-          // now extract the source files from the project file
-          writeFileListToMakefile(tofile, thmbFiles);
+        tofile << "CPP_THUMB_SRC= \\" << endl;
+        writeFileListToMakefile(tofile, thmbCppFiles);
+        foreach(Library lib, libraries)
+          writeFileListToMakefile(tofile, lib.thumb_cpp_src);
+        tofile << endl;
 
-          tofile << "CPP_THUMB_SRC= \\" << endl;
-          writeFileListToMakefile(tofile, thmbCppFiles);
+        tofile << "ARM_SRC= \\" << endl;
+        foreach(Library lib, libraries)
+          writeFileListToMakefile(tofile, lib.arm_src);
+        writeFileListToMakefile(tofile, armFiles);
+        tofile << endl;
 
-          tofile << "ARM_SRC= \\" << endl;
-          // add in all the sources from the required libraries
-          foreach(Library lib, libraries)
-            writeFileListToMakefile(tofile, lib.arm_src);
-          // add the files from the main project file.
-          writeFileListToMakefile(tofile, armFiles);
+        tofile << "ARM_CPP_SRC= \\" << endl;
+        foreach(Library lib, libraries)
+          writeFileListToMakefile(tofile, lib.arm_cpp_src);
+        writeFileListToMakefile(tofile, armCppFiles);
+        tofile << endl;
 
-          tofile << "INCLUDEDIRS = \\" << endl;
-          tofile << "  -I" << filteredPath(projectDir.path()) << " \\" << endl; // always include the project directory
+        tofile << "INCLUDEDIRS = \\" << endl;
+        tofile << "  -I" << filteredPath(projectDir.path()) << " \\" << endl; // always include the project directory
 
-          // add in the directories for the required libraries
-          QDir libdir(QDir::current().filePath(LIBRARIES_DIR));
-          foreach(Library lib, libraries)
-            tofile << "  -I" << filteredPath(libdir.filePath(lib.name)) << " \\" << endl;
+        // add in the directories for the required libraries
+        QDir libdir(MainWindow::appDirectory().filePath(LIBRARIES_DIR));
+        foreach(Library lib, libraries)
+          tofile << "  -I" << filteredPath(libdir.filePath(lib.name)) << " \\" << endl;
 
-          QDomNodeList include_dirs = projectDoc.elementsByTagName("include_dirs").at(0).childNodes();
-          for(int i = 0; i < include_dirs.count(); i++) {
-            QString include_dir = include_dirs.at(i).toElement().text();
+        QDomNodeList include_dirs = projectDoc.elementsByTagName("include_dirs");
+        if(include_dirs.count()) {
+          QDomNodeList dirs = include_dirs.at(0).childNodes();
+          int includelen = dirs.count();
+          for(int i = 0; i < includelen; i++) {
+            QString include_dir = dirs.at(i).toElement().text();
             tofile << "  -I" << filteredPath(include_dir) << " \\" << endl;
           }
           tofile << endl;
-
-          // tools
-          QDir toolsDir( Preferences::toolsPath() );
-          tofile << "CC=" << QDir::toNativeSeparators(toolsDir.filePath("arm-elf-gcc")) << endl;
-          tofile << "CPP=" << QDir::toNativeSeparators(toolsDir.filePath("arm-elf-g++")) << endl;
-          tofile << "OBJCOPY=" << QDir::toNativeSeparators(toolsDir.filePath("arm-elf-objcopy")) << endl;
-          tofile << "ARCH=" << QDir::toNativeSeparators(toolsDir.filePath("arm-elf-ar")) << endl;
-          tofile << "CRT0=" + filteredPath("cores/makecontroller/core/startup/boot.s") << endl;
-          QString debug = (projInfo->debug()) ? "-g" : "";
-          tofile << "DEBUG=" + debug << endl;
-          QString optLevel = projInfo->optLevel();
-          if(optLevel.contains("-O1"))
-            optLevel = "-O1";
-          else if(optLevel.contains("-O2"))
-            optLevel = "-O2";
-          else if(optLevel.contains("-O3"))
-            optLevel = "-O3";
-          else if(optLevel.contains("-Os"))
-            optLevel = "-Os";
-          else
-            optLevel = "-O0";
-          tofile << "OPTIM=" + optLevel << endl;
-          tofile << "LDSCRIPT=" + filteredPath("cores/makecontroller/core/startup/make-controller.ld") << endl << endl;
-
-          // the rest is always the same...
-          tofile << "C_AND_CPP_FLAGS= \\" << endl;
-          tofile << "$(INCLUDEDIRS) \\" << endl;
-          tofile << "-Wall \\" << endl;
-          tofile << "-Wextra \\" << endl;
-          tofile << "-Wstrict-prototypes \\" << endl;
-          tofile << "-Wmissing-prototypes \\" << endl;
-          tofile << "-Wmissing-declarations \\" << endl;
-          tofile << "-Wno-strict-aliasing \\" << endl;
-          tofile << "-D SAM7_GCC \\" << endl;
-          tofile << "-D THUMB_INTERWORK \\" << endl;
-          tofile << "-mthumb-interwork \\" << endl;
-          tofile << "-mcpu=arm7tdmi \\" << endl;
-          tofile << "-T$(LDSCRIPT) \\" << endl;
-          tofile << "$(DEBUG) \\" << endl;
-          tofile << "$(OPTIM)" << endl << endl;
-
-          tofile << "CFLAGS = ${C_AND_CPP_FLAGS}" << endl;
-          tofile << "CFLAGS += -Wmissing-prototypes -Wmissing-declarations" << endl;
-
-          tofile << "CPPFLAGS = ${C_AND_CPP_FLAGS}" << endl;
-          tofile << "CPPFLAGS += -fno-rtti -fno-exceptions -fno-unwind-tables" << endl;
-
-          tofile << "THUMB_FLAGS=-mthumb" << endl;
-          tofile << "LINKER_FLAGS=-Xlinker -o$(OUTPUT).elf -Xlinker -M -Xlinker -Map=$(OUTPUT)_o.map" << endl << endl;
-
-          tofile << "ARM_OBJ = $(ARM_SRC:.c=.o)" << endl;
-          tofile << "THUMB_OBJ = $(THUMB_SRC:.c=.o)" << endl;
-          tofile << "CPP_THUMB_OBJ = $(CPP_THUMB_SRC:.cpp=.o)" << endl;
-          tofile << "CPP_ARM_OBJ = $(CPP_ARM_SRC:.cpp=.o)" << endl << endl;
-
-          // rules
-          tofile << "$(OUTPUT).bin : $(OUTPUT).elf" << endl;
-          tofile << "\t" << "$(OBJCOPY) $(OUTPUT).elf -O binary $(OUTPUT).bin" << endl << endl;
-
-          tofile << "$(OUTPUT).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CPP_ARM_OBJ) $(CPP_THUMB_OBJ) $(CRT0)" << endl;
-          tofile << "\t" << "$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles $(CRT0) $(LINKER_FLAGS)" << endl << endl;
-
-          tofile << "$(THUMB_OBJ) : %.o : %.c ../config.h" << endl;
-          tofile << "\t" << "$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@" << endl << endl;
-
-          tofile << "$(CPP_THUMB_OBJ) : %.o : %.cpp config.h" << endl;
-          tofile << "\t" << "$(CPP) -c $(THUMB_FLAGS) $(CPPFLAGS) $< -o $@" << endl;
-
-          tofile << "$(ARM_OBJ) : %.o : %.c ../config.h" << endl;
-          tofile << "\t" << "$(CC) -c $(CFLAGS) $< -o $@" << endl << endl;
-
-          tofile << "$(CPP_ARM_OBJ) : %.o : %.cpp config.h" << endl;
-          tofile << "\t" << "$(CPP) -c $(CPPFLAGS) $< -o $@" << endl;
-
-          tofile << "clean :" << endl;
-          tofile << "\t" << "rm -f $(ARM_OBJ)" << endl;
-          tofile << "\t" << "rm -f $(THUMB_OBJ)" << endl;
-          tofile << "\t" << "rm -f $(CPP_ARM_OBJ)" << endl;
-          tofile << "\t" << "rm -f $(CPP_THUMB_OBJ)" << endl;
-          tofile << "\t" << "rm -f $(OUTPUT).elf" << endl;
-          tofile << "\t" << "rm -f $(OUTPUT).bin" << endl;
-          tofile << "\t" << "rm -f $(OUTPUT)_o.map" << endl << endl;
         }
+
+        // tools
+        QString toolsPath = Preferences::toolsPath();
+        if( !toolsPath.isEmpty() && !toolsPath.endsWith("/"))
+          toolsPath.append("/");
+        tofile << "CC=" << QDir::toNativeSeparators(toolsPath + "arm-elf-gcc") << endl;
+        tofile << "CPP=" << QDir::toNativeSeparators(toolsPath + "arm-elf-g++") << endl;
+        tofile << "OBJCOPY=" << QDir::toNativeSeparators(toolsPath + "arm-elf-objcopy") << endl;
+        tofile << "ARCH=" << QDir::toNativeSeparators(toolsPath + "arm-elf-ar") << endl;
+        tofile << "CRT0=" + filteredPath("cores/makecontroller/core/startup/boot.s") << endl;
+        QString debug = (projInfo->debug()) ? "-g" : "";
+        tofile << "DEBUG=" + debug << endl;
+        QString optLevel = projInfo->optLevel();
+        if(optLevel.contains("-O1"))
+          optLevel = "-O1";
+        else if(optLevel.contains("-O2"))
+          optLevel = "-O2";
+        else if(optLevel.contains("-O3"))
+          optLevel = "-O3";
+        else if(optLevel.contains("-Os"))
+          optLevel = "-Os";
         else
-          retval = false;
+          optLevel = "-O0";
+        tofile << "OPTIM=" + optLevel << endl;
+
+        // We'd like to use the make-controller.ld linker script, but if it's not there
+        // on older firmware distributions, fall back to the older atmel-rom.ld script.
+        QFileInfo ldScript(MainWindow::appDirectory().filePath("cores/makecontroller/core/startup/make-controller.ld"));
+        if(!ldScript.exists())
+          ldScript.setFile(ldScript.dir(), "atmel-rom.ld");
+        tofile << "LDSCRIPT=" + filteredPath(ldScript.filePath()) << endl << endl;
+
+        // the rest is always the same...grab it from template
+        QFile makefileConstants(MainWindow::appDirectory().filePath("resources/templates/makefile_constants.txt"));
+        tofile << "###########################################################################" << endl;
+        tofile << "#  Note - Everything below is pulled from the template at " << endl;
+        tofile << "# " << makefileConstants.fileName() << endl;
+        tofile << "###########################################################################" << endl;
+
+        if(makefileConstants.open(QIODevice::ReadOnly)) {
+          QTextStream makefileStream(&makefileConstants);
+          while (!makefileStream.atEnd())
+            tofile << makefileStream.readLine() << endl;
+        }
       }
       else
         retval = false;
-      projectFile.close();
     }
     else
       retval = false;
-    makefile.close();
   }
   else
     retval = false;
@@ -348,7 +315,6 @@ void Builder::writeFileListToMakefile(QTextStream & stream, const QStringList & 
 {
   foreach(QString filepath, files)
     stream << "  " << filteredPath(filepath) << " \\" << endl;
-  stream << endl;
 }
 
 /*
@@ -423,7 +389,6 @@ int Builder::getAppBoardVersionNumber()
 */
 bool Builder::compareConfigFile(const QString & projectPath)
 {
-  bool retval = false;
   QDir dir(projectPath);
   QFile configFile(dir.filePath("config.h"));
   if(configFile.open(QIODevice::ReadOnly|QFile::Text)) {
@@ -447,32 +412,35 @@ bool Builder::compareConfigFile(const QString & projectPath)
     QRegExp tcpExp("#define NETWORK_TCP_CONNS (\\d+)");
     QRegExp tcpListenExp("#define NETWORK_TCP_LISTEN_CONNS (\\d+)");
 
+    QRegExp ctrlVersionExp("#define CONTROLLER_VERSION (\\d+)");
+    QRegExp appVersionExp("#define APPBOARD_VERSION (\\d+)");
+
     QString line = in.readLine();
     while(!line.isNull()) {
       if( line.contains(majorVersionExp) ) { // major version number
         int majVer = majorVersionExp.cap(1).toInt();
         if(majVer != maj)
-          retval = true;
+          return true;
       }
       else if( line.contains(minorVersionExp) ) { // minor version number
         int minVer = minorVersionExp.cap(1).toInt();
         if(minVer != min)
-          retval = true;
+          return true;
       }
       else if( line.contains(buildVersionExp) ) { // build version number{
         int bldVer = buildVersionExp.cap(1).toInt();
         if(bldVer != bld)
-          retval = true;
+          return true;
       }
       else if( line.contains(heapExp) ) { // heap size
         int heap = heapExp.cap(1).toInt();
         if(heap != projInfo->heapsize())
-          retval = true;
+          return true;
       }
       else if( line.contains(nameExp) ) { // project name
         QString firmwareName = nameExp.cap(1);
         if(firmwareName != dir.dirName())
-          retval = true;
+          return true;
       }
       else if( line.contains("#define MAKE_CTRL_USB") ) // include USB
         usb = true;
@@ -483,39 +451,46 @@ bool Builder::compareConfigFile(const QString & projectPath)
       else if( line.contains(mempoolExp) ) { // network memory pool size
         int mempool = mempoolExp.cap(1).toInt();
         if( mempool != projInfo->networkMempool() )
-          retval = true;
+          return true;
       }
       else if( line.contains(udpExp) ) { // number of UDP connections
         int udp = udpExp.cap(1).toInt();
         if( udp != projInfo->udpSockets() )
-          retval = true;
+          return true;
       }
       else if( line.contains(tcpExp) ) { // number of TCP sockets
         int tcp = tcpExp.cap(1).toInt();
         if( tcp != projInfo->tcpSockets() )
-          retval = true;
+          return true;
       }
       else if( line.contains(tcpListenExp) ) { // number of TCP server sockets
         int tcpListen = tcpListenExp.cap(1).toInt();
         if( tcpListen != projInfo->tcpServers() )
-          retval = true;
+          return true;
       }
-
+      else if( line.contains(ctrlVersionExp)) {
+        int ctrlV = ctrlVersionExp.cap(1).toInt();
+        if( ctrlV != getCtrlBoardVersionNumber() )
+          return true;
+      }
+      else if( line.contains(appVersionExp)) {
+        int appV = appVersionExp.cap(1).toInt();
+        if( appV != getAppBoardVersionNumber() )
+          return true;
+      }
       line = in.readLine();
     }
 
     if(usb != projInfo->includeUsb() )
-      retval = true;
+      return true;
     if(osc != projInfo->includeOsc() )
-      retval = true;
+      return true;
     if(network != projInfo->includeNetwork() )
-      retval = true;
-
-    configFile.close();
+      return true;
   }
   else
-    retval = true; // file doesn't exist or couldn't be read
-  return retval;
+    return true; // couldn't open the file...probably doesn't exist
+  return false;
 }
 
 /*
@@ -640,11 +615,9 @@ void Builder::filterErrorOutput()
         QString line = outline;
         outline = outstream.readLine();
         // now try to match the output against common patterns...
-        matched = matchErrorOrWarning(line);
-        if(matched)
+        if(matched = matchErrorOrWarning(line))
           continue;
-        matched = matchInFunction(line);
-        if(matched)
+        if(matched = matchInFunction(line))
           continue;
         if(matched = matchUndefinedRef(line))
           continue;
@@ -761,7 +734,7 @@ void Builder::loadDependencies(const QString & libsDir, const QString & project)
 {
   QDir projDir(project);
   QStringList srcFiles = projDir.entryList(QStringList() << "*.c" << "*.h");
-  QDir libDir(QDir::current().filePath(libsDir));
+  QDir libDir(MainWindow::appDirectory().filePath(libsDir));
   QStringList libDirs = libDir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
 
   foreach(QString filename, srcFiles) {
@@ -835,7 +808,7 @@ QString Builder::filteredPath(const QString & path)
   QString filtered = path;
   if(!QDir::isAbsolutePath(path)) {
     if(path.startsWith("cores"))
-      filtered = QDir::current().filePath(path);
+      filtered = MainWindow::appDirectory().filePath(path);
     else
       filtered = QDir(currentProjectPath).filePath(path);
   }
