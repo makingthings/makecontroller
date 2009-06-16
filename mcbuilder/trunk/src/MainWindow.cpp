@@ -806,7 +806,7 @@ void MainWindow::uploadFile(const QString & filename)
 // read the available board files and load them into the UI
 void MainWindow::loadBoardProfiles( )
 {
-  QDir dir = QDir::current().filePath("resources/board_profiles");
+  QDir dir = appDirectory().filePath("resources/board_profiles");
   QStringList boardProfiles = dir.entryList(QStringList("*.xml"));
   QDomDocument doc;
   // get a list of the names of the actions we already have
@@ -845,7 +845,7 @@ void MainWindow::loadBoardProfiles( )
 */
 void MainWindow::loadExamples( )
 {
-  QDir dir = QDir::current().filePath("resources/examples");
+  QDir dir = appDirectory().filePath("resources/examples");
   QStringList exampleCategories = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
   foreach(QString category, exampleCategories) {
     QMenu *exampleMenu = new QMenu(category, this);
@@ -858,6 +858,17 @@ void MainWindow::loadExamples( )
       exampleMenu->addAction(a);
     }
   }
+}
+
+QDir MainWindow::appDirectory()
+{
+  QString appPath = QCoreApplication::applicationDirPath();
+#ifdef Q_OS_MAC
+  // on OS X, this is always the dir containing the actual executable
+  // so we need to pop back up to the dir containing the bundle
+  appPath.append("/../../..");
+#endif
+  return QDir(QDir::cleanPath(appPath));
 }
 
 /*
@@ -876,7 +887,7 @@ void MainWindow::onExample(QAction *example)
 */
 void MainWindow::loadLibraries( )
 {
-  QDir dir = QDir::current().filePath("cores/makecontroller/libraries");
+  QDir dir = appDirectory().filePath("cores/makecontroller/libraries");
   if(dir.exists()) {
     QStringList libraries = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
     foreach(QString library, libraries){
@@ -1011,7 +1022,7 @@ void MainWindow::highlightLine(const QString & filepath, int linenumber, Console
 */
 void MainWindow::openMCReference( )
 {
-  QString ref = QDir::current().filePath("resources/reference/makecontroller/html/index.html");
+  QString ref = appDirectory().filePath("resources/reference/makecontroller/html/index.html");
   QDesktopServices::openUrl(QUrl::fromLocalFile(ref));
 }
 
@@ -1020,7 +1031,7 @@ void MainWindow::openMCReference( )
 */
 void MainWindow::openManual( )
 {
-  QString manual = QDir::current().filePath("resources/reference/manual.pdf");
+  QString manual = appDirectory().filePath("resources/reference/manual.pdf");
   QDesktopServices::openUrl(QUrl::fromLocalFile(manual));
 }
 
