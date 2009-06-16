@@ -50,19 +50,19 @@ void TestBuilder::initTestCase()
 void TestBuilder::loadLibs()
 {
   // change the path to libraries if you need to for your setup...not sure how best to automatically do that
-  QDir libDir = QDir::current().filePath("build/Debug/cores/makecontroller/libraries");
+  QDir libDir = QDir::cleanPath(MainWindow::appDirectory().filePath("../cores/makecontroller/libraries"));
   builder->loadDependencies(libDir.path(), currentProjectPath());
-  QList<Builder::Library> libs = builder->libraries;
+  QList<Builder::Library>* libs = &builder->libraries;
   // the AinToServo example only pulls in one library, servo
-  QVERIFY(libs.size() == 1);
-  QVERIFY(libs.at(0).name == QString("servo"));
+  QCOMPARE(libs->size(), 1);
+  QVERIFY(libs->first().name == QString("servo"));
   // only expect there to be one thumb src file - servo.c
-  QVERIFY(libs.at(0).thumb_src.size() == 1);
-  QString servoFile = libs.at(0).thumb_src.at(0);
+  QCOMPARE(libs->first().thumb_src.size(), 1);
+  QString servoFile = libs->first().thumb_src.first();
   QVERIFY(QDir::isAbsolutePath(servoFile)); // make sure the path is absolute (not relative)
   libDir.cd("servo");
   QVERIFY(libDir.exists(servoFile));
-  QVERIFY(libs.at(0).arm_src.size() == 0);
+  QCOMPARE(libs->first().arm_src.size(), 0);
 }
 
 /*
@@ -79,8 +79,7 @@ void TestBuilder::testMakefile()
   QStringList projectFiles; // a list of all the files in the project file
   QFile projectFile(projDir.filePath(projDir.dirName() + ".xml"));
   QDomDocument projectDoc;
-  if(projectDoc.setContent(&projectFile)) // read the project file and extract all the file paths
-  {
+  if(projectDoc.setContent(&projectFile)) { // read the project file and extract all the file paths
     QDomNodeList files = projectDoc.elementsByTagName("files").at(0).childNodes();
     for(int i = 0; i < files.count(); i++)
       projectFiles.append(builder->filteredPath(files.at(i).toElement().text()));
@@ -91,13 +90,12 @@ void TestBuilder::testMakefile()
   QStringList makeFileDirs; // list of include dirs in the Makefile
   QVERIFY(makefile.open(QFile::ReadOnly | QFile::Text));
   QTextStream in(&makefile);
-  QString makeLine = in.readLine();
   static const int BEGIN = 0;
   static const int FILES = 1;
   static const int DIRS = 2;
   int state = BEGIN;
-  while(!makeLine.isNull())
-  {
+  while(!in.atEnd()) {
+    QString makeLine = in.readLine();
     switch(state)
     {
       case BEGIN:
@@ -107,7 +105,8 @@ void TestBuilder::testMakefile()
       case FILES:
         if(makeLine.startsWith("INCLUDEDIRS"))
           state = DIRS;
-        else if(!makeLine.isEmpty() && !makeLine.startsWith("ARM_SRC"))
+        else if(!makeLine.isEmpty() && !makeLine.startsWith("THUMB_CPP_SRC") &&
+                !makeLine.startsWith("ARM_CPP_SRC") && !makeLine.startsWith("ARM_SRC"))
           makeFiles << makeLine.remove("\\").trimmed();
         break;
       case DIRS:
@@ -116,7 +115,6 @@ void TestBuilder::testMakefile()
         else if(!makeLine.isEmpty())
           makeFileDirs << makeLine.remove("\\").remove("-I").trimmed();
     }
-    makeLine = in.readLine();
   }
   QVERIFY(makeFiles.size()); // make sure we got something
   QVERIFY(makeFileDirs.size());
@@ -127,14 +125,13 @@ void TestBuilder::testMakefile()
   // that are not included in the project file.
   int matches = 0;
   int libraryFiles = 0;
-  foreach(QString file, makeFiles)
-  {
+  foreach(QString file, makeFiles) {
     if(projectFiles.contains(file))
       matches++;
     else if(file.contains("cores/makecontroller/libraries"))
       libraryFiles++;
   }
-  //qDebug("makefiles: %d, projectfiles: %d, matches: %d", makeFiles.size(), projectFiles.size(), matches);
+//  qDebug() << "makefiles:" << makeFiles.size() << "libraryFiles:" << libraryFiles << "matches:" << matches;
   QVERIFY( matches == (makeFiles.size() - libraryFiles));
 
   // now check that the appropriate include directories have been added
@@ -146,8 +143,7 @@ void TestBuilder::testMakefile()
 
   matches = 0;
   int libraryDirs = 0;
-  foreach( QString dir, makeFileDirs )
-  {
+  foreach( QString dir, makeFileDirs ) {
     if(includeDirs.contains(dir))
       matches++;
     else if(dir.contains("cores/makecontroller/libraries"))
@@ -182,7 +178,6 @@ void TestBuilder::testConfigFile()
   ProjectInfo* pi = window->projInfo;
   pi->setHeapSize( pi->heapsize() + 100 );
   QVERIFY( builder->compareConfigFile(currentProjectPath()) == true );
-
 }
 
 void TestBuilder::testClean()
@@ -193,16 +188,16 @@ void TestBuilder::testClean()
   QSignalSpy errorSpy(builder, SIGNAL(error(QProcess::ProcessError)));
 
   builder->clean(currentProjectPath());
-  while(builder->state() != QProcess::NotRunning) // wait until the clean is complete
-    QTest::qWait(100);
+  builder->waitForFinished();
 
-  QVERIFY( errorSpy.count() == 0); // make sure we didn't get any errors
-  for( int i = 0; i < finishedSpy.count(); i++ )
-  {
+  QCOMPARE( errorSpy.count(), 0); // make sure we didn't get any errors
+  for( int i = 0; i < finishedSpy.count(); i++ ) {
     int exitcode = finishedSpy.at(i).at(0).toInt();
     int exitstatus = finishedSpy.at(i).at(1).toInt();
-    if( exitcode != 0 || exitstatus != QProcess::NormalExit )
+    if( exitcode != 0 || exitstatus != QProcess::NormalExit ) {
+      qWarning() << "exitcode" << exitcode << "exitstatus" << exitstatus;
       QFAIL("make/clean exited unhappily.");
+    }
   }
 
   QDir projDir(currentProjectPath());
@@ -222,14 +217,12 @@ void TestBuilder::testBuild( )
   while(builder->state() != QProcess::NotRunning) // wait until the build is complete
     QTest::qWait(100);
 
-  QVERIFY( errorSpy.count() == 0); // make sure we didn't get any errors
-  for( int i = 0; i < finishedSpy.count(); i++ )
-  {
+  QCOMPARE( errorSpy.count(), 0); // make sure we didn't get any errors
+  for( int i = 0; i < finishedSpy.count(); i++ ) {
     int exitcode = finishedSpy.at(i).at(0).toInt();
     int exitstatus = finishedSpy.at(i).at(1).toInt();
-    if( exitcode != 0 || exitstatus != QProcess::NormalExit )
-    {
-      qWarning("exit code: %d, exit status: %d", exitcode, exitstatus);
+    if( exitcode != 0 || exitstatus != QProcess::NormalExit ) {
+      qWarning() << "exit code:" << exitcode << "exit status:" << exitstatus;
       QFAIL("make/build exited unhappily.");
     }
   }

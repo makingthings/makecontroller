@@ -45,6 +45,7 @@ $(ARM_OBJ) : %.o : %.c ../config.h
 
 $(CPP_ARM_OBJ) : %.o : %.cpp config.h
 	$(CPP) -c $(CPPFLAGS) $< -o $@
+
 clean :
 	rm -f $(ARM_OBJ)
 	rm -f $(THUMB_OBJ)
