@@ -264,7 +264,8 @@ bool Builder::createMakefile(const QString & projectPath)
         tofile << "CPP=" << QDir::toNativeSeparators(toolsPath + "arm-elf-g++") << endl;
         tofile << "OBJCOPY=" << QDir::toNativeSeparators(toolsPath + "arm-elf-objcopy") << endl;
         tofile << "ARCH=" << QDir::toNativeSeparators(toolsPath + "arm-elf-ar") << endl;
-        tofile << "CRT0=" + filteredPath("cores/makecontroller/core/startup/boot.s") << endl;
+        tofile << "CRT0=" << filteredPath("cores/makecontroller/core/startup/AT91SAM7_Startup.s");
+        tofile << " " << filteredPath("cores/makecontroller/core/startup/crt0.s") << endl;
         QString debug = (projInfo->debug()) ? "-g" : "";
         tofile << "DEBUG=" + debug << endl;
         QString optLevel = projInfo->optLevel();
