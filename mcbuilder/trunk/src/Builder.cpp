@@ -25,6 +25,11 @@
 
 #define LIBRARIES_DIR "cores/makecontroller/libraries"
 
+#define ARM_C_FILES_GROUP "ARM_SRC"
+#define ARM_CPP_FILES_GROUP "ARM_CPP_SRC"
+#define THUMB_C_FILES_GROUP "THUMB_SRC"
+#define THUMB_CPP_FILES_GROUP "THUMB_CPP_SRC"
+
 /*
   Builder takes a project and turns it into a binary executable.
   We need to generate a Makefile based on the general Preferences
@@ -193,9 +198,11 @@ bool Builder::createMakefile(const QString & projectPath)
         QString projName = projectDir.dirName();
 
         // extract all the files for this project from the project file
+        // into string lists of file names for the different compilation groups
         QStringList thmbFiles, thmbCppFiles, armFiles, armCppFiles;
         QDomNodeList allFiles = projectDoc.elementsByTagName("files").at(0).childNodes();
-        for(int i = 0; i < allFiles.count(); i++) {
+        int allfileslen = allFiles.count();
+        for(int i = 0; i < allfileslen; i++) {
           QString filepath = allFiles.at(i).toElement().text();
           QFileInfo fi(filepath);
           if(allFiles.at(i).toElement().attribute("type") == "thumb") {
@@ -212,30 +219,10 @@ bool Builder::createMakefile(const QString & projectPath)
           }
         }
 
-        tofile << "THUMB_SRC= \\" << endl;
-        // add in all the sources from the required libraries
-        foreach(Library lib, libraries)
-          writeFileListToMakefile(tofile, lib.thumb_src);
-        writeFileListToMakefile(tofile, thmbFiles);
-        tofile << endl;
-
-        tofile << "CPP_THUMB_SRC= \\" << endl;
-        writeFileListToMakefile(tofile, thmbCppFiles);
-        foreach(Library lib, libraries)
-          writeFileListToMakefile(tofile, lib.thumb_cpp_src);
-        tofile << endl;
-
-        tofile << "ARM_SRC= \\" << endl;
-        foreach(Library lib, libraries)
-          writeFileListToMakefile(tofile, lib.arm_src);
-        writeFileListToMakefile(tofile, armFiles);
-        tofile << endl;
-
-        tofile << "ARM_CPP_SRC= \\" << endl;
-        foreach(Library lib, libraries)
-          writeFileListToMakefile(tofile, lib.arm_cpp_src);
-        writeFileListToMakefile(tofile, armCppFiles);
-        tofile << endl;
+        writeGroupToMakeFile( tofile, ARM_C_FILES_GROUP, armFiles );
+        writeGroupToMakeFile( tofile, ARM_CPP_FILES_GROUP, armCppFiles );
+        writeGroupToMakeFile( tofile, THUMB_C_FILES_GROUP, thmbFiles );
+        writeGroupToMakeFile( tofile, THUMB_CPP_FILES_GROUP, thmbCppFiles );
 
         tofile << "INCLUDEDIRS = \\" << endl;
         tofile << "  -I" << filteredPath(projectDir.path()) << " \\" << endl; // always include the project directory
@@ -310,6 +297,27 @@ bool Builder::createMakefile(const QString & projectPath)
   else
     retval = false;
   return retval;
+}
+
+/*
+  Files for a compilation group can come from the core project file,
+  or from any of the libraries.  Write out any files from either source.
+*/
+void Builder::writeGroupToMakeFile(QTextStream & stream, const QString & groupName, const QStringList & files)
+{
+  stream << groupName << "= \\" << endl;
+  foreach(Library lib, libraries) {
+    if( groupName == ARM_C_FILES_GROUP )
+      writeFileListToMakefile(stream, lib.arm_src);
+    else if( groupName == ARM_CPP_FILES_GROUP )
+      writeFileListToMakefile(stream, lib.arm_cpp_src);
+    else if( groupName == THUMB_C_FILES_GROUP )
+      writeFileListToMakefile(stream, lib.thumb_src);
+    else if( groupName == THUMB_CPP_FILES_GROUP )
+      writeFileListToMakefile(stream, lib.thumb_cpp_src);
+  }
+  writeFileListToMakefile(stream, files);
+  stream << endl;
 }
 
 void Builder::writeFileListToMakefile(QTextStream & stream, const QStringList & files)

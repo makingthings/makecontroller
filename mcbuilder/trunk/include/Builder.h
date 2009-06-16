@@ -84,6 +84,7 @@ private:
   int getCtrlBoardVersionNumber();
   int getAppBoardVersionNumber();
   void writeFileListToMakefile(QTextStream & stream, const QStringList & files);
+  void writeGroupToMakeFile(QTextStream & stream, const QString & groupName, const QStringList & files);
 
 private slots:
   void nextStep( int exitCode, QProcess::ExitStatus exitStatus );
