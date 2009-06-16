@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>593</width>
-    <height>304</height>
+    <height>319</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,7 +27,7 @@
    <item row="1" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="generalTab">
       <attribute name="title">
@@ -172,7 +172,7 @@
       <layout class="QVBoxLayout">
        <item>
         <layout class="QGridLayout">
-         <item row="0" column="0" colspan="2">
+         <item row="0" column="0" colspan="3">
           <widget class="QLabel" name="label_6">
            <property name="text">
             <string>Only change these if you want to use tools not provided by mcbuilder.
