@@ -219,10 +219,10 @@ bool Builder::createMakefile(const QString & projectPath)
           }
         }
 
-        writeGroupToMakeFile( tofile, ARM_C_FILES_GROUP, armFiles );
-        writeGroupToMakeFile( tofile, ARM_CPP_FILES_GROUP, armCppFiles );
         writeGroupToMakeFile( tofile, THUMB_C_FILES_GROUP, thmbFiles );
         writeGroupToMakeFile( tofile, THUMB_CPP_FILES_GROUP, thmbCppFiles );
+        writeGroupToMakeFile( tofile, ARM_C_FILES_GROUP, armFiles );
+        writeGroupToMakeFile( tofile, ARM_CPP_FILES_GROUP, armCppFiles );
 
         tofile << "INCLUDEDIRS = \\" << endl;
         tofile << "  -I" << filteredPath(projectDir.path()) << " \\" << endl; // always include the project directory
@@ -276,7 +276,11 @@ bool Builder::createMakefile(const QString & projectPath)
         tofile << "LDSCRIPT=" + filteredPath(ldScript.filePath()) << endl << endl;
 
         // the rest is always the same...grab it from template
-        QFile makefileConstants(MainWindow::appDirectory().filePath("resources/templates/makefile_constants.txt"));
+        QDir d(MainWindow::appDirectory());
+        #ifdef MCBUILDER_TEST_SUITE
+        d.cdUp();
+        #endif
+        QFile makefileConstants(d.filePath("resources/templates/makefile_constants.txt"));
         tofile << "###########################################################################" << endl;
         tofile << "#  Note - Everything below is pulled from the template at " << endl;
         tofile << "# " << makefileConstants.fileName() << endl;
@@ -284,7 +288,7 @@ bool Builder::createMakefile(const QString & projectPath)
 
         if(makefileConstants.open(QIODevice::ReadOnly)) {
           QTextStream makefileStream(&makefileConstants);
-          while (!makefileStream.atEnd())
+          while(!makefileStream.atEnd())
             tofile << makefileStream.readLine() << endl;
         }
       }
@@ -336,7 +340,7 @@ bool Builder::createConfigFile(const QString & projectPath)
   QDir dir(projectPath);
   QFile configFile(dir.filePath("config.h"));
   if(configFile.open(QIODevice::WriteOnly|QFile::Text)) {
-    qDebug("builder - creating/updating config file");
+//    qDebug("builder - creating/updating config file");
     QTextStream tofile(&configFile);
     tofile << "/*****************************************************************************************" << endl << endl;
     tofile << "  config.h" << endl;
@@ -757,7 +761,6 @@ void Builder::loadDependencies(const QString & libsDir, const QString & project)
       // gather all the matching directives
       while((pos = rx.indexIn(fileContents, pos)) != -1) {
         QString match(rx.cap(1));
-        //qDebug("match: %s", qPrintable(match));
         // only list it as a dependency if it's in our list of libraries
         if(libDirs.contains(match)) {
           Library lib;
