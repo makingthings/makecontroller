@@ -1,8 +1,5 @@
 MCBUILDER_VERSION = "0.6.0"
 TEMPLATE = app
-CONFIG += debug
-#CONFIG += release
-CONFIG -= release
 
 FORMS = layouts/mainwindow.ui \
         layouts/preferences.ui \
@@ -39,7 +36,7 @@ SOURCES = src/main.cpp \
           src/About.cpp \
           src/BuildLog.cpp \
           src/ProjectManager.cpp
-          
+
 TRANSLATIONS = translations/mcbuilder_fr.ts
 
 TARGET = mcbuilder
@@ -65,7 +62,6 @@ macx{
 
 win32{
   RC_FILE = resources/icons/mcbuilder.rc
-  debug{ CONFIG += console }
 }
 
 # *******************************************
@@ -75,7 +71,7 @@ INCLUDEPATH += src/qextserialport
 HEADERS +=  src/qextserialport/qextserialbase.h \
             src/qextserialport/qextserialport.h \
             src/qextserialport/qextserialenumerator.h
-            
+
 SOURCES +=  src/qextserialport/qextserialbase.cpp \
             src/qextserialport/qextserialport.cpp \
             src/qextserialport/qextserialenumerator.cpp
@@ -92,11 +88,11 @@ unix{
 }
 
 win32{
-	HEADERS += src/qextserialport/win_qextserialport.h
-	SOURCES += src/qextserialport/win_qextserialport.cpp
-	DEFINES += _TTY_WIN_
-	DEFINES += WINVER=0x0501
-	LIBS += -lSetupapi
+  HEADERS += src/qextserialport/win_qextserialport.h
+  SOURCES += src/qextserialport/win_qextserialport.cpp
+  DEFINES += _TTY_WIN_
+  DEFINES += WINVER=0x0501
+  LIBS += -lSetupapi
 }
 
 
@@ -111,14 +107,14 @@ test_suite {
   CONFIG      -= release # always, no matter what it's set to above
   DESTDIR      = tests
   INCLUDEPATH += tests
-  
+
   SOURCES -=  src/main.cpp
-  
+
   SOURCES +=  tests/main.cpp \
               tests/TestProjectManager.cpp \
               tests/TestBuilder.cpp \
               tests/TestProjectInfo.cpp \
-              
+
   HEADERS +=  tests/TestProjectManager.h \
               tests/TestBuilder.h \
               tests/TestProjectInfo.h \
