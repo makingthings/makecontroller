@@ -35,17 +35,12 @@
   #define APPLED_1_IO IO_PA13
   #define APPLED_2_IO IO_PA28
   #define APPLED_3_IO IO_PA27
-#endif
-
-#define APPBOARD_20 1
-
-#ifdef APPBOARD_20
-  #undef APPLED_2_IO
-  #undef APPLED_3_IO
+#elif ( APPBOARD_VERSION == 200 )
+  #define APPLED_0_IO IO_PA15
+  #define APPLED_1_IO IO_PA13
   #define APPLED_2_IO IO_PA27
   #define APPLED_3_IO IO_PA28
 #endif
-
 
 
 Io* AppLed::leds[] = {0, 0, 0, 0};

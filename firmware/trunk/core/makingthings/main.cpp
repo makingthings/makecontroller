@@ -118,7 +118,7 @@ static void prvSetupHardware( void )
   // Enable the EMAC
   AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_EMAC;
 
-  #if ( APPBOARD_VERSION == 100 )
+  #if ( APPBOARD_VERSION == 100 || APPBOARD_VERSION == 200 )
     // Kill the outputs
     // Outputs 0 - 7 are PA24, PA5, PA6, PA2, PB25, PA25, PA26, PB23
     int outputAMask = ( 1 << 24 ) | ( 1 << 5 ) | ( 1 << 6 ) | ( 1 << 2  ) | ( 1 << 25  ) | ( 1 << 26 );
