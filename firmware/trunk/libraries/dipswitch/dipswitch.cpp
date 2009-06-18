@@ -18,6 +18,11 @@
 #include "dipswitch.h"
 #include "error.h"
 #include "stdio.h"
+#include "core.h"
+
+#if (APPBOARD_VERSION >= 200)
+#warning dipswitch is not avaialable on Application Board v2.0 or later
+#else
 
 #define DIPSWITCH_DEVICE 2
 // static
@@ -265,3 +270,5 @@ bool DipSwitch::value( int channel )
 //}
 
 #endif
+
+#endif // (APPBOARD_VERSION >= 200)

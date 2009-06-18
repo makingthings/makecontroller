@@ -44,7 +44,7 @@
   #define SERVO_2_IO IO_PA02
   #define SERVO_3_IO IO_PA02
 #endif
-#if ( APPBOARD_VERSION == 90 || APPBOARD_VERSION == 95 || APPBOARD_VERSION == 100 )
+#if ( APPBOARD_VERSION >= 90 )
   #define SERVO_0_IO IO_PB24
   #define SERVO_1_IO IO_PA23
   #define SERVO_2_IO IO_PA21

@@ -41,7 +41,7 @@
   #define PWMOUT_3_IO_A IO_PA05
   #define PWMOUT_3_IO_B IO_PA24
 #endif
-#if ( APPBOARD_VERSION == 95 || APPBOARD_VERSION == 100 )
+#if ( APPBOARD_VERSION >= 95 )
   #define PWMOUT_0_IO_A IO_PA24
   #define PWMOUT_0_IO_B IO_PA05
   #define PWMOUT_1_IO_A IO_PA06
