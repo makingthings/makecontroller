@@ -10,7 +10,6 @@
 
 #include <QString>
 #include <QList>
-#include <QMainWindow>
 
 #ifdef _TTY_WIN_
 	#include <windows.h>
@@ -35,11 +34,11 @@ struct QextPortInfo {
 };
 
 #ifdef _TTY_WIN_
+#include <QWidget>
 class QextSerialEnumerator;
 
 class QextSerialRegistrationWidget : public QWidget
 {
-  Q_OBJECT
   public:
     QextSerialRegistrationWidget( QextSerialEnumerator* qese ) {
       this->qese = qese;
@@ -98,7 +97,7 @@ class QextSerialEnumerator : public QObject
       void setUpNotificationWin( );
       static bool getDeviceDetails( QextPortInfo* portInfo, HDEVINFO devInfo, 
                               PSP_DEVINFO_DATA devData, WPARAM wParam = DBT_DEVICEARRIVAL );
-      static void QextSerialEnumerator::enumerateDevicesWin( HDEVINFO devInfo, GUID* guidDev, QList<QextPortInfo>* infoList );
+      static void enumerateDevicesWin( HDEVINFO devInfo, GUID* guidDev, QList<QextPortInfo>* infoList );
       HDEVNOTIFY notificationHandle;
       QextSerialRegistrationWidget* notificationWidget;
 		#endif /*_TTY_WIN_*/
