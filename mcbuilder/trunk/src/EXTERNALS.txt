@@ -4,4 +4,4 @@
 #   svn propset svn:externals -F EXTERNALS.txt .
 # 
 
-qextserialport https://makecontroller.googlecode.com/svn/shared/qextserialport
+qextserialport http://makecontroller.googlecode.com/svn/shared/qextserialport
