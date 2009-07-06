@@ -53,9 +53,9 @@
     <td>
       <ul>
         <li><a href="http://www.makingthings.com/forum">Support Forums</a></li>
-        <li><a href="http://dev.makingthings.com">Issue Tracking and Dev Wiki</a></li>
+        <li><a href="http://makecontroller.googlecode.com">Issue Tracking and Dev Wiki</a></li>
         <li><a href="irc://irc.freenode.net/makingthings">IRC - live chat</a></li>
-        <li><a href="https://www.makingthings.com/svn">Source Code Access</a></li>
+        <li><a href="http://code.google.com/p/makecontroller/source/checkout">Source Code Access</a></li>
       </ul>
     </td>
   </tr>
