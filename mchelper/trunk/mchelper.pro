@@ -1,9 +1,6 @@
 MCHELPER_VERSION = "2.5.0"
 TEMPLATE = app
 TARGET = mchelper
-CONFIG += qt debug
-#CONFIG += qt release
-#CONFIG -= debug
 
 FORMS = layouts/mainwindow.ui \
         layouts/inspector.ui \
@@ -53,7 +50,6 @@ OBJECTS_DIR  = tmp
 MOC_DIR      = tmp
 RCC_DIR      = tmp
 UI_DIR       = tmp
-DESTDIR      = bin
 
 # *******************************************
 #           platform specific stuff
