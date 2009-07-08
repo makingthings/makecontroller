@@ -2,8 +2,8 @@
 
 [Setup]
 AppName=mchelper
-AppVerName=mchelper v2.5.0
-OutputBaseFilename=mchelper-v2.5.0-setup
+AppVerName=mchelper v2.5.1
+OutputBaseFilename=mchelper-v2.5.1-setup
 AppPublisher=MakingThings
 AppPublisherURL=http://www.makingthings.com
 AppSupportURL=http://www.makingthings.com
@@ -23,7 +23,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\..\bin\mchelper.exe"; DestDir: "{app}"; Flags: replacesameversion
+Source: "..\..\release\mchelper.exe"; DestDir: "{app}"; Flags: replacesameversion
 Source: "ReadMe.rtf"; DestDir: "{app}"; Flags: isreadme
 Source: "atm6124.sys"; DestDir: "{sys}\drivers"; Flags: onlyifdoesntexist
 Source: "atm6124.Inf"; DestDir: "{win}\inf"; Flags: replacesameversion
