@@ -1,4 +1,4 @@
-MCHELPER_VERSION = "2.5.0"
+MCHELPER_VERSION = "2.5.1"
 TEMPLATE = app
 TARGET = mchelper
 
