@@ -7,7 +7,7 @@
 #ifndef _QEXTSERIALENUMERATOR_H_
 #define _QEXTSERIALENUMERATOR_H_
 
-
+#include <QObject>
 #include <QString>
 #include <QList>
 
@@ -17,7 +17,7 @@
   #include <dbt.h>
 #endif /*_TTY_WIN_*/
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
   #include <IOKit/usb/IOUSBLib.h>
 #endif
 
@@ -103,7 +103,7 @@ class QextSerialEnumerator : public QObject
 		#endif /*_TTY_WIN_*/
   
     #ifdef _TTY_POSIX_
-    #ifdef Q_WS_MAC
+    #ifdef Q_OS_MAC
       
       void onDeviceDiscoveredOSX( io_object_t service );
       void onDeviceTerminatedOSX( io_object_t service );
@@ -120,13 +120,13 @@ class QextSerialEnumerator : public QObject
       void setUpNotificationOSX( );
       IONotificationPortRef notificationPortRef;
       
-    #else /* Q_WS_MAC */
+    #else /* Q_OS_MAC */
       /*!
        * Search for serial ports on unix.
        * 	\param infoList list with result.
        */
       static void scanPortsNix(QList<QextPortInfo> & infoList);
-    #endif /* Q_WS_MAC */
+    #endif /* Q_OS_MAC */
     #endif /* _TTY_POSIX_ */
 
 	public:

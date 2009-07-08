@@ -21,7 +21,7 @@ QextSerialEnumerator::QextSerialEnumerator( )
 
 QextSerialEnumerator::~QextSerialEnumerator( )
 {
-  #ifdef Q_WS_MAC
+  #ifdef Q_OS_MAC
   IONotificationPortDestroy( notificationPortRef );
   #elif (defined _TTY_WIN_)
   UnregisterDeviceNotification( notificationHandle );
@@ -253,7 +253,7 @@ QextSerialEnumerator::~QextSerialEnumerator( )
 
 #ifdef _TTY_POSIX_
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 // OS X version
 #include <IOKit/IOKitLib.h>
 #include <IOKit/serial/IOSerialKeys.h>
@@ -543,7 +543,7 @@ bool QextSerialEnumerator::getServiceDetails( io_object_t service, QextPortInfo*
   return retval;
 }
 
-#else /* Q_WS_MAC */
+#else /* Q_OS_MAC */
 
 #include <unistd.h>
 #include <hal/libhal.h>
@@ -703,7 +703,7 @@ void QextSerialEnumerator::scanPortsNix(QList<QextPortInfo> & infoList)
 	return;
 }
 
-#endif /* Q_WS_MAC */
+#endif /* Q_OS_MAC */
 #endif /* _TTY_POSIX_ */
 
 
@@ -730,11 +730,11 @@ QList<QextPortInfo> QextSerialEnumerator::getPorts()
 			setupAPIScan(ports);
 	#endif /*_TTY_WIN_*/
 	#ifdef _TTY_POSIX_
-  #ifdef Q_WS_MAC
+  #ifdef Q_OS_MAC
     scanPortsOSX(ports); 
-  #else /* Q_WS_MAC */
+  #else /* Q_OS_MAC */
     scanPortsNix(ports);
-  #endif /* Q_WS_MAC */
+  #endif /* Q_OS_MAC */
 	#endif /*_TTY_POSIX_*/
 	
 	return ports;
@@ -746,11 +746,10 @@ void QextSerialEnumerator::setUpNotifications( )
     setUpNotificationWin( );
   #endif
   #ifdef _TTY_POSIX_
-  #ifdef Q_WS_MAC
-    (void)win;
+  #ifdef Q_OS_MAC
     setUpNotificationOSX( ); 
-  #else /* Q_WS_MAC */
+  #else /* Q_OS_MAC */
     qCritical("Notifications for *Nix/FreeBSD are not implemented yet");
-  #endif /* Q_WS_MAC */
+  #endif /* Q_OS_MAC */
 	#endif /*_TTY_POSIX_*/
 }
