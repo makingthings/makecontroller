@@ -1,0 +1,23 @@
+
+**********************************
+
+mchelper distribution notes
+
+**********************************
+
+ * packager is based on Inno Setup - download from http://www.jrsoftware.org/isdl.php.  would be a bit nicer to move over to nsis, but this is fine for now since it's such an easy install
+
+ * Qt libs - you need to copy the following dll's from your Qt install to this folder before packaging up the installer:
+  - mingwm10.dll
+  - QtCore4.dll
+  - QtGui4.dll
+  - QtNetwork4.dll
+  - QtXml4.dll
+
+Make sure you build in release mode, and don't grab debug dll's (they have a d on the end of their filename).
+
+ * If the USB .inf file has been updated, copy it over from the firmware distribution.  it's in firmware/core/makingthings.
+
+ * update the .iss, Info.rtf and ReadMe.rtf files at the very least with the appropriate version numbers, and possibly with any new changes to the instructions, etc.
+
+ * Run the packager - that's it!

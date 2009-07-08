@@ -1,0 +1,292 @@
+<ui version="4.0" >
+ <class>InspectorUi</class>
+ <widget class="QDialog" name="InspectorUi" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>551</width>
+    <height>405</height>
+   </rect>
+  </property>
+  <property name="sizePolicy" >
+   <sizepolicy vsizetype="Fixed" hsizetype="Fixed" >
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle" >
+   <string>Inspector</string>
+  </property>
+  <layout class="QGridLayout" >
+   <item row="0" column="0" >
+    <widget class="QGroupBox" name="groupBox" >
+     <property name="title" >
+      <string/>
+     </property>
+     <layout class="QGridLayout" >
+      <item row="0" column="0" >
+       <layout class="QGridLayout" >
+        <item row="0" column="0" >
+         <widget class="QLabel" name="nameLabel" >
+          <property name="text" >
+           <string>Name:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>nameEdit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1" colspan="5" >
+         <widget class="QLineEdit" name="nameEdit" />
+        </item>
+        <item row="1" column="0" >
+         <widget class="QLabel" name="sernumLabel" >
+          <property name="text" >
+           <string>Serial Number:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>serialEdit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1" colspan="5" >
+         <widget class="QLineEdit" name="serialEdit" />
+        </item>
+        <item row="2" column="0" >
+         <widget class="QLabel" name="versionLabel" >
+          <property name="text" >
+           <string>Version:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>versionEdit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1" colspan="5" >
+         <widget class="QLineEdit" name="versionEdit" >
+          <property name="focusPolicy" >
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="readOnly" >
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0" >
+         <widget class="QLabel" name="freememLabel" >
+          <property name="text" >
+           <string>Free Memory:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>freememEdit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1" colspan="5" >
+         <widget class="QLineEdit" name="freememEdit" >
+          <property name="focusPolicy" >
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="readOnly" >
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0" >
+         <spacer>
+          <property name="orientation" >
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0" >
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="4" column="1" colspan="5" >
+         <widget class="Line" name="line" >
+          <property name="sizePolicy" >
+           <sizepolicy vsizetype="Fixed" hsizetype="Expanding" >
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="orientation" >
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0" >
+         <widget class="QLabel" name="ipLabel" >
+          <property name="text" >
+           <string>IP Address:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>ipEdit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1" colspan="5" >
+         <widget class="QLineEdit" name="ipEdit" />
+        </item>
+        <item row="6" column="0" >
+         <widget class="QLabel" name="netmaskLabel" >
+          <property name="text" >
+           <string>Network Mask:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>netmaskEdit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="1" colspan="5" >
+         <widget class="QLineEdit" name="netmaskEdit" />
+        </item>
+        <item row="7" column="0" >
+         <widget class="QLabel" name="gatewayLabel" >
+          <property name="text" >
+           <string>Gateway/Router:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>gatewayEdit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="1" colspan="5" >
+         <widget class="QLineEdit" name="gatewayEdit" />
+        </item>
+        <item row="8" column="0" >
+         <widget class="QLabel" name="listenPortLabel" >
+          <property name="text" >
+           <string>Listen Port:</string>
+          </property>
+          <property name="alignment" >
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy" >
+           <cstring>listenPortEdit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="1" colspan="2" >
+         <widget class="QLineEdit" name="listenPortEdit" />
+        </item>
+        <item row="9" column="0" >
+         <spacer>
+          <property name="orientation" >
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0" >
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="9" column="1" >
+         <widget class="QCheckBox" name="dhcpBox" >
+          <property name="text" >
+           <string>DHCP</string>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="3" >
+         <widget class="QLabel" name="sendPortLabel" >
+          <property name="text" >
+           <string>Send Port:</string>
+          </property>
+          <property name="buddy" >
+           <cstring>sendPortEdit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="4" colspan="2" >
+         <widget class="QLineEdit" name="sendPortEdit" />
+        </item>
+        <item row="9" column="2" colspan="4" >
+         <spacer>
+          <property name="orientation" >
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0" >
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="10" column="0" colspan="4" >
+         <spacer>
+          <property name="orientation" >
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0" >
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="10" column="5" >
+         <widget class="QPushButton" name="applyButton" >
+          <property name="text" >
+           <string>Apply</string>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="4" >
+         <widget class="QPushButton" name="revertButton" >
+          <property name="text" >
+           <string>Revert</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>nameEdit</tabstop>
+  <tabstop>serialEdit</tabstop>
+  <tabstop>ipEdit</tabstop>
+  <tabstop>netmaskEdit</tabstop>
+  <tabstop>gatewayEdit</tabstop>
+  <tabstop>listenPortEdit</tabstop>
+  <tabstop>sendPortEdit</tabstop>
+  <tabstop>dhcpBox</tabstop>
+  <tabstop>revertButton</tabstop>
+  <tabstop>applyButton</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>
