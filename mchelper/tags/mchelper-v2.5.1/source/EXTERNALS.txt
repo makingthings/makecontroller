@@ -1,0 +1,7 @@
+#
+# Grab qextserialport from shared repo
+# Apply/update externals definitions with this file by typing
+#   svn propset svn:externals -F EXTERNALS.txt .
+# 
+
+qextserialport http://makecontroller.googlecode.com/svn/shared/qextserialport
