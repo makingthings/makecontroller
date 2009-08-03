@@ -42,6 +42,9 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   // remove when boards have been discovered
   deviceListPlaceholder = QListWidgetItem( tr("No Make Controllers found...") );
   deviceListPlaceholder.setData( Qt::ForegroundRole, Qt::gray );
+  Qt::ItemFlags flags = deviceListPlaceholder.flags();
+  flags &= ~Qt::ItemIsSelectable; // not selectable
+  deviceListPlaceholder.setFlags( flags );
   ui.deviceList->addItem( &deviceListPlaceholder );
 
   // default these to off until we see a board
@@ -171,7 +174,7 @@ void MainWindow::closeEvent( QCloseEvent *qcloseevent )
 */
 void DeviceList::contextMenuEvent(QContextMenuEvent *event)
 {
-  Board *brd = (Board*)itemAt(event->pos());
+  Board *brd = dynamic_cast<Board*>(itemAt(event->pos()));
   if(brd) {
     QMenu menu(this);
     MainWindow *mw = brd->mainWindowRef();
@@ -462,22 +465,14 @@ void MainWindow::setBoardName( const QString & key, const QString & name )
 */
 Board* MainWindow::getCurrentBoard( )
 {
-  QListWidgetItem* item = ui.deviceList->currentItem( );
-  if( item == &deviceListPlaceholder )
-    item = 0;
-  // sometimes the board can become unselected - it might not be the one that
-  // was most recently selected, but give it a shot and grab the last one in this case
-  else if(item == 0 && ui.deviceList->count() != 0) {
-    ui.deviceList->setCurrentRow(ui.deviceList->count()-1);
-    item = ui.deviceList->currentItem( );
-  }
-  return (Board*)item;
+  return dynamic_cast<Board*>(ui.deviceList->currentItem());
 }
 
 QList<Board*> MainWindow::getConnectedBoards( )
 {
   QList<Board*> boardList;
-  for( int i = 0; i < ui.deviceList->count( ); i++ ) {
+  int len = ui.deviceList->count();
+  for( int i = 0; i < len; i++ ) {
     if( ui.deviceList->item( i ) != &deviceListPlaceholder )
       boardList.append( (Board*)ui.deviceList->item( i ) );
   }
