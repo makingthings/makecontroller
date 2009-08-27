@@ -134,9 +134,9 @@ one not be immediately available when trying to transmit a frame. */
       ( ( unsigned portLONG ) AT91C_PB6_ERX1			) | \
       ( ( unsigned portLONG ) AT91C_PB13_ERX2			) | \
       ( ( unsigned portLONG ) AT91C_PB14_ERX3			) | \
-      ( ( unsigned portLONG ) AT91C_PB15_ERXDV		) | \
+      ( ( unsigned portLONG ) AT91C_PB15_ERXDV_ECRSDV		) | \
       ( ( unsigned portLONG ) AT91C_PB8_EMDC			) | \
-      ( ( unsigned portLONG ) AT91C_PB4_ECRS_ECRSDV	) | \
+      ( ( unsigned portLONG ) AT91C_PB4_ECRS	) | \
       ( ( unsigned portLONG ) AT91C_PB9_EMDIO			) | \
       ( ( unsigned portLONG ) AT91C_PB7_ERXER			) | \
       ( ( unsigned portLONG ) AT91C_PB17_ERXCK		);

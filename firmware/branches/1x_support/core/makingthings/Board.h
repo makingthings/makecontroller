@@ -40,4 +40,25 @@
 #define MCK             47923200   // MCK (PLLRC div by 2)
 #define MCKKHz          (MCK/1000) //
 
+/*****************
+      USB
+*****************/
+/// Chip has a UDP controller.
+#define BOARD_USB_UDP
+
+/// Indicates the D+ pull-up is always connected.
+#define BOARD_USB_PULLUP_ALWAYSON
+
+/// Number of endpoints in the USB controller.
+#define BOARD_USB_NUMENDPOINTS                  6
+
+/// Returns the maximum packet size of the given endpoint.
+#define BOARD_USB_ENDPOINTS_MAXPACKETSIZE(i)    ((((i) == 4) || ((i) == 5)) ? 256 : (((i) == 0) ? 8 : 64))
+
+/// Returns the number of FIFO banks for the given endpoint.
+#define BOARD_USB_ENDPOINTS_BANKS(i)            ((((i) == 0) || ((i) == 3)) ? 1 : 2)
+
+/// USB attributes configuration descriptor (bus or self powered, remote wakeup)
+#define BOARD_USB_BMATTRIBUTES                  USBConfigurationDescriptor_BUSPOWERED_NORWAKEUP
+
 #endif /* Board_h */
