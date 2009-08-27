@@ -302,21 +302,21 @@ int Spi_Init()
   
     // Disable their peripherality
     AT91C_BASE_PIOA->PIO_PDR = 
-        AT91C_PA16_MISO0 | 
-        AT91C_PA17_MOSI0 | 
-        AT91C_PA18_SPCK0; 
+        AT91C_PA16_SPI0_MISO | 
+        AT91C_PA17_SPI0_MOSI | 
+        AT91C_PA18_SPI0_SPCK;
   
     // Kill the pull up on the Input
-    AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PA16_MISO0;
+    AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PA16_SPI0_MISO;
   
     // Make sure the input isn't an output
-    AT91C_BASE_PIOA->PIO_ODR = AT91C_PA16_MISO0;
+    AT91C_BASE_PIOA->PIO_ODR = AT91C_PA16_SPI0_MISO;
   
     // Select the correct Devices
     AT91C_BASE_PIOA->PIO_ASR = 
-        AT91C_PA16_MISO0 | 
-        AT91C_PA17_MOSI0 | 
-        AT91C_PA18_SPCK0; 
+        AT91C_PA16_SPI0_MISO | 
+        AT91C_PA17_SPI0_MOSI | 
+        AT91C_PA18_SPI0_SPCK;
   
     // Elsewhere need to do this for the select lines
     // AT91C_BASE_PIOB->PIO_BSR = 
