@@ -88,7 +88,7 @@ static CDCDSerialDriver cdcdSerialDriver;
 /// SetLineCoding request has been retrieved. Sends a zero-length packet
 /// to the host for acknowledging the request.
 //------------------------------------------------------------------------------
-static void CDCDSerialDriver_SetLineCodingCallback()
+static void CDCDSerialDriver_SetLineCodingCallback( void )
 {
     USBD_Write(0, 0, 0, 0, 0);
 }
@@ -96,7 +96,7 @@ static void CDCDSerialDriver_SetLineCodingCallback()
 //------------------------------------------------------------------------------
 /// Receives new line coding information from the USB host.
 //------------------------------------------------------------------------------
-static void CDCDSerialDriver_SetLineCoding()
+static void CDCDSerialDriver_SetLineCoding( void )
 {
     // // trace_LOG(trace_INFO, "sLineCoding ");
 
@@ -111,7 +111,7 @@ static void CDCDSerialDriver_SetLineCoding()
 /// Sends the current line coding information to the host through Control
 /// endpoint 0.
 //------------------------------------------------------------------------------
-static void CDCDSerialDriver_GetLineCoding()
+static void CDCDSerialDriver_GetLineCoding( void )
 {
     // trace_LOG(trace_INFO, "gLineCoding ");
 
@@ -161,7 +161,7 @@ void USBDCallbacks_RequestReceived(const USBGenericRequest *request)
 //------------------------------------------------------------------------------
 /// Initializes the USB Device CDC serial driver & USBD Driver.
 //------------------------------------------------------------------------------
-void CDCDSerialDriver_Initialize()
+void CDCDSerialDriver_Initialize( void )
 {
     // trace_LOG(trace_INFO, "CDCDSerialDriver_Initialize\n\r");
     
@@ -269,7 +269,7 @@ unsigned char CDCDSerialDriver_Write(void *data,
 //------------------------------------------------------------------------------
 /// Returns the current status of the RS-232 line.
 //------------------------------------------------------------------------------
-unsigned short CDCDSerialDriver_GetSerialState()
+unsigned short CDCDSerialDriver_GetSerialState( void )
 {
     return cdcdSerialDriver.serialState;
 }
