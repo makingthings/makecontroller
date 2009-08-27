@@ -75,10 +75,13 @@
 #ifdef OSC
 
 #include "osc.h"
+#include "usb_serial.h"
+
 #include "network.h"
 #include "rtos.h"
 #include "debug.h"
 #include "types.h"
+
 
 // These for the unwrapped semaphore
 #include "FreeRTOS.h"
@@ -426,14 +429,14 @@ void Osc_UsbTask( void* parameters )
   Osc_ResetChannel( ch );
 
   // Chill until the USB connection is up
-  while ( !Usb_GetActive() )
+  while ( !UsbSerial_isActive() )
     Sleep( 100 );
 
   ch->running = true;
 
   while ( true )
   {
-    int length = Usb_SlipReceive( ch->incoming, OSC_MAX_MESSAGE_IN );
+    int length = UsbSerial_readSlip( ch->incoming, OSC_MAX_MESSAGE_IN );
     if ( length > 0 )
       Osc_ReceivePacket( channel, ch->incoming, length );
     Sleep( 1 );
@@ -444,7 +447,7 @@ int Osc_UsbPacketSend( char* packet, int length, int replyAddress, int replyPort
 {
   (void)replyAddress;
   (void)replyPort;
-  return Usb_SlipSend( packet, length );
+  return UsbSerial_writeSlip( packet, length );
 }
 #endif // MAKE_CTRL_USB
 

@@ -32,9 +32,8 @@ THUMB_SRC= \
   $(MAKINGTHINGS)/serial.c \
   $(MAKINGTHINGS)/pwm.c \
   $(MAKINGTHINGS)/spi.c \
-  $(MAKINGTHINGS)/USB-CDC.c \
+  $(MAKINGTHINGS)/usb_serial.c \
   $(MAKINGTHINGS)/rtos.c \
-  $(MAKINGTHINGS)/usb.c \
   $(MAKINGTHINGS)/network.c \
   $(MAKINGTHINGS)/system.c \
   $(LIBRARIES)/xbee/xbee.c \
@@ -82,18 +81,38 @@ THUMB_SRC= \
   $(LWIP)/src/core/udp.c \
   $(LWIP)/src/core/ipv4/ip_frag.c \
   $(MAKINGTHINGS)/osc.c \
-  $(MAKINGTHINGS)/osc_patternmatch.c
+  $(MAKINGTHINGS)/osc_patternmatch.c \
+  $(USB)/device/cdc-serial/CDCDSerialDriver.c \
+  $(USB)/device/cdc-serial/CDCDSerialDriverDescriptors.c \
+  $(USB)/device/core/USBDCallbacks_Initialized.c \
+  $(USB)/device/core/USBDCallbacks_Reset.c \
+  $(USB)/device/core/USBDCallbacks_Resumed.c \
+  $(USB)/device/core/USBDCallbacks_Suspended.c \
+  $(USB)/device/core/USBDDriverCb_CfgChanged.c \
+  $(USB)/device/core/USBDDriverCb_IfSettingChanged.c \
+  $(USB)/device/core/USBDDriver.c \
+  $(USB)/common/core/USBSetAddressRequest.c \
+  $(USB)/common/core/USBGenericDescriptor.c \
+  $(USB)/common/core/USBGenericRequest.c \
+  $(USB)/common/core/USBGetDescriptorRequest.c \
+  $(USB)/common/core/USBSetConfigurationRequest.c \
+  $(USB)/common/core/USBFeatureRequest.c \
+  $(USB)/common/core/USBEndpointDescriptor.c \
+  $(USB)/common/core/USBConfigurationDescriptor.c \
+  $(USB)/common/core/USBInterfaceRequest.c \
+  $(USB)/common/cdc/CDCSetControlLineStateRequest.c \
+  $(USB)/common/cdc/CDCLineCoding.c \
   
 # Source files that must be built in ARM mode.
 ARM_SRC= \
   $(FREERTOS)/portable/GCC/ARM7_AT91SAM7S/portISR.c \
   $(MAKINGTHINGS)/SAM7_EMAC_ISR.c \
-  $(MAKINGTHINGS)/USBIsr.c \
   $(MAKINGTHINGS)/analogin_isr.c \
   $(MAKINGTHINGS)/fasttimer_isr.c \
   $(MAKINGTHINGS)/serial_isr.c \
   $(MAKINGTHINGS)/timer_isr.c \
-  $(MAKINGTHINGS)/can_isr.c
+  $(MAKINGTHINGS)/can_isr.c \
+  $(USB)/device/core/USBD_UDP.c
   
 # All the include directories need to be appended here
 INCLUDEDIRS = \
@@ -109,12 +128,15 @@ INCLUDEDIRS = \
 -I$(LIBRARIES)/webserver  \
 -I$(LIBRARIES)/xbee  \
 -I$(MAKINGTHINGS)  \
--I$(MAKINGTHINGS)/testing  \
 -I$(LWIP)/src/include  \
 -I$(LWIP)/contrib/port/FreeRTOS/AT91SAM7X  \
 -I$(FREERTOS)/include  \
 -I$(FREERTOS)/portable/GCC/ARM7_AT91SAM7S  \
 -I$(LWIP)/src/include/ipv4 \
+-I$(USB)/device/cdc-serial \
+-I$(USB)/device/core \
+-I$(USB)/common/core \
+-I$(USB)/common/cdc
 
 ############################################################################
 # Below here should not change from project to project

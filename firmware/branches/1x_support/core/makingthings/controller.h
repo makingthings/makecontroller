@@ -16,11 +16,7 @@
 *********************************************************************************/
 
 /*
-	CONTROLLER.h
-
-  All the includes needed for just the Controller Board to work.
-
-  MakingThings
+	General includes for core controller functionality.
 */
 
 #ifndef CONTROLLER_H
@@ -39,28 +35,21 @@
 #include "fasttimer.h"
 #include "debug.h"
 #include "can.h"
+#include "usb_serial.h"
 #include "osc.h"
 #include "system.h"
-#include "usb.h"
 #include "network.h"
 #include "serial.h"
+
 #ifdef FACTORY_TESTING
 #include "ctestee.h"
 #include "atestee.h"
 #endif
 
-/* Make Helper Functions */
-
 void Run( void );
 
-void Timer0Isr( void );
-void Timer0Init( void );
-void Timer0Set( int t );
-int Timer0Get( int* jitterTotal, int* jitterMax, int* jitterMaxAllDay );
-
-void FastIsr( void );
-
-void DisableFIQFromThumb( void );
-void EnableFIQFromThumb( void );
+#define UNUSED(x) (void)x
+#define MIN(x, y) (x < y) ? x : y;
+#define MAX(x, y) (x > y) ? x : y;
 
 #endif

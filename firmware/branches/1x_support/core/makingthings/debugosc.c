@@ -23,6 +23,7 @@
 #ifdef OSC
 
 #include "debug.h"
+#include "usb_serial.h"
 #include <stdio.h>
 #include "osc.h"
 #include <stdarg.h>
@@ -277,7 +278,7 @@ int Debug( int level, char* format, ... )
     vsnprintf( DebugData->message, DEBUG_MAX_MESSAGE, format, args ); 
     // va_end( args );
     #ifdef MAKE_CTRL_USB
-    if ( DebugData->usb && Usb_GetActive() )
+    if ( DebugData->usb && UsbSerial_isActive() )
     {
       Osc_CreateMessage( OSC_CHANNEL_USB, "/debug/message", ",s", DebugData->message );
       Osc_SendPacket( OSC_CHANNEL_USB );

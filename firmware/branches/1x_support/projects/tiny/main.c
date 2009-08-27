@@ -9,7 +9,7 @@
 
 #include "AT91SAM7X256.h"
 #include "led.h"
-void swi_handler( void );
+// void swi_handler( void );
 void kill( void );
 
 int main( void )
@@ -38,10 +38,10 @@ int main( void )
 
 }
 
-void swi_handler( void )
-{
-
-}
+// void swi_handler( void )
+// {
+// 
+// }
 
 void kill( void )
 {
