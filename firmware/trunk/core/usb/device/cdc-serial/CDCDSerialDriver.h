@@ -95,7 +95,7 @@
 //      Exported functions
 //------------------------------------------------------------------------------
 
-extern void CDCDSerialDriver_Initialize();
+extern void CDCDSerialDriver_Initialize( void );
 
 extern void CDCDSerialDriver_RequestHandler(const USBGenericRequest *request);
 
@@ -111,7 +111,7 @@ extern unsigned char CDCDSerialDriver_Read(
     TransferCallback callback,
     void *argument);
 
-extern unsigned short CDCDSerialDriver_GetSerialState();
+extern unsigned short CDCDSerialDriver_GetSerialState( void );
 
 extern void CDCDSerialDriver_SetSerialState(unsigned short serialState);
 
