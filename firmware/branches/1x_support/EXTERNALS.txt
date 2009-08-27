@@ -1,0 +1,7 @@
+#
+# Grab usb from trunk
+# Apply/update externals definitions with this file by typing
+#   svn propset svn:externals -F EXTERNALS.txt .
+# 
+
+core/usb http://makecontroller.googlecode.com/svn/firmware/trunk/core/usb

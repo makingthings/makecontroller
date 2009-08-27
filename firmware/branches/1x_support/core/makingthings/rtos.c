@@ -922,7 +922,8 @@ void* MutexCreate( )
 */
 int SemaphoreTake( void* semaphore, int blockTime )
 {
-	return xSemaphoreTake( semaphore, blockTime / portTICK_RATE_MS );
+	blockTime = ( blockTime < 0 ) ? portMAX_DELAY : blockTime / portTICK_RATE_MS;
+	return xSemaphoreTake( semaphore, blockTime );
 }
 
 /**	

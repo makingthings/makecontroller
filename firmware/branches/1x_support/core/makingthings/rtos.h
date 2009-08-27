@@ -60,6 +60,7 @@ int QueueSendToFrontFromISR( void* queue, void* itemToSend, int taskPreviouslyWo
 int QueueSendToBackFromISR( void* queue, void* itemToSend, int taskPreviouslyWoken );
 int QueueReceiveFromISR( void* queue, void* buffer, long* taskWoken );
 
+typedef void* Semaphore;
 void* SemaphoreCreate( void );
 void* MutexCreate( void );
 int SemaphoreTake( void* semaphore, int blockTime );
