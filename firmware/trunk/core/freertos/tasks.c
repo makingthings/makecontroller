@@ -2117,7 +2117,7 @@ void xTaskSetContext( void* task, void* ctx )
 {
   tskTCB* tcb = (tskTCB*)task;
   if( tcb )
-    return tcb->context = ctx;
+    tcb->context = ctx;
 }
 
 void* xTaskGetContext( void* task )
