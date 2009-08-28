@@ -325,25 +325,6 @@ char* TaskGetName( void* task )
 }
 
 /**	
-	Read the amount of stack initially allocated for a task.
-	Each task is allocated a certain amount of stack space when it's created.  Use this function to
-	determine how much stack space a task was originally given.
-	@param task A pointer to the task.
-  @return An integer specifying the amount of stack, in bytes, that this task was allocated.
-	@see TaskGetRemainingStack( )
-	
-\par Example
-\code
-void *taskPtr = TaskCreate( MyTask, "Mine", 1000, 0, 1 );
-int stack = TaskGetStackAllocated( taskPtr ); // will return 1000
-\endcode
-*/
-int TaskGetStackAllocated( void* task )
-{
-  return xTaskGetStackAllocated( task );
-}
-
-/**	
 	Get a pointer to the task that's currently running.
   @return A pointer to the task that's currently running.
 	
@@ -744,14 +725,14 @@ void QueueDelete( void* queue )
     char buffer[100];
   };
 	
-	int taskWokenByPost = 0; // be sure to initialize to 0
+	long taskWokenByPost = 0; // be sure to initialize to 0
 
   // create a queue that can hold 5 pointers to myData structures
 	struct MyData_ myData;
   void* myQueue = QueueCreate( 5, sizeof( myData* ) );
   if( myQueue )
   {
-    taskWokenByPost = QueueSendToFrontFromISR( myQueue, (void*)&myData, taskWokenByPost )
+    QueueSendToFrontFromISR( myQueue, (void*)&myData, &taskWokenByPost )
 		if( taskWokenByPost )
     {
         // We should switch context so the ISR returns to a different task.    
@@ -760,7 +741,7 @@ void QueueDelete( void* queue )
   }
   \endcode
 */
-int QueueSendToFrontFromISR( void* queue, void* itemToSend, int taskPreviouslyWoken )
+int QueueSendToFrontFromISR( void* queue, void* itemToSend, long* taskPreviouslyWoken )
 {
   return xQueueSendToFrontFromISR( queue, itemToSend, taskPreviouslyWoken );
 }
@@ -785,14 +766,14 @@ int QueueSendToFrontFromISR( void* queue, void* itemToSend, int taskPreviouslyWo
     char buffer[100];
   };
 	
-	int taskWokenByPost = 0; // be sure to initialize to 0
+	long taskWokenByPost = 0; // be sure to initialize to 0
 
   // create a queue that can hold 5 pointers to myData structures
 	struct MyData_ myData;
   void* myQueue = QueueCreate( 5, sizeof( myData* ) );
   if( myQueue )
   {
-    taskWokenByPost = QueueSendToBackFromISR( myQueue, (void*)&myData, taskWokenByPost )
+    QueueSendToBackFromISR( myQueue, (void*)&myData, &taskWokenByPost )
 		if( taskWokenByPost )
     {
         // We should switch context so the ISR returns to a different task.    
@@ -801,7 +782,7 @@ int QueueSendToFrontFromISR( void* queue, void* itemToSend, int taskPreviouslyWo
   }
   \endcode
 */
-int QueueSendToBackFromISR( void* queue, void* itemToSend, int taskPreviouslyWoken )
+int QueueSendToBackFromISR( void* queue, void* itemToSend, long* taskPreviouslyWoken )
 {
   return xQueueSendToBackFromISR( queue, itemToSend, taskPreviouslyWoken );
 }
@@ -819,14 +800,14 @@ int QueueSendToBackFromISR( void* queue, void* itemToSend, int taskPreviouslyWok
   \par Example
   \code
 	
-	int taskWokenByReceive = 0; // be sure to initialize to 0
+	long taskWokenByReceive = 0; // be sure to initialize to 0
 	void* myQueue = QueueCreate( 5, sizeof( char ) );
   if( myQueue == 0 )
 		// queue couldn't be created...
 	
 	char data;
 
-	while( QueueReceiveFromISR( myQueue, (void*)&data, taskWokenByReceive ) )
+	while( QueueReceiveFromISR( myQueue, (void*)&data, &taskWokenByReceive ) )
 	{
 		// process new items from queue here
 		
@@ -968,14 +949,13 @@ int SemaphoreGive( void* semaphore )
 	SemaphoreCreate( mySemaphore );
 	void TimerISR( )
 	{
-		static int taskWoken = 0;
-		taskWoken = SemaphoreGiveFromISR( mySemaphore, taskWoken );
-		// If taskWoken was set to true you may want to yield (force a switch)
-    // here.
+		static long taskWoken = 0;
+		SemaphoreGiveFromISR( mySemaphore, &taskWoken );
+		// If taskWoken was set to true you may want to yield (force a switch) here.
 	}
   \endcode
 */
-int SemaphoreGiveFromISR( void* semaphore, int taskWoken )
+int SemaphoreGiveFromISR( void* semaphore, long* taskWoken )
 {
 	return xSemaphoreGiveFromISR( semaphore, taskWoken );
 }
