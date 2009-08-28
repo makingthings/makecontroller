@@ -56,6 +56,15 @@
 
 #if defined(BOARD_USB_UDP)
 
+// MakingThings
+#if (CONTROLLER_VERSION <= 100)
+  #define USB_PULLUP AT91C_PIO_PA11
+  #define USB_DETECT AT91C_PIO_PA10
+#elif (CONTROLLER_VERSION >= 200)
+  #define USB_PULLUP AT91C_PIO_PA30
+  #define USB_DETECT AT91C_PIO_PA29
+#endif
+
 //------------------------------------------------------------------------------
 //         Definitions
 //------------------------------------------------------------------------------
@@ -1186,6 +1195,16 @@ void USBD_Disconnect(void)
 #elif !defined(BOARD_USB_PULLUP_ALWAYSON)
     #error Unsupported pull-up type.
 #endif
+    
+    // Turn the USB line into an input, kill the pull up
+    AT91C_BASE_PIOA->PIO_PER = USB_DETECT;	
+    AT91C_BASE_PIOA->PIO_ODR = USB_DETECT;
+    AT91C_BASE_PIOA->PIO_PPUDR = USB_DETECT;
+
+  // Setup the PIO for the USB pull up resistor - Start low: no USB
+		AT91C_BASE_PIOA->PIO_PER = USB_PULLUP;
+		AT91C_BASE_PIOA->PIO_OER = USB_PULLUP;
+    AT91C_BASE_PIOA->PIO_CODR = USB_PULLUP;
 
     // Device returns to the Powered state
     if (deviceState > USBD_STATE_POWERED) {
@@ -1215,6 +1234,12 @@ void USBD_Init(void)
 #elif !defined(BOARD_USB_PULLUP_ALWAYSON)
     #error Missing pull-up definition.
 #endif
+    
+    AT91C_BASE_PIOA->PIO_PER = USB_DETECT;
+    AT91C_BASE_PIOA->PIO_ODR = USB_DETECT;
+    AT91C_BASE_PIOA->PIO_PER = USB_PULLUP;
+		AT91C_BASE_PIOA->PIO_OER = USB_PULLUP;
+    AT91C_BASE_PIOA->PIO_CODR = USB_PULLUP;
 
     // Device is in the Attached state
     deviceState = USBD_STATE_SUSPENDED;
@@ -1223,23 +1248,8 @@ void USBD_Init(void)
     UDP_EnableUsbClock();
 
     AT91C_BASE_UDP->UDP_IDR = 0xFE;
-
     AT91C_BASE_UDP->UDP_IER = AT91C_UDP_WAKEUP;
-    
-    #if (CONTROLLER_VERSION <= 100)
-      #define USB_PULLUP AT91C_PIO_PA11
-      #define USB_DETECT AT91C_PIO_PA10
-    #elif (CONTROLLER_VERSION >= 200)
-      #define USB_PULLUP AT91C_PIO_PA30
-      #define USB_DETECT AT91C_PIO_PA29
-    #endif
-
     AT91C_BASE_CKGR->CKGR_PLLR |= AT91C_CKGR_USBDIV_1; // Set the PLL UsbSerial Divider
-    AT91C_BASE_PIOA->PIO_PER = USB_DETECT;
-    AT91C_BASE_PIOA->PIO_ODR = USB_DETECT;
-    AT91C_BASE_PIOA->PIO_PER = USB_PULLUP;
-		AT91C_BASE_PIOA->PIO_OER = USB_PULLUP;
-    AT91C_BASE_PIOA->PIO_CODR = USB_PULLUP;
 
     // Configure interrupts
     USBDCallbacks_Initialized();
