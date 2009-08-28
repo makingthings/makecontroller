@@ -7,3 +7,4 @@
 core/usb http://makecontroller.googlecode.com/svn/firmware/trunk/core/usb
 core/freertos http://makecontroller.googlecode.com/svn/firmware/trunk/core/freertos
 core/lwip http://makecontroller.googlecode.com/svn/firmware/trunk/core/lwip
+core/startup http://makecontroller.googlecode.com/svn/firmware/trunk/core/startup
