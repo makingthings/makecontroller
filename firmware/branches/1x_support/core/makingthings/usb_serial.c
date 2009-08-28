@@ -54,6 +54,7 @@ static UsbSerial usbSerial;
 
 void UsbSerial_begin( void )
 {
+  USBD_Disconnect(); // tell the host we're not attached
   CDCDSerialDriver_Initialize();
   USBD_Connect();
   usbSerial.readSemaphore = SemaphoreCreate();
@@ -292,8 +293,7 @@ int UsbSerial_writeSlip( const char *buffer, int length )
 
    *obp++ = END; // tell the receiver that we're done sending the packet
    int sendLength = obp - usbSerial.slipOutBuf;
-   UsbSerial_write( usbSerial.slipOutBuf, sendLength );
-   return CONTROLLER_OK;
+   return UsbSerial_write( usbSerial.slipOutBuf, sendLength );
 }
 
 #endif // MAKE_CTRL_USB
