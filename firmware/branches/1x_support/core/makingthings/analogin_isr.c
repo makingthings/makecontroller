@@ -53,11 +53,11 @@ void AnalogInIsr_Handler( void );
 
 void AnalogInIsr_Handler( void )
 {
-  portCHAR cTaskWokenByPost = pdFALSE; 
+  portBASE_TYPE cTaskWokenByPost = pdFALSE; 
 
   int status = AT91C_BASE_ADC->ADC_SR;
   if ( status & AT91C_ADC_DRDY )
-  	cTaskWokenByPost = xSemaphoreGiveFromISR( AnalogIn->doneSemaphore, cTaskWokenByPost );
+  	xSemaphoreGiveFromISR( AnalogIn->doneSemaphore, &cTaskWokenByPost );
 
   int value = AT91C_BASE_ADC->ADC_LCDR;
   (void)value;

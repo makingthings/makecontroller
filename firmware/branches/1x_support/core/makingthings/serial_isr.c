@@ -90,7 +90,7 @@ void SerialIsr_Handler( void )
       characters. */ 
       int t = sp->at91UARTRegs->US_RHR;
       cChar = t & 0xFF; 
-      xTaskWokenByPost = xQueueSendFromISR( sp->receiveQueue, &cChar, xTaskWokenByPost ); 
+      xQueueSendFromISR( sp->receiveQueue, &cChar, &xTaskWokenByPost ); 
     }
 
     xTaskWokenByTx = xTaskWokenByTx || xTaskWokenByTxThis; 
