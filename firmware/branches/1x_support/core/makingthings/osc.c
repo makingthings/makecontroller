@@ -436,7 +436,7 @@ void Osc_UsbTask( void* parameters )
 
   while ( true )
   {
-    int length = UsbSerial_readSlip( ch->incoming, OSC_MAX_MESSAGE_IN );
+    int length = UsbSerial_readSlip( ch->incoming, OSC_MAX_MESSAGE_IN, -1 );
     if ( length > 0 )
       Osc_ReceivePacket( channel, ch->incoming, length );
     Sleep( 1 );
@@ -447,7 +447,7 @@ int Osc_UsbPacketSend( char* packet, int length, int replyAddress, int replyPort
 {
   (void)replyAddress;
   (void)replyPort;
-  return UsbSerial_writeSlip( packet, length );
+  return UsbSerial_writeSlip( packet, length, -1 );
 }
 #endif // MAKE_CTRL_USB
 
