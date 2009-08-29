@@ -23,6 +23,9 @@
 
 #include "types.h"
 
+#define USBSER_MAX_READ BOARD_USB_ENDPOINTS_MAXPACKETSIZE(CDCDSerialDriverDescriptors_DATAOUT)
+#define USBSER_MAX_WRITE BOARD_USB_ENDPOINTS_MAXPACKETSIZE(CDCDSerialDriverDescriptors_DATAIN)
+
 /**
   Virutal serial port USB communication.
   This allows the Make Controller look like a serial modem to your desktop, which it can then easily
@@ -55,9 +58,9 @@
 void UsbSerial_begin( void );
 bool UsbSerial_isActive( void );
 int UsbSerial_read( char *buffer, int length, int timeout );
-int UsbSerial_write( const char *buffer, int length );
-int UsbSerial_readSlip( char *buffer, int length );
-int UsbSerial_writeSlip( const char *buffer, int length );
+int UsbSerial_write( const char *buffer, int length, int timeout );
+int UsbSerial_readSlip( char *buffer, int length, int timeout );
+int UsbSerial_writeSlip( const char *buffer, int length, int timeout );
 
 #endif // MAKE_CTRL_USB
 
