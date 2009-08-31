@@ -71,15 +71,12 @@ win32{
 #              qextserialport
 # *******************************************
 INCLUDEPATH += source/qextserialport
-HEADERS +=  source/qextserialport/qextserialbase.h \
-            source/qextserialport/qextserialport.h \
+HEADERS +=  source/qextserialport/qextserialport.h \
             source/qextserialport/qextserialenumerator.h
             
-SOURCES +=  source/qextserialport/qextserialbase.cpp \
-            source/qextserialport/qextserialport.cpp \
+SOURCES +=  source/qextserialport/qextserialport.cpp \
             source/qextserialport/qextserialenumerator.cpp
 
-unix:HEADERS  += source/qextserialport/posix_qextserialport.h
 unix:SOURCES  += source/qextserialport/posix_qextserialport.cpp
 unix:DEFINES  += _TTY_POSIX_
 macx: LIBS += -framework IOKit # use IOKit on OS X
@@ -90,7 +87,6 @@ unix{
   }
 }
 
-win32:HEADERS += source/qextserialport/win_qextserialport.h
 win32:SOURCES += source/qextserialport/win_qextserialport.cpp
 win32:DEFINES += _TTY_WIN_
 

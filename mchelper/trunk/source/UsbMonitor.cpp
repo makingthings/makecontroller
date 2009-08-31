@@ -34,7 +34,7 @@ UsbMonitor::UsbMonitor(MainWindow* mw) : QThread()
                        mainWindow, SLOT(onUsbDeviceArrived(QStringList, BoardType::Type)));
   connect(this, SIGNAL(boardsRemoved(QString)), mainWindow, SLOT(onDeviceRemoved(QString)));
   connect( &enumerator, SIGNAL(deviceDiscovered(QextPortInfo)), this, SLOT(onDeviceDiscovered(QextPortInfo)));
-  connect( &enumerator, SIGNAL(deviceTerminated(QextPortInfo)), this, SLOT(onDeviceTerminated(QextPortInfo)));
+  connect( &enumerator, SIGNAL(deviceRemoved(QextPortInfo)), this, SLOT(onDeviceTerminated(QextPortInfo)));
   #ifdef Q_OS_MAC
   enumerator.setUpNotifications();
   #elif (defined Q_OS_WIN)
