@@ -3,111 +3,146 @@
  * \author Michal Policht
  * \see QextSerialEnumerator
  */
- 
+
 #ifndef _QEXTSERIALENUMERATOR_H_
 #define _QEXTSERIALENUMERATOR_H_
 
-#include <QObject>
+
 #include <QString>
 #include <QList>
+#include <QObject>
 
 #ifdef _TTY_WIN_
-	#include <windows.h>
-	#include <setupapi.h>
-  #include <dbt.h>
+    #include <windows.h>
+    #include <setupapi.h>
+    #include <dbt.h>
 #endif /*_TTY_WIN_*/
 
 #ifdef Q_OS_MAC
-  #include <IOKit/usb/IOUSBLib.h>
+    #include <IOKit/usb/IOUSBLib.h>
 #endif
 
 /*!
  * Structure containing port information.
  */
 struct QextPortInfo {
-	QString portName;		///< Port name.
-	QString physName;		///< Physical name.
-	QString friendName;	///< Friendly name.
-	QString enumName;		///< Enumerator name.
-  int vendorID;       ///< Vendor ID.
-  int productID;      ///< Product ID
+    QString portName;   ///< Port name.
+    QString physName;   ///< Physical name.
+    QString friendName; ///< Friendly name.
+    QString enumName;   ///< Enumerator name.
+    int vendorID;       ///< Vendor ID.
+    int productID;      ///< Product ID
 };
 
 #ifdef _TTY_WIN_
+#ifdef QT_GUI_LIB
 #include <QWidget>
 class QextSerialEnumerator;
 
 class QextSerialRegistrationWidget : public QWidget
 {
-  public:
-    QextSerialRegistrationWidget( QextSerialEnumerator* qese ) {
-      this->qese = qese;
-    }
-    ~QextSerialRegistrationWidget( ) { }
+    Q_OBJECT
+    public:
+        QextSerialRegistrationWidget( QextSerialEnumerator* qese ) {
+            this->qese = qese;
+        }
+        ~QextSerialRegistrationWidget( ) { }
 
-  protected:
-    QextSerialEnumerator* qese;
-    bool winEvent( MSG* message, long* result );
+    protected:
+        QextSerialEnumerator* qese;
+        bool winEvent( MSG* message, long* result );
 };
+#endif // QT_GUI_LIB
 #endif // _TTY_WIN_
 
 /*!
- * Serial port enumerator. This class provides list of ports available in the system.
- * 
- * Windows implementation is based on Zach Gorman's work from 
- * <a href="http://www.codeproject.com">The Code Project</a> (http://www.codeproject.com/system/setupdi.asp).
- *
- * OS X implementation, see
- * http://developer.apple.com/documentation/DeviceDrivers/Conceptual/AccessingHardware/AH_Finding_Devices/chapter_4_section_2.html
- */
+  Provides list of ports available in the system.
+
+  \section Usage
+  To poll the system for a list of connected devices, simply use getPorts().  Each
+  QextPortInfo structure will populated with information about the corresponding device.
+
+  \b Example
+  \code
+  QList<QextPortInfo> ports = QextSerialEnumerator::getPorts();
+  foreach( QextPortInfo port, ports ) {
+      // inspect port...
+  }
+  \endcode
+
+  To enable event-driven notification of device connection events, first call
+  setUpNotifications() and then connect to the deviceDiscovered() and deviceRemoved()
+  signals.  Event-driven behavior is currently available only on Windows and OS X.
+
+  \b Example
+  \code
+  QextSerialEnumerator* enumerator = new QextSerialEnumerator();
+  connect(enumerator, SIGNAL(deviceDiscovered(const QextPortInfo &)),
+             myClass, SLOT(onDeviceDiscovered(const QextPortInfo &)));
+  connect(enumerator, SIGNAL(deviceRemoved(const QextPortInfo &)),
+             myClass, SLOT(onDeviceRemoved(const QextPortInfo &)));
+  \endcode
+
+  \section Credits
+  Windows implementation is based on Zach Gorman's work from
+  <a href="http://www.codeproject.com">The Code Project</a> (http://www.codeproject.com/system/setupdi.asp).
+
+  OS X implementation, see
+  http://developer.apple.com/documentation/DeviceDrivers/Conceptual/AccessingHardware/AH_Finding_Devices/chapter_4_section_2.html
+
+  \author Michal Policht, Liam Staskawicz
+*/
 class QextSerialEnumerator : public QObject
 {
-	Q_OBJECT
-  public:
-    QextSerialEnumerator( );
-    ~QextSerialEnumerator( );
-  
-		#ifdef _TTY_WIN_
-    LRESULT onDeviceChangeWin( WPARAM wParam, LPARAM lParam );
-    private:
-			/*!
-			 * Get value of specified property from the registry.
-			 * 	\param key handle to an open key.
-			 * 	\param property property name.
-			 * 	\return property value.
-			 */
-			static QString getRegKeyValue(HKEY key, LPCTSTR property);
+Q_OBJECT
+    public:
+        QextSerialEnumerator( );
+        ~QextSerialEnumerator( );
 
-			/*!
-			 * Get specific property from registry.
-			 * 	\param devInfo pointer to the device information set that contains the interface 
-			 * 		and its underlying device. Returned by SetupDiGetClassDevs() function.
-			 * 	\param devData pointer to an SP_DEVINFO_DATA structure that defines the device instance.
-			 * 		this is returned by SetupDiGetDeviceInterfaceDetail() function. 
-			 * 	\param property registry property. One of defined SPDRP_* constants. 
-			 * 	\return property string.
-			 */
-			static QString getDeviceProperty(HDEVINFO devInfo, PSP_DEVINFO_DATA devData, DWORD property);
+        #ifdef _TTY_WIN_
+            LRESULT onDeviceChangeWin( WPARAM wParam, LPARAM lParam );
+            private:
+            /*!
+             * Get value of specified property from the registry.
+             * 	\param key handle to an open key.
+             * 	\param property property name.
+             * 	\return property value.
+             */
+            static QString getRegKeyValue(HKEY key, LPCTSTR property);
 
-			/*!
-			 * Search for serial ports using setupapi.
-			 * 	\param infoList list with result.
-			 */
-			static void setupAPIScan(QList<QextPortInfo> & infoList);
-      void setUpNotificationWin( );
-      static bool getDeviceDetails( QextPortInfo* portInfo, HDEVINFO devInfo, 
-                              PSP_DEVINFO_DATA devData, WPARAM wParam = DBT_DEVICEARRIVAL );
-      static void enumerateDevicesWin( HDEVINFO devInfo, GUID* guidDev, QList<QextPortInfo>* infoList );
-      HDEVNOTIFY notificationHandle;
-      QextSerialRegistrationWidget* notificationWidget;
-		#endif /*_TTY_WIN_*/
-  
-    #ifdef _TTY_POSIX_
-    #ifdef Q_OS_MAC
-      
+            /*!
+             * Get specific property from registry.
+             * \param devInfo pointer to the device information set that contains the interface
+             *    and its underlying device. Returned by SetupDiGetClassDevs() function.
+             * \param devData pointer to an SP_DEVINFO_DATA structure that defines the device instance.
+             *    this is returned by SetupDiGetDeviceInterfaceDetail() function.
+             * \param property registry property. One of defined SPDRP_* constants.
+             * \return property string.
+             */
+            static QString getDeviceProperty(HDEVINFO devInfo, PSP_DEVINFO_DATA devData, DWORD property);
+
+            /*!
+             * Search for serial ports using setupapi.
+             *  \param infoList list with result.
+             */
+            static void setupAPIScan(QList<QextPortInfo> & infoList);
+            void setUpNotificationWin( );
+            static bool getDeviceDetailsWin( QextPortInfo* portInfo, HDEVINFO devInfo,
+                                  PSP_DEVINFO_DATA devData, WPARAM wParam = DBT_DEVICEARRIVAL );
+            static void enumerateDevicesWin( HDEVINFO devInfo, GUID* guidDev,
+                                                                   QList<QextPortInfo>* infoList );
+            #ifdef QT_GUI_LIB
+            QextSerialRegistrationWidget* notificationWidget;
+            #endif
+            HDEVNOTIFY notificationHandle;
+        #endif /*_TTY_WIN_*/
+
+        #ifdef _TTY_POSIX_
+    #ifdef Q_WS_MAC
+
       void onDeviceDiscoveredOSX( io_object_t service );
       void onDeviceTerminatedOSX( io_object_t service );
-      
+
     private:
       /*!
        * Search for serial ports using IOKit.
@@ -119,27 +154,44 @@ class QextSerialEnumerator : public QObject
       static bool createSambaMatchingDict( CFMutableDictionaryRef* matchingDictionary );
       void setUpNotificationOSX( );
       IONotificationPortRef notificationPortRef;
-      
-    #else /* Q_OS_MAC */
+
+    #else /* Q_WS_MAC */
       /*!
        * Search for serial ports on unix.
        * 	\param infoList list with result.
        */
       static void scanPortsNix(QList<QextPortInfo> & infoList);
-    #endif /* Q_OS_MAC */
+    #endif /* Q_WS_MAC */
     #endif /* _TTY_POSIX_ */
 
-	public:
-		/*!
-		 * Get list of ports.
-		 * 	\return list of ports currently available in the system.
-		 */
-		static QList<QextPortInfo> getPorts();
-    void setUpNotifications( );
-  
-  signals:
-    void deviceDiscovered( const QextPortInfo & info );
-    void deviceTerminated( const QextPortInfo & info );
+    public:
+        /*!
+          Get list of ports.
+          \return list of ports currently available in the system.
+        */
+        static QList<QextPortInfo> getPorts();
+        /*!
+          Enable event-driven notifications of board discovery/removal.
+        */
+        void setUpNotifications( );
+
+    signals:
+        /*!
+          A new device has been connected to the system.
+
+          setUpNotifications() must be called first to enable event-driven device notifications.
+          Currently only implemented on Windows and OS X.
+          \param info The device that has been discovered.
+        */
+        void deviceDiscovered( const QextPortInfo & info );
+        /*!
+          A device has been disconnected from the system.
+
+          setUpNotifications() must be called first to enable event-driven device notifications.
+          Currently only implemented on Windows and OS X.
+          \param info The device that was disconnected.
+        */
+        void deviceRemoved( const QextPortInfo & info );
 };
 
 #endif /*_QEXTSERIALENUMERATOR_H_*/
