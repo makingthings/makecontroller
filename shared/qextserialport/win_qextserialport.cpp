@@ -1,50 +1,14 @@
-//#include <stdio.h>
-//#include <Process.h>
-//#include <QCoreApplication>
-//#include <QEvent>
-#include <QReadWriteLock>
-#include "win_qextserialport.h"
-#include <QMutexLocker>
-#include <QtDebug>
 
+
+#include <QMutexLocker>
+#include <QDebug>
+#include "qextserialport.h"
 
 /*!
-\fn Win_QextSerialPort::Win_QextSerialPort()
-Default constructor.  Note that the name of the device used by a Win_QextSerialPort constructed
-with this constructor will be determined by #defined constants, or lack thereof - the default
-behavior is the same as _TTY_LINUX_.  Possible naming conventions and their associated constants
-are:
-
-\verbatim
-
-Constant         Used By         Naming Convention
-----------       -------------   ------------------------
-_TTY_WIN_        Windows         COM1, COM2
-_TTY_IRIX_       SGI/IRIX        /dev/ttyf1, /dev/ttyf2
-_TTY_HPUX_       HP-UX           /dev/tty1p0, /dev/tty2p0
-_TTY_SUN_        SunOS/Solaris   /dev/ttya, /dev/ttyb
-_TTY_DIGITAL_    Digital UNIX    /dev/tty01, /dev/tty02
-_TTY_FREEBSD_    FreeBSD         /dev/ttyd0, /dev/ttyd1
-_TTY_LINUX_      Linux           /dev/ttyS0, /dev/ttyS1
-<none>           Linux           /dev/ttyS0, /dev/ttyS1
-\endverbatim
-
-This constructor associates the object with the first port on the system, e.g. COM1 for Windows
-platforms.  See the other constructor if you need a port other than the first.
-*/
-Win_QextSerialPort::Win_QextSerialPort(QextSerialBase::QueryMode mode):
-	QextSerialBase() 
-{
-    Win_Handle=INVALID_HANDLE_VALUE;
-    setQueryMode(mode);
-    init();
-}
-
-/*!Win_QextSerialPort::Win_QextSerialPort(const Win_QextSerialPort&)
 Copy constructor.
 */
-Win_QextSerialPort::Win_QextSerialPort(const Win_QextSerialPort& s):
-	QextSerialBase(s.port) 
+QextSerialPort::QextSerialPort(const QextSerialPort& s):
+    QIODevice()
 {
     Win_Handle=INVALID_HANDLE_VALUE;
     _queryMode = s._queryMode;
@@ -54,7 +18,7 @@ Win_QextSerialPort::Win_QextSerialPort(const Win_QextSerialPort& s):
     memcpy(& overlap, & s.overlap, sizeof(OVERLAPPED));
     setOpenMode(s.openMode());
     lastErr=s.lastErr;
-    port = s.port;
+    setPortName(s.port);
     Settings.FlowControl=s.Settings.FlowControl;
     Settings.Parity=s.Settings.Parity;
     Settings.DataBits=s.Settings.DataBits;
@@ -64,90 +28,35 @@ Win_QextSerialPort::Win_QextSerialPort(const Win_QextSerialPort& s):
     memcpy(&Win_CommConfig, &s.Win_CommConfig, sizeof(COMMCONFIG));
     memcpy(&Win_CommTimeouts, &s.Win_CommTimeouts, sizeof(COMMTIMEOUTS));
     if (s.overlapThread->isRunning())
-    	overlapThread->start();
+        overlapThread->start();
 }
 
-/*!
-\fn Win_QextSerialPort::Win_QextSerialPort(const QString & name)
-Constructs a serial port attached to the port specified by devName.
-devName is the name of the device, which is windowsystem-specific,
-e.g."COM2" or "/dev/ttyS0".
-*/
-Win_QextSerialPort::Win_QextSerialPort(const QString & name, QextSerialBase::QueryMode mode):
-	QextSerialBase(name) 
+void QextSerialPort::platformSpecificInit()
 {
     Win_Handle=INVALID_HANDLE_VALUE;
-    setQueryMode(mode);
-    init();
+    _bytesToWrite = 0;
+    overlap.Internal = 0;
+    overlap.InternalHigh = 0;
+    overlap.Offset = 0;
+    overlap.OffsetHigh = 0;
+    overlap.hEvent = CreateEvent(NULL, true, false, NULL);
+    overlapThread = new Win_QextSerialThread(this);
+    bytesToWriteLock = new QReadWriteLock;
 }
 
 /*!
-\fn Win_QextSerialPort::Win_QextSerialPort(const PortSettings& settings)
-Constructs a port with default name and specified settings.
-*/
-Win_QextSerialPort::Win_QextSerialPort(const PortSettings& settings, QextSerialBase::QueryMode mode):
-	QextSerialBase() 
-{
-    Win_Handle=INVALID_HANDLE_VALUE;
-    setBaudRate(settings.BaudRate);
-    setDataBits(settings.DataBits);
-    setStopBits(settings.StopBits);
-    setParity(settings.Parity);
-    setFlowControl(settings.FlowControl);
-    setTimeout(settings.Timeout_Millisec);
-    setQueryMode(mode);
-    init();
-}
-
-/*!
-\fn Win_QextSerialPort::Win_QextSerialPort(const QString & name, const PortSettings& settings)
-Constructs a port with specified name and settings.
-*/
-Win_QextSerialPort::Win_QextSerialPort(const QString & name, const PortSettings& settings, QextSerialBase::QueryMode mode):
-	QextSerialBase(name) 
-{
-    Win_Handle=INVALID_HANDLE_VALUE;
-    setPortName(name);
-    setBaudRate(settings.BaudRate);
-    setDataBits(settings.DataBits);
-    setStopBits(settings.StopBits);
-    setParity(settings.Parity);
-    setFlowControl(settings.FlowControl);
-    setTimeout(settings.Timeout_Millisec);
-    setQueryMode(mode);
-	init();
-}
-
-void Win_QextSerialPort::init()
-{
-	_bytesToWrite = 0;
-	overlap.Internal = 0;
-	overlap.InternalHigh = 0;
-	overlap.Offset = 0;
-	overlap.OffsetHigh = 0;
-	overlap.hEvent = CreateEvent(NULL, true, false, NULL);
-	overlapThread = new Win_QextSerialThread(this);
-	bytesToWriteLock = new QReadWriteLock;
-}
-
-/*!
-\fn Win_QextSerialPort::~Win_QextSerialPort()
 Standard destructor.
 */
-Win_QextSerialPort::~Win_QextSerialPort() {
-    if (isOpen()) {
-        close();
-    }
+void QextSerialPort::platformSpecificDestruct() {
     CloseHandle(overlap.hEvent);
     delete overlapThread;
-    delete bytesToWriteLock; 
+    delete bytesToWriteLock;
 }
 
 /*!
-\fn Win_QextSerialPort& Win_QextSerialPort::operator=(const Win_QextSerialPort& s)
-overrides the = operator
+Overrides the = operator
 */
-Win_QextSerialPort& Win_QextSerialPort::operator=(const Win_QextSerialPort& s) {
+QextSerialPort& QextSerialPort::operator=(const QextSerialPort& s) {
     setOpenMode(s.openMode());
     _queryMode = s._queryMode;
     _bytesToWrite = s._bytesToWrite;
@@ -165,26 +74,25 @@ Win_QextSerialPort& Win_QextSerialPort::operator=(const Win_QextSerialPort& s) {
     memcpy(&Win_CommConfig, &s.Win_CommConfig, sizeof(COMMCONFIG));
     memcpy(&Win_CommTimeouts, &s.Win_CommTimeouts, sizeof(COMMTIMEOUTS));
     if (s.overlapThread->isRunning())
-    	overlapThread->start();
+        overlapThread->start();
     return *this;
 }
 
 
 /*!
-\fn bool Win_QextSerialPort::open(OpenMode mode)
 Opens a serial port.  Note that this function does not specify which device to open.  If you need
-to open a device by name, see Win_QextSerialPort::open(const char*).  This function has no effect
+to open a device by name, see QextSerialPort::open(const char*).  This function has no effect
 if the port associated with the class is already open.  The port is also configured to the current
 settings, as stored in the Settings structure.
 */
-bool Win_QextSerialPort::open(OpenMode mode) {
-	unsigned long confSize = sizeof(COMMCONFIG);
-	Win_CommConfig.dwSize = confSize;
-	DWORD dwFlagsAndAttributes = 0;
-	if (queryMode() == QextSerialBase::EventDriven)
-		dwFlagsAndAttributes += FILE_FLAG_OVERLAPPED;
+bool QextSerialPort::open(OpenMode mode) {
+    unsigned long confSize = sizeof(COMMCONFIG);
+    Win_CommConfig.dwSize = confSize;
+    DWORD dwFlagsAndAttributes = 0;
+    if (queryMode() == QextSerialPort::EventDriven)
+        dwFlagsAndAttributes += FILE_FLAG_OVERLAPPED;
 
-    QMutexLocker locker( mutex );
+    QMutexLocker lock(mutex);
     if (mode == QIODevice::NotOpen)
         return isOpen();
     if (!isOpen()) {
@@ -192,6 +100,7 @@ bool Win_QextSerialPort::open(OpenMode mode) {
         Win_Handle=CreateFileA(port.toAscii(), GENERIC_READ|GENERIC_WRITE,
                               FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, dwFlagsAndAttributes, NULL);
         if (Win_Handle!=INVALID_HANDLE_VALUE) {
+            QIODevice::open(mode);
             /*configure port settings*/
             GetCommConfig(Win_Handle, &Win_CommConfig, &confSize);
             GetCommState(Win_Handle, &(Win_CommConfig.dcb));
@@ -211,80 +120,73 @@ bool Win_QextSerialPort::open(OpenMode mode) {
             SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
 
             //init event driven approach
-			if (queryMode() == QextSerialBase::EventDriven) {
-		        Win_CommTimeouts.ReadIntervalTimeout = MAXDWORD;
-		        Win_CommTimeouts.ReadTotalTimeoutMultiplier = 0;
-		        Win_CommTimeouts.ReadTotalTimeoutConstant = 0;
-				Win_CommTimeouts.WriteTotalTimeoutMultiplier = 0;
-				Win_CommTimeouts.WriteTotalTimeoutConstant = 0;
-				SetCommTimeouts(Win_Handle, &Win_CommTimeouts);
-            	if (!SetCommMask( Win_Handle, EV_TXEMPTY | EV_RXCHAR | EV_DSR)) {
-            		qWarning("failed to set Comm Mask. Error code: %ld", GetLastError());
-            		return false;
-            	}
-            	overlapThread->start();
+            if (queryMode() == QextSerialPort::EventDriven) {
+                Win_CommTimeouts.ReadIntervalTimeout = MAXDWORD;
+                Win_CommTimeouts.ReadTotalTimeoutMultiplier = 0;
+                Win_CommTimeouts.ReadTotalTimeoutConstant = 0;
+                Win_CommTimeouts.WriteTotalTimeoutMultiplier = 0;
+                Win_CommTimeouts.WriteTotalTimeoutConstant = 0;
+                SetCommTimeouts(Win_Handle, &Win_CommTimeouts);
+                if (!SetCommMask( Win_Handle, EV_TXEMPTY | EV_RXCHAR | EV_DSR)) {
+                    qWarning("failed to set Comm Mask. Error code: %ld", GetLastError());
+                    return false;
+                }
+                overlapThread->start();
             }
-			QIODevice::open(mode);
         }
-        else
-        	qDebug("Qesp failed to open device: %s, last error: %ld", qPrintable(port), GetLastError());
     } else {
-    	return false;
+        return false;
     }
     return isOpen();
 }
 
 /*!
-\fn void Win_QextSerialPort::close()
 Closes a serial port.  This function has no effect if the serial port associated with the class
 is not currently open.
 */
-void Win_QextSerialPort::close() 
+void QextSerialPort::close()
 {
-  QMutexLocker locker( mutex );
-
+    QMutexLocker lock(mutex);
     if (isOpen()) {
         flush();
-    QIODevice::close(); // mark ourselves as closed
-		if (overlapThread->isRunning()) {
-			overlapThread->stop();
-			if (QThread::currentThread() != overlapThread)
-				overlapThread->wait();
-		}
+        QIODevice::close(); // mark ourselves as closed
+        if (overlapThread->isRunning()) {
+            overlapThread->stop();
+            if (QThread::currentThread() != overlapThread)
+                overlapThread->wait();
+        }
         if (CloseHandle(Win_Handle))
             Win_Handle = INVALID_HANDLE_VALUE;
-		_bytesToWrite = 0;
+        _bytesToWrite = 0;
 
-    if(!overlappedWrites.isEmpty()) {
-      foreach(OVERLAPPED* o, overlappedWrites) {
-        CloseHandle(o->hEvent);
-        delete o;
-      }
-      overlappedWrites.clear();
+        if(!overlappedWrites.isEmpty()) {
+            foreach(OVERLAPPED* o, overlappedWrites) {
+                CloseHandle(o->hEvent);
+                delete o;
+            }
+            overlappedWrites.clear();
+        }
     }
-  }
 }
 
 /*!
-\fn void Win_QextSerialPort::flush()
 Flushes all pending I/O to the serial port.  This function has no effect if the serial port
 associated with the class is not currently open.
 */
-void Win_QextSerialPort::flush() {
-  QMutexLocker locker( mutex );
+void QextSerialPort::flush() {
+    QMutexLocker lock(mutex);
     if (isOpen()) {
         FlushFileBuffers(Win_Handle);
     }
 }
 
 /*!
-\fn qint64 Win_QextSerialPort::size() const
 This function will return the number of bytes waiting in the receive queue of the serial port.
 It is included primarily to provide a complete QIODevice interface, and will not record errors
 in the lastErr member (because it is const).  This function is also not thread-safe - in
-multithreading situations, use Win_QextSerialPort::bytesAvailable() instead.
+multithreading situations, use QextSerialPort::bytesAvailable() instead.
 */
-qint64 Win_QextSerialPort::size() const {
+qint64 QextSerialPort::size() const {
     int availBytes;
     COMSTAT Win_ComStat;
     DWORD Win_ErrorMask=0;
@@ -294,13 +196,11 @@ qint64 Win_QextSerialPort::size() const {
 }
 
 /*!
-\fn qint64 Win_QextSerialPort::bytesAvailable()
 Returns the number of bytes waiting in the port's receive queue.  This function will return 0 if
-the port is not currently open, or -1 on error.  Error information can be retrieved by calling
-Win_QextSerialPort::getLastError().
+the port is not currently open, or -1 on error.
 */
-qint64 Win_QextSerialPort::bytesAvailable() {
-  QMutexLocker locker( mutex );
+qint64 QextSerialPort::bytesAvailable() const {
+    QMutexLocker lock(mutex);
     if (isOpen()) {
         DWORD Errors;
         COMSTAT Status;
@@ -313,10 +213,9 @@ qint64 Win_QextSerialPort::bytesAvailable() {
 }
 
 /*!
-\fn void Win_QextSerialPort::translateError(ulong error)
 Translates a system-specific error code to a QextSerialPort error code.  Used internally.
 */
-void Win_QextSerialPort::translateError(ulong error) {
+void QextSerialPort::translateError(ulong error) {
     if (error&CE_BREAK) {
         lastErr=E_BREAK_CONDITION;
     }
@@ -344,7 +243,6 @@ void Win_QextSerialPort::translateError(ulong error) {
 }
 
 /*!
-\fn qint64 Win_QextSerialPort::readData(char *data, qint64 maxSize)
 Reads a block of data from the serial port.  This function will read at most maxlen bytes from
 the serial port and place them in the buffer pointed to by data.  Return value is the number of
 bytes actually read, or -1 on error.
@@ -352,108 +250,93 @@ bytes actually read, or -1 on error.
 \warning before calling this function ensure that serial port associated with this class
 is currently open (use isOpen() function to check if port is open).
 */
-qint64 Win_QextSerialPort::readData(char *data, qint64 maxSize)
+qint64 QextSerialPort::readData(char *data, qint64 maxSize)
 {
     DWORD retVal;
-	
-    QMutexLocker locker( mutex );
-    
+    QMutexLocker lock(mutex);
     retVal = 0;
-	if (queryMode() == QextSerialBase::EventDriven) {
-		OVERLAPPED overlapRead;
-		overlapRead.Internal = 0;
-		overlapRead.InternalHigh = 0;
-		overlapRead.Offset = 0;
-		overlapRead.OffsetHigh = 0;
-		overlapRead.hEvent = CreateEvent(NULL, true, false, NULL);
-		if (!ReadFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, & overlapRead)) {
-			if (GetLastError() == ERROR_IO_PENDING)
-				GetOverlappedResult(Win_Handle, & overlapRead, & retVal, true);
-			else {
-	        	lastErr = E_READ_FAILED;
-	        	retVal = (DWORD)-1;
-			}
-		}
-		CloseHandle(overlapRead.hEvent);
-	} else if (!ReadFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, NULL)) {
+    if (queryMode() == QextSerialPort::EventDriven) {
+        OVERLAPPED overlapRead;
+        overlapRead.Internal = 0;
+        overlapRead.InternalHigh = 0;
+        overlapRead.Offset = 0;
+        overlapRead.OffsetHigh = 0;
+        overlapRead.hEvent = CreateEvent(NULL, true, false, NULL);
+        if (!ReadFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, & overlapRead)) {
+            if (GetLastError() == ERROR_IO_PENDING)
+                GetOverlappedResult(Win_Handle, & overlapRead, & retVal, true);
+            else {
+                lastErr = E_READ_FAILED;
+                retVal = (DWORD)-1;
+            }
+        }
+        CloseHandle(overlapRead.hEvent);
+    } else if (!ReadFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, NULL)) {
         lastErr = E_READ_FAILED;
         retVal = (DWORD)-1;
     }
-
     return (qint64)retVal;
 }
 
 /*!
-\fn qint64 Win_QextSerialPort::writeData(const char *data, qint64 maxSize)
 Writes a block of data to the serial port.  This function will write len bytes
 from the buffer pointed to by data to the serial port.  Return value is the number
 of bytes actually written, or -1 on error.
 
-Note - If the port is configured in QextSerialBase::EventDriven mode, this may
-return 0 indicating the write is in progress, but has not completed yet.  Connect
-to the bytesWritten() signal to be informed of when the bytes are actually written out.
-
-Also in QextSerialBase::EventDriven mode on Windows, bytesWritten() is only emitted
-when \b all the bytes in the system buffer have been written out, not on a per-write
-basis.  The number of bytes requested to be written since the last bytesWritten()
-signal can be obtained by calling bytesToWrite().
-
 \warning before calling this function ensure that serial port associated with this class
 is currently open (use isOpen() function to check if port is open).
 */
-qint64 Win_QextSerialPort::writeData(const char *data, qint64 maxSize)
+qint64 QextSerialPort::writeData(const char *data, qint64 maxSize)
 {
-	DWORD retVal;
-	
-	QMutexLocker locker( mutex );
+    DWORD retVal;
+
+    QMutexLocker lock( mutex );
 
     retVal = 0;
-    if (queryMode() == QextSerialBase::EventDriven) {
+    if (queryMode() == QextSerialPort::EventDriven) {
 
-      OVERLAPPED *newOverlapWrite = new OVERLAPPED;
-      ZeroMemory(newOverlapWrite, sizeof(OVERLAPPED));
-      newOverlapWrite->hEvent = CreateEvent(NULL, true, false, NULL);
+        OVERLAPPED *newOverlapWrite = new OVERLAPPED;
+        ZeroMemory(newOverlapWrite, sizeof(OVERLAPPED));
+        newOverlapWrite->hEvent = CreateEvent(NULL, true, false, NULL);
 
-      bool success = WriteFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, newOverlapWrite);
-      if(success) {
-        CloseHandle(newOverlapWrite->hEvent);
-        delete newOverlapWrite;
-      } else if (!success && (GetLastError() == ERROR_IO_PENDING)) {
-        // writing asynchronously...not an error
-        // keep track of the OVERLAPPED structure so we can delete it when the write is complete
-        QWriteLocker writelocker(bytesToWriteLock);
-        _bytesToWrite += maxSize;
-        overlappedWrites.append(newOverlapWrite);
-      } else {
-        qDebug() << "serialport write error:" << GetLastError();
+        bool success = WriteFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, newOverlapWrite);
+        if(success) {
+            CloseHandle(newOverlapWrite->hEvent);
+            delete newOverlapWrite;
+        } else if (!success && (GetLastError() == ERROR_IO_PENDING)) {
+            // writing asynchronously...not an error
+            // keep track of the OVERLAPPED structure so we can delete it when the write is complete
+            QWriteLocker writelocker(bytesToWriteLock);
+            _bytesToWrite += maxSize;
+            overlappedWrites.append(newOverlapWrite);
+        } else {
+            qDebug() << "serialport write error:" << GetLastError();
+            lastErr = E_WRITE_FAILED;
+            retVal = (DWORD)-1;
+            if(!CancelIo(newOverlapWrite->hEvent))
+                qDebug() << "serialport: couldn't cancel IO";
+            CloseHandle(newOverlapWrite->hEvent);
+            delete newOverlapWrite;
+        }
+    } else if (!WriteFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, NULL)) {
         lastErr = E_WRITE_FAILED;
         retVal = (DWORD)-1;
-        if(!CancelIo(newOverlapWrite->hEvent))
-          qDebug() << "serialport: couldn't cancel IO";
-        CloseHandle(newOverlapWrite->hEvent);
-        delete newOverlapWrite;
-      }
-    } else if (!WriteFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, NULL)) {
-      lastErr = E_WRITE_FAILED;
-      retVal = (DWORD)-1;
-   	}
+    }
     return (qint64)retVal;
 }
 
 /*!
-\fn void Win_QextSerialPort::ungetChar(char c)
 This function is included to implement the full QIODevice interface, and currently has no
 purpose within this class.  This function is meaningless on an unbuffered device and currently
 only prints a warning message to that effect.
 */
-void Win_QextSerialPort::ungetChar(char c) {
+void QextSerialPort::ungetChar(char c) {
 
     /*meaningless on unbuffered sequential device - return error and print a warning*/
-    TTY_WARNING("Win_QextSerialPort: ungetChar() called on an unbuffered sequential device - operation is meaningless");
+    TTY_WARNING("QextSerialPort: ungetChar() called on an unbuffered sequential device - operation is meaningless");
 }
 
 /*!
-\fn void Win_QextSerialPort::setFlowControl(FlowType flow)
 Sets the flow control used by the port.  Possible values of flow are:
 \verbatim
     FLOW_OFF            No flow control
@@ -461,8 +344,8 @@ Sets the flow control used by the port.  Possible values of flow are:
     FLOW_XONXOFF        Software (XON/XOFF) flow control
 \endverbatim
 */
-void Win_QextSerialPort::setFlowControl(FlowType flow) {
-  QMutexLocker locker( mutex );
+void QextSerialPort::setFlowControl(FlowType flow) {
+    QMutexLocker lock(mutex);
     if (Settings.FlowControl!=flow) {
         Settings.FlowControl=flow;
     }
@@ -499,7 +382,6 @@ void Win_QextSerialPort::setFlowControl(FlowType flow) {
 }
 
 /*!
-\fn void Win_QextSerialPort::setParity(ParityType parity)
 Sets the parity associated with the serial port.  The possible values of parity are:
 \verbatim
     PAR_SPACE       Space Parity
@@ -509,8 +391,8 @@ Sets the parity associated with the serial port.  The possible values of parity 
     PAR_ODD         Odd Parity
 \endverbatim
 */
-void Win_QextSerialPort::setParity(ParityType parity) {
-  QMutexLocker locker( mutex );
+void QextSerialPort::setParity(ParityType parity) {
+    QMutexLocker lock(mutex);
     if (Settings.Parity!=parity) {
         Settings.Parity=parity;
     }
@@ -521,14 +403,14 @@ void Win_QextSerialPort::setParity(ParityType parity) {
             /*space parity*/
             case PAR_SPACE:
                 if (Settings.DataBits==DATA_8) {
-                    TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: Space parity with 8 data bits is not supported by POSIX systems.");
+                    TTY_PORTABILITY_WARNING("QextSerialPort Portability Warning: Space parity with 8 data bits is not supported by POSIX systems.");
                 }
                 Win_CommConfig.dcb.fParity=TRUE;
                 break;
 
             /*mark parity - WINDOWS ONLY*/
             case PAR_MARK:
-                TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning:  Mark parity is not supported by POSIX systems");
+                TTY_PORTABILITY_WARNING("QextSerialPort Portability Warning:  Mark parity is not supported by POSIX systems");
                 Win_CommConfig.dcb.fParity=TRUE;
                 break;
 
@@ -552,7 +434,6 @@ void Win_QextSerialPort::setParity(ParityType parity) {
 }
 
 /*!
-\fn void Win_QextSerialPort::setDataBits(DataBitsType dataBits)
 Sets the number of data bits used by the serial port.  Possible values of dataBits are:
 \verbatim
     DATA_5      5 data bits
@@ -569,10 +450,9 @@ This function is subject to the following restrictions:
     1.5 stop bits can only be used with 5 data bits.
 \par
     8 data bits cannot be used with space parity on POSIX systems.
-
 */
-void Win_QextSerialPort::setDataBits(DataBitsType dataBits) {
-  QMutexLocker locker( mutex );
+void QextSerialPort::setDataBits(DataBitsType dataBits) {
+    QMutexLocker lock(mutex);
     if (Settings.DataBits!=dataBits) {
         if ((Settings.StopBits==STOP_2 && dataBits==DATA_5) ||
             (Settings.StopBits==STOP_1_5 && dataBits!=DATA_5)) {
@@ -587,7 +467,7 @@ void Win_QextSerialPort::setDataBits(DataBitsType dataBits) {
             /*5 data bits*/
             case DATA_5:
                 if (Settings.StopBits==STOP_2) {
-                    TTY_WARNING("Win_QextSerialPort: 5 Data bits cannot be used with 2 stop bits.");
+                    TTY_WARNING("QextSerialPort: 5 Data bits cannot be used with 2 stop bits.");
                 }
                 else {
                     Win_CommConfig.dcb.ByteSize=5;
@@ -598,7 +478,7 @@ void Win_QextSerialPort::setDataBits(DataBitsType dataBits) {
             /*6 data bits*/
             case DATA_6:
                 if (Settings.StopBits==STOP_1_5) {
-                    TTY_WARNING("Win_QextSerialPort: 6 Data bits cannot be used with 1.5 stop bits.");
+                    TTY_WARNING("QextSerialPort: 6 Data bits cannot be used with 1.5 stop bits.");
                 }
                 else {
                     Win_CommConfig.dcb.ByteSize=6;
@@ -609,7 +489,7 @@ void Win_QextSerialPort::setDataBits(DataBitsType dataBits) {
             /*7 data bits*/
             case DATA_7:
                 if (Settings.StopBits==STOP_1_5) {
-                    TTY_WARNING("Win_QextSerialPort: 7 Data bits cannot be used with 1.5 stop bits.");
+                    TTY_WARNING("QextSerialPort: 7 Data bits cannot be used with 1.5 stop bits.");
                 }
                 else {
                     Win_CommConfig.dcb.ByteSize=7;
@@ -620,7 +500,7 @@ void Win_QextSerialPort::setDataBits(DataBitsType dataBits) {
             /*8 data bits*/
             case DATA_8:
                 if (Settings.StopBits==STOP_1_5) {
-                    TTY_WARNING("Win_QextSerialPort: 8 Data bits cannot be used with 1.5 stop bits.");
+                    TTY_WARNING("QextSerialPort: 8 Data bits cannot be used with 1.5 stop bits.");
                 }
                 else {
                     Win_CommConfig.dcb.ByteSize=8;
@@ -632,7 +512,6 @@ void Win_QextSerialPort::setDataBits(DataBitsType dataBits) {
 }
 
 /*!
-\fn void Win_QextSerialPort::setStopBits(StopBitsType stopBits)
 Sets the number of stop bits used by the serial port.  Possible values of stopBits are:
 \verbatim
     STOP_1      1 stop bit
@@ -649,8 +528,8 @@ This function is subject to the following restrictions:
 \par
     POSIX does not support 1.5 stop bits.
 */
-void Win_QextSerialPort::setStopBits(StopBitsType stopBits) {
-  QMutexLocker locker( mutex );
+void QextSerialPort::setStopBits(StopBitsType stopBits) {
+    QMutexLocker lock(mutex);
     if (Settings.StopBits!=stopBits) {
         if ((Settings.DataBits==DATA_5 && stopBits==STOP_2) ||
             (stopBits==STOP_1_5 && Settings.DataBits!=DATA_5)) {
@@ -670,9 +549,9 @@ void Win_QextSerialPort::setStopBits(StopBitsType stopBits) {
 
             /*1.5 stop bits*/
             case STOP_1_5:
-                TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: 1.5 stop bit operation is not supported by POSIX.");
+                TTY_PORTABILITY_WARNING("QextSerialPort Portability Warning: 1.5 stop bit operation is not supported by POSIX.");
                 if (Settings.DataBits!=DATA_5) {
-                    TTY_WARNING("Win_QextSerialPort: 1.5 stop bits can only be used with 5 data bits");
+                    TTY_WARNING("QextSerialPort: 1.5 stop bits can only be used with 5 data bits");
                 }
                 else {
                     Win_CommConfig.dcb.StopBits=ONE5STOPBITS;
@@ -683,7 +562,7 @@ void Win_QextSerialPort::setStopBits(StopBitsType stopBits) {
             /*two stop bits*/
             case STOP_2:
                 if (Settings.DataBits==DATA_5) {
-                    TTY_WARNING("Win_QextSerialPort: 2 stop bits cannot be used with 5 data bits");
+                    TTY_WARNING("QextSerialPort: 2 stop bits cannot be used with 5 data bits");
                 }
                 else {
                     Win_CommConfig.dcb.StopBits=TWOSTOPBITS;
@@ -695,7 +574,6 @@ void Win_QextSerialPort::setStopBits(StopBitsType stopBits) {
 }
 
 /*!
-\fn void Win_QextSerialPort::setBaudRate(BaudRateType baudRate)
 Sets the baud rate of the serial port.  Note that not all rates are applicable on
 all platforms.  The following table shows translations of the various baud rate
 constants on Windows(including NT/2000) and POSIX platforms.  Speeds marked with an *
@@ -728,8 +606,8 @@ are speeds that are usable on both Windows and POSIX.
    BAUD256000          256000      115200
 \endverbatim
 */
-void Win_QextSerialPort::setBaudRate(BaudRateType baudRate) {
-  QMutexLocker locker( mutex );
+void QextSerialPort::setBaudRate(BaudRateType baudRate) {
+    QMutexLocker lock(mutex);
     if (Settings.BaudRate!=baudRate) {
         switch (baudRate) {
             case BAUD50:
@@ -758,13 +636,13 @@ void Win_QextSerialPort::setBaudRate(BaudRateType baudRate) {
 
             /*50 baud*/
             case BAUD50:
-                TTY_WARNING("Win_QextSerialPort: Windows does not support 50 baud operation.  Switching to 110 baud.");
+                TTY_WARNING("QextSerialPort: Windows does not support 50 baud operation.  Switching to 110 baud.");
                 Win_CommConfig.dcb.BaudRate=CBR_110;
                 break;
 
             /*75 baud*/
             case BAUD75:
-                TTY_WARNING("Win_QextSerialPort: Windows does not support 75 baud operation.  Switching to 110 baud.");
+                TTY_WARNING("QextSerialPort: Windows does not support 75 baud operation.  Switching to 110 baud.");
                 Win_CommConfig.dcb.BaudRate=CBR_110;
                 break;
 
@@ -775,19 +653,19 @@ void Win_QextSerialPort::setBaudRate(BaudRateType baudRate) {
 
             /*134.5 baud*/
             case BAUD134:
-                TTY_WARNING("Win_QextSerialPort: Windows does not support 134.5 baud operation.  Switching to 110 baud.");
+                TTY_WARNING("QextSerialPort: Windows does not support 134.5 baud operation.  Switching to 110 baud.");
                 Win_CommConfig.dcb.BaudRate=CBR_110;
                 break;
 
             /*150 baud*/
             case BAUD150:
-                TTY_WARNING("Win_QextSerialPort: Windows does not support 150 baud operation.  Switching to 110 baud.");
+                TTY_WARNING("QextSerialPort: Windows does not support 150 baud operation.  Switching to 110 baud.");
                 Win_CommConfig.dcb.BaudRate=CBR_110;
                 break;
 
             /*200 baud*/
             case BAUD200:
-                TTY_WARNING("Win_QextSerialPort: Windows does not support 200 baud operation.  Switching to 110 baud.");
+                TTY_WARNING("QextSerialPort: Windows does not support 200 baud operation.  Switching to 110 baud.");
                 Win_CommConfig.dcb.BaudRate=CBR_110;
                 break;
 
@@ -808,7 +686,7 @@ void Win_QextSerialPort::setBaudRate(BaudRateType baudRate) {
 
             /*1800 baud*/
             case BAUD1800:
-                TTY_WARNING("Win_QextSerialPort: Windows does not support 1800 baud operation.  Switching to 1200 baud.");
+                TTY_WARNING("QextSerialPort: Windows does not support 1800 baud operation.  Switching to 1200 baud.");
                 Win_CommConfig.dcb.BaudRate=CBR_1200;
                 break;
 
@@ -829,7 +707,7 @@ void Win_QextSerialPort::setBaudRate(BaudRateType baudRate) {
 
             /*14400 baud*/
             case BAUD14400:
-                TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: POSIX does not support 14400 baud operation.");
+                TTY_PORTABILITY_WARNING("QextSerialPort Portability Warning: POSIX does not support 14400 baud operation.");
                 Win_CommConfig.dcb.BaudRate=CBR_14400;
                 break;
 
@@ -845,7 +723,7 @@ void Win_QextSerialPort::setBaudRate(BaudRateType baudRate) {
 
             /*56000 baud*/
             case BAUD56000:
-                TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: POSIX does not support 56000 baud operation.");
+                TTY_PORTABILITY_WARNING("QextSerialPort Portability Warning: POSIX does not support 56000 baud operation.");
                 Win_CommConfig.dcb.BaudRate=CBR_56000;
                 break;
 
@@ -856,7 +734,7 @@ void Win_QextSerialPort::setBaudRate(BaudRateType baudRate) {
 
             /*76800 baud*/
             case BAUD76800:
-                TTY_WARNING("Win_QextSerialPort: Windows does not support 76800 baud operation.  Switching to 57600 baud.");
+                TTY_WARNING("QextSerialPort: Windows does not support 76800 baud operation.  Switching to 57600 baud.");
                 Win_CommConfig.dcb.BaudRate=CBR_57600;
                 break;
 
@@ -867,13 +745,13 @@ void Win_QextSerialPort::setBaudRate(BaudRateType baudRate) {
 
             /*128000 baud*/
             case BAUD128000:
-                TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: POSIX does not support 128000 baud operation.");
+                TTY_PORTABILITY_WARNING("QextSerialPort Portability Warning: POSIX does not support 128000 baud operation.");
                 Win_CommConfig.dcb.BaudRate=CBR_128000;
                 break;
 
             /*256000 baud*/
             case BAUD256000:
-                TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: POSIX does not support 256000 baud operation.");
+                TTY_PORTABILITY_WARNING("QextSerialPort Portability Warning: POSIX does not support 256000 baud operation.");
                 Win_CommConfig.dcb.BaudRate=CBR_256000;
                 break;
         }
@@ -882,12 +760,11 @@ void Win_QextSerialPort::setBaudRate(BaudRateType baudRate) {
 }
 
 /*!
-\fn void Win_QextSerialPort::setDtr(bool set)
 Sets DTR line to the requested state (high by default).  This function will have no effect if
 the port associated with the class is not currently open.
 */
-void Win_QextSerialPort::setDtr(bool set) {
-  QMutexLocker locker( mutex );
+void QextSerialPort::setDtr(bool set) {
+    QMutexLocker lock(mutex);
     if (isOpen()) {
         if (set) {
             EscapeCommFunction(Win_Handle, SETDTR);
@@ -899,12 +776,11 @@ void Win_QextSerialPort::setDtr(bool set) {
 }
 
 /*!
-\fn void Win_QextSerialPort::setRts(bool set)
 Sets RTS line to the requested state (high by default).  This function will have no effect if
 the port associated with the class is not currently open.
 */
-void Win_QextSerialPort::setRts(bool set) {
-  QMutexLocker locker( mutex );
+void QextSerialPort::setRts(bool set) {
+    QMutexLocker lock(mutex);
     if (isOpen()) {
         if (set) {
             EscapeCommFunction(Win_Handle, SETRTS);
@@ -916,8 +792,7 @@ void Win_QextSerialPort::setRts(bool set) {
 }
 
 /*!
-\fn ulong Win_QextSerialPort::lineStatus(void)
-returns the line status as stored by the port function.  This function will retrieve the states
+Returns the line status as stored by the port function.  This function will retrieve the states
 of the following lines: DCD, CTS, DSR, and RI.  On POSIX systems, the following additional lines
 can be monitored: DTR, RTS, Secondary TXD, and Secondary RXD.  The value returned is an unsigned
 long with specific bits indicating which lines are high.  The following constants should be used
@@ -934,9 +809,9 @@ LS_RI       RI
 
 This function will return 0 if the port associated with the class is not currently open.
 */
-ulong Win_QextSerialPort::lineStatus(void) {
+ulong QextSerialPort::lineStatus(void) {
     unsigned long Status=0, Temp=0;
-    QMutexLocker locker( mutex );
+    QMutexLocker lock(mutex);
     if (isOpen()) {
         GetCommModemStatus(Win_Handle, &Temp);
         if (Temp&MS_CTS_ON) {
@@ -955,132 +830,128 @@ ulong Win_QextSerialPort::lineStatus(void) {
     return Status;
 }
 
-bool Win_QextSerialPort::waitForReadyRead(int msecs)
+bool QextSerialPort::waitForReadyRead(int msecs)
 {
-	//@todo implement
-	return false;
+    //@todo implement
+    return false;
 }
 
-qint64 Win_QextSerialPort::bytesToWrite() const
+qint64 QextSerialPort::bytesToWrite() const
 {
-  QReadLocker readlocker(bytesToWriteLock);
-  return _bytesToWrite;
+    return _bytesToWrite;
 }
 
-void Win_QextSerialPort::monitorCommEvent()
+void QextSerialPort::monitorCommEvent()
 {
-  DWORD eventMask = 0;
-  ResetEvent(overlap.hEvent);
-  if (!WaitCommEvent(Win_Handle, & eventMask, & overlap))
-    if (GetLastError() != ERROR_IO_PENDING)
-      qCritical("WaitCommEvent error %ld\n", GetLastError());
+    DWORD eventMask = 0;
+    ResetEvent(overlap.hEvent);
+    if (!WaitCommEvent(Win_Handle, & eventMask, & overlap))
+        if (GetLastError() != ERROR_IO_PENDING)
+            qCritical("WaitCommEvent error %ld\n", GetLastError());
 
-  if ( WaitForSingleObject(overlap.hEvent, INFINITE) == WAIT_OBJECT_0 ) {
-    //overlap event occured
-    DWORD undefined;
-    if (!GetOverlappedResult(Win_Handle, & overlap, & undefined, false)) {
-      qWarning("CommEvent overlapped error %ld", GetLastError());
-      return;
-    }
-
-    if (eventMask & EV_RXCHAR) {
-      if (sender() != this)
-        emit readyRead();
-    }
-    if (eventMask & EV_TXEMPTY) {
-      /*
-        A write completed.  Run through the list of OVERLAPPED writes, and if
-        they completed successfully, take them off the list and delete them.
-        Otherwise, leave them on there so they can finish.
-      */
-      qint64 totalBytesWritten = 0;
-      QWriteLocker writelocker(bytesToWriteLock);
-      QList<OVERLAPPED*> overlapsToDelete;
-      int numOverlaps = overlappedWrites.size();
-      for(int i = 0; i < numOverlaps; i++ ) {
-        DWORD numBytes = 0;
-        if (GetOverlappedResult(Win_Handle, overlappedWrites.at(i), & numBytes, false)) {
-          overlapsToDelete.append(overlappedWrites.at(i));
-          totalBytesWritten += numBytes;
-        } else if( GetLastError() != ERROR_IO_INCOMPLETE ) {
-          overlapsToDelete.append(overlappedWrites.at(i));
-          qWarning("CommEvent overlapped write error %ld", GetLastError());
+    if ( WaitForSingleObject(overlap.hEvent, INFINITE) == WAIT_OBJECT_0 ) {
+        //overlap event occured
+        DWORD undefined;
+        if (!GetOverlappedResult(Win_Handle, & overlap, & undefined, false)) {
+            qWarning("CommEvent overlapped error %ld", GetLastError());
+            return;
         }
-      }
 
-      if (sender() != this && totalBytesWritten > 0) {
-        emit bytesWritten(totalBytesWritten);
-        _bytesToWrite = 0;
-      }
+        if (eventMask & EV_RXCHAR) {
+            if (sender() != this)
+                emit readyRead();
+        }
+        if (eventMask & EV_TXEMPTY) {
+          /*
+            A write completed.  Run through the list of OVERLAPPED writes, and if
+            they completed successfully, take them off the list and delete them.
+            Otherwise, leave them on there so they can finish.
+          */
+            qint64 totalBytesWritten = 0;
+            QWriteLocker writelocker(bytesToWriteLock);
+            QList<OVERLAPPED*> overlapsToDelete;
+            foreach(OVERLAPPED* o, overlappedWrites) {
+                DWORD numBytes = 0;
+                if (GetOverlappedResult(Win_Handle, o, & numBytes, false)) {
+                    overlapsToDelete.append(o);
+                    totalBytesWritten += numBytes;
+                } else if( GetLastError() != ERROR_IO_INCOMPLETE ) {
+                    overlapsToDelete.append(o);
+                    qWarning() << "CommEvent overlapped write error:" << GetLastError();
+                }
+            }
 
-      foreach(OVERLAPPED* o, overlapsToDelete) {
-        OVERLAPPED *toDelete = overlappedWrites.takeAt(overlappedWrites.indexOf(o));
-        CloseHandle(toDelete->hEvent);
-        delete toDelete;
-      }
+            if (sender() != this && totalBytesWritten > 0) {
+                emit bytesWritten(totalBytesWritten);
+                _bytesToWrite = 0;
+            }
+
+            foreach(OVERLAPPED* o, overlapsToDelete) {
+                OVERLAPPED *toDelete = overlappedWrites.takeAt(overlappedWrites.indexOf(o));
+                CloseHandle(toDelete->hEvent);
+                delete toDelete;
+            }
+        }
+        if (eventMask & EV_DSR)
+        {
+            if (lineStatus() & LS_DSR)
+                emit dsrChanged(true);
+            else
+                emit dsrChanged(false);
+        }
     }
-    if (eventMask & EV_DSR)
-    {
-      if (lineStatus() & LS_DSR)
-        emit dsrChanged(true);
-      else
-        emit dsrChanged(false);
-    }
-  }
 }
 
-void Win_QextSerialPort::terminateCommWait()
+void QextSerialPort::terminateCommWait()
 {
-  CancelIo(Win_Handle);        // cancel outstanding IO
-  SetCommMask(Win_Handle, 0);  // stop blocking on comm events
+    CancelIo(Win_Handle);       // clean up any outstanding IO
+    SetCommMask(Win_Handle, 0); // stop blocking on comm events
 }
 
 
 /*!
-\fn void Win_QextSerialPort::setTimeout(ulong millisec);
 Sets the read and write timeouts for the port to millisec milliseconds.
-Setting 0 indicates that timeouts are not used for read nor write operations; 
+Setting 0 indicates that timeouts are not used for read nor write operations;
 however read() and write() functions will still block. Set -1 to provide
 non-blocking behaviour (read() and write() will return immediately).
 
 \note this function does nothing in event driven mode.
 */
-void Win_QextSerialPort::setTimeout(long millisec) {
-  QMutexLocker locker( mutex );
+void QextSerialPort::setTimeout(long millisec) {
+    QMutexLocker lock(mutex);
     Settings.Timeout_Millisec = millisec;
 
-	if (millisec == -1) {
-		Win_CommTimeouts.ReadIntervalTimeout = MAXDWORD;
-		Win_CommTimeouts.ReadTotalTimeoutConstant = 0;
-	} else {
-		Win_CommTimeouts.ReadIntervalTimeout = millisec;
-		Win_CommTimeouts.ReadTotalTimeoutConstant = millisec;
-	}
-	Win_CommTimeouts.ReadTotalTimeoutMultiplier = 0;
-	Win_CommTimeouts.WriteTotalTimeoutMultiplier = millisec;
-	Win_CommTimeouts.WriteTotalTimeoutConstant = 0;
-	if (queryMode() != QextSerialBase::EventDriven)
-      	SetCommTimeouts(Win_Handle, &Win_CommTimeouts);
-
+    if (millisec == -1) {
+        Win_CommTimeouts.ReadIntervalTimeout = MAXDWORD;
+        Win_CommTimeouts.ReadTotalTimeoutConstant = 0;
+    } else {
+        Win_CommTimeouts.ReadIntervalTimeout = millisec;
+        Win_CommTimeouts.ReadTotalTimeoutConstant = millisec;
+    }
+    Win_CommTimeouts.ReadTotalTimeoutMultiplier = 0;
+    Win_CommTimeouts.WriteTotalTimeoutMultiplier = millisec;
+    Win_CommTimeouts.WriteTotalTimeoutConstant = 0;
+    if (queryMode() != QextSerialPort::EventDriven)
+        SetCommTimeouts(Win_Handle, &Win_CommTimeouts);
 }
 
 
-Win_QextSerialThread::Win_QextSerialThread(Win_QextSerialPort * qesp):
-	QThread()
+Win_QextSerialThread::Win_QextSerialThread(QextSerialPort * qesp):
+    QThread()
 {
-	this->qesp = qesp;
-	terminate = false;
+    this->qesp = qesp;
+    terminate = false;
 }
 
 void Win_QextSerialThread::stop()
 {
-	terminate = true;
-	qesp->terminateCommWait();
+    terminate = true;
+    qesp->terminateCommWait();
 }
 
 void Win_QextSerialThread::run()
 {
-	while (!terminate)
-		qesp->monitorCommEvent();
-	terminate = false;
+    while (!terminate)
+        qesp->monitorCommEvent();
+    terminate = false;
 }
