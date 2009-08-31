@@ -210,13 +210,12 @@ int UsbSerial_readSlip( char *buffer, int length, int timeout )
 
   while ( received < length )
   {
-    if( !usbSerial.slipInCount ) { // if there's nothing left over from last time, get more
+    if( idx >= usbSerial.slipInCount ) { // if there's nothing left over from last time, get more
       usbSerial.slipInCount = UsbSerial_read( usbSerial.slipInBuf, USBSER_MAX_READ, timeout );
       idx = 0;
     }
     
     c = usbSerial.slipInBuf[idx++];
-    usbSerial.slipInCount--;
     switch( c )
     {
       case END:
@@ -228,8 +227,8 @@ int UsbSerial_readSlip( char *buffer, int length, int timeout )
         // get the next byte.  if it's not an ESC_END or ESC_ESC, it's a
         // malformed packet.  http://tools.ietf.org/html/rfc1055 says just
         // drop it in the packet in this case
+        if( idx >= usbSerial.slipInCount ) break;
         c = usbSerial.slipInBuf[idx++];
-        usbSerial.slipInCount--;
         if( c == ESC_END )
           c = END;
         else if( c == ESC_ESC )
@@ -261,9 +260,11 @@ int UsbSerial_writeSlip( const char *buffer, int length, int timeout )
 {
   char* obp = usbSerial.slipOutBuf;
   int count = 0;
+  char c;
   *obp++ = END; // clear out any line noise
    while( length-- ) {
-     switch(*buffer)
+     c = *buffer++;
+     switch(c)
      {
        // if it's the same code as an END character, we send a special 
        //two character code so as not to make the receiver think we sent an END
@@ -283,7 +284,7 @@ int UsbSerial_writeSlip( const char *buffer, int length, int timeout )
          break;
          //otherwise, just send the character
        default:
-         *obp++ = *buffer++;
+         *obp++ = c;
          count += UsbSerial_writeSlipIfFull(&obp, usbSerial.slipOutBuf, timeout );
      }
    }
