@@ -30,7 +30,7 @@ class PacketUsbSerial : public QObject, public PacketInterface
 {
   Q_OBJECT
 public:
-  PacketUsbSerial(QString portName);
+  PacketUsbSerial(const QString & portName);
   ~PacketUsbSerial( );
   bool open( );
   void close( ) { port->close( ); }
@@ -44,12 +44,10 @@ private slots:
 
 private:
   QByteArray currentPacket;
-  QByteArray readBuffer;
   Board* board;
   MainWindow *mainWindow;
   QextSerialPort *port;
-  bool pkt_started;
-  void slipDecode( );
+  void slipDecode( QByteArray & data );
 };
 
 #endif // PACKET_USB_SERIAL_H

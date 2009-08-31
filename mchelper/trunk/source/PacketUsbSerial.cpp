@@ -19,16 +19,17 @@
 #include <QDebug>
 
 // SLIP codes
-#define END     0300 // indicates end of packet
-#define ESC     0333 // indicates byte stuffing
-#define ESC_END 0334 // ESC ESC_END means END data byte
-#define ESC_ESC 0335 // ESC ESC_ESC means ESC data byte
+#define SLIP_END     0300 // indicates end of packet
+#define SLIP_ESC     0333 // indicates byte stuffing
+#define SLIP_ESC_END 0334 // ESC ESC_END means END data byte
+#define SLIP_ESC_ESC 0335 // ESC ESC_ESC means ESC data byte
 
-PacketUsbSerial::PacketUsbSerial(QString portName)
+#define SLIP_MAX_SANE_PKT 4096
+
+PacketUsbSerial::PacketUsbSerial(const QString & portName)
 {
   port = new QextSerialPort(portName, QextSerialPort::EventDriven);
   connect(port, SIGNAL(readyRead()), this, SLOT(processNewData()));
-  pkt_started = false;
 }
 
 PacketUsbSerial::~PacketUsbSerial( )
@@ -43,14 +44,11 @@ PacketUsbSerial::~PacketUsbSerial( )
 */
 void PacketUsbSerial::processNewData( )
 {
-  QByteArray newData;
   int avail = port->bytesAvailable();
   if(avail > 0 ) {
-    newData.resize(avail);
-    if(port->read(newData.data(), newData.size()) > 0) {
-      readBuffer += newData;
-      slipDecode();
-    }
+    QByteArray newData(avail, 0);
+    if(port->read(newData.data(), newData.size()) > 0)
+      slipDecode(newData);
   }
 }
 
@@ -64,24 +62,23 @@ bool PacketUsbSerial::open( )
 */
 bool PacketUsbSerial::sendPacket( const char* packet, int length )
 {
-  QByteArray out;
-  out.append( END ); // Flush out any spurious data that may have accumulated
-  while( length-- )
-  {
-    const char c = *packet++;
+  QByteArray out(1, SLIP_END); // Flush out any spurious data that may have accumulated
+  char c;
+  while( length-- ) {
+    c = *packet++;
     switch(c)
     {
       // if it's the same code as an END character, we send a special
       //two character code so as not to make the receiver think we sent an END
-      case END:
-        out.append( ESC );
-        out.append( ESC_END );
+      case SLIP_END:
+        out.append( SLIP_ESC );
+        out.append( SLIP_ESC_END );
         break;
         // if it's the same code as an ESC character, we send a special
         //two character code so as not to make the receiver think we sent an ESC
-      case ESC:
-        out.append( ESC );
-        out.append( ESC_ESC );
+      case SLIP_ESC:
+        out.append( SLIP_ESC );
+        out.append( SLIP_ESC_ESC );
         break;
         //otherwise, just send the character
       default:
@@ -89,60 +86,43 @@ bool PacketUsbSerial::sendPacket( const char* packet, int length )
     }
   }
   // tell the receiver that we're done sending the packet
-  out.append( END );
-  if(port->write(out) < 0) {
-    //monitor->deviceRemoved( port->portName() ); // shut ourselves down
-    return false;
-  }
-  else
-    return true;
+  out.append( SLIP_END );
+  return ( port->write(out) > 0 );
 }
 
 /*
  SLIP decode the readBuffer.
  When we get a packet, pass it to the board to deal with it.
 */
-void PacketUsbSerial::slipDecode( )
+void PacketUsbSerial::slipDecode( QByteArray & data )
 {
-  while(!readBuffer.isEmpty())
-  {
-    unsigned char c = *(readBuffer.data());
-    readBuffer.remove(0, 1);
+  QDataStream dstream(&data, QIODevice::ReadOnly);
+  quint8 c;
+  while(!dstream.atEnd()) {
+    dstream >> c;
     switch( c )
     {
-      case END:
-        if( pkt_started && currentPacket.size() ) { // it was the END byte
+      case SLIP_END:
+        if( currentPacket.size() ) { // ignore empty packets
           board->msgReceived(currentPacket);
           currentPacket.clear();
-          pkt_started = false;
         }
-        else // skipping all starting END bytes
-          pkt_started = true;
         break;
-      case ESC:
+      case SLIP_ESC:
         // we got an ESC character - get the next byte.
         // if it's not an ESC_END or ESC_ESC, it's a malformed packet.
         // http://tools.ietf.org/html/rfc1055 says just drop it in the packet in this case
-        if(readBuffer.isEmpty())
-          return;
-        else {
-          c = *(readBuffer.data());
-          readBuffer.remove(0, 1);
-          if( pkt_started ) {
-            if( c == ESC_END ) {
-              currentPacket.append(END);
-              break;
-            }
-            else if( c == ESC_ESC ) {
-              currentPacket.append(ESC);
-              break;
-            }
-          }
-        }
+        if( dstream.atEnd() ) break;
+        dstream >> c;
+        if( c == SLIP_ESC_END )
+          c = SLIP_END;
+        else if( c == SLIP_ESC_ESC )
+          c = SLIP_ESC;
         // no break here
       default:
-        if( pkt_started )
-          currentPacket.append( c );
+        currentPacket.append( c );
+        if( currentPacket.size() > SLIP_MAX_SANE_PKT )
+          currentPacket.clear();
         break;
     }
   }
