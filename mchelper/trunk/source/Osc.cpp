@@ -23,17 +23,15 @@
 QString OscMessage::toString( )
 {
   QString msgString = this->addressPattern;
-  foreach( OscData* dataElement, data) {
+  foreach( QVariant d, data) {
     msgString.append( " " );
-    switch( dataElement->type )
+    switch( d.type() )
     {
-      case OscData::Blob:
-        msgString.append("[ " + dataElement->b().toHex() + " ]");
+      case QVariant::ByteArray:
+        msgString.append("[ " + d.toByteArray().toHex() + " ]");
         break;
-      case OscData::String:
-      case OscData::Int:
-      case OscData::Float:
-        msgString.append( dataElement->s() );
+      default:
+        msgString.append( d.toString() );
         break;
     }
   }
@@ -46,29 +44,32 @@ QByteArray OscMessage::toByteArray( )
   QString typetag( "," );
   QByteArray args; // intermediate spot for arguments until we've assembled the typetag
   QDataStream dstream(&args, QIODevice::WriteOnly);
-  foreach( OscData* dataElement, data ) {
-    switch( dataElement->type )
+  foreach( QVariant d, data ) {
+    switch( d.type() )
     {
-      case OscData::String:
+      case QVariant::String:
       {
         typetag.append( 's' );
-        QByteArray ba = Osc::writePaddedString( dataElement->s() );
+        QByteArray ba = Osc::writePaddedString( d.toString() );
         // need to write this as raw data so it doesn't stick a length in there for us
         dstream.writeRawData(ba.constData(), ba.size());
         break;
       }
-      case OscData::Blob: // need to pad the blob
+      case QVariant::ByteArray: // need to pad the blob
         typetag.append( 'b' );
         // datastream packs this as an int32 len followed by raw data, just like OSC wants
-        dstream << dataElement->b();
+        dstream << d.toByteArray();
         break;
-      case OscData::Int:
+      case QVariant::Int:
         typetag.append( 'i' );
-        dstream << dataElement->i();
+        dstream << d.toInt();
         break;
-      case OscData::Float:
-        typetag.append( 'f' );
-        dstream << dataElement->f();
+      default:
+        // QVariant doesn't have a float type, sadly...
+        if( int(d.type()) == QMetaType::type("float") ) {
+            typetag.append( 'f' );
+            dstream << d.value<float>();
+        }
         break;
     }
   }
@@ -76,27 +77,6 @@ QByteArray OscMessage::toByteArray( )
   msg += args;
   Q_ASSERT( ( msg.size( ) % 4 ) == 0 );
   return msg;
-}
-
-OscData::OscData( int i )
-{
-  type = Int;
-  data.setValue(i);
-}
-OscData::OscData( float f )
-{
-  type = Float;
-  data.setValue(f);
-}
-OscData::OscData( const QString & s )
-{
-  type = String;
-  data.setValue(s);
-}
-OscData::OscData( const QByteArray & b )
-{
-  type = Blob;
-  data.setValue(b);
 }
 
 QByteArray Osc::createPacket( const QString & msg )
@@ -146,7 +126,7 @@ QByteArray Osc::createPacket( const QList<OscMessage*> & msgs )
 QList<OscMessage*> Osc::processPacket( const char* data, int size )
 {
   QList<OscMessage*> msgList;
-  QByteArray packet = QByteArray(data, size);
+  QByteArray packet(data, size);
   receivePacket( &packet, &msgList );
   return msgList;
 }
@@ -244,21 +224,21 @@ bool Osc::extractData( const QString & typetag, QByteArray* msg, OscMessage* osc
   QDataStream dstream(msg, QIODevice::ReadOnly);
   int typeIdx = 1; // start after the comma
   while(!dstream.atEnd() && typeIdx < typetag.size()) {
-    OscData* newdata = 0;
+    QVariant newdata;
     switch( typetag.at(typeIdx++).toAscii() )
     {
       case 'i':
       {
         int val;
         dstream >> val;
-        newdata = new OscData(val);
+        newdata.setValue(val);
         break;
       }
       case 'f':
       {
         float f;
         dstream >> f;
-        newdata = new OscData(f);
+        newdata.setValue(f);
         break;
       }
       case 's':
@@ -273,7 +253,7 @@ bool Osc::extractData( const QString & typetag, QByteArray* msg, OscMessage* osc
         while(!dstream.atEnd()) {
           dstream >> c;
           if(c == 0) {
-            newdata = new OscData(str);
+            newdata.setValue(str);
             dstream.skipRawData(paddedLength(str) - str.size() - 1); // step past any extra padding
             break;
           }
@@ -286,17 +266,15 @@ bool Osc::extractData( const QString & typetag, QByteArray* msg, OscMessage* osc
       {
         QByteArray blob;
         dstream >> blob; // data stream unpacks this as an int32 len followed by data, just like OSC wants
-        newdata = new OscData( blob );
+        newdata.setValue(blob);
         break;
       }
     }
 
-    if(dstream.status() == QDataStream::Ok && newdata)
+    if(dstream.status() == QDataStream::Ok && newdata.isValid())
       oscMessage->data.append( newdata );
-    else {
-      if(newdata) delete newdata;
+    else
       return false;
-    }
   }
   return true;
 }
@@ -364,22 +342,22 @@ bool Osc::createMessage( const QString & msg, OscMessage *oscMsg )
           break;
         }
       }
-      oscMsg->data.append( new OscData( elmnt ) );
+      oscMsg->data.append( QVariant( elmnt ) );
     }
     else { // see if it's a number and if not, assume it's a string
       bool ok = false;
       if( elmnt.count( "." ) == 1) { // might be a float, with exactly one .
         float f = elmnt.toFloat( &ok );
         if( ok )
-          oscMsg->data.append( new OscData( f ) );
+          oscMsg->data.append( QVariant( f ) );
       }
       // it's either an int or a string
       if( !ok ) {
         int i = elmnt.toInt( &ok );
         if( ok )
-          oscMsg->data.append( new OscData( i ) );
+          oscMsg->data.append( QVariant( i ) );
         else
-          oscMsg->data.append( new OscData( elmnt ) ); // string
+          oscMsg->data.append( QVariant( elmnt ) ); // string
       }
     }
   }

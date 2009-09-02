@@ -24,32 +24,13 @@
 #include <QStringList>
 #include <QVariant>
 
-class OscData
-{
-public:
-  enum { String, Int, Float, Blob } type;
-  OscData( int i );
-  OscData( float f );
-  OscData( const QString & s );
-  OscData( const QByteArray & b );
-
-  QString s() { return data.toString(); }
-  QByteArray b() { return data.toByteArray(); }
-  int i() { return data.toInt(); }
-  float f() { return data.value<float>(); }
-
-protected:
-  QVariant data;
-};
-
 class OscMessage
 {
 public:
   QString addressPattern;
-  QList<OscData*> data;
+  QList<QVariant> data;
   QString toString( );
   QByteArray toByteArray( );
-  ~OscMessage( ) { qDeleteAll( data ); }
 };
 
 class Osc
