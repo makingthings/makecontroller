@@ -1,0 +1,92 @@
+/*********************************************************************************
+
+ Copyright 2006-2009 MakingThings
+
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
+
+*********************************************************************************/
+
+/** @defgroup Core Core
+  Functions available to the Make Controller Board.
+  
+  \b Core provides the basic functionality of the Make Controller.  The \ref Libraries module extends the Core module to provide
+  additional functionality.
+*/
+
+/**
+ \mainpage Make Controller Kit - Firmware API
+ 
+ 
+ <table width="90%" class="listing">
+  <tr>
+    <th width="33%">Getting Started</th>
+    <th width="33%">Core Features</th>
+    <th width="33%">Resources</th>
+  </tr>
+  <tr>
+    <td>
+      <ul>
+        <li><a href="http://www.makingthings.com/documentation/tutorial/programming-the-make-controller-kit">Programming the Make Controller</a></li>
+        <li><a href="http://www.makingthings.com/documentation/tutorial/osc">OSC</a></li>
+        <li>\ref crashcourse</li>
+        <li><a href="./annotated.html">List of All Classes</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li>\ref networking</li>
+        <li>\ref rtos</li>
+        <li>\ref io</li>
+        <li>\ref dataformats</li>
+        <li>\ref interfacing</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="http://www.makingthings.com/forum">Support Forums</a></li>
+        <li><a href="http://makecontroller.googlecode.com">Issue Tracking and Dev Wiki</a></li>
+        <li><a href="irc://irc.freenode.net/makingthings">IRC - live chat</a></li>
+        <li><a href="http://code.google.com/p/makecontroller/source/checkout">Source Code Access</a></li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Tools</th>
+    <th>Licenses</th>
+    <th></th>
+  </tr>
+  <tr>
+    <td>
+      <ul>
+        <li>mcbuilder</li>
+        <li>mchelper</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li>\ref licenses</li>
+        <li>MakingThings - <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache 2.0</a></li>
+        <li>FreeRTOS - <a href="http://www.freertos.org/a00114.html">Modified GPL</a></li>
+        <li>lwIP - <a href="http://www.xfree86.org/3.3.6/COPYRIGHT2.html#5">Modified BSD</a></li>
+      </ul>
+    </td>
+    <td></td>
+  </tr>
+ </table>
+ <br>
+ <br>
+ <br>
+ <br>
+ <br>
+*/
+
+

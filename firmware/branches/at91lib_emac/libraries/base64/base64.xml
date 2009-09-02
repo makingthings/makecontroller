@@ -1,0 +1,10 @@
+<!DOCTYPE mcbuilder_library>
+<library>
+  <version>1.0</version>
+  <display_name>Base 64</display_name>
+  <author>MakingThings</author>
+  <reference>../../../../resources/reference/makecontroller/html/group__base64.html</reference>
+  <files>
+    <file type="thumb" >base64.c</file>
+  </files>
+</library>
