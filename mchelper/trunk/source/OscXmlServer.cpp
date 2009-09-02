@@ -280,27 +280,23 @@ void OscXmlClient::sendXmlPacket( const QList<OscMessage*> & messageList, const 
     msg.setAttribute( "NAME", oscMsg->addressPattern );
     oscPacket.appendChild( msg );
 
-    foreach( OscData* data, oscMsg->data ) {
+    foreach( QVariant d, oscMsg->data ) {
       QDomElement argument = doc.createElement( "ARGUMENT" );
-      switch( data->type )
+      switch( d.type() )
       {
-        case OscData::String:
+        case QVariant::String:
           argument.setAttribute( "TYPE", "s" );
-          argument.setAttribute( "VALUE", data->s());
+          argument.setAttribute( "VALUE", d.toString());
           break;
-        case OscData::Int:
+        case QVariant::Int:
           argument.setAttribute( "TYPE", "i" );
-          argument.setAttribute( "VALUE", data->s() );
+          argument.setAttribute( "VALUE", d.toString() );
           break;
-        case OscData::Float:
-          argument.setAttribute( "TYPE", "f" );
-          argument.setAttribute( "VALUE", data->s() );
-          break;
-        case OscData::Blob:
+        case QVariant::ByteArray:
         {
           QString blobstring;
-          unsigned char* blob = (unsigned char*)data->b().data( );
-          int blob_len = data->b().size();
+          unsigned char* blob = (unsigned char*)d.toByteArray().data();
+          int blob_len = d.toByteArray().size();
           while( blob_len-- ) {
             // break each byte into 4-bit chunks so they don't get misinterpreted
             // by any casts to ASCII, etc. and send a string composed of single chars from 0-f
@@ -311,6 +307,13 @@ void OscXmlClient::sendXmlPacket( const QList<OscMessage*> & messageList, const 
           argument.setAttribute( "VALUE", blobstring );
           break;
         }
+        default:
+          // QVariant doesn't have a float type, sadly...
+          if( int(d.type()) == QMetaType::type("float") ) {
+            argument.setAttribute( "TYPE", "f" );
+            argument.setAttribute( "VALUE", d.toString() );
+          }
+          break;
       }
       msg.appendChild( argument );
     }
@@ -371,23 +374,23 @@ bool XmlHandler::startElement( const QString & namespaceURI, const QString & loc
     if( type.isEmpty( ) || val.isEmpty( ) )
       return false;
 
-    OscData *msgData = 0;
+    QVariant msgData;
     switch(type.at(0).toAscii())
     {
       case 'i':
-        msgData = new OscData(val.toInt());
+        msgData.setValue(val.toInt());
         break;
       case 'f':
-        msgData = new OscData(val.toFloat());
+        msgData.setValue(val.toFloat());
         break;
       case 's':
-        msgData = new OscData(val);
+        msgData.setValue(val);
         break;
       case 'b': // TODO, unpack this appropriately
-        msgData = new OscData( val.toAscii() );
+        msgData.setValue(val.toAscii());
         break;
     }
-    if(msgData) currentMessage->data.append( msgData );
+    if(msgData.isValid()) currentMessage->data.append( msgData );
   }
   return true;
 }

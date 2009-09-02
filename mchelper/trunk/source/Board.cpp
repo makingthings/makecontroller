@@ -111,45 +111,44 @@ void Board::msgReceived(const QByteArray & packet)
 
 bool Board::extractSystemInfoA( OscMessage* msg )
 {
-  QList<OscData*>* msgData = &msg->data;
   bool newInfo = false;
 
-  int datalen = msgData->size();
+  int datalen = msg->data.size();
   for( int i = 0; i < datalen; i++ )
   {
-    OscData* data = msgData->at( i );
-    if( !data )
+    QVariant data = msg->data.at( i );
+    if( !data.isValid() )
       break;
     switch( i ) // we're counting on the board to send the pieces of data in this order
     {
       case 0:
-        if( name != data->s() ) {
-          name = data->s(); //name
+        if( name != data.toString() ) {
+          name = data.toString(); //name
           emit newBoardName(_key, (name + " : " + location()));
           newInfo = true;
         }
         break;
       case 1:
-        if(serialNumber != data->s()) {
-          serialNumber = data->s(); // serial number
+        if(serialNumber != data.toString()) {
+          serialNumber = data.toString(); // serial number
           newInfo = true;
         }
         break;
       case 2:
-        if(ip_address != data->s()) {
-          ip_address = data->s(); // IP address
+        if(ip_address != data.toString()) {
+          ip_address = data.toString(); // IP address
           newInfo = true;
         }
         break;
       case 3:
-        if(firmwareVersion != data->s()) {
-          firmwareVersion = data->s();
+        if(firmwareVersion != data.toString()) {
+          firmwareVersion = data.toString();
           newInfo = true;
         }
         break;
       case 4:
-        if(freeMemory != data->s()) {
-          freeMemory = data->s();
+        if(freeMemory != data.toString()) {
+          freeMemory = data.toString();
           newInfo = true;
         }
         break;
@@ -160,50 +159,48 @@ bool Board::extractSystemInfoA( OscMessage* msg )
 
 bool Board::extractSystemInfoB( OscMessage* msg )
 {
-  QList<OscData*>* msgData = &msg->data;
   bool newInfo = false;
 
-  int datalen = msgData->size();
-  for( int j = 0; j < datalen; j++ )
-  {
-    OscData* data = msgData->at( j );
-    if(!data)
+  int datalen = msg->data.size();
+  for( int j = 0; j < datalen; j++ ) {
+    QVariant data = msg->data.at( j );
+    if(!data.isValid())
       break;
     switch( j ) // we're counting on the board to send the pieces of data in this order
     {
       case 0:
-        if(dhcp != data->i()) {
-          dhcp = data->i();
+        if(dhcp != data.toInt()) {
+          dhcp = data.toInt();
           newInfo = true;
         }
         break;
       case 1:
-        if(webserver != data->i()) {
-          webserver = data->i();
+        if(webserver != data.toInt()) {
+          webserver = data.toInt();
           newInfo = true;
         }
         break;
       case 2:
-        if(gateway != data->s()) {
-          gateway = data->s();
+        if(gateway != data.toString()) {
+          gateway = data.toString();
           newInfo = true;
         }
         break;
       case 3:
-        if(netMask != data->s()) {
-          netMask = data->s();
+        if(netMask != data.toString()) {
+          netMask = data.toString();
           newInfo = true;
         }
         break;
       case 4:
-        if(udp_listen_port != data->s()) {
-          udp_listen_port = data->s();
+        if(udp_listen_port != data.toString()) {
+          udp_listen_port = data.toString();
           newInfo = true;
         }
         break;
       case 5:
-        if(udp_send_port != data->s()) {
-          udp_send_port = data->s();
+        if(udp_send_port != data.toString()) {
+          udp_send_port = data.toString();
           newInfo = true;
         }
         break;
@@ -214,38 +211,36 @@ bool Board::extractSystemInfoB( OscMessage* msg )
 
 bool Board::extractNetworkFind( OscMessage* msg )
 {
-  QList<OscData*>* msgData = &msg->data;
   bool newInfo = false;
 
-  int datalen = msgData->size();
-  for( int j = 0; j < datalen; j++ )
-  {
-    OscData* data = msgData->at( j );
-    if( !data )
+  int datalen = msg->data.size();
+  for( int j = 0; j < datalen; j++ ) {
+    QVariant data = msg->data.at( j );
+    if( !data.isValid() )
       break;
     switch( j ) // we're counting on the board to send the pieces of data in this order
     {
       case 0:
-        if( ip_address != data->s() ) {
-          ip_address = data->s(); // IP address
+        if( ip_address != data.toString() ) {
+          ip_address = data.toString(); // IP address
           newInfo = true;
         }
         break;
       case 1:
-        if( udp_listen_port != data->s() ) {
-          udp_listen_port = data->s();
+        if( udp_listen_port != data.toString() ) {
+          udp_listen_port = data.toString();
           newInfo = true;
         }
         break;
       case 2:
-        if( udp_send_port != data->s() ) {
-          udp_send_port = data->s();
+        if( udp_send_port != data.toString() ) {
+          udp_send_port = data.toString();
           newInfo = true;
         }
         break;
       case 3:
-        if( name != data->s() ) {
-          name = data->s();
+        if( name != data.toString() ) {
+          name = data.toString();
           emit newBoardName(_key, (name + " : " + location()));
           newInfo = true;
         }
