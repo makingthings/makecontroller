@@ -41,13 +41,11 @@ QextSerialEnumerator::~QextSerialEnumerator( )
     #include "qextserialport.h"
 
 
-    //this is serial port GUID
-    #ifndef GUID_CLASS_COMPORT
-        // DEFINE_GUID(GUID_CLASS_COMPORT, 0x86e0d1e0L, 0x8089, 0x11d0, 0x9c, 0xe4, 0x08, 0x00, 0x3e, 0x30, 0x1f, 0x73);
-        // use more Make Controller specific guid
-        DEFINE_GUID(GUID_CLASS_COMPORT, 0x4D36E978, 0xE325, 0x11CE, 0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18 );
-        DEFINE_GUID(SAMBA_GUID, 0xe6ef7dcd, 0x1795, 0x4a08, 0x9f, 0xbf, 0xaa, 0x78, 0x42, 0x3c, 0x26, 0xf0);
+    // see http://msdn.microsoft.com/en-us/library/ms791134.aspx for list of GUID classes
+    #ifndef GUID_DEVCLASS_PORTS
+        DEFINE_GUID(GUID_DEVCLASS_PORTS, 0x4D36E978, 0xE325, 0x11CE, 0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18 );
     #endif
+    DEFINE_GUID(SAMBA_GUID, 0xe6ef7dcd, 0x1795, 0x4a08, 0x9f, 0xbf, 0xaa, 0x78, 0x42, 0x3c, 0x26, 0xf0);
 
     /* Gordon Schumacher's macros for TCHAR -> QString conversions and vice versa */
     #ifdef UNICODE
@@ -99,24 +97,20 @@ QextSerialEnumerator::~QextSerialEnumerator( )
     //static
     void QextSerialEnumerator::setupAPIScan(QList<QextPortInfo> & infoList)
     {
-        HDEVINFO devInfo = INVALID_HANDLE_VALUE;
-        GUID * guidDev = (GUID *) & GUID_CLASS_COMPORT;
-        GUID * sambaGuidDev = (GUID *) & SAMBA_GUID;
-
-        devInfo = SetupDiGetClassDevs(guidDev, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+        HDEVINFO devInfo = SetupDiGetClassDevs(&GUID_DEVCLASS_PORTS, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
         if(devInfo == INVALID_HANDLE_VALUE) {
             qCritical() << "SetupDiGetClassDevs failed:" << GetLastError();
             return;
         }
-        enumerateDevicesWin( devInfo, guidDev, &infoList );
+        enumerateDevicesWin( devInfo, &GUID_DEVCLASS_PORTS, &infoList );
         
-        devInfo = SetupDiGetClassDevs(sambaGuidDev, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+        devInfo = SetupDiGetClassDevs(&SAMBA_GUID, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
         if(devInfo == INVALID_HANDLE_VALUE)
           return qCritical("SetupDiGetClassDevs failed. Error code: %ld", GetLastError());
-        enumerateDevicesWin( devInfo, sambaGuidDev, &infoList );
+        enumerateDevicesWin( devInfo, &SAMBA_GUID, &infoList );
     }
 
-    void QextSerialEnumerator::enumerateDevicesWin( HDEVINFO devInfo, GUID* guidDev, QList<QextPortInfo>* infoList )
+    void QextSerialEnumerator::enumerateDevicesWin( HDEVINFO devInfo, const GUID* guidDev, QList<QextPortInfo>* infoList )
     {
         //enumerate the devices
         bool ok = true;
@@ -176,7 +170,16 @@ QextSerialEnumerator::~QextSerialEnumerator( )
         ZeroMemory(&dbh, sizeof(dbh));
         dbh.dbcc_size = sizeof(dbh);
         dbh.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
-        CopyMemory(&dbh.dbcc_classguid, &GUID_CLASS_COMPORT, sizeof(GUID));
+        CopyMemory(&dbh.dbcc_classguid, &GUID_DEVCLASS_PORTS, sizeof(GUID));
+
+        notificationHandle = RegisterDeviceNotification( notificationWidget->winId( ), &dbh, DEVICE_NOTIFY_WINDOW_HANDLE );
+        if(!notificationHandle)
+            qWarning() << "RegisterDeviceNotification failed:" << GetLastError();
+            
+        ZeroMemory(&dbh, sizeof(dbh));
+        dbh.dbcc_size = sizeof(dbh);
+        dbh.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+        CopyMemory(&dbh.dbcc_classguid, &SAMBA_GUID, sizeof(GUID));
 
         notificationHandle = RegisterDeviceNotification( notificationWidget->winId( ), &dbh, DEVICE_NOTIFY_WINDOW_HANDLE );
         if(!notificationHandle)
@@ -203,7 +206,7 @@ QextSerialEnumerator::~QextSerialEnumerator( )
                 //qDebug() << "devname:" << devId;
 
                 DWORD dwFlag = DBT_DEVICEARRIVAL == wParam ? (DIGCF_ALLCLASSES | DIGCF_PRESENT) : DIGCF_ALLCLASSES;
-                HDEVINFO hDevInfo = SetupDiGetClassDevs(&GUID_CLASS_COMPORT,NULL,NULL,dwFlag);
+                HDEVINFO hDevInfo = SetupDiGetClassDevs(&GUID_DEVCLASS_PORTS,NULL,NULL,dwFlag);
                 SP_DEVINFO_DATA spDevInfoData;
                 spDevInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
 
@@ -743,15 +746,15 @@ QList<QextPortInfo> QextSerialEnumerator::getPorts()
 
 void QextSerialEnumerator::setUpNotifications( )
 {
-  #ifdef _TTY_WIN_
+#ifdef _TTY_WIN_
     setUpNotificationWin( );
-  #endif
-  #ifdef _TTY_POSIX_
-  #ifdef Q_WS_MAC
-    (void)win;
-    setUpNotificationOSX( ); 
-  #else /* Q_WS_MAC */
+#endif
+
+#ifdef _TTY_POSIX_
+#ifdef Q_OS_MAC
+    setUpNotificationOSX( );
+#else
     qCritical("Notifications for *Nix/FreeBSD are not implemented yet");
-  #endif /* Q_WS_MAC */
-	#endif /*_TTY_POSIX_*/
+#endif // Q_OS_MAC
+#endif // _TTY_POSIX_
 }
