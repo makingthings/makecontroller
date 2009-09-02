@@ -1,0 +1,119 @@
+; --------------------------------------------
+; Make Controller USB CDC ACM Setup File
+; --------------------------------------------
+
+[Version] 
+Signature="$Windows NT$" 
+Class=Ports
+ClassGuid={4D36E978-E325-11CE-BFC1-08002BE10318} 
+Provider=%MAKINGTHINGS% 
+LayoutFile=layout.inf
+DriverVer=04/28/2009,5.1.0.0
+
+[Manufacturer] 
+%DESCRIPTION%=DeviceList, NT, NTia64, NTamd64
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+[DeviceList.NT] 
+%DESCRIPTION%=DriverInstall, USB\VID_EB03&PID_0920
+
+[DeviceList.NTia64] 
+%DESCRIPTION%=DriverInstall, USB\VID_EB03&PID_0920
+
+[DeviceList.NTamd64] 
+%DESCRIPTION%=DriverInstall, USB\VID_EB03&PID_0920
+
+;------------------------------------------------------------------------------
+;  32 bit section for Windows 2000/2003/XP/Vista
+;------------------------------------------------------------------------------
+
+[DriverInstall.NT]
+include=mdmcpq.inf 
+CopyFiles=DriverCopyFiles
+AddReg=DriverInstall.NT.AddReg 
+
+[DriverCopyFiles]
+usbser.sys,,,0x20
+serenum.sys,,,0x20
+
+[DriverInstall.NT.HW] 
+AddReg=DriverInstall.NT.HW.AddReg 
+
+[DriverInstall.NT.AddReg]
+HKR,,EnumPropPages32,,"MsPorts.dll,SerialPortPropPageProvider"
+
+[DriverInstall.NT.HW.AddReg]
+HKR,,NTMPDriver,,*ntkern
+HKR,,NTMPDriver,,usbser.sys
+HKR,,PortSubClass,1,01
+HKR,,"UpperFilters",0x00010000,"serenum" 
+
+[DriverInstall.NT.Services] 
+AddService=usbser, 0x00000002, UsbserService
+AddService=Serenum,,SerenumService
+
+;------------------------------------------------------------------------------
+;  64 bit section for Intel Itanium based systems
+;------------------------------------------------------------------------------
+
+[DriverInstall.NTia64]
+AddReg=DriverInstall.NT.AddReg
+
+[DriverInstall.NTia64.HW]
+AddReg=DriverInstall.NT.HW.AddReg
+
+[DriverInstall.NTia64.Services] 
+include=mdmcpq.inf
+AddService = usbser, 0x00000002, UsbserService
+AddService = Serenum,,SerenumService
+
+;------------------------------------------------------------------------------
+;  64 bit section for AMD64 and Intel EM64T based systems
+;------------------------------------------------------------------------------
+
+[DriverInstall.NTamd64]
+AddReg=DriverInstall.NT.AddReg
+
+[DriverInstall.NTamd64.HW]
+AddReg=DriverInstall.NT.HW.AddReg
+
+[DriverInstall.NTamd64.Services] 
+include=mdmcpq.inf
+AddService = usbser, 0x00000002, UsbserService
+AddService = Serenum,,SerenumService
+
+;------------------------------------------------------------------------------
+;  Usbser Service
+;------------------------------------------------------------------------------
+
+[UsbserService] 
+DisplayName=%USBSER.DESC% 
+ServiceType=1
+StartType=3
+ErrorControl=1
+ServiceBinary=%12%\usbser.sys 
+LoadOrderGroup = Base
+
+;------------------------------------------------------------------------------
+;  Serenum Service
+;------------------------------------------------------------------------------
+
+[SerenumService] 
+DisplayName    = %SERENUM.DESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\serenum.sys
+LoadOrderGroup = PNP Filter
+
+;------------------------------------------------------------------------------
+;  String Definitions
+;------------------------------------------------------------------------------
+
+[Strings] 
+MAKINGTHINGS="MakingThings"
+DESCRIPTION ="Make Controller Kit"
+USBSER.DESC = "USB Serial Driver"
+SERENUM.DESC = "Serenum Filter Driver"

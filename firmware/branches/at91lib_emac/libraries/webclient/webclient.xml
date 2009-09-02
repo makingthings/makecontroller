@@ -1,0 +1,10 @@
+<!DOCTYPE mcbuilder_library>
+<library>
+  <version>1.0</version>
+  <display_name>Web Client</display_name>
+  <author>MakingThings</author>
+  <reference>../../../../resources/reference/makecontroller/html/group__webclient.html</reference>
+  <files>
+    <file type="thumb" >webclient.c</file>
+  </files>
+</library>
