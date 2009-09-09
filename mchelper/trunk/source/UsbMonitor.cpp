@@ -39,8 +39,7 @@ UsbMonitor::UsbMonitor(MainWindow* mw) : QThread()
   enumerator.setUpNotifications();
   #elif (defined Q_OS_WIN)
   QList<QextPortInfo> ports = enumerator.getPorts();
-  if( ports.count())
-  {
+  if( ports.count()) {
     QStringList boards;
     foreach( QextPortInfo port, ports )
       onDeviceDiscovered( port );
@@ -64,25 +63,16 @@ void UsbMonitor::run( )
     QStringList portNames;
 
     // first check if there are any new boards
-    foreach(QextPortInfo port, ports)
-    {
+    foreach(QextPortInfo port, ports) {
       // the portname needs to be tweeked
-      if( !usbSerialList.contains(port.portName) )
-      {
-        if( isMakeController( port ) )
-        {
-          usbSerialList.append(port.portName);  // keep our internal list, the portName is the unique key
-          newSerialPorts.append(port.portName); // on the list to be posted to the UI
-        }
+      if( !usbSerialList.contains(port.portName) && isMakeController(port) ) {
+        usbSerialList.append(port.portName);  // keep our internal list, the portName is the unique key
+        newSerialPorts.append(port.portName); // on the list to be posted to the UI
       }
 
-      if( !usbSambaList.contains(port.portName) )
-      {
-        if( isSamBa( port ) )
-        {
-          usbSambaList.append(port.portName);  // keep our internal list, the portName is the unique key
-          newSambaPorts.append(port.portName); // on the list to be posted to the UI
-        }
+      if( !usbSambaList.contains(port.portName) && isSamBa(port) ) {
+        usbSambaList.append(port.portName);  // keep our internal list, the portName is the unique key
+        newSambaPorts.append(port.portName); // on the list to be posted to the UI
       }
       // check for samba boards...
       portNames << port.portName;
@@ -94,20 +84,16 @@ void UsbMonitor::run( )
       emit newBoards(newSambaPorts, BoardType::UsbSamba);
 
     // if any boards we know about are no longer in the list, they've been removed
-    foreach(QString key, usbSerialList)
-    {
-      if(!portNames.contains(key))
-      {
+    foreach(QString key, usbSerialList) {
+      if(!portNames.contains(key)) {
         usbSerialList.removeAt(usbSerialList.indexOf(key));
         emit boardsRemoved(key);
       }
     }
 
     // same thing for the samba boards
-    foreach(QString key, usbSambaList)
-    {
-      if(!portNames.contains(key))
-      {
+    foreach(QString key, usbSambaList) {
+      if(!portNames.contains(key)) {
         usbSambaList.removeAt(usbSambaList.indexOf(key));
         emit boardsRemoved(key);
       }
@@ -124,13 +110,11 @@ void UsbMonitor::onDeviceDiscovered(const QextPortInfo & info)
   // opened, closed and then re-opened...
   #endif
   qDebug() << tr("device discovered:") << info.portName << info.productID << info.vendorID;
-  if( isMakeController(info) )
-  {
+  if( isMakeController(info) ) {
     QStringList ports = QStringList() << info.portName.toAscii();
     emit newBoards(ports, BoardType::UsbSerial);
   }
-  else if( isSamBa( info ) )
-  {
+  else if( isSamBa( info ) ) {
     QStringList ports = QStringList() << info.portName.toAscii();
     emit newBoards(ports, BoardType::UsbSamba);
   }
