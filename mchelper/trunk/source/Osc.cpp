@@ -64,13 +64,11 @@ QByteArray OscMessage::toByteArray( )
         typetag.append( 'i' );
         dstream << d.toInt();
         break;
-      default:
-        // QVariant doesn't have a float type, sadly...
-        if( int(d.type()) == QMetaType::type("float") ) {
-            typetag.append( 'f' );
-            dstream << d.value<float>();
-        }
+      case QMetaType::Float: // QVariant doesn't have a float type
+        typetag.append( 'f' );
+        dstream << d.value<float>();
         break;
+      default: break;
     }
   }
   msg += Osc::writePaddedString( typetag );
@@ -348,11 +346,13 @@ bool Osc::createMessage( const QString & msg, OscMessage *oscMsg )
       bool ok = false;
       if( elmnt.count( "." ) == 1) { // might be a float, with exactly one .
         float f = elmnt.toFloat( &ok );
-        if( ok )
-          oscMsg->data.append( QVariant( f ) );
+        if( ok ) {
+          QVariant d; // passing f directly to the constructor interprets as a double
+          d.setValue(f);
+          oscMsg->data.append(d);
+        }
       }
-      // it's either an int or a string
-      if( !ok ) {
+      else { // it's either an int or a string
         int i = elmnt.toInt( &ok );
         if( ok )
           oscMsg->data.append( QVariant( i ) );

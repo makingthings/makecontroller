@@ -286,10 +286,14 @@ void OscXmlClient::sendXmlPacket( const QList<OscMessage*> & messageList, const 
       {
         case QVariant::String:
           argument.setAttribute( "TYPE", "s" );
-          argument.setAttribute( "VALUE", d.toString());
+          argument.setAttribute( "VALUE", d.toString() );
           break;
         case QVariant::Int:
           argument.setAttribute( "TYPE", "i" );
+          argument.setAttribute( "VALUE", d.toString() );
+          break;
+        case QMetaType::Float: // QVariant doesn't have a float type
+          argument.setAttribute( "TYPE", "f" );
           argument.setAttribute( "VALUE", d.toString() );
           break;
         case QVariant::ByteArray:
@@ -307,13 +311,7 @@ void OscXmlClient::sendXmlPacket( const QList<OscMessage*> & messageList, const 
           argument.setAttribute( "VALUE", blobstring );
           break;
         }
-        default:
-          // QVariant doesn't have a float type, sadly...
-          if( int(d.type()) == QMetaType::type("float") ) {
-            argument.setAttribute( "TYPE", "f" );
-            argument.setAttribute( "VALUE", d.toString() );
-          }
-          break;
+        default: break;
       }
       msg.appendChild( argument );
     }
