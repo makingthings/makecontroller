@@ -37,10 +37,10 @@ void TestOsc::numbers()
   OscMessage msg;
   osc.createMessage("/test 12 34.5 -3 -23.6", &msg);
   QVERIFY(msg.data.count() == 4);
-  QVERIFY(msg.data.at(0)->i() == 12);
-  QVERIFY(msg.data.at(1)->f() == 34.5f);
-  QVERIFY(msg.data.at(2)->i() == -3);
-  QVERIFY(msg.data.at(3)->f() == -23.6f);
+  QVERIFY(msg.data.at(0).toInt() == 12);
+  QVERIFY(msg.data.at(1).value<float>() == 34.5f);
+  QVERIFY(msg.data.at(2).toInt() == -3);
+  QVERIFY(msg.data.at(3).value<float>() == -23.6f);
 }
 
 /*
@@ -51,8 +51,8 @@ void TestOsc::strings()
   OscMessage msg;
   osc.createMessage("/test string \"test spaces\"", &msg);
   QVERIFY(msg.data.count() == 2);
-  QVERIFY(msg.data.at(0)->s() == "string");
-  QVERIFY(msg.data.at(1)->s() == "test spaces");
+  QVERIFY(msg.data.at(0).toString() == "string");
+  QVERIFY(msg.data.at(1).toString() == "test spaces");
 }
 
 /*
@@ -63,11 +63,11 @@ void TestOsc::mixed()
   OscMessage msg;
   osc.createMessage("/test 23 \"space this\" -34.5 anotherstring 56", &msg);
   QVERIFY(msg.data.count() == 5);
-  QVERIFY(msg.data.at(0)->i() == 23);
-  QVERIFY(msg.data.at(1)->s() == "space this");
-  QVERIFY(msg.data.at(2)->f() == -34.5);
-  QVERIFY(msg.data.at(3)->s() == "anotherstring");
-  QVERIFY(msg.data.at(4)->i() == 56);
+  QVERIFY(msg.data.at(0).toInt() == 23);
+  QVERIFY(msg.data.at(1).toString() == "space this");
+  QVERIFY(msg.data.at(2).value<float>() == -34.5);
+  QVERIFY(msg.data.at(3).toString() == "anotherstring");
+  QVERIFY(msg.data.at(4).toInt() == 56);
 }
 
 /*
@@ -85,10 +85,10 @@ void TestOsc::roundtrip()
   QCOMPARE(processed->data.size(), original.data.size());
 //  for( int i = 0; i < processed->data.size(); i++ )
 
-  QCOMPARE(processed->data.at(0)->i(), original.data.at(0)->i());
-  QCOMPARE(processed->data.at(1)->i(), original.data.at(1)->i());
-  QCOMPARE(processed->data.at(2)->f(), original.data.at(2)->f());
-  QCOMPARE(processed->data.at(3)->s(), original.data.at(3)->s());
+  QCOMPARE(processed->data.at(0).toInt(), original.data.at(0).toInt());
+  QCOMPARE(processed->data.at(1).toInt(), original.data.at(1).toInt());
+  QCOMPARE(processed->data.at(2).value<float>(), original.data.at(2).value<float>());
+  QCOMPARE(processed->data.at(3).toString(), original.data.at(3).toString());
 }
 
 /*
@@ -108,20 +108,20 @@ void TestOsc::bundle()
 
   OscMessage* m = msgs.at(0);
   QVERIFY(m->addressPattern == "/test");
-  QVERIFY(m->data.at(0)->s() == "number");
-  QCOMPARE(m->data.at(1)->i(), 1);
-  QCOMPARE(m->data.at(2)->i(), -2);
-  QCOMPARE(m->data.at(3)->i(), 3);
+  QVERIFY(m->data.at(0).toString() == "number");
+  QCOMPARE(m->data.at(1).toInt(), 1);
+  QCOMPARE(m->data.at(2).toInt(), -2);
+  QCOMPARE(m->data.at(3).toInt(), 3);
 
   m = msgs.at(1);
   QVERIFY(m->addressPattern == "/test2");
-  QVERIFY(m->data.at(0)->s() == "donkey");
-  QVERIFY(m->data.at(1)->s() == "good");
+  QVERIFY(m->data.at(0).toString() == "donkey");
+  QVERIFY(m->data.at(1).toString() == "good");
 
   m = msgs.at(2);
   QVERIFY(m->addressPattern == "/test3");
-  QVERIFY(m->data.at(0)->f() == 34.6f);
-  QVERIFY(m->data.at(1)->s() == "twelve");
+  QVERIFY(m->data.at(0).value<float>() == 34.6f);
+  QVERIFY(m->data.at(1).toString() == "twelve");
 }
 
 

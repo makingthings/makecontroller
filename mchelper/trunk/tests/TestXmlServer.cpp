@@ -20,14 +20,16 @@
 #include "OscXmlServer.h"
 #include "Osc.h"
 
+#define TESTADDR "192.168.0.123"
+
 /*
   Set up the main window.  We'll add one fake board entry.
 */
 void TestXmlServer::initTestCase()
 {
-  PacketUdp *udp = new PacketUdp(QHostAddress("192.168.0.123"), 10000);
+  PacketUdp *udp = new PacketUdp(QHostAddress(TESTADDR), 10000);
   mainWindow->onEthernetDeviceArrived(udp);
-  QVERIFY( mainWindow->deviceList->count() == 1 );
+  QVERIFY( mainWindow->ui.deviceList->count() == 1 );
   QSettings settings("MakingThings", "mchelper");
   serverPort = settings.value("xml_listen_port", DEFAULT_XML_LISTEN_PORT).toInt();
   qRegisterMetaType< QList<Board*> >("QList<Board*>");
@@ -43,8 +45,7 @@ void TestXmlServer::clientConnect()
 
   xmlClient1.connectToHost(QHostAddress::LocalHost, serverPort);
   int count = 0;
-  while( xmlClient1.state() != QAbstractSocket::ConnectedState )
-  {
+  while( xmlClient1.state() != QAbstractSocket::ConnectedState ) {
     QTest::qWait(250);
     if(count++ > 10)
       QFAIL("client 1 couldn't connect to server.");
@@ -54,8 +55,7 @@ void TestXmlServer::clientConnect()
   //QCOMPARE(updateSpy->count(), 1 );
   QCOMPARE(client1DataSpy.count(), 1 );
   QList<QByteArray> newDocuments = xmlClient1.readAll( ).split( '\0' );
-  foreach( QByteArray document, newDocuments )
-  {
+  foreach( QByteArray document, newDocuments ) {
     if(!document.length())
       newDocuments.removeOne(document);
   }
@@ -64,7 +64,7 @@ void TestXmlServer::clientConnect()
   QVERIFY(doc.setContent(newDocuments.at(1)));
   //qDebug("%s", qPrintable(doc.toString(2)));
   QDomElement board = doc.elementsByTagName("BOARD").item(0).toElement();
-  QVERIFY(board.attribute("LOCATION") == "192.168.0.123"); // make sure this is our fake board from above
+  QVERIFY(board.attribute("LOCATION") == TESTADDR); // make sure this is our fake board from above
 }
 
 /*
@@ -77,8 +77,7 @@ void TestXmlServer::clientConnect2()
 
   xmlClient2.connectToHost(QHostAddress::LocalHost, serverPort);
   int count = 0;
-  while( xmlClient2.state() != QAbstractSocket::ConnectedState )
-  {
+  while( xmlClient2.state() != QAbstractSocket::ConnectedState ) {
     QTest::qWait(250);
     if(count++ > 10)
       QFAIL("client 2 couldn't connect to server.");
