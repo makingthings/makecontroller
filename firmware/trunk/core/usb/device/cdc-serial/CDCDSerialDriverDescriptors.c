@@ -202,7 +202,8 @@ const CDCDSerialDriverConfigurationDescriptors configurationDescriptors = {
         CDCGenericDescriptor_INTERFACE,
         CDCGenericDescriptor_CALLMANAGEMENT,
         CDCCallManagementDescriptor_SELFCALLMANAGEMENT,
-        0 // No associated data interface
+//        0 // No associated data interface
+        0xFF // required for OS X to provide a serial port entry
     },
     // Class-specific abstract control management functional descriptor
     {
