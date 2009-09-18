@@ -18,8 +18,6 @@
 #ifndef ANALOGIN_H
 #define ANALOGIN_H
 
-#include "rtos.h"
-
 #define ANALOGIN_CHANNELS 8
 
 /**
@@ -39,32 +37,15 @@
   
   \ingroup io
 */
-class AnalogIn
-{
-public:
-  AnalogIn(int channel);
-  ~AnalogIn();
-  int value();
-  int valueWait( );
-  static bool multi(int values[]);
 
-protected:
-  int index;
-  int getIo( int index );
-  static int managerInit();
-  static void managerDeinit();
+#include "types.h"
 
-  friend void AnalogIn_Isr();
+void ainInit(void);
+void ainDeinit(void);
 
-  typedef struct {
-    Semaphore semaphore;
-    Semaphore doneSemaphore;
-    int activeChannels;
-    bool waitingForMulti; // are we waiting for a multi conversion or just a single channel
-    int multiConversionsComplete; // mask of which conversions have been completed
-  } Manager;
-  static Manager manager;
-};
+int ainValue(int channel);
+int ainValueWait(int channel);
+bool ainMulti(int values[]);
 
 ///* OSC Interface */
 //const char* AnalogInOsc_GetName( void );
