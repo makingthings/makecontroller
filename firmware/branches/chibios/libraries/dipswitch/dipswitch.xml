@@ -1,0 +1,10 @@
+<!DOCTYPE mcbuilder_library>
+<library>
+  <version>1.0</version>
+  <display_name>DIP Switch</display_name>
+  <author>MakingThings</author>
+  <reference>../../../../resources/reference/makecontroller/html/group___dip_switch.html</reference>
+  <files>
+    <file type="thumb" >dipswitch.c</file>
+  </files>
+</library>

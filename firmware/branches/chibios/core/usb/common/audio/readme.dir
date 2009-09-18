@@ -1,0 +1,10 @@
+//------------------------------------------------------------------------------
+/// \dir
+/// !Purpose
+///
+/// This directory contains structures and definitions related to the USB audio
+/// specification. They can be divided into two groups:
+/// - Audio-specific descriptors, prefixed with AUD and suffixed with Descriptor.
+/// - Audio-specific requests, prefixed with AUD and suffixed with Request.
+//------------------------------------------------------------------------------
+

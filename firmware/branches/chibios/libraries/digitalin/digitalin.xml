@@ -1,0 +1,10 @@
+<!DOCTYPE mcbuilder_library>
+<library>
+  <version>1.0</version>
+  <display_name>Digital Input</display_name>
+  <author>MakingThings</author>
+  <reference>../../../../resources/reference/makecontroller/html/group___digital_in.html</reference>
+  <files>
+    <file type="thumb" >digitalin.c</file>
+  </files>
+</library>
