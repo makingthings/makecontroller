@@ -1,0 +1,40 @@
+/*********************************************************************************
+
+ Copyright 2006-2009 MakingThings
+
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
+
+*********************************************************************************/
+
+/**
+  \defgroup io Input / Output
+  
+  \section ains Analog Inputs
+  The Make Controller has 8 10-bit analog inputs.  Check the AnalogIn class for more details.
+  
+  \section raw_io IO Lines
+  The Make Controller provides up to 35 digital IO lines that can be configured as inputs or outputs.
+  Check the Io class for controlling these signal lines.
+  
+  \section Motors
+  The Pwm class provides the most direct control of the pwm signals on the Make Controller, and 
+  the Stepper, Servo and Motor classes make it easy to control stepper, servo and dc motors.
+  
+  \section appboard Application Board
+  The Application Board adds a few more elements not available on the Controller Board.  The 
+  DipSwitch (App Board v1.x only) provides a simple 8-channel switch for manual configuration,
+  and the AppLed class represents the 4 LEDs on the Application Board.
+  
+  Also specific to the Application Board, the DigitalIn and DigitalOut systems make it easy to 
+  control the 8 digital ins and outs on it.  These are based on the Io system, but take care of
+  some configuration for you.
+*/

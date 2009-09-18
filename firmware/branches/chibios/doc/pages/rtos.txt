@@ -1,0 +1,49 @@
+/*********************************************************************************
+
+ Copyright 2006-2009 MakingThings
+
+ Licensed under the Apache License, 
+ Version 2.0 (the "License"); you may not use this file except in compliance 
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0 
+ 
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, either express or implied. See the License for
+ the specific language governing permissions and limitations under the License.
+
+*********************************************************************************/
+
+/**
+  \defgroup rtos Real Time Operating System
+ 
+  \section Overview
+  The Make Controller runs an operating system, called FreeRTOS (http://www.freertos.org).  This makes
+  it \b much easier to do more than one thing at a time in your programs.  If you want to read
+  from sensors, communicate over the network, communicate via USB, and run a couple motors
+  all at once, the RTOS is a great help.  It lets you write each of those tasks separately (not having
+  to jump back and forth between them), then does the jumping for you when the application is run.
+  
+  \section Tasks
+  In a given application, there will usually be 1 or more Tasks.  Each Task is a run loop, or thread,
+  and they can all run more or less simultaneously.  The general idea is to create a Task for each
+  major function of your application - anywhere from 1 to 5 Tasks for an application is normal.  
+  
+  In each Task you can create a loop that runs forever, doing the work you tell it to.  When the application
+  is run, the RTOS switches back and forth between all the different tasks to make sure they all get run.
+  Check the Task class for more info.
+  
+  \section Sempahores
+  Semaphores offer a way to synchronize between tasks.  If you have a single resource that will be
+  accessed from different tasks, you usually want to make sure to protect it with a semaphore.  Check
+  the Semaphore class for more info.
+  
+  \section Queues
+  Queues offer a thread-safe way to transfer data between tasks.  You can load items onto a queue
+  from one task, and then read them off the queue in another.  Check the Queue class for more info.
+  
+  \section Timers
+  The Make Controller offers a couple timers to help coordinate events that need to be
+  performed at regular intervals.  Check the Timer and FastTimer classes for more info.
+*/
