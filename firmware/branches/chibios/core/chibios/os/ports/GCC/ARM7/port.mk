@@ -1,7 +1,7 @@
-# List of the ChibiOS/RT Cortex-M3 port files.
-PORTSRC = ${CHIBIOS}/ports/GCC/ARM7/chcore.c
+# List of the ChibiOS/RT ARM7 port files.
+PORTSRC = ${CHIBIOS}/os/ports/GCC/ARM7/chcore.c
 
-PORTASM = ${CHIBIOS}/ports/GCC/ARM7/crt0.s \
-          ${CHIBIOS}/ports/GCC/ARM7/chcoreasm.s
+PORTASM = ${CHIBIOS}/os/ports/GCC/ARM7/crt0.s \
+          ${CHIBIOS}/os/ports/GCC/ARM7/chcoreasm.s
 
-PORTINC = ${CHIBIOS}/ports/GCC/ARM7
+PORTINC = ${CHIBIOS}/os/ports/GCC/ARM7
