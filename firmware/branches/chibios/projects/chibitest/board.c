@@ -21,6 +21,7 @@
 #include <pal.h>
 #include "board.h"
 #include "at91lib/aic.h"
+#include "analogin.h"
 
 /*
  * FIQ Handler weak symbol defined in vectors.s.
@@ -69,43 +70,33 @@ static const AT91SAM7XPIOConfig config =
  * segments initialization.
  */
 void hwinit0(void) {
-  /*
-   * Flash Memory: 1 wait state, about 50 cycles in a microsecond.
-   */
+  
+  // Flash Memory: 1 wait state, about 50 cycles in a microsecond.
   AT91C_BASE_MC->MC_FMR = (AT91C_MC_FMCN & (50 << 16)) | AT91C_MC_FWS_1FWS;
 
-  /*
-   * Watchdog disabled.
-   */
+  #ifndef WATCHDOG_ENABLE
   AT91C_BASE_WDTC->WDTC_WDMR = AT91C_WDTC_WDDIS;
+  #endif
 
-  /*
-   * Enables the main oscillator and waits 56 slow cycles as startup time.
-   */
+  // Enables the main oscillator and waits 56 slow cycles as startup time.
   AT91C_BASE_PMC->PMC_MOR = (AT91C_CKGR_OSCOUNT & (7 << 8)) | AT91C_CKGR_MOSCEN;
   while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_MOSCS))
     ;
 
-  /*
-   * PLL setup: DIV = 14, MUL = 72, PLLCOUNT = 10
-   * PLLfreq = 96109714 Hz (rounded)
-   */
+  // PLL setup: DIV = 14, MUL = 72, PLLCOUNT = 10
+  // PLLfreq = 96109714 Hz (rounded)
   AT91C_BASE_PMC->PMC_PLLR = (AT91C_CKGR_DIV & 14) |
                              (AT91C_CKGR_PLLCOUNT & (10 << 8)) |
                              (AT91C_CKGR_MUL & (72 << 16));
   while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_LOCK))
     ;
 
-  /*
-   * Master clock = PLLfreq / 2 = 48054858 Hz (rounded)
-   */
+  // Master clock = PLLfreq / 2 = 48054858 Hz (rounded)
   AT91C_BASE_PMC->PMC_MCKR = AT91C_PMC_CSS_PLL_CLK | AT91C_PMC_PRES_CLK_2;
   while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_MCKRDY))
     ;
 
-  /*
-   * PIO initialization.
-   */
+  // PIO initialization.
   palInit(&config);
 }
 
@@ -117,9 +108,7 @@ void hwinit0(void) {
 void hwinit1(void) {
   int i;
 
-  /*
-   * Default AIC setup, the device drivers will modify it as needed.
-   */
+  // Default AIC setup, the device drivers will modify it as needed.
   AT91C_BASE_AIC->AIC_ICCR = 0xFFFFFFFF;
   AT91C_BASE_AIC->AIC_SVR[0] = (AT91_REG)FiqHandler;
   for (i = 1; i < 31; i++) {
@@ -127,35 +116,12 @@ void hwinit1(void) {
     AT91C_BASE_AIC->AIC_EOICR = (AT91_REG)i;
   }
   AT91C_BASE_AIC->AIC_SPU  = (AT91_REG)SpuriousHandler;
+  
+  #ifndef NO_AIN_INIT
+  ainInit();
+  #endif
 
-  /*
-   * LCD pins setup.
-   */
-  // palClearPad(IOPORT1, 12);
-  // palSetPadMode(IOPORT1, 12, PAL_MODE_OUTPUT_PUSHPULL);
-  // 
-  // palSetPad(IOPORT1, PIOA_LCD_RESET);
-  // palSetPadMode(IOPORT1, PIOA_LCD_RESET, PAL_MODE_OUTPUT_PUSHPULL);
-
-  /*
-   * Joystick and buttons setup.
-   */
-  // palSetGroupMode(IOPORT1,
-  //                 PIOA_B1_MASK | PIOA_B2_MASK | PIOA_B3_MASK |
-  //                 PIOA_B4_MASK | PIOA_B5_MASK,
-  //                 PAL_MODE_INPUT);
-  // palSetGroupMode(IOPORT2, PIOB_SW1_MASK | PIOB_SW2_MASK, PAL_MODE_INPUT);
-
-  /*
-   * MMC/SD slot setup.
-   */
-  // palSetGroupMode(IOPORT2,
-  //                 PIOB_MMC_WP_MASK | PIOB_MMC_CP_MASK,
-  //                 PAL_MODE_INPUT);
-
-  /*
-   * PIT Initialization.
-   */
+  // PIT Initialization.
   AIC_ConfigureIT(AT91C_ID_SYS,
                   AT91C_AIC_SRCTYPE_HIGH_LEVEL | (AT91C_AIC_PRIOR_HIGHEST - 1),
                   SYSIrqHandler);
@@ -163,16 +129,13 @@ void hwinit1(void) {
   AT91C_BASE_PITC->PITC_PIMR = (MCK / 16 / CH_FREQUENCY) - 1;
   AT91C_BASE_PITC->PITC_PIMR |= AT91C_PITC_PITEN | AT91C_PITC_PITIEN;
 
-  /*
-   * Serial driver initialization, RTS/CTS pins enabled for USART0 only.
-   */
+  #ifndef NO_SERIAL_INIT
   // sdInit();
   // AT91C_BASE_PIOA->PIO_PDR   = AT91C_PA3_RTS0 | AT91C_PA4_CTS0;
   // AT91C_BASE_PIOA->PIO_ASR   = AT91C_PIO_PA3 | AT91C_PIO_PA4;
   // AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PIO_PA3 | AT91C_PIO_PA4;
+  #endif
 
-  /*
-   * ChibiOS/RT initialization.
-   */
+  // ChibiOS/RT initialization.
   chSysInit();
 }

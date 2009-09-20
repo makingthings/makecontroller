@@ -2,7 +2,6 @@
 
 ##############################################################################
 # Project, sources and paths
-#
 
 # Define project name here
 PROJECT = chibitest
@@ -24,17 +23,19 @@ LDSCRIPT = ${STARTUP}/ch.ld
 # Imported source files
 include ${CHIBIOS}/ports/GCC/ARM7/port.mk
 include ${CHIBIOS}/kernel/kernel.mk
+include ${USB}/usb.mk
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CSRC = ${PORTSRC} \
        ${KERNSRC} \
+			 ${USBSRC} \
        ${CHIBIOS}/io/pal.c \
        ${CHIBIOS}/io/serial.c \
        ${CHIBIOS}/io/platforms/AT91SAM7X/pal_lld.c \
        ${CHIBIOS}/io/platforms/AT91SAM7X/serial_lld.c \
        ${CHIBIOS}/io/platforms/AT91SAM7X/at91lib/aic.c \
-			 ${MT}/analogin.c\
+			 ${MT}/analogin.c \
        board.c main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
@@ -65,7 +66,7 @@ TCPPSRC =
 ASMSRC = $(PORTASM) \
          ${CHIBIOS}/ports/GCC/ARM7/AT91SAM7X/vectors.s
 
-INCDIR = $(PORTINC) $(KERNINC) ${MT} \
+INCDIR = $(PORTINC) $(KERNINC) ${MT} ${USBINC} \
          ${CHIBIOS}/io \
          ${CHIBIOS}/io/platforms/AT91SAM7X \
          ${CHIBIOS}/various \

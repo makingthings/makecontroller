@@ -15,10 +15,6 @@
 
 *********************************************************************************/
 
-// #include <string.h>
-// #include <stdio.h>
-
-#include "error.h"
 #include "analogin.h"
 #include "at91lib/AT91SAM7X256.h"
 #include "at91lib/aic.h"
@@ -33,10 +29,10 @@
 static void ServeAinInterrupt(void);
 
 struct AinManager {
-  Semaphore adcLock;            // lock for the adc system
+  Mutex adcLock;            // lock for the adc system
   Semaphore conversionLock;     // signal for a conversion
-  bool waitingForMulti;         // are we waiting for a multi conversion or just a single channel
-  int multiConversionsComplete; // mask of which conversions have been completed
+  bool processMultiChannelIsr;         // are we waiting for a multi conversion or just a single channel
+  int multiChannelConversions; // mask of which conversions have been completed
 };
 
 static struct AinManager manager;
@@ -48,21 +44,17 @@ static struct AinManager manager;
   \par Example
   \code
   AnalogIn ain0(0);
-  if( ain0.value() > 500 )
-  {
+  if( ain0.value() > 500 ) {
      // then do this
   }
-  else
-  {
+  else {
     // then do that
   }
   \endcode
 */
 int ainValue( int channel )
 {
-  if( chSemWait(&manager.adcLock) != RDY_OK)
-    return -1;
-
+  chMtxLock(&manager.adcLock);
   // disable other channels, and enable the one we want
   int mask = 1 << channel; 
   AT91C_BASE_ADC->ADC_CHDR = ~mask;
@@ -73,7 +65,7 @@ int ainValue( int channel )
     return false;
 
   int value = AT91C_BASE_ADC->ADC_LCDR & 0xFFFF; // grab the last converted value
-  chSemSignal(&manager.adcLock); // free up the system
+  chMtxUnlock();
   return value;
 }
 
@@ -95,16 +87,14 @@ int ainValue( int channel )
 */
 bool ainMulti( int values[] )
 {
-  if( chSemWait(&manager.adcLock) != RDY_OK)
-    return false;
-
+  chMtxLock(&manager.adcLock);
   // enable all the channels
   AT91C_BASE_ADC->ADC_CHER =  AT91C_ADC_CH0 | AT91C_ADC_CH1 | AT91C_ADC_CH2 |
                               AT91C_ADC_CH3 | AT91C_ADC_CH4 | AT91C_ADC_CH5 |
                               AT91C_ADC_CH6 | AT91C_ADC_CH7;
 
-  manager.waitingForMulti = true;           // how to process the ISR
-  manager.multiConversionsComplete = 0;     // which channels have completed
+  manager.processMultiChannelIsr = true;    // how to process the ISR
+  manager.multiChannelConversions = 0;      // which channels have completed
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // start the conversion
 
   if( chSemWait(&manager.conversionLock) != RDY_OK)
@@ -120,8 +110,8 @@ bool ainMulti( int values[] )
   *values++ = AT91C_BASE_ADC->ADC_CDR6;
   *values++ = AT91C_BASE_ADC->ADC_CDR7;
   
-  manager.waitingForMulti = false;
-  chSemSignal(&manager.adcLock); // release the adc system lock
+  manager.processMultiChannelIsr = false;
+  chMtxUnlock();
   return true;
 }
 
@@ -159,16 +149,16 @@ CH_IRQ_HANDLER( AnalogInIsr ) {
 
 void ServeAinInterrupt(void) {
   int status = AT91C_BASE_ADC->ADC_SR;
-  if(manager.waitingForMulti) {
+  if(manager.processMultiChannelIsr) {
     unsigned int i, mask;
     // check if we got an End Of Conversion in any of our channels
     for( i = 0; i < ANALOGIN_CHANNELS; i++ ) {
       mask = 1 << i;
       if( status & mask )
-        manager.multiConversionsComplete |= mask;
+        manager.multiChannelConversions |= mask;
     }
     // if we got End Of Conversion in all our channels, indicate we're done
-    if( manager.multiConversionsComplete == 0xFF ) {
+    if( manager.multiChannelConversions == 0xFF ) {
       status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
       chSemSignalI(&manager.conversionLock);
     }
@@ -202,26 +192,22 @@ void ainInit(void)
        ( ( 9 << 8 ) & AT91C_ADC_PRESCAL ) | // Prescale rate (8 bits)
        ( ( 127 << 16 ) & AT91C_ADC_STARTUP ) | // Startup rate
        ( ( 127 << 24 ) & AT91C_ADC_SHTIM ); // Sample and Hold Time
-
-  // manager.doneSemaphore.take();
    
   // initialize non-adc pins
   palSetGroupMode(IOPORT2,
                   ANALOGIN_0 | ANALOGIN_1 | ANALOGIN_2 | ANALOGIN_3,
                   PAL_MODE_INPUT);
   
-  // init semaphores
-  chSemInit(&manager.adcLock, 1);
+  // init locks
+  chMtxInit(&manager.adcLock);
   chSemInit(&manager.conversionLock, 1);
   chSemWait(&manager.conversionLock); // this must first be released by the isr
-  manager.multiConversionsComplete = 0;
-  manager.waitingForMulti = false;
+  manager.multiChannelConversions = 0;
+  manager.processMultiChannelIsr = false;
   
   // initialize interrupts
   AIC_ConfigureIT(AT91C_ID_ADC, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4, AnalogInIsr);
   AIC_EnableIT(AT91C_ID_ADC);
-
-  return;
 }
 
 void ainDeinit(void)
