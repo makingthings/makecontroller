@@ -1,13 +1,20 @@
 # List of all the ChibiOS/RT kernel files, there is no need to remove the files
 # from this list, you can disable parts of the kernel by editing chconf.h.
-KERNSRC = ${CHIBIOS}/kernel/src/chsys.c       ${CHIBIOS}/kernel/src/chdebug.c \
-          ${CHIBIOS}/kernel/src/chlists.c     ${CHIBIOS}/kernel/src/chvt.c \
-          ${CHIBIOS}/kernel/src/chschd.c      ${CHIBIOS}/kernel/src/chthreads.c \
-          ${CHIBIOS}/kernel/src/chsem.c       ${CHIBIOS}/kernel/src/chmtx.c \
-          ${CHIBIOS}/kernel/src/chcond.c      ${CHIBIOS}/kernel/src/chevents.c \
-          ${CHIBIOS}/kernel/src/chmsg.c       ${CHIBIOS}/kernel/src/chmboxes.c \
-          ${CHIBIOS}/kernel/src/chqueues.c    ${CHIBIOS}/kernel/src/chheap.c \
-          ${CHIBIOS}/kernel/src/chmempools.c
+KERNSRC = ${CHIBIOS}/os/kernel/src/chsys.c \
+          ${CHIBIOS}/os/kernel/src/chdebug.c \
+          ${CHIBIOS}/os/kernel/src/chlists.c \
+          ${CHIBIOS}/os/kernel/src/chvt.c \
+          ${CHIBIOS}/os/kernel/src/chschd.c \
+          ${CHIBIOS}/os/kernel/src/chthreads.c \
+          ${CHIBIOS}/os/kernel/src/chsem.c \
+          ${CHIBIOS}/os/kernel/src/chmtx.c \
+          ${CHIBIOS}/os/kernel/src/chcond.c \
+          ${CHIBIOS}/os/kernel/src/chevents.c \
+          ${CHIBIOS}/os/kernel/src/chmsg.c \
+          ${CHIBIOS}/os/kernel/src/chmboxes.c \
+          ${CHIBIOS}/os/kernel/src/chqueues.c \
+          ${CHIBIOS}/os/kernel/src/chheap.c \
+          ${CHIBIOS}/os/kernel/src/chmempools.c
 
 # Required include directories
-KERNINC = ${CHIBIOS}/kernel/include
+KERNINC = ${CHIBIOS}/os/kernel/include
