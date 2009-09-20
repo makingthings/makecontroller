@@ -18,9 +18,7 @@
 #ifndef SPI_H
 #define SPI_H
 
-#include "config.h"
-#include "rtos.h"
-#include "io.h"
+#include "types.h"
 
 /** 
   Communicate with peripheral devices via SPI.
@@ -28,26 +26,11 @@
   with other devices.  The Make Controller SPI interface has 4 channels, although 2 of these
   are not available since they're used internally.  Channels 2 and 3 can still be used, though.
 */
-class Spi
-{
-  public:
-    Spi( int channel );
-    ~Spi( );
-    int configure( int bits, int clockDivider, int delayBeforeSPCK, int delayBetweenTransfers );
-    int readWriteBlock( unsigned char* buffer, int count );
-    void lock() { _lock.take(); }
-    void unlock() { _lock.give(); }
-    bool valid( ) { return chan != NULL; }
 
-  protected:
-    Semaphore _lock;
-    int _channel;
-    Io* chan;
-    int getIO( int channel );
-    int getChannelPeripheralA( int channel );
-    void init( );
-
-    static int refcount;
-};
+void spiInit(void);
+void spiDeinit(void);
+bool spiEnableChannel( int channel );
+int  spiConfigure( int channel, int bits, int clockDivider, int delayBeforeSPCK, int delayBetweenTransfers );
+int  spiReadWriteBlock( int channel, unsigned char* buffer, int count );
 
 #endif // SPI__H
