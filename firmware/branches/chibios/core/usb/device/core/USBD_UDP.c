@@ -52,7 +52,7 @@
 // #include <usb/common/core/USBGenericRequest.h>
 #include "USBGenericRequest.h"
 
-#include "FreeRTOS.h"
+// #include "FreeRTOS.h"
 
 #if defined(BOARD_USB_UDP)
 
@@ -634,14 +634,14 @@ void UsbIsr_Wrapper( void ) __attribute__ ((naked));
 void UsbIsr_Wrapper( void )
 {
 	/* Save the context of the interrupted task. */
-	portSAVE_CONTEXT();
+  // portSAVE_CONTEXT();
 
 	/* Call the handler to do the work.  This must be a separate
 	function to ensure the stack frame is set up correctly. */
 	USBD_InterruptHandler();
 
 	/* Restore the context of whichever task will execute next. */
-	portRESTORE_CONTEXT();
+  // portRESTORE_CONTEXT();
 }
 
 //------------------------------------------------------------------------------
