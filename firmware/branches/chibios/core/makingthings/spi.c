@@ -17,56 +17,45 @@
 
 #include "spi.h"
 #include "error.h"
-#include "AT91SAM7X256.h"
+#include "config.h"
+#include "at91lib/AT91SAM7X256.h"
 
-
-// Define the SPI select lines 
-// and which peripheral they are on that line
-#if ( CONTROLLER_VERSION == 50 )
-  #define SPI_SEL0_IO           IO_PA12
-  #define SPI_SEL0_PERIPHERAL_A 1 
-  #define SPI_SEL1_IO           IO_PA13
-  #define SPI_SEL1_PERIPHERAL_A 1 
-  #define SPI_SEL2_IO           IO_PA08
-  #define SPI_SEL2_PERIPHERAL_A 0 
-  #define SPI_SEL3_IO           IO_PA09
-  #define SPI_SEL3_PERIPHERAL_A 0
+#if ( (CONTROLLER_VERSION == 50) || (CONTROLLER_VERSION >= 95) )
+  #define SPI_SEL0_IO           AT91C_PA12_SPI0_NPCS0
+  #define SPI_SEL1_IO           AT91C_PA13_SPI0_NPCS1
+  #define SPI_SEL2_IO           AT91C_PA8_SPI0_NPCS2
+  #define SPI_SEL3_IO           AT91C_PA9_SPI0_NPCS3
 #elif ( CONTROLLER_VERSION == 90 )
-  #define SPI_SEL0_IO           IO_PA12
-  #define SPI_SEL0_PERIPHERAL_A 1 
-  #define SPI_SEL1_IO           IO_PA13
-  #define SPI_SEL1_PERIPHERAL_A 1 
-  #define SPI_SEL2_IO           IO_PB14
-  #define SPI_SEL2_PERIPHERAL_A 0 
-  #define SPI_SEL3_IO           IO_PB17
-  #define SPI_SEL3_PERIPHERAL_A 0
-#elif ( CONTROLLER_VERSION >= 95 )
-  #define SPI_SEL0_IO           IO_PA12
-  #define SPI_SEL0_PERIPHERAL_A 1 
-  #define SPI_SEL1_IO           IO_PA13
-  #define SPI_SEL1_PERIPHERAL_A 1 
-  #define SPI_SEL2_IO           IO_PA08
-  #define SPI_SEL2_PERIPHERAL_A 0 
-  #define SPI_SEL3_IO           IO_PA09
-  #define SPI_SEL3_PERIPHERAL_A 0
+  #define SPI_SEL0_IO           AT91C_PA12_SPI0_NPCS0
+  #define SPI_SEL1_IO           AT91C_PA13_SPI0_NPCS1
+  #define SPI_SEL2_IO           AT91C_PB14_SPI0_NPCS2
+  #define SPI_SEL3_IO           AT91C_PB17_SPI0_NPCS3
 #endif
 
-// static
-int Spi::refcount = 0;
+#define SPI_SEL0_PERIPHERAL_A true
+#define SPI_SEL1_PERIPHERAL_A true
+#define SPI_SEL2_PERIPHERAL_A false
+#define SPI_SEL3_PERIPHERAL_A false
 
-Spi::Spi( int channel )
+static int spiGetIO( int channel );
+static bool spiIsChannelPeripheralA( int channel );
+
+bool spiEnableChannel( int channel )
 {
   if( channel < 0 || channel > 3 )
-    return;
+    return false;
 
-  _channel = channel;
-  if(refcount++ == 0)
-    init();
-  Io::Peripheral io_type = getChannelPeripheralA( channel ) ? Io::A : Io::B;
-  chan = new Io( getIO(channel), io_type );
+  // configure as periph a or b
+  // note - on CONTROLLER_VERSION 50, this would need to check which PIO port to use
+  // but those boards don't exist, so just use port A
+  if( spiIsChannelPeripheralA(channel) )
+    AT91C_BASE_PIOA->PIO_ASR = spiGetIO(channel);
+  else
+    AT91C_BASE_PIOA->PIO_BSR = spiGetIO(channel);
+  return true;
 }
 
-void Spi::init( )
+void spiInit(void)
 {
   // Reset it
   AT91C_BASE_SPI0->SPI_CR = AT91C_SPI_SWRST;
@@ -90,10 +79,9 @@ void Spi::init( )
 
   // Set up the IO lines for the peripheral
   // Disable their peripherality
-  AT91C_BASE_PIOA->PIO_PDR = 
-      AT91C_PA16_SPI0_MISO | 
-      AT91C_PA17_SPI0_MOSI | 
-      AT91C_PA18_SPI0_SPCK;
+  AT91C_BASE_PIOA->PIO_PDR =  AT91C_PA16_SPI0_MISO | 
+                              AT91C_PA17_SPI0_MOSI | 
+                              AT91C_PA18_SPI0_SPCK;
 
   // Kill the pull up on the Input
   AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PA16_SPI0_MISO;
@@ -102,10 +90,9 @@ void Spi::init( )
   AT91C_BASE_PIOA->PIO_ODR = AT91C_PA16_SPI0_MISO;
 
   // Select the correct Devices
-  AT91C_BASE_PIOA->PIO_ASR = 
-      AT91C_PA16_SPI0_MISO | 
-      AT91C_PA17_SPI0_MOSI | 
-      AT91C_PA18_SPI0_SPCK;
+  AT91C_BASE_PIOA->PIO_ASR =  AT91C_PA16_SPI0_MISO | 
+                              AT91C_PA17_SPI0_MOSI | 
+                              AT91C_PA18_SPI0_SPCK;
 
   // Elsewhere need to do this for the select lines
   // AT91C_BASE_PIOB->PIO_BSR = 
@@ -113,19 +100,15 @@ void Spi::init( )
 
   // Fire it up
   AT91C_BASE_SPI0->SPI_CR = AT91C_SPI_SPIEN;
-  return;
 }
 
-Spi::~Spi( )
+void spiDeinit(void)
 {
-  if(--refcount <= 0)
-    AT91C_BASE_SPI0->SPI_CR = AT91C_SPI_SPIDIS;
+  AT91C_BASE_SPI0->SPI_CR = AT91C_SPI_SPIDIS;
 }
 
-int Spi::configure( int bits, int clockDivider, int delayBeforeSPCK, int delayBetweenTransfers )
+int spiConfigure( int channel, int bits, int clockDivider, int delayBeforeSPCK, int delayBetweenTransfers )
 {
-  if( !valid())
-    return 0;
   // Check parameters
   if ( bits < 8 || bits > 16 )
     return CONTROLLER_ERROR_ILLEGAL_PARAMETER_VALUE;
@@ -140,7 +123,7 @@ int Spi::configure( int bits, int clockDivider, int delayBeforeSPCK, int delayBe
     return CONTROLLER_ERROR_ILLEGAL_PARAMETER_VALUE;
 
   // Set the values
-  AT91C_BASE_SPI0->SPI_CSR[ _channel ] = 
+  AT91C_BASE_SPI0->SPI_CSR[ channel ] = 
       AT91C_SPI_NCPHA | // Clock Phase TRUE
       ( ( ( bits - 8 ) << 4 ) & AT91C_SPI_BITS ) | // Transfer bits
       ( ( clockDivider << 8 ) & AT91C_SPI_SCBR ) | // Serial Clock Baud Rate Divider (255 = slow)
@@ -151,16 +134,14 @@ int Spi::configure( int bits, int clockDivider, int delayBeforeSPCK, int delayBe
 }
 
 
-int Spi::readWriteBlock( unsigned char* buffer, int count )
+int spiReadWriteBlock( int channel, unsigned char* buffer, int count )
 {
-  if( !valid())
-    return 0;
   int r;
-  int address = ~( 1 << _channel );
+  int address = ~( 1 << channel );
 
-  if ( !( AT91C_BASE_SPI0->SPI_SR & AT91C_SPI_TXEMPTY ) ) // Make sure the unit is at rest before we re-begin
-  {
-    while( !( AT91C_BASE_SPI0->SPI_SR & AT91C_SPI_TXEMPTY ) );
+  if ( !( AT91C_BASE_SPI0->SPI_SR & AT91C_SPI_TXEMPTY ) ) { // Make sure the unit is at rest before we re-begin
+    while( !( AT91C_BASE_SPI0->SPI_SR & AT91C_SPI_TXEMPTY ) )
+      ;
     while( !( AT91C_BASE_SPI0->SPI_SR & AT91C_SPI_RDRF ) )
       r = AT91C_BASE_SPI0->SPI_SR;
     r = AT91C_BASE_SPI0->SPI_RDR;
@@ -169,32 +150,31 @@ int Spi::readWriteBlock( unsigned char* buffer, int count )
   if ( AT91C_BASE_SPI0->SPI_SR & AT91C_SPI_RDRF )
     r = AT91C_BASE_SPI0->SPI_RDR;
   
-  AT91C_BASE_SPI0->SPI_CSR[ _channel ] |= AT91C_SPI_CSAAT; // Make the CS line hang around
+  AT91C_BASE_SPI0->SPI_CSR[ channel ] |= AT91C_SPI_CSAAT; // Make the CS line hang around
 
   int writeIndex = 0;
   unsigned char* writeP = buffer;
   unsigned char* readP = buffer;
 
-  while ( writeIndex < count ) // Do the read write
-  {
+  while ( writeIndex < count ) { // Do the read write
     writeIndex++;
     AT91C_BASE_SPI0->SPI_TDR = ( *writeP++ & 0xFF ) | 
                                ( ( address << 16 ) &  AT91C_SPI_TPCS ) | 
                                (int)( ( writeIndex == count ) ? AT91C_SPI_LASTXFER : 0 );
 
-    while ( !( AT91C_BASE_SPI0->SPI_SR & AT91C_SPI_RDRF ) );
+    while ( !( AT91C_BASE_SPI0->SPI_SR & AT91C_SPI_RDRF ) )
+      ;
     *readP++ = (unsigned char)( AT91C_BASE_SPI0->SPI_RDR & 0xFF );
   }
 
-  AT91C_BASE_SPI0->SPI_CSR[ _channel ] &= ~AT91C_SPI_CSAAT;
+  AT91C_BASE_SPI0->SPI_CSR[ channel ] &= ~AT91C_SPI_CSAAT;
 
   return 0;
 }
 
-int Spi::getIO( int channel )
+int spiGetIO( int channel )
 {
-  switch ( channel )
-  {
+  switch ( channel ) {
     case 0: return SPI_SEL0_IO;
     case 1: return SPI_SEL1_IO;
     case 2: return SPI_SEL2_IO;
@@ -203,14 +183,13 @@ int Spi::getIO( int channel )
   }
 }
 
-int Spi::getChannelPeripheralA( int channel )
+bool spiIsChannelPeripheralA( int channel )
 {  
-  switch ( channel )
-  {
+  switch ( channel ) {
     case 0: return SPI_SEL0_PERIPHERAL_A;
     case 1: return SPI_SEL1_PERIPHERAL_A;
     case 2: return SPI_SEL2_PERIPHERAL_A;
     case 3: return SPI_SEL3_PERIPHERAL_A;
-    default: return -1;
+    default: return false;
   }
 }
