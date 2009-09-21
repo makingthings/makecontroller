@@ -57,8 +57,8 @@ int main(int argc, char **argv) {
    */
   while (TRUE) {
     chThdSleepMilliseconds(500);
-    if (!palReadPad(IOPORT2, PIOB_SW1))
-      sdWrite(&SD1, (uint8_t *)"Hello World!\r\n", 14);
+    // if (!palReadPad(IOPORT2, PIOB_SW1))
+    //   sdWrite(&SD1, (uint8_t *)"Hello World!\r\n", 14);
     // if (!palReadPad(IOPORT2, PIOB_SW2))
     //   TestThread(&SD1);
   }

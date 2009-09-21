@@ -22,6 +22,8 @@
 #include "board.h"
 #include "at91lib/aic.h"
 #include "analogin.h"
+#include "spi.h"
+#include "pwm.h"
 
 /*
  * FIQ Handler weak symbol defined in vectors.s.
@@ -117,8 +119,21 @@ void hwinit1(void) {
   }
   AT91C_BASE_AIC->AIC_SPU  = (AT91_REG)SpuriousHandler;
   
+  
+  /*
+    peripheral inits - these are here so they're conveniently already
+    done for common usage, but can be removed by conditionalization
+  */
   #ifndef NO_AIN_INIT
   ainInit();
+  #endif
+  
+  #ifndef NO_SPI_INIT
+  spiInit();
+  #endif
+  
+  #ifndef NO_PWM_INIT
+  pwmInit();
   #endif
 
   // PIT Initialization.
