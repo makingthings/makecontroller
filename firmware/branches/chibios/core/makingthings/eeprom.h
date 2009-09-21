@@ -39,22 +39,13 @@
   
   Internally, Eeprom relies on \ref Spi, so activating Eeprom also activates \ref Spi.
 */
-class Eeprom
-{
-  public:
-    static Eeprom* get( );
-    int read(int address);
-    void write(int address, int value);
-    int readBlock(int address, uchar* data, int length);
-    int writeBlock(int address, uchar *data, int length);
 
-  protected:
-    Eeprom( );
-    Spi* spi;
-    static Eeprom* _instance; // the only instance of Eeprom anywhere.
-    void writeEnable( );
-    void ready( );
-};
+void eepromInit(void);
+void eepromDeinit(void);
+int  eepromRead( int address );
+void eepromWrite(int address, int value);
+int  eepromReadBlock(int address, uchar* data, int length);
+int  eepromWriteBlock(int address, uchar *data, int length);
 
 #define EEPROM_RESERVE_SIZE 1024
 #define EEPROM_SIZE ( 32 * 1024 )
