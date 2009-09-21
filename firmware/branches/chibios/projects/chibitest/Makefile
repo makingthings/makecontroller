@@ -38,6 +38,7 @@ CSRC = ${PORTSRC} \
 			 ${MT}/analogin.c \
 			 ${MT}/spi.c \
 			 ${MT}/eeprom.c \
+			 ${MT}/pwm.c \
        board.c main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global

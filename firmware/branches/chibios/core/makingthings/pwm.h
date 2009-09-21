@@ -18,6 +18,8 @@
 #ifndef PWM_H
 #define PWM_H
 
+#include "types.h"
+
 /**
   Control the 4 Pulse Width Modulation outputs.
 
@@ -39,31 +41,14 @@
   
   \ingroup io
 */
-class Pwm
-{
-public:
-  Pwm( int channel );
-  ~Pwm();
-  
-  void setWaveform( bool left_aligned, bool starts_low );
-  
-  bool setPeriod( int period );
-  int period( );
 
-  void setDuty(int duty);
-  int duty();
-
-  static bool setFrequency(int freq);
-  static int frequency();
-
-protected:
-  int channel, _duty, _period;
-  static int _frequency;
-  int getIo( int channel );
-  int baseInit();
-  int baseDeinit();
-  static int findClockConfiguration(int frequency);
-  static int activeChannels;
-};
+void pwmInit(void);
+void pwmDeinit(void);
+bool pwmSetFrequency(int freq);
+bool pwmEnableChannel( int channel );
+void pwmDisableChannel( int channel );
+void pwmSetDuty( int channel, int duty );
+void pwmSetWaveform( int channel, bool left_aligned, bool starts_low );
+bool pwmSetPeriod( int channel, int period );
 
 #endif

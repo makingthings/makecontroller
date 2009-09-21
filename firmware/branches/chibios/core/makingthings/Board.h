@@ -1,48 +1,43 @@
-/*----------------------------------------------------------------------------
-*         ATMEL Microcontroller Software Support  -  ROUSSET  -
-*----------------------------------------------------------------------------
-* The software is delivered "AS IS" without warranty or condition of any
-* kind, either express, implied or statutory. This includes without
-* limitation any warranty or condition with respect to merchantability or
-* fitness for any particular purpose, or against the infringements of
-* intellectual property rights of others.
-*----------------------------------------------------------------------------
-* File Name           : Board.h
-* Object              : AT91SAM7X Evaluation Board Features Definition File.
-*
-* Creation            : JG   20/Jun/2005
-*----------------------------------------------------------------------------
+/*
+    ChibiOS/RT - Copyright (C) 2006-2007 Giovanni Di Sirio.
+
+    This file is part of ChibiOS/RT.
+
+    ChibiOS/RT is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+
+    ChibiOS/RT is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef Board_h
-#define Board_h
 
-#include "AT91SAM7X256.h"
-//#include "ioat91sam7x256.h"
+#ifndef _BOARD_H_
+#define _BOARD_H_
 
-/* MAKE BOARD USES PB4, rather than RB18 for PHY power signal */
-/* HAS LED ON RB12 */
-#define MAKE_BOARD 1
+#include "at91lib/AT91SAM7X256.h"
 
+#define BOARD_MAKE_CONTROLLER
 
-/*-------------------------------*/
-/* SAM7Board Memories Definition */
-/*-------------------------------*/
-// The AT91SAM7X128 embeds a 32-Kbyte SRAM bank, and 128K-Byte Flash
+#define CLK             18432000
+#define MCK             48054857
 
-#define  FLASH_PAGE_NB		256
-#define  FLASH_PAGE_SIZE	128
+/*
+ * Initial I/O setup.
+ */
+#define VAL_PIOA_ODSR           0x00000000      /* Output data. */
+#define VAL_PIOA_OSR            0x00000000      /* Direction. */
+#define VAL_PIOA_PUSR           0xFFFFFFFF      /* Pull-up. */
 
-/*--------------*/
-/* Master Clock */
-/*--------------*/
+#define VAL_PIOB_ODSR           0x00000000      /* Output data. */
+#define VAL_PIOB_OSR            0x00000000      /* Direction. */
+#define VAL_PIOB_PUSR           0xFFFFFFFF      /* Pull-up. */
 
-#define EXT_OC          18432000   // Exetrnal ocilator MAINCK
-#define MCK             47923200   // MCK (PLLRC div by 2)
-#define MCKKHz          (MCK/1000) //
-
-/*****************
-      USB
-*****************/
 /// Chip has a UDP controller.
 #define BOARD_USB_UDP
 
@@ -61,4 +56,4 @@
 /// USB attributes configuration descriptor (bus or self powered, remote wakeup)
 #define BOARD_USB_BMATTRIBUTES                  USBConfigurationDescriptor_BUSPOWERED_NORWAKEUP
 
-#endif /* Board_h */
+#endif /* _BOARD_H_ */
