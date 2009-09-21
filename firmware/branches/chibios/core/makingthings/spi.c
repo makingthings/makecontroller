@@ -18,6 +18,7 @@
 #include "spi.h"
 #include "error.h"
 #include "config.h"
+#include <ch.h>
 #include "at91lib/AT91SAM7X256.h"
 
 #if ( (CONTROLLER_VERSION == 50) || (CONTROLLER_VERSION >= 95) )
@@ -39,6 +40,8 @@
 
 static int spiGetIO( int channel );
 static bool spiIsChannelPeripheralA( int channel );
+
+static Mutex spiMutex;
 
 bool spiEnableChannel( int channel )
 {
@@ -100,6 +103,8 @@ void spiInit(void)
 
   // Fire it up
   AT91C_BASE_SPI0->SPI_CR = AT91C_SPI_SPIEN;
+  
+  chMtxInit(&spiMutex);
 }
 
 void spiDeinit(void)
@@ -170,6 +175,16 @@ int spiReadWriteBlock( int channel, unsigned char* buffer, int count )
   AT91C_BASE_SPI0->SPI_CSR[ channel ] &= ~AT91C_SPI_CSAAT;
 
   return 0;
+}
+
+void spiLock()
+{
+  chMtxLock(&spiMutex);
+}
+
+void spiUnlock()
+{
+  chMtxUnlock();
 }
 
 int spiGetIO( int channel )

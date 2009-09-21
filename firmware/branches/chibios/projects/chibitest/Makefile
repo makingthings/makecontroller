@@ -37,6 +37,7 @@ CSRC = ${PORTSRC} \
        ${CHIBIOS}/os/io/platforms/AT91SAM7X/at91lib/aic.c \
 			 ${MT}/analogin.c \
 			 ${MT}/spi.c \
+			 ${MT}/eeprom.c \
        board.c main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global

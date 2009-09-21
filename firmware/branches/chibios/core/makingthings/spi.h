@@ -32,5 +32,7 @@ void spiDeinit(void);
 bool spiEnableChannel( int channel );
 int  spiConfigure( int channel, int bits, int clockDivider, int delayBeforeSPCK, int delayBetweenTransfers );
 int  spiReadWriteBlock( int channel, unsigned char* buffer, int count );
+void spiLock(void);
+void spiUnlock(void);
 
 #endif // SPI__H
