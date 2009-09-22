@@ -36,6 +36,11 @@ static msg_t Thread1(void *arg) {
   return 0;
 }
 
+void kill( void )
+{
+  AT91C_BASE_RSTC->RSTC_RCR = ( AT91C_RSTC_EXTRST | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | (0xA5 << 24 ) );
+}
+
 /*
  * Entry point, note, the main() function is already a thread in the system
  * on entry.
