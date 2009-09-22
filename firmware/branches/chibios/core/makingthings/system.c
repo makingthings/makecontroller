@@ -17,53 +17,26 @@
 
 #include "core.h"
 #include "system.h"
-
 #include <ctype.h>
 #include <string.h>
-#include "io.h"
+#include "board.h"
+#include <ch.h>
 #include "eeprom.h"
+#include "at91lib/AT91SAM7X256.h"
 
-extern "C" {
-  #include "AT91SAM7X256.h"
-  #include "portmacro.h"
-  #include "FreeRTOSConfig.h"
-}
+#define SYSTEM_MAX_NAME 99
 
 /* the Atmel header file doesn't define these. */
 #ifdef AT91SAM7X256_H
 # define AT91C_RSTC_KEY_PASSWORD  (0xa5 << 24)
-
 # define AT91C_IROM     ((char *)(0x3 << 20))
 # define AT91C_IROM_SIZE    (8 << 10)
 #endif
 
-int PortFreeMemory( void );
-void StackAuditTask( void* p );
-extern "C" void vPortDisableAllInterrupts( void );
 #define ASYNC_INIT -10
 #define ASYNC_INACTIVE -1
 
-// static
-System* System::_instance = 0;
-
-System::System( )
-{
-  stackAuditTask = 0;
-  _name[0] = 0;
-  #ifdef OSC
-  _autoDestination = ASYNC_INIT;
-  _autoDestination = autosendDestination( );
-  _autoInterval = ASYNC_INIT;
-  _autoInterval = autosendInterval( );
-  #endif // OSC
-}
-
-System* System::get()
-{
-  if(!_instance)
-    _instance = new System();
-  return _instance;
-}
+static char sysName[SYSTEM_MAX_NAME + 1];
 
 /**
   Returns the free size of the heap.
@@ -78,9 +51,11 @@ System* System::get()
   int freemem = System_GetFreeMemory();
   \endcode
 */
-int System::freeMemory( )
+int systemFreeMemory( )
 {
-  return PortFreeMemory();
+  size_t freemem;
+  chHeapStatus(&freemem);
+  return freemem;
 }
 
 /**
@@ -98,11 +73,9 @@ int System::freeMemory( )
   int sernum = System_GetSerialNumber();
   \endcode
 */
-int System::serialNumber( void )
+int systemSerialNumber( void )
 {
-  Eeprom* ep = Eeprom::get();
-  int serial = ep->read(EEPROM_SYSTEM_SERIAL_NUMBER);
-  return serial & 0xFFFF;
+  return eepromRead(EEPROM_SYSTEM_SERIAL_NUMBER) & 0xFFFF;
 }
 
 /**
@@ -119,11 +92,10 @@ int System::serialNumber( void )
   System_SetSerialNumber(12345);
   \endcode
 */
-int System::setSerialNumber( int serial )
+int systemSetSerialNumber( int serial )
 {
-  Eeprom* ep = Eeprom::get();
   serial &= 0xFFFF;
-  ep->write( EEPROM_SYSTEM_SERIAL_NUMBER, serial );
+  eepromWrite( EEPROM_SYSTEM_SERIAL_NUMBER, serial );
   return CONTROLLER_OK;
 }
 
@@ -142,13 +114,14 @@ int System::setSerialNumber( int serial )
   System_SetSamba(1);
   \endcode
 */
-int System::samba( int sure )
+void systemSamba( bool sure )
 {
   if ( sure )
   {
-    vPortDisableAllInterrupts();
+    chSysLock(); // disable interrupts, etc.
 
     /* Disable the USB pullup. */
+    // todo - consolidate usb pullup defs to board.h...also used in usb system
 #if ( CONTROLLER_VERSION == 90 )
     AT91C_BASE_PIOB->PIO_PER = AT91C_PIO_PB11;
     AT91C_BASE_PIOB->PIO_OER = AT91C_PIO_PB11;
@@ -162,7 +135,7 @@ int System::samba( int sure )
 
     /* Steal the PIT for the pullup disable delay. */
     AT91C_BASE_PITC->PITC_PIMR = (
-      (configCPU_CLOCK_HZ + (16 * 1000 / 2))
+      (MCK + (16 * 1000 / 2))
       / (16 * 1000)
     ) | AT91C_PITC_PITEN
     ;
@@ -176,10 +149,9 @@ int System::samba( int sure )
     /* Reset onboard and offboard peripherals, but not processor */
     while(AT91C_BASE_RSTC->RSTC_RSR & AT91C_RSTC_SRCMP);
     AT91C_BASE_RSTC->RSTC_RMR = AT91C_RSTC_KEY_PASSWORD;
-    AT91C_BASE_RSTC->RSTC_RCR = AT91C_RSTC_KEY_PASSWORD
-  | AT91C_RSTC_PERRST
-      | AT91C_RSTC_EXTRST
-    ;
+    AT91C_BASE_RSTC->RSTC_RCR = AT91C_RSTC_KEY_PASSWORD |
+                                AT91C_RSTC_PERRST |
+                                AT91C_RSTC_EXTRST;
     while(AT91C_BASE_RSTC->RSTC_RSR & AT91C_RSTC_SRCMP);
 
     /*
@@ -230,9 +202,6 @@ int System::samba( int sure )
     "r7", "r6"
     );
   }
-
-  // Never will do this
-  return 1;
 }
 
 /**
@@ -249,16 +218,13 @@ int System::samba( int sure )
   System_SetName("my very special controller");
   \endcode
 */
-int System::setName( char* name )
+int systemSetName( const char* name )
 {
-  Eeprom* ep = Eeprom::get();
-  int length = strlen( name );
-  if( length > SYSTEM_MAX_NAME )
-    length = SYSTEM_MAX_NAME;
-  
-  strncpy( _name, name, length ); // update the name in our buffer
-  for( int i = 0; i <= length; i++ ) // have to do this because Eeprom_Write can only go 32 at a time.
-    ep->writeBlock( EEPROM_SYSTEM_NAME + i, (uchar*)name++, 1 );
+  int length = MIN( strlen(name), SYSTEM_MAX_NAME );
+  strncpy( sysName, name, length ); // update the name in our buffer
+  int i;
+  for( i = 0; i <= length; i++ ) // have to do this because Eeprom_Write can only go 32 at a time.
+    eepromWriteBlock( EEPROM_SYSTEM_NAME + i, (uchar*)name++, 1 );
 
   return CONTROLLER_OK;
 }
@@ -272,21 +238,17 @@ int System::setName( char* name )
   char* board_name = System_GetName();
   \endcode
 */
-char* System::name( )
+const char* systemName( )
 {
-  if( _name[0] == 0 )
-  {
-    char* ptr = _name;
+  if( sysName[0] == 0 ) {
+    char* ptr = sysName;
     bool legal = false;
-    Eeprom* ep = Eeprom::get();
     int i;
-    for( i = 0; i <= SYSTEM_MAX_NAME; i++ )
-    {
-      ep->readBlock( EEPROM_SYSTEM_NAME + i, (uchar*)ptr, 1 );
+    for( i = 0; i <= SYSTEM_MAX_NAME; i++ ) {
+      eepromReadBlock( EEPROM_SYSTEM_NAME + i, (uchar*)ptr, 1 );
       if( *ptr == 0 )
         break;
-      if( !isalnum( *ptr ) && *ptr != ' ' )
-      {
+      if( !isalnum( *ptr ) && *ptr != ' ' ) {
         legal = false;
         break;
       }
@@ -295,12 +257,12 @@ char* System::name( )
     }
     
     if( !legal )
-      setName( "Make Controller Kit" );
+      systemSetName( "Make Controller Kit" );
     else
-      _name[i] = 0; // make sure we're null terminated
+      sysName[i] = 0; // make sure we're null terminated
   }
 
-  return _name;
+  return sysName;
 }
 
 /**
@@ -315,15 +277,13 @@ char* System::name( )
   System_SetReset(1);
   \endcode
 */
-int System::reset( int sure )
+void systemReset( bool sure )
 {
-  if ( sure )
+  if( sure )
     kill( );
-
-  return 1;
 }
 
-#ifdef OSC
+#ifdef OSC____
 #include "osc.h"
 
 //void System_StackAudit( int on_off )

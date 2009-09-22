@@ -27,6 +27,10 @@
 #include "error.h"
 #include "config.h"
 
+#define UNUSED(x) (void)x;
+#define MIN(a, b) ((a < b) ? a : b)
+#define MAX(a, b) ((a > b) ? a : b)
+
 #ifdef __cplusplus
 
 #include "rtos.h"
@@ -45,7 +49,6 @@ extern "C" {
 // C-only business in here
 void Run( void );
 void kill( void );
-void AIC_ConfigureIT(unsigned int source, unsigned int mode, void (*handler)( void ));
 
 #ifdef __cplusplus
 }
