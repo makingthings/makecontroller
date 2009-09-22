@@ -18,7 +18,12 @@
 #include "aes.h"
 #include <string.h>
 
-
+static int aesSetupEncrypt( unsigned long* rk, const unsigned char* key, int keybits);
+static int aesSetupDecrypt( unsigned long *rk, const unsigned char *key, int keybits);
+static void aesDoEncrypt( const unsigned long *rk, int nrounds, 
+                        const unsigned char plaintext[16], unsigned char ciphertext[16]);
+static void aesDoDecrypt( const unsigned long *rk, int nrounds,
+                        const unsigned char ciphertext[16], unsigned char plaintext[16]);
 
 #define FULL_UNROLL
 
@@ -729,7 +734,7 @@ static const u32 rcon[] =
  * @return the number of rounds for the given cipher key size.
  */
 // static
-int Aes::setupEncrypt(u32 *rk, const u8 *key, int keybits)
+int aesSetupEncrypt(u32 *rk, const u8 *key, int keybits)
 {
   int i = 0;
   u32 temp;
@@ -818,14 +823,13 @@ int Aes::setupEncrypt(u32 *rk, const u8 *key, int keybits)
  *
  * @return the number of rounds for the given cipher key size.
  */
-// static
-int Aes::setupDecrypt(u32 *rk, const u8 *key, int keybits)
+int aesSetupDecrypt(u32 *rk, const u8 *key, int keybits)
 {
   int nrounds, i, j;
   u32 temp;
 
   /* expand the cipher key: */
-  nrounds = Aes::setupEncrypt(rk, key, keybits);
+  nrounds = aesSetupEncrypt(rk, key, keybits);
   /* invert the order of the round keys: */
   for (i = 0, j = 4*nrounds; i < j; i += 4, j -= 4)
   {
@@ -867,8 +871,7 @@ int Aes::setupDecrypt(u32 *rk, const u8 *key, int keybits)
  *
  * @return the number of rounds for the given cipher key size.
  */
-void Aes::doEncrypt(const u32 *rk, int nrounds, const u8 plaintext[16],
-  u8 ciphertext[16])
+void aesDoEncrypt(const u32 *rk, int nrounds, const u8 plaintext[16], u8 ciphertext[16])
 {
   u32 s0, s1, s2, s3, t0, t1, t2, t3;
   #ifndef FULL_UNROLL
@@ -1049,8 +1052,7 @@ void Aes::doEncrypt(const u32 *rk, int nrounds, const u8 plaintext[16],
   PUTU32(ciphertext + 12, s3);
 }
 
-// static
-void Aes::doDecrypt(const u32 *rk, int nrounds, const u8 ciphertext[16],
+void aesDoDecrypt(const u32 *rk, int nrounds, const u8 ciphertext[16],
   u8 plaintext[16])
 {
   u32 s0, s1, s2, s3, t0, t1, t2, t3;
@@ -1259,7 +1261,7 @@ void Aes::doDecrypt(const u32 *rk, int nrounds, const u8 ciphertext[16],
   int written = Aes::encrypt(cipherbuf, BUFF_SIZE, plaintext, 26, secret);
   \endcode
 */
-int Aes::encrypt(unsigned char* output, int outlen, unsigned char* input, int inlen, unsigned char* password)
+int aesEncrypt(unsigned char* output, int outlen, unsigned char* input, int inlen, unsigned char* password)
 {
   unsigned long rk[RKLENGTH(KEYBITS)];
   unsigned char key[KEYLENGTH(KEYBITS)];
@@ -1267,18 +1269,14 @@ int Aes::encrypt(unsigned char* output, int outlen, unsigned char* input, int in
   int totalout = outlen;
 
   memcpy(key, password, BLOCK_SIZE); // gotta be 16 coming in
-
-  nrounds = Aes::setupEncrypt(rk, key, KEYBITS); // initialize the encrypt buffer
-  while(inlen)
-  {
+  nrounds = aesSetupEncrypt(rk, key, KEYBITS); // initialize the encrypt buffer
+  while(inlen) {
     unsigned char plaintext[BLOCK_SIZE];
     unsigned char ciphertext[BLOCK_SIZE];
     unsigned int j;
     // grab bytes from the input and stuff them in plaintext
-    for(j = 0; j < BLOCK_SIZE; j++)
-    {
-      if(inlen)
-      {
+    for(j = 0; j < BLOCK_SIZE; j++) {
+      if(inlen) {
         plaintext[j] = *input++;
         inlen--;
       }
@@ -1290,17 +1288,16 @@ int Aes::encrypt(unsigned char* output, int outlen, unsigned char* input, int in
     unsigned int orig_block_size = j;
     for (; j < BLOCK_SIZE; j++) // if we didn't get 16 bytes, pad plaintext
       plaintext[j] = c;
-    Aes::doEncrypt(rk, nrounds, plaintext, ciphertext);
+    aesDoEncrypt(rk, nrounds, plaintext, ciphertext);
     if(outlen < BLOCK_SIZE) // not enough room to write out
       return -1;
     memcpy(output, ciphertext, BLOCK_SIZE);
     output += BLOCK_SIZE;
     outlen -= BLOCK_SIZE;
 
-    if(orig_block_size == BLOCK_SIZE && inlen == 0) // the last chunk was 16 bytes.  encrypt another round so we know how to decrypt the padding
-    {
+    if(orig_block_size == BLOCK_SIZE && inlen == 0) { // the last chunk was 16 bytes.  encrypt another round so we know how to decrypt the padding
       memset(plaintext, BLOCK_SIZE, BLOCK_SIZE); // pad 16 bytes with the value 16
-      Aes::doEncrypt(rk, nrounds, plaintext, ciphertext);
+      aesDoEncrypt(rk, nrounds, plaintext, ciphertext);
       if(outlen < BLOCK_SIZE) // not enough room to write out
         return -1;
       memcpy(output, ciphertext, BLOCK_SIZE);
@@ -1334,7 +1331,7 @@ int Aes::encrypt(unsigned char* output, int outlen, unsigned char* input, int in
   // we now have our original plaintext in plainbuf
   \endcode
 */
-int Aes::decrypt(unsigned char* output, int outlen, unsigned char* input, int inlen, unsigned char* password)
+int aesDecrypt(unsigned char* output, int outlen, unsigned char* input, int inlen, unsigned char* password)
 {
   unsigned long rk[RKLENGTH(KEYBITS)];
   unsigned char key[KEYLENGTH(KEYBITS)];
@@ -1342,10 +1339,8 @@ int Aes::decrypt(unsigned char* output, int outlen, unsigned char* input, int in
   int totalout = outlen;
 
   memcpy(key, password, BLOCK_SIZE); // gotta be 16 coming in
-  
-  nrounds = Aes::setupDecrypt(rk, key, KEYBITS);
-  while(inlen)
-  {
+  nrounds = aesSetupDecrypt(rk, key, KEYBITS);
+  while(inlen) {
     unsigned char plaintext[BLOCK_SIZE];
     unsigned char ciphertext[BLOCK_SIZE];
 
@@ -1354,9 +1349,8 @@ int Aes::decrypt(unsigned char* output, int outlen, unsigned char* input, int in
     memcpy(ciphertext, input, BLOCK_SIZE); // stuff a block from input in ciphertext
     input += BLOCK_SIZE;
     inlen -= BLOCK_SIZE;
-    Aes::doDecrypt(rk, nrounds, ciphertext, plaintext);
-    if(inlen < BLOCK_SIZE) // we're on our last block.  check the padding to determine the size of the original data
-    {
+    aesDoDecrypt(rk, nrounds, ciphertext, plaintext);
+    if(inlen < BLOCK_SIZE) { // we're on our last block.  check the padding to determine the size of the original data
       int padlen = plaintext[BLOCK_SIZE-1]; // look at the last byte
       if(padlen < 1 || padlen > 16) // check for bogus padlen
         return -1;
@@ -1366,8 +1360,7 @@ int Aes::decrypt(unsigned char* output, int outlen, unsigned char* input, int in
       memcpy(output, plaintext, datalen); // stuff only data (no padding) into the output
       outlen -= datalen;
     }
-    else // proceed as normal
-    {
+    else { // proceed as normal
       if(outlen < BLOCK_SIZE) // not enough room to write out
         return -1;
       memcpy(output, plaintext, BLOCK_SIZE); // stuff a decrypted block into the output
