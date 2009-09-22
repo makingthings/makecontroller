@@ -16,12 +16,11 @@
 *********************************************************************************/
 
 #include "usb_serial.h"
+#include "core.h"
 #include "error.h"
-
-extern "C" {
-  #include "string.h"
-  #include "AT91SAM7X256.h"
-}
+#include "string.h"
+#include "at91lib/AT91SAM7X256.h"
+#include <ch.h>
 
 // SLIP codes
 #define END             0300    // indicates end of packet 
@@ -29,40 +28,34 @@ extern "C" {
 #define ESC_END         0334    // ESC ESC_END means END data byte 
 #define ESC_ESC         0335    // ESC ESC_ESC means ESC data byte
 
-void onUsbData(void *pArg, unsigned char status, unsigned int received, unsigned int remaining);
+static void usbserialOnRx(void *pArg, unsigned char status, unsigned int received, unsigned int remaining);
+static void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsigned int remaining);
+static int  usbserialWriteSlipIfFull( char** bufptr, char* buf, int timeout );
 
-UsbSerial* UsbSerial::_instance = 0;
+struct UsbSerial {
+  Semaphore rxSemaphore;
+  Semaphore txSemaphore;
+  int justGot;
+  int justWrote;
+  int rxBufCount;
+  char rxBuf[USBSER_MAX_READ];
+  char slipOutBuf[USBSER_MAX_WRITE];
+  char slipInBuf[USBSER_MAX_READ];
+  int slipInCount;
+};
 
-UsbSerial::UsbSerial( )
+static struct UsbSerial usbSerial;
+
+void usbserialInit( )
 {
+  USBD_Disconnect();
   CDCDSerialDriver_Initialize();
   USBD_Connect();
-  readSemaphore.take( );
-  justGot = 0;
-  rxBufCount = 0;
-}
-
-/**
-  Grab a reference to the UsbSerial system.
-  There's only one UsbSerial object in the system, so you never create your own.  
-  You just grab a reference to the central one via get().  
-  @return A reference to the UsbSerial system.
-  
-  \b Example
-  \code
-  UsbSerial* usb = UsbSerial::get();
-  // now we can do our reading and writing
-  usb->write("a little message", 16);
-  
-  // or, we can combine those onto a single line if we're feeling tricky
-   UsbSerial::get()->write("a little message", 16);
-  \endcode
-*/
-UsbSerial* UsbSerial::get() // static
-{
-  if( !_instance )
-    _instance = new UsbSerial();
-  return _instance;
+  chSemInit(&usbSerial.rxSemaphore, 1);
+  chSemInit(&usbSerial.txSemaphore, 1);
+  chSemWait(&usbSerial.rxSemaphore);
+  usbSerial.justGot = 0;
+  usbSerial.rxBufCount = 0;
 }
 
 /**
@@ -79,7 +72,7 @@ UsbSerial* UsbSerial::get() // static
   // now we're ready to go
   \endcode
 */
-bool UsbSerial::isActive()
+bool usbserialIsActive(void)
 {
   return USBD_GetState() == USBD_STATE_CONFIGURED;
 }
@@ -112,50 +105,45 @@ bool UsbSerial::isActive()
   }
   \endcode
 */
-int UsbSerial::read( char *buffer, int length, int timeout )
+int usbserialRead( char *buffer, int length, int timeout )
 {
   if( USBD_GetState() != USBD_STATE_CONFIGURED )
-    return 0;
+    return -1;
   int length_to_go = length;
-  if( rxBufCount ) // do we already have some lying around?
-  {
-    int copylen = (rxBufCount > length_to_go) ? length_to_go : rxBufCount;
-    memcpy( buffer, rxBuf, copylen );
+  if( usbSerial.rxBufCount ) { // do we already have some lying around?
+    int copylen = MIN(usbSerial.rxBufCount, length_to_go);
+    memcpy( buffer, usbSerial.rxBuf, copylen );
     buffer += copylen;
-    rxBufCount -= copylen;
+    usbSerial.rxBufCount -= copylen;
     length_to_go -= copylen;
   }
-  if(length_to_go) // if we still would like to get more
-  {
+  if(length_to_go) { // if we still would like to get more
     unsigned char result = USBD_Read(CDCDSerialDriverDescriptors_DATAOUT,
-                                  rxBuf, USB_SER_RX_BUF_LEN, onUsbData, this);
-    if(result == USBD_STATUS_SUCCESS)
-    {
-      if( readSemaphore.take( timeout ) )
-      {
-        int copylen = (justGot > length_to_go) ? length_to_go : justGot;
-        memcpy( buffer, rxBuf, copylen );
+                                  usbSerial.rxBuf, USBSER_MAX_READ, usbserialOnRx, 0);
+    if(result == USBD_STATUS_SUCCESS) {
+      if( chSemWaitTimeout(&usbSerial.rxSemaphore, MS2ST(timeout)) == RDY_OK ) {
+        int copylen = MIN(usbSerial.justGot, length_to_go);
+        memcpy( buffer, usbSerial.rxBuf, copylen );
         buffer += copylen;
-        rxBufCount -= copylen;
+        usbSerial.rxBufCount -= copylen;
         length_to_go -= copylen;
-        justGot = 0;
+        usbSerial.justGot = 0;
       }
     }
   }
   return length - length_to_go;
 }
 
-void onUsbData(void *pArg, unsigned char status, unsigned int received, unsigned int remaining)
+// called back when data is received
+void usbserialOnRx(void *pArg, unsigned char status, unsigned int received, unsigned int remaining)
 {
-  (void)remaining; // not much that can be done with this, I think - they're just dropped
-  // in fact, we're pretty unlikely to ever see it since we're always trying to read as much as can be transferred at once
-  UsbSerial* usb = (UsbSerial*)pArg;
-  if( status == USBD_STATUS_SUCCESS )
-  {
-    usb->rxBufCount += received;
-    usb->justGot = received;
+  UNUSED(pArg);
+  UNUSED(remaining);
+  if( status == USBD_STATUS_SUCCESS ) {
+    usbSerial.rxBufCount += received;
+    usbSerial.justGot = received;
   }
-  usb->readSemaphore.giveFromISR(0);
+  chSemSignalI(&usbSerial.rxSemaphore);
 }
 
 /**
@@ -170,14 +158,30 @@ void onUsbData(void *pArg, unsigned char status, unsigned int received, unsigned
   int written = usb->write( "hi hi", 5 );
   \endcode
 */
-int UsbSerial::write( const char *buffer, int length )
+int usbserialWrite( const char *buffer, int length, int timeout )
 {
-  int rv = 0;
+  int rv = -1;
   if( USBD_GetState() == USBD_STATE_CONFIGURED ) {
-    if( USBD_Write(CDCDSerialDriverDescriptors_DATAIN, buffer, length, 0, 0) == USBD_STATUS_SUCCESS )
-      rv = length;
+    if( USBD_Write(CDCDSerialDriverDescriptors_DATAIN, 
+          buffer, length, usbserialOnTx, 0) == USBD_STATUS_SUCCESS ) {
+      if( chSemWaitTimeout(&usbSerial.txSemaphore, MS2ST(timeout)) == RDY_OK ) {
+        rv = usbSerial.justWrote;
+        usbSerial.justWrote = 0;
+      }
+    }
   }
   return rv;
+}
+
+// called back when data is actually transmitted
+void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsigned int remaining)
+{
+  UNUSED(pArg);
+  if( status == USBD_STATUS_SUCCESS ) {
+    usbSerial.justWrote += received;
+  }
+  if( remaining <= 0 )
+    chSemSignalI(&usbSerial.txSemaphore);
 }
 
 /**
@@ -195,72 +199,43 @@ int UsbSerial::write( const char *buffer, int length )
   @return The number of characters successfully read.
   @see read() for a similar example
 */
-int UsbSerial::readSlip( char *buffer, int length )
+int usbserialReadSlip( char *buffer, int length, int timeout )
 {
-  if( length > MAX_INCOMING_SLIP_PACKET )
-    return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
+  int received = 0;
+  static int idx = 0;
+  char c;
 
-  int started = 0, finished = 0, count = 0, i;
-  char *pbp = slipInBuf;
-  static int bufRemaining = 0;
-  char *bp = buffer;
-
-  while ( count < length )
-  {
-    if( !bufRemaining ) // if there's nothing left over from last time, get more
-    {
-      bufRemaining = read( slipInBuf, MAX_INCOMING_SLIP_PACKET );
-      pbp = slipInBuf;
+  while ( received < length ) {
+    if( idx >= usbSerial.slipInCount ) { // if there's nothing left over from last time, get more
+      usbSerial.slipInCount = usbserialRead( usbSerial.slipInBuf, USBSER_MAX_READ, timeout );
+      idx = 0;
     }
-
-    for( i = 0; i < bufRemaining; i++ )
+    
+    c = usbSerial.slipInBuf[idx++];
+    switch( c )
     {
-      switch( *pbp )
-      {
-        case END:
-          if( started && count ) // it was the END byte
-            finished = true;
-          else // skipping all starting END bytes
-            started = true;
+      case END:
+        if( received ) // only return if we actually got anything
+          return received;
+        else
           break;
-        case ESC:
-          // get the next byte.  if it's not an ESC_END or ESC_ESC, it's a
-          // malformed packet.  http://tools.ietf.org/html/rfc1055 says just
-          // drop it in the packet in this case
-          pbp++; 
-          if( started )
-          {
-            if( *pbp == ESC_END )
-            {
-              *bp++ = END;
-              count++;
-              break;
-            }
-            else if( *pbp == ESC_ESC )
-            {
-              *bp++ = ESC;
-              count++;
-              break;
-            }
-          }
-          // no break here
-        default:
-          if( started )
-          {
-            *bp++ = *pbp;
-            count++;
-          }
-          break;
-      }
-      pbp++;
-      bufRemaining--;
-      if( finished )
-        return count;
+      case ESC:
+        // get the next byte.  if it's not an ESC_END or ESC_ESC, it's a
+        // malformed packet.  http://tools.ietf.org/html/rfc1055 says just
+        // drop it in the packet in this case
+        if( idx >= usbSerial.slipInCount ) break;
+        c = usbSerial.slipInBuf[idx++];
+        if( c == ESC_END )
+          c = END;
+        else if( c == ESC_ESC )
+          c = ESC;
+        // no break here
+      default:
+        buffer[received++] = c;
+        break;
     }
-    Task::sleep(1);
   }
-  return CONTROLLER_ERROR_BAD_FORMAT; // should never get here
-  return 0;
+  return CONTROLLER_ERROR_BAD_FORMAT; // error if we get here
 }
 
 /**
@@ -277,42 +252,53 @@ int UsbSerial::readSlip( char *buffer, int length )
   @return The number of characters successfully written.
   @see write() for a similar example.
 */
-int UsbSerial::writeSlip( const char *buffer, int length )
+int usbserialWriteSlip( const char *buffer, int length, int timeout )
 {
-  if( length > MAX_OUTGOING_SLIP_PACKET )
-     return CONTROLLER_ERROR_INSUFFICIENT_RESOURCES;
-
-   char* obp = slipOutBuf;
-   const char* bp = buffer;
-   *obp++ = (char)END;
-
-   while( length-- )
-   {
-     switch(*bp)
+  char* obp = usbSerial.slipOutBuf;
+  int count = 0;
+  char c;
+  *obp++ = END; // clear out any line noise
+   while( length-- ) {
+     c = *buffer++;
+     switch(c)
      {
        // if it's the same code as an END character, we send a special 
        //two character code so as not to make the receiver think we sent an END
        case END:
          *obp++ = (char) ESC;
+         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout );
          *obp++ = (char) ESC_END;
+         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout );
          break;
          // if it's the same code as an ESC character, we send a special 
          //two character code so as not to make the receiver think we sent an ESC
        case ESC:
          *obp++ = (char) ESC;
+         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout );
          *obp++ = (char) ESC_ESC;
+         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout );
          break;
          //otherwise, just send the character
        default:
-         *obp++ = *bp;
+         *obp++ = c;
+         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout );
      }
-     bp++;
    }
 
-   *obp++ = END; // tell the receiver that we're done sending the packet
-   int sendLength = obp - slipOutBuf;
-   write( slipOutBuf, sendLength );
-   return CONTROLLER_OK;
+   *obp++ = END; // end byte
+   count += usbserialWrite( usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf), timeout );
+   return count;
+}
+
+int usbserialWriteSlipIfFull( char** bufptr, char* buf, int timeout )
+{
+  int bufSize = *bufptr - buf;
+  if( bufSize >= USBSER_MAX_WRITE ) {
+    *bufptr = buf;
+    return usbserialWrite( buf, bufSize, timeout );
+  }
+  else
+    return 0;
 }
 
 
