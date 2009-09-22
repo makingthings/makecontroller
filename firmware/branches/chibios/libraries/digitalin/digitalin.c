@@ -16,77 +16,29 @@
 *********************************************************************************/
 
 #include "digitalin.h"
+#include "analogin.h"
 #include "config.h"
 #include "error.h"
-
-#include "AT91SAM7X256.h"
+#include "at91lib/AT91SAM7X256.h"
+#include <ch.h>
+#include <pal.h>
 
 // This number is 4 because the a/d converter is sitting on the IO's 4 - 7
 // this means that we'll need to use the A/d converter to get the digital value.
 // Crazy, eh?  And slow.  Whew.
-#define DIGITALIN_COUNT 8 
+#define DIGITALIN_COUNT 8
 
-//#if ( APPBOARD_VERSION == 90 )
-  #define DIGITALIN_0_IO IO_PB27
-  #define DIGITALIN_1_IO IO_PB28
-  #define DIGITALIN_2_IO IO_PB29
-  #define DIGITALIN_3_IO IO_PB30
-  #define DIGITALIN_4_IO -4
-  #define DIGITALIN_5_IO -5
-  #define DIGITALIN_6_IO -6
-  #define DIGITALIN_7_IO -7
-//#endif
+#ifndef DIGITALIN_THRESHOLD
+#define DIGITALIN_THRESHOLD 200
+#endif
 
-// statics
-AnalogIn* DigitalIn::ains[] = { 0, 0, 0, 0 };
-Io* DigitalIn::ios[] = { 0, 0, 0, 0 };
-short DigitalIn::refcounts[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+// only need symbols for the first 4 since the others are ains
+#define DIGITALIN_0 AT91C_PIO_PB27
+#define DIGITALIN_1 AT91C_PIO_PB28
+#define DIGITALIN_2 AT91C_PIO_PB29
+#define DIGITALIN_3 AT91C_PIO_PB30
 
-/**
-  Create a new DigitalIn object.
-  @param index Which DigitalIn to control (0-7)
-  
-  \b Example
-  \code
-  // create a new DigitalIn 3
-  DigitalIn din(3);
-  // or allocate one...
-  DigitalIn* din = new DigitalIn(3);
-  \endcode
-*/
-DigitalIn::DigitalIn( int index )
-{
-  if ( index < 0 || index >= DIGITALIN_COUNT )
-    return;
-
-  _index = index;
-  if( refcounts[_index]++ == 0 )
-  {
-    int io = getIo( _index );
-
-    if ( io > 0 )
-      ios[_index] = new Io(io, Io::GPIO, INPUT);
-    else
-      ains[_index-4] = new AnalogIn(_index);
-  }
-}
-
-DigitalIn::~DigitalIn()
-{
-  if( --(refcounts[_index]) <= 0 )
-  {
-    if(_index > 3)
-    {
-      delete ains[_index-4];
-      ains[_index-4] = 0;
-    }
-    else
-    {
-      delete ios[_index];
-      ios[_index] = 0;
-    }
-  }
-}
+static int digitalinGetIo( int index );
 
 /** 
   Read the value of a Digital Input on the MAKE Application Board.
@@ -106,26 +58,22 @@ DigitalIn::~DigitalIn()
   }
   \endcode
 */
-bool DigitalIn::value( )
+bool digitalinValue(int channel)
 {
-  if ( _index > 3 )
-    return ains[_index-4]->value() > 200;
+  if ( channel > 3 )
+    return ainValue(channel) > DIGITALIN_THRESHOLD;
   else 
-    return ios[_index]->value();
+    return palReadPad(IOPORT2, digitalinGetIo(channel));
 }
 
-int DigitalIn::getIo( int index )
+int digitalinGetIo( int index )
 {
   switch ( index )
   {
-    case 0: return DIGITALIN_0_IO;
-    case 1: return DIGITALIN_1_IO;
-    case 2: return DIGITALIN_2_IO;
-    case 3: return DIGITALIN_3_IO;
-    case 4: return DIGITALIN_4_IO;
-    case 5: return DIGITALIN_5_IO;
-    case 6: return DIGITALIN_6_IO;
-    case 7: return DIGITALIN_7_IO;
+    case 0: return DIGITALIN_0;
+    case 1: return DIGITALIN_1;
+    case 2: return DIGITALIN_2;
+    case 3: return DIGITALIN_3;
     default: return 0;
   }
 }

@@ -18,13 +18,14 @@
 #ifndef DIGITALIN_H
 #define DIGITALIN_H
 
-#include "io.h"
-#include "analogin.h"
+#include "types.h"
 
 /**
   Read the 8 inputs on the Application Board as digital values - on or off.
   
   \section Usage
+  Because the digitalin system relies on some analogins, ainInit() must be called before
+  you can use the digital ins.
   To get started reading a DigitalIn, create a DigitialIn object and call its value() method.
   \code
   DigitalIn din(3);
@@ -46,21 +47,7 @@
   
   \ingroup io
 */
-class DigitalIn
-{
-public:
-  DigitalIn(int index);
-  ~DigitalIn();
-
-  bool value();
-
-protected:
-  short _index;
-  int getIo( int index );
-  static AnalogIn* ains[];
-  static Io* ios[];
-  static short refcounts[];
-};
+bool digitalinValue(int channel);
 
 /* OSC Interface */
 const char* DigitalInOsc_GetName( void );

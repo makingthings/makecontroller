@@ -29,9 +29,9 @@
 static void ServeAinInterrupt(void);
 
 struct AinManager {
-  Mutex adcLock;            // lock for the adc system
-  Semaphore conversionLock;     // signal for a conversion
-  bool processMultiChannelIsr;         // are we waiting for a multi conversion or just a single channel
+  Mutex adcLock;               // lock for the adc system
+  Semaphore conversionLock;    // signal for a conversion
+  bool processMultiChannelIsr; // are we waiting for a multi conversion or just a single channel
   int multiChannelConversions; // mask of which conversions have been completed
 };
 
