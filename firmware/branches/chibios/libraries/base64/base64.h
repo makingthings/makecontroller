@@ -29,12 +29,8 @@
   Most code lifted from gnulib - http://savannah.gnu.org/projects/gnulib - and written by Simon Josefsson.
   \par
 */
-class Base64
-{
-public:
-  static bool decode(char* dest, int* dest_size, const char* src, int src_size);
-  static int encode(char* dest, int dest_size, const char* src, int src_size);
-};
+bool base64Decode(char* dest, int* dest_size, const char* src, int src_size);
+int  base64Encode(char* dest, int dest_size, const char* src, int src_size);
 
 
 #endif // BASE_64_H
