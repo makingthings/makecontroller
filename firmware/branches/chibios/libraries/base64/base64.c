@@ -23,7 +23,7 @@
 
 #include "base64.h"
 
-bool isbase64 (char ch);
+static bool isbase64 (char ch);
 
 /* C89 compliant way to cast 'char' to 'unsigned char'. */
 static inline unsigned char to_uchar (char ch)
@@ -50,7 +50,7 @@ static inline unsigned char to_uchar (char ch)
   // we now have "dGVzdA==" in encode_buf, and len is 8
   \endcode
 */
-int Base64::encode(char* dest, int dest_size, const char* src, int src_size)
+int base64Encode(char* dest, int dest_size, const char* src, int src_size)
 {
   // our library of valid b64 chars
   static const unsigned char b64str[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -258,7 +258,7 @@ bool isbase64 (char ch)
   // we now have "test" in decode_buf, and decode_size is set to 4
   \endcode
 */
-bool Base64::decode(char* dest, int* dest_size, const char* src, int src_size)
+bool base64Decode(char* dest, int* dest_size, const char* src, int src_size)
 {
   int out_remaining = *dest_size;
 
