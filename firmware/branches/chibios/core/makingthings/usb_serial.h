@@ -20,19 +20,14 @@
 
 #include "config.h"
 #ifdef MAKE_CTRL_USB
-#include "rtos.h"
 
-extern "C" {
-  #include "Board.h"
-  #include "CDCDSerialDriver.h"
-  #include "CDCDSerialDriverDescriptors.h"
-}
+#include "types.h"
+#include "Board.h"
+#include "CDCDSerialDriver.h"
+#include "CDCDSerialDriverDescriptors.h"
 
-#define MAX_INCOMING_SLIP_PACKET 400
-#define MAX_OUTGOING_SLIP_PACKET 600
-#define USB_SER_RX_BUF_LEN BOARD_USB_ENDPOINTS_MAXPACKETSIZE(CDCDSerialDriverDescriptors_DATAIN)
-
-// class Semaphore;
+#define USBSER_MAX_READ BOARD_USB_ENDPOINTS_MAXPACKETSIZE(CDCDSerialDriverDescriptors_DATAOUT)
+#define USBSER_MAX_WRITE BOARD_USB_ENDPOINTS_MAXPACKETSIZE(CDCDSerialDriverDescriptors_DATAIN)
 
 /**
   Virutal serial port USB communication.
@@ -63,27 +58,12 @@ extern "C" {
   on your system.
 */
 
-class UsbSerial
-{
-public:
-  bool isActive();
-  int read( char *buffer, int length, int timeout = -1 );
-  int write( const char *buffer, int length );
-  int readSlip( char *buffer, int length );
-  int writeSlip( const char *buffer, int length );
-  static UsbSerial* get();
-
-protected:
-  UsbSerial( );
-  static UsbSerial* _instance; // the only instance of UsbSerial anywhere.
-  Semaphore readSemaphore;
-  int justGot, rxBufCount;
-  char rxBuf[USB_SER_RX_BUF_LEN];
-  char slipOutBuf[MAX_OUTGOING_SLIP_PACKET];
-  char slipInBuf[MAX_INCOMING_SLIP_PACKET];
-  
-  friend void onUsbData( void *pArg, unsigned char status, unsigned int transferred, unsigned int remaining);
-};
+void usbserialInit( void );
+bool usbserialIsActive( void );
+int  usbserialRead( char *buffer, int length, int timeout );
+int  usbserialWrite( const char *buffer, int length, int timeout );
+int  usbserialReadSlip( char *buffer, int length, int timeout );
+int  usbserialWriteSlip( const char *buffer, int length, int timeout );
 
 #endif // MAKE_CTRL_USB
 
