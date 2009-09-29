@@ -23,14 +23,16 @@
 
 #define IO_PIN_COUNT 64
 
-#ifndef MAX_INTERRUPT_SOURCES
-#define MAX_INTERRUPT_SOURCES 8
-#endif
-
 #define IOPORT(p) ((p < 32) ? IOPORT1 : IOPORT2)
 #define AT91PORT(p) ((p < 32) ? AT91C_BASE_PIOA : AT91C_BASE_PIOB)
 #define PIN(p) (p % 32)
 #define PIN_MASK(p) (1 << (p % 32))
+
+#ifndef PIN_NO_ISR
+
+#ifndef MAX_INTERRUPT_SOURCES
+#define MAX_INTERRUPT_SOURCES 8
+#endif
 
 struct InterruptSource
 {
@@ -45,6 +47,7 @@ static bool isrAInit = false;
 static bool isrBInit = false;
 
 static void pinInitInterrupts(AT91S_PIO* pio, unsigned int priority);
+#endif // PIN_NO_ISR
 
 
 /**
@@ -148,8 +151,11 @@ void pinSetMode( int pin, PinMode mode )
       break;
     default:
       palSetPadMode(IOPORT(pin), PIN(pin), mode);
+      break;
   }
 }
+
+#ifndef PIN_NO_ISR
 
 /**
   Add an interrupt handler for this signal.
@@ -300,6 +306,8 @@ void pinInitInterrupts(AT91S_PIO* pio, unsigned int priority)
   AIC_ConfigureIT(chan, priority, isr_handler); // set it up
   AIC_EnableIT(chan);
 }
+
+#endif // PIN_NO_ISR
 
 
 

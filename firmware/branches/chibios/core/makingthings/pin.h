@@ -22,6 +22,7 @@
 #define ON  true
 #define OFF false
 
+#include "config.h"
 #include "types.h"
 #include <ch.h>
 #include <pal.h>
@@ -92,8 +93,10 @@ void pinSetValue(int pin, bool value);
 void pinOn(int pin);
 void pinOff(int pin);
 void pinSetMode( int pin, PinMode mode );
+#ifndef PIN_NO_ISR
 bool pinAddInterruptHandler(int pin, PinInterruptHandler h, void* arg);
 void pinRemoveInterruptHandler( int pin );
+#endif // PIN_NO_ISR
 
 /**
   \defgroup IoIndices IO Indices
