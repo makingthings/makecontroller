@@ -30,17 +30,13 @@ void Io_Isr( AT91S_PIO* basePio )
   status &= basePio->PIO_IMR;
 
   // Check pending events
-  if(status)
-  {
+  if(status) {
     unsigned int i = 0;
     Io::InterruptSource* is;
-    while( status != 0  && i < Io::isrSourceCount )
-    {
+    while( status != 0  && i < Io::isrSourceCount ) {
       is = &(Io::isrSources[i]);
-      if( is->port == basePio) // Source is configured on the same controller
-      {
-        if ((status & is->mask) != 0) // Source has PIOs whose statuses have changed
-        {
+      if( is->port == basePio) { // Source is configured on the same controller
+        if ((status & is->mask) != 0) { // Source has PIOs whose statuses have changed
           is->handler(is->context); // callback the handler
           status &= ~(is->mask);    // mark this channel as serviced
         }
