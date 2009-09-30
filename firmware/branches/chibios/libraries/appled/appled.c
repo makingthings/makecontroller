@@ -16,37 +16,33 @@
 *********************************************************************************/
 
 #include "appled.h"
-#include "AT91SAM7X256.h"
+#include "pin.h"
 
-#define APPLED_COUNT 4 
+#define APPLED_COUNT 4
 
 #if ( APPBOARD_VERSION == 50 )
-  #define APPLED_0_IO IO_PB19
-  #define APPLED_1_IO IO_PB20
-  #define APPLED_2_IO IO_PB21
-  #define APPLED_3_IO IO_PB22
+  #define APPLED_0 PIN_PB19
+  #define APPLED_1 PIN_PB20
+  #define APPLED_2 PIN_PB21
+  #define APPLED_3 PIN_PB22
 #elif ( APPBOARD_VERSION == 90 )
-  #define APPLED_0_IO IO_PA10
-  #define APPLED_1_IO IO_PA11
-  #define APPLED_2_IO IO_PA13
-  #define APPLED_3_IO IO_PA15
+  #define APPLED_0 PIN_PA10
+  #define APPLED_1 PIN_PA11
+  #define APPLED_2 PIN_PA13
+  #define APPLED_3 PIN_PA15
 #elif ( APPBOARD_VERSION == 95 || APPBOARD_VERSION == 100 )
-  #define APPLED_0_IO IO_PA15
-  #define APPLED_1_IO IO_PA13
-  #define APPLED_2_IO IO_PA28
-  #define APPLED_3_IO IO_PA27
+  #define APPLED_0 PIN_PA15
+  #define APPLED_1 PIN_PA13
+  #define APPLED_2 PIN_PA28
+  #define APPLED_3 PIN_PA27
 #elif ( APPBOARD_VERSION == 200 )
-  #define APPLED_0_IO IO_PA15
-  #define APPLED_1_IO IO_PA13
-  #define APPLED_2_IO IO_PA27
-  #define APPLED_3_IO IO_PA28
+  #define APPLED_0 PIN_PA15
+  #define APPLED_1 PIN_PA13
+  #define APPLED_2 PIN_PA27
+  #define APPLED_3 PIN_PA28
 #endif
 
-
-Io* AppLed::leds[] = {0, 0, 0, 0};
-//#ifdef OSC
-//AppLedOSC* AppLed::oscHandler;
-//#endif
+static int appledGetIo(int index);
 
 /**
   Create a new AppLed
@@ -59,17 +55,11 @@ Io* AppLed::leds[] = {0, 0, 0, 0};
   a.setState(0); // turn it off
   \endcode
 */
-AppLed::AppLed( int index )
+void appledEnable( int channel )
 {
-  _index = index;
-  if( index < 0 || index >= APPLED_COUNT )
-    return;
-  if( !leds[_index] )
-    leds[_index] = new Io( getIo(_index), Io::GPIO, OUTPUT );
-  setState(false);
-//  #ifdef OSC
-//  oscHandler = new AppLedOSC();
-//  #endif
+  short io = appledGetIo(channel);
+  pinSetMode(io, OUTPUT);
+  pinOff(io);
 }
 
 /**
@@ -83,9 +73,9 @@ AppLed::AppLed( int index )
   a->setState(0); // turn it off
   \endcode
 */
-void AppLed::setState( bool state )
+void appledSetValue( int channel, bool on )
 {
-  leds[_index]->setValue( state );
+  pinSetValue(appledGetIo(channel), on);
 }
 
 /**
@@ -106,25 +96,20 @@ void AppLed::setState( bool state )
   }
   \endcode
 */
-bool AppLed::getState( )
+bool appledValue(int channel)
 {
-  return leds[_index]->value( );
+  return pinValue(appledGetIo(channel));
 }
 
-int AppLed::getIo(int index)
+int appledGetIo(int index)
 {
   switch( index )
   {
-    case 0:
-      return APPLED_0_IO;
-    case 1:
-      return APPLED_1_IO;
-    case 2:
-      return APPLED_2_IO;
-    case 3:
-      return APPLED_3_IO;
-    default:
-      return -1;
+    case 0: return APPLED_0;
+    case 1: return APPLED_1;
+    case 2: return APPLED_2;
+    case 3: return APPLED_3;
+    default: return -1;
   }
 }
 
