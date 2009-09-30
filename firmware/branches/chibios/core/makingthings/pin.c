@@ -32,7 +32,7 @@
 
 #ifndef MAX_INTERRUPT_SOURCES
 #define MAX_INTERRUPT_SOURCES 8
-#endif
+#endif // MAX_INTERRUPT_SOURCES
 
 struct InterruptSource
 {

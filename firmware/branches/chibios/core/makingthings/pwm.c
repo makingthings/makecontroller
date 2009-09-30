@@ -25,7 +25,6 @@
 #endif
 
 #define PWM_DUTY_MAX 1024
-#define PWM_COUNT 4
 #define PWM_CHANNEL_0_IO AT91C_PB19_PWM0
 #define PWM_CHANNEL_1_IO AT91C_PB20_PWM1
 #define PWM_CHANNEL_2_IO AT91C_PB21_PWM2
@@ -208,7 +207,7 @@ bool pwmSetPeriod( int channel, int period )
 // from at91lib softpack
 int pwmFindClockConfiguration(int frequency)
 {
-  unsigned int divisors[11] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
+  const static unsigned int divisors[11] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
   unsigned char divisor = 0;
   unsigned int prescaler;
 
