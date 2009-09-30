@@ -15,10 +15,10 @@
 
 *********************************************************************************/
 
-#ifndef LED_CPP_H
-#define LED_CPP_H
+#ifndef LED_H
+#define LED_H
 
-#include "io.h"
+#include "types.h"
 
 /**
   Controls the single green LED on the MAKE Controller Board.
@@ -29,17 +29,10 @@
   
   If you're looking to control the LEDs on the Application Board, check \ref AppLed.
 */
-class Led
-{
-public:
-  Led( );
-  ~Led( ) { }
-  void setState( bool value );
-  bool state( );
-  
-private:
-  Io ledIo;
-};
+
+void ledEnable(void);
+void ledSetValue( bool state );
+bool ledValue(void);
 
 // /* OSC Interface */
 // const char* LedOsc_GetName( void );

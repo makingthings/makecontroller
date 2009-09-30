@@ -20,6 +20,8 @@
 
 #include "types.h"
 
+#define PWM_COUNT 4
+
 /**
   Control the 4 Pulse Width Modulation outputs.
 

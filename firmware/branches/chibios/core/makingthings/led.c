@@ -15,15 +15,16 @@
 
 *********************************************************************************/
 
-#include "config.h"
 #include "led.h"
+#include "pin.h"
+#include "config.h"
 
 #if ( CONTROLLER_VERSION == 50 )
-  #define LED_IO IO_PB25
+  #define LED_IO PIN_PB25
 #elif ( CONTROLLER_VERSION == 90 )
-  #define LED_IO IO_PB12
-#elif ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 || CONTROLLER_VERSION == 200 )
-  #define LED_IO IO_PA12
+  #define LED_IO PIN_PB12
+#elif ( CONTROLLER_VERSION >= 95 )
+  #define LED_IO PIN_PA12
 #endif
 
 /**
@@ -35,11 +36,10 @@
   // that's it!
   \endcode
 */
-Led::Led( )
+void ledEnable( )
 {
-  ledIo.setPin( LED_IO );
-  ledIo.setDirection( OUTPUT );
-  ledIo.setPeripheral( Io::GPIO );
+  pinSetMode(LED_IO, OUTPUT);
+  pinOff(LED_IO);
 }
 
 /**
@@ -53,12 +53,9 @@ Led::Led( )
   led.setState(true); // turn it on
   \endcode
 */
-void Led::setState( bool state )
+void ledSetValue( bool on )
 {
-  if(state)
-    ledIo.on();
-  else
-    ledIo.off();
+  pinSetValue(LED_IO, on);
 }
 
 /**
@@ -73,9 +70,9 @@ void Led::setState( bool state )
   }
   \endcode
 */
-bool Led::state( )
+bool ledValue( )
 {
-  return ledIo.value( );
+  return pinValue(LED_IO);
 }
 
 #ifdef OSC
