@@ -981,6 +981,4 @@ dns_gethostbyname(const char *hostname, struct ip_addr *addr, dns_found_callback
 }
 
 #endif /* LWIP_DNS */
-
 #endif // MAKE_CTRL_NETWORK
-

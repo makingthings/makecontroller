@@ -236,5 +236,4 @@ netbuf_first(struct netbuf *buf)
 }
 
 #endif /* LWIP_NETCONN */
-
 #endif // MAKE_CTRL_NETWORK
