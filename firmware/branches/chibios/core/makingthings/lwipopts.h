@@ -35,7 +35,7 @@
 #include "config.h"
 
 // Liam testing...
-#define LWIP_SOCKET 0
+#define LWIP_SOCKET 1
 
 #define LWIP_NOASSERT 1 // To suppress some errors for now (no debug output)
 #define SYS_LIGHTWEIGHT_PROT            1

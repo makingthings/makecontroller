@@ -20,7 +20,7 @@
 
 #include "config.h"
 #ifdef MAKE_CTRL_NETWORK
-#include "lwip/api.h"
+#include "types.h"
 
 
 /**
@@ -50,21 +50,16 @@
   
   \ingroup networking
 */
-class UdpSocket
-{
-public:
-  
-  UdpSocket( int port = -1 );
-  ~UdpSocket( );
-  bool valid( ) { return _socket != NULL; }
-  
-  bool bind( int port );
-  int write( const char* data, int length, int address, int port );
-  int read( char* data, int length, int* src_address = 0, int* src_port = 0 );
-  
-protected:
-  struct netconn* _socket;
-};
+
+typedef int UdpSocket;
+
+UdpSocket udpNew(void);
+bool udpClose(UdpSocket s);
+bool udpBind(UdpSocket s, int port);
+int  udpWrite(UdpSocket s, const char* data, int length, int address, int port);
+int  udpRead(UdpSocket s, char* data, int length);
+int  udpReadFrom(UdpSocket s, char* data, int length, int* src_address, int* src_port);
+int  udpBytesAvailable(UdpSocket s);
 
 #endif // MAKE_CTRL_NETWORK
 #endif // UDP_SOCKET_H

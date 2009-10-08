@@ -20,9 +20,7 @@
 
 #include "config.h"
 #ifdef MAKE_CTRL_NETWORK
-
-#include "lwip/api.h"
-#include "tcpserver.h"
+#include "types.h"
 
 /**
   Read and write Ethernet data via TCP.
@@ -61,29 +59,16 @@
   
   \ingroup networking
 */
-class TcpSocket
-{
-public:
-  TcpSocket( );
-  ~TcpSocket( );
-  bool valid( );
-  
-  int bytesAvailable( ) const;
-  bool connect( int address, int port );
-  bool close( );
-  bool isConnected( );
-  
-  int write( const char* data, int length );
-  int read( char* data, int length );
-  int readLine( char* data, int length );
-  
-protected:
-  struct netconn* _socket;
-  bool getNewSocket( );
-  TcpSocket( void* sock );
-  
-  friend class TcpServer;
-};
+
+typedef int TcpSocket;
+
+TcpSocket tcpNew(void);
+int tcpConnect(TcpSocket s, int address, int port);
+bool tcpClose(TcpSocket s);
+int tcpBytesAvailable(TcpSocket s);
+int tcpRead(TcpSocket s, char* data, int length);
+int tcpWrite(TcpSocket s, const char* data, int length);
+
 
 #endif // MAKE_CTRL_NETWORK
 #endif // TCP_SOCKET_H
