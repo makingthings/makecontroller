@@ -18,6 +18,8 @@
 #include "udpsocket.h"
 #ifdef MAKE_CTRL_NETWORK
 
+#include "lwip/sockets.h"
+
 /**
   Create a new UDP socket.
   When you create a new socket, you can optionally bind it directly to the port
@@ -35,25 +37,14 @@
   UdpSocket udp(10000); // bind to port 10000
   \endcode
 */
-UdpSocket::UdpSocket( int port )
+UdpSocket udpNew(void)
 {
-  _socket = netconn_new( NETCONN_UDP );
-  if( _socket == NULL || _socket->err != ERR_OK )
-    return;
-  _socket->readingbuf = NULL;
-  if(port >= 0)
-    bind(port);
+  return lwip_socket(0, SOCK_DGRAM, IPPROTO_UDP);
 }
 
-UdpSocket::~UdpSocket( )
+bool udpClose(UdpSocket s)
 {
-  if( _socket )
-  {
-    netconn_close( _socket );
-    netconn_delete(_socket);
-    if ( _socket->readingbuf != NULL )
-      netbuf_delete( _socket->readingbuf );
-  }
+  return lwip_close(s) == 0;
 }
 
 /**
@@ -70,12 +61,13 @@ UdpSocket::~UdpSocket( )
   // now we're ready to read
   \endcode
 */
-bool UdpSocket::bind( int port )
+bool udpBind(UdpSocket s, int port)
 {
-  if( !_socket )
-    return false;
-  else
-    return (ERR_OK == netconn_bind( _socket, IP_ADDR_ANY, port ));
+  struct sockaddr_in sa;
+  sa.sin_family = AF_INET;
+  sa.sin_addr.s_addr = INADDR_ANY;
+  sa.sin_port = port;
+  return lwip_bind(s, (const struct sockaddr *)&sa, sizeof(sa)) == 0;
 }
 
 /**
@@ -94,30 +86,11 @@ bool UdpSocket::bind( int port )
   int written = udp.write("some data", strlen("some data"), address, port);
   \endcode
 */
-int UdpSocket::write( const char* data, int length, int address, int port )
+int udpWrite( UdpSocket s, const char* data, int length, int address, int port )
 {
-  if( !_socket )
-    return 0;
-  struct netbuf *buf;
-  struct ip_addr remote_addr;
-  int lengthsent = 0;
-
-  remote_addr.addr = address;
-  if( ERR_OK != netconn_connect(_socket, &remote_addr, port) )
-    return lengthsent;
-
-  // create a buffer
-  buf = netbuf_new();
-  if( buf != NULL )
-  {
-    netbuf_ref( buf, data, length); // make the buffer point to the data that should be sent
-    if( ERR_OK == netconn_send( _socket, buf) ) // send the data
-      lengthsent = length;
-    netbuf_delete(buf); // deallocate the buffer
-  }
-  netconn_disconnect( _socket );
-
-  return lengthsent;
+  struct sockaddr to;
+  socklen_t tolen = sizeof(to);
+  return lwip_sendto(s, data, length, 0, &to, tolen);
 }
 
 /**
@@ -145,33 +118,28 @@ int UdpSocket::write( const char* data, int length, int address, int port )
   int read = udp.read(mydata, 128, &sender_address, &sender_port);
   \endcode
 */
-int UdpSocket::read( char* data, int length, int* src_address, int* src_port )
+
+int udpRead(UdpSocket s, char* data, int length)
 {
-  if( !_socket )
-    return 0;
+  return lwip_read(s, data, length);
+}
 
-  int buflen = 0;
-  struct netbuf* buf = netconn_recv( _socket );
-  if( buf != NULL )
-  {
-    buflen = netbuf_len( buf );
-    if( buflen > length) // make sure we only write as much as was asked for...the rest gets dropped
-      buflen = length;
-    // copy the contents of the received buffer into the supplied memory pointer
-    netbuf_copy(buf, data, buflen);
-    
-    // if we got passed in valid pointers for addr and port, fill them up
-    if( src_port )
-      *src_port = netbuf_fromport(buf);
-    if( src_address )
-    {
-      struct ip_addr *addr = netbuf_fromaddr(buf);
-      *src_address = addr->addr;
-    }
-    netbuf_delete(buf);
-  }
+int udpReadFrom( UdpSocket s, char* data, int length, int* from_address, int* from_port )
+{
+  struct sockaddr_in from;
+  socklen_t fromlen;
+  int recvd = lwip_recvfrom(s, data, length, 0, (struct sockaddr*)&from, &fromlen);
+  if(from_address)
+    *from_address = from.sin_addr.s_addr;
+  if(from_port)
+    *from_port = from.sin_port;
+  return recvd;
+}
 
-  return buflen;
+int udpBytesAvailable(UdpSocket s)
+{
+  int bytes;
+  return (lwip_ioctl(s, FIONREAD, &bytes) == 0) ? bytes : -1;
 }
 
 #endif // MAKE_CTRL_NETWORK
