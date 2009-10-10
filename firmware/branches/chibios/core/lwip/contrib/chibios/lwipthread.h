@@ -99,6 +99,13 @@
 
 extern WORKING_AREA(wa_lwip_thread, LWIP_THREAD_STACK_SIZE);
 
+struct lwipthread_opts {
+  char* macAddress;
+  int ipaddr;
+  int mask;
+  int gw;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -75,6 +75,7 @@
 #include "netif/ppp_oe.h"
 
 #include "lwipthread.h"
+#include "network.h"
 
 #define PERIODIC_TIMER_ID       1
 #define FRAME_RECEIVED_ID       2
@@ -92,12 +93,12 @@ static void low_level_init(struct netif *netif) {
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
   /* set MAC hardware address */
-  netif->hwaddr[0] = 0xC2;
-  netif->hwaddr[1] = 0xAF;
-  netif->hwaddr[2] = 0x51;
-  netif->hwaddr[3] = 0x03;
-  netif->hwaddr[4] = 0xCF;
-  netif->hwaddr[5] = 0x46;
+  netif->hwaddr[0] = macAddress[0];
+  netif->hwaddr[1] = macAddress[1];
+  netif->hwaddr[2] = macAddress[2];
+  netif->hwaddr[3] = macAddress[3];
+  netif->hwaddr[4] = macAddress[4];
+  netif->hwaddr[5] = macAddress[5];
 
   /* maximum transfer unit */
   netif->mtu = 1500;
@@ -228,6 +229,17 @@ msg_t lwip_thread(void *p) {
   EventListener el0, el1;
   struct ip_addr ip, gateway, netmask;
   static struct netif thisif;
+  if(p) {
+    struct lwipthread_opts* opts = p;
+    ip.addr = opts->ipaddr;
+    gateway.addr = opts->gw;
+    netmask.addr = opts->mask;
+  }
+  else {
+    LWIP_IPADDR(&ip);
+    LWIP_GATEWAY(&gateway);
+    LWIP_NETMASK(&netmask);
+  }
 
   /* Initializes the thing.*/
   sys_init();
@@ -239,11 +251,7 @@ msg_t lwip_thread(void *p) {
   tcpip_init(NULL, NULL);
 
   /* TCP/IP parameters.*/
-  LWIP_IPADDR(&ip);
-  LWIP_GATEWAY(&gateway);
-  LWIP_NETMASK(&netmask);
   netif_add(&thisif, &ip, &netmask, &gateway, NULL, ethernetif_init, tcpip_input);
-
   netif_set_default(&thisif);
   netif_set_up(&thisif);
 
