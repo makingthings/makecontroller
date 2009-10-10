@@ -22,10 +22,8 @@
 
 #ifdef MAKE_CTRL_NETWORK
 
-#include "lwip/api.h"
+#include "types.h"
 #include "tcpsocket.h"
-
-class TcpSocket;
 
 /**
   Listen for incoming TCP connections.
@@ -60,22 +58,14 @@ class TcpSocket;
   
   \ingroup networking
 */
-class TcpServer
-{
-public:
-  TcpServer( );
-  ~TcpServer( );
-  bool valid( ) { return _socket != NULL; }
-  
-  bool listen( int port );
-  bool isListening( );
-  bool close( );
-  TcpSocket* accept( );
-  
-protected:
-  struct netconn* _socket;
-  bool getNewSocket( );
-};
+
+typedef int TcpServer;
+
+TcpServer tcpserverNew(int port);
+TcpSocket tcpserverAccept(TcpServer s);
+bool tcpserverClose(TcpServer s);
+
+
 
 #endif //MAKE_CTRL_NETWORK
 #endif // TCP_SERVER_H
