@@ -5,7 +5,9 @@
 
 #include "config.h"
 #ifdef MAKE_CTRL_NETWORK
-#include "rtos.h"
+#include "types.h"
+
+extern char macAddress[];
 
 /**
   \def IP_ADDRESS( a, b, c, d )
@@ -53,36 +55,14 @@
   
   \ingroup networking
 */
-class Network
-{
-public:
-  static Network* get( );
-  bool setAddress( int a0, int a1, int a2, int a3 );
-  bool setMask( int m0, int m1, int m2, int m3 );
-  bool setGateway( int g0, int g1, int g2, int g3 );
-  int address( );
-  int mask( );
-  int gateway( );
-  int getHostByName( const char *name, int timeout = 30 );
-  void setDhcp(bool enabled);
-  bool dhcp();
-  static int addressToString( char* data, int address );
-  
-protected:
-  Network( );
-  static Network* _instance; // the only instance of Network anywhere.
-  void setDefaults();
-  int setValid( bool valid );
-  bool getValid( );
-  Semaphore dnsSemaphore;
-  int dnsResolvedAddress;
-  friend void dnsCallback(const char *name, struct ip_addr *addr, void *arg);
-  int tempIpAddress, tempGateway, tempMask;
-  void dhcpStart( struct netif* netif );
-  void dhcpStop( struct netif* netif );
-  char emacETHADDR0, emacETHADDR1, emacETHADDR2;
-  char emacETHADDR3, emacETHADDR4, emacETHADDR5;
-};
+
+void networkInit(void);
+bool networkSetAddress(int address, int mask, int gateway);
+bool networkAddress(int* address, int* mask, int* gateway);
+int  networkGetHostByName(const char *name, int timeout);
+void networkSetDhcp(bool enabled);
+bool networkDhcp(void);
+int  networkAddressToString(char* data, int address);
 
 #ifdef OSC
 #include "osc_cpp.h"

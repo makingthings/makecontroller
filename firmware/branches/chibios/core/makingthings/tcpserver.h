@@ -65,8 +65,6 @@ TcpServer tcpserverNew(int port);
 TcpSocket tcpserverAccept(TcpServer s);
 bool tcpserverClose(TcpServer s);
 
-
-
 #endif //MAKE_CTRL_NETWORK
 #endif // TCP_SERVER_H
 
