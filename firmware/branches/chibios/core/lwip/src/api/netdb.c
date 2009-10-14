@@ -33,6 +33,9 @@
  *
  */
 
+#include "config.h"
+#ifdef MAKE_CTRL_NETWORK
+
 #include "lwip/netdb.h"
 
 #if LWIP_DNS && LWIP_SOCKET
@@ -354,3 +357,4 @@ memerr:
 }
 
 #endif /* LWIP_DNS && LWIP_SOCKET */
+#endif // MAKE_CTRL_NETWORK
