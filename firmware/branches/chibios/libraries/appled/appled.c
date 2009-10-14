@@ -59,7 +59,7 @@ void appledEnable( int channel )
 {
   short io = appledGetIo(channel);
   pinSetMode(io, OUTPUT);
-  pinOff(io);
+  pinOn(io); // inverted
 }
 
 /**
@@ -75,7 +75,7 @@ void appledEnable( int channel )
 */
 void appledSetValue( int channel, bool on )
 {
-  pinSetValue(appledGetIo(channel), on);
+  pinSetValue(appledGetIo(channel), !on); // inverted since it's tied to 3.3V
 }
 
 /**
@@ -98,7 +98,7 @@ void appledSetValue( int channel, bool on )
 */
 bool appledValue(int channel)
 {
-  return pinValue(appledGetIo(channel));
+  return !pinValue(appledGetIo(channel));
 }
 
 int appledGetIo(int index)
