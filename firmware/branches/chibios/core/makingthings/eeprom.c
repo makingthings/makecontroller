@@ -17,6 +17,7 @@
 
 #include "eeprom.h"
 #include "error.h"
+#include "pin.h"
 
 #define EEPROM_INSTRUCTION_WREN 0x06
 #define EEPROM_INSTRUCTION_WRDI 0x04
@@ -33,8 +34,8 @@ static void eepromWriteEnable(void);
 
 void eepromInit()
 {
-  spiEnableChannel( EEPROM_DEVICE );
-  spiConfigure( EEPROM_DEVICE, 8, 4, 0, 1 );
+  spiEnableChannel(EEPROM_DEVICE);
+  spiConfigure(EEPROM_DEVICE, 8, 4, 0, 1);
 }
 
 void eepromWriteEnable()
@@ -45,15 +46,13 @@ void eepromWriteEnable()
 
 void eepromReady( )
 {
-  int status;
-  unsigned char c[ 2 ];
+  unsigned char c[2];
   do
   {
-    c[ 0 ] = EEPROM_INSTRUCTION_RDSR;
-    c[ 1 ] = 0;
+    c[0] = EEPROM_INSTRUCTION_RDSR;
+    c[1] = 0;
     spiReadWriteBlock( EEPROM_DEVICE, c, 2 );
-    status = c[ 1 ] != 0xFF;
-  } while ( !status );
+  } while ( c[1] == 0xFF );
 }
 
 /**

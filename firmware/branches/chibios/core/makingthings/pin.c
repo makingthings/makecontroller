@@ -144,9 +144,11 @@ void pinSetMode( int pin, PinMode mode )
 {
   switch(mode) {
     case PERIPHERAL_A:
+      AT91PORT(pin)->PIO_PDR = PIN_MASK(pin);
       AT91PORT(pin)->PIO_ASR = PIN_MASK(pin);
       break;
     case PERIPHERAL_B:
+      AT91PORT(pin)->PIO_PDR = PIN_MASK(pin);
       AT91PORT(pin)->PIO_BSR = PIN_MASK(pin);
       break;
     default:
