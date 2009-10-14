@@ -39,7 +39,7 @@
 void ledEnable( )
 {
   pinSetMode(LED_IO, OUTPUT);
-  pinOff(LED_IO);
+  pinOn(LED_IO); // inverted - really off
 }
 
 /**
@@ -55,7 +55,7 @@ void ledEnable( )
 */
 void ledSetValue( bool on )
 {
-  pinSetValue(LED_IO, on);
+  pinSetValue(LED_IO, !on); // inverted since it's tied to 3.3V
 }
 
 /**
@@ -72,7 +72,7 @@ void ledSetValue( bool on )
 */
 bool ledValue( )
 {
-  return pinValue(LED_IO);
+  return !pinValue(LED_IO);
 }
 
 #ifdef OSC
