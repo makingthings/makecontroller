@@ -19,25 +19,6 @@
 #define SPI_H
 
 #include "types.h"
-#include "at91lib/AT91SAM7X256.h"
-
-/// Calculates the value of the SCBR field of the Chip Select Register given
-/// MCK and SPCK.
-#define SPID_CSR_SCBR(mck, spck)    ((((mck) / (spck)) << 8) & AT91C_SPI_SCBR)
-
-/// Calculates the value of the DLYBS field of the Chip Select Register given
-/// the delay in ns and MCK.
-#define SPID_CSR_DLYBS(mck, delay) \
-    ((((((delay) * ((mck) / 1000000)) / 1000) + 1)  << 16) & AT91C_SPI_DLYBS)
-
-/// Calculates the value of the DLYBCT field of the Chip Select Register given
-/// the delay in ns and MCK.
-#define SPID_CSR_DLYBCT(mck, delay) \
-    ((((((delay) / 32 * ((mck) / 1000000)) / 1000) + 1) << 24) & AT91C_SPI_DLYBCT)
-
-#define AT45_CSR(mck, spck) \
-    (AT91C_SPI_NCPHA | SPID_CSR_DLYBCT(mck, 1000) \
-     | SPID_CSR_DLYBS(mck, 0) | SPID_CSR_SCBR(mck, spck))
 
 /** 
   Communicate with peripheral devices via SPI.
