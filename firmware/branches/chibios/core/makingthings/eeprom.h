@@ -41,8 +41,7 @@
 */
 
 void eepromInit(void);
-void eepromDeinit(void);
-int  eepromRead( int address );
+int  eepromRead(int address);
 void eepromWrite(int address, int value);
 int  eepromReadBlock(int address, uchar* data, int length);
 int  eepromWriteBlock(int address, uchar *data, int length);
