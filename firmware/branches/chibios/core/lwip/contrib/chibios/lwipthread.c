@@ -242,8 +242,8 @@ msg_t lwip_thread(void *p) {
   tcpip_init(NULL, NULL);
 
   /* TCP/IP parameters, runtime or compile time.*/
+  struct lwipthread_opts *opts = p;
   if (p) {
-    struct lwipthread_opts *opts = p;
     if (opts->macaddress) {
       unsigned i;
 
@@ -253,6 +253,7 @@ msg_t lwip_thread(void *p) {
     ip.addr = opts->address;
     gateway.addr = opts->gateway;
     netmask.addr = opts->netmask;
+    *opts->netif = &thisif;
   }
   else {
     thisif.hwaddr[0] = LWIP_ETHADDR_0;
@@ -270,6 +271,9 @@ msg_t lwip_thread(void *p) {
 
   netif_set_default(&thisif);
   netif_set_up(&thisif);
+
+  if(opts)
+    chSemSignal(opts->semaphore);
 
   /* Setup event sources.*/
   evtInit(&evt, S2ST(5));

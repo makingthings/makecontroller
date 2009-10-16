@@ -58,7 +58,7 @@
 #endif
 
 /** @brief Link speed. */
-#if !defined(LWIP_SEND_TIMEOUT) || defined(__DOXYGEN__)
+#if !defined(LWIP_LINK_SPEED) || defined(__DOXYGEN__)
 #define LWIP_LINK_SPEED         100000000
 #endif
 
@@ -110,6 +110,8 @@ struct lwipthread_opts {
   uint32_t      address;
   uint32_t      netmask;
   uint32_t      gateway;
+  struct netif** netif;
+  Semaphore     *semaphore;
 };
 
 extern WORKING_AREA(wa_lwip_thread, LWIP_THREAD_STACK_SIZE);

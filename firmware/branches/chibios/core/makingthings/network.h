@@ -7,8 +7,6 @@
 #ifdef MAKE_CTRL_NETWORK
 #include "types.h"
 
-extern char macAddress[];
-
 /**
   \def IP_ADDRESS( a, b, c, d )
   Generate an address appropriate for Socket functions from 4 integers.

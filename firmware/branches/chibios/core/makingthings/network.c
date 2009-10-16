@@ -9,42 +9,53 @@
 #include "lwipthread.h"
 #include "lwip/dhcp.h"
 #include "lwip/dns.h"
+#include "lwip/sockets.h"
+#include "lwip/netif.h"
+#include "lwipopts.h"
 
 #include "eeprom.h"
 #include "stdio.h"
 #include "error.h"
 
-#define MC_DEFAULT_IP_ADDRESS IP_ADDRESS( 192, 168, 0, 200 )
-#define MC_DEFAULT_GATEWAY    IP_ADDRESS( 192, 168, 0, 1 )
+#ifndef MC_DEFAULT_IP_ADDRESS
+#define MC_DEFAULT_IP_ADDRESS IP_ADDRESS( 192, 168, 1, 200 )
+#endif
+#ifndef MC_DEFAULT_NETMASK
 #define MC_DEFAULT_NETMASK    IP_ADDRESS( 255, 255, 255, 0 )
-#define NETIF_NAME (char*)"ms0"
+#endif
+#ifndef MC_DEFAULT_GATEWAY
+#define MC_DEFAULT_GATEWAY    IP_ADDRESS( 192, 168, 1, 1 )
+#endif
 
-char macAddress[6] = {0xAC, 0xDE, 0x48, 0x00, 0x00, 0x00};
+static unsigned char macAddress[6] = {0xAC, 0xDE, 0x48, 0x00, 0x00, 0x00};
 
-struct Network {
-  Semaphore dnsSemaphore;
-  int dnsResolvedAddress;
+#if (LWIP_DNS == 1)
+struct Dns {
+  Semaphore semaphore;
+  int resolvedAddress;
 };
-
-static struct Network network;
-
+static struct Dns dns;
 static void dnsCallback(const char *name, struct ip_addr *addr, void *arg);
-static bool networkGetValid(int* address, int *mask, int* gateway);
-static void networkSetLastKnownAddress(int* address, int* mask, int* gateway);
+#endif // LWIP_DNS
+
+static struct netif* mcnetif; // our network interface
+static bool networkLastValidAddress(int* address, int *mask, int* gateway);
+
+#if (LWIP_DHCP == 1)
 static bool networkDhcpStart(void);
 static bool networkDhcpStop(void);
+#endif // LWIP_DHCP
 
 void networkInit( )
 {
-  network.dnsResolvedAddress = -1;
-  chSemInit(&network.dnsSemaphore, 1);
-  chSemWait(&network.dnsSemaphore);
+#if (LWIP_DNS == 1)
+  dns.resolvedAddress = -1;
+  chSemInit(&dns.semaphore, 1);
+  chSemWait(&dns.semaphore);
+#endif
   
-  macAddress[0] = 0xAC;
-  macAddress[1] = 0xDE;
-  macAddress[2] = 0x48;
-  
-  int serialNumber = 123; //System_GetSerialNumber();
+  // customize MAC address based on serial number
+  int serialNumber = 123; // systemSerialNumber();
   macAddress[5] = serialNumber & 0xFF;
   macAddress[4] = ( serialNumber >> 8 ) & 0xFF;
   // Low nibble of the third byte - gives us around 1M serial numbers
@@ -52,19 +63,28 @@ void networkInit( )
   
   macInit(); // chibios mac init
   int address, mask, gateway;
-  networkSetLastKnownAddress(&address, &mask, &gateway);
+  networkLastValidAddress(&address, &mask, &gateway);
 
-  // startup the lwip thread
-  struct lwipthread_opts opts = {
-    macAddress,
-    address,
-    mask,
-    gateway
-  };
+  Semaphore initSemaphore;
+  chSemInit(&initSemaphore, 1);
+  chSemWait(&initSemaphore);
+
+  lwip_socket_init();
+  struct lwipthread_opts opts;
+  opts.macaddress = macAddress;
+  opts.address = address;
+  opts.netmask = mask;
+  opts.gateway = gateway;
+  opts.netif = &mcnetif;
+  opts.semaphore = (void*)&initSemaphore;
+
   chThdCreateStatic(wa_lwip_thread, LWIP_THREAD_STACK_SIZE, LOWPRIO, lwip_thread, &opts);
+  chSemWait(&initSemaphore); // wait until lwip is set up
   
+#if (LWIP_DHCP == 1)
   if( networkDhcp() )
     networkDhcpStart();
+#endif
 }
 
 /**
@@ -86,16 +106,22 @@ void networkInit( )
 */
 bool networkSetAddress( int address, int mask, int gateway )
 {
+  bool rv = false;
+#if (LWIP_DHCP == 1)
   if( !networkDhcp() ) { // only actually change the address if we're not using DHCP
-    struct netif* mc_netif = netif_find( NETIF_NAME );
-    if( mc_netif ) {
-      struct ip_addr ip, gw, netmask;
-      ip.addr = address;
-      netmask.addr = mask;
-      gw.addr = gateway;
-      netif_set_addr( mc_netif, &ip, &netmask, &gw );
-    }
+#endif
+    struct ip_addr ip, gw, netmask;
+    ip.addr = address;
+    netmask.addr = mask;
+    gw.addr = gateway;
+    netif_set_addr( mcnetif, &ip, &netmask, &gw );
+#if (LWIP_DHCP == 1)
+    dhcp_inform(mcnetif);
+#endif
+    rv = true;
+#if (LWIP_DHCP == 1)
   }
+#endif
 
   // but write the addresses to memory regardless,
   // so we can use them next time DHCP is disabled
@@ -106,7 +132,7 @@ bool networkSetAddress( int address, int mask, int gateway )
   int total = address + mask + gateway;
   eepromWrite( EEPROM_SYSTEM_NET_CHECK, total );
 
-  return true;
+  return rv;
 }
 
 /**
@@ -124,15 +150,10 @@ bool networkSetAddress( int address, int mask, int gateway )
 */
 bool networkAddress( int* address, int* mask, int* gateway )
 {
-  struct netif* netif = netif_find( NETIF_NAME );
-  if(netif) {
-    *address = netif->ip_addr.addr;
-    *mask = netif->netmask.addr;
-    *gateway = netif->gw.addr;
-    return true;
-  }
-  else
-    return false;
+  *address = mcnetif->ip_addr.addr;
+  *mask = mcnetif->netmask.addr;
+  *gateway = mcnetif->gw.addr;
+  return true;
 }
 
 /**
@@ -158,6 +179,8 @@ int networkAddressToString( char* data, int address )
                   IP_ADDRESS_D( address ));
 }
 
+#if (LWIP_DHCP == 1)
+
 /**
   Turn DHCP on or off.
   @param enabled True to turn DHCP on, false to turn it off.
@@ -178,7 +201,8 @@ void networkSetDhcp(bool enabled)
     networkDhcpStop( );
     eepromWrite( EEPROM_DHCP_ENABLED, enabled );
     int a, m, g;
-    networkSetLastKnownAddress(&a, &m, &g);
+    networkLastValidAddress(&a, &m, &g);
+    networkSetAddress(a, m, g);
   }
 }
 
@@ -201,40 +225,39 @@ void networkSetDhcp(bool enabled)
 */
 bool networkDhcp()
 {
-  return eepromRead( EEPROM_DHCP_ENABLED ) == 1;
+  return eepromRead( EEPROM_DHCP_ENABLED );
 }
 
 bool networkDhcpStart( )
 {
   int count = 100;
   bool rv = false;
-  struct netif* netif = netif_find(NETIF_NAME);
-  if( netif ) {
-    dhcp_start( netif );
-    // now hang out for a second until we get an address
-    // if DHCP is enabled but we don't find a DHCP server, just use the network config stored in EEPROM
-    while( netif->ip_addr.addr == 0 && count-- ) // timeout after 10 (?) seconds of waiting for a DHCP address
-      chThdSleepMilliseconds( 100 );
-    if( netif->ip_addr.addr == 0 ) { // if we timed out getting an address via DHCP, just use whatever's in EEPROM
-      int a, m, g;
-      networkSetLastKnownAddress(&a, &m, &g);
-      rv = true;
-    }
+  if( dhcp_start( mcnetif ) != ERR_OK )
+    return false;
+  // now hang out for a second until we get an address
+  // if DHCP is enabled but we don't find a DHCP server, just use the network config stored in EEPROM
+  while( mcnetif->ip_addr.addr == 0 && count-- ) // timeout after 10 (?) seconds of waiting for a DHCP address
+    chThdSleepMilliseconds( 100 );
+  if( mcnetif->ip_addr.addr == 0 ) { // if we timed out getting an address via DHCP, just use whatever's in EEPROM
+    int a, m, g;
+    networkLastValidAddress(&a, &m, &g);
+//    networkSetAddress(a, m, g);
   }
+  else
+    rv = true;
   return rv;
 }
 
 bool networkDhcpStop( )
 {
-  bool rv = false;
-  struct netif* netif = netif_find(NETIF_NAME);
-  if(netif) {
-    dhcp_release(netif);
-    netif_set_up(netif); // bring the interface back up, as dhcp_release() takes it down
-    rv = true;
-  }
-  return rv;
+  if(dhcp_release(mcnetif) != ERR_OK)
+    return false;
+  dhcp_stop(mcnetif);
+  netif_set_up(mcnetif); // bring the interface back up, as dhcp_release() takes it down
+  return true;
 }
+
+#endif // LWIP_DHCP
 
 /**
   Resolve the IP address for a domain name via DNS.
@@ -260,6 +283,7 @@ bool networkDhcpStop( )
   }
   \endcode
 */
+#if (LWIP_DNS == 1)
 int networkGetHostByName( const char *name, int timeout )
 {
   struct ip_addr address;
@@ -268,8 +292,8 @@ int networkGetHostByName( const char *name, int timeout )
   if(result == ERR_OK) // the result was cached, just return it
     retval = address.addr;
   else if(result == ERR_INPROGRESS) { // a lookup is in progress - wait for the callback to signal that we've gotten a response
-    if(chSemWaitTimeout(&network.dnsSemaphore, S2ST(timeout)) == RDY_OK)
-      retval = network.dnsResolvedAddress;
+    if(chSemWaitTimeout(&dns.semaphore, S2ST(timeout)) == RDY_OK)
+      retval = dns.resolvedAddress;
   }
   return retval;
 }
@@ -280,26 +304,25 @@ int networkGetHostByName( const char *name, int timeout )
 */
 void dnsCallback(const char *name, struct ip_addr *addr, void *arg)
 {
-  network.dnsResolvedAddress = (addr != NULL) ? addr->addr : -1;
-  chSemSignal(&network.dnsSemaphore);
+  dns.resolvedAddress = (addr != NULL) ? addr->addr : -1;
+  chSemSignal(&dns.semaphore);
 }
 
-bool networkGetValid( int* address, int *mask, int* gateway )
+#endif // LWIP_DNS
+
+bool networkLastValidAddress( int* address, int *mask, int* gateway )
 {
-  *address = eepromRead( EEPROM_SYSTEM_NET_ADDRESS );
-  *mask = eepromRead( EEPROM_SYSTEM_NET_MASK );
-  *gateway = eepromRead( EEPROM_SYSTEM_NET_GATEWAY );
+  *address  = eepromRead( EEPROM_SYSTEM_NET_ADDRESS );
+  *mask     = eepromRead( EEPROM_SYSTEM_NET_MASK );
+  *gateway  = eepromRead( EEPROM_SYSTEM_NET_GATEWAY );
   int total = eepromRead( EEPROM_SYSTEM_NET_CHECK );
-  return ( total == *address + *mask + *gateway );
-}
-
-void networkSetLastKnownAddress(int* address, int* mask, int* gateway)
-{
-  if( !networkGetValid(address, mask, gateway) ) { // if we don't have good values, set the defaults
+  if ( total == *address + *mask + *gateway )
+    return true;
+  else {
     *address = MC_DEFAULT_IP_ADDRESS;
-    *mask = MC_DEFAULT_NETMASK;
+    *mask    = MC_DEFAULT_NETMASK;
     *gateway = MC_DEFAULT_GATEWAY;
-    networkSetAddress(*address, *mask, *gateway);
+    return false;
   }
 }
 
