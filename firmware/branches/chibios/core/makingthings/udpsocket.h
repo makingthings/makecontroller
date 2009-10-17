@@ -2,11 +2,11 @@
 
  Copyright 2006-2009 MakingThings
 
- Licensed under the Apache License, 
- Version 2.0 (the "License"); you may not use this file except in compliance 
+ Licensed under the Apache License,
+ Version 2.0 (the "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0 
+ http://www.apache.org/licenses/LICENSE-2.0
  
  Unless required by applicable law or agreed to in writing, software distributed
  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
@@ -21,7 +21,7 @@
 #include "config.h"
 #ifdef MAKE_CTRL_NETWORK
 #include "types.h"
-
+#include "network.h"
 
 /**
   Read and write Ethernet data via UDP.
@@ -30,7 +30,7 @@
   you send will ultimately reach its destination, but the ones that do will get there very quickly.
   
   \section Usage
-  To get started with a UdpSocket, create a new UdpSocket object.  If you're only going to be 
+  To get started with a UdpSocket, create a new UdpSocket object.  If you're only going to be
   writing, all you need is the write() method.  If you're reading, first call bind() to bind to
   a given port, and then read() from it as desired.
   
@@ -51,15 +51,14 @@
   \ingroup networking
 */
 
-typedef int UdpSocket;
-
-UdpSocket udpNew(void);
-bool udpClose(UdpSocket s);
-bool udpBind(UdpSocket s, int port);
-int  udpWrite(UdpSocket s, const char* data, int length, int address, int port);
-int  udpRead(UdpSocket s, char* data, int length);
-int  udpReadFrom(UdpSocket s, char* data, int length, int* src_address, int* src_port);
-int  udpBytesAvailable(UdpSocket s);
+int  udpNew(void);
+bool udpClose(int socket);
+bool udpBind(int socket, int port);
+int  udpWrite(int socket, const char* data, int length, int address, int port);
+int  udpRead(int socket, char* data, int length);
+int  udpReadFrom(int socket, char* data, int length, int* src_address, int* src_port);
+int  udpBytesAvailable(int socket);
+int  udpSetBlocking(int socket, bool blocking);
 
 #endif // MAKE_CTRL_NETWORK
 #endif // UDP_SOCKET_H
