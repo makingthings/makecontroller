@@ -57,6 +57,11 @@ static CH_IRQ_HANDLER(SYSIrqHandler) {
   CH_IRQ_EPILOGUE();
 }
 
+void kill(void)
+{
+  AT91C_BASE_RSTC->RSTC_RCR = ( AT91C_RSTC_EXTRST | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | (0xA5 << 24 ) );
+}
+
 /*
  * Digital I/O ports static configuration as defined in @p board.h.
  */
