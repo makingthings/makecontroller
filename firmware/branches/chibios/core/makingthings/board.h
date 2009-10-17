@@ -21,11 +21,15 @@
 #define _BOARD_H_
 
 #include "at91lib/AT91SAM7X256.h"
+#include "config.h"
 
 #define BOARD_MAKE_CONTROLLER
 
 #define CLK             18432000
 #define MCK             48054857
+
+#define PIOB_PHY_PD_MASK AT91C_PB18_EF100
+#define PHY_HARDWARE PHY_DAVICOM_9161
 
 /*
  * Initial I/O setup.
@@ -55,5 +59,14 @@
 
 /// USB attributes configuration descriptor (bus or self powered, remote wakeup)
 #define BOARD_USB_BMATTRIBUTES                  USBConfigurationDescriptor_BUSPOWERED_NORWAKEUP
+
+// MakingThings
+#if (CONTROLLER_VERSION <= 100)
+  #define USB_PULLUP AT91C_PIO_PA11
+  #define USB_DETECT AT91C_PIO_PA10
+#elif (CONTROLLER_VERSION >= 200)
+  #define USB_PULLUP AT91C_PIO_PA30
+  #define USB_DETECT AT91C_PIO_PA29
+#endif
 
 #endif /* _BOARD_H_ */
