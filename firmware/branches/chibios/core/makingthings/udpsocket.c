@@ -17,7 +17,6 @@
 
 #include "udpsocket.h"
 #ifdef MAKE_CTRL_NETWORK
-
 #include "lwip/sockets.h"
 
 /**
@@ -37,14 +36,14 @@
   UdpSocket udp(10000); // bind to port 10000
   \endcode
 */
-UdpSocket udpNew(void)
+int udpNew(void)
 {
   return lwip_socket(0, SOCK_DGRAM, IPPROTO_UDP);
 }
 
-bool udpClose(UdpSocket s)
+bool udpClose(int socket)
 {
-  return lwip_close(s) == 0;
+  return lwip_close(socket) == 0;
 }
 
 /**
@@ -61,13 +60,13 @@ bool udpClose(UdpSocket s)
   // now we're ready to read
   \endcode
 */
-bool udpBind(UdpSocket s, int port)
+bool udpBind(int socket, int port)
 {
   struct sockaddr_in sa;
   sa.sin_family = AF_INET;
   sa.sin_addr.s_addr = INADDR_ANY;
   sa.sin_port = port;
-  return lwip_bind(s, (const struct sockaddr *)&sa, sizeof(sa)) == 0;
+  return lwip_bind(socket, (const struct sockaddr *)&sa, sizeof(sa)) == 0;
 }
 
 /**
@@ -86,11 +85,19 @@ bool udpBind(UdpSocket s, int port)
   int written = udp.write("some data", strlen("some data"), address, port);
   \endcode
 */
-int udpWrite( UdpSocket s, const char* data, int length, int address, int port )
+int udpWrite( int socket, const char* data, int length, int address, int port )
 {
-  struct sockaddr to;
-  socklen_t tolen = sizeof(to);
-  return lwip_sendto(s, data, length, 0, &to, tolen);
+  struct sockaddr_in sa;
+  sa.sin_family = AF_INET;
+  sa.sin_addr.s_addr = address;
+  sa.sin_port = port;
+  return lwip_sendto(socket, data, length, 0, (struct sockaddr*)&sa, sizeof(sa));
+}
+
+int udpSetBlocking(int socket, bool blocking)
+{
+  int b = blocking ? 1 : 0;
+  return lwip_ioctl(socket, FIONBIO, &b);
 }
 
 /**
@@ -119,16 +126,16 @@ int udpWrite( UdpSocket s, const char* data, int length, int address, int port )
   \endcode
 */
 
-int udpRead(UdpSocket s, char* data, int length)
+int udpRead(int socket, char* data, int length)
 {
-  return lwip_read(s, data, length);
+  return lwip_recvfrom(socket, data, length, 0, NULL, NULL);
 }
 
-int udpReadFrom( UdpSocket s, char* data, int length, int* from_address, int* from_port )
+int udpReadFrom( int socket, char* data, int length, int* from_address, int* from_port )
 {
   struct sockaddr_in from;
   socklen_t fromlen;
-  int recvd = lwip_recvfrom(s, data, length, 0, (struct sockaddr*)&from, &fromlen);
+  int recvd = lwip_recvfrom(socket, data, length, 0, (struct sockaddr*)&from, &fromlen);
   if(from_address)
     *from_address = from.sin_addr.s_addr;
   if(from_port)
@@ -136,10 +143,10 @@ int udpReadFrom( UdpSocket s, char* data, int length, int* from_address, int* fr
   return recvd;
 }
 
-int udpBytesAvailable(UdpSocket s)
+int udpBytesAvailable(int socket)
 {
   int bytes;
-  return (lwip_ioctl(s, FIONREAD, &bytes) == 0) ? bytes : -1;
+  return (lwip_ioctl(socket, FIONREAD, &bytes) == 0) ? bytes : -1;
 }
 
 #endif // MAKE_CTRL_NETWORK
