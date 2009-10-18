@@ -40,6 +40,7 @@ static WORKING_AREA(idle_thread_wa, IDLE_THREAD_STACK_SIZE);
  */
 static void idle_thread(void *p) {
 
+  (void)p;
   while (TRUE) {
     port_wait_for_interrupt();
     IDLE_LOOP_HOOK();
@@ -61,6 +62,9 @@ void chSysInit(void) {
   port_init();
   scheduler_init();
   vt_init();
+#if CH_USE_MEMCORE
+  core_init();
+#endif
 #if CH_USE_HEAP
   heap_init();
 #endif
@@ -94,7 +98,7 @@ void chSysInit(void) {
  */
 void chSysTimerHandlerI(void) {
 
-#if CH_USE_ROUNDROBIN
+#if CH_TIME_QUANTUM > 0
   /* running thread has not used up quantum yet? */
   if (rlist.r_preempt > 0)
     /* decrement remaining quantum */

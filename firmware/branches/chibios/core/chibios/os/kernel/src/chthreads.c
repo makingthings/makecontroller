@@ -124,6 +124,8 @@ Thread *chThdCreateStatic(void *wsp, size_t size,
 /**
  * @brief Creates a new thread allocating the memory from the heap.
  *
+ * @param[in] heapp heap from which allocate the memory or NULL for the
+ *                  default heap
  * @param[in] size size of the working area to be allocated
  * @param[in] prio the priority level for the new thread
  * @param[in] pf the thread function
@@ -139,11 +141,12 @@ Thread *chThdCreateStatic(void *wsp, size_t size,
  *       @p CH_USE_HEAP and @p CH_USE_WAITEXIT options are enabled
  *       in @p chconf.h.
  */
-Thread *chThdCreateFromHeap(size_t size, tprio_t prio, tfunc_t pf, void *arg) {
+Thread *chThdCreateFromHeap(MemoryHeap *heapp, size_t size,
+                            tprio_t prio, tfunc_t pf, void *arg) {
   void *wsp;
   Thread *tp;
 
-  wsp = chHeapAlloc(size);
+  wsp = chHeapAlloc(heapp, size);
   if (wsp == NULL)
     return NULL;
   tp = chThdInit(wsp, size, prio, pf, arg);
@@ -290,7 +293,6 @@ void chThdSleepUntil(systime_t time) {
   chSysUnlock();
 }
 
-#if CH_USE_ROUNDROBIN
 /**
  * @brief Yields the time slot.
  * @details Yields the CPU control to the next thread in the ready list with
@@ -302,7 +304,6 @@ void chThdYield(void) {
   chSchDoYieldS();
   chSysUnlock();
 }
-#endif /* CH_USE_ROUNDROBIN */
 
 /**
  * @brief Terminates the current thread by specifying an exit status code.

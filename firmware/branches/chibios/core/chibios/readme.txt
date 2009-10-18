@@ -2,6 +2,32 @@
 *** Releases                                                              ***
 *****************************************************************************
 
+*** 1.3.3 ***
+- FIX: Fixed bug in the LPC2148 PAL driver (bug 2881380).
+- FIX: Fixed bug in the AT91SAM7X PAL driver (bug 2879933).
+- NEW: New MAC and MII driver models and implementations for the AT91SAM7X.
+  Removed the old EMAC driver, updated the uIP WEB demo to use the new
+  driver model.
+- NEW: Added a simple lwIP demo (web server) for the AT91SAM7X.
+- NEW: Centralized core memory manager. This simple allocator implements a
+  sbrk()-like API: chCoreAlloc(). The other allocators now use this manager
+  in order to get memory blocks.
+- NEW: The heap allocator has been modified, now it is possible to have
+  multiple heaps. The default heap gets its memory from the new core memory
+  manager.
+- NEW: Added a "hungry" mode to the memory pools allocator, when enabled, this
+  mode makes a memory pool to feed memory from the core memory manager.
+- NEW: Added newlib interface file syscalls.c under ./os/various for use with
+  the newest YAGARTO releases. The file provides bindings between the C
+  runtime and the core memory manager.
+- CHANGE: Because the changes in the allocators some API prototypes changed:
+  chHeapAlloc(), chHeapStatus(), chThdCreateFromHeap().
+- CHANGE: Because the changes in the allocators some configuration options
+  changed and some were removed, see the new template chconf.h file.
+- CHANGE: renamed ./demos/ARM7-AT91SAM7X-WEB-GCC in ARM7-AT91SAM7X-UIP-GCC.
+- FIX: Added the most restrictive GCC warning option to the makefiles (-Wextra)
+  and fixed some warnings in the code, mostly unused function parameters.
+
 *** 1.3.2 ***
 - FIX: Fixed GCC 4.4.x aliasing warnings (bug 2846336)(backported in stable
   branch).

@@ -27,6 +27,15 @@
 #ifndef _QUEUES_H_
 #define _QUEUES_H_
 
+#if CH_USE_QUEUES
+
+/*
+ * Module dependancies check.
+ */
+#if !CH_USE_SEMAPHORES
+#error "CH_USE_QUEUES requires CH_USE_SEMAPHORES"
+#endif
+
 /** Queue notification callback type. */
 typedef void (*qnotify_t)(void);
 
@@ -41,7 +50,6 @@ typedef void (*qnotify_t)(void);
 /** Returned by the queue functions if the queue is full. */
 #define Q_FULL          -4
 
-#if CH_USE_QUEUES
 /**
  * @brief Generic I/O queue structure.
  * @details This structure represents a generic Input or Output asymmetrical
@@ -211,7 +219,7 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-#endif  /* CH_USE_QUEUES */
+#endif /* CH_USE_QUEUES */
 
 #endif /* _QUEUES_H_ */
 
