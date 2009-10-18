@@ -35,7 +35,7 @@
 /**
  * Kernel version string.
  */
-#define CH_KERNEL_VERSION       "1.3.2unstable"
+#define CH_KERNEL_VERSION       "1.3.3unstable"
 
 /**
  * Kernel version major number.
@@ -50,7 +50,7 @@
 /**
  * Kernel version patch number.
  */
-#define CH_KERNEL_PATCH         2
+#define CH_KERNEL_PATCH         3
 
 /*
  * Common values.
@@ -75,6 +75,7 @@
 #include "events.h"
 #include "messages.h"
 #include "mailboxes.h"
+#include "memcore.h"
 #include "heap.h"
 #include "mempools.h"
 #include "threads.h"

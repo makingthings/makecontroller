@@ -167,8 +167,8 @@ extern "C" {
   Thread *chThdCreateStatic(void *wsp, size_t size,
                             tprio_t prio, tfunc_t pf, void *arg);
 #if CH_USE_DYNAMIC && CH_USE_WAITEXIT && CH_USE_HEAP
-  Thread *chThdCreateFromHeap(size_t size, tprio_t prio,
-                              tfunc_t pf, void *arg);
+  Thread *chThdCreateFromHeap(MemoryHeap *heapp, size_t size,
+                              tprio_t prio, tfunc_t pf, void *arg);
 #endif
 #if CH_USE_DYNAMIC && CH_USE_WAITEXIT && CH_USE_MEMPOOLS
   Thread *chThdCreateFromMemoryPool(MemoryPool *mp, tprio_t prio,
@@ -179,12 +179,10 @@ extern "C" {
   void chThdTerminate(Thread *tp);
   void chThdSleep(systime_t time);
   void chThdSleepUntil(systime_t time);
+  void chThdYield(void);
   void chThdExit(msg_t msg);
 #if CH_USE_WAITEXIT
   msg_t chThdWait(Thread *tp);
-#endif
-#if CH_USE_ROUNDROBIN
-  void chThdYield(void);
 #endif
 #ifdef __cplusplus
 }
@@ -267,6 +265,6 @@ extern "C" {
  */
 #define chThdSleepMicroseconds(usec) chThdSleep(US2ST(usec))
 
-#endif  /* _THREADS_H_ */
+#endif /* _THREADS_H_ */
 
 /** @} */
