@@ -6,15 +6,14 @@
 # Define project name here
 PROJECT = chibitest
 # available optimization levels: -O0, -O1, -O2, -O3, -Os
-OPTIMIZATION = -Os
-# set DEBUG to -g to include debug info, otherwise leave blank
-DEBUG = 
+OPTIMIZATION = -O0
 
-#LWIP = ../../core/lwip
-USB = ../../core/usb
+# components
+LWIP    = ../../core/lwip
+USB     = ../../core/usb
 CHIBIOS = ../../core/chibios
-MT = ../../core/makingthings
-MTLIBS = ../../libraries
+MT      = ../../core/makingthings
+MTLIBS  = ../../libraries
 STARTUP = ../../core/startup
 
 # Define linker script file here
@@ -23,25 +22,48 @@ LDSCRIPT = ${STARTUP}/ch.ld
 # Imported source files
 include ${CHIBIOS}/os/ports/GCC/ARM7/port.mk
 include ${CHIBIOS}/os/kernel/kernel.mk
+include ${LWIP}/lwip.mk
 include ${USB}/usb.mk
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CSRC = ${PORTSRC} \
        ${KERNSRC} \
-			 ${USBSRC} \
+       ${USBSRC} \
+       ${CHIBIOS}/os/various/syscalls.c \
        ${CHIBIOS}/os/io/pal.c \
        ${CHIBIOS}/os/io/serial.c \
+       ${CHIBIOS}/os/io/mii.c \
+       ${CHIBIOS}/os/io/mac.c \
        ${CHIBIOS}/os/io/platforms/AT91SAM7X/pal_lld.c \
        ${CHIBIOS}/os/io/platforms/AT91SAM7X/serial_lld.c \
+       ${CHIBIOS}/os/io/platforms/AT91SAM7X/mii_lld.c \
+       ${CHIBIOS}/os/io/platforms/AT91SAM7X/mac_lld.c \
        ${CHIBIOS}/os/io/platforms/AT91SAM7X/at91lib/aic.c \
-			 ${MT}/analogin.c \
-			 ${MT}/spi.c \
+       ${CHIBIOS}/os/various/evtimer.c \
+       ${LWIP}/contrib/chibios/lwipthread.c \
+       ${LWIP}/contrib/chibios/arch/sys_arch.c \
+       ${LWNETIFSRC} \
+       ${LWCORESRC} \
+       ${LWIPV4SRC} \
+       ${LWAPISRC} \
+       ${MT}/board.c \
+       ${MT}/pin.c \
+       ${MT}/analogin.c \
+       ${MT}/spi.c \
 			 ${MT}/eeprom.c \
 			 ${MT}/pwm.c \
 			 ${MT}/system.c \
 			 ${MT}/usb_serial.c \
-       board.c main.c
+			 ${MT}/timer.c \
+			 ${MT}/fasttimer.c \
+			 ${MT}/led.c \
+			 ${MT}/network.c \
+			 ${MT}/udpsocket.c \
+			 ${MTLIBS}/pwmout/pwmout.c \
+			 ${MTLIBS}/motor/motor.c \
+			 ${MTLIBS}/appled/appled.c \
+       main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -71,11 +93,14 @@ TCPPSRC =
 ASMSRC = $(PORTASM) \
          ${CHIBIOS}/os/ports/GCC/ARM7/AT91SAM7X/vectors.s
 
-INCDIR = $(PORTINC) $(KERNINC) ${MT} ${USBINC} \
+INCDIR = $(PORTINC) $(KERNINC) ${MT} ${USBINC} ${LWINC} \
          ${CHIBIOS}/os/io \
          ${CHIBIOS}/os/io/platforms/AT91SAM7X \
          ${CHIBIOS}/os/various \
-         ${CHIBIOS}/os/ports/GCC/ARM7/AT91SAM7X
+         ${CHIBIOS}/os/ports/GCC/ARM7/AT91SAM7X \
+				 ${MTLIBS}/pwmout \
+				 ${MTLIBS}/motor \
+				 ${MTLIBS}/appled \
 
 #
 # Project, sources and paths
@@ -108,10 +133,10 @@ AOPT =
 TOPT = -mthumb -DTHUMB
 
 # Define C warning options here
-CWARN = -Wall -Wstrict-prototypes
+CWARN = -Wall -Wextra -Wstrict-prototypes
 
 # Define C++ warning options here
-CPPWARN = -Wall
+CPPWARN = -Wall -Wextra
 
 #
 # Compiler settings
@@ -170,7 +195,7 @@ ULIBS =
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = ${OPTIMIZATION} ${DEBUG} -ggdb -fomit-frame-pointer -mabi=apcs-gnu
+  USE_OPT = ${OPTIMIZATION} -ggdb -fomit-frame-pointer -mabi=apcs-gnu
 endif
 
 # C++ specific options here (added to USE_OPT).
