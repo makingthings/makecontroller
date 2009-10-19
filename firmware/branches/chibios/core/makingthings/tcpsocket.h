@@ -60,14 +60,13 @@
   \ingroup networking
 */
 
-typedef int TcpSocket;
-
-TcpSocket tcpNew(void);
-int tcpConnect(TcpSocket s, int address, int port);
-bool tcpClose(TcpSocket s);
-int tcpBytesAvailable(TcpSocket s);
-int tcpRead(TcpSocket s, char* data, int length);
-int tcpWrite(TcpSocket s, const char* data, int length);
+int  tcpNew(void);
+int  tcpConnect(int socket, int address, int port);
+bool tcpClose(int socket);
+int  tcpBytesAvailable(int socket);
+int  tcpRead(int socket, char* data, int length);
+int  tcpWrite(int socket, const char* data, int length);
+int  tcpSetReadTimeout(int socket, int timeout);
 
 
 #endif // MAKE_CTRL_NETWORK
