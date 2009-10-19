@@ -26,18 +26,23 @@
   \b Example
   \code
   // create a new socket
-  TcpSocket tcp;
+  int tcp;
   // that's all there is to it!
   \endcode
 */
-TcpSocket tcpNew(void)
+int tcpNew(void)
 {
   return lwip_socket(0, SOCK_STREAM, IPPROTO_TCP);
 }
 
-bool tcpClose(TcpSocket s)
+bool tcpClose(int socket)
 {
-  return lwip_close(s) == 0;
+  return lwip_close(socket) == 0;
+}
+
+int tcpSetReadTimeout(int socket, int timeout)
+{
+  return lwip_setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 }
 
 /**
@@ -49,7 +54,7 @@ bool tcpClose(TcpSocket s)
   
   \b Example
   \code
-  TcpSocket tcp; // create a new socket
+  int tcp; // create a new socket
   if(tcp.connect(IP_ADDRESS(192,168,0,210), 11101))
   {
     // then we got a good connection
@@ -58,45 +63,24 @@ bool tcpClose(TcpSocket s)
   }
   \endcode
 */
-int tcpConnect(TcpSocket s, int address, int port)
+int tcpConnect(int socket, int address, int port)
 {
   struct sockaddr_in to;
   to.sin_family = AF_INET;
   to.sin_addr.s_addr = address;
   to.sin_port = port;
-  return lwip_connect(s, (const struct sockaddr*)&to, sizeof(to)) == 0;
+  return lwip_connect(socket, (const struct sockaddr*)&to, sizeof(to)) == 0;
 }
-
-/**
-  Check whether a socket is currently connected.
-  @return True if the close operation was successful, false if not.
-  
-  \b Example
-  \code
-  TcpSocket tcp;
-  // ...
-  if( tcp.isConnected())
-  {
-    // then we're connected
-  }
-  \endcode
-*/
-//bool TcpSocket::isConnected( )
-//{
-//  if( !_socket )
-//    return false;
-//  return ( _socket->state == NETCONN_CONNECT || _socket->state == NETCONN_WRITE );
-//}
 
 /**
   The number of bytes available to be read.
   @return The number of bytes ready to be read.
   @see read() for an example
 */
-int tcpBytesAvailable(TcpSocket s)
+int tcpBytesAvailable(int socket)
 {
   int bytes;
-  return (lwip_ioctl(s, FIONREAD, &bytes) == 0) ? bytes : -1;
+  return (lwip_ioctl(socket, FIONREAD, &bytes) == 0) ? bytes : -1;
 }
 
 /**
@@ -109,7 +93,7 @@ int tcpBytesAvailable(TcpSocket s)
   
   \b Example
   \code
-  TcpSocket tcp;
+  int tcp;
   char mydata = "some of my data";
   if( tcp.connect( IP_ADDRESS(192, 168, 0, 210), 10000 ) )
   {
@@ -118,10 +102,10 @@ int tcpBytesAvailable(TcpSocket s)
   }
   \endcode
 */
-int tcpWrite(TcpSocket s, const char* data, int length)
+int tcpWrite(int socket, const char* data, int length)
 {
   int flags = 0;
-  return lwip_send(s, data, length, flags);
+  return lwip_send(socket, data, length, flags);
 }
 
 /**
@@ -134,7 +118,7 @@ int tcpWrite(TcpSocket s, const char* data, int length)
   
   \b Example
   \code
-  TcpSocket tcp;
+  int tcp;
   char mydata[512];
   if( tcp.connect( IP_ADDRESS(192,168,0,210), 10101 ) )
   {
@@ -147,10 +131,10 @@ int tcpWrite(TcpSocket s, const char* data, int length)
   }
   \endcode
 */
-int tcpRead(TcpSocket s, char* data, int length)
+int tcpRead(int socket, char* data, int length)
 {
   int flags = 0;
-  return lwip_recvfrom(s, data, length, flags, NULL, NULL);
+  return lwip_recvfrom(socket, data, length, flags, NULL, NULL);
 }
 
 /**
@@ -162,7 +146,7 @@ int tcpRead(TcpSocket s, char* data, int length)
   @return The number of bytes of data successfully read.
   @see read() for a similar example
 */
-int tcpReadLine( TcpSocket s, char* data, int length )
+int tcpReadLine(int socket, char* data, int length)
 {
   int readLength;
   int lineLength = -1;
@@ -172,7 +156,7 @@ int tcpReadLine( TcpSocket s, char* data, int length )
   {
     data++; // here data points to where byte will be written
     lineLength++; // linelength now reflects true number of bytes
-    readLength = tcpRead( s, data, 1 );
+    readLength = tcpRead( socket, data, 1 );
     // here, if readlength == 1, data has a new char in next position, linelength is one off,
     //       if readlength == 0, data had no new char and linelength is right
   } while ( ( readLength == 1 ) && ( lineLength < length - 1 ) && ( *data != '\n' ) );
