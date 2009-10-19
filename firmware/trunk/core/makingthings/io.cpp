@@ -163,7 +163,7 @@ bool Io::setValue( bool onoff )
 */
 bool Io::on()
 {
-  basePort->PIO_CODR = mask;
+  basePort->PIO_SODR = mask;
   return true;
 }
 
@@ -183,7 +183,7 @@ bool Io::on()
 */
 bool Io::off()
 {
-  basePort->PIO_SODR = mask;
+  basePort->PIO_CODR = mask;
   return true;
 }
 
