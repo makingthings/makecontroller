@@ -13,6 +13,7 @@
 #include "lwip/netif.h"
 #include "lwipopts.h"
 
+#include "core.h"
 #include "eeprom.h"
 #include "stdio.h"
 #include "error.h"
@@ -304,7 +305,9 @@ int networkGetHostByName( const char *name, int timeout )
 */
 void dnsCallback(const char *name, struct ip_addr *addr, void *arg)
 {
-  dns.resolvedAddress = (addr != NULL) ? addr->addr : -1;
+  UNUSED(name);
+  UNUSED(arg);
+  dns.resolvedAddress = addr ? (int)addr->addr : -1;
   chSemSignal(&dns.semaphore);
 }
 

@@ -20,6 +20,8 @@
 #define IP_ADDRESS_C( address )  ( ( (int)address >> 16 ) & 0xFF ) 
 #define IP_ADDRESS_B( address )  ( ( (int)address >>  8 ) & 0xFF )
 #define IP_ADDRESS_A( address )  ( ( (int)address       ) & 0xFF )
+#define IP_ADDRESS_BROADCAST 0xffffffffUL
+#define IP_ADDRESS_ANY       0x00000000UL
 
 /**
   The network system on the Controller.
