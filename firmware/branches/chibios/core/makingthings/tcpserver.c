@@ -20,6 +20,10 @@
 #ifdef MAKE_CTRL_NETWORK
 #include "lwip/sockets.h"
 
+#ifndef TCPSERVER_BACKLOG
+#define TCPSERVER_BACKLOG 5
+#endif
+
 /**
   Create a new TcpServer.
   
@@ -30,19 +34,19 @@
   TcpServer* server = new TcpServer();
   \endcode
 */
-TcpServer tcpserverNew(int port)
+int tcpserverNew(int port)
 {
   struct sockaddr_in sa;
   sa.sin_family = AF_INET;
   sa.sin_addr.s_addr = INADDR_ANY;
   sa.sin_port = port;
 
-  TcpServer s = lwip_socket(0, SOCK_STREAM, IPPROTO_TCP);
+  int s = lwip_socket(0, SOCK_STREAM, IPPROTO_TCP);
   if( lwip_bind(s, (const struct sockaddr *)&sa, sizeof(sa)) != 0) {
     lwip_close(s);
     return -1;
   }
-  return lwip_listen(s, 5);
+  return lwip_listen(s, TCPSERVER_BACKLOG);
 }
 
 /**
@@ -58,9 +62,9 @@ TcpServer tcpserverNew(int port)
   server.close();
   \endcode
 */
-bool tcpserverClose(TcpServer s)
+bool tcpserverClose(int server)
 {
-  return lwip_close(s) == 0;
+  return lwip_close(server) == 0;
 }
 
 /**
@@ -83,9 +87,9 @@ bool tcpserverClose(TcpServer s)
   }
   \endcode
 */
-TcpSocket tcpserverAccept(TcpServer s)
+int tcpserverAccept(int server)
 {
-  return lwip_accept(s, 0, 0);
+  return lwip_accept(server, 0, 0);
 }
 
 #endif // MAKE_CTRL_NETWORK

@@ -59,11 +59,9 @@
   \ingroup networking
 */
 
-typedef int TcpServer;
-
-TcpServer tcpserverNew(int port);
-TcpSocket tcpserverAccept(TcpServer s);
-bool tcpserverClose(TcpServer s);
+int  tcpserverNew(int port);
+int  tcpserverAccept(int server);
+bool tcpserverClose(int server);
 
 #endif //MAKE_CTRL_NETWORK
 #endif // TCP_SERVER_H
