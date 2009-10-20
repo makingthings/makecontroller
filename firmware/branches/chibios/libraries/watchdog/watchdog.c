@@ -1,7 +1,7 @@
 
 
-#include "AT91SAM7X256.h"
 #include "watchdog.h"
+#include "at91lib/AT91SAM7X256.h"
 
 #define WATCHDOG_KEY (0xA5 << 24)
 
@@ -14,7 +14,7 @@
   The maximum countdown length is 16 seconds.
   @param millis The number of milliseconds in which a reset will occur.
 */
-void Watchdog::enable( int millis )
+void watchdogEnable( int millis )
 {
   int period = (millis * 256) / 1000;
   AT91C_BASE_WDTC->WDTC_WDMR =  AT91C_WDTC_WDRSTEN |        // enable reset on timeout
@@ -29,7 +29,7 @@ void Watchdog::enable( int millis )
   Call enable() first, and then call this occassionally to restart 
   the watchdog countdown so that it doesn't reset.
 */
-void Watchdog::restart( )
+void watchdogRestart( )
 {
   AT91C_BASE_WDTC->WDTC_WDCR = WATCHDOG_KEY | AT91C_WDTC_WDRSTT;
 }
@@ -38,7 +38,7 @@ void Watchdog::restart( )
   Disable the watchdog timer.
   Turn the watchdog off completely if you don't need it.
 */
-void Watchdog::disable( )
+void watchdogDisable( )
 {
   AT91C_BASE_WDTC->WDTC_WDMR = AT91C_WDTC_WDDIS;
 }

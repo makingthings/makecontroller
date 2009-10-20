@@ -30,14 +30,10 @@
   }
   \endcode
 */
-class Watchdog
-{
-public:
-  Watchdog() { }
-  static void enable( int millis );
-  static void restart( );
-  static void disable( );
-};
+
+void watchdogEnable(int millis);
+void watchdogRestart(void);
+void watchdogDisable(void);
 
 #endif // WATCHDOG_H
 
