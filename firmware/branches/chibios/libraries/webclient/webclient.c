@@ -22,26 +22,19 @@
 #include "string.h"
 #include <stdio.h>
 #include "webclient.h"
-#include "rtos.h"
-#include "lwip/api.h"
 #include "network.h"
 #include "error.h"
 
-#define WEBCLIENT_INTERNAL_BUFFER_SIZE 200
+#ifndef WEBCLIENT_BUFFER_SIZE
+#define WEBCLIENT_BUFFER_SIZE 128
+#endif
 
-/**
-  Create a new WebClient
-*/
-WebClient::WebClient()
-{
-  buffer = (char*)malloc(WEBCLIENT_INTERNAL_BUFFER_SIZE);
-}
+#ifndef WEBCLIENT_DNS_TIMEOUT
+#define WEBCLIENT_DNS_TIMEOUT 30
+#endif
 
-WebClient::~WebClient()
-{
-  if(buffer)
-    delete buffer;
-}
+static int webclientReadResponse(int s, char* buf, int size);
+static char buffer[WEBCLIENT_BUFFER_SIZE];
 
 /** 
   Performs an HTTP GET operation to the path at the address / port specified.  
@@ -68,40 +61,36 @@ WebClient::~WebClient()
   \endcode
   Now we should have the results of the HTTP GET from \b www.makingthings.com/test/path in \b myBuffer.
 */
-int WebClient::get( char* hostname, int port, char* path, char* response, int response_size, const char* headers[] )
+int webclientGet( const char* hostname, int port, const char* path, char* response, int response_size, const char* headers[] )
 {
-  if ( socket.connect( Network::get()->getHostByName(hostname), port ) )
-  {
+  int s = tcpNew();
+  if(s < 0)
+    return -1;
+  if ( tcpConnect( s, networkGetHostByName(hostname, WEBCLIENT_DNS_TIMEOUT), port ) ) {
     // construct the GET request
-    int send_len = snprintf( buffer, WEBCLIENT_INTERNAL_BUFFER_SIZE, "GET %s HTTP/1.1\r\n%s%s%s", 
+    int send_len = snprintf( buffer, WEBCLIENT_BUFFER_SIZE, "GET %s HTTP/1.1\r\n%s%s%s", 
                                 path,
                                 ( hostname != NULL ) ? "Host: " : "",
                                 ( hostname != NULL ) ? hostname : "",
                                 ( hostname != NULL ) ? "\r\n" : ""  );
-    socket.write( buffer, send_len );
+    tcpWrite( s, buffer, send_len );
 
-    if(headers)
-    {
-      while(*headers != 0)
-      {
-        socket.write(*headers, strlen(*headers));
-        socket.write("\r\n", 2);
-        headers++;
-      }
+    for ( ; *headers != 0; headers++) {
+      tcpWrite(s, *headers, strlen(*headers));
+      tcpWrite(s, "\r\n", 2);
     }
-    if(!socket.write( "\r\n", 2 )) // all done with headers...just check our last write here...
-    {
-      socket.close( );
-      return CONTROLLER_ERROR_WRITE_FAILED;
+    if (tcpWrite(s, "\r\n", 2 ) < 0) { // all done with headers...just check our last write here...
+      tcpClose(s);
+      return -1;
     }
     
     // read the data into the given buffer until there's none left, or the passed in buffer is full
-    int total_bytes_read = readResponse(response, response_size);
-    socket.close( );
+    int total_bytes_read = webclientReadResponse(s, response, response_size);
+    tcpClose(s);
     return total_bytes_read;
   }
   else
-    return CONTROLLER_ERROR_BAD_ADDRESS;
+    return -1;
 }
 
 /** 
@@ -126,47 +115,40 @@ int WebClient::get( char* hostname, int port, char* path, char* response, int re
   wc.post("www.makingthings.com", "/post/path", myBuffer, datalength, bufLength);
   \endcode
 */
-int WebClient::post( char* hostname, int port, char* path, char* data, int data_length, int response_size, const char* headers[] )
+int webclientPost( const char* hostname, int port, const char* path, char* data, int data_length, int response_size, const char* headers[] )
 {
-  Network* net = Network::get();
-  if ( socket.connect( net->getHostByName(hostname), port ) )
-  { 
-    int send_len = snprintf( buffer, WEBCLIENT_INTERNAL_BUFFER_SIZE, 
+  int s = tcpNew();
+  if(s < 0)
+    return -1;
+  if ( tcpConnect(s, networkGetHostByName(hostname, WEBCLIENT_DNS_TIMEOUT), port ) ) {
+    int send_len = snprintf( buffer, WEBCLIENT_BUFFER_SIZE, 
                                 "POST %s HTTP/1.1\r\nContent-Length: %d\r\n%s%s%s", 
-                                path,
-                                data_length,
+                                path, data_length,
                                 ( hostname != NULL ) ? "Host: " : "",
                                 ( hostname != NULL ) ? hostname : "",
-                                ( hostname != NULL ) ? "\r\n" : "",
-                                data_length );
-    socket.write( buffer, send_len );
+                                ( hostname != NULL ) ? "\r\n" : "");
+    tcpWrite(s, buffer, send_len);
     
-    if(headers)
-    {
-      while(*headers != 0)
-      {
-        socket.write(*headers, strlen(*headers));
-        socket.write("\r\n", 2);
-        headers++;
-      }
+    for ( ; *headers != 0; headers++) {
+      tcpWrite(s, *headers, strlen(*headers));
+      tcpWrite(s, "\r\n", 2);
     }
-    socket.write( "\r\n", 2 ); // all done with headers
-    if(!socket.write( data, data_length )) // send the body...just check our last write here...
-    {
-      socket.close( );
-      return CONTROLLER_ERROR_WRITE_FAILED;
+    tcpWrite(s, "\r\n", 2); // all done with headers
+    if (tcpWrite(s, data, data_length) <= 0) { // send the body...just check our last write here...
+      tcpClose(s);
+      return -1;
     }
     
     // read back the response
-    int buffer_read = readResponse(data, response_size);
-    socket.close( );
+    int buffer_read = webclientReadResponse(s, data, response_size);
+    tcpClose(s);
     return buffer_read;
   }
   else
-    return CONTROLLER_ERROR_BAD_ADDRESS;
+    return -1;
 }
 
-int WebClient::readResponse( char* buf, int size )
+int webclientReadResponse(int s, char* buf, int size)
 {
   // read back the response
   int content_length = 0;
@@ -174,54 +156,46 @@ int WebClient::readResponse( char* buf, int size )
   bool chunked = false;
   
   // read through the headers - figure out the content length scheme
-  while ( ( b_len = socket.readLine( buffer, WEBCLIENT_INTERNAL_BUFFER_SIZE ) ) )
-  {
-    if ( !strncmp( buffer, "Content-Length", 14 ) ) // check for content length
+  while ( ( b_len = tcpReadLine(s, buffer, WEBCLIENT_BUFFER_SIZE) ) ) {
+    if (!strncmp(buffer, "Content-Length", 14)) // check for content length
       content_length = atoi( &buffer[ 16 ] );
-    else if( !strncmp( buffer, "Transfer-Encoding: chunked", 26 ) ) // check to see if we're chunked
+    else if (!strncmp(buffer, "Transfer-Encoding: chunked", 26)) // check to see if we're chunked
       chunked = true;
-    else if ( strncmp( buffer, "\r\n", 2 ) == 0 )
+    else if (strncmp(buffer, "\r\n", 2) == 0)
       break;
   }
 
-  if(b_len <= 0)
+  if (b_len <= 0)
     return 0;
   
   int content_read = 0;
-  
   // read the actual response data into the caller's buffer, if there's any to grab
-  if(chunked ) // first see if it's chunked
-  {
+  if (chunked) { // first see if it's chunked
     int len = 1;
-    while(len != 0 && content_read < size)
-    {
-      b_len = socket.readLine( buffer, WEBCLIENT_INTERNAL_BUFFER_SIZE );
-      if(sscanf(buffer, "%x", &len) != 1) // the first part of the chunk should indicate the chunk's length (hex)
+    while(len != 0 && content_read < size) {
+      b_len = tcpReadLine(s, buffer, WEBCLIENT_BUFFER_SIZE);
+      if (sscanf(buffer, "%x", &len) != 1) // the first part of the chunk should indicate the chunk's length (hex)
         break;
-      if(len == 0) // an empty chunk indicates the end of the transfer
+      if (len == 0) // an empty chunk indicates the end of the transfer
         break;
-      if(len > (size - content_read)) // make sure we have enough room to read this chunk, based on what we've already read
+      if (len > (size - content_read)) // make sure we have enough room to read this chunk, based on what we've already read
         len = size - content_read;
-      content_read += socket.read(buf, len);
-      socket.readLine(buffer, WEBCLIENT_INTERNAL_BUFFER_SIZE); // slurp out the remaining newlines
+      content_read += tcpRead(s, buf, len);
+      tcpReadLine(s, buffer, WEBCLIENT_BUFFER_SIZE); // slurp out the remaining newlines
     }
   }
-  else if ( content_length > 0 ) // otherwise see if we got a content length
-  {
-    while ( ( b_len = socket.read( buf, size - content_read ) ) )
-    {
+  else if (content_length > 0) { // otherwise see if we got a content length
+    while ((b_len = tcpRead(s, buf, size - content_read))) {
       content_read += b_len;
       buf += b_len;
-      if ( content_read >= content_length )
+      if (content_read >= content_length)
         break;
     }
   }
-  else // lastly, just try to read until we get cut off
-  {
-    while( content_read < size )
-    {
-      b_len = socket.read( buf, size - content_read );
-      if(b_len <= 0)
+  else { // lastly, just try to read until we get cut off
+    while (content_read < size) {
+      b_len = tcpRead(s, buf, size - content_read);
+      if (b_len <= 0)
         break;
       content_read += b_len;
       buf += b_len;

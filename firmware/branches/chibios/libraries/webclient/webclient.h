@@ -31,19 +31,10 @@
 
   \ingroup networking
 */
-class WebClient
-{
-public:
-  WebClient();
-  ~WebClient();
-  int get( char* hostname, int port, char* path, char* response, int response_size, const char* headers[] = 0 );
-  int post( char* hostname, int port, char* path, char* data, int post_length, int response_size, const char* headers[] = 0 );
 
-protected:
-  TcpSocket socket;
-  char* buffer;
+int webclientGet(const char* hostname, int port, const char* path, char* response, int response_size, const char* headers[]);
+int webclientPost(const char* hostname, int port, const char* path, char* data, int data_length, int response_size, const char* headers[]);
 
-  int readResponse( char* buf, int size );
-};
+
 
 #endif // WEBCLIENT_H
