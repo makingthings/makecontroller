@@ -157,9 +157,9 @@ int webclientReadResponse(int s, char* buf, int size)
   
   // read through the headers - figure out the content length scheme
   while ( ( b_len = tcpReadLine(s, buffer, WEBCLIENT_BUFFER_SIZE) ) ) {
-    if (!strncmp(buffer, "Content-Length", 14)) // check for content length
+    if (!strncasecmp(buffer, "Content-Length", 14)) // check for content length
       content_length = atoi( &buffer[ 16 ] );
-    else if (!strncmp(buffer, "Transfer-Encoding: chunked", 26)) // check to see if we're chunked
+    else if (!strncasecmp(buffer, "Transfer-Encoding: chunked", 26)) // check to see if we're chunked
       chunked = true;
     else if (strncmp(buffer, "\r\n", 2) == 0)
       break;
