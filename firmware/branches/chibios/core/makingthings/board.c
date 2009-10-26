@@ -23,6 +23,7 @@
 #include "at91lib/aic.h"
 #include "analogin.h"
 #include "spi.h"
+#include "eeprom.h"
 #include "pwm.h"
 
 /*
@@ -94,8 +95,13 @@ void hwinit0(void) {
   // PLLfreq = 96109714 Hz (rounded)
   AT91C_BASE_PMC->PMC_PLLR = (AT91C_CKGR_DIV & 14) |
                              (AT91C_CKGR_PLLCOUNT & (10 << 8)) |
+                              #ifdef MAKE_CTRL_USB
+                             (AT91C_CKGR_USBDIV_1) |
+                              #endif
                              (AT91C_CKGR_MUL & (72 << 16));
   while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_LOCK))
+    ;
+  while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_MCKRDY))
     ;
 
   // Master clock = PLLfreq / 2 = 48054858 Hz (rounded)
@@ -123,6 +129,7 @@ void hwinit1(void) {
     AT91C_BASE_AIC->AIC_EOICR = (AT91_REG)i;
   }
   AT91C_BASE_AIC->AIC_SPU  = (AT91_REG)SpuriousHandler;
+  AT91C_BASE_AIC->AIC_DCR = AT91C_AIC_DCR_PROT;
   
   
   /*
@@ -130,15 +137,19 @@ void hwinit1(void) {
     done for common usage, but can be removed by conditionalization
   */
   #ifndef NO_AIN_INIT
-  ainInit();
+//  ainInit();
   #endif
   
   #ifndef NO_SPI_INIT
-  spiInit();
+//  spiInit();
   #endif
   
+  #ifndef NO_EEPROM_INIT
+//  eepromInit();
+  #endif
+
   #ifndef NO_PWM_INIT
-  pwmInit();
+//  pwmInit();
   #endif
 
   // PIT Initialization.
