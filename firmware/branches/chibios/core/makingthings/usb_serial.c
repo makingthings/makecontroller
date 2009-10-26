@@ -48,7 +48,6 @@ static struct UsbSerial usbSerial;
 
 void usbserialInit( )
 {
-  USBD_Disconnect();
   CDCDSerialDriver_Initialize();
   USBD_Connect();
   chSemInit(&usbSerial.rxSemaphore, 1);

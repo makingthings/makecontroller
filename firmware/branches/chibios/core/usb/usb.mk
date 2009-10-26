@@ -1,7 +1,7 @@
 
 # List of all the at91lib USB files needed (only usb serial for the moment)
 
-USBSRC = $(USB)/device/cdc-serial/CDCDSerialDriver.c \
+USBSRC =  $(USB)/device/cdc-serial/CDCDSerialDriver.c \
           $(USB)/device/cdc-serial/CDCDSerialDriverDescriptors.c \
           $(USB)/device/core/USBDCallbacks_Initialized.c \
           $(USB)/device/core/USBDCallbacks_Reset.c \
@@ -24,7 +24,7 @@ USBSRC = $(USB)/device/cdc-serial/CDCDSerialDriver.c \
           $(USB)/common/cdc/CDCLineCoding.c \
 
 # Required include directories
-USBINC = $(USB)/device/cdc-serial \
+USBINC =  $(USB)/device/cdc-serial \
           $(USB)/device/core \
           $(USB)/common/core \
           $(USB)/common/cdc
