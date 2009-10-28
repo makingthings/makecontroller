@@ -40,6 +40,41 @@ static CH_IRQ_HANDLER(SpuriousHandler) {
   CH_IRQ_EPILOGUE();
 }
 
+void UndHandler(void)
+{
+  while(1) {
+    ;
+  }
+}
+
+void SwiHandler(void)
+{
+  while(1) {
+    ;
+  }
+}
+
+void PrefetchHandler(void)
+{
+  while(1) {
+    ;
+  }
+}
+
+void FiqHandler(void)
+{
+  while(1) {
+    ;
+  }
+}
+
+void AbortHandler(void)
+{
+  while(1) {
+    ;
+  }
+}
+
 /*
  * SYS IRQ handling here.
  */
@@ -119,10 +154,11 @@ void hwinit0(void) {
  * and before invoking the main() function.
  */
 void hwinit1(void) {
-  int i;
+  unsigned int i;
 
   // Default AIC setup, the device drivers will modify it as needed.
-  AT91C_BASE_AIC->AIC_ICCR = 0xFFFFFFFF;
+  AT91C_BASE_AIC->AIC_IDCR = 0xFFFFFFFF; // disable all
+  AT91C_BASE_AIC->AIC_ICCR = 0xFFFFFFFF; // clear all
   AT91C_BASE_AIC->AIC_SVR[0] = (AT91_REG)FiqHandler;
   for (i = 1; i < 31; i++) {
     AT91C_BASE_AIC->AIC_SVR[i] = (AT91_REG)NULL;
@@ -130,7 +166,6 @@ void hwinit1(void) {
   }
   AT91C_BASE_AIC->AIC_SPU  = (AT91_REG)SpuriousHandler;
   AT91C_BASE_AIC->AIC_DCR = AT91C_AIC_DCR_PROT;
-  
   
   /*
     peripheral inits - these are here so they're conveniently already
