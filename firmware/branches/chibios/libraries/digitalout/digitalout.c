@@ -18,8 +18,7 @@
 #include "digitalout.h"
 #include "config.h"
 #include "error.h"
-
-#include "AT91SAM7X256.h"
+#include "pin.h"
 
 #define DIGITALOUT_COUNT 8 
 
@@ -36,9 +35,7 @@
   #define DIGITALOUT_23_ENABLE IO_PA02
   #define DIGITALOUT_45_ENABLE IO_PA02
   #define DIGITALOUT_67_ENABLE IO_PA02
-#endif
-
-#if ( APPBOARD_VERSION == 90 )
+#elif ( APPBOARD_VERSION == 90 )
   #define DIGITALOUT_0_IO IO_PB23
   #define DIGITALOUT_1_IO IO_PA26
   #define DIGITALOUT_2_IO IO_PA25
@@ -51,26 +48,21 @@
   #define DIGITALOUT_23_ENABLE IO_PB20
   #define DIGITALOUT_45_ENABLE IO_PB21
   #define DIGITALOUT_67_ENABLE IO_PB22
-#endif
-#if ( APPBOARD_VERSION >= 95 )
-
-  #define DIGITALOUT_0_IO IO_PA24
-  #define DIGITALOUT_1_IO IO_PA05
-  #define DIGITALOUT_2_IO IO_PA06
-  #define DIGITALOUT_3_IO IO_PA02
-  #define DIGITALOUT_4_IO IO_PB25
-  #define DIGITALOUT_5_IO IO_PA25
-  #define DIGITALOUT_6_IO IO_PA26
-  #define DIGITALOUT_7_IO IO_PB23
-  #define DIGITALOUT_01_ENABLE IO_PB19
-  #define DIGITALOUT_23_ENABLE IO_PB20
-  #define DIGITALOUT_45_ENABLE IO_PB21
-  #define DIGITALOUT_67_ENABLE IO_PB22
+#elif ( APPBOARD_VERSION >= 95 )
+  #define DIGITALOUT_0 PIN_PA24
+  #define DIGITALOUT_1 PIN_PA5
+  #define DIGITALOUT_2 PIN_PA6
+  #define DIGITALOUT_3 PIN_PA2
+  #define DIGITALOUT_4 PIN_PB25
+  #define DIGITALOUT_5 PIN_PA25
+  #define DIGITALOUT_6 PIN_PA26
+  #define DIGITALOUT_7 PIN_PB23
+  #define DOUT_PIOA (PIN_PA24 | PIN_PA5 | PIN_PA6 | PIN_PA2 | PIN_PA25 | PIN_PA26)
+  #define DOUT_PIOB (PIN_PB25 | PIN_PB23)
+  #define DIGITALOUT_ENABLE_MASK (PIN_PB19 | PIN_PB20 | PIN_PB21 | PIN_PB22)
 #endif
 
-//statics
-Io* DigitalOut::ios[] = {0, 0, 0, 0, 0, 0, 0, 0};
-short DigitalOut::refcounts[] = {0, 0, 0, 0, 0, 0, 0, 0};
+static int digitaloutGetIo( int index );
 
 /**
   Create a new DigitalOut object.
@@ -85,34 +77,17 @@ short DigitalOut::refcounts[] = {0, 0, 0, 0, 0, 0, 0, 0};
   DigitalOut* dout = new DigitalOut(6);
   \endcode
 */
-DigitalOut::DigitalOut( int index)
-{
-  if ( index < 0 || index >= DIGITALOUT_COUNT )
-    return;
-  _index = index;
+void digitaloutInit( )
+{ 
+  // configure enable lines as outputs and turn them all on
+  pinGroupSetMode(PORT_B, DIGITALOUT_ENABLE_MASK, OUTPUT);
+  pinGroupOn(PORT_B, DIGITALOUT_ENABLE_MASK);
   
-  if( refcounts[_index]++ == 0 )
-  {
-    int enableIndex = index >> 1;
-    Io enabler(getEnableIo( enableIndex )); // just create this locally to configure it
-    enabler.on();
-
-    ios[_index] = new Io(getIo( _index ));
-    ios[_index]->off();
-  }
-}
-
-DigitalOut::~DigitalOut()
-{
-  if ( --(refcounts[_index]) <= 0 )
-  {
-    ios[_index]->off();
-    delete ios[_index];
-    ios[_index] = 0;
-    int enableIndex = _index >> 1;
-    Io enabler(getEnableIo( enableIndex ));
-    enabler.off();
-  }
+  // configure douts as outputs & turn off
+  pinGroupSetMode(PORT_A, DOUT_PIOA, OUTPUT);
+  pinGroupSetMode(PORT_B, DOUT_PIOB, OUTPUT);
+  pinGroupOff(PORT_A, DOUT_PIOA);
+  pinGroupOff(PORT_B, DOUT_PIOB);
 }
 
 /** 
@@ -127,10 +102,9 @@ DigitalOut::~DigitalOut()
   dout.setValue( true );
   \endcode
 */
-bool DigitalOut::setValue( bool on )
+void digitaloutSetValue( int channel, bool on )
 {
-  ios[_index]->setValue(on);
-  return true;
+  pinSetValue(digitaloutGetIo(channel), on);
 }
 
 /** 
@@ -150,35 +124,23 @@ bool DigitalOut::setValue( bool on )
   }
   \endcode
 */
-bool DigitalOut::value( )
+bool digitaloutValue(int channel)
 {
-  return ios[_index]->value();
+  return pinValue(digitaloutGetIo(channel));
 }
 
-int DigitalOut::getIo( int index )
+int digitaloutGetIo( int index )
 {
   switch ( index )
   {
-    case 0: return DIGITALOUT_0_IO;
-    case 1: return DIGITALOUT_1_IO;
-    case 2: return DIGITALOUT_2_IO;
-    case 3: return DIGITALOUT_3_IO;
-    case 4: return DIGITALOUT_4_IO;
-    case 5: return DIGITALOUT_5_IO;
-    case 6: return DIGITALOUT_6_IO;
-    case 7: return DIGITALOUT_7_IO;
-    default: return 0;
-  }
-}
-
-int DigitalOut::getEnableIo( int enableIndex )
-{
-  switch ( enableIndex )
-  {
-    case 0: return DIGITALOUT_01_ENABLE;
-    case 1: return DIGITALOUT_23_ENABLE;
-    case 2: return DIGITALOUT_45_ENABLE;
-    case 3: return DIGITALOUT_67_ENABLE;
+    case 0: return DIGITALOUT_0;
+    case 1: return DIGITALOUT_1;
+    case 2: return DIGITALOUT_2;
+    case 3: return DIGITALOUT_3;
+    case 4: return DIGITALOUT_4;
+    case 5: return DIGITALOUT_5;
+    case 6: return DIGITALOUT_6;
+    case 7: return DIGITALOUT_7;
     default: return 0;
   }
 }
