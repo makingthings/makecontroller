@@ -31,19 +31,10 @@
   Application Board overview</a> for details.
   \ingroup io
 */
-class DipSwitch
-{
-  public:
-    DipSwitch();
-    ~DipSwitch();
 
-    int value( );
-    bool value( int channel );
-
-  protected:
-    static Spi* spi;
-    static int refcount;
-};
+void dipswitchInit(void);
+int  dipswitchValue(void);
+bool dipswitchValue1(int channel);
 
 /* DipSwitchOsc Interface */
 const char* DipSwitchOsc_GetName( void );
