@@ -15,7 +15,7 @@
 
 *********************************************************************************/
 
-#include "Board.h"
+#include "board.h"
 #include "at91lib/AT91SAM7X256.h"
 #include "at91lib/aic.h"
 #include "pin.h"
@@ -24,7 +24,6 @@
 #define IO_PIN_COUNT 64
 
 #define IOPORT(p) ((p < 32) ? IOPORT1 : IOPORT2)
-#define AT91PORT(p) ((p < 32) ? AT91C_BASE_PIOA : AT91C_BASE_PIOB)
 #define PIN(p) (p % 32)
 #define PIN_MASK(p) (1 << (p % 32))
 
@@ -32,7 +31,7 @@
 
 #ifndef MAX_INTERRUPT_SOURCES
 #define MAX_INTERRUPT_SOURCES 8
-#endif // MAX_INTERRUPT_SOURCES
+#endif
 
 struct InterruptSource
 {
@@ -43,10 +42,8 @@ struct InterruptSource
 
 static struct InterruptSource isrSources[MAX_INTERRUPT_SOURCES];
 static unsigned int isrSourceCount = 0;
-static bool isrAInit = false;
-static bool isrBInit = false;
 
-static void pinInitInterrupts(AT91S_PIO* pio, unsigned int priority);
+static void pinInitInterrupts(Port port, unsigned int priority);
 #endif // PIN_NO_ISR
 
 
@@ -67,6 +64,11 @@ bool pinValue(int pin)
   return palReadPad(IOPORT(pin), PIN(pin));
 }
 
+int pinGroupValue(Port port)
+{
+  return palReadPort(port);
+}
+
 /**
   Turn an Io on or off.
   For this to be meaningful, the Io must be configured as a \b GPIO and set as an \b output.
@@ -82,10 +84,22 @@ bool pinValue(int pin)
 */
 void pinSetValue(int pin, bool value)
 {
-  if (value)
-    pinOn(pin);
-  else
-    pinOff(pin);
+  if (value) {
+    palSetPad(IOPORT(pin), PIN(pin));
+  }
+  else {
+    palClearPad(IOPORT(pin), PIN(pin));
+  }
+}
+
+void pinGroupSetValue(Port port, int pins, bool value)
+{
+  if(value) {
+    palSetPort(port, pins);
+  }
+  else {
+    palClearPort(port, pins);
+  }
 }
 
 /**
@@ -107,6 +121,11 @@ void pinOn(int pin)
   palSetPad(IOPORT(pin), PIN(pin));
 }
 
+void pinGroupOn(Port port, int pins)
+{
+  palSetPort(port, pins);
+}
+
 /**
   Turn an Io off.
   For this to be meaningful, the Io must be configured as a \b GPIO and set as an \b output.
@@ -126,6 +145,11 @@ void pinOff(int pin)
   palClearPad(IOPORT(pin), PIN(pin));
 }
 
+void pinGroupOff(Port port, int pins)
+{
+  palClearPort(port, pins);
+}
+
 /**
   Set an Io as an input or an output
   For this to be meaningful, the Io must be configured as a \b GPIO.
@@ -140,19 +164,36 @@ void pinOff(int pin)
   io.setDirection(INPUT); // now change it to an input
   \endcode
 */
-void pinSetMode( int pin, PinMode mode )
+void pinSetMode(int pin, PinMode mode)
+{
+  pinGroupSetMode(IOPORT(pin), PIN_MASK(pin), mode);
+}
+
+void pinGroupSetMode(Port port, int pins, PinMode mode)
 {
   switch(mode) {
     case PERIPHERAL_A:
-      AT91PORT(pin)->PIO_PDR = PIN_MASK(pin);
-      AT91PORT(pin)->PIO_ASR = PIN_MASK(pin);
+      port->PIO_PDR = pins;
+      port->PIO_ASR = pins;
       break;
     case PERIPHERAL_B:
-      AT91PORT(pin)->PIO_PDR = PIN_MASK(pin);
-      AT91PORT(pin)->PIO_BSR = PIN_MASK(pin);
+      port->PIO_PDR = pins;
+      port->PIO_BSR = pins;
+      break;
+    case PULLUP_ON:
+      port->PIO_PPUER = pins;
+      break;
+    case PULLUP_OFF:
+      port->PIO_PPUDR = pins;
+      break;
+    case GLITCH_FILTER_ON:
+      port->PIO_IFER = pins;
+      break;
+    case GLITCH_FILTER_OFF:
+      port->PIO_IFDR = pins;
       break;
     default:
-      palSetPadMode(IOPORT(pin), PIN(pin), mode);
+      palSetGroupMode(port, pins, mode);
       break;
   }
 }
@@ -207,18 +248,14 @@ bool pinAddInterruptHandler(int pin, PinInterruptHandler h, void* arg)
     return false;
   
   isrSources[isrSourceCount].pin = pin;
-  AT91S_PIO* basePort = AT91PORT(pin);
-  
+  Port port = IOPORT(pin);
 
   // if this is the first time for either channel, set it up
-  if( (!isrAInit && basePort == AT91C_BASE_PIOA) || 
-      (!isrBInit && basePort == AT91C_BASE_PIOB) )
-  {
-    pinInitInterrupts(basePort, (AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 3) );
-  }
+  if(port->PIO_IMR == 0)
+    pinInitInterrupts(port, (AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 3) );
   
-  basePort->PIO_ISR;                                   // clear the status register
-  basePort->PIO_IER = PIN_MASK(pin); // enable our channel
+  port->PIO_ISR;                  // clear the status register
+  pinEnableInterruptHandler(pin); // enable our channel
 
   isrSources[isrSourceCount].callback = h;
   isrSources[isrSourceCount++].context = arg; // make sure to increment our handler count
@@ -243,15 +280,20 @@ bool pinAddInterruptHandler(int pin, PinInterruptHandler h, void* arg)
   
   @return True on success, false on failure.
 */
-void pinRemoveInterruptHandler( int pin )
+void pinDisableInterruptHandler(int pin)
 {
-  AT91PORT(pin)->PIO_IDR = PIN_MASK(pin);
+  IOPORT(pin)->PIO_IDR = PIN_MASK(pin);
 }
 
-static void pinServeInterrupt( AT91S_PIO* basePio )
+void pinEnableInterruptHandler(int pin)
 {
-  unsigned int status = basePio->PIO_ISR;
-  status &= basePio->PIO_IMR;
+  IOPORT(pin)->PIO_IER = PIN_MASK(pin);
+}
+
+static void pinServeInterrupt( Port port )
+{
+  unsigned int status = port->PIO_ISR;
+  status &= port->PIO_IMR;
 
   // Check pending events
   if(status) {
@@ -261,7 +303,7 @@ static void pinServeInterrupt( AT91S_PIO* basePio )
     for( i = 0; status != 0  && i < isrSourceCount; i++ ) {
       is = &(isrSources[i]);
       pinMask = PIN_MASK(is->pin);
-      if( (AT91PORT(is->pin) == basePio) && ((status & pinMask) != 0) ) {
+      if( (IOPORT(is->pin) == port) && ((status & pinMask) != 0) ) {
         is->callback(is->context);     // callback the handler
         status &= ~(pinMask);          // mark this channel as serviced
       }
@@ -285,26 +327,24 @@ CH_IRQ_HANDLER( pinIsrB ) {
   Turn on interrupts for a pio channel - a or b
   at a given priority.
 */
-void pinInitInterrupts(AT91S_PIO* pio, unsigned int priority)
+void pinInitInterrupts(Port port, unsigned int priority)
 {
   unsigned int chan;
   void (*isr_handler)(void);
   
-  if( pio == AT91C_BASE_PIOA ) {
+  if( port == AT91C_BASE_PIOA ) {
     chan = AT91C_ID_PIOA;
     isr_handler = pinIsrA;
-    isrAInit = true;
   }
-  else if( pio == AT91C_BASE_PIOB ) {
+  else if( port == AT91C_BASE_PIOB ) {
     chan = AT91C_ID_PIOB;
     isr_handler = pinIsrB;
-    isrBInit = true;
   }
   else
     return;
   
-  pio->PIO_ISR;                         // clear with a read
-  pio->PIO_IDR = 0xFFFFFFFF;            // disable all by default
+  port->PIO_ISR;                                // clear with a read
+  port->PIO_IDR = 0xFFFFFFFF;                   // disable all by default
   AIC_ConfigureIT(chan, priority, isr_handler); // set it up
   AIC_EnableIT(chan);
 }
