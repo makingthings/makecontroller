@@ -19,9 +19,6 @@
 #ifndef PIN_H
 #define PIN_H
 
-#define ON  true
-#define OFF false
-
 #include "config.h"
 #include "types.h"
 #include <ch.h>
@@ -85,17 +82,31 @@ typedef enum PinMode_t {
   OUTPUT = PAL_MODE_OUTPUT_PUSHPULL,
   OUTPUT_OPENDRAIN = PAL_MODE_OUTPUT_OPENDRAIN,
   PERIPHERAL_A,
-  PERIPHERAL_B
+  PERIPHERAL_B,
+  PULLUP_ON,
+  PULLUP_OFF,
+  GLITCH_FILTER_ON,
+  GLITCH_FILTER_OFF
 } PinMode;
 
+typedef AT91S_PIO* Port;
+#define PORT_A IOPORT1
+#define PORT_B IOPORT2
+
 bool pinValue(int pin);
+int  pinGroupValue(Port port);
 void pinSetValue(int pin, bool value);
+void pinGroupSetValue(Port port, int pins, bool value);
 void pinOn(int pin);
+void pinGroupOn(Port port, int pins);
 void pinOff(int pin);
-void pinSetMode( int pin, PinMode mode );
+void pinGroupOff(Port port, int pins);
+void pinSetMode(int pin, PinMode mode);
+void pinGroupSetMode(Port port, int pins, PinMode mode);
 #ifndef PIN_NO_ISR
 bool pinAddInterruptHandler(int pin, PinInterruptHandler h, void* arg);
-void pinRemoveInterruptHandler( int pin );
+void pinDisableInterruptHandler(int pin);
+void pinEnableInterruptHandler(int pin);
 #endif // PIN_NO_ISR
 
 /**
@@ -106,20 +117,20 @@ void pinRemoveInterruptHandler( int pin );
   @{
 */
 
-#define PIN_PA0  0 /**< Pin 0, Port A */
-#define PIN_PA1  1 /**< Pin 1, Port A */
-#define PIN_PA2  2 /**< Pin 2, Port A */
-#define PIN_PA3  3 /**< Pin 3, Port A */
-#define PIN_PA4  4 /**< Pin 4, Port A */
-#define PIN_PA5  5 /**< Pin 5, Port A */
-#define PIN_PA6  6 /**< Pin 6, Port A */
-#define PIN_PA7  7 /**< Pin 7, Port A */
-#define PIN_PA8  8 /**< Pin 8, Port A */
-#define PIN_PA9  9 /**< Pin 9, Port A */
+#define PIN_PA0  0  /**< Pin 0, Port A */      
+#define PIN_PA1  1  /**< Pin 1, Port A */      
+#define PIN_PA2  2  /**< Pin 2, Port A */      
+#define PIN_PA3  3  /**< Pin 3, Port A */      
+#define PIN_PA4  4  /**< Pin 4, Port A */      
+#define PIN_PA5  5  /**< Pin 5, Port A */      
+#define PIN_PA6  6  /**< Pin 6, Port A */      
+#define PIN_PA7  7  /**< Pin 7, Port A */      
+#define PIN_PA8  8  /**< Pin 8, Port A */      
+#define PIN_PA9  9  /**< Pin 9, Port A */      
 #define PIN_PA10 10 /**< Pin 10, Port A */
 #define PIN_PA11 11 /**< Pin 11, Port A */
 #define PIN_PA12 12 /**< Pin 12, Port A */
-#define PIN_PA13 13 /**< Pin 113, Port A */
+#define PIN_PA13 13 /**< Pin 13, Port A */
 #define PIN_PA14 14 /**< Pin 14, Port A */
 #define PIN_PA15 15 /**< Pin 15, Port A */
 #define PIN_PA16 16 /**< Pin 16, Port A */
@@ -161,7 +172,7 @@ void pinRemoveInterruptHandler( int pin );
 #define PIN_PB19 51 /**< Pin 19, Port B */
 #define PIN_PB20 52 /**< Pin 20, Port B */
 #define PIN_PB21 53 /**< Pin 21, Port B */
-#define PIN_PB22 54/**< Pin 22, Port B */
+#define PIN_PB22 54 /**< Pin 22, Port B */
 #define PIN_PB23 55 /**< Pin 23, Port B */
 #define PIN_PB24 56 /**< Pin 24, Port B */
 #define PIN_PB25 57 /**< Pin 25, Port B */
@@ -192,71 +203,71 @@ void pinRemoveInterruptHandler( int pin );
 @{
 */
 
-#define PIN_PA00_BIT 1LL<<0x00 /**< IO 0, Port A */
-#define PIN_PA01_BIT 1LL<<0x01 /**< IO 1, Port A */
-#define PIN_PA02_BIT 1LL<<0x02 /**< IO 2, Port A */
-#define PIN_PA03_BIT 1LL<<0x03 /**< IO 3, Port A */
-#define PIN_PA04_BIT 1LL<<0x04 /**< IO 4, Port A */
-#define PIN_PA05_BIT 1LL<<0x05 /**< IO 5, Port A */
-#define PIN_PA06_BIT 1LL<<0x06 /**< IO 6, Port A */
-#define PIN_PA07_BIT 1LL<<0x07 /**< IO 7, Port A */
-#define PIN_PA08_BIT 1LL<<0x08 /**< IO 8, Port A */
-#define PIN_PA09_BIT 1LL<<0x09 /**< IO 9, Port A */
-#define PIN_PA10_BIT 1LL<<0x0A /**< IO 10, Port A */
-#define PIN_PA11_BIT 1LL<<0x0B /**< IO 11, Port A */
-#define PIN_PA12_BIT 1LL<<0x0C /**< IO 12, Port A */
-#define PIN_PA13_BIT 1LL<<0x0D /**< IO 13, Port A */
-#define PIN_PA14_BIT 1LL<<0x0E /**< IO 14, Port A */
-#define PIN_PA15_BIT 1LL<<0x0F /**< IO 15, Port A */
-#define PIN_PA16_BIT 1LL<<0x10 /**< IO 16, Port A */
-#define PIN_PA17_BIT 1LL<<0x11 /**< IO 17, Port A */
-#define PIN_PA18_BIT 1LL<<0x12 /**< IO 18, Port A */
-#define PIN_PA19_BIT 1LL<<0x13 /**< IO 19, Port A */
-#define PIN_PA20_BIT 1LL<<0x14 /**< IO 20, Port A */
-#define PIN_PA21_BIT 1LL<<0x15 /**< IO 21, Port A */
-#define PIN_PA22_BIT 1LL<<0x16 /**< IO 22, Port A */
-#define PIN_PA23_BIT 1LL<<0x17 /**< IO 23, Port A */
-#define PIN_PA24_BIT 1LL<<0x18 /**< IO 24, Port A */
-#define PIN_PA25_BIT 1LL<<0x19 /**< IO 25, Port A */
-#define PIN_PA26_BIT 1LL<<0x1A /**< IO 26, Port A */
-#define PIN_PA27_BIT 1LL<<0x1B /**< IO 27, Port A */
-#define PIN_PA28_BIT 1LL<<0x1C /**< IO 28, Port A */
-#define PIN_PA29_BIT 1LL<<0x1D /**< IO 29, Port A */
-#define PIN_PA30_BIT 1LL<<0x1E /**< IO 30, Port A */
-#define PIN_PA31_BIT 1LL<<0x1F /**< IO 31, Port A */
+#define PIN_PA0_BIT  (1 << 0)  /**< Pin 0, Port A */
+#define PIN_PA1_BIT  (1 << 1)  /**< Pin 1, Port A */
+#define PIN_PA2_BIT  (1 << 2)  /**< Pin 2, Port A */
+#define PIN_PA3_BIT  (1 << 3)  /**< Pin 3, Port A */
+#define PIN_PA4_BIT  (1 << 4)  /**< Pin 4, Port A */
+#define PIN_PA5_BIT  (1 << 5)  /**< Pin 5, Port A */
+#define PIN_PA6_BIT  (1 << 6)  /**< Pin 6, Port A */
+#define PIN_PA7_BIT  (1 << 7)  /**< Pin 7, Port A */
+#define PIN_PA8_BIT  (1 << 8)  /**< Pin 8, Port A */
+#define PIN_PA9_BIT  (1 << 9)  /**< Pin 9, Port A */
+#define PIN_PA10_BIT (1 << 10) /**< Pin 10, Port A */
+#define PIN_PA11_BIT (1 << 11) /**< Pin 11, Port A */
+#define PIN_PA12_BIT (1 << 12) /**< Pin 12, Port A */
+#define PIN_PA13_BIT (1 << 13) /**< Pin 13, Port A */
+#define PIN_PA14_BIT (1 << 14) /**< Pin 14, Port A */
+#define PIN_PA15_BIT (1 << 15) /**< Pin 15, Port A */
+#define PIN_PA16_BIT (1 << 16) /**< Pin 16, Port A */
+#define PIN_PA17_BIT (1 << 17) /**< Pin 17, Port A */
+#define PIN_PA18_BIT (1 << 18) /**< Pin 18, Port A */
+#define PIN_PA19_BIT (1 << 19) /**< Pin 19, Port A */
+#define PIN_PA20_BIT (1 << 20) /**< Pin 20, Port A */
+#define PIN_PA21_BIT (1 << 21) /**< Pin 21, Port A */
+#define PIN_PA22_BIT (1 << 22) /**< Pin 22, Port A */
+#define PIN_PA23_BIT (1 << 23) /**< Pin 23, Port A */
+#define PIN_PA24_BIT (1 << 24) /**< Pin 24, Port A */
+#define PIN_PA25_BIT (1 << 25) /**< Pin 25, Port A */
+#define PIN_PA26_BIT (1 << 26) /**< Pin 26, Port A */
+#define PIN_PA27_BIT (1 << 27) /**< Pin 27, Port A */
+#define PIN_PA28_BIT (1 << 28) /**< Pin 28, Port A */
+#define PIN_PA29_BIT (1 << 29) /**< Pin 29, Port A */
+#define PIN_PA30_BIT (1 << 30) /**< Pin 30, Port A */
+#define PIN_PA31_BIT (1 << 31) /**< Pin 31, Port A */
 
-#define PIN_PB00_BIT 1LL<<0x20 /**< IO 0, Port B */
-#define PIN_PB01_BIT 1LL<<0x21 /**< IO 1, Port B */
-#define PIN_PB02_BIT 1LL<<0x22 /**< IO 2, Port B */
-#define PIN_PB03_BIT 1LL<<0x23 /**< IO 3, Port B */
-#define PIN_PB04_BIT 1LL<<0x24 /**< IO 4, Port B */
-#define PIN_PB05_BIT 1LL<<0x25 /**< IO 5, Port B */
-#define PIN_PB06_BIT 1LL<<0x26 /**< IO 6, Port B */
-#define PIN_PB07_BIT 1LL<<0x27 /**< IO 7, Port B */
-#define PIN_PB08_BIT 1LL<<0x28 /**< IO 8, Port B */
-#define PIN_PB09_BIT 1LL<<0x29 /**< IO 9, Port B */
-#define PIN_PB10_BIT 1LL<<0x2A /**< IO 10, Port B */
-#define PIN_PB11_BIT 1LL<<0x2B /**< IO 11, Port B */
-#define PIN_PB12_BIT 1LL<<0x2C /**< IO 12, Port B */
-#define PIN_PB13_BIT 1LL<<0x2D /**< IO 13, Port B */
-#define PIN_PB14_BIT 1LL<<0x2E /**< IO 14, Port B */
-#define PIN_PB15_BIT 1LL<<0x2F /**< IO 15, Port B */
-#define PIN_PB16_BIT 1LL<<0x30 /**< IO 16, Port B */
-#define PIN_PB17_BIT 1LL<<0x31 /**< IO 17, Port B */
-#define PIN_PB18_BIT 1LL<<0x32 /**< IO 18, Port B */
-#define PIN_PB19_BIT 1LL<<0x33 /**< IO 19, Port B */
-#define PIN_PB20_BIT 1LL<<0x34 /**< IO 20, Port B */
-#define PIN_PB21_BIT 1LL<<0x35 /**< IO 21, Port B */
-#define PIN_PB22_BIT 1LL<<0x36 /**< IO 22, Port B */
-#define PIN_PB23_BIT 1LL<<0x37 /**< IO 23, Port B */
-#define PIN_PB24_BIT 1LL<<0x38 /**< IO 24, Port B */
-#define PIN_PB25_BIT 1LL<<0x39 /**< IO 25, Port B */
-#define PIN_PB26_BIT 1LL<<0x3A /**< IO 26, Port B */
-#define PIN_PB27_BIT 1LL<<0x3B /**< IO 27, Port B */
-#define PIN_PB28_BIT 1LL<<0x3C /**< IO 28, Port B */
-#define PIN_PB29_BIT 1LL<<0x3D /**< IO 29, Port B */
-#define PIN_PB30_BIT 1LL<<0x3E /**< IO 30, Port B */
-#define PIN_PB31_BIT 1LL<<0x3F /**< IO 31, Port B */
+#define PIN_PB0_BIT  (1 << 0)  /**< Pin 0, Port B */
+#define PIN_PB1_BIT  (1 << 1)  /**< Pin 1, Port B */
+#define PIN_PB2_BIT  (1 << 2)  /**< Pin 2, Port B */
+#define PIN_PB3_BIT  (1 << 3)  /**< Pin 3, Port B */
+#define PIN_PB4_BIT  (1 << 4)  /**< Pin 4, Port B */
+#define PIN_PB5_BIT  (1 << 5)  /**< Pin 5, Port B */
+#define PIN_PB6_BIT  (1 << 6)  /**< Pin 6, Port B */
+#define PIN_PB7_BIT  (1 << 7)  /**< Pin 7, Port B */
+#define PIN_PB8_BIT  (1 << 8)  /**< Pin 8, Port B */
+#define PIN_PB9_BIT  (1 << 9)  /**< Pin 9, Port B */
+#define PIN_PB10_BIT (1 << 10) /**< Pin 10, Port B */
+#define PIN_PB11_BIT (1 << 11) /**< Pin 11, Port B */
+#define PIN_PB12_BIT (1 << 12) /**< Pin 12, Port B */
+#define PIN_PB13_BIT (1 << 13) /**< Pin 13, Port B */
+#define PIN_PB14_BIT (1 << 14) /**< Pin 14, Port B */
+#define PIN_PB15_BIT (1 << 15) /**< Pin 15, Port B */
+#define PIN_PB16_BIT (1 << 16) /**< Pin 16, Port B */
+#define PIN_PB17_BIT (1 << 17) /**< Pin 17, Port B */
+#define PIN_PB18_BIT (1 << 18) /**< Pin 18, Port B */
+#define PIN_PB19_BIT (1 << 19) /**< Pin 19, Port B */
+#define PIN_PB20_BIT (1 << 20) /**< Pin 20, Port B */
+#define PIN_PB21_BIT (1 << 21) /**< Pin 21, Port B */
+#define PIN_PB22_BIT (1 << 22) /**< Pin 22, Port B */
+#define PIN_PB23_BIT (1 << 23) /**< Pin 23, Port B */
+#define PIN_PB24_BIT (1 << 24) /**< Pin 24, Port B */
+#define PIN_PB25_BIT (1 << 25) /**< Pin 25, Port B */
+#define PIN_PB26_BIT (1 << 26) /**< Pin 26, Port B */
+#define PIN_PB27_BIT (1 << 27) /**< Pin 27, Port B */
+#define PIN_PB28_BIT (1 << 28) /**< Pin 28, Port B */
+#define PIN_PB29_BIT (1 << 29) /**< Pin 29, Port B */
+#define PIN_PB30_BIT (1 << 30) /**< Pin 30, Port B */
+#define PIN_PB31_BIT (1 << 31) /**< Pin 31, Port B */
 
 /** @} */
 
