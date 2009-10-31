@@ -21,13 +21,10 @@
 #include "core.h"
 
 #if (APPBOARD_VERSION >= 200)
-#warning dipswitch is not avaialable on Application Board v2.0 or later
+#warning dipswitch is not available on Application Board v2.0 or later
 #else
 
 #define DIPSWITCH_DEVICE 2
-// static
-Spi* DipSwitch::spi = 0;
-int DipSwitch::refcount = 0;
 
 /**
   Create a new DipSwitch object.
@@ -38,19 +35,10 @@ int DipSwitch::refcount = 0;
   // that's all there is to it.
   \endcode
 */
-DipSwitch::DipSwitch( )
+void dipswitchInit( )
 {
-  if( refcount++ == 0 )
-  {
-    spi = new Spi( DIPSWITCH_DEVICE );
-    spi->configure( 8, 4, 0, 1 );
-  }
-}
-
-DipSwitch::~DipSwitch()
-{
-  if ( --refcount == 0 )
-    delete spi;
+  spiEnableChannel( DIPSWITCH_DEVICE );
+  spiConfigure( DIPSWITCH_DEVICE, 8, 4, 0, 1 );
 }
 
 /** 
@@ -64,15 +52,15 @@ DipSwitch::~DipSwitch()
   // now dip_switch has a bitmask of all 8 channels of the DIP switch
   \endcode
 */
-int DipSwitch::value( )
+int dipswitchValue( )
 {
-  spi->lock();
+  spiLock();
   unsigned char c[ 2 ];
   c[ 0 ] = 0xFE;
   c[ 1 ] = 0xFF;
   
-  spi->readWriteBlock( c, 2 );
-  spi->unlock();
+  spiReadWriteBlock( DIPSWITCH_DEVICE, c, 2 );
+  spiUnlock();
 
   int r = ( c[ 1 ] & 0x01 ) << 8 | 
           ( c[ 0 ] & 0x01 ) << 7 | 
@@ -102,12 +90,12 @@ int DipSwitch::value( )
   }
   \endcode
 */
-bool DipSwitch::value( int channel )
+bool dipswitchValue1( int channel )
 {
   if( channel < 0 || channel > 7 )
     return false;
 
-  int val = value();
+  int val = dipswitchValue();
   return ( val < 0 ) ? false : ((val >> channel) & 0x1);
 }
 
