@@ -18,7 +18,7 @@
 #ifndef DIGITALOUT_H
 #define DIGITALOUT_H
 
-#include "io.h"
+#include "types.h"
 
 /**
   Control the 8 high current outputs on the Application Board.
@@ -42,23 +42,10 @@
   
   \ingroup io
 */
-class DigitalOut
-{
-public:
-  DigitalOut(int index);
-  ~DigitalOut();
 
-  bool setValue(bool on);
-  bool value();
-
-protected:
-  short _index;
-  int getIo( int index );
-  int getEnableIo( int enableIndex );
-
-  static Io* ios[];
-  static short refcounts[];
-};
+void digitaloutInit(void);
+bool digitaloutValue(int channel);
+void digitaloutSetValue( int channel, bool on );
 
 /* OSC Interface */
 const char* DigitalOutOsc_GetName( void );
