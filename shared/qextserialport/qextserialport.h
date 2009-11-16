@@ -120,7 +120,7 @@ struct PortSettings
 
 #include <QIODevice>
 #include <QMutex>
-#ifdef _TTY_POSIX_
+#ifdef Q_OS_UNIX
 #include <stdio.h>
 #include <termios.h>
 #include <errno.h>
@@ -129,10 +129,11 @@ struct PortSettings
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <QSocketNotifier>
-#elif (defined _TTY_WIN_)
+#elif (defined Q_OS_WIN)
 #include <windows.h>
 #include <QThread>
 #include <QReadWriteLock>
+#include <QtCore/private/qwineventnotifier_p.h>
 #endif
 
 /*!
@@ -171,28 +172,24 @@ by default - this behavior can be turned off by defining _TTY_NOWARN_
 (to turn off all warnings) or _TTY_NOWARN_PORT_ (to turn off portability warnings) in the project.
 
 On Windows NT/2000/XP this class uses Win32 serial port functions by default.  The user may
-select POSIX behavior under NT, 2000, or XP ONLY by defining _TTY_POSIX_ in the project.
+select POSIX behavior under NT, 2000, or XP ONLY by defining Q_OS_UNIX in the project.
 No guarantees are made as to the quality of POSIX support under NT/2000 however.
 
 \author Stefan Sander, Michal Policht, Brandon Fosdick, Liam Staskawicz
 */
 class QextSerialPort: public QIODevice
 {
-    Q_OBJECT;
+    Q_OBJECT
     public:
         enum QueryMode {
             Polling,
             EventDriven
         };
 
-        QextSerialPort();
-        QextSerialPort(const QString & name);
         QextSerialPort(QueryMode mode = EventDriven);
         QextSerialPort(const QString & name, QueryMode mode = EventDriven);
         QextSerialPort(PortSettings const& s, QueryMode mode = EventDriven);
         QextSerialPort(const QString & name, PortSettings const& s, QueryMode mode = EventDriven);
-        QextSerialPort(const QextSerialPort& s);
-        QextSerialPort& operator=(const QextSerialPort&);
         ~QextSerialPort();
 
         void setPortName(const QString & name);
@@ -252,10 +249,9 @@ class QextSerialPort: public QIODevice
 
         qint64 size() const;
         qint64 bytesAvailable() const;
-        bool atEnd() const;
+        QByteArray readAll();
 
         void ungetChar(char c);
-        qint64 readLine(char * data, qint64 maxSize);
 
         ulong lastError() const;
         void translateError(ulong error);
@@ -265,9 +261,9 @@ class QextSerialPort: public QIODevice
         ulong lineStatus();
         QString errorString();
 
-#ifdef _TTY_WIN_
-        virtual qint64 bytesToWrite() const;
+#ifdef Q_OS_WIN
         virtual bool waitForReadyRead(int msecs);  ///< @todo implement.
+        virtual qint64 bytesToWrite() const;
         static QString fullPortNameWin(const QString & name);
 #endif
 
@@ -279,29 +275,23 @@ class QextSerialPort: public QIODevice
         QueryMode _queryMode;
 
         // platform specific members
-#ifdef _TTY_POSIX_
+#ifdef Q_OS_UNIX
         int fd;
         QSocketNotifier *readNotifier;
         struct termios Posix_CommConfig;
         struct termios old_termios;
         struct timeval Posix_Timeout;
         struct timeval Posix_Copy_Timeout;
-#elif (defined _TTY_WIN_)
-        friend class Win_QextSerialThread;
-
+#elif (defined Q_OS_WIN)
         HANDLE Win_Handle;
-        HANDLE threadStartEvent;
-        HANDLE threadTerminateEvent;
         OVERLAPPED overlap;
-        QList<OVERLAPPED*> overlappedWrites;
         COMMCONFIG Win_CommConfig;
         COMMTIMEOUTS Win_CommTimeouts;
-        QReadWriteLock * bytesToWriteLock;  ///< @todo maybe move to QextSerialBase.
-        qint64 _bytesToWrite;  ///< @todo maybe move to QextSerialBase (and implement in POSIX).
-        Win_QextSerialThread * overlapThread; ///< @todo maybe move to QextSerialBase (and implement in POSIX).
-
-        void monitorCommEvent();
-        void terminateCommWait();
+        QWinEventNotifier *winEventNotifier;
+        DWORD eventMask;
+        QList<OVERLAPPED*> pendingWrites;
+        QReadWriteLock* bytesToWriteLock;
+        qint64 _bytesToWrite;
 #endif
 
         void construct(); // common construction
@@ -309,6 +299,14 @@ class QextSerialPort: public QIODevice
         void platformSpecificInit();
         qint64 readData(char * data, qint64 maxSize);
         qint64 writeData(const char * data, qint64 maxSize);
+
+#ifdef Q_OS_WIN
+    private slots:
+        void onWinEvent(HANDLE h);
+#endif
+
+    private:
+        Q_DISABLE_COPY(QextSerialPort)
 
     signals:
 //        /**
@@ -329,31 +327,5 @@ class QextSerialPort: public QIODevice
         void dsrChanged(bool status);
 
 };
-
-#ifdef _TTY_WIN_
-class Win_QextSerialThread: public QThread
-{
-    QextSerialPort * qesp;
-    bool terminate;
-
-    public:
-        /*!
-         * Constructor.
-         *
-         * \param qesp valid serial port object.
-         */
-        Win_QextSerialThread(QextSerialPort * qesp);
-
-        /*!
-         * Stop the thread.
-         */
-        void stop();
-
-    protected:
-        //overriden
-        virtual void run();
-
-};
-#endif
 
 #endif
