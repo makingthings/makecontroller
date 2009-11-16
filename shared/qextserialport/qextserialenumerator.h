@@ -12,11 +12,11 @@
 #include <QList>
 #include <QObject>
 
-#ifdef _TTY_WIN_
+#ifdef Q_OS_WIN
     #include <windows.h>
     #include <setupapi.h>
     #include <dbt.h>
-#endif /*_TTY_WIN_*/
+#endif /*Q_OS_WIN*/
 
 #ifdef Q_OS_MAC
     #include <IOKit/usb/IOUSBLib.h>
@@ -34,7 +34,7 @@ struct QextPortInfo {
     int productID;      ///< Product ID
 };
 
-#ifdef _TTY_WIN_
+#ifdef Q_OS_WIN
 #ifdef QT_GUI_LIB
 #include <QWidget>
 class QextSerialEnumerator;
@@ -53,7 +53,7 @@ class QextSerialRegistrationWidget : public QWidget
         bool winEvent( MSG* message, long* result );
 };
 #endif // QT_GUI_LIB
-#endif // _TTY_WIN_
+#endif // Q_OS_WIN
 
 /*!
   Provides list of ports available in the system.
@@ -99,7 +99,7 @@ Q_OBJECT
         QextSerialEnumerator( );
         ~QextSerialEnumerator( );
 
-        #ifdef _TTY_WIN_
+        #ifdef Q_OS_WIN
             LRESULT onDeviceChangeWin( WPARAM wParam, LPARAM lParam );
             private:
             /*!
@@ -129,13 +129,12 @@ Q_OBJECT
             void setUpNotificationWin( );
             static bool getDeviceDetailsWin( QextPortInfo* portInfo, HDEVINFO devInfo,
                                   PSP_DEVINFO_DATA devData, WPARAM wParam = DBT_DEVICEARRIVAL );
-            static void enumerateDevicesWin( HDEVINFO devInfo, const GUID* guidDev,
-                                                                   QList<QextPortInfo>* infoList );
+            static void enumerateDevicesWin( const GUID & guidDev, QList<QextPortInfo>* infoList );
+            bool matchAndDispatchChangedDevice(const QString & deviceID, const GUID & guid, WPARAM wParam);
             #ifdef QT_GUI_LIB
             QextSerialRegistrationWidget* notificationWidget;
             #endif
-            HDEVNOTIFY notificationHandle;
-        #endif /*_TTY_WIN_*/
+        #endif /*Q_OS_WIN*/
 
         #ifdef _TTY_POSIX_
     #ifdef Q_WS_MAC

@@ -3,10 +3,6 @@
 #include <stdio.h>
 #include "qextserialport.h"
 
-#ifdef _TTY_WIN_
-#include <QRegExp>
-#endif
-
 /*!
 Default constructor.  Note that the name of the device used by a QextSerialPort constructed with
 this constructor will be determined by #defined constants, or lack thereof - the default behavior
@@ -16,7 +12,7 @@ is the same as _TTY_LINUX_.  Possible naming conventions and their associated co
 
 Constant         Used By         Naming Convention
 ----------       -------------   ------------------------
-_TTY_WIN_        Windows         COM1, COM2
+Q_OS_WIN        Windows         COM1, COM2
 _TTY_IRIX_       SGI/IRIX        /dev/ttyf1, /dev/ttyf2
 _TTY_HPUX_       HP-UX           /dev/tty1p0, /dev/tty2p0
 _TTY_SUN_        SunOS/Solaris   /dev/ttya, /dev/ttyb
@@ -31,18 +27,10 @@ This constructor assigns the device name to the name of the first port on the sp
 See the other constructors if you need to open a different port.
 */
 QextSerialPort::QextSerialPort(QextSerialPort::QueryMode mode)
-    : QIODevice()
-{
-    construct();
-    setQueryMode(mode);
-    platformSpecificInit();
-}
-
-QextSerialPort::QextSerialPort()
  : QIODevice()
 {
 
-#ifdef _TTY_WIN_
+#ifdef Q_OS_WIN
     setPortName("COM1");
 
 #elif defined(_TTY_IRIX_)
@@ -68,17 +56,7 @@ QextSerialPort::QextSerialPort()
 #endif
 
     construct();
-    platformSpecificInit();
-}
-
-/*!
-Construct a port and assign it to the device specified by the name parameter.
-*/
-QextSerialPort::QextSerialPort(const QString & name)
- : QIODevice()
-{
-    setPortName(name);
-    construct();
+    setQueryMode(mode);
     platformSpecificInit();
 }
 
@@ -158,7 +136,6 @@ Sets the name of the device associated with the object, e.g. "COM1", or "/dev/tt
 */
 void QextSerialPort::setPortName(const QString & name)
 {
-
     #ifdef Q_OS_WIN
     port = fullPortNameWin( name );
     #else
@@ -166,26 +143,23 @@ void QextSerialPort::setPortName(const QString & name)
     #endif
 }
 
-#ifdef Q_OS_WIN
-QString QextSerialPort::fullPortNameWin(const QString & name)
-{
-    QRegExp rx("^COM(\\d+)");
-    QString fullName(name);
-    if(fullName.contains(rx)) {
-        int portnum = rx.cap(1).toInt();
-        if(portnum > 9) // COM ports greater than 9 need \\.\ prepended
-            fullName.prepend("\\\\.\\");
-    }
-    return fullName;
-}
-#endif
-
 /*!
 Returns the name set by setPortName().
 */
 QString QextSerialPort::portName() const
 {
     return port;
+}
+
+/*!
+  Reads all available data from the device, and returns it as a QByteArray.
+  This function has no way of reporting errors; returning an empty QByteArray()
+  can mean either that no data was currently available for reading, or that an error occurred.
+*/
+QByteArray QextSerialPort::readAll()
+{
+    int avail = this->bytesAvailable();
+    return (avail > 0) ? this->read(avail) : QByteArray();
 }
 
 /*!
@@ -243,41 +217,6 @@ bool QextSerialPort::isSequential() const
     return true;
 }
 
-/*!
-This function will return true if the input buffer is empty (or on error), and false otherwise.
-Call QextSerialPort::lastError() for error information.
-*/
-bool QextSerialPort::atEnd() const
-{
-    return size() != 0;
-}
-
-/*!
-This function will read a line of buffered input from the port, stopping when either maxSize bytes
-have been read, the port has no more data available, or a newline is encountered.
-The value returned is the length of the string that was read.
-*/
-qint64 QextSerialPort::readLine(char * data, qint64 maxSize)
-{
-    qint64 numBytes = bytesAvailable();
-    char* pData = data;
-
-    if (maxSize < 2) //maxSize must be larger than 1
-        return -1;
-
-    /*read a byte at a time for MIN(bytesAvail, maxSize - 1) iterations, or until a newline*/
-    while (pData<(data+numBytes) && --maxSize) {
-        readData(pData, 1);
-        if (*pData++ == '\n') {
-            break;
-        }
-    }
-    *pData='\0';
-
-    /*return size of data read*/
-    return (pData-data);
-}
-
 QString QextSerialPort::errorString()
 {
     switch(lastErr)
@@ -300,25 +239,6 @@ QString QextSerialPort::errorString()
         default: return QString("Unknown error: %1").arg(lastErr);
     }
 }
-
-///*!
-//Copy constructor.
-//
-//\deprecated
-//*/
-//QextSerialPort::QextSerialPort(const QextSerialPort& s)
-//{}
-//
-///*!
-//\fn QextSerialPort& QextSerialPort::operator=(const QextSerialPort& s)
-//Overrides the = operator.
-//
-//\deprecated
-//*/
-//QextSerialPort& QextSerialPort::operator=(const QextSerialPort& s)
-//{
-//    return (QextSerialPort&)QextBaseType::operator=(s);
-//}
 
 /*!
 Standard destructor.
