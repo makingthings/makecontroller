@@ -25,6 +25,12 @@
 #include "spi.h"
 #include "eeprom.h"
 #include "pwm.h"
+#include "core.h"
+
+void kill(void)
+{
+  AT91C_BASE_RSTC->RSTC_RCR = ( AT91C_RSTC_EXTRST | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | (0xA5 << 24 ) );
+}
 
 /*
  * FIQ Handler weak symbol defined in vectors.s.
@@ -34,31 +40,41 @@ void FiqHandler(void);
 static CH_IRQ_HANDLER(SpuriousHandler) {
 
   CH_IRQ_PROLOGUE();
-
   AT91C_BASE_AIC->AIC_EOICR = 0;
-
   CH_IRQ_EPILOGUE();
 }
 
 void UndHandler(void)
 {
+#ifdef NO_RESTART_ON_FAILURE
   while(1) {
     ;
   }
+#else
+  kill();
+#endif
 }
 
 void SwiHandler(void)
 {
+#ifdef NO_RESTART_ON_FAILURE
   while(1) {
     ;
   }
+#else
+  kill();
+#endif
 }
 
 void PrefetchHandler(void)
 {
+#ifdef NO_RESTART_ON_FAILURE
   while(1) {
     ;
   }
+#else
+  kill();
+#endif
 }
 
 void FiqHandler(void)
@@ -70,9 +86,13 @@ void FiqHandler(void)
 
 void AbortHandler(void)
 {
+#ifdef NO_RESTART_ON_FAILURE
   while(1) {
     ;
   }
+#else
+  kill();
+#endif
 }
 
 /*
@@ -91,11 +111,6 @@ static CH_IRQ_HANDLER(SYSIrqHandler) {
   AT91C_BASE_AIC->AIC_EOICR = 0;
 
   CH_IRQ_EPILOGUE();
-}
-
-void kill(void)
-{
-  AT91C_BASE_RSTC->RSTC_RCR = ( AT91C_RSTC_EXTRST | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | (0xA5 << 24 ) );
 }
 
 /*
@@ -176,11 +191,11 @@ void hwinit1(void) {
   #endif
   
   #ifndef NO_SPI_INIT
-//  spiInit();
+  spiInit();
   #endif
   
   #ifndef NO_EEPROM_INIT
-//  eepromInit();
+  eepromInit();
   #endif
 
   #ifndef NO_PWM_INIT
