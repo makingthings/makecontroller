@@ -17,10 +17,18 @@
 
 #include "motor.h"
 #include "core.h"
+#include "pwmout.h"
 
 #define MOTOR_COUNT 4
-// static 
-Motor::MotorInternal* Motor::motors[] = {0, 0, 0, 0};
+
+struct Motor
+{
+  int direction;
+  int speed;
+};
+
+static struct Motor motors[MOTOR_COUNT];
+static void motorFinalize( int channel );
 
 /**
   Create a new motor.
@@ -34,35 +42,17 @@ Motor::MotorInternal* Motor::motors[] = {0, 0, 0, 0};
   Motor* m = new Motor(1);
   \endcode
 */
-Motor::Motor( int index )
+void motorEnable(int channel)
 {
-  if ( index < 0 || index >= MOTOR_COUNT )
-    return;
-  _index = index;
-  if( !motors[_index] )
-  {
-    motors[_index] = new MotorInternal();
-    MotorInternal* internal = motors[_index];
-    internal->refcount = 1;
-    internal->direction = true;
-    internal->speed = 0;
-    internal->pwmout = new PwmOut(_index);
-    finalize( internal );
-  }
-  else
-    motors[_index]->refcount++;  
+  struct Motor* m = &(motors[channel]);
+  m->direction = true;
+  m->speed = 0;
+  motorFinalize( channel );
 }
 
-Motor::~Motor()
+void motorDisable(int channel)
 {
-  if( --(motors[_index]->refcount) <= 0 )
-  {
-    MotorInternal* internal = motors[_index];
-    setSpeed(0);
-    delete internal->pwmout;
-    delete internal;
-    motors[_index] = 0;
-  }
+  motorSetSpeed(channel, 0);
 }
 
 /** 
@@ -77,11 +67,10 @@ Motor::~Motor()
   m.setSpeed(768);
   \endcode
 */
-bool Motor::setSpeed( int duty )
+bool motorSetSpeed(int channel, int duty)
 { 
-  MotorInternal* internal = motors[_index];
-  internal->speed = duty;
-  finalize( internal );
+  motors[channel].speed = duty;
+  motorFinalize( channel );
   return true;
 }
 
@@ -97,11 +86,10 @@ bool Motor::setSpeed( int duty )
   m->setDirection(false);
   \endcode
 */
-bool Motor::setDirection( bool forward )
+bool motorSetDirection(int channel, bool forward)
 {
-  MotorInternal* internal = motors[_index];
-  internal->direction = forward;
-  finalize( internal );
+  motors[channel].direction = forward;
+  motorFinalize( channel );
   return true;
 }
 
@@ -116,9 +104,9 @@ bool Motor::setDirection( bool forward )
   int motor1_speed = m.speed();
   \endcode
 */
-int Motor::speed( )
+int motorSpeed(int channel)
 { 
-  return motors[_index]->speed;
+  return motors[channel].speed;
 }
 
 /** 
@@ -138,18 +126,19 @@ int Motor::speed( )
   }
   \endcode
 */
-bool Motor::direction( )
+bool motorDirection(int channel)
 {
-  return motors[_index]->direction;
+  return motors[channel].direction;
 }
 
-void Motor::finalize( MotorInternal* m )
+void motorFinalize( int channel )
 {
-  // possibly add a dead zone inbetween?
+  struct Motor* m = &(motors[channel]);
+  // possibly add a dead zone in between?
   if( m->direction )
-    m->pwmout->setAll( m->speed, false, true );
+    pwmoutSetAll( channel, m->speed, false, true );
   else
-    m->pwmout->setAll( (m->speed * -1), true, false );
+    pwmoutSetAll( channel, (m->speed * -1), true, false );
 }
 
 #ifdef OSC

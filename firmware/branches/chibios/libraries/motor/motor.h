@@ -18,7 +18,10 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 
-#include "pwmout.h"
+#include "types.h"
+
+#define FORWARD true
+#define REVERSE false
 
 /**
   Forward/reverse and speed control for up to 4 DC motors.
@@ -49,30 +52,14 @@
   Application Board overview</a> for more details.
   \ingroup io
 */
-class Motor
-{
-  public:
-    Motor(int index);
-    ~Motor();
 
-    int speed();
-    bool setSpeed(int speed);
+void motorEnable(int channel);
+void motorDisable(int channel);
+int  motorSpeed(int channel);
+bool motorSetSpeed(int channel, int duty);
+bool motorDirection(int channel);
+bool motorSetDirection( int channel, bool forward );
 
-    bool direction();
-    bool setDirection(bool forward);
-
-  protected:
-    int _index;
-    typedef struct {
-      PwmOut* pwmout;
-      short refcount;
-      int direction;
-      int speed;
-    } MotorInternal;
-    static MotorInternal* motors[]; // only ever want to make 4 of these
-
-    void finalize(MotorInternal* m);
-};
 
 /* OSC Interface */
 const char* MotorOsc_GetName( void );
