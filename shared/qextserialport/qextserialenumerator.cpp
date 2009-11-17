@@ -5,10 +5,16 @@
 #include <QDebug>
 #include <QMetaType>
 
+#define SAMBA_VID 0x03EB
+#define SAMBA_PID 0x6124
+
 QextSerialEnumerator::QextSerialEnumerator( )
 {
     if( !QMetaType::isRegistered( QMetaType::type("QextPortInfo") ) )
         qRegisterMetaType<QextPortInfo>("QextPortInfo");
+#ifdef Q_OS_MAC
+    notificationPortRef = 0;
+#endif
 #if (defined Q_OS_WIN) && (defined QT_GUI_LIB)
     notificationWidget = 0;
 #endif // Q_OS_WIN
@@ -17,7 +23,8 @@ QextSerialEnumerator::QextSerialEnumerator( )
 QextSerialEnumerator::~QextSerialEnumerator( )
 {
 #ifdef Q_OS_MAC
-    IONotificationPortDestroy( notificationPortRef );
+    if(notificationPortRef)
+        IONotificationPortDestroy( notificationPortRef );
 #endif
 #if (defined Q_OS_WIN) && (defined QT_GUI_LIB)
     if( notificationWidget )
@@ -212,258 +219,161 @@ QextSerialEnumerator::~QextSerialEnumerator( )
 
 #endif /*Q_OS_WIN*/
 
-#ifdef _TTY_POSIX_
+#ifdef Q_OS_UNIX
 
-#ifdef Q_WS_MAC
-// OS X version
-#include <IOKit/IOKitLib.h>
+#ifdef Q_OS_MAC
 #include <IOKit/serial/IOSerialKeys.h>
 #include <CoreFoundation/CFNumber.h>
-#include <IOKit/IOCFPlugIn.h>
-#include <IOKit/usb/IOUSBLib.h>
 #include <sys/param.h>
-#include <IOKit/IOBSD.h>
 
 // static
 void QextSerialEnumerator::scanPortsOSX(QList<QextPortInfo> & infoList)
 {
-  io_iterator_t serialPortIterator = 0;
-  io_object_t modemService;
-  kern_return_t kernResult = KERN_FAILURE;
-  CFMutableDictionaryRef matchingDictionary;
-  
-  matchingDictionary = IOServiceMatching(kIOSerialBSDServiceValue);
-  if (matchingDictionary == NULL)
-    return qWarning("IOServiceMatching returned a NULL dictionary.");
-  CFDictionaryAddValue(matchingDictionary, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDAllTypes));
-  
-  // then create the iterator with all the matching devices
-  if( IOServiceGetMatchingServices(kIOMasterPortDefault, matchingDictionary, &serialPortIterator) != KERN_SUCCESS )
-    return qCritical("IOServiceGetMatchingServices failed, returned %d", kernResult);
-  
-  // Iterate through all modems found.
-  while((modemService = IOIteratorNext(serialPortIterator)))
-  {
-    QextPortInfo info;
-    info.vendorID = 0;
-    info.productID = 0;
-    getServiceDetails( modemService, &info );
-    infoList.append(info);
-  }
-  IOObjectRelease(serialPortIterator);
-  
-  getSamBaBoards( infoList );
+    io_iterator_t serialPortIterator = 0;
+    kern_return_t kernResult = KERN_FAILURE;
+    CFMutableDictionaryRef matchingDictionary;
+    
+    // first try to get any serialbsd devices, then try any USBCDC devices
+    if( !(matchingDictionary = IOServiceMatching(kIOSerialBSDServiceValue) ) ) {
+        qWarning("IOServiceMatching returned a NULL dictionary.");
+        return;
+    }
+    CFDictionaryAddValue(matchingDictionary, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDAllTypes));
+    
+    // then create the iterator with all the matching devices
+    if( IOServiceGetMatchingServices(kIOMasterPortDefault, matchingDictionary, &serialPortIterator) != KERN_SUCCESS ) {
+        qCritical() << "IOServiceGetMatchingServices failed, returned" << kernResult;
+        return;
+    }
+    iterateServicesOSX(serialPortIterator, infoList);
+    IOObjectRelease(serialPortIterator);
+    serialPortIterator = 0;
+    
+    if( !(matchingDictionary = IOServiceNameMatching("AppleUSBCDC")) ) {
+        qWarning("IOServiceNameMatching returned a NULL dictionary.");
+        return;
+    }
+    
+    if( IOServiceGetMatchingServices(kIOMasterPortDefault, matchingDictionary, &serialPortIterator) != KERN_SUCCESS ) {
+        qCritical() << "IOServiceGetMatchingServices failed, returned" << kernResult;
+        return;
+    }
+    iterateServicesOSX(serialPortIterator, infoList);
+    IOObjectRelease(serialPortIterator);
 }
 
 void QextSerialEnumerator::getSamBaBoards( QList<QextPortInfo> & infoList )
 {
-  kern_return_t err;
-  mach_port_t masterPort = 0;
-  CFMutableDictionaryRef matchingDictionary = 0;
-  io_iterator_t iterator = 0;
-  io_service_t usbDeviceRef;
-  
-  if( (err = IOMasterPort( MACH_PORT_NULL, &masterPort )) )
-    return qWarning( "could not create master port, err = %08x\n", err );
-  
-  if( !createSambaMatchingDict( &matchingDictionary ) )
-    return qWarning("couldn't create samba matching dict");
-  
-  err = IOServiceGetMatchingServices( masterPort, matchingDictionary, &iterator );
-  
-  while( (usbDeviceRef = IOIteratorNext( iterator )) )
-  {
-    QextPortInfo info;
-    info.vendorID = SAMBA_VID;
-    info.productID = SAMBA_PID;
-    infoList.append(info);
-  }
-  IOObjectRelease(iterator);
+    kern_return_t err;
+    mach_port_t masterPort = 0;
+    CFMutableDictionaryRef matchingDictionary = 0;
+    io_iterator_t iterator = 0;
+    io_service_t usbDeviceRef;
+    
+    if( (err = IOMasterPort( MACH_PORT_NULL, &masterPort )) )
+        return qWarning( "could not create master port, err = %08x\n", err );
+    
+    if( !createSambaMatchingDict( &matchingDictionary ) )
+        return qWarning("couldn't create samba matching dict");
+    
+    err = IOServiceGetMatchingServices( masterPort, matchingDictionary, &iterator );
+    
+    while((usbDeviceRef = IOIteratorNext(iterator))) {
+        QextPortInfo info;
+        info.vendorID = SAMBA_VID;
+        info.productID = SAMBA_PID;
+        infoList.append(info);
+    }
+    IOObjectRelease(iterator);
 }
 
 bool QextSerialEnumerator::createSambaMatchingDict( CFMutableDictionaryRef* matchingDictionary )
 {
-  SInt32 idVendor = SAMBA_VID;
-  SInt32 idProduct = SAMBA_PID;
-  CFNumberRef numberRef;
-  
-  if(QSysInfo::MacintoshVersion < QSysInfo::MV_LEOPARD) {
-    if( !(*matchingDictionary = IOServiceMatching(kIOUSBDeviceClassName)) ) {
-      qWarning( "could not create matching dictionary\n" );
-      return false;
-    }
-  }
-  else {
-    if( !(*matchingDictionary = IOServiceNameMatching("AppleUSBCDC")) ) {
-      qWarning( "could not create matching dictionary\n" );
-      return false;
-    }
-  }
-  
-  if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idVendor)) )
-  {
-    qWarning( "could not create CFNumberRef for vendor\n" );
-    return false;
-  }
-
-  CFDictionaryAddValue( *matchingDictionary, CFSTR(kUSBVendorID), numberRef);
-  CFRelease( numberRef );
-  numberRef = 0;
-
-  if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idProduct)) )
-  {
-    qWarning( "could not create CFNumberRef for product\n" );
-    return false;
-  }
-
-  CFDictionaryAddValue( *matchingDictionary, CFSTR(kUSBProductID), numberRef);
-  CFRelease( numberRef );
-  numberRef = 0;
-  return true;
-}
-
-/*
-  These need to be defined as C externs because IOServiceAddMatchingNotification
-  doesn't accept callbacks within a class.
-*/
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-void deviceDiscoveredCallbackOSX( void *ctxt, io_iterator_t serialPortIterator )
-{
-  QextSerialEnumerator* context = (QextSerialEnumerator*)ctxt;
-  io_object_t serialService;
-  while ((serialService = IOIteratorNext(serialPortIterator)))
-    context->onDeviceDiscoveredOSX(serialService);
-}
-
-void deviceTerminatedCallbackOSX( void *ctxt, io_iterator_t serialPortIterator )
-{
-  QextSerialEnumerator* context = (QextSerialEnumerator*)ctxt;
-  io_object_t serialService;
-  while ((serialService = IOIteratorNext(serialPortIterator)))
-    context->onDeviceTerminatedOSX(serialService);
-}
-
-#ifdef __cplusplus
-}
-#endif
-
-extern void deviceDiscoveredCallbackOSX( void *ctxt, io_iterator_t serialPortIterator );
-extern void deviceTerminatedCallbackOSX( void *ctxt, io_iterator_t serialPortIterator );
-
-void QextSerialEnumerator::setUpNotificationOSX( )
-{
-  kern_return_t kernResult;
-  mach_port_t masterPort;
-  CFRunLoopSourceRef notificationRunLoopSource;
-  CFMutableDictionaryRef classesToMatch;
-  CFMutableDictionaryRef sambaClassesToMatch;
-  io_iterator_t portIterator;
+    SInt32 idVendor = SAMBA_VID;
+    SInt32 idProduct = SAMBA_PID;
+    CFNumberRef numberRef;
     
-  kernResult = IOMasterPort(MACH_PORT_NULL, &masterPort);
-  if (KERN_SUCCESS != kernResult)
-    return qDebug("IOMasterPort returned %d", kernResult);
-  
-  classesToMatch = IOServiceMatching(kIOSerialBSDServiceValue);
-  if (classesToMatch == NULL)
-    qDebug("IOServiceMatching returned a NULL dictionary.");
-  else
-    CFDictionarySetValue(classesToMatch, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDAllTypes));
-  
-  if( !createSambaMatchingDict( &sambaClassesToMatch ) )
-    return qWarning("couldn't create samba matching dict");
-  
-  // Retain an additional reference since each call to IOServiceAddMatchingNotification consumes one.
-  classesToMatch = (CFMutableDictionaryRef) CFRetain(classesToMatch);
-  sambaClassesToMatch = (CFMutableDictionaryRef) CFRetain(sambaClassesToMatch);
-  
-  notificationPortRef = IONotificationPortCreate(masterPort);
-  if (notificationPortRef == NULL)
-    return qDebug("IONotificationPortCreate return a NULL IONotificationPortRef.");
-  
-  notificationRunLoopSource = IONotificationPortGetRunLoopSource(notificationPortRef);
-  if (notificationRunLoopSource == NULL)
-    return qDebug("IONotificationPortGetRunLoopSource returned NULL CFRunLoopSourceRef.");
-  
-  CFRunLoopAddSource(CFRunLoopGetCurrent(), notificationRunLoopSource, kCFRunLoopDefaultMode);
-  
-  kernResult = IOServiceAddMatchingNotification(notificationPortRef, kIOMatchedNotification, classesToMatch,
-                                                  deviceDiscoveredCallbackOSX, this, &portIterator);
-  if (kernResult != KERN_SUCCESS)
-    return qDebug("IOServiceAddMatchingNotification return %d", kernResult);
-  
-  // arm the callback, and grab any devices that are already connected
-  deviceDiscoveredCallbackOSX( this, portIterator );
-  
-  kernResult = IOServiceAddMatchingNotification(notificationPortRef, kIOMatchedNotification, sambaClassesToMatch,
-                                                  deviceDiscoveredCallbackOSX, this, &portIterator);
-  if (kernResult != KERN_SUCCESS)
-    return qDebug("IOServiceAddMatchingNotification return %d", kernResult);
-  
-  // arm the callback, and grab any devices that are already connected
-  deviceDiscoveredCallbackOSX( this, portIterator );
-  
-  kernResult = IOServiceAddMatchingNotification(notificationPortRef, kIOTerminatedNotification, classesToMatch,
-                                                  deviceTerminatedCallbackOSX, this, &portIterator);
-  if (kernResult != KERN_SUCCESS)
-    return qDebug("IOServiceAddMatchingNotification return %d.", kernResult);
-  
-  // arm the callback, and clear any devices that are terminated
-  deviceTerminatedCallbackOSX( this, portIterator );
-  
-  kernResult = IOServiceAddMatchingNotification(notificationPortRef, kIOTerminatedNotification, sambaClassesToMatch,
-                                                  deviceTerminatedCallbackOSX, this, &portIterator);
-  if (kernResult != KERN_SUCCESS)
-    return qDebug("IOServiceAddMatchingNotification return %d.", kernResult);
-  
-  // arm the callback, and clear any devices that are terminated
-  deviceTerminatedCallbackOSX( this, portIterator );
+    if(QSysInfo::MacintoshVersion < QSysInfo::MV_LEOPARD) {
+        if( !(*matchingDictionary = IOServiceMatching(kIOUSBDeviceClassName)) ) {
+            qWarning( "could not create matching dictionary\n" );
+            return false;
+        }
+    }
+    else {
+        if( !(*matchingDictionary = IOServiceNameMatching("AppleUSBCDC")) ) {
+            qWarning( "could not create matching dictionary\n" );
+            return false;
+        }
+    }
+    
+    if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idVendor)) ) {
+        qWarning( "could not create CFNumberRef for vendor\n" );
+        return false;
+    }
+    
+    CFDictionaryAddValue( *matchingDictionary, CFSTR(kUSBVendorID), numberRef);
+    CFRelease( numberRef );
+    numberRef = 0;
+    
+    if( !(numberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &idProduct)) ) {
+        qWarning( "could not create CFNumberRef for product\n" );
+        return false;
+    }
+    
+    CFDictionaryAddValue( *matchingDictionary, CFSTR(kUSBProductID), numberRef);
+    CFRelease( numberRef );
+    numberRef = 0;
+    return true;
 }
 
-void QextSerialEnumerator::onDeviceDiscoveredOSX( io_object_t service )
+void QextSerialEnumerator::iterateServicesOSX(io_object_t service, QList<QextPortInfo> & infoList)
 {
-  QextPortInfo info;
-  info.vendorID = 0;
-  info.productID = 0;
-  if( getServiceDetails( service, &info ) )
-    emit deviceDiscovered( info );
+    // Iterate through all modems found.
+    io_object_t usbService;
+    while( ( usbService = IOIteratorNext(service) ) )
+    {
+        QextPortInfo info;
+        info.vendorID = 0;
+        info.productID = 0;
+        getServiceDetailsOSX( usbService, &info );
+        infoList.append(info);
+    }
 }
 
-void QextSerialEnumerator::onDeviceTerminatedOSX( io_object_t service )
+bool QextSerialEnumerator::getServiceDetailsOSX( io_object_t service, QextPortInfo* portInfo )
 {
-  QextPortInfo info;
-  info.vendorID = 0;
-  info.productID = 0;
-  if( getServiceDetails( service, &info ) )
-    emit deviceTerminated( info );
-}
+    bool retval = true;
+    CFTypeRef bsdPathAsCFString = NULL;
+    CFTypeRef productNameAsCFString = NULL;
+    CFTypeRef vendorIdAsCFNumber = NULL;
+    CFTypeRef productIdAsCFNumber = NULL;
+    // check the name of the modem's callout device
+    bsdPathAsCFString = IORegistryEntryCreateCFProperty(service, CFSTR(kIOCalloutDeviceKey),
+                                                        kCFAllocatorDefault, 0);
 
-bool QextSerialEnumerator::getServiceDetails( io_object_t service, QextPortInfo* portInfo )
-{
-  bool retval = true;
-  CFTypeRef bsdPathAsCFString = NULL;
-  CFTypeRef productNameAsCFString = NULL;
-  CFTypeRef vendorIdAsCFNumber = NULL;
-  CFTypeRef productIdAsCFNumber = NULL;
-  // check the name of the modem's callout device
-  bsdPathAsCFString = IORegistryEntryCreateCFProperty(service, CFSTR(kIOCalloutDeviceKey), kCFAllocatorDefault, 0);
-
-  // wander up the hierarchy until we find the level that can give us the vendor/product IDs and the product name, if available
-  io_registry_entry_t parent;
-  kern_return_t kernResult = IORegistryEntryGetParentEntry(service, kIOServicePlane, &parent);
-  while( !kernResult && !vendorIdAsCFNumber && !productIdAsCFNumber )
-  {
-    if(!productNameAsCFString)
-      productNameAsCFString = IORegistryEntrySearchCFProperty(parent, kIOServicePlane, CFSTR("Product Name"), kCFAllocatorDefault, 0);
-    vendorIdAsCFNumber = IORegistryEntrySearchCFProperty(parent, kIOServicePlane, CFSTR(kUSBVendorID), kCFAllocatorDefault, 0);
-    productIdAsCFNumber = IORegistryEntrySearchCFProperty(parent, kIOServicePlane, CFSTR(kUSBProductID), kCFAllocatorDefault, 0);
-    io_registry_entry_t oldparent = parent;
-    kernResult = IORegistryEntryGetParentEntry(parent, kIOServicePlane, &parent);
-    IOObjectRelease(oldparent);
-  }
+    // wander up the hierarchy until we find the level that can give us the
+    // vendor/product IDs and the product name, if available
+    io_registry_entry_t parent;
+    kern_return_t kernResult = IORegistryEntryGetParentEntry(service, kIOServicePlane, &parent);
+    while( kernResult == KERN_SUCCESS && !vendorIdAsCFNumber && !productIdAsCFNumber )
+    {
+        if(!productNameAsCFString)
+            productNameAsCFString = IORegistryEntrySearchCFProperty(parent,
+                                                                    kIOServicePlane,
+                                                                    CFSTR("Product Name"),
+                                                                    kCFAllocatorDefault, 0);
+        vendorIdAsCFNumber = IORegistryEntrySearchCFProperty(parent,
+                                                             kIOServicePlane,
+                                                             CFSTR(kUSBVendorID),
+                                                             kCFAllocatorDefault, 0);
+        productIdAsCFNumber = IORegistryEntrySearchCFProperty(parent,
+                                                              kIOServicePlane,
+                                                              CFSTR(kUSBProductID),
+                                                              kCFAllocatorDefault, 0);
+        io_registry_entry_t oldparent = parent;
+        kernResult = IORegistryEntryGetParentEntry(parent, kIOServicePlane, &parent);
+        IOObjectRelease(oldparent);
+    }
     
   io_string_t ioPathName;
   IORegistryEntryGetPath( service, kIOServicePlane, ioPathName );
@@ -472,7 +382,8 @@ bool QextSerialEnumerator::getServiceDetails( io_object_t service, QextPortInfo*
   if( bsdPathAsCFString )
   {   
     char path[MAXPATHLEN];
-    if( CFStringGetCString((CFStringRef)bsdPathAsCFString, path, PATH_MAX, kCFStringEncodingUTF8) )
+        if( CFStringGetCString((CFStringRef)bsdPathAsCFString, path,
+                               PATH_MAX, kCFStringEncodingUTF8) )
       portInfo->portName = path;
     CFRelease(bsdPathAsCFString);
   }
@@ -480,7 +391,8 @@ bool QextSerialEnumerator::getServiceDetails( io_object_t service, QextPortInfo*
   if(productNameAsCFString)
   {
     char productName[MAXPATHLEN];
-    if( CFStringGetCString((CFStringRef)productNameAsCFString, productName, PATH_MAX, kCFStringEncodingUTF8) )
+        if( CFStringGetCString((CFStringRef)productNameAsCFString, productName,
+                               PATH_MAX, kCFStringEncodingUTF8) )
       portInfo->friendName = productName;
     CFRelease(productNameAsCFString);
   }
@@ -504,7 +416,160 @@ bool QextSerialEnumerator::getServiceDetails( io_object_t service, QextPortInfo*
   return retval;
 }
 
-#else /* Q_WS_MAC */
+// IOKit callbacks registered via setupNotifications()
+void deviceDiscoveredCallbackOSX( void *ctxt, io_iterator_t serialPortIterator );
+void deviceTerminatedCallbackOSX( void *ctxt, io_iterator_t serialPortIterator );
+
+void deviceDiscoveredCallbackOSX( void *ctxt, io_iterator_t serialPortIterator )
+{
+    QextSerialEnumerator* qese = (QextSerialEnumerator*)ctxt;
+    io_object_t serialService;
+    while ((serialService = IOIteratorNext(serialPortIterator)))
+        qese->onDeviceDiscoveredOSX(serialService);
+}
+
+void deviceTerminatedCallbackOSX( void *ctxt, io_iterator_t serialPortIterator )
+{
+    QextSerialEnumerator* qese = (QextSerialEnumerator*)ctxt;
+    io_object_t serialService;
+    while ((serialService = IOIteratorNext(serialPortIterator)))
+        qese->onDeviceTerminatedOSX(serialService);
+}
+
+/*
+ A device has been discovered via IOKit.
+ Create a QextPortInfo if possible, and emit the signal indicating that we've found it.
+ */
+void QextSerialEnumerator::onDeviceDiscoveredOSX( io_object_t service )
+{
+    QextPortInfo info;
+    info.vendorID = 0;
+    info.productID = 0;
+    if( getServiceDetailsOSX( service, &info ) )
+        emit deviceDiscovered( info );
+}
+
+/*
+ Notification via IOKit that a device has been removed.
+ Create a QextPortInfo if possible, and emit the signal indicating that it's gone.
+ */
+void QextSerialEnumerator::onDeviceTerminatedOSX( io_object_t service )
+{
+    QextPortInfo info;
+    info.vendorID = 0;
+    info.productID = 0;
+    if( getServiceDetailsOSX( service, &info ) )
+        emit deviceRemoved( info );
+}
+
+/*
+ Create matching dictionaries for the devices we want to get notifications for,
+ and add them to the current run loop.  Invoke the callbacks that will be responding
+ to these notifications once to arm them, and discover any devices that
+ are currently connected at the time notifications are setup.
+ */
+void QextSerialEnumerator::setUpNotificationOSX( )
+{
+    kern_return_t kernResult;
+    mach_port_t masterPort;
+    CFRunLoopSourceRef notificationRunLoopSource;
+    CFMutableDictionaryRef classesToMatch;
+    CFMutableDictionaryRef cdcClassesToMatch;
+    CFMutableDictionaryRef sambaClassesToMatch;
+    io_iterator_t portIterator;
+    
+    kernResult = IOMasterPort(MACH_PORT_NULL, &masterPort);
+    if (KERN_SUCCESS != kernResult) {
+        qDebug() << "IOMasterPort returned:" << kernResult;
+        return;
+    }
+    
+    classesToMatch = IOServiceMatching(kIOSerialBSDServiceValue);
+    if (classesToMatch == NULL)
+        qDebug("IOServiceMatching returned a NULL dictionary.");
+    else
+        CFDictionarySetValue(classesToMatch, CFSTR(kIOSerialBSDTypeKey), CFSTR(kIOSerialBSDAllTypes));
+    
+    if( !(cdcClassesToMatch = IOServiceNameMatching("AppleUSBCDC") ) ) {
+        qWarning("couldn't create cdc matching dict");
+        return;
+    }
+    
+    if( !createSambaMatchingDict( &sambaClassesToMatch ) ) {
+        qWarning("couldn't create samba matching dict");
+        return;
+    }
+    
+    // Retain an additional reference since each call to IOServiceAddMatchingNotification consumes one.
+    classesToMatch = (CFMutableDictionaryRef) CFRetain(classesToMatch);
+    cdcClassesToMatch = (CFMutableDictionaryRef) CFRetain(cdcClassesToMatch);
+    sambaClassesToMatch = (CFMutableDictionaryRef) CFRetain(sambaClassesToMatch);
+    
+    notificationPortRef = IONotificationPortCreate(masterPort);
+    if(notificationPortRef == NULL) {
+        qDebug("IONotificationPortCreate return a NULL IONotificationPortRef.");
+        return;
+    }
+    
+    notificationRunLoopSource = IONotificationPortGetRunLoopSource(notificationPortRef);
+    if (notificationRunLoopSource == NULL) {
+        qDebug("IONotificationPortGetRunLoopSource returned NULL CFRunLoopSourceRef.");
+        return;
+    }
+    
+    CFRunLoopAddSource(CFRunLoopGetCurrent(), notificationRunLoopSource, kCFRunLoopDefaultMode);
+    
+    kernResult = IOServiceAddMatchingNotification(notificationPortRef, kIOMatchedNotification, classesToMatch,
+                                                  deviceDiscoveredCallbackOSX, this, &portIterator);
+    if (kernResult != KERN_SUCCESS) {
+        qDebug() << "IOServiceAddMatchingNotification return:" << kernResult;
+        return;
+    }
+
+    // arm the callback, and grab any devices that are already connected
+    deviceDiscoveredCallbackOSX( this, portIterator );
+    
+    kernResult = IOServiceAddMatchingNotification(notificationPortRef, kIOMatchedNotification, cdcClassesToMatch,
+                                                  deviceDiscoveredCallbackOSX, this, &portIterator);
+    if (kernResult != KERN_SUCCESS) {
+        qDebug() << "IOServiceAddMatchingNotification return:" << kernResult;
+        return;
+    }
+    deviceDiscoveredCallbackOSX( this, portIterator );
+    
+    kernResult = IOServiceAddMatchingNotification(notificationPortRef, kIOMatchedNotification, sambaClassesToMatch,
+                                                  deviceDiscoveredCallbackOSX, this, &portIterator);
+    if (kernResult != KERN_SUCCESS) {
+        qDebug() << "IOServiceAddMatchingNotification return:" << kernResult;
+        return;
+    }
+    deviceDiscoveredCallbackOSX( this, portIterator );
+    
+    kernResult = IOServiceAddMatchingNotification(notificationPortRef, kIOTerminatedNotification, classesToMatch,
+                                                  deviceTerminatedCallbackOSX, this, &portIterator);
+    if (kernResult != KERN_SUCCESS) {
+        qDebug() << "IOServiceAddMatchingNotification return:" << kernResult;
+        return;
+    }
+    deviceTerminatedCallbackOSX( this, portIterator );
+    
+    kernResult = IOServiceAddMatchingNotification(notificationPortRef, kIOTerminatedNotification, cdcClassesToMatch,
+                                                  deviceTerminatedCallbackOSX, this, &portIterator);
+    if (kernResult != KERN_SUCCESS) {
+        qDebug() << "IOServiceAddMatchingNotification return:" << kernResult;
+        return;
+    }
+    deviceTerminatedCallbackOSX( this, portIterator );
+    
+    kernResult = IOServiceAddMatchingNotification(notificationPortRef, kIOTerminatedNotification, sambaClassesToMatch,
+                                                  deviceTerminatedCallbackOSX, this, &portIterator);
+    if (kernResult != KERN_SUCCESS) {
+        qDebug() << "IOServiceAddMatchingNotification return:" << kernResult;
+        return;
+    }
+    deviceTerminatedCallbackOSX( this, portIterator );
+}
+#else // Q_OS_MAC
 
 #include <unistd.h>
 #include <hal/libhal.h>
@@ -664,9 +729,9 @@ void QextSerialEnumerator::scanPortsNix(QList<QextPortInfo> & infoList)
 	return;
 }
 
-#endif /* Q_WS_MAC */
-#endif /* _TTY_POSIX_ */
+#endif // Q_OS_MAC
 
+#endif // Q_OS_UNIX
 
 //static
 QList<QextPortInfo> QextSerialEnumerator::getPorts()
@@ -689,14 +754,14 @@ QList<QextPortInfo> QextSerialEnumerator::getPorts()
                 EnumPortsW9x(ports);*/
         } else  //w2k or later
             setupAPIScan(ports);
-    #endif /*_TTY_WIN_*/
-    #ifdef _TTY_POSIX_
+    #endif /*Q_OS_WIN*/
+    #ifdef Q_OS_UNIX
       #ifdef Q_OS_MAC
         scanPortsOSX(ports);
       #else /* Q_OS_MAC */
         scanPortsNix(ports);
       #endif /* Q_OS_MAC */
-    #endif /*_TTY_POSIX_*/
+    #endif /*Q_OS_UNIX*/
 
     return ports;
 }
