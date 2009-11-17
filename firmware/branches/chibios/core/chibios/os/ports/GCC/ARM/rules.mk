@@ -1,8 +1,10 @@
 # ARM7 common makefile scripts and rules.
 
 # output dir
-BUILDDIR = build
-ENSUREBUILDDIR = $(shell if ! [ -d $(BUILDDIR) ]; then mkdir $(BUILDDIR); fi )
+ifeq ($(BUILDDIR),)
+  BUILDDIR = build
+endif
+ENSUREBUILDDIR = $(shell test -d $(BUILDDIR) || mkdir $(BUILDDIR))
 
 # Automatic compiler options
 OPT = $(USE_OPT)
