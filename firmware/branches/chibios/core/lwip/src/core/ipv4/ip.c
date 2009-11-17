@@ -252,12 +252,12 @@ ip_input(struct pbuf *p, struct netif *inp)
   /* header length exceeds first pbuf length, or ip length exceeds total pbuf length? */
   if ((iphdr_hlen > p->len) || (iphdr_len > p->tot_len)) {
     if (iphdr_hlen > p->len)
-    LWIP_DEBUGF(IP_DEBUG | 2, ("IP header (len %"U16_F") does not fit in first pbuf (len %"U16_F"), IP packet dropped.\n",
-                               iphdr_hlen, p->len));
+//    LWIP_DEBUGF(IP_DEBUG | 2, ("IP header (len %"U16_F") does not fit in first pbuf (len %"U16_F"), IP packet dropped.\n",
+//                               iphdr_hlen, p->len));
     if (iphdr_len > p->tot_len)
-    LWIP_DEBUGF(IP_DEBUG | 2, ("IP (len %"U16_F") is longer than pbuf (len %"U16_F"), "
-                               "IP packet dropped.\n",
-                               iphdr_len, p->tot_len));
+//    LWIP_DEBUGF(IP_DEBUG | 2, ("IP (len %"U16_F") is longer than pbuf (len %"U16_F"), "
+//                               "IP packet dropped.\n",
+//                               iphdr_len, p->tot_len));
     /* free (drop) packet pbufs */
     pbuf_free(p);
     IP_STATS_INC(ip.lenerr);

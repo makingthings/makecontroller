@@ -94,14 +94,6 @@ static void low_level_init(struct netif *netif) {
   /* set MAC hardware address length */
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
-  /* set MAC hardware address */
-/*  netif->hwaddr[0] = 0xC2;
-  netif->hwaddr[1] = 0xAF;
-  netif->hwaddr[2] = 0x51;
-  netif->hwaddr[3] = 0x03;
-  netif->hwaddr[4] = 0xCF;
-  netif->hwaddr[5] = 0x46;*/
-
   /* maximum transfer unit */
   netif->mtu = 1500;
 
@@ -110,7 +102,6 @@ static void low_level_init(struct netif *netif) {
   netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
 
   /* Do whatever else is needed to initialize interface. */
-//  macSetAddress(&ETH1, netif->hwaddr);
 }
 
 /*
@@ -120,6 +111,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p) {
   struct pbuf *q;
   MACTransmitDescriptor td;
 
+  (void)netif;
   if (macWaitTransmitDescriptor(&ETH1, &td, MS2ST(LWIP_SEND_TIMEOUT)) != RDY_OK)
     return ERR_TIMEOUT;
 
@@ -150,6 +142,7 @@ static struct pbuf *low_level_input(struct netif *netif) {
   struct pbuf *p, *q;
   u16_t len;
 
+  (void)netif;
   if (macWaitReceiveDescriptor(&ETH1, &rd, TIME_IMMEDIATE) == RDY_OK) {
     len = (u16_t)rd.rd_size;
 
