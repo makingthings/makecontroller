@@ -18,7 +18,6 @@
 #ifndef PWMOUT_H
 #define PWMOUT_H
 
-#include "io.h"
 #include "pwm.h"
 
 /**
@@ -52,35 +51,15 @@
   
   \ingroup io
 */
-class PwmOut
-{
-  public:
-    PwmOut(int index);
-    ~PwmOut();
 
-    int duty();
-    bool setDuty(int duty);
-
-    bool invertedA();
-    bool setInvertedA(bool invert);
-
-    bool invertedB();
-    bool setInvertedB(bool invert);
-
-    bool setAll( int duty, bool invertA, bool invertB );
-
-  protected:
-    int _index;
-    typedef struct {
-      Io* ioA;
-      Io* ioB;
-      Pwm* pwm;
-      short count;
-    } PwmOutInternal;
-    static PwmOutInternal* pwmouts[]; // only ever want to make 4 of these
-    
-    void getIos( int* ioA, int* ioB );
-};
+void pwmoutEnable(int channel);
+void pwmoutDisable(int channel);
+void pwmoutSetDuty(int channel, int duty);
+bool pwmoutInvertedA(int channel);
+bool pwmoutSetInvertedA(int channel, bool invert);
+bool pwmoutInvertedB(int channel);
+bool pwmoutSetInvertedB(int channel, bool invert);
+bool pwmoutSetAll(int channel, int duty, bool invertA, bool invertB);
 
 /* OSC Interface */
 // const char* PwmOutOsc_GetName( void );
