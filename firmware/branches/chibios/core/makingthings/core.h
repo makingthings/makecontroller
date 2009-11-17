@@ -23,6 +23,7 @@
 #ifndef CORE_H
 #define CORE_H
 
+#include <ch.h>
 #include "types.h"
 #include "error.h"
 #include "config.h"

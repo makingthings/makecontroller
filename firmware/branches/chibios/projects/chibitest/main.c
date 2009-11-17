@@ -17,55 +17,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <ch.h>
-#include <pal.h>
-#include <serial.h>
-// #include <test.h>
-
+#include "core.h"
 #include "board.h"
+#include "led.h"
 
-static WORKING_AREA(waThread1, 64);
-static msg_t Thread1(void *arg) {
-
-  while (TRUE) {
-    palSetPad(IOPORT1, 12);
-    chThdSleepMilliseconds(100);
-    palClearPad(IOPORT1, 12);
-    chThdSleepMilliseconds(900);
-  }
-  return 0;
-}
-
-void kill( void )
-{
-  AT91C_BASE_RSTC->RSTC_RCR = ( AT91C_RSTC_EXTRST | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | (0xA5 << 24 ) );
-}
-
-/*
- * Entry point, note, the main() function is already a thread in the system
- * on entry.
- */
 int main(int argc, char **argv) {
 
-  /*
-   * Activates the serial driver 1 using the driver default configuration.
-   */
-  sdStart(&SD1, NULL);
-
-  /*
-   * Creates the blinker thread.
-   */
-  chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
-
-  /*
-   * Normal main() thread activity.
-   */
-  while (TRUE) {
-    chThdSleepMilliseconds(500);
-    // if (!palReadPad(IOPORT2, PIOB_SW1))
-    //   sdWrite(&SD1, (uint8_t *)"Hello World!\r\n", 14);
-    // if (!palReadPad(IOPORT2, PIOB_SW2))
-    //   TestThread(&SD1);
+  while (true) {
+    chThdSleepMilliseconds(990);
+    ledSetValue(ON);
+    chThdSleepMilliseconds(10);
+    ledSetValue(OFF);
   }
 
   return 0;
