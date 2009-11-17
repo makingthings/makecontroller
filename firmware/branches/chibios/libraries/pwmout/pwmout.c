@@ -19,7 +19,7 @@
 #include "pwm.h"
 #include "core.h"
 
-#include "AT91SAM7X256.h"
+#include "pin.h"
 
 #if ( APPBOARD_VERSION == 50 )
   #define PWMOUT_0_IO_A IO_PA02
@@ -42,18 +42,17 @@
   #define PWMOUT_3_IO_B IO_PA24
 #endif
 #if ( APPBOARD_VERSION >= 95 )
-  #define PWMOUT_0_IO_A IO_PA24
-  #define PWMOUT_0_IO_B IO_PA05
-  #define PWMOUT_1_IO_A IO_PA06
-  #define PWMOUT_1_IO_B IO_PA02
-  #define PWMOUT_2_IO_A IO_PB25
-  #define PWMOUT_2_IO_B IO_PA25
-  #define PWMOUT_3_IO_A IO_PA26
-  #define PWMOUT_3_IO_B IO_PB23
+  #define PWMOUT_0_IO_A PIN_PA24
+  #define PWMOUT_0_IO_B PIN_PA5
+  #define PWMOUT_1_IO_A PIN_PA6
+  #define PWMOUT_1_IO_B PIN_PA2
+  #define PWMOUT_2_IO_A PIN_PB25
+  #define PWMOUT_2_IO_B PIN_PA25
+  #define PWMOUT_3_IO_A PIN_PA26
+  #define PWMOUT_3_IO_B PIN_PB23
 #endif
 
-// static 
-PwmOut::PwmOutInternal* PwmOut::pwmouts[] = {0, 0, 0, 0};
+static void pwmoutGetIos( int channel, int* ioA, int* ioB );
 
 /**
   Create a new PwmOut object
@@ -67,52 +66,28 @@ PwmOut::PwmOutInternal* PwmOut::pwmouts[] = {0, 0, 0, 0};
   PwmOut* p = new PwmOut();
   \endcode
 */
-PwmOut::PwmOut( int index )
+void pwmoutEnable( int channel )
 {
-  if ( index < 0 || index > 3 )
-    return;
-  _index = index;
-  
-  if( (pwmouts[_index]) == 0 )
-  {
-    pwmouts[_index] = new PwmOutInternal();
-    PwmOutInternal* internal = pwmouts[_index];
-    internal->count = 1;
-    // Look up the IO's that will be used
-    int ioAIdx;
-    int ioBIdx;
-    getIos( &ioAIdx, &ioBIdx );
-    
-    internal->ioA = new Io(ioAIdx);
-    internal->ioB = new Io(ioBIdx);
-    internal->ioA->on();
-    internal->ioB->off();
-    internal->pwm = new Pwm(_index);
-  
-    setDuty( 0 );
-  }
-  else
-    pwmouts[_index]->count++;
+  int a, b; // Look up the IO's that will be used
+  pwmoutGetIos( channel, &a, &b );
+  pinSetMode(a, OUTPUT);
+  pinSetMode(b, OUTPUT);
+  pinOn(a);
+  pinOff(b);
+  pwmSetDuty(channel, 0);
 }
 
 /*
   If this was the last instance of this PwmOut, kill it
   and clean up.
 */
-PwmOut::~PwmOut( )
+void pwmoutDisable(int channel)
 {
-  if( --(pwmouts[_index]->count) <= 0 )
-  {
-    setDuty(0);
-    PwmOutInternal* internal = pwmouts[_index];
-    internal->ioA->off();
-    internal->ioB->off();
-    delete internal->ioA;
-    delete internal->ioB;
-    delete internal->pwm;
-    delete internal;
-    pwmouts[_index] = 0;
-  }
+  int a, b;
+  pwmoutGetIos( channel, &a, &b );
+  pinOff(a);
+  pinOff(b);
+  pwmDisableChannel(channel);
 }
 
 /** 
@@ -126,10 +101,9 @@ PwmOut::~PwmOut( )
   p.setDuty(512);
   \endcode
 */
-bool PwmOut::setDuty( int duty )
+void pwmoutSetDuty( int channel, int duty )
 {
-  pwmouts[_index]->pwm->setDuty(duty);
-  return true;
+  pwmSetDuty(channel, duty);
 }
 
 /** 
@@ -142,10 +116,10 @@ bool PwmOut::setDuty( int duty )
   int duty = p.duty();
   \endcode
 */
-int PwmOut::duty( )
-{
-  return pwmouts[_index]->pwm->duty();
-}
+//int PwmOut::duty( )
+//{
+//  return pwmouts[_index]->pwm->duty();
+//}
 
 /** 
   Set whether the A channel associated with a PwmOut should be inverted.
@@ -158,9 +132,11 @@ int PwmOut::duty( )
   p.setInvertedA(false); // channel A not inverted
   \endcode
 */
-bool PwmOut::setInvertedA( bool invert )
+bool pwmoutSetInvertedA( int channel, bool invert )
 {
-  pwmouts[_index]->ioA->setValue( !invert );
+  int a, b;
+  pwmoutGetIos(channel, &a, &b);
+  pinSetValue( a, !invert );
   return true;
 }
 
@@ -174,9 +150,11 @@ bool PwmOut::setInvertedA( bool invert )
   bool is_A_inverted = p.invertedA();
   \endcode
 */
-bool PwmOut::invertedA( )
+bool pwmoutInvertedA(int channel)
 {
-  return pwmouts[_index]->ioA->value( );
+  int a, b;
+  pwmoutGetIos(channel, &a, &b);
+  return pinValue(a);
 }
 
 /** 
@@ -190,9 +168,11 @@ bool PwmOut::invertedA( )
   p.setInvertedB(false); // channel B not inverted
   \endcode
 */
-bool PwmOut::setInvertedB( bool invert )
+bool pwmoutSetInvertedB( int channel, bool invert )
 {
-  pwmouts[_index]->ioB->setValue( !invert );
+  int a, b;
+  pwmoutGetIos(channel, &a, &b);
+  pinSetValue( b, !invert );
   return true;
 }
 
@@ -206,9 +186,11 @@ bool PwmOut::setInvertedB( bool invert )
   bool is_B_inverted = p.invertedB();
   \endcode
 */
-bool PwmOut::invertedB( )
+bool pwmoutInvertedB(int channel)
 {
-  return pwmouts[_index]->ioB->value( );
+  int a, b;
+  pwmoutGetIos(channel, &a, &b);
+  return pinValue(b);
 }
 
 /** 
@@ -224,18 +206,19 @@ bool PwmOut::invertedB( )
   p.setAll(1023, false, true);
   \endcode
 */
-bool PwmOut::setAll( int duty, bool invertA, bool invertB )
+bool pwmoutSetAll( int channel, int duty, bool invertA, bool invertB )
 {
-  PwmOutInternal* internal = pwmouts[_index];
-  internal->pwm->setDuty(duty);
-  internal->ioA->setValue( !invertA );
-  internal->ioB->setValue( !invertB );
+  int a, b;
+  pwmoutGetIos(channel, &a, &b);
+  pinSetValue(a, !invertA);
+  pinSetValue(b, !invertB);
+  pwmSetDuty(channel, duty);
   return true;
 }
 
-void PwmOut::getIos( int* ioA, int* ioB )
+void pwmoutGetIos( int channel, int* ioA, int* ioB )
 { 
-  switch( _index )
+  switch( channel )
   {
     case 0:
       *ioA = PWMOUT_0_IO_A;
