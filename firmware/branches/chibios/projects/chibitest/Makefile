@@ -16,9 +16,6 @@ MT      = ../../core/makingthings
 MTLIBS  = ../../libraries
 STARTUP = ../../core/startup
 
-# Define linker script file here
-LDSCRIPT = ${STARTUP}/ch.ld
-
 # Imported source files
 include ${CHIBIOS}/os/ports/GCC/ARM7/port.mk
 include ${CHIBIOS}/os/kernel/kernel.mk
@@ -51,18 +48,16 @@ CSRC = ${PORTSRC} \
        ${MT}/pin.c \
        ${MT}/analogin.c \
        ${MT}/spi.c \
-			 ${MT}/eeprom.c \
-			 ${MT}/pwm.c \
-			 ${MT}/system.c \
-			 ${MT}/usb_serial.c \
-			 ${MT}/timer.c \
-			 ${MT}/fasttimer.c \
-			 ${MT}/led.c \
-			 ${MT}/network.c \
-			 ${MT}/udpsocket.c \
-			 ${MTLIBS}/pwmout/pwmout.c \
-			 ${MTLIBS}/motor/motor.c \
-			 ${MTLIBS}/appled/appled.c \
+       ${MT}/eeprom.c \
+       ${MT}/pwm.c \
+       ${MT}/system.c \
+       ${MT}/usb_serial.c \
+       ${MT}/led.c \
+       ${MT}/network.c \
+       ${MT}/udpsocket.c \
+       ${MTLIBS}/pwmout/pwmout.c \
+       ${MTLIBS}/motor/motor.c \
+       ${MTLIBS}/appled/appled.c \
        main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
@@ -98,9 +93,9 @@ INCDIR = $(PORTINC) $(KERNINC) ${MT} ${USBINC} ${LWINC} \
          ${CHIBIOS}/os/io/platforms/AT91SAM7X \
          ${CHIBIOS}/os/various \
          ${CHIBIOS}/os/ports/GCC/ARM7/AT91SAM7X \
-				 ${MTLIBS}/pwmout \
-				 ${MTLIBS}/motor \
-				 ${MTLIBS}/appled \
+         ${MTLIBS}/pwmout \
+         ${MTLIBS}/motor \
+         ${MTLIBS}/appled \
 
 #
 # Project, sources and paths
@@ -125,6 +120,9 @@ AS   = $(TRGT)gcc -x assembler-with-cpp
 OD   = $(TRGT)objdump
 HEX  = $(CP) -O ihex
 BIN  = $(CP) -O binary
+
+# Define linker script file here
+LDSCRIPT = ${MT}/ch.ld
 
 # ARM-specific options here
 AOPT =
@@ -200,7 +198,7 @@ endif
 
 # C++ specific options here (added to USE_OPT).
 ifeq ($(USE_CPPOPT),)
-  USE_CPPOPT = -fno-rtti
+  USE_CPPOPT = -fno-rtti -fno-exceptions
 endif
 
 # Enable this if you want the linker to remove unused code and data

@@ -54,7 +54,7 @@ static char sysName[SYSTEM_MAX_NAME + 1];
 int systemFreeMemory( )
 {
   size_t freemem;
-  chHeapStatus(&freemem);
+  chHeapStatus(NULL, &freemem);
   return freemem;
 }
 
