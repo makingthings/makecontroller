@@ -136,32 +136,36 @@ Q_OBJECT
             #endif
         #endif /*Q_OS_WIN*/
 
-        #ifdef _TTY_POSIX_
-    #ifdef Q_WS_MAC
+        #ifdef Q_OS_UNIX
+            #ifdef Q_OS_MAC
+            private:
+              /*!
+               * Search for serial ports using IOKit.
+               *    \param infoList list with result.
+               */
+              static void scanPortsOSX(QList<QextPortInfo> & infoList);
+              static void iterateServicesOSX(io_object_t service, QList<QextPortInfo> & infoList);
+              static bool getServiceDetailsOSX( io_object_t service, QextPortInfo* portInfo );
+              // MakingThings
+              static void getSamBaBoards(QList<QextPortInfo> & infoList);
+              static bool createSambaMatchingDict( CFMutableDictionaryRef* matchingDictionary );
 
-      void onDeviceDiscoveredOSX( io_object_t service );
-      void onDeviceTerminatedOSX( io_object_t service );
+              void setUpNotificationOSX( );
+              void onDeviceDiscoveredOSX( io_object_t service );
+              void onDeviceTerminatedOSX( io_object_t service );
+              friend void deviceDiscoveredCallbackOSX( void *ctxt, io_iterator_t serialPortIterator );
+              friend void deviceTerminatedCallbackOSX( void *ctxt, io_iterator_t serialPortIterator );
 
-    private:
-      /*!
-       * Search for serial ports using IOKit.
-       * 	\param infoList list with result.
-       */
-      static void scanPortsOSX(QList<QextPortInfo> & infoList);
-      static void getSamBaBoards(QList<QextPortInfo> & infoList);
-      static bool getServiceDetails( io_object_t service, QextPortInfo* portInfo );
-      static bool createSambaMatchingDict( CFMutableDictionaryRef* matchingDictionary );
-      void setUpNotificationOSX( );
-      IONotificationPortRef notificationPortRef;
+              IONotificationPortRef notificationPortRef;
 
-    #else /* Q_WS_MAC */
-      /*!
-       * Search for serial ports on unix.
-       * 	\param infoList list with result.
-       */
-      static void scanPortsNix(QList<QextPortInfo> & infoList);
-    #endif /* Q_WS_MAC */
-    #endif /* _TTY_POSIX_ */
+            #else // Q_OS_MAC
+              /*!
+               * Search for serial ports on unix.
+               *    \param infoList list with result.
+               */
+              // static void scanPortsNix(QList<QextPortInfo> & infoList);
+            #endif // Q_OS_MAC
+        #endif /* Q_OS_UNIX */
 
     public:
         /*!
