@@ -207,7 +207,7 @@ bool pwmSetPeriod( int channel, int period )
 // from at91lib softpack
 int pwmFindClockConfiguration(int frequency)
 {
-  const static unsigned int divisors[11] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
+  static const unsigned int divisors[11] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
   unsigned char divisor = 0;
   unsigned int prescaler;
 
