@@ -2,6 +2,29 @@
 *** Releases                                                              ***
 *****************************************************************************
 
+*** 1.3.5 ***
+
+*** 1.3.4 ***
+- FIX: Fixed bug in STM32 PAL port driver (bug 2897636).
+- FIX: Fixed problem with ARM-CM3 context switch when compiled at level
+  -O0 (bug 2890382).
+- FIX: Fixed wrong conditional in chschd.c (bug 2888836).
+- FIX: Fixed wrong macro in chheap.c (bug 2888833).
+- FIX: Fixed AIC initialization in AT91SAM7X support (bug 2888583).
+- NEW: New SPI (master) driver model.
+- NEW: SPI driver for STM32 implementing the new SPI driver model.
+- NEW: New ADC (streaming capable) driver model.
+- NEW: Generic MMC (over SPI) driver.
+- NEW: Added a STM32 demo that integrates the MMC driver and the FatFs
+  file system.
+- NEW: Implemented I/O redirection on a serial driver into syscalls.c, now
+  it is possible (but not recommended) to use printf()/scanf() etc. An usage
+  example is in the new MMC/FatFs demo. Note the extra -D... into the Makefile.
+- CHANGE: Moved the STM32 firmware library under ./ext, this way there is no
+  need to duplicate it in each demo program.
+- CHANGE: Moved the file stm32f10x.h from the demos to the platforms support
+  directory.
+
 *** 1.3.3 ***
 - FIX: Fixed bug in the LPC2148 PAL driver (bug 2881380).
 - FIX: Fixed bug in the AT91SAM7X PAL driver (bug 2879933).
@@ -15,8 +38,8 @@
 - NEW: The heap allocator has been modified, now it is possible to have
   multiple heaps. The default heap gets its memory from the new core memory
   manager.
-- NEW: Added a "hungry" mode to the memory pools allocator, when enabled, this
-  mode makes a memory pool to feed memory from the core memory manager.
+- NEW: Now memory pools can optionally get new objects automatically from the
+  core memory manager.
 - NEW: Added newlib interface file syscalls.c under ./os/various for use with
   the newest YAGARTO releases. The file provides bindings between the C
   runtime and the core memory manager.

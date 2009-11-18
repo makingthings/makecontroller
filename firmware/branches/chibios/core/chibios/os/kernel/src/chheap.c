@@ -19,8 +19,8 @@
 
 /**
  * @file chheap.c
- * @brief Heap code.
- * @addtogroup heap
+ * @brief Heaps code.
+ * @addtogroup heaps
  * @{
  */
 
@@ -47,7 +47,7 @@
 static MemoryHeap default_heap;
 
 /**
- * @brief Initializes the allocator subsystem.
+ * @brief Initializes the default heap.
  *
  * @note Internal use only.
  */
@@ -63,7 +63,7 @@ void heap_init(void) {
 }
 
 /**
- * @brief Initializes a memory heap.
+ * @brief Initializes a memory heap from a static memory area.
  *
  * @param[out] heapp pointer to a memory heap descriptor to be initialized
  * @param[in] buf heap buffer base
@@ -255,7 +255,7 @@ size_t chHeapStatus(MemoryHeap *heapp, size_t *sizep) {
 
 #if CH_USE_MUTEXES
 #define H_LOCK()        chMtxLock(&hmtx)
-#define H_UNLOCK()      chMtxLock(&hmtx)
+#define H_UNLOCK()      chMtxUnock()
 static Mutex            hmtx;
 #elif CH_USE_SEMAPHORES
 #define H_LOCK()        chSemWait(&hsem)
