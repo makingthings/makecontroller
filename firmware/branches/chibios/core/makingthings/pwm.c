@@ -15,9 +15,9 @@
 
 *********************************************************************************/
 
-#include "at91lib/AT91SAM7X256.h"
-#include "board.h"
 #include "pwm.h"
+#include "ch.h"
+#include "hal.h"
 #include "error.h"
 
 #ifndef PWM_DEFAULT_FREQ

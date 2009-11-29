@@ -9,12 +9,11 @@ PROJECT = chibitest
 OPTIMIZATION = -O0
 
 # components
-LWIP    = ../../core/lwip
-USB     = ../../core/usb
-CHIBIOS = ../../core/chibios
-MT      = ../../core/makingthings
-MTLIBS  = ../../libraries
-STARTUP = ../../core/startup
+LWIP      = ../../core/lwip
+USB       = ../../core/usb
+CHIBIOS   = ../../core/chibios
+MT        = ../../core/makingthings
+LIBRARIES = ../../libraries
 
 # Imported source files
 include ${CHIBIOS}/os/ports/GCC/ARM7/port.mk
@@ -28,15 +27,14 @@ CSRC = ${PORTSRC} \
        ${KERNSRC} \
        ${USBSRC} \
        ${CHIBIOS}/os/various/syscalls.c \
-       ${CHIBIOS}/os/io/pal.c \
-       ${CHIBIOS}/os/io/serial.c \
-       ${CHIBIOS}/os/io/mii.c \
-       ${CHIBIOS}/os/io/mac.c \
-       ${CHIBIOS}/os/io/platforms/AT91SAM7X/pal_lld.c \
-       ${CHIBIOS}/os/io/platforms/AT91SAM7X/serial_lld.c \
-       ${CHIBIOS}/os/io/platforms/AT91SAM7X/mii_lld.c \
-       ${CHIBIOS}/os/io/platforms/AT91SAM7X/mac_lld.c \
-       ${CHIBIOS}/os/io/platforms/AT91SAM7X/at91lib/aic.c \
+       ${CHIBIOS}/os/hal/src/pal.c \
+       ${CHIBIOS}/os/hal/src/serial.c \
+       ${CHIBIOS}/os/hal/src/mac.c \
+       ${CHIBIOS}/os/hal/platforms/AT91SAM7/pal_lld.c \
+       ${CHIBIOS}/os/hal/platforms/AT91SAM7/serial_lld.c \
+       ${CHIBIOS}/os/hal/platforms/AT91SAM7/at91sam7_mii.c \
+       ${CHIBIOS}/os/hal/platforms/AT91SAM7/mac_lld.c \
+       ${CHIBIOS}/os/hal/platforms/AT91SAM7/at91lib/aic.c \
        ${CHIBIOS}/os/various/evtimer.c \
        ${LWIP}/contrib/chibios/lwipthread.c \
        ${LWIP}/contrib/chibios/arch/sys_arch.c \
@@ -47,17 +45,15 @@ CSRC = ${PORTSRC} \
        ${MT}/board.c \
        ${MT}/pin.c \
        ${MT}/analogin.c \
+       ${MT}/usb_serial.c \
        ${MT}/spi.c \
        ${MT}/eeprom.c \
        ${MT}/pwm.c \
        ${MT}/system.c \
-       ${MT}/usb_serial.c \
        ${MT}/led.c \
        ${MT}/network.c \
        ${MT}/udpsocket.c \
-       ${MTLIBS}/pwmout/pwmout.c \
-       ${MTLIBS}/motor/motor.c \
-       ${MTLIBS}/appled/appled.c \
+       ${LIBRARIES}/appled/appled.c \
        main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
@@ -86,16 +82,16 @@ TCPPSRC =
 
 # List ASM source files here
 ASMSRC = $(PORTASM) \
-         ${CHIBIOS}/os/ports/GCC/ARM7/AT91SAM7X/vectors.s
+         ${CHIBIOS}/os/ports/GCC/ARM7/AT91SAM7/vectors.s
 
 INCDIR = $(PORTINC) $(KERNINC) ${MT} ${USBINC} ${LWINC} \
-         ${CHIBIOS}/os/io \
-         ${CHIBIOS}/os/io/platforms/AT91SAM7X \
+         ${CHIBIOS}/os/hal/include \
+         ${CHIBIOS}/os/hal/platforms/AT91SAM7 \
          ${CHIBIOS}/os/various \
-         ${CHIBIOS}/os/ports/GCC/ARM7/AT91SAM7X \
-         ${MTLIBS}/pwmout \
-         ${MTLIBS}/motor \
-         ${MTLIBS}/appled \
+         ${CHIBIOS}/os/ports/GCC/ARM7/AT91SAM7 \
+         ${LIBRARIES}/appled
+
+BUILDDIR = build
 
 #
 # Project, sources and paths
