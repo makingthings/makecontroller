@@ -3,8 +3,8 @@
 #include "network.h"
 #ifdef MAKE_CTRL_NETWORK
 
-#include <ch.h>
-#include <mac.h>
+#include "ch.h"
+#include "hal.h"
 
 #include "lwipthread.h"
 #include "lwip/dhcp.h"
@@ -19,13 +19,13 @@
 #include "error.h"
 
 #ifndef MC_DEFAULT_IP_ADDRESS
-#define MC_DEFAULT_IP_ADDRESS IP_ADDRESS( 192, 168, 1, 200 )
+#define MC_DEFAULT_IP_ADDRESS IP_ADDRESS( 192, 168, 0, 200 )
 #endif
 #ifndef MC_DEFAULT_NETMASK
 #define MC_DEFAULT_NETMASK    IP_ADDRESS( 255, 255, 255, 0 )
 #endif
 #ifndef MC_DEFAULT_GATEWAY
-#define MC_DEFAULT_GATEWAY    IP_ADDRESS( 192, 168, 1, 1 )
+#define MC_DEFAULT_GATEWAY    IP_ADDRESS( 192, 168, 0, 1 )
 #endif
 
 static unsigned char macAddress[6] = {0xAC, 0xDE, 0x48, 0x00, 0x00, 0x00};

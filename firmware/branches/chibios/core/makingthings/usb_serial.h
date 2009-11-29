@@ -22,7 +22,7 @@
 #ifdef MAKE_CTRL_USB
 
 #include "types.h"
-#include "Board.h"
+#include "board.h"
 #include "CDCDSerialDriver.h"
 #include "CDCDSerialDriverDescriptors.h"
 

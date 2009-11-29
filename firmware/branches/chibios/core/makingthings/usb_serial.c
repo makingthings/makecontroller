@@ -19,8 +19,8 @@
 #include "core.h"
 #include "error.h"
 #include "string.h"
-#include "at91lib/AT91SAM7X256.h"
-#include <ch.h>
+#include "ch.h"
+#include "hal.h"
 
 // SLIP codes
 #define END             0300    // indicates end of packet 

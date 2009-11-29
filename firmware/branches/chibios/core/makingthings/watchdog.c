@@ -19,7 +19,7 @@
 #ifdef WATCHDOG_ENABLE
 
 #include "watchdog.h"
-#include "at91lib/AT91SAM7X256.h"
+#include "at91sam7.h"
 
 #define WATCHDOG_KEY (0xA5 << 24)
 

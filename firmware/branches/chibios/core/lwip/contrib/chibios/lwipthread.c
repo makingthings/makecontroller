@@ -61,9 +61,9 @@
 #include "config.h"
 #ifdef MAKE_CTRL_NETWORK
 
-#include <ch.h>
-#include <evtimer.h>
-#include <mac.h>
+#include "ch.h"
+#include "hal.h"
+#include "evtimer.h"
 
 #include "lwip/opt.h"
 

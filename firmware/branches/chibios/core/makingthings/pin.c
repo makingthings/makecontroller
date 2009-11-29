@@ -15,10 +15,8 @@
 
 *********************************************************************************/
 
-#include "board.h"
-#include "at91lib/AT91SAM7X256.h"
-#include "at91lib/aic.h"
 #include "pin.h"
+#include "at91lib/aic.h"
 #include "core.h"
 
 #define IO_PIN_COUNT 64

@@ -20,7 +20,7 @@
 #include "config.h"
 #include <ch.h>
 #include "pin.h"
-#include "at91lib/AT91SAM7X256.h"
+#include "at91sam7.h"
 
 #if ( (CONTROLLER_VERSION == 50) || (CONTROLLER_VERSION >= 95) )
   #define SPI_SEL0_IO           PIN_PA12

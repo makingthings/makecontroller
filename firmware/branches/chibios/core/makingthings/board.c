@@ -17,8 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <ch.h>
-#include <pal.h>
+#include "ch.h"
+#include "hal.h"
 #include "board.h"
 #include "at91lib/aic.h"
 #include "analogin.h"
@@ -116,7 +116,7 @@ static CH_IRQ_HANDLER(SYSIrqHandler) {
 /*
  * Digital I/O ports static configuration as defined in @p board.h.
  */
-static const AT91SAM7XPIOConfig config =
+static const AT91SAM7PIOConfig config =
 {
   {VAL_PIOA_ODSR, VAL_PIOA_OSR, VAL_PIOA_PUSR},
   {VAL_PIOB_ODSR, VAL_PIOB_OSR, VAL_PIOB_PUSR}
@@ -145,9 +145,7 @@ void hwinit0(void) {
   // PLLfreq = 96109714 Hz (rounded)
   AT91C_BASE_PMC->PMC_PLLR = (AT91C_CKGR_DIV & 14) |
                              (AT91C_CKGR_PLLCOUNT & (10 << 8)) |
-                              #ifdef MAKE_CTRL_USB
-                             (AT91C_CKGR_USBDIV_1) |
-                              #endif
+                             (AT91SAM7_USBDIV) |
                              (AT91C_CKGR_MUL & (72 << 16));
   while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_LOCK))
     ;

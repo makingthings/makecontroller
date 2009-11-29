@@ -21,8 +21,8 @@
 
 #include "config.h"
 #include "types.h"
-#include <ch.h>
-#include <pal.h>
+#include "ch.h"
+#include "hal.h"
 
 /**
   Control any of the 35 Input/Output signals on the Make Controller.
