@@ -1,0 +1,7 @@
+#
+# Apply/update externals definitions with this file by typing
+#   svn propset svn:externals -F svn-externals.txt .
+# 
+
+# pulling from trunk via revision...will pull from stable branch once it's available
+core/chibios -r1365 https://chibios.svn.sourceforge.net/svnroot/chibios/trunk
