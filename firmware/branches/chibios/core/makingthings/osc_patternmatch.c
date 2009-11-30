@@ -150,46 +150,44 @@ advance:
 
 static bool oscMatchList (const char *pattern, const char *test)
 {
+  const char *restOfPattern, *tp = test;
 
- const char *restOfPattern, *tp = test;
+  for(restOfPattern = pattern; *restOfPattern != '}'; restOfPattern++) {
+    if (*restOfPattern == 0)
+      return false; // unterminated { in pattern
+  }
 
- for(restOfPattern = pattern; *restOfPattern != '}'; restOfPattern++) {
-   if (*restOfPattern == 0)
-     return false; // unterminated { in pattern
- }
+  restOfPattern++; /* skip close curly brace */
+  pattern++; /* skip open curly brace */
 
- restOfPattern++; /* skip close curly brace */
-
- pattern++; /* skip open curly brace */
-
- while (1) {
-   if (*pattern == ',')  {
-     if (oscPatternMatch(restOfPattern, tp))
-       return true;
-     else  {
-       tp = test;
-       ++pattern;
-     }
-   } 
-   else  {
-     if (*pattern == '}')
-       return oscPatternMatch(restOfPattern, tp);
-     else  {
-       if (*pattern == *tp)  {
-         ++pattern;
-         ++tp;
-       } 
-       else {
-         tp = test;
-         while (*pattern != ',' && *pattern != '}') {
-           pattern++;
-       }
-       if (*pattern == ',') 
-         pattern++;
+  while (1) {
+    if (*pattern == ',')  {
+      if (oscPatternMatch(restOfPattern, tp))
+        return true;
+      else  {
+        tp = test;
+        ++pattern;
       }
-     }
-   }
- }
+    }
+    else  {
+      if (*pattern == '}')
+       return oscPatternMatch(restOfPattern, tp);
+      else  {
+        if (*pattern == *tp)  {
+          ++pattern;
+          ++tp;
+        }
+        else {
+          tp = test;
+          while (*pattern != ',' && *pattern != '}') {
+           pattern++;
+        }
+        if (*pattern == ',')
+          pattern++;
+        }
+      }
+    }
+  }
 }
 
 /*
