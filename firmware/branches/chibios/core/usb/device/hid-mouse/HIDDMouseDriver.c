@@ -34,15 +34,16 @@
 #include "HIDDMouseDriver.h"
 #include "HIDDMouseDriverDescriptors.h"
 #include "HIDDMouseInputReport.h"
-#include <utility/trace.h>
-#include <usb/common/core/USBGetDescriptorRequest.h>
-#include <usb/common/hid/HIDGenericDescriptor.h>
-#include <usb/common/hid/HIDDescriptor.h>
-#include <usb/common/hid/HIDGenericRequest.h>
-#include <usb/common/hid/HIDReportRequest.h>
-#include <usb/common/hid/HIDIdleRequest.h>
-#include <usb/device/core/USBD.h>
-#include <usb/device/core/USBDDriver.h>
+//#include <utility/trace.h>
+#include "board.h"
+#include "USBGetDescriptorRequest.h"
+#include "HIDGenericDescriptor.h"
+#include "HIDDescriptor.h"
+#include "HIDGenericRequest.h"
+#include "HIDReportRequest.h"
+#include "HIDIdleRequest.h"
+#include "USBD.h"
+#include "USBDDriver.h"
 
 //------------------------------------------------------------------------------
 //         Internal Defines
@@ -151,7 +152,7 @@ static unsigned char HIDDMouseDriver_GetDescriptor(unsigned char type,
 //------------------------------------------------------------------------------
 /// Sends the current Idle rate of the input report to the host.
 //------------------------------------------------------------------------------
-static void HIDDMouseDriver_GetIdle()
+static void HIDDMouseDriver_GetIdle(void)
 {
     TRACE_INFO("gIdle ");
 
@@ -211,6 +212,7 @@ static void HIDDMouseDriver_GetReport(unsigned char type,
 static void HIDDMouseDriver_SetReport(unsigned char type,
                                          unsigned short length)
 {
+    (void)length;
     TRACE_INFO("sReport ");
 
     // Check report type
@@ -250,12 +252,12 @@ void USBDCallbacks_RequestReceived(const USBGenericRequest *request)
 /// Callback function when configureation changed
 /// \param cfgnum New configuration number
 //------------------------------------------------------------------------------
-void USBDDriverCallbacks_ConfigurationChanged(unsigned char cfgnum)
-{
-    if (cfgnum > 0) {
-    
-    }
-}
+//void USBDDriverCallbacks_ConfigurationChanged(unsigned char cfgnum)
+//{
+//    if (cfgnum > 0) {
+//
+//    }
+//}
 
 //------------------------------------------------------------------------------
 //      Exported functions
@@ -264,7 +266,7 @@ void USBDDriverCallbacks_ConfigurationChanged(unsigned char cfgnum)
 //------------------------------------------------------------------------------
 /// Initializes the HID Mouse %device driver.
 //------------------------------------------------------------------------------
-void HIDDMouseDriver_Initialize()
+void HIDDMouseDriver_Initialize(void)
 {
     hiddMouseDriver.inputReportIdleRate = 0;
     HIDDMouseInputReport_Initialize(&(hiddMouseDriver.inputReport));

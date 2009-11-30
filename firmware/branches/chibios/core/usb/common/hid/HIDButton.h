@@ -28,51 +28,28 @@
  */
 
 /*
-    Title: HIDGenericDesktop
+    Title: HIDButton
 
     About: Purpose
-        Constants for using the HID generic desktop usage page.
+        Definitions of constants and methods for the HID Button usage page.
 
     About: Usage
-        Use these constants when declaring a Report descriptor which references
-        the generic desktop page.
+        1 - Use the constants declared in this file when instanciating a
+            Report descriptor instance.
+        2 - When implementing the functionality of an HID Mouse, use the
+            key codes defined here to indicate keys that are being pressed and
+            released.
 */
 
-#ifndef HIDGENERICDESKTOP_H
-#define HIDGENERICDESKTOP_H
+#ifndef _HIDBUTTON_H
+#define _HIDBUTTON_H
 
 //------------------------------------------------------------------------------
-//         Definitions
+//         Constants
 //------------------------------------------------------------------------------
 
-/*
-    Constant: HIDGenericDesktop_PAGEID
-        ID for the HID generic desktop usage page.
-*/
-#define HIDGenericDesktop_PAGEID            0x01
+/// Identifier for the HID button usage page
+#define HIDButton_PAGEID                0x09
 
-/*
-    Constants: Usages
-        HIDGenericDesktop_POINTER - Pointer usage ID.
-        HIDGenericDesktop_MOUSE - Mouse usage ID.
-        HIDGenericDesktop_JOYSTICK - Joystick usage ID.
-        HIDGenericDesktop_GAMEPAD - Gamepad usage ID.
-        HIDGenericDesktop_KEYBOARD - Keyboard usage ID.
-        HIDGenericDesktop_KEYPAD - Keypad usage ID.
-        HIDGenericDesktop_MULTIAXIS - Multi-axis controller usage ID.
-*/
-#define HIDGenericDesktop_POINTER           0x01
-#define HIDGenericDesktop_MOUSE             0x02
-#define HIDGenericDesktop_JOYSTICK          0x04
-#define HIDGenericDesktop_GAMEPAD           0x05
-#define HIDGenericDesktop_KEYBOARD          0x06
-#define HIDGenericDesktop_KEYPAD            0x07
-#define HIDGenericDesktop_MULTIAXIS         0x08
 
-/// Axis Usage X direction ID.
-#define HIDGenericDesktop_X                 0x30
-/// Axis Usage Y direction ID.
-#define HIDGenericDesktop_Y                 0x31
-
-#endif //#ifndef HIDGENERICDESKTOP_H
-
+#endif
