@@ -16,14 +16,21 @@
 *********************************************************************************/
 
 #include "pin.h"
+#include "hal.h"
 #include "at91lib/aic.h"
 #include "core.h"
 
-#define IO_PIN_COUNT 64
-
+#if (SAM7_PLATFORM == SAM7X128) || (SAM7_PLATFORM == SAM7X256) || (SAM7_PLATFORM == SAM7X512)
 #define IOPORT(p) ((p < 32) ? IOPORT1 : IOPORT2)
 #define PIN(p) (p % 32)
 #define PIN_MASK(p) (1 << (p % 32))
+#define IO_PIN_COUNT 64
+#else
+#define IOPORT(p) IOPORT1
+#define PIN(p) (p)
+#define PIN_MASK(p) (1 << p)
+#define IO_PIN_COUNT 32
+#endif
 
 #ifndef PIN_NO_ISR
 
@@ -31,8 +38,7 @@
 #define MAX_INTERRUPT_SOURCES 8
 #endif
 
-struct InterruptSource
-{
+struct InterruptSource {
   void* context;
   PinInterruptHandler callback;
   int pin;
@@ -246,13 +252,12 @@ bool pinAddInterruptHandler(int pin, PinInterruptHandler h, void* arg)
     return false;
   
   isrSources[isrSourceCount].pin = pin;
-  Port port = IOPORT(pin);
 
   // if this is the first time for either channel, set it up
-  if(port->PIO_IMR == 0)
-    pinInitInterrupts(port, (AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 3) );
+  if(IOPORT(pin)->PIO_IMR == 0)
+    pinInitInterrupts(IOPORT(pin), (AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 3) );
   
-  port->PIO_ISR;                  // clear the status register
+  IOPORT(pin)->PIO_ISR;           // clear the status register
   pinEnableInterruptHandler(pin); // enable our channel
 
   isrSources[isrSourceCount].callback = h;
@@ -290,13 +295,12 @@ void pinEnableInterruptHandler(int pin)
 
 static void pinServeInterrupt( Port port )
 {
-  unsigned int status = port->PIO_ISR;
-  status &= port->PIO_IMR;
+  unsigned int status = port->PIO_ISR & port->PIO_IMR;
 
   // Check pending events
   if(status) {
     unsigned short i;
-    unsigned short pinMask;
+    unsigned int pinMask;
     struct InterruptSource* is;
     for( i = 0; status != 0  && i < isrSourceCount; i++ ) {
       is = &(isrSources[i]);
@@ -309,17 +313,21 @@ static void pinServeInterrupt( Port port )
   }
 }
 
-CH_IRQ_HANDLER( pinIsrA ) {
+static CH_IRQ_HANDLER( pinIsrA ) {
   CH_IRQ_PROLOGUE();
   pinServeInterrupt(AT91C_BASE_PIOA);
+  AT91C_BASE_AIC->AIC_EOICR = 0;
   CH_IRQ_EPILOGUE();
 }
 
-CH_IRQ_HANDLER( pinIsrB ) {
+#if SAM7_PLATFORM == SAM7X128 || SAM7_PLATFORM == SAM7X256 || SAM7_PLATFORM == SAM7X512
+static CH_IRQ_HANDLER( pinIsrB ) {
   CH_IRQ_PROLOGUE();
   pinServeInterrupt(AT91C_BASE_PIOB);
+  AT91C_BASE_AIC->AIC_EOICR = 0;
   CH_IRQ_EPILOGUE();
 }
+#endif
 
 /*
   Turn on interrupts for a pio channel - a or b
@@ -334,10 +342,12 @@ void pinInitInterrupts(Port port, unsigned int priority)
     chan = AT91C_ID_PIOA;
     isr_handler = pinIsrA;
   }
+#if SAM7_PLATFORM == SAM7X128 || SAM7_PLATFORM == SAM7X256 || SAM7_PLATFORM == SAM7X512
   else if( port == AT91C_BASE_PIOB ) {
     chan = AT91C_ID_PIOB;
     isr_handler = pinIsrB;
   }
+#endif
   else
     return;
   
