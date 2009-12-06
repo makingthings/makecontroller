@@ -15,7 +15,7 @@
 
 *********************************************************************************/
 
-#include "usb_serial.h"
+#include "usbserial.h"
 #include "core.h"
 #include "error.h"
 #include "string.h"
