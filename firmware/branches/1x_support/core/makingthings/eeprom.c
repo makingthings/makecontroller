@@ -244,7 +244,7 @@ int Eeprom_Start()
     }
   
     // We're here means that we got the Spi open, now set it up
-    status = Spi_Configure( EEPROM_DEVICE, 8, 4, 0, 1 );
+    status = Spi_Configure( EEPROM_DEVICE, 8, 16, 0, 1 );
     if ( status != CONTROLLER_OK )
     {
       // Undo all the setup.  Sigh.
@@ -309,7 +309,7 @@ void Eeprom_Ready( void )
   
     Spi_ReadWriteBlock( EEPROM_DEVICE, c, 2 );
 
-    status = c[ 1 ] != 0xFF;
+    status = ( ( c[ 1 ] & 1 ) == 0 );
 
   } while ( !status );
 }

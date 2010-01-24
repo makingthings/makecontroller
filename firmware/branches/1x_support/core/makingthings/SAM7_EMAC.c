@@ -484,28 +484,52 @@ register unsigned portLONG ulBytesRemainingInBuffer, ulRemainingSectionBytes;
 }
 /*-----------------------------------------------------------*/
 
+#define AT91C_PB18_EPWRDWN AT91C_PIO_PB18
+
 /* See the header file for descriptions of public functions. */
 xSemaphoreHandle xEMACInit( void )
 {
 	unsigned portLONG	saved_RSTC_RMR;
 
-	/* Code supplied by Atmel -------------------------------*/
+	/* Code supplied by Atmel tweaked by David -------------------------------*/
+  
+  // Initially:  All Pull Ups are ON and pins all are Inputs.  Whether they are PIO's or Peripheral signals is unclear
 
-	/* Disable pull up on RXDV => PHY normal mode (not in test mode),
-	PHY has internal pull down. */
+  // OK.  So we need to have peripheral control over a few lines
+  AT91C_BASE_PIOB->PIO_PER = AT91C_PB18_EPWRDWN | AT91C_PB0_ETXCK_EREFCK | AT91C_PB5_ERX0 |
+                             AT91C_PB6_ERX1 | AT91C_PB13_ERX2 | AT91C_PB14_ERX3 | 
+                             AT91C_PB4_ECRS | AT91C_PB17_ERXCK | AT91C_PB16_ECOL | AT91C_PB7_ERXER | AT91C_PB15_ERXDV_ECRSDV;
+                             
+  // Turn all those pull ups off
+  AT91C_BASE_PIOB->PIO_PPUDR = AT91C_PB18_EPWRDWN | AT91C_PB0_ETXCK_EREFCK | AT91C_PB5_ERX0 | 
+                             AT91C_PB6_ERX1 | AT91C_PB13_ERX2 | AT91C_PB14_ERX3 | 
+                             AT91C_PB4_ECRS | AT91C_PB17_ERXCK | AT91C_PB16_ECOL | AT91C_PB7_ERXER | AT91C_PB15_ERXDV_ECRSDV;
+                            
+  // POWER DOWN - for now
+	AT91C_BASE_PIOB->PIO_SODR = AT91C_PB18_EPWRDWN;
+
+  // Turn these into outputs
+  AT91C_BASE_PIOB->PIO_OER = AT91C_PB18_EPWRDWN | AT91C_PB0_ETXCK_EREFCK  | AT91C_PB5_ERX0 | 
+                             AT91C_PB6_ERX1 | AT91C_PB13_ERX2 | AT91C_PB14_ERX3 | 
+                             AT91C_PB4_ECRS | AT91C_PB17_ERXCK | AT91C_PB16_ECOL | AT91C_PB7_ERXER | AT91C_PB15_ERXDV_ECRSDV;
+                            
+
+  // Some really ought to be high ( address = 0x1F, MII Mode in 10 mode )
+	AT91C_BASE_PIOB->PIO_SODR = AT91C_PB5_ERX0 | AT91C_PB6_ERX1 | AT91C_PB13_ERX2 | AT91C_PB14_ERX3 | AT91C_PB4_ECRS |
+                              AT91C_PB17_ERXCK;
+
+  // Some really ought to be low (MII)
+	AT91C_BASE_PIOB->PIO_CODR =  AT91C_PB0_ETXCK_EREFCK | AT91C_PB16_ECOL | AT91C_PB7_ERXER | AT91C_PB15_ERXDV_ECRSDV;
+                              
+	/* Disable pull up on RXDV => PHY normal mode (not in test mode), PHY has internal pull down. */
 	AT91C_BASE_PIOB->PIO_PPUDR = 1 << 15;
-
-	#if USE_RMII_INTERFACE != 1
-	  	/* PHY has internal pull down : set MII mode. */
-	  	AT91C_BASE_PIOB->PIO_PPUDR = 1 << 16;
-	#endif
 
   /* MAKINGTHINGS: ADDITION */
 	/* Clear PB18 <=> PHY power up. */
   #if ( CONTROLLER_VERSION == 50 || CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 || CONTROLLER_VERSION == 200 )
-   	AT91C_BASE_PIOB->PIO_PER = 1 << 18;
-	AT91C_BASE_PIOB->PIO_OER = 1 << 18;
-	AT91C_BASE_PIOB->PIO_CODR = 1 << 18;
+   	AT91C_BASE_PIOB->PIO_PER = AT91C_PB18_EPWRDWN;
+	  AT91C_BASE_PIOB->PIO_OER = AT91C_PB18_EPWRDWN;
+	  AT91C_BASE_PIOB->PIO_CODR = AT91C_PB18_EPWRDWN;
   #endif
   #if ( CONTROLLER_VERSION == 90 )
     /* PB13 <=> PHY powerdown - so clearing it is power up. */
@@ -546,6 +570,7 @@ xSemaphoreHandle xEMACInit( void )
   /* end MAKINGTHINGS */
 
 	/* Setup the pins. */
+  // This means taking all the pins we had been using during reset and making them all be whatever the EMAC needs them to be
 	AT91C_BASE_PIOB->PIO_ASR = emacPERIPHERAL_A_SETUP;
 	AT91C_BASE_PIOB->PIO_PDR = emacPERIPHERAL_A_SETUP;
 
