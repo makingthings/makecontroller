@@ -43,13 +43,18 @@
   \ingroup io
 */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void digitaloutInit(void);
 bool digitaloutValue(int channel);
-void digitaloutSetValue( int channel, bool on );
+void digitaloutSetValue(int channel, bool on);
 
 /* OSC Interface */
 const char* DigitalOutOsc_GetName( void );
 int DigitalOutOsc_ReceiveMessage( int channel, char* message, int length );
 
-
+#ifdef __cplusplus
+}
 #endif
+#endif // DIGITALOUT_H

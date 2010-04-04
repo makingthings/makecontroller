@@ -62,7 +62,20 @@
   #define DIGITALOUT_ENABLE_MASK (PIN_PB19 | PIN_PB20 | PIN_PB21 | PIN_PB22)
 #endif
 
-static int digitaloutGetIo( int index );
+static int digitaloutGetIo(int index)
+{
+  switch (index) {
+    case 0: return DIGITALOUT_0;
+    case 1: return DIGITALOUT_1;
+    case 2: return DIGITALOUT_2;
+    case 3: return DIGITALOUT_3;
+    case 4: return DIGITALOUT_4;
+    case 5: return DIGITALOUT_5;
+    case 6: return DIGITALOUT_6;
+    case 7: return DIGITALOUT_7;
+    default: return 0;
+  }
+}
 
 /**
   Create a new DigitalOut object.
@@ -80,14 +93,14 @@ static int digitaloutGetIo( int index );
 void digitaloutInit( )
 { 
   // configure enable lines as outputs and turn them all on
-  pinGroupSetMode(PORT_B, DIGITALOUT_ENABLE_MASK, OUTPUT);
-  pinGroupOn(PORT_B, DIGITALOUT_ENABLE_MASK);
+  pinGroupSetMode(GROUP_B, DIGITALOUT_ENABLE_MASK, OUTPUT);
+  pinGroupOn(GROUP_B, DIGITALOUT_ENABLE_MASK);
   
   // configure douts as outputs & turn off
-  pinGroupSetMode(PORT_A, DOUT_PIOA, OUTPUT);
-  pinGroupSetMode(PORT_B, DOUT_PIOB, OUTPUT);
-  pinGroupOff(PORT_A, DOUT_PIOA);
-  pinGroupOff(PORT_B, DOUT_PIOB);
+  pinGroupSetMode(GROUP_A, DOUT_PIOA, OUTPUT);
+  pinGroupSetMode(GROUP_B, DOUT_PIOB, OUTPUT);
+  pinGroupOff(GROUP_A, DOUT_PIOA);
+  pinGroupOff(GROUP_B, DOUT_PIOB);
 }
 
 /** 
@@ -102,7 +115,7 @@ void digitaloutInit( )
   dout.setValue( true );
   \endcode
 */
-void digitaloutSetValue( int channel, bool on )
+void digitaloutSetValue(int channel, bool on)
 {
   pinSetValue(digitaloutGetIo(channel), on);
 }
@@ -127,22 +140,6 @@ void digitaloutSetValue( int channel, bool on )
 bool digitaloutValue(int channel)
 {
   return pinValue(digitaloutGetIo(channel));
-}
-
-int digitaloutGetIo( int index )
-{
-  switch ( index )
-  {
-    case 0: return DIGITALOUT_0;
-    case 1: return DIGITALOUT_1;
-    case 2: return DIGITALOUT_2;
-    case 3: return DIGITALOUT_3;
-    case 4: return DIGITALOUT_4;
-    case 5: return DIGITALOUT_5;
-    case 6: return DIGITALOUT_6;
-    case 7: return DIGITALOUT_7;
-    default: return 0;
-  }
 }
 
 #ifdef OSC
