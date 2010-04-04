@@ -58,7 +58,7 @@
 
 void networkInit(void);
 bool networkSetAddress(int address, int mask, int gateway);
-bool networkAddress(int* address, int* mask, int* gateway);
+void networkAddress(int* address, int* mask, int* gateway);
 int  networkGetHostByName(const char *name, int timeout);
 void networkSetDhcp(bool enabled);
 bool networkDhcp(void);

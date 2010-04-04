@@ -19,13 +19,13 @@
 #include "error.h"
 
 #ifndef MC_DEFAULT_IP_ADDRESS
-#define MC_DEFAULT_IP_ADDRESS IP_ADDRESS( 192, 168, 0, 200 )
+#define MC_DEFAULT_IP_ADDRESS IP_ADDRESS(192, 168, 0, 200)
 #endif
 #ifndef MC_DEFAULT_NETMASK
-#define MC_DEFAULT_NETMASK    IP_ADDRESS( 255, 255, 255, 0 )
+#define MC_DEFAULT_NETMASK    IP_ADDRESS(255, 255, 255, 0)
 #endif
 #ifndef MC_DEFAULT_GATEWAY
-#define MC_DEFAULT_GATEWAY    IP_ADDRESS( 192, 168, 0, 1 )
+#define MC_DEFAULT_GATEWAY    IP_ADDRESS(192, 168, 0, 1)
 #endif
 
 static unsigned char macAddress[6] = {0xAC, 0xDE, 0x48, 0x00, 0x00, 0x00};
@@ -67,8 +67,7 @@ void networkInit( )
   networkLastValidAddress(&address, &mask, &gateway);
 
   Semaphore initSemaphore;
-  chSemInit(&initSemaphore, 1);
-  chSemWait(&initSemaphore);
+  chSemInit(&initSemaphore, 0);
 
   lwip_socket_init();
   struct lwipthread_opts opts;
@@ -83,7 +82,7 @@ void networkInit( )
   chSemWait(&initSemaphore); // wait until lwip is set up
   
 #if (LWIP_DHCP == 1)
-  if( networkDhcp() )
+  if (networkDhcp())
     networkDhcpStart();
 #endif
 }
@@ -109,7 +108,7 @@ bool networkSetAddress( int address, int mask, int gateway )
 {
   bool rv = false;
 #if (LWIP_DHCP == 1)
-  if( !networkDhcp() ) { // only actually change the address if we're not using DHCP
+  if(!networkDhcp()) { // only actually change the address if we're not using DHCP
 #endif
     struct ip_addr ip, gw, netmask;
     ip.addr = address;
@@ -149,12 +148,11 @@ bool networkSetAddress( int address, int mask, int gateway )
   net->addressToString(address, addr);
   \endcode
 */
-bool networkAddress( int* address, int* mask, int* gateway )
+void networkAddress(int* address, int* mask, int* gateway)
 {
-  *address = mcnetif->ip_addr.addr;
-  *mask = mcnetif->netmask.addr;
-  *gateway = mcnetif->gw.addr;
-  return true;
+  if (address != NULL) *address = mcnetif->ip_addr.addr;
+  if (mask != NULL)    *mask = mcnetif->netmask.addr;
+  if (gateway != NULL) *gateway = mcnetif->gw.addr;
 }
 
 /**
@@ -171,9 +169,9 @@ bool networkAddress( int* address, int* mask, int* gateway )
   Network::addressToString(addr, IP_ADDRESS(192, 168, 0, 100));
   \endcode
 */
-int networkAddressToString( char* data, int address )
+int networkAddressToString(char* data, int address)
 {
-  return sprintf( data, "%d.%d.%d.%d", 
+  return siprintf( data, "%d.%d.%d.%d",
                   IP_ADDRESS_A( address ),
                   IP_ADDRESS_B( address ),
                   IP_ADDRESS_C( address ),
@@ -194,13 +192,13 @@ int networkAddressToString( char* data, int address )
 */
 void networkSetDhcp(bool enabled)
 {
-  if( enabled && !networkDhcp() ) {
-    networkDhcpStart( );
-    eepromWrite( EEPROM_DHCP_ENABLED, enabled );
+  if (enabled && !networkDhcp()) {
+    networkDhcpStart();
+    eepromWrite(EEPROM_DHCP_ENABLED, enabled);
   }
-  else if( !enabled && networkDhcp() ) {
-    networkDhcpStop( );
-    eepromWrite( EEPROM_DHCP_ENABLED, enabled );
+  else if(!enabled && networkDhcp()) {
+    networkDhcpStop();
+    eepromWrite(EEPROM_DHCP_ENABLED, enabled);
     int a, m, g;
     networkLastValidAddress(&a, &m, &g);
     networkSetAddress(a, m, g);
@@ -226,20 +224,20 @@ void networkSetDhcp(bool enabled)
 */
 bool networkDhcp()
 {
-  return eepromRead( EEPROM_DHCP_ENABLED );
+  return eepromRead(EEPROM_DHCP_ENABLED);
 }
 
-bool networkDhcpStart( )
+bool networkDhcpStart()
 {
   int count = 100;
   bool rv = false;
-  if( dhcp_start( mcnetif ) != ERR_OK )
+  if (dhcp_start( mcnetif ) != ERR_OK)
     return false;
   // now hang out for a second until we get an address
   // if DHCP is enabled but we don't find a DHCP server, just use the network config stored in EEPROM
-  while( mcnetif->ip_addr.addr == 0 && count-- ) // timeout after 10 (?) seconds of waiting for a DHCP address
+  while (mcnetif->ip_addr.addr == 0 && count--) // timeout after 10 (?) seconds of waiting for a DHCP address
     chThdSleepMilliseconds( 100 );
-  if( mcnetif->ip_addr.addr == 0 ) { // if we timed out getting an address via DHCP, just use whatever's in EEPROM
+  if (mcnetif->ip_addr.addr == 0 ) { // if we timed out getting an address via DHCP, just use whatever's in EEPROM
     int a, m, g;
     networkLastValidAddress(&a, &m, &g);
 //    networkSetAddress(a, m, g);
@@ -249,9 +247,9 @@ bool networkDhcpStart( )
   return rv;
 }
 
-bool networkDhcpStop( )
+bool networkDhcpStop()
 {
-  if(dhcp_release(mcnetif) != ERR_OK)
+  if (dhcp_release(mcnetif) != ERR_OK)
     return false;
   dhcp_stop(mcnetif);
   netif_set_up(mcnetif); // bring the interface back up, as dhcp_release() takes it down
@@ -285,15 +283,16 @@ bool networkDhcpStop( )
   \endcode
 */
 #if (LWIP_DNS == 1)
-int networkGetHostByName( const char *name, int timeout )
+int networkGetHostByName(const char *name, int timeout)
 {
   struct ip_addr address;
   int retval = -1;
-  err_t result = dns_gethostbyname( name, &address, dnsCallback, 0);
-  if(result == ERR_OK) // the result was cached, just return it
+  err_t result = dns_gethostbyname(name, &address, dnsCallback, 0);
+  if (result == ERR_OK) // the result was cached, just return it
     retval = address.addr;
-  else if(result == ERR_INPROGRESS) { // a lookup is in progress - wait for the callback to signal that we've gotten a response
-    if(chSemWaitTimeout(&dns.semaphore, S2ST(timeout)) == RDY_OK)
+  else if (result == ERR_INPROGRESS) {
+    // a lookup is in progress - wait for the callback to signal that we've gotten a response
+    if (chSemWaitTimeout(&dns.semaphore, S2ST(timeout)) == RDY_OK)
       retval = dns.resolvedAddress;
   }
   return retval;
@@ -313,14 +312,15 @@ void dnsCallback(const char *name, struct ip_addr *addr, void *arg)
 
 #endif // LWIP_DNS
 
-bool networkLastValidAddress( int* address, int *mask, int* gateway )
+bool networkLastValidAddress(int* address, int *mask, int* gateway)
 {
-  *address  = eepromRead( EEPROM_SYSTEM_NET_ADDRESS );
-  *mask     = eepromRead( EEPROM_SYSTEM_NET_MASK );
-  *gateway  = eepromRead( EEPROM_SYSTEM_NET_GATEWAY );
-  int total = eepromRead( EEPROM_SYSTEM_NET_CHECK );
-  if ( total == *address + *mask + *gateway )
+  int total = eepromRead(EEPROM_SYSTEM_NET_CHECK);
+  *address  = eepromRead(EEPROM_SYSTEM_NET_ADDRESS);
+  *mask     = eepromRead(EEPROM_SYSTEM_NET_MASK);
+  *gateway  = eepromRead(EEPROM_SYSTEM_NET_GATEWAY);
+  if (total == *address + *mask + *gateway) {
     return true;
+  }
   else {
     *address = MC_DEFAULT_IP_ADDRESS;
     *mask    = MC_DEFAULT_NETMASK;
