@@ -63,7 +63,7 @@ bool usbmouseSendUpdate(MouseClickAction left, MouseClickAction right, int chang
     else if( right == UP)
       buttons &= ~HIDDMouse_RIGHT_BUTTON;
 
-    return HIDDMouseDriver_ChangePoints(buttons, changeX, changeY) == USBD_STATUS_SUCCESS;
+    return HIDDMouseDriver_ChangePoints(buttons, (signed char)changeX, (signed char)changeY) == USBD_STATUS_SUCCESS;
   }
   else
     return false;

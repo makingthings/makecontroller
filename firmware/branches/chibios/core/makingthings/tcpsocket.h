@@ -65,6 +65,7 @@ int  tcpConnect(int socket, int address, int port);
 bool tcpClose(int socket);
 int  tcpBytesAvailable(int socket);
 int  tcpRead(int socket, char* data, int length);
+int  tcpReadLine(int socket, char* data, int length);
 int  tcpWrite(int socket, const char* data, int length);
 int  tcpSetReadTimeout(int socket, int timeout);
 
