@@ -51,7 +51,11 @@ typedef enum {
   GLITCH_FILTER_OFF
 } PinMode;
 
+#if defined(SIMULATOR)
+typedef sim_vio_port_t* Group;
+#else
 typedef AT91S_PIO* Group;
+#endif
 #define GROUP_A IOPORT1
 #define GROUP_B IOPORT2
 
