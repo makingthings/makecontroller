@@ -18,12 +18,10 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-#include "AT91SAM7X256.h"
+#include "at91sam7.h"
 
 #define TIMER_COUNT 8
 #define TIMER_MARGIN 2
-
-typedef void (*TimerHandler)( int id ); /**< A handler for timers. */
 
 /**
   Provides a timer in a millisecond timeframe.
@@ -66,55 +64,22 @@ typedef void (*TimerHandler)( int id ); /**< A handler for timers. */
   
   For higher resolution timing, check the \ref FastTimer
 */
-class Timer
+
+typedef void (*HwTimerHandler)( int id ); /**< A handler for timers. */
+
+typedef struct HwTimer_t
 {
-public:
-  Timer(int timer = 0);
-  ~Timer();
-  void setHandler(TimerHandler handler, int id );
-  int start( int millis, bool repeat = true );
-  int stop( );
+  HwTimerHandler callback;
+  short id;
+  int   timeCurrent;
+  int   timeInitial;
+  bool  repeat;
+  struct HwTimer_t* next;
+} HwTimer;
 
-protected:
-  int id;
-  int timeCurrent;
-  int timeInitial;
-  bool repeat;
-  TimerHandler callback;
-  Timer* next;
-
-  int getTimeTarget( );
-  int getTime( );
-  void setTimeTarget( int target );
-  int managerInit( int timerindex);
-  void managerDeinit( );
-  void enable( );
-
-  friend void Timer_Isr( );
-
-  typedef struct
-  {
-    unsigned int timer_count; // how many timers have been created?
-    unsigned int channel_id;
-    short count;
-  
-    int jitterTotal;
-    int jitterMax;
-    int jitterMaxAllDay;
-  
-    char running;
-    char servicing;
-  
-    int nextTime;
-    int temp;
-    
-    Timer* first;
-    Timer* next;
-    Timer* previous;
-    Timer* lastAdded;
-    AT91S_TC* tc;
-  } Manager;
-  static Manager manager;
-};
+int hwtimerInit(int channel);
+void hwtimerDeinit(void);
+int hwtimerStart( HwTimer* hwt, int millis, bool repeat );
+int hwtimerStop( HwTimer* hwt );
 
 #endif
