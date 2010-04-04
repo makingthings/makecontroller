@@ -18,13 +18,7 @@
 #ifndef FASTTIMER_H
 #define FASTTIMER_H
 
-#include "AT91SAM7X256.h"
-#define FASTTIMER_COUNT 8
-#define FASTTIMER_MARGIN 2
-#define FASTTIMER_MAXCOUNT 0xFF00
-#define FASTTIMER_MINCOUNT 20
-
-typedef void (*FastTimerHandler)( int id );
+#include "types.h"
 
 /**
   Provides a high resolution timer in a microsecond context.
@@ -45,60 +39,24 @@ typedef void (*FastTimerHandler)( int id );
   - if you have lots of FastTimers, the timing can start to get a little jittery.  For instance, the \ref Servo and \ref Stepper
   libraries use the FastTimer and they can become a little unstable if too many of them are running at once.
 */
-class FastTimer
+
+typedef void (*FastTimerHandler)( int id );
+
+typedef struct FastTimerEntry_t
 {
-public:
-  FastTimer(int timer = 2);
-  ~FastTimer();
-  void setHandler( FastTimerHandler handler, int id );
-  int start( int micros, bool repeat = true );
-  bool setPeriod( int micros );
-  void stop( );
-
-protected:
-  short id;
-  int timeCurrent;
-  int timeInitial;
-  bool repeat;
   FastTimerHandler callback;
-  FastTimer* next;
-  static bool manager_init; // has the manager been set up?
+  short id;
+  int   timeCurrent;
+  int   timeInitial;
+  bool  repeat;
+  struct FastTimerEntry_t* next;
+} FastTimer;
 
-  int getTimeTarget( );
-  int getTime( );
-  void setTimeTarget( int target );
-  int managerInit(int timerindex);
-  void managerDeinit( );
-  void enable( );
+void fasttimerInit(int channel);
+void fasttimerDeinit(void);
+void fasttimerStop(FastTimer *ft);
 
-  friend void FastTimer_Isr( );
-
-  typedef struct
-  {
-    unsigned int timer_count; // how many timers have been created?
-    unsigned int channel_id;
-    short count;
-  
-    int jitterTotal;
-    int jitterMax;
-    int jitterMaxAllDay;
-  
-    char running;
-    char servicing;
-  
-    int nextTime;
-    int temp;
-    
-    FastTimer* first;
-    FastTimer* next;
-    FastTimer* previous;
-    FastTimer* lastAdded;
-    AT91S_TC* tc;
-  } Manager;
-  static Manager manager;
-};
-
-void DisableFIQFromThumb( void );
-void EnableFIQFromThumb( void );
+//void DisableFIQFromThumb( void );
+//void EnableFIQFromThumb( void );
 
 #endif
