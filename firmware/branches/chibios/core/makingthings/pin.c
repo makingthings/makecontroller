@@ -16,10 +16,13 @@
 *********************************************************************************/
 
 #include "pin.h"
-#include "at91lib/aic.h"
 #include "core.h"
+#include <stdio.h>
+#ifndef SIMULATOR
+#include "at91lib/aic.h"
+#endif
 
-#if (SAM7_PLATFORM == SAM7X128) || (SAM7_PLATFORM == SAM7X256) || (SAM7_PLATFORM == SAM7X512)
+#if (SAM7_PLATFORM == SAM7X128) || (SAM7_PLATFORM == SAM7X256) || (SAM7_PLATFORM == SAM7X512) || defined(SIMULATOR)
 #define IOPORT(p) ((p < 32) ? IOPORT1 : IOPORT2)
 #define PIN(p) (p % 32)
 #define PIN_MASK(p) (1 << (p % 32))
@@ -43,6 +46,8 @@ struct InterruptSource {
   int pin;
 };
 
+// TODO - these structures should be caller provided, and we should just maintain a static
+// pointer to the front of a linked list of them
 static struct InterruptSource isrSources[MAX_INTERRUPT_SOURCES];
 static unsigned int isrSourceCount = 0;
 
@@ -252,6 +257,7 @@ void pinSetMode(Pin pin, PinMode mode)
 void pinGroupSetMode(Group group, int pins, PinMode mode)
 {
   switch(mode) {
+#ifndef SIMULATOR
     case PERIPHERAL_A:
       group->PIO_PDR = pins;
       group->PIO_ASR = pins;
@@ -272,6 +278,7 @@ void pinGroupSetMode(Group group, int pins, PinMode mode)
     case GLITCH_FILTER_OFF:
       group->PIO_IFDR = pins;
       break;
+#endif // SIMULATOR
     default:
       palSetGroupMode(group, pins, mode);
       break;
@@ -327,13 +334,13 @@ void pinGroupSetMode(Group group, int pins, PinMode mode)
 */
 bool pinAddInterruptHandler(Pin pin, PinInterruptHandler h, void* arg)
 {
-  if(isrSourceCount >= MAX_INTERRUPT_SOURCES)
+  if (isrSourceCount >= MAX_INTERRUPT_SOURCES)
     return false;
   
   isrSources[isrSourceCount].pin = pin;
 
   // if this is the first time for either channel, set it up
-  if(IOPORT(pin)->PIO_IMR == 0)
+  if (IOPORT(pin)->PIO_IMR == 0)
     pinInitInterrupts(IOPORT(pin), (AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 3) );
   
   IOPORT(pin)->PIO_ISR;           // clear the status register
@@ -393,16 +400,15 @@ void pinEnableHandler(Pin pin)
 static void pinServeInterrupt( Group group )
 {
   unsigned int status = group->PIO_ISR & group->PIO_IMR;
-
   // Check pending events
-  if(status) {
+  if (status) {
     unsigned short i;
     unsigned int pinMask;
     struct InterruptSource* is;
-    for( i = 0; status != 0  && i < isrSourceCount; i++ ) {
+    for (i = 0; status != 0  && i < isrSourceCount; i++) {
       is = &(isrSources[i]);
       pinMask = PIN_MASK(is->pin);
-      if( (IOPORT(is->pin) == group) && ((status & pinMask) != 0) ) {
+      if ((IOPORT(is->pin) == group) && ((status & pinMask) != 0)) {
         is->callback(is->context);     // callback the handler
         status &= ~(pinMask);          // mark this channel as serviced
       }
@@ -435,12 +441,12 @@ void pinInitInterrupts(Group group, unsigned int priority)
   unsigned int chan;
   void (*isr_handler)(void);
   
-  if( group == AT91C_BASE_PIOA ) {
+  if (group == AT91C_BASE_PIOA) {
     chan = AT91C_ID_PIOA;
     isr_handler = pinIsrA;
   }
 #if SAM7_PLATFORM == SAM7X128 || SAM7_PLATFORM == SAM7X256 || SAM7_PLATFORM == SAM7X512
-  else if( group == AT91C_BASE_PIOB ) {
+  else if (group == AT91C_BASE_PIOB) {
     chan = AT91C_ID_PIOB;
     isr_handler = pinIsrB;
   }
@@ -455,7 +461,5 @@ void pinInitInterrupts(Group group, unsigned int priority)
 }
 
 #endif // PIN_NO_ISR
-
-
 
 

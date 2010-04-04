@@ -15,6 +15,9 @@
 
 *********************************************************************************/
 
+#include "config.h"
+#ifdef MAKE_CTRL_USB
+
 #include "usbserial.h"
 #include "core.h"
 #include "error.h"
@@ -32,7 +35,7 @@ static void usbserialOnRx(void *pArg, unsigned char status, unsigned int receive
 static void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsigned int remaining);
 static int  usbserialWriteSlipIfFull( char** bufptr, char* buf, int timeout );
 
-struct UsbSerial {
+typedef struct UsbSerial_t {
   Semaphore rxSemaphore;
   Semaphore txSemaphore;
   int justGot;
@@ -42,17 +45,16 @@ struct UsbSerial {
   char slipOutBuf[USBSER_MAX_WRITE];
   char slipInBuf[USBSER_MAX_READ];
   int slipInCount;
-};
+} UsbSerial;
 
-static struct UsbSerial usbSerial;
+static UsbSerial usbSerial;
 
 void usbserialInit( )
 {
   CDCDSerialDriver_Initialize();
   USBD_Connect();
-  chSemInit(&usbSerial.rxSemaphore, 1);
-  chSemInit(&usbSerial.txSemaphore, 1);
-  chSemWait(&usbSerial.rxSemaphore);
+  chSemInit(&usbSerial.rxSemaphore, 0);
+  chSemInit(&usbSerial.txSemaphore, 0);
   usbSerial.justGot = 0;
   usbSerial.rxBufCount = 0;
 }
@@ -109,7 +111,7 @@ int usbserialRead( char *buffer, int length, int timeout )
   if( USBD_GetState() != USBD_STATE_CONFIGURED )
     return -1;
   int length_to_go = length;
-  if( usbSerial.rxBufCount ) { // do we already have some lying around?
+  if (usbSerial.rxBufCount) { // do we already have some lying around?
     int copylen = MIN(usbSerial.rxBufCount, length_to_go);
     memcpy( buffer, usbSerial.rxBuf, copylen );
     buffer += copylen;
@@ -119,10 +121,10 @@ int usbserialRead( char *buffer, int length, int timeout )
   if(length_to_go) { // if we still would like to get more
     unsigned char result = USBD_Read(CDCDSerialDriverDescriptors_DATAOUT,
                                   usbSerial.rxBuf, USBSER_MAX_READ, usbserialOnRx, 0);
-    if(result == USBD_STATUS_SUCCESS) {
-      if( chSemWaitTimeout(&usbSerial.rxSemaphore, MS2ST(timeout)) == RDY_OK ) {
+    if (result == USBD_STATUS_SUCCESS) {
+      if (chSemWaitTimeout(&usbSerial.rxSemaphore, MS2ST(timeout)) == RDY_OK) {
         int copylen = MIN(usbSerial.justGot, length_to_go);
-        memcpy( buffer, usbSerial.rxBuf, copylen );
+        memcpy(buffer, usbSerial.rxBuf, copylen);
         buffer += copylen;
         usbSerial.rxBufCount -= copylen;
         length_to_go -= copylen;
@@ -138,7 +140,7 @@ void usbserialOnRx(void *pArg, unsigned char status, unsigned int received, unsi
 {
   UNUSED(pArg);
   UNUSED(remaining);
-  if( status == USBD_STATUS_SUCCESS ) {
+  if (status == USBD_STATUS_SUCCESS) {
     usbSerial.rxBufCount += received;
     usbSerial.justGot = received;
   }
@@ -160,10 +162,10 @@ void usbserialOnRx(void *pArg, unsigned char status, unsigned int received, unsi
 int usbserialWrite( const char *buffer, int length, int timeout )
 {
   int rv = -1;
-  if( USBD_GetState() == USBD_STATE_CONFIGURED ) {
-    if( USBD_Write(CDCDSerialDriverDescriptors_DATAIN, 
+  if (USBD_GetState() == USBD_STATE_CONFIGURED) {
+    if (USBD_Write(CDCDSerialDriverDescriptors_DATAIN,
           buffer, length, usbserialOnTx, 0) == USBD_STATUS_SUCCESS ) {
-      if( chSemWaitTimeout(&usbSerial.txSemaphore, MS2ST(timeout)) == RDY_OK ) {
+      if (chSemWaitTimeout(&usbSerial.txSemaphore, MS2ST(timeout)) == RDY_OK ) {
         rv = usbSerial.justWrote;
         usbSerial.justWrote = 0;
       }
@@ -176,10 +178,10 @@ int usbserialWrite( const char *buffer, int length, int timeout )
 void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsigned int remaining)
 {
   UNUSED(pArg);
-  if( status == USBD_STATUS_SUCCESS ) {
+  if (status == USBD_STATUS_SUCCESS) {
     usbSerial.justWrote += received;
   }
-  if( remaining <= 0 )
+  if (remaining <= 0)
     chSemSignalI(&usbSerial.txSemaphore);
 }
 
@@ -204,17 +206,17 @@ int usbserialReadSlip( char *buffer, int length, int timeout )
   static int idx = 0;
   char c;
 
-  while ( received < length ) {
-    if( idx >= usbSerial.slipInCount ) { // if there's nothing left over from last time, get more
-      usbSerial.slipInCount = usbserialRead( usbSerial.slipInBuf, USBSER_MAX_READ, timeout );
+  while (received < length) {
+    if (idx >= usbSerial.slipInCount) { // if there's nothing left over from last time, get more
+      usbSerial.slipInCount = usbserialRead(usbSerial.slipInBuf, USBSER_MAX_READ, timeout);
       idx = 0;
     }
     
     c = usbSerial.slipInBuf[idx++];
-    switch( c )
+    switch (c)
     {
       case END:
-        if( received ) // only return if we actually got anything
+        if (received) // only return if we actually got anything
           return received;
         else
           break;
@@ -224,9 +226,9 @@ int usbserialReadSlip( char *buffer, int length, int timeout )
         // drop it in the packet in this case
         if( idx >= usbSerial.slipInCount ) break;
         c = usbSerial.slipInBuf[idx++];
-        if( c == ESC_END )
+        if (c == ESC_END)
           c = END;
-        else if( c == ESC_ESC )
+        else if (c == ESC_ESC)
           c = ESC;
         // no break here
       default:
@@ -257,9 +259,9 @@ int usbserialWriteSlip( const char *buffer, int length, int timeout )
   int count = 0;
   char c;
   *obp++ = END; // clear out any line noise
-   while( length-- ) {
+   while (length--) {
      c = *buffer++;
-     switch(c)
+     switch (c)
      {
        // if it's the same code as an END character, we send a special 
        //two character code so as not to make the receiver think we sent an END
@@ -285,20 +287,21 @@ int usbserialWriteSlip( const char *buffer, int length, int timeout )
    }
 
    *obp++ = END; // end byte
-   count += usbserialWrite( usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf), timeout );
+   count += usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf), timeout);
    return count;
 }
 
 int usbserialWriteSlipIfFull( char** bufptr, char* buf, int timeout )
 {
   int bufSize = *bufptr - buf;
-  if( bufSize >= USBSER_MAX_WRITE ) {
+  if (bufSize >= USBSER_MAX_WRITE) {
     *bufptr = buf;
-    return usbserialWrite( buf, bufSize, timeout );
+    return usbserialWrite(buf, bufSize, timeout);
   }
   else
     return 0;
 }
 
+#endif // MAKE_CTRL_USB
 
 
