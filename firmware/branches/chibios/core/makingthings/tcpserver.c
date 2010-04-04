@@ -42,7 +42,7 @@ int tcpserverNew(int port)
   sa.sin_port = port;
 
   int s = lwip_socket(0, SOCK_STREAM, IPPROTO_TCP);
-  if( lwip_bind(s, (const struct sockaddr *)&sa, sizeof(sa)) != 0) {
+  if (lwip_bind(s, (const struct sockaddr *)&sa, sizeof(sa)) != 0) {
     lwip_close(s);
     return -1;
   }
