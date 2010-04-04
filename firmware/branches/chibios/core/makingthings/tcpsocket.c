@@ -104,8 +104,7 @@ int tcpBytesAvailable(int socket)
 */
 int tcpWrite(int socket, const char* data, int length)
 {
-  int flags = 0;
-  return lwip_send(socket, data, length, flags);
+  return lwip_send(socket, data, length, 0);
 }
 
 /**
@@ -133,8 +132,7 @@ int tcpWrite(int socket, const char* data, int length)
 */
 int tcpRead(int socket, char* data, int length)
 {
-  int flags = 0;
-  return lwip_recvfrom(socket, data, length, flags, NULL, NULL);
+  return lwip_recvfrom(socket, data, length, 0, NULL, NULL);
 }
 
 /**
@@ -159,7 +157,7 @@ int tcpReadLine(int socket, char* data, int length)
     readLength = tcpRead( socket, data, 1 );
     // here, if readlength == 1, data has a new char in next position, linelength is one off,
     //       if readlength == 0, data had no new char and linelength is right
-  } while ( ( readLength == 1 ) && ( lineLength < length - 1 ) && ( *data != '\n' ) );
+  } while ((readLength == 1) && (lineLength < length - 1) && (*data != '\n'));
   
   if ( readLength == 1 ) // here, length is corrected if there was a character  
     lineLength++;

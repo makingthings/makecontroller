@@ -626,8 +626,8 @@ CH_IRQ_HANDLER(USBD_ISR) __attribute__ ((naked));
 CH_IRQ_HANDLER( USBD_ISR ) {
   CH_IRQ_PROLOGUE();
   USBD_InterruptHandler();
-  CH_IRQ_EPILOGUE();
   AT91C_BASE_AIC->AIC_EOICR = 0;
+  CH_IRQ_EPILOGUE();
 }
 
 //------------------------------------------------------------------------------
