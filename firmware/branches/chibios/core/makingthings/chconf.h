@@ -80,7 +80,11 @@
  * @note Requires @p CH_USE_COREMEM.
  */
 #if !defined(CH_MEMCORE_SIZE) || defined(__DOXYGEN__)
+#ifdef SIMULATOR
+#define CH_MEMCORE_SIZE                 0x20000
+#else
 #define CH_MEMCORE_SIZE                 0
+#endif
 #endif
 
 /*===========================================================================*/
@@ -187,7 +191,7 @@
  * @note Requires @p CH_USE_MUTEXES.
  */
 #if !defined(CH_USE_CONDVARS) || defined(__DOXYGEN__)
-#define CH_USE_CONDVARS                 TRUE
+#define CH_USE_CONDVARS                 FALSE
 #endif
 
 /**
@@ -199,7 +203,7 @@
  * @note Requires @p CH_USE_CONDVARS.
  */
 #if !defined(CH_USE_CONDVARS_TIMEOUT) || defined(__DOXYGEN__)
-#define CH_USE_CONDVARS_TIMEOUT         TRUE
+#define CH_USE_CONDVARS_TIMEOUT         FALSE
 #endif
 
 /**
@@ -232,7 +236,11 @@
  * @note The default is @p TRUE.
  */
 #if !defined(CH_USE_MESSAGES) || defined(__DOXYGEN__)
+#ifdef SIMULATOR
 #define CH_USE_MESSAGES                 TRUE
+#else
+#define CH_USE_MESSAGES                 FALSE
+#endif
 #endif
 
 /**
@@ -317,7 +325,7 @@
  * @note The default is @p TRUE.
  */
 #if !defined(CH_USE_MEMPOOLS) || defined(__DOXYGEN__)
-#define CH_USE_MEMPOOLS                 TRUE
+#define CH_USE_MEMPOOLS                 FALSE
 #endif
 
 /**
@@ -344,7 +352,7 @@
  * @note The default is @p FALSE.
  */
 #if !defined(CH_DBG_ENABLE_CHECKS) || defined(__DOXYGEN__)
-#define CH_DBG_ENABLE_CHECKS            FALSE
+#define CH_DBG_ENABLE_CHECKS            TRUE
 #endif
 
 /**
@@ -356,7 +364,7 @@
  * @note The default is @p FALSE.
  */
 #if !defined(CH_DBG_ENABLE_ASSERTS) || defined(__DOXYGEN__)
-#define CH_DBG_ENABLE_ASSERTS           FALSE
+#define CH_DBG_ENABLE_ASSERTS           TRUE
 #endif
 
 /**
@@ -367,7 +375,7 @@
  * @note The default is @p FALSE.
  */
 #if !defined(CH_DBG_ENABLE_TRACE) || defined(__DOXYGEN__)
-#define CH_DBG_ENABLE_TRACE             FALSE
+#define CH_DBG_ENABLE_TRACE             TRUE
 #endif
 
 /**
@@ -379,7 +387,7 @@
  *       may not be implemented or some ports.
  */
 #if !defined(CH_DBG_ENABLE_STACK_CHECK) || defined(__DOXYGEN__)
-#define CH_DBG_ENABLE_STACK_CHECK       FALSE
+#define CH_DBG_ENABLE_STACK_CHECK       TRUE
 #endif
 
 /**
