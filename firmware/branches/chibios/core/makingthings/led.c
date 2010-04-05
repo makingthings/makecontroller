@@ -23,7 +23,7 @@
   #define LED_IO PIN_PB25
 #elif ( CONTROLLER_VERSION == 90 )
   #define LED_IO PIN_PB12
-#elif ( CONTROLLER_VERSION >= 95 )
+#else // ( CONTROLLER_VERSION >= 95 )
   #define LED_IO PIN_PA12
 #endif
 
@@ -36,7 +36,7 @@
   // that's it!
   \endcode
 */
-void ledEnable( )
+void ledEnable()
 {
   pinSetMode(LED_IO, OUTPUT);
   pinOn(LED_IO); // inverted - really off
@@ -53,9 +53,9 @@ void ledEnable( )
   led.setState(true); // turn it on
   \endcode
 */
-void ledSetValue( bool on )
+void ledSetValue(bool on)
 {
-  pinSetValue(LED_IO, !on); // inverted since it's tied to 3.3V
+  pinSetValue(LED_IO, on ? 0 : 1); // inverted since it's tied to 3.3V
 }
 
 /**
@@ -70,9 +70,9 @@ void ledSetValue( bool on )
   }
   \endcode
 */
-bool ledValue( )
+bool ledValue()
 {
-  return !pinValue(LED_IO);
+  return pinValue(LED_IO) ? 0 : 1;
 }
 
 #ifdef OSC
