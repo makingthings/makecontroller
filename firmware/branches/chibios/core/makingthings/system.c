@@ -20,17 +20,19 @@
 #include <ctype.h>
 #include <string.h>
 #include "board.h"
-#include <ch.h>
+#include "ch.h"
 #include "eeprom.h"
-#include "at91lib/AT91SAM7X256.h"
+#include "at91sam7.h"
 
+#ifndef SYSTEM_MAX_NAME
 #define SYSTEM_MAX_NAME 99
+#endif
 
 /* the Atmel header file doesn't define these. */
 #ifdef AT91SAM7X256_H
-# define AT91C_RSTC_KEY_PASSWORD  (0xa5 << 24)
-# define AT91C_IROM     ((char *)(0x3 << 20))
-# define AT91C_IROM_SIZE    (8 << 10)
+#define AT91C_RSTC_KEY_PASSWORD  (0xa5 << 24)
+#define AT91C_IROM     ((char *)(0x3 << 20))
+#define AT91C_IROM_SIZE    (8 << 10)
 #endif
 
 #define ASYNC_INIT -10
@@ -92,10 +94,9 @@ int systemSerialNumber( void )
   System_SetSerialNumber(12345);
   \endcode
 */
-int systemSetSerialNumber( int serial )
+int systemSetSerialNumber(int serial)
 {
-  serial &= 0xFFFF;
-  eepromWrite( EEPROM_SYSTEM_SERIAL_NUMBER, serial );
+  eepromWrite(EEPROM_SYSTEM_SERIAL_NUMBER, serial & 0xFFFF);
   return CONTROLLER_OK;
 }
 
@@ -114,10 +115,9 @@ int systemSetSerialNumber( int serial )
   System_SetSamba(1);
   \endcode
 */
-void systemSamba( bool sure )
+void systemSamba(bool sure)
 {
-  if ( sure )
-  {
+  if (sure) {
     chSysLock(); // disable interrupts, etc.
 
     /* Disable the USB pullup. */
@@ -134,11 +134,7 @@ void systemSamba( bool sure )
 #endif
 
     /* Steal the PIT for the pullup disable delay. */
-    AT91C_BASE_PITC->PITC_PIMR = (
-      (MCK + (16 * 1000 / 2))
-      / (16 * 1000)
-    ) | AT91C_PITC_PITEN
-    ;
+    AT91C_BASE_PITC->PITC_PIMR = ((MCK + (16 * 1000 / 2)) / (16 * 1000)) | AT91C_PITC_PITEN;
 
     /* Dummy read to clear picnt. */
     __asm__ __volatile__ ("ldr r3, %0" :: "m" (AT91C_BASE_PITC->PITC_PIVR) : "r3");
@@ -218,14 +214,12 @@ void systemSamba( bool sure )
   System_SetName("my very special controller");
   \endcode
 */
-int systemSetName( const char* name )
+int systemSetName(const char* name)
 {
-  int length = MIN( strlen(name), SYSTEM_MAX_NAME );
-  strncpy( sysName, name, length ); // update the name in our buffer
-  int i;
-  for( i = 0; i <= length; i++ ) // have to do this because Eeprom_Write can only go 32 at a time.
-    eepromWriteBlock( EEPROM_SYSTEM_NAME + i, (uchar*)name++, 1 );
-
+  int i, length = MIN(strlen(name), SYSTEM_MAX_NAME);
+  strncpy(sysName, name, length); // update the name in our buffer
+  for (i = 0; i <= length; i++) // have to do this because Eeprom_Write can only go 32 at a time.
+    eepromWriteBlock(EEPROM_SYSTEM_NAME + i, (uchar*)name++, 1);
   return CONTROLLER_OK;
 }
 
@@ -238,17 +232,17 @@ int systemSetName( const char* name )
   char* board_name = System_GetName();
   \endcode
 */
-const char* systemName( )
+const char* systemName()
 {
-  if( sysName[0] == 0 ) {
-    char* ptr = sysName;
+  if (sysName[0] == 0) {
+    const char* ptr = sysName;
     bool legal = false;
     int i;
-    for( i = 0; i <= SYSTEM_MAX_NAME; i++ ) {
-      eepromReadBlock( EEPROM_SYSTEM_NAME + i, (uchar*)ptr, 1 );
-      if( *ptr == 0 )
+    for (i = 0; i <= SYSTEM_MAX_NAME; i++ ) {
+      eepromReadBlock(EEPROM_SYSTEM_NAME + i, (uchar*)ptr, 1);
+      if (*ptr == 0)
         break;
-      if( !isalnum( *ptr ) && *ptr != ' ' ) {
+      if (!isalnum((int)*ptr) && (*ptr) != ' ') {
         legal = false;
         break;
       }
@@ -256,8 +250,8 @@ const char* systemName( )
       ptr++;
     }
     
-    if( !legal )
-      systemSetName( "Make Controller Kit" );
+    if (!legal)
+      systemSetName("Make Controller Kit");
     else
       sysName[i] = 0; // make sure we're null terminated
   }
@@ -279,8 +273,8 @@ const char* systemName( )
 */
 void systemReset( bool sure )
 {
-  if( sure )
-    kill( );
+  if (sure)
+    kill();
 }
 
 #ifdef OSC____
