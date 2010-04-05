@@ -1062,6 +1062,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
         sys_sem_signal(socksem);
         return;
       }
+      s = conn->socket;
       sys_sem_signal(socksem);
     }
 
@@ -1494,7 +1495,7 @@ lwip_getsockopt_internal(void *arg)
   case IPPROTO_TCP:
     switch (optname) {
     case TCP_NODELAY:
-      *(int*)optval = (sock->conn->pcb.tcp->flags & TF_NODELAY);
+      *(int*)optval = tcp_nagle_disabled(sock->conn->pcb.tcp);
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_TCP, TCP_NODELAY) = %s\n",
                   s, (*(int*)optval)?"on":"off") );
       break;
@@ -1855,9 +1856,9 @@ lwip_setsockopt_internal(void *arg)
     switch (optname) {
     case TCP_NODELAY:
       if (*(int*)optval) {
-        sock->conn->pcb.tcp->flags |= TF_NODELAY;
+        tcp_nagle_disable(sock->conn->pcb.tcp);
       } else {
-        sock->conn->pcb.tcp->flags &= ~TF_NODELAY;
+        tcp_nagle_enable(sock->conn->pcb.tcp);
       }
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_TCP, TCP_NODELAY) -> %s\n",
                   s, (*(int *)optval)?"on":"off") );
