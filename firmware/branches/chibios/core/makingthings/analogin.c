@@ -15,18 +15,15 @@
 
 *********************************************************************************/
 
-#include "analogin.h"
-#include "at91lib/AT91SAM7X256.h"
+#include "ch.h"
+#include "hal.h"
 #include "at91lib/aic.h"
-#include <ch.h>
-#include <pal.h>
+#include "analogin.h"
 
 #define ANALOGIN_0 AT91C_PIO_PB27
 #define ANALOGIN_1 AT91C_PIO_PB28
 #define ANALOGIN_2 AT91C_PIO_PB29
 #define ANALOGIN_3 AT91C_PIO_PB30
-
-static void ServeAinInterrupt(void);
 
 struct AinManager {
   Mutex adcLock;               // lock for the adc system
@@ -56,12 +53,11 @@ int ainValue( int channel )
 {
   chMtxLock(&manager.adcLock);
   // disable other channels, and enable the one we want
-  int mask = 1 << channel; 
-  AT91C_BASE_ADC->ADC_CHDR = ~mask;
-  AT91C_BASE_ADC->ADC_CHER = mask;
+  AT91C_BASE_ADC->ADC_CHDR = ~(1 << channel);
+  AT91C_BASE_ADC->ADC_CHER = (1 << channel);
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // Start the conversion
 
-  if( chSemWait(&manager.conversionLock) != RDY_OK)
+  if (chSemWait(&manager.conversionLock) != RDY_OK)
     return false;
 
   int value = AT91C_BASE_ADC->ADC_LCDR & 0xFFFF; // grab the last converted value
@@ -130,24 +126,17 @@ bool ainMulti( int values[] )
 */
 int ainValueWait(int channel)
 {
-  int mask = 1 << channel;                  // select the active channel
-  AT91C_BASE_ADC->ADC_CHDR = ~mask;         // disable all other channels
-  AT91C_BASE_ADC->ADC_CHER = mask;          // enable our channel
-  AT91C_BASE_ADC->ADC_IDR = AT91C_ADC_DRDY; // turn off data ready interrupt
-  AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // start the conversion
+  AT91C_BASE_ADC->ADC_CHDR = ~(1 << channel); // disable all other channels
+  AT91C_BASE_ADC->ADC_CHER = (1 << channel);  // enable our channel
+  AT91C_BASE_ADC->ADC_IDR = AT91C_ADC_DRDY;   // turn off data ready interrupt
+  AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START;   // start the conversion
   while ( !( AT91C_BASE_ADC->ADC_SR & AT91C_ADC_DRDY ) )
     ; // Busy wait
   AT91C_BASE_ADC->ADC_IER = AT91C_ADC_DRDY; // turn interrupt back on
   return AT91C_BASE_ADC->ADC_LCDR & 0xFFFF; // last converted value
 }
 
-CH_IRQ_HANDLER( AnalogInIsr ) {
-  CH_IRQ_PROLOGUE();
-  ServeAinInterrupt();
-  CH_IRQ_EPILOGUE();
-}
-
-void ServeAinInterrupt(void) {
+static void ainServeInterrupt(void) {
   int status = AT91C_BASE_ADC->ADC_SR;
   if(manager.processMultiChannelIsr) {
     unsigned int i, mask;
@@ -168,6 +157,13 @@ void ServeAinInterrupt(void) {
     status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
   }
   AT91C_BASE_AIC->AIC_EOICR = 0;
+}
+
+CH_IRQ_HANDLER( AnalogInIsr ) {
+  CH_IRQ_PROLOGUE();
+  ainServeInterrupt();
+  AT91C_BASE_AIC->AIC_EOICR = 0;
+  CH_IRQ_EPILOGUE();
 }
 
 void ainInit(void)
@@ -200,8 +196,7 @@ void ainInit(void)
   
   // init locks
   chMtxInit(&manager.adcLock);
-  chSemInit(&manager.conversionLock, 1);
-  chSemWait(&manager.conversionLock); // this must first be released by the isr
+  chSemInit(&manager.conversionLock, 0);
   manager.multiChannelConversions = 0;
   manager.processMultiChannelIsr = false;
   

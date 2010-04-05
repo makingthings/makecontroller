@@ -20,10 +20,10 @@
 #ifndef _BOARD_H_
 #define _BOARD_H_
 
-#include "at91lib/AT91SAM7X256.h"
-#include "config.h"
-
 #define BOARD_MAKE_CONTROLLER
+#define SAM7_PLATFORM SAM7X256
+#include "config.h"
+#include "at91sam7.h"
 
 #define CLK             18432000
 #define MCK             48054857
