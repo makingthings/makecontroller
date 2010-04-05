@@ -46,10 +46,15 @@
   \endcode
 */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void watchdogEnable(int millis);
-void watchdogRestart(void);
+void watchdogReset(void);
 void watchdogDisable(void);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // WATCHDOG_H
 
 

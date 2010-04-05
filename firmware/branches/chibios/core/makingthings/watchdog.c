@@ -32,22 +32,22 @@
   The maximum countdown length is 16 seconds.
   @param millis The number of milliseconds in which a reset will occur.
 */
-void watchdogEnable( int millis )
+void watchdogEnable(int millis)
 {
   int period = (millis * 256) / 1000;
   AT91C_BASE_WDTC->WDTC_WDMR =  AT91C_WDTC_WDRSTEN |        // enable reset on timeout
                                 AT91C_WDTC_WDDBGHLT |       // respect debug mode
                                 AT91C_WDTC_WDIDLEHLT |      // respect idle mode
-                                ( (period << 16 ) & AT91C_WDTC_WDD ) | // delta is as wide as the period, so we can restart anytime
+                                ((period << 16 ) & AT91C_WDTC_WDD) | // delta is as wide as the period, so we can restart anytime
                                 (period & AT91C_WDTC_WDV);  // set the period
 }
 
 /**
   Restart the watchdog timer countdown.
-  Call enable() first, and then call this occassionally to restart 
+  Call enable() first, and then call this occasionally to restart
   the watchdog countdown so that it doesn't reset.
 */
-void watchdogRestart( )
+void watchdogReset()
 {
   AT91C_BASE_WDTC->WDTC_WDCR = WATCHDOG_KEY | AT91C_WDTC_WDRSTT;
 }
@@ -58,7 +58,7 @@ void watchdogRestart( )
   
   This is done by default, unless you define WATCHDOG_ENABLE in your config.h
 */
-void watchdogDisable( )
+void watchdogDisable()
 {
   AT91C_BASE_WDTC->WDTC_WDMR = AT91C_WDTC_WDDIS;
 }

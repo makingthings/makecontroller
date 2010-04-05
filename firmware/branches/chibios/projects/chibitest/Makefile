@@ -38,12 +38,13 @@ CSRC = ${PORTSRC} ${KERNSRC} \
        ${LWIP}/contrib/chibios/lwipthread.c \
        ${LWIP}/contrib/chibios/arch/sys_arch.c \
        ${LWNETIFSRC} ${LWCORESRC} ${LWIPV4SRC} ${LWAPISRC} \
-       ${MT}/board.c ${MT}/system.c ${MT}/led.c ${MT}/pin.c \
+       ${MT}/board.c ${MT}/watchdog.c ${MT}/system.c ${MT}/led.c ${MT}/pin.c \
        ${MT}/analogin.c ${MT}/pwm.c \
        ${MT}/usbserial.c \
        ${MT}/spi.c ${MT}/eeprom.c ${MT}/i2c.c \
        ${MT}/network.c ${MT}/udpsocket.c ${MT}/tcpsocket.c ${MT}/tcpserver.c \
        ${LIBRARIES}/appled/appled.c \
+       ${LIBRARIES}/digitalin/digitalin.c \
        main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
@@ -80,7 +81,8 @@ INCDIR = $(PORTINC) $(KERNINC) ${MT} ${LWINC} \
          ${CHIBIOS}/os/hal/platforms/AT91SAM7 \
          ${CHIBIOS}/os/various \
          ${CHIBIOS}/os/ports/GCC/ARM7/AT91SAM7 \
-         ${LIBRARIES}/appled
+         ${LIBRARIES}/appled \
+         ${LIBRARIES}/digitalin
 
 BUILDDIR = build
 
