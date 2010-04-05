@@ -228,7 +228,7 @@
  * (requires the LWIP_TCP option)
  */
 #ifndef MEMP_NUM_TCP_PCB_LISTEN
-#define MEMP_NUM_TCP_PCB_LISTEN         8
+#define MEMP_NUM_TCP_PCB_LISTEN         2
 #endif
 
 /**
@@ -574,7 +574,7 @@
 
 /**
  * SNMP_CONCURRENT_REQUESTS: Number of concurrent requests the module will
- * allow. At least one request buffer is required.
+ * allow. At least one request buffer is required. 
  */
 #ifndef SNMP_CONCURRENT_REQUESTS
 #define SNMP_CONCURRENT_REQUESTS        1
@@ -589,7 +589,7 @@
 #endif
 
 /**
- * SNMP_PRIVATE_MIB:
+ * SNMP_PRIVATE_MIB: 
  */
 #ifndef SNMP_PRIVATE_MIB
 #define SNMP_PRIVATE_MIB                0
@@ -610,7 +610,7 @@
    ----------------------------------
 */
 /**
- * LWIP_IGMP==1: Turn on IGMP module.
+ * LWIP_IGMP==1: Turn on IGMP module. 
  */
 #ifndef LWIP_IGMP
 #define LWIP_IGMP                       0
@@ -707,6 +707,13 @@
 #define UDP_TTL                         (IP_DEFAULT_TTL)
 #endif
 
+/**
+ * LWIP_NETBUF_RECVINFO==1: append destination addr and port to every netbuf.
+ */
+#ifndef LWIP_NETBUF_RECVINFO
+#define LWIP_NETBUF_RECVINFO            0
+#endif
+
 /*
    ---------------------------------
    ---------- TCP options ----------
@@ -727,7 +734,7 @@
 #endif
 
 /**
- * TCP_WND: The size of a TCP window.  This must be at least
+ * TCP_WND: The size of a TCP window.  This must be at least 
  * (2 * TCP_MSS) for things to work well
  */
 #ifndef TCP_WND
@@ -757,14 +764,14 @@
 #endif
 
 /**
- * TCP_MSS: TCP Maximum segment size. (default is 128, a *very*
- * conservative default.)
+ * TCP_MSS: TCP Maximum segment size. (default is 536, a conservative default,
+ * you might want to increase this.)
  * For the receive side, this MSS is advertised to the remote side
  * when opening a connection. For the transmit size, this MSS sets
  * an upper limit on the MSS advertised by the remote host.
  */
 #ifndef TCP_MSS
-#define TCP_MSS                         128
+#define TCP_MSS                         536
 #endif
 
 /**
@@ -781,7 +788,7 @@
 
 
 /**
- * TCP_SND_BUF: TCP sender buffer space (bytes).
+ * TCP_SND_BUF: TCP sender buffer space (bytes). 
  */
 #ifndef TCP_SND_BUF
 #define TCP_SND_BUF                     256
@@ -792,7 +799,7 @@
  * as much as (2 * TCP_SND_BUF/TCP_MSS) for things to work.
  */
 #ifndef TCP_SND_QUEUELEN
-#define TCP_SND_QUEUELEN                (4 * (TCP_SND_BUF/TCP_MSS))
+#define TCP_SND_QUEUELEN                (4 * (TCP_SND_BUF)/(TCP_MSS))
 #endif
 
 /**
@@ -801,7 +808,7 @@
  * TCP snd_buf for select to return writable.
  */
 #ifndef TCP_SNDLOWAT
-#define TCP_SNDLOWAT                    (TCP_SND_BUF/2)
+#define TCP_SNDLOWAT                    ((TCP_SND_BUF)/2)
 #endif
 
 /**
@@ -884,7 +891,7 @@
  * LWIP_NETIF_API==1: Support netif api (in netifapi.c)
  */
 #ifndef LWIP_NETIF_API
-#define LWIP_NETIF_API                  0
+#define LWIP_NETIF_API                  1
 #endif
 
 /**
@@ -1492,9 +1499,12 @@
 #endif
 #define PPP_MINMRU                      128             /* No MRUs below this */
 
-
+#ifndef MAXNAMELEN
 #define MAXNAMELEN                      256     /* max length of hostname or name for auth */
+#endif
+#ifndef MAXSECRETLEN
 #define MAXSECRETLEN                    256     /* max length of password or secret */
+#endif
 
 #endif /* PPP_SUPPORT */
 
@@ -1509,28 +1519,28 @@
 #ifndef CHECKSUM_GEN_IP
 #define CHECKSUM_GEN_IP                 1
 #endif
-
+ 
 /**
  * CHECKSUM_GEN_UDP==1: Generate checksums in software for outgoing UDP packets.
  */
 #ifndef CHECKSUM_GEN_UDP
 #define CHECKSUM_GEN_UDP                1
 #endif
-
+ 
 /**
  * CHECKSUM_GEN_TCP==1: Generate checksums in software for outgoing TCP packets.
  */
 #ifndef CHECKSUM_GEN_TCP
 #define CHECKSUM_GEN_TCP                1
 #endif
-
+ 
 /**
  * CHECKSUM_CHECK_IP==1: Check checksums in software for incoming IP packets.
  */
 #ifndef CHECKSUM_CHECK_IP
 #define CHECKSUM_CHECK_IP               1
 #endif
-
+ 
 /**
  * CHECKSUM_CHECK_UDP==1: Check checksums in software for incoming UDP packets.
  */
