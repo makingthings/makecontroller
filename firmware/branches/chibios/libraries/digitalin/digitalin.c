@@ -18,10 +18,8 @@
 #include "digitalin.h"
 #include "analogin.h"
 #include "config.h"
-#include "error.h"
-#include "at91lib/AT91SAM7X256.h"
-#include <ch.h>
-#include <pal.h>
+#include "ch.h"
+#include "hal.h"
 
 // This number is 4 because the a/d converter is sitting on the IO's 4 - 7
 // this means that we'll need to use the A/d converter to get the digital value.
@@ -38,7 +36,16 @@
 #define DIGITALIN_2 AT91C_PIO_PB29
 #define DIGITALIN_3 AT91C_PIO_PB30
 
-static int digitalinGetIo( int index );
+static int digitalinGetIo( int index )
+{
+  switch (index) {
+    case 0: return DIGITALIN_0;
+    case 1: return DIGITALIN_1;
+    case 2: return DIGITALIN_2;
+    case 3: return DIGITALIN_3;
+    default: return 0;
+  }
+}
 
 /** 
   Read the value of a Digital Input on the MAKE Application Board.
@@ -60,22 +67,10 @@ static int digitalinGetIo( int index );
 */
 bool digitalinValue(int channel)
 {
-  if ( channel > 3 )
+  if (channel > 3)
     return ainValue(channel) > DIGITALIN_THRESHOLD;
   else 
     return palReadPad(IOPORT2, digitalinGetIo(channel));
-}
-
-int digitalinGetIo( int index )
-{
-  switch ( index )
-  {
-    case 0: return DIGITALIN_0;
-    case 1: return DIGITALIN_1;
-    case 2: return DIGITALIN_2;
-    case 3: return DIGITALIN_3;
-    default: return 0;
-  }
 }
 
 #ifdef OSC
