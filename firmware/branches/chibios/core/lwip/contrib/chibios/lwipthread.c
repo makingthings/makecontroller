@@ -213,6 +213,13 @@ static err_t ethernetif_init(struct netif *netif) {
   return ERR_OK;
 }
 
+static void lwipInitialized(void* a)
+{
+  Semaphore *sem = a;
+  if (sem != NULL)
+    chSemSignal(sem);
+}
+
 /**
  * @brief LWIP handling thread.
  *
@@ -224,18 +231,9 @@ msg_t lwip_thread(void *p) {
   EventListener el0, el1;
   struct ip_addr ip, gateway, netmask;
   static struct netif thisif;
-
-  /* Initializes the thing.*/
-  sys_init();
-  mem_init();
-  memp_init();
-  pbuf_init();
-  netif_init();
-  ip_init();
-  tcpip_init(NULL, NULL);
+  struct lwipthread_opts *opts = p;
 
   /* TCP/IP parameters, runtime or compile time.*/
-  struct lwipthread_opts *opts = p;
   if (p) {
     if (opts->macaddress) {
       unsigned i;
@@ -259,14 +257,21 @@ msg_t lwip_thread(void *p) {
     LWIP_GATEWAY(&gateway);
     LWIP_NETMASK(&netmask);
   }
+
+  /* Initializes the thing.*/
+  sys_init();
+  mem_init();
+  memp_init();
+  pbuf_init();
+  netif_init();
+  ip_init();
+  tcpip_init(lwipInitialized, (opts != NULL) ? opts->semaphore : 0);
+
   macSetAddress(&ETH1, thisif.hwaddr);
   netif_add(&thisif, &ip, &netmask, &gateway, NULL, ethernetif_init, tcpip_input);
 
   netif_set_default(&thisif);
   netif_set_up(&thisif);
-
-  if(opts)
-    chSemSignal(opts->semaphore);
 
   /* Setup event sources.*/
   evtInit(&evt, S2ST(5));
