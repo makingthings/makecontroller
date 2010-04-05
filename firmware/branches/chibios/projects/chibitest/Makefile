@@ -6,7 +6,7 @@
 # Define project name here
 PROJECT = chibitest
 # available optimization levels: -O0, -O1, -O2, -O3, -Os
-OPTIMIZATION = -O0
+OPTIMIZATION = -Os
 
 # components
 LWIP      = ../../core/lwip
@@ -23,9 +23,8 @@ include ${USB}/usb.mk
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-CSRC = ${PORTSRC} \
-       ${KERNSRC} \
-       ${USBSRC} \
+CSRC = ${PORTSRC} ${KERNSRC} \
+       ${USBCORESRC} ${USBCDCSRC} \
        ${CHIBIOS}/os/various/syscalls.c \
        ${CHIBIOS}/os/hal/src/pal.c \
        ${CHIBIOS}/os/hal/src/serial.c \
@@ -38,21 +37,12 @@ CSRC = ${PORTSRC} \
        ${CHIBIOS}/os/various/evtimer.c \
        ${LWIP}/contrib/chibios/lwipthread.c \
        ${LWIP}/contrib/chibios/arch/sys_arch.c \
-       ${LWNETIFSRC} \
-       ${LWCORESRC} \
-       ${LWIPV4SRC} \
-       ${LWAPISRC} \
-       ${MT}/board.c \
-       ${MT}/pin.c \
-       ${MT}/analogin.c \
-       ${MT}/usb_serial.c \
-       ${MT}/spi.c \
-       ${MT}/eeprom.c \
-       ${MT}/pwm.c \
-       ${MT}/system.c \
-       ${MT}/led.c \
-       ${MT}/network.c \
-       ${MT}/udpsocket.c \
+       ${LWNETIFSRC} ${LWCORESRC} ${LWIPV4SRC} ${LWAPISRC} \
+       ${MT}/board.c ${MT}/system.c ${MT}/led.c ${MT}/pin.c \
+       ${MT}/analogin.c ${MT}/pwm.c \
+       ${MT}/usbserial.c \
+       ${MT}/spi.c ${MT}/eeprom.c \
+       ${MT}/network.c ${MT}/udpsocket.c ${MT}/tcpsocket.c ${MT}/tcpserver.c \
        ${LIBRARIES}/appled/appled.c \
        main.c
 
@@ -84,7 +74,8 @@ TCPPSRC =
 ASMSRC = $(PORTASM) \
          ${CHIBIOS}/os/ports/GCC/ARM7/AT91SAM7/vectors.s
 
-INCDIR = $(PORTINC) $(KERNINC) ${MT} ${USBINC} ${LWINC} \
+INCDIR = $(PORTINC) $(KERNINC) ${MT} ${LWINC} \
+         ${USBCOREINC} ${USBCDCINC} \
          ${CHIBIOS}/os/hal/include \
          ${CHIBIOS}/os/hal/platforms/AT91SAM7 \
          ${CHIBIOS}/os/various \
