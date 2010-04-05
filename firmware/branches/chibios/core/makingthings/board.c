@@ -184,6 +184,8 @@ void hwinit1(void) {
     peripheral inits - these are here so they're conveniently already
     done for common usage, but can be removed by conditionalization
   */
+  ledEnable();
+
   #ifndef NO_AIN_INIT
 //  ainInit();
   #endif

@@ -25,8 +25,6 @@ int main(int argc, char **argv) {
   UNUSED(argc);
   UNUSED(argv);
 
-  ledEnable();
-
   while (true) {
     chThdSleepMilliseconds(990);
     ledSetValue(ON);
