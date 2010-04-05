@@ -23,10 +23,23 @@
 #ifndef CORE_H
 #define CORE_H
 
-#include <ch.h>
+// all the basics
+#include "ch.h"
+#include "hal.h"
 #include "types.h"
 #include "error.h"
 #include "config.h"
+#ifdef MAKE_CTRL_NETWORK
+#include "network.h"
+#include "udpsocket.h"
+#include "tcpsocket.h"
+#include "tcpserver.h"
+#endif // MAKE_CTRL_NETWORK
+#ifdef MAKE_CTRL_USB
+#include "usbserial.h"
+#endif
+#include "led.h"
+#include "analogin.h"
 
 #define UNUSED(x) (void)x;
 #define MIN(a, b) ((a < b) ? a : b)
@@ -35,11 +48,7 @@
 #ifdef __cplusplus
 
 #include "rtos.h"
-#include "network.h"
-#include "usb_serial.h"
 #include "system.h"
-#include "analogin.h"
-#include "led.h"
 #include "timer.h"
 #include "fasttimer.h"
 #include "pwm.h"

@@ -11,6 +11,7 @@
 #include "lwip/dns.h"
 #include "lwip/sockets.h"
 #include "lwip/netif.h"
+#include "lwip/netifapi.h"
 #include "lwipopts.h"
 
 #include "core.h"
@@ -47,12 +48,11 @@ static bool networkDhcpStart(void);
 static bool networkDhcpStop(void);
 #endif // LWIP_DHCP
 
-void networkInit( )
+void networkInit()
 {
 #if (LWIP_DNS == 1)
   dns.resolvedAddress = -1;
-  chSemInit(&dns.semaphore, 1);
-  chSemWait(&dns.semaphore);
+  chSemInit(&dns.semaphore, 0);
 #endif
   
   // customize MAC address based on serial number
@@ -63,7 +63,7 @@ void networkInit( )
   macAddress[3] = 0x50 | ( ( serialNumber >> 12 ) & 0xF );
   
   macInit(); // chibios mac init
-  int address, mask, gateway;
+  int address = 0, mask = 0, gateway = 0;
   networkLastValidAddress(&address, &mask, &gateway);
 
   Semaphore initSemaphore;
@@ -80,7 +80,7 @@ void networkInit( )
 
   chThdCreateStatic(wa_lwip_thread, LWIP_THREAD_STACK_SIZE, LOWPRIO, lwip_thread, &opts);
   chSemWait(&initSemaphore); // wait until lwip is set up
-  
+
 #if (LWIP_DHCP == 1)
   if (networkDhcp())
     networkDhcpStart();
@@ -104,20 +104,17 @@ void networkInit( )
   net->setAddress(192, 168, 0, 100);
   \endcode
 */
-bool networkSetAddress( int address, int mask, int gateway )
+bool networkSetAddress(int address, int mask, int gateway)
 {
   bool rv = false;
 #if (LWIP_DHCP == 1)
-  if(!networkDhcp()) { // only actually change the address if we're not using DHCP
+  if (!networkDhcp()) { // only actually change the address if we're not using DHCP
 #endif
     struct ip_addr ip, gw, netmask;
     ip.addr = address;
     netmask.addr = mask;
     gw.addr = gateway;
-    netif_set_addr( mcnetif, &ip, &netmask, &gw );
-#if (LWIP_DHCP == 1)
-    dhcp_inform(mcnetif);
-#endif
+    netifapi_netif_set_addr(mcnetif, &ip, &netmask, &gw);
     rv = true;
 #if (LWIP_DHCP == 1)
   }
@@ -125,12 +122,12 @@ bool networkSetAddress( int address, int mask, int gateway )
 
   // but write the addresses to memory regardless,
   // so we can use them next time DHCP is disabled
-  eepromWrite( EEPROM_SYSTEM_NET_ADDRESS, address );
-  eepromWrite( EEPROM_SYSTEM_NET_MASK, mask );
-  eepromWrite( EEPROM_SYSTEM_NET_GATEWAY, gateway );
+  eepromWrite(EEPROM_SYSTEM_NET_ADDRESS, address);
+  eepromWrite(EEPROM_SYSTEM_NET_MASK, mask);
+  eepromWrite(EEPROM_SYSTEM_NET_GATEWAY, gateway);
 
   int total = address + mask + gateway;
-  eepromWrite( EEPROM_SYSTEM_NET_CHECK, total );
+  eepromWrite(EEPROM_SYSTEM_NET_CHECK, total);
 
   return rv;
 }
@@ -171,11 +168,11 @@ void networkAddress(int* address, int* mask, int* gateway)
 */
 int networkAddressToString(char* data, int address)
 {
-  return siprintf( data, "%d.%d.%d.%d",
-                  IP_ADDRESS_A( address ),
-                  IP_ADDRESS_B( address ),
-                  IP_ADDRESS_C( address ),
-                  IP_ADDRESS_D( address ));
+  return siprintf(data, "%d.%d.%d.%d",
+                  IP_ADDRESS_A(address),
+                  IP_ADDRESS_B(address),
+                  IP_ADDRESS_C(address),
+                  IP_ADDRESS_D(address));
 }
 
 #if (LWIP_DHCP == 1)
@@ -231,13 +228,13 @@ bool networkDhcpStart()
 {
   int count = 100;
   bool rv = false;
-  if (dhcp_start( mcnetif ) != ERR_OK)
+  if (netifapi_dhcp_start(mcnetif) != ERR_OK)
     return false;
   // now hang out for a second until we get an address
   // if DHCP is enabled but we don't find a DHCP server, just use the network config stored in EEPROM
   while (mcnetif->ip_addr.addr == 0 && count--) // timeout after 10 (?) seconds of waiting for a DHCP address
-    chThdSleepMilliseconds( 100 );
-  if (mcnetif->ip_addr.addr == 0 ) { // if we timed out getting an address via DHCP, just use whatever's in EEPROM
+    chThdSleepMilliseconds(100);
+  if (mcnetif->ip_addr.addr == 0) { // if we timed out getting an address via DHCP, just use whatever's in EEPROM
     int a, m, g;
     networkLastValidAddress(&a, &m, &g);
 //    networkSetAddress(a, m, g);
@@ -249,10 +246,8 @@ bool networkDhcpStart()
 
 bool networkDhcpStop()
 {
-  if (dhcp_release(mcnetif) != ERR_OK)
-    return false;
-  dhcp_stop(mcnetif);
-  netif_set_up(mcnetif); // bring the interface back up, as dhcp_release() takes it down
+  netifapi_dhcp_stop(mcnetif);
+  netifapi_netif_set_up(mcnetif); // bring the interface back up, as dhcp_release() takes it down
   return true;
 }
 
