@@ -32,8 +32,8 @@
   \ingroup networking
 */
 
-int webclientGet(const char* hostname, int port, const char* path, char* response, int response_size, const char* headers[]);
-int webclientPost(const char* hostname, int port, const char* path, char* data, int data_length, int response_size, const char* headers[]);
+int webclientGet(const char* hostname, const char* path, int port, char* response, int response_size, const char* headers[]);
+int webclientPost(const char* hostname, const char* path, int port, char* data, int data_length, int response_size, const char* headers[]);
 
 
 
