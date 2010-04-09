@@ -21,20 +21,52 @@
 #include "lwip/sockets.h"
 
 /**
-  Create a new TCP socket.
+  Open a new TCP socket.
+  Be sure to close any sockets you open - otherwise, you won't be able to open any new ones.
+  @param address The IP address to connect to - use the IP_ADDRESS macro if needed.
+  @param port The port to connect on.
+  @return A handle to the new socket, or -1 if it failed to connect.
   
   \b Example
   \code
-  // create a new socket
-  int tcp;
-  // that's all there is to it!
+  int sock = tcpOpen(IP_ADDRESS(192, 168, 0, 210), 11101)
+  if (sock > -1) {
+    // then we got a good connection
+    // ...reading & writing...
+    tcpClose(sock); // make sure to close it if we connected
+  }
   \endcode
 */
-int tcpNew(void)
+int tcpOpen(int address, int port)
 {
-  return lwip_socket(0, SOCK_STREAM, IPPROTO_TCP);
+  int sock = lwip_socket(0, SOCK_STREAM, IPPROTO_TCP);
+  if (sock >= 0) {
+    struct sockaddr_in to = {
+      .sin_family = AF_INET,
+      .sin_addr.s_addr = address,
+      .sin_port = port
+    };
+    if (lwip_connect(sock, (const struct sockaddr*)&to, sizeof(to)) != 0) {
+      lwip_close(sock);
+      sock = -1;
+    }
+  }
+  return sock;
 }
 
+/**
+  Create a new TCP socket.
+  @return A handle to the new socket.
+
+  \b Example
+  \code
+  // create a new socket
+  int sock = tcpNew();
+  if (sock < 0) {
+    // then there was a problem
+  }
+  \endcode
+*/
 bool tcpClose(int socket)
 {
   return lwip_close(socket) == 0;
@@ -46,38 +78,11 @@ int tcpSetReadTimeout(int socket, int timeout)
 }
 
 /**
-  Make a connection to a host.
-  You'll need to make a connection to a host before you can read or write.  
-  @param address The IP address to connect to - use the IP_ADDRESS macro.
-  @param port The port to connect on.
-  @return True if the connection was successful, false if not.
-  
-  \b Example
-  \code
-  int tcp; // create a new socket
-  if(tcp.connect(IP_ADDRESS(192,168,0,210), 11101))
-  {
-    // then we got a good connection
-    // ...reading & writing...
-    tcp.close(); // make sure to close it if we connected
-  }
-  \endcode
-*/
-int tcpConnect(int socket, int address, int port)
-{
-  struct sockaddr_in to;
-  to.sin_family = AF_INET;
-  to.sin_addr.s_addr = address;
-  to.sin_port = port;
-  return lwip_connect(socket, (const struct sockaddr*)&to, sizeof(to)) == 0;
-}
-
-/**
   The number of bytes available to be read.
   @return The number of bytes ready to be read.
-  @see read() for an example
+  @see tcpRead() for an example
 */
-int tcpBytesAvailable(int socket)
+int tcpAvailable(int socket)
 {
   int bytes;
   return (lwip_ioctl(socket, FIONREAD, &bytes) == 0) ? bytes : -1;
@@ -93,12 +98,11 @@ int tcpBytesAvailable(int socket)
   
   \b Example
   \code
-  int tcp;
+  int sock = tcpNew();
   char mydata = "some of my data";
-  if( tcp.connect( IP_ADDRESS(192, 168, 0, 210), 10000 ) )
-  {
-    int written = tcp.write(mydata, strlen(mydata));
-    tcp.close();
+  if (tcpConnect(sock, IP_ADDRESS(192, 168, 0, 210), 10000) == true) {
+    int written = tcpWrite(sock, mydata, strlen(mydata));
+    tcpClose(sock);
   }
   \endcode
 */
@@ -109,24 +113,26 @@ int tcpWrite(int socket, const char* data, int length)
 
 /**
   Read data.
-  Note this won't return until it has received as many bytes as you asked for.
-  Use bytesAvailable() to see how many are ready to be read.
+  Note - this is free to return the number of bytes available,
+  which is not necessarily as much as you asked for.
+  Use tcpAvailable() to see how many are ready to be read, or tcpSetReadTimeout()
+  to change the amount of time to wait for data to become available.
+  @param sock The socket to read on, as returned by tcpOpen().
   @param data Where to store the incoming data.
   @param length How many bytes of data to read.
   @return The number of bytes successfully read.
   
   \b Example
   \code
-  int tcp;
   char mydata[512];
-  if( tcp.connect( IP_ADDRESS(192,168,0,210), 10101 ) )
-  {
-    int available = tcp.bytesAvailable();
+  int sock = tcpOpen(sock, IP_ADDRESS(192, 168, 0, 210), 10101);
+  if (sock > -1) {
+    int available = tcpAvailable(sock);
     if(available > 512) // make sure we don't read more than we have room for
       available = 512;
-    int read = tcp.read(mydata, available);
+    int read = tcpRead(mydata, sizeof(mydata));
     // handle our new data here
-    tcp.close(); // and finally close down
+    tcpClose(sock); // and finally close down
   }
   \endcode
 */
@@ -154,12 +160,12 @@ int tcpReadLine(int socket, char* data, int length)
   {
     data++; // here data points to where byte will be written
     lineLength++; // linelength now reflects true number of bytes
-    readLength = tcpRead( socket, data, 1 );
+    readLength = tcpRead(socket, data, 1);
     // here, if readlength == 1, data has a new char in next position, linelength is one off,
     //       if readlength == 0, data had no new char and linelength is right
   } while ((readLength == 1) && (lineLength < length - 1) && (*data != '\n'));
   
-  if ( readLength == 1 ) // here, length is corrected if there was a character  
+  if (readLength == 1) // here, length is corrected if there was a character
     lineLength++;
   
   return lineLength;
