@@ -48,6 +48,14 @@ typedef unsigned long long int ulonglong;
 #define OFF false
 #endif
 
+#ifndef YES
+#define YES 1
+#endif
+
+#ifndef NO
+#define NO 0
+#endif
+
 #ifndef NULL
 #define NULL 0
 #endif
