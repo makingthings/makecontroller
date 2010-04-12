@@ -19,11 +19,7 @@
 #define TCP_SERVER_H
 
 #include "config.h"
-
 #ifdef MAKE_CTRL_NETWORK
-
-#include "types.h"
-#include "tcpsocket.h"
 
 /**
   Listen for incoming TCP connections.
@@ -36,19 +32,14 @@
   \code
   void myTask(void* p)
   {
-    TcpServer server; // create the server
-    server.listen(8080); // put it into listen mode on port 8080
-    // now in our loop, wait for new connections, say hello to each of them, and close them
-    while(1)
-    {
-      TcpSocket* client = server.accept(); // this will wait for new connections to come in
-      if(client) // if we got a good connection
-      {
-        client->write("hello there", 11);
-        client->close();
-        delete client;
+    int server = tcpserverOpen(8080); // put it into listen mode on port 8080
+    // now, wait for new connections, say hello to each of them, and close them
+    while (1) {
+      int client = tcpserverAccept(server); // this will wait for new connections to come in
+      if (client > -1) { // make sure we got a good connection
+        tcpWrite(client, "hello there", 11);
+        tcpClose(client);
       }
-      Task::sleep(2);
     }
   }
   \endcode
@@ -58,10 +49,15 @@
   
   \ingroup networking
 */
-
-int  tcpserverNew(int port);
+#ifdef __cplusplus
+extern "C" {
+#endif
+int  tcpserverOpen(int port);
 int  tcpserverAccept(int server);
-bool tcpserverClose(int server);
+void tcpserverClose(int server);
+#ifdef __cplusplus
+}
+#endif
 
 #endif //MAKE_CTRL_NETWORK
 #endif // TCP_SERVER_H

@@ -731,9 +731,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
   buf.p = buf.ptr = NULL;
   if (to) {
     remote_addr.addr = ((const struct sockaddr_in *)to)->sin_addr.s_addr;
-// TODO - why does this use ntohs?  Gives reverse endian port numbers...comment out for now.
-//    remote_port      = ntohs(((const struct sockaddr_in *)to)->sin_port);
-    remote_port      = ((const struct sockaddr_in *)to)->sin_port;
+    remote_port      = ntohs(((const struct sockaddr_in *)to)->sin_port);
     buf.addr         = &remote_addr;
     buf.port         = remote_port;
   } else {

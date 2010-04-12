@@ -44,8 +44,9 @@ int tcpOpen(int address, int port)
     struct sockaddr_in to = {
       .sin_family = AF_INET,
       .sin_addr.s_addr = address,
-      .sin_port = port
+      .sin_port = htons(port)
     };
+
     if (lwip_connect(sock, (const struct sockaddr*)&to, sizeof(to)) != 0) {
       lwip_close(sock);
       sock = -1;
