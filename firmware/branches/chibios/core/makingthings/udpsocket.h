@@ -18,10 +18,7 @@
 #ifndef UDP_SOCKET_H
 #define UDP_SOCKET_H
 
-#include "config.h"
-#ifdef MAKE_CTRL_NETWORK
 #include "types.h"
-#include "network.h"
 
 /**
   Read and write Ethernet data via UDP.
@@ -48,15 +45,18 @@
   
   \ingroup networking
 */
-
-int  udpNew(void);
-bool udpClose(int socket);
+#ifdef __cplusplus
+extern "C" {
+#endif
+int  udpOpen(void);
+void udpClose(int socket);
 bool udpBind(int socket, int port);
 int  udpWrite(int socket, const char* data, int length, int address, int port);
 int  udpRead(int socket, char* data, int length);
 int  udpReadFrom(int socket, char* data, int length, int* src_address, int* src_port);
-int  udpBytesAvailable(int socket);
+int  udpAvailable(int socket);
 int  udpSetBlocking(int socket, bool blocking);
-
-#endif // MAKE_CTRL_NETWORK
+#ifdef __cplusplus
+}
+#endif
 #endif // UDP_SOCKET_H

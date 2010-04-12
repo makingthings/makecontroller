@@ -16,7 +16,7 @@
 *********************************************************************************/
 
 #include "tcpserver.h"
-
+#include "lwipopts.h"
 #if defined(MAKE_CTRL_NETWORK) && LWIP_TCP
 #include "lwip/sockets.h"
 
