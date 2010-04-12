@@ -16,6 +16,7 @@
 *********************************************************************************/
 
 #include "udpsocket.h"
+#include "lwipopts.h"
 #if defined(MAKE_CTRL_NETWORK) && LWIP_UDP
 #include "lwip/sockets.h"
 
@@ -27,20 +28,20 @@
   \b Example
   \code
   // create a new socket
-  int sock = udpNew();
-  if (sock >= 0) {
+  int sock = udpOpen();
+  if (sock > -1) {
     // then it was created successfully
   }
   \endcode
 */
-int udpNew(void)
+int udpOpen(void)
 {
   return lwip_socket(0, SOCK_DGRAM, IPPROTO_UDP);
 }
 
-bool udpClose(int socket)
+void udpClose(int socket)
 {
-  return lwip_close(socket) == 0;
+  lwip_close(socket);
 }
 
 /**
@@ -152,7 +153,7 @@ int udpReadFrom(int socket, char* data, int length, int* from_address, int* from
   }
   \endcode
 */
-int udpBytesAvailable(int socket)
+int udpAvailable(int socket)
 {
   int bytes;
   return (lwip_ioctl(socket, FIONREAD, &bytes) == 0) ? bytes : -1;
