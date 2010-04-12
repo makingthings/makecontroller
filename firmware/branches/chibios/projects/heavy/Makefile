@@ -17,32 +17,22 @@ LIBRARIES = ../../libraries
 
 # Imported source files
 include ${CHIBIOS}/os/ports/GCC/ARM7/port.mk
+include $(CHIBIOS)/os/hal/platforms/AT91SAM7/platform.mk
+include $(CHIBIOS)/os/hal/hal.mk
 include ${CHIBIOS}/os/kernel/kernel.mk
 include ${LWIP}/lwip.mk
 include ${USB}/usb.mk
+include ${MT}/mtcore.mk
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-CSRC = ${PORTSRC} ${KERNSRC} \
+CSRC = ${PORTSRC} ${KERNSRC} $(HALSRC) $(PLATFORMSRC) ${MTCORESRC} \
        ${USBCORESRC} ${USBCDCSRC} \
        ${LWNETIFSRC} ${LWCORESRC} ${LWIPV4SRC} ${LWAPISRC} \
        ${LWIP}/contrib/chibios/lwipthread.c \
        ${LWIP}/contrib/chibios/arch/sys_arch.c \
        ${CHIBIOS}/os/various/syscalls.c \
-       ${CHIBIOS}/os/hal/src/pal.c \
-       ${CHIBIOS}/os/hal/src/serial.c \
-       ${CHIBIOS}/os/hal/src/mac.c \
-       ${CHIBIOS}/os/hal/platforms/AT91SAM7/pal_lld.c \
-       ${CHIBIOS}/os/hal/platforms/AT91SAM7/serial_lld.c \
-       ${CHIBIOS}/os/hal/platforms/AT91SAM7/at91sam7_mii.c \
-       ${CHIBIOS}/os/hal/platforms/AT91SAM7/mac_lld.c \
-       ${CHIBIOS}/os/hal/platforms/AT91SAM7/at91lib/aic.c \
        ${CHIBIOS}/os/various/evtimer.c \
-       ${MT}/board.c ${MT}/watchdog.c ${MT}/system.c ${MT}/led.c ${MT}/pin.c \
-       ${MT}/analogin.c ${MT}/pwm.c \
-       ${MT}/usbserial.c \
-       ${MT}/spi.c ${MT}/eeprom.c ${MT}/i2c.c \
-       ${MT}/network.c ${MT}/udpsocket.c ${MT}/tcpsocket.c ${MT}/tcpserver.c \
        ${LIBRARIES}/appled/appled.c \
        ${LIBRARIES}/digitalin/digitalin.c \
        ${LIBRARIES}/webclient/webclient.c \
@@ -76,12 +66,10 @@ TCPPSRC =
 ASMSRC = $(PORTASM) \
          ${CHIBIOS}/os/ports/GCC/ARM7/AT91SAM7/vectors.s
 
-INCDIR = $(PORTINC) $(KERNINC) ${MT} ${LWINC} \
+INCDIR = $(PORTINC) $(KERNINC) $(HALINC) $(PLATFORMINC) ${MT} ${LWINC}  \
          ${USBCOREINC} ${USBCDCINC} \
-         ${CHIBIOS}/os/hal/include \
-         ${CHIBIOS}/os/hal/platforms/AT91SAM7 \
-         ${CHIBIOS}/os/various \
-         ${CHIBIOS}/os/ports/GCC/ARM7/AT91SAM7 \
+         $(CHIBIOS)/os/various \
+         $(CHIBIOS)/os/ports/GCC/ARM7/AT91SAM7 \
          ${LIBRARIES}/appled \
          ${LIBRARIES}/digitalin \
          ${LIBRARIES}/webclient
