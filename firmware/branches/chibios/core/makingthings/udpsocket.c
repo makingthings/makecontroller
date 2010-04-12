@@ -21,19 +21,16 @@
 
 /**
   Create a new UDP socket.
-  When you create a new socket, you can optionally bind it directly to the port
-  you want to listen on - the \b port argument is optional.  Otherwise, you don't
-  need to pass in a port number, and the socket will not be bound to a port.
-  @param port (optional) An integer specifying the port to open - anything less than 0 will
-  prevent the socket from binding immediately.  Is -1 by default.
+  @return A handle to the new socket, or -1 if there was an error.
+  @see udpWrite(), udpBind(), udpRead()
   
   \b Example
   \code
-  // create a new socket without binding
-  UdpSocket udp;
-  
-  // or create one that binds automatically
-  UdpSocket udp(10000); // bind to port 10000
+  // create a new socket
+  int sock = udpNew();
+  if (sock >= 0) {
+    // then it was created successfully
+  }
   \endcode
 */
 int udpNew(void)
@@ -48,49 +45,54 @@ bool udpClose(int socket)
 
 /**
   Bind to a port to listen for incoming data.
-  You need to bind to a port before trying to read.  If you're only
+  Before you can receive UDP data, you need to bind to a port.  If you're only
   going to be writing, you don't need to bother binding.
+  @param socket The socket obtained from udpNew()
   @param port An integer specifying the port to bind to.
   @return True on success, false on failure.
   
   \b Example
   \code
-  UdpSocket udp; // create a new socket without binding
-  udp.bind(10000); // then bind to port 10000
-  // now we're ready to read
+  int sock = udpNew();  // create a new socket
+  if (udpBind(sock, 10000) == true) { // then bind to port 10000
+    // we're successfully bound, and ready to read
+  }
   \endcode
 */
 bool udpBind(int socket, int port)
 {
-  struct sockaddr_in sa;
-  sa.sin_family = AF_INET;
-  sa.sin_addr.s_addr = INADDR_ANY;
-  sa.sin_port = port;
+  struct sockaddr_in sa = {
+    .sin_family = AF_INET,
+    .sin_addr.s_addr = INADDR_ANY,
+    .sin_port = htons(port)
+  };
   return lwip_bind(socket, (const struct sockaddr *)&sa, sizeof(sa)) == 0;
 }
 
 /**
-  Send data.
+  Send UDP data.
+  @param socket The socket, obtained via udpNew()
   @param data The data to send.
   @param length The number of bytes to send.
-  @param address The IP address to send to - use the IP_ADDRESS macro.
+  @param address The IP address to send to - use the IP_ADDRESS macro if necessary.
   @param port The port to send on.
   @return The number of bytes written.
   
   \b Example
   \code
-  UdpSocket udp; // create a new socket without binding
-  int address = IP_ADDRESS(192,168,0,210); // where to send
+  int sock = udpNew();  // create a new socket
+  int address = IP_ADDRESS(192, 168, 0, 210); // where to send
   int port = 10000; // which port to send on
-  int written = udp.write("some data", strlen("some data"), address, port);
+  int written = udpWrite(sock, "some data", strlen("some data"), address, port);
   \endcode
 */
-int udpWrite( int socket, const char* data, int length, int address, int port )
+int udpWrite(int socket, const char* data, int length, int address, int port)
 {
-  struct sockaddr_in sa;
-  sa.sin_family = AF_INET;
-  sa.sin_addr.s_addr = address;
-  sa.sin_port = port;
+  struct sockaddr_in sa = {
+    .sin_family = AF_INET,
+    .sin_addr.s_addr = address,
+    .sin_port = htons(port)
+  };
   return lwip_sendto(socket, data, length, 0, (struct sockaddr*)&sa, sizeof(sa));
 }
 
@@ -103,26 +105,20 @@ int udpSetBlocking(int socket, bool blocking)
 /**
   Read data.
   Be sure to bind to a port before trying to read.  If you want to know which
-  address the message came from, supply arguments for \b src_address and \b src_port,
-  otherwise you can omit those parameters.
-  
+  address the message came from, see udpReadFrom().
+  @param socket The UDP socket, as obtained from udpNew()
   @param data Where to store the incoming data.
   @param length How many bytes of data to read.
-  @param src_address  (optional) An int that will be set to the address of the sender.
-  @param src_port (optional) An int that will be set to the port of the sender.
   @return The number of bytes read.
-  @see bind
+  @see udpBind()
   
   \b Example
   \code
   char mydata[128];
-  UdpSocket udp(10000); // create a new socket, binding to port 10000
-  int read = udp.read(mydata, 128);
-  
-  // or, if we wanted to check who sent the message
-  int sender_address;
-  int sender port;
-  int read = udp.read(mydata, 128, &sender_address, &sender_port);
+  int sock = udpNew();  // create a new socket
+  if (udpBind(sock, 10000) == true) { // listen on port 10000
+    int read = udpRead(sock, mydata, sizeof(mydata));
+  }
   \endcode
 */
 
@@ -131,18 +127,31 @@ int udpRead(int socket, char* data, int length)
   return lwip_recvfrom(socket, data, length, 0, NULL, NULL);
 }
 
-int udpReadFrom( int socket, char* data, int length, int* from_address, int* from_port )
+int udpReadFrom(int socket, char* data, int length, int* from_address, int* from_port)
 {
   struct sockaddr_in from;
   socklen_t fromlen;
   int recvd = lwip_recvfrom(socket, data, length, 0, (struct sockaddr*)&from, &fromlen);
-  if(from_address)
+  if (from_address)
     *from_address = from.sin_addr.s_addr;
-  if(from_port)
+  if (from_port)
     *from_port = from.sin_port;
   return recvd;
 }
 
+/*
+  The number of bytes available for reading on this socket.
+  @param socket The socket to check.
+  @return The number of bytes available.
+
+  \b Example
+  \code
+  int sock = udpNew();  // create a new socket
+  if (udpBytesAvailable(sock) > 0) {
+    // we have some reading to do...
+  }
+  \endcode
+*/
 int udpBytesAvailable(int socket)
 {
   int bytes;
