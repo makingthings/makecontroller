@@ -17,7 +17,7 @@
 
 #include "tcpserver.h"
 
-#ifdef MAKE_CTRL_NETWORK
+#if defined(MAKE_CTRL_NETWORK) && LWIP_TCP
 #include "lwip/sockets.h"
 
 /**

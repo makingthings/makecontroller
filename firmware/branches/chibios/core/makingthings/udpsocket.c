@@ -16,7 +16,7 @@
 *********************************************************************************/
 
 #include "udpsocket.h"
-#ifdef MAKE_CTRL_NETWORK
+#if defined(MAKE_CTRL_NETWORK) && LWIP_UDP
 #include "lwip/sockets.h"
 
 /**
