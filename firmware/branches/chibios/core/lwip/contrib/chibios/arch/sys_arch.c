@@ -1,5 +1,5 @@
 /*
-    ChibiOS/RT - Copyright (C) 2006-2007 Giovanni Di Sirio.
+    ChibiOS/RT - Copyright (C) 2010 Giovanni Di Sirio.
 
     This file is part of ChibiOS/RT.
 
@@ -10,11 +10,18 @@
 
     ChibiOS/RT is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+                                      ---
+
+    A special exception to the GPL can be applied should you wish to distribute
+    a combined work that includes ChibiOS/RT, without being obliged to provide
+    the source code for any proprietary components. See the file exception.txt
+    for full details of how and when the exception can be applied.
 */
 /*
  * **** This file incorporates work covered by the following copyright and ****
@@ -51,11 +58,12 @@
  *
  */
 
-#include <ch.h>
+#include "ch.h"
 
 #include "lwip/opt.h"
 #include "lwip/mem.h"
 #include "lwip/sys.h"
+#include "lwip/stats.h"
 
 #include "arch/cc.h"
 #include "arch/sys_arch.h"
@@ -67,13 +75,20 @@ void sys_init(void) {
 sys_sem_t sys_sem_new(u8_t count) {
 
   sys_sem_t sem = chHeapAlloc(NULL, sizeof(Semaphore));
-  chSemInit(sem, (cnt_t)count);
+  if (sem == 0) {
+    SYS_STATS_INC(sem.err);
+  }
+  else {
+    chSemInit(sem, (cnt_t)count);
+    SYS_STATS_INC(sem.used);
+  }
   return sem;
 }
 
 void sys_sem_free(sys_sem_t sem) {
 
   chHeapFree(sem);
+  SYS_STATS_DEC(sem.used);
 }
 
 void sys_sem_signal(sys_sem_t sem) {
@@ -95,16 +110,22 @@ u32_t sys_arch_sem_wait(sys_sem_t sem, u32_t timeout) {
 }
 
 sys_mbox_t sys_mbox_new(int size) {
-  sys_mbox_t mbox;
-
-  mbox = chHeapAlloc(NULL, sizeof(Mailbox) + sizeof(msg_t) * size);
-  chMBInit(mbox, (void *)(((uint8_t *)mbox) + sizeof(Mailbox)), size);
+  
+  sys_mbox_t mbox = chHeapAlloc(NULL, sizeof(Mailbox) + sizeof(msg_t) * size);
+  if (mbox == 0) {
+    SYS_STATS_INC(mbox.err);
+  }
+  else {
+    chMBInit(mbox, (void *)(((uint8_t *)mbox) + sizeof(Mailbox)), size);
+    SYS_STATS_INC(mbox.used);
+  }
   return mbox;
 }
 
 void sys_mbox_free(sys_mbox_t mbox) {
 
   chHeapFree(mbox);
+  SYS_STATS_DEC(mbox.used);
 }
 
 void sys_mbox_post(sys_mbox_t mbox, void *msg) {

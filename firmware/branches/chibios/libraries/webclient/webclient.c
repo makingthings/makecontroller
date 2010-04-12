@@ -16,7 +16,8 @@
 *********************************************************************************/
 
 #include "config.h"
-#ifdef MAKE_CTRL_NETWORK
+#include "lwipopts.h"
+#if defined(MAKE_CTRL_NETWORK) && LWIP_DNS == 1
 
 #include "stdlib.h"
 #include "string.h"
@@ -63,9 +64,8 @@ static char buffer[WEBCLIENT_BUFFER_SIZE];
 */
 int webclientGet(const char* hostname, const char* path, int port, char* response, int response_size, const char* headers[])
 {
-  int s = tcpNew();
-  if (s < 0) return -1;
-  if (tcpConnect(s, networkGetHostByName(hostname, WEBCLIENT_DNS_TIMEOUT), port)) {
+  int s = tcpOpen(networkGetHostByName(hostname, WEBCLIENT_DNS_TIMEOUT), port);
+  if (s > -1) {
     // construct the GET request
     int len = sniprintf(buffer, WEBCLIENT_BUFFER_SIZE, "GET %s HTTP/1.1\r\n%s%s%s",
                                 path,
@@ -118,9 +118,8 @@ int webclientGet(const char* hostname, const char* path, int port, char* respons
 */
 int webclientPost(const char* hostname, const char* path, int port, char* data, int data_length, int response_size, const char* headers[])
 {
-  int s = tcpNew();
-  if (s < 0) return -1;
-  if (tcpConnect(s, networkGetHostByName(hostname, WEBCLIENT_DNS_TIMEOUT), port)) {
+  int s = tcpOpen(networkGetHostByName(hostname, WEBCLIENT_DNS_TIMEOUT), port);
+  if (s > -1) {
     int len = sniprintf( buffer, WEBCLIENT_BUFFER_SIZE,
                                 "POST %s HTTP/1.1\r\nContent-Length: %d\r\n%s%s%s", 
                                 path, data_length,

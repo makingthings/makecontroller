@@ -39,6 +39,7 @@
  * header files or to override the low level drivers settings.
  */
 #include "mcuconf.h"
+#include "config.h"
 
 /*===========================================================================*/
 /* PAL driver related settings.                                              */
@@ -80,7 +81,7 @@
 /**
  * @brief Enables the MAC subsystem.
  */
-#if !defined(CH_HAL_USE_MAC) || defined(__DOXYGEN__)
+#if (!defined(CH_HAL_USE_MAC) || defined(__DOXYGEN__)) && defined(MAKE_CTRL_NETWORK)
 #ifndef SIMULATOR
 #define CH_HAL_USE_MAC              TRUE
 #endif
