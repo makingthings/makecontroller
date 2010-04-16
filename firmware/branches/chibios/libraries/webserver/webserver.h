@@ -18,19 +18,12 @@
 #ifndef WEB_SERVER_H
 #define WEB_SERVER_H
 
-#include "config.h"
-#ifdef MAKE_CTRL_NETWORK
-
-#include "string.h"
-#include "stdio.h"
-#include "rtos.h"
-#include "tcpserver.h"
-#include "tcpsocket.h"
 #include "http.h"
+#include "types.h"
 
+#ifndef MAX_FORM_ELEMENTS
 #define MAX_FORM_ELEMENTS 5
-#define MAX_WEB_HANDLERS 5
-#define REQUEST_SIZE_MAX 256
+#endif
 
 /**
   A structure that represents a key-value pair in an HTML form.
@@ -38,8 +31,7 @@
   to note that this structure becomes invalid as soon as the data used to create is gone.
   \ingroup Network
 */
-typedef struct
-{
+typedef struct HtmlFormElement_t {
   char *key;   /**< A pointer to the key of this element. */ 
   char *value; /**< A pointer to the value of this element. */
 } HtmlFormElement;
@@ -49,8 +41,7 @@ typedef struct
   If you need a larger form, you can adjust \b MAX_FORM_ELEMENTS in webserver.h it accommodates 10 by default.
   \ingroup Network
 */
-typedef struct
-{
+typedef struct HtmlForm_t {
   HtmlFormElement elements[MAX_FORM_ELEMENTS]; /**< An array of form elements. */
   int count;                                   /**< The number of form elements contained in this form. */
 } HtmlForm;
@@ -101,55 +92,28 @@ typedef struct
   };
   \endcode
 */
-class WebHandler
-{
-  public:
-    /**
-      The top level element that your responder matches.
-    */
-    virtual const char* address() = 0;
-    virtual bool get( TcpSocket* client, char* path );
-    virtual bool post( TcpSocket* client, char* path, char* body, int len );
-    virtual bool put( TcpSocket* client, char* path, char* body, int len );
-    virtual bool del( TcpSocket* client, char* path );
-    virtual ~WebHandler( ) { }
 
-  protected:
-    bool setResponseCode( TcpSocket* client, int code );
-//    bool addHeader( const char* type, const char* value, bool lastone = true );
-};
+typedef struct WebHandler_t {
+  const char* address;
+  bool (*onRequest)(int socket, HttpMethod method, char* path, char* body, int bodylen);
+  struct WebHandler_t* next;
+} WebHandler;
 
 /**
   A simple webserver.
   Also see \ref WebResponder.
   \ingroup networking
 */
-class WebServer
-{
-  public:
-    static WebServer* get();
-    bool route(WebHandler* handler);
-    bool setListenPort(int port);
-    int getListenPort();
-    void sendResponse();
-  
-  protected:
-    WebServer( );
-    virtual ~WebServer( ) { }
-    static WebServer* _instance; // the only instance of WebServer anywhere.
-    friend void webServerLoop( void *parameters );
-    Task* webServerTask;
-    TcpServer tcpServer;
-    int listenPort, newListenPort, hits, handler_count;
-    char requestBuf[ REQUEST_SIZE_MAX ];
-
-    virtual void processRequest( TcpSocket* request, HttpMethod method, char* path );
-    WebHandler* handlers[MAX_WEB_HANDLERS];
-    char* getRequestAddress( char* request, int length, HttpMethod* method );
-    int getBody( TcpSocket* socket, char* requestBuffer, int maxSize );
-};
-
-#endif // MAKE_CTRL_NETWORK
+#ifdef __cplusplus
+extern "C" {
+#endif
+bool webserverEnable(bool on, int port);
+void webserverAddRoute(WebHandler* handler);
+void webserverSetResponseOK(int socket);
+void webserverSetResponseCode(int socket, int code);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // WEB_SERVER_H
 
