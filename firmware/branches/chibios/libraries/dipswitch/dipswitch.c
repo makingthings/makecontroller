@@ -55,17 +55,13 @@ void dipswitchInit( )
 int dipswitchValue( )
 {
   spiLock();
-  unsigned char c[ 2 ];
-  c[ 0 ] = 0xFE;
-  c[ 1 ] = 0xFF;
-  
-  spiReadWriteBlock( DIPSWITCH_DEVICE, c, 2 );
+  unsigned char c[2] = { 0xFE, 0xFF };
+  spiReadWriteBlock(DIPSWITCH_DEVICE, c, 2);
   spiUnlock();
 
-  int r = ( c[ 1 ] & 0x01 ) << 8 | 
-          ( c[ 0 ] & 0x01 ) << 7 | 
-            c[ 1 ] >> 1; 
-  return r;
+  return (c[1] & 0x01) << 8 |
+         (c[0] & 0x01) << 7 |
+          c[1] >> 1;
 }
 
 /**
@@ -92,7 +88,7 @@ int dipswitchValue( )
 */
 bool dipswitchValue1( int channel )
 {
-  if( channel < 0 || channel > 7 )
+  if (channel < 0 || channel > 7)
     return false;
 
   int val = dipswitchValue();
