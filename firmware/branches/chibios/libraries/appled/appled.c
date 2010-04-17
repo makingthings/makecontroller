@@ -42,20 +42,27 @@
   #define APPLED_3 PIN_PA28
 #endif
 
-static int appledGetIo(int index);
+static int appledGetIo(int index)
+{
+  switch (index) {
+    case 0: return APPLED_0;
+    case 1: return APPLED_1;
+    case 2: return APPLED_2;
+    case 3: return APPLED_3;
+    default: return -1;
+  }
+}
 
 /**
-  Create a new AppLed
-  @param index Which AppLed - valid options are 0, 1, 2, and 3
+  Configure an app LED.
+  @param index Which app LED - valid options are 0-3
 
   \b Example
   \code
-  AppLed a(1); // controlling AppLed 1
-  a.setState(1); // turn it on
-  a.setState(0); // turn it off
+  appledEnable(1); // set it up
   \endcode
 */
-void appledEnable( int channel )
+void appledEnable(int channel)
 {
   short io = appledGetIo(channel);
   pinSetMode(io, OUTPUT);
@@ -64,34 +71,30 @@ void appledEnable( int channel )
 
 /**
   Turn an AppLed on or off.
+  @param channel Which app LED - valid options are 0-3.
   @param state True to turn it on, false to turn it off.
 
   \b Example
   \code
-  AppLed* a = new AppLed(0); // allocate a new AppLed 0
-  a->setState(1); // turn it on
-  a->setState(0); // turn it off
+  appledSetValue(0, ON); // turn LED 0 on
+  appledSetValue(1, OFF); // turn LED 1 off
   \endcode
 */
-void appledSetValue( int channel, bool on )
+void appledSetValue(int channel, bool on)
 {
   pinSetValue(appledGetIo(channel), !on); // inverted since it's tied to 3.3V
 }
 
 /**
   Read whether an AppLed is currently on or not.
-
   @return true if it's on, false if it's not.
 
   \b Example
   \code
-  AppLed appled(2);
-  if( appled.getState() )
-  {
+  if (appledValue() == ON) {
     // then do this
   }
-  else
-  {
+  else {
     // then do that
   }
   \endcode
@@ -99,18 +102,6 @@ void appledSetValue( int channel, bool on )
 bool appledValue(int channel)
 {
   return !pinValue(appledGetIo(channel));
-}
-
-int appledGetIo(int index)
-{
-  switch( index )
-  {
-    case 0: return APPLED_0;
-    case 1: return APPLED_1;
-    case 2: return APPLED_2;
-    case 3: return APPLED_3;
-    default: return -1;
-  }
 }
 
 #ifdef OSC
