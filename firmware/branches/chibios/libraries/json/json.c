@@ -144,33 +144,33 @@ void jsonwriterInit(JsonWriter* jw, char* buffer, int len)
 */
 char* jsonwriterObjectOpen(JsonWriter* jw)
 {
-  if( !jw->p )
+  if (!jw->p)
     return 0;
   int len = 1;
-  switch(jw->steps[jw->depth]) {
+  switch (jw->steps[jw->depth]) {
     case JSON_ARRAY_START:
     case JSON_OBJ_START:
     case JSON_START:
-      if(jw->remaining < len)
+      if (jw->remaining < len)
         return NULL;
       *jw->p = '{';
       break;
     case JSON_OBJ_KEY:
     case JSON_IN_ARRAY:
       len += 1; // for ,
-      if(jw->remaining < len)
+      if (jw->remaining < len)
         return NULL;
       memcpy(jw->p, ",{", len);
       break;
     case JSON_OBJ_VALUE:
       len += 1; // for :
-      if(jw->remaining < len)
+      if (jw->remaining < len)
         return NULL;
       memcpy(jw->p, ":{", len);
       break;
   }
   
-  if(++jw->depth > JSON_MAX_DEPTH)
+  if (++jw->depth > JSON_MAX_DEPTH)
     return NULL;
   jw->steps[jw->depth] = JSON_OBJ_START;
   jw->remaining -= len;
@@ -200,7 +200,7 @@ char* jsonwriterObjectKey(JsonWriter* jw, const char *key)
 */
 char* jsonwriterObjectClose(JsonWriter* jw)
 {
-  if(jw->remaining < 1 || !jw->p )
+  if (jw->remaining < 1 || !jw->p )
     return NULL;
   *jw->p++ = '}';
   jw->remaining--;
@@ -219,32 +219,32 @@ char* jsonwriterObjectClose(JsonWriter* jw)
 */
 char* jsonwriterArrayOpen(JsonWriter* jw)
 {
-  if( !jw->p )
+  if (!jw->p)
     return 0;
   int len = 1;
-  switch(jw->steps[jw->depth]) {
+  switch (jw->steps[jw->depth]) {
     case JSON_ARRAY_START:
     case JSON_OBJ_START:
     case JSON_START:
-      if(jw->remaining < len)
+      if (jw->remaining < len)
         return NULL;
       *jw->p = '[';
       break;
     case JSON_OBJ_KEY:
     case JSON_IN_ARRAY:
       len += 1; // for ,
-      if(jw->remaining < len)
+      if (jw->remaining < len)
         return NULL;
       memcpy(jw->p, ",[", len);
       break;
     case JSON_OBJ_VALUE:
       len += 1; // for :
-      if(jw->remaining < len)
+      if (jw->remaining < len)
         return NULL;
       memcpy(jw->p, ":[", len);
       break;
   }
-  if(++jw->depth > JSON_MAX_DEPTH)
+  if (++jw->depth > JSON_MAX_DEPTH)
     return NULL;
   jw->steps[jw->depth] = JSON_ARRAY_START;
   jw->remaining -= len;
@@ -262,7 +262,7 @@ char* jsonwriterArrayOpen(JsonWriter* jw)
 */
 char* jsonwriterArrayClose(JsonWriter* jw)
 {
-  if(jw->remaining < 1 || !jw->p)
+  if (jw->remaining < 1 || !jw->p)
     return NULL;
   *jw->p++ = ']';
   jw->remaining--;
@@ -284,31 +284,31 @@ char* jsonwriterArrayClose(JsonWriter* jw)
 */
 char* jsonwriterString(JsonWriter* jw, const char *string)
 {
-  if( !jw->p )
+  if (!jw->p)
     return 0;
   int string_len = strlen(string) + 2 /* quotes */ + 1 /* null terminator*/;
   // json doesn't actually need the null-terminator, but it's worth
   // requiring so we can just use sprintf directly into the buffer
 
-  switch(jw->steps[jw->depth]) {
+  switch (jw->steps[jw->depth]) {
     case JSON_ARRAY_START:
     case JSON_OBJ_START:
-      if(jw->remaining < string_len)
+      if (jw->remaining < string_len)
         return NULL;
-      string_len = snprintf(jw->p, string_len, "\"%s\"", string);
+      string_len = sniprintf(jw->p, string_len, "\"%s\"", string);
       break;
     case JSON_OBJ_KEY:
     case JSON_IN_ARRAY:
       string_len += 1; // for ,
-      if(jw->remaining < string_len)
+      if (jw->remaining < string_len)
         return NULL;
-      string_len = snprintf(jw->p, string_len, ",\"%s\"", string);
+      string_len = sniprintf(jw->p, string_len, ",\"%s\"", string);
       break;
     case JSON_OBJ_VALUE:
       string_len += 1; // for :
-      if(jw->remaining < string_len)
+      if (jw->remaining < string_len)
         return NULL;
-      string_len = snprintf(jw->p, string_len, ":\"%s\"", string);
+      string_len = sniprintf(jw->p, string_len, ":\"%s\"", string);
       break;
     default:
       return NULL;
@@ -330,17 +330,16 @@ char* jsonwriterString(JsonWriter* jw, const char *string)
 */
 char* jsonwriterInt(JsonWriter* jw, int value)
 {
-  if( !jw->p )
+  if (!jw->p)
     return 0;
   int int_as_str_len = 10 + 1 + 1; // largest 32-bit int is 10 digits long, and also leave room for a +/-
   int int_len = 0;
-  switch(jw->steps[jw->depth])
-  {
+  switch (jw->steps[jw->depth]) {
     case JSON_ARRAY_START:
     {
       char temp[int_as_str_len];
-      int_len = snprintf(temp, int_as_str_len, "%d", value);
-      if(jw->remaining < int_len)
+      int_len = sniprintf(temp, int_as_str_len, "%d", value);
+      if (jw->remaining < int_len)
         return NULL;
       memcpy(jw->p, temp, int_len);
       break;
@@ -349,8 +348,8 @@ char* jsonwriterInt(JsonWriter* jw, int value)
     {
       int_as_str_len += 1; // for ,
       char temp[int_as_str_len];
-      int_len = snprintf(temp, int_as_str_len, ",%d", value);
-      if(jw->remaining < int_len)
+      int_len = sniprintf(temp, int_as_str_len, ",%d", value);
+      if (jw->remaining < int_len)
         return NULL;
       memcpy(jw->p, temp, int_len);
       break;
@@ -359,8 +358,8 @@ char* jsonwriterInt(JsonWriter* jw, int value)
     {
       int_as_str_len += 1; // for :
       char temp[int_as_str_len];
-      int_len = snprintf(temp, int_as_str_len, ":%d", value);
-      if(jw->remaining < int_len)
+      int_len = sniprintf(temp, int_as_str_len, ":%d", value);
+      if (jw->remaining < int_len)
         return NULL;
       memcpy(jw->p, temp, int_len);
       break;
@@ -385,7 +384,7 @@ char* jsonwriterInt(JsonWriter* jw, int value)
 */
 char* jsonwriterBool(JsonWriter* jw, bool value)
 {
-  if( !jw->p )
+  if (!jw->p)
     return 0;
   const char* boolval;
   int bool_len;
@@ -397,23 +396,23 @@ char* jsonwriterBool(JsonWriter* jw, bool value)
     boolval = "false";
     bool_len = 5 + 1; // for null terminator
   }
-  switch(jw->steps[jw->depth]) {
+  switch (jw->steps[jw->depth]) {
     case JSON_ARRAY_START:
-      if(jw->remaining < bool_len)
+      if (jw->remaining < bool_len)
         return NULL;
-      bool_len = snprintf(jw->p, bool_len, "%s", boolval);
+      bool_len = sniprintf(jw->p, bool_len, "%s", boolval);
       break;
     case JSON_IN_ARRAY:
       bool_len += 1; // for ,
-      if(jw->remaining < bool_len)
+      if (jw->remaining < bool_len)
         return NULL;
-      bool_len = snprintf(jw->p, bool_len, ",%s", boolval);
+      bool_len = sniprintf(jw->p, bool_len, ",%s", boolval);
       break;
     case JSON_OBJ_VALUE:
       bool_len += 1; // for :
-      if(jw->remaining < bool_len)
+      if (jw->remaining < bool_len)
         return NULL;
-      bool_len = snprintf(jw->p, bool_len, ":%s", boolval);
+      bool_len = sniprintf(jw->p, bool_len, ":%s", boolval);
       break;
     default:
       return NULL; // bogus state
@@ -431,7 +430,7 @@ char* jsonwriterBool(JsonWriter* jw, bool value)
 // static
 void jsonwriterAppendedAtom(JsonWriter* jw)
 {
-  switch(jw->steps[jw->depth]) {
+  switch (jw->steps[jw->depth]) {
     case JSON_OBJ_START:
     case JSON_OBJ_KEY:
       jw->steps[jw->depth] = JSON_OBJ_VALUE;
@@ -514,15 +513,14 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
   jr->p = text;
   jr->len = len;
 
-  while(jr->len) {
-    while(*jr->p == ' ') // eat white space
+  while (jr->len) {
+    while (*jr->p == ' ') // eat white space
       jr->p++;
     token = jsonreaderGetToken( jr->p, jr->len);
-    switch(token)
-    {
+    switch (token) {
       case token_true:
-        if(jr->handlers.bool_handler &&
-          !jr->handlers.bool_handler(jr->context, true))
+        if (jr->handlers.bool_handler &&
+           !jr->handlers.bool_handler(jr->context, true))
         {
           return false;
         }
@@ -530,8 +528,8 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
         jr->len -= 4;
         break;
       case token_false:
-        if(jr->handlers.bool_handler &&
-          !jr->handlers.bool_handler(jr->context, false))
+        if (jr->handlers.bool_handler &&
+           !jr->handlers.bool_handler(jr->context, false))
         {
           return false;
         }
@@ -539,8 +537,8 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
         jr->len -= 5;
         break;
       case token_null:
-        if(jr->handlers.null_handler &&
-          !jr->handlers.null_handler(jr->context))
+        if (jr->handlers.null_handler &&
+           !jr->handlers.null_handler(jr->context))
         {
           return false;
         }
@@ -556,8 +554,8 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
         break;
       case token_left_bracket:
         jr->steps[++jr->depth] = JSON_READER_OBJECT_START;
-        if(jr->handlers.start_obj_handler &&
-          !jr->handlers.start_obj_handler(jr->context))
+        if (jr->handlers.start_obj_handler &&
+           !jr->handlers.start_obj_handler(jr->context))
         {
           return false;
         }
@@ -566,8 +564,8 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
         break;
       case token_right_bracket:
         jr->depth--;
-        if(jr->handlers.end_obj_handler &&
-          !jr->handlers.end_obj_handler(jr->context))
+        if (jr->handlers.end_obj_handler &&
+           !jr->handlers.end_obj_handler(jr->context))
         {
           return false;
         }
@@ -576,8 +574,8 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
         break;
       case token_left_brace:
         jr->steps[++jr->depth] = JSON_READER_IN_ARRAY;
-        if(jr->handlers.start_array_handler &&
-          !jr->handlers.start_array_handler(jr->context))
+        if (jr->handlers.start_array_handler &&
+           !jr->handlers.start_array_handler(jr->context))
         {
           return false;
         }
@@ -586,8 +584,8 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
         break;
       case token_right_brace:
         jr->depth--;
-        if(jr->handlers.end_array_handler &&
-          !jr->handlers.end_array_handler(jr->context))
+        if (jr->handlers.end_array_handler &&
+           !jr->handlers.end_array_handler(jr->context))
         {
           return false;
         }
@@ -599,30 +597,29 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
         const char* p = jr->p;
         bool keepgoing = true;
         bool gotdecimal = false;
-        do
-        {
-          if(*p == '.') {
-            if(gotdecimal) // we only expect to get one decimal place in a number
+        do {
+          if (*p == '.') {
+            if (gotdecimal) // we only expect to get one decimal place in a number
               return false;
             gotdecimal = true;
             p++;
           }
-          else if(!isdigit(*p))
+          else if (!isdigit((int)*p))
             keepgoing = false;
           else
             p++;
-        } while(keepgoing);
+        } while (keepgoing);
         int size = p - jr->p;
-        if(gotdecimal) {
-          if(jr->handlers.float_handler &&
-            !jr->handlers.float_handler(jr->context, atof(jr->p)))
+        if (gotdecimal) {
+          if (jr->handlers.float_handler &&
+             !jr->handlers.float_handler(jr->context, atof(jr->p)))
           {
             return false;
           }
         }
         else {
-          if(jr->handlers.int_handler &&
-            !jr->handlers.int_handler(jr->context, atoi(jr->p)))
+          if (jr->handlers.int_handler &&
+             !jr->handlers.int_handler(jr->context, atoi(jr->p)))
           {
             return false;
           }
@@ -636,10 +633,10 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
         char* p = ++jr->p; // move past the opening "
         jr->len--;
         bool keepgoing = true;
-        while(keepgoing) {
-          if(*p == '\\') // we got an escape - skip the escape and the next character
+        while (keepgoing) {
+          if (*p == '\\') // we got an escape - skip the escape and the next character
             p += 2;
-          else if(*p == '"') // we got the end of a string
+          else if (*p == '"') // we got the end of a string
             keepgoing = false;
           else
             p++; // keep looking for the end of the string
@@ -649,16 +646,16 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
 
         // figure out if this is a key or a normal string
         bool objkey = false;
-        if(jr->steps[jr->depth] == JSON_READER_OBJECT_START) {
-          jr->steps[jr->depth] = JSON_READER_IN_OBJECT;
+        if (jr->steps[jr->depth] == JSON_READER_OBJECT_START) {
+            jr->steps[jr->depth] = JSON_READER_IN_OBJECT;
           objkey = true;
         }
-        if(jr->gotcomma && jr->steps[jr->depth] == JSON_READER_IN_OBJECT) {
+        if (jr->gotcomma && jr->steps[jr->depth] == JSON_READER_IN_OBJECT) {
           jr->gotcomma = false;
           objkey = true;
         }
 
-        if(objkey) { // last one was a comma - next string has to be a key
+        if (objkey) { // last one was a comma - next string has to be a key
           if(jr->handlers.obj_key_handler &&
             !jr->handlers.obj_key_handler(jr->context, jr->p, size))
           {
@@ -666,8 +663,8 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
           }
         }
         else { // just a normal string
-          if(jr->handlers.string_handler &&
-            !jr->handlers.string_handler(jr->context, jr->p, size))
+          if (jr->handlers.string_handler &&
+             !jr->handlers.string_handler(jr->context, jr->p, size))
           {
             return false;
           }
@@ -689,9 +686,9 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
 // static
 JsonReaderToken jsonreaderGetToken(char* text, int len)
 {
-  if(len < 1)
+  if (len < 1)
     return token_unknown;
-  switch(text[0]) {
+  switch (text[0]) {
     case ':':
       return token_colon;
     case ',':
