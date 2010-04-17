@@ -17,13 +17,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
- * @file templates/chconf.h
- * @brief Configuration file template.
- * @addtogroup config
- * @{
- */
-
 #ifndef _CHCONF_H_
 #define _CHCONF_H_
 
@@ -472,4 +465,3 @@ struct {                                                                \
 
 #endif  /* _CHCONF_H_ */
 
-/** @} */

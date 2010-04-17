@@ -21,34 +21,6 @@
 #include "config.h"
 #ifdef MAKE_CTRL_NETWORK
 
-/**
-  Listen for incoming TCP connections.
-  
-  \section Usage
-  To get started using a TcpServer, create a new TcpServer object, put it in listen mode and
-  start accepting requests.  The TcpServer will accept one client after another, blocking
-  until a new client makes a connection.
-  
-  \code
-  void myTask(void* p)
-  {
-    int server = tcpserverOpen(8080); // put it into listen mode on port 8080
-    // now, wait for new connections, say hello to each of them, and close them
-    while (1) {
-      int client = tcpserverAccept(server); // this will wait for new connections to come in
-      if (client > -1) { // make sure we got a good connection
-        tcpWrite(client, "hello there", 11);
-        tcpClose(client);
-      }
-    }
-  }
-  \endcode
-  
-  If you're looking to serve HTTP requests check the WebServer instead, which is built on
-  the TcpServer.
-  
-  \ingroup networking
-*/
 #ifdef __cplusplus
 extern "C" {
 #endif

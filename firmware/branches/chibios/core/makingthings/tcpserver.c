@@ -21,13 +21,46 @@
 #include "lwip/sockets.h"
 
 /**
+  \defgroup tcpserver TCP Server
+  Listen for incoming TCP connections.
+
+  \section Usage
+  Create a new TCP server, specifying which port to listen on, and then wait for
+  incoming connections.
+
+  \code
+  void myTask(void* p)
+  {
+    int server = tcpserverOpen(8080); // put it into listen mode on port 8080
+    // now, wait for new connections, say hello to each of them, and close them
+    while (1) {
+      int client = tcpserverAccept(server); // this will wait for new connections to come in
+      if (client > -1) { // make sure we got a good connection
+        tcpWrite(client, "hello there", 11);
+        tcpClose(client);
+      }
+    }
+  }
+  \endcode
+
+  If you're looking to serve HTTP requests check the \ref webserver instead, which is built on
+  the TCP server.
+
+  \ingroup networking
+  @{
+*/
+
+/**
   Create a new TcpServer.
-  
+  @param port The port to listen on.
+  @return A handle to the server.  -1 indicates that it was not created successfully.
+
   \b Example
   \code
-  TcpServer server;
-  // or allocate one...
-  TcpServer* server = new TcpServer();
+  int server = tcpserverOpen(80);
+  if (server > -1) {
+    // then it was created successfully.
+  }
   \endcode
 */
 int tcpserverOpen(int port)
@@ -52,15 +85,13 @@ int tcpserverOpen(int port)
 
 /**
   Close this socket.
-  
-  @return True on success, false on failure.
+  @param server The handle to the server, as returned by tcpserverOpen();
   
   \b Example
   \code
-  TcpServer server;
-  server.listen(80);
-  TcpSocket* newConnection = server.accept();
-  server.close();
+  int server = tcpserverOpen(80);
+  // ... do some work for a while
+  tcpserverClose(server);
   \endcode
 */
 void tcpserverClose(int server)
@@ -70,21 +101,19 @@ void tcpserverClose(int server)
 
 /**
   Accept an incoming connection.
-  This method will block until a new connection is made, and return the new TcpSocket
-  that represents the remote connection.
+  This method will wait until a new connection is made, and return a handle to
+  the connecting \ref tcpsocket.
   
-  Note - you'll need to delete the TcpSocket returned once you're done with it.
-  @return The newly connected socket, or NULL if it failed.
+  Note - be sure to close the TCP socket returned once you're done with it.
+  @return The newly connected socket, or -1 if it failed.
   
   \b Example
   \code
-  TcpServer* s = new TcpServer();
-  s->listen(8080);
-  while(1)
-  {
-    TcpSocket* client = s->accept();
+  int server = tcpserverOpen(80);
+  while (1) {
+    int client = tcpserverAccept(server);
     // ...do something with the client connection here...
-    delete client; // then clean it up
+    tcpClose(client); // then clean it up
   }
   \endcode
 */
@@ -92,6 +121,9 @@ int tcpserverAccept(int server)
 {
   return lwip_accept(server, 0, 0);
 }
+
+/** @}
+*/
 
 #endif // MAKE_CTRL_NETWORK
 

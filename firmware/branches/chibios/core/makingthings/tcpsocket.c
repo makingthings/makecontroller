@@ -15,10 +15,47 @@
 
 *********************************************************************************/
 
-#include "tcpsocket.h"
+#include "config.h"
 #include "lwipopts.h"
 #if defined(MAKE_CTRL_NETWORK) && LWIP_TCP
+#include "tcpsocket.h"
 #include "lwip/sockets.h"
+
+/**
+  \defgroup tcpsocket TCP Socket
+  Read and write Ethernet data via TCP.
+  TCP is a reliable way to transfer information via Ethernet.
+
+  \section Usage
+  There are two main ways you might obtain a TCP socket:
+   - you create one yourself
+   - you receive one from a \ref tcpserver listening for incoming connections.
+
+  If you're creating one yourself, you can use the tcpOpen() method to connect to a
+  server socket.  If you get one from a \ref tcpserver, it's already open.  Then,
+  tcpRead() and tcpWrite() as you like.  You can always check the number
+  of bytes available to be read with tcpAvailable().
+
+  \code
+  // Making a connection ourselves
+  int sock = tcpOpen(IP_ADDRESS(192, 168, 0, 100), 10100);
+  char buffer[512]; // buffer to read into
+  if (sock > -1) {
+    tcpWrite(sock, "hi", 2);
+    int available = tcpAvailable(sock);
+    if (available > 0) {
+      tcpRead(sock, buffer, available);
+    }
+    tcpClose(sock); // always remember to close it if tcpOpen() was successful
+  }
+  \endcode
+
+  If you're looking to access the web check the \ref WebClient instead, which
+  provides web-specific behavior on top of TCP sockets.
+
+  \ingroup networking
+  @{
+*/
 
 /**
   Open a new TCP socket.
@@ -29,7 +66,7 @@
   
   \b Example
   \code
-  int sock = tcpOpen(IP_ADDRESS(192, 168, 0, 210), 11101)
+  int sock = tcpOpen(IP_ADDRESS(192, 168, 0, 210), 11101);
   if (sock > -1) {
     // then we got a good connection
     // ...reading & writing...
@@ -56,21 +93,18 @@ int tcpOpen(int address, int port)
 }
 
 /**
-  Create a new TCP socket.
-  @return A handle to the new socket.
+  Close a TCP socket.
+  @param socket A handle to the socket to close.
 
   \b Example
   \code
-  // create a new socket
-  int sock = tcpNew();
-  if (sock < 0) {
-    // then there was a problem
-  }
+  int sock = tcpOpen(IP_ADDRESS(192, 168, 0, 210), 11101);
+  tcpClose(sock);
   \endcode
 */
-bool tcpClose(int socket)
+void tcpClose(int socket)
 {
-  return lwip_close(socket) == 0;
+  lwip_close(socket);
 }
 
 int tcpSetReadTimeout(int socket, int timeout)
@@ -92,16 +126,16 @@ int tcpAvailable(int socket)
 /**
   Send data.
   Make sure you're already successfully connected before trying to write.
+  @param socket The socket to send on, as returned by tcpOpen()
   @param data The data to send.
   @param length The number of bytes to send.
   @return The number of bytes written.
-  @see connect()
   
   \b Example
   \code
-  int sock = tcpNew();
+  int sock = tcpOpen(IP_ADDRESS(192, 168, 0, 210), 10000);
   char mydata = "some of my data";
-  if (tcpConnect(sock, IP_ADDRESS(192, 168, 0, 210), 10000) == true) {
+  if (sock > -1) {
     int written = tcpWrite(sock, mydata, strlen(mydata));
     tcpClose(sock);
   }
@@ -118,7 +152,7 @@ int tcpWrite(int socket, const char* data, int length)
   which is not necessarily as much as you asked for.
   Use tcpAvailable() to see how many are ready to be read, or tcpSetReadTimeout()
   to change the amount of time to wait for data to become available.
-  @param sock The socket to read on, as returned by tcpOpen().
+  @param socket The socket to read on, as returned by tcpOpen().
   @param data Where to store the incoming data.
   @param length How many bytes of data to read.
   @return The number of bytes successfully read.
@@ -126,7 +160,7 @@ int tcpWrite(int socket, const char* data, int length)
   \b Example
   \code
   char mydata[512];
-  int sock = tcpOpen(sock, IP_ADDRESS(192, 168, 0, 210), 10101);
+  int sock = tcpOpen(IP_ADDRESS(192, 168, 0, 210), 10101);
   if (sock > -1) {
     int available = tcpAvailable(sock);
     if(available > 512) // make sure we don't read more than we have room for
@@ -146,10 +180,11 @@ int tcpRead(int socket, char* data, int length)
   Read a single line from a TCP socket, as terminated by CR LF (0x0D 0x0A).
   Make sure you have an open socket before trying to read from it.  The line
   endings are not included in the data returned.
+  @param socket The socket to read from.
   @param data Where to store the incoming data.
-  @param length How many bytes to read.
+  @param length The maximum number of bytes to read.
   @return The number of bytes of data successfully read.
-  @see read() for a similar example
+  @see tcpRead() for a similar example
 */
 int tcpReadLine(int socket, char* data, int length)
 {
@@ -171,6 +206,9 @@ int tcpReadLine(int socket, char* data, int length)
   
   return lineLength;
 }
+
+/** @}
+*/
 
 #endif // MAKE_CTRL_NETWORK
 
