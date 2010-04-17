@@ -17,13 +17,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
- * @file templates/halconf.h
- * @brief HAL configuration header.
- * @addtogroup HAL_CONF
- * @{
- */
-
 /*
  * HAL configuration file, this file allows to enable or disable the various
  * device drivers from your application. You may also use this file in order
@@ -38,7 +31,7 @@
  * settings file. This file can be used to include platform specific
  * header files or to override the low level drivers settings.
  */
-#include "mcuconf.h"
+//#include "mcuconf.h"
 #include "config.h"
 
 /*===========================================================================*/
@@ -151,5 +144,3 @@
 /*#define MMC_POLLING_DELAY           10*/
 
 #endif /* _HALCONF_H_ */
-
-/** @} */
