@@ -20,31 +20,6 @@
 
 #include "types.h"
 
-/**
-  Read and write Ethernet data via UDP.
-  UDP is a lightweight network protocol that's great for sending lots of data
-  at quick rates.  Unlike TcpSocket you're not always guaranteed that each and every message
-  you send will ultimately reach its destination, but the ones that do will get there very quickly.
-  
-  \section Usage
-  First, create a new UDP Socket, with udpNew().  If you're only going to be
-  writing, simply call the udpWrite() method as needed.  To receive data, first call udpBind()
-  on the desired port, and then use udpRead() as needed.
-  
-  \code
-  int sock = udpNew(); // sock is a handle to the socket created
-  udpWrite(sock, "hi there", strlen("hi there"), IP_ADDRESS(192,168,0,5), 10000); // can write immediately
-  if (sock.bind(10000) == true) {
-    char data[128];
-    int bytes_read = udpRead(sock, data, sizeof(data)); // this will wait for data to show up
-    if (bytes_read > 0) { // did we read successfully?
-      // ...handle new data here...
-    }
-  }
-  \endcode
-  
-  \ingroup networking
-*/
 #ifdef __cplusplus
 extern "C" {
 #endif

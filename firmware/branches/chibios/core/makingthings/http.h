@@ -23,7 +23,12 @@
 #define HTTP_CONTENT_HTML "text/html\r\n\r\n"
 #define HTTP_CONTENT_PLAIN "text/plain\r\n\r\n"
 
-enum HttpMethod {HTTP_GET, HTTP_PUT, HTTP_POST, HTTP_DELETE};
+typedef enum {
+  HTTP_GET,
+  HTTP_PUT,
+  HTTP_POST,
+  HTTP_DELETE
+} HttpMethod;
 
 
 #endif // HTTP_H

@@ -15,10 +15,39 @@
 
 *********************************************************************************/
 
-#include "udpsocket.h"
+#include "config.h"
 #include "lwipopts.h"
 #if defined(MAKE_CTRL_NETWORK) && LWIP_UDP
+#include "udpsocket.h"
 #include "lwip/sockets.h"
+
+/**
+  \defgroup udpsocket UDP Socket
+  Read and write Ethernet data via UDP.
+  UDP is a lightweight network protocol that's great for sending lots of data
+  at quick rates.  Unlike \ref tcpsocket you're not always guaranteed that each and every message
+  you send will ultimately reach its destination, but the ones that do will get there very quickly.
+
+  \section Usage
+  First, create a new UDP socket, with udpOpen().  If you're only going to be
+  writing, simply call the udpWrite() method as needed.  To receive data, first call udpBind()
+  on the desired port, and then use udpRead() as needed.
+
+  \code
+  int sock = udpOpen(); // sock is a handle to the socket created
+  udpWrite(sock, "hi there", strlen("hi there"), IP_ADDRESS(192,168,0,5), 10000); // can write immediately
+  if (udpBind(sock, 10000) == true) {
+    char data[128];
+    int bytes_read = udpRead(sock, data, sizeof(data)); // this will wait for data to show up
+    if (bytes_read > 0) { // did we read successfully?
+      // ...handle new data here...
+    }
+  }
+  udpClose(sock);
+  \endcode
+  \ingroup networking
+  @{
+*/
 
 /**
   Create a new UDP socket.
@@ -39,6 +68,15 @@ int udpOpen(void)
   return lwip_socket(0, SOCK_DGRAM, IPPROTO_UDP);
 }
 
+/**
+  Close a new UDP socket.
+
+  \b Example
+  \code
+  int sock = udpOpen();
+  udpClose(sock);
+  \endcode
+*/
 void udpClose(int socket)
 {
   lwip_close(socket);
@@ -122,7 +160,6 @@ int udpSetBlocking(int socket, bool blocking)
   }
   \endcode
 */
-
 int udpRead(int socket, char* data, int length)
 {
   return lwip_recvfrom(socket, data, length, 0, NULL, NULL);
@@ -158,6 +195,9 @@ int udpAvailable(int socket)
   int bytes;
   return (lwip_ioctl(socket, FIONREAD, &bytes) == 0) ? bytes : -1;
 }
+
+/** @}
+*/
 
 #endif // MAKE_CTRL_NETWORK
 
