@@ -37,28 +37,35 @@
 static int webclientReadResponse(int s, char* buf, int size);
 static char webclientBuf[WEBCLIENT_BUFFER_SIZE];
 
+/**
+  \defgroup webclient Web Client
+  Connect to sites and other services on the internet or local network via HTTP.
+
+  The web client system allows the Make Controller to get/post data to a webserver.  This
+  makes it straightforward to use the Make Controller as a source of data for your web apps.
+
+  \ingroup networking
+  @{
+*/
+
 /** 
   Performs an HTTP GET operation to the path at the address / port specified.  
   
-  Reads through the HTTP headers and copies the data into the buffer you pass in.
-  
-  Note that this uses lots of printf style functions and may require a fair amount of memory to be allocated
-  to the task calling it.  The result is returned in the specified buffer.
+  The data returned from the web server (up to maxresponse bytes) is written into the given buffer.
 
   @param hostname The name of the host to connect to.
-  @param port The port to connect on - standard http port is 80
   @param path The path on the server to connect to.
+  @param port The port to connect on - standard http port is 80
   @param response The buffer read the response back into.  
   @param maxresponse An integer specifying the size of the response buffer.
   @param headers (optional) An array of strings to be sent as headers - last element in the array must be 0.
-  @return the number of bytes read, or < 0 on error.
+  @return the number of bytes received, or < 0 on error.
 
-  \par Example
+  \b Example
   \code
-  WebClient wc;
-  int bufLength = 100;
-  char myBuffer[bufLength];
-  int justGot = webclientGet("www.makingthings.com", "/test/path", 80, myBuffer, bufLength, 0);
+  #define BUF_LENGTH 100
+  char myBuffer[BUF_LENGTH];
+  int justGot = webclientGet("www.makingthings.com", "/test/path", 80, myBuffer, BUF_LENGTH, 0);
   \endcode
   Now we should have the results of the HTTP GET from \b www.makingthings.com/test/path in \b myBuffer.
 */
@@ -95,25 +102,25 @@ int webclientGet(const char* hostname, const char* path, int port, char* respons
 }
 
 /** 
-  Performs an HTTP POST operation to the path at the address / port specified.  The actual post contents 
-  are found read from a given buffer and the result is returned in the same buffer.
+  Performs an HTTP POST operation to the path at the address / port specified.
+  A buffer with the data to be POSTed is passed in, and up to maxresponse bytes of the response
+  from the server are written back into the same buffer.
   @param hostname The name of the host to connect to.
-  @param port The port to connect on - standard http port is 80
   @param path The path on the server to post to.
+  @param port The port to connect on - standard http port is 80
   @param data The buffer to write from, and then read the response back into
   @param data_length The number of bytes to write from \b data
   @param maxresponse How many bytes of the response to read back into \b data
   @param headers (optional) An array of strings to be sent as headers - last element in the array must be 0.
-  @return status.
+  @return The number of bytes written, or -1 on failure.
 
-  \par Example
+  \b Example
   \code
   // we'll post a test message to www.makingthings.com/post/path
-  WebClient wc;
   int bufLength = 100;
   char myBuffer[bufLength];
-  int datalength = sprintf( myBuffer, "A test message to post" ); // load the buffer with some data to send
-  wc.post("www.makingthings.com", "/post/path", myBuffer, datalength, bufLength);
+  int datalength = siprintf(myBuffer, "A test message to post"); // load the buffer with some data to send
+  webclientPost("www.makingthings.com", "/post/path", 80, myBuffer, datalength, bufLength, 0);
   \endcode
 */
 int webclientPost(const char* hostname, const char* path, int port, char* data, int data_length, int maxresponse, const char* headers[])
@@ -149,6 +156,9 @@ int webclientPost(const char* hostname, const char* path, int port, char* data, 
   }
   return -1;
 }
+
+/** @}
+*/
 
 int webclientReadResponse(int s, char* buf, int size)
 {

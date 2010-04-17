@@ -1325,7 +1325,9 @@ PREDEFINED             = MAKE_CTRL_NETWORK \
                          __attribute__(x)= \
                          WATCHDOG_ENABLE \
                          LWIP_TCP=1 \
-                         LWIP_UDP=1
+                         LWIP_UDP=1 \
+                         LWIP_DNS=1 \
+                         LWIP_DHCP=1
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
 # this tag can be used to specify a list of macro names that should be expanded. 
