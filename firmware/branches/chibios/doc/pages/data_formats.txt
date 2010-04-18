@@ -16,7 +16,7 @@
 *********************************************************************************/
 
 /**
-  \page dataformats Data Formats & Protocols
+  \defgroup dataformats Data Formats & Protocols
   
   \section OSC
   The Make Controller has great support for OSC (Open Sound Control).  Don't let the name fool you - 

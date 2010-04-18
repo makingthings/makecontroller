@@ -30,6 +30,37 @@ static void aesDoDecrypt( const unsigned long *rk, int nrounds,
 typedef unsigned long u32;
 typedef unsigned char u8;
 
+/**
+  \defgroup AES
+  Encrypt and decrypt data using AES (Advanced Encryption Standard).
+
+  AES is a block cipher adopted for use by the NSA (US government agency).  According to Wikipedia,
+  "This marks the first time the public has had access to a cipher approved by the NSA for
+  top secret information."  Pretty cool, right?  This is a good way to send info privately
+  from your Make Controller over the network, to a web server for example.
+
+  AES requires that both sides of communication have access to the same key.  So both your Make 
+  Controller, and whatever other device it's communicating with need to know about the same 
+  password so they can decrypt data that has been encrypted by the other.
+
+  There are several different flavors of AES.  There are two main ways in which AES libraries
+  differ:
+  - the way they chain blocks
+  - the way they pad data
+
+  This library uses ECB (Electronic Code Book) chaining, and pads data with a character 
+  that corresponds to the number of bytes needed to pad to 16.  Check the Wikipedia article
+  for an explanation - http://en.wikipedia.org/wiki/Advanced_Encryption_Standard
+
+  The lookup tables used in this library will use somewhere between 8 and 13 kB of program space, 
+  depending on the compiler optimization you use.  Memory usage is pretty minimal.
+
+  Code is used and adapted from Philip J. Erdelsky - see http://www.efgh.com/software/rijndael.htm
+  for the original.
+  \ingroup dataformats
+  @{
+*/
+
 static const u32 Te0[256] =
 {
   0xc66363a5U, 0xf87c7c84U, 0xee777799U, 0xf67b7b8dU,
@@ -1258,7 +1289,7 @@ void aesDoDecrypt(const u32 *rk, int nrounds, const u8 ciphertext[16],
   unsigned char cipherbuf[BUFF_SIZE]; // the buffer that will be written into
   unsigned char plaintext[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; // the text to encrypt
   unsigned char secret[] = "A SECRET PASSWORD"; // 16 bytes long
-  int written = Aes::encrypt(cipherbuf, BUFF_SIZE, plaintext, 26, secret);
+  int written = aesEncrypt(cipherbuf, BUFF_SIZE, plaintext, 26, secret);
   \endcode
 */
 int aesEncrypt(unsigned char* output, int outlen, unsigned char* input, int inlen, unsigned char* password)
@@ -1326,8 +1357,8 @@ int aesEncrypt(unsigned char* output, int outlen, unsigned char* input, int inle
   unsigned char plaintext[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; // our plaintext to encrypt
   unsigned char secret[] = "A SECRET PASSWORD"; // 16 bytes long
 
-  int written = Aes::encrypt(cipherbuf, 256, plaintext, 26, secret);
-  written = Aes::decrypt(plainbuf, 256, cipherbuf, written, secret);
+  int written = aesEncrypt(cipherbuf, 256, plaintext, 26, secret);
+  written = aesDecrypt(plainbuf, 256, cipherbuf, written, secret);
   // we now have our original plaintext in plainbuf
   \endcode
 */
@@ -1370,6 +1401,9 @@ int aesDecrypt(unsigned char* output, int outlen, unsigned char* input, int inle
   }
   return totalout - outlen;
 }
+
+/** @}
+*/
 
 
 
