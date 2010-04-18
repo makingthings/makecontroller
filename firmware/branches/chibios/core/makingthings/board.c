@@ -185,6 +185,10 @@ void hwinit1(void) {
     done for common usage, but can be removed by conditionalization
   */
   ledEnable();
+  
+  #if APPBOARD_VERSION >= 100 && !defined(NO_DOUT_INIT)
+  digitaloutInit();
+  #endif
 
   #ifndef NO_AIN_INIT
   ainInit();
