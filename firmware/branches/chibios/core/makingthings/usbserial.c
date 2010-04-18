@@ -235,6 +235,7 @@ void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsi
   Check the Wikipedia description of SLIP at http://en.wikipedia.org/wiki/Serial_Line_Internet_Protocol
   @param buffer Where to store the incoming data.
   @param length The number of bytes to read.
+  @param timeout The number of milliseconds to wait for new data.
   @return The number of characters successfully read.
   @see read() for a similar example
 */
