@@ -36,7 +36,24 @@
 #define DIGITALIN_2 AT91C_PIO_PB29
 #define DIGITALIN_3 AT91C_PIO_PB30
 
-static int digitalinGetIo( int index )
+/**
+  \defgroup digitalin Digital Input
+  Read the 8 inputs on the Application Board as digital values - on or off.
+  
+  \section Usage
+  Use digitalinValue() to read digital in values.
+  
+  \section Notes
+  Internally, the 8 inputs on the Application Board consist of 4 dedicated analog inputs, 
+  and 4 lines which can be configured either as digitial ins or outs. Because digital 
+  ins 4-7 are always \ref analogin lines, there's no performance gain to reading those as DigitalIns 
+  as opposed to AnalogIns.
+  
+  \ingroup io
+  @{
+*/
+
+static int digitalinGetIo(int index)
 {
   switch (index) {
     case 0: return DIGITALIN_0;
@@ -50,17 +67,15 @@ static int digitalinGetIo( int index )
 /** 
   Read the value of a Digital Input on the MAKE Application Board.
   If the voltage on the input is greater than ~0.6V, the Digital In will read high.
+  @param channel The digital in channel to read - valid options are 0-7.
   @return True when high, false when low.
   
   \b Example
   \code
-  DigitalIn di(5);
-  if( di.value(5) )
-  {
+  if (digitalinValue(5) == ON) {
     // DigitalIn 5 is high
   }
-  else
-  {
+  else {
     // DigitalIn 5 is low
   }
   \endcode
@@ -72,6 +87,9 @@ bool digitalinValue(int channel)
   else 
     return palReadPad(IOPORT2, digitalinGetIo(channel));
 }
+
+/** @}
+*/
 
 #ifdef OSC
 
