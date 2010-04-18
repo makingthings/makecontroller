@@ -54,6 +54,7 @@
     }
   }
   \endcode
+  \ingroup Core
   @{
 */
 
