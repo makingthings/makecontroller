@@ -42,7 +42,7 @@ typedef struct I2CDriver_t {
 static I2CDriver i2cDriver;
 
 /**
-  \defgroup I2C
+  \defgroup I2C I2C
   Interface with I2C (TWI / two-wire) devices.
 
   \section Usage

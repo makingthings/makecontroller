@@ -25,12 +25,6 @@
 #include "hal.h"
 
 /**
- * @brief Types for pins.
- * @addtogroup Pins
- * @{
- */
-
-/**
  * A handler for use with pinAddInterruptHandler().
  */
 typedef void (*PinInterruptHandler)(void*);
@@ -60,8 +54,10 @@ typedef AT91S_PIO* Group;
 #define GROUP_B IOPORT2
 
 /**
- * Pins for each of the processor's IO lines.
- */
+  \defgroup PinOptions Pin Options
+  Pins for each of the processor's IO lines.
+  @{
+*/
 typedef enum {
   PIN_PA0  = 0,  /**< Pin 0, Port A */
   PIN_PA1  = 1,  /**< Pin 1, Port A */
@@ -130,7 +126,7 @@ typedef enum {
   PIN_PB31 = 63, /**< Pin 31, Port B */
 } Pin;
 
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 extern "C" {
@@ -156,10 +152,8 @@ void pinEnableHandler(Pin pin);
 
 /**
   \defgroup PinBits Pin Bits
-  @addtogroup Pins
-@{
+  @{
 */
-
 #define PIN_PA0_BIT  (1 << 0)  /**< Pin 0, Port A */
 #define PIN_PA1_BIT  (1 << 1)  /**< Pin 1, Port A */
 #define PIN_PA2_BIT  (1 << 2)  /**< Pin 2, Port A */
@@ -225,7 +219,6 @@ void pinEnableHandler(Pin pin);
 #define PIN_PB29_BIT (1 << 29) /**< Pin 29, Port B */
 #define PIN_PB30_BIT (1 << 30) /**< Pin 30, Port B */
 #define PIN_PB31_BIT (1 << 31) /**< Pin 31, Port B */
-
 /** @} */
 
 #endif

@@ -31,7 +31,7 @@ typedef unsigned long u32;
 typedef unsigned char u8;
 
 /**
-  \defgroup AES
+  \defgroup AES AES
   Encrypt and decrypt data using AES (Advanced Encryption Standard).
 
   AES is a block cipher adopted for use by the NSA (US government agency).  According to Wikipedia,

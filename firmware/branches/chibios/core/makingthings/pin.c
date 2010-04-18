@@ -54,15 +54,16 @@ static unsigned int isrSourceCount = 0;
 static void pinInitInterrupts(Group group, unsigned int priority);
 #endif // PIN_NO_ISR
 
-/** \defgroup Pins
+/** \defgroup Pins Pins
   Control any of the 35 pins on the Make Controller.
 
   Each of the pins on the Make Controller can be used as a digital in/out, and many
   can be used as part of one of the peripherals on the board (serial, usb, etc).
+  See \ref PinOptions for a list of the available pins.
 
   \section Usage
   For each pin you'll generally want to first set its mode, then control it.  The most
-  common modes are INPUT and OUTPUT - here's how they work.
+  common modes are \b INPUT and \b OUTPUT - here's how they work.
 
   \subsection Input
   First set a pin as an input, then you can read the value on that pin:
@@ -93,6 +94,7 @@ static void pinInitInterrupts(Group group, unsigned int priority);
   to turn these all off at the same time, it's as easy as:
   \code pinGroupOff(GROUP_A, pingroup); \endcode
   Note that within a group you can only specify pins from the same port - \b GROUP_A or \b GROUP_B.
+  \ingroup io
   @{
 */
 
@@ -306,7 +308,7 @@ void pinGroupSetMode(Group group, int pins, PinMode mode)
   int count = 0; // we'll keep track of how many changes we've seen
   void myHandler(void* context)
   {
-    if(pinValue(PIN_PB27) == ON) {
+    if (pinValue(PIN_PB27) == ON) {
       // then the change was from low to high
     }
     else {
@@ -321,7 +323,7 @@ void pinGroupSetMode(Group group, int pins, PinMode mode)
     pinSetMode(PIN_PB27, INPUT);       // set the pin as an input
     pinAddInterruptHandler(PIN_PB27, myHandler, 0); // register our handler
     
-    while(true) {
+    while (true) {
       // do the rest of my task...
     }
   }
@@ -343,7 +345,7 @@ bool pinAddInterruptHandler(Pin pin, PinInterruptHandler h, void* arg)
   if (IOPORT(pin)->PIO_IMR == 0)
     pinInitInterrupts(IOPORT(pin), (AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 3) );
   
-  IOPORT(pin)->PIO_ISR;           // clear the status register
+  IOPORT(pin)->PIO_ISR;  // clear the status register
   pinEnableHandler(pin); // enable our channel
 
   isrSources[isrSourceCount].callback = h;
@@ -397,7 +399,7 @@ void pinEnableHandler(Pin pin)
 /** @}
 */
 
-static void pinServeInterrupt( Group group )
+static void pinServeInterrupt(Group group)
 {
   unsigned int status = group->PIO_ISR & group->PIO_IMR;
   // Check pending events
@@ -416,7 +418,7 @@ static void pinServeInterrupt( Group group )
   }
 }
 
-static CH_IRQ_HANDLER( pinIsrA ) {
+static CH_IRQ_HANDLER(pinIsrA) {
   CH_IRQ_PROLOGUE();
   pinServeInterrupt(AT91C_BASE_PIOA);
   AT91C_BASE_AIC->AIC_EOICR = 0;
@@ -424,7 +426,7 @@ static CH_IRQ_HANDLER( pinIsrA ) {
 }
 
 #if SAM7_PLATFORM == SAM7X128 || SAM7_PLATFORM == SAM7X256 || SAM7_PLATFORM == SAM7X512
-static CH_IRQ_HANDLER( pinIsrB ) {
+static CH_IRQ_HANDLER(pinIsrB) {
   CH_IRQ_PROLOGUE();
   pinServeInterrupt(AT91C_BASE_PIOB);
   AT91C_BASE_AIC->AIC_EOICR = 0;
