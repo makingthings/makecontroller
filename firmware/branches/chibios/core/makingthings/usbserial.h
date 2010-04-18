@@ -18,9 +18,6 @@
 #ifndef USB_SERIAL_H
 #define USB_SERIAL_H
 
-#include "config.h"
-#ifdef MAKE_CTRL_USB
-
 #include "types.h"
 #include "board.h"
 #include "CDCDSerialDriver.h"
@@ -29,42 +26,17 @@
 #define USBSER_MAX_READ BOARD_USB_ENDPOINTS_MAXPACKETSIZE(CDCDSerialDriverDescriptors_DATAOUT)
 #define USBSER_MAX_WRITE BOARD_USB_ENDPOINTS_MAXPACKETSIZE(CDCDSerialDriverDescriptors_DATAIN)
 
-/**
-  Virutal serial port USB communication.
-  This allows the Make Controller look like a serial modem to your desktop, which it can then easily
-  open up, read and write to.
-  
-  \section Usage
-  There's only one UsbSerial object in the system, so you never create your own.  You can access
-  it through the get() method.
-  
-  \code
-  UsbSerial* usb = UsbSerial::get(); // first get a reference to the central UsbSerial object
-  usb->write("hello", 5); // write a little something
-  
-  char buffer[128];
-  int got = usb->read(buffer, 128); // and read
-  \endcode
-  
-  \section Drivers
-  On OS X, the system driver is used - no external drivers are needed.
-  An entry in \b /dev is created - similar to <b>/dev/cu.usbmodem.xxxx</b>.  It may be opened for reading and 
-  writing like a regular file using the standard POSIX open(), close(), read(), write() functions.
-
-  On Windows, the first time the device is seen, it needs 
-  to be pointed to a .INF file containing additional information - the \b make_controller_kit.inf in 
-  the same directory as this file.  Once Windows sets this up, the device can be opened as a normal
-  COM port.  If you've installed mchelper or mcbuilder, this file is already in the right spot
-  on your system.
-*/
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 void usbserialInit( void );
 bool usbserialIsActive( void );
 int  usbserialRead( char *buffer, int length, int timeout );
 int  usbserialWrite( const char *buffer, int length, int timeout );
 int  usbserialReadSlip( char *buffer, int length, int timeout );
 int  usbserialWriteSlip( const char *buffer, int length, int timeout );
-
-#endif // MAKE_CTRL_USB
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #endif // USB_SERIAL_H
