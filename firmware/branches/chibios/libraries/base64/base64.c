@@ -25,6 +25,18 @@
 
 static bool isbase64 (char ch);
 
+/**
+  \defgroup base64 Base 64
+  Decode and encode base 64 data.
+
+  This is often handy when you need to send raw/binary data (as opposed to text) through a 
+  text based format, like XML or JSON.
+
+  Most code lifted from gnulib - http://savannah.gnu.org/projects/gnulib - and written by Simon Josefsson.
+  \ingroup dataformats
+  @{
+*/
+
 /* C89 compliant way to cast 'char' to 'unsigned char'. */
 static inline unsigned char to_uchar (char ch)
 {
@@ -46,7 +58,7 @@ static inline unsigned char to_uchar (char ch)
   \code
   #define BUFF_SIZE 256
   char encode_buf[BUFF_SIZE];
-  int len = Base64::encode(encode_buf, BUFF_SIZE, "test", 4);
+  int len = base64Encode(encode_buf, BUFF_SIZE, "test", 4);
   // we now have "dGVzdA==" in encode_buf, and len is 8
   \endcode
 */
@@ -254,7 +266,7 @@ bool isbase64 (char ch)
   #define BUFF_SIZE 256
   char decode_buf[BUFF_SIZE];
   int decode_size = BUFF_SIZE;
-  bool result = Base64::decode(decode_buf, &decode_size, "dGVzdA==", 8);
+  bool result = base64Decode(decode_buf, &decode_size, "dGVzdA==", 8);
   // we now have "test" in decode_buf, and decode_size is set to 4
   \endcode
 */
@@ -317,6 +329,8 @@ bool base64Decode(char* dest, int* dest_size, const char* src, int src_size)
   return true;
 }
 
+/** @}
+*/
 
 
 
