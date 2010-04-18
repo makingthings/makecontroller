@@ -22,14 +22,9 @@
 #include <ctype.h>
 
 /** \defgroup json JSON
-	The Make Controller JSON library provides a very small and very fast library for parsing and
-  generating json.
+	A very small and very fast library for parsing and generating json.
 
-  From http://www.json.org: "JSON (JavaScript Object Notation)
-  is a lightweight data-interchange format. It is easy for humans to read and write. It is easy for
-  machines to parse and generate."
-
-  JSON is quite widely used when communicating with web servers, or other network enabled devices.
+  <a href="http://www.json.org">JSON</a> is quite widely used when communicating with web servers, or other network enabled devices.
   It's nice and small, and easy to work with.  It's quite well supported in many programming
   environments, so it's not a bad option for a communication format when you need to talk to other
   devices from the Make Controller.
@@ -44,39 +39,39 @@
   elements to your string.
 
   You need to provide a few things:
-   - a JsonEncode_State variable
+   - a JsonWriter
    - the buffer in which to store the JSON string being built
    - a count of how many bytes are left in that buffer
-   The API will update that count, so it's not too much trouble.
+   The API will update the count, so it's not too much trouble.
 
   \code
   #define MAX_JSON_LEN 256
   char jsonbuf[MAX_JSON_LEN];
   int remaining = MAX_JSON_LEN;
-  JsonEncode_State s;
+  JsonWriter jw;
 
   char *p = jsonbuf; // keep a pointer to the current location
-  JsonEncode_Init(&s); // initialize our state variable
-  p = JsonEncode_ObjectOpen(&s, p, &remaining);
-  p = JsonEncode_String(&s, p, "hello", &remaining);
-  p = JsonEncode_Int(&s, p, 234, &remaining);
-  p = JsonEncode_ObjectClose(&s, p, &remaining);
+  jsonwriterInit(&jw);
+  p = jsonwriterObjectOpen(&jw);
+  p = jsonwriterString(&jw, "hello");
+  p = jsonwriterInt(&jw, 234);
+  p = jsonwriterObjectClose(&jw);
   // now the string in jsonbuf looks like {"hello":234} - beautifully formatted JSON
-  int json_len = MAX_JSON_LEN - remaining; // this is the total length of the string in jsonbuf
+  int json_len = MAX_JSON_LEN - jw.remaining; // this is the total length of the string in jsonbuf
   \endcode
 
   \b Note - the library will add the appropriate separators (: or , usually) to the string,
   depending on the context of the objects and arrays you've opened, or other data you've inserted.
 
-  \section Parsing
-  Parsing is done using an event-based mechanism.  This means you can register for any parse events you care
-  to hear about, and then be called back with their value as they're encountered in the JSON string.
-  Each parse process needs its own JsonDecode_State variable to keep track of where it is.
+  \section Reading
+  Reading is done using an event-based mechanism.  This means you can register for the kind of data you care
+  to hear about, and then be called with their value as they're encountered in the JSON string.
+  Each read process needs its own JsonReader.
 
   In each callback, return true to continue parsing, or return false and parsing will stop.
 
   If you need to pass around some context that you would like available in each of the callbacks,
-  you can pass it to JsonDecode_Init() and it will be passed to each of the callbacks you've registered.
+  you can pass it to jsonreaderInit() and it will be passed to each of the callbacks you've registered.
   Otherwise, just pass 0 if you don't need it.
 
   \code
@@ -99,32 +94,34 @@
     // called when a string is encountered...
     return true; // keep parsing
   }
-
-  // Now, register these callbacks with the JSON parser.
-  JsonDecode_SetStartObjCallback(on_obj_opened);
-  JsonDecode_SetIntCallback(on_int);
-  JsonDecode_SetStringCallback(on_string);
+  
+  // the json string that we'll be reading
+  char jsonstr[] = "[{\"label\":\"value\",\"label2\":{\"nested\":234}}]";
+  
+  // Now, register these callbacks with the JSON reader.
+  JsonReader jr;
+  jsonreaderInit(&jr, 0);
+  jr.handlers.start_obj_handler = on_obj_opened;
+  jr.handlers.int_handler = on_int;
+  jr.handlers.string_handler = on_string;
 
   // Finally, run the parser.
-  JsonDecode_State s;
-  JsonDecode_Init(&s, 0); // pass 0 if you don't need to use any special context
-  char jsonstr[] = "[{\"label\":\"value\",\"label2\":{\"nested\":234}}]";
-  JsonDecode(&s, jsonstr, strlen(jsonstr));
+  jsonreaderGo(&jr, jsonstr, strlen(jsonstr));
   // now each of our callbacks will be triggered at the appropriate time
   \endcode
-
   Thanks to YAJL (http://code.google.com/p/yajl-c) for some design inspiration.
-  \par
-
-	\ingroup Libraries
+	\ingroup dataformats
 	@{
 */
 
 static void jsonwriterAppendedAtom(JsonWriter* jw);
 
 /**
-  Initialize or reset the state of a JsonEncode_State variable.
-  Be sure to do this each time before you start parsing.
+  Initialize or reset the state of a JsonWriter.
+  Be sure to do this each time before you start a new parse.
+  @param jw The JsonWriter to initialize.
+  @param buffer The buffer it will be writing to.
+  @param len The maximum size of \b buffer
 */
 void jsonwriterInit(JsonWriter* jw, char* buffer, int len)
 {
@@ -137,9 +134,7 @@ void jsonwriterInit(JsonWriter* jw, char* buffer, int len)
 /**
   Open up a new JSON object.
   This adds an opening '{' to the json string.
-  @param state A pointer to the JsonEncode_State variable being used for this encode process.
-  @param buf A pointer to the buffer holding the JSON string.
-  @param remaining A pointer to the count of how many bytes are left in your JSON buffer.
+  @param jw The JsonWriter being used.
   @return A pointer to the location in the JSON buffer after this element has been added, or NULL if there was no room.
 */
 char* jsonwriterObjectOpen(JsonWriter* jw)
@@ -180,10 +175,12 @@ char* jsonwriterObjectOpen(JsonWriter* jw)
 
 /**
   Set the key for a JSON object.
-  This is a convenience function that simply calls JsonEncode_String().
+  This is a convenience function that simply calls jsonwriterString().
   It is provided to help enforce the idea that the first member of a JSON
   object pair must be a string.
-  @see JsonEncode_String()
+  @param jw The JsonWriter being used.
+  @param key The object key
+  @return A pointer to the location in the JSON buffer after this element has been added, or NULL if there was no room.
 */
 char* jsonwriterObjectKey(JsonWriter* jw, const char *key)
 {
@@ -193,9 +190,7 @@ char* jsonwriterObjectKey(JsonWriter* jw, const char *key)
 /**
   Close a JSON object.
   Adds a closing '}' to the string.
-  @param state A pointer to the JsonEncode_State variable being used for this encode process.
-  @param buf A pointer to the buffer which contains your JSON string.
-  @param remaining A pointer to an integer keeping track of how many bytes are left in your JSON buffer.
+  @param jw The JsonWriter being used.
   @return A pointer to the location in the JSON buffer after this element has been added, or NULL if there was no room.
 */
 char* jsonwriterObjectClose(JsonWriter* jw)
@@ -212,9 +207,7 @@ char* jsonwriterObjectClose(JsonWriter* jw)
 /**
   Open up a new JSON array.
   This adds an opening '[' to the json string.
-  @param state A pointer to the JsonEncode_State variable being used for this encode process.
-  @param buf A pointer to the buffer holding the JSON string.
-  @param remaining A pointer to the count of how many bytes are left in your JSON buffer.
+  @param jw The JsonWriter being used.
   @return A pointer to the location in the JSON buffer after this element has been added, or NULL if there was no room.
 */
 char* jsonwriterArrayOpen(JsonWriter* jw)
@@ -255,9 +248,7 @@ char* jsonwriterArrayOpen(JsonWriter* jw)
 /**
   Close an array.
   Adds a closing ']' to the string.
-  @param state A pointer to the JsonEncode_State variable being used for this encode process.
-  @param buf A pointer to the buffer which contains your JSON string.
-  @param remaining A pointer to the count of how many bytes are left in your JSON buffer.
+  @param jw The JsonWriter being used.
   @return A pointer to the JSON buffer after this element has been added, or NULL if there was no room.
 */
 char* jsonwriterArrayClose(JsonWriter* jw)
@@ -276,10 +267,8 @@ char* jsonwriterArrayClose(JsonWriter* jw)
   Depending on whether you've opened objects, arrays, or other inserted 
   other data, the approprate separating symbols will be added to the string.
 
-  @param state A pointer to the JsonEncode_State variable being used for this encode process.
-  @param buf A pointer to the buffer containing the JSON string.
+  @param jw The JsonWriter being used.
   @param string The string to be added.
-  @param remaining A pointer to the count of bytes remaining in the JSON buffer.
   @return A pointer to the JSON buffer after this element has been added, or NULL if there was no room.
 */
 char* jsonwriterString(JsonWriter* jw, const char *string)
@@ -322,10 +311,8 @@ char* jsonwriterString(JsonWriter* jw, const char *string)
 /**
   Add an int to a JSON string.
 
-  @param state A pointer to the JsonEncode_State variable being used for this encode process.
-  @param buf A pointer to the buffer containing the JSON string.
+  @param jw The JsonWriter being used.
   @param value The integer to be added.
-  @param remaining A pointer to the count of bytes remaining in the JSON buffer.
   @return A pointer to the JSON buffer after this element has been added, or NULL if there was no room.
 */
 char* jsonwriterInt(JsonWriter* jw, int value)
@@ -376,10 +363,8 @@ char* jsonwriterInt(JsonWriter* jw, int value)
 /**
   Add a boolean value to a JSON string.
 
-  @param state A pointer to the JsonEncode_State variable being used for this encode process.
-  @param buf A pointer to the buffer containing the JSON string.
+  @param jw The JsonWriter being used.
   @param value The boolean value to be added.
-  @param remaining A pointer to the count of bytes remaining in the JSON buffer.
   @return A pointer to the JSON buffer after this element has been added, or NULL if there was no room.
 */
 char* jsonwriterBool(JsonWriter* jw, bool value)
@@ -471,11 +456,11 @@ typedef enum JsonReaderToken_t {
 static JsonReaderToken jsonreaderGetToken(char* text, int len);
 
 /**
-  Initialize or reset a JsonDecode_State variable.
-  Do this prior to making a call to JsonDecode().
-  @param state A pointer to the JsonDecode_State variable being used for this decode process.
-  @param context An optional paramter that your code can use to 
-  pass around a known object within the callbacks.  Otherwise, just set it to 0
+  Initialize or reset a JsonReader.
+  Do this prior to making a call to jsonreaderGo().
+  @param jr The JsonReader to use.
+  @param context (optional) An optional paramter that your code can use to 
+  pass around a known object within the callbacks.  Set it to 0 if you don't need it.
 */
 void jsonreaderInit(JsonReader* jr, void* context)
 {
@@ -489,10 +474,9 @@ void jsonreaderInit(JsonReader* jr, void* context)
 
 /**
   Parse a JSON string.
-  The JSON parser is event based, meaning that you will receive any callbacks
-  you registered for as the elements are encountered in the JSON string.
-
-  @param state A pointer to the JsonDecode_State variable being used for this decode process.
+  While it's reading, handlers that have been registered will be called
+  with any relevant data.
+  @param jr The JsonReader to use.
   @param text The JSON string to parse.
   @param len The length of the JSON string.
   @return True on a successful parse, false on failure.
@@ -500,10 +484,11 @@ void jsonreaderInit(JsonReader* jr, void* context)
   \par Example
   \code
   // quotes are escaped since I'm writing it out manually
-  JsonDecode_State s;
   char jsonstr[] = "[{\"label\":\"value\",\"label2\":{\"nested\":234}}]";
-  JsonDecode_Init(&s, 0);
-  JsonDecode(jsonstr, strlen(jsonstr), 0); // don't pass in any context
+  JsonReader jr;
+  jsonreaderInit(&jr, 0);
+  jr.handlers.int_handler = myNullHandler;
+  jsonreaderGo(&jr, jsonstr, strlen(jsonstr));
   // now we expect to be called back on any callbacks we registered.
   \endcode
 */
