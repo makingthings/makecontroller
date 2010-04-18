@@ -20,29 +20,6 @@
 
 #include "types.h"
 
-/**
-  Control the 8 high current outputs on the Application Board.
-  
-  \section Usage
-  To get started using the DigitalOuts, create a DigitalOut object then set and read its value
-  as desired.
-  \code
-  DigitalOut dout(4); // create a DigitalOut object, controlling channel 4
-  dout.setValue(true); // turn it on
-  bool is_it_on = dout.value(); // check if it's on or not
-  \endcode
-  
-  \section Notes
-  If you're simultaneously using any of the other systems on the outputs (Stepper, Motor, etc.), results will
-  be unpredictable since they're using the same signals.  Make sure to only use one system at a time on a given
-  output signal.
-  
-  See the <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/digital-outputs">
-  Digital Out section</a> of the Application Board overview for more details.
-  
-  \ingroup io
-*/
-
 #ifdef __cplusplus
 extern "C" {
 #endif

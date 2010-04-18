@@ -62,6 +62,26 @@
   #define DIGITALOUT_ENABLE_MASK (PIN_PB19 | PIN_PB20 | PIN_PB21 | PIN_PB22)
 #endif
 
+/**
+  \defgroup digitalout Digital Output
+  Control the 8 high current outputs on the Application Board.
+  
+  \section Usage
+  To turn a digital out on or off, call digitaloutSetValue().  If you need to check
+  whether a digital out is on or off, use digitaloutValue().
+  
+  \section Notes
+  If you're simultaneously using any of the other systems on the outputs (Stepper, Motor, etc.), results will
+  be unpredictable since they're using the same signals.  Make sure to only use one system at a time on a given
+  output signal.
+  
+  See the <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/digital-outputs">
+  Digital Out section</a> of the Application Board overview for more details.
+  
+  \ingroup io
+  @{
+*/
+
 static int digitaloutGetIo(int index)
 {
   switch (index) {
@@ -78,19 +98,11 @@ static int digitaloutGetIo(int index)
 }
 
 /**
-  Create a new DigitalOut object.
-  This is automatically called, setting the channel active, the first time DigitalOut_SetValue() is called.
-  However, the channel must be explicitly set to inactive in order for any other devices to access the I/O lines. 
-  @param index Which DigitalOut to control (0-7)
-  
-  \b Example
-  \code
-  DigitalOut dout(6);
-  // or allocate one...
-  DigitalOut* dout = new DigitalOut(6);
-  \endcode
+  Initialize the digital out system.
+  This is done automatically during system startup, but if you don't want
+  it initialized, define \b NO_DOUT_INIT in your config.h file.
 */
-void digitaloutInit( )
+void digitaloutInit()
 { 
   // configure enable lines as outputs and turn them all on
   pinGroupSetMode(GROUP_B, DIGITALOUT_ENABLE_MASK, OUTPUT);
@@ -104,15 +116,15 @@ void digitaloutInit( )
 }
 
 /** 
-  Turn a DigitalOut on or off.
+  Turn a digital out on or off.
+  @param channel Which digital out channel - valid options are 0-7.
   @param on True to turn it on, false to turn it off.
   @return True on success, false on failure.
   
   \b Example
   \code
   // Turn digital out 2 on
-  DigitalOut dout(2);
-  dout.setValue( true );
+  digitaloutSetValue(2, ON);
   \endcode
 */
 void digitaloutSetValue(int channel, bool on)
@@ -121,18 +133,15 @@ void digitaloutSetValue(int channel, bool on)
 }
 
 /** 
-  Read whether a DigitalOut is on or off.
+  Read whether a digital out is on or off.
   @return True if it's on, false if it's off.
   
   \b Example
   \code
-  DigitalOut dout(2);
-  if( dout.value() )
-  {
+  if (digitaloutValue() == ON) {
     // DigitalOut 2 is high
   }
-  else
-  {
+  else {
     // DigitalOut 2 is low
   }
   \endcode
@@ -141,6 +150,9 @@ bool digitaloutValue(int channel)
 {
   return pinValue(digitaloutGetIo(channel));
 }
+
+/** @}
+*/
 
 #ifdef OSC
 
