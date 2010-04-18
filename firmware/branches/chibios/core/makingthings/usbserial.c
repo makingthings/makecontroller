@@ -25,15 +25,17 @@
 #include "ch.h"
 #include "hal.h"
 
+#ifndef USBSER_NO_SLIP
 // SLIP codes
 #define END             0300    // indicates end of packet 
 #define ESC             0333    // indicates byte stuffing 
 #define ESC_END         0334    // ESC ESC_END means END data byte 
 #define ESC_ESC         0335    // ESC ESC_ESC means ESC data byte
+static int  usbserialWriteSlipIfFull(char** bufptr, char* buf, int timeout);
+#endif // USBSER_NO_SLIP
 
 static void usbserialOnRx(void *pArg, unsigned char status, unsigned int received, unsigned int remaining);
 static void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsigned int remaining);
-static int  usbserialWriteSlipIfFull( char** bufptr, char* buf, int timeout );
 
 typedef struct UsbSerial_t {
   Semaphore rxSemaphore;
@@ -42,14 +44,50 @@ typedef struct UsbSerial_t {
   int justWrote;
   int rxBufCount;
   char rxBuf[USBSER_MAX_READ];
+#ifndef USBSER_NO_SLIP
   char slipOutBuf[USBSER_MAX_WRITE];
   char slipInBuf[USBSER_MAX_READ];
   int slipInCount;
+#endif
 } UsbSerial;
 
 static UsbSerial usbSerial;
 
-void usbserialInit( )
+/**
+  \defgroup usbserial USB Serial
+  Virutal serial port USB communication.
+  This allows the Make Controller look like a serial port to your desktop, which it can then easily
+  open up, read and write to.
+
+  \section Usage
+  First call usbserialInit() and then you can read and write to it.
+
+  \code
+  usbserialInit();
+  usbserialWrite("hello", 5); // write a little something
+
+  char buffer[128];
+  int got = usbserialRead(buffer, 128); // and read
+  \endcode
+
+  \section Drivers
+  On OS X, the system driver is used - no external drivers are needed.
+  An entry in \b /dev is created - similar to <b>/dev/cu.usbmodem.xxxx</b>.  It may be opened for reading and
+  writing like a regular file using the standard POSIX open(), close(), read(), write() functions.
+
+  On Windows, the first time the device is seen, it needs
+  to be pointed to a .INF file containing additional information - the \b make_controller_kit.inf in
+  the same directory as this file.  Once Windows sets this up, the device can be opened as a normal
+  COM port.  If you've installed mchelper or mcbuilder, this file has already been installed in the
+  right spot on your system.
+  \ingroup interfacing
+  @{
+*/
+
+/**
+  Initialize the USB serial system.
+*/
+void usbserialInit()
 {
   CDCDSerialDriver_Initialize();
   USBD_Connect();
@@ -63,17 +101,18 @@ void usbserialInit( )
   Check if the USB system got set up OK.
   When things are starting up, if you want to wait until the USB is ready, 
   you can use this to check.  
-  @return Whether the UsbSerial system is currently running.
+  @return Whether the USB serial system is currently running.
   
   \b Example
   \code
-  UsbSerial* usb = UsbSerial::get(); // get a reference to the usb system
-  while( !usb->isActive() ) // while usb is not active
-    Task::sleep(10);        // wait around for a little bit
-  // now we're ready to go
+  usbserialInit();
+  // wait until usb is active
+  while (usbserialIsActive() == NO) {
+    Task::sleep(10);
+  }
   \endcode
 */
-bool usbserialIsActive(void)
+bool usbserialIsActive()
 {
   return USBD_GetState() == USBD_STATE_CONFIGURED;
 }
@@ -93,20 +132,18 @@ bool usbserialIsActive(void)
   \b Example
   \code
   char mydata[128];
-  UsbSerial* usb = UsbSerial::get(); // get a reference to the usb system
   // simplest is reading a short chunk
-  int read = usb->read(mydata, 20);
+  int read = usbserialRead(mydata, 20);
   
   // or, we can wait until we've read more than the maximum of 64 bytes
   int got_so_far = 0;
-  while(got_so_far < 128) // wait until we've read 128 bytes
-  {
-    int read = usb->read(mydata, (128 - got_so_far)); // read some new data
+  while(got_so_far < 128) { // wait until we've read 128 bytes
+    int read = usbserialRead(mydata, (128 - got_so_far)); // read some new data
     got_so_far += read; // add to how much we've gotten so far
   }
   \endcode
 */
-int usbserialRead( char *buffer, int length, int timeout )
+int usbserialRead(char *buffer, int length, int timeout)
 {
   if( USBD_GetState() != USBD_STATE_CONFIGURED )
     return -1;
@@ -151,15 +188,15 @@ void usbserialOnRx(void *pArg, unsigned char status, unsigned int received, unsi
   Write data to a USB host.
   @param buffer The data to send.
   @param length How many bytes to send.
+  @param timeout How many milliseconds to wait for the data to be written out.
   @return The number of bytes successfully written.
   
   \b Example
   \code
-  UsbSerial* usb = UsbSerial::get(); // get a reference to the usb system
-  int written = usb->write( "hi hi", 5 );
+  int written = usbserialWrite("hi hi", 5);
   \endcode
 */
-int usbserialWrite( const char *buffer, int length, int timeout )
+int usbserialWrite(const char *buffer, int length, int timeout)
 {
   int rv = -1;
   if (USBD_GetState() == USBD_STATE_CONFIGURED) {
@@ -185,6 +222,7 @@ void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsi
     chSemSignalI(&usbSerial.txSemaphore);
 }
 
+#ifndef USBSER_NO_SLIP
 /**
   Read from the USB port using SLIP codes to de-packetize messages.
   SLIP (Serial Line Internet Protocol) is a way to separate one "packet" from another 
@@ -200,7 +238,7 @@ void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsi
   @return The number of characters successfully read.
   @see read() for a similar example
 */
-int usbserialReadSlip( char *buffer, int length, int timeout )
+int usbserialReadSlip(char *buffer, int length, int timeout)
 {
   int received = 0;
   static int idx = 0;
@@ -213,8 +251,7 @@ int usbserialReadSlip( char *buffer, int length, int timeout )
     }
     
     c = usbSerial.slipInBuf[idx++];
-    switch (c)
-    {
+    switch (c) {
       case END:
         if (received) // only return if we actually got anything
           return received;
@@ -224,7 +261,7 @@ int usbserialReadSlip( char *buffer, int length, int timeout )
         // get the next byte.  if it's not an ESC_END or ESC_ESC, it's a
         // malformed packet.  http://tools.ietf.org/html/rfc1055 says just
         // drop it in the packet in this case
-        if( idx >= usbSerial.slipInCount ) break;
+        if (idx >= usbSerial.slipInCount) break;
         c = usbSerial.slipInBuf[idx++];
         if (c == ESC_END)
           c = END;
@@ -247,22 +284,22 @@ int usbserialReadSlip( char *buffer, int length, int timeout )
   actually contains the start/end byte.  Pass your normal buffer to this function to
   have the SLIP codes inserted and then write it out over USB.
 
-  Check the Wikipedia description of SLIP at http://en.wikipedia.org/wiki/Serial_Line_Internet_Protocol
+  Check the <A HREF="http://en.wikipedia.org/wiki/Serial_Line_Internet_Protocol">Wikipedia description</A>
+  of SLIP for more info.
   @param buffer The data to write.
   @param length The number of bytes to write.
+  @param timeout
   @return The number of characters successfully written.
   @see write() for a similar example.
 */
-int usbserialWriteSlip( const char *buffer, int length, int timeout )
+int usbserialWriteSlip(const char *buffer, int length, int timeout)
 {
   char* obp = usbSerial.slipOutBuf;
   int count = 0;
-  char c;
   *obp++ = END; // clear out any line noise
    while (length--) {
-     c = *buffer++;
-     switch (c)
-     {
+     char c = *buffer++;
+     switch (c) {
        // if it's the same code as an END character, we send a special 
        //two character code so as not to make the receiver think we sent an END
        case END:
@@ -291,7 +328,10 @@ int usbserialWriteSlip( const char *buffer, int length, int timeout )
    return count;
 }
 
-int usbserialWriteSlipIfFull( char** bufptr, char* buf, int timeout )
+/** @}
+*/
+
+int usbserialWriteSlipIfFull(char** bufptr, char* buf, int timeout)
 {
   int bufSize = *bufptr - buf;
   if (bufSize >= USBSER_MAX_WRITE) {
@@ -301,7 +341,7 @@ int usbserialWriteSlipIfFull( char** bufptr, char* buf, int timeout )
   else
     return 0;
 }
-
+#endif // USBSER_NO_SLIP
 #endif // MAKE_CTRL_USB
 
 

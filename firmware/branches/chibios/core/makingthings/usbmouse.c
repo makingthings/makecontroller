@@ -50,23 +50,21 @@ bool usbmouseIsActive(void) {
  */
 bool usbmouseSendUpdate(MouseClickAction left, MouseClickAction right, int changeX, int changeY) {
 
-  if( USBD_GetState() == USBD_STATE_CONFIGURED ) {
-    unsigned char buttons = 0;
-
-    if(left == DOWN)
-      buttons |= HIDDMouse_LEFT_BUTTON;
-    else if( left == UP)
-      buttons &= ~HIDDMouse_LEFT_BUTTON;
-
-    if(right == DOWN)
-      buttons |= HIDDMouse_RIGHT_BUTTON;
-    else if( right == UP)
-      buttons &= ~HIDDMouse_RIGHT_BUTTON;
-
-    return HIDDMouseDriver_ChangePoints(buttons, (signed char)changeX, (signed char)changeY) == USBD_STATUS_SUCCESS;
-  }
-  else
+  if (USBD_GetState() != USBD_STATE_CONFIGURED)
     return false;
+  unsigned char buttons = 0;
+
+  if (left == DOWN)
+    buttons |= HIDDMouse_LEFT_BUTTON;
+  else if (left == UP)
+    buttons &= ~HIDDMouse_LEFT_BUTTON;
+
+  if (right == DOWN)
+    buttons |= HIDDMouse_RIGHT_BUTTON;
+  else if (right == UP)
+    buttons &= ~HIDDMouse_RIGHT_BUTTON;
+
+  return HIDDMouseDriver_ChangePoints(buttons, (signed char)changeX, (signed char)changeY) == USBD_STATUS_SUCCESS;
 }
 
 
