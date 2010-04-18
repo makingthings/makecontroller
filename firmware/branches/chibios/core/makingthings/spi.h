@@ -27,6 +27,9 @@
   are not available since they're used internally.  Channels 2 and 3 can still be used, though.
 */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void spiInit(void);
 void spiDeinit(void);
 bool spiEnableChannel(int channel);
@@ -34,5 +37,8 @@ int  spiConfigure(int channel, int bits, int clockDivider, int delayBeforeSPCK, 
 int  spiReadWriteBlock(int channel, unsigned char* buffer, int count);
 void spiLock(void);
 void spiUnlock(void);
+#ifdef __cplusplus
+}
+#endif
 
 #endif // SPI__H

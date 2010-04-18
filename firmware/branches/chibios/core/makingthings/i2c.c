@@ -41,11 +41,49 @@ typedef struct I2CDriver_t {
 
 static I2CDriver i2cDriver;
 
+/**
+  \defgroup I2C
+  Interface with I2C (TWI / two-wire) devices.
+
+  \section Usage
+  First, initialize the I2C system with i2cInit().  The default I2C_DEFAULT_RATE of 200kHz
+  is used, but you can define \b I2C_DEFAULT_RATE in your config.h to change this, or
+  use i2cSetBitrate() if you need to change it on the fly.
+
+  Once you're configured, use i2cRead() and i2cWrite() to send and receive data with your
+  devices.  The driver is interrupt driven, but not thread safe - if you're going to
+  be communicating with devices from different threads, be sure to surround your I2C
+  activities with calls to i2cAcquireBus() and i2cReleaseBus().
+
+  \b Example
+  \code
+  #define MY_DEVICE_ADDRESS 0x12
+  i2cInit();
+
+  uint8_t mydata[24];
+  i2cAcquireBus(); // first get access to the I2C system
+  int status = i2cRead(MY_DEVICE_ADDRESS, mydata, 24, 0, 0);
+  i2cReleaseBus();
+  if (status != 0) {
+    // then there was a problem
+  }
+  \endcode
+  \ingroup interfacing
+  @{
+*/
+
+/**
+  Acquire exclusive access to the I2C system.
+  Call this before reading or writing, and be sure to call i2cReleaseBus() once you're done.
+*/
 void i2cAcquireBus()
 {
   chMtxLock(&i2cDriver.mutex);
 }
 
+/**
+  Release exclusive access to the I2C system.
+*/
 void i2cReleaseBus()
 {
   chMtxUnlock();
@@ -104,11 +142,10 @@ static CH_IRQ_HANDLER( i2cISR ) {
   CH_IRQ_EPILOGUE();
 }
 
-/*
- * Init the i2c device.
- * Configure IO lines, set the clock rate.
- * Interrupts are enabled/disabled as needed in the read/write routines.
- */
+/**
+  Initialize the I2C system.
+  Be sure to call this before trying to communicate with any I2C devices.
+*/
 void i2cInit(void)
 {
   chMtxInit(&i2cDriver.mutex);
@@ -129,11 +166,22 @@ void i2cInit(void)
   AIC_EnableIT(AT91C_ID_TWI);
 }
 
-/*
- * Write data to the i2c bus.
- * This is not threadsafe - if you need exclusive access
- * to the i2c bus, see i2cAcquireBus() and i2cReleaseBus()
- */
+/**
+  Write data to an I2C device.
+  If the device that you're communicating with has an internal register map,
+  you can specify the device's internal address to write to in the
+  \b internalAddr parameter.  Otherwise, this can be left as 0.
+
+  This is not threadsafe - if you need exclusive access
+  to the I2C system, see i2cAcquireBus() and i2cReleaseBus()
+
+  @param deviceAddr The address of the device to communicate with.
+  @param data The data to send.
+  @param length The amount of data to send.
+  @param internalAddr (optional) The device's internal address to write to.
+  @param intAddrLen (optional) The size of the internal address (0-3 bytes)
+  @return 0 on success, non-zero on error.
+*/
 int i2cWrite(uint8_t deviceAddr, const uint8_t *data, uint8_t length,
               uint16_t internalAddr, uint16_t intAddrLen)
 {
@@ -154,11 +202,23 @@ int i2cWrite(uint8_t deviceAddr, const uint8_t *data, uint8_t length,
   return (chSemWaitTimeout(&i2cDriver.sem, MS2ST(1000)) == RDY_OK) ? i2cDriver.state : I2C_TIMED_OUT;
 }
 
-/*
- * Read data from the i2c bus.
- * This is not threadsafe - if you need exclusive access
- * to the i2c bus, see i2cAcquireBus() and i2cReleaseBus()
- */
+/**
+  Read data from an I2C device.
+  This will wait until all the bytes requested have been received.
+
+  If the device that you're communicating with has an internal register map,
+  you can specify the device's internal address to write to in the
+  \b internalAddr parameter.  Otherwise, this can be left as 0.
+
+  This is not threadsafe - if you need exclusive access
+  to the i2c bus, see i2cAcquireBus() and i2cReleaseBus()
+  @param deviceAddr The address of the device to communicate with.
+  @param data The data to send.
+  @param length The amount of data to send.
+  @param internalAddr (optional) The device's internal address to read from.
+  @param intAddrLen (optional) The size of the internal address (0-3 bytes)
+  @return 0 on success, non-zero on error.
+*/
 int i2cRead(uint8_t deviceAddr, uint8_t *data, uint8_t length,
             uint16_t internalAddr, uint16_t intAddrLen)
 {
@@ -190,9 +250,10 @@ static uint32_t power(unsigned int x, unsigned int y)
   return result;
 }
 
-/*
- * Set the bit rate in Hz
- */
+/**
+  Set the I2C bit rate in Hz.
+  @param rate The rate in Hz.
+*/
 void i2cSetBitrate(int rate)
 {
   uint32_t cldiv, ckdiv = 0;
@@ -209,3 +270,5 @@ void i2cSetBitrate(int rate)
   AT91C_BASE_TWI->TWI_CWGR = (ckdiv << 16) | (cldiv << 8) | cldiv;
 }
 
+/** @}
+*/
