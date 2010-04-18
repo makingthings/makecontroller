@@ -25,8 +25,7 @@
 #endif
 
 // state object for encoding
-typedef enum
-{
+typedef enum {
   JSON_START,
   JSON_OBJ_START,
   JSON_OBJ_KEY,
@@ -39,7 +38,6 @@ typedef enum
   The structure used to maintain the state of a JSON encode process.
   You'll need to have one of these for each JSON string you want to encode.
   The same variable can be reused after resetting it with a call to JsonEncode_Init().
-  \ingroup json
  */
 typedef struct
 {
@@ -73,7 +71,6 @@ typedef struct JsonReaderHandlers_t {
   The structure used to maintain the state of a JSON decode process.
   You'll need to have one of these for each JSON string you want to encode.
   The same variable can be reused after resetting it with a call to JsonDecode_Init().
-  \ingroup json
  */
 typedef struct JsonReader_t {
   JsonReaderStep steps[JSON_MAX_DEPTH];  /**< An array to keep track of each step of the decoder. */
