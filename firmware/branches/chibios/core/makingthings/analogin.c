@@ -34,22 +34,43 @@ struct AinManager {
 
 static struct AinManager manager;
 
+/**
+  \defgroup analogin Analog Input
+  10-bit analog inputs.
+  The analog inputs read incoming signals from 0 - 3.3V.  They are rated as 5V tolerant, 
+  but will not return meaningful values for anything above 3.3V.
+  
+  \section Usage
+  ainInit() is called during system startup, so you can start reading via ainValue() 
+  whenever you like.  If you don't want it to be initialized automatically, define
+  \b NO_AIN_INIT in your config.h file.
+  
+  \section Values
+  Analog inputs will return a value between 0 and 1023, corresponding to the range of \b 0 to \b 3.3V on the input.
+  
+  If you want to convert this to the actual voltage, you can use the following conversion:
+  \code float voltage = 3.3 * (ainValue(1) / 1023.0); \endcode
+  where \b ainValue is the AnalogIn value.
+  
+  A quicker version that doesn't use floating point, but will be slightly less precise:
+  \code int voltage = (100 * ainValue(1)) / 1023; \endcode
+  \ingroup io
+  @{
+*/
+
 /** 
   Read the value of an analog input.
+  @param channel Which analog in to sample - valid options are 0-7.
   @return The value as an integer (0 - 1023).
   
-  \par Example
+  \b Example
   \code
-  AnalogIn ain0(0);
-  if( ain0.value() > 500 ) {
+  if (ainValue(0) > 500) {
      // then do this
-  }
-  else {
-    // then do that
   }
   \endcode
 */
-int ainValue( int channel )
+int ainValue(int channel)
 {
   chMtxLock(&manager.adcLock);
   // disable other channels, and enable the one we want
@@ -70,18 +91,17 @@ int ainValue( int channel )
   If you want to read all the anaog ins, this is quicker than reading them all 
   separately.  Make sure to provide an array of 8 ints, as this does not do
   any checking about the size of the array it's writing to.
-
   @param values An array of ints to be filled with the values.
-  @return 0 on success, otherwise non-zero.
+  @return non-zero on success, zero on failure.
   
-  \par Example
+  \b Example
   \code
   int samples[8];
-  AnalogIn::multi( samples );
+  ainMulti(samples);
    // now samples is filled with all the analogin values
   \endcode
 */
-bool ainMulti( int values[] )
+bool ainMulti(int values[])
 {
   chMtxLock(&manager.adcLock);
   // enable all the channels
@@ -93,7 +113,7 @@ bool ainMulti( int values[] )
   manager.multiChannelConversions = 0;      // which channels have completed
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // start the conversion
 
-  if( chSemWait(&manager.conversionLock) != RDY_OK)
+  if (chSemWait(&manager.conversionLock) != RDY_OK)
     return false;
 
   // read all the data channels into the passed in array
@@ -104,7 +124,7 @@ bool ainMulti( int values[] )
   *values++ = AT91C_BASE_ADC->ADC_CDR4;
   *values++ = AT91C_BASE_ADC->ADC_CDR5;
   *values++ = AT91C_BASE_ADC->ADC_CDR6;
-  *values++ = AT91C_BASE_ADC->ADC_CDR7;
+  *values   = AT91C_BASE_ADC->ADC_CDR7;
   
   manager.processMultiChannelIsr = false;
   chMtxUnlock();
@@ -116,12 +136,12 @@ bool ainMulti( int values[] )
   This will busy wait until the read has completed.  Note that this is not 
   thread safe and shouldn't be used if another part of the code might be 
   using it or the thread safe versions.
+  @param channel Which analog in to sample - valid options are 0-7.
   @return The value as an integer (0 - 1023).
   
   \par Example
   \code
-  AnalogIn ain0(0);
-  int value = ain0.valueWait( );
+  int value = ainValueWait(0);
   \endcode
 */
 int ainValueWait(int channel)
@@ -130,7 +150,7 @@ int ainValueWait(int channel)
   AT91C_BASE_ADC->ADC_CHER = (1 << channel);  // enable our channel
   AT91C_BASE_ADC->ADC_IDR = AT91C_ADC_DRDY;   // turn off data ready interrupt
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START;   // start the conversion
-  while ( !( AT91C_BASE_ADC->ADC_SR & AT91C_ADC_DRDY ) )
+  while (!(AT91C_BASE_ADC->ADC_SR & AT91C_ADC_DRDY))
     ; // Busy wait
   AT91C_BASE_ADC->ADC_IER = AT91C_ADC_DRDY; // turn interrupt back on
   return AT91C_BASE_ADC->ADC_LCDR & 0xFFFF; // last converted value
@@ -138,34 +158,37 @@ int ainValueWait(int channel)
 
 static void ainServeInterrupt(void) {
   int status = AT91C_BASE_ADC->ADC_SR;
-  if(manager.processMultiChannelIsr) {
+  if (manager.processMultiChannelIsr) {
     unsigned int i, mask;
     // check if we got an End Of Conversion in any of our channels
-    for( i = 0; i < ANALOGIN_CHANNELS; i++ ) {
+    for (i = 0; i < ANALOGIN_CHANNELS; i++) {
       mask = 1 << i;
-      if( status & mask )
+      if (status & mask)
         manager.multiChannelConversions |= mask;
     }
     // if we got End Of Conversion in all our channels, indicate we're done
-    if( manager.multiChannelConversions == 0xFF ) {
+    if (manager.multiChannelConversions == 0xFF) {
       status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
       chSemSignalI(&manager.conversionLock);
     }
   }
-  else if ( status & AT91C_ADC_DRDY ) {
+  else if (status & AT91C_ADC_DRDY) {
     chSemSignalI(&manager.conversionLock);
     status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
   }
   AT91C_BASE_AIC->AIC_EOICR = 0;
 }
 
-CH_IRQ_HANDLER( AnalogInIsr ) {
+static CH_IRQ_HANDLER(AnalogInIsr) {
   CH_IRQ_PROLOGUE();
   ainServeInterrupt();
   AT91C_BASE_AIC->AIC_EOICR = 0;
   CH_IRQ_EPILOGUE();
 }
 
+/**
+  Initialize the analog in system.
+*/
 void ainInit(void)
 {
   AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_ADC; // enable the peripheral clock
@@ -185,9 +208,9 @@ void ainInit(void)
     // AT91C_ADC_LOWRES_8_BIT | // 8 bit conversion
        AT91C_ADC_SLEEP_NORMAL_MODE | // SLEEP
     // AT91C_ADC_SLEEP_MODE | // SLEEP
-       ( ( 9 << 8 ) & AT91C_ADC_PRESCAL ) | // Prescale rate (8 bits)
-       ( ( 127 << 16 ) & AT91C_ADC_STARTUP ) | // Startup rate
-       ( ( 127 << 24 ) & AT91C_ADC_SHTIM ); // Sample and Hold Time
+       ((9 << 8) & AT91C_ADC_PRESCAL) | // Prescale rate (8 bits)
+       ((127 << 16) & AT91C_ADC_STARTUP) | // Startup rate
+       ((127 << 24) & AT91C_ADC_SHTIM ); // Sample and Hold Time
    
   // initialize non-adc pins
   palSetGroupMode(IOPORT2,
@@ -205,11 +228,17 @@ void ainInit(void)
   AIC_EnableIT(AT91C_ID_ADC);
 }
 
+/**
+  Deinitialize the analog in system.
+*/
 void ainDeinit(void)
 {
   AT91C_BASE_PMC->PMC_PCDR = 1 << AT91C_ID_ADC; // disable peripheral clock
   AIC_DisableIT(AT91C_ID_ADC);                  // disable interrupts
 }
+
+/** @}
+*/
 
 #ifdef OSC___
 

@@ -187,7 +187,7 @@ void hwinit1(void) {
   ledEnable();
 
   #ifndef NO_AIN_INIT
-//  ainInit();
+  ainInit();
   #endif
   
   #ifndef NO_SPI_INIT
@@ -217,6 +217,5 @@ void hwinit1(void) {
   // AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PIO_PA3 | AT91C_PIO_PA4;
   #endif
 
-  // ChibiOS/RT initialization.
-  chSysInit();
+  chSysInit(); // ChibiOS/RT initialization.
 }
