@@ -50,7 +50,7 @@
   }
   \endcode
 
-  If you're looking to access the web check the \ref WebClient instead, which
+  If you're looking to access the web check the \ref webclient instead, which
   provides web-specific behavior on top of TCP sockets.
 
   \ingroup networking
