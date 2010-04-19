@@ -28,14 +28,18 @@
 #endif
 
 /**
-  Create a new LED object.
-  
-  \b Example
-  \code
-  Led led;
-  // that's it!
-  \endcode
+  \defgroup led LED
+  Controls the single green LED on the MAKE Controller Board.
+  There are two LEDs on the MAKE Controller Board - one green and one red.  The red LED is simply
+  a power indicator and cannot be controlled by the Controller.  The green LED can be used for
+  program feedback.  In many MakingThings applications, for example, it is set to blink once a
+  second, showing the board's "heartbeat" and letting the user know that the board is running.
+
+  If you're looking to control the LEDs on the Application Board, check \ref appled.
+  \ingroup Core
+  @{
 */
+
 void ledEnable()
 {
   pinSetMode(LED_IO, OUTPUT);
@@ -44,13 +48,11 @@ void ledEnable()
 
 /**
   Turn the LED on or off.
-  
-  @param state True to turn it on, false to turn it off.
+  @param on True to turn it on, false to turn it off.
   
   \b Example
   \code
-  Led led;
-  led.setState(true); // turn it on
+  ledSetValue(ON); // turn it on
   \endcode
 */
 void ledSetValue(bool on)
@@ -63,17 +65,17 @@ void ledSetValue(bool on)
   
   \b Example
   \code
-  Led led;
-  if(led.state())
-  {
+  if (ledValue() == ON) {
     // then it's on
   }
   \endcode
 */
 bool ledValue()
 {
-  return pinValue(LED_IO) ? 0 : 1;
+  return pinValue(LED_IO);
 }
+
+/** @} */
 
 #ifdef OSC
 
