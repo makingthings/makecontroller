@@ -215,16 +215,15 @@ int serialRead(int port, char* buf, int len, int timeout)
 */
 char serialGet(int port, int timeout)
 {
-  uint8_t c;
 #if USE_SAM7_USART0
   if (port == 0)
-    return sdReadTimeout(&SD1, &c, 1, MS2ST(timeout));
+    return chIQGetTimeout(&SD1.sd.iqueue, MS2ST(timeout));
 #endif
 #if USE_SAM7_USART1
   if (port == 1)
-    return sdReadTimeout(&SD2, &c, 1, MS2ST(timeout));
+    return chIQGetTimeout(&SD2.sd.iqueue, MS2ST(timeout));
 #endif
-  return c;
+  return 0;
 }
 
 /**
@@ -265,14 +264,13 @@ int serialWrite(int port, char* buf, int len, int timeout)
 */
 int serialPut(int port, char c, int timeout)
 {
-  char ch = c;
 #if USE_SAM7_USART0
   if (port == 0)
-    return sdWriteTimeout(&SD1, (uint8_t*)&ch, 1, MS2ST(timeout));
+    return chOQPutTimeout(&SD1.sd.oqueue, (uint8_t)c, MS2ST(timeout));
 #endif
 #if USE_SAM7_USART1
   if (port == 1)
-    return sdWriteTimeout(&SD2, (uint8_t*)&ch, 1, MS2ST(timeout));
+    return chOQPutTimeout(&SD2.sd.oqueue, (uint8_t)c, MS2ST(timeout));
 #endif
   return 0;
 }
