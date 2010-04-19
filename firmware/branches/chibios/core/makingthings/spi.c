@@ -51,7 +51,7 @@ static bool spiGetMode( int channel );
   
   \b Note - the SPI routines are not thread-safe.  If you're going to be using them from different
   threads, use the spiLock() and spiUnlock() routines to get exclusive access.
-  \ingroup io
+  \ingroup interfacing
   @{
 */
 
