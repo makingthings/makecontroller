@@ -208,6 +208,26 @@ int serialRead(int port, char* buf, int len, int timeout)
 }
 
 /**
+  Get a single character from the serial port.
+  @param port Which serial port - valid options are 0 and 1.
+  @param timeout How long to wait (in milliseconds) for data to arrive.
+  @return The character received.
+*/
+char serialGet(int port, int timeout)
+{
+  uint8_t c;
+#if USE_SAM7_USART0
+  if (port == 0)
+    return sdReadTimeout(&SD1, &c, 1, MS2ST(timeout));
+#endif
+#if USE_SAM7_USART1
+  if (port == 1)
+    return sdReadTimeout(&SD2, &c, 1, MS2ST(timeout));
+#endif
+  return c;
+}
+
+/**
   Write data to a serial port.
   @param port Which serial port - valid options are 0 and 1.
   @param buf The buffer containing the data to write.
@@ -233,6 +253,26 @@ int serialWrite(int port, char* buf, int len, int timeout)
 #if USE_SAM7_USART1
   if (port == 1)
     return sdWriteTimeout(&SD2, (uint8_t*)buf, (size_t)len, MS2ST(timeout));
+#endif
+  return 0;
+}
+
+/**
+  Write a single character to the serial port.
+  @param port Which serial port - valid options are 0 and 1.
+  @param c The character to write.
+  @param timeout How long to wait (in milliseconds) for data to be written.
+*/
+int serialPut(int port, char c, int timeout)
+{
+  char ch = c;
+#if USE_SAM7_USART0
+  if (port == 0)
+    return sdWriteTimeout(&SD1, (uint8_t*)&ch, 1, MS2ST(timeout));
+#endif
+#if USE_SAM7_USART1
+  if (port == 1)
+    return sdWriteTimeout(&SD2, (uint8_t*)&ch, 1, MS2ST(timeout));
 #endif
   return 0;
 }

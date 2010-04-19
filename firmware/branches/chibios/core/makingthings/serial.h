@@ -29,7 +29,9 @@ void serialEnable(int port, int baud, int parity, int charbits, int stopbits, bo
 void serialDisable(int port);
 int  serialAvailable(int port);
 int  serialRead(int port, char* buf, int len, int timeout);
+char serialGet(int port, int timeout);
 int  serialWrite(int port, char* buf, int len, int timeout);
+int  serialPut(int port, char c, int timeout);
 #ifdef __cplusplus
 }
 #endif
