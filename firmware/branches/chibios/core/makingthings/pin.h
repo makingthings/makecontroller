@@ -56,6 +56,7 @@ typedef AT91S_PIO* Group;
 /**
   \defgroup PinOptions Pin Options
   Pins for each of the processor's IO lines.
+  \ingroup Core
   @{
 */
 typedef enum {
@@ -152,6 +153,7 @@ void pinEnableHandler(Pin pin);
 
 /**
   \defgroup PinBits Pin Bits
+  \ingroup Core
   @{
 */
 #define PIN_PA0_BIT  (1 << 0)  /**< Pin 0, Port A */
