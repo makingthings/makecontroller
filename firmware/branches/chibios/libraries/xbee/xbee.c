@@ -67,11 +67,8 @@ static XBeeDriver xbee;
 
   \section API
   The Make Controller API for working with the XBee modules makes use of the XBee Packet API.  If you simply want to make use
-  of the transparent serial port functionality, you can use the following functions:
-  XBee_SetActive( )
-  XBee_Write(  );
-  XBee_Read( );
-  XBee_GetReadable( );
+  of the transparent serial port functionality, you can use the \ref serial system directly.  Make sure
+  to set the baud rate to 9600 to communicate with XBee modules.
 
   Or if you want to handle setup etc. yourself, you don't need to deal with these - just hook up the module to your 
   Make Controller and start reading and writing over the serial port.
@@ -92,14 +89,14 @@ static XBeeDriver xbee;
   be sent to the XBee module attached to the Make Controller.  The \b XBee_ functions deal with sending and receiving 
   messages to other XBee modules not connected to the Make Controller.
 
-  \ingroup Libraries
+  \ingroup interfacing
   @{
 */
 
 /**     
   Controls the active state of the \b XBee subsystem
   @param state Whether this subsystem is active or not
-        @return Zero on success.
+  @return Zero on success.
 */
 void xbeeInit()
 {
@@ -230,27 +227,26 @@ int xbeeGetPacket(XBeePacket* packet, int timeout)
 int xbeeSendPacket(XBeePacket* packet, int datalength)
 {
   serialPut(XBEE_SERIAL, XBEE_PACKET_STARTBYTE);
-  int size = datalength;
   switch (packet->apiId) {
     case XBEE_TX64: //account for apiId, frameId, 8 bytes destination, and options
-      size += 11;
+      datalength += 11;
       break;
     case XBEE_TX16: //account for apiId, frameId, 2 bytes destination, and options
-      size += 5; 
+      datalength += 5; 
       break;
     case XBEE_ATCOMMAND: // length = API ID + Frame ID, + AT Command (+ Parameter Value)
-      size = (datalength > 0) ? 8 : 4; // if we're writing, there are 4 bytes of data, otherwise, just the length above
+      datalength = (datalength > 0) ? 8 : 4; // if we're writing, there are 4 bytes of data, otherwise, just the length above
       break;
     default:
-      size = 0;
+      datalength = 0;
       break;
   }
 
-  serialPut(XBEE_SERIAL, (size >> 8) & 0xFF ); // send the most significant bit
-  serialPut(XBEE_SERIAL, size & 0xFF ); // then the LSB
+  serialPut(XBEE_SERIAL, (datalength >> 8) & 0xFF); // send the most significant bit
+  serialPut(XBEE_SERIAL, datalength & 0xFF); // then the LSB
   packet->crc = 0; // just in case it hasn't been initialized.
   uint8_t* p = (uint8_t*)packet;
-  while (size--) {
+  while (datalength--) {
     serialPut(XBEE_SERIAL, *p);
     packet->crc += *p++;
   }
@@ -283,29 +279,28 @@ void xbeeResetPacket(XBeePacket* packet)
   When setting this on, the XBee module needs to wait 1 second after sending the command sequence before it's 
   ready to receive any AT commands - this function will block for that amount of time.  Once you turn it off,
   you won't get any responses to packets you send the module until you turn packet mode on again.
-  @param value 1 to turn packet mode on, 0 to turn it off.
+  @param enabled true to turn packet mode on, false to turn it off.
         
   \par Example
   \code
-        MyTask( void * p )
-        {
-                XBeeConfig_SetPacketApiMode( 1 ); // initialize the module to be in API mode
-                while( 1 )
-                {
-                        // your task here.
-                }
-        }
+  MyTask( void * p )
+  {
+    xbeeConfigSetPacketApiMode(YES); // initialize the module to be in API mode
+    while (1) {
+      // your task here.
+    }
+  }
   \endcode
 */
-void xbeeConfigSetPacketApiMode(int value)
+void xbeeConfigSetPacketApiMode(bool enabled)
 {
-  if (value) {
+  if (enabled) {
     char buf[10];
     int len = siprintf(buf, "+++"); // enter command mode
     serialPut(XBEE_SERIAL, buf, len, 0 );
     chThdSleepMilliseconds(1025); // have to wait one second after +++ to actually get set to receive in AT mode
-    len = siprintf(buf, "ATAP1,CN\r" ); // turn API mode on, and leave command mode
-    serialPut(XBEE_SERIAL, buf, len, 0 );
+    len = siprintf(buf, "ATAP1,CN\r"); // turn API mode on, and leave command mode
+    serialPut(XBEE_SERIAL, buf, len, 0);
     chThdSleepMilliseconds(50);
     while (serialAvailable(XBEE_SERIAL) > 0)
       (void)serialGet(XBEE_SERIAL); // rip the OKs out of there
@@ -517,7 +512,7 @@ bool xbeeCreateTX64Packet(XBeePacket* xbp, uint8_t frameID, uint64_t destination
   xbp->apiId = XBEE_TX64;
   xbp->tx64.frameID = frameID;
   for (i = 0; i < 8; i++)
-    xbp->tx64.destination[i] = (destination >> 8*i) & (0xFF * i); // ????????
+    xbp->tx64.destination[i] = (destination >> (8 * i)) & 0xFF;
   xbp->tx64.options = options;
   xbp->length = datalength + 5;
   p = xbp->tx64.data;
