@@ -234,7 +234,7 @@ bool xbeeReadAtResponsePacket(XBeePacket* xbp, uint8_t* frameID, char** command,
 bool xbeeReadTXStatusPacket(XBeePacket* xbp, uint8_t* frameID, uint8_t* status );
 
 // XBee Config stuff
-void xbeeConfigSetPacketApiMode(int value);
+void xbeeConfigSetPacketApiMode(bool enabled);
 int  xbeeConfigRequestPacketApiMode(void);
 void xbeeConfigWriteStateToMemory(void);
 void xbeeConfigSetAddress(uint16_t address);
