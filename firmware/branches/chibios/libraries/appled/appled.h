@@ -35,15 +35,14 @@ public:
 };
 #endif // OSC
 
-/**
-  Status LEDs for program feedback.
-  App LEDs (Application Board LED) are great for providing some information about how your
-  program is running.  
-*/
-
-void appledEnable(int channel);
-void appledSetValue(int channel, bool onff);
-bool appledValue(int channel);
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+void appledEnable(int led);
+void appledSetValue(int led, bool onff);
+bool appledValue(int led);
+#ifdef __cplusplus
+}
+#endif
 #endif // APPLED_H
 

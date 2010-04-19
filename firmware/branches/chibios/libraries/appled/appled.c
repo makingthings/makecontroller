@@ -42,6 +42,15 @@
   #define APPLED_3 PIN_PA28
 #endif
 
+/**
+  \defgroup appled Application Board LEDs
+  Status LEDs for program feedback.
+  App LEDs (Application Board LED) are great for providing some information about how your
+  program is running.
+  \ingroup io
+  @{
+*/
+
 static int appledGetIo(int index)
 {
   switch (index) {
@@ -55,24 +64,24 @@ static int appledGetIo(int index)
 
 /**
   Configure an app LED.
-  @param index Which app LED - valid options are 0-3
+  @param led Which app LED - valid options are 0-3
 
   \b Example
   \code
-  appledEnable(1); // set it up
+  appledEnable(1); // set up app led 1
   \endcode
 */
-void appledEnable(int channel)
+void appledEnable(int led)
 {
-  short io = appledGetIo(channel);
+  short io = appledGetIo(led);
   pinSetMode(io, OUTPUT);
   pinOn(io); // inverted
 }
 
 /**
   Turn an AppLed on or off.
-  @param channel Which app LED - valid options are 0-3.
-  @param state True to turn it on, false to turn it off.
+  @param led Which app LED - valid options are 0-3.
+  @param on True to turn it on, false to turn it off.
 
   \b Example
   \code
@@ -80,13 +89,14 @@ void appledEnable(int channel)
   appledSetValue(1, OFF); // turn LED 1 off
   \endcode
 */
-void appledSetValue(int channel, bool on)
+void appledSetValue(int led, bool on)
 {
-  pinSetValue(appledGetIo(channel), !on); // inverted since it's tied to 3.3V
+  pinSetValue(appledGetIo(led), !on); // inverted since it's tied to 3.3V
 }
 
 /**
   Read whether an AppLed is currently on or not.
+  @param led Which app LED - valid options are 0-3.
   @return true if it's on, false if it's not.
 
   \b Example
@@ -99,10 +109,12 @@ void appledSetValue(int channel, bool on)
   }
   \endcode
 */
-bool appledValue(int channel)
+bool appledValue(int led)
 {
-  return !pinValue(appledGetIo(channel));
+  return !pinValue(appledGetIo(led));
 }
+
+/** @} */
 
 #ifdef OSC
 
