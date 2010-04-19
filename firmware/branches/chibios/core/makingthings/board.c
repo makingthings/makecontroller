@@ -26,6 +26,7 @@
 #include "eeprom.h"
 #include "pwm.h"
 #include "core.h"
+#include "serial.h"
 
 void kill(void)
 {
@@ -47,9 +48,7 @@ static CH_IRQ_HANDLER(SpuriousHandler) {
 void UndHandler(void)
 {
 #ifdef NO_RESTART_ON_FAILURE
-  while(1) {
-    ;
-  }
+  while(1);
 #else
   kill();
 #endif
@@ -58,9 +57,7 @@ void UndHandler(void)
 void SwiHandler(void)
 {
 #ifdef NO_RESTART_ON_FAILURE
-  while(1) {
-    ;
-  }
+  while(1);
 #else
   kill();
 #endif
@@ -69,9 +66,7 @@ void SwiHandler(void)
 void PrefetchHandler(void)
 {
 #ifdef NO_RESTART_ON_FAILURE
-  while(1) {
-    ;
-  }
+  while(1);
 #else
   kill();
 #endif
@@ -79,17 +74,13 @@ void PrefetchHandler(void)
 
 void FiqHandler(void)
 {
-  while(1) {
-    ;
-  }
+  while(1);
 }
 
 void AbortHandler(void)
 {
 #ifdef NO_RESTART_ON_FAILURE
-  while(1) {
-    ;
-  }
+  while(1);
 #else
   kill();
 #endif
@@ -101,7 +92,6 @@ void AbortHandler(void)
 static CH_IRQ_HANDLER(SYSIrqHandler) {
 
   CH_IRQ_PROLOGUE();
-
   if (AT91C_BASE_PITC->PITC_PISR & AT91C_PITC_PITS) {
     (void) AT91C_BASE_PITC->PITC_PIVR;
     chSysLockFromIsr();
@@ -109,7 +99,6 @@ static CH_IRQ_HANDLER(SYSIrqHandler) {
     chSysUnlockFromIsr();
   }
   AT91C_BASE_AIC->AIC_EOICR = 0;
-
   CH_IRQ_EPILOGUE();
 }
 
@@ -185,10 +174,6 @@ void hwinit1(void) {
     done for common usage, but can be removed by conditionalization
   */
   ledEnable();
-  
-  #if APPBOARD_VERSION >= 100 && !defined(NO_DOUT_INIT)
-  digitaloutInit();
-  #endif
 
   #ifndef NO_AIN_INIT
   ainInit();
@@ -215,11 +200,12 @@ void hwinit1(void) {
   AT91C_BASE_PITC->PITC_PIMR |= AT91C_PITC_PITEN | AT91C_PITC_PITIEN;
 
   #ifndef NO_SERIAL_INIT
-  // sdInit();
-  // AT91C_BASE_PIOA->PIO_PDR   = AT91C_PA3_RTS0 | AT91C_PA4_CTS0;
-  // AT91C_BASE_PIOA->PIO_ASR   = AT91C_PIO_PA3 | AT91C_PIO_PA4;
-  // AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PIO_PA3 | AT91C_PIO_PA4;
+  serialInit();
   #endif
+  // setup hardware handshake lines
+  AT91C_BASE_PIOA->PIO_PDR   = AT91C_PA3_RTS0 | AT91C_PA4_CTS0 | AT91C_PA8_RTS1 | AT91C_PA9_CTS1;
+  AT91C_BASE_PIOA->PIO_ASR   = AT91C_PA3_RTS0 | AT91C_PA4_CTS0 | AT91C_PA8_RTS1 | AT91C_PA9_CTS1;
+  AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PA3_RTS0 | AT91C_PA4_CTS0 | AT91C_PA8_RTS1 | AT91C_PA9_CTS1;
 
   chSysInit(); // ChibiOS/RT initialization.
 }

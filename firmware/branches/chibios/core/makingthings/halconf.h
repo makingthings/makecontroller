@@ -102,6 +102,17 @@
 #define CH_HAL_USE_SERIAL           TRUE
 #endif
 
+#ifndef USE_SAM7_USART0
+#define USE_SAM7_USART0             TRUE
+#endif
+
+#ifndef USE_SAM7_USART1
+#define USE_SAM7_USART1             TRUE
+#endif
+
+#define SAM7_USART0_PRIORITY        (AT91C_AIC_PRIOR_HIGHEST - 2)
+#define SAM7_USART1_PRIORITY        (AT91C_AIC_PRIOR_HIGHEST - 2)
+
 /*
  * Default SERIAL settings overrides (uncomment to override).
  */
