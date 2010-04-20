@@ -18,19 +18,9 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-/* some types */
 #ifndef __cplusplus
 typedef unsigned char bool;
 #endif
-typedef unsigned char uchar;
-typedef unsigned char uint8;
-typedef unsigned int uint;
-typedef unsigned short int uint16;
-typedef unsigned long long int uint64;
-typedef long long int llong;
-typedef long long int longlong;
-typedef unsigned long long int ullong;
-typedef unsigned long long int ulonglong;
 
 #ifndef true
 #define true 1
