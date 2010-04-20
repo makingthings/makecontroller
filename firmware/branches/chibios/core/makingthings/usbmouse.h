@@ -17,7 +17,7 @@ extern "C" {
 #endif
 void usbmouseInit(void);
 bool usbmouseIsActive(void);
-bool usbmouseSendUpdate(MouseClickAction left, MouseClickAction right, int changeX, int changeY);
+bool usbmouseUpdate(MouseClickAction left, MouseClickAction right, int changeX, int changeY);
 #ifdef __cplusplus
 }
 #endif
