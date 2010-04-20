@@ -23,12 +23,31 @@
 #ifndef CORE_H
 #define CORE_H
 
+#define UNUSED(x) (void)x;
+#define MIN(a, b) ((a < b) ? a : b)
+#define MAX(a, b) ((a > b) ? a : b)
+
+#ifdef __cplusplus
+
+#include "rtos.h"
+#include "timer.h"
+#include "fasttimer.h"
+
+extern "C" {
+#endif
+// C-only business in here
+
 // all the basics
 #include "ch.h"
 #include "hal.h"
 #include "types.h"
 #include "error.h"
 #include "config.h"
+#include "pin.h"
+#include "system.h"
+#include "pwm.h"
+#include "serial.h"
+#include "spi.h"
 #ifdef MAKE_CTRL_NETWORK
 #include "network.h"
 #include "udpsocket.h"
@@ -41,22 +60,6 @@
 #include "led.h"
 #include "analogin.h"
 
-#define UNUSED(x) (void)x;
-#define MIN(a, b) ((a < b) ? a : b)
-#define MAX(a, b) ((a > b) ? a : b)
-
-#ifdef __cplusplus
-
-#include "rtos.h"
-#include "system.h"
-#include "timer.h"
-#include "fasttimer.h"
-#include "pwm.h"
-
-extern "C" {
-#endif
-
-// C-only business in here
 void Run( void );
 void kill( void );
 

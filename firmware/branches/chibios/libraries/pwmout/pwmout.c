@@ -16,9 +16,8 @@
 *********************************************************************************/
 
 #include "pwmout.h"
-#include "pwm.h"
 #include "core.h"
-
+#include "pwm.h"
 #include "pin.h"
 
 #if ( APPBOARD_VERSION == 50 )
@@ -52,24 +51,55 @@
   #define PWMOUT_3_IO_B PIN_PB23
 #endif
 
-static void pwmoutGetIos( int channel, int* ioA, int* ioB );
+static void pwmoutGetIos(int channel, int* ioA, int* ioB);
 
 /**
-  Create a new PwmOut object
-  
-  @param index Which channel to control - valid options are 0, 1, 2, 3
+  \defgroup pwmout PWM Out
+  Control the 4 PWM signals on the Application Board.
+
+  The PWM signals on the Controller Board are connected on the Application Board to high current
+  drivers.  Each driver has 2 PWM signals, which control a pair of Digital Outs - an A and a B channel:
+  - PwmOut 0 - Digital Outs 0 (A) and 1 (B).
+  - PwmOut 1 - Digital Outs 2 (A) and 3 (B).
+  - PwmOut 2 - Digital Outs 4 (A) and 5 (B).
+  - PwmOut 3 - Digital Outs 6 (A) and 7 (B).
+
+  The A and B channels of a PWM device can be set independently to be inverted, or not, from one another
+  in order to control motors, lights, etc.
+
+  \section Usage
+  First, enable a PWM out with pwmoutEnable() and then control it with the other routines.
+
+  \code
+  pwmoutEnable(2); // enable PWM out 2
+  pwmoutSetDuty(2, 1023); // turn it on full blast
+  \endcode
+
+  \section Note
+  Each PWM out is built on top of a \ref PWM instance.  If you need to adjust timing,
+  inversion or other parameters, check the \ref PWM system.
+
+  See the digital out section of the
+  <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/digital-outputs">
+  Application Board overview</a> for more details.
+
+  \ingroup io
+  @{
+*/
+
+/**
+  Enable a PWM out channel.
+  @param channel Which pwmout - valid options are 0-3.
   
   \b Example
   \code
-  PwmOut pwmout;
-  // or allocate one...
-  PwmOut* p = new PwmOut();
+  pwmoutEnable(1);
   \endcode
 */
-void pwmoutEnable( int channel )
+void pwmoutEnable(int channel)
 {
   int a, b; // Look up the IO's that will be used
-  pwmoutGetIos( channel, &a, &b );
+  pwmoutGetIos(channel, &a, &b);
   pinSetMode(a, OUTPUT);
   pinSetMode(b, OUTPUT);
   pinOn(a);
@@ -78,13 +108,13 @@ void pwmoutEnable( int channel )
 }
 
 /*
-  If this was the last instance of this PwmOut, kill it
-  and clean up.
+  Disable a PWM out.
+  @param channel Which pwmout - valid options are 0-3.
 */
 void pwmoutDisable(int channel)
 {
   int a, b;
-  pwmoutGetIos( channel, &a, &b );
+  pwmoutGetIos(channel, &a, &b);
   pinOff(a);
   pinOff(b);
   pwmDisableChannel(channel);
@@ -92,21 +122,20 @@ void pwmoutDisable(int channel)
 
 /** 
   Set the speed of a PwmOut.
+  @param channel Which pwmout - valid options are 0-3.
   @param duty An integer (0 - 1023) specifying the duty.
-  @return True on success, false on failure.
   
   \b Example
   \code
-  PwmOut p(1);
-  p.setDuty(512);
+  pwmoutSetDuty(1, 512);
   \endcode
 */
-void pwmoutSetDuty( int channel, int duty )
+void pwmoutSetDuty(int channel, int duty)
 {
   pwmSetDuty(channel, duty);
 }
 
-/** 
+/*
   Read the current duty of a PwmOut.
   @return The duty (0 - 1023).
   
@@ -123,31 +152,31 @@ void pwmoutSetDuty( int channel, int duty )
 
 /** 
   Set whether the A channel associated with a PwmOut should be inverted.
+  @param channel Which pwmout - valid options are 0-3.
   @param invert A character specifying the inversion - 1/non-zero (inverted) 0 (normal).
   @return True on success, false on failure;
   
   \b Example
   \code
-  PwmOut p(1);
-  p.setInvertedA(false); // channel A not inverted
+  pwmoutSetInvertedA(1, false); // channel A not inverted
   \endcode
 */
-bool pwmoutSetInvertedA( int channel, bool invert )
+bool pwmoutSetInvertedA(int channel, bool invert)
 {
   int a, b;
   pwmoutGetIos(channel, &a, &b);
-  pinSetValue( a, !invert );
+  pinSetValue(a, !invert);
   return true;
 }
 
 /** 
   Read whether the A channel of a PwmOut is inverted.
+  @param channel Which pwmout - valid options are 0-3.
   @return True if inverted, false if not.
   
   \b Example
   \code
-  PwmOut p(1);
-  bool is_A_inverted = p.invertedA();
+  bool is_A_inverted = pwmoutInvertedA(1);
   \endcode
 */
 bool pwmoutInvertedA(int channel)
@@ -159,31 +188,31 @@ bool pwmoutInvertedA(int channel)
 
 /** 
   Read whether the B channel of a PwmOut is inverted.
+  @param channel Which pwmout - valid options are 0-3.
   @param invert A character specifying the inversion - 1/non-zero (inverted) 0 (normal).
   @return True on success, false on failure.
   
   \b Example
   \code
-  PwmOut p(1);
-  p.setInvertedB(false); // channel B not inverted
+  pwmoutSetInvertedB(1, false); // channel B not inverted
   \endcode
 */
-bool pwmoutSetInvertedB( int channel, bool invert )
+bool pwmoutSetInvertedB(int channel, bool invert)
 {
   int a, b;
   pwmoutGetIos(channel, &a, &b);
-  pinSetValue( b, !invert );
+  pinSetValue(b, !invert);
   return true;
 }
 
 /** 
   Read whether the B channel of a PwmOut is inverted.
+  @param channel Which pwmout - valid options are 0-3.
   @return True if inverted, false if not.
   
   \b Example
   \code
-  PwmOut p(1);
-  bool is_B_inverted = p.invertedB();
+  bool is_B_inverted = pwmoutInvertedB(1);
   \endcode
 */
 bool pwmoutInvertedB(int channel)
@@ -195,6 +224,7 @@ bool pwmoutInvertedB(int channel)
 
 /** 
   Set all the parameters of a PwmOut at once.
+  @param channel Which pwmout - valid options are 0-3.
   @param duty The duty (0-1023)
   @param invertA Whether channel A should be inverted
   @param invertB Whether channel B should be inverted
@@ -202,11 +232,10 @@ bool pwmoutInvertedB(int channel)
   
   \b Example
   \code
-  PwmOut p(1);
-  p.setAll(1023, false, true);
+  pwmoutSetAll(1, 1023, false, true);
   \endcode
 */
-bool pwmoutSetAll( int channel, int duty, bool invertA, bool invertB )
+bool pwmoutSetAll(int channel, int duty, bool invertA, bool invertB)
 {
   int a, b;
   pwmoutGetIos(channel, &a, &b);
@@ -216,10 +245,11 @@ bool pwmoutSetAll( int channel, int duty, bool invertA, bool invertB )
   return true;
 }
 
-void pwmoutGetIos( int channel, int* ioA, int* ioB )
+/** @} */
+
+void pwmoutGetIos(int channel, int* ioA, int* ioB)
 { 
-  switch( channel )
-  {
+  switch(channel) {
     case 0:
       *ioA = PWMOUT_0_IO_A;
       *ioB = PWMOUT_0_IO_B;
@@ -318,7 +348,7 @@ void pwmoutGetIos( int channel, int* ioA, int* ioB )
 
   The below values allow you to adjust the period length to all possible values as supported
   by the physical limits of the Make Controller.  Before altering the values, it is good to understand
-  a little about the subsustem of the PWM module.  Please see the general introduction in the \ref Pwm section.
+  a little about the subsustem of the PWM module.  Please see the general introduction in the \ref PWM section.
 
   \subsection DividerBValue
   The \b dividerXValue property corresponds to the linear divider value within clock divider module X of the 
