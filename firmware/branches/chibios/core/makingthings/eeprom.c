@@ -15,6 +15,7 @@
 
 *********************************************************************************/
 
+#include "spi.h"
 #include "eeprom.h"
 #include "error.h"
 #include "pin.h"
@@ -27,32 +28,54 @@
 #define EEPROM_INSTRUCTION_WRITE 0x02
 
 #define EEPROM_DEVICE 0x03
-//#define EEPROM_NOTCS 0x0B  
+//#define EEPROM_NOTCS 0x0B
 
-static void eepromReady(void);
-static void eepromWriteEnable(void);
+/**
+  \defgroup eeprom EEPROM
+  Persistent storage of 32k bytes of data.
+  If you want to store a little information that can be retrieved even after the board has
+  been powered down, then Eeprom is for you.  You don't have a TON of space, but 32K is a good amount
+  for configuration info and even a tiny bit of logging.
 
+  \section Usage
+  eepromInit() must be called before using the EEPROM - this is done automatically during system
+  startup, but you can disable it by defining \b NO_EEPROM_INIT in your config.h file.  Once it's
+  initialized, read and write single int values with eepromRead() and eepromWrite(), or write blocks
+  of data with eepromReadBlock() and eepromWriteBlock().
+
+  The last 1k (1024) bytes of this space are reserved for Make Controller system
+  use, storing things like the board's IP address, serial number, build version, etc.  The symbol
+  \b EEPROM_SYSTEM_BASE provides the last available address before the reserved section, so
+  make sure that none of the addresses that you're writing to are greater than \b EEPROM_SYSTEM_BASE.
+
+  Internally, Eeprom relies on \ref SPI, so activating Eeprom also activates \ref SPI.
+  \ingroup Core
+  @{
+*/
+
+/**
+  Initialize the EEPROM system.
+*/
 void eepromInit()
 {
   spiEnableChannel(EEPROM_DEVICE);
   spiConfigure(EEPROM_DEVICE, 8, 4, 0, 1);
 }
 
-void eepromWriteEnable()
+static void eepromWriteEnable(void)
 {
-  uchar c = EEPROM_INSTRUCTION_WREN;
+  uint8_t c = EEPROM_INSTRUCTION_WREN;
   spiReadWriteBlock( EEPROM_DEVICE, &c, 1 );
 }
 
-void eepromReady( )
+static void eepromReady(void)
 {
   unsigned char c[2];
-  do
-  {
+  do {
     c[0] = EEPROM_INSTRUCTION_RDSR;
     c[1] = 0;
-    spiReadWriteBlock( EEPROM_DEVICE, c, 2 );
-  } while ( c[1] == 0xFF );
+    spiReadWriteBlock(EEPROM_DEVICE, c, 2);
+  } while (c[1] == 0xFF);
 }
 
 /**
@@ -62,14 +85,13 @@ void eepromReady( )
   
   \b Example
   \code
-  Eeprom* e = Eeprom::get(); // get a reference to the EEPROM
-  int myvalue = e->read(32); // read from address 32
+  int myvalue = eepromRead(32); // read from address 32
   \endcode
 */
-int eepromRead( int address )
+int eepromRead(int address)
 {
   int val;
-  eepromReadBlock( address, (uchar*)&val, 4 );
+  eepromReadBlock(address, (uint8_t*)&val, 4);
   return val;
 }
 
@@ -80,14 +102,13 @@ int eepromRead( int address )
   
   \b Example
   \code
-  Eeprom* e = Eeprom::get( ); // get a reference to the EEPROM
   int valueToStore = 95;
-  e->write(32, valueToStore);
+  eepromWrite(32, valueToStore);
   \endcode
 */
 void eepromWrite(int address, int value)
 {
-  eepromWriteBlock( address, (uchar*)&value, 4 );
+  eepromWriteBlock( address, (uint8_t*)&value, 4 );
 }
 
 /**
@@ -99,30 +120,29 @@ void eepromWrite(int address, int value)
   
   \b Example
   \code
-  uchar mydata[24];
-  Eeprom* e = Eeprom::get( ); // get a reference to the EEPROM
-  e->readBlock(32, mydata, 24);
+  uint8_t mydata[24];
+  eepromReadBlock(32, mydata, 24);
   \endcode
 */
-int eepromReadBlock(int address, uchar* data, int length)
+int eepromReadBlock(int address, uint8_t* data, int length)
 {
-  if ( address < 0 || address > EEPROM_SIZE )
+  if (address < 0 || address > EEPROM_SIZE)
     return CONTROLLER_ERROR_BAD_ADDRESS;
 
   spiLock();
-  eepromReady( );
+  eepromReady();
 
-  unsigned char c[ length + 4 ];
-  c[ 0 ] = EEPROM_INSTRUCTION_READ;
-  c[ 1 ] = (unsigned char)( address >> 8 );
-  c[ 2 ] = (unsigned char)( address & 0xFF );
-  c[ 3 ] = 0;
+  unsigned char c[length + 4];
+  c[0] = EEPROM_INSTRUCTION_READ;
+  c[1] = (unsigned char)(address >> 8);
+  c[2] = (unsigned char)(address & 0xFF);
+  c[3] = 0;
   
-  spiReadWriteBlock( EEPROM_DEVICE, c, length + 3 );
+  spiReadWriteBlock(EEPROM_DEVICE, c, length + 3);
 
   int i;
-  for ( i = 0; i < length; i++ )
-    data[ i ] = c[ i + 3 ];
+  for (i = 0; i < length; i++)
+    data[i] = c[i + 3];
 
   spiUnlock();
 
@@ -137,36 +157,36 @@ int eepromReadBlock(int address, uchar* data, int length)
   
   \b Example
   \code
-  uchar mydata[24];
-  Eeprom* e = Eeprom::get( ); // get a reference to the EEPROM
-  e->writeBlock(32, mydata, 24);
+  uint8_t mydata[24];
+  eepromWriteBlock(32, mydata, 24);
   \endcode
 */
-int eepromWriteBlock(int address, uchar *data, int length)
+int eepromWriteBlock(int address, uint8_t *data, int length)
 {
-  if ( address < 0 || address >= EEPROM_SIZE )
+  if (address < 0 || address >= EEPROM_SIZE)
     return CONTROLLER_ERROR_BAD_ADDRESS;
 
   spiLock();
-  eepromReady( );
+  eepromReady();
   eepromWriteEnable();    
 
-  uchar c[ length + 4 ];
+  uint8_t c[ length + 4 ];
   c[ 0 ] = EEPROM_INSTRUCTION_WRITE;
-  c[ 1 ] = (unsigned char)( address >> 8 );
-  c[ 2 ] = (unsigned char)( address & 0xFF );
+  c[ 1 ] = (unsigned char)(address >> 8);
+  c[ 2 ] = (unsigned char)(address & 0xFF);
   c[ 3 ] = 0;
 
   int i;
-  for ( i = 0; i < length; i++ )
-    c[ i + 3 ] = data[ i ];
+  for (i = 0; i < length; i++)
+    c[i + 3] = data[i];
   
-  spiReadWriteBlock( EEPROM_DEVICE, c, 3 + length );
+  spiReadWriteBlock(EEPROM_DEVICE, c, 3 + length);
   spiUnlock();
 
   return CONTROLLER_OK;
 }
 
+/** @} */
 
 
 

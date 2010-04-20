@@ -219,7 +219,7 @@ int systemSetName(const char* name)
   int i, length = MIN(strlen(name), SYSTEM_MAX_NAME);
   strncpy(sysName, name, length); // update the name in our buffer
   for (i = 0; i <= length; i++) // have to do this because Eeprom_Write can only go 32 at a time.
-    eepromWriteBlock(EEPROM_SYSTEM_NAME + i, (uchar*)name++, 1);
+    eepromWriteBlock(EEPROM_SYSTEM_NAME + i, (uint8_t*)name++, 1);
   return CONTROLLER_OK;
 }
 
@@ -239,7 +239,7 @@ const char* systemName()
     bool legal = false;
     int i;
     for (i = 0; i <= SYSTEM_MAX_NAME; i++ ) {
-      eepromReadBlock(EEPROM_SYSTEM_NAME + i, (uchar*)ptr, 1);
+      eepromReadBlock(EEPROM_SYSTEM_NAME + i, (uint8_t*)ptr, 1);
       if (*ptr == 0)
         break;
       if (!isalnum((int)*ptr) && (*ptr) != ' ') {
