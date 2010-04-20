@@ -339,8 +339,13 @@ hr {
 }
 
 .mdescLeft, .mdescRight {
-	padding: 0px 8px 4px 8px;
+/*  padding: 0px 8px 4px 8px;*/
 	color: #555;
+}
+
+.mdescRight p { 
+  padding: -10px;
+  margin: 0;
 }
 
 .memItemLeft, .memItemRight, .memTemplParams {
@@ -400,6 +405,7 @@ hr {
 	padding: 5px 5px 5px 10px;
 	background-color: #fff;
 	border-top-width: 0;
+	margin-bottom: 15px;
 	-webkit-border-bottom-left-radius: 8px;
 	-webkit-border-bottom-right-radius: 8px;
 	-moz-border-radius-bottomleft: 8px;
