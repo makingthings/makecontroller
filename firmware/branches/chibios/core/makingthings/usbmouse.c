@@ -20,7 +20,27 @@
 #include "USBConfigurationDescriptor.h"
 #include "USBD.h"
 
-void usbmouseInit(void) {
+/**
+  \defgroup usbmouse USB Mouse (HID)
+  Allow the Make Controller to behave like a mouse for your laptop or desktop.
+  You can send right and left click events, as well as send mouse movement events.
+
+  \section Usage
+  First, initialize the USB system by calling usbmouseInit().  Then, call usbmouseUpdate()
+  to send mouse click and movement events.
+
+  \section Building
+  You'll need to adjust your Makefile to build as a USB mouse.  In the \b CSRC section,
+  add ${USBHIDCORE} and ${USBHIDMOUSE}, and in the \b INCDIR section, add ${USBHIDCOREINC} and
+  ${USBHIDMOUSEINC}, and add ${MT}/usbmouse.c.
+  \ingroup interfacing
+  @{
+*/
+
+/**
+  Initialize the Make Controller as a USB mouse.
+*/
+void usbmouseInit() {
   HIDDMouseDriver_Initialize();
   USBD_Connect();
 }
@@ -48,7 +68,7 @@ bool usbmouseIsActive(void) {
  * @param changeY A change in position (specified in pixels) on the y-axis.
  * @return True if the message was successfully sent, otherwise false.
  */
-bool usbmouseSendUpdate(MouseClickAction left, MouseClickAction right, int changeX, int changeY) {
+bool usbmouseUpdate(MouseClickAction left, MouseClickAction right, int changeX, int changeY) {
 
   if (USBD_GetState() != USBD_STATE_CONFIGURED)
     return false;
@@ -67,6 +87,7 @@ bool usbmouseSendUpdate(MouseClickAction left, MouseClickAction right, int chang
   return HIDDMouseDriver_ChangePoints(buttons, (signed char)changeX, (signed char)changeY) == USBD_STATUS_SUCCESS;
 }
 
+/** @} */
 
 
 
