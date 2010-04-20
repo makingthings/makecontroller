@@ -19,39 +19,11 @@
 #define PWMOUT_H
 
 #include "pwm.h"
+#include "types.h"
 
-/**
-  Control the 4 PWM signals on the Application Board.
-  
-  The PWM signals on the Controller Board are connected on the Application Board to high current
-  drivers.  Each driver has 2 PWM signals, which control a pair of Digital Outs - an A and a B channel:
-  - PwmOut 0 - Digital Outs 0 (A) and 1 (B).
-  - PwmOut 1 - Digital Outs 2 (A) and 3 (B).
-  - PwmOut 2 - Digital Outs 4 (A) and 5 (B).
-  - PwmOut 3 - Digital Outs 6 (A) and 7 (B).
-  
-  The A and B channels of a PWM device can be set independently to be inverted, or not, from one another
-  in order to control motors, lights, etc.
-  
-  \section Usage
-  To get started, create a new PwmOut object specifying the channel you want to control.  
-  
-  \code
-  PwmOut pout(2); // create a new PwmOut object on channel 2
-  pout.setDuty(1023); // turn it on full blast
-  \endcode
-  
-  \section Note
-  Each PwmOut is built on top of a Pwm instance.  If you need to adjust timing, 
-  inversion or other parameters, check the Pwm system.
-  
-  See the digital out section of the 
-  <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/digital-outputs">
-  Application Board overview</a> for more details.
-  
-  \ingroup io
-*/
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 void pwmoutEnable(int channel);
 void pwmoutDisable(int channel);
 void pwmoutSetDuty(int channel, int duty);
@@ -60,7 +32,9 @@ bool pwmoutSetInvertedA(int channel, bool invert);
 bool pwmoutInvertedB(int channel);
 bool pwmoutSetInvertedB(int channel, bool invert);
 bool pwmoutSetAll(int channel, int duty, bool invertA, bool invertB);
-
+#ifdef __cplusplus
+}
+#endif
 /* OSC Interface */
 // const char* PwmOutOsc_GetName( void );
 // int PwmOutOsc_ReceiveMessage( int channel, char* message, int length );

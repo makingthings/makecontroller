@@ -21,33 +21,64 @@
 
 #define MOTOR_COUNT 4
 
-struct Motor
-{
+struct Motor {
   int direction;
   int speed;
 };
 
 static struct Motor motors[MOTOR_COUNT];
-static void motorFinalize( int channel );
+static void motorFinalize( int motor );
 
 /**
-  Create a new motor.
-  
-  @param index Which motor to control - valid options are 0, 1, 2, 3
+  \defgroup dcmotor DC Motor
+  Forward/reverse and speed control for up to 4 DC motors.
+
+  \b Note - this library is intended for use with the Make Application Board.
+
+  \section Usage
+  First enable the motor you want to use with motorEnable() and then use the other
+  routines to control it.  Note that other output devices cannot be used simultaneously
+  since they use the same output signals.  For example, a \ref digitalout cannot be used
+  without first setting overlapping the motor I/O lines to inactive.
+
+  Note - the symbols \b FORWARD and \b REVERSE are defined to \b true and \b false to make
+  things a little clearer.
+
+  \code
+  motorEnable(3); // enable the motor on channel 3
+  motorSetDirection(3, REVERSE); // set the motor to go backwards
+  motorSetSpeed(3, 1023); // full steam ahead
+  \endcode
+
+  \section Setup
+  Each motor controller is composed of 2 adjacent Digital Outs on the Make Application Board:
+  - motor 0 - Digital Outs 0 and 1.
+  - motor 1 - Digital Outs 2 and 3.
+  - motor 2 - Digital Outs 4 and 5.
+  - motor 3 - Digital Outs 6 and 7.
+
+  See the digital out section of the
+  <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/digital-outputs">
+  Application Board overview</a> for more details.
+  \ingroup io
+  @{
+*/
+
+/**
+  Enable a motor.
+  @param motor Which motor - valid options are 0-3.
   
   \b Example
   \code
-  Motor m(1);
-  // or...
-  Motor* m = new Motor(1);
+  motorEnable(1);
   \endcode
 */
-void motorEnable(int channel)
+void motorEnable(int motor)
 {
-  struct Motor* m = &(motors[channel]);
+  struct Motor* m = &(motors[motor]);
   m->direction = true;
   m->speed = 0;
-  motorFinalize( channel );
+  motorFinalize(motor);
 }
 
 void motorDisable(int channel)
@@ -57,88 +88,88 @@ void motorDisable(int channel)
 
 /** 
   Set the speed of a DC motor.
+  @param motor Which motor - valid options are 0-3.
   @param duty An integer (0 - 1023) specifying the speed.
   @returns True on success, false on failure.
   
   \b Example
   \code
   // Set the speed of motor 3 to %75
-  Motor m(3);
-  m.setSpeed(768);
+  motorSetSpeed(3, 768);
   \endcode
 */
-bool motorSetSpeed(int channel, int duty)
+bool motorSetSpeed(int motor, int duty)
 { 
-  motors[channel].speed = duty;
-  motorFinalize( channel );
+  motors[motor].speed = duty;
+  motorFinalize(motor);
   return true;
 }
 
 /** 
   Set the direction of a DC motor.
+  @param motor Which motor - valid options are 0-3.
   @param forward True for forward, false for reverse
   @return True on success, false on failure
   
   \b Example
   \code
   // Set the direction of motor 2 to reverse.
-  Motor* m = new Motor(2);
-  m->setDirection(false);
+  motorSetDirection(2, REVERSE);
   \endcode
 */
-bool motorSetDirection(int channel, bool forward)
+bool motorSetDirection(int motor, bool forward)
 {
-  motors[channel].direction = forward;
-  motorFinalize( channel );
+  motors[motor].direction = forward;
+  motorFinalize(motor);
   return true;
 }
 
 /** 
   Read the speed of a DC motor.
+  @param motor Which motor - valid options are 0-3.
   @return the speed (0 - 1023)
   
   \b Example
   \code
   // check the current speed of motor 1
-  Motor m(1);
-  int motor1_speed = m.speed();
+  int speed = motorSpeed(1);
   \endcode
 */
-int motorSpeed(int channel)
+int motorSpeed(int motor)
 { 
-  return motors[channel].speed;
+  return motors[motor].speed;
 }
 
 /** 
   Read the direction of a DC motor.
+  @param motor Which motor - valid options are 0-3.
   @return True for forward, false for reverse
   
   \b Example
   \code
-  Motor m(0);
-  if( m.direction() )
-  {
+  if (motorDirection(0) == FORWARD) {
     // Motor 0 is going forward
   }
-  else
-  {
+  else {
     // Motor 0 is going in reverse
   }
   \endcode
 */
-bool motorDirection(int channel)
+bool motorDirection(int motor)
 {
-  return motors[channel].direction;
+  return motors[motor].direction;
 }
 
-void motorFinalize( int channel )
+/** @} */
+
+void motorFinalize( int motor )
 {
-  struct Motor* m = &(motors[channel]);
+  struct Motor* m = &(motors[motor]);
   // possibly add a dead zone in between?
   if( m->direction )
-    pwmoutSetAll( channel, m->speed, false, true );
+    pwmoutSetAll( motor, m->speed, false, true );
   else
-    pwmoutSetAll( channel, (m->speed * -1), true, false );
+    pwmoutSetAll( motor, (m->speed * -1), true, false );
 }
 
 #ifdef OSC

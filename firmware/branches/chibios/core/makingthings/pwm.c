@@ -53,7 +53,7 @@ static int pwmGetIo(int channel);
   - channel 2 is PB21
   - channel 3 is PB22
 
-  The \ref PwmOut system relies on the Pwm system, and provides control of the output lines associated with
+  The \ref pwmout system relies on the Pwm system, and provides control of the output lines associated with
   a given Pwm signal.
 
   \ingroup io
