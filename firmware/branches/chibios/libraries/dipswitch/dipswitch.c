@@ -15,9 +15,8 @@
 
 *********************************************************************************/
 
+
 #include "dipswitch.h"
-#include "error.h"
-#include "stdio.h"
 #include "core.h"
 
 #if (APPBOARD_VERSION >= 200)
@@ -27,18 +26,34 @@
 #define DIPSWITCH_DEVICE 2
 
 /**
-  Create a new DipSwitch object.
-  
+  \defgroup dipswitch DIP Switch
+  Reads values in from the 8 position DIP Switch (0 - 255) on the Application Board.
+
+  \section Usage
+  First, initialize the DIP switch with dipswitchInit().  If you only want to read the value
+  of a single channel on the switch, use dipswitchSingleValue(), otherwise use dipswitchValue()
+  to read all the channels at once.
+
+  Note - this is only appropriate when using the Make Application Board.
+
+  See the <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/user-interface">
+  Application Board overview</a> for details.
+  \ingroup io
+  @{
+*/
+
+/**
+  Enable the DIP switch.
+
   \b Example
   \code
-  DipSwitch dip;
-  // that's all there is to it.
+  dipswitchInit();
   \endcode
 */
-void dipswitchInit( )
+void dipswitchInit()
 {
-  spiEnableChannel( DIPSWITCH_DEVICE );
-  spiConfigure( DIPSWITCH_DEVICE, 8, 4, 0, 1 );
+  spiEnableChannel(DIPSWITCH_DEVICE);
+  spiConfigure(DIPSWITCH_DEVICE, 8, 4, 0, 1);
 }
 
 /** 
@@ -47,12 +62,11 @@ void dipswitchInit( )
   
   \b Example
   \code
-  DipSwitch dip;
-  int dip_switch = dip.value();
+  int dip_switch = dipswitchValue();
   // now dip_switch has a bitmask of all 8 channels of the DIP switch
   \endcode
 */
-int dipswitchValue( )
+int dipswitchValue()
 {
   spiLock();
   unsigned char c[2] = { 0xFE, 0xFF };
@@ -66,27 +80,20 @@ int dipswitchValue( )
 
 /**
   Read a single channel's value.
-  
-  If you pass a channel number into value() it will
-  return the state of just that channel.
-  
   @param channel The channel (0-7) you'd like to read.
-  return true if the channel is on, false if it's off.
+  @return true if the channel is on, false if it's off.
   
   \b Example
   \code
-  DipSwitch dip;
-  if(dip.value(4))
-  {
+  if (dipswitchSingleValue(4) == ON) {
     // DIP switch channel 4 is on
   }
-  else
-  {
+  else {
     // DIP switch channel 4 is off
   }
   \endcode
 */
-bool dipswitchValue1( int channel )
+bool dipswitchSingleValue(int channel)
 {
   if (channel < 0 || channel > 7)
     return false;
@@ -94,6 +101,8 @@ bool dipswitchValue1( int channel )
   int val = dipswitchValue();
   return ( val < 0 ) ? false : ((val >> channel) & 0x1);
 }
+
+/** @} */
 
 #ifdef OSC
 
