@@ -59,23 +59,23 @@
 void eepromInit()
 {
   spiEnableChannel(EEPROM_DEVICE);
-  spiConfigure(EEPROM_DEVICE, 8, 4, 0, 1);
+  spiConfigure(EEPROM_DEVICE, 8, 16, 0, 1);
 }
 
 static void eepromWriteEnable(void)
 {
   uint8_t c = EEPROM_INSTRUCTION_WREN;
-  spiReadWriteBlock( EEPROM_DEVICE, &c, 1 );
+  spiReadWriteBlock(EEPROM_DEVICE, &c, 1);
 }
 
 static void eepromReady(void)
 {
-  unsigned char c[2];
+  uint8_t c[2];
   do {
     c[0] = EEPROM_INSTRUCTION_RDSR;
     c[1] = 0;
     spiReadWriteBlock(EEPROM_DEVICE, c, 2);
-  } while (c[1] == 0xFF);
+  } while ((c[1] & 1) != 0);
 }
 
 /**
@@ -108,7 +108,7 @@ int eepromRead(int address)
 */
 void eepromWrite(int address, int value)
 {
-  eepromWriteBlock( address, (uint8_t*)&value, 4 );
+  eepromWriteBlock(address, (uint8_t*)&value, 4);
 }
 
 /**
@@ -170,11 +170,11 @@ int eepromWriteBlock(int address, uint8_t *data, int length)
   eepromReady();
   eepromWriteEnable();    
 
-  uint8_t c[ length + 4 ];
-  c[ 0 ] = EEPROM_INSTRUCTION_WRITE;
-  c[ 1 ] = (unsigned char)(address >> 8);
-  c[ 2 ] = (unsigned char)(address & 0xFF);
-  c[ 3 ] = 0;
+  uint8_t c[length + 4];
+  c[0] = EEPROM_INSTRUCTION_WRITE;
+  c[1] = (uint8_t)(address >> 8);
+  c[2] = (uint8_t)(address & 0xFF);
+  c[3] = 0;
 
   int i;
   for (i = 0; i < length; i++)

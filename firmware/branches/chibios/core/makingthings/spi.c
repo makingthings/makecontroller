@@ -39,8 +39,8 @@
 #define SPI_SEL2_MODE PERIPHERAL_B
 #define SPI_SEL3_MODE PERIPHERAL_B
 
-static int  spiGetPin( int channel );
-static bool spiGetMode( int channel );
+static int  spiGetPin(int channel);
+static bool spiGetMode(int channel);
 
 /** 
   \defgroup SPI
@@ -213,9 +213,9 @@ void spiUnlock()
 
 /** @} */
 
-int spiGetPin( int channel )
+int spiGetPin(int channel)
 {
-  switch ( channel ) {
+  switch (channel) {
     case 0: return SPI_SEL0_IO;
     case 1: return SPI_SEL1_IO;
     case 2: return SPI_SEL2_IO;
@@ -224,9 +224,9 @@ int spiGetPin( int channel )
   }
 }
 
-bool spiGetMode( int channel )
+bool spiGetMode(int channel)
 {  
-  switch ( channel ) {
+  switch (channel) {
     case 0: return SPI_SEL0_MODE;
     case 1: return SPI_SEL1_MODE;
     case 2: return SPI_SEL2_MODE;
