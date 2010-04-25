@@ -16,7 +16,7 @@
 *********************************************************************************/
 
 #include "types.h"
-#include "timer.h"
+#include "hwtimer.h"
 #include "error.h"
 #include "at91lib/aic.h"
 #include <ch.h>
