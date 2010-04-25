@@ -15,10 +15,8 @@
 
 *********************************************************************************/
 
-#ifndef TIMER_H
-#define TIMER_H
-
-#include "at91sam7.h"
+#ifndef HWTIMER_H
+#define HWTIMER_H
 
 #define TIMER_COUNT 8
 #define TIMER_MARGIN 2
@@ -67,8 +65,7 @@
 
 typedef void (*HwTimerHandler)( int id ); /**< A handler for timers. */
 
-typedef struct HwTimer_t
-{
+typedef struct HwTimer_t {
   HwTimerHandler callback;
   short id;
   int   timeCurrent;
@@ -79,7 +76,7 @@ typedef struct HwTimer_t
 
 int hwtimerInit(int channel);
 void hwtimerDeinit(void);
-int hwtimerStart( HwTimer* hwt, int millis, bool repeat );
-int hwtimerStop( HwTimer* hwt );
+int hwtimerStart(HwTimer* hwt, int millis, bool repeat);
+int hwtimerStop(HwTimer* hwt);
 
-#endif
+#endif // HWTIMER_H
