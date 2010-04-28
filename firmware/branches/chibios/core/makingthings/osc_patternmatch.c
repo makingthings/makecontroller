@@ -23,7 +23,7 @@
  */
 
 #include "config.h"
-//#ifdef OSC
+#if 1 //def OSC
 
 #include "osc_patternmatch.h"
 #include <stdio.h>
@@ -60,14 +60,13 @@ bool oscPatternMatch(const char *  pattern, const char * test)
       return false;
   }
 
-  switch (pattern[0]) 
-  {
+  switch (pattern[0]) {
     case 0: 
       return test[0] == 0;
     case '?': 
       return oscPatternMatch(pattern + 1, test + 1);
     case '*': 
-      if (oscPatternMatch(pattern+1, test))
+      if (oscPatternMatch(pattern + 1, test))
         return true;
       else 
 	      return oscPatternMatch(pattern, test+1);
@@ -75,9 +74,9 @@ bool oscPatternMatch(const char *  pattern, const char * test)
     case '}':
       return false; // spurious closing bracket
     case '[':
-      return oscMatchBrackets (pattern,test);
+      return oscMatchBrackets(pattern,test);
     case '{':
-      return oscMatchList (pattern,test);
+      return oscMatchList(pattern,test);
     case '\\':  
       if (pattern[1] == 0) 
       	return test[0] == 0;
@@ -99,7 +98,6 @@ bool oscPatternMatch(const char *  pattern, const char * test)
 
 
 /* we know that pattern[0] == '[' and test[0] != 0 */
-
 static bool oscMatchBrackets (const char *pattern, const char *test)
 {
   bool result;
@@ -143,14 +141,14 @@ advance:
     p++;
   }
 
-  return oscPatternMatch(p+1,test+1);
+  return oscPatternMatch(p + 1, test + 1);
 }
 
 static bool oscMatchList (const char *pattern, const char *test)
 {
   const char *restOfPattern, *tp = test;
 
-  for(restOfPattern = pattern; *restOfPattern != '}'; restOfPattern++) {
+  for (restOfPattern = pattern; *restOfPattern != '}'; restOfPattern++) {
     if (*restOfPattern == 0)
       return false; // unterminated { in pattern
   }
@@ -200,24 +198,24 @@ bool oscNumberMatch(const char* pattern, int offset, int count, OscRange* r)
   int digits = 0;
   while (isdigit(*pattern)) {
     digits++;
-    n = n * 10 + ( *pattern++ - '0' );
+    n = n * 10 + (*pattern++ - '0');
   }
 
-  if ( n >= count )
+  if (n >= count)
     return false;
 
-  switch ( *pattern ) {
+  switch (*pattern) {
     case '*':
     case '?':
     case '[':
     case '{': {
       int i;
       r->value = 0;
-      char s[ 5 ];
-      for ( i = count - 1; i >=0 ; i-- ) {
+      char s[5];
+      for (i = count - 1; i >=0 ; i--) {
         r->value <<= 1;
-        sprintf( s, "%d", i );
-        if ( oscPatternMatch( pattern, s ) )
+        siprintf(s, "%d", i);
+        if (oscPatternMatch(pattern, s))
           r->value |= 1;
       }
       r->index = offset;
@@ -225,7 +223,7 @@ bool oscNumberMatch(const char* pattern, int offset, int count, OscRange* r)
       return true;
     }
     default:
-      if ( digits == 0 ) {
+      if (digits == 0) {
         r->state = EXHAUSTED;
         return false;
       }
@@ -238,7 +236,7 @@ bool oscNumberMatch(const char* pattern, int offset, int count, OscRange* r)
 }
 
 bool oscRangeHasNext(OscRange* r) {
-  switch(r->state) {
+  switch (r->state) {
     case SINGLENUM: return true;
     case BITS:      return (r->value > 0);
     default:        return false;
@@ -246,12 +244,12 @@ bool oscRangeHasNext(OscRange* r) {
 }
 
 int oscRangeNext(OscRange* r) {
-  switch(r->state) {
+  switch (r->state) {
     case SINGLENUM:
       r->state = EXHAUSTED;
       return r->value;
     case BITS:
-      while(r->value > 0 && !(r->value & 0x01)) {
+      while (r->value > 0 && !(r->value & 0x01)) {
         r->index++;
         r->value >>= 1;
       }
@@ -261,7 +259,6 @@ int oscRangeNext(OscRange* r) {
   }
 }
 
-//#endif // OSC
-
+#endif // OSC
 
 
