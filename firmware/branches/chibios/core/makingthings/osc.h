@@ -36,8 +36,8 @@ typedef bool (*OscHandler)(OscChannel ch, char* address, short idx, OscData data
 typedef struct OscNode_t {
   const char* name;
   OscHandler handler;
-  uint8_t indexCount;
-  uint8_t indexOffset;
+  uint8_t range;
+  uint8_t rangeOffset;
   const struct OscNode_t* children[]; // must be 0-terminated
 } OscNode;
 
@@ -47,6 +47,8 @@ extern "C" {
 bool oscUsbEnable(bool on);
 bool oscUdpEnable(bool on, int port);
 int  oscSplitAddress(char* buf, char* elems[], int maxelems);
+void oscLockChannel(OscChannel ct);
+void oscUnlockChannel(OscChannel ct);
 bool oscCreateMessage(OscChannel ct, const char* address, OscData* data, int datacount);
 int  oscSendPendingMessages(OscChannel ct);
 #ifdef __cplusplus

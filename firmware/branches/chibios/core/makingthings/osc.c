@@ -75,9 +75,12 @@ static msg_t OscUsbSerialThread(void *arg) {
     chThdSleepMilliseconds(10);
 
   while(!chThdShouldTerminate()) {
-    if ((justGot = usbserialReadSlip(osc.usb.inBuf, OSC_IN_BUF_SIZE, 10000)) > 0) {
+    justGot = usbserialReadSlip(osc.usb.inBuf, OSC_IN_BUF_SIZE, 10000);
+    if (justGot > 0) {
+      chMtxLock(&osc.usb.lock);
       oscReceivePacket(USB, osc.usb.inBuf, justGot);
       oscResetChannel(&osc.usb);
+      chMtxUnlock();
     }
   }
   return 0;
@@ -128,8 +131,10 @@ static msg_t OscUdpThread(void *arg) {
   while(!chThdShouldTerminate()) {
     justGot = udpReadFrom(osc.udpsock, osc.udp.inBuf, OSC_IN_BUF_SIZE, &osc.udpReplyAddress, 0);
     if (justGot > 0) {
+      chMtxLock(&osc.udp.lock);
       oscReceivePacket(UDP, osc.udp.inBuf, justGot);
       oscResetChannel(&osc.udp);
+      chMtxUnlock();
     }
   }
   return 0;
@@ -166,6 +171,22 @@ static OscChannelData* oscGetChannelByType(OscChannel ct) {
   if (ct == UDP) return &osc.udp;
 #endif
   return 0;
+}
+
+void oscLockChannel(OscChannel ct)
+{
+#ifdef MAKE_CTRL_USB
+  if (ct == USB) chMtxLock(&osc.usb.lock); return;
+#endif
+#ifdef MAKE_CTRL_NETWORK
+  if (ct == UDP) chMtxLock(&osc.udp.lock); return;
+#endif
+}
+
+void oscUnlockChannel(OscChannel ct)
+{
+  UNUSED(ct);
+  chMtxUnlock();
 }
 
 void oscResetChannel(OscChannelData* channel)
@@ -212,16 +233,15 @@ void oscReceiveMessage(OscChannel ch, char* data, int len)
   // number of data items is the length of the typetag
   int datalen = strlen(data + length) - 1; // don't take the leading , into account
   OscData d[datalen];
-  length = oscExtractData(data, len, d, datalen);
-  if (length == datalen)
+  if (datalen == oscExtractData(data + length, len, d, datalen))
     oscDispatchNode(ch, data + 1, data, &oscRootNode, d, datalen);
 }
 
 /*
  * Dispatch data to matching nodes.
- * Index nodes are treated specially - check if the direct child has
- * a matching endpoint & trigger it.  Otherwise, descend looking for a
- * child with a matching endpoint by name only.
+ * Range nodes are treated specially - check if the direct child has
+ * a matching handler & trigger it.  Otherwise, descend looking for a
+ * child with a matching handler by name only.
  */
 void oscDispatchNode(OscChannel ch, char* addr, char* fulladdr, const OscNode* node, OscData data[], int datalen)
 {
@@ -229,31 +249,30 @@ void oscDispatchNode(OscChannel ch, char* addr, char* fulladdr, const OscNode* n
   char* nextPattern = strchr(addr, '/');
   if (nextPattern != 0)
     *nextPattern++ = 0;
-  
-  // check if this is an index node
-  if (node->indexCount > 0) {
-    OscRange r;
-    if (oscNumberMatch(addr, node->indexOffset, node->indexCount, &r)) {
-      while (oscRangeHasNext(&r)) {
-        int j, idx = oscRangeNext(&r);
-        for (j = 0; node->children[j] != 0; j++) {
-          if (oscPatternMatch(nextPattern, node->children[j]->name) && node->children[j]->handler != NULL)
-            node->children[j]->handler(ch, fulladdr, idx, data, datalen);
-        }
-      }
+
+  for (i = 0; node->children[i] != 0; i++) {
+    if (node->children[i]->handler != NULL) {
+      node->children[i]->handler(ch, fulladdr, 0, data, datalen);
     }
-  }
-  // otherwise, if the callback is defined at this level, call it and be done
-  // if not, dispatch to available child nodes
-  else { 
-    for (i = 0; node->children[i] != 0; i++) {
-      if (node->children[i]->handler != NULL) {
-        node->children[i]->handler(ch, fulladdr, 0, data, datalen);
+    else if (nextPattern != NULL) {
+      if (oscPatternMatch(addr, node->children[i]->name)) {
+        *(nextPattern - 1) = '/'; // replace this - we nulled it earlier
+        oscDispatchNode(ch, nextPattern, fulladdr, node->children[i], data, datalen);
       }
-      else if (nextPattern != NULL) {
-        if (oscPatternMatch(addr, node->children[i]->name) || node->children[i]->indexCount > 0) {
-          *(nextPattern - 1) = '/'; // replace this - we nulled it earlier
-          oscDispatchNode(ch, nextPattern, fulladdr, node->children[i], data, datalen);
+      else if (node->children[i]->range > 0) {
+        OscRange r;
+        // as part of our cheat, ranges can only be the second to last node.
+        // we jump down a level here since we are planning on getting to the handler
+        // without traversing the tree any further
+        const OscNode *n = node->children[i];
+        if (oscNumberMatch(addr, n->rangeOffset, n->range, &r)) {
+          while (oscRangeHasNext(&r)) {
+            int j, idx = oscRangeNext(&r);
+            for (j = 0; n->children[j] != 0; j++) {
+              if (oscPatternMatch(nextPattern, n->children[j]->name) && n->children[j]->handler != NULL)
+                n->children[j]->handler(ch, fulladdr, idx, data, datalen);
+            }
+          }
         }
       }
     }
@@ -269,11 +288,7 @@ void oscDispatchNode(OscChannel ch, char* addr, char* fulladdr, const OscNode* n
 int oscExtractData(char* buf, int len, OscData data[], int datacount)
 {
   int items = 0;
-  // skip past null padding to beginning of type tag
-  while (len-- > 0 && *buf++ == 0)
-    ;
-
-  if (*buf != ',') // beginning of typetag should be ,
+  if (buf[0] != ',') // beginning of typetag should be ,
     return 0;
   
   char* typetag = buf + 1; // skip the ,
@@ -438,8 +453,6 @@ bool oscCreateMessage(OscChannel ch, const char* address, OscData* data, int dat
 {
   OscChannelData* chd = oscGetChannelByType(ch);
   bool rv = true;
-  // make sure nobody else is writing to the channel
-//  chMtxLock(&chd->lock);
   // Try to create the message. If it fails, send any messages
   // in the buffer and try again.
   if (oscDoCreateMessage(chd, address, data, datacount) == NULL) {
@@ -448,7 +461,6 @@ bool oscCreateMessage(OscChannel ch, const char* address, OscData* data, int dat
     if (oscDoCreateMessage(chd, address, data, datacount) == NULL)
       rv = false;
   }
-//  chMtxUnlock();
   return rv;
 }
 
@@ -460,11 +472,9 @@ int oscSendPendingMessages(OscChannel ch)
   OscChannelData* chd = oscGetChannelByType(ch);
   if (chd->outMsgCount == 0)
     return 0;
-  chMtxLock(&chd->lock);
   // set the buffer and length up
   char* data = chd->outBuf;
   int len = OSC_OUT_BUF_SIZE - chd->outBufRemaining;
-
   // if we only have 1 message, skip past the bundle preamble
   // which has already been written to the buffer
   if (chd->outMsgCount == 1) {
@@ -472,10 +482,8 @@ int oscSendPendingMessages(OscChannel ch)
     data += 20;
     len -= 20;
   }
-
   (*chd->sendMessage)(data, len);
   oscResetChannel(chd);
-  chMtxUnlock();
   return 1;
 }
 
