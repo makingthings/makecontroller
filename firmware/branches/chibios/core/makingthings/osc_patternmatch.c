@@ -212,7 +212,7 @@ bool oscNumberMatch(const char* pattern, int offset, int count, OscRange* r)
       int i;
       r->value = 0;
       char s[5];
-      for (i = count - 1; i >=0 ; i--) {
+      for (i = count - 1; i >= 0; i--) {
         r->value <<= 1;
         siprintf(s, "%d", i);
         if (oscPatternMatch(pattern, s))
@@ -253,6 +253,7 @@ int oscRangeNext(OscRange* r) {
         r->index++;
         r->value >>= 1;
       }
+      r->value >>= 1;
       return r->index++;
     default:
       return -1;
