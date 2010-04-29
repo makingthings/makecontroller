@@ -201,11 +201,6 @@ void hwinit1(void) {
 
   #ifndef NO_SERIAL_INIT
   serialInit();
-  // setup hw handshake lines
-  // don't do PA8/PA9 by default since they are SPI/EEPROM CS lines, but include these if you need them
-  AT91C_BASE_PIOA->PIO_PDR   = AT91C_PA3_RTS0 | AT91C_PA4_CTS0; // | AT91C_PA8_RTS1 | AT91C_PA9_CTS1;
-  AT91C_BASE_PIOA->PIO_ASR   = AT91C_PA3_RTS0 | AT91C_PA4_CTS0; // | AT91C_PA8_RTS1 | AT91C_PA9_CTS1;
-  AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PA3_RTS0 | AT91C_PA4_CTS0; // | AT91C_PA8_RTS1 | AT91C_PA9_CTS1;
   #endif
 
   chSysInit(); // ChibiOS/RT initialization.
