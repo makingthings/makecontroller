@@ -25,14 +25,12 @@ typedef struct OscData_t {
     float f;
     char* s;
     char* b;
-  };
+  } value;
 } OscData;
 
 typedef bool (*OscHandler)(OscChannel ch, char* address, short idx, OscData data[], int datalen);
 
-// childNodes members are flexible length arrays.
-// should ideally be declared const so
-// they're located in read-only storage.
+// should typically be declared const so they're located in read-only storage.
 typedef struct OscNode_t {
   const char* name;
   OscHandler handler;

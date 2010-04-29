@@ -8,9 +8,8 @@
 #include "osc_patternmatch.h"
 #include "osc_data.h"
 #include "ch.h"
-#include "usbserial.h"
 #include "core.h"
-#include "string.h"
+#include <string.h>
 
 #ifndef OSC_IN_BUF_SIZE
 #define OSC_IN_BUF_SIZE 512
@@ -55,11 +54,9 @@ static int  oscExtractData(char* buf, int len, OscData data[], int maxdata);
 static void oscDispatchNode(OscChannel ch, char* addr, char* fulladdr,
                               const OscNode* node, OscData d[], int datalen);
 
-// static data
 static Osc osc;
-extern const OscNode oscRootNode;
+extern const OscNode oscRootNode; // must be defined by the user
 
-// usb stuff
 #ifdef MAKE_CTRL_USB
 
 #ifndef OSC_USB_STACK_SIZE
@@ -79,7 +76,6 @@ static msg_t OscUsbSerialThread(void *arg) {
     if (justGot > 0) {
       chMtxLock(&osc.usb.lock);
       oscReceivePacket(USB, osc.usb.inBuf, justGot);
-      oscResetChannel(&osc.usb);
       chMtxUnlock();
     }
   }
@@ -133,7 +129,6 @@ static msg_t OscUdpThread(void *arg) {
     if (justGot > 0) {
       chMtxLock(&osc.udp.lock);
       oscReceivePacket(UDP, osc.udp.inBuf, justGot);
-      oscResetChannel(&osc.udp);
       chMtxUnlock();
     }
   }
@@ -304,7 +299,7 @@ int oscExtractData(char* buf, int len, OscData data[], int datacount)
         int i;
         if ((buf = oscDecodeInt32(buf, &len, &i)) != NULL) {
           data[items].type = INT;
-          data[items++].i = i;
+          data[items++].value.i = i;
         }
         break;
       }
@@ -312,7 +307,7 @@ int oscExtractData(char* buf, int len, OscData data[], int datacount)
         float f;
         if ((buf = oscDecodeFloat32(buf, &len, &f)) != NULL) {
           data[items].type = FLOAT;
-          data[items++].f = f;
+          data[items++].value.f = f;
         }
         break;
       }
@@ -320,7 +315,7 @@ int oscExtractData(char* buf, int len, OscData data[], int datacount)
         char* s;
         if ((buf = oscDecodeString(buf, &len, &s)) != NULL) {
           data[items].type = STRING;
-          data[items++].s = s;
+          data[items++].value.s = s;
         }
         break;
       }
@@ -329,7 +324,7 @@ int oscExtractData(char* buf, int len, OscData data[], int datacount)
         int bloblen;
         if ((buf = oscDecodeBlob(buf, &len, &b, &bloblen)) != NULL) {
           data[items].type = BLOB;
-          data[items++].b = b;
+          data[items++].value.b = b;
           // TODO - need some way to represent the blob len
         }
         break;
@@ -421,16 +416,16 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
   for (i = 0; i < datacount && buf != NULL; i++) {
     switch (data[i].type) {
       case INT:
-        buf = oscEncodeInt32(buf, len, data[i].i);
+        buf = oscEncodeInt32(buf, len, data[i].value.i);
         break;
       case FLOAT:
-        buf = oscEncodeFloat32(buf, len, data[i].f);
+        buf = oscEncodeFloat32(buf, len, data[i].value.f);
         break;
       case STRING:
-        buf = oscEncodeString(buf, len, data[i].s);
+        buf = oscEncodeString(buf, len, data[i].value.s);
         break;
       case BLOB:
-        buf = oscEncodeBlob(buf, len, data[i].b, 100);
+        buf = oscEncodeBlob(buf, len, data[i].value.b, 100);
         break;
       default: break;
     }
