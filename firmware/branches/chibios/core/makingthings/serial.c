@@ -114,10 +114,25 @@ void serialEnable(int port, int baud, int parity, int charbits, int stopbits, bo
   };
 
 #if USE_SAM7_USART0
-  if (port == 0) sdStart(&SD1, &config);
+  if (port == 0) {
+    if (handshake == YES) {
+      AT91C_BASE_PIOA->PIO_PDR   = AT91C_PA3_RTS0 | AT91C_PA4_CTS0;
+      AT91C_BASE_PIOA->PIO_ASR   = AT91C_PA3_RTS0 | AT91C_PA4_CTS0;
+      AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PA3_RTS0 | AT91C_PA4_CTS0;
+    }
+    sdStart(&SD1, &config);
+  }
 #endif
 #if USE_SAM7_USART1
-  if (port == 1) sdStart(&SD2, &config);
+  if (port == 1) {
+    // careful - PA8/PA9 are SPI/EEPROM CS lines, but include these if you need them
+    if (handshake == YES) {
+      AT91C_BASE_PIOA->PIO_PDR   = AT91C_PA8_RTS1 | AT91C_PA9_CTS1;
+      AT91C_BASE_PIOA->PIO_ASR   = AT91C_PA8_RTS1 | AT91C_PA9_CTS1;
+      AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PA8_RTS1 | AT91C_PA9_CTS1;
+    }
+    sdStart(&SD2, &config);
+  }
 #endif
 }
 
