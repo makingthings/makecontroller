@@ -292,7 +292,7 @@ void ainDeinit(void)
   \verbatim /analogin/0/active 1 \endverbatim
 */
 
-static bool ainOscHandler(OscChannel ch, char* address, short idx, OscData d[], int datalen)
+static bool ainOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(d);
   if (datalen == 0) {
