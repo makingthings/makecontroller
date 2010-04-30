@@ -3,8 +3,6 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
-#include "config.h"
-#ifdef MAKE_CTRL_NETWORK
 #include "types.h"
 
 /**
@@ -56,34 +54,22 @@
   \ingroup networking
 */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void networkInit(void);
 bool networkSetAddress(int address, int mask, int gateway);
 void networkAddress(int* address, int* mask, int* gateway);
 int  networkGetHostByName(const char *name, int timeout);
-void networkSetDhcp(bool enabled);
+void networkSetDhcp(bool enabled, int timeout);
 bool networkDhcp(void);
 int  networkAddressToString(char* data, int address);
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef OSC
-#include "osc_cpp.h"
-
-class NetworkOSC : public OscHandler
-{
-public:
-  NetworkOSC( ) { }
-  int onNewMsg( OscTransport t, OscMessage* msg, int src_addr, int src_port );
-  int onQuery( OscTransport t, char* address, int element );
-  const char* name( ) { return "network"; }
-  static const char* propertyList[];
-  
-  int getUdpListenPort( );
-  int getUdpSendPort( );
-  
-protected:
-  int udp_listen_port;
-  int udp_send_port;
-};
-
+#include "osc.h"
+extern const OscNode networkOsc;
 #endif // OSC
-#endif // MAKE_CTRL_NETWORK
 #endif // NETWORK_H

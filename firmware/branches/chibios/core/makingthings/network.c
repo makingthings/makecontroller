@@ -1,8 +1,9 @@
 
 
-#include "network.h"
+#include "config.h"
 #ifdef MAKE_CTRL_NETWORK
 
+#include "network.h"
 #include "ch.h"
 #include "hal.h"
 
@@ -31,7 +32,7 @@
 
 static unsigned char macAddress[6] = {0xAC, 0xDE, 0x48, 0x00, 0x00, 0x00};
 
-#if (LWIP_DNS == 1)
+#if LWIP_DNS
 struct Dns {
   Semaphore semaphore;
   int resolvedAddress;
@@ -43,24 +44,21 @@ static void dnsCallback(const char *name, struct ip_addr *addr, void *arg);
 static struct netif* mcnetif; // our network interface
 static bool networkLastValidAddress(int* address, int *mask, int* gateway);
 
-#if (LWIP_DHCP == 1)
-static bool networkDhcpStart(void);
-static bool networkDhcpStop(void);
+#if LWIP_DHCP
+static SEMAPHORE_DECL(dhcpSem, 0);
+static void lwipStatusCallback(struct netif *netif);
+static bool networkDhcpStart(int timeout);
+static bool networkDhcpStop(int timeout);
 #endif // LWIP_DHCP
 
 void networkInit()
 {
-#if (LWIP_DNS == 1)
-  dns.resolvedAddress = -1;
-  chSemInit(&dns.semaphore, 0);
-#endif
-  
   // customize MAC address based on serial number
   int serialNumber = 123; // systemSerialNumber();
   macAddress[5] = serialNumber & 0xFF;
-  macAddress[4] = ( serialNumber >> 8 ) & 0xFF;
+  macAddress[4] = (serialNumber >> 8) & 0xFF;
   // Low nibble of the third byte - gives us around 1M serial numbers
-  macAddress[3] = 0x50 | ( ( serialNumber >> 12 ) & 0xF );
+  macAddress[3] = 0x50 | ((serialNumber >> 12) & 0xF);
   
   macInit(); // chibios mac init
   int address = 0, mask = 0, gateway = 0;
@@ -78,45 +76,46 @@ void networkInit()
   opts.netif = &mcnetif;
   opts.semaphore = (void*)&initSemaphore;
 
-  chThdCreateStatic(wa_lwip_thread, LWIP_THREAD_STACK_SIZE, LOWPRIO, lwip_thread, &opts);
+  chThdCreateStatic(wa_lwip_thread, LWIP_THREAD_STACK_SIZE, NORMALPRIO + 1, lwip_thread, &opts);
   chSemWait(&initSemaphore); // wait until lwip is set up
 
-#if (LWIP_DHCP == 1)
+  mcnetif->hostname = "tester";
+#if LWIP_DHCP
+  mcnetif->status_callback = lwipStatusCallback;
   if (networkDhcp())
-    networkDhcpStart();
+    networkDhcpStart(5000);
 #endif
 }
 
 /**
-  Manually set the board's IP address.
-  Specify the address as the 4 numbers that make up the address - like 192.168.0.100.
+  Manually set the network address.
+  The network address consists of the IP address, mask and gateway.
+
   If DHCP is enabled this will have no effect, but the values will be stored and
   used the next time DHCP is disabled.
-  @param a0 First element of the address.
-  @param a1 Second element of the address.
-  @param a2 Third element of the address.
-  @param a3 Fourth element of the address.
+  @param address The IP address you want to use.
+  @param mask The network mask to use - 255.255.255.0 is quite common
+  @param gateway The gateway address - often, this is the same as the address, with the last digit changed to 1.
   @return True on success, false on failure.
   
   \b Example
   \code
-  Network* net = Network::get();
-  net->setAddress(192, 168, 0, 100);
+  networkSetAddress(IP_ADDRESS(192, 168, 0, 100), IP_ADDRESS(255, 255, 255, 0), IP_ADDRESS(192, 168, 0, 1));
   \endcode
 */
 bool networkSetAddress(int address, int mask, int gateway)
 {
   bool rv = false;
-#if (LWIP_DHCP == 1)
+#if LWIP_DHCP
   if (!networkDhcp()) { // only actually change the address if we're not using DHCP
 #endif
     struct ip_addr ip, gw, netmask;
     ip.addr = address;
     netmask.addr = mask;
     gw.addr = gateway;
-    netifapi_netif_set_addr(mcnetif, &ip, &netmask, &gw);
+    netif_set_addr(mcnetif, &ip, &netmask, &gw);
     rv = true;
-#if (LWIP_DHCP == 1)
+#if LWIP_DHCP
   }
 #endif
 
@@ -139,10 +138,11 @@ bool networkSetAddress(int address, int mask, int gateway)
   
   \b Example
   \code
-  int addr = Network::get()->address();
+  int address;
+  networkAddress(&address, 0, 0);
   // now convert it to a string
-  char address[50];
-  net->addressToString(address, addr);
+  char buf[50];
+  networkAddressToString(buf, address);
   \endcode
 */
 void networkAddress(int* address, int* mask, int* gateway)
@@ -163,7 +163,7 @@ void networkAddress(int* address, int* mask, int* gateway)
   \b Example
   \code
   char addr[50];
-  Network::addressToString(addr, IP_ADDRESS(192, 168, 0, 100));
+  int len = networkAddressToString(addr, IP_ADDRESS(192, 168, 0, 100));
   \endcode
 */
 int networkAddressToString(char* data, int address)
@@ -175,7 +175,13 @@ int networkAddressToString(char* data, int address)
                   IP_ADDRESS_D(address));
 }
 
-#if (LWIP_DHCP == 1)
+#if LWIP_DHCP
+
+void lwipStatusCallback(struct netif *netif)
+{
+  if (netif == mcnetif)
+    chSemSignal(&dhcpSem);
+}
 
 /**
   Turn DHCP on or off.
@@ -183,18 +189,17 @@ int networkAddressToString(char* data, int address)
   
   \b Example
   \code
-  Network* net = Network::get(); // get a reference to the Network system
-  net->setDhcp(true); // turn it on
+  networkSetDhcp(ON, 0); // turn it on, but don't wait around for a new address
   \endcode
 */
-void networkSetDhcp(bool enabled)
+void networkSetDhcp(bool enabled, int timeout)
 {
   if (enabled && !networkDhcp()) {
-    networkDhcpStart();
+    networkDhcpStart(timeout);
     eepromWrite(EEPROM_DHCP_ENABLED, enabled);
   }
   else if(!enabled && networkDhcp()) {
-    networkDhcpStop();
+    networkDhcpStop(timeout);
     eepromWrite(EEPROM_DHCP_ENABLED, enabled);
     int a, m, g;
     networkLastValidAddress(&a, &m, &g);
@@ -208,13 +213,10 @@ void networkSetDhcp(bool enabled)
   
   \b Example
   \code
-  Network* net = Network::get();
-  if( net->dhcp() )
-  {
+  if (networkDhcp() == ON) {
     // then DHCP is enabled
   }
-  else
-  {
+  else {
     // DHCP is not enabled
   }
   \endcode
@@ -224,31 +226,25 @@ bool networkDhcp()
   return eepromRead(EEPROM_DHCP_ENABLED);
 }
 
-bool networkDhcpStart()
+// TODO - the netifapi_ routines don't seem to work here,
+// even though they're the recommended ones to use...investigate.
+bool networkDhcpStart(int timeout)
 {
-  int count = 100;
-  bool rv = false;
-  if (netifapi_dhcp_start(mcnetif) != ERR_OK)
+//  if (netifapi_dhcp_start(mcnetif) != ERR_OK)
+  if (dhcp_start(mcnetif) != ERR_OK)
     return false;
   // now hang out for a second until we get an address
-  // if DHCP is enabled but we don't find a DHCP server, just use the network config stored in EEPROM
-  while (mcnetif->ip_addr.addr == 0 && count--) // timeout after 10 (?) seconds of waiting for a DHCP address
-    chThdSleepMilliseconds(100);
-  if (mcnetif->ip_addr.addr == 0) { // if we timed out getting an address via DHCP, just use whatever's in EEPROM
-    int a, m, g;
-    networkLastValidAddress(&a, &m, &g);
-//    networkSetAddress(a, m, g);
-  }
-  else
-    rv = true;
-  return rv;
+  return chSemWaitTimeout(&dhcpSem, MS2ST(timeout)) == RDY_OK;
 }
 
-bool networkDhcpStop()
+bool networkDhcpStop(int timeout)
 {
-  netifapi_dhcp_stop(mcnetif);
-  netifapi_netif_set_up(mcnetif); // bring the interface back up, as dhcp_release() takes it down
-  return true;
+//  netifapi_dhcp_stop(mcnetif);
+  dhcp_stop(mcnetif);
+  bool rv = (chSemWaitTimeout(&dhcpSem, MS2ST(timeout)) == RDY_OK);
+//  netifapi_netif_set_up(mcnetif);
+  netif_set_up(mcnetif); // bring the interface back up, as dhcp_release() takes it down
+  return rv;
 }
 
 #endif // LWIP_DHCP
@@ -266,31 +262,29 @@ bool networkDhcpStop()
 
   \b Example
   \code
-  Network* net = Network::get();
-  int makingthings = net->getHostByName("www.makingthings.com");
+  int makingthings = networkGetHostByName("www.makingthings.com");
   // Now we can make a new connection to this host
-  TcpSocket sock;
-  if(sock.connect(makingthings, 80))
-  {
+  int socket = tcpOpen(makingthings, 80);
+  if (socket > -1) {
     // now we can communicate
-    sock.close();
+    tcpClose(socket);
   }
   \endcode
 */
-#if (LWIP_DNS == 1)
+#if LWIP_DNS
 int networkGetHostByName(const char *name, int timeout)
 {
   struct ip_addr address;
-  int retval = -1;
-  err_t result = dns_gethostbyname(name, &address, dnsCallback, 0);
-  if (result == ERR_OK) // the result was cached, just return it
-    retval = address.addr;
+  err_t result = dns_gethostbyname(name, &address, dnsCallback, &dns);
+  if (result == ERR_OK) { // the result was cached, just return it
+    return address.addr;
+  }
   else if (result == ERR_INPROGRESS) {
     // a lookup is in progress - wait for the callback to signal that we've gotten a response
-    if (chSemWaitTimeout(&dns.semaphore, S2ST(timeout)) == RDY_OK)
-      retval = dns.resolvedAddress;
+    return (chSemWaitTimeout(&dns.semaphore, S2ST(timeout)) == RDY_OK) ? dns.resolvedAddress : -1;
   }
-  return retval;
+  else
+    return -1;
 }
 
 /*
@@ -300,9 +294,9 @@ int networkGetHostByName(const char *name, int timeout)
 void dnsCallback(const char *name, struct ip_addr *addr, void *arg)
 {
   UNUSED(name);
-  UNUSED(arg);
-  dns.resolvedAddress = addr ? (int)addr->addr : -1;
-  chSemSignal(&dns.semaphore);
+  struct Dns* dns = arg;
+  dns->resolvedAddress = addr ? (int)addr->addr : -1;
+  chSemSignal(&dns->semaphore);
 }
 
 #endif // LWIP_DNS
@@ -324,6 +318,58 @@ bool networkLastValidAddress(int* address, int *mask, int* gateway)
   }
 }
 
+#ifdef OSC
+
+static bool networkOscFindHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
+{
+  UNUSED(idx);
+  UNUSED(datalen);
+  UNUSED(data);
+
+  char addrbuf[16];
+  int a;
+  networkAddress(&a, 0 , 0);
+  networkAddressToString(addrbuf, a);
+  OscData d[4] = {
+    { .type = STRING, .value.s = addrbuf },
+    { .type = INT,    .value.i = 10000 },
+    { .type = INT,    .value.i = 10000 },
+    { .type = STRING, .value.s = "myname" }
+  };
+  oscCreateMessage(ch, address, d, 4);
+  return true;
+}
+
+static bool networkOscDhcpHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
+{
+  UNUSED(idx);
+  if (datalen == 0) { // it's a request
+    OscData d;
+    d.value.i = networkDhcp() ? 1 : 0;
+    d.type = INT;
+    oscCreateMessage(ch, address, &d, 1);
+    return true;
+  }
+  if (datalen == 1 && data[0].type == INT) {
+    networkSetDhcp(data[0].value.i, 0);
+    return true;
+  }
+  return false;
+}
+
+static const OscNode networkOscFind = { .name = "find", .handler = networkOscFindHandler };
+static const OscNode networkOscDhcp = { .name = "dhcp", .handler = networkOscDhcpHandler };
+//const OscNode networkOscAddress = { .name = "address", .handler = networkOscAddressHandler };
+
+const OscNode networkOsc = {
+  .name = "network",
+  .children = {
+    &networkOscFind,
+    &networkOscDhcp, 0
+  }
+};
+
+#endif // OSC
 #endif // MAKE_CTRL_NETWORK
 
 
