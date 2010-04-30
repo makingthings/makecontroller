@@ -150,7 +150,7 @@ bool appledValue(int led)
   \code /appled/0/active 1 \endcode
 */
 
-static bool appledOscHandler(OscChannel ch, char* address, short idx, OscData d[], int datalen)
+static bool appledOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   if (datalen == 1) {
     appledSetValue(idx, d[0].value.i);
@@ -165,13 +165,13 @@ static bool appledOscHandler(OscChannel ch, char* address, short idx, OscData d[
   return false;
 }
 
-static const OscNode appledState = {
+static const OscNode appledVal = {
   .name = "value",
   .handler = appledOscHandler
 };
 static const OscNode appledRange = {
   .range = 4,
-  .children = { &appledState, 0 }
+  .children = { &appledVal, 0 }
 };
 const OscNode appledOsc = {
   .name = "appled",

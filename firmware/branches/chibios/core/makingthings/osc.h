@@ -28,7 +28,7 @@ typedef struct OscData_t {
   } value;
 } OscData;
 
-typedef bool (*OscHandler)(OscChannel ch, char* address, short idx, OscData data[], int datalen);
+typedef bool (*OscHandler)(OscChannel ch, char* address, int idx, OscData data[], int datalen);
 
 // should typically be declared const so they're located in read-only storage.
 typedef struct OscNode_t {

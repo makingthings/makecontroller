@@ -151,6 +151,11 @@ void pinEnableHandler(Pin pin);
 }
 #endif
 
+#ifdef OSC
+#include "osc.h"
+extern const OscNode pinOsc;
+#endif
+
 /**
   \defgroup PinBits Pin Bits
   \ingroup Core

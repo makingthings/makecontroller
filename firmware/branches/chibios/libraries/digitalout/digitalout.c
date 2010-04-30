@@ -188,7 +188,7 @@ bool digitaloutValue(int channel)
 
 #include "osc.h"
 
-static bool digitaloutOscHandler(OscChannel ch, char* address, short idx, OscData d[], int datalen)
+static bool digitaloutOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   if (datalen == 1) {
     digitaloutSetValue(idx, d[0].value.i);
