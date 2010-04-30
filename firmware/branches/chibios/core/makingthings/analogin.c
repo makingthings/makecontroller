@@ -15,10 +15,9 @@
 
 *********************************************************************************/
 
-#include "ch.h"
-#include "hal.h"
-#include "at91lib/aic.h"
 #include "analogin.h"
+#include "core.h"
+#include "at91lib/aic.h"
 
 #define ANALOGIN_0 AT91C_PIO_PB27
 #define ANALOGIN_1 AT91C_PIO_PB28
@@ -176,7 +175,6 @@ static void ainServeInterrupt(void) {
     chSemSignalI(&manager.conversionLock);
     status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
   }
-  AT91C_BASE_AIC->AIC_EOICR = 0;
 }
 
 static CH_IRQ_HANDLER(AnalogInIsr) {
@@ -240,50 +238,7 @@ void ainDeinit(void)
 /** @}
 */
 
-#ifdef OSC___
-
-#define AUTOSENDSAVE 0xDF
-
-void AnalogIn_AutoSendInit( )
-{
-  int autosend;
-  Eeprom_Read( EEPROM_ANALOGIN_AUTOSEND, (uchar*)&autosend, 4 );
-  if( !((autosend >> 16) & 0xFF) == AUTOSENDSAVE )
-    AnalogIn->autosend = AUTOSENDSAVE << 16;
-  else
-    AnalogIn->autosend = autosend;
-}
-
-/** 
-  Read whether a particular channel is enabled to check for and send new values automatically.
-  @param index An integer specifying which input (0-7).
-  @return True if enabled, false if disabled.
-*/
-bool AnalogIn_GetAutoSend( int index )
-{
-  AnalogIn_SetActive( index, 1 );
-  return (AnalogIn->autosend >> index) & 0x01;
-}
-
-/** 
-  Set whether a particular channel is enabled to check for and send new values automatically.
-  @param index An integer specifying which input (0-7).
-  @param onoff A boolean specifying whether to turn atuosending on or off.
-*/
-void AnalogIn_SetAutoSend( int index, bool onoff )
-{
-  AnalogIn_SetActive( index, 1 );
-  if( ((AnalogIn->autosend >> index) & 0x01) != onoff )
-  {
-    int mask = (1 << index);
-    if( onoff )
-      AnalogIn->autosend |= mask;
-    else
-      AnalogIn->autosend &= ~mask;
-    
-    Eeprom_Write( EEPROM_ANALOGIN_AUTOSEND, (uchar*)&AnalogIn->autosend, 4 );
-  }
-}
+#ifdef OSC
 
 /** \defgroup AnalogInOSC Analog In - OSC
   Read the Application Board's Analog Inputs via OSC.
@@ -337,94 +292,34 @@ void AnalogIn_SetAutoSend( int index, bool onoff )
   \verbatim /analogin/0/active 1 \endverbatim
 */
 
-#include "osc.h"
-#include "string.h"
-#include "stdio.h"
-
-// Need a list of property names
-// MUST end in zero
-static char* AnalogInOsc_Name = "analogin";
-static char* AnalogInOsc_PropertyNames[] = { "active", "value", "autosend", 0 }; // must have a trailing 0
-
-int AnalogInOsc_PropertySet( int index, int property, int value );
-int AnalogInOsc_PropertyGet( int index, int property );
-
-// Returns the name of the subsystem
-const char* AnalogInOsc_GetName( )
+static bool ainOscHandler(OscChannel ch, char* address, short idx, OscData d[], int datalen)
 {
-  return AnalogInOsc_Name;
-}
-
-// Now getting a message.  This is actually a part message, with the first
-// part (the subsystem) already parsed off.
-int AnalogInOsc_ReceiveMessage( int channel, char* message, int length )
-{
-  int status = Osc_IndexIntReceiverHelper( channel, message, length, 
-                                     ANALOGIN_CHANNELS, AnalogInOsc_Name,
-                                     AnalogInOsc_PropertySet, AnalogInOsc_PropertyGet, 
-                                     AnalogInOsc_PropertyNames );
-  if ( status != CONTROLLER_OK )
-    return Osc_SendError( channel, AnalogInOsc_Name, status );
-  return CONTROLLER_OK;
-
-}
-
-// Set the index LED, property with the value
-int AnalogInOsc_PropertySet( int index, int property, int value )
-{
-  switch ( property )
-  {
-    case 0: 
-      AnalogIn_SetActive( index, value );
-      break;
-    case 2: // autosend 
-      AnalogIn_SetAutoSend( index, value );
-      break;    
+  UNUSED(d);
+  if (datalen == 0) {
+    OscData d = {
+      .type = INT,
+      .value.i = ainValue(idx)
+    };
+    oscCreateMessage(ch, address, &d, 1);
+    return true;
   }
-  return CONTROLLER_OK;
+  return false;
 }
 
-// Get the index LED, property
-int AnalogInOsc_PropertyGet( int index, int property )
-{
-  int value = 0;
-  switch ( property )
-  {
-    case 0:
-      value = AnalogIn_GetActive( index );
-      break;
-    case 1:
-      value = AnalogIn_GetValue( index );
-      break;
-    case 2: // autosend
-      value = AnalogIn_GetAutoSend( index );
-      break;
-  }
-  
-  return value;
-}
-
-int AnalogInOsc_Async( int channel )
-{
-  int newMsgs = 0;
-  char address[ OSC_SCRATCH_SIZE ];
-  int i;
-  int value;
-  for( i = 0; i < ANALOGIN_CHANNELS; i ++ )
-  {
-    if( !AnalogIn_GetAutoSend( i ) )
-      continue;
-    value = AnalogIn_GetValue( i );
-    if( value != AnalogIn->lastValues[i] )
-    {
-      AnalogIn->lastValues[i] = value;
-      snprintf( address, OSC_SCRATCH_SIZE, "/%s/%d/value", AnalogInOsc_Name, i );
-      Osc_CreateMessage( channel, address, ",i", value );
-      newMsgs++;
-    }
-  }
-
-  return newMsgs;
-}
-
+static const OscNode ainAutosendNode = {
+  .name = "autosend",
+  .handler = 0 // ainAutosendHandler TODO!!
+};
+static const OscNode ainValueNode = {
+  .name = "value",
+  .handler = ainOscHandler
+};
+static const OscNode ainRange = {
+  .range = 8,
+  .children = { &ainValueNode, &ainAutosendNode, 0 }
+};
+const OscNode ainOsc = {
+  .name = "ain",
+  .children = { &ainRange, 0 }
+};
 #endif // OSC

@@ -20,6 +20,7 @@
 
 #define ANALOGIN_CHANNELS 8
 
+#include "config.h"
 #include "types.h"
 
 #ifdef __cplusplus
@@ -34,9 +35,8 @@ bool ainMulti(int values[]);
 }
 #endif
 
-///* OSC Interface */
-//const char* AnalogInOsc_GetName( void );
-//int AnalogInOsc_ReceiveMessage( int channel, char* message, int length );
-//int AnalogInOsc_Async( int channel );
-
-#endif
+#ifdef OSC
+#include "osc.h"
+extern const OscNode ainOsc;
+#endif // OSC
+#endif // ANALOGIN_H
