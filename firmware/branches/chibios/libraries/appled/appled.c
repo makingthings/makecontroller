@@ -166,7 +166,7 @@ static bool appledOscHandler(OscChannel ch, char* address, short idx, OscData d[
 }
 
 static const OscNode appledState = {
-  .name = "state",
+  .name = "value",
   .handler = appledOscHandler
 };
 static const OscNode appledRange = {

@@ -186,68 +186,34 @@ bool digitaloutValue(int channel)
   \verbatim /digitalout/0/active 1 \endverbatim
 */
 
-//#include "osc.h"
-//#include "string.h"
-//#include "stdio.h"
-//
-//// Need a list of property names
-//// MUST end in zero
-//static char* DigitalOutOsc_Name = "digitalout";
-//static char* DigitalOutOsc_PropertyNames[] = { "active", "value", 0 }; // must have a trailing 0
-//
-//int DigitalOutOsc_PropertySet( int index, int property, int value );
-//int DigitalOutOsc_PropertyGet( int index, int property );
-//
-//// Returns the name of the subsystem
-//const char* DigitalOutOsc_GetName( )
-//{
-//  return DigitalOutOsc_Name;
-//}
-//
-//// Now getting a message.  This is actually a part message, with the first
-//// part (the subsystem) already parsed off.
-//int DigitalOutOsc_ReceiveMessage( int channel, char* message, int length )
-//{
-//  int status = Osc_IndexIntReceiverHelper( channel, message, length, 
-//                                           DIGITALOUT_COUNT, DigitalOutOsc_Name,
-//                                           DigitalOutOsc_PropertySet, DigitalOutOsc_PropertyGet, 
-//                                           DigitalOutOsc_PropertyNames );
-//                                     
-//  if ( status != CONTROLLER_OK )
-//    return Osc_SendError( channel, DigitalOutOsc_Name, status );
-//  return CONTROLLER_OK;
-//}
-//
-//// Set the index LED, property with the value
-//int DigitalOutOsc_PropertySet( int index, int property, int value )
-//{
-//  switch ( property )
-//  {
-//    case 0: 
-//      DigitalOut_SetActive( index, value );
-//      break;      
-//    case 1: 
-//      DigitalOut_SetValue( index, value );
-//      break;
-//  }
-//  return CONTROLLER_OK;
-//}
-//
-//// Get the index LED, property
-//int DigitalOutOsc_PropertyGet( int index, int property )
-//{
-//  int value = 0;
-//  switch ( property )
-//  {
-//    case 0:
-//      value = DigitalOut_GetActive( index );
-//      break;
-//    case 1:
-//      value = DigitalOut_GetValue( index );
-//      break;
-//  }
-//  
-//  return value;
-//}
+#include "osc.h"
+
+static bool digitaloutOscHandler(OscChannel ch, char* address, short idx, OscData d[], int datalen)
+{
+  if (datalen == 1) {
+    digitaloutSetValue(idx, d[0].value.i);
+    return true;
+  }
+  else if (datalen == 0) {
+    OscData d;
+    d.value.i = digitaloutValue(idx);
+    oscCreateMessage(ch, address, &d, 1);
+    return true;
+  }
+  return false;
+}
+
+static const OscNode digitaloutState = {
+  .name = "value",
+  .handler = digitaloutOscHandler
+};
+static const OscNode digitaloutRange = {
+  .range = 8,
+  .children = { &digitaloutState, 0 }
+};
+const OscNode digitaloutOsc = {
+  .name = "appled",
+  .children = { &digitaloutRange, 0 }
+};
 
 #endif
