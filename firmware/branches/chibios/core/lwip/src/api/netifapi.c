@@ -30,6 +30,8 @@
  * This file is part of the lwIP TCP/IP stack.
  * 
  */
+#include "config.h"
+#ifdef MAKE_CTRL_NETWORK
 
 #include "lwip/opt.h"
 
@@ -160,3 +162,4 @@ netifapi_netif_common( struct netif *netif,
 }
 
 #endif /* LWIP_NETIF_API */
+#endif // MAKE_CTRL_NETWORK

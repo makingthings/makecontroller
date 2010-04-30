@@ -58,6 +58,9 @@
  *
  */
 
+#include "config.h"
+#ifdef MAKE_CTRL_NETWORK
+
 #include "ch.h"
 
 #include "lwip/opt.h"
@@ -186,3 +189,5 @@ void sys_arch_unprotect(sys_prot_t pval) {
   (void)pval;
   chSysUnlock();
 }
+
+#endif // MAKE_CTRL_NETWORK

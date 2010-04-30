@@ -207,7 +207,7 @@ int i2cWrite(uint8_t deviceAddr, const uint8_t *data, uint8_t length,
   This will wait until all the bytes requested have been received.
 
   If the device that you're communicating with has an internal register map,
-  you can specify the device's internal address to write to in the
+  you can specify the device's internal address to read from in the
   \b internalAddr parameter.  Otherwise, this can be left as 0.
 
   This is not threadsafe - if you need exclusive access
