@@ -34,4 +34,9 @@ int DigitalOutOsc_ReceiveMessage( int channel, char* message, int length );
 #ifdef __cplusplus
 }
 #endif
+
+#ifdef OSC
+#include "osc.h"
+extern const OscNode digitaloutOsc;
+#endif // OSC
 #endif // DIGITALOUT_H

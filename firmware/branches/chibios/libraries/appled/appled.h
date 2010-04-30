@@ -22,18 +22,9 @@
 #include "types.h"
 
 #ifdef OSC
-#include "osc_cpp.h"
-
-class AppLedOSC : public OscHandler
-{
-public:
-  AppLedOSC( ) { }
-  int onNewMsg( OscTransport t, OscMessage* msg, int src_addr, int src_port );
-  int onQuery( OscTransport t, char* address, int element );
-  const char* name( ) { return "appled"; }
-  static const char* propertyList[];
-};
-#endif // OSC
+#include "osc.h"
+extern const OscNode appledOsc;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
