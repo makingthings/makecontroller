@@ -380,9 +380,11 @@ hr {
 }
 
 .memitem {
-	padding: 0;
-	-moz-border-radius:0.5em 0.5em 0.5em 0.5em;
-	-moz-box-shadow:2px 2px 2px gray;
+  padding: 0;
+  -moz-border-radius:0.5em 0.5em 0.5em 0.5em;
+  -webkit-border-radius:0.5em;
+  -moz-box-shadow:2px 2px 2px gray;
+  -webkit-box-shadow:2px 2px 2px gray;
 }
 
 .memname {
