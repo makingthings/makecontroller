@@ -143,6 +143,7 @@ table.listing td {
 table.listing th {
   border-width: 0;
   background-color: #45B2EA;
+  padding: 5px;
 }
 
 table.listing ul {
@@ -244,7 +245,7 @@ img.formulaInl {
 /* @group Code Colorization */
 
 span.keyword {
-	color: #A39FFF
+  color: #A39FFF;
 }
 
 span.keywordtype {
@@ -252,7 +253,7 @@ span.keywordtype {
 }
 
 span.keywordflow {
-	color: #e08000
+	color: #FF8837
 }
 
 span.comment {
@@ -264,7 +265,7 @@ span.preprocessor {
 }
 
 span.stringliteral {
-	color: #DD7937
+	color: #F9FF39
 }
 
 span.charliteral {
@@ -380,6 +381,8 @@ hr {
 
 .memitem {
 	padding: 0;
+	-moz-border-radius:0.5em 0.5em 0.5em 0.5em;
+	-moz-box-shadow:2px 2px 2px gray;
 }
 
 .memname {
