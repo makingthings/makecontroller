@@ -51,6 +51,37 @@ static bool networkDhcpStart(int timeout);
 static bool networkDhcpStop(int timeout);
 #endif // LWIP_DHCP
 
+/**
+  \defgroup Network Network
+  Control the network system on the Controller.
+
+  The Make Controller has a full network system with DHCP, DNS, sockets, and a simple web server.
+  The Network class manages the network configuration of the board - its address, gateway, etc.
+
+  \section Usage
+  First, turn on the network system via networkInit().  You can then manually set the address,
+  manage DHCP, etc.
+
+  \section DHCP
+  DHCP is a mechanism that allows the board to automatically get an IP address from a router.  If
+  you plug your board onto a network that has a router (this is quite common), enabling DHCP is
+  the simplest way to get set up - it's highly recommended - use networkSetDhcp() and networkDhcp().  If you
+  have a situation that requires a manual address, turn DHCP off and set it yourself with networkSetAddress().
+
+  \section DNS
+  DNS is a mechanism that resolves a domain name, like www.makingthings.com, into the IP address
+  of the MakingThings web site.  This is the same thing that happens in your browser when you type
+  an address in.  The Make Controller can do this as well - check getHostByName().
+
+  For a general overview of the network capabilities, check out the \ref networking page.
+
+  \ingroup networking
+  @{
+*/
+
+/**
+  Turn on the network system.
+*/
 void networkInit()
 {
   // customize MAC address based on serial number
@@ -256,8 +287,7 @@ bool networkDhcpStop(int timeout)
   The cached values are maintained internally, so if one of them becomes invalid, a
   new lookup will be fired off the next time it's asked for.
   @param name The domain to look up.
-  @param timeout (optional) The number of seconds to wait for this operation to 
-  complete - defaults to 30 seconds.
+  @param timeout The number of seconds to wait for this operation to complete.
   @return The IP address of the host, or -1 on error.
 
   \b Example
@@ -286,6 +316,8 @@ int networkGetHostByName(const char *name, int timeout)
   else
     return -1;
 }
+
+/** @} */
 
 /*
   The callback for a DNS look up.  The original request is waiting (via semaphore) on

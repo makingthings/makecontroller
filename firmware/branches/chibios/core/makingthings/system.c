@@ -28,7 +28,7 @@
 #define SYSTEM_MAX_NAME 99
 #endif
 
-/* the Atmel header file doesn't define these. */
+// the Atmel header file doesn't define these.
 #ifdef AT91SAM7X256_H
 #define AT91C_RSTC_KEY_PASSWORD  (0xa5 << 24)
 #define AT91C_IROM     ((char *)(0x3 << 20))
@@ -39,6 +39,13 @@
 #define ASYNC_INACTIVE -1
 
 static char sysName[SYSTEM_MAX_NAME + 1];
+
+/**
+  \defgroup System System
+  Monitors and controls several aspects of the system.
+  \ingroup Core
+  @{
+*/
 
 /**
   Returns the free size of the heap.
@@ -266,6 +273,8 @@ void systemReset(bool sure)
   if (sure)
     kill();
 }
+
+/** @} */
 
 #ifdef OSC
 #include <stdio.h>

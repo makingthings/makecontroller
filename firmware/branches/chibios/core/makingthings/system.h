@@ -20,10 +20,6 @@
 
 #include "types.h"
 
-/** 
-  Monitors and controls several aspects of the system. 
-*/
-
 #ifdef __cplusplus
 extern "C" {
 #endif
