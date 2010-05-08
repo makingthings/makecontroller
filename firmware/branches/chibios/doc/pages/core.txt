@@ -37,8 +37,7 @@
       <ul>
         <li><a href="http://www.makingthings.com/documentation/tutorial/programming-the-make-controller-kit">Programming the Make Controller</a></li>
         <li><a href="http://www.makingthings.com/documentation/tutorial/osc">OSC</a></li>
-        <li>\ref crashcourse</li>
-        <li><a href="./annotated.html">List of All Classes</a></li>
+        <li><a href="http://www.makingthings.com/documentation/tutorial/getting-started">Make Controller Overview</a></li>
       </ul>
     </td>
     <td>
@@ -68,14 +67,14 @@
     <td>
       <ul>
         <li>mcbuilder</li>
-        <li>mchelper</li>
+        <li><a href="http://www.makingthings.com/documentation/tutorial/mchelper/tutorial-all-pages">mchelper</a></li>
       </ul>
     </td>
     <td>
       <ul>
         <li>\ref licenses</li>
         <li>MakingThings - <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache 2.0</a></li>
-        <li>FreeRTOS - <a href="http://www.freertos.org/a00114.html">Modified GPL</a></li>
+        <li>ChibiOS - <a href="http://chibios.sourceforge.net/license.html">Modified GPL</a></li>
         <li>lwIP - <a href="http://www.xfree86.org/3.3.6/COPYRIGHT2.html#5">Modified BSD</a></li>
       </ul>
     </td>

@@ -18,8 +18,6 @@
 /**
   \defgroup interfacing Communication Interfaces
  
-  \section Overview
   The Make Controller has a great variety of peripherals that make it easy to 
   interface with other devices.
-  
 */
