@@ -21,39 +21,6 @@
 #define IP_ADDRESS_BROADCAST 0xffffffffUL
 #define IP_ADDRESS_ANY       0x00000000UL
 
-/**
-  The network system on the Controller.
-  
-  The Make Controller has a full network system with DHCP, DNS, sockets, and a simple web server.
-  The Network class manages the network configuration of the board - its address, gateway, etc.
-  
-  \section Usage
-  To get started using the Network system, grab a reference to the central Network object - since
-  there's only one, you don't create your own.  Then you can set the address, check the address, 
-  manage DHCP and more.
-  
-  \code
-  Network* net = Network::get(); // get a reference to the Network object
-  int a = net->address(); // check our address
-  net->setDhcp(true); // turn on dhcp
-  \endcode
-  
-  \section DHCP
-  DHCP is a mechanism that allows the board to automatically get an IP address from a router.  If 
-  you plug your board onto a network that has a router (this is quite common), enabling DHCP is 
-  the simplest way to get set up - it's highly recommended - use setDhcp() and dhcp().  If you 
-  have a situation that requires a manual address, turn DHCP off and set it yourself with setAddress().
-  
-  \section DNS
-  DNS is a mechanism that resolves a domain name, like www.makingthings.com, into the IP address
-  of the MakingThings web site.  This is the same thing that happens in your browser when you type
-  an address in.  The Make Controller can do this as well - check getHostByName().
-  
-  For a general overview of the network capabilities, check out the \ref networking page.
-  
-  \ingroup networking
-*/
-
 #ifdef __cplusplus
 extern "C" {
 #endif
