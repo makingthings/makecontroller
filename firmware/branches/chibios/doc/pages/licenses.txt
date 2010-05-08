@@ -24,7 +24,7 @@
   Make Controller.  The Make Controller software environment is a fusion of four main bodies of code:
   - User code: the applications that you create.
   - MakingThings library: code that MakingThings has contributed to make it easier to work with the Make Controller Kit.
-  - FreeRTOS: an open source Real Time Operating System for the SAM7X.  See http://www.freertos.org
+  - ChibiOS: an open source Real Time Operating System for the SAM7X.  See http://www.chibios.sourceforge.net
   - lwIP: a complete and open source TCIP/IP code library.  See http://www.sics.se/~adam/lwip/
 
   This software is all open source, and thus subject to the licensing of each module 
@@ -32,7 +32,7 @@
   both open source and commercial projects.  Be sure to acquaint yourself with the licenses for the main 
   bodies of code in the Make Controller firmware codebase:
   - MakingThings: http://www.apache.org/licenses/LICENSE-2.0.html
-  - FreeRTOS: http://www.freertos.org/a00114.html
+  - ChibiOS: http://chibios.sourceforge.net/license.html
   - lwIP: http://www.xfree86.org/3.3.6/COPYRIGHT2.html#5
 */
 

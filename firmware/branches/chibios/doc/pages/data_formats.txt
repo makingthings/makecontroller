@@ -17,4 +17,7 @@
 
 /**
   \defgroup dataformats Data Formats & Protocols
+  
+  The Make Controller supports several data formats for transferring information
+  between different parts of your projects.
 */
