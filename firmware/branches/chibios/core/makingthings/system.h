@@ -22,9 +22,11 @@
 
 /** 
   Monitors and controls several aspects of the system. 
-
 */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 const char* systemName(void);
 int  systemSetName(const char* name);
 void systemReset(bool sure);
@@ -32,11 +34,13 @@ void systemSamba(bool sure);
 int  systemSerialNumber(void);
 int  systemSetSerialNumber(int serial);
 int  systemFreeMemory(void);
+#ifdef __cplusplus
+}
+#endif
 
-///* SystemOsc Interface */
-//
-//const char* SystemOsc_GetName( void );
-//int SystemOsc_ReceiveMessage( int channel, char* message, int length );
-//int SystemOsc_Poll( void );
+#ifdef OSC
+#include "osc.h"
+extern const OscNode systemOsc;
+#endif
 
 #endif
