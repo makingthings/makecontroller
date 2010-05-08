@@ -30,4 +30,10 @@ int DigitalInOsc_ReceiveMessage( int channel, char* message, int length );
 #ifdef __cpluscplus
 extern "C" {
 #endif
+
+#ifdef OSC
+#include "osc.h"
+extern const OscNode digitalinOsc;
+#endif
+
 #endif // DIGITALIN_H

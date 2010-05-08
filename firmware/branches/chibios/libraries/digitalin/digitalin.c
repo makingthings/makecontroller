@@ -17,7 +17,7 @@
 
 #include "digitalin.h"
 #include "analogin.h"
-#include "config.h"
+#include "core.h"
 #include "ch.h"
 #include "hal.h"
 
@@ -107,9 +107,8 @@ bool digitalinValue(int channel)
   If the voltage on the input is greater than <b>~0.6V</b>, the Digital In will read high.
   
   \section properties Properties
-  The Digital Ins have two properties
+  The Digital Ins have the following properties
   - value
-  - active
 
   \par Value
   The \b value property corresponds to the on/off value of a Digital In.
@@ -117,79 +116,37 @@ bool digitalinValue(int channel)
   want to include an argument at the end of your OSC message to read the value.
   To read the third Digital In, send the message
   \verbatim /digitalin/2/value \endverbatim
-  
-  \par Active
-  The \b active property corresponds to the active state of a Digital In.
-  If a Digital In is set to be active, no other tasks will be able to
-  read from it as an Analog In.  If you're not seeing appropriate
-  responses to your messages to the Digital In, check the whether it's 
-  locked by sending a message like
-  \verbatim /digitalin/0/active \endverbatim
-  \par
-  You can set the active flag by sending
-  \verbatim /digitalin/0/active 0 \endverbatim
 */
 
-//#include "osc.h"
-//#include "string.h"
-//#include "stdio.h"
-//
-//// Need a list of property names
-//// MUST end in zero
-//static char* DigitalInOsc_Name = "digitalin";
-//static char* DigitalInOsc_PropertyNames[] = { "active", "value", 0 }; // must have a trailing 0
-//
-//int DigitalInOsc_PropertySet( int index, int property, int value );
-//int DigitalInOsc_PropertyGet( int index, int property );
-//
-//// Returns the name of the subsystem
-//const char* DigitalInOsc_GetName( )
-//{
-//  return DigitalInOsc_Name;
-//}
-//
-//// Now getting a message.  This is actually a part message, with the first
-//// part (the subsystem) already parsed off.
-//int DigitalInOsc_ReceiveMessage( int channel, char* message, int length )
-//{
-//  int status = Osc_IndexIntReceiverHelper( channel, message, length, 
-//                                     DIGITALIN_COUNT, DigitalInOsc_Name,
-//                                     DigitalInOsc_PropertySet, DigitalInOsc_PropertyGet, 
-//                                     DigitalInOsc_PropertyNames );
-//
-//                                     
-//  if ( status != CONTROLLER_OK )
-//    return Osc_SendError( channel, DigitalInOsc_Name, status );
-//  return CONTROLLER_OK;
-//}
-//
-//// Set the index LED, property with the value
-//int DigitalInOsc_PropertySet( int index, int property, int value )
-//{
-//  switch ( property )
-//  {
-//    case 0: 
-//      DigitalIn_SetActive( index, value );
-//      break;      
-//  }
-//  return CONTROLLER_OK;
-//}
-//
-//// Get the index LED, property
-//int DigitalInOsc_PropertyGet( int index, int property )
-//{
-//  int value = 0;
-//  switch ( property )
-//  {
-//    case 0:
-//      value = DigitalIn_GetActive( index );
-//      break;
-//    case 1:
-//      value = DigitalIn_GetValue( index );
-//      break;
-//  }
-//  
-//  return value;
-//}
+static bool digitalinOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+{
+  UNUSED(d);
+  if (datalen == 0) {
+    OscData d = {
+      .type = INT,
+      .value.i = digitalinValue(idx)
+    };
+    oscCreateMessage(ch, address, &d, 1);
+    return true;
+  }
+  return false;
+}
 
-#endif
+static const OscNode digitalinValueNode = { .name = "value", .handler = digitalinOscHandler };
+static const OscNode digitalinRange = {
+  .range = 8,
+  .children = {
+    &digitalinValueNode, 0
+//    &digitalAutosendNode,
+  }
+};
+
+const OscNode digitalinOsc = {
+  .name = "digitalin",
+  .children = {
+    &digitalinRange,
+    0
+  }
+};
+
+#endif // OSC
