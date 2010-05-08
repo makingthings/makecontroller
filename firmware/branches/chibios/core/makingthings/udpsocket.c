@@ -168,7 +168,7 @@ int udpRead(int socket, char* data, int length)
 int udpReadFrom(int socket, char* data, int length, int* from_address, int* from_port)
 {
   struct sockaddr_in from;
-  socklen_t fromlen;
+  socklen_t fromlen = sizeof(from);
   int recvd = lwip_recvfrom(socket, data, length, 0, (struct sockaddr*)&from, &fromlen);
   if (from_address)
     *from_address = from.sin_addr.s_addr;
