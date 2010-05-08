@@ -101,9 +101,9 @@
   // Now, register these callbacks with the JSON reader.
   JsonReader jr;
   jsonreaderInit(&jr, 0);
-  jr.handlers.start_obj_handler = on_obj_opened;
-  jr.handlers.int_handler = on_int;
-  jr.handlers.string_handler = on_string;
+  jr.start_obj_handler = on_obj_opened;
+  jr.int_handler = on_int;
+  jr.string_handler = on_string;
 
   // Finally, run the parser.
   jsonreaderGo(&jr, jsonstr, strlen(jsonstr));
@@ -459,17 +459,29 @@ static JsonReaderToken jsonreaderGetToken(char* text, int len);
   Initialize or reset a JsonReader.
   Do this prior to making a call to jsonreaderGo().
   @param jr The JsonReader to use.
-  @param context (optional) An optional paramter that your code can use to 
+  @param context (optional) An optional parameter that your code can use to
   pass around a known object within the callbacks.  Set it to 0 if you don't need it.
+  @param resetHandlers True to disable all the handlers, false to leave them untouched.
 */
-void jsonreaderInit(JsonReader* jr, void* context)
+void jsonreaderInit(JsonReader* jr, void* context, bool resetHandlers)
 {
   jr->depth = 0;
   jr->gotcomma = false;
   jr->context = context;
   jr->p = 0;
   jr->len = 0;
-  memset(&jr->handlers, 0, sizeof(jr->handlers));
+  if (resetHandlers) {
+    jr->null_handler        = 0;
+    jr->bool_handler        = 0;
+    jr->int_handler         = 0;
+    jr->float_handler       = 0;
+    jr->string_handler      = 0;
+    jr->start_obj_handler   = 0;
+    jr->obj_key_handler     = 0;
+    jr->end_obj_handler     = 0;
+    jr->start_array_handler = 0;
+    jr->end_array_handler   = 0;
+  }
 }
 
 /**
@@ -487,7 +499,7 @@ void jsonreaderInit(JsonReader* jr, void* context)
   char jsonstr[] = "[{\"label\":\"value\",\"label2\":{\"nested\":234}}]";
   JsonReader jr;
   jsonreaderInit(&jr, 0);
-  jr.handlers.int_handler = myNullHandler;
+  jr.int_handler = myIntHandler;
   jsonreaderGo(&jr, jsonstr, strlen(jsonstr));
   // now we expect to be called back on any callbacks we registered.
   \endcode
@@ -504,29 +516,20 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
     token = jsonreaderGetToken( jr->p, jr->len);
     switch (token) {
       case token_true:
-        if (jr->handlers.bool_handler &&
-           !jr->handlers.bool_handler(jr->context, true))
-        {
+        if (jr->bool_handler && !jr->bool_handler(jr->context, true))
           return false;
-        }
         jr->p += 4;
         jr->len -= 4;
         break;
       case token_false:
-        if (jr->handlers.bool_handler &&
-           !jr->handlers.bool_handler(jr->context, false))
-        {
+        if (jr->bool_handler && !jr->bool_handler(jr->context, false))
           return false;
-        }
         jr->p += 5;
         jr->len -= 5;
         break;
       case token_null:
-        if (jr->handlers.null_handler &&
-           !jr->handlers.null_handler(jr->context))
-        {
+        if (jr->null_handler && !jr->null_handler(jr->context))
           return false;
-        }
         jr->p += 4;
         jr->len -= 4;
         break;
@@ -539,41 +542,29 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
         break;
       case token_left_bracket:
         jr->steps[++jr->depth] = JSON_READER_OBJECT_START;
-        if (jr->handlers.start_obj_handler &&
-           !jr->handlers.start_obj_handler(jr->context))
-        {
+        if (jr->start_obj_handler && !jr->start_obj_handler(jr->context))
           return false;
-        }
         jr->p++;
         jr->len--;
         break;
       case token_right_bracket:
         jr->depth--;
-        if (jr->handlers.end_obj_handler &&
-           !jr->handlers.end_obj_handler(jr->context))
-        {
+        if (jr->end_obj_handler && !jr->end_obj_handler(jr->context))
           return false;
-        }
         jr->p++;
         jr->len--;
         break;
       case token_left_brace:
         jr->steps[++jr->depth] = JSON_READER_IN_ARRAY;
-        if (jr->handlers.start_array_handler &&
-           !jr->handlers.start_array_handler(jr->context))
-        {
+        if (jr->start_array_handler && !jr->start_array_handler(jr->context))
           return false;
-        }
         jr->p++;
         jr->len--;
         break;
       case token_right_brace:
         jr->depth--;
-        if (jr->handlers.end_array_handler &&
-           !jr->handlers.end_array_handler(jr->context))
-        {
+        if (jr->end_array_handler && !jr->end_array_handler(jr->context))
           return false;
-        }
         jr->p++;
         jr->len--;
         break;
@@ -596,18 +587,12 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
         } while (keepgoing);
         int size = p - jr->p;
         if (gotdecimal) {
-          if (jr->handlers.float_handler &&
-             !jr->handlers.float_handler(jr->context, atof(jr->p)))
-          {
+          if (jr->float_handler && !jr->float_handler(jr->context, atof(jr->p)))
             return false;
-          }
         }
         else {
-          if (jr->handlers.int_handler &&
-             !jr->handlers.int_handler(jr->context, atoi(jr->p)))
-          {
+          if (jr->int_handler && !jr->int_handler(jr->context, atoi(jr->p)))
             return false;
-          }
         }
         jr->p += size;
         jr->len -= size;
@@ -641,18 +626,12 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
         }
 
         if (objkey) { // last one was a comma - next string has to be a key
-          if(jr->handlers.obj_key_handler &&
-            !jr->handlers.obj_key_handler(jr->context, jr->p, size))
-          {
+          if(jr->obj_key_handler && !jr->obj_key_handler(jr->context, jr->p, size))
             return false;
-          }
         }
         else { // just a normal string
-          if (jr->handlers.string_handler &&
-             !jr->handlers.string_handler(jr->context, jr->p, size))
-          {
+          if (jr->string_handler && !jr->string_handler(jr->context, jr->p, size))
             return false;
-          }
         }
         jr->p += (size+1); // account for the trailing "
         jr->len -= (size+1);
@@ -671,38 +650,24 @@ bool jsonreaderGo(JsonReader* jr, char* text, int len)
 // static
 JsonReaderToken jsonreaderGetToken(char* text, int len)
 {
-  if (len < 1)
-    return token_unknown;
+  if (len < 1) return token_unknown;
   switch (text[0]) {
-    case ':':
-      return token_colon;
-    case ',':
-      return token_comma;
-    case '{':
-      return token_left_bracket;
-    case '}':
-      return token_right_bracket;
-    case '[':
-      return token_left_brace;
-    case ']':
-      return token_right_brace;
-    case '"':
-      return token_string;
+    case ':': return token_colon;
+    case ',': return token_comma;
+    case '{': return token_left_bracket;
+    case '}': return token_right_bracket;
+    case '[': return token_left_brace;
+    case ']': return token_right_brace;
+    case '"': return token_string;
     case '0': case '1': case '2': case '3': case '4': 
     case '5': case '6': case '7': case '8': case '9':
       return token_number;
-    case '-':
-      return token_maybe_negative;
-    case 't':
-      return strncmp(text, "true", 4) == 0 ? token_true : token_unknown;
-    case 'f':
-      return strncmp(text, "false", 5) == 0 ? token_false : token_unknown;
-    case 'n':
-      return strncmp(text, "null", 4) == 0 ? token_null : token_unknown;
-    case '\0':
-      return token_eof;
-    default:
-      return token_unknown;
+    case '-': return token_maybe_negative;
+    case 't': return strncmp(text, "true", 4) == 0 ? token_true : token_unknown;
+    case 'f': return strncmp(text, "false", 5) == 0 ? token_false : token_unknown;
+    case 'n': return strncmp(text, "null", 4) == 0 ? token_null : token_unknown;
+    case '\0': return token_eof;
+    default:  return token_unknown;
   }
 }
 

@@ -25,7 +25,7 @@
 #endif
 
 // state object for encoding
-typedef enum {
+typedef enum JsonWriterStep_t {
   JSON_START,
   JSON_OBJ_START,
   JSON_OBJ_KEY,
@@ -37,24 +37,34 @@ typedef enum {
 /**
   The structure used to maintain the state of a JSON encode process.
   You'll need to have one of these for each JSON string you want to encode.
-  The same variable can be reused after resetting it with a call to JsonEncode_Init().
+  The same variable can be reused after resetting it with a call to jsonwriterInit().
  */
-typedef struct
-{
+typedef struct JsonWriter_t {
   JsonWriterStep steps[JSON_MAX_DEPTH]; /**< An array to keep track of the state of each step in the encoder. */
   int depth;                            /**< The current depth of the encoder (how many elements have been opened). */
-  char* p;
-  int remaining;
+  char* p;                              /**< A pointer to the buffer to write into. */
+  int remaining;                        /**< The number of bytes remaining in the buffer to write into. */
 } JsonWriter;
 
 // state object for decoding
-typedef enum {
+typedef enum JsonReaderStep_t {
   JSON_READER_OBJECT_START,
   JSON_READER_IN_OBJECT,
   JSON_READER_IN_ARRAY
 } JsonReaderStep;
 
-typedef struct JsonReaderHandlers_t {
+/**
+  The structure used to maintain the state of a JSON decode process.
+  You'll need to have one of these for each JSON string you want to encode.
+  The same variable can be reused after resetting it with a call to jsonreaderInit().
+ */
+typedef struct JsonReader_t {
+  JsonReaderStep steps[JSON_MAX_DEPTH];     /**< An array to keep track of each step of the decoder. */
+  int depth;                                /**< The current depth of the decoder (how many elements have been opened). */
+  bool gotcomma;                            /**< Used internally by the decoder. */
+  void* context;                            /**< A pointer to the user context. */
+  char* p;                                  /**< A pointer to the data. */
+  int len;                                  /**< The current length. */
   bool(*null_handler)(void*);                /**< Called when "null" is encountered. */
   bool(*bool_handler)(void*, bool);          /**< Called when a boolean value is encountered. */
   bool(*int_handler)(void*, int);            /**< Called when an int is encountered. */
@@ -65,21 +75,6 @@ typedef struct JsonReaderHandlers_t {
   bool(*end_obj_handler)(void*);             /**< Called when an object is closed - a } is encountered. */
   bool(*start_array_handler)(void*);         /**< Called when an array is opened - a [ is encountered. */
   bool(*end_array_handler)(void*);           /**< Called when an object is closed - a ] is encountered. */
-} JsonReaderHandlers;
-
-/**
-  The structure used to maintain the state of a JSON decode process.
-  You'll need to have one of these for each JSON string you want to encode.
-  The same variable can be reused after resetting it with a call to JsonDecode_Init().
- */
-typedef struct JsonReader_t {
-  JsonReaderStep steps[JSON_MAX_DEPTH];  /**< An array to keep track of each step of the decoder. */
-  int depth;                             /**< The current depth of the decoder (how many elements have been opened). */
-  bool gotcomma;                         /**< Used internally by the decoder. */
-  void* context;                         /**< A pointer to the user context. */
-  char* p;                               /**< A pointer to the data. */
-  int len;                               /**< The current length. */
-  JsonReaderHandlers handlers;           /**< The handlers for each json type */
 } JsonReader;
 
 #ifdef __cplusplus
@@ -97,7 +92,7 @@ char* jsonwriterInt(JsonWriter* jw, int value);
 char* jsonwriterBool(JsonWriter* jw, bool value);
 
 // reader
-void jsonreaderInit(JsonReader* jr, void* context);
+void jsonreaderInit(JsonReader* jr, void* context, bool resetHandlers);
 bool jsonreaderGo(JsonReader* jr, char* text, int len);
 #ifdef __cplusplus
 }

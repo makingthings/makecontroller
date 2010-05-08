@@ -44,6 +44,7 @@ h2 a, h3 a { font-weight: bold; }
 
 h3 {
 	font-size: 100%;
+	text-align: center;
 }
 
 /* @end */
