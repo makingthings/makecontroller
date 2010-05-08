@@ -30,9 +30,10 @@ bool dipswitchSingleValue(int channel);
 #ifdef __cplusplus
 }
 #endif
-/* DipSwitchOsc Interface */
-const char* DipSwitchOsc_GetName( void );
-int DipSwitchOsc_ReceiveMessage( int channel, char* message, int length );
-int DipSwitchOsc_Async( int channel );
+
+#ifdef OSC
+#include "osc.h"
+extern const OscNode dipswitchOsc;
+#endif // OSC
 
 #endif
