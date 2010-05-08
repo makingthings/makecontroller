@@ -42,7 +42,6 @@ static char sysName[SYSTEM_MAX_NAME + 1];
 
 /**
   Returns the free size of the heap.
-  The heap size is set in config.h in the constant CONTROLLER_HEAPSIZE.
   Any calls to Malloc will take their memory from the heap.  This allows
   you to check how much heap is remaining.
   @return The size free memory.
@@ -50,10 +49,10 @@ static char sysName[SYSTEM_MAX_NAME + 1];
   \b Example
   \code
   // see how much memory is available
-  int freemem = System_GetFreeMemory();
+  int freemem = systemFreeMemory();
   \endcode
 */
-int systemFreeMemory( )
+int systemFreeMemory()
 {
   size_t freemem;
   chHeapStatus(NULL, &freemem);
@@ -63,19 +62,18 @@ int systemFreeMemory( )
 /**
   Gets the board's Serial Number.
   Each board has a serial number, although it's not necessarily unique
-  as you can reset it as you please.
+  since you can reset it to whatever you like.
   
   The serial number is used to determine the Ethernet MAC address, so boards
   on the same network need to have unique serial numbers.
-  @return CONTROLLER_OK ( = 0 ).
+  @return The board's serial number.
   
   \b Example
   \code
-  // get this board's serial number
-  int sernum = System_GetSerialNumber();
+  int sernum = systemSerialNumber();
   \endcode
 */
-int systemSerialNumber( void )
+int systemSerialNumber()
 {
   return eepromRead(EEPROM_SYSTEM_SERIAL_NUMBER) & 0xFFFF;
 }
@@ -84,14 +82,14 @@ int systemSerialNumber( void )
   Sets the Serial Number. 
   Note that this can be changed by the user at 
   any time, but that it is used in the \ref Network subsystem to form the last 
-  two bytes of the network MAC address, so ideally units on the same network
+  two bytes of the network MAC address, so units on the same network
   should have unique serial numbers.
   @return 0 on success.
   
   \b Example
   \code
   // set the serial number to 12345
-  System_SetSerialNumber(12345);
+  systemSetSerialNumber(12345);
   \endcode
 */
 int systemSetSerialNumber(int serial)
@@ -121,17 +119,9 @@ void systemSamba(bool sure)
     chSysLock(); // disable interrupts, etc.
 
     /* Disable the USB pullup. */
-    // todo - consolidate usb pullup defs to board.h...also used in usb system
-#if ( CONTROLLER_VERSION == 90 )
-    AT91C_BASE_PIOB->PIO_PER = AT91C_PIO_PB11;
-    AT91C_BASE_PIOB->PIO_OER = AT91C_PIO_PB11;
-    AT91C_BASE_PIOB->PIO_SODR = AT91C_PIO_PB11;
-#endif
-#if ( CONTROLLER_VERSION == 95 || CONTROLLER_VERSION == 100 || CONTROLLER_VERSION == 200 )
-    AT91C_BASE_PIOA->PIO_PER = AT91C_PIO_PA11;
-    AT91C_BASE_PIOA->PIO_OER = AT91C_PIO_PA11;
-    AT91C_BASE_PIOA->PIO_CODR = AT91C_PIO_PA11;
-#endif
+    AT91C_BASE_PIOA->PIO_PER = USB_PULLUP;
+    AT91C_BASE_PIOA->PIO_OER = USB_PULLUP;
+    AT91C_BASE_PIOA->PIO_CODR = USB_PULLUP;
 
     /* Steal the PIT for the pullup disable delay. */
     AT91C_BASE_PITC->PITC_PIMR = ((MCK + (16 * 1000 / 2)) / (16 * 1000)) | AT91C_PITC_PITEN;
@@ -211,7 +201,7 @@ void systemSamba(bool sure)
   \b Example
   \code
   // give the board a special name
-  System_SetName("my very special controller");
+  systemSetName("my very special controller");
   \endcode
 */
 int systemSetName(const char* name)
@@ -229,7 +219,7 @@ int systemSetName(const char* name)
   
   \b Example
   \code
-  char* board_name = System_GetName();
+  char* board_name = systemName();
   \endcode
 */
 const char* systemName()
@@ -268,17 +258,17 @@ const char* systemName()
   \b Example
   \code
   // reboot
-  System_SetReset(1);
+  systemReset(YES);
   \endcode
 */
-void systemReset( bool sure )
+void systemReset(bool sure)
 {
   if (sure)
     kill();
 }
 
-#ifdef OSC____
-#include "osc.h"
+#ifdef OSC
+#include <stdio.h>
 
 //void System_StackAudit( int on_off )
 //{
@@ -318,150 +308,146 @@ void systemReset( bool sure )
 //  }
 //}
 
-void System::setAutosendDestination( int dest )
-{
-  if( _autoDestination != dest )
-  {
-    _autoDestination = dest;
-    Eeprom::get()->write( EEPROM_OSC_ASYNC_DEST, _autoDestination );
-  }
-}
+//void systemSetAutosendDestination(int dest)
+//{
+//  if (_autoDestination != dest) {
+//    _autoDestination = dest;
+//    eepromErite(EEPROM_OSC_ASYNC_DEST, _autoDestination);
+//  }
+//}
 
-int System::autosendDestination( )
-{
-  if( _autoDestination == ASYNC_INIT )
-  {
-    int async = Eeprom::get()->read( EEPROM_OSC_ASYNC_DEST );
-    if( async >= 0 && async <= 1 ) // either usb or udp
-      _autoDestination = async;
-    else
-      _autoDestination = ASYNC_INACTIVE;
-  }
-  return _autoDestination;
-}
-
-void System::setAutosendInterval( int interval )
-{
-  if( interval < 0 || interval > 5000 )
-    return;
-  
-  if( _autoInterval != interval )
-  {
-    _autoInterval = interval;
-    Eeprom::get()->write( EEPROM_OSC_ASYNC_INTERVAL, interval );
-  }
-}
-
-int System::autosendInterval( )
-{
-  if( _autoInterval == ASYNC_INIT )
-  {
-    int interval = Eeprom::get()->read( EEPROM_OSC_ASYNC_INTERVAL );
-    if( interval >= 0 && interval <= 5000 )
-      _autoInterval = interval;
-    else
-      _autoInterval = 10;
-  }
-  return _autoInterval;
-}
-
-///** \defgroup SystemOSC System - OSC
-//  System controls many of the logistics of the Controller Board via OSC.
-//  \ingroup OSC
-//   
-//    \section devices Devices
-//    There's only one System, so a device index is not used in OSC messages to it.
-//   
-//    \section properties Properties
-//    System has the following properties:
-//    - name
-//    - freememory
-//    - samba
-//    - reset
-//    - serialnumber
-//    - version
-//    - stack-audit
-//    - task-report
-//    - active
+//int systemAutosendDestination()
+//{
+//  if (_autoDestination == ASYNC_INIT) {
+//    int async = eepromRead(EEPROM_OSC_ASYNC_DEST);
+//    if (async >= 0 && async <= 1) // either usb or udp
+//      _autoDestination = async;
+//    else
+//      _autoDestination = ASYNC_INACTIVE;
+//  }
+//  return _autoDestination;
+//}
 //
-//    \par Name
-//    The \b name property allows you to give a board its own name.  The name can only contain 
-//    alphabetic characters and numbers.
-//    To set your board's name, send the message
-//    \verbatim /system/name "My Board"\endverbatim
-//    To read the board's name, send the message
-//    \verbatim /system/name \endverbatim
-//    The board will respond by sending back an OSC message with the board's name.
-//    
-//    \par Free Memory
-//    The \b freememory property corresponds to the amount of free memory on the Controller Board.
-//    This value is read-only.  To get the amount of free memory, send the message
-//    \verbatim /system/freememory \endverbatim
-//    The board will respond by sending back an OSC message with the amount of free memory.
-//   
-//    \par Samba
-//    The \b samba property is a write-only value that returns the board to a state in which it's ready
-//    to receive new firmware via SAM-BA or mchelper.  Once you've set the board to SAM-BA state,
-//    unplug and replug the power on the board before uploading new firmware.
-//    \par
-//    To set the board in SAM-BA state, send the message
-//    \verbatim /system/samba 1 \endverbatim
-//    and don't forget to power cycle the board.  Remember the board won't be able to send/receive OSC
-//    messages until a new program is uploaded to it.
-//   
-//    \par Reset
-//    The \b reset property is a write-only value that reboots the board.
-//    To reset the board, send the message
-//    \verbatim /system/reset 1 \endverbatim
-//   
-//    \par Serial Number
-//    The \b serialnumber property corresponds to the unique serial number on each Controller Board.
-//    This value can be used in situations where a unique value needs to be used to identify a board.
-//    The serial number can be both read and written.
-//    \par
-//    To read the board's serial number, send the message
-//    \verbatim /system/serialnumber \endverbatim
-//   
-//    \par Version
-//    The \b version property corresponds to the of the firmware currently running on the board.
-//    This is read-only.
-//    \par
-//    To read the board's version, send the message
-//    \verbatim /system/version \endverbatim
+//void systemSetAutosendInterval(int interval)
+//{
+//  if (interval < 0 || interval > 5000)
+//    return;
 //
-//    \par Stack Audit
-//    The \b stack-audit property can fire up a task that will monitor the stack usage
-//    of all tasks running on the board.  If the remaining stack of any of the tasks drops below 50 bytes,
-//    the board will attempt to send an OSC message back via the \ref Debug system to let you know.
-//    \par
-//    This uses up quite a lot of processor time, so it's really only designed to be used in a 
-//    debug context.
-//    \par
-//    To start up the stack audit, send the message
-//    \verbatim /system/stack-audit 1 \endverbatim
-//    \par
-//    and turn it off by sending 
-//    \verbatim /system/stack-audit 0 \endverbatim
-//    
-//    \par Task Report
-//    The \b task-report property is a read-only property that will generate a list of all the tasks running 
-//    on your Make Controller, first giving the name of the task followed by the task's remaining stack.
-//    \par
-//    To see the tasks running on your board, send the message
-//    \verbatim /system/task-report \endverbatim
-//   
-//    \par Active
-//    The \b active property corresponds to the active state of System.
-//    If System is set to be inactive, it will not respond to any other OSC messages. 
-//    If you're not seeing appropriate
-//    responses to your messages to System, check the whether it's
-//    active by sending a message like
-//    \verbatim /system/active \endverbatim
-//    \par
-//    You can set the active flag by sending
-//    \verbatim /system/active 1 \endverbatim
-//*/
+//  if (_autoInterval != interval) {
+//    _autoInterval = interval;
+//    eepromWrite(EEPROM_OSC_ASYNC_INTERVAL, interval);
+//  }
+//}
 //
+//int systemAutosendInterval()
+//{
+//  if (_autoInterval == ASYNC_INIT) {
+//    int interval = eepromRead(EEPROM_OSC_ASYNC_INTERVAL);
+//    if (interval >= 0 && interval <= 5000)
+//      _autoInterval = interval;
+//    else
+//      _autoInterval = 10;
+//  }
+//  return _autoInterval;
+//}
+
+/** \defgroup SystemOSC System - OSC
+  System controls many of the logistics of the Controller Board via OSC.
+  \ingroup OSC
+
+    \section devices Devices
+    There's only one System, so a device index is not used in OSC messages to it.
+
+    \section properties Properties
+    System has the following properties:
+    - name
+    - freememory
+    - samba
+    - reset
+    - serialnumber
+    - version
+    - stack-audit
+    - task-report
+    - active
+
+    \par Name
+    The \b name property allows you to give a board its own name.  The name can only contain
+    alphabetic characters and numbers.
+    To set your board's name, send the message
+    \verbatim /system/name "My Board"\endverbatim
+    To read the board's name, send the message
+    \verbatim /system/name \endverbatim
+    The board will respond by sending back an OSC message with the board's name.
+
+    \par Free Memory
+    The \b freememory property corresponds to the amount of free memory on the Controller Board.
+    This value is read-only.  To get the amount of free memory, send the message
+    \verbatim /system/freememory \endverbatim
+    The board will respond by sending back an OSC message with the amount of free memory.
+
+    \par Samba
+    The \b samba property is a write-only value that returns the board to a state in which it's ready
+    to receive new firmware via SAM-BA or mchelper.  Once you've set the board to SAM-BA state,
+    unplug and replug the power on the board before uploading new firmware.
+    \par
+    To set the board in SAM-BA state, send the message
+    \verbatim /system/samba 1 \endverbatim
+    and don't forget to power cycle the board.  Remember the board won't be able to send/receive OSC
+    messages until a new program is uploaded to it.
+
+    \par Reset
+    The \b reset property is a write-only value that reboots the board.
+    To reset the board, send the message
+    \verbatim /system/reset 1 \endverbatim
+
+    \par Serial Number
+    The \b serialnumber property corresponds to the unique serial number on each Controller Board.
+    This value can be used in situations where a unique value needs to be used to identify a board.
+    The serial number can be both read and written.
+    \par
+    To read the board's serial number, send the message
+    \verbatim /system/serialnumber \endverbatim
+
+    \par Version
+    The \b version property corresponds to the of the firmware currently running on the board.
+    This is read-only.
+    \par
+    To read the board's version, send the message
+    \verbatim /system/version \endverbatim
+
+    \par Stack Audit
+    The \b stack-audit property can fire up a task that will monitor the stack usage
+    of all tasks running on the board.  If the remaining stack of any of the tasks drops below 50 bytes,
+    the board will attempt to send an OSC message back via the \ref Debug system to let you know.
+    \par
+    This uses up quite a lot of processor time, so it's really only designed to be used in a
+    debug context.
+    \par
+    To start up the stack audit, send the message
+    \verbatim /system/stack-audit 1 \endverbatim
+    \par
+    and turn it off by sending
+    \verbatim /system/stack-audit 0 \endverbatim
+
+    \par Task Report
+    The \b task-report property is a read-only property that will generate a list of all the tasks running
+    on your Make Controller, first giving the name of the task followed by the task's remaining stack.
+    \par
+    To see the tasks running on your board, send the message
+    \verbatim /system/task-report \endverbatim
+
+    \par Active
+    The \b active property corresponds to the active state of System.
+    If System is set to be inactive, it will not respond to any other OSC messages.
+    If you're not seeing appropriate
+    responses to your messages to System, check the whether it's
+    active by sending a message like
+    \verbatim /system/active \endverbatim
+    \par
+    You can set the active flag by sending
+    \verbatim /system/active 1 \endverbatim
+*/
+
 //static char* SystemOsc_Name = "system";
 //static char* SystemOsc_PropertyNames[] = { "active", "freememory", "samba", "reset", 
 //                                            "serialnumber", "version",
@@ -732,5 +718,95 @@ int System::autosendInterval( )
 //  
 //  return CONTROLLER_OK;
 //}
+
+static bool systemNameOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+{
+  UNUSED(idx);
+  bool rv = false;
+  if (datalen == 1 && d[0].type == STRING) {
+    systemSetName(d[0].value.s);
+    rv = true;
+  }
+  else if (datalen == 0) {
+    OscData d = {
+      .type = STRING,
+      .value.s = sysName
+    };
+    oscCreateMessage(ch, address, &d, 1);
+    rv = true;
+  }
+  return rv;
+}
+
+static bool systemFreememOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+{
+  UNUSED(idx);
+  UNUSED(d);
+  if (datalen == 0) {
+    OscData d = {
+      .type = INT,
+      .value.i = systemFreeMemory()
+    };
+    oscCreateMessage(ch, address, &d, 1);
+    return true;
+  }
+  else
+    return false;
+}
+
+static bool systemResetOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+{
+  UNUSED(idx);
+  UNUSED(ch);
+  UNUSED(address);
+  if (datalen == 1 && d[0].value.i == 1) {
+    systemReset(YES);
+    return true;
+  }
+  return false;
+}
+
+static bool systemSambaOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+{
+  UNUSED(idx);
+  UNUSED(ch);
+  UNUSED(address);
+  if (datalen == 1 && d[0].value.i == 1) {
+    systemSamba(YES);
+    return true;
+  }
+  return false;
+}
+
+static bool systemVersionOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+{
+  UNUSED(idx);
+  UNUSED(d);
+  if (datalen == 0) {
+    char verStr[30];
+    sniprintf(verStr, 30, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER);
+    OscData d = { .type = STRING, .value.s = verStr };
+    oscCreateMessage(ch, address, &d, 1);
+    return true;
+  }
+  return false;
+}
+
+static const OscNode systemNameNode = { .name = "name", .handler = systemNameOsc };
+static const OscNode systemFreememNode = { .name = "freememory", .handler = systemFreememOsc };
+static const OscNode systemResetNode = { .name = "reset", .handler = systemResetOsc };
+static const OscNode systemSambaNode = { .name = "samba", .handler = systemSambaOsc };
+static const OscNode systemVersionNode = { .name = "version", .handler = systemVersionOsc };
+
+const OscNode systemOsc = {
+  .name = "system",
+  .children = {
+    &systemFreememNode,
+    &systemResetNode,
+    &systemSambaNode,
+    &systemVersionNode,
+    &systemNameNode, 0
+  }
+};
 
 #endif // OSC
