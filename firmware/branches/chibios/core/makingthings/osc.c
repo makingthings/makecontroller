@@ -246,19 +246,15 @@ void oscDispatchNode(OscChannel ch, char* addr, char* fulladdr, const OscNode* n
     *nextPattern++ = 0;
 
   for (i = 0; node->children[i] != 0; i++) {
-    if (node->children[i]->handler != NULL) {
+    if (node->children[i]->handler != NULL && oscPatternMatch(addr, node->children[i]->name)) {
       node->children[i]->handler(ch, fulladdr, 0, data, datalen);
     }
     else if (nextPattern != NULL) {
-      if (oscPatternMatch(addr, node->children[i]->name)) {
-        *(nextPattern - 1) = '/'; // replace this - we nulled it earlier
-        oscDispatchNode(ch, nextPattern, fulladdr, node->children[i], data, datalen);
-      }
-      else if (node->children[i]->range > 0) {
-        OscRange r;
+      if (node->children[i]->range > 0) {
         // as part of our cheat, ranges can only be the second to last node.
         // we jump down a level here since we are planning on getting to the handler
         // without traversing the tree any further
+        OscRange r;
         const OscNode *n = node->children[i];
         if (oscNumberMatch(addr, n->rangeOffset, n->range, &r)) {
           while (oscRangeHasNext(&r)) {
@@ -269,6 +265,10 @@ void oscDispatchNode(OscChannel ch, char* addr, char* fulladdr, const OscNode* n
             }
           }
         }
+      }
+      else if (oscPatternMatch(addr, node->children[i]->name)) {
+        *(nextPattern - 1) = '/'; // replace this - we nulled it earlier
+        oscDispatchNode(ch, nextPattern, fulladdr, node->children[i], data, datalen);
       }
     }
   }
