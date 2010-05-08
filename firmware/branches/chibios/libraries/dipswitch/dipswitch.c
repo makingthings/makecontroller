@@ -119,7 +119,6 @@ bool dipswitchSingleValue(int channel)
   The DIP Switch has the following properties
   - value
   - autosend
-  - active
 
   \par Value
   The \b value property corresponds to current configuration of the DIP Switch.
@@ -148,17 +147,6 @@ bool dipswitchSingleValue(int channel)
   to send via USB, and 
   \verbatim /system/autosend-udp 1 \endverbatim
   to send via Ethernet.  Via Ethernet, the board will send messages to the last address it received a message from.
-  
-  \par Active
-  The \b active property corresponds to the active state of the DIP Switch.
-  If the DIP Switch is set to be active, no other tasks will be able to
-  use its I/O lines.  If you're not seeing appropriate
-  responses to your messages to the DIP Switch, check whether it's 
-  locked by sending the message
-  \verbatim /dipswitch/active \endverbatim
-  \par
-  You can set the active flag by sending
-  \verbatim /dipswitch/active 1 \endverbatim
 */
 
 //#include "osc.h"
@@ -184,65 +172,7 @@ bool dipswitchSingleValue(int channel)
 //    Eeprom_Write( EEPROM_DIPSWITCH_AUTOSEND, (uchar*)&onoff, 4 );
 //  }
 //}
-//
-//static char* DipSwitchOsc_Name = "dipswitch";
-//static char* DipSwitchOsc_PropertyNames[] = { "active", "value", "autosend",  0 }; // must have a trailing 0
-//
-//int DipSwitchOsc_PropertySet( int property, int value );
-//int DipSwitchOsc_PropertyGet( int property );
-//
-//const char* DipSwitchOsc_GetName( void )
-//{
-//  return DipSwitchOsc_Name;
-//}
-//
-//int DipSwitchOsc_ReceiveMessage( int channel, char* message, int length )
-//{
-//  int status = Osc_IntReceiverHelper( channel, message, length, 
-//                                      DipSwitchOsc_Name,
-//                                      DipSwitchOsc_PropertySet, DipSwitchOsc_PropertyGet, 
-//                                      DipSwitchOsc_PropertyNames );
-//
-//  if ( status != CONTROLLER_OK )
-//    return Osc_SendError( channel, DipSwitchOsc_Name, status );
-//  return CONTROLLER_OK;
-//}
-//
-//// Set the index LED, property with the value
-//int DipSwitchOsc_PropertySet( int property, int value )
-//{
-//  switch ( property )
-//  {
-//    case 0: 
-//      DipSwitch_SetActive( value );
-//      break;      
-//    case 2: 
-//      DipSwitch_SetAutoSend( value );
-//      break;  
-//  }
-//  return CONTROLLER_OK;
-//}
-//
-//// Get the property
-//int DipSwitchOsc_PropertyGet( int property )
-//{
-//  int value = 0;
-//  switch ( property )
-//  {
-//    case 0:
-//      value = DipSwitch_GetActive( );
-//      break;
-//    case 1:
-//      value = DipSwitch_GetValue( );
-//      break;
-//    case 2:
-//      value = DipSwitch_GetAutoSend( false );
-//      break;
-//  }
-//  
-//  return value;
-//}
-//
+
 //int DipSwitchOsc_Async( int channel )
 //{
 //  int newMsgs = 0;
@@ -261,7 +191,30 @@ bool dipswitchSingleValue(int channel)
 //
 //  return newMsgs;
 //}
+static bool dipswitchOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+{
+  UNUSED(d);
+  UNUSED(idx);
+  if (datalen == 0) {
+    OscData d = {
+      .type = INT,
+      .value.i = dipswitchValue()
+    };
+    oscCreateMessage(ch, address, &d, 1);
+    return true;
+  }
+  return false;
+}
 
-#endif
+static const OscNode dipswitchValueNode = { .name = "value", .handler = dipswitchOscHandler };
+const OscNode dipswitchOsc = {
+  .name = "dipswitch",
+  .children = {
+    &dipswitchValueNode,
+    0
+  }
+};
+
+#endif // OSC
 
 #endif // (APPBOARD_VERSION >= 200)
