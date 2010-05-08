@@ -36,8 +36,9 @@ bool motorSetDirection( int motor, bool forward );
 }
 #endif
 
-/* OSC Interface */
-const char* MotorOsc_GetName( void );
-int MotorOsc_ReceiveMessage( int channel, char* message, int length );
+#ifdef OSC
+#include "osc.h"
+extern const OscNode motorOsc;
+#endif
 
 #endif

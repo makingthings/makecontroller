@@ -27,7 +27,7 @@ struct Motor {
 };
 
 static struct Motor motors[MOTOR_COUNT];
-static void motorFinalize( int motor );
+static void motorFinalize(int motor);
 
 /**
   \defgroup dcmotor DC Motor
@@ -162,14 +162,14 @@ bool motorDirection(int motor)
 
 /** @} */
 
-void motorFinalize( int motor )
+void motorFinalize(int motor)
 {
   struct Motor* m = &(motors[motor]);
   // possibly add a dead zone in between?
   if( m->direction )
-    pwmoutSetAll( motor, m->speed, false, true );
+    pwmoutSetAll(motor, m->speed, false, true);
   else
-    pwmoutSetAll( motor, (m->speed * -1), true, false );
+    pwmoutSetAll(motor, (m->speed * -1), true, false);
 }
 
 #ifdef OSC
@@ -191,7 +191,6 @@ void motorFinalize( int motor )
   Each motor controller has three properties:
   - speed
   - direction
-  - active
 
   \par Speed
   The \b speed property corresponds to the speed at which a motor is being driven.
@@ -212,88 +211,58 @@ void motorFinalize( int motor )
   For example, to set the first motor to move in reverse, send the message
   \verbatim /motor/0/direction 0 \endverbatim
   Simply change the argument of 0 to a 1 in order to set the motor's direction to forward.
-  
-  \par Active
-  The \b active property corresponds to the active state of the motor.
-  If the motor is set to be active, no other tasks will be able to
-  use its 2 digital out lines.  If you're not seeing appropriate
-  responses to your messages to the motor, check the whether it's 
-  locked by sending a message like
-  \verbatim /motor/0/active \endverbatim
-  \par
-  If you're no longer using the motor, you can free the 2 Digital Outs by 
-  sending the message
-  \verbatim /motor/0/active 0 \endverbatim
 */
 
-//#include "osc.h"
-//#include "string.h"
-//#include "stdio.h"
-//
-//// Need a list of property names
-//// MUST end in zero
-//static char* MotorOsc_Name = "motor";
-//static char* MotorOsc_PropertyNames[] = { "active", "speed", "direction", 0 }; // must have a trailing 0
-//
-//int MotorOsc_PropertySet( int index, int property, int value );
-//int MotorOsc_PropertyGet( int index, int property );
-//
-//// Returns the name of the subsystem
-//const char* MotorOsc_GetName( )
-//{
-//  return MotorOsc_Name;
-//}
-//
-//// Now getting a message.  This is actually a part message, with the first
-//// part (the subsystem) already parsed off.
-//int MotorOsc_ReceiveMessage( int channel, char* message, int length )
-//{
-//  int status = Osc_IndexIntReceiverHelper( channel, message, length, 
-//                                     MOTOR_COUNT, MotorOsc_Name,
-//                                     MotorOsc_PropertySet, MotorOsc_PropertyGet, 
-//                                     MotorOsc_PropertyNames );
-//                                     
-//  if ( status != CONTROLLER_OK )
-//    return Osc_SendError( channel, MotorOsc_Name, status );
-//  return CONTROLLER_OK;
-//}
-//
-//// Set the index LED, property with the value
-//int MotorOsc_PropertySet( int index, int property, int value )
-//{
-//  switch ( property )
-//  {
-//    case 0: 
-//      Motor_SetActive( index, value );
-//      break;      
-//    case 1:
-//      Motor_SetSpeed( index, value );
-//      break;
-//    case 2:
-//      Motor_SetDirection( index, value );
-//      break;
-//  }
-//  return CONTROLLER_OK;
-//}
-//
-//// Get the index LED, property
-//int MotorOsc_PropertyGet( int index, int property )
-//{
-//  int value = 0;
-//  switch ( property )
-//  {
-//    case 0:
-//      value = Motor_GetActive( index );
-//      break;
-//    case 1:
-//      value = Motor_GetSpeed( index );
-//      break;
-//    case 2:
-//      value = Motor_GetDirection( index );
-//      break;
-//  }
-//  
-//  return value;
-//}
+static bool motorOscSpeed(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+{
+  UNUSED(d);
+  if (datalen == 1) {
+    motorSetSpeed(idx, d[0].value.i);
+    return true;
+  }
+  else if (datalen == 0) {
+    OscData d = {
+      .type = INT,
+      .value.i = motorSpeed(idx)
+    };
+    oscCreateMessage(ch, address, &d, 1);
+    return true;
+  }
+  return false;
+}
 
-#endif
+static bool motorOscDirection(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+{
+  UNUSED(d);
+  if (datalen == 1) {
+    motorSetDirection(idx, d[0].value.i);
+    return true;
+  }
+  else if (datalen == 0) {
+    OscData d = {
+      .type = INT,
+      .value.i = motorDirection(idx)
+    };
+    oscCreateMessage(ch, address, &d, 1);
+    return true;
+  }
+  return false;
+}
+
+static const OscNode motorSpeedNode = { .name = "speed", .handler = motorOscSpeed };
+static const OscNode motorDirectionNode = { .name = "direction", .handler = motorOscDirection };
+static const OscNode motorRange = {
+  .range = 4,
+  .children = {
+    &motorDirectionNode,
+    &motorSpeedNode, 0
+  }
+};
+const OscNode motorOsc = {
+  .name = "motor",
+  .children = {
+    &motorRange, 0
+  }
+};
+
+#endif // OSC
