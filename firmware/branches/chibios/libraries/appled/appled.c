@@ -35,11 +35,13 @@
   #define APPLED_1 PIN_PA13
   #define APPLED_2 PIN_PA28
   #define APPLED_3 PIN_PA27
+  #define APPLED_ALL (PIN_PA15_BIT | PIN_PA13_BIT | PIN_PA28_BIT | PIN_PA27_BIT)
 #elif ( APPBOARD_VERSION == 200 )
   #define APPLED_0 PIN_PA15
   #define APPLED_1 PIN_PA13
   #define APPLED_2 PIN_PA27
   #define APPLED_3 PIN_PA28
+  #define APPLED_ALL (PIN_PA15_BIT | PIN_PA13_BIT | PIN_PA28_BIT | PIN_PA27_BIT)
 #endif
 
 /**
@@ -71,11 +73,10 @@ static int appledGetIo(int index)
   appledEnable(1); // set up app led 1
   \endcode
 */
-void appledEnable(int led)
+void appledEnable()
 {
-  short io = appledGetIo(led);
-  pinSetMode(io, OUTPUT);
-  pinOn(io); // inverted
+  pinGroupSetMode(GROUP_A, APPLED_ALL, OUTPUT);
+  pinGroupOn(GROUP_A, APPLED_ALL); // inverted
 }
 
 /**
@@ -165,10 +166,7 @@ static bool appledOscHandler(OscChannel ch, char* address, int idx, OscData d[],
   return false;
 }
 
-static const OscNode appledVal = {
-  .name = "value",
-  .handler = appledOscHandler
-};
+static const OscNode appledVal = { .name = "value", .handler = appledOscHandler };
 static const OscNode appledRange = {
   .range = 4,
   .children = { &appledVal, 0 }

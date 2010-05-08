@@ -29,7 +29,7 @@ extern const OscNode appledOsc;
 #ifdef __cplusplus
 extern "C" {
 #endif
-void appledEnable(int led);
+void appledEnable(void);
 void appledSetValue(int led, bool onff);
 bool appledValue(int led);
 #ifdef __cplusplus
