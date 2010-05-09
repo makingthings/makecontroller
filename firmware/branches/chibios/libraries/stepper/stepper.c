@@ -73,14 +73,17 @@ static Stepper steppers[STEPPER_COUNT];
   - bipolar or unipolar
   - normal of half-stepping
   
-  \section Positioning
-  You can generally use the stepper motor in 2 modes - \b absolute positioning or \b relative positioning.
+  \section Usage
+  There are 2 approaches to using the stepper motor - \b absolute positioning or \b relative positioning.
 
-  For absolute positioning, call Stepper_SetPositionRequested() with the desired position, and the motor will move there.
-  You can read back the stepper's position at any point along the way to determine where it is at a given moment.  The board
-  keeps an internal count of how many steps the motor has taken in order to keep track of where it is.
+  \section abs Absolute Positioning
+  For absolute positioning, call stepperSetDestination() with the desired position, and the motor will move there.
+  You can read back the stepper's position at any point along the way, via stepperPosition(), to determine
+  where it is at a given moment. The board keeps an internal count of how many steps the motor has taken in
+  order to keep track of where it is.
 
-  For relative positioning, use Stepper_Step( ) to simply move a number of steps from the current position.
+  \section rel Relative Positioning
+  For relative positioning, simply use stepperStep() to move a number of steps from the current position.
   
   See the <a href="http://www.makingthings.com/documentation/how-to/stepper-motor">Stepper Motor how-to</a>
   for more detailed info on hooking up a stepper motor to the Make Controller.
@@ -148,9 +151,9 @@ void stepperDisable(int stepper)
 }
 
 /**	
-	Set the position of the specified stepper motor.
-	Note that this will not ask the stepper to move.  It will simply update
-	the position that the stepper thinks its at.  To move the stepper, see
+	Reset the position of the specified stepper motor.
+	Note that this will not ask the stepper to move.  It will simply set the
+	stepper's current position as 0.  To move the stepper, see
 	stepperSetDestination() or stepperStep().
 	@param stepper An integer specifying which stepper (0 or 1).
 	@param position An integer specifying the stepper position.
@@ -162,7 +165,7 @@ void stepperDisable(int stepper)
 	stepperSetPosition(1, 0);
 	\endcode
 */
-int stepperSetPosition(int stepper, int position)
+int stepperResetPosition(int stepper, int position)
 {
   Stepper* s = &steppers[stepper];
   
@@ -352,7 +355,7 @@ int stepperDuty(int stepper)
   By default it's in unipolar mode, and in full step mode.
   @param stepper An integer specifying which stepper (0 or 1).
   @param bipolar True for bipolar, false for unipolar.
-  @param halfStep True for half step, false for full step
+  @param halfstep True for half step, false for full step
 
   \b Example
   \code

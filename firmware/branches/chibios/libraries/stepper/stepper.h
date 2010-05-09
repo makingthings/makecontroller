@@ -25,7 +25,7 @@ extern "C" {
 #endif
 void stepperEnable(int stepper);
 void stepperDisable(int stepper);
-int  stepperSetPosition(int stepper, int position);
+int  stepperResetPosition(int stepper, int position);
 int  stepperPosition(int stepper);
 int  stepperSetDestination(int stepper, int destination);
 int  stepperDestination(int stepper);
