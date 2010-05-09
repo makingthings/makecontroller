@@ -42,13 +42,13 @@ typedef struct Stepper_t {
   unsigned int bipolar : 1;
   unsigned int halfStep : 1;
   unsigned int timerRunning : 1;
-  int speed;
+  unsigned int speed;
   int duty;
   int acceleration;
   int destination;
   int position;
   int pins[4];
-//  FastTimerEntry fastTimerEntry;
+  FastTimer fastTimer;
 } Stepper;
 
 void Stepper_IRQCallback(int id);
@@ -92,9 +92,8 @@ static Stepper steppers[STEPPER_COUNT];
 */
 
 /**
-	Sets whether the specified Stepper is active.
-	@param stepper An integer specifying which stepper (0 or 1).
-	@return Zero on success.
+	Enable a stepper motor.
+	@param stepper Which stepper (0 or 1).
 	
 	\b Example
 	\code
@@ -104,6 +103,7 @@ static Stepper steppers[STEPPER_COUNT];
 */
 void stepperEnable(int stepper)
 {
+  fasttimerInit(2);
   Stepper* s = &steppers[stepper];
   pwmEnableChannel(stepper * 2);
   pwmEnableChannel(stepper * 2 + 1);
@@ -129,15 +129,21 @@ void stepperEnable(int stepper)
   s->halfStep = false;
   s->bipolar = true;
 
-//    FastTimer_InitializeEntry( &sc->fastTimerEntry, Stepper_IRQCallback, index, sc->speed * 1000, true );
+  s->fastTimer.handler = Stepper_IRQCallback;
+  s->fastTimer.id = stepper;
+  fasttimerStart(&s->fastTimer, s->speed * 1000, true);
 }
 
+/**
+  Disable a stepper motor.
+  @param stepper Which stepper (0 or 1).
+*/
 void stepperDisable(int stepper)
 {
   Stepper* s = &steppers[stepper];
   if (s->timerRunning) {
     chSysDisable();
-//    FastTimer_Cancel( &s->fastTimerEntry );
+    fasttimerStop(&s->fastTimer);
     chSysEnable();
   }
 
@@ -227,7 +233,8 @@ int stepperSetSpeed(int stepper, int speed)
   s->speed = speed * 1000;
 
   chSysDisable();
-//  FastTimer_SetTime(&s->fastTimerEntry, s->speed);
+  fasttimerStop(&s->fastTimer);
+  fasttimerStart(&s->fastTimer, s->speed, true);
   chSysEnable();
 
   stepperSetDetails(s);
@@ -419,7 +426,7 @@ void stepperIRQCallback(int id)
   }
 
   if (s->position == s->destination) {
-//    FastTimer_Cancel(&s->fastTimerEntry);
+    fasttimerStop(&s->fastTimer);
     s->timerRunning = false;
   }
 }
@@ -429,13 +436,13 @@ void stepperSetDetails(Stepper* s)
   if (!s->timerRunning && (s->position != s->destination) && (s->speed != 0)) {
     s->timerRunning = true;
     chSysDisable();
-//    FastTimer_Set( &s->fastTimerEntry );
+    fasttimerStart(&s->fastTimer, s->speed, true);
     chSysEnable();
   }
   else {
     if ((s->timerRunning) && ((s->position == s->destination) || (s->speed == 0))) {
       chSysDisable();
-//      FastTimer_Cancel(&s->fastTimerEntry);
+      fasttimerStop(&s->fastTimer);
       chSysEnable();
       s->timerRunning = false;
     }
