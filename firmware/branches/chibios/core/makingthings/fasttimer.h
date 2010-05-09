@@ -20,43 +20,27 @@
 
 #include "types.h"
 
-/**
-  Provides a high resolution timer in a microsecond context.
-  
-  \section usage Usage
-  The interface for the FastTimer is essentially the same as the \ref Timer system, so 
-  that's the best place to check for an overview.  
+typedef void (*FastTimerHandler)(int id);
 
-  \section notes Notes
-  A few things to be aware of when using FastTimers:
-  - In your handler, you must not sleep or make any calls that will take a long time.  You may, however, use
-  the Queue and Semaphore calls that end in \b fromISR in order to synchronize with running tasks.
-  - To modify an existing FastTimer, stop() it and then start() it again.  Modifying it while running is not recommended.
-  - There are 3 identical hardware timers on the Make Controller.  The first FastTimer that you create
-  will specify which of them to use, and it will be used for all subsequent fast timers created.  
-  If you don't specify a channel, 2 is used which is usually fine.  Specifically, the \ref Timer is on 
-  channel 0 by default, so make sure to keep them separate if you're running them at the same time.
-  - if you have lots of FastTimers, the timing can start to get a little jittery.  For instance, the \ref Servo and \ref Stepper
-  libraries use the FastTimer and they can become a little unstable if too many of them are running at once.
-*/
-
-typedef void (*FastTimerHandler)( int id );
-
-typedef struct FastTimerEntry_t
-{
-  FastTimerHandler callback;
+typedef struct FastTimer_t {
+  FastTimerHandler handler;
   short id;
   int   timeCurrent;
   int   timeInitial;
   bool  repeat;
-  struct FastTimerEntry_t* next;
+  struct FastTimer_t* next;
 } FastTimer;
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 void fasttimerInit(int channel);
 void fasttimerDeinit(void);
+int  fasttimerStart(FastTimer *ft, int micros, bool repeat);
 void fasttimerStop(FastTimer *ft);
-
-//void DisableFIQFromThumb( void );
-//void EnableFIQFromThumb( void );
+#ifdef __cplusplus
+}
+#endif
 
 #endif
