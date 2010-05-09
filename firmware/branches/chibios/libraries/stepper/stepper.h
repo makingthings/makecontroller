@@ -15,38 +15,28 @@
 
 *********************************************************************************/
 
-/*
-	stepper.h
-
-  MakingThings
-*/
-
 #ifndef STEPPER_H
 #define STEPPER_H
 
+#include "types.h"
 
-int Stepper_SetActive( int index, int state );
-int Stepper_GetActive( int index );
-
-int  Stepper_SetPosition( int index, int position );
-int  Stepper_GetPosition( int index );
-int  Stepper_SetPositionRequested( int index, int positionRequested );
-int  Stepper_GetPositionRequested( int index );
-int  Stepper_SetDuty( int index, int duty );
-int  Stepper_GetDuty( int index );
-int  Stepper_SetBipolar( int index, int bipolar );
-int  Stepper_GetBipolar( int index );
-int  Stepper_SetHalfStep( int index, int bipolar );
-int  Stepper_GetHalfStep( int index );
-int  Stepper_SetSpeed( int index, int speed );
-int  Stepper_GetSpeed( int index );
-void Stepper_SetAcceleration( int index, int acceleration );
-int  Stepper_GetAcceleration( int index );
-int Stepper_Step( int index, int steps );
-
-/* OSC Interface */
-const char* StepperOsc_GetName( void );
-int StepperOsc_ReceiveMessage( int channel, char* message, int length );
-
-
+#ifdef __cplusplus
+extern "C" {
 #endif
+void stepperEnable(int stepper);
+void stepperDisable(int stepper);
+int  stepperSetPosition(int stepper, int position);
+int  stepperPosition(int stepper);
+int  stepperSetDestination(int stepper, int destination);
+int  stepperDestination(int stepper);
+int  stepperSetDuty(int stepper, int duty);
+int  stepperDuty(int stepper);
+void stepperConfigure(int stepper, bool bipolar, bool halfstep);
+int  stepperSetSpeed(int stepper, int speed);
+int  stepperSpeed(int stepper);
+int  stepperStep(int stepper, int steps);
+#ifdef __cplusplus
+}
+#endif
+
+#endif // STEPPER_H
