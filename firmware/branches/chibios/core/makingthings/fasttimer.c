@@ -17,7 +17,7 @@
 
 #include "fasttimer.h"
 #include "error.h"
-#include <ch.h>
+#include "ch.h"
 #include "at91lib/AT91SAM7X256.h"
 
 #define FASTTIMER_COUNT 8
@@ -26,8 +26,7 @@
 #define FASTTIMER_MINCOUNT 20
 #define FAST_TIMER_CYCLES_PER_US 6
 
-struct FastTimerManager
-{
+struct FastTimerManager {
   char users;
   short count;
 
@@ -59,9 +58,32 @@ static struct FastTimerManager manager;
 static void fasttimerEnable(void);
 static int  fasttimerGetTimeTarget(void);
 static int  fasttimerGetTime(void);
-static void fasttimerSetTimeTarget( int target );
+static void fasttimerSetTimeTarget(int target);
 
 static void fasttimerServeInterrupt(void);
+
+/**
+  \defgroup fasttimer Fast Timer
+  Provides a high resolution timer in a microsecond context.
+  
+  \section usage Usage
+  The interface for the FastTimer is essentially the same as the \ref Timer system, so 
+  that's the best place to check for an overview.  
+
+  \section notes Notes
+  A few things to be aware of when using FastTimers:
+  - In your handler, you must not sleep or make any calls that will take a long time.  You may, however, use
+  the Queue and Semaphore calls that end in \b fromISR in order to synchronize with running tasks.
+  - To modify an existing FastTimer, stop() it and then start() it again.  Modifying it while running is not recommended.
+  - There are 3 identical hardware timers on the Make Controller.  The first FastTimer that you create
+  will specify which of them to use, and it will be used for all subsequent fast timers created.  
+  If you don't specify a channel, 2 is used which is usually fine.  Specifically, the \ref Timer is on 
+  channel 0 by default, so make sure to keep them separate if you're running them at the same time.
+  - if you have lots of FastTimers, the timing can start to get a little jittery.  For instance, the \ref Servo and \ref Stepper
+  libraries use the FastTimer and they can become a little unstable if too many of them are running at once.
+  \ingroup Core
+  @{
+*/
 
 /**
   Sets the requested entry to run.
@@ -78,18 +100,18 @@ static void fasttimerServeInterrupt(void);
   t.start(250); // call myHandler every 250 microseconds
   \endcode
   */
-int fasttimerStart( FastTimer *ft, int micros, bool repeat )
+int fasttimerStart(FastTimer *ft, int micros, bool repeat)
 {
   ft->timeCurrent = 0;
   ft->timeInitial = micros * FAST_TIMER_CYCLES_PER_US;
   ft->repeat = repeat;
   ft->next = NULL;
   // this could be a lot smarter - for example, modifying the current period?
-  if ( !manager.servicing ) 
+  if (!manager.servicing)
     chSysLock();
 
-  if ( !manager.running ) {
-    fasttimerSetTimeTarget( ft->timeInitial );
+  if (!manager.running) {
+    fasttimerSetTimeTarget(ft->timeInitial);
     fasttimerEnable();
   }  
 
@@ -103,11 +125,11 @@ int fasttimerStart( FastTimer *ft, int micros, bool repeat )
   ft->next = first;
 
   // Are we actually servicing an interrupt right now?
-  if ( !manager.servicing ) {
+  if (!manager.servicing) {
     // No - so does the time requested by this new timer make the time need to come earlier?
-    if ( ft->timeCurrent < ( remaining - FASTTIMER_MARGIN ) ) {
+    if (ft->timeCurrent < (remaining - FASTTIMER_MARGIN)) {
       // Damn it!  Reschedule the next callback
-      fasttimerSetTimeTarget( target - ( remaining - ft->timeCurrent ));
+      fasttimerSetTimeTarget(target - (remaining - ft->timeCurrent));
     }
     else {
       // pretend that the existing time has been with us for the whole slice so that when the 
@@ -121,17 +143,17 @@ int fasttimerStart( FastTimer *ft, int micros, bool repeat )
     // Make sure the previous pointer is OK.  This comes up if we were servicing the first item
     // and it subsequently wants to delete itself, it would need to alter the next pointer of the 
     // the new head... err... kind of a pain, this
-    if ( manager.previous == NULL )
+    if (manager.previous == NULL)
       manager.previous = ft;
 
     // Need to make sure that if this new time is the lowest yet, that the IRQ routine 
     // knows that.  Since we added this entry onto the beginning of the list, the IRQ
     // won't look at it again
-    if ( manager.nextTime == -1 || manager.nextTime > ft->timeCurrent )
+    if (manager.nextTime == -1 || manager.nextTime > ft->timeCurrent)
         manager.nextTime = ft->timeCurrent;
   }
 
-  if ( !manager.servicing ) 
+  if (!manager.servicing)
     chSysUnlock();
 
   return CONTROLLER_OK;
@@ -150,26 +172,26 @@ int fasttimerStart( FastTimer *ft, int micros, bool repeat )
 */
 void fasttimerStop(FastTimer *ft)
 {
-  if ( !manager.servicing ) 
+  if (!manager.servicing)
     chSysLock();
 
   // Look through the running list - clobber the entry
   FastTimer* te = manager.first;
   FastTimer* previousEntry = NULL;
-  while ( te != NULL ) {
+  while (te != NULL) {
     // check for the requested entry
-    if ( te == ft ) {
+    if (te == ft) {
       // remove the entry from the list
-      if ( te == manager.first )
+      if (te == manager.first)
         manager.first = te->next;
       else
         previousEntry->next = te->next;
       
       // make sure the in-IRQ pointers are all OK
-      if ( manager.servicing ) {
-        if ( manager.previous == ft )
+      if (manager.servicing) {
+        if (manager.previous == ft)
           manager.previous = previousEntry;
-        if ( manager.next == ft )
+        if (manager.next == ft)
           manager.next = te->next;
       }
 
@@ -182,42 +204,39 @@ void fasttimerStop(FastTimer *ft)
     }
   }
 
-  if ( !manager.servicing ) 
+  if (!manager.servicing)
     chSysUnlock();
 }
 
 // Enable the timer.  Disable is performed by the ISR when timer is at an end
-void fasttimerEnable( )
+void fasttimerEnable()
 {
   manager.tc->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
   manager.running = true;
 }
 
-int fasttimerGetTimeTarget( )
+int fasttimerGetTimeTarget()
 {
   return manager.tc->TC_RC;
 }
 
-int fasttimerGetTime( )
+int fasttimerGetTime()
 {
   return manager.tc->TC_CV;
 }
 
 void fasttimerSetTimeTarget( int target )
 {
-  manager.tc->TC_RC = ( target < FASTTIMER_MAXCOUNT ) ? target : FASTTIMER_MAXCOUNT;
+  manager.tc->TC_RC = (target < FASTTIMER_MAXCOUNT) ? target : FASTTIMER_MAXCOUNT;
 }
 
-CH_IRQ_HANDLER( fasttimerIsr ) {
-  CH_IRQ_PROLOGUE();
+static __attribute__((interrupt("FIQ"))) void fasttimerIsr(void) {
   fasttimerServeInterrupt();
-  CH_IRQ_EPILOGUE();
 }
 
 void fasttimerInit(int channel)
 {
-  switch(channel)
-  {
+  switch (channel) {
     case 0:
       manager.tc = AT91C_BASE_TC0;
       manager.channel_id = AT91C_ID_TC0;
@@ -243,12 +262,14 @@ void fasttimerInit(int channel)
 #endif
                                     
   unsigned int mask = 0x1 << manager.channel_id;
+  if (AT91C_BASE_PMC->PMC_PCSR & mask) // we're already configured on this channel
+    return;
   AT91C_BASE_PMC->PMC_PCER = mask;
 
   // Disable the interrupt, configure it, reenable it
   AT91C_BASE_AIC->AIC_IDCR = mask;
-  AT91C_BASE_AIC->AIC_SVR[ AT91C_ID_FIQ ] = (unsigned int)fasttimerIsr;
-  AT91C_BASE_AIC->AIC_SMR[ manager.channel_id ] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 7  ;
+  AT91C_BASE_AIC->AIC_SVR[AT91C_ID_FIQ] = (unsigned int)fasttimerIsr;
+  AT91C_BASE_AIC->AIC_SMR[manager.channel_id] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 7  ;
   AT91C_BASE_AIC->AIC_ICCR = mask ;
 
   // Set the timer up.  We want just the basics, except when the timer compares 
@@ -266,7 +287,7 @@ void fasttimerInit(int channel)
   // DIV5: A tick MCK/1024 times a second
   // This makes every tick every 21.368us
   manager.tc->TC_CMR = AT91C_TC_CLKS_TIMER_DIV2_CLOCK |  AT91C_TC_CPCTRG;
-                   
+
   // Only interested in interrupts when the RC happens
   manager.tc->TC_IDR = 0xFF; 
   manager.tc->TC_IER = AT91C_TC_CPCS; 
@@ -277,9 +298,9 @@ void fasttimerInit(int channel)
 
   /// Finally, prep the IO flag if it's being used
 #ifdef FASTIRQ_MONITOR_IO
-    Io_Start( FASTIRQ_MONITOR_IO, true );
-    Io_PioEnable( FASTIRQ_MONITOR_IO );
-    Io_SetOutput( FASTIRQ_MONITOR_IO );
+    Io_Start(FASTIRQ_MONITOR_IO, true);
+    Io_PioEnable(FASTIRQ_MONITOR_IO);
+    Io_SetOutput(FASTIRQ_MONITOR_IO);
 #endif
 }
 
@@ -287,11 +308,11 @@ void fasttimerInit(int channel)
 //FastTimerEntry* te;
 //int jitter;
 
-void fasttimerServeInterrupt( )
+void fasttimerServeInterrupt()
 {
 //  portENTER_FIQ( );
   int status = manager.tc->TC_SR;
-  if ( status & AT91C_TC_CPCS ) {
+  if (status & AT91C_TC_CPCS) {
     manager.servicing = true;
 
     //AT91C_BASE_TC2->TC_CCR = AT91C_TC_CLKDIS;
@@ -301,7 +322,7 @@ void fasttimerServeInterrupt( )
     manager.tc->TC_RC = 0xFF00;
 
 #ifdef FASTIRQ_MONITOR_IO
-    Io_SetTrue( FASTIRQ_MONITOR_IO );
+    Io_SetTrue(FASTIRQ_MONITOR_IO);
 #endif
 
 #ifdef FASTIRQ_STATS
@@ -311,8 +332,7 @@ void fasttimerServeInterrupt( )
     //int jitter;
     jitter = manager.tc->TC_CV;
 
-    if ( ++manager.count == 1000 )
-    {
+    if (++manager.count == 1000) {
       // need to not do division here... takes too long
       //manager.jitterTotal = manager.jitterTotal / manager.count;
       manager.jitterTotal = 0;
@@ -326,11 +346,10 @@ void fasttimerServeInterrupt( )
 
     manager.jitterTotal += jitter;
 
-    if ( jitter > manager.jitterMax )
+    if (jitter > manager.jitterMax)
       manager.jitterMax = jitter;
-    if ( jitter > manager.jitterMaxAllDay )
+    if (jitter > manager.jitterMaxAllDay)
       manager.jitterMaxAllDay = jitter;
-
 #endif
 
     // Use this during debuggin
@@ -341,50 +360,50 @@ void fasttimerServeInterrupt( )
     int removed = false;
     // timeReference = AT91C_BASE_TC2->TC_CV;
 
-    while ( ftimer != NULL ) {
+    while (ftimer != NULL) {
       manager.next = ftimer->next;
-      ftimer->timeCurrent -= ( timeReference + manager.tc->TC_CV );
-      if ( ftimer->timeCurrent <= FASTTIMER_MINCOUNT ) {
+      ftimer->timeCurrent -= (timeReference + manager.tc->TC_CV);
+      if (ftimer->timeCurrent <= FASTTIMER_MINCOUNT) {
         // Watch out for gross errors
         //if ( ftimer->timeCurrent < -FASTTIMER_MINCOUNT)
         //  ftimer->timeCurrent = -FASTTIMER_MINCOUNT;
 
-        if ( ftimer->repeat )
+        if (ftimer->repeat)
           ftimer->timeCurrent += ftimer->timeInitial;
         else {
           // remove it if necessary (do this first!)
-          if ( manager.previous == NULL )
+          if (manager.previous == NULL)
             manager.first = manager.next;
           else
             manager.previous->next = manager.next;
           removed = true;
         }
 
-        if ( ftimer->callback != NULL ) {
+        if (ftimer->handler != NULL) {
           // in this callback, the callee is free to add and remove any members of this list
           // which might effect the first, next and previous pointers
           // so don't assume any of those local variables are good anymore
-          (*ftimer->callback)( ftimer->id );
+          (*ftimer->handler)(ftimer->id);
         }
       }
 
       // note that this has to be better than this ultimately - since
       // the callback routine can remove the entry without letting us know
       // at all.
-      if ( !removed ) {
-        if ( manager.nextTime == -1 || ftimer->timeCurrent < manager.nextTime )
+      if (!removed) {
+        if (manager.nextTime == -1 || ftimer->timeCurrent < manager.nextTime)
           manager.nextTime = ftimer->timeCurrent;
         manager.previous = ftimer;
       }
       ftimer = manager.next;
     }
 
-    if ( manager.first != NULL ) {
+    if (manager.first != NULL) {
       // Make sure it's not too big
-      if ( manager.nextTime > 0xFF00 )
+      if (manager.nextTime > 0xFF00)
         manager.nextTime = 0xFF00;
       // Make sure it's not too small
-      if ( manager.nextTime < (int)manager.tc->TC_CV + 20 )
+      if (manager.nextTime < (int)manager.tc->TC_CV + 20)
         manager.nextTime = manager.tc->TC_CV + 20;
       manager.tc->TC_RC = manager.nextTime;
     }
@@ -396,14 +415,14 @@ void fasttimerServeInterrupt( )
 #ifdef FASTIRQ_STATS
     int duration = manager.tc->TC_CV - startCount;
     manager.durationTotal += duration;
-    if ( duration > manager.durationMax )
+    if (duration > manager.durationMax)
       manager.durationMax = duration;
-    if ( duration > manager.durationMaxAllDay )
+    if (duration > manager.durationMaxAllDay)
       manager.durationMaxAllDay = duration;
 #endif
 
 #ifdef FASTIRQ_MONITOR_IO
-    Io_SetFalse( FASTIRQ_MONITOR_IO );
+    Io_SetFalse(FASTIRQ_MONITOR_IO);
 #endif
 
     // AT91C_BASE_TC2->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
@@ -412,8 +431,11 @@ void fasttimerServeInterrupt( )
 //  portEXIT_FIQ( );
 }
 
-void fasttimerDeinit( )
+void fasttimerDeinit()
 {
   AT91C_BASE_AIC->AIC_IDCR = manager.channel_id; // disable the interrupt
   AT91C_BASE_PMC->PMC_PCDR = manager.channel_id; // power down
 }
+
+/** @} */
+
