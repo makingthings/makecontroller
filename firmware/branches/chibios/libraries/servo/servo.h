@@ -15,26 +15,22 @@
 
 *********************************************************************************/
 
-/*
-	servo.h
-
-  MakingThings
-*/
-
 #ifndef SERVO_H
 #define SERVO_H
 
-int Servo_SetActive( int index, int state );
-int Servo_GetActive( int index );
-
-int Servo_SetPosition( int index, int position );
-int Servo_GetPosition( int index );
-
-int Servo_SetSpeed( int index, int speed );
-int Servo_GetSpeed( int index );
-
-/* OSC Interface */
-const char* ServoOsc_GetName( void );
-int ServoOsc_ReceiveMessage( int channel, char* message, int length );
-
+#ifdef __cplusplus
+extern "C" {
 #endif
+void servoInit(void);
+void servoDeinit(void);
+void servoEnable(int index);
+int servoSetPosition(int index, int position);
+int servoPosition(int index);
+int servoSetSpeed(int index, int speed);
+int servoGetSpeed(int index);
+#ifdef __cplusplus
+}
+#endif
+
+#endif // SERVO_H
+
