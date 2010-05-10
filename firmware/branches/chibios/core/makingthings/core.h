@@ -27,11 +27,34 @@
 #define MIN(a, b) ((a < b) ? a : b)
 #define MAX(a, b) ((a > b) ? a : b)
 
+#define sleep(m) chThdSleepMilliseconds(m)
+#define yield()  chThdYield()
+
+// helper macros for managing threads
+#define threadLoop(name, stack)         \
+WORKING_AREA(name##_WA, stack);         \
+void name##Function(void);              \
+Thread* name;                           \
+static msg_t name##_Thd(void *arg)      \
+{                                       \
+  (void)arg;                            \
+  while (!chThdShouldTerminate())       \
+    name##Function();                   \
+  return 0;                             \
+}                                       \
+void name##Function()
+
+#define startThreadLoop(name, priority)                                               \
+{                                                                                     \
+  name = chThdCreateStatic(name##_WA, sizeof(name##_WA), priority, name##_Thd, NULL); \
+}
+
+#define stopThreadLoop(name) chThdTerminate(name)
+
 #ifdef __cplusplus
 
 #include "rtos.h"
 #include "timer.h"
-#include "fasttimer.h"
 
 extern "C" {
 #endif
@@ -48,6 +71,9 @@ extern "C" {
 #include "pwm.h"
 #include "serial.h"
 #include "spi.h"
+#include "fasttimer.h"
+#include "led.h"
+#include "analogin.h"
 #ifdef MAKE_CTRL_NETWORK
 #include "network.h"
 #include "udpsocket.h"
@@ -57,8 +83,6 @@ extern "C" {
 #ifdef MAKE_CTRL_USB
 #include "usbserial.h"
 #endif
-#include "led.h"
-#include "analogin.h"
 
 void Run( void );
 void kill( void );
