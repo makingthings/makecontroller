@@ -20,10 +20,6 @@
 #include "ch.h"
 #include "hal.h"
 
-#ifndef SERIAL_DEFAULT_BAUD
-#define SERIAL_DEFAULT_BAUD 115200
-#endif
-
 #ifndef SERIAL_DEFAULT_PARITY
 #define SERIAL_DEFAULT_PARITY 0
 #endif
@@ -59,7 +55,7 @@
   \code
   void myTask() {
     char serialdata[56];    // a buffer for storing the data we read
-    serialEnableDefault(0); // enable serial port 0 with the default settings
+    serialEnable(0, 9600);  // enable serial port 0 at 9600 baud
     // now wait for bytes to arrive, and read them if possible
     while (1) {
       int bytes = serialAvailable(0);
@@ -89,8 +85,27 @@ void serialInit()
 
 /**
   Enable a serial port.
+  If you need to customize the settings, use serialEnableAll().
+
+  Otherwise, the default settings can all be redefined in your config.h file.  Their names and default values are:
+  - SERIAL_DEFAULT_PARITY 0
+  - SERIAL_DEFAULT_CHARBITS 8
+  - SERIAL_DEFAULT_STOPBITS 1
+  - SERIAL_DEFAULT_HANDSHAKE NO
+
   @param port Which serial port - valid options are 0 and 1.
-  @param baud The rate of this serial port - 115200 is the default, other common options are 9600, 34800, 57600.
+  @param baud The rate of this serial port - common options are 9600, 34800, 57600, 115200.
+*/
+void serialEnable(int port, int baud)
+{
+  serialEnableAll(port, baud, SERIAL_DEFAULT_PARITY, SERIAL_DEFAULT_CHARBITS,
+                SERIAL_DEFAULT_STOPBITS, SERIAL_DEFAULT_HANDSHAKE);
+}
+
+/**
+  Enable a serial port, specifying all the details.
+  @param port Which serial port - valid options are 0 and 1.
+  @param baud The rate of this serial port - common options are 9600, 34800, 57600, 115200.
   @param parity -1 is odd, 0 is none, 1 is even. The default is none - 0.
   @param charbits The number of bits in a character - valid options are 5-8, default is 8.
   @param stopbits The stop bits per character - valid options are 1 or 2, 1 is the default.
@@ -102,13 +117,13 @@ void serialInit()
   serialEnable(0, 9600, 0, 8, 1, NO);
   \endcode
 */
-void serialEnable(int port, int baud, int parity, int charbits, int stopbits, bool handshake)
+void serialEnableAll(int port, int baud, int parity, int charbits, int stopbits, bool handshake)
 {
   SerialConfig config = {
     baud,
     AT91C_US_CLKS_CLOCK |
     (handshake ? AT91C_US_USMODE_HWHSH : AT91C_US_USMODE_NORMAL) |
-    (((charbits - 5) << 6 ) & AT91C_US_CHRL) |
+    (((charbits - 5) << 6) & AT91C_US_CHRL) |
     (stopbits == 2 ? AT91C_US_NBSTOP_2_BIT : AT91C_US_NBSTOP_1_BIT) |
     (parity == 0 ? AT91C_US_PAR_NONE : (parity == -1 ? AT91C_US_PAR_ODD : AT91C_US_PAR_EVEN))
   };
@@ -134,24 +149,6 @@ void serialEnable(int port, int baud, int parity, int charbits, int stopbits, bo
     sdStart(&SD2, &config);
   }
 #endif
-}
-
-/**
-  Enable a serial port with the default settings.
-  If you need to customize the settings, use serialEnable().
-  @param port Which serial port - valid options are 0 and 1.
-
-  The default settings can all be redefined in your config.h file.  Their names and default values are:
-  - SERIAL_DEFAULT_BAUD 115200
-  - SERIAL_DEFAULT_PARITY 0
-  - SERIAL_DEFAULT_CHARBITS 8
-  - SERIAL_DEFAULT_STOPBITS 1
-  - SERIAL_DEFAULT_HANDSHAKE NO
-*/
-void serialEnableDefault(int port)
-{
-  serialEnable(port, SERIAL_DEFAULT_BAUD, SERIAL_DEFAULT_PARITY, SERIAL_DEFAULT_CHARBITS,
-                SERIAL_DEFAULT_STOPBITS, SERIAL_DEFAULT_HANDSHAKE);
 }
 
 /**

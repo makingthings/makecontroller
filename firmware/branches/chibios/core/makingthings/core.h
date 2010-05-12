@@ -33,7 +33,7 @@
 // helper macros for managing threads
 #define threadLoop(name, stack)         \
 WORKING_AREA(name##_WA, stack);         \
-void name##Function(void);              \
+static void name##Function(void);       \
 Thread* name;                           \
 static msg_t name##_Thd(void *arg)      \
 {                                       \
@@ -44,12 +44,10 @@ static msg_t name##_Thd(void *arg)      \
 }                                       \
 void name##Function()
 
-#define startThreadLoop(name, priority)                                               \
+#define createThread(name, priority)                                                  \
 {                                                                                     \
   name = chThdCreateStatic(name##_WA, sizeof(name##_WA), priority, name##_Thd, NULL); \
 }
-
-#define stopThreadLoop(name) chThdTerminate(name)
 
 #ifdef __cplusplus
 

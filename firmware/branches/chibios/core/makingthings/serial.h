@@ -24,8 +24,8 @@
 extern "C" {
 #endif
 void serialInit(void);
-void serialEnableDefault(int port);
-void serialEnable(int port, int baud, int parity, int charbits, int stopbits, bool handshake);
+void serialEnable(int port, int baud);
+void serialEnableAll(int port, int baud, int parity, int charbits, int stopbits, bool handshake);
 void serialDisable(int port);
 int  serialAvailable(int port);
 int  serialRead(int port, char* buf, int len, int timeout);
