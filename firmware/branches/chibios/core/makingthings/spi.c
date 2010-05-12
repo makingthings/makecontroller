@@ -178,13 +178,13 @@ int spiReadWriteBlock(int channel, unsigned char* buffer, int count)
     i = AT91C_BASE_SPI0->SPI_RDR;
 
   // Make the CS line hang around
-  AT91C_BASE_SPI0->SPI_CSR[ channel ] |= AT91C_SPI_CSAAT;
+  AT91C_BASE_SPI0->SPI_CSR[channel] |= AT91C_SPI_CSAAT;
 
   i = 0;
   while (i++ < count) {
-    AT91C_BASE_SPI0->SPI_TDR = ( *buffer & 0xFF ) |
-                               ( ( ~( 1 << channel ) << 16 ) &  AT91C_SPI_TPCS ) |
-                               (int)( ( i == count ) ? AT91C_SPI_LASTXFER : 0 );
+    AT91C_BASE_SPI0->SPI_TDR = (*buffer & 0xFF) |
+                               ((~(1 << channel) << 16) &  AT91C_SPI_TPCS) |
+                               (int)((i == count) ? AT91C_SPI_LASTXFER : 0);
 
     while (!(AT91C_BASE_SPI0->SPI_SR & AT91C_SPI_RDRF))
       ;

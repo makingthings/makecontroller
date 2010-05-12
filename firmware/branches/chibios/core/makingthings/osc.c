@@ -125,7 +125,7 @@ static msg_t OscUdpThread(void *arg) {
   udpBind(osc.udpsock, 10000);
 
   while(!chThdShouldTerminate()) {
-    justGot = udpReadFrom(osc.udpsock, osc.udp.inBuf, OSC_IN_BUF_SIZE, &osc.udpReplyAddress, 0);
+    justGot = udpRead(osc.udpsock, osc.udp.inBuf, OSC_IN_BUF_SIZE, &osc.udpReplyAddress, 0);
     if (justGot > 0) {
       chMtxLock(&osc.udp.lock);
       oscReceivePacket(UDP, osc.udp.inBuf, justGot);

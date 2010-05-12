@@ -27,8 +27,7 @@ int  udpOpen(void);
 void udpClose(int socket);
 bool udpBind(int socket, int port);
 int  udpWrite(int socket, const char* data, int length, int address, int port);
-int  udpRead(int socket, char* data, int length);
-int  udpReadFrom(int socket, char* data, int length, int* src_address, int* src_port);
+int  udpRead(int socket, char* data, int length, int* src_address, int* src_port);
 int  udpAvailable(int socket);
 int  udpSetBlocking(int socket, bool blocking);
 #ifdef __cplusplus
