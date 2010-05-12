@@ -148,6 +148,8 @@ int udpSetBlocking(int socket, bool blocking)
   @param socket The UDP socket, as obtained from udpNew()
   @param data Where to store the incoming data.
   @param length How many bytes of data to read.
+  @param from_address (optional) The address the data came from.
+  @param from_port (optional) The port the data arrived on.
   @return The number of bytes read.
   @see udpBind()
   
@@ -156,16 +158,11 @@ int udpSetBlocking(int socket, bool blocking)
   char mydata[128];
   int sock = udpNew();  // create a new socket
   if (udpBind(sock, 10000) == true) { // listen on port 10000
-    int read = udpRead(sock, mydata, sizeof(mydata));
+    int read = udpRead(sock, mydata, sizeof(mydata), 0, 0);
   }
   \endcode
 */
-int udpRead(int socket, char* data, int length)
-{
-  return lwip_recvfrom(socket, data, length, 0, NULL, NULL);
-}
-
-int udpReadFrom(int socket, char* data, int length, int* from_address, int* from_port)
+int udpRead(int socket, char* data, int length, int* from_address, int* from_port)
 {
   struct sockaddr_in from;
   socklen_t fromlen = sizeof(from);

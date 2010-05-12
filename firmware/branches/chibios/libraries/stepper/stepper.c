@@ -51,7 +51,7 @@ typedef struct Stepper_t {
   FastTimer fastTimer;
 } Stepper;
 
-void Stepper_IRQCallback(int id);
+static void stepperIRQCallback(int id);
 
 static int stepperGetIo(int stepper, int io);
 static void stepperSetDetails(Stepper* s);
@@ -129,7 +129,7 @@ void stepperEnable(int stepper)
   s->halfStep = false;
   s->bipolar = true;
 
-  s->fastTimer.handler = Stepper_IRQCallback;
+  s->fastTimer.handler = stepperIRQCallback;
   s->fastTimer.id = stepper;
   fasttimerStart(&s->fastTimer, s->speed * 1000, true);
 }
