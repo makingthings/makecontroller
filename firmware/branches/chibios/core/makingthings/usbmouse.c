@@ -40,12 +40,14 @@
 /**
   Initialize the Make Controller as a USB mouse.
 */
-void usbmouseInit() {
+void usbmouseInit()
+{
   HIDDMouseDriver_Initialize();
   USBD_Connect();
 }
 
-bool usbmouseIsActive(void) {
+bool usbmouseIsActive(void)
+{
   return USBD_GetState() == USBD_STATE_CONFIGURED;
 }
 
@@ -68,8 +70,8 @@ bool usbmouseIsActive(void) {
  * @param changeY A change in position (specified in pixels) on the y-axis.
  * @return True if the message was successfully sent, otherwise false.
  */
-bool usbmouseUpdate(MouseClickAction left, MouseClickAction right, int changeX, int changeY) {
-
+bool usbmouseUpdate(MouseClickAction left, MouseClickAction right, int changeX, int changeY)
+{
   if (USBD_GetState() != USBD_STATE_CONFIGURED)
     return false;
   unsigned char buttons = 0;
