@@ -1,0 +1,40 @@
+<!DOCTYPE CrossStudio_Project_File>
+<solution version="1" Name="tiny" >
+  <project file_name="" Name="tiny" >
+    <configuration Target="AT91SAM7S256" property_groups_file_path="$(StudioDir)/targets/ATMEL_AT91SAM7/propertyGroups.xml" linker_memory_map_file="$(StudioDir)/targets/ATMEL_AT91SAM7/AT91SAM7S256_MemoryMap.xml" project_directory="" link_include_startup_code="No" project_type="Executable" linker_printf_width_precision_supported="Yes" Name="Common" linker_output_format="bin" />
+    <configuration target_reset_script="RAMReset()" Name="RAM" />
+    <configuration arm_target_flash_loader_file_path="$(StudioDir)/targets/ATMEL_AT91SAM7/Release/Loader.exe" target_reset_script="FLASHReset()" Name="Flash" />
+    <folder Name="Source Files" >
+      <configuration filter="c;cpp;cxx;cc;h;s;asm;inc" Name="Common" />
+      <folder Name="Tiny" >
+        <file file_name="main.c" Name="main.c" />
+        <file file_name="config.h" Name="config.h" />
+      </folder>
+      <folder Name="Core" >
+        <folder Name="Startup" >
+          <file file_name="../../../firmware/controller/startup/flash_placement.xml" Name="flash_placement.xml" />
+          <file file_name="../../../firmware/controller/startup/AT91SAM7_Startup.s" Name="AT91SAM7_Startup.s" />
+          <file file_name="../../../firmware/controller/startup/AT91SAM7_Target.js" Name="AT91SAM7_Target.js" />
+          <file file_name="../../../firmware/controller/startup/AT91SAM7S256_MemoryMap.xml" Name="AT91SAM7S256_MemoryMap.xml" />
+          <file file_name="../../../firmware/controller/startup/crt0.s" Name="crt0.s" />
+        </folder>
+        <folder Name="MakingThings" >
+          <file file_name="../../../firmware/controller/makingthings/led.h" Name="led.h" />
+          <file file_name="../../../firmware/controller/makingthings/io.c" Name="io.c" />
+          <file file_name="../../../firmware/controller/makingthings/io.h" Name="io.h" />
+          <file file_name="../../../firmware/controller/makingthings/led.c" Name="led.c" />
+        </folder>
+      </folder>
+    </folder>
+    <configuration arm_target_loader_reset_after_download="Yes" Target="AT91SAM7X256" build_intermediate_directory="intermediate" arm_simulator_memory_simulation_parameter="0x20000;0x4000" linker_memory_map_file="$(StudioDir)/targets/Atmel_AT91SAM7/AT91SAM7X256_MemoryMap.xml" c_user_include_directories=".;../../core/makingthings;../../core/freertos/portable/GCC/ARM7_AT91SAM7S" target_reset_script="FLASHReset()" build_output_directory="output" arm_target_flash_loader_type="Comms Channel Loader" Name="THUMB Flash Debug" />
+    <configuration c_user_include_directories=".;../../core/makingthings;../../core/freertos/portable/GCC/ARM7_AT91SAM7S" gcc_optimization_level="Level 1" build_debug_information="Yes" Name="THUMB Flash Release" />
+    <configuration c_user_include_directories=".;../controller/makingthings;../appboard/makingthings;../controller/freertos/include;../controller/lwip/src/include;../controller/lwip/contrib/port/FreeRTOS/AT91SAM7X;../controller/freertos/portable/GCC/ARM7_AT91SAM7S;../controller/lwip/src/include/ipv4" Name="Debug" />
+  </project>
+  <configuration build_quietly="Yes" inherited_configurations="THUMB;Flash;Debug" Name="THUMB Flash Debug" />
+  <configuration arm_library_instruction_set="THUMB" c_preprocessor_definitions="__THUMB" arm_instruction_set="THUMB" hidden="Yes" Name="THUMB" />
+  <configuration c_preprocessor_definitions="__FLASH_BUILD" hidden="Yes" Name="Flash" />
+  <configuration c_preprocessor_definitions="DEBUG" link_include_startup_code="No" gcc_optimization_level="None" build_debug_information="Yes" Name="Debug" />
+  <configuration inherited_configurations="THUMB;Flash;Release" gcc_optimization_level="Level 2" Name="THUMB Flash Release" />
+  <configuration c_preprocessor_definitions="NDEBUG" link_include_startup_code="No" gcc_optimization_level="Level 1" build_debug_information="No" Name="Release" />
+  <configuration arm_library_instruction_set="THUMB" gcc_entry_point="0x100000" build_quietly="Yes" c_preprocessor_definitions="SAM7_GCC;THUMB_INTERWORK;SUPERVISOR_START" c_user_include_directories="." link_include_startup_code="Yes" arm_instruction_set="THUMB" c_preprocessor_undefinitions="" c_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wmissing-prototypes;-Wmissing-declarations;-Wno-strict-aliasing" arm_linker_stack_size="0" Name="Common" c_system_include_directories="$(StudioDir)/include" arm_linker_heap_size="0" />
+</solution>

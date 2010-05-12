@@ -1,0 +1,10 @@
+<!DOCTYPE mcbuilder_library>
+<library>
+  <version>1.0</version>
+  <display_name>Web Server</display_name>
+  <author>MakingThings</author>
+  <reference>../../../../resources/reference/makecontroller/html/group__webserver.html</reference>
+  <files>
+    <file type="thumb" >webserver.c</file>
+  </files>
+</library>
