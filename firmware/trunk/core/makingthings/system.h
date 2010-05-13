@@ -15,56 +15,28 @@
 
 *********************************************************************************/
 
-#ifndef _SYSTEM_H
-#define _SYSTEM_H
+#ifndef SYSTEM_H
+#define SYSTEM_H
 
-#include "core.h"
+#include "types.h"
 
-#define SYSTEM_MAX_NAME 99 
+#ifdef __cplusplus
+extern "C" {
+#endif
+const char* systemName(void);
+int  systemSetName(const char* name);
+void systemReset(bool sure);
+void systemSamba(bool sure);
+int  systemSerialNumber(void);
+int  systemSetSerialNumber(int serial);
+int  systemFreeMemory(void);
+#ifdef __cplusplus
+}
+#endif
 
-/** 
-  Monitors and controls several aspects of the system. 
-
-*/
-class System
-{
-  public:
-    static System* get();
-
-    int samba( int sure );
-    int reset( int sure );
-
-    int serialNumber();
-    int setSerialNumber( int serial );
-
-    char* name( );
-    int setName( char* name );
-    
-    void stackAudit( int on_off );
-    int freeMemory();
-
-    int autosendDestination( );
-    void setAutosendDestination( int dest );
-    
-    int autosendInterval( );
-    void setAutosendInterval( int interval );
-  
-  protected:
-    System();
-    static System* _instance;
-    char _name[SYSTEM_MAX_NAME + 1];
-    Task* stackAuditTask;
-    #ifdef OSC
-//    char scratch1[ OSC_SCRATCH_SIZE ];
-    int _autoDestination;
-    int _autoInterval;
-    #endif
-};
-
-///* SystemOsc Interface */
-//
-//const char* SystemOsc_GetName( void );
-//int SystemOsc_ReceiveMessage( int channel, char* message, int length );
-//int SystemOsc_Poll( void );
+#ifdef OSC
+#include "osc.h"
+extern const OscNode systemOsc;
+#endif
 
 #endif

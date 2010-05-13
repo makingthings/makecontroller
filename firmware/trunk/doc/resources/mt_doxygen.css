@@ -44,6 +44,7 @@ h2 a, h3 a { font-weight: bold; }
 
 h3 {
 	font-size: 100%;
+	text-align: center;
 }
 
 /* @end */
@@ -143,6 +144,7 @@ table.listing td {
 table.listing th {
   border-width: 0;
   background-color: #45B2EA;
+  padding: 5px;
 }
 
 table.listing ul {
@@ -244,7 +246,7 @@ img.formulaInl {
 /* @group Code Colorization */
 
 span.keyword {
-	color: #A39FFF
+  color: #A39FFF;
 }
 
 span.keywordtype {
@@ -252,7 +254,7 @@ span.keywordtype {
 }
 
 span.keywordflow {
-	color: #e08000
+	color: #FF8837
 }
 
 span.comment {
@@ -264,7 +266,7 @@ span.preprocessor {
 }
 
 span.stringliteral {
-	color: #DD7937
+	color: #F9FF39
 }
 
 span.charliteral {
@@ -339,8 +341,13 @@ hr {
 }
 
 .mdescLeft, .mdescRight {
-	padding: 0px 8px 4px 8px;
+/*  padding: 0px 8px 4px 8px;*/
 	color: #555;
+}
+
+.mdescRight p { 
+  padding: -10px;
+  margin: 0;
 }
 
 .memItemLeft, .memItemRight, .memTemplParams {
@@ -374,7 +381,11 @@ hr {
 }
 
 .memitem {
-	padding: 0;
+  padding: 0;
+  -moz-border-radius:0.5em 0.5em 0.5em 0.5em;
+  -webkit-border-radius:0.5em;
+  -moz-box-shadow:2px 2px 2px gray;
+  -webkit-box-shadow:2px 2px 2px gray;
 }
 
 .memname {
@@ -400,6 +411,7 @@ hr {
 	padding: 5px 5px 5px 10px;
 	background-color: #fff;
 	border-top-width: 0;
+	margin-bottom: 15px;
 	-webkit-border-bottom-left-radius: 8px;
 	-webkit-border-bottom-right-radius: 8px;
 	-moz-border-radius-bottomleft: 8px;

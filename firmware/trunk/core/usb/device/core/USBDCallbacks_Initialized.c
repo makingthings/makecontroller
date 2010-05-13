@@ -33,10 +33,10 @@
 
 #include "USBDCallbacks.h"
 #include "USBD.h"
-#include <Board.h>
-// #include <aic/aic.h>
+#include <board.h>
+#include <at91lib/aic.h>
 
-extern void ( UsbIsr_Wrapper )( void );
+extern void USBD_ISR(void);
 
 //------------------------------------------------------------------------------
 //         Exported function
@@ -50,16 +50,8 @@ void USBDCallbacks_Initialized(void)
 {
 #if defined(BOARD_USB_UDP)
     // Configure and enable the UDP interrupt
-//    AIC_ConfigureIT(AT91C_ID_UDP, 0, UsbIsr_Wrapper);
-    AT91C_BASE_AIC->AIC_IDCR = 1 << AT91C_ID_UDP;
-    // Configure mode and handler
-    AT91C_BASE_AIC->AIC_SMR[AT91C_ID_UDP] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 3;
-    AT91C_BASE_AIC->AIC_SVR[AT91C_ID_UDP] = (unsigned int) UsbIsr_Wrapper;
-  
-    // Clear interrupt
-    AT91C_BASE_AIC->AIC_ICCR = 1 << AT91C_ID_UDP;
-//    AIC_EnableIT(AT91C_ID_UDP);
-    AT91C_BASE_AIC->AIC_IECR = 1 << AT91C_ID_UDP;
+    AIC_ConfigureIT(AT91C_ID_UDP, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 3, USBD_ISR);
+    AIC_EnableIT(AT91C_ID_UDP);
 
 #elif defined(BOARD_USB_UDPHS)
     // Configure and enable the UDPHS interrupt

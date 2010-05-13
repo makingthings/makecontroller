@@ -7,9 +7,9 @@
 #define CONFIG_H
 
 #define FIRMWARE_NAME          "Heavy svn"
-#define FIRMWARE_MAJOR_VERSION 1
-#define FIRMWARE_MINOR_VERSION 6
-#define FIRMWARE_BUILD_NUMBER  1
+#define FIRMWARE_MAJOR_VERSION 2
+#define FIRMWARE_MINOR_VERSION 0
+#define FIRMWARE_BUILD_NUMBER  0
 
 #define CONTROLLER_HEAPSIZE 21000
 
@@ -18,7 +18,7 @@
 //----------------------------------------------------------------
 #define MAKE_CTRL_USB     // enable the USB system
 #define MAKE_CTRL_NETWORK // enable the Ethernet system
-#define OSC               // enable the OSC system
+//#define OSC               // enable the OSC system
 
 // ---------------------------------------------------------------
 // Network options

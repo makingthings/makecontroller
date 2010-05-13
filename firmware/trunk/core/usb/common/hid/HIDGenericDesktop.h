@@ -69,5 +69,10 @@
 #define HIDGenericDesktop_KEYPAD            0x07
 #define HIDGenericDesktop_MULTIAXIS         0x08
 
+/// Axis Usage X direction ID.
+#define HIDGenericDesktop_X                 0x30
+/// Axis Usage Y direction ID.
+#define HIDGenericDesktop_Y                 0x31
+
 #endif //#ifndef HIDGENERICDESKTOP_H
 

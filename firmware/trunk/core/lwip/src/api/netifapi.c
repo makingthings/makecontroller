@@ -30,6 +30,8 @@
  * This file is part of the lwIP TCP/IP stack.
  * 
  */
+#include "config.h"
+#ifdef MAKE_CTRL_NETWORK
 
 #include "lwip/opt.h"
 
@@ -55,6 +57,20 @@ do_netifapi_netif_add( struct netifapi_msg_msg *msg)
   } else {
     msg->err = ERR_OK;
   }
+  TCPIP_NETIFAPI_ACK(msg);
+}
+
+/**
+ * Call netif_set_addr() inside the tcpip_thread context.
+ */
+void
+do_netifapi_netif_set_addr( struct netifapi_msg_msg *msg)
+{
+  netif_set_addr( msg->netif,
+                  msg->msg.add.ipaddr,
+                  msg->msg.add.netmask,
+                  msg->msg.add.gw);
+  msg->err = ERR_OK;
   TCPIP_NETIFAPI_ACK(msg);
 }
 
@@ -104,6 +120,28 @@ netifapi_netif_add(struct netif *netif,
 }
 
 /**
+ * Call netif_set_addr() in a thread-safe way by running that function inside the
+ * tcpip_thread context.
+ *
+ * @note for params @see netif_set_addr()
+ */
+err_t
+netifapi_netif_set_addr(struct netif *netif,
+                        struct ip_addr *ipaddr,
+                        struct ip_addr *netmask,
+                        struct ip_addr *gw)
+{
+  struct netifapi_msg msg;
+  msg.function = do_netifapi_netif_set_addr;
+  msg.msg.netif = netif;
+  msg.msg.msg.add.ipaddr  = ipaddr;
+  msg.msg.msg.add.netmask = netmask;
+  msg.msg.msg.add.gw      = gw;
+  TCPIP_NETIFAPI(&msg);
+  return msg.msg.err;
+}
+
+/**
  * call the "errtfunc" (or the "voidfunc" if "errtfunc" is NULL) in a thread-safe
  * way by running that function inside the tcpip_thread context.
  *
@@ -124,3 +162,4 @@ netifapi_netif_common( struct netif *netif,
 }
 
 #endif /* LWIP_NETIF_API */
+#endif // MAKE_CTRL_NETWORK

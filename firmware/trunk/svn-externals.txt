@@ -1,0 +1,6 @@
+#
+# Apply/update externals definitions with this file by typing
+#   svn propset svn:externals -F svn-externals.txt .
+# 
+
+core/chibios https://chibios.svn.sourceforge.net/svnroot/chibios/branches/stable_1.4.x

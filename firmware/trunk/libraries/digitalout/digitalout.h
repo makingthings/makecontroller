@@ -18,51 +18,25 @@
 #ifndef DIGITALOUT_H
 #define DIGITALOUT_H
 
-#include "io.h"
+#include "types.h"
 
-/**
-  Control the 8 high current outputs on the Application Board.
-  
-  \section Usage
-  To get started using the DigitalOuts, create a DigitalOut object then set and read its value
-  as desired.
-  \code
-  DigitalOut dout(4); // create a DigitalOut object, controlling channel 4
-  dout.setValue(true); // turn it on
-  bool is_it_on = dout.value(); // check if it's on or not
-  \endcode
-  
-  \section Notes
-  If you're simultaneously using any of the other systems on the outputs (Stepper, Motor, etc.), results will
-  be unpredictable since they're using the same signals.  Make sure to only use one system at a time on a given
-  output signal.
-  
-  See the <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/digital-outputs">
-  Digital Out section</a> of the Application Board overview for more details.
-  
-  \ingroup io
-*/
-class DigitalOut
-{
-public:
-  DigitalOut(int index);
-  ~DigitalOut();
-
-  bool setValue(bool on);
-  bool value();
-
-protected:
-  short _index;
-  int getIo( int index );
-  int getEnableIo( int enableIndex );
-
-  static Io* ios[];
-  static short refcounts[];
-};
+#ifdef __cplusplus
+extern "C" {
+#endif
+void digitaloutInit(void);
+bool digitaloutValue(int channel);
+void digitaloutSetValue(int channel, bool on);
 
 /* OSC Interface */
 const char* DigitalOutOsc_GetName( void );
 int DigitalOutOsc_ReceiveMessage( int channel, char* message, int length );
 
-
+#ifdef __cplusplus
+}
 #endif
+
+#ifdef OSC
+#include "osc.h"
+extern const OscNode digitaloutOsc;
+#endif // OSC
+#endif // DIGITALOUT_H

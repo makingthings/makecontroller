@@ -18,52 +18,22 @@
 #ifndef PWM_H
 #define PWM_H
 
-/**
-  Control the 4 Pulse Width Modulation outputs.
+#include "types.h"
 
-  The Make Controller has 4 PWM signals.  Each be configured separately, and can control
-  up to 2 output lines.  These lines can be driven with the pwm signal in parallel or they can
-  be inverted from one another.  , the 2 lines running either parallel or inverted.  For a very simple
-  start, just see Pwm_Set( ) and Pwm_Get( ) as these will start driving your PWMs immediately with
-  very little hassle.
+#define PWM_COUNT 4
 
-  \section Hardware
-  The PWM lines on the Make Controller are located on the following signal lines:
-  - channel 0 is PB19
-  - channel 1 is PB20
-  - channel 2 is PB21
-  - channel 3 is PB22
-  
-  The \ref PwmOut system relies on the Pwm system, and provides control of the output lines associated with
-  a given Pwm signal.
-  
-  \ingroup io
-*/
-class Pwm
-{
-public:
-  Pwm( int channel );
-  ~Pwm();
-  
-  void setWaveform( bool left_aligned, bool starts_low );
-  
-  bool setPeriod( int period );
-  int period( );
-
-  void setDuty(int duty);
-  int duty();
-
-  static bool setFrequency(int freq);
-  static int frequency();
-
-protected:
-  int channel, _duty, _period;
-  static int _frequency;
-  int getIo( int channel );
-  int baseInit();
-  int baseDeinit();
-  static int findClockConfiguration(int frequency);
-  static int activeChannels;
-};
-
+#ifdef __cplusplus
+extern "C" {
 #endif
+void pwmInit(void);
+void pwmDeinit(void);
+bool pwmSetFrequency(int freq);
+bool pwmEnableChannel(int channel);
+void pwmDisableChannel(int channel);
+void pwmSetDuty(int channel, int duty);
+void pwmSetWaveform(int channel, bool left_aligned, bool starts_low);
+bool pwmSetPeriod(int channel, int period);
+#ifdef __cplusplus
+}
+#endif
+#endif // PWM_H

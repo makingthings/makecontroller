@@ -23,108 +23,105 @@
  */
 
 #include "config.h"
-#ifdef OSC
+#if 1 //def OSC
 
-#include "types.h"
-#include "osc.h"
+#include "osc_patternmatch.h"
+#include <stdio.h>
+#include <ctype.h>
 
-static const char *theWholePattern;	/* Just for warning messages */
+static bool oscMatchBrackets (const char *pattern, const char *test);
+static bool oscMatchList (const char *pattern, const char *test);
 
-static bool MatchBrackets (const char *pattern, const char *test);
-static bool MatchList (const char *pattern, const char *test);
+static bool oscIsSpecialChar(char c) {
+  switch(c) {
+    case 0:
+    case '?':
+    case '*':
+    case '[':
+    case '{':
+    case ']':
+    case '}':
+    case '\\':
+      return true;
+    default:
+      return false;
+  }
+}
 
-bool Osc_PatternMatch(const char *  pattern, const char * test) 
+bool oscPatternMatch(const char *  pattern, const char * test)
 {
-  theWholePattern = pattern;
-  
-  if (pattern == 0 || pattern[0] == 0) 
-  {
+  if (pattern == 0 || pattern[0] == 0)
     return test[0] == 0;
-  } 
   
-  if (test[0] == 0)
-  {
+  if (test[0] == 0) {
     if (pattern[0] == '*')
-      return Osc_PatternMatch(pattern+1,test);
+      return oscPatternMatch(pattern+1,test);
     else
       return false;
   }
 
-  switch (pattern[0]) 
-  {
+  switch (pattern[0]) {
     case 0: 
       return test[0] == 0;
     case '?': 
-      return Osc_PatternMatch(pattern + 1, test + 1);
+      return oscPatternMatch(pattern + 1, test + 1);
     case '*': 
-      if (Osc_PatternMatch(pattern+1, test)) 
+      if (oscPatternMatch(pattern + 1, test))
         return true;
       else 
-	      return Osc_PatternMatch(pattern, test+1);
+	      return oscPatternMatch(pattern, test+1);
     case ']':
     case '}':
-      // OSCWarning("Spurious %c in pattern \".../%s/...\"",pattern[0], theWholePattern);
-      return false;
+      return false; // spurious closing bracket
     case '[':
-      return MatchBrackets (pattern,test);
+      return oscMatchBrackets(pattern,test);
     case '{':
-      return MatchList (pattern,test);
+      return oscMatchList(pattern,test);
     case '\\':  
       if (pattern[1] == 0) 
       	return test[0] == 0;
-      else 
-      {
+      else {
         if (pattern[1] == test[0]) 
-          return Osc_PatternMatch(pattern+2,test+1);
+          return oscPatternMatch(pattern+2,test+1);
         else 
           return false;
       }
     default:
-      if (pattern[0] == test[0]) 
-      	return Osc_PatternMatch(pattern+1,test+1);
-      else 
+      // TODO - this recurses for *each* character...should
+      // iterate unless it's a special osc character
+      if (pattern[0] == test[0])
+      	return oscPatternMatch(pattern+1,test+1);
+      else
       	return false;
   }
 }
 
 
 /* we know that pattern[0] == '[' and test[0] != 0 */
-
-static bool MatchBrackets (const char *pattern, const char *test) 
+static bool oscMatchBrackets (const char *pattern, const char *test)
 {
   bool result;
   bool negated = false;
   const char *p = pattern;
 
-  if (pattern[1] == 0) 
-  {
-    // OSCWarning("Unterminated [ in pattern \".../%s/...\"", theWholePattern);
-    return false;
-  }
+  if (pattern[1] == 0)
+    return false; // unterminated [ in pattern
 
-  if (pattern[1] == '!') 
-  {
+  if (pattern[1] == '!')  {
     negated = true;
     p++;
   }
 
-  while (*p != ']') 
-  {
-    if (*p == 0) 
-    {
-      //OSCWarning("Unterminated [ in pattern \".../%s/...\"", theWholePattern);
-      return false;
-    }
-    if (p[1] == '-' && p[2] != 0) 
-    {
-      if (test[0] >= p[0] && test[0] <= p[2]) 
-      {
+  while (*p != ']') {
+    if (*p == 0)
+      return false; // unterminated [ in pattern
+    if (p[1] == '-' && p[2] != 0)  {
+      if (test[0] >= p[0] && test[0] <= p[2])  {
 	      result = !negated;
 	      goto advance;
       }
     }
-    if (p[0] == test[0]) 
-    {
+    if (p[0] == test[0]) {
       result = !negated;
       goto advance;
     }
@@ -138,75 +135,131 @@ advance:
   if (!result)
     return false;
 
-  while (*p != ']') 
-  {
-    if (*p == 0) 
-    {
-      //OSCWarning("Unterminated [ in pattern \".../%s/...\"", theWholePattern);
-      return false;
-    }
+  while (*p != ']') {
+    if (*p == 0)
+      return false; // unterminated [ in pattern
     p++;
   }
 
-  return Osc_PatternMatch(p+1,test+1);
+  return oscPatternMatch(p + 1, test + 1);
 }
 
-static bool MatchList (const char *pattern, const char *test) 
+static bool oscMatchList (const char *pattern, const char *test)
 {
+  const char *restOfPattern, *tp = test;
 
- const char *restOfPattern, *tp = test;
+  for (restOfPattern = pattern; *restOfPattern != '}'; restOfPattern++) {
+    if (*restOfPattern == 0)
+      return false; // unterminated { in pattern
+  }
 
- for(restOfPattern = pattern; *restOfPattern != '}'; restOfPattern++) 
- {
-   if (*restOfPattern == 0) 
-   {
-     //OSCWarning("Unterminated { in pattern \".../%s/...\"", theWholePattern);
-     return false;
-   }
- }
+  restOfPattern++; /* skip close curly brace */
+  pattern++; /* skip open curly brace */
 
- restOfPattern++; /* skip close curly brace */
-
- pattern++; /* skip open curly brace */
-
- while (1) 
- {  
-   if (*pattern == ',') 
-   {
-     if (Osc_PatternMatch(restOfPattern, tp)) 
-       return true;
-     else 
-     {
-       tp = test;
-       ++pattern;
-     }
-   } 
-   else 
-   {
-     if (*pattern == '}')
-       return Osc_PatternMatch(restOfPattern, tp);
-     else 
-     {
-       if (*pattern == *tp) 
-       {
-         ++pattern;
-         ++tp;
-       } 
-       else 
-       {
-         tp = test;
-         while (*pattern != ',' && *pattern != '}') {
-           pattern++;
-       }
-       if (*pattern == ',') 
-         pattern++;
+  while (1) {
+    if (*pattern == ',')  {
+      if (oscPatternMatch(restOfPattern, tp))
+        return true;
+      else  {
+        tp = test;
+        ++pattern;
       }
-     }
-   }
- }
+    }
+    else  {
+      if (*pattern == '}')
+       return oscPatternMatch(restOfPattern, tp);
+      else  {
+        if (*pattern == *tp)  {
+          ++pattern;
+          ++tp;
+        }
+        else {
+          tp = test;
+          while (*pattern != ',' && *pattern != '}')
+           pattern++;
+          if (*pattern == ',')
+            pattern++;
+        }
+      }
+    }
+  }
+}
+
+/*
+ * Match a range element in an address pattern, and populate an
+ * OscRange object accordingly - the range object can either represent
+ * a single value in the simplest case, or in more complex scenarios
+ * a bit mask of values.
+ */
+bool oscNumberMatch(const char* pattern, int offset, int count, OscRange* r)
+{
+  r->state = EXHAUSTED;
+  int n = 0;
+  int digits = 0;
+  while (isdigit(*pattern)) {
+    digits++;
+    n = n * 10 + (*pattern++ - '0');
+  }
+
+  if (n >= count)
+    return false;
+
+  switch (*pattern) {
+    case '*':
+    case '?':
+    case '[':
+    case '{': {
+      int i;
+      r->value = 0;
+      char s[5];
+      for (i = count - 1; i >= 0; i--) {
+        r->value <<= 1;
+        siprintf(s, "%d", i);
+        if (oscPatternMatch(pattern, s))
+          r->value |= 1;
+      }
+      r->index = offset;
+      r->state = BITS;
+      return true;
+    }
+    default:
+      if (digits == 0) {
+        r->state = EXHAUSTED;
+        return false;
+      }
+      else {
+        r->state = SINGLENUM;
+        r->value = n;
+        return true;
+      }
+  }
+}
+
+bool oscRangeHasNext(OscRange* r) {
+  switch (r->state) {
+    case SINGLENUM: return true;
+    case BITS:      return (r->value > 0);
+    default:        return false;
+  }
+}
+
+int oscRangeNext(OscRange* r) {
+  switch (r->state) {
+    case SINGLENUM:
+      r->state = EXHAUSTED;
+      return r->value;
+    case BITS:
+      while (r->value > 0 && !(r->value & 0x01)) {
+        r->index++;
+        r->value >>= 1;
+      }
+      r->value >>= 1;
+      return r->index++;
+    default:
+      return -1;
+  }
 }
 
 #endif // OSC
-
 
 

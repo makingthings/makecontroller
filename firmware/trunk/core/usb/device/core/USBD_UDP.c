@@ -43,7 +43,7 @@
 
 #include "USBD.h"
 #include "USBDCallbacks.h"
-#include <Board.h>
+#include <board.h>
 // #include <pio/pio.h>
 // #include <utility/trace.h>
 // #include <utility/led.h>
@@ -52,18 +52,10 @@
 // #include <usb/common/core/USBGenericRequest.h>
 #include "USBGenericRequest.h"
 
-#include "FreeRTOS.h"
+#include <ch.h>
+#include "pin.h"
 
 #if defined(BOARD_USB_UDP)
-
-// MakingThings
-#if (CONTROLLER_VERSION <= 100)
-  #define USB_PULLUP AT91C_PIO_PA11
-  #define USB_DETECT AT91C_PIO_PA10
-#elif (CONTROLLER_VERSION >= 200)
-  #define USB_PULLUP AT91C_PIO_PA30
-  #define USB_DETECT AT91C_PIO_PA29
-#endif
 
 //------------------------------------------------------------------------------
 //         Definitions
@@ -629,19 +621,13 @@ static void UDP_EndpointHandler(unsigned char bEndpoint)
 
 }
 
-void UsbIsr_Wrapper( void ) __attribute__ ((naked));
+CH_IRQ_HANDLER(USBD_ISR) __attribute__ ((naked));
 
-void UsbIsr_Wrapper( void )
-{
-	/* Save the context of the interrupted task. */
-	portSAVE_CONTEXT();
-
-	/* Call the handler to do the work.  This must be a separate
-	function to ensure the stack frame is set up correctly. */
-	USBD_InterruptHandler();
-
-	/* Restore the context of whichever task will execute next. */
-	portRESTORE_CONTEXT();
+CH_IRQ_HANDLER( USBD_ISR ) {
+  CH_IRQ_PROLOGUE();
+  USBD_InterruptHandler();
+  AT91C_BASE_AIC->AIC_EOICR = 0;
+  CH_IRQ_EPILOGUE();
 }
 
 //------------------------------------------------------------------------------
@@ -1169,6 +1155,7 @@ void USBD_Connect(void)
 #elif !defined(BOARD_USB_PULLUP_ALWAYSON)
     #error Unsupported pull-up type.
 #endif
+  pinOn(USB_PULLUP);
 }
 
 //------------------------------------------------------------------------------
@@ -1196,15 +1183,7 @@ void USBD_Disconnect(void)
     #error Unsupported pull-up type.
 #endif
     
-    // Turn the USB line into an input, kill the pull up
-    AT91C_BASE_PIOA->PIO_PER = USB_DETECT;	
-    AT91C_BASE_PIOA->PIO_ODR = USB_DETECT;
-    AT91C_BASE_PIOA->PIO_PPUDR = USB_DETECT;
-
-  // Setup the PIO for the USB pull up resistor - Start low: no USB
-		AT91C_BASE_PIOA->PIO_PER = USB_PULLUP;
-		AT91C_BASE_PIOA->PIO_OER = USB_PULLUP;
-    AT91C_BASE_PIOA->PIO_CODR = USB_PULLUP;
+		pinOff(USB_PULLUP); // kill the pullup
 
     // Device returns to the Powered state
     if (deviceState > USBD_STATE_POWERED) {
@@ -1235,11 +1214,9 @@ void USBD_Init(void)
     #error Missing pull-up definition.
 #endif
     
-    AT91C_BASE_PIOA->PIO_PER = USB_DETECT;
-    AT91C_BASE_PIOA->PIO_ODR = USB_DETECT;
-    AT91C_BASE_PIOA->PIO_PER = USB_PULLUP;
-		AT91C_BASE_PIOA->PIO_OER = USB_PULLUP;
-    AT91C_BASE_PIOA->PIO_CODR = USB_PULLUP;
+    pinSetMode(USB_DETECT, INPUT);
+    pinSetMode(USB_PULLUP, OUTPUT);
+    pinOff(USB_PULLUP);
 
     // Device is in the Attached state
     deviceState = USBD_STATE_SUSPENDED;
@@ -1249,11 +1226,9 @@ void USBD_Init(void)
 
     AT91C_BASE_UDP->UDP_IDR = 0xFE;
     AT91C_BASE_UDP->UDP_IER = AT91C_UDP_WAKEUP;
-    AT91C_BASE_CKGR->CKGR_PLLR |= AT91C_CKGR_USBDIV_1; // Set the PLL UsbSerial Divider
 
     // Configure interrupts
     USBDCallbacks_Initialized();
-    AT91C_BASE_PIOA->PIO_SODR = USB_PULLUP;
 }
 
 //------------------------------------------------------------------------------

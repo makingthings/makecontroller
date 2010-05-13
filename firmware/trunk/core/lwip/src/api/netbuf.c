@@ -65,6 +65,11 @@ netbuf *netbuf_new(void)
     buf->p = NULL;
     buf->ptr = NULL;
     buf->addr = NULL;
+    buf->port = 0;
+#if LWIP_NETBUF_RECVINFO
+    buf->toaddr = NULL;
+    buf->toport = 0;
+#endif /* LWIP_NETBUF_RECVINFO */
     return buf;
   } else {
     return NULL;
@@ -236,5 +241,4 @@ netbuf_first(struct netbuf *buf)
 }
 
 #endif /* LWIP_NETCONN */
-
 #endif // MAKE_CTRL_NETWORK
