@@ -41,20 +41,20 @@
 #include "HIDDMouseDriverDescriptors.h"
 #include "HIDDMouseInputReport.h"
 #include <board.h>
-#include <usb/common/core/USBDeviceDescriptor.h>
-#include <usb/common/core/USBConfigurationDescriptor.h>
-#include <usb/common/core/USBInterfaceDescriptor.h>
-#include <usb/common/core/USBEndpointDescriptor.h>
-#include <usb/common/core/USBStringDescriptor.h>
-#include <usb/common/hid/HIDGenericDescriptor.h>
-#include <usb/common/hid/HIDDeviceDescriptor.h>
-#include <usb/common/hid/HIDInterfaceDescriptor.h>
-#include <usb/common/hid/HIDDescriptor.h>
-#include <usb/common/hid/HIDReport.h>
-#include <usb/common/hid/HIDGenericDesktop.h>
-#include <usb/common/hid/HIDLeds.h>
-#include <usb/common/hid/HIDButton.h>
-#include <usb/device/core/USBDDriverDescriptors.h>
+#include "USBDeviceDescriptor.h"
+#include "USBConfigurationDescriptor.h"
+#include "USBInterfaceDescriptor.h"
+#include "USBEndpointDescriptor.h"
+#include "USBStringDescriptor.h"
+#include "HIDGenericDescriptor.h"
+#include "HIDDeviceDescriptor.h"
+#include "HIDInterfaceDescriptor.h"
+#include "HIDDescriptor.h"
+#include "HIDReport.h"
+#include "HIDGenericDesktop.h"
+#include "HIDLeds.h"
+#include "HIDButton.h"
+#include "USBDDriverDescriptors.h"
 
 //------------------------------------------------------------------------------
 //         Definitions
@@ -70,11 +70,17 @@
 /// - HIDDMouseDriverDescriptors_RELEASE
 
 /// Device product ID.
+#ifndef HIDDMouseDriverDescriptors_PRODUCTID
 #define HIDDMouseDriverDescriptors_PRODUCTID       0x6200
+#endif
 /// Device vendor ID.
+#ifndef HIDDMouseDriverDescriptors_VENDORID
 #define HIDDMouseDriverDescriptors_VENDORID        0x03EB
+#endif
 /// Device release number.
+#ifndef HIDDMouseDriverDescriptors_RELEASE
 #define HIDDMouseDriverDescriptors_RELEASE         0x0100
+#endif
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
@@ -117,7 +123,7 @@ static const USBDeviceDescriptor deviceDescriptor = {
     HIDDMouseDriverDescriptors_RELEASE,
     1, // Index of manufacturer description
     2, // Index of product description
-    3, // Index of serial number description
+    0, // Index of serial number description
     1  // One possible configuration
 };
 
@@ -253,39 +259,47 @@ static const unsigned char languageIdDescriptor[] = {
 
 static const unsigned char manufacturerDescriptor[] = {
 
-    USBStringDescriptor_LENGTH(5),
+    USBStringDescriptor_LENGTH(12),
     USBGenericDescriptor_STRING,
-    USBStringDescriptor_UNICODE('A'),
-    USBStringDescriptor_UNICODE('T'),
     USBStringDescriptor_UNICODE('M'),
-    USBStringDescriptor_UNICODE('E'),
-    USBStringDescriptor_UNICODE('L')
+    USBStringDescriptor_UNICODE('a'),
+    USBStringDescriptor_UNICODE('k'),
+    USBStringDescriptor_UNICODE('i'),
+    USBStringDescriptor_UNICODE('n'),
+    USBStringDescriptor_UNICODE('g'),
+    USBStringDescriptor_UNICODE('T'),
+    USBStringDescriptor_UNICODE('h'),
+    USBStringDescriptor_UNICODE('i'),
+    USBStringDescriptor_UNICODE('n'),
+    USBStringDescriptor_UNICODE('g'),
+    USBStringDescriptor_UNICODE('s')
 };
 
 static const unsigned char productDescriptor[] = {
 
-    USBStringDescriptor_LENGTH(19),
+    USBStringDescriptor_LENGTH(21),
     USBGenericDescriptor_STRING,
-    USBStringDescriptor_UNICODE('A'),
-    USBStringDescriptor_UNICODE('T'),
     USBStringDescriptor_UNICODE('M'),
-    USBStringDescriptor_UNICODE('E'),
-    USBStringDescriptor_UNICODE('L'),
+    USBStringDescriptor_UNICODE('a'),
+    USBStringDescriptor_UNICODE('k'),
+    USBStringDescriptor_UNICODE('e'),
     USBStringDescriptor_UNICODE(' '),
-    USBStringDescriptor_UNICODE('A'),
-    USBStringDescriptor_UNICODE('T'),
-    USBStringDescriptor_UNICODE('9'),
-    USBStringDescriptor_UNICODE('1'),
-    USBStringDescriptor_UNICODE(' '),
-    USBStringDescriptor_UNICODE('H'),
-    USBStringDescriptor_UNICODE('I'),
-    USBStringDescriptor_UNICODE('D'),
+    USBStringDescriptor_UNICODE('C'),
+    USBStringDescriptor_UNICODE('o'),
+    USBStringDescriptor_UNICODE('n'),
+    USBStringDescriptor_UNICODE('t'),
+    USBStringDescriptor_UNICODE('r'),
+    USBStringDescriptor_UNICODE('o'),
+    USBStringDescriptor_UNICODE('l'),
+    USBStringDescriptor_UNICODE('l'),
+    USBStringDescriptor_UNICODE('e'),
+    USBStringDescriptor_UNICODE('r'),
     USBStringDescriptor_UNICODE(' '),
     USBStringDescriptor_UNICODE('M'),
-    USBStringDescriptor_UNICODE('O'),
-    USBStringDescriptor_UNICODE('U'),
-    USBStringDescriptor_UNICODE('S'),
-    USBStringDescriptor_UNICODE('E'),
+    USBStringDescriptor_UNICODE('o'),
+    USBStringDescriptor_UNICODE('u'),
+    USBStringDescriptor_UNICODE('s'),
+    USBStringDescriptor_UNICODE('e')
 };
 
 static const unsigned char serialNumberDescriptor[] = {
@@ -339,7 +353,7 @@ USBDDriverDescriptors hiddMouseDriverDescriptors = {
     0, // No high-speed other speed configuration descriptor
 #endif
     stringDescriptors,
-    4 // Four string descriptors in list
+    3 // 3 string descriptors in list
 };
 
 /// Report descriptor used by the driver.

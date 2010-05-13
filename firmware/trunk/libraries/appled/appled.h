@@ -15,46 +15,25 @@
 
 *********************************************************************************/
 
-#ifndef APPLED_CPP_H
-#define APPLED_CPP_H
+#ifndef APPLED_H
+#define APPLED_H
 
 #include "config.h"
-#include "io.h"
+#include "types.h"
 
 #ifdef OSC
-#include "osc_cpp.h"
+#include "osc.h"
+extern const OscNode appledOsc;
+#endif
 
-class AppLedOSC : public OscHandler
-{
-public:
-  AppLedOSC( ) { }
-  int onNewMsg( OscTransport t, OscMessage* msg, int src_addr, int src_port );
-  int onQuery( OscTransport t, char* address, int element );
-  const char* name( ) { return "appled"; }
-  static const char* propertyList[];
-};
-#endif // OSC
-
-/**
-  Status LEDs for program feedback.
-  App LEDs (Application Board LED) are great for providing some information about how your
-  program is running.  
-*/
-class AppLed
-{
-public:
-  AppLed( int index );
-  void setState( bool state );
-  bool getState( );
-//  #ifdef OSC
-//  static AppLedOSC* oscHandler;
-//  #endif
-  
-protected:
-  int getIo(int index);
-  int _index;
-  static Io* leds[4]; // only ever want to make 4 of these, to allow for multiple instances using the same Io*
-};
-
-#endif // APPLED_CPP_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+void appledEnable(void);
+void appledSetValue(int led, bool onff);
+bool appledValue(int led);
+#ifdef __cplusplus
+}
+#endif
+#endif // APPLED_H
 

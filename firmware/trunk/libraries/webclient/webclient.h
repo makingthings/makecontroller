@@ -20,30 +20,9 @@
 
 #include "tcpsocket.h"
 
-/**
-  Connect to sites and other services on the internet or local network via HTTP.
+int webclientGet(const char* hostname, const char* path, int port, char* response, int response_size, const char* headers[]);
+int webclientPost(const char* hostname, const char* path, int port, char* data, int data_length, int response_size, const char* headers[]);
 
-  The web client system allows the Make Controller to get/post data to a webserver.  This
-  makes it straightforward to use the Make Controller as a source of data for your web apps.
-  
-  Note that these functions make liberal use of printf-style functions, which can require 
-  lots of memory to be allocated to the task calling them.
 
-  \ingroup networking
-*/
-class WebClient
-{
-public:
-  WebClient();
-  ~WebClient();
-  int get( char* hostname, int port, char* path, char* response, int response_size, const char* headers[] = 0 );
-  int post( char* hostname, int port, char* path, char* data, int post_length, int response_size, const char* headers[] = 0 );
-
-protected:
-  TcpSocket socket;
-  char* buffer;
-
-  int readResponse( char* buf, int size );
-};
 
 #endif // WEBCLIENT_H

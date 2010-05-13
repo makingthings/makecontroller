@@ -19,63 +19,17 @@
 #define TCP_SERVER_H
 
 #include "config.h"
-
 #ifdef MAKE_CTRL_NETWORK
 
-#include "lwip/api.h"
-#include "tcpsocket.h"
-
-class TcpSocket;
-
-/**
-  Listen for incoming TCP connections.
-  
-  \section Usage
-  To get started using a TcpServer, create a new TcpServer object, put it in listen mode and
-  start accepting requests.  The TcpServer will accept one client after another, blocking
-  until a new client makes a connection.
-  
-  \code
-  void myTask(void* p)
-  {
-    TcpServer server; // create the server
-    server.listen(8080); // put it into listen mode on port 8080
-    // now in our loop, wait for new connections, say hello to each of them, and close them
-    while(1)
-    {
-      TcpSocket* client = server.accept(); // this will wait for new connections to come in
-      if(client) // if we got a good connection
-      {
-        client->write("hello there", 11);
-        client->close();
-        delete client;
-      }
-      Task::sleep(2);
-    }
-  }
-  \endcode
-  
-  If you're looking to serve HTTP requests check the WebServer instead, which is built on
-  the TcpServer.
-  
-  \ingroup networking
-*/
-class TcpServer
-{
-public:
-  TcpServer( );
-  ~TcpServer( );
-  bool valid( ) { return _socket != NULL; }
-  
-  bool listen( int port );
-  bool isListening( );
-  bool close( );
-  TcpSocket* accept( );
-  
-protected:
-  struct netconn* _socket;
-  bool getNewSocket( );
-};
+#ifdef __cplusplus
+extern "C" {
+#endif
+int  tcpserverOpen(int port);
+int  tcpserverAccept(int server);
+void tcpserverClose(int server);
+#ifdef __cplusplus
+}
+#endif
 
 #endif //MAKE_CTRL_NETWORK
 #endif // TCP_SERVER_H

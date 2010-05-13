@@ -43,13 +43,9 @@
  * something that better describes your network interface.
  */
 
-#include "config.h" // MakingThings - network system conditionalization
-#ifdef MAKE_CTRL_NETWORK
-
 #include "lwip/opt.h"
 
-/* This is all reimplemented by FreeRTOS/MakingThings */
-#if 1 /* don't build, this is only a skeleton, see previous comment */
+#if 0 /* don't build, this is only a skeleton, see previous comment */
 
 #include "lwip/def.h"
 #include "lwip/mem.h"
@@ -59,17 +55,6 @@
 #include <lwip/snmp.h>
 #include "netif/etharp.h"
 #include "netif/ppp_oe.h"
-
-/* MAKINGTHINGS: Addition for FreeRTOS */
-#include "FreeRTOS.h"
-#include "SAM7_EMAC.h"
-#include "Emac.h"
-
-/* MAKINGTHINGS: Addition for FreeRTOS */
-#define netifMTU							( 1500 )
-#define netifINTERFACE_TASK_STACK_SIZE		( 150 )
-#define netifINTERFACE_TASK_PRIORITY		( configMAX_PRIORITIES - 1 )
-#define netifGUARD_BLOCK_TIME				( 250 )
 
 /* Define those to better describe your network interface. */
 #define IFNAME0 'e'
@@ -86,14 +71,8 @@ struct ethernetif {
   /* Add whatever per-interface state that is needed here. */
 };
 
-/* MAKINGTHINGS: Add */
-//static const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
-static struct netif *xNetIf = NULL;    
-
 /* Forward declarations. */
-//static void  ethernetif_input(struct netif *netif);
-static void  ethernetif_input(void *); // MakingThings
-// err_t ethernetif_init( struct netif *netif ); // MakingThings
+static void  ethernetif_input(struct netif *netif);
 
 /**
  * In this function, the hardware should be initialized.
@@ -105,51 +84,24 @@ static void  ethernetif_input(void *); // MakingThings
 static void
 low_level_init(struct netif *netif)
 {
-  //struct ethernetif *ethernetif = netif->state;
-  /* MAKINGTHINGS: Addition for FREERTOS */
-  unsigned portBASE_TYPE uxPriority;
-
+  struct ethernetif *ethernetif = netif->state;
+  
   /* set MAC hardware address length */
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
   /* set MAC hardware address */
-  /* MAKINGTHINGS: Added/Tweaked */
-  netif->hwaddr[0] = emacETHADDR0;
-  netif->hwaddr[1] = emacETHADDR1;
-  netif->hwaddr[2] = emacETHADDR2;
-  netif->hwaddr[3] = emacETHADDR3;
-  netif->hwaddr[4] = emacETHADDR4;
-  netif->hwaddr[5] = emacETHADDR5;
-  
-  /* MAKINGTHINGS: Added */
-  netif->mtu = netifMTU;
-  
-  /* MAKINGTHINGS: Removed */
+  netif->hwaddr[0] = ;
+  ...
+  netif->hwaddr[5] = ;
+
   /* maximum transfer unit */
-  //netif->mtu = 1500;
+  netif->mtu = 1500;
   
   /* device capabilities */
   /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
   netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
  
-  /* Do whatever else is needed to initialize interface. */
-  xNetIf = netif;
-
-  /* FreeRTOS: Initialise the EMAC.  This routine contains code that polls status bits.  
-  If the Ethernet cable is not plugged in then this can take a considerable 
-  time.  To prevent this starving lower priority tasks of processing time we
-  lower our priority prior to the call, then raise it back again once the
-  initialisation is complete. */
-  uxPriority = uxTaskPriorityGet( NULL );
-  vTaskPrioritySet( NULL, tskIDLE_PRIORITY );
-  while( xEMACInit() == NULL )
-  {
-    __asm( "NOP" );
-  }
-  vTaskPrioritySet( NULL, uxPriority );
-
-  /* Create the task that handles the EMAC. */
-  xTaskCreate( ethernetif_input, ( signed portCHAR * ) "ETH_INT", netifINTERFACE_TASK_STACK_SIZE, NULL, netifINTERFACE_TASK_PRIORITY, NULL );
+  /* Do whatever else is needed to initialize interface. */  
 }
 
 /**
@@ -171,55 +123,23 @@ low_level_init(struct netif *netif)
 static err_t
 low_level_output(struct netif *netif, struct pbuf *p)
 {
-  (void)netif; // MakingThings
-  //struct ethernetif *ethernetif = netif->state;
+  struct ethernetif *ethernetif = netif->state;
   struct pbuf *q;
 
-  /* MAKINGTHINGS: add */
-  static xSemaphoreHandle xTxSemaphore = NULL;
-  err_t xReturn = ERR_OK;
-  
-  /* MAKINGTHINGS: initiate transfer(); */
-  if( xTxSemaphore == NULL )
-  {
-    vSemaphoreCreateBinary( xTxSemaphore );
-  }
-  //initiate transfer();
+  initiate transfer();
   
 #if ETH_PAD_SIZE
   pbuf_header(p, -ETH_PAD_SIZE); /* drop the padding word */
 #endif
-  
-  /* MAKINGTHINGS: Remove */
-  /*
+
   for(q = p; q != NULL; q = q->next) {
-    * Send the data from the pbuf to the interface, one pbuf at a
+    /* Send the data from the pbuf to the interface, one pbuf at a
        time. The size of the data in each pbuf is kept in the ->len
-       variable. *
+       variable. */
     send data from(q->payload, q->len);
   }
-  
 
   signal that packet should be sent();
-  */
-
-  /* MAKINGTHINGS: Add */
-  /* Access to the EMAC is guarded using a semaphore. */
-  if( xSemaphoreTake( xTxSemaphore, netifGUARD_BLOCK_TIME ) )
-  {
-    for( q = p; q != NULL; q = q->next )
-    {
-      /* Send the data from the pbuf to the interface, one pbuf at a 
-      time. The size of the data in each pbuf is kept in the ->len 
-      variable.  if q->next == NULL then this is the last pbuf in the
-      chain. */
-      if( !lEMACSend( q->payload, q->len, ( q->next == NULL ) ) )
-      {
-        xReturn = ~ERR_OK;
-      }
-    }
-    xSemaphoreGive( xTxSemaphore );
-  }
 
 #if ETH_PAD_SIZE
   pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
@@ -227,11 +147,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
   
   LINK_STATS_INC(link.xmit);
 
-  /* MakingThings: Remove */
-  // return ERR_OK;
-
-  /* MakingThings: Add */
-  return xReturn;
+  return ERR_OK;
 }
 
 /**
@@ -245,33 +161,13 @@ low_level_output(struct netif *netif, struct pbuf *p)
 static struct pbuf *
 low_level_input(struct netif *netif)
 {
-  //struct ethernetif *ethernetif = netif->state;
-  /* MakingThings:  Initialized p */
-  struct pbuf *p = NULL;
-  struct pbuf *q;
-  /* MakingThings:  Initialized len */
-  u16_t len = 0;
+  struct ethernetif *ethernetif = netif->state;
+  struct pbuf *p, *q;
+  u16_t len;
 
-  /* MakingThings: Add for FreeRTOS */
-  static xSemaphoreHandle xRxSemaphore = NULL;
-
-  /* Parameter not used. */
-  ( void ) netif;
-
-  /* MakingThings: Add for FreeRTOS */
-  if( xRxSemaphore == NULL )
-  {
-    vSemaphoreCreateBinary( xRxSemaphore );
-  }
-
-  /* Access to the emac is guarded using a semaphore. */
-  if( xSemaphoreTake( xRxSemaphore, netifGUARD_BLOCK_TIME ) )
-  {
-    /* Obtain the size of the packet. */
-    len = ulEMACInputLength();
-
-		if( len )
-		{
+  /* Obtain the size of the packet and put it into the "len"
+     variable. */
+  len = ;
 
 #if ETH_PAD_SIZE
   len += ETH_PAD_SIZE; /* allow room for Ethernet padding */
@@ -286,21 +182,20 @@ low_level_input(struct netif *netif)
     pbuf_header(p, -ETH_PAD_SIZE); /* drop the padding word */
 #endif
 
-    /* MakingThings: Added */
-    /* Let the driver know we are going to read a new packet. */
-    vEMACRead( NULL, 0, len );
-
     /* We iterate over the pbuf chain until we have read the entire
      * packet into the pbuf. */
     for(q = p; q != NULL; q = q->next) {
       /* Read enough bytes to fill this pbuf in the chain. The
        * available data in the pbuf is given by the q->len
-       * variable. */
-      // read data into(q->payload, q->len);
-      vEMACRead( q->payload, q->len, len );
+       * variable.
+       * This does not necessarily have to be a memcpy, you can also preallocate
+       * pbufs for a DMA-enabled MAC and after receiving truncate it to the
+       * actually received size. In this case, ensure the tot_len member of the
+       * pbuf is the sum of the chained pbuf len members.
+       */
+      read data into(q->payload, q->len);
     }
-    // MakingThings: for FreeRTOS - nope
-        // acknowledge that packet has been read();
+    acknowledge that packet has been read();
 
 #if ETH_PAD_SIZE
     pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
@@ -308,12 +203,9 @@ low_level_input(struct netif *netif)
 
     LINK_STATS_INC(link.recv);
   } else {
-    //drop packet();
+    drop packet();
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
-  }
-  }
-    xSemaphoreGive( xRxSemaphore );
   }
 
   return p;  
@@ -329,58 +221,42 @@ low_level_input(struct netif *netif)
  * @param netif the lwip network interface structure for this ethernetif
  */
 static void
-ethernetif_input( void* notused )
-//ethernetif_input(struct netif *netif)
+ethernetif_input(struct netif *netif)
 {
-  (void)notused; // MakingThings 
   struct ethernetif *ethernetif;
   struct eth_hdr *ethhdr;
   struct pbuf *p;
-  for( ;; )
-  {
-    do
-    {
-      // ethernetif = netif->state;
-      ethernetif = xNetIf->state; // MakingThings
 
-      /* move received packet into a new pbuf */
-      p = low_level_input(xNetIf); // MakingThings
-      /* no packet could be read, silently ignore this */
-      // if (p == NULL) return; // MakingThings
-      if( p == NULL )
-      {
-        /* No packet could be read.  Wait a for an interrupt to tell us 
-        there is more data available. */
-        vEMACWaitForInput();
-      }
-    } while( p == NULL );
+  ethernetif = netif->state;
 
-    /* points to packet payload, which starts with an Ethernet header */
-    ethhdr = p->payload;
+  /* move received packet into a new pbuf */
+  p = low_level_input(netif);
+  /* no packet could be read, silently ignore this */
+  if (p == NULL) return;
+  /* points to packet payload, which starts with an Ethernet header */
+  ethhdr = p->payload;
 
-    switch (htons(ethhdr->type)) {
-    /* IP or ARP packet? */
-      case ETHTYPE_IP:
-      case ETHTYPE_ARP:
+  switch (htons(ethhdr->type)) {
+  /* IP or ARP packet? */
+  case ETHTYPE_IP:
+  case ETHTYPE_ARP:
 #if PPPOE_SUPPORT
   /* PPPoE packet? */
-      case ETHTYPE_PPPOEDISC:
-      case ETHTYPE_PPPOE:
+  case ETHTYPE_PPPOEDISC:
+  case ETHTYPE_PPPOE:
 #endif /* PPPOE_SUPPORT */
     /* full packet send to tcpip_thread to process */
-      //if (netif->input(p, netif)!=ERR_OK)
-      if (xNetIf->input(p, xNetIf)!=ERR_OK)
-      { LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
-        pbuf_free(p);
-        p = NULL;
-      }
-      break;
+    if (netif->input(p, netif)!=ERR_OK)
+     { LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
+       pbuf_free(p);
+       p = NULL;
+     }
+    break;
 
-    default:
-      pbuf_free(p);
-      p = NULL;
-      break;
-    }
+  default:
+    pbuf_free(p);
+    p = NULL;
+    break;
   }
 }
 
@@ -419,7 +295,7 @@ ethernetif_init(struct netif *netif)
    * The last argument should be replaced with your link speed, in units
    * of bits per second.
    */
-  NETIF_INIT_SNMP(netif, snmp_ifType_ethernet_csmacd, 1000000);
+  NETIF_INIT_SNMP(netif, snmp_ifType_ethernet_csmacd, LINK_SPEED_OF_YOUR_NETIF_IN_BPS);
 
   netif->state = ethernetif;
   netif->name[0] = IFNAME0;
@@ -440,6 +316,3 @@ ethernetif_init(struct netif *netif)
 }
 
 #endif /* 0 */
-
-#endif // MAKE_CTRL_NETWORK
-

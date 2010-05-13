@@ -156,10 +156,6 @@ struct netconn {
 #endif /* LWIP_TCP */
   /** A callback function that is informed about events for this netconn */
   netconn_callback callback;
-
-  /* MAKINGTHINGS: Addition */
-  struct netbuf *readingbuf;
-  u16_t readingoffset;
 };
 
 /* Register an Network connection event */

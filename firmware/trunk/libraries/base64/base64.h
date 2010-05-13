@@ -20,21 +20,12 @@
 
 #include "types.h"
 
-/**
-  Decode and encode base 64 data.
-
-  This is often handy when you need to send raw/binary data (as opposed to text) through a 
-  text based format, like XML or JSON.
-
-  Most code lifted from gnulib - http://savannah.gnu.org/projects/gnulib - and written by Simon Josefsson.
-  \par
-*/
-class Base64
-{
-public:
-  static bool decode(char* dest, int* dest_size, const char* src, int src_size);
-  static int encode(char* dest, int dest_size, const char* src, int src_size);
-};
-
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+bool base64Decode(char* dest, int* dest_size, const char* src, int src_size);
+int  base64Encode(char* dest, int dest_size, const char* src, int src_size);
+#ifdef __cplusplus
+}
+#endif
 #endif // BASE_64_H

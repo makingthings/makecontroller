@@ -19,35 +19,21 @@
 #ifndef DIPSWITCH_H
 #define DIPSWITCH_H
 
-#include "spi.h"
 #include "types.h"
 
-/**
-  Reads values in from the 8 position DIP Switch (0 - 255) on the Application Board.
-  
-  Note that this is only appropriate when using the Make Application Board.
-  
-  See the <a href="http://www.makingthings.com/documentation/tutorial/application-board-overview/user-interface">
-  Application Board overview</a> for details.
-  \ingroup io
-*/
-class DipSwitch
-{
-  public:
-    DipSwitch();
-    ~DipSwitch();
+#ifdef __cplusplus
+extern "C" {
+#endif
+void dipswitchInit(void);
+int  dipswitchValue(void);
+bool dipswitchSingleValue(int channel);
+#ifdef __cplusplus
+}
+#endif
 
-    int value( );
-    bool value( int channel );
-
-  protected:
-    static Spi* spi;
-    static int refcount;
-};
-
-/* DipSwitchOsc Interface */
-const char* DipSwitchOsc_GetName( void );
-int DipSwitchOsc_ReceiveMessage( int channel, char* message, int length );
-int DipSwitchOsc_Async( int channel );
+#ifdef OSC
+#include "osc.h"
+extern const OscNode dipswitchOsc;
+#endif // OSC
 
 #endif

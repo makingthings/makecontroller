@@ -171,6 +171,15 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     buf->ptr = p;
     buf->addr = addr;
     buf->port = port;
+#if LWIP_NETBUF_RECVINFO
+    {
+      const struct ip_hdr* iphdr = ip_current_header();
+      /* get the UDP header - always in the first pbuf, ensured by udp_input */
+      const struct udp_hdr* udphdr = (void*)(((char*)iphdr) + IPH_LEN(iphdr));
+      buf->toaddr = (struct ip_addr*)&iphdr->dest;
+      buf->toport = udphdr->dest;
+    }
+#endif /* LWIP_NETBUF_RECVINFO */
   }
 
   if (sys_mbox_trypost(conn->recvmbox, buf) != ERR_OK) {
@@ -487,7 +496,7 @@ struct netconn*
 netconn_alloc(enum netconn_type t, netconn_callback callback)
 {
   struct netconn *conn;
-  int size;
+  int size = 0;
 
   conn = memp_malloc(MEMP_NETCONN);
   if (conn == NULL) {
@@ -810,6 +819,8 @@ do_connect(struct api_msg_msg *msg)
     break;
 #endif /* LWIP_TCP */
   default:
+    LWIP_ERROR("Invalid netconn type", 0, do{ msg->conn->err = ERR_VAL;
+      sys_sem_signal(msg->conn->op_completed); }while(0));
     break;
   }
 }
@@ -1152,7 +1163,7 @@ do_close(struct api_msg_msg *msg)
 #endif /* LWIP_TCP */
   {
     msg->conn->err = ERR_VAL;
-    TCPIP_APIMSG_ACK(msg);
+    sys_sem_signal(msg->conn->op_completed);
   }
 }
 
@@ -1197,9 +1208,8 @@ static void
 do_dns_found(const char *name, struct ip_addr *ipaddr, void *arg)
 {
   struct dns_api_msg *msg = (struct dns_api_msg*)arg;
-  
-  LWIP_UNUSED_ARG(name); // MakingThings - not using any 'assert' for the Make Controller at the moment...avoid compiler warning
-  //LWIP_ASSERT("DNS response for wrong host name", strcmp(msg->name, name) == 0);
+
+  LWIP_ASSERT("DNS response for wrong host name", strcmp(msg->name, name) == 0);
 
   if (ipaddr == NULL) {
     /* timeout or memory error */

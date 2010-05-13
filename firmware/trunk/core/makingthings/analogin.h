@@ -18,57 +18,25 @@
 #ifndef ANALOGIN_H
 #define ANALOGIN_H
 
-#include "rtos.h"
-
 #define ANALOGIN_CHANNELS 8
 
-/**
-  10-bit analog inputs.
-  The analog to digital converters read incoming signals from 0 - 3.3V.  They are rated as 5V tolerant, 
-  but will not return meaningful values for anything above 3.3V.
-  
-  \section Values
-  Analog inputs will return a value between 0 and 1023, corresponding to the range of \b 0 to \b 3.3V on the input.
-  
-  If you want to convert this to the actual voltage, you can use the following conversion:
-  \code float voltage = 3.3 * ( ainValue / 1023.0 ) \endcode
-  where \b ainValue is the AnalogIn value.
-  
-  A quicker version that doesn't use floating point, but will be slightly less precise:
-  \code int voltage = ( 100 * ainValue ) / 1023 \endcode
-  
-  \ingroup io
-*/
-class AnalogIn
-{
-public:
-  AnalogIn(int channel);
-  ~AnalogIn();
-  int value();
-  int valueWait( );
-  static bool multi(int values[]);
+#include "config.h"
+#include "types.h"
 
-protected:
-  int index;
-  int getIo( int index );
-  static int managerInit();
-  static void managerDeinit();
-
-  friend void AnalogIn_Isr();
-
-  typedef struct {
-    Semaphore semaphore;
-    Semaphore doneSemaphore;
-    int activeChannels;
-    bool waitingForMulti; // are we waiting for a multi conversion or just a single channel
-    int multiConversionsComplete; // mask of which conversions have been completed
-  } Manager;
-  static Manager manager;
-};
-
-///* OSC Interface */
-//const char* AnalogInOsc_GetName( void );
-//int AnalogInOsc_ReceiveMessage( int channel, char* message, int length );
-//int AnalogInOsc_Async( int channel );
-
+#ifdef __cplusplus
+extern "C" {
 #endif
+void ainInit(void);
+void ainDeinit(void);
+int  ainValue(int channel);
+int  ainValueWait(int channel);
+bool ainMulti(int values[]);
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef OSC
+#include "osc.h"
+extern const OscNode ainOsc;
+#endif // OSC
+#endif // ANALOGIN_H

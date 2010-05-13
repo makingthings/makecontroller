@@ -31,5 +31,22 @@ The OpenSound Control WWW page is
     OSC-pattern-match.h
 */
 
-bool PatternMatch (const char *pattern, const char *test);
+#include "types.h"
+
+typedef enum OscRangeState_t {
+  BITS,
+  SINGLENUM,
+  EXHAUSTED
+} OscRangeState;
+
+typedef struct OscRange_t {
+  int value; // could be single num or bit mask
+  int index; // if bit mask, which value we're on
+  OscRangeState state; // which mode we're in
+} OscRange;
+
+bool oscPatternMatch (const char *pattern, const char *test);
+bool oscNumberMatch(const char* pattern, int offset, int count, OscRange* r);
+bool oscRangeHasNext(OscRange* r);
+int  oscRangeNext(OscRange* r);
 
