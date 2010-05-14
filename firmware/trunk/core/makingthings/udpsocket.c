@@ -86,13 +86,13 @@ void udpClose(int socket)
   Bind to a port to listen for incoming data.
   Before you can receive UDP data, you need to bind to a port.  If you're only
   going to be writing, you don't need to bother binding.
-  @param socket The socket obtained from udpNew()
+  @param socket The socket obtained from udpOpen()
   @param port An integer specifying the port to bind to.
   @return True on success, false on failure.
   
   \b Example
   \code
-  int sock = udpNew();  // create a new socket
+  int sock = udpOpen();  // create a new socket
   if (udpBind(sock, 10000) == true) { // then bind to port 10000
     // we're successfully bound, and ready to read
   }
@@ -110,7 +110,7 @@ bool udpBind(int socket, int port)
 
 /**
   Send UDP data.
-  @param socket The socket, obtained via udpNew()
+  @param socket The socket, obtained via udpOpen()
   @param data The data to send.
   @param length The number of bytes to send.
   @param address The IP address to send to - use the IP_ADDRESS macro if necessary.
@@ -119,7 +119,7 @@ bool udpBind(int socket, int port)
   
   \b Example
   \code
-  int sock = udpNew();  // create a new socket
+  int sock = udpOpen();  // create a new socket
   int address = IP_ADDRESS(192, 168, 0, 210); // where to send
   int port = 10000; // which port to send on
   int written = udpWrite(sock, "some data", strlen("some data"), address, port);
@@ -145,7 +145,7 @@ int udpSetBlocking(int socket, bool blocking)
   Read data.
   Be sure to bind to a port before trying to read.  If you want to know which
   address the message came from, see udpReadFrom().
-  @param socket The UDP socket, as obtained from udpNew()
+  @param socket The UDP socket, as obtained from udpOpen()
   @param data Where to store the incoming data.
   @param length How many bytes of data to read.
   @param from_address (optional) The address the data came from.
@@ -156,7 +156,7 @@ int udpSetBlocking(int socket, bool blocking)
   \b Example
   \code
   char mydata[128];
-  int sock = udpNew();  // create a new socket
+  int sock = udpOpen();  // create a new socket
   if (udpBind(sock, 10000) == true) { // listen on port 10000
     int read = udpRead(sock, mydata, sizeof(mydata), 0, 0);
   }
@@ -181,7 +181,7 @@ int udpRead(int socket, char* data, int length, int* from_address, int* from_por
 
   \b Example
   \code
-  int sock = udpNew();  // create a new socket
+  int sock = udpOpen();  // create a new socket
   if (udpBytesAvailable(sock) > 0) {
     // we have some reading to do...
   }

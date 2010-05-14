@@ -1,9 +1,5 @@
 
 
-##############################################################################
-# Project, sources and paths
-
-# Define project name here
 PROJECT = heavy
 # available optimization levels: -O0, -O1, -O2, -O3, -Os
 OPTIMIZATION = -O0
@@ -24,8 +20,7 @@ include ${LWIP}/lwip.mk
 include ${USB}/usb.mk
 include ${MT}/mtcore.mk
 
-# C sources that can be compiled in ARM or THUMB mode depending on the global
-# setting.
+# C sources
 CSRC = ${PORTSRC} ${KERNSRC} $(HALSRC) $(PLATFORMSRC) ${MTCORESRC} \
        ${USBCORESRC} ${USBCDCSRC} \
        ${LWNETIFSRC} ${LWCORESRC} ${LWIPV4SRC} ${LWAPISRC} \
@@ -38,34 +33,10 @@ CSRC = ${PORTSRC} ${KERNSRC} $(HALSRC) $(PLATFORMSRC) ${MTCORESRC} \
        ${LIBRARIES}/webclient/webclient.c \
        main.c
 
-# C++ sources that can be compiled in ARM or THUMB mode depending on the global
-# setting.
+# C++ sources
 CPPSRC =
 
-# C sources to be compiled in ARM mode regardless of the global setting.
-# NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
-#       option that results in lower performance and larger code size.
-ACSRC =
-
-# C++ sources to be compiled in ARM mode regardless of the global setting.
-# NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
-#       option that results in lower performance and larger code size.
-ACPPSRC =
-
-# C sources to be compiled in THUMB mode regardless of the global setting.
-# NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
-#       option that results in lower performance and larger code size.
-TCSRC =
-
-# C sources to be compiled in THUMB mode regardless of the global setting.
-# NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
-#       option that results in lower performance and larger code size.
-TCPPSRC =
-
-# List ASM source files here
-ASMSRC = $(PORTASM) \
-         ${CHIBIOS}/os/ports/GCC/ARM7/AT91SAM7/vectors.s
-
+# include directories
 INCDIR = $(PORTINC) $(KERNINC) $(HALINC) $(PLATFORMINC) ${MT} ${LWINC}  \
          ${USBCOREINC} ${USBCDCINC} \
          $(CHIBIOS)/os/various \
@@ -74,15 +45,15 @@ INCDIR = $(PORTINC) $(KERNINC) $(HALINC) $(PLATFORMINC) ${MT} ${LWINC}  \
          ${LIBRARIES}/digitalin \
          ${LIBRARIES}/webclient
 
+# where to put the build output 
 BUILDDIR = build
 
-#
-# Project, sources and paths
-##############################################################################
+# assembly sources
+ASMSRC = $(PORTASM) \
+         ${CHIBIOS}/os/ports/GCC/ARM7/AT91SAM7/vectors.s
 
 ##############################################################################
 # Compiler settings
-#
 
 MCU  = arm7tdmi
 
@@ -100,7 +71,7 @@ OD   = $(TRGT)objdump
 HEX  = $(CP) -O ihex
 BIN  = $(CP) -O binary
 
-# Define linker script file here
+# linker script
 LDSCRIPT = ${MT}/ch.ld
 
 # ARM-specific options here
