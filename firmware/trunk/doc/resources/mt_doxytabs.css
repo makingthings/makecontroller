@@ -34,8 +34,8 @@ DIV.tabs A
 /*   float            : right;*/
 /*   background       : url("tab_r.gif") no-repeat right top;*/
 /*   border-bottom    : 1px solid #84B0C7;*/
-   font-size        : 10pt;
-   font-weight      : bold;
+   font-size        : 12pt;
+/*   font-weight      : bold;*/
    text-decoration  : none;
 }
 

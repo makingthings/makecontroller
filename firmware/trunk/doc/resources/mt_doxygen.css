@@ -33,14 +33,16 @@ html {
 
 h1 {
 	text-align: center;
-	font-size: 150%;
+  font-size: 150%;
+  font-weight: lighter;
 }
 
 h2 {
 	font-size: 120%;
-	
+	font-weight: lighter;
 }
-h2 a, h3 a { font-weight: bold; }
+
+/*h2 a, h3 a { font-weight: bold; }*/
 
 h3 {
 	font-size: 100%;
@@ -74,7 +76,6 @@ div.navtab {
 
 a {
 /*  color: #006EB5;*/
-	font-weight: normal;
 	text-decoration: none;
 }
 
@@ -109,9 +110,9 @@ a.qindexHL {
 	border: 1px double #9295C2;
 }
 
-a.el {
-	font-weight: bold;
-}
+/*a.el {
+  font-weight: bold;
+}*/
 
 a.elRef {
 }
@@ -143,6 +144,8 @@ table.listing td {
 
 table.listing th {
   border-width: 0;
+  font-weight: lighter;
+  font-size: 110%;
   background-color: #45B2EA;
   padding: 5px;
 }
@@ -390,7 +393,7 @@ hr {
 
 .memname {
 	white-space: nowrap;
-	font-weight: bold;
+/*  font-weight: bold;*/
 }
 
 .memproto, .memdoc {
