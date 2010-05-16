@@ -92,8 +92,18 @@ void networkInit()
   macAddress[3] = 0x50 | ((serialNumber >> 12) & 0xF);
   
   macInit(); // chibios mac init
-  int address = 0, mask = 0, gateway = 0;
-  networkLastValidAddress(&address, &mask, &gateway);
+  int address, mask, gateway;
+  // if DHCP is compiled in and it's enabled, init address values with 0 - DHCP doesn't seem to work otherwise
+#if LWIP_DHCP
+  bool dhcp = networkDhcp();
+  if (dhcp)
+    address = mask = gateway = 0;
+  else
+    networkLastValidAddress(&address, &mask, &gateway);
+#else
+    networkLastValidAddress(&address, &mask, &gateway);
+#endif // LWIP_DHCP
+
 
   Semaphore initSemaphore;
   chSemInit(&initSemaphore, 0);
@@ -113,7 +123,7 @@ void networkInit()
   mcnetif->hostname = "tester";
 #if LWIP_DHCP
   mcnetif->status_callback = lwipStatusCallback;
-  if (networkDhcp())
+  if (dhcp)
     networkDhcpStart(5000);
 #endif
 }
@@ -257,12 +267,10 @@ bool networkDhcp()
   return eepromRead(EEPROM_DHCP_ENABLED);
 }
 
-// TODO - the netifapi_ routines don't seem to work here,
-// even though they're the recommended ones to use...investigate.
 bool networkDhcpStart(int timeout)
 {
-//  if (netifapi_dhcp_start(mcnetif) != ERR_OK)
-  if (dhcp_start(mcnetif) != ERR_OK)
+  netif_set_down(mcnetif); // note - dhcp_start brings it back up
+  if (netifapi_dhcp_start(mcnetif) != ERR_OK)
     return false;
   // now hang out for a second until we get an address
   return chSemWaitTimeout(&dhcpSem, MS2ST(timeout)) == RDY_OK;
@@ -270,11 +278,9 @@ bool networkDhcpStart(int timeout)
 
 bool networkDhcpStop(int timeout)
 {
-//  netifapi_dhcp_stop(mcnetif);
-  dhcp_stop(mcnetif);
+  netifapi_dhcp_stop(mcnetif);
   bool rv = (chSemWaitTimeout(&dhcpSem, MS2ST(timeout)) == RDY_OK);
-//  netifapi_netif_set_up(mcnetif);
-  netif_set_up(mcnetif); // bring the interface back up, as dhcp_release() takes it down
+  netifapi_netif_set_up(mcnetif); // bring the interface back up, as dhcp_release() takes it down
   return rv;
 }
 
