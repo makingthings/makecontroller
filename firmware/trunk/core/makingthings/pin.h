@@ -30,20 +30,24 @@
 typedef void (*PinInterruptHandler)(void*);
 
 /**
- * Available pin modes.
- */
+  \defgroup PinMode Pin Modes
+  \ingroup Pins
+  @{
+*/
 typedef enum {
-  INPUT = PAL_MODE_INPUT,
-  INPUT_PULLUP = PAL_MODE_INPUT_PULLUP,
-  OUTPUT = PAL_MODE_OUTPUT_PUSHPULL,
-  OUTPUT_OPENDRAIN = PAL_MODE_OUTPUT_OPENDRAIN,
-  PERIPHERAL_A,
-  PERIPHERAL_B,
-  PULLUP_ON,
-  PULLUP_OFF,
-  GLITCH_FILTER_ON,
-  GLITCH_FILTER_OFF
+  INPUT = PAL_MODE_INPUT,                         /**< Set the pin as an input */
+  INPUT_PULLUP = PAL_MODE_INPUT_PULLUP,           /**< Set the pin as an input with pull-up enabled */
+  OUTPUT = PAL_MODE_OUTPUT_PUSHPULL,              /**< Set the pin as an output */
+  OUTPUT_OPENDRAIN = PAL_MODE_OUTPUT_OPENDRAIN,   /**< Set the pin as an output in open drain mode */
+  PERIPHERAL_A,                                   /**< Configure this pin to function as part of its peripheral A */
+  PERIPHERAL_B,                                   /**< Configure this pin to function as part of its peripheral B */
+  PULLUP_ON,                                      /**< Enable the built-in pullup for this pin */
+  PULLUP_OFF,                                     /**< Disable the built-in pullup for this pin */
+  GLITCH_FILTER_ON,                               /**< Enable the built-in glitch filter for this pin */
+  GLITCH_FILTER_OFF                               /**< Disable the built-in glitch filter for this pin */
 } PinMode;
+
+/** @} */
 
 #if defined(SIMULATOR)
 typedef sim_vio_port_t* Group;
@@ -55,8 +59,7 @@ typedef AT91S_PIO* Group;
 
 /**
   \defgroup PinOptions Pin Options
-  Pins for each of the processor's IO lines.
-  \ingroup Core
+  \ingroup Pins
   @{
 */
 typedef enum {
@@ -158,7 +161,7 @@ extern const OscNode pinOsc;
 
 /**
   \defgroup PinBits Pin Bits
-  \ingroup Core
+  \ingroup Pins
   @{
 */
 #define PIN_PA0_BIT  (1 << 0)  /**< Pin 0, Port A */

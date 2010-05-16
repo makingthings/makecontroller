@@ -65,14 +65,14 @@ static void pinInitInterrupts(Group group, unsigned int priority);
   For each pin you'll generally want to first set its mode, then control it.  The most
   common modes are \b INPUT and \b OUTPUT - here's how they work.
 
-  \subsection Input
+  \section Input
   First set a pin as an input, then you can read the value on that pin:
   \code
   pinSetMode(PIN_PA08, INPUT);
   bool isItOn = pinValue(PIN_PA08);
   \endcode
 
-  \subsection Output
+  \section Output
   First set a pin as an output, then you can turn it on and off:
   \code
   pinSetMode(PIN_PA08, OUTPUT);
@@ -233,7 +233,7 @@ void pinGroupOff(Group group, int pins)
 
 /**
   Set the mode for a pin.
-  Pins can operate in a variety of modes - see PinMode for options.
+  Pins can operate in a variety of modes - see \ref PinMode for options.
   @param pin Which pin to set the mode for.
   @param mode Which PinMode to use for this pin.
   
@@ -249,6 +249,7 @@ void pinSetMode(Pin pin, PinMode mode)
 
 /**
  * Same as pinSetMode(), but for a group of pins.
+  See \ref PinMode for the available modes.
  * \b Example
  * \code
  * // set pins PA0, PA1, PA2 as outputs, all at once
