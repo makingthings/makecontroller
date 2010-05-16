@@ -27,10 +27,13 @@
 #define MIN(a, b) ((a < b) ? a : b)
 #define MAX(a, b) ((a > b) ? a : b)
 
-#define sleep(m) chThdSleepMilliseconds(m)
-#define yield()  chThdYield()
-
 // helper macros for managing threads
+/**
+  Define a thread.
+  @param name The name of your thread - use this in createThread().
+  @param stack The amount of memory required for this task.  512 is a good default, then tune as needed.
+  \ingroup rtos
+*/
 #define threadLoop(name, stack)         \
 WORKING_AREA(name##_WA, stack);         \
 static void name##Function(void);       \
@@ -44,22 +47,44 @@ static msg_t name##_Thd(void *arg)      \
 }                                       \
 void name##Function()
 
+/**
+  Create and run a new thread.
+  @param name The name of your thread, as specified in threadLoop().
+  @param priority Anywhere from 1 to 128.
+  \ingroup rtos
+*/
 #define createThread(name, priority)                                                  \
 {                                                                                     \
   name = chThdCreateStatic(name##_WA, sizeof(name##_WA), priority, name##_Thd, NULL); \
 }
 
-#ifdef __cplusplus
+/**
+  Delay the current thread.
+  @param millis The number of milliseconds to sleep.
+  \ingroup rtos
+*/
+#define sleep(millis) chThdSleepMilliseconds(millis)
+/**
+  Pass control to the next waiting thread.
+  \ingroup rtos
+*/
+#define yield()  chThdYield()
 
-#include "timer.h"
+#ifdef __cplusplus
 
 extern "C" {
 #endif
 // C-only business in here
 
-// all the basics
+// for user code
+void setup(void);
+void loop(void);
+void kill(void);
+
 #include "ch.h"
 #include "hal.h"
+
+// all the basics
 #include "types.h"
 #include "error.h"
 #include "config.h"
@@ -68,6 +93,7 @@ extern "C" {
 #include "pwm.h"
 #include "serial.h"
 #include "spi.h"
+//#include "timer.h"
 #include "fasttimer.h"
 #include "led.h"
 #include "analogin.h"
@@ -80,9 +106,6 @@ extern "C" {
 #ifdef MAKE_CTRL_USB
 #include "usbserial.h"
 #endif
-
-void Run(void);
-void kill(void);
 
 #ifdef __cplusplus
 }

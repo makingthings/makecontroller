@@ -11,6 +11,7 @@ MTCORESRC = ${MT}/board.c \
 						${MT}/spi.c \
 						${MT}/eeprom.c \
 						${MT}/i2c.c \
+						${MT}/main.c \
 						${MT}/network.c \
 						${MT}/udpsocket.c \
 						${MT}/tcpsocket.c \
