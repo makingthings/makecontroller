@@ -31,7 +31,7 @@ CSRC = ${PORTSRC} ${KERNSRC} $(HALSRC) $(PLATFORMSRC) ${MTCORESRC} \
        ${LIBRARIES}/appled/appled.c \
        ${LIBRARIES}/digitalin/digitalin.c \
        ${LIBRARIES}/webclient/webclient.c \
-       main.c
+       $(PROJECT).c
 
 # C++ sources
 CPPSRC =
