@@ -51,7 +51,6 @@ void name##Function()
 
 #ifdef __cplusplus
 
-#include "rtos.h"
 #include "timer.h"
 
 extern "C" {
@@ -82,8 +81,8 @@ extern "C" {
 #include "usbserial.h"
 #endif
 
-void Run( void );
-void kill( void );
+void Run(void);
+void kill(void);
 
 #ifdef __cplusplus
 }
