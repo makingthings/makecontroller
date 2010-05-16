@@ -16,34 +16,64 @@
 *********************************************************************************/
 
 /**
-  \defgroup rtos Real Time Operating System
+  \defgroup rtos Multi Threading
  
   \section Overview
-  The Make Controller runs an operating system, called FreeRTOS (http://www.freertos.org).  This makes
-  it \b much easier to do more than one thing at a time in your programs.  If you want to read
-  from sensors, communicate over the network, communicate via USB, and run a couple motors
-  all at once, the RTOS is a great help.  It lets you write each of those tasks separately (not having
-  to jump back and forth between them), then does the jumping for you when the application is run.
+  The Make Controller runs an operating system, called ChibiOS (http://chibios.sourceforge.net).
+  This makes it \b much easier to do more than one thing at a time in your programs.
+  If you want to read from sensors, communicate over the network, communicate via USB, 
+  and run a couple motors all at once, the RTOS is a great help.
   
-  \section Tasks
-  In a given application, there will usually be 1 or more Tasks.  Each Task is a run loop, or thread,
-  and they can all run more or less simultaneously.  The general idea is to create a Task for each
-  major function of your application - anywhere from 1 to 5 Tasks for an application is normal.  
+  \section Threads
+  Each application has 1 or more threads.  Each thread is a loop that performs part 
+  of your application.  loop() is the basic thread that all apps contain, but
+  you can create additional threads as well.  Define a thread loop using threadLoop(), and then start
+  your thread via createThread().
   
-  In each Task you can create a loop that runs forever, doing the work you tell it to.  When the application
-  is run, the RTOS switches back and forth between all the different tasks to make sure they all get run.
-  Check the Task class for more info.
+  \section Example
+  \code
+  #include "core.h"
   
-  \section Sempahores
-  Semaphores offer a way to synchronize between tasks.  If you have a single resource that will be
-  accessed from different tasks, you usually want to make sure to protect it with a semaphore.  Check
-  the Semaphore class for more info.
+  // define our thread, and reserve 512 bytes of memory for it
+  threadLoop(mythread, 512)
+  {
+    if (ledValue() == ON) {
+      ledSetValue(OFF);
+    }
+    else {
+      ledSetValue(ON);
+    }
+    sleep(100); // sleep for 100 milliseconds, then do it all again
+  }
   
-  \section Queues
-  Queues offer a thread-safe way to transfer data between tasks.  You can load items onto a queue
-  from one task, and then read them off the queue in another.  Check the Queue class for more info.
+  void setup()
+  {
+    // create our thread with priority of 100 (1 is minimum, 128 is maximum priority)
+    createThread(mythread, 100);
+  }
   
-  \section Timers
-  The Make Controller offers a couple timers to help coordinate events that need to be
-  performed at regular intervals.  Check the Timer and FastTimer classes for more info.
+  void loop()
+  {
+    
+  }
+  \endcode
+  
+  \section Priorities
+  Each thread has a priority.  If a thread with a higher priority needs to run, threads
+  with lower priority will be suspended until the high priority thread either sleeps or yields.
+  Call sleep() to delay for a number of milliseconds, or yield() to pass control to the next
+  waiting thread.
+  
+  \section stacks Thread Stacks
+  Each thread has a certain amount of local memory given to it.  The amount of memory required
+  depends on your thread - if you have a lot of big buffers, or variables, you'll need more memory.
+  Define the amount of memory you need when you define your threadLoop().  512 is a good starting point - 
+  if you notice the board is resetting, you probably need to give your thread more memory.
+  
+  \section Advanced
+  ChibiOS provides many interesting features in addition to basic thread management, including queues,
+  semaphores, events, message passing and more.  You can access these directly in your
+  Make Controller applications, but you'll need to consult the excellent 
+  <a href="http://chibios.sourceforge.net/html/index.html">ChibiOS documentation</a> to 
+  get all the details on how to do it.
 */

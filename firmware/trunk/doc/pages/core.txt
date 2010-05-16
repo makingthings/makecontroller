@@ -15,16 +15,14 @@
 
 *********************************************************************************/
 
-/** @defgroup Core Core
+/**
+  \defgroup Core Core
   Functions available to the Make Controller Board.
-  
-  \b Core provides the basic functionality of the Make Controller.  The \ref Libraries module extends the Core module to provide
   additional functionality.
 */
 
 /**
- \mainpage Make Controller Kit - Firmware API
- 
+ \mainpage Make Controller Kit - Firmware Reference
  
  <table width="90%" class="listing">
   <tr>
