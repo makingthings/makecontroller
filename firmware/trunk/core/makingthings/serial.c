@@ -129,7 +129,7 @@ void serialEnableAll(int port, int baud, int parity, int charbits, int stopbits,
   };
 
 #if USE_SAM7_USART0
-  if (port == 0) {
+  if (port == 0 && SD1.sd.state < SD_READY) {
     if (handshake == YES) {
       AT91C_BASE_PIOA->PIO_PDR   = AT91C_PA3_RTS0 | AT91C_PA4_CTS0;
       AT91C_BASE_PIOA->PIO_ASR   = AT91C_PA3_RTS0 | AT91C_PA4_CTS0;
@@ -139,7 +139,7 @@ void serialEnableAll(int port, int baud, int parity, int charbits, int stopbits,
   }
 #endif
 #if USE_SAM7_USART1
-  if (port == 1) {
+  if (port == 1 && SD2.sd.state < SD_READY) {
     // careful - PA8/PA9 are SPI/EEPROM CS lines, but include these if you need them
     if (handshake == YES) {
       AT91C_BASE_PIOA->PIO_PDR   = AT91C_PA8_RTS1 | AT91C_PA9_CTS1;
@@ -229,11 +229,11 @@ char serialGet(int port, int timeout)
 {
 #if USE_SAM7_USART0
   if (port == 0)
-    return chIQGetTimeout(&SD1.sd.iqueue, MS2ST(timeout));
+    return sdGetTimeout(&SD1, MS2ST(timeout));
 #endif
 #if USE_SAM7_USART1
   if (port == 1)
-    return chIQGetTimeout(&SD2.sd.iqueue, MS2ST(timeout));
+    return sdGetTimeout(&SD2, MS2ST(timeout));
 #endif
   return 0;
 }
@@ -278,11 +278,11 @@ int serialPut(int port, char c, int timeout)
 {
 #if USE_SAM7_USART0
   if (port == 0)
-    return chOQPutTimeout(&SD1.sd.oqueue, (uint8_t)c, MS2ST(timeout));
+    return sdPutTimeout(&SD1, (uint8_t)c, MS2ST(timeout));
 #endif
 #if USE_SAM7_USART1
   if (port == 1)
-    return chOQPutTimeout(&SD2.sd.oqueue, (uint8_t)c, MS2ST(timeout));
+    return sdPutTimeout(&SD2, (uint8_t)c, MS2ST(timeout));
 #endif
   return 0;
 }
