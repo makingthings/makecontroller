@@ -6,51 +6,51 @@ OPTIMIZATION = -O0
 
 # components
 LWIP      = ../../core/lwip
-USB       = ../../core/usb
+USB       = ../../core
 CHIBIOS   = ../../core/chibios
 MT        = ../../core/makingthings
 LIBRARIES = ../../libraries
 
 # Imported source files
-include ${CHIBIOS}/os/ports/GCC/ARM7/port.mk
+include $(CHIBIOS)/os/ports/GCC/ARM7/port.mk
 include $(CHIBIOS)/os/hal/platforms/AT91SAM7/platform.mk
 include $(CHIBIOS)/os/hal/hal.mk
-include ${CHIBIOS}/os/kernel/kernel.mk
-include ${LWIP}/lwip.mk
-include ${USB}/usb.mk
-include ${MT}/mtcore.mk
+include $(CHIBIOS)/os/kernel/kernel.mk
+include $(LWIP)/lwip.mk
+include $(USB)/usb/usb.mk
+include $(MT)/mtcore.mk
 
 # C sources
-CSRC = ${PORTSRC} ${KERNSRC} $(HALSRC) $(PLATFORMSRC) ${MTCORESRC} \
-       ${USBCORESRC} ${USBCDCSRC} \
-       ${LWNETIFSRC} ${LWCORESRC} ${LWIPV4SRC} ${LWAPISRC} \
+CSRC = $(PORTSRC) $(KERNSRC) $(HALSRC) $(PLATFORMSRC) $(MTCORESRC) \
+       $(USBCORESRC) $(USBCDCSRC) \
+       $(LWNETIFSRC) $(LWCORESRC) $(LWIPV4SRC) $(LWAPISRC) \
        ${LWIP}/contrib/chibios/lwipthread.c \
        ${LWIP}/contrib/chibios/arch/sys_arch.c \
-       ${CHIBIOS}/os/various/syscalls.c \
-       ${CHIBIOS}/os/various/evtimer.c \
-       ${LIBRARIES}/appled/appled.c \
-       ${LIBRARIES}/digitalin/digitalin.c \
-       ${LIBRARIES}/webclient/webclient.c \
+       $(CHIBIOS)/os/various/syscalls.c \
+       $(CHIBIOS)/os/various/evtimer.c \
+       $(LIBRARIES)/appled/appled.c \
+       $(LIBRARIES)/digitalin/digitalin.c \
+       $(LIBRARIES)/webclient/webclient.c \
        $(PROJECT).c
 
 # C++ sources
 CPPSRC =
 
 # include directories
-INCDIR = $(PORTINC) $(KERNINC) $(HALINC) $(PLATFORMINC) ${MT} ${LWINC}  \
-         ${USBCOREINC} ${USBCDCINC} \
+INCDIR = $(PORTINC) $(KERNINC) $(HALINC) $(PLATFORMINC) \
+				 $(MT) $(LWINC) $(USBINC) \
          $(CHIBIOS)/os/various \
          $(CHIBIOS)/os/ports/GCC/ARM7/AT91SAM7 \
-         ${LIBRARIES}/appled \
-         ${LIBRARIES}/digitalin \
-         ${LIBRARIES}/webclient
+         $(LIBRARIES)/appled \
+         $(LIBRARIES)/digitalin \
+         $(LIBRARIES)/webclient
 
 # where to put the build output 
 BUILDDIR = build
 
 # assembly sources
 ASMSRC = $(PORTASM) \
-         ${CHIBIOS}/os/ports/GCC/ARM7/AT91SAM7/vectors.s
+         $(CHIBIOS)/os/ports/GCC/ARM7/AT91SAM7/vectors.s
 
 ##############################################################################
 # Compiler settings
@@ -72,7 +72,7 @@ HEX  = $(CP) -O ihex
 BIN  = $(CP) -O binary
 
 # linker script
-LDSCRIPT = ${MT}/ch.ld
+LDSCRIPT = $(MT)/ch.ld
 
 # ARM-specific options here
 AOPT =
@@ -170,4 +170,4 @@ endif
 # Build global options
 ##############################################################################
 
-include ${CHIBIOS}/os/ports/GCC/ARM/rules.mk
+include $(CHIBIOS)/os/ports/GCC/ARM/rules.mk

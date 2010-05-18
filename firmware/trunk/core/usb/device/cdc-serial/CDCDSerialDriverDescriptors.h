@@ -43,8 +43,7 @@
 //         Headers
 //------------------------------------------------------------------------------
 
-// #include <usb/device/core/USBDDriverDescriptors.h>
-#include "USBDDriverDescriptors.h"
+ #include <usb/device/core/USBDDriverDescriptors.h>
 
 //------------------------------------------------------------------------------
 //         Definitions

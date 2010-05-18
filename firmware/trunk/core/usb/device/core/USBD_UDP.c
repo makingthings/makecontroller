@@ -47,10 +47,8 @@
 // #include <pio/pio.h>
 // #include <utility/trace.h>
 // #include <utility/led.h>
-// #include <usb/common/core/USBEndpointDescriptor.h>
-#include "USBEndpointDescriptor.h"
-// #include <usb/common/core/USBGenericRequest.h>
-#include "USBGenericRequest.h"
+ #include <usb/common/core/USBEndpointDescriptor.h>
+ #include <usb/common/core/USBGenericRequest.h>
 
 #include <ch.h>
 #include "pin.h"

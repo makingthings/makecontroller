@@ -42,8 +42,7 @@
 //         Headers
 //------------------------------------------------------------------------------
 
-// #include <usb/common/core/USBGenericRequest.h>
-#include "USBGenericRequest.h"
+ #include <usb/common/core/USBGenericRequest.h>
 
 //------------------------------------------------------------------------------
 //         Exported functions

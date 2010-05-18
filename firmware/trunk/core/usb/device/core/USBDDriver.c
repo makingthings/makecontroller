@@ -36,26 +36,16 @@
 #include "USBD.h"
 #include <Board.h>
 // #include <utility/trace.h>
-// #include <usb/common/core/USBGenericDescriptor.h>
-#include "USBGenericDescriptor.h"
-// #include <usb/common/core/USBDeviceDescriptor.h>
-#include "USBDeviceDescriptor.h"
-// #include <usb/common/core/USBConfigurationDescriptor.h>
-#include "USBConfigurationDescriptor.h"
-// #include <usb/common/core/USBDeviceQualifierDescriptor.h>
-#include "USBDeviceQualifierDescriptor.h"
-// #include <usb/common/core/USBEndpointDescriptor.h>
-#include "USBEndpointDescriptor.h"
-// #include <usb/common/core/USBFeatureRequest.h>
-#include "USBFeatureRequest.h"
-// #include <usb/common/core/USBSetAddressRequest.h>
-#include "USBSetAddressRequest.h"
-// #include <usb/common/core/USBGetDescriptorRequest.h>
-#include "USBGetDescriptorRequest.h"
-// #include <usb/common/core/USBSetConfigurationRequest.h>
-#include "USBSetConfigurationRequest.h"
-// #include <usb/common/core/USBInterfaceRequest.h>
-#include "USBInterfaceRequest.h"
+ #include <usb/common/core/USBGenericDescriptor.h>
+ #include <usb/common/core/USBDeviceDescriptor.h>
+ #include <usb/common/core/USBConfigurationDescriptor.h>
+ #include <usb/common/core/USBDeviceQualifierDescriptor.h>
+ #include <usb/common/core/USBEndpointDescriptor.h>
+ #include <usb/common/core/USBFeatureRequest.h>
+ #include <usb/common/core/USBSetAddressRequest.h>
+ #include <usb/common/core/USBGetDescriptorRequest.h>
+ #include <usb/common/core/USBSetConfigurationRequest.h>
+ #include <usb/common/core/USBInterfaceRequest.h>
 
 #include <string.h>
 

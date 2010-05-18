@@ -20,8 +20,8 @@
 
 #include "types.h"
 #include "board.h"
-#include "CDCDSerialDriver.h"
-#include "CDCDSerialDriverDescriptors.h"
+#include "usb/device/cdc-serial/CDCDSerialDriver.h"
+#include "usb/device/cdc-serial/CDCDSerialDriverDescriptors.h"
 
 #define USBSER_MAX_READ BOARD_USB_ENDPOINTS_MAXPACKETSIZE(CDCDSerialDriverDescriptors_DATAOUT)
 #define USBSER_MAX_WRITE BOARD_USB_ENDPOINTS_MAXPACKETSIZE(CDCDSerialDriverDescriptors_DATAIN)
