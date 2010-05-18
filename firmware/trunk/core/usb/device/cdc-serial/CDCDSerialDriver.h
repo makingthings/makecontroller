@@ -53,10 +53,8 @@
 //         Headers
 //------------------------------------------------------------------------------
 
-// #include <usb/common/core/USBGenericRequest.h>
-// #include <usb/device/core/USBD.h>
-#include "USBGenericRequest.h"
-#include "USBD.h"
+ #include <usb/common/core/USBGenericRequest.h>
+ #include <usb/device/core/USBD.h>
 
 //------------------------------------------------------------------------------
 //         Definitions

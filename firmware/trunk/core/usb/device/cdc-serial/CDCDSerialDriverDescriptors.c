@@ -33,32 +33,19 @@
 
 #include "CDCDSerialDriverDescriptors.h"
 #include <Board.h>
-// #include <usb/common/core/USBGenericDescriptor.h>
-#include "USBGenericDescriptor.h"
-// #include <usb/common/core/USBConfigurationDescriptor.h>
-#include "USBConfigurationDescriptor.h"
-// #include <usb/common/core/USBEndpointDescriptor.h>
-#include "USBEndpointDescriptor.h"
-// #include <usb/common/core/USBStringDescriptor.h>
-#include "USBStringDescriptor.h"
-// #include <usb/common/core/USBGenericRequest.h>
-#include "USBGenericRequest.h"
-// #include <usb/common/cdc/CDCGenericDescriptor.h>
-#include "CDCGenericDescriptor.h"
-// #include <usb/common/cdc/CDCDeviceDescriptor.h>
-#include "CDCDeviceDescriptor.h"
-// #include <usb/common/cdc/CDCCommunicationInterfaceDescriptor.h>
-#include "CDCCommunicationInterfaceDescriptor.h"
-// #include <usb/common/cdc/CDCDataInterfaceDescriptor.h>
-#include "CDCDataInterfaceDescriptor.h"
-// #include <usb/common/cdc/CDCHeaderDescriptor.h>
-#include "CDCHeaderDescriptor.h"
-// #include <usb/common/cdc/CDCCallManagementDescriptor.h>
-#include "CDCCallManagementDescriptor.h"
-// #include <usb/common/cdc/CDCAbstractControlManagementDescriptor.h>
-#include "CDCAbstractControlManagementDescriptor.h"
-// #include <usb/common/cdc/CDCUnionDescriptor.h>
-#include "CDCUnionDescriptor.h"
+ #include <usb/common/core/USBGenericDescriptor.h>
+ #include <usb/common/core/USBConfigurationDescriptor.h>
+ #include <usb/common/core/USBEndpointDescriptor.h>
+ #include <usb/common/core/USBStringDescriptor.h>
+ #include <usb/common/core/USBGenericRequest.h>
+ #include <usb/common/cdc/CDCGenericDescriptor.h>
+ #include <usb/common/cdc/CDCDeviceDescriptor.h>
+ #include <usb/common/cdc/CDCCommunicationInterfaceDescriptor.h>
+ #include <usb/common/cdc/CDCDataInterfaceDescriptor.h>
+ #include <usb/common/cdc/CDCHeaderDescriptor.h>
+ #include <usb/common/cdc/CDCCallManagementDescriptor.h>
+ #include <usb/common/cdc/CDCAbstractControlManagementDescriptor.h>
+ #include <usb/common/cdc/CDCUnionDescriptor.h>
 
 //------------------------------------------------------------------------------
 //         Definitions

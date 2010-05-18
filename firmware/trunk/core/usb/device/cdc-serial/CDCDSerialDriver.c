@@ -40,17 +40,13 @@
 
 #include "CDCDSerialDriver.h"
 #include "CDCDSerialDriverDescriptors.h"
-#include "USBDCallbacks.h"
+#include <usb/device/core/USBDCallbacks.h>
 // #include <utility/trace.h>
 // #include <utility/assert.h>
-// #include <usb/device/core/USBDDriver.h>
-#include "USBDDriver.h"
-// #include <usb/common/cdc/CDCLineCoding.h>
-#include "CDCLineCoding.h"
-// #include <usb/common/cdc/CDCGenericRequest.h>
-#include "CDCGenericRequest.h"
-// #include <usb/common/cdc/CDCSetControlLineStateRequest.h>
-#include "CDCSetControlLineStateRequest.h"
+ #include <usb/device/core/USBDDriver.h>
+ #include <usb/common/cdc/CDCLineCoding.h>
+ #include <usb/common/cdc/CDCGenericRequest.h>
+ #include <usb/common/cdc/CDCSetControlLineStateRequest.h>
 
 //------------------------------------------------------------------------------
 //         Types

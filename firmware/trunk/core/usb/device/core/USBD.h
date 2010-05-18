@@ -49,10 +49,8 @@
 //         Headers
 //------------------------------------------------------------------------------
 
-// #include <usb/common/core/USBEndpointDescriptor.h>
-// #include <usb/common/core/USBGenericRequest.h>
-#include "USBEndpointDescriptor.h"
-#include "USBGenericRequest.h"
+ #include <usb/common/core/USBEndpointDescriptor.h>
+ #include <usb/common/core/USBGenericRequest.h>
 
 //------------------------------------------------------------------------------
 //      Definitions
