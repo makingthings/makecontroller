@@ -115,38 +115,12 @@ static const AT91SAM7PIOConfig config =
  * This initialization is performed just after reset before BSS and DATA
  * segments initialization.
  */
-void hwinit0(void) {
-  
-  // Flash Memory: 1 wait state, about 50 cycles in a microsecond.
-  AT91C_BASE_MC->MC_FMR = (AT91C_MC_FMCN & (50 << 16)) | AT91C_MC_FWS_1FWS;
-
+void hwinit0(void)
+{
   #ifndef WATCHDOG_ENABLE
   AT91C_BASE_WDTC->WDTC_WDMR = AT91C_WDTC_WDDIS;
   #endif
-
-  // Enables the main oscillator and waits 56 slow cycles as startup time.
-  AT91C_BASE_PMC->PMC_MOR = (AT91C_CKGR_OSCOUNT & (7 << 8)) | AT91C_CKGR_MOSCEN;
-  while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_MOSCS))
-    ;
-
-  // PLL setup: DIV = 14, MUL = 72, PLLCOUNT = 10
-  // PLLfreq = 96109714 Hz (rounded)
-  AT91C_BASE_PMC->PMC_PLLR = (AT91C_CKGR_DIV & 14) |
-                             (AT91C_CKGR_PLLCOUNT & (10 << 8)) |
-                             (AT91SAM7_USBDIV) |
-                             (AT91C_CKGR_MUL & (72 << 16));
-  while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_LOCK))
-    ;
-  while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_MCKRDY))
-    ;
-
-  // Master clock = PLLfreq / 2 = 48054858 Hz (rounded)
-  AT91C_BASE_PMC->PMC_MCKR = AT91C_PMC_CSS_PLL_CLK | AT91C_PMC_PRES_CLK_2;
-  while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_MCKRDY))
-    ;
-
-  // PIO initialization.
-  palInit(&config);
+  at91sam7_clock_init();
 }
 
 /*
@@ -154,9 +128,9 @@ void hwinit0(void) {
  * This initialization is performed after BSS and DATA segments initialization
  * and before invoking the main() function.
  */
-void hwinit1(void) {
+void hwinit1(void)
+{
   unsigned int i;
-
   // Default AIC setup, the device drivers will modify it as needed.
   AT91C_BASE_AIC->AIC_IDCR = 0xFFFFFFFF; // disable all
   AT91C_BASE_AIC->AIC_ICCR = 0xFFFFFFFF; // clear all
@@ -168,6 +142,9 @@ void hwinit1(void) {
   AT91C_BASE_AIC->AIC_SPU  = (AT91_REG)SpuriousHandler;
   AT91C_BASE_AIC->AIC_DCR = AT91C_AIC_DCR_PROT;
   
+  // PIO initialization.
+  palInit(&config);
+
   /*
     peripheral inits - these are here so they're conveniently already
     done for common usage, but can be removed by conditionalization
@@ -187,7 +164,7 @@ void hwinit1(void) {
   #endif
 
   #ifndef NO_PWM_INIT
-//  pwmInit();
+  //pwmInit();
   #endif
 
   // PIT Initialization.
