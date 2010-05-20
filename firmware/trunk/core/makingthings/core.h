@@ -93,6 +93,7 @@ void kill(void);
 #include "pwm.h"
 #include "serial.h"
 #include "spi.h"
+#include "eeprom.h"
 //#include "timer.h"
 #include "fasttimer.h"
 #include "led.h"

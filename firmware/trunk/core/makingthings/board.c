@@ -17,15 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ch.h"
-#include "hal.h"
-#include "at91lib/aic.h"
-#include "analogin.h"
-#include "spi.h"
-#include "eeprom.h"
-#include "pwm.h"
 #include "core.h"
-#include "serial.h"
+#include "at91lib/aic.h"
 
 void kill(void)
 {
