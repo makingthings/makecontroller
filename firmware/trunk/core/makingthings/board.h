@@ -31,33 +31,20 @@
 #define PIOB_PHY_PD_MASK AT91C_PB18_EF100
 #define PHY_HARDWARE PHY_DAVICOM_9161
 
-/*
- * Initial I/O setup.
- */
-#define VAL_PIOA_ODSR           0x00000000      /* Output data. */
-#define VAL_PIOA_OSR            0x00000000      /* Direction. */
-#define VAL_PIOA_PUSR           0xFFFFFFFF      /* Pull-up. */
+// Initial I/O setup.
+#define VAL_PIOA_ODSR           0x00000000      // Output data.
+#define VAL_PIOA_OSR            0x00000000      // Direction.
+#define VAL_PIOA_PUSR           0xFFFFFFFF      // Pull-up.
 
-#define VAL_PIOB_ODSR           0x00000000      /* Output data. */
-#define VAL_PIOB_OSR            0x00000000      /* Direction. */
-#define VAL_PIOB_PUSR           0xFFFFFFFF      /* Pull-up. */
+#define VAL_PIOB_ODSR           0x00000000      // Output data.
+#define VAL_PIOB_OSR            0x00000000      // Direction.
+#define VAL_PIOB_PUSR           0xFFFFFFFF      // Pull-up.
 
-/// Chip has a UDP controller.
 #define BOARD_USB_UDP
-
-/// Indicates the D+ pull-up is always connected.
 #define BOARD_USB_PULLUP_ALWAYSON
-
-/// Number of endpoints in the USB controller.
 #define BOARD_USB_NUMENDPOINTS                  6
-
-/// Returns the maximum packet size of the given endpoint.
 #define BOARD_USB_ENDPOINTS_MAXPACKETSIZE(i)    ((((i) == 4) || ((i) == 5)) ? 256 : (((i) == 0) ? 8 : 64))
-
-/// Returns the number of FIFO banks for the given endpoint.
 #define BOARD_USB_ENDPOINTS_BANKS(i)            ((((i) == 0) || ((i) == 3)) ? 1 : 2)
-
-/// USB attributes configuration descriptor (bus or self powered, remote wakeup)
 #define BOARD_USB_BMATTRIBUTES                  USBConfigurationDescriptor_BUSPOWERED_NORWAKEUP
 
 // MakingThings
@@ -69,4 +56,4 @@
   #define USB_DETECT AT91C_PIO_PA29
 #endif
 
-#endif /* _BOARD_H_ */
+#endif // _BOARD_H_
