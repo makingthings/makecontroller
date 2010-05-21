@@ -7,6 +7,7 @@ MTCORESRC = ${MT}/board.c \
 						${MT}/serial.c \
 						${MT}/analogin.c \
 						${MT}/pwm.c \
+						${MT}/timer.c \
 						${MT}/usbserial.c \
 						${MT}/spi.c \
 						${MT}/eeprom.c \
