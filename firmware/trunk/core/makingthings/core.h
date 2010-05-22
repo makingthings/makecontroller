@@ -94,7 +94,7 @@ void kill(void);
 #include "serial.h"
 #include "spi.h"
 #include "eeprom.h"
-//#include "timer.h"
+#include "timer.h"
 #include "fasttimer.h"
 #include "led.h"
 #include "analogin.h"
