@@ -24,9 +24,6 @@
 extern "C" {
 #endif
 bool digitalinValue(int channel);
-/* OSC Interface */
-const char* DigitalInOsc_GetName( void );
-int DigitalInOsc_ReceiveMessage( int channel, char* message, int length );
 #ifdef __cpluscplus
 extern "C" {
 #endif

@@ -16,9 +16,8 @@
 *********************************************************************************/
 
 /**
-  \defgroup Core Core
-  Functions available to the Make Controller Board.
-  additional functionality.
+  \defgroup Core Core System
+  Modules for managing the core system of the Make Controller.
 */
 
 /**
@@ -45,6 +44,7 @@
         <li>\ref io</li>
         <li>\ref dataformats</li>
         <li>\ref interfacing</li>
+        <li>\ref Core</li>
       </ul>
     </td>
     <td>

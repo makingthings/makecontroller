@@ -9,16 +9,18 @@
   Timers can be used to schedule an event some time in the future by specifying
   the amount of time, and a handler function to be called at that time.
 
-  TimerCallback functions must have the format \code void myHandler(void* p); \endcode
+  TimerHandler functions must have the format \code void myHandler(void); \endcode
 
   Timers are single shot, meaning that if you want them to trigger repeatedly
   you'll need to reload them from within the handler, as shown in the example below.
+  This gives you the option to change the duration of the timer after it fires each time,
+  if necessary.
 
   \code
   Timer mytimer;
   // first, we'll create a function that will get called by the timer.
   int count = 0; // our current count
-  void myHandler(void* p)
+  void myHandler(void)
   {
     count++;
     if (count > 500) {
@@ -51,7 +53,7 @@
 */
 void timerGo(Timer* timer, int millis, TimerHandler handler)
 {
-  chVTSetI(timer, MS2ST(millis), handler, 0);
+  chVTSetI(timer, MS2ST(millis), (vtfunc_t)handler, 0);
 }
 
 /**
