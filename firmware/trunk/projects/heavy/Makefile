@@ -27,7 +27,6 @@ CSRC = $(PORTSRC) $(KERNSRC) $(HALSRC) $(PLATFORMSRC) $(MTCORESRC) \
        ${LWIP}/contrib/chibios/lwipthread.c \
        ${LWIP}/contrib/chibios/arch/sys_arch.c \
        $(CHIBIOS)/os/various/syscalls.c \
-       $(CHIBIOS)/os/various/evtimer.c \
        $(LIBRARIES)/appled/appled.c \
        $(LIBRARIES)/digitalin/digitalin.c \
        $(LIBRARIES)/webclient/webclient.c \
