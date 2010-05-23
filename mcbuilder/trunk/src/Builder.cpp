@@ -346,15 +346,17 @@ bool Builder::matchErrorOrWarning(const QString & error)
 
     //qDebug("cap! %s: %s, %d - %s", qPrintable(severity), qPrintable(filepath), linenumber, qPrintable(msg));
     QFileInfo fi(filepath);
-    ConsoleItem *item;
+    QListWidgetItem *item = new QListWidgetItem();
+    item->setData(FILEPATH_ROLE, filepath);
+    item->setData(LINENO_ROLE, linenumber);;
     QString fullmsg = tr("%1 (line %2): %3").arg(fi.fileName()).arg(linenumber).arg(msg);
-    if(severity == "error") {
-      item = new ConsoleItem(filepath, linenumber, ConsoleItem::Error);
+    if (severity == "error") {
+      item->setData(TYPE_ROLE, ConsoleItem::Error);
       item->setIcon(QIcon(":/icons/error.png"));
       mainWindow->highlightLine(filepath, linenumber, ConsoleItem::Error);
     }
     else {
-      item = new ConsoleItem(filepath, linenumber, ConsoleItem::Warning);
+      item->setData(TYPE_ROLE, ConsoleItem::Warning);
       mainWindow->highlightLine(filepath, linenumber, ConsoleItem::Warning);
       item->setIcon(QIcon(":/icons/warning.png"));
     }

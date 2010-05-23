@@ -30,6 +30,10 @@
 #include "TestBuilder.h"
 #endif
 
+#define FILEPATH_ROLE (Qt::UserRole)
+#define LINENO_ROLE   (Qt::UserRole + 1)
+#define TYPE_ROLE     (Qt::UserRole + 2)
+
 class MainWindow;
 class ProjectInfo;
 class Preferences;
