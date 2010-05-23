@@ -100,7 +100,7 @@ static void CDCDSerialDriver_SetLineCoding( void )
               (void *) &(cdcdSerialDriver.lineCoding),
               sizeof(CDCLineCoding),
               (TransferCallback) CDCDSerialDriver_SetLineCodingCallback,
-              0);
+              0, 0);
 }
 
 //------------------------------------------------------------------------------
@@ -236,7 +236,7 @@ unsigned char CDCDSerialDriver_Read(void *data,
                      data,
                      size,
                      callback,
-                     argument);
+                     argument, 0);
 }
 
 //------------------------------------------------------------------------------

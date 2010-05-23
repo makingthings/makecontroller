@@ -135,6 +135,9 @@ typedef void (*TransferCallback)(void *pArg,
                                  unsigned int transferred,
                                  unsigned int remaining);
 
+// MakingThings - for byte-oriented reading
+typedef void (*ProgressCallback)(void *pArg, char byte);
+
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
@@ -159,7 +162,8 @@ extern char USBD_Read(
     void *pData,
     unsigned int dLength,
     TransferCallback fCallback,
-    void *pArg);
+    void *pArg,
+    ProgressCallback pCallback);
 
 extern unsigned char USBD_Stall(unsigned char bEndpoint);
 

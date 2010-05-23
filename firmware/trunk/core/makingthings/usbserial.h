@@ -29,12 +29,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void usbserialInit( void );
-bool usbserialIsActive( void );
-int  usbserialRead( char *buffer, int length, int timeout );
-int  usbserialWrite( const char *buffer, int length, int timeout );
-int  usbserialReadSlip( char *buffer, int length, int timeout );
-int  usbserialWriteSlip( const char *buffer, int length, int timeout );
+void usbserialInit(void);
+bool usbserialIsActive(void);
+int  usbserialAvailable(void);
+int  usbserialRead(char *buffer, int length, int timeout);
+int  usbserialWrite(const char *buffer, int length, int timeout);
+int  usbserialReadSlip(char *buffer, int length, int timeout);
+int  usbserialWriteSlip(const char *buffer, int length, int timeout);
 #ifdef __cplusplus
 extern "C" {
 #endif
