@@ -1,150 +1,168 @@
-#
-# MAKINGTHINGS MAKE FILE FOR THE MAKE CONTROLLER
-# Each project may be named uniquely 
-# (See Output variable below) and possibly have different source files
-# Dependencies are automatically created by the compiler (into .d files) and 
-# included in the makefile 
-#
 
-# Name the output files here
-OUTPUT = solo
 
-# this rule says that when "make" is typed the bin file is created 		       
-all: output/$(OUTPUT).bin
+PROJECT = blink
+# available optimization levels: -O0, -O1, -O2, -O3, -Os
+OPTIMIZATION = -Os
 
-# Source files that can be built in THUMB mode.
-THUMB_SRC= \
-  make.c \
-  ../../core/freertos/tasks.c \
-  ../../core/freertos/queue.c \
-  ../../core/freertos/list.c \
-  ../../core/freertos/portable/GCC/ARM7_AT91SAM7S/port.c \
-  ../../core/startup/extras.c \
-  ../../core/freertos/portable/MemMang/heap_2.c \
-  ../../core/makingthings/main.c \
-  ../../core/makingthings/eeprom.c \
-  ../../core/makingthings/analogin.c \
-  ../../core/makingthings/serial.c \
-  ../../core/makingthings/pwm.c \
-  ../../core/makingthings/spi.c \
-  ../../core/makingthings/USB-CDC.c \
-  ../../core/makingthings/rtos.c \
-  ../../core/makingthings/usb.c \
-  ../../core/makingthings/network.c \
-  ../../core/makingthings/system.c \
-  ../../core/makingthings/io.c \
-  ../../core/makingthings/led.c \
-  ../../core/makingthings/timer.c \
-  ../../core/makingthings/fasttimer.c \
-  ../../core/makingthings/debugosc.c \
-  ../../core/makingthings/can.c \
-  ../../core/lwip/src/core/tcp_out.c \
-  ../../core/lwip/src/core/ipv4/inet.c \
-  ../../core/lwip/src/core/mem.c \
-  ../../core/lwip/src/core/memp.c \
-  ../../core/lwip/src/core/netif.c \
-  ../../core/lwip/src/core/pbuf.c \
-  ../../core/lwip/src/core/raw.c \
-  ../../core/lwip/src/core/stats.c \
-  ../../core/lwip/src/core/sys.c \
-  ../../core/lwip/src/core/tcp.c \
-  ../../core/lwip/src/core/tcp_in.c \
-  ../../core/lwip/src/core/init.c \
-  ../../core/lwip/src/core/ipv4/ip.c \
-  ../../core/lwip/src/core/ipv4/ip_addr.c \
-  ../../core/lwip/src/core/ipv4/icmp.c \
-  ../../core/lwip/src/core/ipv4/inet_chksum.c \
-  ../../core/lwip/src/core/dhcp.c \
-  ../../core/lwip/src/core/dns.c \
-  ../../core/lwip/src/api/tcpip.c \
-  ../../core/lwip/src/api/api_msg.c \
-  ../../core/lwip/src/api/err.c \
-  ../../core/lwip/src/api/netbuf.c \
-  ../../core/lwip/src/api/api_lib.c \
-  ../../core/lwip/src/netif/etharp.c \
-  ../../core/lwip/contrib/port/FreeRTOS/AT91SAM7X/sys_arch.c \
-  ../../core/lwip/src/netif/ethernetif.c \
-  ../../core/makingthings/SAM7_EMAC.c \
-  ../../core/lwip/src/core/udp.c \
-  ../../core/lwip/src/core/ipv4/ip_frag.c \
-  ../../core/makingthings/osc.c \
-  ../../core/makingthings/osc_patternmatch.c
-  
-# Source files that must be built in ARM mode.
-ARM_SRC= \
-  ../../core/freertos/portable/GCC/ARM7_AT91SAM7S/portISR.c \
-  ../../core/makingthings/SAM7_EMAC_ISR.c \
-  ../../core/makingthings/USBIsr.c \
-  ../../core/startup/Cstartup_SAM7.c \
-  ../../core/makingthings/analogin_isr.c \
-  ../../core/makingthings/fasttimer_isr.c \
-  ../../core/makingthings/serial_isr.c \
-  ../../core/makingthings/timer_isr.c \
-  ../../core/makingthings/can_isr.c
-  
-# All the include directories need to be appended here
-INCLUDEDIRS = \
--I.  \
--I../../core/makingthings  \
--I../../core/lwip/src/include  \
--I../../core/lwip/contrib/port/FreeRTOS/AT91SAM7X  \
--I../../core/freertos/include  \
--I../../core/freertos/portable/GCC/ARM7_AT91SAM7S  \
--I../../core/lwip/src/include/ipv4 \
+# components
+LWIP      = ../../core/lwip
+USB       = ../../core
+CHIBIOS   = ../../core/chibios
+MT        = ../../core/makingthings
+LIBRARIES = ../../libraries
 
-############################################################################
-# Below here should not change from project to project
+# Imported source files
+include $(CHIBIOS)/os/ports/GCC/ARM7/port.mk
+include $(CHIBIOS)/os/hal/platforms/AT91SAM7/platform.mk
+include $(CHIBIOS)/os/hal/hal.mk
+include $(CHIBIOS)/os/kernel/kernel.mk
+include $(LWIP)/lwip.mk
+include $(USB)/usb/usb.mk
+include $(MT)/mtcore.mk
 
-CC=arm-elf-gcc
-OBJCOPY=arm-elf-objcopy
-ARCH=arm-elf-ar
-CRT0=../../core/startup/boot.s
-DEBUG=
-OPTIM=-O2
-LDSCRIPT=../../core/startup/atmel-rom.ld
+# C sources
+CSRC = $(PORTSRC) $(KERNSRC) $(HALSRC) $(PLATFORMSRC) $(MTCORESRC) \
+       $(USBCORESRC) $(USBCDCSRC) \
+       $(LWNETIFSRC) $(LWCORESRC) $(LWIPV4SRC) $(LWAPISRC) \
+       $(LWIP)/contrib/chibios/lwipthread.c \
+       $(LWIP)/contrib/chibios/arch/sys_arch.c \
+       $(CHIBIOS)/os/various/syscalls.c \
+       $(CHIBIOS)/os/various/evtimer.c \
+       $(PROJECT).c
+
+# C++ sources
+CPPSRC =
+
+# include directories
+INCDIR = $(PORTINC) $(KERNINC) $(HALINC) $(PLATFORMINC) \
+         $(MT) $(LWINC) $(USBINC) \
+         $(CHIBIOS)/os/various \
+         $(CHIBIOS)/os/ports/GCC/ARM7/AT91SAM7
+
+# where to put the build output 
+BUILDDIR = build
+
+# assembly sources
+ASMSRC = $(PORTASM) \
+         $(CHIBIOS)/os/ports/GCC/ARM7/AT91SAM7/vectors.s
+
+##############################################################################
+# Compiler settings - shouldn't need to change anything beyond here
+# unless you know what you're up to!
+
+MCU  = arm7tdmi
+
+TRGT = arm-elf-
+CC   = $(TRGT)gcc
+CPPC = $(TRGT)g++
+# Enable loading with g++ only if you need C++ runtime support.
+# NOTE: You can use C++ even without C++ support if you are careful. C++
+#       runtime support makes code size explode.
+LD   = $(TRGT)gcc
+#LD   = $(TRGT)g++
+CP   = $(TRGT)objcopy
+AS   = $(TRGT)gcc -x assembler-with-cpp
+OD   = $(TRGT)objdump
+HEX  = $(CP) -O ihex
+BIN  = $(CP) -O binary
+
+# linker script
+LDSCRIPT = $(MT)/ch.ld
+
+# ARM-specific options here
+AOPT =
+
+# THUMB-specific options here
+TOPT = -mthumb -DTHUMB
+
+# Define C warning options here
+CWARN = -Wall -Wextra -Wstrict-prototypes
+
+# Define C++ warning options here
+CPPWARN = -Wall -Wextra
 
 #
-# CFLAGS common to both the THUMB and ARM mode builds
+# Compiler settings
+##############################################################################
+
+##############################################################################
+# Start of default section
 #
 
-CFLAGS= \
-$(INCLUDEDIRS) \
--Wall  \
--Wextra  \
--Wstrict-prototypes  \
--Wmissing-prototypes  \
--Wmissing-declarations  \
--Wno-strict-aliasing  \
--D SAM7_GCC  \
--D THUMB_INTERWORK \
--mthumb-interwork \
--mcpu=arm7tdmi  \
--T$(LDSCRIPT) \
-$(DEBUG)  \
-$(OPTIM)
+# List all default C defines here, like -D_DEBUG=1
+DDEFS =
 
-THUMB_FLAGS=-mthumb
-LINKER_FLAGS=-Xlinker -ooutput/$(OUTPUT).elf -Xlinker -M -Xlinker -Map=output/$(OUTPUT)_o.map
+# List all default ASM defines here, like -D_DEBUG=1
+DADEFS =
 
-ARM_OBJ = $(ARM_SRC:.c=.o)
-THUMB_OBJ = $(THUMB_SRC:.c=.o)
+# List all default directories to look for include files here
+DINCDIR =
 
-output/$(OUTPUT).bin : output/$(OUTPUT).elf
-	$(OBJCOPY) output/$(OUTPUT).elf -O binary output/$(OUTPUT).bin
-	
-output/$(OUTPUT).elf : $(ARM_OBJ) $(THUMB_OBJ) $(CRT0)
-	$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles $(CRT0) $(LINKER_FLAGS)
+# List the default directory to look for the libraries here
+DLIBDIR =
 
-$(THUMB_OBJ) : %.o : %.c
-	$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@
+# List all default libraries here
+DLIBS =
 
-$(ARM_OBJ) : %.o : %.c
-	$(CC) -c $(CFLAGS) $< -o $@
-  	    
-clean :
-	rm -f $(ARM_OBJ)
-	rm -f $(THUMB_OBJ)
-	rm -f output/$(OUTPUT).elf     
-	rm -f output/$(OUTPUT).bin     
-	rm -f output/$(OUTPUT)_o.map     
+#
+# End of default section
+##############################################################################
 
+##############################################################################
+# Start of user section
+#
+
+# List all user C define here, like -D_DEBUG=1
+UDEFS =
+
+# Define ASM defines here
+UADEFS =
+
+# List all user directories here
+UINCDIR =
+
+# List the user directory to look for the libraries here
+ULIBDIR =
+
+# List all user libraries here
+ULIBS =
+
+#
+# End of user defines
+##############################################################################
+
+##############################################################################
+# Build global options
+# NOTE: Can be overridden externally.
+#
+
+# Compiler options here.
+ifeq ($(USE_OPT),)
+  USE_OPT = ${OPTIMIZATION} -ggdb -fomit-frame-pointer -mabi=apcs-gnu
+endif
+
+# C++ specific options here (added to USE_OPT).
+ifeq ($(USE_CPPOPT),)
+  USE_CPPOPT = -fno-rtti -fno-exceptions
+endif
+
+# Enable this if you want the linker to remove unused code and data
+ifeq ($(USE_LINK_GC),)
+  USE_LINK_GC = yes
+endif
+
+# If enabled, this option allows to compile the application in THUMB mode.
+ifeq ($(USE_THUMB),)
+  USE_THUMB = no
+endif
+
+# Enable register caching optimization (read documentation).
+ifeq ($(USE_CURRP_CACHING),)
+  USE_CURRP_CACHING = no
+endif
+
+#
+# Build global options
+##############################################################################
+
+include $(CHIBIOS)/os/ports/GCC/ARM/rules.mk
