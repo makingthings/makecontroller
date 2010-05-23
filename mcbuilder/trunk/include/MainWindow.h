@@ -70,7 +70,7 @@ public:
   void setEditorFont(const QString & family, int pointSize);
   void printOutput(const QString & text);
   void printOutputError(const QString & text);
-  void printOutputError(ConsoleItem *item);
+  void printOutputError(QListWidgetItem *item);
   QString currentProjectPath( ) { return currentProject; }
   QString currentBoardProfile( );
   bool findText(const QString & text, QTextDocument::FindFlags flags, bool forward);
@@ -92,7 +92,7 @@ private:
   void loadRecentProjects( );
   void writeSettings();
   void readSettings();
-  void closeEvent( QCloseEvent *qcloseevent );
+  void closeEvent(QCloseEvent *qcloseevent);
   Ui::MainWindow ui;
   Highlighter *highlighter;
   Preferences *prefs;
