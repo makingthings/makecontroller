@@ -1,0 +1,30 @@
+
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#ifndef FIRMWARE_NAME
+#define FIRMWARE_NAME "My Project"
+#endif
+
+#ifndef FIRMWARE_MAJOR_VERSION
+#define FIRMWARE_MAJOR_VERSION 0
+#endif
+
+#ifndef FIRMWARE_MINOR_VERSION
+#define FIRMWARE_MINOR_VERSION 1
+#endif
+
+#ifndef FIRMWARE_BUILD_NUMBER
+#define FIRMWARE_BUILD_NUMBER  0
+#endif
+
+#ifndef CONTROLLER_VERSION
+#define CONTROLLER_VERSION  200    // valid options: 50, 90, 95, 100, 200
+#endif
+
+#ifndef APPBOARD_VERSION
+#define APPBOARD_VERSION  100      // valid options: 50, 90, 95, 100, 200
+#endif
+
+#endif // CONFIG_H
+

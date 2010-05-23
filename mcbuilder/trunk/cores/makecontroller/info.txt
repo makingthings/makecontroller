@@ -1,6 +1,6 @@
 If it's not already here, you need to grab the firmware code for the Make Controller.  
 
-You can use any version you like, but the latest is always at https://www.makingthings.com/svn/firmware/trunk.  The 'cores' and 'libraries' directories from the firmware codebase should be placed here, such that the structure from the root of the mcbuilder directory looks like:
+You can use any version you like, but the latest is always at http://makecontroller.googlecode.com/svn/firmware/trunk.  The 'core' and 'libraries' directories from the firmware codebase should be placed here, such that the structure from the root of the mcbuilder directory looks like:
 
 mcbuilder
   / cores

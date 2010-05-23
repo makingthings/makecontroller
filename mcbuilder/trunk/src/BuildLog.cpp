@@ -54,7 +54,7 @@ void BuildLog::append(const QString & msg)
 /*
   Clear the log.
 */
-void BuildLog::clear( )
+void BuildLog::clear()
 {
   ui.logConsole->clear();
 }

@@ -27,7 +27,7 @@ class ProjectManager
     ProjectManager( ) { }
     QString createNewFile(const QString & projectPath, const QString & filePath);
     QString saveFileAs(const QString & projectPath, const QString & existingFilePath, const QString & newFilePath);
-    bool addToProjectFile(const QString & projectPath, const QString & newFilePath, const QString & buildtype);
+    bool addToProjectFile(const QString & projectPath, const QString & newFilePath);
     bool removeFromProjectFile(const QString & projectPath, const QString & filePath);
     QString createNewProject(const QString & newProjectPath);
     QString saveCurrentProjectAs(const QString & currentProjectPath, const QString & newProjectPath);

@@ -18,6 +18,7 @@
 
 #include "ProjectManager.h"
 #include <QTextStream>
+#include <QtDebug>
 #include <QDate>
 #include <QFileInfo>
 #include <QDir>
@@ -31,21 +32,21 @@
 QString ProjectManager::createNewFile(const QString & projectPath, const QString & filePath)
 {
   QFileInfo fi(filePath);
-  if(fi.exists()) // if it already exists, don't do anything
+  if (fi.exists()) // if it already exists, don't do anything
     return "";
 
   QString newFileName;
   confirmValidFileName(&fi);
   QFile file(fi.filePath());
 
-  if(file.exists()) // don't do anything if this file's already there
+  if (file.exists()) // don't do anything if this file's already there
     return fi.filePath();
-  if(file.open(QIODevice::WriteOnly | QFile::Text)) {
+  if (file.open(QIODevice::WriteOnly | QFile::Text)) {
     QTextStream out(&file);
     out << QString("// %1").arg(fi.fileName()) << endl;
     out << QString("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl << endl;
     file.close();
-    if(addToProjectFile(projectPath, fi.filePath(), "thumb"))
+    if (addToProjectFile(projectPath, fi.filePath()))
       newFileName = fi.filePath();
   }
   return newFileName;
@@ -65,7 +66,7 @@ QString ProjectManager::saveFileAs(const QString & projectPath, const QString & 
   if(!file.copy(fi.filePath()))
     return QString();
 
-  if(addToProjectFile(projectPath, fi.filePath(), "thumb"))
+  if(addToProjectFile(projectPath, fi.filePath()))
     return fi.filePath();
   else
     return QString();
@@ -118,18 +119,26 @@ QString ProjectManager::createNewProject(const QString & newProjectPath)
   QString newProjName = newProjectDir.dirName();
 
   // grab the templates for a new project
-  QDir templatesDir = QDir::current().filePath("resources/templates");
+  QDir templatesDir("/Users/liam/Documents/mtcode/make/mcbuilder/resources/templates");
 
   // create the project file from our template
   QFile templateFile(templatesDir.filePath("project_template.xml"));
   templateFile.copy(newProjectDir.filePath(newProjName + ".xml"));
   templateFile.close();
 
+  templateFile.setFileName(templatesDir.filePath("makefile_template.txt"));
+  templateFile.copy(newProjectDir.filePath("Makefile"));
+  templateFile.close();
+
+  templateFile.setFileName(templatesDir.filePath("config_template.txt"));
+  templateFile.copy(newProjectDir.filePath("config.h"));
+  templateFile.close();
+
   templateFile.setFileName(templatesDir.filePath("source_template.txt"));
-  if( templateFile.open(QIODevice::ReadOnly | QFile::Text) ) {
+  if (templateFile.open(QIODevice::ReadOnly | QFile::Text)) {
     // and create the main file
     QFile mainFile(newProjectDir.filePath(newProjName + ".c"));
-    if( mainFile.open(QIODevice::WriteOnly | QFile::Text) ) {
+    if (mainFile.open(QIODevice::WriteOnly | QFile::Text)) {
       QTextStream out(&mainFile);
       out << QString("// %1.c").arg(newProjName) << endl;
       out << QString("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl;
@@ -137,7 +146,7 @@ QString ProjectManager::createNewProject(const QString & newProjectPath)
       mainFile.close();
     }
     QFileInfo fi(mainFile);
-    addToProjectFile(newProjectDir.path(), fi.filePath(), "thumb");
+    addToProjectFile(newProjectDir.path(), fi.filePath());
     templateFile.close();
   }
   return newProjectDir.path();
@@ -147,7 +156,7 @@ QString ProjectManager::createNewProject(const QString & newProjectPath)
   Add a filepath to this project's file list.
   It's path should be relative to the project directory.
 */
-bool ProjectManager::addToProjectFile(const QString & projectPath, const QString & newFilePath, const QString & buildtype)
+bool ProjectManager::addToProjectFile(const QString & projectPath, const QString & newFilePath)
 {
   bool retval = false;
   QDomDocument newProjectDoc;
@@ -157,7 +166,6 @@ bool ProjectManager::addToProjectFile(const QString & projectPath, const QString
   if(newProjectDoc.setContent(&projectFile)) {
     projectFile.close();
     QDomElement newFileElement = newProjectDoc.createElement("file");
-    newFileElement.setAttribute("type", buildtype);
     QDomText newFilePathElement = newProjectDoc.createTextNode(projectDir.relativeFilePath(newFilePath));
     newFileElement.appendChild(newFilePathElement);
     newProjectDoc.elementsByTagName("files").at(0).toElement().appendChild(newFileElement);

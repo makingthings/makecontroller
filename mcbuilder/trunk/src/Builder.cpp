@@ -20,22 +20,18 @@
 #include <QTextStream>
 #include <QDateTime>
 #include <QDebug>
+#include <QThread>
 #include "Builder.h"
 #include "ConsoleItem.h"
 
-#define LIBRARIES_DIR "cores/makecontroller/libraries"
-
-#define ARM_C_FILES_GROUP "ARM_SRC"
-#define ARM_CPP_FILES_GROUP "ARM_CPP_SRC"
-#define THUMB_C_FILES_GROUP "THUMB_SRC"
-#define THUMB_CPP_FILES_GROUP "THUMB_CPP_SRC"
+#define LIBRARIES_DIR "/Users/liam/Documents/mtcode/make/mcbuilder/cores/makecontroller/libraries"
 
 /*
   Builder takes a project and turns it into a binary executable.
   We need to generate a Makefile based on the general Preferences
   and Properties for this project.
 */
-Builder::Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog, Preferences* prefs ) : QProcess( 0 )
+Builder::Builder(MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog, Preferences* prefs) : QProcess(0)
 {
   this->mainWindow = mainWindow;
   this->projInfo = projInfo;
@@ -57,18 +53,17 @@ void Builder::build(const QString & projectName)
 {
   currentProjectPath = projectName;
   QDir dir(projectName);
-  setWorkingDirectory(dir.filePath("build"));
-  loadDependencies(LIBRARIES_DIR, projectName);      // this loads up the list of libraries this project depends on
-  if(compareConfigFile(projectName))
-    createConfigFile(projectName);      // create a config file based on the Properties for this project
-  createMakefile(projectName);        // create a Makefile for this project, given the dependencies
+  setWorkingDirectory(projectName);
+  qDebug() << "projname" << projectName;
+
   buildStep = BUILD;
   currentProcess = "make";
   setEnvironment(QProcess::systemEnvironment());
   QString makePath = Preferences::makePath();
-  if(!makePath.isEmpty() && !makePath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
+  if (!makePath.isEmpty() && !makePath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
     makePath += "/";
-  start(makePath + "make");
+  qDebug() << generateArgs(projectName);
+  start(makePath + "make", generateArgs(projectName));
   QString buildmsg("***************************************************************\n");
   buildmsg += tr("  mcbuilder - building ") + dir.dirName() + "\n";
   buildmsg += QDateTime::currentDateTime().toString("  MMM d, yyyy h:m ap") + "\n";
@@ -76,25 +71,57 @@ void Builder::build(const QString & projectName)
   buildLog->append(buildmsg);
 }
 
+QStringList Builder::generateArgs(const QString & projectName)
+{
+  QStringList args;
+  int parallelthreads = QThread::idealThreadCount();
+  if (parallelthreads < 1)
+    parallelthreads = 1;
+  args << QString("-j%1").arg(parallelthreads); // use all the cores possible
+
+  QString src = "/Users/liam/Documents/mtcode/make/mcbuilder/cores/makecontroller";
+  args << QString("PROJECT=%1").arg(projectName.split("/").last());
+  args << QString("LWIP=%1/core/lwip").arg(src);
+  args << QString("USB=%1/core").arg(src);
+  args << QString("CHIBIOS=%1/core/chibios").arg(src);
+  args << QString("MT=%1/core/makingthings").arg(src);
+  args << QString("LIBRARIES=%1/libraries").arg(src);
+  args << QString("TRGT=%1/arm-elf-").arg(Preferences::toolsPath());
+
+  // load up the list of libraries this project depends on
+  QList<Builder::Library> libs = loadDependencies(LIBRARIES_DIR, projectName);
+  QString csrc = "MCBUILDER_CSRC=";
+  QString cppsrc = "MCBUILDER_CPPSRC=";
+  QString incdir = "MCBUILDER_INCDIR=";
+  foreach (Builder::Library lib, libs) {
+    foreach (QString cfile, lib.csrc)
+      csrc.append(cfile + "\\ ");
+    foreach (QString cppfile, lib.cppsrc)
+      csrc.append(cppsrc + "\\ ");
+    incdir.append(QDir(LIBRARIES_DIR).filePath(lib.name));
+  }
+  // if we actually got anything in any of them, add them to the list of args
+  if (!csrc.endsWith("=")) args << csrc;
+  if (!cppsrc.endsWith("=")) args << cppsrc;
+  if (!incdir.endsWith("=")) args << incdir;
+  return args;
+}
+
 /*
   Remove all the object files from the build directory.
 */
 void Builder::clean(const QString & projectName)
 {
-  QDir buildDir(ensureBuildDirExists(projectName));
-  setWorkingDirectory(buildDir.path());
-  loadDependencies(LIBRARIES_DIR, projectName);
-  if(compareConfigFile(projectName))
-    createConfigFile(projectName);      // create a config file based on the Properties for this project
-  createMakefile(projectName);
+  setWorkingDirectory(projectName);
   buildStep = CLEAN;
-  QStringList args = QStringList() << "clean";
   currentProcess = "make clean";
   buildLog->clear( );
   setEnvironment(QProcess::systemEnvironment());
   QString makePath = Preferences::makePath();
   if(!makePath.isEmpty() && !makePath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
     makePath += "/";
+  QStringList args = generateArgs(projectName);
+  args.prepend("clean");
   start(QDir::toNativeSeparators(makePath + "make"), args);
 }
 
@@ -104,31 +131,18 @@ void Builder::stop()
 }
 
 /*
-  If there's no build directory within a project, create one.
-  Return the build dir's path.
-*/
-QString Builder::ensureBuildDirExists(const QString & projPath)
-{
-  QDir dir(projPath);
-  if(!dir.exists("build"))
-    dir.mkdir("build");
-  return dir.filePath("build");
-}
-
-/*
   This handles the end of each step of the build process.  Maintain which state we're
   in and fire off the next process as appropriate.
 */
-void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
+void Builder::nextStep(int exitCode, QProcess::ExitStatus exitStatus)
 {
-  if( exitCode != 0 || exitStatus != QProcess::NormalExit) { // something didn't finish happily
+  if (exitCode != 0 || exitStatus != QProcess::NormalExit) { // something didn't finish happily
     mainWindow->onBuildComplete(false);
     resetBuildProcess();
     return;
   }
 
-  switch(buildStep)
-  {
+  switch (buildStep) {
     case BUILD: // the build has just completed.  check the size of the .bin
     {
       QDir dir(currentProjectPath);
@@ -137,9 +151,9 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
       dir.setNameFilters(QStringList() << "*.bin");
       QFileInfoList bins = dir.entryInfoList();
       bool success = false;
-      if(bins.count()) {
+      if (bins.count()) {
         int filesize = bins.first().size();
-        if(filesize <= (256 * 1024) ) {
+        if (filesize <= (256 * 1024) ) {
           mainWindow->printOutput(tr("%1.bin is %2 out of a possible 256K bytes.").arg(projectName).arg(filesize));
           mainWindow->onBuildComplete(true);
           success = true;
@@ -147,7 +161,7 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
         else
           mainWindow->printOutputError(tr("Error - %1.bin is too big!  %2 out of a possible 256K bytes.").arg(projectName).arg(filesize));
       }
-      if(!success)
+      if (!success)
         mainWindow->onBuildComplete(false);
       break;
     }
@@ -164,224 +178,6 @@ void Builder::nextStep( int exitCode, QProcess::ExitStatus exitStatus )
 void Builder::resetBuildProcess()
 {
   errMsg.clear();
-  libraries.clear();
-}
-
-/*
-  Create a Makefile for this project.
-  Assemble the list of source files, set the name,
-  stuff in the project properties,
-  add the boilerplate info and we're all set.
-*/
-bool Builder::createMakefile(const QString & projectPath)
-{
-  bool retval = true;
-  QDir buildDir( ensureBuildDirExists(projectPath) );
-  QFile makefile(buildDir.filePath("Makefile"));
-  if(makefile.open(QIODevice::WriteOnly | QFile::Text)) {
-    QDir projectDir(projectPath);
-    QTextStream tofile(&makefile);
-    tofile << "##################################################################################################" << endl;
-    tofile << "#" << endl << tr("# This file generated automatically by mcbuilder - ");
-    tofile << QDateTime::currentDateTime().toString("MMM d, yyyy h:m ap") << endl;
-    tofile << tr("# Any manual changes made to this file will be overwritten the next time mcbuilder builds.") << endl << "#" << endl;
-    tofile << "##################################################################################################" << endl << endl;
-
-    tofile << "OUTPUT = " + projectDir.dirName().toLower() << endl << endl;
-    tofile << "all: $(OUTPUT).bin" << endl << endl;
-
-    // read the project file in to get a list of the files we want to build, and include dirs
-    QFile projectFile(projectDir.filePath(projectDir.dirName() + ".xml"));
-    QDomDocument projectDoc;
-    if(projectDoc.setContent(&projectFile)) {
-      if(projectDoc.doctype().name() == "mcbuilder_project_file") {
-        QString projName = projectDir.dirName();
-
-        // extract all the files for this project from the project file
-        // into string lists of file names for the different compilation groups
-        QStringList thmbFiles, thmbCppFiles, armFiles, armCppFiles;
-        QDomNodeList allFiles = projectDoc.elementsByTagName("files").at(0).childNodes();
-        int allfileslen = allFiles.count();
-        for(int i = 0; i < allfileslen; i++) {
-          QString filepath = allFiles.at(i).toElement().text();
-          QFileInfo fi(filepath);
-          if(allFiles.at(i).toElement().attribute("type") == "thumb") {
-            if(cppSuffixes.contains(fi.suffix()))
-              thmbCppFiles << filepath;
-            else
-              thmbFiles << filepath;
-          }
-          else if(allFiles.at(i).toElement().attribute("type") == "arm") {
-            if(cppSuffixes.contains(fi.suffix()))
-              armCppFiles << filepath;
-            else
-              armFiles << filepath;
-          }
-        }
-
-        writeGroupToMakeFile( tofile, THUMB_C_FILES_GROUP, thmbFiles );
-        writeGroupToMakeFile( tofile, THUMB_CPP_FILES_GROUP, thmbCppFiles );
-        writeGroupToMakeFile( tofile, ARM_C_FILES_GROUP, armFiles );
-        writeGroupToMakeFile( tofile, ARM_CPP_FILES_GROUP, armCppFiles );
-
-        tofile << "INCLUDEDIRS = \\" << endl;
-        tofile << "  -I" << filteredPath(projectDir.path()) << " \\" << endl; // always include the project directory
-
-        // add in the directories for the required libraries
-        QDir libdir(MainWindow::appDirectory().filePath(LIBRARIES_DIR));
-        foreach(Library lib, libraries)
-          tofile << "  -I" << filteredPath(libdir.filePath(lib.name)) << " \\" << endl;
-
-        QDomNodeList include_dirs = projectDoc.elementsByTagName("include_dirs");
-        if(include_dirs.count()) {
-          QDomNodeList dirs = include_dirs.at(0).childNodes();
-          int includelen = dirs.count();
-          for(int i = 0; i < includelen; i++) {
-            QString include_dir = dirs.at(i).toElement().text();
-            tofile << "  -I" << filteredPath(include_dir) << " \\" << endl;
-          }
-          tofile << endl;
-        }
-
-        // tools
-        QString toolsPath = Preferences::toolsPath();
-        if( !toolsPath.isEmpty() && !toolsPath.endsWith("/"))
-          toolsPath.append("/");
-        tofile << "CC=" << QDir::toNativeSeparators(toolsPath + "arm-elf-gcc") << endl;
-        tofile << "CPP=" << QDir::toNativeSeparators(toolsPath + "arm-elf-g++") << endl;
-        tofile << "OBJCOPY=" << QDir::toNativeSeparators(toolsPath + "arm-elf-objcopy") << endl;
-        tofile << "ARCH=" << QDir::toNativeSeparators(toolsPath + "arm-elf-ar") << endl;
-        tofile << "CRT0=" << filteredPath("cores/makecontroller/core/startup/AT91SAM7_Startup.s");
-        tofile << " " << filteredPath("cores/makecontroller/core/startup/crt0.s") << endl;
-        QString debug = (projInfo->debug()) ? "-g" : "";
-        tofile << "DEBUG=" + debug << endl;
-        QString optLevel = projInfo->optLevel();
-        if(optLevel.contains("-O1"))
-          optLevel = "-O1";
-        else if(optLevel.contains("-O2"))
-          optLevel = "-O2";
-        else if(optLevel.contains("-O3"))
-          optLevel = "-O3";
-        else if(optLevel.contains("-Os"))
-          optLevel = "-Os";
-        else
-          optLevel = "-O0";
-        tofile << "OPTIM=" + optLevel << endl;
-
-        // We'd like to use the make-controller.ld linker script, but if it's not there
-        // on older firmware distributions, fall back to the older atmel-rom.ld script.
-        QFileInfo ldScript(MainWindow::appDirectory().filePath("cores/makecontroller/core/startup/make-controller.ld"));
-        if(!ldScript.exists())
-          ldScript.setFile(ldScript.dir(), "atmel-rom.ld");
-        tofile << "LDSCRIPT=" + filteredPath(ldScript.filePath()) << endl << endl;
-
-        // the rest is always the same...grab it from template
-        QDir d(MainWindow::appDirectory());
-        #ifdef MCBUILDER_TEST_SUITE
-        d.cdUp();
-        #endif
-        QFile makefileConstants(d.filePath("resources/templates/makefile_constants.txt"));
-        tofile << "###########################################################################" << endl;
-        tofile << "#  Note - Everything below is pulled from the template at " << endl;
-        tofile << "# " << makefileConstants.fileName() << endl;
-        tofile << "###########################################################################" << endl;
-
-        if(makefileConstants.open(QIODevice::ReadOnly)) {
-          QTextStream makefileStream(&makefileConstants);
-          while(!makefileStream.atEnd())
-            tofile << makefileStream.readLine() << endl;
-        }
-      }
-      else
-        retval = false;
-    }
-    else
-      retval = false;
-  }
-  else
-    retval = false;
-  return retval;
-}
-
-/*
-  Files for a compilation group can come from the core project file,
-  or from any of the libraries.  Write out any files from either source.
-*/
-void Builder::writeGroupToMakeFile(QTextStream & stream, const QString & groupName, const QStringList & files)
-{
-  stream << groupName << "= \\" << endl;
-  foreach(Library lib, libraries) {
-    if( groupName == ARM_C_FILES_GROUP )
-      writeFileListToMakefile(stream, lib.arm_src);
-    else if( groupName == ARM_CPP_FILES_GROUP )
-      writeFileListToMakefile(stream, lib.arm_cpp_src);
-    else if( groupName == THUMB_C_FILES_GROUP )
-      writeFileListToMakefile(stream, lib.thumb_src);
-    else if( groupName == THUMB_CPP_FILES_GROUP )
-      writeFileListToMakefile(stream, lib.thumb_cpp_src);
-  }
-  writeFileListToMakefile(stream, files);
-  stream << endl;
-}
-
-void Builder::writeFileListToMakefile(QTextStream & stream, const QStringList & files)
-{
-  foreach(QString filepath, files)
-    stream << "  " << filteredPath(filepath) << " \\" << endl;
-}
-
-/*
-  Create config.h.
-  This file specifies several build conditions and is set
-  up in the UI via the project properties.
-*/
-bool Builder::createConfigFile(const QString & projectPath)
-{
-  QDir dir(projectPath);
-  QFile configFile(dir.filePath("config.h"));
-  if(configFile.open(QIODevice::WriteOnly|QFile::Text)) {
-//    qDebug("builder - creating/updating config file");
-    QTextStream tofile(&configFile);
-    tofile << "/*****************************************************************************************" << endl << endl;
-    tofile << "  config.h" << endl;
-    tofile << tr("  Generated automatically by mcbuilder - ") << QDateTime::currentDateTime().toString("MMM d, yyyy h:m ap") << endl;
-    tofile << tr("  Any manual changes made to this file will be overwritten the next time mcbuilder builds.") << endl << endl;
-    tofile << "******************************************************************************************/" << endl << endl;
-
-    tofile << "#ifndef CONFIG_H" << endl << "#define CONFIG_H" << endl << endl;
-
-    tofile << "#include \"controller.h\"" << endl << "#include \"error.h\"" << endl << endl;
-
-    tofile << "#define CONTROLLER_HEAPSIZE " << projInfo->heapsize() << endl;
-    tofile << "#define FIRMWARE_NAME " << "\"" + dir.dirName() + "\"" << endl;
-    int maj, min, bld;
-    parseVersionNumber( &maj, &min, &bld );
-    tofile << "#define FIRMWARE_MAJOR_VERSION " << maj << endl;
-    tofile << "#define FIRMWARE_MINOR_VERSION " << min << endl;
-    tofile << "#define FIRMWARE_BUILD_NUMBER " << bld << endl << endl;
-
-    if(projInfo->includeOsc())
-      tofile << "#define OSC" << endl;
-
-    if(projInfo->includeUsb())
-      tofile << "#define MAKE_CTRL_USB" << endl;
-
-    if(projInfo->includeNetwork()) {
-      tofile << "#define MAKE_CTRL_NETWORK" << endl;
-      tofile << "#define NETWORK_MEM_POOL " << projInfo->networkMempool() << endl;
-      tofile << "#define NETWORK_UDP_CONNS " << projInfo->udpSockets() << endl;
-      tofile << "#define NETWORK_TCP_CONNS " << projInfo->tcpSockets() << endl;
-      tofile << "#define NETWORK_TCP_LISTEN_CONNS " << projInfo->tcpServers() << endl;
-    }
-    tofile << endl;
-
-    tofile << "#define CONTROLLER_VERSION " << getCtrlBoardVersionNumber() << endl;
-    tofile << "#define APPBOARD_VERSION " << getAppBoardVersionNumber() << endl << endl;
-
-    tofile << "#endif // CONFIG_H" << endl;
-    configFile.close();
-  }
-  return true;
 }
 
 int Builder::getCtrlBoardVersionNumber()
@@ -395,157 +191,38 @@ int Builder::getAppBoardVersionNumber()
 }
 
 /*
-  Check if we need to modify the config file for this project.
-  Compare the info currently in ProjectInfo with the info in config.h.
-  If they don't match or config.h doesn't exist, return true.
-  If we don't need to update/create config.h, return false.
-*/
-bool Builder::compareConfigFile(const QString & projectPath)
-{
-  QDir dir(projectPath);
-  QFile configFile(dir.filePath("config.h"));
-  if(configFile.open(QIODevice::ReadOnly|QFile::Text)) {
-    QTextStream in(&configFile);
-    int maj, min, bld;
-    parseVersionNumber( &maj, &min, &bld );
-
-    bool network = false;
-    bool osc = false;
-    bool usb = false;
-
-    QRegExp majorVersionExp("#define FIRMWARE_MAJOR_VERSION (\\d+)");
-    QRegExp minorVersionExp("#define FIRMWARE_MINOR_VERSION (\\d+)");
-    QRegExp buildVersionExp("#define FIRMWARE_BUILD_NUMBER (\\d+)");
-
-    QRegExp heapExp("#define CONTROLLER_HEAPSIZE (\\d+)");
-    QRegExp nameExp("#define FIRMWARE_NAME \"(.+)\"");
-
-    QRegExp mempoolExp("#define NETWORK_MEM_POOL (\\d+)");
-    QRegExp udpExp("#define NETWORK_UDP_CONNS (\\d+)");
-    QRegExp tcpExp("#define NETWORK_TCP_CONNS (\\d+)");
-    QRegExp tcpListenExp("#define NETWORK_TCP_LISTEN_CONNS (\\d+)");
-
-    QRegExp ctrlVersionExp("#define CONTROLLER_VERSION (\\d+)");
-    QRegExp appVersionExp("#define APPBOARD_VERSION (\\d+)");
-
-    QString line = in.readLine();
-    while(!line.isNull()) {
-      if( line.contains(majorVersionExp) ) { // major version number
-        int majVer = majorVersionExp.cap(1).toInt();
-        if(majVer != maj)
-          return true;
-      }
-      else if( line.contains(minorVersionExp) ) { // minor version number
-        int minVer = minorVersionExp.cap(1).toInt();
-        if(minVer != min)
-          return true;
-      }
-      else if( line.contains(buildVersionExp) ) { // build version number{
-        int bldVer = buildVersionExp.cap(1).toInt();
-        if(bldVer != bld)
-          return true;
-      }
-      else if( line.contains(heapExp) ) { // heap size
-        int heap = heapExp.cap(1).toInt();
-        if(heap != projInfo->heapsize())
-          return true;
-      }
-      else if( line.contains(nameExp) ) { // project name
-        QString firmwareName = nameExp.cap(1);
-        if(firmwareName != dir.dirName())
-          return true;
-      }
-      else if( line.contains("#define MAKE_CTRL_USB") ) // include USB
-        usb = true;
-      else if( line.contains("#define OSC") ) // include OSC
-        osc = true;
-      else if( line.contains("#define MAKE_CTRL_NETWORK") ) // include network
-        network = true;
-      else if( line.contains(mempoolExp) ) { // network memory pool size
-        int mempool = mempoolExp.cap(1).toInt();
-        if( mempool != projInfo->networkMempool() )
-          return true;
-      }
-      else if( line.contains(udpExp) ) { // number of UDP connections
-        int udp = udpExp.cap(1).toInt();
-        if( udp != projInfo->udpSockets() )
-          return true;
-      }
-      else if( line.contains(tcpExp) ) { // number of TCP sockets
-        int tcp = tcpExp.cap(1).toInt();
-        if( tcp != projInfo->tcpSockets() )
-          return true;
-      }
-      else if( line.contains(tcpListenExp) ) { // number of TCP server sockets
-        int tcpListen = tcpListenExp.cap(1).toInt();
-        if( tcpListen != projInfo->tcpServers() )
-          return true;
-      }
-      else if( line.contains(ctrlVersionExp)) {
-        int ctrlV = ctrlVersionExp.cap(1).toInt();
-        if( ctrlV != getCtrlBoardVersionNumber() )
-          return true;
-      }
-      else if( line.contains(appVersionExp)) {
-        int appV = appVersionExp.cap(1).toInt();
-        if( appV != getAppBoardVersionNumber() )
-          return true;
-      }
-      line = in.readLine();
-    }
-
-    if(usb != projInfo->includeUsb() )
-      return true;
-    if(osc != projInfo->includeOsc() )
-      return true;
-    if(network != projInfo->includeNetwork() )
-      return true;
-  }
-  else
-    return true; // couldn't open the file...probably doesn't exist
-  return false;
-}
-
-/*
   Convert a version number string to 3 ints.
   We expect the version string to be in the form X.Y.Z
 */
-bool Builder::parseVersionNumber( int *maj, int *min, int *bld )
+bool Builder::parseVersionNumber(int *maj, int *min, int *bld)
 {
   QStringList versions = projInfo->version().split(".");
-  bool success = true;
-  if(versions.count() == 3) {
-    bool ok = false;
-    int temp;
-    temp = versions.takeFirst().toInt(&ok);
-    if(ok)
+  bool success = false;
+  if (versions.count() == 3) {
+    int temp = versions.takeFirst().toInt(&success);
+    if (success) {
       *maj = temp;
-    else
-      success = false;
-    temp = versions.takeFirst().toInt(&ok);
-    if(ok)
-      *min = temp;
-    else
-      success = false;
-    temp = versions.takeFirst().toInt(&ok);
-    if(ok)
-      *bld = temp;
-    else
-      success = false;
+      temp = versions.takeFirst().toInt(&success);
+      if (success) {
+        *min = temp;
+        temp = versions.takeFirst().toInt(&success);
+        if (success)
+          *bld = temp;
+      }
+    }
   }
-  if(versions.count() != 3 || !success) { // just use the default
+  if (versions.count() != 3 || !success) { // just use the default
     *maj = 0;
     *min = 1;
     *bld = 0;
   }
-  return true;
+  return success;
 }
 
 void Builder::onBuildError(QProcess::ProcessError error)
 {
   QString msg;
-  switch(error)
-  {
+  switch (error) {
     case QProcess::FailedToStart:
       msg = tr("'%1' failed to start.  It's either missing, or doesn't have the correct permissions").arg(currentProcess);
       break;
@@ -579,18 +256,17 @@ void Builder::onBuildError(QProcess::ProcessError error)
 void Builder::filterOutput()
 {
   // switch based on what part of the build we're performing
-  switch(buildStep)
-  {
+  switch(buildStep) {
     case BUILD:
     {
       QString output = readAllStandardOutput();
       buildLog->append(output);
       QTextStream outstream(&output); // use QTextStream to deal with \r\n or \n line endings for us
       QString outline = outstream.readLine();
-      while(!outline.isNull()) {
+      while (!outline.isNull()) {
         //qDebug("msg: %s", qPrintable(outline));
         QStringList sl = outline.split(" ");
-        if(sl.first().endsWith("arm-elf-gcc") && sl.at(1) == "-c") {
+        if (sl.first().endsWith("arm-elf-gcc") && sl.at(1) == "-c") {
           QFileInfo srcFile(sl.last());
           mainWindow->buildingNow(srcFile.baseName() + ".c");
         }
@@ -698,8 +374,8 @@ bool Builder::matchInFunction(const QString & error)
 {
   bool matched = false;
   QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+): In function (.+)");
-  int pos = 0;
-  while((pos = errExp.indexIn(error, pos)) != -1) {
+  int pos;
+  while ((pos = errExp.indexIn(error, pos)) != -1) {
     QString filepath(errExp.cap(1));
     QString func(errExp.cap(2));
 
@@ -743,36 +419,37 @@ bool Builder::matchUndefinedRef(const QString & error)
   directives and see if any of them match the libs in our libraries directory.
   Create a Library structure for each library and store it in our class member "libraries"
 */
-void Builder::loadDependencies(const QString & libsDir, const QString & project)
+QList<Builder::Library> Builder::loadDependencies(const QString & libsDir, const QString & project)
 {
   QDir projDir(project);
   QStringList srcFiles = projDir.entryList(QStringList() << "*.c" << "*.h");
   QDir libDir(MainWindow::appDirectory().filePath(libsDir));
   QStringList libDirs = libDir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
+  QList<Library> libraries;
 
-  foreach(QString filename, srcFiles) {
+  foreach (QString filename, srcFiles) {
     QFile file(projDir.filePath(filename));
-    if(file.open(QIODevice::ReadOnly|QFile::Text)) {
-      // match anything in the form of #include "*.h" or <*.h>
-      QRegExp rx("#include [\"|<]([a-zA-Z0-9]*)\\.h[\"|>]");
-      QString fileContents = file.readAll();
-      int pos = 0;
+    if (!file.open(QIODevice::ReadOnly|QFile::Text))
+      continue;
+    // match anything in the form of #include "*.h" or <*.h>
+    QRegExp rx("#include [\"|<]([a-zA-Z0-9]*)\\.h[\"|>]");
+    QTextStream in(&file);
 
-      // gather all the matching directives
-      while((pos = rx.indexIn(fileContents, pos)) != -1) {
+    while (!in.atEnd()) {
+      if (rx.indexIn(in.readLine()) != -1) {
         QString match(rx.cap(1));
         // only list it as a dependency if it's in our list of libraries
-        if(libDirs.contains(match)) {
+        if (libDirs.contains(match)) {
           Library lib;
           lib.name = match;
           // extract the lists of source files specified in the library's spec file
-          getLibrarySources( libDir.filePath(match), lib );
+          getLibrarySources(libDir.filePath(match), lib);
           libraries.append(lib);
         }
-        pos += rx.matchedLength(); // step the index past the match so we can continue looking
       }
     }
   }
+  return libraries;
 }
 
 /*
@@ -784,47 +461,18 @@ void Builder::getLibrarySources(const QString & libdir, Library & lib)
   QDir dir(libdir);
   QFile libfile(dir.filePath(dir.dirName() + ".xml"));
   QDomDocument libDoc;
-  if(libDoc.setContent(&libfile)) {
+  if (libDoc.setContent(&libfile)) {
     QDomNodeList files = libDoc.elementsByTagName("files").at(0).childNodes();
     int filescount = files.count();
-    for(int i = 0; i < filescount; i++) {
+    for (int i = 0; i < filescount; i++) {
       QString filepath = dir.filePath(files.at(i).toElement().text());
       QFileInfo fi(filepath);
-      if(files.at(i).toElement().attribute("type") == "thumb") {
-        if(cppSuffixes.contains(fi.suffix()))
-          lib.thumb_cpp_src.append(filepath);
-        else
-          lib.thumb_src.append(filepath);
-      }
-      else if(files.at(i).toElement().attribute("type") == "arm") {
-        if(cppSuffixes.contains(fi.suffix()))
-          lib.arm_cpp_src.append(filepath);
-        else
-          lib.arm_src.append(filepath);
-      }
+      if (cppSuffixes.contains(fi.suffix()))
+        lib.cppsrc.append(filepath);
+      else
+        lib.csrc.append(filepath);
     }
   }
-}
-
-/*
-  Filter a path for inclusion in a Makefile.
-  Make sure the directory separators are system appropriate.
-  If a file path is not absolute
-    1. check to see if it's in our cores dir
-    2. assume it's relative to the current project
-*/
-QString Builder::filteredPath(const QString & path)
-{
-  // would be good to be able to do something about file paths with spaces
-  // but not quite sure how to deal at the moment...
-  QString filtered = path;
-  if(!QDir::isAbsolutePath(path)) {
-    if(path.startsWith("cores"))
-      filtered = MainWindow::appDirectory().filePath(path);
-    else
-      filtered = QDir(currentProjectPath).filePath(path);
-  }
-  return QDir::toNativeSeparators(filtered);
 }
 
 

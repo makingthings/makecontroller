@@ -1,269 +1,170 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>ProjectInfoUi</class>
- <widget class="QDialog" name="ProjectInfoUi" >
-  <property name="geometry" >
+ <widget class="QDialog" name="ProjectInfoUi">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>430</width>
+    <width>433</width>
     <height>477</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>Project Info</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout" >
+  <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QTabWidget" name="tabWidget" >
-     <property name="currentIndex" >
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
       <number>0</number>
      </property>
-     <widget class="QWidget" name="tab" >
-      <property name="geometry" >
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>400</width>
-        <height>398</height>
-       </rect>
-      </property>
-      <attribute name="title" >
+     <widget class="QWidget" name="tab">
+      <attribute name="title">
        <string>Config</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout" >
-       <item row="0" column="0" >
-        <widget class="QLabel" name="label" >
-         <property name="toolTip" >
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="1" column="0">
+        <widget class="QLabel" name="label">
+         <property name="toolTip">
           <string>A version number for your project.</string>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>Version:</string>
          </property>
-         <property name="alignment" >
+         <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
-         <property name="buddy" >
+         <property name="buddy">
           <cstring>versionEdit</cstring>
          </property>
         </widget>
        </item>
-       <item row="0" column="1" colspan="2" >
-        <widget class="QLineEdit" name="versionEdit" />
+       <item row="1" column="1" colspan="2">
+        <widget class="QLineEdit" name="versionEdit"/>
        </item>
-       <item row="1" column="0" >
-        <widget class="QLabel" name="label_2" >
-         <property name="toolTip" >
-          <string>The amount of memory available to your project at run time.
-Generally, make this as high as you can until the project won't build.</string>
-         </property>
-         <property name="text" >
-          <string>Heap Size:</string>
-         </property>
-         <property name="alignment" >
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="buddy" >
-          <cstring>heapSizeEdit</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1" colspan="2" >
-        <widget class="QLineEdit" name="heapSizeEdit" />
-       </item>
-       <item row="2" column="0" >
-        <widget class="QLabel" name="label_3" >
-         <property name="toolTip" >
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_3">
+         <property name="toolTip">
           <string>Optimized code is generally smaller and faster.</string>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>Optimization Level:</string>
          </property>
-         <property name="alignment" >
+         <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
-         <property name="buddy" >
+         <property name="buddy">
           <cstring>optLevelBox</cstring>
          </property>
         </widget>
        </item>
-       <item row="2" column="1" colspan="2" >
-        <widget class="QComboBox" name="optLevelBox" >
+       <item row="2" column="1" colspan="2">
+        <widget class="QComboBox" name="optLevelBox">
          <item>
-          <property name="text" >
+          <property name="text">
            <string>None</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>Level 1 (-O1)</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>Level 2 (-O2)</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>Optimize For Size (-Os)</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>Optimize For Speed (-O3)</string>
           </property>
          </item>
         </widget>
        </item>
-       <item row="3" column="1" colspan="2" >
-        <widget class="QCheckBox" name="debugInfoCheckbox" >
-         <property name="toolTip" >
+       <item row="3" column="1" colspan="2">
+        <widget class="QCheckBox" name="debugInfoCheckbox">
+         <property name="toolTip">
           <string>Include debugging info in your build.  Makes your project bigger.</string>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>Include Debug Info</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="1" colspan="2" >
-        <widget class="Line" name="line" >
-         <property name="orientation" >
+       <item row="4" column="1" colspan="2">
+        <widget class="Line" name="line">
+         <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
         </widget>
        </item>
-       <item row="5" column="1" colspan="2" >
-        <widget class="QCheckBox" name="oscBox" >
-         <property name="text" >
+       <item row="5" column="1" colspan="2">
+        <widget class="QCheckBox" name="oscBox">
+         <property name="text">
           <string>Include OSC System</string>
          </property>
         </widget>
        </item>
-       <item row="6" column="1" colspan="2" >
-        <widget class="QCheckBox" name="usbBox" >
-         <property name="text" >
+       <item row="6" column="1" colspan="2">
+        <widget class="QCheckBox" name="usbBox">
+         <property name="text">
           <string>Include USB System</string>
          </property>
         </widget>
        </item>
-       <item row="7" column="1" colspan="2" >
-        <widget class="QCheckBox" name="networkBox" >
-         <property name="text" >
+       <item row="7" column="1" colspan="2">
+        <widget class="QCheckBox" name="networkBox">
+         <property name="text">
           <string>Include Network System</string>
          </property>
         </widget>
        </item>
-       <item row="8" column="1" colspan="2" >
-        <widget class="Line" name="line_2" >
-         <property name="orientation" >
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="0" >
-        <widget class="QLabel" name="networkMempoolLabel" >
-         <property name="enabled" >
-          <bool>true</bool>
-         </property>
-         <property name="text" >
-          <string>Network Memory Pool:</string>
-         </property>
-         <property name="alignment" >
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="buddy" >
-          <cstring>networkMempoolEdit</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="1" colspan="2" >
-        <widget class="QLineEdit" name="networkMempoolEdit" />
-       </item>
-       <item row="10" column="0" >
-        <widget class="QLabel" name="udpSocketLabel" >
-         <property name="text" >
-          <string>UDP Sockets:</string>
-         </property>
-         <property name="alignment" >
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="buddy" >
-          <cstring>udpSocketEdit</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="10" column="1" colspan="2" >
-        <widget class="QLineEdit" name="udpSocketEdit" />
-       </item>
-       <item row="11" column="0" >
-        <widget class="QLabel" name="tcpSocketLabel" >
-         <property name="text" >
-          <string>TCP Socket Sockets:</string>
-         </property>
-         <property name="alignment" >
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="buddy" >
-          <cstring>tcpSocketEdit</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="11" column="1" colspan="2" >
-        <widget class="QLineEdit" name="tcpSocketEdit" />
-       </item>
-       <item row="12" column="0" >
-        <widget class="QLabel" name="tcpServerLabel" >
-         <property name="text" >
-          <string>TCP Server Sockets:</string>
-         </property>
-         <property name="alignment" >
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="buddy" >
-          <cstring>tcpServerEdit</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="12" column="1" colspan="2" >
-        <widget class="QLineEdit" name="tcpServerEdit" />
-       </item>
-       <item row="13" column="2" >
-        <widget class="QPushButton" name="defaultsButton" >
-         <property name="text" >
+       <item row="8" column="2">
+        <widget class="QPushButton" name="defaultsButton">
+         <property name="text">
           <string>Restore Defaults</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0" colspan="3">
+        <widget class="QLabel" name="locationLabel">
+         <property name="text">
+          <string>proj  location...</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_2" >
-      <property name="geometry" >
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>400</width>
-        <height>398</height>
-       </rect>
-      </property>
-      <attribute name="title" >
+     <widget class="QWidget" name="tab_2">
+      <attribute name="title">
        <string>Files</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_2" >
+      <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
-        <widget class="FileBrowser" name="fileBrowser" >
-         <property name="uniformRowHeights" >
+        <widget class="FileBrowser" name="fileBrowser">
+         <property name="uniformRowHeights">
           <bool>true</bool>
          </property>
-         <property name="animated" >
+         <property name="animated">
           <bool>false</bool>
          </property>
          <column>
-          <property name="text" >
+          <property name="text">
            <string>File</string>
           </property>
          </column>
          <column>
-          <property name="text" >
+          <property name="text">
            <string>Build Type</string>
           </property>
          </column>
@@ -274,11 +175,11 @@ Generally, make this as high as you can until the project won't build.</string>
     </widget>
    </item>
    <item>
-    <widget class="QDialogButtonBox" name="buttonBox" >
-     <property name="orientation" >
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
-     <property name="standardButtons" >
+     <property name="standardButtons">
       <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
      </property>
     </widget>

@@ -71,14 +71,9 @@ class ProjectInfo : public QDialog
     QString version() { return ui.versionEdit->text(); }
     QString optLevel() { return ui.optLevelBox->currentText(); }
     bool debug() { return ui.debugInfoCheckbox->isChecked(); }
-    int heapsize() { return ui.heapSizeEdit->text().toInt(); }
     bool includeOsc() { return ui.oscBox->isChecked(); }
     bool includeUsb() { return ui.usbBox->isChecked(); }
     bool includeNetwork() { return ui.networkBox->isChecked(); }
-    int networkMempool() { return ui.networkMempoolEdit->text().toInt(); }
-    int udpSockets() { return ui.udpSocketEdit->text().toInt(); }
-    int tcpSockets() { return ui.tcpSocketEdit->text().toInt(); }
-    int tcpServers() { return ui.tcpServerEdit->text().toInt(); }
     bool load( const QString & projectPath );
     bool diffProjects( const QString & newProjectPath, bool saveUiToFile = false );
 
@@ -91,15 +86,9 @@ class ProjectInfo : public QDialog
     ProjectManager projectManager;
     QString projectFilePath( const QString & projectPath );
     bool configChanged;
-    void setNetworkSectionEnabled(bool state);
     void loadFileBrowser(QDir *projectDir, QDomDocument *projectFile);
     // mostly for testing...
     void setVersion(QString version) { ui.versionEdit->setText(version); }
-    void setHeapSize(int heap) { ui.heapSizeEdit->setText(QString::number(heap)); }
-    void setMempool(int mempool) { ui.networkMempoolEdit->setText(QString::number(mempool)); }
-    void setUdp(int udp) { ui.udpSocketEdit->setText(QString::number(udp)); }
-    void setTcp(int tcp) { ui.tcpSocketEdit->setText(QString::number(tcp)); }
-    void setTcpListen(int tcplisten) { ui.tcpServerEdit->setText(QString::number(tcplisten)); }
     void setIncludeOsc(bool osc);
     void setIncludeUsb(bool usb);
     void setIncludeNetwork(bool network);
@@ -107,7 +96,6 @@ class ProjectInfo : public QDialog
   private slots:
     void applyChanges( );
     void restoreDefaults( );
-    void onNetworkChanged(int state);
     void onRemoveFileRequest(const QString & filename);
     void onChangeBuildType(const QString & filename, const QString & newtype);
 
