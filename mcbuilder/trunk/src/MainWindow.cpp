@@ -685,14 +685,13 @@ void MainWindow::onBuildComplete(bool success)
 {
   if (success) {
     ui.outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), tr("Build succeeded."), ui.outputConsole));
-    ui.outputConsole->scrollToBottom();
     statusBar()->showMessage(tr("Build succeeded."));
   }
   else {
     ui.outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), tr("Build failed."), ui.outputConsole));
-    ui.outputConsole->scrollToBottom();
     statusBar()->showMessage(tr("Build failed."));
   }
+  ui.outputConsole->scrollToBottom();
   ui.actionStop->setEnabled(false);
 }
 
@@ -700,14 +699,13 @@ void MainWindow::onUploadComplete(bool success)
 {
   if (success) {
     ui.outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/success.png"), tr("Upload succeeded."), ui.outputConsole));
-    ui.outputConsole->scrollToBottom();
     statusBar()->showMessage(tr("Upload succeeded."));
   }
   else {
     ui.outputConsole->addItem(new QListWidgetItem(QIcon(":/icons/error.png"), tr("Upload failed."), ui.outputConsole));
-    ui.outputConsole->scrollToBottom();
     statusBar()->showMessage(tr("Upload failed."));
   }
+  ui.outputConsole->scrollToBottom();
 }
 
 void MainWindow::onCleanComplete()
@@ -999,7 +997,9 @@ void MainWindow::onConsoleDoubleClick(QListWidgetItem *item)
 */
 void MainWindow::highlightLine(const QString & filepath, int linenumber, int type)
 {
-  if (QDir::toNativeSeparators(filepath) == QDir::toNativeSeparators(currentFile)) {
+  if (QDir::toNativeSeparators(filepath) == QDir::toNativeSeparators(currentFile) ||
+      currentFile.contains(filepath))
+  {
     QTextCursor c(ui.editor->document());
     c.movePosition(QTextCursor::Start);
     while (c.blockNumber() < linenumber-1) // blockNumber is 0 based, lineNumber starts at 1

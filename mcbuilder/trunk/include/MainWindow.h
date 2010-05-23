@@ -49,13 +49,13 @@ class Editor : public QPlainTextEdit
 {
   Q_OBJECT
 public:
-  Editor(QWidget *parent = 0) : QPlainTextEdit(0)
+  Editor(QWidget *parent = 0) : QPlainTextEdit(parent)
   {
-    setParent(parent);
+//    setParent(parent);
   }
 
 private:
-  void keyPressEvent( QKeyEvent* event );
+  void keyPressEvent(QKeyEvent* event);
 };
 
 #include "ui_mainwindow.h"
