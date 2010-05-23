@@ -19,7 +19,6 @@ HEADERS = include/Highlighter.h \
           include/FindReplace.h \
           include/About.h \
           include/AppUpdater.h \
-          include/ConsoleItem.h \
           include/BuildLog.h \
           include/ProjectManager.h
 

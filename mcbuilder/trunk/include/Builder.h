@@ -34,6 +34,9 @@
 #define LINENO_ROLE   (Qt::UserRole + 1)
 #define TYPE_ROLE     (Qt::UserRole + 2)
 
+#define ERROR_FEEDBACK    0
+#define WARNING_FEEDBACK  1
+
 class MainWindow;
 class ProjectInfo;
 class Preferences;
@@ -47,7 +50,7 @@ class Builder : public QProcess
   #endif
 
 public:
-  Builder( MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog, Preferences* prefs );
+  Builder(MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildLog, Preferences* prefs);
   void build(const QString & projectName);
   void clean(const QString & projectName);
   void stop();
@@ -58,6 +61,7 @@ private:
     QStringList csrc;
     QStringList cppsrc;
   } Library;
+
   MainWindow *mainWindow;
   ProjectInfo *projInfo;
   BuildLog *buildLog;

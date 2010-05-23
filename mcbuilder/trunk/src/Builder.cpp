@@ -22,7 +22,6 @@
 #include <QDebug>
 #include <QThread>
 #include "Builder.h"
-#include "ConsoleItem.h"
 
 #define LIBRARIES_DIR "/Users/liam/Documents/mtcode/make/mcbuilder/cores/makecontroller/libraries"
 
@@ -351,13 +350,13 @@ bool Builder::matchErrorOrWarning(const QString & error)
     item->setData(LINENO_ROLE, linenumber);;
     QString fullmsg = tr("%1 (line %2): %3").arg(fi.fileName()).arg(linenumber).arg(msg);
     if (severity == "error") {
-      item->setData(TYPE_ROLE, ConsoleItem::Error);
+      item->setData(TYPE_ROLE, ERROR_FEEDBACK);
       item->setIcon(QIcon(":/icons/error.png"));
-      mainWindow->highlightLine(filepath, linenumber, ConsoleItem::Error);
+      mainWindow->highlightLine(filepath, linenumber, ERROR_FEEDBACK);
     }
     else {
-      item->setData(TYPE_ROLE, ConsoleItem::Warning);
-      mainWindow->highlightLine(filepath, linenumber, ConsoleItem::Warning);
+      item->setData(TYPE_ROLE, WARNING_FEEDBACK);
+      mainWindow->highlightLine(filepath, linenumber, WARNING_FEEDBACK);
       item->setIcon(QIcon(":/icons/warning.png"));
     }
     item->setText(fullmsg);
