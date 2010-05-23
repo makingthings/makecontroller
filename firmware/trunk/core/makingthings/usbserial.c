@@ -34,16 +34,13 @@
 static int  usbserialWriteSlipIfFull(char** bufptr, char* buf, int timeout);
 #endif // USBSER_NO_SLIP
 
-static void usbserialOnRx(void *pArg, unsigned char status, unsigned int received, unsigned int remaining);
 static void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsigned int remaining);
 
 typedef struct UsbSerial_t {
-  Semaphore rxSemaphore;
   Semaphore txSemaphore;
-  int justGot;
+  InputQueue inq;
+  uint8_t inbuffer[USBSER_MAX_READ];
   int justWrote;
-  int rxBufCount;
-  char rxBuf[USBSER_MAX_READ];
 #ifndef USBSER_NO_SLIP
   char slipOutBuf[USBSER_MAX_WRITE];
   char slipInBuf[USBSER_MAX_READ];
@@ -84,17 +81,32 @@ static UsbSerial usbSerial;
   @{
 */
 
+static void onByteRx(void *pArg, char byte)
+{
+  UNUSED(pArg);
+  chIQPutI(&usbSerial.inq, (uint8_t)byte);
+}
+
+/*
+  Gets called whenever the input queue is being read from.
+  If we're empty, go get some more data
+*/
+static void usbserialInotify(void)
+{
+  if (chIQIsEmpty(&usbSerial.inq) && USBD_GetState() == USBD_STATE_CONFIGURED)
+    USBD_Read(CDCDSerialDriverDescriptors_DATAOUT, 0, sizeof(usbSerial.inq), 0, 0, onByteRx);
+}
+
 /**
   Initialize the USB serial system.
 */
 void usbserialInit()
 {
+  USBD_Disconnect();
   CDCDSerialDriver_Initialize();
   USBD_Connect();
-  chSemInit(&usbSerial.rxSemaphore, 0);
+  chIQInit(&usbSerial.inq, usbSerial.inbuffer, sizeof(usbSerial.inbuffer), usbserialInotify);
   chSemInit(&usbSerial.txSemaphore, 0);
-  usbSerial.justGot = 0;
-  usbSerial.rxBufCount = 0;
 }
 
 /**
@@ -108,13 +120,33 @@ void usbserialInit()
   usbserialInit();
   // wait until usb is active
   while (usbserialIsActive() == NO) {
-    Task::sleep(10);
+    sleep(10);
   }
   \endcode
 */
 bool usbserialIsActive()
 {
   return USBD_GetState() == USBD_STATE_CONFIGURED;
+}
+
+/**
+  The number of bytes that have already arrived.
+  Use this to determine if there's data already waiting to be read.  Note that
+  if this is empty, you'll need to fire off usbserialRead() to fetch more data.
+  @return The number of bytes waiting to be read.
+
+  \b Example
+  \code
+  char data[28];
+  int avail = usbserialAvailable();
+  if (avail > 0) {
+    usbserialRead(data, avail, 0); // we can read with no timeout
+  }
+  \endcode
+*/
+int usbserialAvailable()
+{
+  return chQSpace(&usbSerial.inq);
 }
 
 /**
@@ -145,43 +177,7 @@ bool usbserialIsActive()
 */
 int usbserialRead(char *buffer, int length, int timeout)
 {
-  if( USBD_GetState() != USBD_STATE_CONFIGURED )
-    return -1;
-  int length_to_go = length;
-  if (usbSerial.rxBufCount) { // do we already have some lying around?
-    int copylen = MIN(usbSerial.rxBufCount, length_to_go);
-    memcpy( buffer, usbSerial.rxBuf, copylen );
-    buffer += copylen;
-    usbSerial.rxBufCount -= copylen;
-    length_to_go -= copylen;
-  }
-  if(length_to_go) { // if we still would like to get more
-    unsigned char result = USBD_Read(CDCDSerialDriverDescriptors_DATAOUT,
-                                  usbSerial.rxBuf, USBSER_MAX_READ, usbserialOnRx, 0);
-    if (result == USBD_STATUS_SUCCESS) {
-      if (chSemWaitTimeout(&usbSerial.rxSemaphore, MS2ST(timeout)) == RDY_OK) {
-        int copylen = MIN(usbSerial.justGot, length_to_go);
-        memcpy(buffer, usbSerial.rxBuf, copylen);
-        buffer += copylen;
-        usbSerial.rxBufCount -= copylen;
-        length_to_go -= copylen;
-        usbSerial.justGot = 0;
-      }
-    }
-  }
-  return length - length_to_go;
-}
-
-// called back when data is received
-void usbserialOnRx(void *pArg, unsigned char status, unsigned int received, unsigned int remaining)
-{
-  UNUSED(pArg);
-  UNUSED(remaining);
-  if (status == USBD_STATUS_SUCCESS) {
-    usbSerial.rxBufCount += received;
-    usbSerial.justGot = received;
-  }
-  chSemSignalI(&usbSerial.rxSemaphore);
+  return chIQReadTimeout(&usbSerial.inq, (uint8_t*)buffer, length, MS2ST(timeout));
 }
 
 /**
@@ -304,18 +300,18 @@ int usbserialWriteSlip(const char *buffer, int length, int timeout)
        // if it's the same code as an END character, we send a special 
        //two character code so as not to make the receiver think we sent an END
        case END:
-         *obp++ = (char) ESC;
-         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout );
-         *obp++ = (char) ESC_END;
-         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout );
+         *obp++ = (char)ESC;
+         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout);
+         *obp++ = (char)ESC_END;
+         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout);
          break;
          // if it's the same code as an ESC character, we send a special 
          //two character code so as not to make the receiver think we sent an ESC
        case ESC:
-         *obp++ = (char) ESC;
-         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout );
-         *obp++ = (char) ESC_ESC;
-         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout );
+         *obp++ = (char)ESC;
+         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout);
+         *obp++ = (char)ESC_ESC;
+         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout);
          break;
          //otherwise, just send the character
        default:
