@@ -79,17 +79,17 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   connect(ui.outputConsole, SIGNAL(itemDoubleClicked(QListWidgetItem*)),this, SLOT(onConsoleDoubleClick(QListWidgetItem*)));
 
   // menu actions
-  connect(ui.actionNew,                SIGNAL(triggered()), this,		SLOT(onNewFile()));
-  connect(ui.actionAdd_Existing_File,  SIGNAL(triggered()), this,		SLOT(onAddExistingFile()));
-  connect(ui.actionNew_Project,        SIGNAL(triggered()), this,		SLOT(onNewProject()));
-  connect(ui.actionOpen,               SIGNAL(triggered()), this,		SLOT(onOpen()));
-  connect(ui.actionSave,               SIGNAL(triggered()), this,		SLOT(onSave()));
-  connect(ui.actionSave_As,            SIGNAL(triggered()), this,		SLOT(onSaveAs()));
-  connect(ui.actionBuild,              SIGNAL(triggered()), this,		SLOT(onBuild()));
-  connect(ui.actionStop,               SIGNAL(triggered()), this,		SLOT(onStop()));
-  connect(ui.actionClean,              SIGNAL(triggered()), this,		SLOT(onClean()));
-  connect(ui.actionProperties,         SIGNAL(triggered()), this,		SLOT(onProperties()));
-  connect(ui.actionUpload,             SIGNAL(triggered()), this,		SLOT(onUpload()));
+  connect(ui.actionNew,                SIGNAL(triggered()), this, SLOT(onNewFile()));
+  connect(ui.actionAdd_Existing_File,  SIGNAL(triggered()), this, SLOT(onAddExistingFile()));
+  connect(ui.actionNew_Project,        SIGNAL(triggered()), this, SLOT(onNewProject()));
+  connect(ui.actionOpen,               SIGNAL(triggered()), this, SLOT(onOpen()));
+  connect(ui.actionSave,               SIGNAL(triggered()), this, SLOT(onSave()));
+  connect(ui.actionSave_As,            SIGNAL(triggered()), this, SLOT(onSaveAs()));
+  connect(ui.actionBuild,              SIGNAL(triggered()), this, SLOT(onBuild()));
+  connect(ui.actionStop,               SIGNAL(triggered()), this, SLOT(onStop()));
+  connect(ui.actionClean,              SIGNAL(triggered()), this, SLOT(onClean()));
+  connect(ui.actionProperties,         SIGNAL(triggered()), this, SLOT(onProperties()));
+  connect(ui.actionUpload,             SIGNAL(triggered()), this, SLOT(onUpload()));
   connect(ui.actionUndo,               SIGNAL(triggered()), ui.editor,	SLOT(undo()));
   connect(ui.actionRedo,               SIGNAL(triggered()), ui.editor,	SLOT(redo()));
   connect(ui.actionCut,                SIGNAL(triggered()), ui.editor,	SLOT(cut()));
@@ -102,7 +102,7 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
   connect(ui.actionBuildLog,           SIGNAL(triggered()), buildLog, SLOT(show()));
   connect(ui.actionVisitForum,         SIGNAL(triggered()), this,   SLOT(onVisitForum()));
   connect(ui.actionClear_Output_Console, SIGNAL(triggered()), ui.outputConsole,	SLOT(clear()));
-  connect(ui.actionUpload_File_to_Board, SIGNAL(triggered()), this,	SLOT(onUploadFile()));
+  connect(ui.actionUpload_File_to_Board, SIGNAL(triggered()), this, SLOT(onUploadFile()));
   connect(ui.actionMake_Controller_Reference, SIGNAL(triggered()), this, SLOT(openMCReference()));
   connect(ui.actionMcbuilder_User_Manual, SIGNAL(triggered()), this, SLOT(openManual()));
   connect(ui.menuExamples,             SIGNAL(triggered(QAction*)), this, SLOT(onExample(QAction*)));
@@ -119,23 +119,23 @@ void MainWindow::readSettings()
   QSettings settings;
   settings.beginGroup("MainWindow");
 
-  QSize size = settings.value( "size" ).toSize( );
-  if( size.isValid( ) )
-    resize( size );
+  QSize size = settings.value("size").toSize();
+  if(size.isValid())
+    resize(size);
 
-  QList<QVariant> splitterSettings = settings.value( "splitterSizes" ).toList( );
+  QList<QVariant> splitterSettings = settings.value("splitterSizes").toList();
   QList<int> splitterSizes;
-  if( !splitterSettings.isEmpty( ) ) {
-    for( int i = 0; i < splitterSettings.count( ); i++ )
-      splitterSizes.append( splitterSettings.at(i).toInt( ) );
-    ui.splitter->setSizes( splitterSizes );
+  if (!splitterSettings.isEmpty()) {
+    for (int i = 0; i < splitterSettings.count(); i++)
+      splitterSizes.append(splitterSettings.at(i).toInt());
+    ui.splitter->setSizes(splitterSizes);
   }
 
   if(settings.value("checkForUpdates", true).toBool())
     updater->checkForUpdates(APPUPDATE_BACKGROUND);
 
   QString lastProject = settings.value("lastOpenProject").toString();
-  if(!lastProject.isEmpty())
+  if (!lastProject.isEmpty())
     openProject(lastProject);
   settings.endGroup();
   QPoint mainWinPos = settings.value("mainwindow_pos").toPoint();
@@ -150,10 +150,10 @@ void MainWindow::writeSettings()
 {
   QSettings settings;
   settings.beginGroup("MainWindow");
-  settings.setValue("size", size() );
+  settings.setValue("size", size());
   QList<QVariant> splitterSettings;
   QList<int> splitterSizes = ui.splitter->sizes();
-  for( int i = 0; i < splitterSizes.count( ); i++ )
+  for (int i = 0; i < splitterSizes.count(); i++)
     splitterSettings.append( splitterSizes.at(i) );
   settings.setValue("splitterSizes", splitterSettings );
   settings.setValue("lastOpenProject", currentProject);
@@ -165,12 +165,13 @@ void MainWindow::writeSettings()
 /*
   The app is closing.
 */
-void MainWindow::closeEvent( QCloseEvent *qcloseevent )
+void MainWindow::closeEvent(QCloseEvent *qcloseevent)
 {
-  if(!maybeSave( ))
+  if(!maybeSave()) {
     qcloseevent->ignore();
+  }
   else {
-    writeSettings( );
+    writeSettings();
     qcloseevent->accept();
   }
 }
@@ -187,7 +188,7 @@ void Editor::keyPressEvent(QKeyEvent* event)
     QString whitespace;
     QString line = c.block().text();
     int count = 0;
-    while(count < line.size() && line.at(count).isSpace())
+    while (count < line.size() && line.at(count).isSpace())
       whitespace += line.at(count++);
 
     c.beginEditBlock();
@@ -204,10 +205,10 @@ void Editor::keyPressEvent(QKeyEvent* event)
   Highlight the current line, if appropriate.
   Update the line/column display in the status bar.
 */
-void MainWindow::onCursorMoved( )
+void MainWindow::onCursorMoved()
 {
   QTextCursor c = ui.editor->textCursor();
-  if(c.hasSelection()) // don't highlight the line if text is selected
+  if (c.hasSelection()) // don't highlight the line if text is selected
     return ui.editor->setExtraSelections(QList<QTextEdit::ExtraSelection>());
   QTextEdit::ExtraSelection highlight;
   highlight.cursor = c;
@@ -218,14 +219,14 @@ void MainWindow::onCursorMoved( )
   extras << highlight;
   ui.editor->setExtraSelections( extras );
 
-  statusBar()->showMessage( tr("Line: %1  Column: %2").arg(c.blockNumber()+1).arg(c.columnNumber()));
+  statusBar()->showMessage(tr("Line: %1  Column: %2").arg(c.blockNumber()+1).arg(c.columnNumber()));
 }
 
 /*
   The file in the editor has been changed.
   Set the window 'dirty' state to reflect the state of the file.
 */
-void MainWindow::onDocumentModified( )
+void MainWindow::onDocumentModified()
 {
   setWindowModified(ui.editor->document()->isModified());
 }
@@ -282,20 +283,20 @@ void MainWindow::setEditorFont(const QString & family, int pointSize)
   ui.editor->setFont(QFont(family, pointSize));
 }
 
-void MainWindow::setTabWidth( int width )
+void MainWindow::setTabWidth(int width)
 {
   QFontMetrics fm(ui.editor->font());
-  ui.editor->setTabStopWidth( fm.width(" ") * width );
+  ui.editor->setTabStopWidth(fm.width(" ") * width);
 }
 
 /*
   Return the path to the file that contains the currently selected board's profile.
   This is stored in the data item of the actions in the "Board Type" menu
 */
-QString MainWindow::currentBoardProfile( )
+QString MainWindow::currentBoardProfile()
 {
-  QAction *board = boardTypeGroup->checkedAction( );
-  if(board)
+  QAction *board = boardTypeGroup->checkedAction();
+  if (board)
     return board->data().toString();
   else
     return QString();
@@ -304,11 +305,11 @@ QString MainWindow::currentBoardProfile( )
 /*
   Load a source file into the editor.
 */
-void MainWindow::editorLoadFile( const QString & filepath )
+void MainWindow::editorLoadFile(const QString & filepath)
 {
   Q_ASSERT(!currentProject.isEmpty());
   QFile file(filepath);
-  if(file.open(QIODevice::ReadOnly|QFile::Text)) {
+  if (file.open(QIODevice::ReadOnly|QFile::Text)) {
     currentFile = file.fileName();
     ui.editor->setPlainText(file.readAll());
     file.close();
@@ -321,17 +322,17 @@ void MainWindow::editorLoadFile( const QString & filepath )
   Called when the "new file" action is triggered.
   Prompt for a file name and create it within the currently open project.
 */
-void MainWindow::onNewFile( )
+void MainWindow::onNewFile()
 {
-  if(currentProject.isEmpty()) {
-    statusBar()->showMessage( tr("Need to open a project first.  Open or create a new one from the File menu."), 3500 );
+  if (currentProject.isEmpty()) {
+    statusBar()->showMessage(tr("Need to open a project first.  Open or create a new one from the File menu."), 3500);
     return;
   }
   QString newFilePath = QFileDialog::getSaveFileName(this, tr("Create New File"), currentProject, tr("C Files (*.c)"));
-  if(!newFilePath.isNull()) { // user cancelled
+  if (!newFilePath.isNull()) { // user cancelled
     Q_ASSERT(!currentProject.isEmpty());
     QString newFile = projectManager.createNewFile(currentProject, newFilePath);
-    if(!newFile.isEmpty()) {
+    if (!newFile.isEmpty()) {
       QFileInfo fi(newFile);
       editorLoadFile(fi.filePath());
       currentFileDropDown->addItem(fi.fileName(), fi.filePath()); // store the filepath on the combo box item
@@ -349,13 +350,13 @@ void MainWindow::onNewFile( )
 */
 void MainWindow::onAddExistingFile( )
 {
-  if(currentProject.isEmpty()) {
-    statusBar()->showMessage( tr("Need to open a project first.  Open or create a new one from the File menu."), 3500 );
+  if (currentProject.isEmpty()) {
+    statusBar()->showMessage(tr("Need to open a project first.  Open or create a new one from the File menu."), 3500);
     return;
   }
   QString newFilePath = QFileDialog::getOpenFileName(this, tr("Add Existing File"), currentProject, tr("C Files (*.c)"));
-  if(!newFilePath.isNull()) { // user cancelled
-    if(projectManager.addToProjectFile(currentProject, QDir(currentProject).filePath(newFilePath), "thumb")) {
+  if (!newFilePath.isNull()) { // user cancelled
+    if (projectManager.addToProjectFile(currentProject, QDir(currentProject).filePath(newFilePath))) {
       editorLoadFile(newFilePath);
       QFileInfo fi(newFilePath);
       currentFileDropDown->addItem(fi.fileName(), fi.filePath());
@@ -377,10 +378,10 @@ void MainWindow::removeFileFromProject(const QString & file)
   QFileInfo fi(file);
   int idx = currentFileDropDown->findData(fi.filePath());
   // remove the file from the dropdown
-  if(idx > -1)
+  if (idx > -1)
     currentFileDropDown->removeItem(idx);
   // if it's currently loaded in the editor, get it out
-  if(file == currentFile) {
+  if (file == currentFile) {
     QString newfile = currentFileDropDown->itemData(currentFileDropDown->currentIndex()).toString();
     if(!newfile.isEmpty())
       editorLoadFile(newfile);
@@ -400,13 +401,13 @@ void MainWindow::removeFileFromProject(const QString & file)
 void MainWindow::createNewFile(const QString & path)
 {
   QFileInfo fi(path);
-  if(fi.suffix().isEmpty())
+  if (fi.suffix().isEmpty())
     fi.setFile(fi.filePath() + ".c");
   QFile file(fi.filePath());
 
-  if(file.exists()) // don't do anything if this file's already there
+  if (file.exists()) // don't do anything if this file's already there
     return;
-  if(file.open(QIODevice::WriteOnly | QFile::Text)) {
+  if (file.open(QIODevice::WriteOnly | QFile::Text)) {
     QTextStream out(&file);
     out << QString("// %1").arg(fi.fileName()) << endl;
     out << tr("// created %1").arg(QDate::currentDate().toString("MMM d, yyyy") ) << endl << endl;
@@ -414,7 +415,7 @@ void MainWindow::createNewFile(const QString & path)
     editorLoadFile(fi.filePath());
     currentFileDropDown->addItem(fi.fileName(), fi.filePath()); // store the filepath on the combo box item
     currentFileDropDown->setCurrentIndex(currentFileDropDown->count()-1);
-    projectManager.addToProjectFile(currentProject, fi.filePath(), "thumb");
+    projectManager.addToProjectFile(currentProject, fi.filePath());
   }
 }
 
@@ -424,11 +425,11 @@ void MainWindow::createNewFile(const QString & path)
 */
 void MainWindow::onFileSelection(int index)
 {
-  if(index < 0) // the list has just been cleared...no use grabbing anything
+  if (index < 0) // the list has just been cleared...no use grabbing anything
     return;
   Q_ASSERT(!currentProject.isEmpty()); // we shouldn't have any files loaded unless a project is open
   QFileInfo file(currentFileDropDown->itemData(index).toString());
-  if(file.exists())
+  if (file.exists())
     editorLoadFile(file.filePath());
   else {
     QString message = tr("Couldn't find %1.").arg(file.fileName());
@@ -442,13 +443,13 @@ void MainWindow::onFileSelection(int index)
   Called when the "new project" action is triggered.
   Create a new project directory and project file within it.
 */
-void MainWindow::onNewProject( )
+void MainWindow::onNewProject()
 {
   QString workspace = Preferences::workspace();
   QString newProjPath = QFileDialog::getSaveFileName(this, tr("Create Project"), workspace, "", 0, QFileDialog::ShowDirsOnly);
-  if(!newProjPath.isNull()) {
+  if (!newProjPath.isNull()) {
     QString newProject = projectManager.createNewProject(newProjPath);
-    if(!newProject.isEmpty())
+    if (!newProject.isEmpty())
       openProject(newProject);
     else
       return statusBar()->showMessage(tr("Couldn't create new project.  Make sure there are no spaces in the path specified."), 3000);
@@ -459,11 +460,11 @@ void MainWindow::onNewProject( )
   Called when the "open" action is triggered.
   Prompt the user for which project they'd like to open.
 */
-void MainWindow::onOpen( )
+void MainWindow::onOpen()
 {
   QString projectPath = QFileDialog::getExistingDirectory(this, tr("Open Project"),
                                           Preferences::workspace(), QFileDialog::ShowDirsOnly);
-  if( !projectPath.isNull() ) // user cancelled
+  if (!projectPath.isNull()) // user cancelled
     openProject(projectPath);
 }
 
@@ -887,41 +888,40 @@ void MainWindow::onExample(QAction *example)
 */
 void MainWindow::loadLibraries( )
 {
-  QDir dir = appDirectory().filePath("cores/makecontroller/libraries");
-  if(dir.exists()) {
-    QStringList libraries = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
-    foreach(QString library, libraries){
-      QDir libdir = dir.filePath(library);
-      QFile libfile(libdir.filePath(library + ".xml"));
-      QDomDocument doc;
-      if(doc.setContent(&libfile)) {
-        libfile.close();
-        // add the library to the "Import Library" menu
-        QString libname = library;
-        QDomNodeList nodes = doc.elementsByTagName("display_name");
-        if(nodes.count())
-          libname = nodes.at(0).toElement().text();
+  QDir dir = appDirectory().filePath("/Users/liam/Documents/mtcode/make/mcbuilder/cores/makecontroller/libraries");
+  QStringList libraries = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
+  foreach (QString library, libraries) {
+    qDebug() << "looking for libs" << library;
+    QDir libdir = dir.filePath(library);
+    QFile libfile(libdir.filePath(library + ".xml"));
+    QDomDocument doc;
+    if(doc.setContent(&libfile)) {
+      libfile.close();
+      // add the library to the "Import Library" menu
+      QString libname = library;
+      QDomNodeList nodes = doc.elementsByTagName("display_name");
+      if(nodes.count())
+        libname = nodes.at(0).toElement().text();
 
-        // create a menu that allows us to import the library, view its documentation, etc
-        QMenu *menu = new QMenu(libname, ui.menuLibraries);
-        ui.menuLibraries->addMenu(menu);
-        QAction *a = new QAction(tr("Import to Current Project"), menu);
-        a->setData(library);
+      // create a menu that allows us to import the library, view its documentation, etc
+      QMenu *menu = new QMenu(libname, ui.menuLibraries);
+      ui.menuLibraries->addMenu(menu);
+      QAction *a = new QAction(tr("Import to Current Project"), menu);
+      a->setData(library);
+      menu->addAction(a);
+
+      nodes = doc.elementsByTagName("reference");
+      if(nodes.count()) {
+        a = new QAction(tr("View Documentation"), menu);
+        QString doclink = nodes.at(0).toElement().text();
+        QUrl url(doclink);
+        if(url.isRelative()) // if it's relative, we need to store the path for context
+          a->setData(QDir::cleanPath(libdir.filePath(doclink)));
+        else
+          a->setData(doclink); // otherwise just store the link
         menu->addAction(a);
-
-        nodes = doc.elementsByTagName("reference");
-        if(nodes.count()) {
-          a = new QAction(tr("View Documentation"), menu);
-          QString doclink = nodes.at(0).toElement().text();
-          QUrl url(doclink);
-          if(url.isRelative()) // if it's relative, we need to store the path for context
-            a->setData(QDir::cleanPath(libdir.filePath(doclink)));
-          else
-            a->setData(doclink); // otherwise just store the link
-          menu->addAction(a);
-        }
-        // TODO add the library's examples to the example menu
       }
+      // TODO add the library's examples to the example menu
     }
   }
 }

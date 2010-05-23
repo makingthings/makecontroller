@@ -22,16 +22,11 @@
 #include <QContextMenuEvent>
 
 #define DEFAULT_VERSION "0.1.0"
-#define DEFAULT_HEAPSIZE 18000
 #define DEFAULT_OPTLEVEL "Optimize For Size (-Os)"
 #define DEFAULT_INCLUDE_DEBUG false
 #define DEFAULT_INCLUDE_OSC false
 #define DEFAULT_INCLUDE_USB false
 #define DEFAULT_INCLUDE_NETWORK false
-#define DEFAULT_NETWORK_MEMPOOL 2000
-#define DEFAULT_UDP_SOCKETS 4
-#define DEFAULT_TCP_SOCKETS 4
-#define DEFAULT_TCP_SERVERS 2
 
 #define FILENAME_COLUMN 0
 #define BUILDTYPE_COLUMN 1
@@ -49,7 +44,6 @@ ProjectInfo::ProjectInfo(MainWindow *mainWindow) : QDialog( 0 )
   connect(ui.buttonBox, SIGNAL(accepted()), this, SLOT(applyChanges()));
   connect(ui.buttonBox, SIGNAL(rejected()), this, SLOT(accept()));
   connect(ui.defaultsButton, SIGNAL(clicked()), this, SLOT(restoreDefaults()));
-  connect(ui.networkBox, SIGNAL(stateChanged(int)), this, SLOT(onNetworkChanged(int)));
   connect(ui.fileBrowser, SIGNAL(removeFileRequest(QString)), this, SLOT(onRemoveFileRequest(QString)));
   connect(ui.fileBrowser, SIGNAL(changeBuildType(QString, QString)), this, SLOT(onChangeBuildType(QString, QString)));
 
@@ -57,26 +51,27 @@ ProjectInfo::ProjectInfo(MainWindow *mainWindow) : QDialog( 0 )
   header->setResizeMode(FILENAME_COLUMN, QHeaderView::Stretch);
   header->setResizeMode(BUILDTYPE_COLUMN, QHeaderView::ResizeToContents);
   header->setStretchLastSection(false);
+//  ui.locationLabel->setForegroundRole(QPalette::Disabled);
 }
 
 /*
   Read the project's ProjectInfo from the project file
   and load them into the UI.
 */
-bool ProjectInfo::load( const QString & projectPath )
+bool ProjectInfo::load(const QString & projectPath)
 {
-  if(projectPath.isEmpty())
+  if (projectPath.isEmpty())
     return false;
   QDir projectDir(projectPath);
   setWindowTitle(projectDir.dirName() + " - Project Info");
+  ui.locationLabel->setText(projectPath);
 
   // read the ProjectInfo file
   QFile file(projectFilePath(projectPath));
-  if(file.open(QIODevice::ReadOnly|QFile::Text)) {
+  if (file.open(QIODevice::ReadOnly|QFile::Text)) {
     QDomDocument projectFile;
-    if(projectFile.setContent(&file)) {
+    if (projectFile.setContent(&file)) {
       ui.versionEdit->setText(projectFile.elementsByTagName("version").at(0).toElement().text());
-      ui.heapSizeEdit->setText(projectFile.elementsByTagName("heapsize").at(0).toElement().text());
       QString optlevel = projectFile.elementsByTagName("optlevel").at(0).toElement().text();
       ui.optLevelBox->setCurrentIndex(ui.optLevelBox->findText(optlevel));
       bool state = (projectFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true");
@@ -90,16 +85,9 @@ bool ProjectInfo::load( const QString & projectPath )
 
       state = (projectFile.elementsByTagName("include_network").at(0).toElement().text() == "true");
       ui.networkBox->setChecked(state);
-      setNetworkSectionEnabled(state);
 
-      ui.networkMempoolEdit->setText(projectFile.elementsByTagName("network_mempool").at(0).toElement().text());
-      ui.udpSocketEdit->setText(projectFile.elementsByTagName("network_udp_sockets").at(0).toElement().text());
-      ui.tcpSocketEdit->setText(projectFile.elementsByTagName("network_tcp_sockets").at(0).toElement().text());
-      ui.tcpServerEdit->setText(projectFile.elementsByTagName("network_tcp_servers").at(0).toElement().text());
-
-      loadFileBrowser( &projectDir, &projectFile);
+      loadFileBrowser(&projectDir, &projectFile);
     }
-    file.close();
   }
   else
     return false;
@@ -121,10 +109,10 @@ void ProjectInfo::loadFileBrowser(QDir *projectDir, QDomDocument *projectFile)
 
   // only deals with files in the top level directory at the moment
   QFileIconProvider ip;
-  for(int i = 0; i < allFiles.count(); i++) {
+  for (int i = 0; i < allFiles.count(); i++) {
     QFileInfo fi(projectDir->filePath(allFiles.at(i).toElement().text()));
-    if(!fi.fileName().isEmpty()) {
-      if(projectDir->exists(fi.fileName())) {
+    if (!fi.fileName().isEmpty()) {
+      if (projectDir->exists(fi.fileName())) {
         QString buildtype = allFiles.at(i).toElement().attribute("type");
         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << fi.fileName() << buildtype);
         child->setData(FILENAME_COLUMN, FULLPATH_ROLE, fi.filePath());
@@ -158,17 +146,12 @@ bool ProjectInfo::diffProjects( const QString & newProjectPath, bool saveUiToFil
   bool changed = false;
 
   QFile file(projectFilePath(newProjectPath));
-  if(file.open(QIODevice::ReadWrite|QFile::Text)) {
+  if (file.open(QIODevice::ReadWrite|QFile::Text)) {
     QDomDocument projectFile;
     if(projectFile.setContent(&file)) {
       // to get at the actual text of an element, you need to grab its child, which will be a QDomText node
       if(ui.versionEdit->text() != projectFile.elementsByTagName("version").at(0).toElement().text()) {
         projectFile.elementsByTagName("version").at(0).firstChild().setNodeValue(ui.versionEdit->text());
-        changed = true;
-      }
-
-      if(ui.heapSizeEdit->text() != projectFile.elementsByTagName("heapsize").at(0).toElement().text()) {
-        projectFile.elementsByTagName("heapsize").at(0).firstChild().setNodeValue(ui.heapSizeEdit->text());
         changed = true;
       }
 
@@ -205,26 +188,6 @@ bool ProjectInfo::diffProjects( const QString & newProjectPath, bool saveUiToFil
         changed = true;
       }
 
-      if(ui.networkMempoolEdit->text() != projectFile.elementsByTagName("network_mempool").at(0).toElement().text()) {
-        projectFile.elementsByTagName("network_mempool").at(0).firstChild().setNodeValue(ui.networkMempoolEdit->text());
-        changed = true;
-      }
-
-      if(ui.udpSocketEdit->text() != projectFile.elementsByTagName("network_udp_sockets").at(0).toElement().text()) {
-        projectFile.elementsByTagName("network_udp_sockets").at(0).firstChild().setNodeValue(ui.udpSocketEdit->text());
-        changed = true;
-      }
-
-      if(ui.tcpSocketEdit->text() != projectFile.elementsByTagName("network_tcp_sockets").at(0).toElement().text()) {
-        projectFile.elementsByTagName("network_tcp_sockets").at(0).firstChild().setNodeValue(ui.tcpSocketEdit->text());
-        changed = true;
-      }
-
-      if(ui.tcpServerEdit->text() != projectFile.elementsByTagName("network_tcp_servers").at(0).toElement().text()) {
-        projectFile.elementsByTagName("network_tcp_servers").at(0).firstChild().setNodeValue(ui.tcpServerEdit->text());
-        changed = true;
-      }
-
       if(saveUiToFile) {
         file.resize(0); // clear out the current contents so we can update them, since we opened as read/write
         file.write(projectFile.toByteArray(2));
@@ -239,42 +202,20 @@ bool ProjectInfo::diffProjects( const QString & newProjectPath, bool saveUiToFil
   Return the path of the project file
   for the current project.
 */
-QString ProjectInfo::projectFilePath( const QString & projectPath )
+QString ProjectInfo::projectFilePath(const QString & projectPath)
 {
   QDir projectDir(projectPath);
   return projectDir.filePath(projectDir.dirName() + ".xml");
 }
 
-void ProjectInfo::restoreDefaults( )
+void ProjectInfo::restoreDefaults()
 {
   ui.versionEdit->setText(DEFAULT_VERSION);
-  ui.heapSizeEdit->setText(QString::number(DEFAULT_HEAPSIZE));
   ui.optLevelBox->setCurrentIndex(ui.optLevelBox->findText(DEFAULT_OPTLEVEL));
   ui.debugInfoCheckbox->setChecked(DEFAULT_INCLUDE_DEBUG);
   ui.oscBox->setChecked(DEFAULT_INCLUDE_OSC);
   ui.usbBox->setChecked(DEFAULT_INCLUDE_USB);
   ui.networkBox->setChecked(DEFAULT_INCLUDE_NETWORK);
-  ui.networkMempoolEdit->setText(QString::number(DEFAULT_NETWORK_MEMPOOL));
-  ui.udpSocketEdit->setText(QString::number(DEFAULT_UDP_SOCKETS));
-  ui.tcpSocketEdit->setText(QString::number(DEFAULT_TCP_SOCKETS));
-  ui.tcpServerEdit->setText(QString::number(DEFAULT_TCP_SERVERS));
-}
-
-void ProjectInfo::onNetworkChanged(int state)
-{
-  setNetworkSectionEnabled(state == Qt::Checked);
-}
-
-void ProjectInfo::setNetworkSectionEnabled(bool state)
-{
-  ui.networkMempoolEdit->setEnabled(state);
-  ui.networkMempoolLabel->setEnabled(state);
-  ui.udpSocketEdit->setEnabled(state);
-  ui.udpSocketLabel->setEnabled(state);
-  ui.tcpSocketEdit->setEnabled(state);
-  ui.tcpSocketLabel->setEnabled(state);
-  ui.tcpServerEdit->setEnabled(state);
-  ui.tcpServerLabel->setEnabled(state);
 }
 
 /*
@@ -285,14 +226,14 @@ void ProjectInfo::setNetworkSectionEnabled(bool state)
 void FileBrowser::contextMenuEvent(QContextMenuEvent *event)
 {
   QTreeWidgetItem *item = itemAt(event->pos());
-  if(item) {
-    if(item->childCount()) // files shouldn't have any children
+  if (item) {
+    if (item->childCount()) // files shouldn't have any children
       return;
     setCurrentItem(item); // make sure we have the right item selected
     QMenu menu(this);
     menu.addAction(actionRemoveFromProject);
     actionSetBuildType->setText("Change build type to thumb");
-    if(item->text(BUILDTYPE_COLUMN) == "thumb")
+    if (item->text(BUILDTYPE_COLUMN) == "thumb")
       actionSetBuildType->setText("Change build type to arm");
     menu.addAction(actionSetBuildType);
     menu.exec(event->globalPos());

@@ -1,22 +1,14 @@
-#include "config.h"
+#include "core.h"
 
-void MyTask( void* p );
-
-void Run( ) // this task gets called as soon as we boot up.
+void setup()
 {
-  TaskCreate( MyTask, "Me", 1000, 0, 3 );
+  // get ready...
 }
 
-void MyTask( void* p )
+// loop forever
+void loop()
 {
-  (void)p;
-  // initialize here...
-
-  while( true )
-  {
-    // loop forever in here...
-    Sleep(1);
-  }
+  sleep(1);
 }
 
 

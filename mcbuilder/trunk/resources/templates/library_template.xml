@@ -4,6 +4,6 @@
   <display_name>My Wonderful Library</display_name>
   <reference>http://yoursite.com</reference>
   <files>
-    <file type="thumb" >mylib.c</file>
+    <file>mylib.c</file>
   </files>
 </library>

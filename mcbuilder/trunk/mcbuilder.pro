@@ -1,4 +1,4 @@
-MCBUILDER_VERSION = "0.6.0"
+MCBUILDER_VERSION = "0.8.0"
 TEMPLATE = app
 
 FORMS = layouts/mainwindow.ui \
@@ -55,8 +55,8 @@ UI_DIR       = tmp
 # *******************************************
 macx{
   QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
-  QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
-  release{ CONFIG += x86 ppc }
+  QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.5.sdk #need this if building on PPC
+  release{ CONFIG += x86 }
   ICON = resources/icons/mcbuilder.icns
 }
 
@@ -68,18 +68,14 @@ win32{
 #              qextserialport
 # *******************************************
 INCLUDEPATH += src/qextserialport
-HEADERS +=  src/qextserialport/qextserialbase.h \
-            src/qextserialport/qextserialport.h \
+HEADERS +=  src/qextserialport/qextserialport.h \
             src/qextserialport/qextserialenumerator.h
 
-SOURCES +=  src/qextserialport/qextserialbase.cpp \
-            src/qextserialport/qextserialport.cpp \
+SOURCES +=  src/qextserialport/qextserialport.cpp \
             src/qextserialport/qextserialenumerator.cpp
 
-unix:HEADERS  += src/qextserialport/posix_qextserialport.h
 unix:SOURCES  += src/qextserialport/posix_qextserialport.cpp
-unix:DEFINES  += _TTY_POSIX_
-macx: LIBS += -framework IOKit # use IOKit on OS X
+macx: LIBS += -framework IOKit -framework Carbon
 unix{
   !macx{
     CONFIG += link_pkgconfig
@@ -88,9 +84,7 @@ unix{
 }
 
 win32{
-  HEADERS += src/qextserialport/win_qextserialport.h
   SOURCES += src/qextserialport/win_qextserialport.cpp
-  DEFINES += _TTY_WIN_
   DEFINES += WINVER=0x0501
   LIBS += -lSetupapi
 }

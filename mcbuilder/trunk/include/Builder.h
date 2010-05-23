@@ -49,14 +49,11 @@ public:
   void stop();
 
 private:
-  struct Library
-  {
+  typedef struct Library {
     QString name;
-    QStringList thumb_src;
-    QStringList thumb_cpp_src;
-    QStringList arm_src;
-    QStringList arm_cpp_src;
-  };
+    QStringList csrc;
+    QStringList cppsrc;
+  } Library;
   MainWindow *mainWindow;
   ProjectInfo *projInfo;
   BuildLog *buildLog;
@@ -68,23 +65,16 @@ private:
   BuildStep buildStep;
   int maxsize;
   QString currentProcess;
-  QList<Library> libraries;
   void resetBuildProcess();
-  bool createMakefile(const QString & projectPath);
-  bool createConfigFile(const QString & projectPath);
-  bool compareConfigFile(const QString & projectPath);
   bool matchErrorOrWarning(const QString & msg);
   bool matchInFunction(const QString & msg);
   bool matchUndefinedRef(const QString & msg);
-  QString ensureBuildDirExists(const QString & projPath);
   bool parseVersionNumber( int *maj, int *min, int *bld );
-  void loadDependencies(const QString & libsDir, const QString & project);
+  QList<Library> loadDependencies(const QString & libsDir, const QString & project);
+  QStringList generateArgs(const QString & projectName);
   void getLibrarySources(const QString & libdir, Library & lib);
-  QString filteredPath(const QString & path);
   int getCtrlBoardVersionNumber();
   int getAppBoardVersionNumber();
-  void writeFileListToMakefile(QTextStream & stream, const QStringList & files);
-  void writeGroupToMakeFile(QTextStream & stream, const QString & groupName, const QStringList & files);
 
 private slots:
   void nextStep( int exitCode, QProcess::ExitStatus exitStatus );
