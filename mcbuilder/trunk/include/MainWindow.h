@@ -29,7 +29,6 @@
 #include "UsbConsole.h"
 #include "FindReplace.h"
 #include "About.h"
-#include "ConsoleItem.h"
 #include "AppUpdater.h"
 #include "BuildLog.h"
 #include "ProjectManager.h"
@@ -80,7 +79,7 @@ public:
   void onUploadComplete(bool success);
   void onCleanComplete();
   void buildingNow(const QString & file);
-  void highlightLine(const QString & filepath, int linenumber, ConsoleItem::Type type);
+  void highlightLine(const QString & filepath, int linenumber, int type);
   void removeFileFromProject(const QString & file);
   static QDir appDirectory();
 

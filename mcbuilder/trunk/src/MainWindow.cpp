@@ -991,13 +991,13 @@ void MainWindow::onConsoleDoubleClick(QListWidgetItem *item)
 {
   highlightLine(item->data(FILEPATH_ROLE).toString(),
                 item->data(LINENO_ROLE).toInt(),
-                (ConsoleItem::Type)item->data(TYPE_ROLE).toInt());
+                item->data(TYPE_ROLE).toInt());
 }
 
 /*
   Highlight a line in the editor to indicate either an error or warning.
 */
-void MainWindow::highlightLine(const QString & filepath, int linenumber, ConsoleItem::Type type)
+void MainWindow::highlightLine(const QString & filepath, int linenumber, int type)
 {
   if (QDir::toNativeSeparators(filepath) == QDir::toNativeSeparators(currentFile)) {
     QTextCursor c(ui.editor->document());
@@ -1008,7 +1008,7 @@ void MainWindow::highlightLine(const QString & filepath, int linenumber, Console
     QTextEdit::ExtraSelection es;
     es.cursor = c;
     es.format.setProperty(QTextFormat::FullWidthSelection, true);
-    if (type == ConsoleItem::Error)
+    if (type == ERROR_FEEDBACK)
       es.format.setBackground(QColor("#ED575D")); // light red
     else
       es.format.setBackground(QColor("#FFDE49")); // light yellow
