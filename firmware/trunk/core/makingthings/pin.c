@@ -18,9 +18,6 @@
 #include "pin.h"
 #include "core.h"
 #include <stdio.h>
-#ifndef SIMULATOR
-#include "at91lib/aic.h"
-#endif
 
 #if (SAM7_PLATFORM == SAM7X128) || (SAM7_PLATFORM == SAM7X256) || (SAM7_PLATFORM == SAM7X512) || defined(SIMULATOR)
 #define IOPORT(p) ((p < 32) ? IOPORT1 : IOPORT2)
@@ -34,25 +31,8 @@
 #define IO_PIN_COUNT 32
 #endif
 
-#ifndef PIN_NO_ISR
-
-#ifndef MAX_INTERRUPT_SOURCES
-#define MAX_INTERRUPT_SOURCES 8
-#endif
-
-struct InterruptSource {
-  void* context;
-  PinInterruptHandler callback;
-  int pin;
-};
-
-// TODO - these structures should be caller provided, and we should just maintain a static
-// pointer to the front of a linked list of them
-static struct InterruptSource isrSources[MAX_INTERRUPT_SOURCES];
-static unsigned int isrSourceCount = 0;
-
+static PinInterrupt* interrupts = 0;
 static void pinInitInterrupts(Group group, unsigned int priority);
-#endif // PIN_NO_ISR
 
 /** \defgroup Pins Pins
   Control any of the 35 pins on the Make Controller.
@@ -99,21 +79,22 @@ static void pinInitInterrupts(Group group, unsigned int priority);
 */
 
 /**
- * Read whether a pin is on or off.
- * The pin can be configured as an \b INPUT or \b OUTPUT.
- * @param pin Which pin to read.
- * @return True if the pin is high, false if it's low.
- * \b Example
- * \code
- * pinSetMode(PIN_PB28, INPUT); // set as an input
- * if (pinValue(PIN_PB28) == ON) {
- *   // then it's on
- * }
- * else {
- *   // then it's off
- * }
- * \endcode
- */
+  Read whether a pin is on or off.
+  The pin can be configured as an \b INPUT or \b OUTPUT.
+  @param pin Which pin to read.
+  @return True if the pin is high, false if it's low.
+
+  \b Example
+  \code
+  pinSetMode(PIN_PB28, INPUT); // set as an input
+  if (pinValue(PIN_PB28) == ON) {
+    // then it's on
+  }
+  else {
+    // then it's off
+  }
+  \endcode
+*/
 bool pinValue(Pin pin)
 {
   return palReadPad(IOPORT(pin), PIN(pin));
@@ -288,14 +269,12 @@ void pinGroupSetMode(Group group, int pins, PinMode mode)
   }
 }
 
-#ifndef PIN_NO_ISR
-
 /**
   Add an interrupt handler for this pin.
   Your handler will get called any time the value on this pin changes,
   meaning you don't have to constantly check its value yourself.
   Your handler must have this specific signature:
-  \code void myHandler(void* context) \endcode
+  \code void myHandler(void); \endcode
   
   Note that in your handler, you shouldn't do anything that takes too long,
   and definitely can't sleep().
@@ -319,10 +298,16 @@ void pinGroupSetMode(Group group, int pins, PinMode mode)
     count++; // increment our count
   }
 
+  // create our handler structure - 'const' means read-only
+  const PinInterrupt myInterrupt = {
+    .handler = myHandler,
+    .pin = PIN_PB27
+  };
+
   void myTask(void* p)
   {
-    pinSetMode(PIN_PB27, INPUT);       // set the pin as an input
-    pinAddInterruptHandler(PIN_PB27, myHandler, 0); // register our handler
+    pinSetMode(PIN_PB27, INPUT);          // set the pin as an input
+    pinAddInterruptHandler(&myInterrupt); // register our handler
     
     while (true) {
       // do the rest of my task...
@@ -330,28 +315,28 @@ void pinGroupSetMode(Group group, int pins, PinMode mode)
   }
   \endcode
   
-  @param pin The pin to monitor for changes.
-  @param h Your handler that will be called when the input value changes.
-  @param arg (optional) Argument that will be passed into your handler, if desired.
+  @param pi The PinInterrupt to monitor for changes.
   @return True if the handler was registered successfully, false if not.
 */
-bool pinAddInterruptHandler(Pin pin, PinInterruptHandler h, void* arg)
+bool pinAddInterruptHandler(PinInterrupt* pi)
 {
-  if (isrSourceCount >= MAX_INTERRUPT_SOURCES)
-    return false;
+  pi->next = 0;
+  if (interrupts == 0) {
+    pinInitInterrupts(GROUP_A, (AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 3));
+#if SAM7_PLATFORM == SAM7X128 || SAM7_PLATFORM == SAM7X256 || SAM7_PLATFORM == SAM7X512
+    pinInitInterrupts(GROUP_B, (AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 3));
+#endif
+    interrupts = pi;
+  }
+  else {
+    PinInterrupt* i = interrupts;
+    while (i->next != 0)
+      i = i->next;
+    i->next = pi;
+  }
   
-  isrSources[isrSourceCount].pin = pin;
-
-  // if this is the first time for either channel, set it up
-  if (IOPORT(pin)->PIO_IMR == 0)
-    pinInitInterrupts(IOPORT(pin), (AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 3) );
-  
-  IOPORT(pin)->PIO_ISR;  // clear the status register
-  pinEnableHandler(pin); // enable our channel
-
-  isrSources[isrSourceCount].callback = h;
-  isrSources[isrSourceCount++].context = arg; // make sure to increment our handler count
-
+  IOPORT(pi->pin)->PIO_ISR;  // clear the status register
+  pinEnableHandler(pi);      // enable our channel
   return true;
 }
 
@@ -359,42 +344,52 @@ bool pinAddInterruptHandler(Pin pin, PinInterruptHandler h, void* arg)
   Disable the interrupt handler for this pin.
   This is only meaningful if you have registered a handler with
   pinAddInterruptHandler().
-  @param pin The pin to disable the handler for.
+  @param pi The PinInterrupt to disable.
   
   \b Example
   \code
+  const PinInterrupt myInterrupt = {
+    .handler = myHandler,
+    .pin = PIN_PB27
+  };
+
   pinSetMode(PIN_PB27, INPUT);
-  pinAddInterruptHandler(PIN_PB27, myHandler); // start notifications
+  pinAddInterruptHandler(&myInterrupt); // start notifications
   
   // ... some time later, we want to stop getting notified
   
-  pinDisableHandler(PIN_PB27); // stop notifications
+  pinDisableHandler(&myInterrupt); // stop notifications
   \endcode
 */
-void pinDisableHandler(Pin pin)
+void pinDisableHandler(PinInterrupt* pi)
 {
-  IOPORT(pin)->PIO_IDR = PIN_MASK(pin);
+  IOPORT(pi->pin)->PIO_IDR = PIN_MASK(pi->pin);
 }
 
 /**
- * Re-enable the interrupt handler for a pin.
- * This is to re-enable a handler that has previously been
- * disabled via pinDisableHandler().
- * @param pin The pin to re-enable the handler for.
- *
- * \b Example
- * \code
- * pinSetMode(PIN_PB27, INPUT);
- * pinAddInterruptHandler(PIN_PB27, myHandler); // start notifications
- * // ... some time later, we want to stop getting notified
- * pinDisableHandler(PIN_PB27); // stop notifications
- * // ... some time later yet again, we want to turn them back on
- * pinEnableHandler(PIN_PB27);
- * \endcode
- */
-void pinEnableHandler(Pin pin)
+  Re-enable the interrupt handler for a pin.
+  This is to re-enable a handler that has previously been
+  disabled via pinDisableHandler().
+  @param pi The PinInterrupt structure to enable.
+  
+  \b Example
+  \code
+  const PinInterrupt myInterrupt = {
+    .handler = myHandler,
+    .pin = PIN_PB27
+  };
+
+  pinSetMode(PIN_PB27, INPUT);
+  pinAddInterruptHandler(&myInterrupt); // start notifications
+  // ... some time later, we want to stop getting notified
+  pinDisableHandler(&myInterrupt); // stop notifications
+  // ... some time later yet again, we want to turn them back on
+  pinEnableHandler(&myInterrupt);
+  \endcode
+*/
+void pinEnableHandler(PinInterrupt* pi)
 {
-  IOPORT(pin)->PIO_IER = PIN_MASK(pin);
+  IOPORT(pi->pin)->PIO_IER = PIN_MASK(pi->pin);
 }
 
 /** @}
@@ -405,16 +400,15 @@ static void pinServeInterrupt(Group group)
   unsigned int status = group->PIO_ISR & group->PIO_IMR;
   // Check pending events
   if (status) {
-    unsigned short i;
-    unsigned int pinMask;
-    struct InterruptSource* is;
-    for (i = 0; status != 0  && i < isrSourceCount; i++) {
-      is = &(isrSources[i]);
-      pinMask = PIN_MASK(is->pin);
-      if ((IOPORT(is->pin) == group) && ((status & pinMask) != 0)) {
-        is->callback(is->context);     // callback the handler
-        status &= ~(pinMask);          // mark this channel as serviced
+    uint32_t pinMask;
+    PinInterrupt* pi = interrupts;
+    while (pi != 0) {
+      pinMask = PIN_MASK(pi->pin);
+      if ((IOPORT(pi->pin) == group) && ((status & pinMask) != 0)) {
+        pi->handler();          // callback the handler
+        status &= ~(pinMask);   // mark this channel as serviced
       }
+      pi = pi->next;
     }
   }
 }
@@ -462,8 +456,6 @@ void pinInitInterrupts(Group group, unsigned int priority)
   AIC_ConfigureIT(chan, priority, isr_handler); // set it up
   AIC_EnableIT(chan);
 }
-
-#endif // PIN_NO_ISR
 
 #ifdef OSC
 

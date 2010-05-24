@@ -19,9 +19,6 @@
 #include "system.h"
 #include <ctype.h>
 #include <string.h>
-#include "board.h"
-#include "ch.h"
-#include "eeprom.h"
 #include "at91sam7.h"
 
 #ifndef SYSTEM_MAX_NAME

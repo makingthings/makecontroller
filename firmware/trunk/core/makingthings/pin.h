@@ -27,7 +27,17 @@
 /**
  * A handler for use with pinAddInterruptHandler().
  */
-typedef void (*PinInterruptHandler)(void*);
+typedef void (*PinInterruptHandler)(void);
+
+/**
+  Structure to register a pin interrupt handler.
+  \ingroup Pins
+*/
+typedef struct PinInterrupt_t {
+  PinInterruptHandler handler;  /**< The function that handles the interrupt */
+  int pin;                      /**< Which pin this handler is attached to */
+  struct PinInterrupt_t* next;  /**< The next interrupt handler in the list */
+} PinInterrupt;
 
 /**
   \defgroup PinMode Pin Modes
@@ -145,11 +155,9 @@ void pinOff(Pin pin);
 void pinGroupOff(Group port, int pins);
 void pinSetMode(Pin pin, PinMode mode);
 void pinGroupSetMode(Group port, int pins, PinMode mode);
-#ifndef PIN_NO_ISR
-bool pinAddInterruptHandler(Pin pin, PinInterruptHandler h, void* arg);
-void pinDisableHandler(Pin pin);
-void pinEnableHandler(Pin pin);
-#endif // PIN_NO_ISR
+bool pinAddInterruptHandler(PinInterrupt* pi);
+void pinDisableHandler(PinInterrupt* pi);
+void pinEnableHandler(PinInterrupt* pi);
 #ifdef __cplusplus
 }
 #endif
