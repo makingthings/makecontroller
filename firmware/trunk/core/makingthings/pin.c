@@ -400,10 +400,9 @@ static void pinServeInterrupt(Group group)
   unsigned int status = group->PIO_ISR & group->PIO_IMR;
   // Check pending events
   if (status) {
-    uint32_t pinMask;
     PinInterrupt* pi = interrupts;
-    while (pi != 0) {
-      pinMask = PIN_MASK(pi->pin);
+    while (pi != 0 && status != 0) {
+      uint32_t pinMask = PIN_MASK(pi->pin);
       if ((IOPORT(pi->pin) == group) && ((status & pinMask) != 0)) {
         pi->handler();          // callback the handler
         status &= ~(pinMask);   // mark this channel as serviced
