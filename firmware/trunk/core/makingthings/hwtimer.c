@@ -270,13 +270,12 @@ static void hwtimerServeInterrupt( void )
     jitter = manager.tc->TC_CV;
     manager.servicing = false;
   }
-
-  AT91C_BASE_AIC->AIC_EOICR = 0; // Clear AIC to complete ISR processing
 }
 
-CH_IRQ_HANDLER( hwtimerIsr ) {
+CH_IRQ_HANDLER(hwtimerIsr) {
   CH_IRQ_PROLOGUE();
   hwtimerServeInterrupt();
+  AT91C_BASE_AIC->AIC_EOICR = 0;
   CH_IRQ_EPILOGUE();
 }
 
