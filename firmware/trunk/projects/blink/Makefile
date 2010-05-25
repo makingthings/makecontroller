@@ -52,7 +52,7 @@ ASMSRC = $(PORTASM) \
 
 MCU  = arm7tdmi
 
-TRGT = /Users/liam/Documents/mtcode/arm-elf/bin/arm-elf-
+TRGT = arm-elf-
 CC   = $(TRGT)gcc
 CPPC = $(TRGT)g++
 # Enable loading with g++ only if you need C++ runtime support.
