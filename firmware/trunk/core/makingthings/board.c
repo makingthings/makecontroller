@@ -101,15 +101,6 @@ static CH_IRQ_HANDLER(SYSIrqHandler) {
 }
 
 /*
- * Digital I/O ports static configuration as defined in @p board.h.
- */
-static const PALConfig config =
-{
-  {VAL_PIOA_ODSR, VAL_PIOA_OSR, VAL_PIOA_PUSR},
-  {VAL_PIOB_ODSR, VAL_PIOB_OSR, VAL_PIOB_PUSR}
-};
-
-/*
  * Early initialization code.
  * This initialization is performed just after reset before BSS and DATA
  * segments initialization.
@@ -141,7 +132,11 @@ void hwinit1(void)
   AT91C_BASE_AIC->AIC_SPU  = (AT91_REG)SpuriousHandler;
   AT91C_BASE_AIC->AIC_DCR = AT91C_AIC_DCR_PROT;
   
-  // PIO initialization.
+  // PIO initialization - config values from board.h
+  const PALConfig config = {
+    {VAL_PIOA_ODSR, VAL_PIOA_OSR, VAL_PIOA_PUSR},
+    {VAL_PIOB_ODSR, VAL_PIOB_OSR, VAL_PIOB_PUSR}
+  };
   palInit(&config);
 
   /*
