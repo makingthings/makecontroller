@@ -16,22 +16,28 @@
 *********************************************************************************/
 
 #include "pwm.h"
-#include "ch.h"
-#include "hal.h"
+#include "core.h"
 #include "error.h"
 
-#ifndef PWM_DEFAULT_FREQ
-#define PWM_DEFAULT_FREQ 350
-#endif
-
 #define PWM_DUTY_MAX 1024
-#define PWM_CHANNEL_0_IO AT91C_PB19_PWM0
-#define PWM_CHANNEL_1_IO AT91C_PB20_PWM1
-#define PWM_CHANNEL_2_IO AT91C_PB21_PWM2
-#define PWM_CHANNEL_3_IO AT91C_PB22_PWM3
+#define PWM_CHANNEL_0_IO PIN_PB19
+#define PWM_CHANNEL_1_IO PIN_PB20
+#define PWM_CHANNEL_2_IO PIN_PB21
+#define PWM_CHANNEL_3_IO PIN_PB22
 
-static int pwmFindClockConfiguration(int frequency);
-static int pwmGetIo(int channel);
+static unsigned int pwmFindClockConfiguration(int frequency, bool forChannel);
+static bool pwmSetFrequency(int freq);
+
+static int pwmGetIo(int channel)
+{
+  switch (channel) {
+    case 0: return PWM_CHANNEL_0_IO;
+    case 1: return PWM_CHANNEL_1_IO;
+    case 2: return PWM_CHANNEL_2_IO;
+    case 3: return PWM_CHANNEL_3_IO;
+    default: return 0;
+  }
+}
 
 /**
   \defgroup PWM
@@ -45,6 +51,10 @@ static int pwmGetIo(int channel);
   First call pwmInit() to initialize the pwm system, then enable any channels you want to use
   via pwmEnableChannel().  pwmSetDuty() will control the duty cycle for a given channel,
   and pwmSetWaveform() gives some more control over the output.
+
+  \section Frequency
+  When the PWM system is started up, its frequency is set at 20 kHz.  You can override this
+  by defining \b PWM_DEFAULT_FREQ in your config.h file.
 
   \section Hardware
   The PWM lines on the Make Controller are located on the following signal lines:
@@ -61,31 +71,39 @@ static int pwmGetIo(int channel);
 */
 
 /**
-  Eanble a PWM channel.
-  @param channel Which channel to use - valid options are 0, 1, 2, 3.
+  Enable a PWM channel.
+  You can specify several pieces of configuration for the PWM channel.  All PWM channels
+  share a baseline frequency, but each channel can be configured to run at some slower
+  rate by specifying how many times to divide the central PWM frequency.
+
+  @param channel Which PWM channel - valid options are 0, 1, 2, 3.
+  @param divider (optional) How much to divide the baseline PWM frequency for this channel.
+  @param center_aligned (optional) Whether this channel is center aligned, otherwise is left aligned.
+  @param starts_high (optional) Whether this channel starts high, otherwise starts low.
 
   \b Example
   \code
   pwmEnableChannel(0); // enable channel 0
   \endcode
 */
-bool pwmEnableChannel(int channel)
+bool pwmEnable(int channel, int frequency, bool center_aligned, bool starts_high)
 {
   // configure to use peripheral A...all channels are on port B
-  AT91C_BASE_PIOB->PIO_ASR = pwmGetIo(channel);
+  pinSetMode(pwmGetIo(channel), PERIPHERAL_A);
+
+  // make sure the channel is disabled
+  AT91C_BASE_PWMC->PWMC_DIS = 1 << channel;
+  while ((AT91C_BASE_PWMC->PWMC_SR & (1 << channel)) != 0);
 
   AT91S_PWMC_CH *pwm = &AT91C_BASE_PWMC->PWMC_CH[channel];
-  pwm->PWMC_CMR =
-    // AT91C_PWMC_CPRE_MCK |  // Divider Clock ? 
-       AT91C_PWMC_CPRE_MCKA |    //Divider Clock A
-    // AT91C_PWMC_CPRE_MCKB;  //Divider Clock B
-    // AT91C_PWMC_CPD;  // Channel Update Period 
-       AT91C_PWMC_CPOL; // Channel Polarity Invert
-    // AT91C_PWMC_CALG ; // Channel Alignment Center
+  // 0 is special value to just base PWM clock - otherwise try to find best frequency
+  // as a divider of MCK
+  pwm->PWMC_CMR = ((frequency == 0) ? AT91C_PWMC_CPRE_MCKA : pwmFindClockConfiguration(frequency, YES)) |
+                  (center_aligned ? AT91C_PWMC_CALG : 0) |
+                  (starts_high    ? AT91C_PWMC_CPOL : 0);
 
-  pwm->PWMC_CPRDR = PWM_DUTY_MAX; // Set the Period register (sample size bit fied )
-  pwm->PWMC_CDTYR = 0;            // Set the duty cycle register (output value)
-  pwm->PWMC_CUPDR = 0 ;           // Initialise the Update register write only
+  pwm->PWMC_CPRDR = PWM_DUTY_MAX; // Set the Period register (sample size bit fied)
+  pwmSetDuty(channel, 0);         // Set the duty cycle
 
   AT91C_BASE_PWMC->PWMC_ENA = (1 << channel); // enable this channel
   return true;
@@ -93,14 +111,14 @@ bool pwmEnableChannel(int channel)
 
 /**
   Disable a PWM channel.
-  @param channel Which channel to use - valid options are 0, 1, 2, 3.
+  @param channel Which PWM channel - valid options are 0, 1, 2, 3.
 
   \b Example
   \code
   pwmDisableChannel(0); // disable channel 0
   \endcode
 */
-void pwmDisableChannel(int channel)
+void pwmDisable(int channel)
 {
   // could reconfig the pio pin as well, possibly...
   AT91C_BASE_PWMC->PWMC_DIS = (1 << channel); // disable this channel
@@ -130,13 +148,16 @@ void pwmSetDuty(int channel, int duty)
 
 /**
   Initialize the PWM system.
+  Note - this is called automatically during startup with the value of \b PWM_DEFAULT_FREQ.
+  You can override PWM_DEFAULT_FREQ in your config.h file to start up with a different frequency.
+  @param frequency The base frequency for the PWM system.
 */
-void pwmInit()
+void pwmInit(int frequency)
 {
   // turn on pwm power, disable all channels and configure clock A
   AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_PWMC;
   AT91C_BASE_PWMC->PWMC_DIS = AT91C_PWMC_CHID0 | AT91C_PWMC_CHID1 | AT91C_PWMC_CHID2 | AT91C_PWMC_CHID3;
-  pwmSetFrequency(PWM_DEFAULT_FREQ);
+  pwmSetFrequency(frequency);
 }
 
 /**
@@ -148,46 +169,9 @@ void pwmDeinit()
   AT91C_BASE_PWMC->PWMC_DIS = AT91C_PWMC_CHID0 | AT91C_PWMC_CHID1 | AT91C_PWMC_CHID2 | AT91C_PWMC_CHID3;
 }
 
-int pwmGetIo(int channel)
-{  
-  switch (channel) {
-    case 0: return PWM_CHANNEL_0_IO;
-    case 1: return PWM_CHANNEL_1_IO;
-    case 2: return PWM_CHANNEL_2_IO;
-    case 3: return PWM_CHANNEL_3_IO;
-    default: return 0;
-  }
-}
+/** @} */
 
-/**
-  Configure the waveform of this Pwm channel.
-  You can specify the alignment - options are left and center - and
-  the polarity - whether the waveform starts at a low or a high level.
-  The default is left aligned, and starting high.
-  @param channel Which channel to use - valid options are 0, 1, 2, 3.
-  @param left_aligned Whether the waveform should be left aligned (is otherwise center aligned).
-  @param starts_low Whether the waveform should start at a low level (otherwise starts high).
-
-  \b Example
-  \code
-  pwmSetWaveform(1, false, true); // set it to right-aligned and starting low for channel 1
-  \endcode
-*/
-void pwmSetWaveform(int channel, bool left_aligned, bool starts_low)
-{
-  unsigned int alignment = left_aligned ? 0 : 1;
-  unsigned int polarity = starts_low ? 0 : 1;
-  // Disable channel (effective at the end of the current period)
-  if ((AT91C_BASE_PWMC->PWMC_SR & (1 << channel)) != 0) {
-    AT91C_BASE_PWMC->PWMC_DIS = 1 << channel;
-    while ((AT91C_BASE_PWMC->PWMC_SR & (1 << channel)) != 0);
-  }
-
-  // Configure channel
-  AT91C_BASE_PWMC->PWMC_CH[channel].PWMC_CMR = alignment | polarity;
-}
-
-/**
+/*
   Set the frequency of the PWM system.
   Note that this will change the frequency for all PWM channels
 
@@ -202,8 +186,8 @@ void pwmSetWaveform(int channel, bool left_aligned, bool starts_low)
 bool pwmSetFrequency(int freq)
 {
   unsigned int mode = 0;
-  unsigned int result = pwmFindClockConfiguration( freq * 1000 );
-  if(!result)
+  unsigned int result = pwmFindClockConfiguration(freq * 1000, NO);
+  if (!result)
     return false;
   mode |= result;
   /*
@@ -216,38 +200,18 @@ bool pwmSetFrequency(int freq)
   return true;
 }
 
-/**
-  Set the period of a cycle.
-  @param channel Which channel to use - valid options are 0, 1, 2, 3.
-  @param period The period in for a cycle.
-
-  \b Example
-  \code
-  pwmSetPeriod(2, 200);
-  \endcode
+/*
+  Try to find the best fit for a frequency, given our MCK.
+  If we're doing this for a channel (forChannel), the default value if we fail
+  should be clock A.  If we're doing it for the main PWM system, the default
+  value if a valid clock isn't found should be 0.
+  adapted from at91lib softpack.
 */
-bool pwmSetPeriod(int channel, int period)
+unsigned int pwmFindClockConfiguration(int frequency, bool forChannel)
 {
-  // If channel is disabled, write to CPRD
-  if ((AT91C_BASE_PWMC->PWMC_SR & (1 << channel)) == 0)
-    AT91C_BASE_PWMC->PWMC_CH[channel].PWMC_CPRDR = period;
-  // Otherwise use update register
-  else {
-    AT91C_BASE_PWMC->PWMC_CH[channel].PWMC_CMR |= AT91C_PWMC_CPD;
-    AT91C_BASE_PWMC->PWMC_CH[channel].PWMC_CUPDR = period;
-  }
-  return true;
-}
-
-/** @}
-*/
-
-// from at91lib softpack
-int pwmFindClockConfiguration(int frequency)
-{
-  static const unsigned int divisors[11] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
-  unsigned char divisor = 0;
-  unsigned int prescaler;
+  static const uint32_t divisors[11] = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
+  uint8_t divisor = 0;
+  uint32_t prescaler;
 
   // Find prescaler and divisor values
   prescaler = (MCK / divisors[divisor]) / frequency;
@@ -255,7 +219,11 @@ int pwmFindClockConfiguration(int frequency)
     divisor++;
     prescaler = (MCK / divisors[divisor]) / frequency;
   }
-  return (divisor < 11) ? prescaler | (divisor << 8) : 0;
+
+  if (forChannel)
+    return (divisor < 11) ? divisor : AT91C_PWMC_CPRE_MCKA;
+  else
+    return (divisor < 11) ? prescaler | (divisor << 8) : 0;
 }
 
 

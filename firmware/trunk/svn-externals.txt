@@ -3,4 +3,4 @@
 #   svn propset svn:externals -F svn-externals.txt .
 # 
 
-core/chibios https://chibios.svn.sourceforge.net/svnroot/chibios/branches/stable_1.4.x
+core/chibios https://chibios.svn.sourceforge.net/svnroot/chibios/tags/ver_1.5.7unstable

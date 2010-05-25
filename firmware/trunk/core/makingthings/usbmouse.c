@@ -31,8 +31,7 @@
 
   \section Building
   You'll need to adjust your Makefile to build as a USB mouse.  In the \b CSRC section,
-  add ${USBHIDCORE} and ${USBHIDMOUSE}, and in the \b INCDIR section, add ${USBHIDCOREINC} and
-  ${USBHIDMOUSEINC}, and add ${MT}/usbmouse.c.
+  add $(USBHIDCORE), $(USBHIDMOUSE), and add $(MT)/usbmouse.c.
   \ingroup interfacing
   @{
 */

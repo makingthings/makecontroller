@@ -17,7 +17,6 @@
 
 #include "analogin.h"
 #include "core.h"
-#include "at91lib/aic.h"
 
 #define ANALOGIN_0 AT91C_PIO_PB27
 #define ANALOGIN_1 AT91C_PIO_PB28

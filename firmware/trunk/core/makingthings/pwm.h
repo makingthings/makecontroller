@@ -22,17 +22,18 @@
 
 #define PWM_COUNT 4
 
+#ifndef PWM_DEFAULT_FREQ
+#define PWM_DEFAULT_FREQ 20000
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-void pwmInit(void);
+void pwmInit(int frequency);
 void pwmDeinit(void);
-bool pwmSetFrequency(int freq);
-bool pwmEnableChannel(int channel);
-void pwmDisableChannel(int channel);
+bool pwmEnable(int channel, int frequency, bool center_aligned, bool starts_high);
+void pwmDisable(int channel);
 void pwmSetDuty(int channel, int duty);
-void pwmSetWaveform(int channel, bool left_aligned, bool starts_low);
-bool pwmSetPeriod(int channel, int period);
 #ifdef __cplusplus
 }
 #endif

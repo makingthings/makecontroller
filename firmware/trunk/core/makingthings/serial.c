@@ -129,7 +129,7 @@ void serialEnableAll(int port, int baud, int parity, int charbits, int stopbits,
   };
 
 #if USE_SAM7_USART0
-  if (port == 0 && SD1.sd.state < SD_READY) {
+  if (port == 0 && SD1.state < SD_READY) {
     if (handshake == YES) {
       AT91C_BASE_PIOA->PIO_PDR   = AT91C_PA3_RTS0 | AT91C_PA4_CTS0;
       AT91C_BASE_PIOA->PIO_ASR   = AT91C_PA3_RTS0 | AT91C_PA4_CTS0;
@@ -139,7 +139,7 @@ void serialEnableAll(int port, int baud, int parity, int charbits, int stopbits,
   }
 #endif
 #if USE_SAM7_USART1
-  if (port == 1 && SD2.sd.state < SD_READY) {
+  if (port == 1 && SD2.state < SD_READY) {
     // careful - PA8/PA9 are SPI/EEPROM CS lines, but include these if you need them
     if (handshake == YES) {
       AT91C_BASE_PIOA->PIO_PDR   = AT91C_PA8_RTS1 | AT91C_PA9_CTS1;
@@ -183,10 +183,10 @@ void serialDisable(int port)
 int serialAvailable(int port)
 {
 #if USE_SAM7_USART0
-  if (port == 0) return chQSpace(&SD1.sd.iqueue);
+  if (port == 0) return chQSpace(&SD1.iqueue);
 #endif
 #if USE_SAM7_USART1
-  if (port == 1) return chQSpace(&SD2.sd.iqueue);
+  if (port == 1) return chQSpace(&SD2.iqueue);
 #endif
   return 0;
 }

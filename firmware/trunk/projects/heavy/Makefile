@@ -24,8 +24,8 @@ include $(MT)/mtcore.mk
 CSRC = $(PORTSRC) $(KERNSRC) $(HALSRC) $(PLATFORMSRC) $(MTCORESRC) \
        $(USBCORESRC) $(USBCDCSRC) \
        $(LWNETIFSRC) $(LWCORESRC) $(LWIPV4SRC) $(LWAPISRC) \
-       ${LWIP}/contrib/chibios/lwipthread.c \
-       ${LWIP}/contrib/chibios/arch/sys_arch.c \
+       $(LWIP)/contrib/chibios/lwipthread.c \
+       $(LWIP)/contrib/chibios/arch/sys_arch.c \
        $(CHIBIOS)/os/various/syscalls.c \
        $(CHIBIOS)/os/various/evtimer.c \
        $(LIBRARIES)/appled/appled.c \
@@ -38,12 +38,11 @@ CPPSRC =
 
 # include directories
 INCDIR = $(PORTINC) $(KERNINC) $(HALINC) $(PLATFORMINC) \
-				 $(MT) $(LWINC) $(USBINC) \
+         $(MT) $(LWINC) $(USBINC) \
          $(CHIBIOS)/os/various \
          $(CHIBIOS)/os/ports/GCC/ARM7/AT91SAM7 \
          $(LIBRARIES)/appled \
-         $(LIBRARIES)/digitalin \
-         $(LIBRARIES)/webclient
+         $(LIBRARIES)/digitalin
 
 # where to put the build output 
 BUILDDIR = build
@@ -53,11 +52,12 @@ ASMSRC = $(PORTASM) \
          $(CHIBIOS)/os/ports/GCC/ARM7/AT91SAM7/vectors.s
 
 ##############################################################################
-# Compiler settings
+# Compiler settings - shouldn't need to change anything beyond here
+# unless you know what you're up to!
 
 MCU  = arm7tdmi
 
-TRGT = arm-elf-
+TRGT = /Users/liam/Documents/mtcode/arm-elf/bin/arm-elf-
 CC   = $(TRGT)gcc
 CPPC = $(TRGT)g++
 # Enable loading with g++ only if you need C++ runtime support.
