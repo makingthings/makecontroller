@@ -18,7 +18,6 @@
 */
 
 #include "core.h"
-#include "at91lib/aic.h"
 
 void kill(void)
 {
@@ -90,6 +89,13 @@ static CH_IRQ_HANDLER(SYSIrqHandler) {
     chSysTimerHandlerI();
     chSysUnlockFromIsr();
   }
+  
+#if USE_SAM7_DBGU_UART
+  if (AT91C_BASE_DBGU->DBGU_CSR & 
+    (AT91C_US_RXRDY | AT91C_US_TXRDY | AT91C_US_PARE | AT91C_US_FRAME | AT91C_US_OVRE | AT91C_US_RXBRK)) {
+    sd_lld_serve_interrupt(&SD3);
+  }
+#endif  
   AT91C_BASE_AIC->AIC_EOICR = 0;
   CH_IRQ_EPILOGUE();
 }
@@ -97,7 +103,7 @@ static CH_IRQ_HANDLER(SYSIrqHandler) {
 /*
  * Digital I/O ports static configuration as defined in @p board.h.
  */
-static const AT91SAM7PIOConfig config =
+static const PALConfig config =
 {
   {VAL_PIOA_ODSR, VAL_PIOA_OSR, VAL_PIOA_PUSR},
   {VAL_PIOB_ODSR, VAL_PIOB_OSR, VAL_PIOB_PUSR}
@@ -157,7 +163,7 @@ void hwinit1(void)
   #endif
 
   #ifndef NO_PWM_INIT
-  //pwmInit();
+//  pwmInit(PWM_DEFAULT_FREQ);
   #endif
 
   // PIT Initialization.
