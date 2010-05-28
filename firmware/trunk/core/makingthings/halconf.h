@@ -110,6 +110,10 @@
 #define USE_SAM7_USART1             TRUE
 #endif
 
+#ifndef USE_SAM7_DBGU_UART
+#define USE_SAM7_DBGU_UART          FALSE
+#endif
+
 #define SAM7_USART0_PRIORITY        (AT91C_AIC_PRIOR_HIGHEST - 2)
 #define SAM7_USART1_PRIORITY        (AT91C_AIC_PRIOR_HIGHEST - 2)
 

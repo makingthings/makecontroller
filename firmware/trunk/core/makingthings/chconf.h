@@ -330,7 +330,7 @@
  * @note Requires @p CH_USE_WAITEXIT.
  */
 #if !defined(CH_USE_DYNAMIC) || defined(__DOXYGEN__)
-#define CH_USE_DYNAMIC                  TRUE
+#define CH_USE_DYNAMIC                  FALSE
 #endif
 
 /*===========================================================================*/
@@ -368,7 +368,7 @@
  * @note The default is @p FALSE.
  */
 #if !defined(CH_DBG_ENABLE_TRACE) || defined(__DOXYGEN__)
-#define CH_DBG_ENABLE_TRACE             TRUE
+#define CH_DBG_ENABLE_TRACE             FALSE
 #endif
 
 /**
@@ -380,7 +380,7 @@
  *       may not be implemented or some ports.
  */
 #if !defined(CH_DBG_ENABLE_STACK_CHECK) || defined(__DOXYGEN__)
-#define CH_DBG_ENABLE_STACK_CHECK       TRUE
+#define CH_DBG_ENABLE_STACK_CHECK       FALSE
 #endif
 
 /**
