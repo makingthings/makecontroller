@@ -1,4 +1,6 @@
 
+#include "config.h"
+#ifdef OSC
 #include "osc_data.h"
 #include "string.h"
 
@@ -147,4 +149,4 @@ int oscPaddedStrlen(const char* str) {
   return len;
 }
 
-
+#endif // OSC
