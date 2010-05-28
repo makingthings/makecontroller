@@ -4,8 +4,7 @@
 #ifdef MAKE_CTRL_NETWORK
 
 #include "network.h"
-#include "ch.h"
-#include "hal.h"
+#include "core.h"
 
 #include "lwipthread.h"
 #include "lwip/dhcp.h"
@@ -15,8 +14,6 @@
 #include "lwip/netifapi.h"
 #include "lwipopts.h"
 
-#include "core.h"
-#include "eeprom.h"
 #include "stdio.h"
 #include "error.h"
 
@@ -30,7 +27,7 @@
 #define MC_DEFAULT_GATEWAY    IP_ADDRESS(192, 168, 0, 1)
 #endif
 
-static unsigned char macAddress[6] = {0xAC, 0xDE, 0x48, 0x00, 0x00, 0x00};
+static uint8_t macAddress[6] = {0xAC, 0xDE, 0x48, 0x00, 0x00, 0x00};
 
 #if LWIP_DNS
 struct Dns {
@@ -103,7 +100,6 @@ void networkInit()
 #else
     networkLastValidAddress(&address, &mask, &gateway);
 #endif // LWIP_DHCP
-
 
   Semaphore initSemaphore;
   chSemInit(&initSemaphore, 0);
@@ -214,6 +210,21 @@ int networkAddressToString(char* data, int address)
                   IP_ADDRESS_B(address),
                   IP_ADDRESS_C(address),
                   IP_ADDRESS_D(address));
+}
+
+/**
+  Convert a string representation of a network address into an integer.
+  The input string should be in the form \code xxx.xxx.xxx.xxx \endcode.
+  @param str The string to convert.
+  @return The address as an integer, or -1 on failure.
+*/
+int networkAddressFromString(char *str)
+{
+  int a1, a2, a3, a4;
+  if (siscanf(str, "%d.%d.%d.%d", &a1, &a2, &a3, &a4) == 4)
+    return IP_ADDRESS(a1, a2, a3, a4);
+  else
+    return -1;
 }
 
 #if LWIP_DHCP
@@ -395,9 +406,58 @@ static bool networkOscDhcpHandler(OscChannel ch, char* address, int idx, OscData
   return false;
 }
 
+static bool networkOscAddressHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
+{
+  UNUSED(idx);
+  if (datalen == 3 && data[0].type == STRING && data[1].type == STRING && data[2].type == STRING) {
+    // set our address
+    int a = networkAddressFromString(data[0].value.s);
+    int m = networkAddressFromString(data[1].value.s);
+    int g = networkAddressFromString(data[2].value.s);
+    networkSetAddress(a, m, g);
+    return true;
+  }
+  if (datalen == 0) {
+    char addrbuf[16];
+    char maskbuf[16];
+    char gatewaybuf[16];
+    int a, m, g;
+    networkAddress(&a, &m, &g);
+    networkAddressToString(addrbuf, a);
+    networkAddressToString(maskbuf, m);
+    networkAddressToString(gatewaybuf, g);
+    OscData d[3] = {
+      { .type = STRING, .value.s = addrbuf },
+      { .type = STRING, .value.s = maskbuf },
+      { .type = STRING, .value.s = gatewaybuf }
+    };
+    oscCreateMessage(ch, address, d, 3);
+    return true;
+  }
+  return false;
+}
+
+static bool networkOscUdpPortHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
+{
+  UNUSED(idx);
+  if (datalen == 0) { // it's a request
+    OscData d;
+    d.value.i = oscUdpReplyPort();
+    d.type = INT;
+    oscCreateMessage(ch, address, &d, 1);
+    return true;
+  }
+  if (datalen == 1 && data[0].type == INT) {
+    oscUdpSetReplyPort(data[0].value.i);
+    return true;
+  }
+  return false;
+}
+
 static const OscNode networkOscFind = { .name = "find", .handler = networkOscFindHandler };
 static const OscNode networkOscDhcp = { .name = "dhcp", .handler = networkOscDhcpHandler };
-//const OscNode networkOscAddress = { .name = "address", .handler = networkOscAddressHandler };
+static const OscNode networkOscAddress = { .name = "address", .handler = networkOscAddressHandler };
+static const OscNode networkOscUdpPort = { .name = "osc_udp_listen_port", .handler = networkOscUdpPortHandler };
 
 const OscNode networkOsc = {
   .name = "network",

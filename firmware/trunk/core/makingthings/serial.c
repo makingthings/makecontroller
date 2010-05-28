@@ -16,9 +16,7 @@
 *********************************************************************************/
 
 #include "serial.h"
-#include "config.h"
-#include "ch.h"
-#include "hal.h"
+#include "core.h"
 
 #ifndef SERIAL_DEFAULT_PARITY
 #define SERIAL_DEFAULT_PARITY 0
