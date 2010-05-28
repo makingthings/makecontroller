@@ -2,7 +2,7 @@
 
 
 #include "config.h"
-#if 1 //def OSC
+#ifdef OSC
 
 #include "osc.h"
 #include "osc_patternmatch.h"

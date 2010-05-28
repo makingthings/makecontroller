@@ -23,7 +23,7 @@
  */
 
 #include "config.h"
-#if 1 //def OSC
+#ifdef OSC
 
 #include "osc_patternmatch.h"
 #include <stdio.h>
@@ -261,5 +261,3 @@ int oscRangeNext(OscRange* r) {
 }
 
 #endif // OSC
-
-
