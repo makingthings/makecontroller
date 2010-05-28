@@ -44,6 +44,8 @@ extern "C" {
 #endif
 bool oscUsbEnable(bool on);
 bool oscUdpEnable(bool on, int port);
+void oscUdpSetReplyPort(int port);
+int  oscUdpReplyPort(void);
 int  oscSplitAddress(char* buf, char* elems[], int maxelems);
 void oscLockChannel(OscChannel ct);
 void oscUnlockChannel(OscChannel ct);

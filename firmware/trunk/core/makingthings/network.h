@@ -31,6 +31,7 @@ int  networkGetHostByName(const char *name, int timeout);
 void networkSetDhcp(bool enabled, int timeout);
 bool networkDhcp(void);
 int  networkAddressToString(char* data, int address);
+int  networkAddressFromString(char *str);
 #ifdef __cplusplus
 }
 #endif

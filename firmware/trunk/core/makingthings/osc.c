@@ -7,7 +7,6 @@
 #include "osc.h"
 #include "osc_patternmatch.h"
 #include "osc_data.h"
-#include "ch.h"
 #include "core.h"
 #include <string.h>
 
@@ -124,7 +123,7 @@ static msg_t OscUdpThread(void *arg) {
 
   udpBind(osc.udpsock, 10000);
 
-  while(!chThdShouldTerminate()) {
+  while (!chThdShouldTerminate()) {
     justGot = udpRead(osc.udpsock, osc.udp.inBuf, OSC_IN_BUF_SIZE, &osc.udpReplyAddress, 0);
     if (justGot > 0) {
       chMtxLock(&osc.udp.lock);
@@ -154,6 +153,16 @@ bool oscUdpEnable(bool on, int port)
     return true;
   }
   return false;
+}
+
+void oscUdpSetReplyPort(int port)
+{
+  osc.udpReplyPort = port;
+}
+
+int oscUdpReplyPort()
+{
+  return osc.udpReplyPort;
 }
 
 #endif // MAKE_CTRL_NETWORK
@@ -442,7 +451,7 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
 }
 
 /*
- * Create an OSC message given a number of schema data items.
+ * Create an OSC message given a number of data items.
  */
 bool oscCreateMessage(OscChannel ch, const char* address, OscData* data, int datacount)
 {

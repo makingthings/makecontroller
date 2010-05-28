@@ -466,6 +466,7 @@ static bool pinOscHandler(OscChannel ch, char* address, int idx, OscData d[], in
   }
   else if (datalen == 0) {
     OscData d;
+    d.type = INT;
     d.value.i = pinValue(idx);
     oscCreateMessage(ch, address, &d, 1);
     return true;
