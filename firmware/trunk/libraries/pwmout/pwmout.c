@@ -17,8 +17,6 @@
 
 #include "pwmout.h"
 #include "core.h"
-#include "pwm.h"
-#include "pin.h"
 
 #if ( APPBOARD_VERSION == 50 )
   #define PWMOUT_0_IO_A IO_PA02
@@ -51,7 +49,7 @@
   #define PWMOUT_3_IO_B PIN_PB23
 #endif
 
-static void pwmoutGetIos(int channel, int* ioA, int* ioB);
+static void pwmoutGetPins(int channel, int* ioA, int* ioB);
 
 /**
   \defgroup pwmout PWM Out
@@ -99,12 +97,12 @@ static void pwmoutGetIos(int channel, int* ioA, int* ioB);
 void pwmoutEnable(int channel)
 {
   int a, b; // Look up the IO's that will be used
-  pwmoutGetIos(channel, &a, &b);
+  pwmoutGetPins(channel, &a, &b);
   pinSetMode(a, OUTPUT);
   pinSetMode(b, OUTPUT);
   pinOn(a);
   pinOff(b);
-  pwmSetDuty(channel, 0);
+  pwmEnable(channel, 0, 0);
 }
 
 /*
@@ -114,10 +112,10 @@ void pwmoutEnable(int channel)
 void pwmoutDisable(int channel)
 {
   int a, b;
-  pwmoutGetIos(channel, &a, &b);
+  pwmoutGetPins(channel, &a, &b);
   pinOff(a);
   pinOff(b);
-  pwmDisableChannel(channel);
+  pwmDisable(channel);
 }
 
 /** 
@@ -164,7 +162,7 @@ void pwmoutSetDuty(int channel, int duty)
 bool pwmoutSetInvertedA(int channel, bool invert)
 {
   int a, b;
-  pwmoutGetIos(channel, &a, &b);
+  pwmoutGetPins(channel, &a, &b);
   pinSetValue(a, !invert);
   return true;
 }
@@ -182,7 +180,7 @@ bool pwmoutSetInvertedA(int channel, bool invert)
 bool pwmoutInvertedA(int channel)
 {
   int a, b;
-  pwmoutGetIos(channel, &a, &b);
+  pwmoutGetPins(channel, &a, &b);
   return pinValue(a);
 }
 
@@ -200,7 +198,7 @@ bool pwmoutInvertedA(int channel)
 bool pwmoutSetInvertedB(int channel, bool invert)
 {
   int a, b;
-  pwmoutGetIos(channel, &a, &b);
+  pwmoutGetPins(channel, &a, &b);
   pinSetValue(b, !invert);
   return true;
 }
@@ -218,7 +216,7 @@ bool pwmoutSetInvertedB(int channel, bool invert)
 bool pwmoutInvertedB(int channel)
 {
   int a, b;
-  pwmoutGetIos(channel, &a, &b);
+  pwmoutGetPins(channel, &a, &b);
   return pinValue(b);
 }
 
@@ -238,7 +236,7 @@ bool pwmoutInvertedB(int channel)
 bool pwmoutSetAll(int channel, int duty, bool invertA, bool invertB)
 {
   int a, b;
-  pwmoutGetIos(channel, &a, &b);
+  pwmoutGetPins(channel, &a, &b);
   pinSetValue(a, !invertA);
   pinSetValue(b, !invertB);
   pwmSetDuty(channel, duty);
@@ -247,9 +245,9 @@ bool pwmoutSetAll(int channel, int duty, bool invertA, bool invertB)
 
 /** @} */
 
-void pwmoutGetIos(int channel, int* ioA, int* ioB)
+void pwmoutGetPins(int channel, int* ioA, int* ioB)
 { 
-  switch(channel) {
+  switch (channel) {
     case 0:
       *ioA = PWMOUT_0_IO_A;
       *ioB = PWMOUT_0_IO_B;
