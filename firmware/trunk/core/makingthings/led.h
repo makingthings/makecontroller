@@ -23,7 +23,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void ledEnable(void);
+
 void ledSetValue( bool state );
 bool ledValue(void);
 #ifdef __cplusplus

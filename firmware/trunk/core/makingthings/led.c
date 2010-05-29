@@ -40,12 +40,6 @@
   @{
 */
 
-void ledEnable()
-{
-  pinSetMode(LED_IO, OUTPUT);
-  pinOn(LED_IO); // inverted - really off
-}
-
 /**
   Turn the LED on or off.
   @param on True to turn it on, false to turn it off.

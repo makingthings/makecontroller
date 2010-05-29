@@ -31,11 +31,11 @@
 #define PIOB_PHY_PD_MASK AT91C_PB18_EF100
 #define PHY_HARDWARE PHY_DAVICOM_9161
 
-// Initial I/O setup.
-#define VAL_PIOA_ODSR           0x00000000      // Output data.
-#define VAL_PIOA_OSR            0x00000000      // Direction.
+// Initial I/O setup - everything as input with pullup, except LED (PA12)
+#define VAL_PIOA_ODSR           0x00001000      // Output data.
+#define VAL_PIOA_OSR            0x00001000      // Direction.
 #define VAL_PIOA_PUSR           0xFFFFFFFF      // Pull-up.
-
+// Port B - everything as input with pullup
 #define VAL_PIOB_ODSR           0x00000000      // Output data.
 #define VAL_PIOB_OSR            0x00000000      // Direction.
 #define VAL_PIOB_PUSR           0xFFFFFFFF      // Pull-up.
