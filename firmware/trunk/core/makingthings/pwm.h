@@ -28,11 +28,9 @@ extern "C" {
 void pwmInit(void);
 void pwmDeinit(void);
 bool pwmSetFrequency(int freq);
-bool pwmEnableChannel(int channel);
-void pwmDisableChannel(int channel);
+bool pwmEnable(int channel, bool center_aligned, bool starts_high);
+void pwmDisable(int channel);
 void pwmSetDuty(int channel, int duty);
-void pwmSetWaveform(int channel, bool left_aligned, bool starts_low);
-bool pwmSetPeriod(int channel, int period);
 #ifdef __cplusplus
 }
 #endif
