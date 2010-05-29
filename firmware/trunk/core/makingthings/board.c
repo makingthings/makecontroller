@@ -139,11 +139,8 @@ void hwinit1(void)
   };
   palInit(&config);
 
-  /*
-    peripheral inits - these are here so they're conveniently already
-    done for common usage, but can be removed by conditionalization
-  */
-  ledEnable();
+  // peripheral inits - these are here so they're conveniently already
+  // done for common usage, but can be removed by conditionalization
 
   #ifndef NO_AIN_INIT
   ainInit();
@@ -158,7 +155,7 @@ void hwinit1(void)
   #endif
 
   #ifndef NO_PWM_INIT
-//  pwmInit(PWM_DEFAULT_FREQ);
+  pwmInit();
   #endif
 
   // PIT Initialization.
