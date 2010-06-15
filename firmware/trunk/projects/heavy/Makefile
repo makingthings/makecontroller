@@ -31,6 +31,7 @@ CSRC = $(PORTSRC) $(KERNSRC) $(HALSRC) $(PLATFORMSRC) $(MTCORESRC) \
        $(LIBRARIES)/appled/appled.c \
        $(LIBRARIES)/digitalin/digitalin.c \
        $(LIBRARIES)/webclient/webclient.c \
+       $(LIBRARIES)/pwmout/pwmout.c \
        $(PROJECT).c
 
 # C++ sources
@@ -43,7 +44,8 @@ INCDIR = $(PORTINC) $(KERNINC) $(HALINC) $(PLATFORMINC) \
          $(CHIBIOS)/os/ports/GCC/ARM7/AT91SAM7 \
          $(LIBRARIES)/appled \
          $(LIBRARIES)/digitalin \
-         $(LIBRARIES)/webclient
+         $(LIBRARIES)/webclient \
+         $(LIBRARIES)/pwmout
 
 # where to put the build output 
 BUILDDIR = build
@@ -57,7 +59,7 @@ ASMSRC = $(PORTASM) \
 
 MCU  = arm7tdmi
 
-TRGT = arm-elf-
+TRGT = arm-none-eabi-
 CC   = $(TRGT)gcc
 CPPC = $(TRGT)g++
 # Enable loading with g++ only if you need C++ runtime support.
