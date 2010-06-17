@@ -286,7 +286,7 @@ void pinGroupSetMode(Group group, int pins, PinMode mode)
   \b Example
   \code
   int count = 0; // we'll keep track of how many changes we've seen
-  void myHandler(void* context)
+  void myHandler(void)
   {
     if (pinValue(PIN_PB27) == ON) {
       // then the change was from low to high
@@ -374,7 +374,7 @@ void pinDisableHandler(PinInterrupt* pi)
   
   \b Example
   \code
-  const PinInterrupt myInterrupt = {
+  PinInterrupt myInterrupt = {
     .handler = myHandler,
     .pin = PIN_PB27
   };
@@ -399,16 +399,14 @@ static void pinServeInterrupt(Group group)
 {
   unsigned int status = group->PIO_ISR & group->PIO_IMR;
   // Check pending events
-  if (status) {
-    PinInterrupt* pi = interrupts;
-    while (pi != 0 && status != 0) {
-      uint32_t pinMask = PIN_MASK(pi->pin);
-      if ((IOPORT(pi->pin) == group) && ((status & pinMask) != 0)) {
-        pi->handler();          // callback the handler
-        status &= ~(pinMask);   // mark this channel as serviced
-      }
-      pi = pi->next;
+  PinInterrupt* pi = interrupts;
+  while (pi != 0 && status != 0) {
+    uint32_t pinMask = PIN_MASK(pi->pin);
+    if ((IOPORT(pi->pin) == group) && ((status & pinMask) != 0)) {
+      pi->handler();          // callback the handler
+      status &= ~(pinMask);   // mark this channel as serviced
     }
+    pi = pi->next;
   }
 }
 
