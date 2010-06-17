@@ -34,7 +34,7 @@
 #include "USBDDriver.h"
 #include "USBDDriverCallbacks.h"
 #include "USBD.h"
-#include <Board.h>
+#include <board.h>
 // #include <utility/trace.h>
  #include <usb/common/core/USBGenericDescriptor.h>
  #include <usb/common/core/USBDeviceDescriptor.h>

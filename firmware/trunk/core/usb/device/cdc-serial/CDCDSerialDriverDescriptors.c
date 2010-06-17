@@ -32,7 +32,7 @@
 //------------------------------------------------------------------------------
 
 #include "CDCDSerialDriverDescriptors.h"
-#include <Board.h>
+#include <board.h>
  #include <usb/common/core/USBGenericDescriptor.h>
  #include <usb/common/core/USBConfigurationDescriptor.h>
  #include <usb/common/core/USBEndpointDescriptor.h>
