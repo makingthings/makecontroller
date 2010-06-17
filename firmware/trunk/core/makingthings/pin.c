@@ -298,8 +298,8 @@ void pinGroupSetMode(Group group, int pins, PinMode mode)
     count++; // increment our count
   }
 
-  // create our handler structure - 'const' means read-only
-  const PinInterrupt myInterrupt = {
+  // create our handler structure
+  PinInterrupt myInterrupt = {
     .handler = myHandler,
     .pin = PIN_PB27
   };
@@ -348,7 +348,7 @@ bool pinAddInterruptHandler(PinInterrupt* pi)
   
   \b Example
   \code
-  const PinInterrupt myInterrupt = {
+  PinInterrupt myInterrupt = {
     .handler = myHandler,
     .pin = PIN_PB27
   };
