@@ -27,69 +27,63 @@
 #include <QFile>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QDebug>
 
 AppUpdater::AppUpdater( ) : QDialog( )
 {
-  setModal( true );
-  setWindowTitle( tr("Software Update") );
+  setModal(true);
+  setWindowTitle(tr("Software Update"));
 
-  acceptButton.setDefault( true );
-  ignoreButton.setText( tr("Not Right Now") );
+  acceptButton.setDefault(true);
+  ignoreButton.setText(tr("Not Right Now"));
 
-  buttonLayout.addStretch( );
-  buttonLayout.addWidget( &acceptButton );
+  buttonLayout.addStretch();
+  buttonLayout.addWidget(&acceptButton);
 
-  mcbuilderIcon.load( ":icons/mcbuilder96.png" );
-  icon.setPixmap( mcbuilderIcon );
-  icon.setAlignment( Qt::AlignHCenter );
+  mcbuilderIcon.load(":icons/mcbuilder96.png");
+  icon.setPixmap(mcbuilderIcon);
+  icon.setAlignment(Qt::AlignHCenter);
 
-  headline.setWordWrap( false );
-  details.setWordWrap( false );
-  browser.setReadOnly( true );
+  headline.setWordWrap(false);
+  details.setWordWrap(false);
+  browser.setReadOnly(true);
 
-  textLayout.addWidget( &headline );
-  textLayout.addWidget( &details );
-  textLayout.addLayout( &buttonLayout );
-  topLevelLayout.addWidget( &icon );
-  topLevelLayout.addLayout( &textLayout );
-  topLevelLayout.setAlignment( Qt::AlignHCenter );
+  textLayout.addWidget(&headline);
+  textLayout.addWidget(&details);
+  textLayout.addLayout(&buttonLayout);
+  topLevelLayout.addWidget(&icon);
+  topLevelLayout.addLayout(&textLayout);
+  topLevelLayout.setAlignment(Qt::AlignHCenter);
 
-  this->setLayout( &topLevelLayout );
+  this->setLayout(&topLevelLayout);
   checkingOnStartup = true; // hide the dialog by default
-  connect( &http, SIGNAL( requestFinished( int, bool ) ), this, SLOT( finishedRead( int, bool ) ) );
+  connect(&qnam, SIGNAL(finished(QNetworkReply*)), this, SLOT(onDownloadComplete(QNetworkReply*)));
 }
 
-void AppUpdater::checkForUpdates( bool inBackground )
+void AppUpdater::checkForUpdates(bool inBackground)
 {
   checkingOnStartup = inBackground;
-  http.setHost("www.makingthings.com");
-  httpGetID = http.get("/updates/mcbuilder.xml");
+  qnam.get(QNetworkRequest(QUrl("http://www.makingthings.com/updates/mcbuilder.xml")));
 }
 
-
-void AppUpdater::finishedRead( int id, bool errors )
+void AppUpdater::onDownloadComplete(QNetworkReply *reply)
 {
-  (void)errors;
-  // we'll get called here alternately by the setHost( ) request and the actual GET request
-  // we don't care about setHost, so just return and wait for the GET response
-  if( id != httpGetID )
-    return;
-
   QDomDocument doc;
   QString err;
   int line, col;
 
-  if (!doc.setContent(http.readAll(), true, &err, &line, &col))
-  {
+  if (!doc.setContent(reply->readAll(), true, &err, &line, &col)) {
     headline.setText( tr("<font size=4>Couldn't contact the update server...</font>") );
     details.setText( tr( "Make sure you're connected to the internet." ) );
-    acceptButton.setText( tr("OK") );
-    acceptButton.disconnect( ); // make sure it wasn't connected by anything else previously
-    connect( &acceptButton, SIGNAL( clicked() ), this, SLOT( accept() ) );
-    removeBrowserAndIgnoreButton( );
+    acceptButton.setText(tr("OK"));
+    acceptButton.disconnect(); // make sure it wasn't connected by anything else previously
+    connect(&acceptButton, SIGNAL(clicked()), this, SLOT(accept()));
+    removeBrowserAndIgnoreButton();
 
-    if(!checkingOnStartup)
-      this->show( );
+    if (!checkingOnStartup)
+      this->show();
     return;
   }
 
@@ -98,15 +92,13 @@ void AppUpdater::finishedRead( int id, bool errors )
   QPair<QString, QString> latest(MCBUILDER_VERSION, "");
   bool updateAvailable = false;
 
-  for (int i=0, j=items.size(); i<j; i++)
-  {
+  for (int i=0, j=items.size(); i<j; i++) {
     QDomElement item = items.item(i).toElement();
     if( item.isNull() )
       continue;
     QDomNodeList enclosures = item.elementsByTagName("enclosure");
 
-    for (int k=0, l=enclosures.size(); k<l; k++)
-    {
+    for (int k=0, l=enclosures.size(); k<l; k++) {
       QDomElement enclosure = enclosures.item(k).toElement();
       if (enclosure.isNull()) continue;
       QString version = enclosure.attributeNS(
@@ -116,8 +108,7 @@ void AppUpdater::finishedRead( int id, bool errors )
       // should have a version field
       if (version == "not-found") continue;
 
-      if( versionCompare(version, latest.first) > 0 )
-      {
+      if (versionCompare(version, latest.first) > 0) {
         latest.first = version;
         QDomNodeList descs = item.elementsByTagName("description");
         //I(descs.size() == 1);
@@ -130,47 +121,45 @@ void AppUpdater::finishedRead( int id, bool errors )
   }
 
   // add the appropriate elements/info depending on whether an update is available
-  if( updateAvailable )
-  {
+  if (updateAvailable) {
     headline.setText( tr("<font size=4>A new version of mcbuilder is available!</font>" ));
     QString d = tr( "mcbuilder %1 is now available (you have %2).  Would you like to download it?" )
-                          .arg(latest.first).arg( MCBUILDER_VERSION );
-    details.setText( d );
-    browser.setHtml( latest.second );
-    acceptButton.setText( tr("Visit Download Page") );
-    acceptButton.disconnect( );
-    ignoreButton.disconnect( );
-    connect( &acceptButton, SIGNAL( clicked() ), this, SLOT( visitDownloadsPage() ) );
-    connect( &ignoreButton, SIGNAL( clicked() ), this, SLOT( accept() ) );
-    if( textLayout.indexOf( &browser ) < 0 ) // if the browser's not in the layout, then insert it after the details line
-      textLayout.insertWidget( textLayout.indexOf( &details ) + 1, &browser );
-    if( buttonLayout.indexOf( &ignoreButton ) < 0 ) // put the ignore button on the left
-      buttonLayout.insertWidget( 0, &ignoreButton );
+                          .arg(latest.first).arg(MCBUILDER_VERSION);
+    details.setText(d);
+    browser.setHtml(latest.second);
+    acceptButton.setText(tr("Visit Download Page"));
+    acceptButton.disconnect();
+    ignoreButton.disconnect();
+    connect(&acceptButton, SIGNAL(clicked()), this, SLOT(visitDownloadsPage()));
+    connect(&ignoreButton, SIGNAL(clicked()), this, SLOT(accept()));
+    if (textLayout.indexOf(&browser) < 0) // if the browser's not in the layout, then insert it after the details line
+      textLayout.insertWidget( textLayout.indexOf(&details) + 1, &browser);
+    if (buttonLayout.indexOf(&ignoreButton) < 0) // put the ignore button on the left
+      buttonLayout.insertWidget(0, &ignoreButton);
 
-    this->show( );
+    this->show();
   }
-  else
-  {
-    headline.setText( tr("<font size=4>You're up to date!</font>") );
-    details.setText( tr( "You're running the latest version of mcbuilder, version %1." ).arg( MCBUILDER_VERSION ) );
-    acceptButton.setText( tr("OK") );
-    acceptButton.disconnect( );
-    connect( &acceptButton, SIGNAL( clicked() ), this, SLOT( accept() ) );
-    removeBrowserAndIgnoreButton( );
-    if(!checkingOnStartup)
-      this->show( );
+  else {
+    headline.setText(tr("<font size=4>You're up to date!</font>"));
+    details.setText(tr("You're running the latest version of mcbuilder, version %1.").arg(MCBUILDER_VERSION));
+    acceptButton.setText(tr("OK"));
+    acceptButton.disconnect();
+    connect(&acceptButton, SIGNAL(clicked()), this, SLOT(accept()));
+    removeBrowserAndIgnoreButton();
+    if (!checkingOnStartup)
+      this->show();
   }
 }
 
 void AppUpdater::removeBrowserAndIgnoreButton( )
 {
-  if( textLayout.indexOf( &browser ) >= 0 ) // if the browser's in the layout, rip it out
-    textLayout.removeWidget( &browser );
-  browser.setParent( NULL );
+  if (textLayout.indexOf(&browser) >= 0) // if the browser's in the layout, rip it out
+    textLayout.removeWidget(&browser);
+  browser.setParent(NULL);
 
-  if( textLayout.indexOf( &ignoreButton ) >= 0 ) // if the ignoreButton's in the layout, rip it out
-    textLayout.removeWidget( &ignoreButton );
-  ignoreButton.setParent( NULL );
+  if (textLayout.indexOf(&ignoreButton) >= 0) // if the ignoreButton's in the layout, rip it out
+    textLayout.removeWidget(&ignoreButton);
+  ignoreButton.setParent(0);
 }
 
 int AppUpdater::versionCompare(const QString & left, const QString & right)
@@ -182,16 +171,15 @@ int AppUpdater::versionCompare(const QString & left, const QString & right)
     int rightCount = rightParts.size();
     int maxCount = leftCount > rightCount ? leftCount : rightCount;
 
-    for (int i=0, j=maxCount; i<j; i++)
-    {
-        unsigned int l = 0;
-        if (i < leftCount) { l = leftParts.at(i).toUInt(); }
-        unsigned int r = 0;
-        if (i < rightCount) { r = rightParts.at(i).toUInt(); }
+    for (int i=0, j=maxCount; i<j; i++) {
+      unsigned int l = 0;
+      if (i < leftCount) { l = leftParts.at(i).toUInt(); }
+      unsigned int r = 0;
+      if (i < rightCount) { r = rightParts.at(i).toUInt(); }
 
-        if (l == r) continue;
-        if (l > r) return 1;
-        return -1;
+      if (l == r) continue;
+      if (l > r) return 1;
+      return -1;
     }
 
     return 0;
@@ -199,8 +187,8 @@ int AppUpdater::versionCompare(const QString & left, const QString & right)
 
 void AppUpdater::visitDownloadsPage( )
 {
-  QDesktopServices::openUrl( QUrl( "http://www.makingthings.com/resources/downloads" ) );
-  accept( );
+  QDesktopServices::openUrl(QUrl( "http://www.makingthings.com/resources/downloads"));
+  accept();
 }
 
 
