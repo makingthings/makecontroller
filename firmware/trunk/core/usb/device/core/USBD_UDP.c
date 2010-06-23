@@ -355,9 +355,10 @@ static void UDP_ReadPayload(unsigned char bEndpoint, int wPacketSize)
 
     // Retrieve packet
     if (pTransfer->pCallback != 0) {
+      char d;
       chSysLockFromIsr();
       while (wPacketSize-- > 0) {
-        char d = (char) AT91C_BASE_UDP->UDP_FDR[bEndpoint];
+        d = (char) AT91C_BASE_UDP->UDP_FDR[bEndpoint];
         pTransfer->pCallback(pTransfer->pArgument, d);
       }
       chSysUnlockFromIsr();
@@ -410,6 +411,7 @@ static void UDP_ResetEndpoints( void )
         pTransfer->remaining = -1;
         pTransfer->fCallback = 0;
         pTransfer->pArgument = 0;
+        pTransfer->pCallback = 0;
 
         // Reset endpoint state
         pEndpoint->bank = 0;
