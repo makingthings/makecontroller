@@ -88,8 +88,8 @@ static void onByteRx(void *pArg, char byte)
 */
 static void usbserialInotify(void)
 {
-  if (chIQIsEmpty(&usbSerial.inq) && usbserialIsActive()  )
-    USBD_Read(CDCDSerialDriverDescriptors_DATAOUT, 0, sizeof(usbSerial.inq), 0, 0, onByteRx);
+  if (chIQIsEmpty(&usbSerial.inq) && usbserialIsActive())
+    USBD_Read(CDCDSerialDriverDescriptors_DATAOUT, 0, sizeof(usbSerial.inbuffer), 0, 0, onByteRx);
 }
 
 /**
@@ -189,7 +189,7 @@ char usbserialGet()
     return 0;
   // TODO - would prefer to use chIQGetTimeout, but it doesn't trigger inotify currently.
   // should be fixed in chibios shortly
-  char ch;
+  char ch = 0;
   chIQReadTimeout(&usbSerial.inq, (uint8_t*)&ch, 1, TIME_INFINITE);
   return ch;
 }
@@ -202,7 +202,7 @@ char usbserialGet()
 int usbserialPut(char c)
 {
   char ch = c;
-  return usbserialWrite(&ch, 1, TIME_INFINITE);
+  return usbserialWrite(&ch, 1, 100000);
 }
 
 /**
