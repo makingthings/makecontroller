@@ -20,13 +20,10 @@
 
 #include "usbserial.h"
 #include "core.h"
-#include "error.h"
 #include "string.h"
-#include "ch.h"
-#include "hal.h"
+#include <usb/device/core/USBDCallbacks.h>
 
 #ifndef USBSER_NO_SLIP
-// SLIP codes
 #define END             0300    // indicates end of packet 
 #define ESC             0333    // indicates byte stuffing 
 #define ESC_END         0334    // ESC ESC_END means END data byte 
@@ -43,8 +40,6 @@ typedef struct UsbSerial_t {
   int justWrote;
 #ifndef USBSER_NO_SLIP
   char slipOutBuf[USBSER_MAX_WRITE];
-  char slipInBuf[USBSER_MAX_READ];
-  int slipInCount;
 #endif
 } UsbSerial;
 
@@ -93,7 +88,7 @@ static void onByteRx(void *pArg, char byte)
 */
 static void usbserialInotify(void)
 {
-  if (chIQIsEmpty(&usbSerial.inq) && USBD_GetState() == USBD_STATE_CONFIGURED)
+  if (chIQIsEmpty(&usbSerial.inq) && usbserialIsActive()  )
     USBD_Read(CDCDSerialDriverDescriptors_DATAOUT, 0, sizeof(usbSerial.inq), 0, 0, onByteRx);
 }
 
@@ -102,11 +97,19 @@ static void usbserialInotify(void)
 */
 void usbserialInit()
 {
+  chIQInit(&usbSerial.inq, usbSerial.inbuffer, sizeof(usbSerial.inbuffer), usbserialInotify);
+  chSemInit(&usbSerial.txSemaphore, 0);
   USBD_Disconnect();
   CDCDSerialDriver_Initialize();
   USBD_Connect();
-  chIQInit(&usbSerial.inq, usbSerial.inbuffer, sizeof(usbSerial.inbuffer), usbserialInotify);
-  chSemInit(&usbSerial.txSemaphore, 0);
+}
+
+// called back from the central USB driver.
+// reset things that clients might be blocking on.
+void USBDCallbacks_Reset()
+{
+  chIQResetI(&usbSerial.inq);
+  chSemResetI(&usbSerial.txSemaphore, 0);
 }
 
 /**
@@ -151,33 +154,55 @@ int usbserialAvailable()
 
 /**
   Read data from a USB host.
-  This will read up to 64 bytes of data at a time, as this is the maximum USB transfer
-  for the Make Controller internally.  If you want to read more than that, 
-  keep calling read until you've got what you need.  
-  
-  If nothing is ready to be read, this will not return until new data arrives.
+  This will wait up until the timeout for the specified number of bytes to arrive.
+  If you need to get a byte at a time, see usbserialGet().
   @param buffer Where to store the incoming data.
-  @param length How many bytes to read. 64 is the max that can be read at one time.
+  @param length How many bytes to read.
   @param timeout The number of milliseconds to wait if no data is available.  -1 means wait forever.
   @return The number of bytes successfully read.
   
   \b Example
   \code
   char mydata[128];
-  // simplest is reading a short chunk
-  int read = usbserialRead(mydata, 20);
-  
-  // or, we can wait until we've read more than the maximum of 64 bytes
-  int got_so_far = 0;
-  while(got_so_far < 128) { // wait until we've read 128 bytes
-    int read = usbserialRead(mydata, (128 - got_so_far)); // read some new data
-    got_so_far += read; // add to how much we've gotten so far
-  }
+  int got = usbserialRead(mydata, 20);
   \endcode
 */
 int usbserialRead(char *buffer, int length, int timeout)
 {
+  // if we're not connected, don't try to read more than has already arrived.
+  if (!usbserialIsActive()) {
+    if (chIQIsEmpty(&usbSerial.inq))
+      return 0;
+    if (length > chQSpace(&usbSerial.inq))
+      length = chQSpace(&usbSerial.inq);
+  }
   return chIQReadTimeout(&usbSerial.inq, (uint8_t*)buffer, length, MS2ST(timeout));
+}
+
+/**
+  Get a character from the USB port.
+  @return The character.
+*/
+char usbserialGet()
+{
+  if (!usbserialIsActive() && chIQIsEmpty(&usbSerial.inq))
+    return 0;
+  // TODO - would prefer to use chIQGetTimeout, but it doesn't trigger inotify currently.
+  // should be fixed in chibios shortly
+  char ch;
+  chIQReadTimeout(&usbSerial.inq, (uint8_t*)&ch, 1, TIME_INFINITE);
+  return ch;
+}
+
+/**
+  Write a character to the USB port.
+  @param c The character to write.
+  @return 1 on success, -1 on failure.
+*/
+int usbserialPut(char c)
+{
+  char ch = c;
+  return usbserialWrite(&ch, 1, TIME_INFINITE);
 }
 
 /**
@@ -195,7 +220,7 @@ int usbserialRead(char *buffer, int length, int timeout)
 int usbserialWrite(const char *buffer, int length, int timeout)
 {
   int rv = -1;
-  if (USBD_GetState() == USBD_STATE_CONFIGURED) {
+  if (usbserialIsActive()) {
     if (USBD_Write(CDCDSerialDriverDescriptors_DATAIN,
           buffer, length, usbserialOnTx, 0) == USBD_STATUS_SUCCESS ) {
       if (chSemWaitTimeout(&usbSerial.txSemaphore, MS2ST(timeout)) == RDY_OK ) {
@@ -211,10 +236,9 @@ int usbserialWrite(const char *buffer, int length, int timeout)
 void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsigned int remaining)
 {
   UNUSED(pArg);
-  if (status == USBD_STATUS_SUCCESS) {
+  if (status == USBD_STATUS_SUCCESS)
     usbSerial.justWrote += received;
-  }
-  if (remaining <= 0)
+  if (remaining == 0)
     chSemSignalI(&usbSerial.txSemaphore);
 }
 
@@ -237,17 +261,11 @@ void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsi
 */
 int usbserialReadSlip(char *buffer, int length, int timeout)
 {
+  UNUSED(timeout);
   int received = 0;
-  static int idx = 0;
-  char c;
 
   while (received < length) {
-    if (idx >= usbSerial.slipInCount) { // if there's nothing left over from last time, get more
-      usbSerial.slipInCount = usbserialRead(usbSerial.slipInBuf, USBSER_MAX_READ, timeout);
-      idx = 0;
-    }
-    
-    c = usbSerial.slipInBuf[idx++];
+    char c = usbserialGet();
     switch (c) {
       case END:
         if (received) // only return if we actually got anything
@@ -258,8 +276,7 @@ int usbserialReadSlip(char *buffer, int length, int timeout)
         // get the next byte.  if it's not an ESC_END or ESC_ESC, it's a
         // malformed packet.  http://tools.ietf.org/html/rfc1055 says just
         // drop it in the packet in this case
-        if (idx >= usbSerial.slipInCount) break;
-        c = usbSerial.slipInBuf[idx++];
+        c = usbserialGet();
         if (c == ESC_END)
           c = END;
         else if (c == ESC_ESC)
@@ -316,7 +333,7 @@ int usbserialWriteSlip(const char *buffer, int length, int timeout)
          //otherwise, just send the character
        default:
          *obp++ = c;
-         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout );
+         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout);
      }
    }
 
