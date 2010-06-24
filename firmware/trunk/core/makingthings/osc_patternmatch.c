@@ -31,8 +31,9 @@
 
 static bool oscMatchBrackets (const char *pattern, const char *test);
 static bool oscMatchList (const char *pattern, const char *test);
-
-static bool oscIsSpecialChar(char c) {
+/*
+static bool oscIsSpecialChar(char c)
+{
   switch(c) {
     case 0:
     case '?':
@@ -47,6 +48,7 @@ static bool oscIsSpecialChar(char c) {
       return false;
   }
 }
+*/
 
 bool oscPatternMatch(const char *  pattern, const char * test)
 {
@@ -196,7 +198,7 @@ bool oscNumberMatch(const char* pattern, int offset, int count, OscRange* r)
   r->state = EXHAUSTED;
   int n = 0;
   int digits = 0;
-  while (isdigit(*pattern)) {
+  while (isdigit((int)*pattern)) {
     digits++;
     n = n * 10 + (*pattern++ - '0');
   }
