@@ -23,8 +23,8 @@ typedef int (*OscSendMsg)(const char* data, int len);
 
 typedef struct OscChannelData_t {
   Mutex lock;
-  int outMsgCount;
-  int outBufRemaining;
+  uint8_t outMsgCount;
+  uint32_t outBufRemaining;
   char* outBufPtr;
   char outBuf[OSC_MAX_MSG_OUT];
   char inBuf[OSC_MAX_MSG_IN];
@@ -45,10 +45,10 @@ typedef struct Osc_t {
 #endif
 } Osc;
 
-static void oscReceivePacket(OscChannel ch, char* data, int len);
-static void oscReceiveMessage(OscChannel ch, char* data, int len);
+static void oscReceivePacket(OscChannel ch, char* data, uint32_t len);
+static void oscReceiveMessage(OscChannel ch, char* data, uint32_t len);
 static void oscResetChannel(OscChannelData* ch);
-static int  oscExtractData(char* buf, int len, OscData data[], int maxdata);
+static uint32_t oscExtractData(char* buf, uint32_t len, OscData data[], int maxdata);
 static void oscDispatchNode(OscChannel ch, char* addr, char* fulladdr,
                               const OscNode* node, OscData d[], int datalen);
 
@@ -201,7 +201,7 @@ void oscResetChannel(OscChannelData* channel)
   bundle and process accordingly. If any response messages were
   generated during processing, send them off.
 */
-void oscReceivePacket(OscChannel ch, char* data, int len)
+void oscReceivePacket(OscChannel ch, char* data, uint32_t len)
 {
   if (data[0] == '/') { // single message
     oscReceiveMessage(ch, data, len);
@@ -210,8 +210,8 @@ void oscReceivePacket(OscChannel ch, char* data, int len)
     data += 16; // skip timetag
     len -= 16;
     while (len > 0) {
-      int msglen; // each message preceded by int32 length
-      data = oscDecodeInt32(data, &len, &msglen);
+      uint32_t msglen; // each message preceded by int32 length
+      data = oscDecodeInt32(data, &len, (int*)&msglen);
       if (msglen <= len)
         oscReceivePacket(ch, data, msglen);
       data += msglen;
@@ -225,13 +225,13 @@ void oscReceivePacket(OscChannel ch, char* data, int len)
   A new message has arrived.  Extract the data from it, then
   dispatch it to any nodes that match it.
 */
-void oscReceiveMessage(OscChannel ch, char* data, int len)
+void oscReceiveMessage(OscChannel ch, char* data, uint32_t len)
 {
-  int length = oscPaddedStrlen(data);
+  uint32_t length = oscPaddedStrlen(data);
   if (len < length)
     return;
   // number of data items is the length of the typetag
-  int datalen = strlen(data + length) - 1; // don't take the leading , into account
+  uint32_t datalen = strlen(data + length) - 1; // don't take the leading , into account
   OscData d[datalen];
   if (datalen == oscExtractData(data + length, len, d, datalen))
     oscDispatchNode(ch, data + 1, data, &oscRoot, d, datalen);
@@ -268,6 +268,7 @@ void oscDispatchNode(OscChannel ch, char* addr, char* fulladdr, const OscNode* n
               if (oscPatternMatch(nextPattern, n->children[j]->name) && n->children[j]->handler != NULL) {
                 *(nextPattern - 1) = '/'; // replace this - we nulled it earlier
                 n->children[j]->handler(ch, fulladdr, idx, data, datalen);
+                *(nextPattern - 1) = 0; // replace this - we nulled it earlier
               }
             }
           }
@@ -287,14 +288,14 @@ void oscDispatchNode(OscChannel ch, char* addr, char* fulladdr, const OscNode* n
   Pull out values from the data segment according to what the
   typetag tells us we should find.
 */
-int oscExtractData(char* buf, int len, OscData data[], int datacount)
+uint32_t oscExtractData(char* buf, uint32_t len, OscData data[], int datacount)
 {
   int items = 0;
   if (buf[0] != ',') // beginning of typetag should be ,
     return 0;
   
   char* typetag = buf + 1; // skip the ,
-  int paddedlen = oscPaddedStrlen(buf); // skip to end of typetag
+  uint32_t paddedlen = oscPaddedStrlen(buf); // skip to end of typetag
   if (len < paddedlen)
     return items;
   buf += paddedlen;
@@ -328,7 +329,7 @@ int oscExtractData(char* buf, int len, OscData data[], int datacount)
       }
       case 'b': {
         char* b;
-        int bloblen;
+        uint32_t bloblen;
         if ((buf = oscDecodeBlob(buf, &len, &b, &bloblen)) != NULL) {
           data[items].type = BLOB;
           data[items++].value.b = b;
@@ -360,7 +361,7 @@ int oscSplitAddress(char* addr, char* elems[], int maxelem)
 /*
  * Write out an OSC timetag
  */
-static char* oscWriteTimetag(char* data, int* len, int a, int b)
+static char* oscWriteTimetag(char* data, uint32_t* len, int a, int b)
 {
   if (*len < 8)
     return 0;
@@ -371,7 +372,7 @@ static char* oscWriteTimetag(char* data, int* len, int a, int b)
   return data;
 }
 
-static char* oscCreateBundle(char* data, int* len, int a, int b )
+static char* oscCreateBundle(char* data, uint32_t* len, int a, int b )
 {
   if ((data = oscEncodeString(data, len, "#bundle")) == NULL)
     return 0;
@@ -383,7 +384,7 @@ static char* oscCreateBundle(char* data, int* len, int a, int b )
 static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscData* data, int datacount)
 {
   char* buf = chd->outBufPtr;
-  int* len = &chd->outBufRemaining;
+  uint32_t* len = &chd->outBufRemaining;
   /*
     if this is the first msg in the buffer, write bundle
     info in there in case the outgoing message ends up
@@ -395,15 +396,15 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
   }
 
   char* lenp = buf; // where to stick this message's length
-  buf += 4;
-  *len -= 4;
+  buf += sizeof(int);
+  *len -= sizeof(int);
   char* messagestart = buf;
 
   // do the address
   if ((buf = oscEncodeString(buf, len, address)) == NULL)
     return 0;
 
-  // do the type
+  // build up the typetag
   uint8_t i;
   char typetag[28] = ",";
   char* t = typetag + 1;
@@ -416,6 +417,7 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
       default: break;
     }
   }
+  *t = 0; // null terminate
   if ((buf = oscEncodeString(buf, len, typetag)) == NULL)
     return 0;
 
@@ -439,12 +441,13 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
   }
 
   // write the length of this message
-  int dummylen = 4;
-  if (oscEncodeInt32(lenp, &dummylen, (messagestart - buf)) == NULL)
+  uint32_t dummylen = sizeof(int);
+  if (oscEncodeInt32(lenp, &dummylen, (buf - messagestart)) == NULL)
     return 0;
 
   if (buf != NULL)
     chd->outMsgCount++;
+  chd->outBufPtr = buf;
   return buf;
 }
 

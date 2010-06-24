@@ -4,6 +4,8 @@
 #include "osc_data.h"
 #include "string.h"
 
+#define OSC_BYTE_ALIGN 4
+
 /*
  * Get 8 bits of a 32 bit value
  * w - 32 bit word, i - index
@@ -16,9 +18,9 @@
                             
 **********************************************************/
 
-static char* oscNullPad(char* buf, int* remaining, int elementsize)
+static char* oscNullPad(char* buf, uint32_t* remaining, int elementsize)
 {
-  int padding = elementsize % 4;
+  uint32_t padding = elementsize % OSC_BYTE_ALIGN;
   if (*remaining < padding || buf == 0)
     return 0;
   while (padding--) {
@@ -28,11 +30,11 @@ static char* oscNullPad(char* buf, int* remaining, int elementsize)
   return buf;
 }
 
-char* oscEncodeString(char* buf, int* remaining, const char* str)
+char* oscEncodeString(char* buf, uint32_t* remaining, const char* str)
 {
-  int len = strlen(str) + 1; // account for null pad
-  int pad = len % 4;
-  if (pad != 0) pad = (4 - pad);
+  uint32_t len = strlen(str) + 1; // account for null pad
+  uint32_t pad = len % OSC_BYTE_ALIGN;
+  if (pad != 0) pad = (OSC_BYTE_ALIGN - pad);
   if (*remaining < len + pad)
     return 0;
 
@@ -46,33 +48,33 @@ char* oscEncodeString(char* buf, int* remaining, const char* str)
   return buf;
 }
 
-char* oscEncodeInt32(char* buf, int* remaining, int i)
+char* oscEncodeInt32(char* buf, uint32_t* remaining, int i)
 {
-  if (*remaining < 4 || buf == 0)
+  if (*remaining < sizeof(int) || buf == 0)
     return 0;
   // to big endian
   *buf++ = byteOfWord(i, 3);
   *buf++ = byteOfWord(i, 2);
   *buf++ = byteOfWord(i, 1);
   *buf++ = byteOfWord(i, 0);
-  *remaining -= 4;
+  *remaining -= sizeof(int);
   return buf;
 }
 
-char* oscEncodeFloat32(char* buf, int* remaining, float f)
+char* oscEncodeFloat32(char* buf, uint32_t* remaining, float f)
 {
-  if (*remaining < 4 || buf == 0)
+  if (*remaining < sizeof(float) || buf == 0)
     return 0;
   // to big endian
   *buf++ = byteOfWord(f, 3);
   *buf++ = byteOfWord(f, 2);
   *buf++ = byteOfWord(f, 1);
   *buf++ = byteOfWord(f, 0);
-  *remaining -= 4;
+  *remaining -= sizeof(float);
   return buf;
 }
 
-char* oscEncodeBlob(char* buf, int* remaining, const char* b, int len)
+char* oscEncodeBlob(char* buf, uint32_t* remaining, const char* b, uint32_t len)
 {
   if (*remaining < len || buf == 0)
     return 0;
@@ -89,29 +91,29 @@ char* oscEncodeBlob(char* buf, int* remaining, const char* b, int len)
                             
 **********************************************************/
 
-char* oscDecodeInt32(char* buf, int* remaining, int* value)
+char* oscDecodeInt32(char* buf, uint32_t* remaining, int* value)
 {
-  if (*remaining < 4 || buf == 0)
+  if (*remaining < sizeof(int) || buf == 0)
     return 0;
   // to little endian
   byteOfWord(*value, 3) = *buf++;
   byteOfWord(*value, 2) = *buf++;
   byteOfWord(*value, 1) = *buf++;
   byteOfWord(*value, 0) = *buf++;
-  *remaining -= 4;
+  *remaining -= sizeof(int);
   return buf;
 }
 
-char* oscDecodeFloat32(char* buf, int* remaining, float* value)
+char* oscDecodeFloat32(char* buf, uint32_t* remaining, float* value)
 {
-  if (*remaining < 4 || buf == 0)
+  if (*remaining < sizeof(float) || buf == 0)
     return 0;
   // to little endian
   byteOfWord(*value, 3) = *buf++;
   byteOfWord(*value, 2) = *buf++;
   byteOfWord(*value, 1) = *buf++;
   byteOfWord(*value, 0) = *buf++;
-  *remaining -= 4;
+  *remaining -= sizeof(float);
   return buf;
 }
 
@@ -119,12 +121,12 @@ char* oscDecodeFloat32(char* buf, int* remaining, float* value)
   Sets string to the string data in the buffer.
   Doesn't do any copying, so make sure the data hangs around.
 */
-char* oscDecodeString(char* buf, int* remaining, char** str)
+char* oscDecodeString(char* buf, uint32_t* remaining, char** str)
 {
   if (buf == 0)
     return 0;
   *str = buf;
-  int paddedlen = oscPaddedStrlen(buf);
+  uint32_t paddedlen = oscPaddedStrlen(buf);
   if (paddedlen > *remaining)
     return 0;
 
@@ -133,18 +135,16 @@ char* oscDecodeString(char* buf, int* remaining, char** str)
   return buf;
 }
 
-char* oscDecodeBlob(char* buf, int* remaining, char** blob, int* len)
+char* oscDecodeBlob(char* buf, uint32_t* remaining, char** blob, uint32_t* len)
 {
-  if(buf == 0)
+  if (buf == 0)
     return 0;
-  buf = oscDecodeInt32(buf, remaining, len);
+  buf = oscDecodeInt32(buf, remaining, (int*)len);
+  if (*remaining < *len)
+    return 0;
   *blob = buf;
   *remaining -= *len;
-  if (*remaining < 0)
-    buf = 0;
-  else
-    buf += *len;
-  
+  buf += *len;
   return buf;
 }
 
@@ -154,9 +154,9 @@ char* oscDecodeBlob(char* buf, int* remaining, char** blob, int* len)
  */
 int oscPaddedStrlen(const char* str) {
   int len = strlen(str) + 1; // account for null pad
-  int pad = len % 4;
+  int pad = len % OSC_BYTE_ALIGN;
   if (pad != 0)
-    len += (4 - pad);
+    len += (OSC_BYTE_ALIGN - pad);
   return len;
 }
 
