@@ -71,7 +71,6 @@ void name##Function()
 #define yield()  chThdYield()
 
 #ifdef __cplusplus
-
 extern "C" {
 #endif
 // C-only business in here

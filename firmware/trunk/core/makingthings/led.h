@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-void ledSetValue( bool state );
+void ledSetValue(bool state);
 bool ledValue(void);
 #ifdef __cplusplus
 }

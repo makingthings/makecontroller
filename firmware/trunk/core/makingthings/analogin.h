@@ -29,7 +29,6 @@ extern "C" {
 void ainInit(void);
 void ainDeinit(void);
 int  ainValue(int channel);
-int  ainValueWait(int channel);
 bool ainMulti(int values[]);
 #ifdef __cplusplus
 }

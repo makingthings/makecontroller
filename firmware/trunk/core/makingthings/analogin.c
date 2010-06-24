@@ -71,6 +71,7 @@ static struct AinManager manager;
 int ainValue(int channel)
 {
   chMtxLock(&manager.adcLock);
+  manager.processMultiChannelIsr = NO;
   // disable other channels, and enable the one we want
   AT91C_BASE_ADC->ADC_CHDR = ~(1 << channel);
   AT91C_BASE_ADC->ADC_CHER = (1 << channel);
@@ -115,46 +116,22 @@ bool ainMulti(int values[])
     return false;
 
   // read all the data channels into the passed in array
-  *values++ = AT91C_BASE_ADC->ADC_CDR0;
-  *values++ = AT91C_BASE_ADC->ADC_CDR1;
-  *values++ = AT91C_BASE_ADC->ADC_CDR2;
-  *values++ = AT91C_BASE_ADC->ADC_CDR3;
-  *values++ = AT91C_BASE_ADC->ADC_CDR4;
-  *values++ = AT91C_BASE_ADC->ADC_CDR5;
-  *values++ = AT91C_BASE_ADC->ADC_CDR6;
-  *values   = AT91C_BASE_ADC->ADC_CDR7;
+  values[0] = AT91C_BASE_ADC->ADC_CDR0;
+  values[1] = AT91C_BASE_ADC->ADC_CDR1;
+  values[2] = AT91C_BASE_ADC->ADC_CDR2;
+  values[3] = AT91C_BASE_ADC->ADC_CDR3;
+  values[4] = AT91C_BASE_ADC->ADC_CDR4;
+  values[5] = AT91C_BASE_ADC->ADC_CDR5;
+  values[6] = AT91C_BASE_ADC->ADC_CDR6;
+  values[7] = AT91C_BASE_ADC->ADC_CDR7;
   
   manager.processMultiChannelIsr = false;
   chMtxUnlock();
   return true;
 }
 
-/** 
-  Read the value of an analog input without the use of any OS services.
-  This will busy wait until the read has completed.  Note that this is not 
-  thread safe and shouldn't be used if another part of the code might be 
-  using it or the thread safe versions.
-  @param channel Which analog in to sample - valid options are 0-7.
-  @return The value as an integer (0 - 1023).
-  
-  \par Example
-  \code
-  int value = ainValueWait(0);
-  \endcode
-*/
-int ainValueWait(int channel)
+static void ainServeInterrupt(void)
 {
-  AT91C_BASE_ADC->ADC_CHDR = ~(1 << channel); // disable all other channels
-  AT91C_BASE_ADC->ADC_CHER = (1 << channel);  // enable our channel
-  AT91C_BASE_ADC->ADC_IDR = AT91C_ADC_DRDY;   // turn off data ready interrupt
-  AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START;   // start the conversion
-  while (!(AT91C_BASE_ADC->ADC_SR & AT91C_ADC_DRDY))
-    ; // Busy wait
-  AT91C_BASE_ADC->ADC_IER = AT91C_ADC_DRDY; // turn interrupt back on
-  return AT91C_BASE_ADC->ADC_LCDR & 0xFFFF; // last converted value
-}
-
-static void ainServeInterrupt(void) {
   int status = AT91C_BASE_ADC->ADC_SR;
   if (manager.processMultiChannelIsr) {
     unsigned int i, mask;
@@ -171,12 +148,12 @@ static void ainServeInterrupt(void) {
     }
   }
   else if (status & AT91C_ADC_DRDY) {
-    chSemSignalI(&manager.conversionLock);
     status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
+    chSemSignalI(&manager.conversionLock);
   }
 }
 
-static CH_IRQ_HANDLER(AnalogInIsr) {
+static CH_IRQ_HANDLER(ainIsr) {
   CH_IRQ_PROLOGUE();
   ainServeInterrupt();
   AT91C_BASE_AIC->AIC_EOICR = 0;
@@ -205,23 +182,22 @@ void ainInit(void)
     // AT91C_ADC_LOWRES_8_BIT | // 8 bit conversion
        AT91C_ADC_SLEEP_NORMAL_MODE | // SLEEP
     // AT91C_ADC_SLEEP_MODE | // SLEEP
-       ((9 << 8) & AT91C_ADC_PRESCAL) | // Prescale rate (8 bits)
+       ((9 << 8)    & AT91C_ADC_PRESCAL) | // Prescale rate (8 bits)
        ((127 << 16) & AT91C_ADC_STARTUP) | // Startup rate
        ((127 << 24) & AT91C_ADC_SHTIM ); // Sample and Hold Time
    
   // initialize non-adc pins
-  palSetGroupMode(IOPORT2,
-                  ANALOGIN_0 | ANALOGIN_1 | ANALOGIN_2 | ANALOGIN_3,
-                  PAL_MODE_INPUT);
+  pinGroupSetMode(GROUP_B, ANALOGIN_0 | ANALOGIN_1 | ANALOGIN_2 | ANALOGIN_3, PAL_MODE_INPUT_ANALOG);
   
   // init locks
   chMtxInit(&manager.adcLock);
   chSemInit(&manager.conversionLock, 0);
-  manager.multiChannelConversions = 0;
-  manager.processMultiChannelIsr = false;
+  manager.multiChannelConversions = NO;
+  manager.processMultiChannelIsr = NO;
   
   // initialize interrupts
-  AIC_ConfigureIT(AT91C_ID_ADC, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4, AnalogInIsr);
+  AT91C_BASE_ADC->ADC_IER = AT91C_ADC_DRDY;
+  AIC_ConfigureIT(AT91C_ID_ADC, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4, ainIsr);
   AIC_EnableIT(AT91C_ID_ADC);
 }
 
