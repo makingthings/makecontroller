@@ -1,5 +1,5 @@
 
-#include "config.h"
+#include "core.h"
 #ifdef OSC
 #include "osc_data.h"
 #include "string.h"
@@ -8,9 +8,7 @@
  * Get 8 bits of a 32 bit value
  * w - 32 bit word, i - index
  */
-#define byteOfWord(w,i) ((unsigned char*)&w)[i]
-
-static char* oscNullPad(char* buf, int* remaining);
+#define byteOfWord(w,i) ((uint8_t*)&w)[i]
 
 /**********************************************************
 
@@ -18,11 +16,11 @@ static char* oscNullPad(char* buf, int* remaining);
                             
 **********************************************************/
 
-char* oscNullPad(char* buf, int* remaining)
+static char* oscNullPad(char* buf, int* remaining, int elementsize)
 {
-  if (*remaining <= 0 || buf == 0)
+  int padding = elementsize % 4;
+  if (*remaining < padding || buf == 0)
     return 0;
-  int padding = *remaining % 4;
   while (padding--) {
     *buf++ = 0;
     (*remaining)--;
@@ -32,19 +30,31 @@ char* oscNullPad(char* buf, int* remaining)
 
 char* oscEncodeString(char* buf, int* remaining, const char* str)
 {
-  while ((*remaining >= 0) && (*buf++ = *str++))
+  int len = strlen(str) + 1; // account for null pad
+  int pad = len % 4;
+  if (pad != 0) pad = (4 - pad);
+  if (*remaining < len + pad)
+    return 0;
+
+  strcpy(buf, str);
+  *remaining -= len;
+  buf += len;
+  while (pad-- > 0) {
     (*remaining)--;
-  return oscNullPad(buf, remaining);
+    *buf++ = 0;
+  }
+  return buf;
 }
 
 char* oscEncodeInt32(char* buf, int* remaining, int i)
 {
   if (*remaining < 4 || buf == 0)
     return 0;
-  *buf++ = byteOfWord(i, 0);
-  *buf++ = byteOfWord(i, 1);
-  *buf++ = byteOfWord(i, 2);
+  // to big endian
   *buf++ = byteOfWord(i, 3);
+  *buf++ = byteOfWord(i, 2);
+  *buf++ = byteOfWord(i, 1);
+  *buf++ = byteOfWord(i, 0);
   *remaining -= 4;
   return buf;
 }
@@ -53,10 +63,11 @@ char* oscEncodeFloat32(char* buf, int* remaining, float f)
 {
   if (*remaining < 4 || buf == 0)
     return 0;
-  *buf++ = byteOfWord(f, 0);
-  *buf++ = byteOfWord(f, 1);
-  *buf++ = byteOfWord(f, 2);
+  // to big endian
   *buf++ = byteOfWord(f, 3);
+  *buf++ = byteOfWord(f, 2);
+  *buf++ = byteOfWord(f, 1);
+  *buf++ = byteOfWord(f, 0);
   *remaining -= 4;
   return buf;
 }
@@ -69,7 +80,7 @@ char* oscEncodeBlob(char* buf, int* remaining, const char* b, int len)
   *remaining -= (len + 4); // account for 4 bytes of len itself 
   while (len--)
     *buf++ = *b++;
-  return oscNullPad(buf, remaining);
+  return oscNullPad(buf, remaining, len);
 }
 
 /**********************************************************
@@ -145,7 +156,7 @@ int oscPaddedStrlen(const char* str) {
   int len = strlen(str) + 1; // account for null pad
   int pad = len % 4;
   if (pad != 0)
-    len += ( 4 - pad );
+    len += (4 - pad);
   return len;
 }
 
