@@ -1,21 +1,20 @@
 
 
 
-#include "config.h"
+#include "core.h"
 #ifdef OSC
 
 #include "osc.h"
 #include "osc_patternmatch.h"
 #include "osc_data.h"
-#include "core.h"
 #include <string.h>
 
-#ifndef OSC_IN_BUF_SIZE
-#define OSC_IN_BUF_SIZE 512
+#ifndef OSC_MAX_MSG_IN
+#define OSC_MAX_MSG_IN 512
 #endif
 
-#ifndef OSC_OUT_BUF_SIZE
-#define OSC_OUT_BUF_SIZE 512
+#ifndef OSC_MAX_MSG_OUT
+#define OSC_MAX_MSG_OUT 512
 #endif
 
 #define OSC_UDP_DEFAULT_PORT 10000
@@ -27,8 +26,8 @@ typedef struct OscChannelData_t {
   int outMsgCount;
   int outBufRemaining;
   char* outBufPtr;
-  char outBuf[OSC_OUT_BUF_SIZE];
-  char inBuf[OSC_IN_BUF_SIZE];
+  char outBuf[OSC_MAX_MSG_OUT];
+  char inBuf[OSC_MAX_MSG_IN];
   OscSendMsg sendMessage;
 } OscChannelData;
 
@@ -54,24 +53,24 @@ static void oscDispatchNode(OscChannel ch, char* addr, char* fulladdr,
                               const OscNode* node, OscData d[], int datalen);
 
 static Osc osc;
-extern const OscNode oscRootNode; // must be defined by the user
+extern const OscNode oscRoot; // must be defined by the user
 
 #ifdef MAKE_CTRL_USB
 
 #ifndef OSC_USB_STACK_SIZE
-#define OSC_USB_STACK_SIZE 256
+#define OSC_USB_STACK_SIZE 1024
 #endif
 
 static WORKING_AREA(waUsbThd, OSC_USB_STACK_SIZE);
-static msg_t OscUsbSerialThread(void *arg) {
+static msg_t OscUsbSerialThread(void *arg)
+{
   UNUSED(arg);
-  int justGot;
 
   while (!usbserialIsActive())
-    chThdSleepMilliseconds(10);
+    chThdSleepMilliseconds(50);
 
-  while(!chThdShouldTerminate()) {
-    justGot = usbserialReadSlip(osc.usb.inBuf, OSC_IN_BUF_SIZE, 10000);
+  while (!chThdShouldTerminate()) {
+    int justGot = usbserialReadSlip(osc.usb.inBuf, sizeof(osc.usb.inBuf), 100000);
     if (justGot > 0) {
       chMtxLock(&osc.usb.lock);
       oscReceivePacket(USB, osc.usb.inBuf, justGot);
@@ -83,7 +82,7 @@ static msg_t OscUsbSerialThread(void *arg) {
 
 static int oscSendMessageUSB(const char* data, int len)
 {
-  return usbserialWriteSlip(data, len, 100);
+  return usbserialWriteSlip(data, len, 10000);
 }
 
 bool oscUsbEnable(bool on)
@@ -96,7 +95,6 @@ bool oscUsbEnable(bool on)
   }
   if (!on && osc.usbThd != 0) {
     chThdTerminate(osc.usbThd);
-//    chThdWait(osc.usbThd);
     osc.usbThd = 0;
     return true;
   }
@@ -114,9 +112,6 @@ bool oscUsbEnable(bool on)
 static WORKING_AREA(waUdpThd, OSC_UDP_STACK_SIZE);
 static msg_t OscUdpThread(void *arg) {
   UNUSED(arg);
-  int justGot;
-
-  chMtxInit(&osc.udp.lock);
 
   while ((osc.udpsock = udpOpen()) < 0)
     chThdSleepMilliseconds(500);
@@ -124,7 +119,7 @@ static msg_t OscUdpThread(void *arg) {
   udpBind(osc.udpsock, 10000);
 
   while (!chThdShouldTerminate()) {
-    justGot = udpRead(osc.udpsock, osc.udp.inBuf, OSC_IN_BUF_SIZE, &osc.udpReplyAddress, 0);
+    int justGot = udpRead(osc.udpsock, osc.udp.inBuf, sizeof(osc.udp.inBuf), &osc.udpReplyAddress, 0);
     if (justGot > 0) {
       chMtxLock(&osc.udp.lock);
       oscReceivePacket(UDP, osc.udp.inBuf, justGot);
@@ -144,6 +139,7 @@ bool oscUdpEnable(bool on, int port)
   if (on && osc.udpThd == 0) {
     osc.udpReplyPort = (port == -1) ? OSC_UDP_DEFAULT_PORT : port;
     osc.udp.sendMessage = oscSendMessageUDP;
+    chMtxInit(&osc.udp.lock);
     osc.udpThd = chThdCreateStatic(waUdpThd, sizeof(waUdpThd), NORMALPRIO, OscUdpThread, NULL);
     return true;
   }
@@ -238,7 +234,7 @@ void oscReceiveMessage(OscChannel ch, char* data, int len)
   int datalen = strlen(data + length) - 1; // don't take the leading , into account
   OscData d[datalen];
   if (datalen == oscExtractData(data + length, len, d, datalen))
-    oscDispatchNode(ch, data + 1, data, &oscRootNode, d, datalen);
+    oscDispatchNode(ch, data + 1, data, &oscRoot, d, datalen);
 }
 
 /*
@@ -269,8 +265,10 @@ void oscDispatchNode(OscChannel ch, char* addr, char* fulladdr, const OscNode* n
           while (oscRangeHasNext(&r)) {
             int j, idx = oscRangeNext(&r);
             for (j = 0; n->children[j] != 0; j++) {
-              if (oscPatternMatch(nextPattern, n->children[j]->name) && n->children[j]->handler != NULL)
+              if (oscPatternMatch(nextPattern, n->children[j]->name) && n->children[j]->handler != NULL) {
+                *(nextPattern - 1) = '/'; // replace this - we nulled it earlier
                 n->children[j]->handler(ch, fulladdr, idx, data, datalen);
+              }
             }
           }
         }
@@ -402,7 +400,7 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
   char* messagestart = buf;
 
   // do the address
-  if ((chd->outBufPtr = oscEncodeString(chd->outBufPtr, len, address)) == NULL)
+  if ((buf = oscEncodeString(buf, len, address)) == NULL)
     return 0;
 
   // do the type
@@ -450,9 +448,7 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
   return buf;
 }
 
-/*
- * Create an OSC message given a number of data items.
- */
+// Create an OSC message given a number of data items.
 bool oscCreateMessage(OscChannel ch, const char* address, OscData* data, int datacount)
 {
   OscChannelData* chd = oscGetChannelByType(ch);
@@ -478,7 +474,7 @@ int oscSendPendingMessages(OscChannel ch)
     return 0;
   // set the buffer and length up
   char* data = chd->outBuf;
-  int len = OSC_OUT_BUF_SIZE - chd->outBufRemaining;
+  int len = sizeof(chd->outBuf) - chd->outBufRemaining;
   // if we only have 1 message, skip past the bundle preamble
   // which has already been written to the buffer
   if (chd->outMsgCount == 1) {
