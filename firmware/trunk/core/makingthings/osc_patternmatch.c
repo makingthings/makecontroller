@@ -196,8 +196,7 @@ static bool oscMatchList (const char *pattern, const char *test)
 bool oscNumberMatch(const char* pattern, int offset, int count, OscRange* r)
 {
   r->state = EXHAUSTED;
-  int n = 0;
-  int digits = 0;
+  int i, n = 0, digits = 0;
   while (isdigit((int)*pattern)) {
     digits++;
     n = n * 10 + (*pattern++ - '0');
@@ -211,10 +210,9 @@ bool oscNumberMatch(const char* pattern, int offset, int count, OscRange* r)
     case '?':
     case '[':
     case '{': {
-      int i;
       r->value = 0;
-      char s[5];
-      for (i = count - 1; i >= 0; i--) {
+      char s[10];
+      for (i = count - 1; i >= offset; i--) {
         r->value <<= 1;
         siprintf(s, "%d", i);
         if (oscPatternMatch(pattern, s))
