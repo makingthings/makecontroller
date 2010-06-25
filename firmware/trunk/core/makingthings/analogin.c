@@ -23,14 +23,16 @@
 #define ANALOGIN_2 AT91C_PIO_PB29
 #define ANALOGIN_3 AT91C_PIO_PB30
 
-struct AinManager {
-  Mutex adcLock;               // lock for the adc system
-  Semaphore conversionLock;    // signal for a conversion
+#define ANALOGIN_CHANNELS 8
+
+struct AinDriver {
+  Mutex mtx;                   // lock for the adc system
+  Thread *thd;                 // pointer to the thread waiting on an adc conversion
   bool processMultiChannelIsr; // are we waiting for a multi conversion or just a single channel
-  int multiChannelConversions; // mask of which conversions have been completed
+  uint8_t multiChannelConversions; // mask of which conversions have been completed
 };
 
-static struct AinManager manager;
+static struct AinDriver aind;
 
 /**
   \defgroup analogin Analog Input
@@ -56,6 +58,19 @@ static struct AinManager manager;
   @{
 */
 
+/*
+  As a very lightweight synchronization mechanism, simply suspend
+  the current thread, and reschedule it from the ISR.
+*/
+static void ainWaitForConversion(void)
+{
+  chSysLock();
+  aind.thd = currp;
+  chSchGoSleepS(THD_STATE_SUSPENDED);
+  aind.thd = NULL;
+  chSysUnlock();
+}
+
 /** 
   Read the value of an analog input.
   @param channel Which analog in to sample - valid options are 0-7.
@@ -70,15 +85,14 @@ static struct AinManager manager;
 */
 int ainValue(int channel)
 {
-  chMtxLock(&manager.adcLock);
-  manager.processMultiChannelIsr = NO;
+  chMtxLock(&aind.mtx);
+  aind.processMultiChannelIsr = NO;
   // disable other channels, and enable the one we want
   AT91C_BASE_ADC->ADC_CHDR = ~(1 << channel);
   AT91C_BASE_ADC->ADC_CHER = (1 << channel);
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // Start the conversion
 
-  if (chSemWait(&manager.conversionLock) != RDY_OK)
-    return false;
+  ainWaitForConversion();
 
   int value = AT91C_BASE_ADC->ADC_LCDR & 0xFFFF; // grab the last converted value
   chMtxUnlock();
@@ -102,18 +116,17 @@ int ainValue(int channel)
 */
 bool ainMulti(int values[])
 {
-  chMtxLock(&manager.adcLock);
+  chMtxLock(&aind.mtx);
   // enable all the channels
-  AT91C_BASE_ADC->ADC_CHER =  AT91C_ADC_CH0 | AT91C_ADC_CH1 | AT91C_ADC_CH2 |
-                              AT91C_ADC_CH3 | AT91C_ADC_CH4 | AT91C_ADC_CH5 |
-                              AT91C_ADC_CH6 | AT91C_ADC_CH7;
+  AT91C_BASE_ADC->ADC_CHER = AT91C_ADC_CH0 | AT91C_ADC_CH1 | AT91C_ADC_CH2 |
+                             AT91C_ADC_CH3 | AT91C_ADC_CH4 | AT91C_ADC_CH5 |
+                             AT91C_ADC_CH6 | AT91C_ADC_CH7;
 
-  manager.processMultiChannelIsr = true;    // how to process the ISR
-  manager.multiChannelConversions = 0;      // which channels have completed
+  aind.processMultiChannelIsr = YES;    // how to process the ISR
+  aind.multiChannelConversions = 0;      // which channels have completed
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // start the conversion
 
-  if (chSemWait(&manager.conversionLock) != RDY_OK)
-    return false;
+  ainWaitForConversion();
 
   // read all the data channels into the passed in array
   values[0] = AT91C_BASE_ADC->ADC_CDR0;
@@ -125,7 +138,7 @@ bool ainMulti(int values[])
   values[6] = AT91C_BASE_ADC->ADC_CDR6;
   values[7] = AT91C_BASE_ADC->ADC_CDR7;
   
-  manager.processMultiChannelIsr = false;
+  aind.processMultiChannelIsr = false;
   chMtxUnlock();
   return true;
 }
@@ -133,23 +146,29 @@ bool ainMulti(int values[])
 static void ainServeInterrupt(void)
 {
   int status = AT91C_BASE_ADC->ADC_SR;
-  if (manager.processMultiChannelIsr) {
-    unsigned int i, mask;
+  if (aind.processMultiChannelIsr) {
+    uint8_t i, mask;
     // check if we got an End Of Conversion in any of our channels
     for (i = 0; i < ANALOGIN_CHANNELS; i++) {
       mask = 1 << i;
       if (status & mask)
-        manager.multiChannelConversions |= mask;
+        aind.multiChannelConversions |= mask;
     }
     // if we got End Of Conversion in all our channels, indicate we're done
-    if (manager.multiChannelConversions == 0xFF) {
+    if (aind.multiChannelConversions == 0xFF) {
       status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
-      chSemSignalI(&manager.conversionLock);
+      // reschedule the thread waiting on us
+      chSysLockFromIsr();
+      chSchReadyI(aind.thd);
+      chSysUnlockFromIsr();
     }
   }
   else if (status & AT91C_ADC_DRDY) {
     status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
-    chSemSignalI(&manager.conversionLock);
+    // reschedule the thread waiting on us
+    chSysLockFromIsr();
+    chSchReadyI(aind.thd);
+    chSysUnlockFromIsr();
   }
 }
 
@@ -190,10 +209,10 @@ void ainInit(void)
   pinGroupSetMode(GROUP_B, ANALOGIN_0 | ANALOGIN_1 | ANALOGIN_2 | ANALOGIN_3, PAL_MODE_INPUT_ANALOG);
   
   // init locks
-  chMtxInit(&manager.adcLock);
-  chSemInit(&manager.conversionLock, 0);
-  manager.multiChannelConversions = NO;
-  manager.processMultiChannelIsr = NO;
+  chMtxInit(&aind.mtx);
+  aind.thd = 0;
+  aind.multiChannelConversions = NO;
+  aind.processMultiChannelIsr = NO;
   
   // initialize interrupts
   AT91C_BASE_ADC->ADC_IER = AT91C_ADC_DRDY;
