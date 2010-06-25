@@ -187,11 +187,7 @@ char usbserialGet()
 {
   if (!usbserialIsActive() && chIQIsEmpty(&usbSerial.inq))
     return 0;
-  // TODO - would prefer to use chIQGetTimeout, but it doesn't trigger inotify currently.
-  // should be fixed in chibios shortly
-  char ch = 0;
-  chIQReadTimeout(&usbSerial.inq, (uint8_t*)&ch, 1, TIME_INFINITE);
-  return ch;
+  return chIQGetTimeout(&usbSerial.inq, TIME_INFINITE);
 }
 
 /**
