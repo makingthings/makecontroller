@@ -58,15 +58,15 @@ QString ProjectManager::createNewFile(const QString & projectPath, const QString
 QString ProjectManager::saveFileAs(const QString & projectPath, const QString & existingFilePath, const QString & newFilePath)
 {
   QFileInfo fi(newFilePath);
-  if(fi.exists()) // if it already exists, don't do anything
+  if (fi.exists()) // if it already exists, don't do anything
     return fi.filePath();
 
   confirmValidFileName(&fi);
   QFile file(existingFilePath);
-  if(!file.copy(fi.filePath()))
+  if (!file.copy(fi.filePath()))
     return QString();
 
-  if(addToProjectFile(projectPath, fi.filePath()))
+  if (addToProjectFile(projectPath, fi.filePath()))
     return fi.filePath();
   else
     return QString();
@@ -78,12 +78,12 @@ QString ProjectManager::saveFileAs(const QString & projectPath, const QString & 
 */
 void ProjectManager::confirmValidFileName(QFileInfo* fi)
 {
-  if(fi->baseName().contains(" ")) {
+  if (fi->baseName().contains(" ")) {
     QString newBaseName = fi->baseName().remove(" ");
     fi->setFile(fi->path() + "/" + newBaseName + "." + fi->suffix());
   }
   QStringList validSuffixes = QStringList() << "c" << "cpp" << "cxx" << "cc" << "h" << "hpp";
-  if(!validSuffixes.contains(fi->suffix())) // default to a .c suffix if not provided
+  if (!validSuffixes.contains(fi->suffix())) // default to a .c suffix if not provided
     fi->setFile(fi->path() + "/" + fi->baseName() + ".c");
 }
 
@@ -94,7 +94,7 @@ void ProjectManager::confirmValidFileName(QFileInfo* fi)
 QString ProjectManager::confirmValidProjectName(const QString & name)
 {
   QString validname = name;
-  if(name.contains(" ")) { // make sure the project name doesn't have any spaces
+  if (name.contains(" ")) { // make sure the project name doesn't have any spaces
     QStringList elems = name.split(QDir::separator());
     elems.last().remove(" ");
     validname = elems.join(QDir::separator());
@@ -163,7 +163,7 @@ bool ProjectManager::addToProjectFile(const QString & projectPath, const QString
   QDir projectDir(projectPath);
   QFile projectFile(projectDir.filePath(projectDir.dirName() + ".xml"));
   // read in the existing file, and add a node to the "files" section
-  if(newProjectDoc.setContent(&projectFile)) {
+  if (newProjectDoc.setContent(&projectFile)) {
     projectFile.close();
     QDomElement newFileElement = newProjectDoc.createElement("file");
     QDomText newFilePathElement = newProjectDoc.createTextNode(projectDir.relativeFilePath(newFilePath));
@@ -171,7 +171,7 @@ bool ProjectManager::addToProjectFile(const QString & projectPath, const QString
     newProjectDoc.elementsByTagName("files").at(0).toElement().appendChild(newFileElement);
 
     // write our newly manipulated file
-    if(projectFile.open(QIODevice::WriteOnly | QFile::Text)) { // reopen as WriteOnly
+    if (projectFile.open(QIODevice::WriteOnly | QFile::Text)) { // reopen as WriteOnly
       projectFile.write(newProjectDoc.toByteArray(2));
       projectFile.close();
       retval = true;
@@ -190,14 +190,14 @@ bool ProjectManager::removeFromProjectFile(const QString & projectPath, const QS
   QDomDocument doc;
   QDir dir(projectPath);
   QFile projectFile(dir.filePath(dir.dirName() + ".xml"));
-  if(doc.setContent(&projectFile)) {
+  if (doc.setContent(&projectFile)) {
     projectFile.close();
     QDomNodeList files = doc.elementsByTagName("files").at(0).childNodes();
-    for(int i = 0; i < files.count(); i++) {
-      if(files.at(i).toElement().text() == dir.relativeFilePath(filePath)) {
+    for (int i = 0; i < files.count(); i++) {
+      if (files.at(i).toElement().text() == dir.relativeFilePath(filePath)) {
         QDomNode parent = files.at(i).parentNode();
         parent.removeChild(files.at(i));
-        if(projectFile.open(QIODevice::WriteOnly|QFile::Text)) {
+        if (projectFile.open(QIODevice::WriteOnly|QFile::Text)) {
           projectFile.write(doc.toByteArray(2));
           retval = true;
         }
@@ -224,10 +224,10 @@ QString ProjectManager::saveCurrentProjectAs(const QString & currentProjectPath,
   QString newProjectName = newProjectDir.dirName();
 
   QFileInfoList fileList = currentProjectDir.entryInfoList();
-  foreach(QFileInfo fi, fileList) {
+  foreach (QFileInfo fi, fileList) {
     // give any project-specific files the new project's name
-    if(fi.baseName() == currentProjectName) {
-      if(fi.suffix() != "o") { // don't need to copy obj files
+    if (fi.baseName() == currentProjectName) {
+      if (fi.suffix() != "o") { // don't need to copy obj files
         QFile tocopy(fi.filePath());
         tocopy.copy(newProjectDir.filePath(newProjectName + "." + fi.suffix()));
       }
@@ -261,54 +261,3 @@ QString ProjectManager::saveCurrentProjectAs(const QString & currentProjectPath,
   }
   return newProjectDir.path();
 }
-
-/*
-  Set the build type of a file in the project file to either thumb or arm.
-*/
-bool ProjectManager::setFileBuildType(const QString & projectPath, const QString & filename, const QString & buildtype)
-{
-  bool retval = false;
-  QDir dir(projectPath);
-  QFile projectFile(dir.filePath(dir.dirName() + ".xml"));
-  QDomDocument doc;
-  if(doc.setContent(&projectFile)) {
-    projectFile.close();
-    QDomNodeList files = doc.elementsByTagName("files").at(0).childNodes();
-    for(int i = 0; i < files.count(); i++) {
-      if(files.at(i).toElement().text() == dir.relativeFilePath(filename)) {
-        files.at(i).toElement().setAttribute("type", buildtype);
-        if(projectFile.open(QIODevice::WriteOnly|QFile::Text)) {
-          projectFile.write(doc.toByteArray(2));
-          retval = true;
-        }
-      }
-    }
-  }
-  return retval;
-}
-
-/*
-  Return the buildtype of a file in the project file.
-*/
-QString ProjectManager::fileBuildType(const QString & projectPath, const QString & filename)
-{
-  QString buildtype;
-  QDir dir(projectPath);
-  QFile projectFile(dir.filePath(dir.dirName() + ".xml"));
-  QDomDocument doc;
-  if(doc.setContent(&projectFile)) {
-    projectFile.close();
-    QDomNodeList files = doc.elementsByTagName("files").at(0).childNodes();
-    for(int i = 0; i < files.count(); i++) {
-      if(files.at(i).toElement().text() == dir.relativeFilePath(filename))
-        buildtype = files.at(i).toElement().attribute("type");
-    }
-  }
-  return buildtype;
-}
-
-
-
-
-
-
