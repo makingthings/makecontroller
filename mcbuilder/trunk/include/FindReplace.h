@@ -28,17 +28,17 @@ class FindReplace : public QDialog
   Q_OBJECT
 
   public:
-    FindReplace( MainWindow *mw );
+    FindReplace(MainWindow *mw);
   private:
     MainWindow *mainWindow;
     Ui::FindReplaceUi ui;
     QTextDocument::FindFlags getFlags(bool forward = true);
 
   private slots:
-    void onNext( );
-    void onPrevious( );
-    void onReplace( );
-    void onReplaceAll( );
+    void onNext();
+    void onPrevious();
+    void onReplace();
+    void onReplaceAll();
 };
 
 #endif // FIND_REPLACE_H

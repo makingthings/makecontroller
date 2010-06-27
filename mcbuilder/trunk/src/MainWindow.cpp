@@ -64,11 +64,13 @@ MainWindow::MainWindow( ) : QMainWindow( 0 )
 
   // load
   boardTypeGroup = new QActionGroup(ui.menuBoard_Type);
-  loadBoardProfiles( );
-  loadExamples( );
-  loadLibraries( );
-  loadRecentProjects( );
-  readSettings( );
+  loadBoardProfiles();
+  loadExamples();
+  loadLibraries();
+  loadRecentProjects();
+  readSettings();
+
+  qDebug() << "current dir" << QDir::currentPath();
 
   // misc. signals
   connect(ui.editor, SIGNAL(cursorPositionChanged()), this, SLOT(onCursorMoved()));
@@ -131,7 +133,7 @@ void MainWindow::readSettings()
     ui.splitter->setSizes(splitterSizes);
   }
 
-  if(settings.value("checkForUpdates", true).toBool())
+  if (settings.value("checkForUpdates", true).toBool())
     updater->checkForUpdates(APPUPDATE_BACKGROUND);
 
   QString lastProject = settings.value("lastOpenProject").toString();
@@ -139,7 +141,7 @@ void MainWindow::readSettings()
     openProject(lastProject);
   settings.endGroup();
   QPoint mainWinPos = settings.value("mainwindow_pos").toPoint();
-  if(!mainWinPos.isNull())
+  if (!mainWinPos.isNull())
     move(mainWinPos);
 }
 
@@ -154,7 +156,7 @@ void MainWindow::writeSettings()
   QList<QVariant> splitterSettings;
   QList<int> splitterSizes = ui.splitter->sizes();
   for (int i = 0; i < splitterSizes.count(); i++)
-    splitterSettings.append( splitterSizes.at(i) );
+    splitterSettings.append(splitterSizes.at(i));
   settings.setValue("splitterSizes", splitterSettings );
   settings.setValue("lastOpenProject", currentProject);
   settings.endGroup();
@@ -167,7 +169,7 @@ void MainWindow::writeSettings()
 */
 void MainWindow::closeEvent(QCloseEvent *qcloseevent)
 {
-  if(!maybeSave()) {
+  if (!maybeSave()) {
     qcloseevent->ignore();
   }
   else {
@@ -183,7 +185,7 @@ void MainWindow::closeEvent(QCloseEvent *qcloseevent)
 */
 void Editor::keyPressEvent(QKeyEvent* event)
 {
-  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+  if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
     QTextCursor c = textCursor();
     QString whitespace;
     QString line = c.block().text();
@@ -237,13 +239,13 @@ void MainWindow::onDocumentModified()
 bool MainWindow::findText(const QString & text, QTextDocument::FindFlags flags, bool forward)
 {
   bool success = false;
-  if(!ui.editor->find(text, flags)) { // if we didn't find it, try wrapping around
+  if (!ui.editor->find(text, flags)) { // if we didn't find it, try wrapping around
     if(forward)
       ui.editor->moveCursor(QTextCursor::Start);
     else
       ui.editor->moveCursor(QTextCursor::End);
 
-    if(ui.editor->find(text, flags)) // now try again
+    if (ui.editor->find(text, flags)) // now try again
       success = true;
   }
   else
@@ -260,11 +262,11 @@ void MainWindow::replaceAll(const QString & find, const QString & replace, QText
   bool keepgoing = true;
   ui.editor->moveCursor(QTextCursor::Start);
   do {
-    if(ui.editor->find(find, flags))
+    if (ui.editor->find(find, flags))
       ui.editor->textCursor().insertText(replace);
     else
       keepgoing = false;
-  } while(keepgoing);
+  } while (keepgoing);
   ui.editor->textCursor().endEditBlock();
 }
 
@@ -274,7 +276,7 @@ void MainWindow::replaceAll(const QString & find, const QString & replace, QText
 */
 void MainWindow::replace(const QString & rep)
 {
-  if(!ui.editor->textCursor().selectedText().isEmpty())
+  if (!ui.editor->textCursor().selectedText().isEmpty())
     ui.editor->textCursor().insertText(rep);
 }
 
@@ -296,10 +298,7 @@ void MainWindow::setTabWidth(int width)
 QString MainWindow::currentBoardProfile()
 {
   QAction *board = boardTypeGroup->checkedAction();
-  if (board)
-    return board->data().toString();
-  else
-    return QString();
+  return (board != 0) ? board->data().toString() : QString();
 }
 
 /*
@@ -383,7 +382,7 @@ void MainWindow::removeFileFromProject(const QString & file)
   // if it's currently loaded in the editor, get it out
   if (file == currentFile) {
     QString newfile = currentFileDropDown->itemData(currentFileDropDown->currentIndex()).toString();
-    if(!newfile.isEmpty())
+    if (!newfile.isEmpty())
       editorLoadFile(newfile);
     else {
       currentFile = "";
@@ -504,7 +503,7 @@ void MainWindow::openProject(const QString & projectPath)
         }
       }
     }
-    setWindowTitle( projectName + "[*] - mcbuilder");
+    setWindowTitle(projectName + "[*] - mcbuilder");
     updateRecentProjects(projectPath);
     // diff projects before loading the new one in
     bool clean = projInfo->diffProjects(projectPath);
@@ -514,7 +513,7 @@ void MainWindow::openProject(const QString & projectPath)
     buildLog->clear();
   }
   else
-    return statusBar()->showMessage( tr("Couldn't find main file for %1.").arg(projectName), 3500 );
+    return statusBar()->showMessage(tr("Couldn't find main file for %1.").arg(projectName), 3500);
 }
 
 /*
@@ -731,7 +730,7 @@ void MainWindow::onClean( )
   if (builder->state() == QProcess::NotRunning)
     builder->clean(currentProject);
   else
-    return statusBar()->showMessage( tr("Builder is currently busy...give it a second, then try again."), 3500 );
+    return statusBar()->showMessage(tr("Builder is currently busy...give it a second, then try again."), 3500);
 }
 
 /*
@@ -777,7 +776,7 @@ void MainWindow::onUploadFile( )
 {
   QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
                                                  QDir::homePath(), tr("Binaries (*.bin)"));
-  if(!fileName.isNull())
+  if (!fileName.isNull())
     uploadFile(fileName);
 }
 
@@ -789,21 +788,21 @@ void MainWindow::uploadFile(const QString & filename)
 {
   // get the board type so the uploader can check which upload mechanism to use
   QFileInfo fi(filename);
-  if(!fi.exists())
-    return statusBar()->showMessage( tr("Couldn't find %1.").arg(fi.fileName()), 3500 );
+  if (!fi.exists())
+    return statusBar()->showMessage(tr("Couldn't find %1.").arg(fi.fileName()), 3500);
   QAction *board = boardTypeGroup->checkedAction( );
-  if(board) {
-    if(uploader->state() == QProcess::NotRunning)
+  if (board) {
+    if (uploader->state() == QProcess::NotRunning)
       uploader->upload(board->data().toString(), filename);
     else
-      return statusBar()->showMessage( tr("Uploader is currently busy...give it a second, then try again."), 3500 );
+      return statusBar()->showMessage(tr("Uploader is currently busy...give it a second, then try again."), 3500);
   }
   else
-    return statusBar()->showMessage( tr("Please select a board type from the Project menu first."), 3500 );
+    return statusBar()->showMessage(tr("Please select a board type from the Project menu first."), 3500);
 }
 
 // read the available board files and load them into the UI
-void MainWindow::loadBoardProfiles( )
+void MainWindow::loadBoardProfiles()
 {
   QDir dir = appDirectory().filePath("resources/board_profiles");
   QStringList boardProfiles = dir.entryList(QStringList("*.xml"));
@@ -816,16 +815,16 @@ void MainWindow::loadBoardProfiles( )
 
   foreach(QString filename, boardProfiles) {
     QFile file(dir.filePath(filename));
-    if(doc.setContent(&file)) {
+    if (doc.setContent(&file)) {
       QDomNodeList boardElements = doc.elementsByTagName("board");
       int len = boardElements.size();
       QString preferredBoard = Preferences::boardType();
-      for( int i = 0; i < len; i++ ) {
+      for (int i = 0; i < len; i++) {
         QString boardName = boardElements.at(i).firstChildElement("name").text();
-        if(!actionNames.contains(boardName)) {
+        if (!actionNames.contains(boardName)) {
           QAction *boardAction = new QAction(boardName, boardTypeGroup);
           boardAction->setCheckable(true);
-          if(boardName == preferredBoard)
+          if (boardName == preferredBoard)
             boardAction->setChecked(true);
           boardAction->setData(filename);         // hang onto the filename so we don't have to look it up again later
           ui.menuBoard_Type->addAction(boardAction); // add the action to the actual menu
@@ -834,7 +833,7 @@ void MainWindow::loadBoardProfiles( )
     }
   }
   boardActions = ui.menuBoard_Type->actions(); // refresh this, to get added entries
-  if( ui.menuBoard_Type->activeAction() == 0 && boardActions.count() )
+  if (ui.menuBoard_Type->activeAction() == 0 && boardActions.count())
     boardActions.at(0)->setChecked(true);
 }
 
@@ -846,12 +845,12 @@ void MainWindow::loadExamples( )
 {
   QDir dir = appDirectory().filePath("resources/examples");
   QStringList exampleCategories = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
-  foreach(QString category, exampleCategories) {
+  foreach (QString category, exampleCategories) {
     QMenu *exampleMenu = new QMenu(category, this);
     ui.menuExamples->addMenu(exampleMenu);
     QDir exampleDir(dir.filePath(category));
     QFileInfoList examples = exampleDir.entryInfoList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
-    foreach(QFileInfo example, examples) {
+    foreach (QFileInfo example, examples) {
       QAction *a = new QAction(example.baseName(), exampleMenu); // use the base name for the name in the menu
       a->setData(example.filePath()); // store the path in the action's data
       exampleMenu->addAction(a);
@@ -884,21 +883,20 @@ void MainWindow::onExample(QAction *example)
   If the library provides a "friendly name", use that in the dropdown of libraries
   in the UI, and always store the actual library dir name in the action's data
 */
-void MainWindow::loadLibraries( )
+void MainWindow::loadLibraries()
 {
-  QDir dir = appDirectory().filePath("/Users/liam/Documents/mtcode/make/mcbuilder/cores/makecontroller/libraries");
+  QDir dir = appDirectory().filePath("cores/makecontroller/libraries");
   QStringList libraries = dir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
   foreach (QString library, libraries) {
-    qDebug() << "looking for libs" << library;
     QDir libdir = dir.filePath(library);
     QFile libfile(libdir.filePath(library + ".xml"));
     QDomDocument doc;
-    if(doc.setContent(&libfile)) {
+    if (doc.setContent(&libfile)) {
       libfile.close();
       // add the library to the "Import Library" menu
       QString libname = library;
       QDomNodeList nodes = doc.elementsByTagName("display_name");
-      if(nodes.count())
+      if (nodes.size() > 0)
         libname = nodes.at(0).toElement().text();
 
       // create a menu that allows us to import the library, view its documentation, etc
@@ -909,7 +907,7 @@ void MainWindow::loadLibraries( )
       menu->addAction(a);
 
       nodes = doc.elementsByTagName("reference");
-      if(nodes.count()) {
+      if (nodes.size() > 0) {
         a = new QAction(tr("View Documentation"), menu);
         QString doclink = nodes.at(0).toElement().text();
         QUrl url(doclink);

@@ -77,18 +77,16 @@ QString Preferences::workspace( )
   QSettings settings;
   #ifdef Q_WS_MAC
   QString workspace = QDir::home().filePath("Documents/mcbuilder");
+  #elif defined(Q_WS_WIN)
+  // would be nice to use home dir, but can't have spaces in file path
+  QString workspace = QDir::current().filePath("workspace");
   #else
-    #ifdef Q_WS_WIN
-    // would be nice to use home dir, but can't have spaces in file path
-    QString workspace = QDir::current().filePath("workspace");
-    #else
-    QString workspace = QDir::home().path() + "/mcbuilder";
-    #endif // Q_WS_WIN
+  QString workspace = QDir::home().path() + "/mcbuilder";
   #endif // Q_WS_MAC
   workspace = settings.value("workspace", workspace).toString();
   // always make sure the workspace directory exists
   QDir dir(workspace);
-  if(!dir.exists()) {
+  if (!dir.exists()) {
     dir.cdUp();
     #ifdef Q_WS_WIN
     dir.mkdir("workspace");
@@ -100,7 +98,7 @@ QString Preferences::workspace( )
 }
 
 // static
-QString Preferences::boardType( )
+QString Preferences::boardType()
 {
   QSettings settings;
   return settings.value("boardType").toString();
@@ -114,7 +112,7 @@ QString Preferences::boardType( )
 QString Preferences::toolsPath( ) // static
 {
   QSettings settings;
-  return settings.value("toolsPath", QDir::current().filePath("resources/tools/arm-elf/bin")).toString();
+  return settings.value("toolsPath", QDir::current().filePath("resources/tools/arm-none-eabi/bin")).toString();
 }
 
 QString Preferences::makePath( ) // static
@@ -141,16 +139,16 @@ void Preferences::loadAndShow( )
 {
   QSettings settings;
   ui.workspaceEdit->setText(QDir::toNativeSeparators(workspace()));
-  ui.makePathEdit->setText(QDir::toNativeSeparators(makePath()));
+  ui.makePathEdit->setText( QDir::toNativeSeparators(makePath()));
   ui.toolsPathEdit->setText(QDir::toNativeSeparators(toolsPath()));
-  ui.sam7PathEdit->setText(QDir::toNativeSeparators(sam7Path()));
+  ui.sam7PathEdit->setText( QDir::toNativeSeparators(sam7Path()));
 
   bool state = settings.value("checkForUpdates", true).toBool();
   ui.updaterBox->setChecked(state);
 
   ui.fontBox->setText(QString("%1, %2pt").arg(currentFont.family()).arg(currentFont.pointSize()));
   ui.tabWidth->setText(QString::number(settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt()));
-  show( );
+  show();
 }
 
 /*
@@ -161,7 +159,7 @@ void Preferences::browseWorkspace( )
 {
   QString newProjDir = QFileDialog::getExistingDirectory(this, tr("Select Workspace Directory"),
                                                            Preferences::workspace(), QFileDialog::ShowDirsOnly);
-  if( !newProjDir.isNull() ) // will be null if user hit cancel
+  if (!newProjDir.isNull()) // will be null if user hit cancel
     ui.workspaceEdit->setText(newProjDir);
 }
 
@@ -174,7 +172,7 @@ void Preferences::getNewFont( )
 {
   bool ok = false;
   QFont newFont = QFontDialog::getFont(&ok, QFont(currentFont.family(), currentFont.pointSize()), this);
-  if(ok) { // the user clicked OK and font is set to the font the user selected
+  if (ok) { // the user clicked OK and font is set to the font the user selected
     tempFont = newFont;
     ui.fontBox->setText(QString("%1, %2pt").arg(tempFont.family()).arg(tempFont.pointSize()));
   }
@@ -199,12 +197,12 @@ void Preferences::applyChanges( )
   settings.setValue("appVersion", ui.appVersionComboBox->itemText(ui.appVersionComboBox->currentIndex()));
 
   int oldTabWidth = settings.value("tabWidth", DEFAULT_TAB_WIDTH).toInt();
-  if( oldTabWidth != ui.tabWidth->text().toInt() ) {
+  if (oldTabWidth != ui.tabWidth->text().toInt()) {
     settings.setValue("tabWidth", ui.tabWidth->text().toInt());
-    mainWindow->setTabWidth( ui.tabWidth->text().toInt() );
+    mainWindow->setTabWidth(ui.tabWidth->text().toInt());
   }
 
-  if(tempFont.family() != currentFont.family() || tempFont.pointSize() != currentFont.pointSize()) {
+  if (tempFont.family() != currentFont.family() || tempFont.pointSize() != currentFont.pointSize()) {
     currentFont.setFamily(tempFont.family());
     currentFont.setPointSize(tempFont.pointSize());
     mainWindow->setEditorFont(currentFont.family(), currentFont.pointSize());
@@ -217,28 +215,22 @@ void Preferences::onMakePathButton()
 {
   QString newMakeDir = QFileDialog::getExistingDirectory(this, tr("Select Directory Containing Make"),
                                                            makePath(), QFileDialog::ShowDirsOnly);
-  if( !newMakeDir.isNull() ) // will be null if user hit cancel
+  if (!newMakeDir.isNull()) // will be null if user hit cancel
     ui.makePathEdit->setText(newMakeDir);
 }
 
 void Preferences::onArmElfPathButton()
 {
-  QString newArmElfDir = QFileDialog::getExistingDirectory(this, tr("Select Directory Containing Arm Elf Tools"),
+  QString newArmElfDir = QFileDialog::getExistingDirectory(this, tr("Select Directory Containing GnuArm Tools"),
                                                            toolsPath(), QFileDialog::ShowDirsOnly);
-  if( !newArmElfDir.isNull() ) // will be null if user hit cancel
+  if (!newArmElfDir.isNull()) // will be null if user hit cancel
     ui.toolsPathEdit->setText(newArmElfDir);
 }
 
 void Preferences::onSam7Button()
 {
-  QString newSam7Dir = QFileDialog::getExistingDirectory(this, tr("Select Directory Containing Arm Elf Tools"),
+  QString newSam7Dir = QFileDialog::getExistingDirectory(this, tr("Select Directory Containing GnuArm Tools"),
                                                            sam7Path(), QFileDialog::ShowDirsOnly);
-  if( !newSam7Dir.isNull() ) // will be null if user hit cancel
+  if (!newSam7Dir.isNull()) // will be null if user hit cancel
     ui.sam7PathEdit->setText(newSam7Dir);
 }
-
-
-
-
-
-

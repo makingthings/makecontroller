@@ -64,14 +64,14 @@ class MainWindow : public QMainWindow
 {
   Q_OBJECT
 public:
-  MainWindow( );
-  void setTabWidth( int width );
+  MainWindow();
+  void setTabWidth(int width);
   void setEditorFont(const QString & family, int pointSize);
   void printOutput(const QString & text);
   void printOutputError(const QString & text);
   void printOutputError(QListWidgetItem *item);
-  QString currentProjectPath( ) { return currentProject; }
-  QString currentBoardProfile( );
+  QString currentProjectPath() { return currentProject; }
+  QString currentBoardProfile();
   bool findText(const QString & text, QTextDocument::FindFlags flags, bool forward);
   void replaceAll(const QString & find, const QString & replace, QTextDocument::FindFlags flags);
   void replace(const QString & rep);
@@ -84,11 +84,11 @@ public:
   static QDir appDirectory();
 
 private:
-  void openFile( const QString &path );
-  void loadBoardProfiles( );
-  void loadExamples( );
-  void loadLibraries( );
-  void loadRecentProjects( );
+  void openFile(const QString &path);
+  void loadBoardProfiles();
+  void loadExamples();
+  void loadLibraries();
+  void loadRecentProjects();
   void writeSettings();
   void readSettings();
   void closeEvent(QCloseEvent *qcloseevent);
@@ -108,36 +108,37 @@ private:
   QActionGroup *boardTypeGroup;
   QString currentFile; // path of the file in the editor
   QString currentProject; // path of the current project directory
+
   void editorLoadFile( const QString & filepath );
   void createNewFile(const QString & path);
   void openProject(const QString & projectPath);
   void updateRecentProjects(const QString & newProject);
   void uploadFile(const QString & filename);
-  bool maybeSave( );
-  bool save( );
+  bool maybeSave();
+  bool save();
 
 private slots:
-  void onCursorMoved( );
-  void onDocumentModified( );
-  void onNewFile( );
-  void onAddExistingFile( );
-  void onNewProject( );
-  void onOpen( );
-  void onSave( );
-  void onSaveAs( );
-  void onSaveProjectAs( );
+  void onCursorMoved();
+  void onDocumentModified();
+  void onNewFile();
+  void onAddExistingFile();
+  void onNewProject();
+  void onOpen();
+  void onSave();
+  void onSaveAs();
+  void onSaveProjectAs();
   void openRecentProject(QAction* project);
-  void onBuild( );
-  void onStop( );
-  void onClean( );
-  void onProperties( );
-  void onUpload( );
-  void onUploadFile( );
+  void onBuild();
+  void onStop();
+  void onClean();
+  void onProperties();
+  void onUpload();
+  void onUploadFile();
   void onExample(QAction *example);
   void onLibrary(QAction *example);
   void onFileSelection(int index);
-  void openMCReference( );
-  void openManual( );
+  void openMCReference();
+  void openManual();
   void onConsoleDoubleClick(QListWidgetItem *item);
   void onUpdate();
   void onVisitForum();
