@@ -43,7 +43,6 @@ private slots:
   void saveFileAsNoSuffix();
   void saveFileAsWrongSuffix();
   void removeFromProject();
-  void changeBuildType();
 
 private:
   void rmDirRecursive(QString path);

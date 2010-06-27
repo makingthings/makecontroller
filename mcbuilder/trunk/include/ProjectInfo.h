@@ -79,7 +79,7 @@ class ProjectInfo : public QDialog
     MainWindow *mainWindow;
     Ui::ProjectInfoUi ui;
     ProjectManager projectManager;
-    QString projectFilePath( const QString & projectPath );
+    QString projectFilePath(const QString & projectPath);
     bool configChanged;
     void loadFileBrowser(QDir *projectDir, QDomDocument *projectFile);
     // mostly for testing...
@@ -89,8 +89,8 @@ class ProjectInfo : public QDialog
     void setIncludeNetwork(bool network);
 
   private slots:
-    void applyChanges( );
-    void restoreDefaults( );
+    void applyChanges();
+    void restoreDefaults();
     void onRemoveFileRequest(const QString & filename);
 
   #ifdef MCBUILDER_TEST_SUITE

@@ -18,7 +18,7 @@
 #include "TestProjectInfo.h"
 #include <QCheckBox>
 
-TestProjectInfo::TestProjectInfo( MainWindow* mw )
+TestProjectInfo::TestProjectInfo(MainWindow* mw)
 {
   mainWindow = mw;
   projectInfo = mw->projInfo;
@@ -31,17 +31,16 @@ TestProjectInfo::TestProjectInfo( MainWindow* mw )
 void TestProjectInfo::includeSystem()
 {
   QCheckBox* u = projectInfo->ui.usbBox;
-  bool originalState = (u->checkState() == Qt::Checked);
+  bool originalState = u->isChecked();
   QString projectPath = projectInfo->projectFilePath(mainWindow->currentProjectPath());
   projectInfo->load(projectPath);
 
   QFile file(projectPath);
-  if(file.open(QIODevice::ReadOnly|QFile::Text))
-  {
+  if (file.open(QIODevice::ReadOnly|QFile::Text)) {
     QDomDocument projectFile;
-    if(projectFile.setContent(&file))
-    {
+    if (projectFile.setContent(&file)) {
       QString originalString = (originalState) ? "true" : "false";
+      qDebug() << "projectname" << projectPath;
       QVERIFY(projectFile.elementsByTagName("include_usb").at(0).toElement().text() == originalString);
     }
     file.close();
@@ -49,14 +48,14 @@ void TestProjectInfo::includeSystem()
   else
     QFAIL("Couldn't open project file.");
 
-  QTest::mouseClick(u, Qt::LeftButton);
+//  QTest::mouseClick(u, Qt::LeftButton); // this doesn't seem to work anymore...
+  u->setChecked(true);
+  QVERIFY(u->isChecked() != originalState);
   projectInfo->applyChanges();
 
-  if(file.open(QIODevice::ReadOnly|QFile::Text))
-  {
+  if (file.open(QIODevice::ReadOnly|QFile::Text)) {
     QDomDocument projectFile;
-    if(projectFile.setContent(&file))
-    {
+    if (projectFile.setContent(&file)) {
       QString newString = (originalState) ? "false" : "true";
       QVERIFY(projectFile.elementsByTagName("include_usb").at(0).toElement().text() == newString);
     }
@@ -65,7 +64,3 @@ void TestProjectInfo::includeSystem()
   else
     QFAIL("Couldn't open project file.");
 }
-
-
-
-

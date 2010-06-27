@@ -42,8 +42,6 @@ private:
 private slots:
   void initTestCase();
   void loadLibs();
-  void testMakefile();
-  void testConfigFile();
   void testClean();
   void testBuild();
 };

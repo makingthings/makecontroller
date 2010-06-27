@@ -18,6 +18,7 @@
 #include "TestProjectManager.h"
 #include <QDirIterator>
 #include <QDomDocument>
+#include <QDebug>
 
 /********************************************************************************
                                   UTILS
@@ -30,14 +31,12 @@ void TestProjectManager::rmDirRecursive(QString path)
 {
   QDirIterator it(path, QDirIterator::Subdirectories);
   QDir dir(path);
-  while(it.hasNext())
-  {
+  while (it.hasNext()) {
     QFileInfo entry(it.next());
-    if(entry.isDir() && !entry.filePath().endsWith("..") && !entry.filePath().endsWith("."))
-    {
+    if (entry.isDir() && !entry.filePath().endsWith("..") && !entry.filePath().endsWith(".")) {
       // remove all the files, then remove the directory once it's empty
       QFileInfoList fiList = QDir(entry.filePath()).entryInfoList(QDir::Files);
-      foreach(QFileInfo fi, fiList)
+      foreach (QFileInfo fi, fiList)
         dir.remove(fi.filePath());
       dir.rmdir(entry.filePath());
     }
@@ -54,13 +53,11 @@ bool TestProjectManager::inProjectFile(QString projectpath, QString filepath)
   QString projectName = projDir.dirName();
   QFile projectFile(projDir.filePath(projectName + ".xml"));
   bool foundfile = false;
-  if(doc.setContent(&projectFile))
-  {
+  if (doc.setContent(&projectFile)) {
     QDomNodeList files = doc.elementsByTagName("files").at(0).childNodes();
-    for( int i = 0; i < files.count(); i++)
-    {
+    for (int i = 0; i < files.count(); i++) {
       QString file = files.at(i).toElement().text();
-      if(files.at(i).toElement().text() == filepath)
+      if (files.at(i).toElement().text() == filepath)
         foundfile = true;
     }
   }
@@ -79,7 +76,7 @@ bool TestProjectManager::inProjectFile(QString projectpath, QString filepath)
 void TestProjectManager::initTestCase()
 {
   QDir currentDir = QDir::current();
-  if(currentDir.exists("tests/test_debris")) // dump the contents
+  if (currentDir.exists("tests/test_debris")) // dump the contents
     rmDirRecursive(currentDir.filePath("tests/test_debris"));
   else
     currentDir.mkpath(currentDir.filePath("tests/test_debris"));
@@ -97,6 +94,7 @@ void TestProjectManager::newProject()
   QString newProj = projectManager.createNewProject(testDir.filePath(projectName));
   QVERIFY(!newProj.isEmpty());
   QDir projDir(newProj);
+  QVERIFY(projDir.exists());
   QCOMPARE(projDir.path(), testDir.filePath(projectName)); // make sure the project name is as we specified it
   QVERIFY(projDir.exists(projectName + ".c")); // make sure the source stub is created
   QVERIFY(projDir.exists(projectName + ".xml")); // make sure the project file is created
@@ -199,25 +197,7 @@ void TestProjectManager::saveFileAsWrongSuffix()
 void TestProjectManager::removeFromProject()
 {
   QDir dir(testDir.filePath("TestProject1"));
-  if(!projectManager.removeFromProjectFile(dir.path(), "SavedAsBadSuffix.c"))
+  if (!projectManager.removeFromProjectFile(dir.path(), "SavedAsBadSuffix.c"))
     QFAIL("removeFromProjectFile() returned false");
   QVERIFY(!inProjectFile(dir.path(), "SavedAsBadSuffix.c"));
 }
-
-void TestProjectManager::changeBuildType()
-{
-  QDir dir(testDir.filePath("TestProject1"));
-  QString buildtype = projectManager.fileBuildType(dir.path(), "testfile.c");
-  QVERIFY(buildtype == "thumb"); // should be thumb by default
-  if(!projectManager.setFileBuildType(dir.path(), "testfile.c", "arm"))
-    QFAIL("setBuildType() returned false");
-  buildtype = projectManager.fileBuildType(dir.path(), "testfile.c");
-  QVERIFY(buildtype == "arm");
-}
-
-
-
-
-
-
-

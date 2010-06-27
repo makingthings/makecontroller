@@ -120,7 +120,11 @@ QString ProjectManager::createNewProject(const QString & newProjectPath)
   QString newProjName = newProjectDir.dirName();
 
   // grab the templates for a new project
-  QDir templatesDir(MainWindow::appDirectory().filePath("/resources/templates"));
+  QString templatePath = "resources/templates";
+  #ifdef MCBUILDER_TEST_SUITE
+  templatePath.prepend("../");
+  #endif
+  QDir templatesDir(MainWindow::appDirectory().filePath(templatePath));
 
   // create the project file from our template
   QFile templateFile(templatesDir.filePath("project_template.xml"));
