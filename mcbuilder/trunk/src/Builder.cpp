@@ -23,7 +23,8 @@
 #include <QThread>
 #include "Builder.h"
 
-#define LIBRARIES_DIR "/Users/liam/Documents/mtcode/make/mcbuilder/cores/makecontroller/libraries"
+#define CORES_DIR QString("cores/")
+#define LIBRARIES_DIR (CORES_DIR + "makecontroller/libraries")
 
 /*
   Builder takes a project and turns it into a binary executable.
@@ -36,8 +37,6 @@ Builder::Builder(MainWindow *mainWindow, ProjectInfo *projInfo, BuildLog *buildL
   this->projInfo = projInfo;
   this->buildLog = buildLog;
   this->prefs = prefs;
-
-  cppSuffixes << "cpp" << "cxx" << "cc";
 
   connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(filterOutput()));
   connect(this, SIGNAL(readyReadStandardError()), this, SLOT(filterErrorOutput()));
@@ -74,21 +73,21 @@ QStringList Builder::generateArgs(const QString & projectName)
 {
   QStringList args;
   int parallelthreads = QThread::idealThreadCount();
-  if (parallelthreads < 1)
-    parallelthreads = 1;
-  args << QString("-j%1").arg(parallelthreads); // use all the cores possible
+  if (parallelthreads > 1)
+    args << QString("-j%1").arg(parallelthreads); // use all the cores possible
 
-  QString src = "/Users/liam/Documents/mtcode/make/mcbuilder/cores/makecontroller";
+  QString src = MainWindow::appDirectory().filePath(CORES_DIR + "makecontroller");
   args << QString("PROJECT=%1").arg(projectName.split("/").last());
   args << QString("LWIP=%1/core/lwip").arg(src);
   args << QString("USB=%1/core").arg(src);
   args << QString("CHIBIOS=%1/core/chibios").arg(src);
   args << QString("MT=%1/core/makingthings").arg(src);
   args << QString("LIBRARIES=%1/libraries").arg(src);
-  args << QString("TRGT=%1/arm-elf-").arg(Preferences::toolsPath());
+  args << QString("TRGT=%1/arm-none-eabi-").arg(Preferences::toolsPath());
 
   // load up the list of libraries this project depends on
-  QList<Builder::Library> libs = loadDependencies(LIBRARIES_DIR, projectName);
+  QString libsPath = MainWindow::appDirectory().filePath(LIBRARIES_DIR);
+  QList<Builder::Library> libs = loadDependencies(libsPath, projectName);
   QString csrc = "MCBUILDER_CSRC=";
   QString cppsrc = "MCBUILDER_CPPSRC=";
   QString incdir = "MCBUILDER_INCDIR=";
@@ -114,10 +113,10 @@ void Builder::clean(const QString & projectName)
   setWorkingDirectory(projectName);
   buildStep = CLEAN;
   currentProcess = "make clean";
-  buildLog->clear( );
+  buildLog->clear();
   setEnvironment(QProcess::systemEnvironment());
   QString makePath = Preferences::makePath();
-  if(!makePath.isEmpty() && !makePath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
+  if (!makePath.isEmpty() && !makePath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
     makePath += "/";
   QStringList args = generateArgs(projectName);
   args.prepend("clean");
@@ -145,7 +144,6 @@ void Builder::nextStep(int exitCode, QProcess::ExitStatus exitStatus)
     case BUILD: // the build has just completed.  check the size of the .bin
     {
       QDir dir(currentProjectPath);
-      QString projectName = dir.dirName().remove(" ").toLower();
       dir.cd("build");
       dir.setNameFilters(QStringList() << "*.bin");
       QFileInfoList bins = dir.entryInfoList();
@@ -153,12 +151,10 @@ void Builder::nextStep(int exitCode, QProcess::ExitStatus exitStatus)
       if (bins.count()) {
         int filesize = bins.first().size();
         if (filesize <= (256 * 1024) ) {
-          mainWindow->printOutput(tr("%1.bin is %2 out of a possible 256K bytes.").arg(projectName).arg(filesize));
+          mainWindow->printOutput(tr("%1 is %2 out of a possible 256K bytes.").arg(bins.first().fileName()).arg(filesize));
           mainWindow->onBuildComplete(true);
           success = true;
         }
-        else
-          mainWindow->printOutputError(tr("Error - %1.bin is too big!  %2 out of a possible 256K bytes.").arg(projectName).arg(filesize));
       }
       if (!success)
         mainWindow->onBuildComplete(false);
@@ -265,7 +261,7 @@ void Builder::filterOutput()
       while (!outline.isNull()) {
         //qDebug("msg: %s", qPrintable(outline));
         QStringList sl = outline.split(" ");
-        if (sl.first().endsWith("arm-elf-gcc") && sl.at(1) == "-c") {
+        if (sl.first().endsWith("arm-none-eabi-gcc") && sl.at(1) == "-c") {
           QFileInfo srcFile(sl.last());
           mainWindow->buildingNow(srcFile.baseName() + ".c");
         }
@@ -337,7 +333,8 @@ bool Builder::matchErrorOrWarning(const QString & error)
   bool matched = false;
   QRegExp errExp("([a-zA-Z0-9\\\\/\\.:]+):(\\d+): (error|warning): (.+)");
   int pos = 0;
-  while((pos = errExp.indexIn(error, pos)) != -1) {
+  while ((pos = errExp.indexIn(error, pos)) != -1) {
+    qDebug() << "err" << error;
     QString filepath(errExp.cap(1));
     int linenumber = errExp.cap(2).toInt();
     QString severity(errExp.cap(3));
@@ -400,7 +397,7 @@ bool Builder::matchUndefinedRef(const QString & error)
   bool matched = false;
   QRegExp errExp("(.+):.+: undefined reference to (.+)");
   int pos = 0;
-  while((pos = errExp.indexIn(error, pos)) != -1) {
+  while ((pos = errExp.indexIn(error, pos)) != -1) {
     QString filepath(errExp.cap(1));
     QString func(errExp.cap(2));
 
@@ -420,11 +417,11 @@ bool Builder::matchUndefinedRef(const QString & error)
   directives and see if any of them match the libs in our libraries directory.
   Create a Library structure for each library and store it in our class member "libraries"
 */
-QList<Builder::Library> Builder::loadDependencies(const QString & libsDir, const QString & project)
+QList<Builder::Library> Builder::loadDependencies(const QString & libsPath, const QString & project)
 {
   QDir projDir(project);
   QStringList srcFiles = projDir.entryList(QStringList() << "*.c" << "*.h");
-  QDir libDir(MainWindow::appDirectory().filePath(libsDir));
+  QDir libDir(libsPath);
   QStringList libDirs = libDir.entryList(QStringList(), QDir::Dirs | QDir::NoDotAndDotDot);
   QList<Library> libraries;
 
@@ -463,6 +460,7 @@ void Builder::getLibrarySources(const QString & libdir, Library & lib)
   QFile libfile(dir.filePath(dir.dirName() + ".xml"));
   QDomDocument libDoc;
   if (libDoc.setContent(&libfile)) {
+    QStringList cppSuffixes = QStringList() << "cpp" << "cxx" << "cc";
     QDomNodeList files = libDoc.elementsByTagName("files").at(0).childNodes();
     int filescount = files.count();
     for (int i = 0; i < filescount; i++) {

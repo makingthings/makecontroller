@@ -68,11 +68,10 @@ private:
   Preferences* prefs;
   QString errMsg;
   QString currentProjectPath;
-  QStringList cppSuffixes;
   enum BuildStep { BUILD, CLEAN };
   BuildStep buildStep;
-  int maxsize;
   QString currentProcess;
+
   void resetBuildProcess();
   bool matchErrorOrWarning(const QString & msg);
   bool matchInFunction(const QString & msg);
@@ -85,7 +84,7 @@ private:
   int getAppBoardVersionNumber();
 
 private slots:
-  void nextStep( int exitCode, QProcess::ExitStatus exitStatus );
+  void nextStep(int exitCode, QProcess::ExitStatus exitStatus);
   void filterOutput();
   void filterErrorOutput();
   void onBuildError(QProcess::ProcessError error);
