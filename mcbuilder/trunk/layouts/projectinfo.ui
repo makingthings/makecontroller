@@ -158,16 +158,6 @@
          <property name="animated">
           <bool>false</bool>
          </property>
-         <column>
-          <property name="text">
-           <string>File</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Build Type</string>
-          </property>
-         </column>
         </widget>
        </item>
       </layout>
@@ -189,8 +179,8 @@
  <customwidgets>
   <customwidget>
    <class>FileBrowser</class>
-   <extends>QTreeWidget</extends>
-   <header>ProjectInfo.h</header>
+   <extends>QTreeView</extends>
+   <header location="global">ProjectInfo.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
