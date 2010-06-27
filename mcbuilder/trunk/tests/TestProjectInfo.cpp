@@ -40,7 +40,6 @@ void TestProjectInfo::includeSystem()
     QDomDocument projectFile;
     if (projectFile.setContent(&file)) {
       QString originalString = (originalState) ? "true" : "false";
-      qDebug() << "projectname" << projectPath;
       QVERIFY(projectFile.elementsByTagName("include_usb").at(0).toElement().text() == originalString);
     }
     file.close();
@@ -49,7 +48,7 @@ void TestProjectInfo::includeSystem()
     QFAIL("Couldn't open project file.");
 
 //  QTest::mouseClick(u, Qt::LeftButton); // this doesn't seem to work anymore...
-  u->setChecked(true);
+  u->setChecked(!originalState);
   QVERIFY(u->isChecked() != originalState);
   projectInfo->applyChanges();
 
