@@ -39,24 +39,19 @@ public:
   FileBrowser(QWidget *parent = 0) : QTreeWidget(0)
   {
     setParent(parent);
-    actionRemoveFromProject = new QAction(tr("Remove from project..."), this);
-    actionSetBuildType = new QAction(tr("Change build type to thumb"), this);
+    actionRemoveFromProject = new QAction(tr("Remove from project"), this);
     connect(actionRemoveFromProject, SIGNAL(triggered()), this, SLOT(onRemoveRequest()));
-    connect(actionSetBuildType, SIGNAL(triggered()), this, SLOT(onSetBuildType()));
   }
   void contextMenuEvent(QContextMenuEvent *event);
 
 private:
   QAction *actionRemoveFromProject;
-  QAction *actionSetBuildType;
 
 private slots:
   void onRemoveRequest();
-  void onSetBuildType();
 
 signals:
   void removeFileRequest(const QString & filename);
-  void changeBuildType(const QString & filename, const QString & newtype);
 };
 
 #include "ui_projectinfo.h"
@@ -74,7 +69,7 @@ class ProjectInfo : public QDialog
     bool includeOsc() { return ui.oscBox->isChecked(); }
     bool includeUsb() { return ui.usbBox->isChecked(); }
     bool includeNetwork() { return ui.networkBox->isChecked(); }
-    bool load( const QString & projectPath );
+    bool load(const QString & projectPath);
     bool diffProjects( const QString & newProjectPath, bool saveUiToFile = false );
 
   signals:
@@ -97,7 +92,6 @@ class ProjectInfo : public QDialog
     void applyChanges( );
     void restoreDefaults( );
     void onRemoveFileRequest(const QString & filename);
-    void onChangeBuildType(const QString & filename, const QString & newtype);
 
   #ifdef MCBUILDER_TEST_SUITE
   friend class TestBuilder;

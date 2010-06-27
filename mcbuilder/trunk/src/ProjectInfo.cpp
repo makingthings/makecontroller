@@ -29,9 +29,7 @@
 #define DEFAULT_INCLUDE_NETWORK false
 
 #define FILENAME_COLUMN 0
-#define BUILDTYPE_COLUMN 1
-
-#define FULLPATH_ROLE Qt::UserRole
+#define FULLPATH_ROLE   (Qt::UserRole)
 
 /*
   ProjectInfo is a dialog box that pops up to manage per-project
@@ -45,13 +43,8 @@ ProjectInfo::ProjectInfo(MainWindow *mainWindow) : QDialog( 0 )
   connect(ui.buttonBox, SIGNAL(rejected()), this, SLOT(accept()));
   connect(ui.defaultsButton, SIGNAL(clicked()), this, SLOT(restoreDefaults()));
   connect(ui.fileBrowser, SIGNAL(removeFileRequest(QString)), this, SLOT(onRemoveFileRequest(QString)));
-  connect(ui.fileBrowser, SIGNAL(changeBuildType(QString, QString)), this, SLOT(onChangeBuildType(QString, QString)));
 
-  QHeaderView *header = ui.fileBrowser->header();
-  header->setResizeMode(FILENAME_COLUMN, QHeaderView::Stretch);
-  header->setResizeMode(BUILDTYPE_COLUMN, QHeaderView::ResizeToContents);
-  header->setStretchLastSection(false);
-//  ui.locationLabel->setForegroundRole(QPalette::Disabled);
+  ui.fileBrowser->header()->setVisible(false);
 }
 
 /*
@@ -72,8 +65,10 @@ bool ProjectInfo::load(const QString & projectPath)
     QDomDocument projectFile;
     if (projectFile.setContent(&file)) {
       ui.versionEdit->setText(projectFile.elementsByTagName("version").at(0).toElement().text());
+
       QString optlevel = projectFile.elementsByTagName("optlevel").at(0).toElement().text();
       ui.optLevelBox->setCurrentIndex(ui.optLevelBox->findText(optlevel));
+
       bool state = (projectFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true");
       ui.debugInfoCheckbox->setChecked(state);
 
@@ -129,7 +124,7 @@ void ProjectInfo::loadFileBrowser(QDir *projectDir, QDomDocument *projectFile)
 // update appropriately if they have
 void ProjectInfo::applyChanges( )
 {
-  if( diffProjects( mainWindow->currentProjectPath(), true ) )
+  if (diffProjects( mainWindow->currentProjectPath(), true))
     emit projectInfoUpdated();
   accept();
 }
@@ -141,54 +136,55 @@ void ProjectInfo::applyChanges( )
 */
 bool ProjectInfo::diffProjects( const QString & newProjectPath, bool saveUiToFile )
 {
-  if(ui.versionEdit->text().isEmpty()) // check the version box as a sample...if this is empty, we don't have anything loaded so don't bother checking
+  // check the version box as a sample...if this is empty, we don't have anything loaded so don't bother checking
+  if (ui.versionEdit->text().isEmpty())
     return false;
   bool changed = false;
 
   QFile file(projectFilePath(newProjectPath));
   if (file.open(QIODevice::ReadWrite|QFile::Text)) {
     QDomDocument projectFile;
-    if(projectFile.setContent(&file)) {
+    if (projectFile.setContent(&file)) {
       // to get at the actual text of an element, you need to grab its child, which will be a QDomText node
-      if(ui.versionEdit->text() != projectFile.elementsByTagName("version").at(0).toElement().text()) {
+      if (ui.versionEdit->text() != projectFile.elementsByTagName("version").at(0).toElement().text()) {
         projectFile.elementsByTagName("version").at(0).firstChild().setNodeValue(ui.versionEdit->text());
         changed = true;
       }
 
-      if(ui.optLevelBox->currentText() != projectFile.elementsByTagName("optlevel").at(0).toElement().text()) {
+      if (ui.optLevelBox->currentText() != projectFile.elementsByTagName("optlevel").at(0).toElement().text()) {
         projectFile.elementsByTagName("optlevel").at(0).firstChild().setNodeValue(ui.optLevelBox->currentText());
         changed = true;
       }
 
       bool state = (projectFile.elementsByTagName("debuginfo").at(0).toElement().text() == "true");
-      if(ui.debugInfoCheckbox->checkState() != state) {
+      if (ui.debugInfoCheckbox->checkState() != state) {
         QString debugstr = ui.debugInfoCheckbox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("debuginfo").at(0).firstChild().setNodeValue(debugstr);
         changed = true;
       }
 
       state = (projectFile.elementsByTagName("include_osc").at(0).toElement().text() == "true");
-      if(ui.oscBox->isChecked() != state) {
+      if (ui.oscBox->isChecked() != state) {
         QString str = ui.oscBox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("include_osc").at(0).firstChild().setNodeValue(str);
         changed = true;
       }
 
       state = (projectFile.elementsByTagName("include_usb").at(0).toElement().text() == "true");
-      if(ui.usbBox->isChecked() != state) {
+      if (ui.usbBox->isChecked() != state) {
         QString str = ui.usbBox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("include_usb").at(0).firstChild().setNodeValue(str);
         changed = true;
       }
 
       state = (projectFile.elementsByTagName("include_network").at(0).toElement().text() == "true");
-      if(ui.networkBox->isChecked() != state) {
+      if (ui.networkBox->isChecked() != state) {
         QString str = ui.networkBox->isChecked() ? "true" : "false";
         projectFile.elementsByTagName("include_network").at(0).firstChild().setNodeValue(str);
         changed = true;
       }
 
-      if(saveUiToFile) {
+      if (saveUiToFile) {
         file.resize(0); // clear out the current contents so we can update them, since we opened as read/write
         file.write(projectFile.toByteArray(2));
       }
@@ -232,10 +228,6 @@ void FileBrowser::contextMenuEvent(QContextMenuEvent *event)
     setCurrentItem(item); // make sure we have the right item selected
     QMenu menu(this);
     menu.addAction(actionRemoveFromProject);
-    actionSetBuildType->setText("Change build type to thumb");
-    if (item->text(BUILDTYPE_COLUMN) == "thumb")
-      actionSetBuildType->setText("Change build type to arm");
-    menu.addAction(actionSetBuildType);
     menu.exec(event->globalPos());
   }
 }
@@ -253,24 +245,6 @@ void FileBrowser::onRemoveRequest()
 }
 
 /*
-  The user has triggered the action to change a file's build type.
-  Grab the file name and signal ProjectInfo to make the change in the project file.
-*/
-void FileBrowser::onSetBuildType()
-{
-  QTreeWidgetItem *item = currentItem();
-  QString filepath = item->data(FILENAME_COLUMN, FULLPATH_ROLE).toString();
-  QString newtype;
-  if(item->text(BUILDTYPE_COLUMN) == "thumb")
-    newtype = "arm";
-  else if(item->text(BUILDTYPE_COLUMN) == "arm")
-    newtype = "thumb";
-
-  item->setText(BUILDTYPE_COLUMN, newtype);
-  emit changeBuildType(filepath, newtype);
-}
-
-/*
   Remove the file in the current project's project file.
   The file has already been removed from the filebrowser UI.
 */
@@ -278,17 +252,8 @@ void ProjectInfo::onRemoveFileRequest(const QString & filename)
 {
   QFile projectFile(projectFilePath(mainWindow->currentProjectPath()));
   QDir projectDir(mainWindow->currentProjectPath());
-  if(projectManager.removeFromProjectFile(projectDir.path(), filename))
+  if (projectManager.removeFromProjectFile(projectDir.path(), filename))
     mainWindow->removeFileFromProject(projectDir.filePath(filename));
-}
-
-/*
-  Toggle the file's build type in the project file.
-  The filebrowser UI has already been updated.
-*/
-void ProjectInfo::onChangeBuildType(const QString & filename, const QString & newtype)
-{
-  projectManager.setFileBuildType(mainWindow->currentProjectPath(), filename, newtype);
 }
 
 void ProjectInfo::setIncludeOsc(bool osc)
@@ -305,10 +270,3 @@ void ProjectInfo::setIncludeNetwork(bool network)
 {
   ui.networkBox->setChecked(network);
 }
-
-
-
-
-
-
-
