@@ -30,6 +30,9 @@ int main(int argc, char* argv[])
   (void)argc;
   (void)argv;
   QApplication app(argc, argv);
+  QCoreApplication::setOrganizationName("MakingThings");
+  QCoreApplication::setOrganizationDomain("makingthings.com");
+  QCoreApplication::setApplicationName("mcbuilder");
   MainWindow window;
   
   TestProjectManager testProjectManager;

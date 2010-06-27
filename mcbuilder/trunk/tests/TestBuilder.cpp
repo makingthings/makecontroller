@@ -72,7 +72,6 @@ void TestBuilder::testClean()
   QSignalSpy finishedSpy(builder, SIGNAL(finished(int, QProcess::ExitStatus)));
   QSignalSpy errorSpy(builder, SIGNAL(error(QProcess::ProcessError)));
 
-  qDebug() << "current project" << currentProjectPath();
   builder->clean(currentProjectPath());
   builder->waitForFinished();
 

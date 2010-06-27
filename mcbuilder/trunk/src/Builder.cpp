@@ -52,7 +52,6 @@ void Builder::build(const QString & projectName)
   currentProjectPath = projectName;
   QDir dir(projectName);
   setWorkingDirectory(projectName);
-  qDebug() << "projname" << projectName;
 
   buildStep = BUILD;
   currentProcess = "make";
@@ -60,7 +59,6 @@ void Builder::build(const QString & projectName)
   QString makePath = Preferences::makePath();
   if (!makePath.isEmpty() && !makePath.endsWith("/"))  // if this is empty, just leave it so the system versions are used
     makePath += "/";
-  qDebug() << generateArgs(projectName);
   start(makePath + "make", generateArgs(projectName));
   QString buildmsg("***************************************************************\n");
   buildmsg += tr("  mcbuilder - building ") + dir.dirName() + "\n";
@@ -76,7 +74,11 @@ QStringList Builder::generateArgs(const QString & projectName)
   if (parallelthreads > 1)
     args << QString("-j%1").arg(parallelthreads); // use all the cores possible
 
-  QString src = MainWindow::appDirectory().filePath(CORES_DIR + "makecontroller");
+  QString coresDir = CORES_DIR + "makecontroller";
+  #ifdef MCBUILDER_TEST_SUITE
+    coresDir.prepend("../");
+  #endif
+  QString src = QDir::cleanPath(MainWindow::appDirectory().filePath(coresDir));
   args << QString("PROJECT=%1").arg(projectName.split("/").last());
   args << QString("LWIP=%1/core/lwip").arg(src);
   args << QString("USB=%1/core").arg(src);
@@ -135,6 +137,7 @@ void Builder::stop()
 void Builder::nextStep(int exitCode, QProcess::ExitStatus exitStatus)
 {
   if (exitCode != 0 || exitStatus != QProcess::NormalExit) { // something didn't finish happily
+    qDebug() << "err:" << this->errorString();
     mainWindow->onBuildComplete(false);
     resetBuildProcess();
     return;
@@ -237,6 +240,7 @@ void Builder::onBuildError(QProcess::ProcessError error)
       msg = tr("'%1' - unknown error type.").arg(currentProcess);
       break;
   }
+  qDebug() << "err:" << this->errorString();
   mainWindow->printOutputError(tr("Error: ") + msg);
   resetBuildProcess();
   mainWindow->onBuildComplete(false);
