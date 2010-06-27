@@ -30,11 +30,11 @@ class Preferences : public QDialog
   Q_OBJECT
   public:
     Preferences(MainWindow *mainWindow);
-    static QString workspace( );
-    static QString boardType( );
-    static QString toolsPath( );
-    static QString makePath( );
-    static QString sam7Path( );
+    static QString workspace();
+    static QString boardType();
+    static QString toolsPath();
+    static QString makePath();
+    static QString sam7Path();
     QString ctrlBoardVersion() { return ui.mcVersionComboBox->currentText(); }
     QString appBoardVersion() { return ui.appVersionComboBox->currentText(); }
 
@@ -44,11 +44,11 @@ class Preferences : public QDialog
     QFont currentFont, tempFont;
 
   public slots:
-    void loadAndShow( );
+    void loadAndShow();
   private slots:
-    void applyChanges( );
-    void browseWorkspace( );
-    void getNewFont( );
+    void applyChanges();
+    void browseWorkspace();
+    void getNewFont();
     void onMakePathButton();
     void onArmElfPathButton();
     void onSam7Button();

@@ -23,6 +23,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QDomDocument>
+#include "MainWindow.h"
 
 /*
   ProjectManager is a class to handle various tasks related to
@@ -119,7 +120,7 @@ QString ProjectManager::createNewProject(const QString & newProjectPath)
   QString newProjName = newProjectDir.dirName();
 
   // grab the templates for a new project
-  QDir templatesDir("/Users/liam/Documents/mtcode/make/mcbuilder/resources/templates");
+  QDir templatesDir(MainWindow::appDirectory().filePath("/resources/templates"));
 
   // create the project file from our template
   QFile templateFile(templatesDir.filePath("project_template.xml"));
@@ -241,20 +242,20 @@ QString ProjectManager::saveCurrentProjectAs(const QString & currentProjectPath,
   // update the contents of the project file
   QDomDocument projectDoc;
   QFile projFile(newProjectDir.filePath(newProjectName + ".xml"));
-  if(projectDoc.setContent(&projFile)) {
+  if (projectDoc.setContent(&projFile)) {
     projFile.close();
     QDomNodeList allFiles = projectDoc.elementsByTagName("files").at(0).childNodes();
-    for(int i = 0; i < allFiles.count(); i++) {
-      if(!allFiles.at(i).toElement().text().startsWith("resources/cores")) {
+    for (int i = 0; i < allFiles.count(); i++) {
+      if (!allFiles.at(i).toElement().text().startsWith("resources/cores")) {
         QFileInfo fi(allFiles.at(i).toElement().text());
-        if(fi.baseName() == currentProjectName) {
+        if (fi.baseName() == currentProjectName) {
           fi.setFile(fi.path() + "/" + newProjectName + "." + fi.suffix());
           allFiles.at(i).firstChild().setNodeValue(QDir::cleanPath(fi.filePath()));
         }
       }
     }
     // reopen with WriteOnly
-    if(projFile.open(QIODevice::WriteOnly|QFile::Text)) {
+    if (projFile.open(QIODevice::WriteOnly|QFile::Text)) {
       projFile.write(projectDoc.toByteArray(2));
       projFile.close();
     }
