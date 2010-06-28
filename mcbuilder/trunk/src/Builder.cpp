@@ -23,9 +23,6 @@
 #include <QThread>
 #include "Builder.h"
 
-#define CORES_DIR QString("cores/")
-#define LIBRARIES_DIR (CORES_DIR + "makecontroller/libraries")
-
 /*
   Builder takes a project and turns it into a binary executable.
   We need to generate a Makefile based on the general Preferences
@@ -74,36 +71,45 @@ QStringList Builder::generateArgs(const QString & projectName)
   if (parallelthreads > 1)
     args << QString("-j%1").arg(parallelthreads); // use all the cores possible
 
-  QString coresDir = CORES_DIR + "makecontroller";
+  QString mckSrcPath = "cores/makecontroller";
   #ifdef MCBUILDER_TEST_SUITE
-    coresDir.prepend("../");
+  mckSrcPath.prepend("../");
   #endif
-  QString src = QDir::cleanPath(MainWindow::appDirectory().filePath(coresDir));
+  QDir srcDir(QDir::cleanPath(MainWindow::appDirectory().filePath(mckSrcPath)));
+  QString src = srcDir.filePath("core");
   args << QString("PROJECT=%1").arg(projectName.split("/").last());
-  args << QString("LWIP=%1/core/lwip").arg(src);
-  args << QString("USB=%1/core").arg(src);
-  args << QString("CHIBIOS=%1/core/chibios").arg(src);
-  args << QString("MT=%1/core/makingthings").arg(src);
+  args << QString("LWIP=%1/lwip").arg(src);
+  args << QString("USB=%1").arg(src);
+  args << QString("CHIBIOS=%1/chibios").arg(src);
+  args << QString("MT=%1/makingthings").arg(src);
   args << QString("LIBRARIES=%1/libraries").arg(src);
   args << QString("TRGT=%1/arm-none-eabi-").arg(Preferences::toolsPath());
 
   // load up the list of libraries this project depends on
-  QString libsPath = MainWindow::appDirectory().filePath(LIBRARIES_DIR);
+  QString libsPath = srcDir.filePath("libraries");
+  qDebug() << "libsPath" << libsPath;
   QList<Builder::Library> libs = loadDependencies(libsPath, projectName);
   QString csrc = "MCBUILDER_CSRC=";
   QString cppsrc = "MCBUILDER_CPPSRC=";
   QString incdir = "MCBUILDER_INCDIR=";
   foreach (Builder::Library lib, libs) {
+    qDebug() << "lib:" << lib.name;
     foreach (QString cfile, lib.csrc)
       csrc.append(cfile + "\\ ");
     foreach (QString cppfile, lib.cppsrc)
-      csrc.append(cppsrc + "\\ ");
-    incdir.append(QDir(LIBRARIES_DIR).filePath(lib.name));
+      csrc.append(cppfile + "\\ ");
+    incdir.append(QDir(libsPath).filePath(lib.name) + "\\ ");
   }
   // if we actually got anything in any of them, add them to the list of args
   if (!csrc.endsWith("=")) args << csrc;
   if (!cppsrc.endsWith("=")) args << cppsrc;
   if (!incdir.endsWith("=")) args << incdir;
+
+  QString defs = "MCBUILDER_DEFS=";
+  if (projInfo->includeUsb()) defs.append("-DMAKE_CTRL_USB ");
+  if (projInfo->includeNetwork()) defs.append("-DMAKE_CTRL_NETWORK");
+  if (projInfo->includeOsc()) defs.append("-DOSC ");
+  if (!defs.endsWith("="))  args << defs;
   return args;
 }
 
@@ -260,6 +266,7 @@ void Builder::filterOutput()
     {
       QString output = readAllStandardOutput();
       buildLog->append(output);
+      qDebug() << output;
       QTextStream outstream(&output); // use QTextStream to deal with \r\n or \n line endings for us
       QString outline = outstream.readLine();
       while (!outline.isNull()) {

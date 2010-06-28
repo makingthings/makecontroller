@@ -51,19 +51,6 @@ BUILDDIR = build
 ASMSRC = $(PORTASM) \
          $(CHIBIOS)/os/ports/GCC/ARM7/AT91SAM7/vectors.s
 
-# include mcbuilder additions
-ifneq ($(MCBUILDER_CSRC),)
-  CSRC   += MCBUILDER_CSRC
-endif
-
-ifneq ($(MCBUILDER_CPPSRC),)
-  CPPSRC   += MCBUILDER_CPPSRC
-endif
-
-ifneq ($(MCBUILDER_INCDIR),)
-  INCDIR   += MCBUILDER_INCDIR
-endif
-
 ##############################################################################
 # Compiler settings - shouldn't need to change anything beyond here
 # unless you know what you're up to!
@@ -148,6 +135,23 @@ ULIBS =
 #
 # End of user defines
 ##############################################################################
+
+# include mcbuilder additions
+ifneq ($(MCBUILDER_CSRC),)
+  CSRC   += $(MCBUILDER_CSRC)
+endif
+
+ifneq ($(MCBUILDER_CPPSRC),)
+  CPPSRC   += $(MCBUILDER_CPPSRC)
+endif
+
+ifneq ($(MCBUILDER_INCDIR),)
+  INCDIR   += $(MCBUILDER_INCDIR)
+endif
+
+ifneq ($(MCBUILDER_DEFS),)
+  DDEFS    += $(MCBUILDER_DEFS)
+endif
 
 ##############################################################################
 # Build global options
