@@ -16,10 +16,10 @@
 //----------------------------------------------------------------
 #define MAKE_CTRL_USB     // enable the USB system
 #define MAKE_CTRL_NETWORK // enable the Ethernet system
-//#define OSC               // enable the OSC system
+#define OSC               // enable the OSC system
 
 //  The version of the MAKE Controller Board you're using.
-#define CONTROLLER_VERSION  200    // valid options: 50, 90, 95, 100, 200
+#define CONTROLLER_VERSION  100    // valid options: 50, 90, 95, 100, 200
 
 //  The version of the MAKE Application Board you're using.
 #define APPBOARD_VERSION  100    // valid options: 50, 90, 95, 100, 200
