@@ -93,7 +93,7 @@ void TestBuilder::testClean()
   QVERIFY(!projDir.exists(shortname + ".map"));
 }
 
-void TestBuilder::testBuild( )
+void TestBuilder::testBuild()
 {
   QSignalSpy finishedSpy(builder, SIGNAL(finished(int, QProcess::ExitStatus)));
   QSignalSpy errorSpy(builder, SIGNAL(error(QProcess::ProcessError)));
