@@ -101,7 +101,7 @@ int ainValue(int channel)
 
 /** 
   Read the value of all the analog inputs.
-  If you want to read all the anaog ins, this is quicker than reading them all 
+  If you want to read all the analog ins, this is quicker than reading them all
   separately.  Make sure to provide an array of 8 ints, as this does not do
   any checking about the size of the array it's writing to.
   @param values An array of ints to be filled with the values.
@@ -118,17 +118,14 @@ bool ainMulti(int values[])
 {
   chMtxLock(&aind.mtx);
   // enable all the channels
-  AT91C_BASE_ADC->ADC_CHER = AT91C_ADC_CH0 | AT91C_ADC_CH1 | AT91C_ADC_CH2 |
-                             AT91C_ADC_CH3 | AT91C_ADC_CH4 | AT91C_ADC_CH5 |
-                             AT91C_ADC_CH6 | AT91C_ADC_CH7;
+  AT91C_BASE_ADC->ADC_CHER = 0xFF; // channel enables are the low byte
 
-  aind.processMultiChannelIsr = YES;    // how to process the ISR
-  aind.multiChannelConversions = 0;      // which channels have completed
+  aind.processMultiChannelIsr = YES;        // how to process the ISR
+  aind.multiChannelConversions = 0;         // which channels have completed
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // start the conversion
 
   ainWaitForConversion();
 
-  // read all the data channels into the passed in array
   values[0] = AT91C_BASE_ADC->ADC_CDR0;
   values[1] = AT91C_BASE_ADC->ADC_CDR1;
   values[2] = AT91C_BASE_ADC->ADC_CDR2;
@@ -138,22 +135,15 @@ bool ainMulti(int values[])
   values[6] = AT91C_BASE_ADC->ADC_CDR6;
   values[7] = AT91C_BASE_ADC->ADC_CDR7;
   
-  aind.processMultiChannelIsr = false;
   chMtxUnlock();
   return true;
 }
 
 static void ainServeInterrupt(void)
 {
-  int status = AT91C_BASE_ADC->ADC_SR;
+  uint32_t status = AT91C_BASE_ADC->ADC_SR;
   if (aind.processMultiChannelIsr) {
-    uint8_t i, mask;
-    // check if we got an End Of Conversion in any of our channels
-    for (i = 0; i < ANALOGIN_CHANNELS; i++) {
-      mask = 1 << i;
-      if (status & mask)
-        aind.multiChannelConversions |= mask;
-    }
+    aind.multiChannelConversions |= (status & 0xFF); // EoC channels are the low byte
     // if we got End Of Conversion in all our channels, indicate we're done
     if (aind.multiChannelConversions == 0xFF) {
       status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
@@ -309,7 +299,7 @@ static const OscNode ainValueNode = {
   .handler = ainOscHandler
 };
 static const OscNode ainRange = {
-  .range = 8,
+  .range = ANALOGIN_CHANNELS,
   .children = { &ainValueNode, &ainAutosendNode, 0 }
 };
 const OscNode ainOsc = {
