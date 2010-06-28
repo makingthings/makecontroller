@@ -16,5 +16,8 @@ MTCORESRC = ${MT}/board.c \
 						${MT}/network.c \
 						${MT}/udpsocket.c \
 						${MT}/tcpsocket.c \
-						${MT}/tcpserver.c
+						${MT}/tcpserver.c \
+						${MT}/osc.c \
+						${MT}/osc_data.c \
+						${MT}/osc_patternmatch.c
 
