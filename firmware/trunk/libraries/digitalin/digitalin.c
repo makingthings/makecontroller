@@ -16,10 +16,7 @@
 *********************************************************************************/
 
 #include "digitalin.h"
-#include "analogin.h"
 #include "core.h"
-#include "ch.h"
-#include "hal.h"
 
 // This number is 4 because the a/d converter is sitting on the IO's 4 - 7
 // this means that we'll need to use the A/d converter to get the digital value.
@@ -31,10 +28,10 @@
 #endif
 
 // only need symbols for the first 4 since the others are ains
-#define DIGITALIN_0 AT91C_PIO_PB27
-#define DIGITALIN_1 AT91C_PIO_PB28
-#define DIGITALIN_2 AT91C_PIO_PB29
-#define DIGITALIN_3 AT91C_PIO_PB30
+#define DIGITALIN_0 PIN_PB27
+#define DIGITALIN_1 PIN_PB28
+#define DIGITALIN_2 PIN_PB29
+#define DIGITALIN_3 PIN_PB30
 
 /**
   \defgroup digitalin Digital Input
@@ -53,7 +50,7 @@
   @{
 */
 
-static int digitalinGetIo(int index)
+static int digitalinGetPin(int index)
 {
   switch (index) {
     case 0: return DIGITALIN_0;
@@ -85,7 +82,7 @@ bool digitalinValue(int channel)
   if (channel > 3)
     return ainValue(channel) > DIGITALIN_THRESHOLD;
   else 
-    return palReadPad(IOPORT2, digitalinGetIo(channel));
+    return pinValue(digitalinGetPin(channel));
 }
 
 /** @}
@@ -134,7 +131,7 @@ static bool digitalinOscHandler(OscChannel ch, char* address, int idx, OscData d
 
 static const OscNode digitalinValueNode = { .name = "value", .handler = digitalinOscHandler };
 static const OscNode digitalinRange = {
-  .range = 8,
+  .range = DIGITALIN_COUNT,
   .children = {
     &digitalinValueNode, 0
 //    &digitalAutosendNode,

@@ -16,9 +16,7 @@
 *********************************************************************************/
 
 #include "digitalout.h"
-#include "config.h"
-#include "error.h"
-#include "pin.h"
+#include "core.h"
 
 #define DIGITALOUT_COUNT 8 
 
@@ -208,11 +206,11 @@ static const OscNode digitaloutState = {
   .handler = digitaloutOscHandler
 };
 static const OscNode digitaloutRange = {
-  .range = 8,
+  .range = DIGITALOUT_COUNT,
   .children = { &digitaloutState, 0 }
 };
 const OscNode digitaloutOsc = {
-  .name = "appled",
+  .name = "digitalout",
   .children = { &digitaloutRange, 0 }
 };
 

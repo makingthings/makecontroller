@@ -2,7 +2,7 @@
 
 PROJECT = heavy
 # available optimization levels: -O0, -O1, -O2, -O3, -Os
-OPTIMIZATION = -O0
+OPTIMIZATION = -O2
 
 # components
 LWIP      = ../../core/lwip
@@ -30,7 +30,9 @@ CSRC = $(PORTSRC) $(KERNSRC) $(HALSRC) $(PLATFORMSRC) $(MTCORESRC) \
        $(CHIBIOS)/os/various/evtimer.c \
        $(LIBRARIES)/appled/appled.c \
        $(LIBRARIES)/digitalin/digitalin.c \
-       $(LIBRARIES)/webclient/webclient.c \
+       $(LIBRARIES)/digitalout/digitalout.c \
+       $(LIBRARIES)/dipswitch/dipswitch.c \
+       $(LIBRARIES)/motor/motor.c \
        $(LIBRARIES)/pwmout/pwmout.c \
        $(PROJECT).c
 
@@ -44,7 +46,9 @@ INCDIR = $(PORTINC) $(KERNINC) $(HALINC) $(PLATFORMINC) \
          $(CHIBIOS)/os/ports/GCC/ARM7/AT91SAM7 \
          $(LIBRARIES)/appled \
          $(LIBRARIES)/digitalin \
-         $(LIBRARIES)/webclient \
+         $(LIBRARIES)/digitalout \
+         $(LIBRARIES)/dipswitch \
+         $(LIBRARIES)/motor \
          $(LIBRARIES)/pwmout
 
 # where to put the build output 
