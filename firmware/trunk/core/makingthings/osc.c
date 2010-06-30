@@ -17,6 +17,10 @@
 #define OSC_MAX_MSG_OUT 512
 #endif
 
+#ifndef OSC_MAX_DATA_ITEMS
+#define OSC_MAX_DATA_ITEMS 20
+#endif
+
 #define OSC_UDP_DEFAULT_PORT 10000
 
 typedef int (*OscSendMsg)(const char* data, int len);
@@ -232,6 +236,8 @@ void oscReceiveMessage(OscChannel ch, char* data, uint32_t len)
     return;
   // number of data items is the length of the typetag
   uint32_t datalen = strlen(data + length) - 1; // don't take the leading , into account
+  if (datalen > OSC_MAX_DATA_ITEMS) // make sure we don't blow the stack
+    return;
   OscData d[datalen];
   if (datalen == oscExtractData(data + length, len, d, datalen))
     oscDispatchNode(ch, data + 1, data, &oscRoot, d, datalen);
@@ -406,7 +412,7 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
 
   // build up the typetag
   uint8_t i;
-  char typetag[28] = ",";
+  char typetag[OSC_MAX_DATA_ITEMS + 2] = ","; // 2 = 1 for comma, 1 for terminator
   char* t = typetag + 1;
   for (i = 0; i < datacount; i++) {
     switch (data[i].type) {

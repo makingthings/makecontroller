@@ -224,6 +224,8 @@ void ainDeinit(void)
 
 #ifdef OSC
 
+#include <stdio.h>
+
 /** \defgroup AnalogInOSC Analog In - OSC
   Read the Application Board's Analog Inputs via OSC.
   \ingroup OSC
@@ -279,12 +281,15 @@ void ainDeinit(void)
 static bool ainOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(d);
+  UNUSED(address);
   if (datalen == 0) {
+    char specificAddress[13];
     OscData d = {
       .type = INT,
       .value.i = ainValue(idx)
     };
-    oscCreateMessage(ch, address, &d, 1);
+    sniprintf(specificAddress, sizeof(specificAddress), "/ain/%d/value", idx);
+    oscCreateMessage(ch, specificAddress, &d, 1);
     return true;
   }
   return false;
