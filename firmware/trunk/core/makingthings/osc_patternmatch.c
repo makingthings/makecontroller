@@ -235,7 +235,8 @@ bool oscNumberMatch(const char* pattern, int offset, int count, OscRange* r)
   }
 }
 
-bool oscRangeHasNext(OscRange* r) {
+bool oscRangeHasNext(OscRange* r)
+{
   switch (r->state) {
     case SINGLENUM: return true;
     case BITS:      return (r->value > 0);
@@ -243,7 +244,8 @@ bool oscRangeHasNext(OscRange* r) {
   }
 }
 
-int oscRangeNext(OscRange* r) {
+int oscRangeNext(OscRange* r)
+{
   switch (r->state) {
     case SINGLENUM:
       r->state = EXHAUSTED;

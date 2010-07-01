@@ -21,6 +21,10 @@
 #define OSC_MAX_DATA_ITEMS 20
 #endif
 
+#ifndef OSC_AUTOSEND_STACK_SIZE
+#define OSC_AUTOSEND_STACK_SIZE 512
+#endif
+
 #define OSC_UDP_DEFAULT_PORT 10000
 
 typedef int (*OscSendMsg)(const char* data, int len);
@@ -47,6 +51,9 @@ typedef struct Osc_t {
   int udpReplyPort;
   int udpReplyAddress;
 #endif
+  Thread* autosendThd;
+  OscChannel autosendDestination;
+  uint32_t autosendPeriod;
 } Osc;
 
 static void oscReceivePacket(OscChannel ch, char* data, uint32_t len);
@@ -166,6 +173,44 @@ int oscUdpReplyPort()
 }
 
 #endif // MAKE_CTRL_NETWORK
+
+static WORKING_AREA(waAutosendThd, OSC_AUTOSEND_STACK_SIZE);
+static msg_t OscAutosendThread(void *arg)
+{
+  UNUSED(arg);
+  uint8_t i;
+  const OscNode* node;
+
+  while (!chThdShouldTerminate()) {
+    i = 0;
+    node = oscRoot.children[i++];
+    while (node != 0) {
+      if (node->autosender != 0) {
+        node->autosender(osc.autosendDestination);
+      }
+      node = oscRoot.children[i++];
+    }
+    oscSendPendingMessages(osc.autosendDestination);
+    chThdSleepMilliseconds(osc.autosendPeriod);
+  }
+  return 0;
+}
+
+bool oscAutosendEnable(bool enabled, OscChannel destination, int frequency)
+{
+  if (enabled && osc.autosendThd == 0) {
+    osc.autosendPeriod = frequency;
+    osc.autosendDestination = destination;
+    osc.autosendThd = chThdCreateStatic(waAutosendThd, sizeof(waAutosendThd), NORMALPRIO, OscAutosendThread, NULL);
+    return true;
+  }
+  if (!enabled && osc.autosendThd != 0) {
+    chThdTerminate(osc.autosendThd);
+    osc.autosendThd = 0;
+    return true;
+  }
+  return false;
+}
 
 static OscChannelData* oscGetChannelByType(OscChannel ct) {
 #ifdef MAKE_CTRL_USB
