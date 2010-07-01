@@ -30,12 +30,15 @@ typedef struct OscData_t {
 
 typedef bool (*OscHandler)(OscChannel ch, char* address, int idx, OscData data[], int datalen);
 
+typedef void (*OscAutosender)(OscChannel ch);
+
 // should typically be declared const so they're located in read-only storage.
 typedef struct OscNode_t {
   const char* name;
   OscHandler handler;
   uint8_t range;
   uint8_t rangeOffset;
+  OscAutosender autosender;
   const struct OscNode_t* children[]; // must be 0-terminated
 } OscNode;
 
@@ -44,6 +47,7 @@ extern "C" {
 #endif
 bool oscUsbEnable(bool on);
 bool oscUdpEnable(bool on, int port);
+bool oscAutosendEnable(bool enabled, OscChannel destination, int frequency);
 void oscUdpSetReplyPort(int port);
 int  oscUdpReplyPort(void);
 int  oscSplitAddress(char* buf, char* elems[], int maxelems);
