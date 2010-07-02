@@ -295,6 +295,24 @@ static bool ainOscHandler(OscChannel ch, char* address, int idx, OscData d[], in
   return false;
 }
 
+static int ainAutosendVals[ANALOGIN_CHANNELS];
+
+static void ainOscAutosend(OscChannel ch)
+{
+  uint8_t i;
+  OscData d;
+  d.type = INT;
+  char addr[13];
+  for (i = 0; i < ANALOGIN_CHANNELS; i++) {
+    d.value.i = ainValue(i);
+    if (ainAutosendVals[i] != d.value.i) {
+      ainAutosendVals[i] = d.value.i;
+      sniprintf(addr, sizeof(addr), "/ain/%d/value", i);
+      oscCreateMessage(ch, addr, &d, 1);
+    }
+  }
+}
+
 static const OscNode ainAutosendNode = {
   .name = "autosend",
   .handler = 0 // ainAutosendHandler TODO!!
@@ -309,6 +327,7 @@ static const OscNode ainRange = {
 };
 const OscNode ainOsc = {
   .name = "ain",
-  .children = { &ainRange, 0 }
+  .children = { &ainRange, 0 },
+  .autosender = ainOscAutosend
 };
 #endif // OSC
