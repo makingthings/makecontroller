@@ -2,8 +2,6 @@
 # USB framework
 
 USBCORESRC =    $(USB)/usb/device/core/USBDCallbacks_Initialized.c \
-                $(USB)/usb/device/core/USBDCallbacks_Resumed.c \
-                $(USB)/usb/device/core/USBDCallbacks_Suspended.c \
                 $(USB)/usb/device/core/USBDDriverCb_CfgChanged.c \
                 $(USB)/usb/device/core/USBDDriverCb_IfSettingChanged.c \
                 $(USB)/usb/device/core/USBDDriver.c \

@@ -112,6 +112,17 @@ void USBDCallbacks_Reset()
   chSemResetI(&usbSerial.txSemaphore, 0);
 }
 
+void USBDCallbacks_Suspended()
+{
+  // nothing to do here, really
+}
+
+void USBDCallbacks_Resumed()
+{
+  chIQResetI(&usbSerial.inq);
+  chSemResetI(&usbSerial.txSemaphore, 0);
+}
+
 /**
   Check if the USB system got set up OK.
   When things are starting up, if you want to wait until the USB is ready, 
