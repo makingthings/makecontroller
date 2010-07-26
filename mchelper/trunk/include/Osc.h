@@ -36,23 +36,22 @@ public:
 class Osc
 {
   public:
-    Osc( ) { }
-    static QByteArray writePaddedString( const QString & str );
-    static QByteArray writeTimetag( int a, int b );
-    static QByteArray createOneRequest( const char* message );
-    QList<OscMessage*> processPacket( const char* data, int size );
-    QByteArray createPacket( const QStringList & strings );
-    QByteArray createPacket( const QList<OscMessage*> & msgs );
-    QByteArray createPacket( const QString & msg );
-    bool createMessage( const QString & msg, OscMessage *oscMsg );
+    Osc() {}
+    static QByteArray writePaddedString(const QString & str);
+    static QByteArray writeTimetag(int a, int b);
+    static QByteArray createOneRequest(const char* message);
+    QList<OscMessage*> processPacket(const char* data, int size);
+    QByteArray createPacket(const QStringList & strings);
+    QByteArray createPacket(const QList<OscMessage*> & msgs);
+    QByteArray createPacket(const QString & msg);
+    bool createMessage(const QString & msg, OscMessage *oscMsg);
 
   private:
-    QString getTypeTag( QByteArray* msg );
-    bool receivePacket( QByteArray* pkt,  QList<OscMessage*>* oscMessageList );
-    OscMessage* receiveMessage( QByteArray* msg );
-    bool extractData( const QString & typetag, QByteArray* buffer, OscMessage* message );
-    QString preamble;
-    int paddedLength( const QString & str );
+    QString getTypeTag(QByteArray* msg);
+    bool receivePacket(QByteArray* pkt,  QList<OscMessage*>* oscMessageList);
+    OscMessage* receiveMessage(QByteArray* msg);
+    bool extractData(const QString & typetag, QByteArray* buffer, OscMessage* message);
+    int paddedLength(const QString & str);
 };
 
 #endif
