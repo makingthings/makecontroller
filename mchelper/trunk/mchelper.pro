@@ -54,13 +54,14 @@ UI_DIR       = tmp
 # *******************************************
 #           platform specific stuff
 # *******************************************
-macx{
+macx {
   QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
-  QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk #need this if building on PPC
+  QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.5.sdk #need this if building on PPC
+  CONFIG += x86
   ICON = resources/icons/mchelper.icns
 }
 
-win32{
+win32 {
   DEFINES += WINVER=0x0501
   LIBS += -lSetupapi
   RC_FILE = resources/icons/mchelper.rc # for application icon
@@ -78,10 +79,9 @@ SOURCES +=  source/qextserialport/qextserialport.cpp \
             source/qextserialport/qextserialenumerator.cpp
 
 unix:SOURCES  += source/qextserialport/posix_qextserialport.cpp
-unix:DEFINES  += _TTY_POSIX_
-macx: LIBS += -framework IOKit # use IOKit on OS X
-unix{ 
-  !macx{
+macx: LIBS += -framework IOKit -framework Carbon # use IOKit on OS X
+unix {
+  !macx {
     CONFIG += link_pkgconfig
     PKGCONFIG += dbus-1 hal
   }
@@ -112,6 +112,3 @@ test_suite {
   HEADERS +=  tests/TestOsc.h \
               tests/TestXmlServer.h
 }
-
-
-
