@@ -46,6 +46,14 @@ typedef unsigned char bool;
 #define NO 0
 #endif
 
+#ifndef HIGH
+#define HIGH 1
+#endif
+
+#ifndef LOW
+#define LOW 0
+#endif
+
 #ifndef NULL
 #define NULL 0
 #endif
