@@ -72,16 +72,6 @@
 */
 
 /**
-  Initialize the serial system.
-  This is done by default during system startup, but you can disable it by defining \b NO_SERIAL_INIT
-  in your config.h file.
-*/
-void serialInit()
-{
-  sdInit();
-}
-
-/**
   Enable a serial port.
   If you need to customize the settings, use serialEnableAll().
 
