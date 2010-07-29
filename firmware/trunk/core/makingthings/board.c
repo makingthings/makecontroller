@@ -29,7 +29,7 @@ void kill(void)
  */
 void FiqHandler(void);
 
-static CH_IRQ_HANDLER(SpuriousHandler)
+CH_IRQ_HANDLER(SpuriousHandler)
 {
   CH_IRQ_PROLOGUE();
   AT91C_BASE_AIC->AIC_EOICR = 0;
@@ -120,28 +120,9 @@ void hwinit0(void)
  */
 void hwinit1(void)
 {
-  unsigned int i;
-  // Default AIC setup, the device drivers will modify it as needed.
-  AT91C_BASE_AIC->AIC_IDCR = 0xFFFFFFFF; // disable all
-  AT91C_BASE_AIC->AIC_ICCR = 0xFFFFFFFF; // clear all
-  AT91C_BASE_AIC->AIC_SVR[0] = (AT91_REG)FiqHandler;
-  for (i = 1; i < 31; i++) {
-    AT91C_BASE_AIC->AIC_SVR[i] = (AT91_REG)NULL;
-    AT91C_BASE_AIC->AIC_EOICR = (AT91_REG)i;
-  }
-  AT91C_BASE_AIC->AIC_SPU  = (AT91_REG)SpuriousHandler;
-  AT91C_BASE_AIC->AIC_DCR = AT91C_AIC_DCR_PROT;
-  
-  // PIO initialization - config values from board.h
-  const PALConfig config = {
-    {VAL_PIOA_ODSR, VAL_PIOA_OSR, VAL_PIOA_PUSR},
-    {VAL_PIOB_ODSR, VAL_PIOB_OSR, VAL_PIOB_PUSR}
-  };
-  palInit(&config);
-
+  halInit();
   // peripheral inits - these are here so they're conveniently already
   // done for common usage, but can be removed by conditionalization
-
   #ifndef NO_AIN_INIT
   ainInit();
   #endif
@@ -165,10 +146,6 @@ void hwinit1(void)
   AIC_EnableIT(AT91C_ID_SYS);
   AT91C_BASE_PITC->PITC_PIMR = (MCK / 16 / CH_FREQUENCY) - 1;
   AT91C_BASE_PITC->PITC_PIMR |= AT91C_PITC_PITEN | AT91C_PITC_PITIEN;
-
-  #ifndef NO_SERIAL_INIT
-  serialInit();
-  #endif
 
   chSysInit(); // ChibiOS/RT initialization.
 }

@@ -23,7 +23,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void serialInit(void);
 void serialEnable(int port, int baud);
 void serialEnableAll(int port, int baud, int parity, int charbits, int stopbits, bool handshake);
 void serialDisable(int port);
