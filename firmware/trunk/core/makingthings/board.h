@@ -49,11 +49,11 @@
 
 // MakingThings
 #if (CONTROLLER_VERSION <= 100)
-  #define USB_PULLUP AT91C_PIO_PA11
-  #define USB_DETECT AT91C_PIO_PA10
+  #define USB_PULLUP PIN_PA11
+  #define USB_DETECT PIN_PA10
 #elif (CONTROLLER_VERSION >= 200)
-  #define USB_PULLUP AT91C_PIO_PA30
-  #define USB_DETECT AT91C_PIO_PA29
+  #define USB_PULLUP PIN_PA30
+  #define USB_DETECT PIN_PA29
 #endif
 
 #endif // _BOARD_H_
