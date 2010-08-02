@@ -7,15 +7,16 @@
 #include "ch.h"
 
 typedef enum OscChannel_t {
+  NONE,
   UDP,
   USB
 } OscChannel;
 
 typedef enum OscDataType_t {
-  INT,
-  FLOAT,
-  STRING,
-  BLOB
+  INT = 'i',
+  FLOAT = 'f',
+  STRING = 's',
+  BLOB = 'b'
 } OscDataType;
 
 typedef struct OscData_t {
@@ -50,11 +51,14 @@ bool oscUdpEnable(bool on, int port);
 bool oscAutosendEnable(bool enabled, OscChannel destination, int frequency);
 void oscUdpSetReplyPort(int port);
 int  oscUdpReplyPort(void);
-int  oscSplitAddress(char* buf, char* elems[], int maxelems);
 void oscLockChannel(OscChannel ct);
 void oscUnlockChannel(OscChannel ct);
 bool oscCreateMessage(OscChannel ct, const char* address, OscData* data, int datacount);
 int  oscSendPendingMessages(OscChannel ct);
+OscChannel oscAutosendDestination(void);
+void oscSetAutosendDestination(OscChannel oc);
+uint32_t oscAutosendInterval(void);
+void oscSetAutosendInterval(uint32_t interval);
 #ifdef __cplusplus
 }
 #endif

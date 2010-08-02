@@ -69,22 +69,26 @@ extern const OscNode oscRoot; // must be defined by the user
 #ifdef MAKE_CTRL_USB
 
 #ifndef OSC_USB_STACK_SIZE
-#define OSC_USB_STACK_SIZE 1024
+#define OSC_USB_STACK_SIZE 2048
 #endif
 
 static WORKING_AREA(waUsbThd, OSC_USB_STACK_SIZE);
 static msg_t OscUsbSerialThread(void *arg)
 {
   UNUSED(arg);
+  bool val = 1;
 
   while (!usbserialIsActive())
     chThdSleepMilliseconds(50);
 
   while (!chThdShouldTerminate()) {
-    int justGot = usbserialReadSlip(osc.usb.inBuf, sizeof(osc.usb.inBuf), 100000);
+    int justGot = usbserialReadSlip(osc.usb.inBuf, sizeof(osc.usb.inBuf), 1000);
     if (justGot > 0) {
+      ledSetValue(val);
+      val = !val;
       chMtxLock(&osc.usb.lock);
       oscReceivePacket(USB, osc.usb.inBuf, justGot);
+      oscSendPendingMessages(USB);
       chMtxUnlock();
     }
   }
@@ -93,7 +97,7 @@ static msg_t OscUsbSerialThread(void *arg)
 
 static int oscSendMessageUSB(const char* data, int len)
 {
-  return usbserialWriteSlip(data, len, 10000);
+  return usbserialWriteSlip(data, len, 1000);
 }
 
 bool oscUsbEnable(bool on)
@@ -212,6 +216,12 @@ bool oscAutosendEnable(bool enabled, OscChannel destination, int frequency)
   return false;
 }
 
+OscChannel oscAutosendDestination()           { return osc.autosendDestination; }
+void oscSetAutosendDestination(OscChannel oc) { osc.autosendDestination = oc; }
+
+uint32_t oscAutosendInterval()                 { return osc.autosendPeriod; }
+void oscSetAutosendInterval(uint32_t interval) { osc.autosendPeriod = interval; }
+
 static OscChannelData* oscGetChannelByType(OscChannel ct) {
 #ifdef MAKE_CTRL_USB
   if (ct == USB) return &osc.usb;
@@ -252,22 +262,23 @@ void oscResetChannel(OscChannelData* channel)
 */
 void oscReceivePacket(OscChannel ch, char* data, uint32_t len)
 {
+  uint32_t length = len;
   if (data[0] == '/') { // single message
-    oscReceiveMessage(ch, data, len);
+    oscReceiveMessage(ch, data, length);
   }
   else if (data[0] == '#') { // bundle
     data += 16; // skip timetag
-    len -= 16;
-    while (len > 0) {
+    length -= 16;
+    while (length > 0) {
       uint32_t msglen; // each message preceded by int32 length
-      data = oscDecodeInt32(data, &len, (int*)&msglen);
-      if (msglen <= len)
-        oscReceivePacket(ch, data, msglen);
+      data = oscDecodeInt32(data, &length, (int*)&msglen);
+      if (msglen > len) // we got a bogus length
+        break;
+      oscReceivePacket(ch, data, msglen);
       data += msglen;
-      len -= msglen;
+      length -= msglen;
     }
   }
-  oscSendPendingMessages(ch);
 }
 
 /*
@@ -284,8 +295,9 @@ void oscReceiveMessage(OscChannel ch, char* data, uint32_t len)
   if (datalen > OSC_MAX_DATA_ITEMS) // make sure we don't blow the stack
     return;
   OscData d[datalen];
-  if (datalen == oscExtractData(data + length, len, d, datalen))
+  if (datalen == oscExtractData(data + length, len, d, datalen)) {
     oscDispatchNode(ch, data + 1, data, &oscRoot, d, datalen);
+  }
 }
 
 /*
@@ -394,22 +406,6 @@ uint32_t oscExtractData(char* buf, uint32_t len, OscData data[], int datacount)
 }
 
 /*
-  Take a / delimited address string as input, and split it into
-  an array of pointers to each element. Return the number of elements.
-*/
-int oscSplitAddress(char* addr, char* elems[], int maxelem)
-{
-  int i = 0;
-  char* e = " ";
-  while (i < maxelem && e != NULL) {
-    e = strchr(addr, '/');
-    if (e != NULL && ++e != NULL)
-      elems[i++] = e;
-  }
-  return i;
-}
-
-/*
  * Write out an OSC timetag
  */
 static char* oscWriteTimetag(char* data, uint32_t* len, int a, int b)
@@ -418,18 +414,14 @@ static char* oscWriteTimetag(char* data, uint32_t* len, int a, int b)
     return 0;
   if ((data = oscEncodeInt32(data, len, a)) == NULL)
     return 0;
-  if ((data = oscEncodeInt32(data, len, b)) == NULL)
-    return 0;
-  return data;
+  return oscEncodeInt32(data, len, b);
 }
 
 static char* oscCreateBundle(char* data, uint32_t* len, int a, int b )
 {
   if ((data = oscEncodeString(data, len, "#bundle")) == NULL)
     return 0;
-  if ((data = oscWriteTimetag(data, len, a, b)) == NULL)
-    return 0;
-  return data;
+  return oscWriteTimetag(data, len, a, b);
 }
 
 static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscData* data, int datacount)
@@ -446,7 +438,9 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
       return 0;
   }
 
-  char* lenp = buf; // where to stick this message's length
+  if (*len < sizeof(int))
+    return 0;
+  char* lenp = buf; // where to stick this message's length once we know it
   buf += sizeof(int);
   *len -= sizeof(int);
   char* messagestart = buf;
@@ -459,15 +453,8 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
   uint8_t i;
   char typetag[OSC_MAX_DATA_ITEMS + 2] = ","; // 2 = 1 for comma, 1 for terminator
   char* t = typetag + 1;
-  for (i = 0; i < datacount; i++) {
-    switch (data[i].type) {
-      case INT:    *t++ = 'i'; break;
-      case FLOAT:  *t++ = 'f'; break;
-      case STRING: *t++ = 's'; break;
-      case BLOB:   *t++ = 'b'; break;
-      default: break;
-    }
-  }
+  for (i = 0; i < datacount; i++)
+    *t++ = data[i].type;
   *t = 0; // null terminate
   if ((buf = oscEncodeString(buf, len, typetag)) == NULL)
     return 0;
@@ -495,9 +482,9 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
   uint32_t dummylen = sizeof(int);
   if (oscEncodeInt32(lenp, &dummylen, (buf - messagestart)) == NULL)
     return 0;
-
   if (buf != NULL)
     chd->outMsgCount++;
+
   chd->outBufPtr = buf;
   return buf;
 }
