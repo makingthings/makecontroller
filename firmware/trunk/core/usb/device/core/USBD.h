@@ -45,6 +45,8 @@
 #ifndef USBD_H
 #define USBD_H
 
+#include "ch.h"
+
 //------------------------------------------------------------------------------
 //         Headers
 //------------------------------------------------------------------------------
@@ -135,9 +137,6 @@ typedef void (*TransferCallback)(void *pArg,
                                  unsigned int transferred,
                                  unsigned int remaining);
 
-// MakingThings - for byte-oriented reading
-typedef void (*ProgressCallback)(void *pArg, char byte);
-
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
@@ -163,7 +162,7 @@ extern char USBD_Read(
     unsigned int dLength,
     TransferCallback fCallback,
     void *pArg,
-    ProgressCallback pCallback);
+    InputQueue *inq);
 
 extern unsigned char USBD_Stall(unsigned char bEndpoint);
 
