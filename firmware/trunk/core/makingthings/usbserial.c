@@ -28,15 +28,17 @@
 #define ESC             0333    // indicates byte stuffing 
 #define ESC_END         0334    // ESC ESC_END means END data byte 
 #define ESC_ESC         0335    // ESC ESC_ESC means ESC data byte
-static int  usbserialWriteSlipIfFull(char** bufptr, char* buf, int timeout);
 #endif // USBSER_NO_SLIP
 
+#define qRemaining(q) (chQSize(q) - chQSpace(q))
+
+static void usbserialInotify(void);
 static void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsigned int remaining);
 
 typedef struct UsbSerial_t {
   Semaphore txSemaphore;
   InputQueue inq;
-  uint8_t inbuffer[USBSER_MAX_READ];
+  uint8_t inbuffer[USBSER_MAX_READ * 2];
   int justWrote;
 #ifndef USBSER_NO_SLIP
   char slipOutBuf[USBSER_MAX_WRITE];
@@ -76,20 +78,14 @@ static UsbSerial usbSerial;
   @{
 */
 
-static void onByteRx(void *pArg, char byte)
+// Gets called whenever the input queue is being read from.
+// If we're empty, go get some more data
+void usbserialInotify()
 {
-  UNUSED(pArg);
-  chIQPutI(&usbSerial.inq, (uint8_t)byte);
-}
-
-/*
-  Gets called whenever the input queue is being read from.
-  If we're empty, go get some more data
-*/
-static void usbserialInotify(void)
-{
-  if (chIQIsEmpty(&usbSerial.inq) && usbserialIsActive())
-    USBD_Read(CDCDSerialDriverDescriptors_DATAOUT, 0, sizeof(usbSerial.inbuffer), 0, 0, onByteRx);
+  if (qRemaining(&usbSerial.inq) >= USBSER_MAX_READ && usbserialIsActive()) {
+    // this will fail if there's already a read in progress
+    USBD_Read(CDCDSerialDriverDescriptors_DATAOUT, 0, USBSER_MAX_READ, (TransferCallback)usbserialInotify, 0, &usbSerial.inq);
+  }
 }
 
 /**
@@ -99,7 +95,6 @@ void usbserialInit()
 {
   chIQInit(&usbSerial.inq, usbSerial.inbuffer, sizeof(usbSerial.inbuffer), usbserialInotify);
   chSemInit(&usbSerial.txSemaphore, 0);
-  USBD_Disconnect();
   CDCDSerialDriver_Initialize();
   USBD_Connect();
 }
@@ -315,35 +310,48 @@ int usbserialReadSlip(char *buffer, int length, int timeout)
 */
 int usbserialWriteSlip(const char *buffer, int length, int timeout)
 {
+  char c;
   char* obp = usbSerial.slipOutBuf;
-  int count = 0;
+  int count = 1;
   *obp++ = END; // clear out any line noise
-   while (length--) {
-     char c = *buffer++;
+   while (length > 0) {
+     c = *buffer++;
      switch (c) {
        // if it's the same code as an END character, we send a special 
-       //two character code so as not to make the receiver think we sent an END
+       // two character code so as not to make the receiver think we sent an END.
        case END:
+         // if we don't have enough room in the current chunk for these 2 bytes, write out what we have first.
+         if (obp - usbSerial.slipOutBuf >= USBSER_MAX_WRITE - 2) {
+           count += usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf), timeout);
+           obp = usbSerial.slipOutBuf;
+         }
          *obp++ = (char)ESC;
-         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout);
          *obp++ = (char)ESC_END;
-         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout);
          break;
-         // if it's the same code as an ESC character, we send a special 
-         //two character code so as not to make the receiver think we sent an ESC
+       // if it's the same code as an ESC character, we send a special
+       // two character code so as not to make the receiver think we sent an ESC
        case ESC:
+         // if we don't have enough room in the current chunk for these 2 bytes, write out what we have first.
+          if (obp - usbSerial.slipOutBuf >= USBSER_MAX_WRITE - 2) {
+            count += usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf), timeout);
+            obp = usbSerial.slipOutBuf;
+          }
          *obp++ = (char)ESC;
-         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout);
          *obp++ = (char)ESC_ESC;
-         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout);
          break;
-         //otherwise, just send the character
+       // otherwise, just send the character
        default:
          *obp++ = c;
-         count += usbserialWriteSlipIfFull(&obp, usbSerial.slipOutBuf, timeout);
+     }
+     length--;
+     // is it time to write a chunk?
+     if (obp - usbSerial.slipOutBuf >= USBSER_MAX_WRITE) {
+       count += usbserialWrite(usbSerial.slipOutBuf, sizeof(usbSerial.slipOutBuf), timeout);
+       obp = usbSerial.slipOutBuf;
      }
    }
 
+   chDbgAssert(length == 0, "usbserialWriteSlip()", "didn't write everything...");
    *obp++ = END; // end byte
    count += usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf), timeout);
    return count;
@@ -352,17 +360,5 @@ int usbserialWriteSlip(const char *buffer, int length, int timeout)
 /** @}
 */
 
-int usbserialWriteSlipIfFull(char** bufptr, char* buf, int timeout)
-{
-  int bufSize = *bufptr - buf;
-  if (bufSize >= USBSER_MAX_WRITE) {
-    *bufptr = buf;
-    return usbserialWrite(buf, bufSize, timeout);
-  }
-  else
-    return 0;
-}
 #endif // USBSER_NO_SLIP
 #endif // MAKE_CTRL_USB
-
-

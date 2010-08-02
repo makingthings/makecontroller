@@ -41,17 +41,17 @@
 //      Headers
 //------------------------------------------------------------------------------
 
+#include "ch.h"
+#include "pin.h"
+
 #include "USBD.h"
 #include "USBDCallbacks.h"
-#include <board.h>
+#include "board.h"
 // #include <pio/pio.h>
 // #include <utility/trace.h>
 // #include <utility/led.h>
  #include <usb/common/core/USBEndpointDescriptor.h>
  #include <usb/common/core/USBGenericRequest.h>
-
-#include "ch.h"
-#include "pin.h"
 
 #if defined(BOARD_USB_UDP)
 
@@ -157,7 +157,7 @@ typedef struct {
     /// Optional argument to the callback function.
     void             *pArgument;
     /// Optional byte-oriented callback
-    volatile ProgressCallback pCallback;
+    volatile InputQueue *inq;
 } Transfer;
 
 //------------------------------------------------------------------------------
@@ -354,18 +354,16 @@ static void UDP_ReadPayload(unsigned char bEndpoint, int wPacketSize)
     pTransfer->transferred += wPacketSize;
 
     // Retrieve packet
-    if (pTransfer->pCallback != 0) {
-      char d;
+    if (pTransfer->inq != 0) {
       chSysLockFromIsr();
-      while (wPacketSize-- > 0) {
-        d = (char) AT91C_BASE_UDP->UDP_FDR[bEndpoint];
-        pTransfer->pCallback(pTransfer->pArgument, d);
-      }
+      // add to the queue from the FIFO Data Register
+      while (wPacketSize-- > 0)
+        chIQPutI((InputQueue*)pTransfer->inq, AT91C_BASE_UDP->UDP_FDR[bEndpoint]);
       chSysUnlockFromIsr();
     }
     else {
       while (wPacketSize-- > 0) {
-        char d = (char) AT91C_BASE_UDP->UDP_FDR[bEndpoint];
+        char d = AT91C_BASE_UDP->UDP_FDR[bEndpoint];
         *(pTransfer->pData) = d;
         pTransfer->pData++;
       }
@@ -411,7 +409,7 @@ static void UDP_ResetEndpoints( void )
         pTransfer->remaining = -1;
         pTransfer->fCallback = 0;
         pTransfer->pArgument = 0;
-        pTransfer->pCallback = 0;
+        pTransfer->inq = 0;
 
         // Reset endpoint state
         pEndpoint->bank = 0;
@@ -900,7 +898,7 @@ char USBD_Write( unsigned char    bEndpoint,
     pTransfer->transferred = 0;
     pTransfer->fCallback = fCallback;
     pTransfer->pArgument = pArgument;
-    pTransfer->pCallback = 0;
+    pTransfer->inq = 0;
 
     // Send the first packet
     pEndpoint->state = UDP_ENDPOINT_SENDING;
@@ -943,7 +941,7 @@ char USBD_Read(unsigned char    bEndpoint,
                unsigned int     dLength,
                TransferCallback fCallback,
                void             *pArgument,
-               ProgressCallback pCallback)
+               InputQueue       *inq)
 {
     Endpoint *pEndpoint = &(endpoints[bEndpoint]);
     Transfer *pTransfer = &(pEndpoint->transfer);
@@ -965,7 +963,7 @@ char USBD_Read(unsigned char    bEndpoint,
     pTransfer->transferred = 0;
     pTransfer->fCallback = fCallback;
     pTransfer->pArgument = pArgument;
-    pTransfer->pCallback = pCallback;
+    pTransfer->inq = inq;
 
     // Enable interrupt on endpoint
     AT91C_BASE_UDP->UDP_IER = 1 << bEndpoint;
