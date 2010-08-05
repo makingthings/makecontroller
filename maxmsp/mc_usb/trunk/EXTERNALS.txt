@@ -1,4 +1,0 @@
-# Apply/update externals definitions with this file by typing
-#   svn propset svn:externals -F EXTERNALS.txt
-
-src/max-usb https://www.makingthings.com/svn/shared/max-usb
