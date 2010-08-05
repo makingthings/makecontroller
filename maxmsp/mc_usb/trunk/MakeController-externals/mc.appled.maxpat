@@ -19,9 +19,9 @@
 		"boxes" : [ 			{
 				"box" : 				{
 					"maxclass" : "outlet",
+					"patching_rect" : [ 242.0, 191.0, 25.0, 25.0 ],
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 208.0, 245.0, 25.0, 25.0 ],
 					"id" : "obj-1",
 					"comment" : "To Make Controller (via USB or Ethernet)"
 				}
@@ -30,11 +30,11 @@
 , 			{
 				"box" : 				{
 					"maxclass" : "inlet",
+					"patching_rect" : [ 419.0, 103.0, 25.0, 25.0 ],
 					"numinlets" : 0,
 					"numoutlets" : 1,
-					"patching_rect" : [ 446.0, 95.0, 25.0, 25.0 ],
-					"outlettype" : [ "" ],
 					"id" : "obj-2",
+					"outlettype" : [ "" ],
 					"comment" : "LED 3 on/off (0 or 1)"
 				}
 
@@ -42,11 +42,11 @@
 , 			{
 				"box" : 				{
 					"maxclass" : "inlet",
+					"patching_rect" : [ 286.0, 103.0, 25.0, 25.0 ],
 					"numinlets" : 0,
 					"numoutlets" : 1,
-					"patching_rect" : [ 313.0, 95.0, 25.0, 25.0 ],
-					"outlettype" : [ "" ],
 					"id" : "obj-3",
+					"outlettype" : [ "" ],
 					"comment" : "LED 2 on/off (0 or 1)"
 				}
 
@@ -54,11 +54,11 @@
 , 			{
 				"box" : 				{
 					"maxclass" : "inlet",
+					"patching_rect" : [ 149.0, 103.0, 25.0, 25.0 ],
 					"numinlets" : 0,
 					"numoutlets" : 1,
-					"patching_rect" : [ 159.0, 95.0, 25.0, 25.0 ],
-					"outlettype" : [ "" ],
 					"id" : "obj-4",
+					"outlettype" : [ "" ],
 					"comment" : "LED 1 on/off (0 or 1)"
 				}
 
@@ -66,11 +66,11 @@
 , 			{
 				"box" : 				{
 					"maxclass" : "inlet",
+					"patching_rect" : [ 31.0, 103.0, 25.0, 25.0 ],
 					"numinlets" : 0,
 					"numoutlets" : 1,
-					"patching_rect" : [ 53.0, 95.0, 25.0, 25.0 ],
-					"outlettype" : [ "" ],
 					"id" : "obj-5",
+					"outlettype" : [ "" ],
 					"comment" : "LED 0 on/off (0 or 1)"
 				}
 
@@ -78,56 +78,56 @@
 , 			{
 				"box" : 				{
 					"maxclass" : "message",
-					"text" : "/appled/3/state $1",
+					"text" : "/appled/3/value $1",
+					"patching_rect" : [ 419.0, 134.0, 109.0, 18.0 ],
 					"numinlets" : 2,
-					"fontsize" : 12.0,
 					"numoutlets" : 1,
-					"patching_rect" : [ 419.0, 134.0, 130.0, 18.0 ],
-					"outlettype" : [ "" ],
 					"id" : "obj-6",
-					"fontname" : "Arial"
+					"fontname" : "Arial",
+					"outlettype" : [ "" ],
+					"fontsize" : 12.0
 				}
 
 			}
 , 			{
 				"box" : 				{
 					"maxclass" : "message",
-					"text" : "/appled/2/state $1",
+					"text" : "/appled/2/value $1",
+					"patching_rect" : [ 286.0, 134.0, 109.0, 18.0 ],
 					"numinlets" : 2,
-					"fontsize" : 12.0,
 					"numoutlets" : 1,
-					"patching_rect" : [ 286.0, 134.0, 130.0, 18.0 ],
-					"outlettype" : [ "" ],
 					"id" : "obj-7",
-					"fontname" : "Arial"
+					"fontname" : "Arial",
+					"outlettype" : [ "" ],
+					"fontsize" : 12.0
 				}
 
 			}
 , 			{
 				"box" : 				{
 					"maxclass" : "message",
-					"text" : "/appled/1/state $1",
+					"text" : "/appled/1/value $1",
+					"patching_rect" : [ 149.0, 134.0, 109.0, 18.0 ],
 					"numinlets" : 2,
-					"fontsize" : 12.0,
 					"numoutlets" : 1,
-					"patching_rect" : [ 149.0, 134.0, 130.0, 18.0 ],
-					"outlettype" : [ "" ],
 					"id" : "obj-8",
-					"fontname" : "Arial"
+					"fontname" : "Arial",
+					"outlettype" : [ "" ],
+					"fontsize" : 12.0
 				}
 
 			}
 , 			{
 				"box" : 				{
 					"maxclass" : "message",
-					"text" : "/appled/0/state $1",
+					"text" : "/appled/0/value $1",
+					"patching_rect" : [ 31.0, 134.0, 109.0, 18.0 ],
 					"numinlets" : 2,
-					"fontsize" : 12.0,
 					"numoutlets" : 1,
-					"patching_rect" : [ 31.0, 134.0, 112.0, 18.0 ],
-					"outlettype" : [ "" ],
 					"id" : "obj-9",
-					"fontname" : "Arial"
+					"fontname" : "Arial",
+					"outlettype" : [ "" ],
+					"fontsize" : 12.0
 				}
 
 			}
