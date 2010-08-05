@@ -124,7 +124,7 @@ void hwinit1(void)
   // peripheral inits - these are here so they're conveniently already
   // done for common usage, but can be removed by conditionalization
   #ifndef NO_AIN_INIT
-  ainInit();
+  analoginInit();
   #endif
   
   #ifndef NO_SPI_INIT

@@ -18,10 +18,10 @@
 #include "analogin.h"
 #include "core.h"
 
-#define ANALOGIN_0 AT91C_PIO_PB27
-#define ANALOGIN_1 AT91C_PIO_PB28
-#define ANALOGIN_2 AT91C_PIO_PB29
-#define ANALOGIN_3 AT91C_PIO_PB30
+#define ANALOGIN_0 PIN_PB27
+#define ANALOGIN_1 PIN_PB28
+#define ANALOGIN_2 PIN_PB29
+#define ANALOGIN_3 PIN_PB30
 
 #define ANALOGIN_CHANNELS 8
 
@@ -70,7 +70,7 @@ static struct AinDriver aind;
   }
   \endcode
 */
-int ainValue(int channel)
+int analoginValue(int channel)
 {
   chMtxLock(&aind.mtx);
   aind.processMultiChannelIsr = NO;
@@ -100,7 +100,7 @@ int ainValue(int channel)
    // now samples is filled with all the analogin values
   \endcode
 */
-bool ainMulti(int values[])
+bool analoginMulti(int values[])
 {
   chMtxLock(&aind.mtx);
   // enable all the channels
@@ -125,7 +125,7 @@ bool ainMulti(int values[])
   return true;
 }
 
-static void ainServeInterrupt(void)
+static void analoginServeInterrupt(void)
 {
   uint32_t status = AT91C_BASE_ADC->ADC_SR;
   if (aind.processMultiChannelIsr) {
@@ -142,9 +142,9 @@ static void ainServeInterrupt(void)
   }
 }
 
-static CH_IRQ_HANDLER(ainIsr) {
+static CH_IRQ_HANDLER(analoginIsr) {
   CH_IRQ_PROLOGUE();
-  ainServeInterrupt();
+  analoginServeInterrupt();
   AT91C_BASE_AIC->AIC_EOICR = 0;
   CH_IRQ_EPILOGUE();
 }
@@ -152,7 +152,7 @@ static CH_IRQ_HANDLER(ainIsr) {
 /**
   Initialize the analog in system.
 */
-void ainInit(void)
+void analoginInit(void)
 {
   AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_ADC; // enable the peripheral clock
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_SWRST;     // reset to clear out previous settings
@@ -186,14 +186,14 @@ void ainInit(void)
   
   // initialize interrupts
   AT91C_BASE_ADC->ADC_IER = AT91C_ADC_DRDY;
-  AIC_ConfigureIT(AT91C_ID_ADC, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4, ainIsr);
+  AIC_ConfigureIT(AT91C_ID_ADC, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4, analoginIsr);
   AIC_EnableIT(AT91C_ID_ADC);
 }
 
 /**
   Deinitialize the analog in system.
 */
-void ainDeinit(void)
+void analoginDeinit(void)
 {
   AT91C_BASE_PMC->PMC_PCDR = 1 << AT91C_ID_ADC; // disable peripheral clock
   AIC_DisableIT(AT91C_ID_ADC);                  // disable interrupts
@@ -258,76 +258,76 @@ void ainDeinit(void)
   \verbatim /analogin/0/active 1 \endverbatim
 */
 
-static bool ainOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static bool analoginOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(d);
   UNUSED(address);
   if (datalen == 0) {
-    char specificAddress[15];
+    char specificAddress[19];
     OscData d = {
       .type = INT,
-      .value.i = ainValue(idx)
+      .value.i = analoginValue(idx)
     };
-    sniprintf(specificAddress, sizeof(specificAddress), "/ain/%d/value", idx);
+    sniprintf(specificAddress, sizeof(specificAddress), "/analogin/%d/value", idx);
     oscCreateMessage(ch, specificAddress, &d, 1);
     return true;
   }
   return false;
 }
 
-static int ainAutosendVals[ANALOGIN_CHANNELS];
-static uint8_t ainAutosendChannels = 0;
+static int analoginAutosendVals[ANALOGIN_CHANNELS];
+static uint8_t analoginAutosendChannels = 0;
 
-static void ainOscAutosender(OscChannel ch)
+static void analoginOscAutosender(OscChannel ch)
 {
   uint8_t i;
   OscData d = { .type = INT };
-  char addr[13];
+  char addr[19];
   for (i = 0; i < ANALOGIN_CHANNELS; i++) {
-    if (ainAutosendChannels & (1 << i)) {
-      d.value.i = ainValue(i);
-      if (ainAutosendVals[i] != d.value.i) {
-        ainAutosendVals[i] = d.value.i;
-        sniprintf(addr, sizeof(addr), "/ain/%d/value", i);
+    if (analoginAutosendChannels & (1 << i)) {
+      d.value.i = analoginValue(i);
+      if (analoginAutosendVals[i] != d.value.i) {
+        analoginAutosendVals[i] = d.value.i;
+        sniprintf(addr, sizeof(addr), "/analogin/%d/value", i);
         oscCreateMessage(ch, addr, &d, 1);
       }
     }
   }
 }
 
-static bool ainAutosendHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static bool analoginAutosendHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(d);
   UNUSED(address);
   if (datalen == 0) {
-    char specificAddress[18];
+    char specificAddress[22];
     OscData d = {
       .type = INT,
-      .value.i = ainValue(idx)
+      .value.i = analoginValue(idx)
     };
-    sniprintf(specificAddress, sizeof(specificAddress), "/ain/%d/autosend", idx);
+    sniprintf(specificAddress, sizeof(specificAddress), "/analogin/%d/autosend", idx);
     oscCreateMessage(ch, specificAddress, &d, 1);
     return true;
   }
   else if (datalen == 1) {
     if (d[0].value.i)
-      ainAutosendChannels |= (1 << idx);
+      analoginAutosendChannels |= (1 << idx);
     else
-      ainAutosendChannels &= ~(1 << idx);
+      analoginAutosendChannels &= ~(1 << idx);
   }
   return false;
 }
 
-static const OscNode ainAutosendNode = { .name = "autosend", .handler = ainAutosendHandler };
-static const OscNode ainValueNode = { .name = "value", .handler = ainOscHandler };
+static const OscNode analoginAutosendNode = { .name = "autosend", .handler = analoginAutosendHandler };
+static const OscNode analoginValueNode = { .name = "value", .handler = analoginOscHandler };
 
-static const OscNode ainRange = {
+static const OscNode analoginRange = {
   .range = ANALOGIN_CHANNELS,
-  .children = { &ainValueNode, &ainAutosendNode, 0 }
+  .children = { &analoginValueNode, &analoginAutosendNode, 0 }
 };
-const OscNode ainOsc = {
-  .name = "ain",
-  .children = { &ainRange, 0 },
-  .autosender = ainOscAutosender
+const OscNode analoginOsc = {
+  .name = "analogin",
+  .children = { &analoginRange, 0 },
+  .autosender = analoginOscAutosender
 };
 #endif // OSC
