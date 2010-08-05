@@ -26,16 +26,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void ainInit(void);
-void ainDeinit(void);
-int  ainValue(int channel);
-bool ainMulti(int values[]);
+void analoginInit(void);
+void analoginDeinit(void);
+int  analoginValue(int channel);
+bool analoginMulti(int values[]);
 #ifdef __cplusplus
 }
 #endif
 
 #ifdef OSC
 #include "osc.h"
-extern const OscNode ainOsc;
+extern const OscNode analoginOsc;
 #endif // OSC
 #endif // ANALOGIN_H
