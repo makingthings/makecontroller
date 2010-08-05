@@ -27,7 +27,7 @@
 
 struct AinDriver {
   Mutex mtx;                   // lock for the adc system
-  Thread *thd;                 // pointer to the thread waiting on an adc conversion
+  Semaphore sem;               // signal a conversion is complete
   bool processMultiChannelIsr; // are we waiting for a multi conversion or just a single channel
   uint8_t multiChannelConversions; // mask of which conversions have been completed
 };
@@ -58,19 +58,6 @@ static struct AinDriver aind;
   @{
 */
 
-/*
-  As a very lightweight synchronization mechanism, simply suspend
-  the current thread, and reschedule it from the ISR.
-*/
-static void ainWaitForConversion(void)
-{
-  chSysLock();
-  aind.thd = currp;
-  chSchGoSleepS(THD_STATE_SUSPENDED);
-  aind.thd = NULL;
-  chSysUnlock();
-}
-
 /** 
   Read the value of an analog input.
   @param channel Which analog in to sample - valid options are 0-7.
@@ -92,8 +79,7 @@ int ainValue(int channel)
   AT91C_BASE_ADC->ADC_CHER = (1 << channel);
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // Start the conversion
 
-  ainWaitForConversion();
-
+  chSemWait(&aind.sem);
   int value = AT91C_BASE_ADC->ADC_LCDR & 0xFFFF; // grab the last converted value
   chMtxUnlock();
   return value;
@@ -124,7 +110,7 @@ bool ainMulti(int values[])
   aind.multiChannelConversions = 0;         // which channels have completed
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // start the conversion
 
-  ainWaitForConversion();
+  chSemWait(&aind.sem);
 
   values[0] = AT91C_BASE_ADC->ADC_CDR0;
   values[1] = AT91C_BASE_ADC->ADC_CDR1;
@@ -147,18 +133,12 @@ static void ainServeInterrupt(void)
     // if we got End Of Conversion in all our channels, indicate we're done
     if (aind.multiChannelConversions == 0xFF) {
       status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
-      // reschedule the thread waiting on us
-      chSysLockFromIsr();
-      chSchReadyI(aind.thd);
-      chSysUnlockFromIsr();
+      chSemSignalI(&aind.sem);
     }
   }
   else if (status & AT91C_ADC_DRDY) {
     status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
-    // reschedule the thread waiting on us
-    chSysLockFromIsr();
-    chSchReadyI(aind.thd);
-    chSysUnlockFromIsr();
+    chSemSignalI(&aind.sem);
   }
 }
 
@@ -199,8 +179,8 @@ void ainInit(void)
   pinGroupSetMode(GROUP_B, ANALOGIN_0 | ANALOGIN_1 | ANALOGIN_2 | ANALOGIN_3, PAL_MODE_INPUT_ANALOG);
   
   // init locks
+  chSemInit(&aind.sem, 0);
   chMtxInit(&aind.mtx);
-  aind.thd = 0;
   aind.multiChannelConversions = NO;
   aind.processMultiChannelIsr = NO;
   
@@ -283,7 +263,7 @@ static bool ainOscHandler(OscChannel ch, char* address, int idx, OscData d[], in
   UNUSED(d);
   UNUSED(address);
   if (datalen == 0) {
-    char specificAddress[13];
+    char specificAddress[15];
     OscData d = {
       .type = INT,
       .value.i = ainValue(idx)
@@ -296,31 +276,51 @@ static bool ainOscHandler(OscChannel ch, char* address, int idx, OscData d[], in
 }
 
 static int ainAutosendVals[ANALOGIN_CHANNELS];
+static uint8_t ainAutosendChannels = 0;
 
-static void ainOscAutosend(OscChannel ch)
+static void ainOscAutosender(OscChannel ch)
 {
   uint8_t i;
-  OscData d;
-  d.type = INT;
+  OscData d = { .type = INT };
   char addr[13];
   for (i = 0; i < ANALOGIN_CHANNELS; i++) {
-    d.value.i = ainValue(i);
-    if (ainAutosendVals[i] != d.value.i) {
-      ainAutosendVals[i] = d.value.i;
-      sniprintf(addr, sizeof(addr), "/ain/%d/value", i);
-      oscCreateMessage(ch, addr, &d, 1);
+    if (ainAutosendChannels & (1 << i)) {
+      d.value.i = ainValue(i);
+      if (ainAutosendVals[i] != d.value.i) {
+        ainAutosendVals[i] = d.value.i;
+        sniprintf(addr, sizeof(addr), "/ain/%d/value", i);
+        oscCreateMessage(ch, addr, &d, 1);
+      }
     }
   }
 }
 
-static const OscNode ainAutosendNode = {
-  .name = "autosend",
-  .handler = 0 // ainAutosendHandler TODO!!
-};
-static const OscNode ainValueNode = {
-  .name = "value",
-  .handler = ainOscHandler
-};
+static bool ainAutosendHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+{
+  UNUSED(d);
+  UNUSED(address);
+  if (datalen == 0) {
+    char specificAddress[18];
+    OscData d = {
+      .type = INT,
+      .value.i = ainValue(idx)
+    };
+    sniprintf(specificAddress, sizeof(specificAddress), "/ain/%d/autosend", idx);
+    oscCreateMessage(ch, specificAddress, &d, 1);
+    return true;
+  }
+  else if (datalen == 1) {
+    if (d[0].value.i)
+      ainAutosendChannels |= (1 << idx);
+    else
+      ainAutosendChannels &= ~(1 << idx);
+  }
+  return false;
+}
+
+static const OscNode ainAutosendNode = { .name = "autosend", .handler = ainAutosendHandler };
+static const OscNode ainValueNode = { .name = "value", .handler = ainOscHandler };
+
 static const OscNode ainRange = {
   .range = ANALOGIN_CHANNELS,
   .children = { &ainValueNode, &ainAutosendNode, 0 }
@@ -328,6 +328,6 @@ static const OscNode ainRange = {
 const OscNode ainOsc = {
   .name = "ain",
   .children = { &ainRange, 0 },
-  .autosender = ainOscAutosend
+  .autosender = ainOscAutosender
 };
 #endif // OSC
