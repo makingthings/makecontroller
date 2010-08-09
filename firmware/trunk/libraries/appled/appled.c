@@ -16,7 +16,7 @@
 *********************************************************************************/
 
 #include "appled.h"
-#include "pin.h"
+#include "core.h"
 
 #define APPLED_COUNT 4
 
@@ -120,6 +120,7 @@ bool appledValue(int led)
 #ifdef OSC
 
 #include "osc.h"
+#include <stdio.h>
 
 /**
   \defgroup AppLEDOSC OSC - App LED
@@ -153,24 +154,26 @@ bool appledValue(int led)
 
 static bool appledOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
+  UNUSED(address);
   if (datalen == 1) {
     appledSetValue(idx, d[0].value.i);
     return true;
   }
   else if (datalen == 0) {
-    OscData d;
-    d.value.i = appledValue(idx);
-    oscCreateMessage(ch, address, &d, 1);
+    char specificAddress[18];
+    OscData d = {
+      .type = INT,
+      .value.i = appledValue(idx)
+    };
+    sniprintf(specificAddress, sizeof(specificAddress), "/appled/%d/value", idx);
+    oscCreateMessage(ch, specificAddress, &d, 1);
     return true;
   }
   return false;
 }
 
 static const OscNode appledVal = { .name = "value", .handler = appledOscHandler };
-static const OscNode appledRange = {
-  .range = 4,
-  .children = { &appledVal, 0 }
-};
+static const OscNode appledRange = { .range = 4, .children = {&appledVal, 0} };
 const OscNode appledOsc = {
   .name = "appled",
   .children = { &appledRange, 0 }
