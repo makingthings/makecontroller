@@ -18,8 +18,7 @@
 #ifndef APPLED_H
 #define APPLED_H
 
-#include "config.h"
-#include "types.h"
+#include "core.h"
 
 #ifdef OSC
 #include "osc.h"
@@ -29,7 +28,7 @@ extern const OscNode appledOsc;
 #ifdef __cplusplus
 extern "C" {
 #endif
-void appledEnable(void);
+void appledInit(void);
 void appledSetValue(int led, bool onff);
 bool appledValue(int led);
 #ifdef __cplusplus

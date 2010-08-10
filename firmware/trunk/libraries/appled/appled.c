@@ -16,7 +16,6 @@
 *********************************************************************************/
 
 #include "appled.h"
-#include "core.h"
 
 #define APPLED_COUNT 4
 
@@ -73,7 +72,7 @@ static int appledGetIo(int index)
   appledEnable(1); // set up app led 1
   \endcode
 */
-void appledEnable()
+void appledInit()
 {
   pinGroupSetMode(GROUP_A, APPLED_ALL, OUTPUT);
   pinGroupOn(GROUP_A, APPLED_ALL); // inverted
@@ -160,23 +159,22 @@ static bool appledOscHandler(OscChannel ch, char* address, int idx, OscData d[],
     return true;
   }
   else if (datalen == 0) {
-    char specificAddress[18];
     OscData d = {
       .type = INT,
       .value.i = appledValue(idx)
     };
-    sniprintf(specificAddress, sizeof(specificAddress), "/appled/%d/value", idx);
-    oscCreateMessage(ch, specificAddress, &d, 1);
+    oscCreateMessage(ch, address, &d, 1);
     return true;
   }
   return false;
 }
 
 static const OscNode appledVal = { .name = "value", .handler = appledOscHandler };
-static const OscNode appledRange = { .range = 4, .children = {&appledVal, 0} };
+
 const OscNode appledOsc = {
   .name = "appled",
-  .children = { &appledRange, 0 }
+  .range = APPLED_COUNT,
+  .children = { &appledVal, 0 }
 };
 
 #endif // OSC
