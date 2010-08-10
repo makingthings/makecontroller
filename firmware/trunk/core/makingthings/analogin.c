@@ -300,13 +300,11 @@ static bool analoginAutosendHandler(OscChannel ch, char* address, int idx, OscDa
   UNUSED(d);
   UNUSED(address);
   if (datalen == 0) {
-    char specificAddress[22];
     OscData d = {
       .type = INT,
       .value.i = analoginValue(idx)
     };
-    sniprintf(specificAddress, sizeof(specificAddress), "/analogin/%d/autosend", idx);
-    oscCreateMessage(ch, specificAddress, &d, 1);
+    oscCreateMessage(ch, address, &d, 1);
     return true;
   }
   else if (datalen == 1) {
@@ -321,13 +319,10 @@ static bool analoginAutosendHandler(OscChannel ch, char* address, int idx, OscDa
 static const OscNode analoginAutosendNode = { .name = "autosend", .handler = analoginAutosendHandler };
 static const OscNode analoginValueNode = { .name = "value", .handler = analoginOscHandler };
 
-static const OscNode analoginRange = {
-  .range = ANALOGIN_CHANNELS,
-  .children = { &analoginValueNode, &analoginAutosendNode, 0 }
-};
 const OscNode analoginOsc = {
   .name = "analogin",
-  .children = { &analoginRange, 0 },
+  .range = ANALOGIN_CHANNELS,
+  .children = { &analoginValueNode, &analoginAutosendNode, 0 },
   .autosender = analoginOscAutosender
 };
 #endif // OSC
