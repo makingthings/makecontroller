@@ -327,13 +327,13 @@ bool oscDispatchNode(OscChannel ch, char* addr, char* fulladdr, const OscNode* n
     return true;
   }
 
+  uint8_t i;
   if (node->range > 0) {
     // as part of our cheat, ranges can only be the second to last node.
     // we jump down a level here since we are planning on getting to the handler
     // without traversing the tree any further
-    int j;
-    for (j = 0; node->children[j] != 0; j++) {
-      if (node->children[j]->handler != NULL && oscPatternMatch(nextPattern, node->children[j]->name)) {
+    for (i = 0; node->children[i] != 0; i++) {
+      if (node->children[i]->handler && oscPatternMatch(nextPattern, node->children[i]->name)) {
         OscRange r;
         if (oscNumberMatch(addr, node->rangeOffset, node->range, &r)) {
           *(addr - 1) = 0;
@@ -342,8 +342,8 @@ bool oscDispatchNode(OscChannel ch, char* addr, char* fulladdr, const OscNode* n
             int idx = oscRangeNext(&r);
             // recreate an address specific to this index, in the case that we got here
             // through a pattern match
-            siprintf(endofaddr, "/%d/%s", idx, node->children[j]->name);
-            node->children[j]->handler(ch, fulladdr, idx, data, datalen);
+            siprintf(endofaddr, "/%d/%s", idx, node->children[i]->name);
+            node->children[i]->handler(ch, fulladdr, idx, data, datalen);
           }
           return true;
         }
@@ -354,14 +354,11 @@ bool oscDispatchNode(OscChannel ch, char* addr, char* fulladdr, const OscNode* n
     *(nextPattern - 1) = '/';
   }
   // otherwise, go down to the next level and try some more
-  else {
-    uint8_t i;
-    for (i = 0; node->children[i] != 0; ++i) {
-      if (oscPatternMatch(addr, node->children[i]->name)) {
-        *(nextPattern - 1) = '/'; // replace this - we nulled it earlier
-        if (oscDispatchNode(ch, nextPattern, fulladdr, node->children[i], data, datalen))
-          return true;
-      }
+  for (i = 0; node->children[i] != 0; ++i) {
+    if (oscPatternMatch(addr, node->children[i]->name)) {
+      *(nextPattern - 1) = '/'; // replace this - we nulled it earlier
+      if (oscDispatchNode(ch, nextPattern, fulladdr, node->children[i], data, datalen))
+        return true;
     }
   }
   return false;
@@ -371,6 +368,8 @@ static void oscNameSpaceQueryEndpoint(OscChannel ch, char *fulladdr, const OscNo
 {
   char *endoforiginal = fulladdr + strlen(fulladdr);
   if (node->range > 0) {
+    // we could have gotten here from a query to either the range element or the trailing
+    // property element - figure out which, and return all the children
     OscRange r;
     oscNumberMatch("*", node->rangeOffset, node->range, &r);
     while (oscRangeHasNext(&r)) {
@@ -409,6 +408,8 @@ bool oscNameSpaceQuery(OscChannel ch, char* addr, char *fulladdr, const OscNode*
 
   // do a simple strcmp - don't need to match patterns for this
   if (strcmp(addr, node->name) ==  0) {
+    if (!node->range)
+      *(nextpattern - 1) = '/'; // replace this - we nulled it earlier
     oscNameSpaceQueryEndpoint(ch, fulladdr, node);
     return true;
   }
