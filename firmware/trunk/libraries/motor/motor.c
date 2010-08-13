@@ -166,7 +166,7 @@ void motorFinalize(int motor)
 {
   struct Motor* m = &(motors[motor]);
   // possibly add a dead zone in between?
-  if( m->direction )
+  if (m->direction)
     pwmoutSetAll(motor, m->speed, false, true);
   else
     pwmoutSetAll(motor, (m->speed * -1), true, false);
@@ -213,55 +213,39 @@ void motorFinalize(int motor)
   Simply change the argument of 0 to a 1 in order to set the motor's direction to forward.
 */
 
-static bool motorOscSpeed(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void motorOscSpeed(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(d);
   if (datalen == 1) {
     motorSetSpeed(idx, d[0].value.i);
-    return true;
   }
   else if (datalen == 0) {
-    OscData d = {
-      .type = INT,
-      .value.i = motorSpeed(idx)
-    };
+    OscData d = { .type = INT, .value.i = motorSpeed(idx) };
     oscCreateMessage(ch, address, &d, 1);
-    return true;
   }
-  return false;
 }
 
-static bool motorOscDirection(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void motorOscDirection(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(d);
   if (datalen == 1) {
     motorSetDirection(idx, d[0].value.i);
-    return true;
   }
   else if (datalen == 0) {
-    OscData d = {
-      .type = INT,
-      .value.i = motorDirection(idx)
-    };
+    OscData d = { .type = INT, .value.i = motorDirection(idx) };
     oscCreateMessage(ch, address, &d, 1);
-    return true;
   }
-  return false;
 }
 
 static const OscNode motorSpeedNode = { .name = "speed", .handler = motorOscSpeed };
 static const OscNode motorDirectionNode = { .name = "direction", .handler = motorOscDirection };
-static const OscNode motorRange = {
-  .range = 4,
-  .children = {
-    &motorDirectionNode,
-    &motorSpeedNode, 0
-  }
-};
+
 const OscNode motorOsc = {
   .name = "motor",
+  .range = MOTOR_COUNT,
   .children = {
-    &motorRange, 0
+    &motorSpeedNode,
+    &motorDirectionNode, 0
   }
 };
 

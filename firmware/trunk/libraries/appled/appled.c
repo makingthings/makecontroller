@@ -151,22 +151,16 @@ bool appledValue(int led)
   \code /appled/0/active 1 \endcode
 */
 
-static bool appledOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void appledOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(address);
   if (datalen == 1) {
     appledSetValue(idx, d[0].value.i);
-    return true;
   }
   else if (datalen == 0) {
-    OscData d = {
-      .type = INT,
-      .value.i = appledValue(idx)
-    };
+    OscData d = { .type = INT, .value.i = appledValue(idx) };
     oscCreateMessage(ch, address, &d, 1);
-    return true;
   }
-  return false;
 }
 
 static const OscNode appledVal = { .name = "value", .handler = appledOscHandler };

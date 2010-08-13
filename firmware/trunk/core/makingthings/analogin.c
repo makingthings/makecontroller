@@ -258,21 +258,16 @@ void analoginDeinit(void)
   \verbatim /analogin/0/active 1 \endverbatim
 */
 
-static bool analoginOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void analoginOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(d);
   UNUSED(address);
   if (datalen == 0) {
     char specificAddress[19];
-    OscData d = {
-      .type = INT,
-      .value.i = analoginValue(idx)
-    };
+    OscData d = { .type = INT, .value.i = analoginValue(idx) };
     sniprintf(specificAddress, sizeof(specificAddress), "/analogin/%d/value", idx);
     oscCreateMessage(ch, specificAddress, &d, 1);
-    return true;
   }
-  return false;
 }
 
 static int analoginAutosendVals[ANALOGIN_CHANNELS];
@@ -295,17 +290,13 @@ static void analoginOscAutosender(OscChannel ch)
   }
 }
 
-static bool analoginAutosendHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void analoginAutosendHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(d);
   UNUSED(address);
   if (datalen == 0) {
-    OscData d = {
-      .type = INT,
-      .value.i = analoginValue(idx)
-    };
+    OscData d = { .type = INT, .value.i = analoginValue(idx) };
     oscCreateMessage(ch, address, &d, 1);
-    return true;
   }
   else if (datalen == 1) {
     if (d[0].value.i)
@@ -313,7 +304,6 @@ static bool analoginAutosendHandler(OscChannel ch, char* address, int idx, OscDa
     else
       analoginAutosendChannels &= ~(1 << idx);
   }
-  return false;
 }
 
 static const OscNode analoginAutosendNode = { .name = "autosend", .handler = analoginAutosendHandler };

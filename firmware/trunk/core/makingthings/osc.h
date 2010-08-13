@@ -29,7 +29,7 @@ typedef struct OscData_t {
   } value;
 } OscData;
 
-typedef bool (*OscHandler)(OscChannel ch, char* address, int idx, OscData data[], int datalen);
+typedef void (*OscHandler)(OscChannel ch, char* address, int idx, OscData data[], int datalen);
 
 typedef void (*OscAutosender)(OscChannel ch);
 
