@@ -366,27 +366,26 @@ bool oscDispatchNode(OscChannel ch, char* addr, char* fulladdr, const OscNode* n
 
 static void oscNameSpaceQueryEndpoint(OscChannel ch, char *fulladdr, const OscNode* node)
 {
+  uint8_t i;
   char *endoforiginal = fulladdr + strlen(fulladdr);
-  if (node->range > 0) {
-    // we could have gotten here from a query to either the range element or the trailing
-    // property element - figure out which, and return all the children
-    OscRange r;
-    oscNumberMatch("*", node->rangeOffset, node->range, &r);
-    while (oscRangeHasNext(&r)) {
-      siprintf(endoforiginal, "/%d", oscRangeNext(&r));
-      oscCreateMessage(ch, fulladdr, 0, 0);
-    }
+  for (i = 0; node->children[i] != 0; i++) {
+    // we strcat into the original message buf here to save space - it's ok
+    // since we've already got the data out of it that we need
+    strcat(fulladdr, node->children[i]->name);
+    oscCreateMessage(ch, fulladdr, 0, 0);
+    // each time we strcat, we need to replace the null so subsequent children can be handled
+    *endoforiginal = 0;
   }
-  else {
-    uint8_t i;
-    for (i = 0; node->children[i] != 0; i++) {
-      // we strcat into the original message buf here to save space - it's ok
-      // since we've already got the data out of it that we need
-      strcat(fulladdr, node->children[i]->name);
-      oscCreateMessage(ch, fulladdr, 0, 0);
-      // each time we strcat, we need to replace the null so subsequent children can be handled
-      *endoforiginal = 0;
-    }
+}
+
+static void oscNameSpaceQueryRangeEndpoint(OscChannel ch, char *fulladdr, const OscNode* node)
+{
+  OscRange r;
+  char *endoforiginal = fulladdr + strlen(fulladdr);
+  oscNumberMatch("*", node->rangeOffset, node->range, &r);
+  while (oscRangeHasNext(&r)) {
+    siprintf(endoforiginal, "/%d", oscRangeNext(&r));
+    oscCreateMessage(ch, fulladdr, 0, 0);
   }
 }
 
@@ -408,19 +407,22 @@ bool oscNameSpaceQuery(OscChannel ch, char* addr, char *fulladdr, const OscNode*
 
   // do a simple strcmp - don't need to match patterns for this
   if (strcmp(addr, node->name) ==  0) {
-    if (!node->range)
+    if (node->range > 0 && *nextpattern == 0)
+      oscNameSpaceQueryRangeEndpoint(ch, fulladdr, node);
+    else {
       *(nextpattern - 1) = '/'; // replace this - we nulled it earlier
-    oscNameSpaceQueryEndpoint(ch, fulladdr, node);
+      oscNameSpaceQueryEndpoint(ch, fulladdr, node);
+    }
     return true;
   }
-  else {
-    uint8_t i;
-    for (i = 0; node->children[i] != 0; i++) {
-      if (oscPatternMatch(addr, node->children[i]->name)) {
-        *(nextpattern - 1) = '/'; // replace this - we nulled it earlier
-        if (oscNameSpaceQuery(ch, addr, fulladdr, node->children[i]))
-          return true;
-        }
+
+  // or try the next level down
+  uint8_t i;
+  for (i = 0; node->children[i] != 0; i++) {
+    if (oscPatternMatch(addr, node->children[i]->name)) {
+      *(nextpattern - 1) = '/'; // replace this - we nulled it earlier
+      if (oscNameSpaceQuery(ch, addr, fulladdr, node->children[i]))
+        return true;
     }
   }
   return false;
