@@ -176,11 +176,10 @@ int usbserialAvailable()
 int usbserialRead(char *buffer, int length, int timeout)
 {
   // if we're not connected, don't try to read more than has already arrived.
-  if (!usbserialIsActive()) {
-    if (chIQIsEmpty(&usbSerial.inq))
+  if (!usbserialIsActive() && length > chQSpace(&usbSerial.inq)) {
+    length = chQSpace(&usbSerial.inq);
+    if (length == 0)
       return 0;
-    if (length > chQSpace(&usbSerial.inq))
-      length = chQSpace(&usbSerial.inq);
   }
   return chIQReadTimeout(&usbSerial.inq, (uint8_t*)buffer, length, MS2ST(timeout));
 }
