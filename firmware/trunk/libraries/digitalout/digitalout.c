@@ -188,30 +188,27 @@ bool digitaloutValue(int channel)
 
 static bool digitaloutOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
-  if (datalen == 1) {
+  if (datalen == 1 && d[0].type == INT) {
     digitaloutSetValue(idx, d[0].value.i);
     return true;
   }
   else if (datalen == 0) {
-    OscData d;
-    d.value.i = digitaloutValue(idx);
+    OscData d = { .type = INT, .value.i = digitaloutValue(idx) };
     oscCreateMessage(ch, address, &d, 1);
     return true;
   }
   return false;
 }
 
-static const OscNode digitaloutState = {
+static const OscNode digitaloutVal = {
   .name = "value",
   .handler = digitaloutOscHandler
 };
-static const OscNode digitaloutRange = {
-  .range = DIGITALOUT_COUNT,
-  .children = { &digitaloutState, 0 }
-};
+
 const OscNode digitaloutOsc = {
   .name = "digitalout",
-  .children = { &digitaloutRange, 0 }
+  .range = DIGITALOUT_COUNT,
+  .children = { &digitaloutVal, 0 }
 };
 
 #endif
