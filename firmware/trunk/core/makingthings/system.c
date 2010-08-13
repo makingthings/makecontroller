@@ -58,9 +58,7 @@ static char sysName[SYSTEM_MAX_NAME + 1];
 */
 int systemFreeMemory()
 {
-  size_t freemem;
-  chHeapStatus(NULL, &freemem);
-  return freemem;
+  return chCoreStatus();
 }
 
 /**
@@ -210,7 +208,7 @@ void systemSamba(bool sure)
 */
 int systemSetName(const char* name)
 {
-  int i, length = MIN(strlen(name), SYSTEM_MAX_NAME);
+  int i, length = MIN(strlen(name) + 1, SYSTEM_MAX_NAME);
   strncpy(sysName, name, length); // update the name in our buffer
   for (i = 0; i <= length; i++) // have to do this because Eeprom_Write can only go 32 at a time.
     eepromWriteBlock(EEPROM_SYSTEM_NAME + i, (uint8_t*)name++, 1);
@@ -236,7 +234,7 @@ const char* systemName()
       eepromReadBlock(EEPROM_SYSTEM_NAME + i, (uint8_t*)ptr, 1);
       if (*ptr == 0)
         break;
-      if (!isalnum((int)*ptr) && (*ptr) != ' ') {
+      if (!isalnum((int)*ptr) && !isspace((int)*ptr)) {
         legal = false;
         break;
       }
@@ -734,10 +732,7 @@ static bool systemNameOsc(OscChannel ch, char* address, int idx, OscData d[], in
     rv = true;
   }
   else if (datalen == 0) {
-    OscData d = {
-      .type = STRING,
-      .value.s = sysName
-    };
+    OscData d = { .type = STRING, .value.s = (char*)systemName() };
     oscCreateMessage(ch, address, &d, 1);
     rv = true;
   }
@@ -749,10 +744,7 @@ static bool systemFreememOsc(OscChannel ch, char* address, int idx, OscData d[],
   UNUSED(idx);
   UNUSED(d);
   if (datalen == 0) {
-    OscData d = {
-      .type = INT,
-      .value.i = systemFreeMemory()
-    };
+    OscData d = { .type = INT, .value.i = systemFreeMemory() };
     oscCreateMessage(ch, address, &d, 1);
     return true;
   }
@@ -798,11 +790,43 @@ static bool systemVersionOsc(OscChannel ch, char* address, int idx, OscData d[],
   return false;
 }
 
+static bool systemAutosendOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+{
+  UNUSED(idx);
+  if (datalen == 0) {
+    OscData d = { .type = INT, .value.i = oscAutosendDestination() };
+    oscCreateMessage(ch, address, &d, 1);
+    return true;
+  }
+  else if (d[0].type == INT) {
+    oscSetAutosendDestination(d[0].value.i);
+    return true;
+  }
+  return false;
+}
+
+static bool systemAutosendIntervalOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+{
+  UNUSED(idx);
+  if (datalen == 0) {
+    OscData d = { .type = INT, .value.i = oscAutosendInterval() };
+    oscCreateMessage(ch, address, &d, 1);
+    return true;
+  }
+  else if (d[0].type == INT) {
+    oscSetAutosendInterval(d[0].value.i);
+    return true;
+  }
+  return false;
+}
+
 static const OscNode systemNameNode = { .name = "name", .handler = systemNameOsc };
 static const OscNode systemFreememNode = { .name = "freememory", .handler = systemFreememOsc };
 static const OscNode systemResetNode = { .name = "reset", .handler = systemResetOsc };
 static const OscNode systemSambaNode = { .name = "samba", .handler = systemSambaOsc };
 static const OscNode systemVersionNode = { .name = "version", .handler = systemVersionOsc };
+static const OscNode systemAutosendNode = { .name = "autosend", .handler = systemAutosendOsc };
+static const OscNode systemAutosendIntervalNode = { .name = "autosend-interval", .handler = systemAutosendIntervalOsc };
 
 const OscNode systemOsc = {
   .name = "system",
@@ -811,7 +835,9 @@ const OscNode systemOsc = {
     &systemResetNode,
     &systemSambaNode,
     &systemVersionNode,
-    &systemNameNode, 0
+    &systemNameNode,
+    &systemAutosendNode,
+    &systemAutosendIntervalNode, 0
   }
 };
 
