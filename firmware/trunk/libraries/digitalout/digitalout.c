@@ -186,18 +186,15 @@ bool digitaloutValue(int channel)
 
 #include "osc.h"
 
-static bool digitaloutOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void digitaloutOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   if (datalen == 1 && d[0].type == INT) {
     digitaloutSetValue(idx, d[0].value.i);
-    return true;
   }
   else if (datalen == 0) {
     OscData d = { .type = INT, .value.i = digitaloutValue(idx) };
     oscCreateMessage(ch, address, &d, 1);
-    return true;
   }
-  return false;
 }
 
 static const OscNode digitaloutVal = {

@@ -80,7 +80,7 @@ static int digitalinGetPin(int index)
 bool digitalinValue(int channel)
 {
   if (channel > 3)
-    return ainValue(channel) > DIGITALIN_THRESHOLD;
+    return analoginValue(channel) > DIGITALIN_THRESHOLD;
   else 
     return pinValue(digitalinGetPin(channel));
 }
@@ -115,18 +115,13 @@ bool digitalinValue(int channel)
   \verbatim /digitalin/2/value \endverbatim
 */
 
-static bool digitalinOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void digitalinOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(d);
   if (datalen == 0) {
-    OscData d = {
-      .type = INT,
-      .value.i = digitalinValue(idx)
-    };
+    OscData d = { .type = INT, .value.i = digitalinValue(idx) };
     oscCreateMessage(ch, address, &d, 1);
-    return true;
   }
-  return false;
 }
 
 static const OscNode digitalinValueNode = { .name = "value", .handler = digitalinOscHandler };

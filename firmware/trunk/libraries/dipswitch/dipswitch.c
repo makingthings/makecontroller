@@ -191,27 +191,21 @@ bool dipswitchSingleValue(int channel)
 //
 //  return newMsgs;
 //}
-static bool dipswitchOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void dipswitchOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(d);
   UNUSED(idx);
   if (datalen == 0) {
-    OscData d = {
-      .type = INT,
-      .value.i = dipswitchValue()
-    };
+    OscData d = { .type = INT, .value.i = dipswitchValue() };
     oscCreateMessage(ch, address, &d, 1);
-    return true;
   }
-  return false;
 }
 
 static const OscNode dipswitchValueNode = { .name = "value", .handler = dipswitchOscHandler };
 const OscNode dipswitchOsc = {
   .name = "dipswitch",
   .children = {
-    &dipswitchValueNode,
-    0
+    &dipswitchValueNode, 0
   }
 };
 

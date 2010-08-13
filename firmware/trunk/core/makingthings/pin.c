@@ -456,33 +456,23 @@ void pinInitInterrupts(Group group, unsigned int priority)
 
 #ifdef OSC
 
-static bool pinOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void pinOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   if (datalen == 1) {
     pinSetValue(idx, d[0].value.i);
-    return true;
   }
   else if (datalen == 0) {
-    OscData d;
-    d.type = INT;
-    d.value.i = pinValue(idx);
+    OscData d = { .type = INT, .value.i = pinValue(idx) };
     oscCreateMessage(ch, address, &d, 1);
-    return true;
   }
-  return false;
 }
 
-static const OscNode pinVal = {
-  .name = "value",
-  .handler = pinOscHandler
-};
-static const OscNode pinRange = {
-  .range = 8,
-  .children = { &pinVal, 0 }
-};
+static const OscNode pinVal = { .name = "value", .handler = pinOscHandler };
+
 const OscNode pinOsc = {
   .name = "pin",
-  .children = { &pinRange, 0 }
+  .range = 64,
+  .children = { &pinVal, 0 }
 };
 
 #endif

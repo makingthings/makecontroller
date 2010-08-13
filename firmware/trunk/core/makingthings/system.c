@@ -723,60 +723,47 @@ void systemReset(bool sure)
 //  return CONTROLLER_OK;
 //}
 
-static bool systemNameOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void systemNameOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(idx);
-  bool rv = false;
   if (datalen == 1 && d[0].type == STRING) {
     systemSetName(d[0].value.s);
-    rv = true;
   }
   else if (datalen == 0) {
     OscData d = { .type = STRING, .value.s = (char*)systemName() };
     oscCreateMessage(ch, address, &d, 1);
-    rv = true;
   }
-  return rv;
 }
 
-static bool systemFreememOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void systemFreememOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(idx);
   UNUSED(d);
   if (datalen == 0) {
     OscData d = { .type = INT, .value.i = systemFreeMemory() };
     oscCreateMessage(ch, address, &d, 1);
-    return true;
   }
-  else
-    return false;
 }
 
-static bool systemResetOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void systemResetOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(idx);
   UNUSED(ch);
   UNUSED(address);
-  if (datalen == 1 && d[0].value.i == 1) {
+  if (datalen == 1 && d[0].value.i == 1)
     systemReset(YES);
-    return true;
-  }
-  return false;
 }
 
-static bool systemSambaOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void systemSambaOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(idx);
   UNUSED(ch);
   UNUSED(address);
-  if (datalen == 1 && d[0].value.i == 1) {
+  if (datalen == 1 && d[0].value.i == 1)
     systemSamba(YES);
-    return true;
-  }
-  return false;
 }
 
-static bool systemVersionOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void systemVersionOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(idx);
   UNUSED(d);
@@ -785,39 +772,31 @@ static bool systemVersionOsc(OscChannel ch, char* address, int idx, OscData d[],
     sniprintf(verStr, 30, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER);
     OscData d = { .type = STRING, .value.s = verStr };
     oscCreateMessage(ch, address, &d, 1);
-    return true;
   }
-  return false;
 }
 
-static bool systemAutosendOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void systemAutosendOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(idx);
   if (datalen == 0) {
     OscData d = { .type = INT, .value.i = oscAutosendDestination() };
     oscCreateMessage(ch, address, &d, 1);
-    return true;
   }
   else if (d[0].type == INT) {
     oscSetAutosendDestination(d[0].value.i);
-    return true;
   }
-  return false;
 }
 
-static bool systemAutosendIntervalOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+static void systemAutosendIntervalOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(idx);
   if (datalen == 0) {
     OscData d = { .type = INT, .value.i = oscAutosendInterval() };
     oscCreateMessage(ch, address, &d, 1);
-    return true;
   }
   else if (d[0].type == INT) {
     oscSetAutosendInterval(d[0].value.i);
-    return true;
   }
-  return false;
 }
 
 static const OscNode systemNameNode = { .name = "name", .handler = systemNameOsc };
