@@ -56,15 +56,15 @@ bool usbmouseIsActive(void)
  * the mouse.
  *
  * Specify clicks on what would be the right and left buttons of the mouse via
- * the appropriate MouseClickAction - DOWN, UP, or NONE.
+ * the appropriate MouseClickAction - CLICK_PRESS, CLICK_RELEASE, or CLICK_NONE.
  *
  * The position of the mouse is updated from its current location -
  * if you specify a changeX of 10, the mouse will move 10 pixels to the right,
  * -10 will take you 10 pixels to the left.  A changeY of 10 will take you 10
  * pixels downwards and -10 will bring you 10 pixels up.
  *
- * @param left A left-click action - DOWN, UP, or NONE.
- * @param right A right-click action - DOWN, UP, or NONE.
+ * @param left A left-click action - CLICK_PRESS, CLICK_RELEASE, or CLICK_NONE.
+ * @param right A right-click action - CLICK_PRESS, CLICK_RELEASE, or CLICK_NONE.
  * @param changeX A change in position (specified in pixels) on the x-axis.
  * @param changeY A change in position (specified in pixels) on the y-axis.
  * @return True if the message was successfully sent, otherwise false.
@@ -75,14 +75,14 @@ bool usbmouseUpdate(MouseClickAction left, MouseClickAction right, int changeX, 
     return false;
   unsigned char buttons = 0;
 
-  if (left == DOWN)
+  if (left == CLICK_PRESS)
     buttons |= HIDDMouse_LEFT_BUTTON;
-  else if (left == UP)
+  else if (left == CLICK_RELEASE)
     buttons &= ~HIDDMouse_LEFT_BUTTON;
 
-  if (right == DOWN)
+  if (right == CLICK_PRESS)
     buttons |= HIDDMouse_RIGHT_BUTTON;
-  else if (right == UP)
+  else if (right == CLICK_RELEASE)
     buttons &= ~HIDDMouse_RIGHT_BUTTON;
 
   return HIDDMouseDriver_ChangePoints(buttons, (signed char)changeX, (signed char)changeY) == USBD_STATUS_SUCCESS;
