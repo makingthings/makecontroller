@@ -70,6 +70,11 @@ void name##Function()
 */
 #define yield()  chThdYield()
 
+#define random() rand()
+#define randomMax(max) ((rand() % max) + 1)
+#define randomMinMax(min, max) ((rand() % (max - min + 1)) + min)
+#define randomSeed(s) srand(s)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -82,6 +87,10 @@ void kill(void);
 
 #include "ch.h"
 #include "hal.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 // all the basics
 #include "types.h"
