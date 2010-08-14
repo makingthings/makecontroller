@@ -38,7 +38,7 @@ typedef struct OscNode_t {
   const char* name;
   OscHandler handler;
   uint8_t range;
-  uint8_t rangeOffset;
+  int8_t rangeOffset;
   OscAutosender autosender;
   const struct OscNode_t* children[]; // must be 0-terminated
 } OscNode;

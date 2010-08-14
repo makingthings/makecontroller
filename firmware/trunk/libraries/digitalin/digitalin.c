@@ -125,19 +125,12 @@ static void digitalinOscHandler(OscChannel ch, char* address, int idx, OscData d
 }
 
 static const OscNode digitalinValueNode = { .name = "value", .handler = digitalinOscHandler };
-static const OscNode digitalinRange = {
-  .range = DIGITALIN_COUNT,
-  .children = {
-    &digitalinValueNode, 0
-//    &digitalAutosendNode,
-  }
-};
 
 const OscNode digitalinOsc = {
   .name = "digitalin",
+  .range = DIGITALIN_COUNT,
   .children = {
-    &digitalinRange,
-    0
+    &digitalinValueNode, 0
   }
 };
 

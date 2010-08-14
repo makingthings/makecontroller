@@ -197,10 +197,7 @@ static void digitaloutOscHandler(OscChannel ch, char* address, int idx, OscData 
   }
 }
 
-static const OscNode digitaloutVal = {
-  .name = "value",
-  .handler = digitaloutOscHandler
-};
+static const OscNode digitaloutVal = { .name = "value", .handler = digitaloutOscHandler };
 
 const OscNode digitaloutOsc = {
   .name = "digitalout",

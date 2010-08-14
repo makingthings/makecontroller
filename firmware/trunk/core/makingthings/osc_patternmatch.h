@@ -40,8 +40,8 @@ typedef enum OscRangeState_t {
 } OscRangeState;
 
 typedef struct OscRange_t {
-  int value; // could be single num or bit mask
-  int index; // if bit mask, which value we're on
+  uint64_t value; // could be single num or bit mask
+  uint8_t index; // if bit mask, which value we're on
   OscRangeState state; // which mode we're in
 } OscRange;
 
