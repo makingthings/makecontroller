@@ -9,6 +9,7 @@ MTCORESRC = ${MT}/board.c \
 						${MT}/pwm.c \
 						${MT}/timer.c \
 						${MT}/usbserial.c \
+						${MT}/usbmouse.c \
 						${MT}/spi.c \
 						${MT}/eeprom.c \
 						${MT}/i2c.c \
