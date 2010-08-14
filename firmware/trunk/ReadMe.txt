@@ -9,7 +9,7 @@ Required Tools
 
 Building
 =========
-* Navigate to a project directory, start with 'blink' to begin with since it's the simplest.
+* Navigate to a project directory, start with 'blink' since it's the simplest.
 * type `make`
 * a 'build' folder should be created with blink.bin in it - you can now upload this to your board 
 

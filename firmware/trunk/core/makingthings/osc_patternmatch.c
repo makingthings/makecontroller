@@ -22,7 +22,7 @@
     Adapted from oscpattern.c, by Matt Wright and Amar Chaudhury
  */
 
-#include "config.h"
+#include "core.h"
 #ifdef OSC
 
 #include "osc_patternmatch.h"

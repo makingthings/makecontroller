@@ -23,12 +23,12 @@
 #define IOPORT(p) ((p < 32) ? IOPORT1 : IOPORT2)
 #define PIN(p) (p % 32)
 #define PIN_MASK(p) (1 << (p % 32))
-#define IO_PIN_COUNT 64
+#define PIN_COUNT 64
 #else
 #define IOPORT(p) IOPORT1
 #define PIN(p) (p)
 #define PIN_MASK(p) (1 << p)
-#define IO_PIN_COUNT 32
+#define PIN_COUNT 32
 #endif
 
 static PinInterrupt* interrupts = 0;
@@ -471,7 +471,7 @@ static const OscNode pinVal = { .name = "value", .handler = pinOscHandler };
 
 const OscNode pinOsc = {
   .name = "pin",
-  .range = 64,
+  .range = PIN_COUNT,
   .children = { &pinVal, 0 }
 };
 
