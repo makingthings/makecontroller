@@ -3,8 +3,7 @@
 #ifndef USB_MOUSE_H
 #define USB_MOUSE_H
 
-#include "config.h"
-#include "types.h"
+#include "core.h"
 
 typedef enum MouseClickAction_t {
   NONE,

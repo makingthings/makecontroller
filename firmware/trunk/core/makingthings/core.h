@@ -105,6 +105,7 @@ void kill(void);
 #endif // MAKE_CTRL_NETWORK
 #ifdef MAKE_CTRL_USB
 #include "usbserial.h"
+#include "usbmouse.h"
 #endif
 
 #ifdef __cplusplus

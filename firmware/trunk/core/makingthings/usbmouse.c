@@ -16,9 +16,9 @@
 *********************************************************************************/
 
 #include "usbmouse.h"
-#include "HIDDMouseDriver.h"
-#include "USBConfigurationDescriptor.h"
-#include "USBD.h"
+#include "usb/device/hid-mouse/HIDDMouseDriver.h"
+#include "usb/common/core/USBConfigurationDescriptor.h"
+#include "usb/device/core/USBD.h"
 
 /**
   \defgroup usbmouse USB Mouse (HID)
