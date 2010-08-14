@@ -6,9 +6,9 @@
 #include "core.h"
 
 typedef enum MouseClickAction_t {
-  NONE,
-  DOWN,
-  UP
+  CLICK_NONE,
+  CLICK_PRESS,
+  CLICK_RELEASE
 } MouseClickAction;
 
 #ifdef __cplusplus
