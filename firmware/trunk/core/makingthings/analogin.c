@@ -34,6 +34,10 @@ struct AinDriver {
 
 static struct AinDriver aind;
 
+#ifdef OSC
+static void analoginAutoSendInit(void);
+#endif
+
 /**
   \defgroup analogin Analog Input
   10-bit analog inputs.
@@ -188,6 +192,10 @@ void analoginInit(void)
   AT91C_BASE_ADC->ADC_IER = AT91C_ADC_DRDY;
   AIC_ConfigureIT(AT91C_ID_ADC, AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 4, analoginIsr);
   AIC_EnableIT(AT91C_ID_ADC);
+
+  #ifdef OSC
+  analoginAutoSendInit();
+  #endif
 }
 
 /**
@@ -258,10 +266,22 @@ void analoginDeinit(void)
   \verbatim /analogin/0/active 1 \endverbatim
 */
 
+// sort of a checksum to verify whether a previous save was legit
+#define AIN_AUTOSEND_SAVED 0xDF
+
+static int analoginAutosendVals[ANALOGIN_CHANNELS];
+static uint16_t analoginAutosendChannels;
+
+void analoginAutoSendInit()
+{
+  analoginAutosendChannels = eepromRead(EEPROM_ANALOGIN_AUTOSEND);
+  if (((analoginAutosendChannels >> 8) & 0xFF) != AIN_AUTOSEND_SAVED)
+    analoginAutosendChannels = AIN_AUTOSEND_SAVED << 8;
+}
+
 static void analoginOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
-  UNUSED(d);
-  UNUSED(address);
+  UNUSED(d); UNUSED(address);
   if (datalen == 0) {
     char specificAddress[19];
     OscData d = { .type = INT, .value.i = analoginValue(idx) };
@@ -269,9 +289,6 @@ static void analoginOscHandler(OscChannel ch, char* address, int idx, OscData d[
     oscCreateMessage(ch, specificAddress, &d, 1);
   }
 }
-
-static int analoginAutosendVals[ANALOGIN_CHANNELS];
-static uint8_t analoginAutosendChannels = 0;
 
 static void analoginOscAutosender(OscChannel ch)
 {
@@ -303,6 +320,8 @@ static void analoginAutosendHandler(OscChannel ch, char* address, int idx, OscDa
       analoginAutosendChannels |= (1 << idx);
     else
       analoginAutosendChannels &= ~(1 << idx);
+
+    eepromWrite(EEPROM_ANALOGIN_AUTOSEND, analoginAutosendChannels);
   }
 }
 

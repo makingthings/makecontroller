@@ -123,10 +123,6 @@ void hwinit1(void)
   halInit();
   // peripheral inits - these are here so they're conveniently already
   // done for common usage, but can be removed by conditionalization
-  #ifndef NO_AIN_INIT
-  analoginInit();
-  #endif
-  
   #ifndef NO_SPI_INIT
   spiInit();
   #endif
@@ -148,4 +144,9 @@ void hwinit1(void)
   AT91C_BASE_PITC->PITC_PIMR |= AT91C_PITC_PITEN | AT91C_PITC_PITIEN;
 
   chSysInit(); // ChibiOS/RT initialization.
+
+  // would rather not put this below chSysInit() but it relies on the RTOS being setup
+  #ifndef NO_AIN_INIT
+  analoginInit();
+  #endif
 }

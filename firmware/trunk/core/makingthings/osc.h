@@ -48,7 +48,7 @@ extern "C" {
 #endif
 bool oscUsbEnable(bool on);
 bool oscUdpEnable(bool on, int port);
-bool oscAutosendEnable(bool enabled, OscChannel destination, int frequency);
+void oscAutosendEnable(bool enabled);
 void oscUdpSetReplyPort(int port);
 int  oscUdpReplyPort(void);
 void oscLockChannel(OscChannel ct);
