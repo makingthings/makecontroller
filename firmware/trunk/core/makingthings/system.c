@@ -419,27 +419,6 @@ void systemReset(bool sure)
     To read the board's version, send the message
     \verbatim /system/version \endverbatim
 
-    \par Stack Audit
-    The \b stack-audit property can fire up a task that will monitor the stack usage
-    of all tasks running on the board.  If the remaining stack of any of the tasks drops below 50 bytes,
-    the board will attempt to send an OSC message back via the \ref Debug system to let you know.
-    \par
-    This uses up quite a lot of processor time, so it's really only designed to be used in a
-    debug context.
-    \par
-    To start up the stack audit, send the message
-    \verbatim /system/stack-audit 1 \endverbatim
-    \par
-    and turn it off by sending
-    \verbatim /system/stack-audit 0 \endverbatim
-
-    \par Task Report
-    The \b task-report property is a read-only property that will generate a list of all the tasks running
-    on your Make Controller, first giving the name of the task followed by the task's remaining stack.
-    \par
-    To see the tasks running on your board, send the message
-    \verbatim /system/task-report \endverbatim
-
     \par Active
     The \b active property corresponds to the active state of System.
     If System is set to be inactive, it will not respond to any other OSC messages.
@@ -451,277 +430,6 @@ void systemReset(bool sure)
     You can set the active flag by sending
     \verbatim /system/active 1 \endverbatim
 */
-
-//static char* SystemOsc_Name = "system";
-//static char* SystemOsc_PropertyNames[] = { "active", "freememory", "samba", "reset", 
-//                                            "serialnumber", "version",
-//                                            "name", "info-internal", "info", "stack-audit", 
-//                                            "task-report", "autosend-usb", "autosend-udp", "autosend-interval", 0 }; // must have a trailing 0
-//
-//int SystemOsc_PropertySet( int property, char* typedata, int channel );
-//int SystemOsc_PropertyGet( int property, int channel );
-//
-//const char* SystemOsc_GetName( void )
-//{
-//  return SystemOsc_Name;
-//}
-//// need to allow this to accept non-int arguments
-//int SystemOsc_ReceiveMessage( int channel, char* message, int length )
-//{
-//  int status = Osc_GeneralReceiverHelper( channel, message, length, 
-//                                SystemOsc_Name,
-//                                SystemOsc_PropertySet, SystemOsc_PropertyGet, 
-//                                SystemOsc_PropertyNames );
-//
-//  if ( status != CONTROLLER_OK )
-//    return Osc_SendError( channel, SystemOsc_Name, status );
-//
-//  return CONTROLLER_OK;
-//}
-//
-//int SystemOsc_Poll( )
-//{
-//  return CONTROLLER_OK;
-//}
-//
-//// Set the index LED, property with the value
-//int SystemOsc_PropertySet( int property, char* typedata, int channel )
-//{
-//  int value = 0;
-//  switch ( property )
-//  {
-//    case 0: // active
-//    {
-//      int count = Osc_ExtractData( typedata, "i", &value );
-//      if ( count != 1 )
-//        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
-//
-//      System_SetActive( value );
-//      break;
-//    }
-//    case 2: // samba
-//    {
-//      int count = Osc_ExtractData( typedata, "i", &value );
-//      if ( count != 1 )
-//        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
-//
-//      System_SetSamba( value );
-//      break;
-//    }
-//    case 3: // reset
-//    {
-//      int count = Osc_ExtractData( typedata, "i", &value );
-//      if ( count != 1 )
-//        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
-//
-//      System_SetReset( value );
-//      break;
-//    }
-//    case 4: // serialnumber
-//    {
-//      int count = Osc_ExtractData( typedata, "i", &value );
-//      if ( count != 1 )
-//        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
-//
-//      System_SetSerialNumber( value );
-//      break;
-//    }
-//    case 6: // name
-//    {
-//      char* address;
-//      int count = Osc_ExtractData( typedata, "s", &address );
-//      if ( count != 1 ) 
-//        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need a string" );
-//
-//      System_SetName( address );
-//      break;
-//    }
-//    case 9: // stack-audit
-//    {
-//      int count = Osc_ExtractData( typedata, "i", &value );
-//      if ( count != 1 )
-//        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
-//
-//      System_StackAudit( value );
-//      break;
-//    }
-//    case 11: // autosend-usb
-//    {
-//      int count = Osc_ExtractData( typedata, "i", &value );
-//      if ( count != 1 )
-//        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
-//      if( value )
-//        System_SetAsyncDestination( OSC_CHANNEL_USB );
-//      else
-//      {
-//        if( System_GetAsyncDestination( ) == OSC_CHANNEL_USB )
-//          System_SetAsyncDestination( ASYNC_INACTIVE );
-//      }
-//      break;
-//    }
-//    case 12: // autosend-udp
-//    {
-//      int count = Osc_ExtractData( typedata, "i", &value );
-//      if ( count != 1 )
-//        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
-//      if( value )
-//        System_SetAsyncDestination( OSC_CHANNEL_UDP );
-//      else
-//      {
-//        if( System_GetAsyncDestination( ) == OSC_CHANNEL_UDP )
-//          System_SetAsyncDestination( ASYNC_INACTIVE );
-//      }
-//      break;
-//    }
-//    case 13: // autosend-interval
-//    {
-//      int count = Osc_ExtractData( typedata, "i", &value );
-//      if ( count != 1 )
-//        return Osc_SubsystemError( channel, SystemOsc_Name, "Incorrect data - need an int" );
-//
-//      System_SetAutoSendInterval( value );
-//      break;
-//    }
-//  }
-//  return CONTROLLER_OK;
-//}
-//
-//// Get the property
-//int SystemOsc_PropertyGet( int property, int channel )
-//{
-//  int value = 0;
-//  //char address[ OSC_SCRATCH_SIZE ];
-//  switch ( property )
-//  {
-//    case 0: // active
-//      value = System_GetActive( );
-//      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-//      Osc_CreateMessage( channel, System->scratch1, ",i", value ); 
-//      break;
-//    case 1: // freememory
-//      value = System_GetFreeMemory( );
-//      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-//      Osc_CreateMessage( channel, System->scratch1, ",i", value ); 
-//      break;
-//    case 4: // serialnumber
-//      value = System_GetSerialNumber( );
-//      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-//      Osc_CreateMessage( channel, System->scratch1, ",i", value ); 
-//      break;  
-//    case 5: // version
-//    {
-//      char versionString[50];
-//      snprintf( versionString, 50, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER );
-//      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-//      Osc_CreateMessage( channel, System->scratch1, ",s", versionString ); 
-//      break;
-//    }
-//    case 6: // name
-//    {
-//      char* name;
-//      name = System_GetName( );
-//      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-//      Osc_CreateMessage( channel, System->scratch1, ",s", name ); 
-//      break;
-//    }
-//    case 7: // info-internal
-//    case 8: // info
-//    {
-//      int a0, a1, a2, a3;
-//      { // put these in their own context so the local variables aren't lying around on the stack for the whole message
-//        char ipAddr[25];
-//        char* sysName = System_GetName( );
-//        int serialnum = System_GetSerialNumber( );
-//        char sysVersion[25];
-//        snprintf( sysVersion, 25, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER );
-//        int freemem = System_GetFreeMemory( );
-//        #ifdef MAKE_CTRL_NETWORK
-//        if( Network_GetAddress( &a0, &a1, &a2, &a3 ) != CONTROLLER_OK )
-//          a0 = a1 = a2 = a3 = -1;
-//        #else
-//        a0 = a1 = a2 = a3 = -1;
-//        #endif // MAKE_CTRL_NETWORK
-//        snprintf( ipAddr, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
-//        snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s-a", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-//        Osc_CreateMessage( channel, System->scratch1, ",sissi", sysName, serialnum, ipAddr, sysVersion, freemem );
-//      }
-//      {
-//      char gateway[25];
-//      char mask[25];
-//      int dhcp;
-//      int webserver;
-//      int oscUdpListen;
-//      int oscUdpSend; 
-//      #ifdef MAKE_CTRL_NETWORK
-//      if( Network_GetGateway( &a0, &a1, &a2, &a3 ) != CONTROLLER_OK )
-//        a0 = a1 = a2 = a3 = -1;
-//      snprintf( gateway, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
-//      if( Network_GetMask( &a0, &a1, &a2, &a3 ) != CONTROLLER_OK )
-//        a0 = a1 = a2 = a3 = -1;
-//      snprintf( mask, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
-//      dhcp = Network_GetDhcpEnabled( );
-//      webserver = 0; // webserver no longer in core. TODO - update system-info to not use webserver
-//      oscUdpListen = NetworkOsc_GetUdpListenPort( );
-//      oscUdpSend = NetworkOsc_GetUdpSendPort( );
-//      #else
-//      a0 = a1 = a2 = a3 = -1;
-//      snprintf( gateway, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
-//      snprintf( mask, 25, "%d.%d.%d.%d", a0, a1, a2, a3 );
-//      dhcp = 0;
-//      webserver = 0;
-//      oscUdpListen = 0;
-//      oscUdpSend = 0;
-//      #endif // MAKE_CTRL_NETWORK
-//      
-//      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s-b", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-//      Osc_CreateMessage( channel, System->scratch1, ",iissii", dhcp, webserver, gateway, mask, oscUdpListen, oscUdpSend );
-//      }
-//      break;
-//    }
-//    case 9: // stack-audit
-//      if( System->StackAuditPtr == NULL )
-//        value = 0;
-//      else
-//        value = 1;
-//      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-//      Osc_CreateMessage( channel, System->scratch1, ",i", value ); 
-//      break;
-//    case 10: // task-report
-//    {
-//      int numOfTasks = GetNumberOfTasks( ) - 1;  // don't count the IDLE task
-//      int i;
-//      void* task = NULL;
-//      char* taskName = "";
-//      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-//      
-//      for( i = 0; i < numOfTasks; i++ )
-//      {
-//        task = TaskGetNext( task );
-//        value = TaskGetRemainingStack( task );
-//        taskName = TaskGetName( task );
-//        Osc_CreateMessage( channel, System->scratch1, ",si", taskName, value ); 
-//      }
-//      break;
-//    }
-//    case 11: // autosend-usb
-//      value = ( System_GetAsyncDestination( ) == OSC_CHANNEL_USB ) ? 1 : 0;
-//      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-//      Osc_CreateMessage( channel, System->scratch1, ",i", value ); 
-//      break;
-//    case 12: // autosend-udp
-//      value = ( System_GetAsyncDestination( ) == OSC_CHANNEL_UDP ) ? 1 : 0;
-//      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-//      Osc_CreateMessage( channel, System->scratch1, ",i", value ); 
-//      break;
-//    case 13: // autosend-interval
-//      value = System_GetAutoSendInterval( );
-//      snprintf( System->scratch1, OSC_SCRATCH_SIZE, "/%s/%s", SystemOsc_Name, SystemOsc_PropertyNames[ property ] ); 
-//      Osc_CreateMessage( channel, System->scratch1, ",i", value ); 
-//      break; 
-//  }
-//  
-//  return CONTROLLER_OK;
-//}
 
 static void systemNameOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
@@ -737,8 +445,7 @@ static void systemNameOsc(OscChannel ch, char* address, int idx, OscData d[], in
 
 static void systemFreememOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
-  UNUSED(idx);
-  UNUSED(d);
+  UNUSED(idx); UNUSED(d);
   if (datalen == 0) {
     OscData d = { .type = INT, .value.i = systemFreeMemory() };
     oscCreateMessage(ch, address, &d, 1);
@@ -747,18 +454,14 @@ static void systemFreememOsc(OscChannel ch, char* address, int idx, OscData d[],
 
 static void systemResetOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
-  UNUSED(idx);
-  UNUSED(ch);
-  UNUSED(address);
+  UNUSED(idx); UNUSED(ch); UNUSED(address);
   if (datalen == 1 && d[0].value.i == 1)
     systemReset(YES);
 }
 
 static void systemSambaOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
-  UNUSED(idx);
-  UNUSED(ch);
-  UNUSED(address);
+  UNUSED(idx); UNUSED(ch); UNUSED(address);
   if (datalen == 1 && d[0].value.i == 1)
     systemSamba(YES);
 }
