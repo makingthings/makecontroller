@@ -33,6 +33,8 @@
 #define DIGITALIN_2 PIN_PB29
 #define DIGITALIN_3 PIN_PB30
 
+static void digitalinAutoSendInit(void);
+
 /**
   \defgroup digitalin Digital Input
   Read the 8 inputs on the Application Board as digital values - on or off.
@@ -49,6 +51,14 @@
   \ingroup io
   @{
 */
+
+void digitalinInit()
+{
+
+  #ifdef OSC
+  digitalinAutoSendInit();
+  #endif
+}
 
 static int digitalinGetPin(int index)
 {
@@ -124,13 +134,66 @@ static void digitalinOscHandler(OscChannel ch, char* address, int idx, OscData d
   }
 }
 
+// sort of a checksum to verify whether a previous save was legit
+#define DIN_AUTOSEND_SAVED 0xDF
+
+static uint8_t digitalinAutosendVals[DIGITALIN_COUNT];
+static uint16_t digitalinAutosendChannels;
+
+void digitalinAutoSendInit()
+{
+  digitalinAutosendChannels = eepromRead(EEPROM_DIGITALIN_AUTOSEND);
+  if (((digitalinAutosendChannels >> 8) & 0xFF) != DIN_AUTOSEND_SAVED)
+    digitalinAutosendChannels = DIN_AUTOSEND_SAVED << 8;
+}
+
+static void digitalinOscAutosender(OscChannel ch)
+{
+  uint8_t i;
+  OscData d = { .type = INT };
+  char addr[20];
+  for (i = 0; i < ANALOGIN_CHANNELS; i++) {
+    if (digitalinAutosendChannels & (1 << i)) {
+      d.value.i = digitalinValue(i);
+      if (digitalinAutosendVals[i] != d.value.i) {
+        digitalinAutosendVals[i] = d.value.i;
+        sniprintf(addr, sizeof(addr), "/digitalin/%d/value", i);
+        oscCreateMessage(ch, addr, &d, 1);
+      }
+    }
+  }
+}
+
+static void digitalinAutosendHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+{
+  UNUSED(d);
+  UNUSED(address);
+  if (datalen == 0) {
+    OscData d;
+    d.type = INT;
+    d.value.i = (digitalinAutosendChannels & (1 << idx)) ? 1 : 0;
+    oscCreateMessage(ch, address, &d, 1);
+  }
+  else if (datalen == 1) {
+    if (d[0].value.i)
+      digitalinAutosendChannels |= (1 << idx);
+    else
+      digitalinAutosendChannels &= ~(1 << idx);
+
+    eepromWrite(EEPROM_DIGITALIN_AUTOSEND, digitalinAutosendChannels);
+  }
+}
+
+static const OscNode digitalinAutosendNode = { .name = "autosend", .handler = digitalinAutosendHandler };
 static const OscNode digitalinValueNode = { .name = "value", .handler = digitalinOscHandler };
 
 const OscNode digitalinOsc = {
   .name = "digitalin",
   .range = DIGITALIN_COUNT,
+  .autosender = digitalinOscAutosender,
   .children = {
-    &digitalinValueNode, 0
+    &digitalinValueNode,
+    &digitalinAutosendNode, 0
   }
 };
 
