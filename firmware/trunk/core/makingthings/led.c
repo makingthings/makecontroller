@@ -51,7 +51,7 @@
 */
 void ledSetValue(bool on)
 {
-  pinSetValue(LED_IO, on ? 0 : 1); // inverted since it's tied to 3.3V
+  pinSetValue(LED_IO, !on); // inverted since it's tied to 3.3V
 }
 
 /**
@@ -70,71 +70,3 @@ bool ledValue()
 }
 
 /** @} */
-
-#ifdef OSC
-
-// #include "osc.h"
-// #include "string.h"
-// #include "stdio.h"
-// 
-// // Need a list of property names
-// // MUST end in zero
-// static char* LedOsc_Name = "led";
-// static char* LedOsc_PropertyNames[] = { "active", "state", 0 }; // must have a trailing 0
-// 
-// int LedOsc_PropertySet( int property, int value );
-// int LedOsc_PropertyGet( int property );
-// 
-// // Returns the name of the subsystem
-// const char* LedOsc_GetName( )
-// {
-//   return LedOsc_Name;
-// }
-// 
-// // Now getting a message.  This is actually a part message, with the first
-// // part (the subsystem) already parsed off.
-// int LedOsc_ReceiveMessage( int channel, char* message, int length )
-// {
-//   int status = Osc_IntReceiverHelper( channel, message, length, 
-//                                 LedOsc_Name,
-//                                 LedOsc_PropertySet, LedOsc_PropertyGet, 
-//                                 LedOsc_PropertyNames );
-// 
-//   if ( status != CONTROLLER_OK )
-//     Osc_SendError( channel, LedOsc_Name, status );
-//   return CONTROLLER_OK;
-// }
-// 
-// // Set the index LED, property with the value
-// int LedOsc_PropertySet( int property, int value )
-// {
-//   switch ( property )
-//   {
-//     case 0: 
-//       Led_SetActive( value );
-//       break;      
-//     case 1:
-//       Led_SetState( value );
-//       break;
-//   }
-//   return CONTROLLER_OK;
-// }
-// 
-// // Get the index LED, property
-// int LedOsc_PropertyGet( int property )
-// {
-//   int value = 0;
-//   switch ( property )
-//   {
-//     case 0:
-//       value = Led_GetActive( );
-//       break;
-//     case 1:
-//       value = Led_GetState( );
-//       break;
-//   }
-//   
-//   return value;
-// }
-
-#endif
