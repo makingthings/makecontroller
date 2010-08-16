@@ -23,6 +23,7 @@
 #ifdef __cpluscplus
 extern "C" {
 #endif
+void digitalinInit(void);
 bool digitalinValue(int channel);
 #ifdef __cpluscplus
 extern "C" {

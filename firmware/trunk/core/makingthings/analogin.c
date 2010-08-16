@@ -312,7 +312,9 @@ static void analoginAutosendHandler(OscChannel ch, char* address, int idx, OscDa
   UNUSED(d);
   UNUSED(address);
   if (datalen == 0) {
-    OscData d = { .type = INT, .value.i = analoginValue(idx) };
+    OscData d;
+    d.type = INT;
+    d.value.i = (analoginAutosendChannels & (1 << idx)) ? 1 : 0;
     oscCreateMessage(ch, address, &d, 1);
   }
   else if (datalen == 1) {
