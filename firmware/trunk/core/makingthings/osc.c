@@ -206,11 +206,8 @@ static msg_t OscAutosendThread(void *arg)
       i = 0;
       node = oscRoot.children[i++];
       while (node != 0) {
-        if (node->autosender != 0) {
-          // no check in place yet for the case in which the USB or UDP systems are
-          // compile-time disabled, and this gets a disabled channel...
+        if (node->autosender != 0)
           node->autosender(osc.autosendDestination);
-        }
         node = oscRoot.children[i++];
       }
       oscSendPendingMessages(osc.autosendDestination);
@@ -238,7 +235,16 @@ OscChannel oscAutosendDestination()
 {
   if (osc.autosendDestination == 0) { // uninitialized
     osc.autosendDestination = eepromRead(EEPROM_OSC_ASYNC_DEST);
-    if (osc.autosendDestination != USB && osc.autosendDestination != UDP)
+    bool valid = false;
+    #ifdef MAKE_CTRL_USB
+    if (osc.autosendDestination == USB)
+      valid = true;
+    #endif
+    #ifdef MAKE_CTRL_NETWORK
+    if (osc.autosendDestination == UDP)
+      valid = true;
+    #endif
+    if (!valid)
       osc.autosendDestination = NONE;
   }
   return osc.autosendDestination;
