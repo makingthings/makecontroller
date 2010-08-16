@@ -26,7 +26,17 @@
 #define OSC_AUTOSEND_STACK_SIZE 512
 #endif
 
+#ifndef OSC_UDP_DEFAULT_PORT
 #define OSC_UDP_DEFAULT_PORT 10000
+#endif
+
+#ifndef OSC_AUTOSEND_MAX_INTERVAL
+#define OSC_AUTOSEND_MAX_INTERVAL 5000
+#endif
+
+#ifndef OSC_AUTOSEND_DEFAULT_INTERVAL
+#define OSC_AUTOSEND_DEFAULT_INTERVAL 10
+#endif
 
 typedef int (*OscSendMsg)(const char* data, int len);
 
@@ -189,41 +199,76 @@ static msg_t OscAutosendThread(void *arg)
   const OscNode* node;
 
   while (!chThdShouldTerminate()) {
-    i = 0;
-    node = oscRoot.children[i++];
-    while (node != 0) {
-      if (node->autosender != 0) {
-        node->autosender(osc.autosendDestination);
-      }
-      node = oscRoot.children[i++];
+    if (osc.autosendDestination == NONE) {
+      sleep(250);
     }
-    oscSendPendingMessages(osc.autosendDestination);
-    chThdSleepMilliseconds(osc.autosendPeriod);
+    else {
+      i = 0;
+      node = oscRoot.children[i++];
+      while (node != 0) {
+        if (node->autosender != 0) {
+          // no check in place yet for the case in which the USB or UDP systems are
+          // compile-time disabled, and this gets a disabled channel...
+          node->autosender(osc.autosendDestination);
+        }
+        node = oscRoot.children[i++];
+      }
+      oscSendPendingMessages(osc.autosendDestination);
+      sleep(osc.autosendPeriod);
+    }
   }
   return 0;
 }
 
-bool oscAutosendEnable(bool enabled, OscChannel destination, int frequency)
+void oscAutosendEnable(bool enabled)
 {
   if (enabled && osc.autosendThd == 0) {
-    osc.autosendPeriod = frequency;
-    osc.autosendDestination = destination;
+    // load up the interval and destination, and start the thread
+    oscAutosendInterval();
+    oscAutosendDestination();
     osc.autosendThd = chThdCreateStatic(waAutosendThd, sizeof(waAutosendThd), NORMALPRIO, OscAutosendThread, NULL);
-    return true;
   }
-  if (!enabled && osc.autosendThd != 0) {
+  else if (!enabled && osc.autosendThd != 0) {
     chThdTerminate(osc.autosendThd);
     osc.autosendThd = 0;
-    return true;
   }
-  return false;
 }
 
-OscChannel oscAutosendDestination()           { return osc.autosendDestination; }
-void oscSetAutosendDestination(OscChannel oc) { osc.autosendDestination = oc; }
+OscChannel oscAutosendDestination()
+{
+  if (osc.autosendDestination == 0) { // uninitialized
+    osc.autosendDestination = eepromRead(EEPROM_OSC_ASYNC_DEST);
+    if (osc.autosendDestination != USB && osc.autosendDestination != UDP)
+      osc.autosendDestination = NONE;
+  }
+  return osc.autosendDestination;
+}
 
-uint32_t oscAutosendInterval()                 { return osc.autosendPeriod; }
-void oscSetAutosendInterval(uint32_t interval) { osc.autosendPeriod = interval; }
+void oscSetAutosendDestination(OscChannel oc)
+{
+  if (osc.autosendDestination != oc) {
+    osc.autosendDestination = oc;
+    eepromWrite(EEPROM_OSC_ASYNC_DEST, oc);
+  }
+}
+
+uint32_t oscAutosendInterval()
+{
+  if (osc.autosendPeriod == 0) { // uninitialized
+    osc.autosendPeriod = eepromRead(EEPROM_OSC_ASYNC_INTERVAL);
+    if (osc.autosendPeriod < 1 || osc.autosendPeriod > OSC_AUTOSEND_MAX_INTERVAL)
+      osc.autosendPeriod = OSC_AUTOSEND_DEFAULT_INTERVAL;
+  }
+  return osc.autosendPeriod;
+}
+
+void oscSetAutosendInterval(uint32_t interval)
+{
+  if (interval != osc.autosendPeriod && interval > 1 && interval < OSC_AUTOSEND_MAX_INTERVAL) {
+    osc.autosendPeriod = interval;
+    eepromWrite(EEPROM_OSC_ASYNC_INTERVAL, interval);
+  }
+}
 
 static OscChannelData* oscGetChannelByType(OscChannel ct) {
 #ifdef MAKE_CTRL_USB
