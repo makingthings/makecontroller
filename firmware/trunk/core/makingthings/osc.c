@@ -61,6 +61,7 @@ typedef struct Osc_t {
   int udpsock;
   int udpReplyPort;
   int udpReplyAddress;
+  int udpListenPort;
 #endif
   Thread* autosendThd;
   OscChannel autosendDestination;
@@ -143,7 +144,7 @@ static msg_t OscUdpThread(void *arg) {
   while ((osc.udpsock = udpOpen()) < 0)
     chThdSleepMilliseconds(500);
 
-  udpBind(osc.udpsock, 10000);
+  udpBind(osc.udpsock, osc.udpListenPort);
 
   while (!chThdShouldTerminate()) {
     int justGot = udpRead(osc.udpsock, osc.udp.inBuf, sizeof(osc.udp.inBuf), &osc.udpReplyAddress, 0);
@@ -165,6 +166,7 @@ static int oscSendMessageUDP(const char* data, int len)
 bool oscUdpEnable(bool on, int port)
 {
   if (on && osc.udpThd == 0) {
+    osc.udpListenPort = OSC_UDP_DEFAULT_PORT;
     osc.udpReplyPort = (port == -1) ? OSC_UDP_DEFAULT_PORT : port;
     osc.udp.sendMessage = oscSendMessageUDP;
     chMtxInit(&osc.udp.lock);
@@ -179,6 +181,7 @@ bool oscUdpEnable(bool on, int port)
   return false;
 }
 
+// TODO - maintain these in EEPROM
 void oscUdpSetReplyPort(int port)
 {
   osc.udpReplyPort = port;
@@ -187,6 +190,11 @@ void oscUdpSetReplyPort(int port)
 int oscUdpReplyPort()
 {
   return osc.udpReplyPort;
+}
+
+int oscUdpListenPort()
+{
+  return osc.udpListenPort;
 }
 
 #endif // MAKE_CTRL_NETWORK

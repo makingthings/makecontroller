@@ -51,6 +51,7 @@ bool oscUdpEnable(bool on, int port);
 void oscAutosendEnable(bool enabled);
 void oscUdpSetReplyPort(int port);
 int  oscUdpReplyPort(void);
+int  oscUdpListenPort(void);
 void oscLockChannel(OscChannel ct);
 void oscUnlockChannel(OscChannel ct);
 bool oscCreateMessage(OscChannel ct, const char* address, OscData* data, int datacount);
