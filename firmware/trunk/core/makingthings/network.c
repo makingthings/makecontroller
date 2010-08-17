@@ -184,9 +184,9 @@ bool networkSetAddress(int address, int mask, int gateway)
 */
 void networkAddress(int* address, int* mask, int* gateway)
 {
-  if (address != NULL) *address = mcnetif->ip_addr.addr;
-  if (mask != NULL)    *mask = mcnetif->netmask.addr;
-  if (gateway != NULL) *gateway = mcnetif->gw.addr;
+  if (address) *address = mcnetif->ip_addr.addr;
+  if (mask)    *mask = mcnetif->netmask.addr;
+  if (gateway) *gateway = mcnetif->gw.addr;
 }
 
 /**
@@ -369,11 +369,9 @@ bool networkLastValidAddress(int* address, int *mask, int* gateway)
 
 #ifdef OSC
 
-static bool networkOscFindHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
+static void networkOscFindHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
 {
-  UNUSED(idx);
-  UNUSED(datalen);
-  UNUSED(data);
+  UNUSED(idx); UNUSED(datalen); UNUSED(data);
 
   char addrbuf[16];
   int a;
@@ -386,10 +384,9 @@ static bool networkOscFindHandler(OscChannel ch, char* address, int idx, OscData
     { .type = STRING, .value.s = "myname" }
   };
   oscCreateMessage(ch, address, d, 4);
-  return true;
 }
 
-static bool networkOscDhcpHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
+static void networkOscDhcpHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
 {
   UNUSED(idx);
   if (datalen == 0) { // it's a request
@@ -397,16 +394,13 @@ static bool networkOscDhcpHandler(OscChannel ch, char* address, int idx, OscData
     d.value.i = networkDhcp() ? 1 : 0;
     d.type = INT;
     oscCreateMessage(ch, address, &d, 1);
-    return true;
   }
-  if (datalen == 1 && data[0].type == INT) {
+  else if (datalen == 1 && data[0].type == INT) {
     networkSetDhcp(data[0].value.i, 0);
-    return true;
   }
-  return false;
 }
 
-static bool networkOscAddressHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
+static void networkOscAddressHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
 {
   UNUSED(idx);
   if (datalen == 3 && data[0].type == STRING && data[1].type == STRING && data[2].type == STRING) {
@@ -415,9 +409,8 @@ static bool networkOscAddressHandler(OscChannel ch, char* address, int idx, OscD
     int m = networkAddressFromString(data[1].value.s);
     int g = networkAddressFromString(data[2].value.s);
     networkSetAddress(a, m, g);
-    return true;
   }
-  if (datalen == 0) {
+  else if (datalen == 0) {
     char addrbuf[16];
     char maskbuf[16];
     char gatewaybuf[16];
@@ -432,26 +425,19 @@ static bool networkOscAddressHandler(OscChannel ch, char* address, int idx, OscD
       { .type = STRING, .value.s = gatewaybuf }
     };
     oscCreateMessage(ch, address, d, 3);
-    return true;
   }
-  return false;
 }
 
-static bool networkOscUdpPortHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
+static void networkOscUdpPortHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
 {
   UNUSED(idx);
   if (datalen == 0) { // it's a request
-    OscData d;
-    d.value.i = oscUdpReplyPort();
-    d.type = INT;
+    OscData d = { .value.i = oscUdpReplyPort(), .type = INT };
     oscCreateMessage(ch, address, &d, 1);
-    return true;
   }
-  if (datalen == 1 && data[0].type == INT) {
+  else if (datalen == 1 && data[0].type == INT) {
     oscUdpSetReplyPort(data[0].value.i);
-    return true;
   }
-  return false;
 }
 
 static const OscNode networkOscFind = { .name = "find", .handler = networkOscFindHandler };
@@ -463,13 +449,11 @@ const OscNode networkOsc = {
   .name = "network",
   .children = {
     &networkOscFind,
-    &networkOscDhcp, 0
+    &networkOscDhcp,
+    &networkOscAddress,
+    &networkOscUdpPort, 0
   }
 };
 
 #endif // OSC
 #endif // MAKE_CTRL_NETWORK
-
-
-
-

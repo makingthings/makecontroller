@@ -468,11 +468,10 @@ static void systemSambaOsc(OscChannel ch, char* address, int idx, OscData d[], i
 
 static void systemVersionOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
-  UNUSED(idx);
-  UNUSED(d);
+  UNUSED(idx); UNUSED(d);
   if (datalen == 0) {
     char verStr[30];
-    sniprintf(verStr, 30, "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER);
+    sniprintf(verStr, sizeof(verStr), "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER);
     OscData d = { .type = STRING, .value.s = verStr };
     oscCreateMessage(ch, address, &d, 1);
   }
@@ -502,6 +501,58 @@ static void systemAutosendIntervalOsc(OscChannel ch, char* address, int idx, Osc
   }
 }
 
+static void systemInfoOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+{
+  UNUSED(idx); UNUSED(d);
+  if (datalen == 0) {
+    {
+      char verStr[30];
+      char ipaddr[16];
+      int addr;
+      networkAddress(&addr, 0, 0);
+      networkAddressToString(ipaddr, addr);
+      sniprintf(verStr, sizeof(verStr), "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER);
+      OscData oscd[5] = {
+        { .type = STRING, .value.s = (char*)systemName() },
+        { .type = INT, .value.i = systemSerialNumber() },
+        { .type = STRING, .value.s = ipaddr },
+        { .type = STRING, .value.s = verStr },
+        { .type = INT, .value.i = systemFreeMemory() }
+      };
+      oscCreateMessage(ch, address, oscd, 5);
+    }
+    {
+      char mask[16];
+      char gateway[16];
+      int m, g;
+      networkAddress(0, &m, &g);
+      networkAddressToString(mask, m);
+      networkAddressToString(gateway, g);
+      OscData oscd[5] = {
+        { .type = INT, .value.i = networkDhcp() },
+        { .type = STRING, .value.s = gateway },
+        { .type = STRING, .value.s = mask },
+        { .type = INT, .value.i = oscUdpListenPort() },
+        { .type = INT, .value.i = oscUdpReplyPort() }
+      };
+      oscCreateMessage(ch, address, oscd, 5);
+    }
+  }
+}
+
+static void systemSerialNumOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
+{
+  UNUSED(idx);
+  if (datalen == 0) {
+    OscData oscd = { .type = INT, .value.i = systemSerialNumber() };
+    oscCreateMessage(ch, address, &oscd, 1);
+  }
+  else if (d[0].type == INT) {
+    if (systemSerialNumber() != d[0].value.i)
+      systemSetSerialNumber(d[0].value.i);
+  }
+}
+
 static const OscNode systemNameNode = { .name = "name", .handler = systemNameOsc };
 static const OscNode systemFreememNode = { .name = "freememory", .handler = systemFreememOsc };
 static const OscNode systemResetNode = { .name = "reset", .handler = systemResetOsc };
@@ -509,6 +560,9 @@ static const OscNode systemSambaNode = { .name = "samba", .handler = systemSamba
 static const OscNode systemVersionNode = { .name = "version", .handler = systemVersionOsc };
 static const OscNode systemAutosendNode = { .name = "autosend", .handler = systemAutosendOsc };
 static const OscNode systemAutosendIntervalNode = { .name = "autosend-interval", .handler = systemAutosendIntervalOsc };
+static const OscNode systemInfoNode = { .name = "info", .handler = systemInfoOsc };
+static const OscNode systemInfoInternalNode = { .name = "info-internal", .handler = systemInfoOsc };
+static const OscNode systemSerialNumNode = { .name = "serialnumber", .handler = systemSerialNumOsc };
 
 const OscNode systemOsc = {
   .name = "system",
@@ -519,7 +573,9 @@ const OscNode systemOsc = {
     &systemVersionNode,
     &systemNameNode,
     &systemAutosendNode,
-    &systemAutosendIntervalNode, 0
+    &systemAutosendIntervalNode,
+    &systemInfoNode, &systemInfoInternalNode,
+    &systemSerialNumNode, 0
   }
 };
 
