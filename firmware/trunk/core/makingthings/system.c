@@ -505,6 +505,7 @@ static void systemInfoOsc(OscChannel ch, char* address, int idx, OscData d[], in
 {
   UNUSED(idx); UNUSED(d);
   if (datalen == 0) {
+    char *endofaddr = address + strlen(address);
     {
       char verStr[30];
       char ipaddr[16];
@@ -519,6 +520,7 @@ static void systemInfoOsc(OscChannel ch, char* address, int idx, OscData d[], in
         { .type = STRING, .value.s = verStr },
         { .type = INT, .value.i = systemFreeMemory() }
       };
+      siprintf(endofaddr, "-a");
       oscCreateMessage(ch, address, oscd, 5);
     }
     {
@@ -528,14 +530,16 @@ static void systemInfoOsc(OscChannel ch, char* address, int idx, OscData d[], in
       networkAddress(0, &m, &g);
       networkAddressToString(mask, m);
       networkAddressToString(gateway, g);
-      OscData oscd[5] = {
+      OscData oscd[6] = {
         { .type = INT, .value.i = networkDhcp() },
+        { .type = INT, .value.i = 0 }, // used to be for webserver...deprecate eventually
         { .type = STRING, .value.s = gateway },
         { .type = STRING, .value.s = mask },
         { .type = INT, .value.i = oscUdpListenPort() },
         { .type = INT, .value.i = oscUdpReplyPort() }
       };
-      oscCreateMessage(ch, address, oscd, 5);
+      siprintf(endofaddr, "-b");
+      oscCreateMessage(ch, address, oscd, 6);
     }
   }
 }

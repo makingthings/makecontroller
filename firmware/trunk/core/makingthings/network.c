@@ -379,9 +379,9 @@ static void networkOscFindHandler(OscChannel ch, char* address, int idx, OscData
   networkAddressToString(addrbuf, a);
   OscData d[4] = {
     { .type = STRING, .value.s = addrbuf },
-    { .type = INT,    .value.i = 10000 },
-    { .type = INT,    .value.i = 10000 },
-    { .type = STRING, .value.s = "myname" }
+    { .type = INT,    .value.i = oscUdpListenPort() },
+    { .type = INT,    .value.i = oscUdpReplyPort() },
+    { .type = STRING, .value.s = (char*)systemName() }
   };
   oscCreateMessage(ch, address, d, 4);
 }
@@ -390,13 +390,11 @@ static void networkOscDhcpHandler(OscChannel ch, char* address, int idx, OscData
 {
   UNUSED(idx);
   if (datalen == 0) { // it's a request
-    OscData d;
-    d.value.i = networkDhcp() ? 1 : 0;
-    d.type = INT;
+    OscData d = { .type = INT, .value.i = networkDhcp() ? 1 : 0 };
     oscCreateMessage(ch, address, &d, 1);
   }
   else if (datalen == 1 && data[0].type == INT) {
-    networkSetDhcp(data[0].value.i, 0);
+    networkSetDhcp(data[0].value.i, 100);
   }
 }
 
