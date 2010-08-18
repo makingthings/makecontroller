@@ -82,7 +82,7 @@ extern const OscNode oscRoot; // must be defined by the user
 #ifdef MAKE_CTRL_USB
 
 #ifndef OSC_USB_STACK_SIZE
-#define OSC_USB_STACK_SIZE 2048
+#define OSC_USB_STACK_SIZE 1024
 #endif
 
 static WORKING_AREA(waUsbThd, OSC_USB_STACK_SIZE);
@@ -181,19 +181,31 @@ bool oscUdpEnable(bool on, int port)
   return false;
 }
 
-// TODO - maintain these in EEPROM
 void oscUdpSetReplyPort(int port)
 {
-  osc.udpReplyPort = port;
+  if (osc.udpReplyPort != port) {
+    osc.udpReplyPort = port;
+    eepromWrite(EEPROM_OSC_UDP_SEND_PORT, port);
+  }
 }
 
 int oscUdpReplyPort()
 {
+  if (osc.udpReplyPort == 0) { // uninitialized
+    osc.udpReplyPort = eepromRead(EEPROM_OSC_UDP_SEND_PORT);
+    if (osc.udpReplyPort < 0 || osc.udpReplyPort > 65536)
+      osc.udpReplyPort = OSC_UDP_DEFAULT_PORT;
+  }
   return osc.udpReplyPort;
 }
 
 int oscUdpListenPort()
 {
+  if (osc.udpListenPort == 0) { // uninitialized
+    osc.udpListenPort = eepromRead(EEPROM_OSC_UDP_LISTEN_PORT);
+    if (osc.udpListenPort < 0 || osc.udpListenPort > 65536)
+      osc.udpListenPort = OSC_UDP_DEFAULT_PORT;
+  }
   return osc.udpListenPort;
 }
 
