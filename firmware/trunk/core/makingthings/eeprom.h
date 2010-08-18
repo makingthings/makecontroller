@@ -68,5 +68,6 @@ int  eepromWriteBlock(int address, uint8_t *data, int length);
 #define EEPROM_DIPSWITCH_AUTOSEND      EEPROM_SYSTEM_BASE + 212
 #define EEPROM_ANALOGIN_AUTOSEND      EEPROM_SYSTEM_BASE + 216
 #define EEPROM_OSC_ASYNC_INTERVAL      EEPROM_SYSTEM_BASE + 220
+#define EEPROM_DIGITALIN_AUTOSEND      EEPROM_SYSTEM_BASE + 224
 
 #endif
