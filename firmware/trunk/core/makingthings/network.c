@@ -319,7 +319,7 @@ bool networkDhcpStop(int timeout)
   \endcode
 */
 #if LWIP_DNS
-int networkGetHostByName(const char *name, int timeout)
+int networkGetHostByName(const char *name)
 {
   struct ip_addr address;
   err_t result = dns_gethostbyname(name, &address, dnsCallback, &dns);
@@ -328,7 +328,7 @@ int networkGetHostByName(const char *name, int timeout)
   }
   else if (result == ERR_INPROGRESS) {
     // a lookup is in progress - wait for the callback to signal that we've gotten a response
-    return (chSemWaitTimeout(&dns.semaphore, S2ST(timeout)) == RDY_OK) ? dns.resolvedAddress : -1;
+    return (chSemWait(&dns.semaphore) == RDY_OK) ? dns.resolvedAddress : -1;
   }
   else
     return -1;
@@ -406,7 +406,8 @@ static void networkOscAddressHandler(OscChannel ch, char* address, int idx, OscD
     int a = networkAddressFromString(data[0].value.s);
     int m = networkAddressFromString(data[1].value.s);
     int g = networkAddressFromString(data[2].value.s);
-    networkSetAddress(a, m, g);
+    if (a != -1 && m != -1 && g != -1)
+      networkSetAddress(a, m, g);
   }
   else if (datalen == 0) {
     char addrbuf[16];

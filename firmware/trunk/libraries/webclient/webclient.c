@@ -30,10 +30,6 @@
 #define WEBCLIENT_BUFFER_SIZE 128
 #endif
 
-#ifndef WEBCLIENT_DNS_TIMEOUT
-#define WEBCLIENT_DNS_TIMEOUT 30
-#endif
-
 static int webclientReadResponse(int s, char* buf, int size);
 static char webclientBuf[WEBCLIENT_BUFFER_SIZE];
 
@@ -71,7 +67,7 @@ static char webclientBuf[WEBCLIENT_BUFFER_SIZE];
 */
 int webclientGet(const char* hostname, const char* path, int port, char* response, int maxresponse, const char* headers[])
 {
-  int s = tcpOpen(networkGetHostByName(hostname, WEBCLIENT_DNS_TIMEOUT), port);
+  int s = tcpOpen(networkGetHostByName(hostname), port);
   if (s > -1) {
     // construct the GET request
     int len = sniprintf(webclientBuf, WEBCLIENT_BUFFER_SIZE, "GET %s HTTP/1.1\r\n%s%s%s",
@@ -125,7 +121,7 @@ int webclientGet(const char* hostname, const char* path, int port, char* respons
 */
 int webclientPost(const char* hostname, const char* path, int port, char* data, int data_length, int maxresponse, const char* headers[])
 {
-  int s = tcpOpen(networkGetHostByName(hostname, WEBCLIENT_DNS_TIMEOUT), port);
+  int s = tcpOpen(networkGetHostByName(hostname), port);
   if (s > -1) {
     int len = sniprintf(webclientBuf, WEBCLIENT_BUFFER_SIZE,
                                 "POST %s HTTP/1.1\r\nContent-Length: %d\r\n%s%s%s", 
@@ -217,6 +213,3 @@ int webclientReadResponse(int s, char* buf, int size)
 }
 
 #endif // MAKE_CTRL_NETWORK
-
-
-
