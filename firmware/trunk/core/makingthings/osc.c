@@ -71,6 +71,7 @@ typedef struct Osc_t {
 static void oscReceivePacket(OscChannel ch, char* data, uint32_t len);
 static void oscReceiveMessage(OscChannel ch, char* data, uint32_t len);
 static void oscResetChannel(OscChannelData* ch);
+static OscChannelData* oscGetChannelByType(OscChannel ct);
 static uint32_t oscExtractData(char* buf, uint32_t len, OscData data[], int maxdata);
 static bool oscDispatchNode(OscChannel ch, char* addr, char* fulladdr,
                               const OscNode* node, OscData d[], int datalen);
@@ -82,7 +83,7 @@ extern const OscNode oscRoot; // must be defined by the user
 #ifdef MAKE_CTRL_USB
 
 #ifndef OSC_USB_STACK_SIZE
-#define OSC_USB_STACK_SIZE 1024
+#define OSC_USB_STACK_SIZE 1536
 #endif
 
 static WORKING_AREA(waUsbThd, OSC_USB_STACK_SIZE);
@@ -134,7 +135,7 @@ bool oscUsbEnable(bool on)
 #ifdef MAKE_CTRL_NETWORK
 
 #ifndef OSC_UDP_STACK_SIZE
-#define OSC_UDP_STACK_SIZE 1024
+#define OSC_UDP_STACK_SIZE 1536
 #endif
 
 static WORKING_AREA(waUdpThd, OSC_UDP_STACK_SIZE);
@@ -217,20 +218,24 @@ static msg_t OscAutosendThread(void *arg)
   UNUSED(arg);
   uint8_t i;
   const OscNode* node;
+  OscChannelData* chd;
 
   while (!chThdShouldTerminate()) {
     if (osc.autosendDestination == NONE) {
       sleep(250);
     }
     else {
+      chd = oscGetChannelByType(osc.autosendDestination);
       i = 0;
       node = oscRoot.children[i++];
+      chMtxLock(&chd->lock);
       while (node != 0) {
         if (node->autosender != 0)
           node->autosender(osc.autosendDestination);
         node = oscRoot.children[i++];
       }
       oscSendPendingMessages(osc.autosendDestination);
+      chMtxUnlock();
       sleep(osc.autosendPeriod);
     }
   }
@@ -296,7 +301,8 @@ void oscSetAutosendInterval(uint32_t interval)
   }
 }
 
-static OscChannelData* oscGetChannelByType(OscChannel ct) {
+OscChannelData* oscGetChannelByType(OscChannel ct)
+{
 #ifdef MAKE_CTRL_USB
   if (ct == USB) return &osc.usb;
 #endif
