@@ -509,9 +509,13 @@ static void systemInfoOsc(OscChannel ch, char* address, int idx, OscData d[], in
     {
       char verStr[30];
       char ipaddr[16];
+      #ifdef MAKE_CTRL_NETWORK
       int addr;
       networkAddress(&addr, 0, 0);
       networkAddressToString(ipaddr, addr);
+      #else
+      siprintf(ipaddr, "0.0.0.0");
+      #endif
       sniprintf(verStr, sizeof(verStr), "%s %d.%d.%d", FIRMWARE_NAME, FIRMWARE_MAJOR_VERSION, FIRMWARE_MINOR_VERSION, FIRMWARE_BUILD_NUMBER);
       OscData oscd[5] = {
         { .type = STRING, .value.s = (char*)systemName() },
@@ -526,17 +530,31 @@ static void systemInfoOsc(OscChannel ch, char* address, int idx, OscData d[], in
     {
       char mask[16];
       char gateway[16];
+      #ifdef MAKE_CTRL_NETWORK
       int m, g;
       networkAddress(0, &m, &g);
       networkAddressToString(mask, m);
       networkAddressToString(gateway, g);
+      #else
+      siprintf(mask, "0.0.0.0");
+      siprintf(gateway, "0.0.0.0");
+      #endif
       OscData oscd[6] = {
+        #ifdef MAKE_CTRL_NETWORK
         { .type = INT, .value.i = networkDhcp() },
+        #else
+        { .type = INT, .value.i = 0 },
+        #endif
         { .type = INT, .value.i = 0 }, // used to be for webserver...deprecate eventually
         { .type = STRING, .value.s = gateway },
         { .type = STRING, .value.s = mask },
+        #ifdef MAKE_CTRL_NETWORK
         { .type = INT, .value.i = oscUdpListenPort() },
         { .type = INT, .value.i = oscUdpReplyPort() }
+        #else
+        { .type = INT, .value.i = 0 },
+        { .type = INT, .value.i = 0 }
+        #endif
       };
       siprintf(endofaddr, "-b");
       oscCreateMessage(ch, address, oscd, 6);

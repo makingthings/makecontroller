@@ -192,8 +192,7 @@ int tcpReadLine(int socket, char* data, int length)
   int lineLength = -1;
   data--;
   
-  do // Upon entering, data points to char prior to buffer, length is -1
-  {
+  do { // Upon entering, data points to char prior to buffer, length is -1
     data++; // here data points to where byte will be written
     lineLength++; // linelength now reflects true number of bytes
     readLength = tcpRead(socket, data, 1);
@@ -211,7 +210,3 @@ int tcpReadLine(int socket, char* data, int length)
 */
 
 #endif // MAKE_CTRL_NETWORK
-
-
-
-
