@@ -16,11 +16,7 @@
 *********************************************************************************/
 
 #include "spi.h"
-#include "error.h"
-#include "config.h"
-#include <ch.h>
-#include "pin.h"
-#include "at91sam7.h"
+#include "core.h"
 
 #if ( (CONTROLLER_VERSION == 50) || (CONTROLLER_VERSION >= 95) )
   #define SPI_SEL0_IO           PIN_PA12
@@ -92,18 +88,9 @@ void spiInit(void)
 
   AT91C_BASE_SPI0->SPI_IDR = 0x3FF; // All interrupts are off
 
-  // Set up the IO lines for the peripheral
-  AT91C_BASE_PIOA->PIO_PDR = AT91C_PA16_SPI0_MISO |
-                              AT91C_PA17_SPI0_MOSI |
-                              AT91C_PA18_SPI0_SPCK;
-
-  AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PA16_SPI0_MISO;
-  AT91C_BASE_PIOA->PIO_ODR = AT91C_PA16_SPI0_MISO;
-
+  pinSetMode(PIN_PA16, INPUT); // this disables the pullup
   // Select the correct Devices
-  AT91C_BASE_PIOA->PIO_ASR = AT91C_PA16_SPI0_MISO |
-                              AT91C_PA17_SPI0_MOSI |
-                              AT91C_PA18_SPI0_SPCK;
+  pinGroupSetMode(GROUP_A, PIN_PA16_BIT | PIN_PA17_BIT | PIN_PA18_BIT, PERIPHERAL_A);
 
   AT91C_BASE_SPI0->SPI_CR = AT91C_SPI_SPIEN;
 }
@@ -140,9 +127,9 @@ int spiConfigure(int channel, int bits, int clockDivider, int delayBeforeSPCK, i
   if (delayBetweenTransfers < 0 || delayBetweenTransfers > 255)
     return CONTROLLER_ERROR_ILLEGAL_PARAMETER_VALUE;
 
-  AT91C_BASE_SPI0->SPI_CSR[ channel ] =
+  AT91C_BASE_SPI0->SPI_CSR[channel] =
         AT91C_SPI_NCPHA | // Clock Phase TRUE
-        ((( bits - 8) << 4) & AT91C_SPI_BITS) | // Transfer bits
+        (((bits - 8) << 4) & AT91C_SPI_BITS) | // Transfer bits
         ((clockDivider << 8) & AT91C_SPI_SCBR) | // Serial Clock Baud Rate Divider (255 = slow)
         ((delayBeforeSPCK << 16) & AT91C_SPI_DLYBS) | // Delay before SPCK
         ((delayBetweenTransfers << 24) & AT91C_SPI_DLYBCT); // Delay between transfers
@@ -152,7 +139,7 @@ int spiConfigure(int channel, int bits, int clockDivider, int delayBeforeSPCK, i
 
 /**
   Exchange a block of data.
-  Since SPI always involves a two-way transfer, this writes the data originally
+  SPI always involves a two-way transfer, so this writes the data originally
   contained in \b buffer and reads the response data back into \b buffer.
   @param channel Which channel to communicate on.
   @param buffer The buffer to read/write data from.
