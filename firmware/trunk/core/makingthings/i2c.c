@@ -199,7 +199,7 @@ int i2cWrite(uint8_t deviceAddr, const uint8_t *data, uint8_t length,
   // Write first byte to send - this generates a START event when in write mode
   AT91C_BASE_TWI->TWI_THR = data[0];
   AT91C_BASE_TWI->TWI_IER = (AT91C_TWI_TXRDY | AT91C_TWI_NACK); // turn on interrupts
-  return (chSemWaitTimeout(&i2cDriver.sem, MS2ST(1000)) == RDY_OK) ? i2cDriver.state : I2C_TIMED_OUT;
+  return (chSemWait(&i2cDriver.sem) == RDY_OK) ? i2cDriver.state : I2C_TIMED_OUT;
 }
 
 /**
@@ -237,7 +237,7 @@ int i2cRead(uint8_t deviceAddr, uint8_t *data, uint8_t length,
   AT91C_BASE_TWI->TWI_CR = (length > 1) ? AT91C_TWI_START : AT91C_TWI_START
       | AT91C_TWI_STOP;
   // wait for the isr handler to take care of business
-  return (chSemWaitTimeout(&i2cDriver.sem, MS2ST(1000)) == RDY_OK) ? i2cDriver.state : I2C_TIMED_OUT;
+  return (chSemWait(&i2cDriver.sem) == RDY_OK) ? i2cDriver.state : I2C_TIMED_OUT;
 }
 
 static uint32_t power(unsigned int x, unsigned int y)
