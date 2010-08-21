@@ -47,10 +47,11 @@ typedef struct OscNode_t {
 extern "C" {
 #endif
 bool oscUsbEnable(bool on);
-bool oscUdpEnable(bool on, int port);
+bool oscUdpEnable(bool on);
 void oscAutosendEnable(bool enabled);
 void oscUdpSetReplyPort(int port);
 int  oscUdpReplyPort(void);
+void oscUdpSetListenPort(int port);
 int  oscUdpListenPort(void);
 void oscLockChannel(OscChannel ct);
 void oscUnlockChannel(OscChannel ct);

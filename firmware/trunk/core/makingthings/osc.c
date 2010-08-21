@@ -164,11 +164,11 @@ static int oscSendMessageUDP(const char* data, int len)
   return udpWrite(osc.udpsock, data, len, osc.udpReplyAddress, osc.udpReplyPort);
 }
 
-bool oscUdpEnable(bool on, int port)
+bool oscUdpEnable(bool on)
 {
   if (on && osc.udpThd == 0) {
     osc.udpListenPort = OSC_UDP_DEFAULT_PORT;
-    osc.udpReplyPort = (port == -1) ? OSC_UDP_DEFAULT_PORT : port;
+    oscUdpReplyPort();
     osc.udp.sendMessage = oscSendMessageUDP;
     chMtxInit(&osc.udp.lock);
     osc.udpThd = chThdCreateStatic(waUdpThd, sizeof(waUdpThd), NORMALPRIO, OscUdpThread, NULL);
@@ -198,6 +198,14 @@ int oscUdpReplyPort()
       osc.udpReplyPort = OSC_UDP_DEFAULT_PORT;
   }
   return osc.udpReplyPort;
+}
+
+void oscUdpSetListenPort(int port)
+{
+  if (osc.udpListenPort != port) {
+    osc.udpListenPort = port;
+    eepromWrite(EEPROM_OSC_UDP_LISTEN_PORT, port);
+  }
 }
 
 int oscUdpListenPort()
