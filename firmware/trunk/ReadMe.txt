@@ -4,7 +4,9 @@ For a reference of the available modules, see http://www.makingthings.com/ref/fi
 
 Required Tools
 ===============
-* a GnuARM toolchain - you can find pre-built versions at http://sourceforge.net/projects/yagarto/files/
+* a GnuARM toolchain - you can find pre-built versions at
+** Windows: http://sourceforge.net/projects/yagarto/files/
+** OS X and Linux: http://github.com/jsnyder/arm-eabi-toolchain/downloads
 * the `make` utility - on OS X, you'll need to install the Xcode developer tools, on Windows YAGARTO provides it
 
 Building
