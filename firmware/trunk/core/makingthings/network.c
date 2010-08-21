@@ -430,7 +430,7 @@ static void networkOscAddressHandler(OscChannel ch, char* address, int idx, OscD
 static void networkOscUdpPortHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
 {
   UNUSED(idx);
-  if (datalen == 0) { // it's a request
+  if (datalen == 0) {
     OscData d = { .value.i = oscUdpReplyPort(), .type = INT };
     oscCreateMessage(ch, address, &d, 1);
   }
@@ -439,10 +439,23 @@ static void networkOscUdpPortHandler(OscChannel ch, char* address, int idx, OscD
   }
 }
 
+static void networkOscUdpListenPortHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
+{
+  UNUSED(idx);
+  if (datalen == 0) {
+    OscData d = { .value.i = oscUdpListenPort(), .type = INT };
+    oscCreateMessage(ch, address, &d, 1);
+  }
+  else if (datalen == 1 && data[0].type == INT) {
+    oscUdpSetListenPort(data[0].value.i);
+  }
+}
+
 static const OscNode networkOscFind = { .name = "find", .handler = networkOscFindHandler };
 static const OscNode networkOscDhcp = { .name = "dhcp", .handler = networkOscDhcpHandler };
 static const OscNode networkOscAddress = { .name = "address", .handler = networkOscAddressHandler };
-static const OscNode networkOscUdpPort = { .name = "osc_udp_listen_port", .handler = networkOscUdpPortHandler };
+static const OscNode networkOscUdpSendPort = { .name = "osc_udp_send_port", .handler = networkOscUdpPortHandler };
+static const OscNode networkOscUdpListenPort = { .name = "osc_udp_listen_port", .handler = networkOscUdpListenPortHandler };
 
 const OscNode networkOsc = {
   .name = "network",
@@ -450,7 +463,8 @@ const OscNode networkOsc = {
     &networkOscFind,
     &networkOscDhcp,
     &networkOscAddress,
-    &networkOscUdpPort, 0
+    &networkOscUdpSendPort,
+    &networkOscUdpListenPort, 0
   }
 };
 
