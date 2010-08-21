@@ -18,21 +18,46 @@
 #include "core.h"
 #include "osc.h"
 #include "appled.h"
+#include "dipswitch.h"
+#include "digitalin.h"
+#include "digitalout.h"
+#include "motor.h"
 
 const OscNode oscRoot = {
   .children = {
     &appledOsc,
-    &ainOsc, 0
+    &analoginOsc,
+    &systemOsc,
+    #ifdef MAKE_CTRL_NETWORK
+    &networkOsc,
+    #endif
+    #if APPBOARD_VERSION <= 100
+    &dipswitchOsc,
+    #endif
+    &pinOsc,
+    &digitalinOsc,
+    &digitaloutOsc,
+    0
   }
 };
 
 void setup()
 {
-  usbserialInit();
-  networkInit();
+  appledInit();
+  digitaloutInit();
+  #if APPBOARD_VERSION <= 100
+  dipswitchInit();
+  #endif
 
+  usbserialInit();
   oscUsbEnable(YES);
-  oscUdpEnable(YES, 10000);
+
+  #ifdef MAKE_CTRL_NETWORK
+  networkInit();
+  oscUdpEnable(YES);
+  #endif
+
+  oscAutosendEnable(YES);
 }
 
 void loop()

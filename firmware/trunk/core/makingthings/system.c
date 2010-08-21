@@ -112,7 +112,7 @@ int systemSetSerialNumber(int serial)
   \b Example
   \code
   // prepare to be uploaded
-  System_SetSamba(1);
+  systemSamba(1);
   \endcode
 */
 void systemSamba(bool sure)
@@ -274,87 +274,6 @@ void systemReset(bool sure)
 #ifdef OSC
 #include <stdio.h>
 
-//void System_StackAudit( int on_off )
-//{
-//  System_SetActive( 1 );
-//  if( System->StackAuditPtr == NULL && on_off )
-//    System->StackAuditPtr = TaskCreate( StackAuditTask, "StackAudit", 700, 0, 5 );
-//  
-//  if( System->StackAuditPtr != NULL && !on_off )
-//  {
-//    TaskDelete( System->StackAuditPtr );
-//    System->StackAuditPtr = NULL;
-//  }
-//}
-//
-//void StackAuditTask( void* p )
-//{
-//  (void)p;
-//  void* task = NULL;
-//  while( 1 )
-//  {
-//    task = TaskGetNext( task );
-//    int stackremaining = TaskGetRemainingStack( task );
-//    if( stackremaining < 50 )
-//    {
-//      //Led_SetState( 1 );
-//      Debug( DEBUG_WARNING, "Warning: Stack running low on task %s. %d bytes left.", TaskGetName( task ), stackremaining );
-//    }
-//
-//    int freemem = System_GetFreeMemory( );
-//    if( freemem < 100 )
-//    {
-//      //Led_SetState( 1 );
-//      Debug( DEBUG_WARNING, "Warning: System memory running low. %d bytes left.", freemem );
-//    }
-//    
-//    Sleep( 5 );
-//  }
-//}
-
-//void systemSetAutosendDestination(int dest)
-//{
-//  if (_autoDestination != dest) {
-//    _autoDestination = dest;
-//    eepromErite(EEPROM_OSC_ASYNC_DEST, _autoDestination);
-//  }
-//}
-
-//int systemAutosendDestination()
-//{
-//  if (_autoDestination == ASYNC_INIT) {
-//    int async = eepromRead(EEPROM_OSC_ASYNC_DEST);
-//    if (async >= 0 && async <= 1) // either usb or udp
-//      _autoDestination = async;
-//    else
-//      _autoDestination = ASYNC_INACTIVE;
-//  }
-//  return _autoDestination;
-//}
-//
-//void systemSetAutosendInterval(int interval)
-//{
-//  if (interval < 0 || interval > 5000)
-//    return;
-//
-//  if (_autoInterval != interval) {
-//    _autoInterval = interval;
-//    eepromWrite(EEPROM_OSC_ASYNC_INTERVAL, interval);
-//  }
-//}
-//
-//int systemAutosendInterval()
-//{
-//  if (_autoInterval == ASYNC_INIT) {
-//    int interval = eepromRead(EEPROM_OSC_ASYNC_INTERVAL);
-//    if (interval >= 0 && interval <= 5000)
-//      _autoInterval = interval;
-//    else
-//      _autoInterval = 10;
-//  }
-//  return _autoInterval;
-//}
-
 /** \defgroup SystemOSC System - OSC
   System controls many of the logistics of the Controller Board via OSC.
   \ingroup OSC
@@ -370,9 +289,6 @@ void systemReset(bool sure)
     - reset
     - serialnumber
     - version
-    - stack-audit
-    - task-report
-    - active
 
     \par Name
     The \b name property allows you to give a board its own name.  The name can only contain
@@ -418,17 +334,6 @@ void systemReset(bool sure)
     \par
     To read the board's version, send the message
     \verbatim /system/version \endverbatim
-
-    \par Active
-    The \b active property corresponds to the active state of System.
-    If System is set to be inactive, it will not respond to any other OSC messages.
-    If you're not seeing appropriate
-    responses to your messages to System, check the whether it's
-    active by sending a message like
-    \verbatim /system/active \endverbatim
-    \par
-    You can set the active flag by sending
-    \verbatim /system/active 1 \endverbatim
 */
 
 static void systemNameOsc(OscChannel ch, char* address, int idx, OscData d[], int datalen)
