@@ -645,6 +645,9 @@ CH_IRQ_HANDLER( USBD_ISR ) {
 /// Manages device resume, suspend, end of bus reset. 
 /// Forwards endpoint interrupts to the appropriate handler.
 //------------------------------------------------------------------------------
+#if defined(__GNU__)
+__attribute__((noinline))
+#endif
 void USBD_InterruptHandler(void)
 {
     unsigned int status;
