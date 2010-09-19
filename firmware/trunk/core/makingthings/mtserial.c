@@ -15,7 +15,7 @@
 
 *********************************************************************************/
 
-#include "serial.h"
+#include "mtserial.h"
 #include "core.h"
 
 #ifndef SERIAL_DEFAULT_PARITY

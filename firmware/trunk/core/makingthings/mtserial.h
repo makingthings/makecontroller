@@ -15,8 +15,8 @@
 
 *********************************************************************************/
 
-#ifndef SERIAL_H
-#define SERIAL_H
+#ifndef MT_SERIAL_H
+#define MT_SERIAL_H
 
 #include "types.h"
 
@@ -34,4 +34,4 @@ int  serialPut(int port, char c, int timeout);
 #ifdef __cplusplus
 }
 #endif
-#endif // SERIAL_H
+#endif // MT_SERIAL_H
