@@ -75,6 +75,8 @@ void name##Function()
 #define randomMinMax(min, max) ((rand() % (max - min + 1)) + min)
 #define randomSeed(s) srand(s)
 
+#include "config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -107,11 +109,16 @@ void kill(void);
 #include "fasttimer.h"
 #include "led.h"
 #include "analogin.h"
+
+#ifdef MAKE_CTRL_NETWORK
 #include "network.h"
 #include "udpsocket.h"
 #include "tcpsocket.h"
 #include "tcpserver.h"
+#endif // MAKE_CTRL_NETWORK
+#ifdef MAKE_CTRL_USB
 #include "usbserial.h"
 #include "usbmouse.h"
+#endif
 
 #endif // CORE_H
