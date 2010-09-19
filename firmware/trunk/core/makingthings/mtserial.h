@@ -20,6 +20,10 @@
 
 #include "types.h"
 
+#define SERIAL_0    0 /**< symbol for serial port 0 */
+#define SERIAL_1    1 /**< symbol for serial port 1 */
+#define SERIAL_DBG  2 /**< symbol for the debug serial port */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
