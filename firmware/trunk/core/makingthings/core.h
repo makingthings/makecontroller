@@ -78,12 +78,13 @@ void name##Function()
 #ifdef __cplusplus
 extern "C" {
 #endif
-// C-only business in here
-
 // for user code
 void setup(void);
 void loop(void);
 void kill(void);
+#ifdef __cplusplus
+}
+#endif
 
 #include "ch.h"
 #include "hal.h"
@@ -115,10 +116,6 @@ void kill(void);
 #ifdef MAKE_CTRL_USB
 #include "usbserial.h"
 #include "usbmouse.h"
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif // CORE_H
