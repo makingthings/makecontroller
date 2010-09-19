@@ -23,7 +23,7 @@
 #ifndef CORE_H
 #define CORE_H
 
-#define UNUSED(x) (void)x;
+#define UNUSED(x) (void)x
 #define MIN(a, b) ((a < b) ? a : b)
 #define MAX(a, b) ((a > b) ? a : b)
 
@@ -107,15 +107,11 @@ void kill(void);
 #include "fasttimer.h"
 #include "led.h"
 #include "analogin.h"
-#ifdef MAKE_CTRL_NETWORK
 #include "network.h"
 #include "udpsocket.h"
 #include "tcpsocket.h"
 #include "tcpserver.h"
-#endif // MAKE_CTRL_NETWORK
-#ifdef MAKE_CTRL_USB
 #include "usbserial.h"
 #include "usbmouse.h"
-#endif
 
 #endif // CORE_H
