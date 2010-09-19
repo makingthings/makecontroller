@@ -39,7 +39,7 @@ int  usbserialPut(char c);
 int  usbserialReadSlip(char *buffer, int length, int timeout);
 int  usbserialWriteSlip(const char *buffer, int length, int timeout);
 #ifdef __cplusplus
-extern "C" {
+}
 #endif
 
 #endif // USB_SERIAL_H
