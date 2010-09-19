@@ -135,6 +135,10 @@ void hwinit1(void)
   pwmInit();
   #endif
 
+  #ifndef NO_SERIAL_INIT
+  sdInit();
+  #endif
+
   // PIT Initialization.
   AIC_ConfigureIT(AT91C_ID_SYS,
                   AT91C_AIC_SRCTYPE_HIGH_LEVEL | (AT91C_AIC_PRIOR_HIGHEST - 1),
