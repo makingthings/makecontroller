@@ -4,7 +4,7 @@ MTCORESRC = ${MT}/board.c \
 						${MT}/system.c \
 						${MT}/led.c \
 						${MT}/pin.c \
-						${MT}/serial.c \
+						${MT}/mtserial.c \
 						${MT}/analogin.c \
 						${MT}/pwm.c \
 						${MT}/timer.c \
