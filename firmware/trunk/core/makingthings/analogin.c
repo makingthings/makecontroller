@@ -27,7 +27,7 @@
 
 struct AinDriver {
   Mutex mtx;                   // lock for the adc system
-  Semaphore sem;               // signal a conversion is complete
+  Thread *thd;
   bool processMultiChannelIsr; // are we waiting for a multi conversion or just a single channel
   uint8_t multiChannelConversions; // mask of which conversions have been completed
 };
@@ -76,16 +76,21 @@ static void analoginAutoSendInit(void);
 */
 int analoginValue(int channel)
 {
-  chMtxLock(&aind.mtx);
+  int value;
+  chSysLock();
+  chMtxLockS(&aind.mtx);
   aind.processMultiChannelIsr = NO;
   // disable other channels, and enable the one we want
   AT91C_BASE_ADC->ADC_CHDR = ~(1 << channel);
   AT91C_BASE_ADC->ADC_CHER = (1 << channel);
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // Start the conversion
 
-  chSemWait(&aind.sem);
-  int value = AT91C_BASE_ADC->ADC_LCDR & 0xFFFF; // grab the last converted value
-  chMtxUnlock();
+  aind.thd = chThdSelf();
+  chSchGoSleepS(THD_STATE_SUSPENDED);
+  // this thread gets rescheduled from the ISR
+  value = chThdSelf()->p_u.rdymsg;
+  chMtxUnlockS();
+  chSysUnlock();
   return value;
 }
 
@@ -114,7 +119,9 @@ bool analoginMulti(int values[])
   aind.multiChannelConversions = 0;         // which channels have completed
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START; // start the conversion
 
-  chSemWait(&aind.sem);
+  aind.thd = chThdSelf();
+  chSchGoSleepS(THD_STATE_SUSPENDED);
+  // this thread gets rescheduled from the ISR
 
   values[0] = AT91C_BASE_ADC->ADC_CDR0;
   values[1] = AT91C_BASE_ADC->ADC_CDR1;
@@ -129,24 +136,36 @@ bool analoginMulti(int values[])
   return true;
 }
 
+#if defined(__GNU__)
+__attribute__((noinline))
+#endif
 static void analoginServeInterrupt(void)
 {
   uint32_t status = AT91C_BASE_ADC->ADC_SR;
   if (aind.processMultiChannelIsr) {
     aind.multiChannelConversions |= (status & 0xFF); // EoC channels are the low byte
     // if we got End Of Conversion in all our channels, indicate we're done
-    if (aind.multiChannelConversions == 0xFF) {
-      status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
-      chSemSignalI(&aind.sem);
+    if (aind.multiChannelConversions == 0xFF && aind.thd) {
+      chSysLockFromIsr();
+      // dummy read to clear the AT91C_ADC_DRDY bit
+      (void)AT91C_BASE_ADC->ADC_LCDR;
+      chSchReadyI(aind.thd);
+      aind.thd = 0;
+      chSysUnlockFromIsr();
     }
   }
-  else if (status & AT91C_ADC_DRDY) {
-    status = AT91C_BASE_ADC->ADC_LCDR; // dummy read to clear
-    chSemSignalI(&aind.sem);
+  else if ((status & AT91C_ADC_DRDY) && (aind.thd != 0)) {
+    chSysLockFromIsr();
+    // send a msg back to the calling thread with the conversion result
+    aind.thd->p_u.rdymsg = AT91C_BASE_ADC->ADC_LCDR & 0xFFFF;
+    chSchReadyI(aind.thd);
+    aind.thd = 0;
+    chSysUnlockFromIsr();
   }
 }
 
-static CH_IRQ_HANDLER(analoginIsr) {
+static CH_IRQ_HANDLER(analoginIsr)
+{
   CH_IRQ_PROLOGUE();
   analoginServeInterrupt();
   AT91C_BASE_AIC->AIC_EOICR = 0;
@@ -156,34 +175,34 @@ static CH_IRQ_HANDLER(analoginIsr) {
 /**
   Initialize the analog in system.
 */
-void analoginInit(void)
+void analoginInit()
 {
   AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_ADC; // enable the peripheral clock
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_SWRST;     // reset to clear out previous settings
   
+  // ADCClock = MCK / ( (PRESCAL+1) * 2 )
+  // Startup Time = (STARTUP+1) * 8 / ADCClock
+  // Sample & Hold Time = SHTIM/ADCClock
+
   // prescal = (mckClock / (2*adcClock)) - 1;
   // startup = ((adcClock/1000000) * startupTime / 8) - 1;
   // shtim = (((adcClock/1000000) * sampleAndHoldTime)/1000) - 1;
   
   // Set up
   AT91C_BASE_ADC->ADC_MR =
-       AT91C_ADC_TRGEN_DIS | // Hardware Trigger Disabled
-    // AT91C_ADC_TRGEN_EN  | // Hardware Trigger Disabled
-    //   AT91C_ADC_TRGSEL_ | // Hardware Trigger Disabled
-    // AT91C_ADC_TRGSEL_TIOA0  | // Trigger Selection Don't Care
-       AT91C_ADC_LOWRES_10_BIT | // 10 bit conversion
-    // AT91C_ADC_LOWRES_8_BIT | // 8 bit conversion
-       AT91C_ADC_SLEEP_NORMAL_MODE | // SLEEP
-    // AT91C_ADC_SLEEP_MODE | // SLEEP
-       ((9 << 8)    & AT91C_ADC_PRESCAL) | // Prescale rate (8 bits)
-       ((127 << 16) & AT91C_ADC_STARTUP) | // Startup rate
-       ((127 << 24) & AT91C_ADC_SHTIM ); // Sample and Hold Time
+       AT91C_ADC_TRGEN_DIS |                // Hardware Trigger Disabled
+       AT91C_ADC_LOWRES_10_BIT |            // 10 bit conversion
+       AT91C_ADC_SLEEP_NORMAL_MODE |        // normal mode (no SLEEP)
+       ((9 << 8)    & AT91C_ADC_PRESCAL) |  // Prescale rate (8 bits)
+       ((127 << 16) & AT91C_ADC_STARTUP) |  // Startup rate
+       ((127 << 24) & AT91C_ADC_SHTIM);     // Sample and Hold Time
    
   // initialize non-adc pins
+  // pins ADC4-7 can only ever be ADCs (not full GPIOs) so no need to configure them
   pinGroupSetMode(GROUP_B, ANALOGIN_0 | ANALOGIN_1 | ANALOGIN_2 | ANALOGIN_3, PAL_MODE_INPUT_ANALOG);
   
   // init locks
-  chSemInit(&aind.sem, 0);
+  aind.thd = 0;
   chMtxInit(&aind.mtx);
   aind.multiChannelConversions = NO;
   aind.processMultiChannelIsr = NO;
@@ -201,7 +220,7 @@ void analoginInit(void)
 /**
   Deinitialize the analog in system.
 */
-void analoginDeinit(void)
+void analoginDeinit()
 {
   AT91C_BASE_PMC->PMC_PCDR = 1 << AT91C_ID_ADC; // disable peripheral clock
   AIC_DisableIT(AT91C_ID_ADC);                  // disable interrupts
@@ -222,9 +241,8 @@ void analoginDeinit(void)
   There are 8 Analog Inputs on the Make Application Board, numbered 0 - 7.
   
   \section properties Properties
-  The Analog Ins have three properties:
+  The Analog Ins have the following properties:
   - value
-  - active
   - autosend
 
   \par Value
@@ -253,17 +271,6 @@ void analoginDeinit(void)
   to send via USB, and 
   \verbatim /system/autosend-udp 1 \endverbatim
   to send via Ethernet.  Via Ethernet, the board will send messages to the last address it received a message from.
-  
-  \par Active
-  The \b active property corresponds to the active state of an Analog In.
-  If an Analog In is set to be active, no other tasks will be able to
-  read from it as an Analog In.  If you're not seeing appropriate
-  responses to your messages to the Analog In, check the whether it's 
-  locked by sending a message like
-  \verbatim /analogin/0/active \endverbatim
-  \par
-  You can set the active flag by sending
-  \verbatim /analogin/0/active 1 \endverbatim
 */
 
 // sort of a checksum to verify whether a previous save was legit
