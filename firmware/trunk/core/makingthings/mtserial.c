@@ -263,7 +263,7 @@ char serialGet(int port, int timeout)
   int wrote = serialWrite(0, serialbuf, 3, 0);
   \endcode
 */
-int serialWrite(int port, char* buf, int len, int timeout)
+int serialWrite(int port, charc const* buf, int len, int timeout)
 {
 #if USE_SAM7_USART0
   if (port == 0)
