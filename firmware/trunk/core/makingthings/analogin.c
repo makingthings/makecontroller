@@ -111,7 +111,8 @@ int analoginValue(int channel)
 */
 bool analoginMulti(int values[])
 {
-  chMtxLock(&aind.mtx);
+  chSysLock();
+  chMtxLockS(&aind.mtx);
   // enable all the channels
   AT91C_BASE_ADC->ADC_CHER = 0xFF; // channel enables are the low byte
 
@@ -132,7 +133,8 @@ bool analoginMulti(int values[])
   values[6] = AT91C_BASE_ADC->ADC_CDR6;
   values[7] = AT91C_BASE_ADC->ADC_CDR7;
   
-  chMtxUnlock();
+  chMtxUnlockS();
+  chSysUnlock();
   return true;
 }
 
@@ -290,10 +292,8 @@ static void analoginOscHandler(OscChannel ch, char* address, int idx, OscData d[
 {
   UNUSED(d); UNUSED(address);
   if (datalen == 0) {
-    char specificAddress[19];
     OscData d = { .type = INT, .value.i = analoginValue(idx) };
-    sniprintf(specificAddress, sizeof(specificAddress), "/analogin/%d/value", idx);
-    oscCreateMessage(ch, specificAddress, &d, 1);
+    oscCreateMessage(ch, address, &d, 1);
   }
 }
 
