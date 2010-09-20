@@ -39,4 +39,3 @@ int  serialPut(int port, char c, int timeout);
 }
 #endif
 #endif // MT_SERIAL_H
-
