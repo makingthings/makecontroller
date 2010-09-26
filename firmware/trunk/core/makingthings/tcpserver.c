@@ -126,5 +126,3 @@ int tcpserverAccept(int server)
 */
 
 #endif // MAKE_CTRL_NETWORK
-
-
