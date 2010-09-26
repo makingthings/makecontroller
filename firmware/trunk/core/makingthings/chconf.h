@@ -38,6 +38,8 @@
 #ifndef _CHCONF_H_
 #define _CHCONF_H_
 
+#include "config.h"
+
 /*===========================================================================*/
 /* Kernel parameters.                                                        */
 /*===========================================================================*/
@@ -78,7 +80,11 @@
  * @note T  he default is @p FALSE.
  */
 #if !defined(CH_USE_NESTED_LOCKS) || defined(__DOXYGEN__)
+#ifdef MAKE_CTRL_NETWORK
+#define CH_USE_NESTED_LOCKS             TRUE
+#else
 #define CH_USE_NESTED_LOCKS             FALSE
+#endif // MAKE_CTRL_NETWORK
 #endif
 
 /**
