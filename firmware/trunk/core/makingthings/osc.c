@@ -106,16 +106,11 @@ static msg_t OscUsbSerialThread(void *arg)
   return 0;
 }
 
-static int oscSendMessageUSB(const char* data, int len)
-{
-  return usbserialWriteSlip(data, len);
-}
-
 bool oscUsbEnable(bool on)
 {
   if (on && osc.usbThd == 0) {
     chMtxInit(&osc.usb.lock);
-    osc.usb.sendMessage = oscSendMessageUSB;
+    osc.usb.sendMessage = usbserialWriteSlip;
     osc.usbThd = chThdCreateStatic(waUsbThd, sizeof(waUsbThd), NORMALPRIO, OscUsbSerialThread, NULL);
     return true;
   }
@@ -571,48 +566,34 @@ uint32_t oscExtractData(char* buf, uint32_t len, OscData data[], int datacount)
   return items;
 }
 
-/*
- * Write out an OSC timetag
- */
-static char* oscWriteTimetag(char* data, uint32_t* len, int a, int b)
-{
-  if (*len < 8)
-    return 0;
-  if ((data = oscEncodeInt32(data, len, a)) == NULL)
-    return 0;
-  return oscEncodeInt32(data, len, b);
-}
-
-static char* oscCreateBundle(char* data, uint32_t* len, int a, int b )
-{
-  if ((data = oscEncodeString(data, len, "#bundle")) == NULL)
-    return 0;
-  return oscWriteTimetag(data, len, a, b);
-}
-
 static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscData* data, int datacount)
 {
+  // temporary vals for these guys, since we might fail
+  // and don't want to affect the real pointers in that case
   char* buf = chd->outBufPtr;
-  uint32_t* len = &chd->outBufRemaining;
+  uint32_t len = chd->outBufRemaining;
   /*
     if this is the first msg in the buffer, write bundle
     info in there in case the outgoing message ends up
     being a bundle - can always be skipped if not needed
   */
   if (chd->outMsgCount == 0) {
-    if ((buf = oscCreateBundle(buf, len, 0, 0)) == NULL)
+    if (len < (8 /* #bundle */ + 8 /* timetag */))
       return 0;
+    buf = oscEncodeString(buf, &len, "#bundle");
+    buf = oscEncodeInt32(buf, &len, 0); // timetag
+    buf = oscEncodeInt32(buf, &len, 0);
   }
 
-  if (*len < sizeof(int))
+  if (len < sizeof(int))
     return 0;
   char* lenp = buf; // where to stick this message's length once we know it
   buf += sizeof(int);
-  *len -= sizeof(int);
+  len -= sizeof(int);
   char* messagestart = buf;
 
   // do the address
-  if ((buf = oscEncodeString(buf, len, address)) == NULL)
+  if ((buf = oscEncodeString(buf, &len, address)) == NULL)
     return 0;
 
   // build up the typetag
@@ -622,36 +603,36 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
   for (i = 0; i < datacount; i++)
     *t++ = data[i].type;
   *t = 0; // null terminate
-  if ((buf = oscEncodeString(buf, len, typetag)) == NULL)
-    return 0;
+  buf = oscEncodeString(buf, &len, typetag);
 
   // now pack the data
   for (i = 0; i < datacount && buf != NULL; i++) {
     switch (data[i].type) {
       case INT:
-        buf = oscEncodeInt32(buf, len, data[i].value.i);
+        buf = oscEncodeInt32(buf, &len, data[i].value.i);
         break;
       case FLOAT:
-        buf = oscEncodeFloat32(buf, len, data[i].value.f);
+        buf = oscEncodeFloat32(buf, &len, data[i].value.f);
         break;
       case STRING:
-        buf = oscEncodeString(buf, len, data[i].value.s);
+        buf = oscEncodeString(buf, &len, data[i].value.s);
         break;
       case BLOB:
-        buf = oscEncodeBlob(buf, len, data[i].value.b, 100);
+        buf = oscEncodeBlob(buf, &len, data[i].value.b, 100);
         break;
       default: break;
     }
   }
 
-  // write the length of this message
-  uint32_t dummylen = sizeof(int);
-  if (oscEncodeInt32(lenp, &dummylen, (buf - messagestart)) == NULL)
+  if (buf == NULL) // any failures along the way?
     return 0;
-  if (buf != NULL)
-    chd->outMsgCount++;
 
+  // write the vals back into the real pointers
+  chd->outMsgCount++;
   chd->outBufPtr = buf;
+  chd->outBufRemaining = len;
+  // write the length of this message - len is just used as a dummy here
+  oscEncodeInt32(lenp, &len, (buf - messagestart));
   return buf;
 }
 
@@ -689,7 +670,7 @@ int oscSendPendingMessages(OscChannel ch)
     data += 20;
     len -= 20;
   }
-  (*chd->sendMessage)(data, len);
+  chd->sendMessage(data, len);
   oscResetChannel(chd);
   return 1;
 }
