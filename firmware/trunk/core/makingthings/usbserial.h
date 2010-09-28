@@ -34,10 +34,10 @@ bool usbserialIsActive(void);
 int  usbserialAvailable(void);
 int  usbserialRead(char *buffer, int length, int timeout);
 char usbserialGet(void);
-int  usbserialWrite(const char *buffer, int length, int timeout);
+int  usbserialWrite(const char *buffer, int length);
 int  usbserialPut(char c);
 int  usbserialReadSlip(char *buffer, int length, int timeout);
-int  usbserialWriteSlip(const char *buffer, int length, int timeout);
+int  usbserialWriteSlip(const char *buffer, int length);
 #ifdef __cplusplus
 }
 #endif
