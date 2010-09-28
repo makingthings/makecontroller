@@ -37,6 +37,7 @@ static void usbserialOnTx(void *pArg, unsigned char status, unsigned int receive
 
 typedef struct UsbSerial_t {
   Semaphore txSemaphore;
+  Mutex txMutex;
   InputQueue inq;
   uint8_t inbuffer[USBSER_MAX_READ * 2];
   int justWrote;
@@ -95,6 +96,7 @@ void usbserialInit()
 {
   chIQInit(&usbSerial.inq, usbSerial.inbuffer, sizeof(usbSerial.inbuffer), usbserialInotify);
   chSemInit(&usbSerial.txSemaphore, 0);
+  chMtxInit(&usbSerial.txMutex);
   CDCDSerialDriver_Initialize();
   USBD_Connect();
 }
@@ -222,6 +224,7 @@ int usbserialWrite(const char *buffer, int length, int timeout)
 {
   int rv = -1;
   if (usbserialIsActive()) {
+    chMtxLock(&usbSerial.txMutex);
     if (USBD_Write(CDCDSerialDriverDescriptors_DATAIN,
           buffer, length, usbserialOnTx, 0) == USBD_STATUS_SUCCESS ) {
       if (chSemWaitTimeout(&usbSerial.txSemaphore, MS2ST(timeout)) == RDY_OK ) {
@@ -229,6 +232,7 @@ int usbserialWrite(const char *buffer, int length, int timeout)
         usbSerial.justWrote = 0;
       }
     }
+    chMtxUnlock();
   }
   return rv;
 }
