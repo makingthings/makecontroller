@@ -36,7 +36,7 @@ static void usbserialInotify(void);
 static void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsigned int remaining);
 
 typedef struct UsbSerial_t {
-  Semaphore txSemaphore;
+  Thread *thd;
   Mutex txMutex;
   InputQueue inq;
   uint8_t inbuffer[USBSER_MAX_READ * 2];
@@ -95,7 +95,7 @@ void usbserialInotify()
 void usbserialInit()
 {
   chIQInit(&usbSerial.inq, usbSerial.inbuffer, sizeof(usbSerial.inbuffer), usbserialInotify);
-  chSemInit(&usbSerial.txSemaphore, 0);
+  usbSerial.thd = 0;
   chMtxInit(&usbSerial.txMutex);
   CDCDSerialDriver_Initialize();
   USBD_Connect();
@@ -106,7 +106,6 @@ void usbserialInit()
 void USBDCallbacks_Reset()
 {
   chIQResetI(&usbSerial.inq);
-  chSemResetI(&usbSerial.txSemaphore, 0);
 }
 
 void USBDCallbacks_Suspended()
@@ -117,7 +116,6 @@ void USBDCallbacks_Suspended()
 void USBDCallbacks_Resumed()
 {
   chIQResetI(&usbSerial.inq);
-  chSemResetI(&usbSerial.txSemaphore, 0);
 }
 
 /**
@@ -224,15 +222,19 @@ int usbserialWrite(const char *buffer, int length, int timeout)
 {
   int rv = -1;
   if (usbserialIsActive()) {
-    chMtxLock(&usbSerial.txMutex);
+    chSysLock();
+    chMtxLockS(&usbSerial.txMutex);
     if (USBD_Write(CDCDSerialDriverDescriptors_DATAIN,
-          buffer, length, usbserialOnTx, 0) == USBD_STATUS_SUCCESS ) {
-      if (chSemWaitTimeout(&usbSerial.txSemaphore, MS2ST(timeout)) == RDY_OK ) {
-        rv = usbSerial.justWrote;
-        usbSerial.justWrote = 0;
-      }
+          buffer, length, usbserialOnTx, 0) == USBD_STATUS_SUCCESS )
+    {
+      usbSerial.thd = chThdSelf();
+      chSchGoSleepS(THD_STATE_SUSPENDED);
+      // this thread gets rescheduled from the ISR
+      rv = usbSerial.justWrote;
+      usbSerial.justWrote = 0;
     }
-    chMtxUnlock();
+    chMtxUnlockS();
+    chSysUnlock();
   }
   return rv;
 }
@@ -243,8 +245,11 @@ void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsi
   UNUSED(pArg);
   if (status == USBD_STATUS_SUCCESS)
     usbSerial.justWrote += received;
-  if (remaining == 0)
-    chSemSignalI(&usbSerial.txSemaphore);
+  if (remaining == 0 && usbSerial.thd != 0) {
+    // reschedule the thread waiting on the TX event
+    chSchReadyI(usbSerial.thd);
+    usbSerial.thd = 0;
+  }
 }
 
 #ifndef USBSER_NO_SLIP
