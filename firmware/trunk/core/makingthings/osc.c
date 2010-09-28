@@ -90,7 +90,6 @@ static WORKING_AREA(waUsbThd, OSC_USB_STACK_SIZE);
 static msg_t OscUsbSerialThread(void *arg)
 {
   UNUSED(arg);
-  bool val = 1;
 
   while (!usbserialIsActive())
     chThdSleepMilliseconds(50);
@@ -98,8 +97,6 @@ static msg_t OscUsbSerialThread(void *arg)
   while (!chThdShouldTerminate()) {
     int justGot = usbserialReadSlip(osc.usb.inBuf, sizeof(osc.usb.inBuf), 1000);
     if (justGot > 0) {
-      ledSetValue(val);
-      val = !val;
       chMtxLock(&osc.usb.lock);
       oscReceivePacket(USB, osc.usb.inBuf, justGot);
       oscSendPendingMessages(USB);
@@ -111,7 +108,7 @@ static msg_t OscUsbSerialThread(void *arg)
 
 static int oscSendMessageUSB(const char* data, int len)
 {
-  return usbserialWriteSlip(data, len, 1000);
+  return usbserialWriteSlip(data, len);
 }
 
 bool oscUsbEnable(bool on)
@@ -139,7 +136,8 @@ bool oscUsbEnable(bool on)
 #endif
 
 static WORKING_AREA(waUdpThd, OSC_UDP_STACK_SIZE);
-static msg_t OscUdpThread(void *arg) {
+static msg_t OscUdpThread(void *arg)
+{
   UNUSED(arg);
 
   while ((osc.udpsock = udpOpen()) < 0)
@@ -256,7 +254,7 @@ void oscAutosendEnable(bool enabled)
     // load up the interval and destination, and start the thread
     oscAutosendInterval();
     oscAutosendDestination();
-    osc.autosendThd = chThdCreateStatic(waAutosendThd, sizeof(waAutosendThd), NORMALPRIO, OscAutosendThread, NULL);
+    osc.autosendThd = chThdCreateStatic(waAutosendThd, sizeof(waAutosendThd), NORMALPRIO - 2, OscAutosendThread, NULL);
   }
   else if (!enabled && osc.autosendThd != 0) {
     chThdTerminate(osc.autosendThd);

@@ -203,22 +203,21 @@ char usbserialGet()
 int usbserialPut(char c)
 {
   char ch = c;
-  return usbserialWrite(&ch, 1, 100000);
+  return usbserialWrite(&ch, 1);
 }
 
 /**
   Write data to a USB host.
   @param buffer The data to send.
   @param length How many bytes to send.
-  @param timeout How many milliseconds to wait for the data to be written out.
-  @return The number of bytes successfully written.
+  @return The number of bytes successfully written, or -1 on error.
   
   \b Example
   \code
   int written = usbserialWrite("hi hi", 5);
   \endcode
 */
-int usbserialWrite(const char *buffer, int length, int timeout)
+int usbserialWrite(const char *buffer, int length)
 {
   int rv = -1;
   if (usbserialIsActive()) {
@@ -312,11 +311,10 @@ int usbserialReadSlip(char *buffer, int length, int timeout)
   of SLIP for more info.
   @param buffer The data to write.
   @param length The number of bytes to write.
-  @param timeout
   @return The number of characters successfully written.
   @see write() for a similar example.
 */
-int usbserialWriteSlip(const char *buffer, int length, int timeout)
+int usbserialWriteSlip(const char *buffer, int length)
 {
   char c;
   char* obp = usbSerial.slipOutBuf;
@@ -330,7 +328,7 @@ int usbserialWriteSlip(const char *buffer, int length, int timeout)
        case END:
          // if we don't have enough room in the current chunk for these 2 bytes, write out what we have first.
          if (obp - usbSerial.slipOutBuf >= USBSER_MAX_WRITE - 2) {
-           count += usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf), timeout);
+           count += usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf));
            obp = usbSerial.slipOutBuf;
          }
          *obp++ = (char)ESC;
@@ -341,7 +339,7 @@ int usbserialWriteSlip(const char *buffer, int length, int timeout)
        case ESC:
          // if we don't have enough room in the current chunk for these 2 bytes, write out what we have first.
           if (obp - usbSerial.slipOutBuf >= USBSER_MAX_WRITE - 2) {
-            count += usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf), timeout);
+            count += usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf));
             obp = usbSerial.slipOutBuf;
           }
          *obp++ = (char)ESC;
@@ -354,14 +352,14 @@ int usbserialWriteSlip(const char *buffer, int length, int timeout)
      length--;
      // is it time to write a chunk?
      if (obp - usbSerial.slipOutBuf >= USBSER_MAX_WRITE) {
-       count += usbserialWrite(usbSerial.slipOutBuf, sizeof(usbSerial.slipOutBuf), timeout);
+       count += usbserialWrite(usbSerial.slipOutBuf, sizeof(usbSerial.slipOutBuf));
        obp = usbSerial.slipOutBuf;
      }
    }
 
    chDbgAssert(length == 0, "usbserialWriteSlip()", "didn't write everything...");
    *obp++ = END; // end byte
-   count += usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf), timeout);
+   count += usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf));
    return count;
 }
 
