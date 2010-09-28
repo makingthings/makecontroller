@@ -317,50 +317,48 @@ int usbserialReadSlip(char *buffer, int length, int timeout)
 int usbserialWriteSlip(const char *buffer, int length)
 {
   char c;
-  char* obp = usbSerial.slipOutBuf;
+  char* obp = usbSerial.slipOutBuf + 1;
   int count = 1;
-  *obp++ = END; // clear out any line noise
-   while (length > 0) {
-     c = *buffer++;
-     switch (c) {
-       // if it's the same code as an END character, we send a special 
-       // two character code so as not to make the receiver think we sent an END.
-       case END:
-         // if we don't have enough room in the current chunk for these 2 bytes, write out what we have first.
-         if (obp - usbSerial.slipOutBuf >= USBSER_MAX_WRITE - 2) {
-           count += usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf));
-           obp = usbSerial.slipOutBuf;
-         }
-         *obp++ = (char)ESC;
-         *obp++ = (char)ESC_END;
-         break;
-       // if it's the same code as an ESC character, we send a special
-       // two character code so as not to make the receiver think we sent an ESC
-       case ESC:
-         // if we don't have enough room in the current chunk for these 2 bytes, write out what we have first.
-          if (obp - usbSerial.slipOutBuf >= USBSER_MAX_WRITE - 2) {
-            count += usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf));
-            obp = usbSerial.slipOutBuf;
-          }
-         *obp++ = (char)ESC;
-         *obp++ = (char)ESC_ESC;
-         break;
-       // otherwise, just send the character
-       default:
-         *obp++ = c;
-     }
-     length--;
-     // is it time to write a chunk?
-     if (obp - usbSerial.slipOutBuf >= USBSER_MAX_WRITE) {
-       count += usbserialWrite(usbSerial.slipOutBuf, sizeof(usbSerial.slipOutBuf));
-       obp = usbSerial.slipOutBuf;
-     }
-   }
+  usbSerial.slipOutBuf[0] = END;
+  while (length--) {
+    c = *buffer++;
+    switch (c) {
+      // if it's the same code as an END character, we send a special
+      // two character code so as not to make the receiver think we sent an END.
+      case END:
+        // if we don't have enough room in the current chunk for these 2 bytes, write out what we have first.
+        if (obp - usbSerial.slipOutBuf >= USBSER_MAX_WRITE - 2) {
+          count += usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf));
+          obp = usbSerial.slipOutBuf;
+        }
+        *obp++ = (char) ESC;
+        *obp++ = (char) ESC_END;
+        break;
+        // if it's the same code as an ESC character, we send a special
+        // two character code so as not to make the receiver think we sent an ESC
+      case ESC:
+        // if we don't have enough room in the current chunk for these 2 bytes, write out what we have first.
+        if (obp - usbSerial.slipOutBuf >= USBSER_MAX_WRITE - 2) {
+          count += usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf));
+          obp = usbSerial.slipOutBuf;
+        }
+        *obp++ = (char) ESC;
+        *obp++ = (char) ESC_ESC;
+        break;
+        // otherwise, just send the character
+      default:
+        *obp++ = c;
+        // is it time to write a chunk?
+        if (obp - usbSerial.slipOutBuf >= USBSER_MAX_WRITE) {
+          count += usbserialWrite(usbSerial.slipOutBuf, sizeof(usbSerial.slipOutBuf));
+          obp = usbSerial.slipOutBuf;
+        }
+        break;
+    }
+  }
 
-   chDbgAssert(length == 0, "usbserialWriteSlip()", "didn't write everything...");
-   *obp++ = END; // end byte
-   count += usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf));
-   return count;
+  *obp = END; // end byte
+  return count + usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf));
 }
 
 /** @}
