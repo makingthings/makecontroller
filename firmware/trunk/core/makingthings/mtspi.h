@@ -15,8 +15,8 @@
 
 *********************************************************************************/
 
-#ifndef SPI_H
-#define SPI_H
+#ifndef MT_SPI_H
+#define MT_SPI_H
 
 #include "types.h"
 
@@ -34,4 +34,4 @@ void spiUnlock(void);
 }
 #endif
 
-#endif // SPI__H
+#endif // MT_SPI_H

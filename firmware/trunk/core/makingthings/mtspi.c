@@ -15,7 +15,7 @@
 
 *********************************************************************************/
 
-#include "spi.h"
+#include "mtspi.h"
 #include "core.h"
 
 #if ( (CONTROLLER_VERSION == 50) || (CONTROLLER_VERSION >= 95) )
