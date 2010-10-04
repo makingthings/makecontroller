@@ -64,8 +64,24 @@
   }
   \endcode
 
+  \section printf printf Support
+  You can select a serial port to use as the destination for the stdin and stdout streams
+  used by printf and friends, such that when you try something like
+  \code printf("hi there %d\r\n", 45); \endcode
+  you see "hi there 45" written out the selected serial port.  To configure this, add lines like:
+  \code
+  #define STDOUT_SD SD1
+  #define STDIN_SD SD1
+  \endcode
+  to your config.h file.  Due to naming conventions in ChibiOS, SD1 corresponds to serial port 0, SD2
+  corresponds to serial port 1, and SD3 corresponds to the debug serial port on the Make Controller.
+
+  \section Configuration
   By default, the buffer for each serial port is 64 bytes.  You can customize this by
   defining \b SERIAL_BUFFERS_SIZE in your config.h file.
+
+  Normally, support for the debug serial port (DBGU) on the Make Conrtoller is not built in, but you
+  can include it by adding the line \code #define USE_SAM7_DBGU_UART 1 \endcode to your config.h file.
 
   \ingroup interfacing
   @{
