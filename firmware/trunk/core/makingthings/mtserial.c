@@ -53,12 +53,12 @@
   \code
   void myTask() {
     char serialdata[56];    // a buffer for storing the data we read
-    serialEnable(0, 9600);  // enable serial port 0 at 9600 baud
+    serialEnable(Serial0, 9600);  // enable serial port 0 at 9600 baud
     // now wait for bytes to arrive, and read them if possible
     while (1) {
-      int bytes = serialAvailable(0);
+      int bytes = serialAvailable(Serial0);
       if (bytes > 0) {
-        serialRead(0, serialdata, bytes, 0);
+        serialRead(Serial0, serialdata, bytes, 0);
       }
     }
   }
@@ -81,10 +81,10 @@
   - SERIAL_DEFAULT_STOPBITS 1
   - SERIAL_DEFAULT_HANDSHAKE NO
 
-  @param port Which serial port - valid options are 1-3.
+  @param port Which serial port - valid options are Serial0, Serial1, or SerialDbg.
   @param baud The rate of this serial port - common options are 9600, 34800, 57600, 115200.
 */
-void serialEnable(int port, int baud)
+void serialEnable(Serial port, int baud)
 {
   serialEnableAll(port, baud, SERIAL_DEFAULT_PARITY, SERIAL_DEFAULT_CHARBITS,
                 SERIAL_DEFAULT_STOPBITS, SERIAL_DEFAULT_HANDSHAKE);
@@ -92,7 +92,7 @@ void serialEnable(int port, int baud)
 
 /**
   Enable a serial port, specifying all the details.
-  @param port Which serial port - valid options are 1-3.
+  @param port Which serial port - valid options are Serial0, Serial1, or SerialDbg.
   @param baud The rate of this serial port - common options are 9600, 34800, 57600, 115200.
   @param parity -1 is odd, 0 is none, 1 is even. The default is none - 0.
   @param charbits The number of bits in a character - valid options are 5-8, default is 8.
@@ -102,10 +102,10 @@ void serialEnable(int port, int baud)
   \b Example
   \code
   // set up port 0 for 9600 baud
-  serialEnable(0, 9600, 0, 8, 1, NO);
+  serialEnable(Serial0, 9600, 0, 8, 1, NO);
   \endcode
 */
-void serialEnableAll(int port, int baud, int parity, int charbits, int stopbits, bool handshake)
+void serialEnableAll(Serial port, int baud, int parity, int charbits, int stopbits, bool handshake)
 {
   SerialConfig config = {
     baud,
@@ -117,83 +117,66 @@ void serialEnableAll(int port, int baud, int parity, int charbits, int stopbits,
   };
 
 #if USE_SAM7_USART0
-  if (port == 0 && SD1.state < SD_READY) {
+  if (port == Serial0 && Serial0->state < SD_READY) {
     if (handshake == YES) {
       AT91C_BASE_PIOA->PIO_PDR   = AT91C_PA3_RTS0 | AT91C_PA4_CTS0;
       AT91C_BASE_PIOA->PIO_ASR   = AT91C_PA3_RTS0 | AT91C_PA4_CTS0;
       AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PA3_RTS0 | AT91C_PA4_CTS0;
     }
-    sdStart(&SD1, &config);
+    sdStart(Serial0, &config);
   }
 #endif
 #if USE_SAM7_USART1
-  if (port == 1 && SD2.state < SD_READY) {
+  if (port == Serial1 && Serial1->state < SD_READY) {
     // careful - PA8/PA9 are SPI/EEPROM CS lines, but include these if you need them
     if (handshake == YES) {
       AT91C_BASE_PIOA->PIO_PDR   = AT91C_PA8_RTS1 | AT91C_PA9_CTS1;
       AT91C_BASE_PIOA->PIO_ASR   = AT91C_PA8_RTS1 | AT91C_PA9_CTS1;
       AT91C_BASE_PIOA->PIO_PPUDR = AT91C_PA8_RTS1 | AT91C_PA9_CTS1;
     }
-    sdStart(&SD2, &config);
+    sdStart(Serial1, &config);
   }
 #endif
 #if USE_SAM7_DBGU_UART
-  if (port == 2 && SD3.state < SD_READY) {
+  if (port == SerialDbg && SerialDbg->state < SD_READY) {
     // no handshake on dbgu
-    sdStart(&SD3, &config);
+    sdStart(SerialDbg, &config);
   }
 #endif
 }
 
 /**
   Disable a previously enabled serial port.
-  @param port Which serial port - valid options are 1-3.
+  @param port Which serial port - valid options are Serial0, Serial1, or SerialDbg.
 */
-void serialDisable(int port)
+void serialDisable(Serial port)
 {
-#if USE_SAM7_USART0
-  if (port == 0) sdStop(&SD1);
-#endif
-#if USE_SAM7_USART1
-  if (port == 1) sdStop(&SD2);
-#endif
-#if USE_SAM7_DBGU_UART
-  if (port == 2) sdStop(&SD3);
-#endif
+  sdStop(port);
 }
 
 /**
   Read the number of bytes available to be read from a serial port.
   This returns the number of bytes that have already been received,
   such that you can be sure a serialRead() won't wait for data to arrive.
-  @param port Which serial port - valid options are 1-3.
+  @param port Which serial port - valid options are Serial0, Serial1, or SerialDbg.
 
   \b Example
   \code
   char buffer[20];
-  int avail = serialAvailable(0); // how many on serial port 0
+  int avail = serialAvailable(Serial0); // how many on serial port 0
   if (avail > 0) {
-    serialRead(0, buffer, avail, 0); // read the available bytes with no timeout
+    serialRead(Serial0, buffer, avail, 0); // read the available bytes with no timeout
   }
   \endcode
 */
-int serialAvailable(int port)
+int serialAvailable(Serial port)
 {
-#if USE_SAM7_USART0
-  if (port == 0) return chQSpace(&SD1.iqueue);
-#endif
-#if USE_SAM7_USART1
-  if (port == 1) return chQSpace(&SD2.iqueue);
-#endif
-#if USE_SAM7_DBGU_UART
-  if (port == 2) return chQSpace(&SD3.iqueue);
-#endif
-  return 0;
+  return chQSpace(&port->iqueue);
 }
 
 /**
   Read data from a serial port.
-  @param port Which serial port - valid options are 1-3.
+  @param port Which serial port - valid options are Serial0, Serial1, or SerialDbg.
   @param buf The buffer to read the data into.
   @param len The number of bytes to read
   @param timeout How long to wait (in milliseconds) for data to arrive.
@@ -203,52 +186,28 @@ int serialAvailable(int port)
   \code
   // try to read 28 bytes, and wait 50 milliseconds if they're not available yet.
   char serialbuf[28];
-  int got = serialRead(0, serialbuf, 28, 50);
+  int got = serialRead(Serial0, serialbuf, 28, 50);
   \endcode
 */
-int serialRead(int port, char* buf, int len, int timeout)
+int serialRead(Serial port, char* buf, int len, int timeout)
 {
-#if USE_SAM7_USART0
-  if (port == 0)
-    return sdReadTimeout(&SD1, (uint8_t*)buf, (size_t)len, MS2ST(timeout));
-#endif
-#if USE_SAM7_USART1
-  if (port == 1)
-    return sdReadTimeout(&SD2, (uint8_t*)buf, (size_t)len, MS2ST(timeout));
-#endif
-#if USE_SAM7_DBGU_UART
-  if (port == 2)
-    return sdReadTimeout(&SD3, (uint8_t*)buf, (size_t)len, MS2ST(timeout));
-#endif
-  return 0;
+  return sdReadTimeout(port, (uint8_t*)buf, (size_t)len, MS2ST(timeout));
 }
 
 /**
   Get a single character from the serial port.
-  @param port Which serial port - valid options are 1-3.
+  @param port Which serial port - valid options are Serial0, Serial1, or SerialDbg.
   @param timeout How long to wait (in milliseconds) for data to arrive.
   @return The character received.
 */
-char serialGet(int port, int timeout)
+char serialGet(Serial port, int timeout)
 {
-#if USE_SAM7_USART0
-  if (port == 0)
-    return sdGetTimeout(&SD1, MS2ST(timeout));
-#endif
-#if USE_SAM7_USART1
-  if (port == 1)
-    return sdGetTimeout(&SD2, MS2ST(timeout));
-#endif
-#if USE_SAM7_DBGU_UART
-  if (port == 2)
-    return sdGetTimeout(&SD3, MS2ST(timeout));
-#endif
-  return 0;
+  return sdGetTimeout(port, MS2ST(timeout));
 }
 
 /**
   Write data to a serial port.
-  @param port Which serial port - valid options are 1-3.
+  @param port Which serial port - valid options are Serial0, Serial1, or SerialDbg.
   @param buf The buffer containing the data to write.
   @param len The number of bytes to write.
   @param timeout How long to wait (in milliseconds) for data to be written.
@@ -260,48 +219,23 @@ char serialGet(int port, int timeout)
   serialbuf[0] = 1;
   serialbuf[1] = 2;
   serialbuf[2] = 3;
-  int wrote = serialWrite(0, serialbuf, 3, 0);
+  int wrote = serialWrite(Serial0, serialbuf, 3, 0);
   \endcode
 */
-int serialWrite(int port, char const* buf, int len, int timeout)
+int serialWrite(Serial port, char const* buf, int len, int timeout)
 {
-#if USE_SAM7_USART0
-  if (port == 0)
-    return sdWriteTimeout(&SD1, (uint8_t*)buf, (size_t)len, MS2ST(timeout));
-#endif
-#if USE_SAM7_USART1
-  if (port == 1)
-    return sdWriteTimeout(&SD2, (uint8_t*)buf, (size_t)len, MS2ST(timeout));
-#endif
-#if USE_SAM7_DBGU_UART
-  if (port == 2)
-    return sdWriteTimeout(&SD3, (uint8_t*)buf, (size_t)len, MS2ST(timeout));
-#endif
-  return 0;
+  return sdWriteTimeout(port, (uint8_t*)buf, (size_t)len, MS2ST(timeout));
 }
 
 /**
   Write a single character to the serial port.
-  @param port Which serial port - valid options are 1-3.
+  @param port Which serial port - valid options are Serial0, Serial1, or SerialDbg.
   @param c The character to write.
   @param timeout How long to wait (in milliseconds) for data to be written.
 */
-int serialPut(int port, char c, int timeout)
+int serialPut(Serial port, char c, int timeout)
 {
-#if USE_SAM7_USART0
-  if (port == 0)
-    return sdPutTimeout(&SD1, (uint8_t)c, MS2ST(timeout));
-#endif
-#if USE_SAM7_USART1
-  if (port == 1)
-    return sdPutTimeout(&SD2, (uint8_t)c, MS2ST(timeout));
-#endif
-#if USE_SAM7_DBGU_UART
-  if (port == 2)
-    return sdPutTimeout(&SD3, (uint8_t)c, MS2ST(timeout));
-#endif
-  return 0;
+  return sdPutTimeout(port, (uint8_t)c, MS2ST(timeout));
 }
 
 /** @} */
-
