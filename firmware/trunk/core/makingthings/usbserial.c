@@ -40,7 +40,6 @@ typedef struct UsbSerial_t {
   Mutex txMutex;
   InputQueue inq;
   uint8_t inbuffer[USBSER_MAX_READ * 2];
-  int justWrote;
 #ifndef USBSER_NO_SLIP
   char slipOutBuf[USBSER_MAX_WRITE];
 #endif
@@ -227,10 +226,10 @@ int usbserialWrite(const char *buffer, int length)
           buffer, length, usbserialOnTx, 0) == USBD_STATUS_SUCCESS )
     {
       usbSerial.thd = chThdSelf();
+      usbSerial.thd->p_u.rdymsg = 0; // use rdymsg as count of bytes written
       chSchGoSleepS(THD_STATE_SUSPENDED);
       // this thread gets rescheduled from the ISR
-      rv = usbSerial.justWrote;
-      usbSerial.justWrote = 0;
+      rv = chThdSelf()->p_u.rdymsg;
     }
     chMtxUnlockS();
     chSysUnlock();
@@ -243,7 +242,7 @@ void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsi
 {
   UNUSED(pArg);
   if (status == USBD_STATUS_SUCCESS)
-    usbSerial.justWrote += received;
+    usbSerial.thd->p_u.rdymsg += received;
   if (remaining == 0 && usbSerial.thd != 0) {
     // reschedule the thread waiting on the TX event
     chSchReadyI(usbSerial.thd);
