@@ -72,7 +72,7 @@
       <ul>
         <li>\ref licenses</li>
         <li>MakingThings - <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache 2.0</a></li>
-        <li>ChibiOS - <a href="http://chibios.sourceforge.net/license.html">Modified GPL</a></li>
+        <li>ChibiOS - <a href="http://chibios.sourceforge.net/dokuwiki/doku.php?id=chibios:license">Modified GPL</a></li>
         <li>lwIP - <a href="http://www.xfree86.org/3.3.6/COPYRIGHT2.html#5">Modified BSD</a></li>
       </ul>
     </td>
