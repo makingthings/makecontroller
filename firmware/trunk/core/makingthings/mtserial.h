@@ -19,22 +19,26 @@
 #define MT_SERIAL_H
 
 #include "types.h"
+#include "ch.h"
+#include "hal.h"
 
-#define SERIAL_0    0 /**< symbol for serial port 0 */
-#define SERIAL_1    1 /**< symbol for serial port 1 */
-#define SERIAL_DBG  2 /**< symbol for the debug serial port */
+typedef SerialDriver* Serial;
+
+#define Serial0    (&SD1) /**< symbol for serial port 0 */
+#define Serial1    (&SD2) /**< symbol for serial port 1 */
+#define SerialDbg  (&SD3) /**< symbol for the debug serial port */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void serialEnable(int port, int baud);
-void serialEnableAll(int port, int baud, int parity, int charbits, int stopbits, bool handshake);
-void serialDisable(int port);
-int  serialAvailable(int port);
-int  serialRead(int port, char* buf, int len, int timeout);
-char serialGet(int port, int timeout);
-int  serialWrite(int port, char const* buf, int len, int timeout);
-int  serialPut(int port, char c, int timeout);
+void serialEnable(Serial port, int baud);
+void serialEnableAll(Serial port, int baud, int parity, int charbits, int stopbits, bool handshake);
+void serialDisable(Serial port);
+int  serialAvailable(Serial port);
+int  serialRead(Serial port, char* buf, int len, int timeout);
+char serialGet(Serial port, int timeout);
+int  serialWrite(Serial port, char const* buf, int len, int timeout);
+int  serialPut(Serial port, char c, int timeout);
 #ifdef __cplusplus
 }
 #endif
