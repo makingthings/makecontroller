@@ -18,17 +18,21 @@
 #ifndef MT_SPI_H
 #define MT_SPI_H
 
-#include "types.h"
+#include "core.h"
+
+typedef AT91S_SPI* Spi;
+#define Spi0 AT91C_BASE_SPI0
+#define Spi1 AT91C_BASE_SPI1
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 void spiInit(void);
-void spiDeinit(void);
-bool spiEnableChannel(int channel);
-int  spiConfigure(int channel, int bits, int clockDivider, int delayBeforeSPCK, int delayBetweenTransfers);
-int  spiReadWriteBlock(int channel, unsigned char* buffer, int count);
-void spiLock(void);
+void spiDisable(Spi spi);
+int  spiConfigure(Spi spi, int csn, int bits, int clockDivider, int delayBeforeSPCK, int delayBetweenTransfers);
+int  spiReadWriteBlock(Spi spi, int csn, unsigned char* buffer, int count);
+
+void spiLock(Spi spi);
 void spiUnlock(void);
 #ifdef __cplusplus
 }

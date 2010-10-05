@@ -15,10 +15,7 @@
 
 *********************************************************************************/
 
-#include "spi.h"
 #include "eeprom.h"
-#include "error.h"
-#include "pin.h"
 
 #define EEPROM_INSTRUCTION_WREN 0x06
 #define EEPROM_INSTRUCTION_WRDI 0x04
@@ -58,14 +55,13 @@
 */
 void eepromInit()
 {
-  spiEnableChannel(EEPROM_DEVICE);
-  spiConfigure(EEPROM_DEVICE, 8, 16, 0, 1);
+  spiConfigure(Spi0, EEPROM_DEVICE, 8, 16, 0, 1);
 }
 
 static void eepromWriteEnable(void)
 {
   uint8_t c = EEPROM_INSTRUCTION_WREN;
-  spiReadWriteBlock(EEPROM_DEVICE, &c, 1);
+  spiReadWriteBlock(Spi0, EEPROM_DEVICE, &c, 1);
 }
 
 static void eepromReady(void)
@@ -74,12 +70,12 @@ static void eepromReady(void)
   do {
     c[0] = EEPROM_INSTRUCTION_RDSR;
     c[1] = 0;
-    spiReadWriteBlock(EEPROM_DEVICE, c, 2);
+    spiReadWriteBlock(Spi0, EEPROM_DEVICE, c, 2);
   } while ((c[1] & 1) != 0);
 }
 
 /**
-  Read an individual character from EEPROM.
+  Read an int from EEPROM.
   @param address The address to read from.
   @return The value stored at that address.
   
@@ -96,7 +92,7 @@ int eepromRead(int address)
 }
 
 /**
-  Write an individual character to EEPROM.
+  Write an int to EEPROM.
   @param address The address to write to.
   @param value The value to store
   
@@ -129,7 +125,7 @@ int eepromReadBlock(int address, uint8_t* data, int length)
   if (address < 0 || address > EEPROM_SIZE)
     return CONTROLLER_ERROR_BAD_ADDRESS;
 
-  spiLock();
+  spiLock(Spi0);
   eepromReady();
 
   unsigned char c[length + 4];
@@ -138,7 +134,7 @@ int eepromReadBlock(int address, uint8_t* data, int length)
   c[2] = (unsigned char)(address & 0xFF);
   c[3] = 0;
   
-  spiReadWriteBlock(EEPROM_DEVICE, c, length + 3);
+  spiReadWriteBlock(Spi0, EEPROM_DEVICE, c, length + 3);
 
   int i;
   for (i = 0; i < length; i++)
@@ -166,7 +162,7 @@ int eepromWriteBlock(int address, uint8_t *data, int length)
   if (address < 0 || address >= EEPROM_SIZE)
     return CONTROLLER_ERROR_BAD_ADDRESS;
 
-  spiLock();
+  spiLock(Spi0);
   eepromReady();
   eepromWriteEnable();    
 
@@ -180,7 +176,7 @@ int eepromWriteBlock(int address, uint8_t *data, int length)
   for (i = 0; i < length; i++)
     c[i + 3] = data[i];
   
-  spiReadWriteBlock(EEPROM_DEVICE, c, 3 + length);
+  spiReadWriteBlock(Spi0, EEPROM_DEVICE, c, 3 + length);
   spiUnlock();
 
   return CONTROLLER_OK;
