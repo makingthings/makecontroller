@@ -181,7 +181,7 @@ void serialDisable(Serial port)
   char buffer[20];
   int avail = serialAvailable(Serial0); // how many on serial port 0
   if (avail > 0) {
-    serialRead(Serial0, buffer, avail, 0); // read the available bytes with no timeout
+    serialRead(Serial0, buffer, avail, IMMEDIATE); // read the available bytes with no timeout
   }
   \endcode
 */
@@ -195,7 +195,8 @@ int serialAvailable(Serial port)
   @param port Which serial port - valid options are Serial0, Serial1, or SerialDbg.
   @param buf The buffer to read the data into.
   @param len The number of bytes to read
-  @param timeout How long to wait (in milliseconds) for data to arrive.
+  @param timeout How long to wait (in milliseconds) for data to arrive.  The special
+  values FOREVER and IMMEDIATE may be used to wait either forever, or not at all.
   @return The number of bytes read - remember, this may be fewer than you asked for.
 
   \b Example
@@ -207,18 +208,19 @@ int serialAvailable(Serial port)
 */
 int serialRead(Serial port, char* buf, int len, int timeout)
 {
-  return sdReadTimeout(port, (uint8_t*)buf, (size_t)len, MS2ST(timeout));
+  return sdReadTimeout(port, (uint8_t*)buf, (size_t)len, (systime_t)timeout);
 }
 
 /**
   Get a single character from the serial port.
   @param port Which serial port - valid options are Serial0, Serial1, or SerialDbg.
-  @param timeout How long to wait (in milliseconds) for data to arrive.
+  @param timeout How long to wait (in milliseconds) for data to arrive.  The special
+  values FOREVER and IMMEDIATE may be used to wait either forever, or not at all.
   @return The character received.
 */
 char serialGet(Serial port, int timeout)
 {
-  return sdGetTimeout(port, MS2ST(timeout));
+  return sdGetTimeout(port, (systime_t)timeout);
 }
 
 /**
@@ -226,7 +228,8 @@ char serialGet(Serial port, int timeout)
   @param port Which serial port - valid options are Serial0, Serial1, or SerialDbg.
   @param buf The buffer containing the data to write.
   @param len The number of bytes to write.
-  @param timeout How long to wait (in milliseconds) for data to be written.
+  @param timeout How long to wait (in milliseconds) for data to be written. The special
+  values FOREVER and IMMEDIATE may be used to wait either forever, or not at all.
   @return The number of bytes successfully written.
 
   \b Example
@@ -235,23 +238,24 @@ char serialGet(Serial port, int timeout)
   serialbuf[0] = 1;
   serialbuf[1] = 2;
   serialbuf[2] = 3;
-  int wrote = serialWrite(Serial0, serialbuf, 3, 0);
+  int wrote = serialWrite(Serial0, serialbuf, 3, FOREVER); // wait for it to be written
   \endcode
 */
 int serialWrite(Serial port, char const* buf, int len, int timeout)
 {
-  return sdWriteTimeout(port, (uint8_t*)buf, (size_t)len, MS2ST(timeout));
+  return sdWriteTimeout(port, (uint8_t*)buf, (size_t)len, (systime_t)timeout);
 }
 
 /**
   Write a single character to the serial port.
   @param port Which serial port - valid options are Serial0, Serial1, or SerialDbg.
   @param c The character to write.
-  @param timeout How long to wait (in milliseconds) for data to be written.
+  @param timeout How long to wait (in milliseconds) for data to be written. The special
+  values FOREVER and IMMEDIATE may be used to wait either forever, or not at all.
 */
 int serialPut(Serial port, char c, int timeout)
 {
-  return sdPutTimeout(port, (uint8_t)c, MS2ST(timeout));
+  return sdPutTimeout(port, (uint8_t)c, (systime_t)timeout);
 }
 
 /** @} */
