@@ -27,6 +27,10 @@
 #define MIN(a, b) ((a < b) ? a : b)
 #define MAX(a, b) ((a > b) ? a : b)
 
+// timeout definitions
+#define FOREVER     TIME_INFINITE
+#define IMMEDIATE   TIME_IMMEDIATE
+
 // helper macros for managing threads
 /**
   Define a thread.
