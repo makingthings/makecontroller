@@ -138,7 +138,7 @@ bool analoginMulti(int values[])
   return true;
 }
 
-#if defined(__GNU__)
+#if defined(__GNUC__)
 __attribute__((noinline))
 #endif
 static void analoginServeInterrupt(void)
