@@ -31,19 +31,19 @@ typedef void(*TimerHandler)(void);
   \b Example
   \code
   // do some rough timing measurements
-  int start = timerNow();
+  int start = timeNow();
   // ... do something here
-  int elapsed = timerNow() - start;
+  int elapsed = timeNow() - start;
   \endcode
   \ingroup timer
 */
-#define timerNow() chTimeNow()
+#define timeNow() chTimeNow()
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void timerGo(Timer* timer, int millis, TimerHandler handler);
-void timerCancel(Timer* timer);
+void timerStart(Timer* timer, int millis, TimerHandler handler);
+void timerStop(Timer* timer);
 #ifdef __cplusplus
 }
 #endif

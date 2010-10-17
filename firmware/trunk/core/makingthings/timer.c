@@ -27,11 +27,11 @@
       // then do something here
       count = 0; // and reset the count
     }
-    timerGo(&mytimer, 250, myHandler); // reload the timer
+    timerStart(&mytimer, 250, myHandler); // reload the timer
   }
   
   // schedule the timer for the first time
-  timerGo(&mytimer, 250, myHandler);
+  timerStart(&mytimer, 250, myHandler);
   \endcode
   
   \section Note
@@ -47,11 +47,13 @@
 
 /**
   Schedule a timer.
+  If you want the timer to repeat, call timerStart() again from within
+  the handler.
   @param timer The timer to use.
   @param millis How long to wait before calling the handler.
   @param handler The handler function to be called when this timer triggers.
 */
-void timerGo(Timer* timer, int millis, TimerHandler handler)
+void timerStart(Timer* timer, int millis, TimerHandler handler)
 {
   chVTSetI(timer, MS2ST(millis), (vtfunc_t)handler, 0);
 }
@@ -61,7 +63,7 @@ void timerGo(Timer* timer, int millis, TimerHandler handler)
   If the timer is not currently active, this has no effect.
   @param timer The timer to cancel.
 */
-void timerCancel(Timer* timer)
+void timerStop(Timer* timer)
 {
   if (chVTIsArmedI(timer)) {
     chVTResetI(timer);
