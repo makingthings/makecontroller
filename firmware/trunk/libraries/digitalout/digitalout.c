@@ -55,9 +55,9 @@
   #define DIGITALOUT_5 PIN_PA25
   #define DIGITALOUT_6 PIN_PA26
   #define DIGITALOUT_7 PIN_PB23
-  #define DOUT_PIOA (PIN_PA24 | PIN_PA5 | PIN_PA6 | PIN_PA2 | PIN_PA25 | PIN_PA26)
-  #define DOUT_PIOB (PIN_PB25 | PIN_PB23)
-  #define DIGITALOUT_ENABLE_MASK (PIN_PB19 | PIN_PB20 | PIN_PB21 | PIN_PB22)
+  #define DOUT_PIOA (PIN_PA24_BIT | PIN_PA5_BIT | PIN_PA6_BIT | PIN_PA2_BIT | PIN_PA25_BIT | PIN_PA26_BIT)
+  #define DOUT_PIOB (PIN_PB25_BIT | PIN_PB23_BIT)
+  #define DOUT_ENABLE_MASK (PIN_PB19_BIT | PIN_PB20_BIT | PIN_PB21_BIT | PIN_PB22_BIT)
 #endif
 
 /**
@@ -103,8 +103,8 @@ static int digitaloutGetIo(int index)
 void digitaloutInit()
 { 
   // configure enable lines as outputs and turn them all on
-  pinGroupSetMode(GROUP_B, DIGITALOUT_ENABLE_MASK, OUTPUT);
-  pinGroupOn(GROUP_B, DIGITALOUT_ENABLE_MASK);
+  pinGroupSetMode(GROUP_B, DOUT_ENABLE_MASK, OUTPUT);
+  pinGroupOn(GROUP_B, DOUT_ENABLE_MASK);
   
   // configure douts as outputs & turn off
   pinGroupSetMode(GROUP_A, DOUT_PIOA, OUTPUT);
