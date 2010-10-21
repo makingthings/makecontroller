@@ -82,7 +82,7 @@ static bool networkDhcpStop(int timeout);
 void networkInit()
 {
   // customize MAC address based on serial number
-  int serialNumber = 123; // systemSerialNumber();
+  int serialNumber = systemSerialNumber();
   macAddress[5] = serialNumber & 0xFF;
   macAddress[4] = (serialNumber >> 8) & 0xFF;
   // Low nibble of the third byte - gives us around 1M serial numbers
@@ -427,6 +427,18 @@ static void networkOscAddressHandler(OscChannel ch, char* address, int idx, OscD
   }
 }
 
+static void networkOscMacHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
+{
+  UNUSED(idx); UNUSED(data);
+  if (datalen == 0) {
+    char b[18];
+    sniprintf(b, sizeof(b), "%02X:%02X:%02X:%02X:%02X:%02X",
+        macAddress[0], macAddress[1], macAddress[2], macAddress[3], macAddress[4], macAddress[5]);
+    OscData d = { .value.s = b, .type = STRING };
+    oscCreateMessage(ch, address, &d, 1);
+  }
+}
+
 static void networkOscUdpPortHandler(OscChannel ch, char* address, int idx, OscData data[], int datalen)
 {
   UNUSED(idx);
@@ -454,6 +466,7 @@ static void networkOscUdpListenPortHandler(OscChannel ch, char* address, int idx
 static const OscNode networkOscFind = { .name = "find", .handler = networkOscFindHandler };
 static const OscNode networkOscDhcp = { .name = "dhcp", .handler = networkOscDhcpHandler };
 static const OscNode networkOscAddress = { .name = "address", .handler = networkOscAddressHandler };
+static const OscNode networkOscMac = { .name = "mac", .handler = networkOscMacHandler };
 static const OscNode networkOscUdpSendPort = { .name = "osc_udp_send_port", .handler = networkOscUdpPortHandler };
 static const OscNode networkOscUdpListenPort = { .name = "osc_udp_listen_port", .handler = networkOscUdpListenPortHandler };
 
@@ -463,6 +476,7 @@ const OscNode networkOsc = {
     &networkOscFind,
     &networkOscDhcp,
     &networkOscAddress,
+    &networkOscMac,
     &networkOscUdpSendPort,
     &networkOscUdpListenPort, 0
   }
