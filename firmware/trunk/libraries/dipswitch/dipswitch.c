@@ -23,7 +23,8 @@
 #warning dipswitch is not available on Application Board v2.0 or later
 #else
 
-#define DIPSWITCH_DEVICE 2
+#define DIPSWITCH_DEVICE  2
+#define DIPSWITCH_SPI     Spi0
 
 /**
   \defgroup dipswitch DIP Switch
@@ -52,8 +53,7 @@
 */
 void dipswitchInit()
 {
-  spiEnableChannel(DIPSWITCH_DEVICE);
-  spiConfigure(DIPSWITCH_DEVICE, 8, 4, 0, 1);
+  spiConfigure(DIPSWITCH_SPI, DIPSWITCH_DEVICE, 8, 4, 0, 1);
 }
 
 /** 
@@ -68,9 +68,9 @@ void dipswitchInit()
 */
 int dipswitchValue()
 {
-  spiLock();
+  spiLock(DIPSWITCH_SPI);
   unsigned char c[2] = { 0xFE, 0xFF };
-  spiReadWriteBlock(DIPSWITCH_DEVICE, c, 2);
+  spiReadWriteBlock(DIPSWITCH_SPI, DIPSWITCH_DEVICE, c, 2);
   spiUnlock();
 
   return (c[1] & 0x01) << 8 |
@@ -99,7 +99,7 @@ bool dipswitchSingleValue(int channel)
     return false;
 
   int val = dipswitchValue();
-  return ( val < 0 ) ? false : ((val >> channel) & 0x1);
+  return (val < 0) ? false : ((val >> channel) & 0x1);
 }
 
 /** @} */
@@ -149,48 +149,6 @@ bool dipswitchSingleValue(int channel)
   to send via Ethernet.  Via Ethernet, the board will send messages to the last address it received a message from.
 */
 
-//#include "osc.h"
-//
-//bool DipSwitch_GetAutoSend( bool init )
-//{
-//  DipSwitch_SetActive( 1 );
-//  if( init )
-//  {
-//    int autosend;
-//    Eeprom_Read( EEPROM_DIPSWITCH_AUTOSEND, (uchar*)&autosend, 4 );
-//    DipSwitch->autosend = (autosend == 1 ) ? 1 : 0;
-//  }
-//  return DipSwitch->autosend;
-//}
-//
-//void DipSwitch_SetAutoSend( int onoff )
-//{
-//  DipSwitch_SetActive( 1 );
-//  if( DipSwitch->autosend != onoff )
-//  {
-//    DipSwitch->autosend = onoff;
-//    Eeprom_Write( EEPROM_DIPSWITCH_AUTOSEND, (uchar*)&onoff, 4 );
-//  }
-//}
-
-//int DipSwitchOsc_Async( int channel )
-//{
-//  int newMsgs = 0;
-//  if( !DipSwitch_GetAutoSend( false ) )
-//    return newMsgs;
-//  char address[ OSC_SCRATCH_SIZE ];
-//  int value = DipSwitch_GetValue( );
-//  
-//  if( value != DipSwitch->lastValue )
-//  {
-//    DipSwitch->lastValue = value;
-//    snprintf( address, OSC_SCRATCH_SIZE, "/%s/value", DipSwitchOsc_Name );
-//    Osc_CreateMessage( channel, address, ",i", value );
-//    newMsgs++;
-//  }
-//
-//  return newMsgs;
-//}
 static void dipswitchOscHandler(OscChannel ch, char* address, int idx, OscData d[], int datalen)
 {
   UNUSED(d);
@@ -210,5 +168,4 @@ const OscNode dipswitchOsc = {
 };
 
 #endif // OSC
-
 #endif // (APPBOARD_VERSION >= 200)
