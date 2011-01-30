@@ -1,5 +1,5 @@
 /*
-    ChibiOS/RT - Copyright (C) 2006-2007 Giovanni Di Sirio.
+    ChibiOS/RT - Copyright (C) 2006,2007,2008,2009,2010,2011 Giovanni Di Sirio.
 
     This file is part of ChibiOS/RT.
 
@@ -10,11 +10,18 @@
 
     ChibiOS/RT is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+                                      ---
+
+    A special exception to the GPL can be applied should you wish to distribute
+    a combined work that includes ChibiOS/RT, without being obliged to provide
+    the source code for any proprietary components. See the file exception.txt
+    for full details of how and when the exception can be applied.
 */
 
 #include "core.h"
@@ -77,12 +84,29 @@ void AbortHandler(void)
 #endif
 }
 
+/**
+ * @brief   PAL setup.
+ * @details Digital I/O ports static configuration as defined in @p board.h.
+ *          This variable is used by the HAL when initializing the PAL driver.
+ */
+#if HAL_USE_PAL || defined(__DOXYGEN__)
+const PALConfig pal_default_config =
+{
+  {VAL_PIOA_ODSR, VAL_PIOA_OSR, VAL_PIOA_PUSR},
+#if (SAM7_PLATFORM == SAM7X128) || (SAM7_PLATFORM == SAM7X256) || \
+    (SAM7_PLATFORM == SAM7X512)
+  {VAL_PIOB_ODSR, VAL_PIOB_OSR, VAL_PIOB_PUSR}
+#endif
+};
+#endif
+
 /*
  * SYS IRQ handling here.
  */
 static CH_IRQ_HANDLER(SYSIrqHandler) {
 
   CH_IRQ_PROLOGUE();
+
   if (AT91C_BASE_PITC->PITC_PISR & AT91C_PITC_PITS) {
     (void) AT91C_BASE_PITC->PITC_PIVR;
     chSysLockFromIsr();
@@ -102,11 +126,12 @@ static CH_IRQ_HANDLER(SYSIrqHandler) {
 
 /*
  * Early initialization code.
- * This initialization is performed just after reset before BSS and DATA
- * segments initialization.
+ * This initialization must be performed just after stack setup and before
+ * any other initialization.
  */
-void hwinit0(void)
-{
+void __early_init(void) {
+  
+  /* Watchdog disabled.*/
   #ifndef WATCHDOG_ENABLE
   AT91C_BASE_WDTC->WDTC_WDMR = AT91C_WDTC_WDDIS;
   #endif
@@ -114,43 +139,17 @@ void hwinit0(void)
 }
 
 /*
- * Late initialization code.
- * This initialization is performed after BSS and DATA segments initialization
- * and before invoking the main() function.
+ * Board-specific initialization code.
  */
-void hwinit1(void)
+void boardInit(void)
 {
-  halInit();
-  // peripheral inits - these are here so they're conveniently already
-  // done for common usage, but can be removed by conditionalization
-  #ifndef NO_SPI_INIT
-  spiInit();
-  #endif
-  
-  #ifndef NO_EEPROM_INIT
-  eepromInit();
-  #endif
-
-  #ifndef NO_PWM_INIT
-  pwmInit();
-  #endif
-
-  #ifndef NO_SERIAL_INIT
-  sdInit();
-  #endif
-
-  // PIT Initialization.
+  /*
+   * PIT Initialization.
+   */
   AIC_ConfigureIT(AT91C_ID_SYS,
                   AT91C_AIC_SRCTYPE_HIGH_LEVEL | (AT91C_AIC_PRIOR_HIGHEST - 1),
                   SYSIrqHandler);
   AIC_EnableIT(AT91C_ID_SYS);
   AT91C_BASE_PITC->PITC_PIMR = (MCK / 16 / CH_FREQUENCY) - 1;
   AT91C_BASE_PITC->PITC_PIMR |= AT91C_PITC_PITEN | AT91C_PITC_PITIEN;
-
-  chSysInit(); // ChibiOS/RT initialization.
-
-  // would rather not put this below chSysInit() but it relies on the RTOS being setup
-  #ifndef NO_AIN_INIT
-  analoginInit();
-  #endif
 }

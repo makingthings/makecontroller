@@ -11,7 +11,7 @@ MT        = ../../core/makingthings
 LIBRARIES = ../../libraries
 
 # Imported source files
-include $(CHIBIOS)/os/ports/GCC/ARM7/port.mk
+include $(CHIBIOS)/os/ports/GCC/ARM/port.mk
 include $(CHIBIOS)/os/hal/platforms/AT91SAM7/platform.mk
 include $(CHIBIOS)/os/hal/hal.mk
 include $(CHIBIOS)/os/kernel/kernel.mk
@@ -42,7 +42,7 @@ CPPSRC =
 INCDIR = $(PORTINC) $(KERNINC) $(HALINC) $(PLATFORMINC) \
 				 $(MT) $(LWINC) $(USBINC) \
          $(CHIBIOS)/os/various \
-         $(CHIBIOS)/os/ports/GCC/ARM7/AT91SAM7 \
+         $(CHIBIOS)/os/ports/GCC/ARM/AT91SAM7 \
          $(LIBRARIES)/appled \
          $(LIBRARIES)/digitalin \
          $(LIBRARIES)/digitalout \
@@ -55,7 +55,7 @@ BUILDDIR = build
 
 # assembly sources
 ASMSRC = $(PORTASM) \
-         $(CHIBIOS)/os/ports/GCC/ARM7/AT91SAM7/vectors.s
+         $(CHIBIOS)/os/ports/GCC/ARM/AT91SAM7/vectors.s
 
 ##############################################################################
 # Compiler settings
@@ -90,6 +90,8 @@ CWARN = -Wall -Wextra -Wstrict-prototypes
 
 # Define C++ warning options here
 CPPWARN = -Wall -Wextra
+
+DDEFS =
 
 #
 # Compiler settings
