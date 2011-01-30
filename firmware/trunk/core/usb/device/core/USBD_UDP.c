@@ -157,7 +157,7 @@ typedef struct {
     /// Optional argument to the callback function.
     void             *pArgument;
     /// Optional byte-oriented callback
-    volatile InputQueue *inq;
+    InputQueue       *inq;
 } Transfer;
 
 //------------------------------------------------------------------------------
@@ -357,8 +357,10 @@ static void UDP_ReadPayload(unsigned char bEndpoint, int wPacketSize)
     if (pTransfer->inq != 0) {
       chSysLockFromIsr();
       // add to the queue from the FIFO Data Register
-      while (wPacketSize-- > 0)
-        chIQPutI((InputQueue*)pTransfer->inq, AT91C_BASE_UDP->UDP_FDR[bEndpoint]);
+      while (wPacketSize-- > 0) {
+        char d = AT91C_BASE_UDP->UDP_FDR[bEndpoint];
+        chIQPutI(pTransfer->inq, d);
+      }
       chSysUnlockFromIsr();
     }
     else {

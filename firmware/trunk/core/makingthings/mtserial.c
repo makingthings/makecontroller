@@ -45,8 +45,8 @@
   - hardwareHandshake - whether hardware handshaking is used or not.
 
   \section Usage
-  First, enable the serial port.  If the default settings are OK for you, serialEnableDefault() can be
-  a little easier, or you can customize the settings for the port with serialEnable().  You can check
+  First, enable the serial port.  If the default settings are OK for you, serialEnable() can be
+  a little easier, or you can customize the settings for the port with serialEnableAll().  You can check
   how much data is available to be read at any time via serialAvailable().  Read and write with
   serialRead() and serialWrite().
 
@@ -73,14 +73,14 @@
   #define STDOUT_SD SD1
   #define STDIN_SD SD1
   \endcode
-  to your config.h file.  Due to naming conventions in ChibiOS, SD1 corresponds to serial port 0, SD2
-  corresponds to serial port 1, and SD3 corresponds to the debug serial port on the Make Controller.
+  to your config.h file.  Due to naming conventions in ChibiOS, \b SD1 corresponds to serial port 0,
+  \b SD2 corresponds to serial port 1, and \b SD3 corresponds to the debug serial port on the Make Controller.
 
   \section Configuration
   By default, the buffer for each serial port is 64 bytes.  You can customize this by
   defining \b SERIAL_BUFFERS_SIZE in your config.h file.
 
-  Normally, support for the debug serial port (DBGU) on the Make Conrtoller is not built in, but you
+  Normally, support for the debug serial port (SerialDbg) on the Make Controller is not built in, but you
   can include it by adding the line \code #define USE_SAM7_DBGU_UART 1 \endcode to your config.h file.
 
   \ingroup interfacing
@@ -187,7 +187,7 @@ void serialDisable(Serial port)
 */
 int serialAvailable(Serial port)
 {
-  return chQSpace(&port->iqueue);
+  return chQSpaceI(&port->iqueue);
 }
 
 /**

@@ -30,9 +30,9 @@
 #define ESC_ESC         0335    // ESC ESC_ESC means ESC data byte
 #endif // USBSER_NO_SLIP
 
-#define qRemaining(q) (chQSize(q) - chQSpace(q))
+#define qRemaining(q) (chQSizeI(q) - chQSpaceI(q))
 
-static void usbserialInotify(void);
+static void usbserialInotify(GenericQueue *q);
 static void usbserialOnTx(void *pArg, unsigned char status, unsigned int received, unsigned int remaining);
 
 typedef struct UsbSerial_t {
@@ -78,13 +78,22 @@ static UsbSerial usbSerial;
   @{
 */
 
+static void usbserialRxCallback(void *pArg, unsigned char status, unsigned int transferred, unsigned int remaining)
+{
+  UNUSED(transferred);
+  chDbgAssert(status == USBD_STATUS_SUCCESS, "usbserialRxCallback()", "no success :(");
+  if (remaining == 0) {
+    usbserialInotify(pArg);
+  }
+}
+
 // Gets called whenever the input queue is being read from.
 // If we're empty, go get some more data
-void usbserialInotify()
+void usbserialInotify(GenericQueue *q)
 {
-  if (qRemaining(&usbSerial.inq) >= USBSER_MAX_READ && usbserialIsActive()) {
+  if (qRemaining(q) >= USBSER_MAX_READ && usbserialIsActive()) {
     // this will fail if there's already a read in progress
-    USBD_Read(CDCDSerialDriverDescriptors_DATAOUT, 0, USBSER_MAX_READ, (TransferCallback)usbserialInotify, 0, &usbSerial.inq);
+    USBD_Read(CDCDSerialDriverDescriptors_DATAOUT, 0, USBSER_MAX_READ, usbserialRxCallback, q, q);
   }
 }
 
@@ -154,7 +163,7 @@ bool usbserialIsActive()
 */
 int usbserialAvailable()
 {
-  return chQSpace(&usbSerial.inq);
+  return chQSpaceI(&usbSerial.inq);
 }
 
 /**
@@ -175,8 +184,8 @@ int usbserialAvailable()
 int usbserialRead(char *buffer, int length, int timeout)
 {
   // if we're not connected, don't try to read more than has already arrived.
-  if (!usbserialIsActive() && length > chQSpace(&usbSerial.inq)) {
-    length = chQSpace(&usbSerial.inq);
+  if (!usbserialIsActive() && length > chQSpaceI(&usbSerial.inq)) {
+    length = chQSpaceI(&usbSerial.inq);
     if (length == 0)
       return 0;
   }
@@ -189,9 +198,9 @@ int usbserialRead(char *buffer, int length, int timeout)
 */
 char usbserialGet()
 {
-  if (!usbserialIsActive() && chIQIsEmpty(&usbSerial.inq))
+  if (!usbserialIsActive() && chIQIsEmptyI(&usbSerial.inq))
     return 0;
-  return chIQGetTimeout(&usbSerial.inq, TIME_INFINITE);
+  return chIQGet(&usbSerial.inq);
 }
 
 /**
@@ -201,8 +210,7 @@ char usbserialGet()
 */
 int usbserialPut(char c)
 {
-  char ch = c;
-  return usbserialWrite(&ch, 1);
+  return usbserialWrite(&c, 1);
 }
 
 /**

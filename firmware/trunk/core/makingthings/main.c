@@ -22,6 +22,32 @@ int main(int argc, char **argv)
   UNUSED(argc);
   UNUSED(argv);
   
+  halInit();
+  // peripheral inits - these are here so they're conveniently already
+  // done for common usage, but can be removed by conditionalization
+  #ifndef NO_SPI_INIT
+  spiInit();
+  #endif
+
+  #ifndef NO_EEPROM_INIT
+  eepromInit();
+  #endif
+
+  #ifndef NO_PWM_INIT
+  pwmInit();
+  #endif
+
+  #ifndef NO_SERIAL_INIT
+  sdInit();
+  #endif
+
+  chSysInit(); // ChibiOS/RT initialization.
+
+  // would rather not put this below chSysInit() but it relies on the RTOS being setup
+  #ifndef NO_AIN_INIT
+  analoginInit();
+  #endif
+
   setup();
 
   while (true) {

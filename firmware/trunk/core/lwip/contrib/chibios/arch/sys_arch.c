@@ -1,5 +1,5 @@
 /*
-    ChibiOS/RT - Copyright (C) 2006,2007,2008,2009,2010 Giovanni Di Sirio.
+    ChibiOS/RT - Copyright (C) 2006,2007,2008,2009,2010,2011 Giovanni Di Sirio.
 
     This file is part of ChibiOS/RT.
 
@@ -129,7 +129,7 @@ sys_mbox_t sys_mbox_new(int size) {
 
 void sys_mbox_free(sys_mbox_t mbox) {
 
-  if (chMBGetFull(mbox) != 0) {
+  if (chMBGetUsedCountI(mbox) != 0) {
     // If there are messages still present in the mailbox when the mailbox
     // is deallocated, it is an indication of a programming error in lwIP
     // and the developer should be notified.
@@ -147,7 +147,7 @@ void sys_mbox_post(sys_mbox_t mbox, void *msg) {
 
 err_t sys_mbox_trypost(sys_mbox_t mbox, void *msg) {
 
-  if (chMBPost(mbox, (msg_t)msg, TIME_IMMEDIATE) != RDY_OK) {
+  if (chMBPost(mbox, (msg_t)msg, TIME_IMMEDIATE) == RDY_TIMEOUT) {
     SYS_STATS_INC(mbox.err);
     return ERR_MEM;
   }
@@ -169,7 +169,7 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout) {
 
 u32_t sys_arch_mbox_tryfetch(sys_mbox_t mbox, void **msg) {
 
-  if (chMBFetch(mbox, (msg_t *)msg, TIME_IMMEDIATE) != RDY_OK)
+  if (chMBFetch(mbox, (msg_t *)msg, TIME_IMMEDIATE) == RDY_TIMEOUT)
     return SYS_MBOX_EMPTY;
   return 0;
 }

@@ -1,5 +1,5 @@
 /*
-    ChibiOS/RT - Copyright (C) 2006-2007 Giovanni Di Sirio.
+    ChibiOS/RT - Copyright (C) 2006,2007,2008,2009,2010,2011 Giovanni Di Sirio.
 
     This file is part of ChibiOS/RT.
 
@@ -10,11 +10,18 @@
 
     ChibiOS/RT is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+                                      ---
+
+    A special exception to the GPL can be applied should you wish to distribute
+    a combined work that includes ChibiOS/RT, without being obliged to provide
+    the source code for any proprietary components. See the file exception.txt
+    for full details of how and when the exception can be applied.
 */
 
 #ifndef _BOARD_H_
@@ -31,14 +38,16 @@
 #define PIOB_PHY_PD_MASK AT91C_PB18_EF100
 #define PHY_HARDWARE PHY_DAVICOM_9161
 
-// Initial I/O setup - everything as input with pullup, except LED (PA12)
-#define VAL_PIOA_ODSR           0x00001000      // Output data.
-#define VAL_PIOA_OSR            0x00001000      // Direction.
-#define VAL_PIOA_PUSR           0xFFFFFFFF      // Pull-up.
-// Port B - everything as input with pullup
-#define VAL_PIOB_ODSR           0x00000000      // Output data.
-#define VAL_PIOB_OSR            0x00000000      // Direction.
-#define VAL_PIOB_PUSR           0xFFFFFFFF      // Pull-up.
+/*
+ * Initial I/O setup.
+ */
+#define VAL_PIOA_ODSR           0x00001000      /* Output data. */
+#define VAL_PIOA_OSR            0x00001000      /* Direction. */
+#define VAL_PIOA_PUSR           0xFFFFFFFF      /* Pull-up. */
+
+#define VAL_PIOB_ODSR           0x00000000      /* Output data. */
+#define VAL_PIOB_OSR            0x00000000      /* Direction. */
+#define VAL_PIOB_PUSR           0xFFFFFFFF      /* Pull-up. */
 
 #define BOARD_USB_UDP
 #define BOARD_USB_PULLUP_ALWAYSON
@@ -55,5 +64,13 @@
   #define USB_PULLUP PIN_PA30
   #define USB_DETECT PIN_PA29
 #endif
-
+#if !defined(_FROM_ASM_)
+#ifdef __cplusplus
+extern "C" {
+#endif
+  void boardInit(void);
+#ifdef __cplusplus
+}
+#endif
+#endif /* _FROM_ASM_ */
 #endif // _BOARD_H_
