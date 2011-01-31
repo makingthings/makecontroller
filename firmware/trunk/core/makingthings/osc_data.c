@@ -33,18 +33,15 @@ static char* oscNullPad(char* buf, uint32_t* remaining, int elementsize)
 char* oscEncodeString(char* buf, uint32_t* remaining, const char* str)
 {
   uint32_t len = strlen(str) + 1; // account for null pad
-  uint32_t pad = len % OSC_BYTE_ALIGN;
-  if (pad != 0) pad = (OSC_BYTE_ALIGN - pad);
-  if (*remaining < len + pad)
+  uint8_t pad = (OSC_BYTE_ALIGN - (len % OSC_BYTE_ALIGN)) % OSC_BYTE_ALIGN;
+  if (buf == 0 || *remaining < len + pad)
     return 0;
 
   strcpy(buf, str);
-  *remaining -= len;
   buf += len;
-  while (pad-- > 0) {
-    (*remaining)--;
+  *remaining -= (len + pad);
+  while (pad--)
     *buf++ = 0;
-  }
   return buf;
 }
 
