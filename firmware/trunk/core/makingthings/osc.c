@@ -95,7 +95,7 @@ static msg_t OscUsbSerialThread(void *arg)
     chThdSleepMilliseconds(50);
 
   while (!chThdShouldTerminate()) {
-    int justGot = usbserialReadSlip(osc.usb.inBuf, sizeof(osc.usb.inBuf), 1000);
+    int justGot = usbserialReadSlip(osc.usb.inBuf, sizeof(osc.usb.inBuf));
     if (justGot > 0) {
       chMtxLock(&osc.usb.lock);
       oscReceivePacket(USB, osc.usb.inBuf, justGot);
@@ -585,13 +585,13 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
     buf = oscEncodeInt32(buf, &len, 0);
   }
 
-  if (len < sizeof(int))
+  if (len < sizeof(uint32_t))
     return 0;
-  char* lenp = buf; // where to stick this message's length once we know it
-  buf += sizeof(int);
-  len -= sizeof(int);
-  char* messagestart = buf;
+  char* lenptr = buf; // where to stick this message's length once we know it
+  buf += sizeof(uint32_t);
+  len -= sizeof(uint32_t);
 
+  char* messagestart = buf;
   // do the address
   if ((buf = oscEncodeString(buf, &len, address)) == NULL)
     return 0;
@@ -599,10 +599,9 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
   // build up the typetag
   uint8_t i;
   char typetag[OSC_MAX_DATA_ITEMS + 2] = ","; // 2 = 1 for comma, 1 for terminator
-  char* t = typetag + 1;
   for (i = 0; i < datacount; i++)
-    *t++ = data[i].type;
-  *t = 0; // null terminate
+    typetag[i+1] = data[i].type;
+  typetag[i+1] = 0; // null terminate
   buf = oscEncodeString(buf, &len, typetag);
 
   // now pack the data
@@ -618,9 +617,8 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
         buf = oscEncodeString(buf, &len, data[i].value.s);
         break;
       case BLOB:
-        buf = oscEncodeBlob(buf, &len, data[i].value.b, 100);
+        buf = oscEncodeBlob(buf, &len, data[i].value.b, 100); // TODO: don't be lame with length
         break;
-      default: break;
     }
   }
 
@@ -632,7 +630,7 @@ static char* oscDoCreateMessage(OscChannelData* chd, const char* address, OscDat
   chd->outBufPtr = buf;
   chd->outBufRemaining = len;
   // write the length of this message - len is just used as a dummy here
-  oscEncodeInt32(lenp, &len, (buf - messagestart));
+  oscEncodeInt32(lenptr, &len, (buf - messagestart));
   return buf;
 }
 
