@@ -39,12 +39,9 @@ int main( int argc, char *argv[] )
   mchelperTranslator.load(QString("mchelper_") + locale);
   app.installTranslator(&mchelperTranslator);
 
-  QStringList args;
-  for(int i = 0; i < argc; i++)
-    args << argv[i];
-  bool no_ui = args.contains("-no_ui");
+  bool no_ui = app.arguments().contains("-no_ui");
   MainWindow window(no_ui);
-  if(!no_ui)
+  if (!no_ui)
     window.show();
   return app.exec();
 }
