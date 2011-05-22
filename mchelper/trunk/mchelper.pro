@@ -55,9 +55,8 @@ UI_DIR       = tmp
 #           platform specific stuff
 # *******************************************
 macx {
-  QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.3
-  QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.5.sdk #need this if building on PPC
-  CONFIG += x86
+  QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
+  QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk #need this if building on PPC
   ICON = resources/icons/mchelper.icns
 }
 
@@ -102,6 +101,10 @@ test_suite {
   CONFIG      -= release # always, no matter what it's set to above
   DESTDIR      = tests
   INCLUDEPATH += tests
+  OBJECTS_DIR  = tests/tmp
+  MOC_DIR      = tests/tmp
+  RCC_DIR      = tests/tmp
+  UI_DIR       = tests/tmp
   
   SOURCES -=  source/main.cpp
   
