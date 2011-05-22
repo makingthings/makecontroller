@@ -18,6 +18,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <stdint.h>
+
 #ifndef __cplusplus
 typedef unsigned char bool;
 #endif
