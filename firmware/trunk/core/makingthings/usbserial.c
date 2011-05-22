@@ -184,7 +184,7 @@ int usbserialAvailable()
 int usbserialRead(char *buffer, int length, int timeout)
 {
   // if we're not connected, don't try to read more than has already arrived.
-  if (!usbserialIsActive() && length > chQSpaceI(&usbSerial.inq)) {
+  if (!usbserialIsActive() && (size_t)length > chQSpaceI(&usbSerial.inq)) {
     length = chQSpaceI(&usbSerial.inq);
     if (length == 0)
       return 0;
@@ -322,18 +322,18 @@ int usbserialReadSlip(char *buffer, int length)
 int usbserialWriteSlip(const char *buffer, int length)
 {
   char* obp = usbSerial.slipOutBuf;
-  int count = 0;
+  int totalTxCount = 0, currentChunkSize;
 
   while (length--) {
     char c = *buffer++;
-    int outgoingDataCount = obp - usbSerial.slipOutBuf;
     switch (c) {
       // if it's the same code as an END character, we send a special
       // two character code so as not to make the receiver think we sent an END.
       case END:
         // if we don't have enough room in the current chunk for these 2 bytes, write out what we have first.
-        if (outgoingDataCount >= USBSER_MAX_WRITE - 2) {
-          count += usbserialWrite(usbSerial.slipOutBuf, outgoingDataCount);
+        currentChunkSize = obp - usbSerial.slipOutBuf;
+        if (currentChunkSize >= USBSER_MAX_WRITE - 2) {
+          totalTxCount += usbserialWrite(usbSerial.slipOutBuf, currentChunkSize);
           obp = usbSerial.slipOutBuf;
         }
         *obp++ = (char)ESC;
@@ -343,8 +343,9 @@ int usbserialWriteSlip(const char *buffer, int length)
         // two character code so as not to make the receiver think we sent an ESC
       case ESC:
         // if we don't have enough room in the current chunk for these 2 bytes, write out what we have first.
-        if (outgoingDataCount >= USBSER_MAX_WRITE - 2) {
-          count += usbserialWrite(usbSerial.slipOutBuf, outgoingDataCount);
+        currentChunkSize = obp - usbSerial.slipOutBuf;
+        if (currentChunkSize >= USBSER_MAX_WRITE - 2) {
+          totalTxCount += usbserialWrite(usbSerial.slipOutBuf, currentChunkSize);
           obp = usbSerial.slipOutBuf;
         }
         *obp++ = (char)ESC;
@@ -354,8 +355,8 @@ int usbserialWriteSlip(const char *buffer, int length)
       default:
         *obp++ = c;
         // is it time to write a chunk?
-        if (outgoingDataCount >= USBSER_MAX_WRITE) {
-          count += usbserialWrite(usbSerial.slipOutBuf, sizeof(usbSerial.slipOutBuf));
+        if ((obp - usbSerial.slipOutBuf) >= USBSER_MAX_WRITE) {
+          totalTxCount += usbserialWrite(usbSerial.slipOutBuf, sizeof(usbSerial.slipOutBuf));
           obp = usbSerial.slipOutBuf;
         }
         break;
@@ -363,7 +364,7 @@ int usbserialWriteSlip(const char *buffer, int length)
   }
 
   *obp++ = END; // end byte
-  return count + usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf));
+  return totalTxCount + usbserialWrite(usbSerial.slipOutBuf, (obp - usbSerial.slipOutBuf));
 }
 
 /** @}
