@@ -39,7 +39,7 @@ NetworkMonitor::NetworkMonitor( MainWindow* mainWindow ) : QUdpSocket( )
   connect( this, SIGNAL(readyRead()), this, SLOT( processPendingDatagrams() ) );
   connect( this, SIGNAL(msg(QString, MsgType::Type, QString)), mainWindow, SLOT(message(QString, MsgType::Type, QString)));
   connect( &pingTimer, SIGNAL( timeout() ), this, SLOT( sendPing() ) );
-  broadcastPing = Osc::createOneRequest( "/network/find" ); // our constant OSC ping
+  broadcastPing = OscMessage("/network/find").toByteArray(); // our constant OSC ping
   setListenPort( listen, false );
   pingTimer.start(1000);
 }

@@ -20,10 +20,20 @@
 #include <QtDebug>
 #include <QDataStream>
 
-QString OscMessage::toString( )
+OscMessage::OscMessage()
+{
+}
+
+OscMessage::OscMessage(const QString & address) :
+  addressPattern(address)
+{
+
+}
+
+QString OscMessage::toString()
 {
   QString msgString = this->addressPattern;
-  foreach (QVariant d, data) {
+  foreach (const QVariant & d, data) {
     msgString.append(" ");
     switch (d.type()) {
       case QVariant::ByteArray:
@@ -39,37 +49,38 @@ QString OscMessage::toString( )
 
 QByteArray OscMessage::toByteArray()
 {
-  QByteArray msg = Osc::writePaddedString(this->addressPattern);
+  QByteArray msg;
+  QDataStream msgstream(&msg, QIODevice::WriteOnly);
+  Osc::writePaddedString(msgstream, this->addressPattern);
+
   QString typetag(",");
   QByteArray args; // intermediate spot for arguments until we've assembled the typetag
-  QDataStream dstream(&args, QIODevice::WriteOnly);
-  foreach (QVariant d, data) {
-    switch(d.type()) {
+  QDataStream argstream(&args, QIODevice::WriteOnly);
+  foreach (const QVariant & d, data) {
+    switch (d.type()) {
       case QVariant::String: {
         typetag.append('s');
-        QByteArray ba = Osc::writePaddedString(d.toString());
-        // need to write this as raw data so it doesn't stick a length in there for us
-        dstream.writeRawData(ba.constData(), ba.size());
+        Osc::writePaddedString(argstream, d.toString());
         break;
       }
       case QVariant::ByteArray: // need to pad the blob
         typetag.append('b');
         // datastream packs this as an int32 len followed by raw data, just like OSC wants
-        dstream << d.toByteArray();
+        argstream << d.toByteArray();
         break;
       case QVariant::Int:
         typetag.append('i');
-        dstream << d.toInt();
+        argstream << d.toInt();
         break;
       case QMetaType::Float: // QVariant doesn't have a float type
         typetag.append('f');
-        dstream << d.value<float>();
+        argstream << d.value<float>();
         break;
       default: break;
     }
   }
-  msg += Osc::writePaddedString(typetag);
-  msg += args;
+  Osc::writePaddedString(msgstream, typetag);
+  msgstream.writeRawData(args.constData(), args.size());
   Q_ASSERT((msg.size() % 4) == 0);
   return msg;
 }
@@ -86,7 +97,7 @@ QByteArray Osc::createPacket(const QString & msg)
 QByteArray Osc::createPacket(const QStringList & strings)
 {
   QList<OscMessage*> oscMsgs;
-  foreach (QString str, strings) {
+  foreach (const QString & str, strings) {
     OscMessage *msg = new OscMessage();
     if (createMessage(str, msg))
       oscMsgs.append(msg);
@@ -101,15 +112,15 @@ QByteArray Osc::createPacket(const QStringList & strings)
 QByteArray Osc::createPacket(const QList<OscMessage*> & msgs)
 {
   QByteArray bundle;
-  if (msgs.size() == 0)
+  if (msgs.isEmpty())
     return bundle;
   else if (msgs.size() == 1) // if there's only one message in the bundle, send it as a normal message
     bundle = msgs.first()->toByteArray();
   else { // we have more than one message, and it's worth sending a real bundle
-    bundle += Osc::writePaddedString("#bundle"); // indicate that this is indeed a bundle
-    bundle += Osc::writeTimetag(0, 0); // we don't do much with timetags
-
     QDataStream dstream(&bundle, QIODevice::WriteOnly);
+    writePaddedString(dstream, "#bundle"); // indicate that this is indeed a bundle
+    Osc::writeTimetag(dstream, 0, 0); // we don't do much with timetags
+
     dstream.skipRawData(bundle.size()); // make sure we're at the end of the data
     foreach (OscMessage* msg, msgs) // then write out the messages
       dstream << msg->toByteArray(); // datastream packs this as an int32 followed by raw data, just like OSC wants
@@ -144,13 +155,13 @@ QString Osc::getTypeTag(QByteArray* msg)
   // get rid of everything up until the beginning of the typetag, which is indicated by ','
   while (msg->at(0) != ',' && msg->size())
     msg->remove(0, 1);
-  QString tag( msg->data() );
+  QString tag(msg->data());
   msg->remove(0, paddedLength(tag)); // remove the tag and trailing nulls from the buffer
   return tag;
 }
 
 // When we receive a packet, check to see whether it is a message or a bundle.
-bool Osc::receivePacket( QByteArray* pkt, QList<OscMessage*>* oscMessageList )
+bool Osc::receivePacket(QByteArray* pkt, QList<OscMessage*>* oscMessageList)
 {
   if (pkt->startsWith('/')) { // single message
     OscMessage* om = receiveMessage(pkt);
@@ -230,8 +241,7 @@ bool Osc::extractData(const QString & typetag, QByteArray* msg, OscMessage* oscM
         newdata.setValue(f);
         break;
       }
-      case 's':
-      {
+      case 's': {
         /*
           normally data stream wants to store int32 then string data, but
           that's not how OSC wants it so just pull out chars until we get a null
@@ -260,22 +270,14 @@ bool Osc::extractData(const QString & typetag, QByteArray* msg, OscMessage* oscM
     }
 
     if (dstream.status() == QDataStream::Ok && newdata.isValid())
-      oscMessage->data.append( newdata );
+      oscMessage->data.append(newdata);
     else
       return false;
   }
   return true;
 }
 
-QByteArray Osc::createOneRequest(const char* message)
-{
-  QByteArray oneRequest = Osc::writePaddedString(message);
-  oneRequest += Osc::writePaddedString(",");
-  Q_ASSERT((oneRequest.size() % 4) == 0);
-  return oneRequest;
-}
-
-QByteArray Osc::writePaddedString(const QString & str)
+void Osc::writePaddedString(QDataStream & ds, const QString & str)
 {
   QByteArray paddedString = str.toAscii() + '\0'; // OSC requires that strings be null-terminated
   int pad = 4 - (paddedString.size() % 4);
@@ -283,9 +285,8 @@ QByteArray Osc::writePaddedString(const QString & str)
     while (pad--)
       paddedString.append('\0');
   }
-
-  Q_ASSERT(((paddedString.size()) % 4) == 0);
-  return paddedString;
+  Q_ASSERT((paddedString.size() % 4) == 0);
+  ds.writeRawData(paddedString.constData(), paddedString.size());
 }
 
 /*
@@ -300,13 +301,9 @@ int Osc::paddedLength(const QString & str)
   return len;
 }
 
-QByteArray Osc::writeTimetag(int a, int b)
+void Osc::writeTimetag(QDataStream & ds, int a, int b)
 {
-  QByteArray tag;
-  QDataStream dstream(&tag, QIODevice::WriteOnly);
-  dstream << a << b;
-  Q_ASSERT(tag.size() == 8);
-  return tag;
+  ds << a << b;
 }
 
 // we expect an address pattern followed by some number of arguments,

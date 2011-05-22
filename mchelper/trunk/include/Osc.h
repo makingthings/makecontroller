@@ -27,19 +27,18 @@
 class OscMessage
 {
 public:
+  OscMessage();
+  OscMessage(const QString & address);
   QString addressPattern;
   QList<QVariant> data;
-  QString toString( );
-  QByteArray toByteArray( );
+  QString toString();
+  QByteArray toByteArray();
 };
 
 class Osc
 {
   public:
     Osc() {}
-    static QByteArray writePaddedString(const QString & str);
-    static QByteArray writeTimetag(int a, int b);
-    static QByteArray createOneRequest(const char* message);
     QList<OscMessage*> processPacket(const char* data, int size);
     QByteArray createPacket(const QStringList & strings);
     QByteArray createPacket(const QList<OscMessage*> & msgs);
@@ -52,8 +51,8 @@ class Osc
     OscMessage* receiveMessage(QByteArray* msg);
     bool extractData(const QString & typetag, QByteArray* buffer, OscMessage* message);
     int paddedLength(const QString & str);
+    friend class OscMessage;
+    static void writePaddedString(QDataStream & ds, const QString & str);
+    static void writeTimetag(QDataStream & ds, int a, int b);
 };
-
 #endif
-
-
