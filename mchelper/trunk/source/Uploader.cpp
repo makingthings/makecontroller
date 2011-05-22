@@ -24,7 +24,8 @@
 #include <QtDebug>
 
 #ifdef Q_OS_MAC
-#include <CoreFoundation/CoreFoundation.h>
+#include <CoreFoundation/CFURL.h>
+#include <CoreFoundation/CFBundle.h>
 #endif
 
 /*

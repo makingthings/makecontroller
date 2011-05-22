@@ -41,7 +41,7 @@ Inspector::Inspector(MainWindow *mainWindow) : QDialog( 0 )
   connect(sendPortEdit, SIGNAL(textEdited(QString)), this, SLOT(onAnyValueEdited()));
   connect(dhcpBox, SIGNAL(clicked(bool)), this, SLOT(onAnyValueEdited()));
 
-  QSettings settings("MakingThings", "mchelper");
+  QSettings settings;
   QPoint inspectorPos = settings.value("inspector_pos").toPoint();
   if(!inspectorPos.isNull())
     move(inspectorPos);
