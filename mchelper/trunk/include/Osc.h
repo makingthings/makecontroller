@@ -46,10 +46,9 @@ class Osc
     bool createMessage(const QString & msg, OscMessage *oscMsg);
 
   private:
-    QString getTypeTag(QByteArray* msg);
     bool receivePacket(QByteArray* pkt,  QList<OscMessage*>* oscMessageList);
-    OscMessage* receiveMessage(QByteArray* msg);
-    bool extractData(const QString & typetag, QByteArray* buffer, OscMessage* message);
+    OscMessage* receiveMessage(QDataStream & ds, QByteArray* msg);
+    bool extractData(QDataStream & ds, QByteArray* buffer, OscMessage* message);
     int paddedLength(const QString & str);
     friend class OscMessage;
     static void writePaddedString(QDataStream & ds, const QString & str);
