@@ -137,39 +137,16 @@ QList<OscMessage*> Osc::processPacket(const char* data, int size)
   return msgList;
 }
 
-/*
-  An OSC Type Tag String is an OSC-string beginning with the character ',' (comma) followed by a sequence
-  of characters corresponding exactly to the sequence of OSC Arguments in the given message.
-  Each character after the comma is called an OSC Type Tag and represents the type of the corresponding OSC Argument.
-  (The requirement for OSC Type Tag Strings to start with a comma makes it easier for the recipient of an OSC Message
-  to determine whether that OSC Message is lacking an OSC Type Tag String.)
-
-  OSC Type Tag  Type of corresponding argument
-      i         int32
-      f         float32
-      s         Osc-string
-      b         Osc-blob
-*/
-QString Osc::getTypeTag(QByteArray* msg)
-{
-  // get rid of everything up until the beginning of the typetag, which is indicated by ','
-  while (msg->at(0) != ',' && msg->size())
-    msg->remove(0, 1);
-  QString tag(msg->data());
-  msg->remove(0, paddedLength(tag)); // remove the tag and trailing nulls from the buffer
-  return tag;
-}
-
 // When we receive a packet, check to see whether it is a message or a bundle.
 bool Osc::receivePacket(QByteArray* pkt, QList<OscMessage*>* oscMessageList)
 {
+  QDataStream dstream(pkt, QIODevice::ReadOnly);
   if (pkt->startsWith('/')) { // single message
-    OscMessage* om = receiveMessage(pkt);
+    OscMessage* om = receiveMessage(dstream, pkt);
     if (om)
       oscMessageList->append(om);
   }
   else if (pkt->startsWith("#bundle")) { // bundle
-    QDataStream dstream(pkt, QIODevice::ReadOnly);
     dstream.skipRawData(16); // skip bundle text and timetag
     QByteArray msg;
     while (!dstream.atEnd() && dstream.status() == QDataStream::Ok) {
@@ -178,7 +155,7 @@ bool Osc::receivePacket(QByteArray* pkt, QList<OscMessage*>* oscMessageList)
         qDebug() << QApplication::tr("got insane length - %d, bailing.").arg(msg.size());
         return false;
       }
-      if (!receivePacket( &msg, oscMessageList))
+      if (!receivePacket(&msg, oscMessageList))
         return false;
     }
   }
@@ -192,29 +169,19 @@ bool Osc::receivePacket(QByteArray* pkt, QList<OscMessage*>* oscMessageList)
   Once we receive a message, we need to make sure it's in the right format,
   and then send it off to be interpreted (via extractData() ).
 */
-OscMessage* Osc::receiveMessage(QByteArray* msg)
+OscMessage* Osc::receiveMessage(QDataStream & ds, QByteArray* msg)
 {
-  OscMessage* oscMessage = new OscMessage();
-  oscMessage->addressPattern = QString(msg->data());
-  msg->remove(0, paddedLength(oscMessage->addressPattern));
+  OscMessage* oscMessage = new OscMessage(msg->constData());
+  ds.skipRawData(paddedLength(oscMessage->addressPattern));
 
-  QString typetag = getTypeTag(msg);
-  if (typetag.isEmpty() || !typetag.startsWith(',')) { //If there was no type tag, say so and stop processing this message.
-    QString msg = QObject::tr( "Error - No type tag.");
+  // We get a count back from extractData() of how many items were included - if this
+  // doesn't match the length of the type tag, something funky is happening.
+  if (!extractData(ds, msg, oscMessage)) {
+    qDebug() << "Error extracting data from packet - type tag doesn't correspond to data included.";
     delete oscMessage;
     return 0;
   }
-  else {
-    // We get a count back from extractData() of how many items were included - if this
-    // doesn't match the length of the type tag, something funky is happening.
-    if (!extractData( typetag, msg, oscMessage ) || oscMessage->data.size() != typetag.size() - 1) {
-      qDebug() << "Error extracting data from packet - type tag doesn't correspond to data included.";
-      delete oscMessage;
-      return 0;
-    }
-    else
-      return oscMessage;
-  }
+  return oscMessage;
 }
 
 /*
@@ -222,71 +189,73 @@ OscMessage* Osc::receiveMessage(QByteArray* msg)
   This means we need to step through the type tag, and then step the corresponding number of bytes
   through the data, depending on the type specified in the tag.
 */
-bool Osc::extractData(const QString & typetag, QByteArray* msg, OscMessage* oscMessage)
+bool Osc::extractData(QDataStream & ds, QByteArray* msg, OscMessage* oscMessage)
 {
-  QDataStream dstream(msg, QIODevice::ReadOnly);
+  QString typetag(msg->constData() + ds.device()->pos());
+  ds.skipRawData(paddedLength(typetag));
+  if (typetag.isEmpty() || !typetag.startsWith(',')) { //If there was no type tag, say so and stop processing this message.
+    qDebug() << "Error - invalid type tag." << typetag;
+    return false;
+  }
+
   int typeIdx = 1; // start after the comma
-  while (!dstream.atEnd() && typeIdx < typetag.size()) {
+  while (!ds.atEnd() && typeIdx < typetag.size()) {
     QVariant newdata;
     switch (typetag.at(typeIdx++).toAscii()) {
       case 'i': {
         int val;
-        dstream >> val;
+        ds >> val;
         newdata.setValue(val);
         break;
       }
       case 'f': {
         float f;
-        dstream >> f;
+        ds >> f;
         newdata.setValue(f);
         break;
       }
       case 's': {
         /*
           normally data stream wants to store int32 then string data, but
-          that's not how OSC wants it so just pull out chars until we get a null
-          then skip any remaining nulls
+          that's not how OSC wants it so just cheat a little, and create
+          a string from the QByteArray, starting at the offset that we've
+          currently read to, then skip the datastream past it.
         */
-        QString str;
-        quint8 c;
-        while (!dstream.atEnd()) {
-          dstream >> c;
-          if (c == 0) {
-            newdata.setValue(str);
-            dstream.skipRawData(paddedLength(str) - str.size() - 1); // step past any extra padding
-            break;
-          }
-          else
-            str.append(c);
-        }
+        QString str(msg->constData() + ds.device()->pos());
+        newdata.setValue(str);
+        ds.skipRawData(paddedLength(str)); // step past any extra padding
         break;
       }
       case 'b': {
         QByteArray blob;
-        dstream >> blob; // data stream unpacks this as an int32 len followed by data, just like OSC wants
+        ds >> blob; // data stream unpacks this as an int32 len followed by data, just like OSC wants
         newdata.setValue(blob);
         break;
       }
     }
 
-    if (dstream.status() == QDataStream::Ok && newdata.isValid())
+    if (ds.status() == QDataStream::Ok && newdata.isValid()) {
       oscMessage->data.append(newdata);
-    else
+    }
+    else {
+      qWarning() << "unhappy OSC parse..." << ds.status();
       return false;
+    }
   }
-  return true;
+  // ensure we got the appropriate number of data elements, according to the typetag
+  return (oscMessage->data.size() == typetag.size() - 1);
 }
 
 void Osc::writePaddedString(QDataStream & ds, const QString & str)
 {
   QByteArray paddedString = str.toAscii() + '\0'; // OSC requires that strings be null-terminated
+  ds.writeRawData(paddedString.constData(), paddedString.size());
   int pad = 4 - (paddedString.size() % 4);
   if (pad < 4) { // if we had 4 - 0, that means we don't need to add any padding
-    while (pad--)
-      paddedString.append('\0');
+    while (pad--) {
+      ds << (quint8)'\0';
+    }
   }
-  Q_ASSERT((paddedString.size() % 4) == 0);
-  ds.writeRawData(paddedString.constData(), paddedString.size());
 }
 
 /*
