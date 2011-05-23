@@ -22,7 +22,7 @@
 #include <QTcpSocket>
 #include <QXmlSimpleReader>
 #include <QXmlDefaultHandler>
-#include <QDomDocument>
+#include <QXmlStreamWriter>
 #include <QThread>
 
 #include "MainWindow.h"
@@ -86,6 +86,7 @@ class OscXmlClient : public QThread
     int socketDescriptor;
     MainWindow *mainWindow;
     bool lastParseComplete;
+    QXmlStreamWriter xmlWriter;
     QXmlSimpleReader xml;
     QXmlInputSource xmlInput;
     XmlHandler *handler;
@@ -95,7 +96,6 @@ class OscXmlClient : public QThread
     bool shuttingDown;
 
     bool isConnected( );
-    void writeXmlDoc( const QDomDocument & doc );
 
   private slots:
     void processData( );
@@ -134,5 +134,3 @@ class OscXmlServer : public QTcpServer
 };
 
 #endif // OSC_XML_SERVER_H
-
-

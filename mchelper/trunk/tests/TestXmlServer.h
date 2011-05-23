@@ -32,7 +32,7 @@ class TestXmlServer : public QObject
   Q_OBJECT
 
 public:
-  TestXmlServer( MainWindow* window )
+  TestXmlServer(MainWindow* window)
   {
     this->mainWindow = window;
   }
@@ -51,11 +51,3 @@ private slots:
 };
 
 #endif //TEST_XML_SERVER_H
-
-
-
-
-
-
-
-
