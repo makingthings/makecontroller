@@ -29,8 +29,8 @@ void TestXmlServer::initTestCase()
 {
   PacketUdp *udp = new PacketUdp(QHostAddress(TESTADDR), 10000);
   mainWindow->onEthernetDeviceArrived(udp);
-  QVERIFY( mainWindow->ui.deviceList->count() == 1 );
-  QSettings settings("MakingThings", "mchelper");
+  QCOMPARE(mainWindow->ui.deviceList->count(), 1);
+  QSettings settings;
   serverPort = settings.value("xml_listen_port", DEFAULT_XML_LISTEN_PORT).toInt();
   qRegisterMetaType< QList<Board*> >("QList<Board*>");
 }
@@ -45,18 +45,19 @@ void TestXmlServer::clientConnect()
 
   xmlClient1.connectToHost(QHostAddress::LocalHost, serverPort);
   int count = 0;
-  while( xmlClient1.state() != QAbstractSocket::ConnectedState ) {
+  while (xmlClient1.state() != QAbstractSocket::ConnectedState) {
     QTest::qWait(250);
-    if(count++ > 10)
+    if (count++ > 10)
       QFAIL("client 1 couldn't connect to server.");
   }
-  QTest::qWait(10);
+  QTest::qWait(100);
 
   //QCOMPARE(updateSpy->count(), 1 );
-  QCOMPARE(client1DataSpy.count(), 1 );
-  QList<QByteArray> newDocuments = xmlClient1.readAll( ).split( '\0' );
-  foreach( QByteArray document, newDocuments ) {
-    if(!document.length())
+  QCOMPARE(client1DataSpy.count(), 1);
+  QList<QByteArray> newDocuments = xmlClient1.readAll().split('\0');
+  foreach (const QByteArray & document, newDocuments) {
+    qDebug() << "data" << QString(document);
+    if (document.isEmpty())
       newDocuments.removeOne(document);
   }
   QCOMPARE(newDocuments.count(), 2); // should have the crossdomain.xml policy file and the list of connected boards
@@ -109,13 +110,3 @@ void TestXmlServer::dataFromBoard()
   QCOMPARE(client2DataSpy.count(), 1 );
   QVERIFY(xmlClient1.readAll() == xmlClient2.readAll()); // make sure they both got the same thing
 }
-
-
-
-
-
-
-
-
-
-

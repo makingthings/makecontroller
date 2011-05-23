@@ -36,7 +36,7 @@ OscXmlServer::OscXmlServer( MainWindow *mainWindow, QObject *parent ) : QTcpServ
 */
 void OscXmlServer::openNewConnection( )
 {
-  OscXmlClient *client = new OscXmlClient( nextPendingConnection( ), mainWindow );
+  OscXmlClient *client = new OscXmlClient(nextPendingConnection(), mainWindow );
   client->sendCrossDomainPolicy();
   connect( client, SIGNAL(finished()), client, SLOT(deleteLater()));
   connect(this, SIGNAL(newXmlPacket(QList<OscMessage*>, QString)), client, SLOT(sendXmlPacket(QList<OscMessage*>, QString)));
@@ -98,6 +98,7 @@ OscXmlClient::OscXmlClient( QTcpSocket *socket, MainWindow *mainWindow, QObject 
 {
   this->mainWindow = mainWindow;
   this->socket = socket;
+  xmlWriter.setDevice(socket);
   qRegisterMetaType<MsgType::Type>("MsgType::Type");
   connect(this, SIGNAL(msg(QString, MsgType::Type, QString)), mainWindow, SLOT(message(QString, MsgType::Type, QString)));
   connect(mainWindow, SIGNAL(boardInfoUpdate(Board*)), this, SLOT(boardInfoUpdate(Board*)));
@@ -105,7 +106,6 @@ OscXmlClient::OscXmlClient( QTcpSocket *socket, MainWindow *mainWindow, QObject 
   xml.setContentHandler( handler );
   xml.setErrorHandler( handler );
   lastParseComplete = true;
-  socket = NULL;
   shuttingDown = false;
 }
 
@@ -191,19 +191,19 @@ bool OscXmlClient::isConnected( )
 */
 void OscXmlClient::boardInfoUpdate( Board* board )
 {
-  if(!board)
+  if (!board)
     return;
-  QDomDocument doc;
-  QDomElement boardUpdate = doc.createElement( "BOARD_INFO" );
-  doc.appendChild( boardUpdate );
-
-  QDomElement boardElement = doc.createElement( "BOARD" );
-  boardElement.setAttribute( "LOCATION", board->key() );
-  boardElement.setAttribute( "NAME", board->name );
-  boardElement.setAttribute( "SERIALNUMBER", board->serialNumber );
-  boardUpdate.appendChild( boardElement );
-
-  writeXmlDoc( doc );
+  xmlWriter.writeStartDocument();
+  xmlWriter.writeStartElement("BOARD_INFO");
+  xmlWriter.writeStartElement("BOARD");
+  xmlWriter.writeAttribute("LOCATION", board->key());
+  xmlWriter.writeAttribute("NAME", board->name);
+  xmlWriter.writeAttribute("SERIALNUMBER", board->serialNumber);
+  xmlWriter.writeEndElement(); // BOARD
+  xmlWriter.writeEndElement(); // BOARD_INFO
+  xmlWriter.writeEndDocument();
+  char terminator = '\0';
+  socket->write(&terminator, 1);
 }
 
 /*
@@ -212,111 +212,103 @@ void OscXmlClient::boardInfoUpdate( Board* board )
 */
 void OscXmlClient::boardListUpdate( const QList<Board*> & boardList, bool arrived )
 {
-  if(!boardList.count())
+  if (boardList.isEmpty())
     return;
-  QDomDocument doc;
-  QDomElement boardUpdate;
-  if( arrived )
-    boardUpdate = doc.createElement( "BOARD_ARRIVAL" );
-  else
-    boardUpdate = doc.createElement( "BOARD_REMOVAL" );
 
-  doc.appendChild( boardUpdate );
-  foreach( Board *board, boardList) {
-    QDomElement boardElem = doc.createElement( "BOARD" );
-    if( board->type() == BoardType::UsbSerial )
-      boardElem.setAttribute( "TYPE", "USB" );
+  xmlWriter.writeStartDocument();
+  xmlWriter.writeStartElement(arrived ? "BOARD_ARRIVAL" : "BOARD_REMOVAL");
+  foreach (Board *board, boardList) {
+    xmlWriter.writeStartElement("BOARD");
+    if (board->type() == BoardType::UsbSerial )
+      xmlWriter.writeAttribute("TYPE", "USB");
     else if( board->type() == BoardType::Ethernet )
-      boardElem.setAttribute( "TYPE", "Ethernet" );
-    boardElem.setAttribute( "LOCATION", board->key() );
-    boardUpdate.appendChild( boardElem );
+      xmlWriter.writeAttribute("TYPE", "Ethernet");
+    xmlWriter.writeAttribute("LOCATION", board->key());
+    xmlWriter.writeEndElement();
   }
-  writeXmlDoc( doc );
-}
-
-void OscXmlClient::writeXmlDoc( const QDomDocument & doc )
-{
-  if( isConnected( ) )
-  {
-    //qDebug("sending %s", qPrintable(doc.toString(2)));
-    socket->write( doc.toByteArray(0).append( '\0' ) ); // Flash wants XML followed by a zero byte
-  }
+  xmlWriter.writeEndElement(); // board arrival/removal
+  xmlWriter.writeEndDocument();
+  char terminator = '\0';
+  socket->write(&terminator, 1);
 }
 
 /*
   Flash requires a cross-domain policy to appease its security system.
   Just allow anybody to connect to us.
+
+  http://kb2.adobe.com/cps/142/tn_14213.html
 */
 void OscXmlClient::sendCrossDomainPolicy()
 {
-  QDomImplementation impl;
-  QDomDocumentType doctype = impl.createDocumentType("cross-domain-policy", QString(), "/xml/dtds/cross-domain-policy.dtd");
-  QDomDocument doc(doctype);
-  QDomProcessingInstruction instr = doc.createProcessingInstruction("xml","version=\"1.0\"");
-  doc.appendChild(instr);
-  QDomElement pol = doc.createElement("cross-domain-policy");
-  doc.appendChild( pol );
-  QDomElement access = doc.createElement("allow-access-from");
-  access.setAttribute( "domain", "*" );
-  access.setAttribute( "to-ports", "*" );
-  pol.appendChild( access );
-  writeXmlDoc(doc);
+  xmlWriter.writeStartDocument();
+  xmlWriter.writeDTD("<!DOCTYPE cross-domain-policy SYSTEM \"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd\">");
+
+  xmlWriter.writeStartElement("cross-domain-policy");
+  xmlWriter.writeStartElement("allow-access-from");
+  xmlWriter.writeAttribute("domain", "*");
+  xmlWriter.writeAttribute("to-ports", "*");
+  xmlWriter.writeEndElement(); // allow-access-from
+  xmlWriter.writeEndElement(); // cross-domain-policy
+
+  xmlWriter.writeEndDocument();
+  char terminator = '\0';
+  socket->write(&terminator, 1);
 }
 
 void OscXmlClient::sendXmlPacket( const QList<OscMessage*> & messageList, const QString & srcAddress )
 {
-  if( !isConnected( ) || messageList.count() < 1 )
+  if (!isConnected() || messageList.isEmpty())
     return;
 
-  QDomDocument doc;
-  QDomElement oscPacket = doc.createElement( "OSCPACKET" );
-  oscPacket.setAttribute( "ADDRESS", srcAddress );
-  oscPacket.setAttribute( "TIME", 0 );
-  doc.appendChild( oscPacket );
+  xmlWriter.writeStartDocument();
+  xmlWriter.writeStartElement("OSCPACKET");
+  xmlWriter.writeAttribute("ADDRESS", srcAddress);
+  xmlWriter.writeAttribute("TIME", 0);
 
-  foreach( OscMessage* oscMsg, messageList )
-  {
-    QDomElement msg = doc.createElement( "MESSAGE" );
-    msg.setAttribute( "NAME", oscMsg->addressPattern );
-    oscPacket.appendChild( msg );
-
-    foreach( QVariant d, oscMsg->data ) {
-      QDomElement argument = doc.createElement( "ARGUMENT" );
-      switch( d.type() )
-      {
+  foreach (OscMessage* oscMsg, messageList) {
+    xmlWriter.writeStartElement("MESSAGE");
+    xmlWriter.writeAttribute("NAME", oscMsg->addressPattern);
+    foreach (const QVariant & d, oscMsg->data) {
+      xmlWriter.writeStartElement("ARGUMENT");
+      switch(d.type()) {
         case QVariant::String:
-          argument.setAttribute( "TYPE", "s" );
-          argument.setAttribute( "VALUE", d.toString() );
+          xmlWriter.writeAttribute("TYPE", "s");
+          xmlWriter.writeAttribute("VALUE", d.toString());
           break;
         case QVariant::Int:
-          argument.setAttribute( "TYPE", "i" );
-          argument.setAttribute( "VALUE", d.toString() );
+          xmlWriter.writeAttribute("TYPE", "i");
+          xmlWriter.writeAttribute("VALUE", d.toString());
           break;
         case QMetaType::Float: // QVariant doesn't have a float type
-          argument.setAttribute( "TYPE", "f" );
-          argument.setAttribute( "VALUE", d.toString() );
+          xmlWriter.writeAttribute("TYPE", "f");
+          xmlWriter.writeAttribute("VALUE", d.toString());
           break;
-        case QVariant::ByteArray:
-        {
+        case QVariant::ByteArray: {
           QString blobstring;
           unsigned char* blob = (unsigned char*)d.toByteArray().data();
           int blob_len = d.toByteArray().size();
-          while( blob_len-- ) {
+          while (blob_len--) {
             // break each byte into 4-bit chunks so they don't get misinterpreted
             // by any casts to ASCII, etc. and send a string composed of single chars from 0-f
-            blobstring.append( QString::number( (*blob >> 4) & 0x0f, 16 ) );
-            blobstring.append( QString::number(*blob++ & 0x0f, 16 ) );
+            blobstring.append(QString::number((*blob >> 4) & 0x0f, 16 ));
+            blobstring.append(QString::number(*blob++ & 0x0f, 16 ));
           }
-          argument.setAttribute( "TYPE", "b" );
-          argument.setAttribute( "VALUE", blobstring );
+          xmlWriter.writeAttribute("TYPE", "b");
+          xmlWriter.writeAttribute("VALUE", blobstring);
           break;
         }
-        default: break;
+        default:
+          break;
       }
-      msg.appendChild( argument );
+      xmlWriter.writeEndElement(); // ARGUMENT
     }
+    xmlWriter.writeEndElement(); // MESSAGE
   }
-  writeXmlDoc( doc );
+
+  xmlWriter.writeEndElement(); // OSCPACKET
+  xmlWriter.writeEndDocument();
+  char terminator = '\0';
+  socket->write(&terminator, 1);
 }
 
 /************************************************************************************
