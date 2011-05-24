@@ -21,31 +21,27 @@
 
 #define FROM_STRING "XML Server"
 
-OscXmlServer::OscXmlServer( MainWindow *mainWindow, QObject *parent ) : QTcpServer( parent )
+OscXmlServer::OscXmlServer(MainWindow *mainWindow, QObject *parent)
+  : QTcpServer(parent),
+    mainWindow (mainWindow)
 {
-  this->mainWindow = mainWindow;
-  connect( this, SIGNAL( newConnection() ), this, SLOT( openNewConnection( ) ) );
   connect(this, SIGNAL(msg(QString, MsgType::Type, QString)), mainWindow, SLOT(message(QString, MsgType::Type, QString)));
   QSettings settings;
-  setListenPort( settings.value("xml_listen_port", DEFAULT_XML_LISTEN_PORT).toInt(), false );
+  setListenPort(settings.value("xml_listen_port", DEFAULT_XML_LISTEN_PORT).toInt(), false);
 }
 
 /*
   Called when a new TCP connection has been made.
   Create a new thread for the client, and set it up.
 */
-void OscXmlServer::openNewConnection( )
+void OscXmlServer::incomingConnection(int handle)
 {
-  OscXmlClient *client = new OscXmlClient(nextPendingConnection(), mainWindow );
-  client->sendCrossDomainPolicy();
-  connect( client, SIGNAL(finished()), client, SLOT(deleteLater()));
+  OscXmlClient *client = new OscXmlClient(handle, mainWindow);
+  connect(client, SIGNAL(finished()), client, SLOT(deleteLater()));
   connect(this, SIGNAL(newXmlPacket(QList<OscMessage*>, QString)), client, SLOT(sendXmlPacket(QList<OscMessage*>, QString)));
   connect(this, SIGNAL(boardInfoUpdate(Board*)), client, SLOT(boardInfoUpdate(Board*)));
   connect(this, SIGNAL(boardListUpdated(QList<Board*>, bool)), client, SLOT(boardListUpdate(QList<Board*>, bool)));
-  client->start( );
-
-  // tell Flash about the boards we have connected
-  client->boardListUpdate(mainWindow->getConnectedBoards( ), true);
+  client->start();
 }
 
 bool OscXmlServer::setListenPort( int port, bool announce )
@@ -93,12 +89,11 @@ void OscXmlServer::sendBoardListUpdate(QList<Board*> boardList, bool arrived)
   on to be sent out via UDP or USB to a board.
 
 ************************************************************************************/
-OscXmlClient::OscXmlClient( QTcpSocket *socket, MainWindow *mainWindow, QObject *parent )
-  : QThread(parent)
+OscXmlClient::OscXmlClient(int socketDescriptor, MainWindow *mainWindow, QObject *parent )
+  : QThread(parent),
+    socketDescriptor(socketDescriptor),
+    mainWindow(mainWindow)
 {
-  this->mainWindow = mainWindow;
-  this->socket = socket;
-  xmlWriter.setDevice(socket);
   qRegisterMetaType<MsgType::Type>("MsgType::Type");
   connect(this, SIGNAL(msg(QString, MsgType::Type, QString)), mainWindow, SLOT(message(QString, MsgType::Type, QString)));
   connect(mainWindow, SIGNAL(boardInfoUpdate(Board*)), this, SLOT(boardInfoUpdate(Board*)));
@@ -113,19 +108,26 @@ OscXmlClient::OscXmlClient( QTcpSocket *socket, MainWindow *mainWindow, QObject 
   This is the main loop for the separate thread that each TCP client sits in.
   Set up our connections and wait around for data.
 */
-void OscXmlClient::run( )
+void OscXmlClient::run()
 {
-  // these connections need to be direct since we have a pointer to the tcpsocket in our class
-  // which means that it will live by default in the server thread (the main GUI thread),
-  // and we want to process in our own thread
-  connect( socket, SIGNAL(readyRead()), this, SLOT(processData()), Qt::DirectConnection);
-  connect( socket, SIGNAL(disconnected()), this, SLOT(disconnected()), Qt::DirectConnection);
+  this->socket = new QTcpSocket();
+  if (!socket->setSocketDescriptor(socketDescriptor)) {
+    qWarning() << "couldn't figure new server connection, bailing.";
+    return;
+  }
+  connect(socket, SIGNAL(readyRead()), this, SLOT(processData()));
+  connect(socket, SIGNAL(disconnected()), this, SLOT(disconnected()));
   //connect( socket, SIGNAL(bytesWritten(qint64)), this, SLOT(wroteBytes(qint64)), Qt::DirectConnection);
   qRegisterMetaType< QList<OscMessage*> >("QList<OscMessage*>");
 
   peerAddress = socket->peerAddress( ).toString( );
   emit msg( tr("New connection from peer at %1").arg(peerAddress), MsgType::Notice, FROM_STRING );
-  exec( ); // run the thread, listening for and sending messages, until we call exit( )
+
+  xmlWriter.setDevice(socket);
+  sendCrossDomainPolicy();
+  boardListUpdate(mainWindow->getConnectedBoards(), true);
+
+  exec(); // run the thread, listening for and sending messages, until we call exit( )
 }
 
 /*
@@ -405,11 +407,3 @@ bool XmlHandler::endElement( const QString & namespaceURI, const QString & local
 
   return true;
 }
-
-
-
-
-
-
-
-
