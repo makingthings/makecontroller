@@ -67,7 +67,7 @@ class OscXmlClient : public QThread
 {
   Q_OBJECT
   public:
-    OscXmlClient( QTcpSocket *socket, MainWindow *mainWindow, QObject *parent = 0 );
+    OscXmlClient(int socketDescriptor, MainWindow *mainWindow, QObject *parent = 0);
     ~OscXmlClient( ) { }
     void run();
     void sendCrossDomainPolicy();
@@ -121,8 +121,8 @@ class OscXmlServer : public QTcpServer
     void boardInfoUpdate(Board *board);
     void boardListUpdated(QList<Board*> boardList, bool arrived);
 
-  private slots:
-    void openNewConnection( );
+  protected:
+    void incomingConnection(int handle);
 
   private:
     MainWindow *mainWindow;
