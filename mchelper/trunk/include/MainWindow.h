@@ -63,7 +63,7 @@ class MainWindow : public QMainWindow
 {
   Q_OBJECT
 public:
-  MainWindow(bool no_ui);
+  MainWindow(bool no_ui, QWidget *parent = 0);
   bool noUi() {return no_ui;}
   void setMaxMessages(int msgs);
   Board* getCurrentBoard();
@@ -96,7 +96,6 @@ private:
   About *about;
   AppUpdater* appUpdater;
   QListWidgetItem deviceListPlaceholder;
-  QTextCharFormat grayText, blackText;
   bool no_ui;
   bool hideOscMsgs;
   void readSettings();
