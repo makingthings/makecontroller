@@ -70,17 +70,19 @@ MainWindow::MainWindow(bool no_ui) : QMainWindow( 0 )
   connect( ui.deviceList, SIGNAL(itemSelectionChanged()), this, SLOT(onDeviceSelectionChanged()));
 
   // menu connections
-  connect( ui.actionInspector, SIGNAL(triggered()), inspector, SLOT(loadAndShow()));
-  connect( ui.actionPreferences, SIGNAL(triggered()), preferences, SLOT(loadAndShow()));
-  connect( ui.actionUpload, SIGNAL(triggered()), uploader, SLOT(show()));
-  connect( ui.actionClearConsole, SIGNAL(triggered()), ui.outputConsole, SLOT(clear()));
-  connect( ui.actionAbout, SIGNAL(triggered()), about, SLOT(show()));
-  connect( ui.actionResetBoard, SIGNAL(triggered()), this, SLOT(onDeviceResetRequest()));
-  connect( ui.actionEraseBoard, SIGNAL(triggered()), this, SLOT(onEraseRequest()));
-  connect( ui.actionHide_OSC, SIGNAL(triggered(bool)), this, SLOT(onHideOsc(bool)));
-  connect( ui.actionCheckForUpdates, SIGNAL(triggered()), this, SLOT(onCheckForUpdates()));
-  connect( ui.actionHelp, SIGNAL(triggered()), this, SLOT(onHelp()));
-  connect( ui.actionOscTutorial, SIGNAL(triggered()), this, SLOT(onOscTutorial()));
+  connect(ui.actionInspector, SIGNAL(triggered()), inspector, SLOT(loadAndShow()));
+  connect(ui.actionPreferences, SIGNAL(triggered()), preferences, SLOT(loadAndShow()));
+  connect(ui.actionUpload, SIGNAL(triggered()), uploader, SLOT(show()));
+  connect(ui.actionClearConsole, SIGNAL(triggered()), ui.outputConsole, SLOT(clear()));
+  connect(ui.actionAbout, SIGNAL(triggered()), about, SLOT(show()));
+  connect(ui.actionResetBoard, SIGNAL(triggered()), this, SLOT(onDeviceResetRequest()));
+  connect(ui.actionEraseBoard, SIGNAL(triggered()), this, SLOT(onEraseRequest()));
+  connect(ui.actionHide_OSC, SIGNAL(triggered(bool)), this, SLOT(onHideOsc(bool)));
+  connect(ui.actionCheckForUpdates, SIGNAL(triggered()), this, SLOT(onCheckForUpdates()));
+  connect(ui.actionHelp, SIGNAL(triggered()), this, SLOT(onHelp()));
+  connect(ui.actionOscTutorial, SIGNAL(triggered()), this, SLOT(onOscTutorial()));
+
+//  ui.outputConsole->setCenterOnScroll(true);
 
   // command line connections
   connect( ui.commandLine->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onCommandLine()));
@@ -252,7 +254,7 @@ void MainWindow::onEthernetDeviceArrived(PacketInterface* pi)
   board->setIcon(QIcon(":/icons/network_icon.png"));
   board->setToolTip(tr("Ethernet Device: ") + pi->key());
 
-  if(noUi()) {
+  if (noUi()) {
     QTextStream out(stdout);
     out << tr("network device discovered: ") + pi->key() << endl;
   }
@@ -272,7 +274,7 @@ void MainWindow::onUsbDeviceArrived(const QStringList & keys, BoardType::Type ty
   Board *board;
   QList<Board*> boardList;
   QString noUiString;
-  foreach(QString key, keys) {
+  foreach(const QString & key, keys) {
     if( type == BoardType::UsbSerial){
       PacketUsbSerial *usb = new PacketUsbSerial(key);
       board = new Board(this, usb, oscXmlServer, type, key);
@@ -356,14 +358,14 @@ void MainWindow::message(const QStringList & msgs, MsgType::Type type, const QSt
   QString currentTime = QTime::currentTime().toString();
   QTextBlockFormat format;
   format.setBackground(msgColor(type));
-  QString tofrom("from");
-  if(type == MsgType::Command)
-    tofrom = "to";
+  QString tofrom = (type == MsgType::Command) ? "to " : "from ";
+  tofrom.append(from);
 
   ui.outputConsole->setUpdatesEnabled(false);
-  QString tf = QString("%1 %2").arg(tofrom).arg(from);
-  foreach(QString msg, msgs)
-    addMessage( currentTime, msg, tf, format);
+  QString color(msgColorStr(type));
+  foreach (const QString & msg, msgs) {
+    addMessage(currentTime, msg, tofrom, color);
+  }
   ui.outputConsole->setUpdatesEnabled(true);
 }
 
@@ -376,29 +378,22 @@ void MainWindow::message(const QString & msg, MsgType::Type type, const QString 
   else {
     if( !messagesEnabled( type ) )
       return;
-    QTextBlockFormat format;
-    format.setBackground(msgColor(type));
-    QString tofrom = tr("from");
-
-    if(type == MsgType::Command)
-      tofrom = tr("to");
+    QString tofrom = (type == MsgType::Command) ? "to " : "from ";
+    tofrom.append(from);
 
     ui.outputConsole->setUpdatesEnabled(false);
-    addMessage( QTime::currentTime().toString(), msg, QString("%1 %2").arg(tofrom).arg(from), format);
+    addMessage(QTime::currentTime().toString(), msg, tofrom, msgColorStr(type));
     ui.outputConsole->setUpdatesEnabled(true);
   }
 }
 
-void MainWindow::addMessage( const QString & time, const QString & msg,
-                              const QString & tofrom, const QTextBlockFormat & bkgnd )
+void MainWindow::addMessage(const QString & time, const QString & msg,
+                              const QString & tofrom, const QString & bkgnd)
 {
-  ui.outputConsole->setCurrentCharFormat(grayText);
-  ui.outputConsole->appendPlainText(time + "   ");
-  ui.outputConsole->setCurrentCharFormat(blackText);
-  ui.outputConsole->insertPlainText(msg);
-  ui.outputConsole->setCurrentCharFormat(grayText);
-  ui.outputConsole->insertPlainText(" " + tofrom);
-  ui.outputConsole->textCursor().setBlockFormat(bkgnd);
+  // TODO - figure out how to get background colors to span the entire width of a block
+  QString html = QString("<span style=\"background:%1;\"><span style=\"color:gray;\">%2</span>   %3 <span style=\"color:gray;\">%4</span></span>")
+        .arg(bkgnd).arg(time).arg(msg).arg(tofrom);
+  ui.outputConsole->appendHtml(html);
 }
 
 bool MainWindow::messagesEnabled( MsgType::Type type )
@@ -414,6 +409,24 @@ bool MainWindow::messagesEnabled( MsgType::Type type )
 void MainWindow::statusMsg(const QString & msg, int duration)
 {
   statusBar()->showMessage(msg, duration);
+}
+
+QString MainWindow::msgColorStr(MsgType::Type type)
+{
+  switch(type) {
+    case MsgType::Warning:
+      return "#ffe4ff"; // QColor(255, 228, 118, 255); // orange
+    case MsgType::Error:
+      return "#ffdddd"; // QColor(255, 221, 221, 255); // red
+    case MsgType::Notice:
+      return "#ebebeb"; // QColor(235, 235, 235, 235); // light gray
+    case MsgType::Command:
+      return "#e5edf7"; // QColor(229, 237, 247, 255); // light blue
+    case MsgType::XMLMessage:
+      return "#dbfae0"; // QColor(219, 250, 224, 255); // green
+    default:
+      return "white"; // Qt::white;
+  }
 }
 
 QColor MainWindow::msgColor(MsgType::Type type)
@@ -541,18 +554,3 @@ void MainWindow::onOscTutorial()
   if( !QDesktopServices::openUrl( QUrl("http://www.makingthings.com/documentation/tutorial/osc") ) )
     statusBar()->showMessage( tr("Help is online and requires an internet connection."), 3000 );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
