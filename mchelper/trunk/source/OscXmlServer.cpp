@@ -97,10 +97,6 @@ OscXmlClient::OscXmlClient(int socketDescriptor, MainWindow *mainWindow, QObject
   qRegisterMetaType<MsgType::Type>("MsgType::Type");
   connect(this, SIGNAL(msg(QString, MsgType::Type, QString)), mainWindow, SLOT(message(QString, MsgType::Type, QString)));
   connect(mainWindow, SIGNAL(boardInfoUpdate(Board*)), this, SLOT(boardInfoUpdate(Board*)));
-  handler = new XmlHandler( mainWindow, this );
-  xml.setContentHandler( handler );
-  xml.setErrorHandler( handler );
-  lastParseComplete = true;
   shuttingDown = false;
 }
 
@@ -120,8 +116,7 @@ void OscXmlClient::run()
   //connect( socket, SIGNAL(bytesWritten(qint64)), this, SLOT(wroteBytes(qint64)), Qt::DirectConnection);
   qRegisterMetaType< QList<OscMessage*> >("QList<OscMessage*>");
 
-  peerAddress = socket->peerAddress( ).toString( );
-  emit msg( tr("New connection from peer at %1").arg(peerAddress), MsgType::Notice, FROM_STRING );
+  emit msg( tr("New connection from peer at %1").arg(socket->peerAddress().toString()), MsgType::Notice, FROM_STRING );
 
   xmlWriter.setDevice(socket);
   sendCrossDomainPolicy();
@@ -134,28 +129,78 @@ void OscXmlClient::run()
   New data has arrived on our TCP connection.
   Read it and kick off the parsing process.
 */
-void OscXmlClient::processData( )
+void OscXmlClient::processData()
 {
-  // if there's more than one XML document, we expect them to be delimited by \0
-  QList<QByteArray> newDocuments = socket->readAll( ).split( '\0' );
-  bool status;
+  foreach (const QByteArray & doc, socket->readAll().split('\0')) {
+    if (doc.isEmpty()) continue;
 
-  foreach( QByteArray document, newDocuments ) {
-    if( document.size( ) ) {
-      xmlInput.setData( document );
-      if( lastParseComplete ) {
-        lastParseComplete = false; // this will get reset in the parsing process if we get a complete message
-        status = xml.parse( &xmlInput, true );
-      }
-      else
-        status = xml.parseContinue( );
+    xmlReader.addData(doc);
+    while (!xmlReader.atEnd()) {
+      switch (xmlReader.readNext()) {
+        case QXmlStreamReader::StartElement: {
+          QXmlStreamAttributes atts = xmlReader.attributes();
+          if (xmlReader.name() == "OSCPACKET") {
+              currentDestination = atts.value("ADDRESS").toString();
+              currentPort = atts.value("PORT").toString().toInt();
+//              if (currentDestination.isEmpty())
+//                return false;
+          }
+          else if (xmlReader.name() == "MESSAGE") {
+            currentMessage = new OscMessage(atts.value("NAME").toString());
+          }
+          else if (xmlReader.name() == "ARGUMENT") {
+            QString val = atts.value("VALUE").toString();
+//              if (type.isEmpty( ) || val.isEmpty())
+//                return false;
 
-      if( !status ) {
-        // there was a problem parsing.  now the next time we come through, it will start
-        // a new parse, discarding anything that was left from the last socket read
-        lastParseComplete = true;
-        qDebug() <<  "XML parse error:" << handler->errorString();
+            QVariant msgData;
+            switch (atts.value("TYPE").at(0).toAscii()) {
+              case 'i': msgData.setValue(val.toInt()); break;
+              case 'f': msgData.setValue(val.toFloat()); break;
+              case 's': msgData.setValue(val); break;
+              // TODO, unpack this appropriately
+              case 'b': msgData.setValue(val.toAscii()); break;
+            }
+            if (msgData.isValid()) {
+              currentMessage->data.append(msgData);
+            }
+          }
+        }
+          break;
+        case QXmlStreamReader::EndElement:
+          if (xmlReader.name() == "OSCPACKET") {
+            mainWindow->newXmlPacketReceived(oscMessageList, currentDestination);
+            QStringList strings;
+            foreach (OscMessage* msg, oscMessageList)
+              strings << msg->toString();
+//            emit msg(strings, MsgType::XMLMessage, FROM_STRING);
+            qDeleteAll(oscMessageList);
+            oscMessageList.clear();
+          }
+          else if (xmlReader.name() == "MESSAGE") {
+            oscMessageList.append(currentMessage);
+          }
+          break;
+        default:
+          break;
       }
+    }
+
+    // atEnd() could be true because we're truly at the end, or because of an error.
+    // unless we got PrematureEndOfDocumentError, we need to clear the reader
+    // to reset its internal state so it can start a new document
+    if (xmlReader.hasError()) {
+      if (xmlReader.error() != QXmlStreamReader::PrematureEndOfDocumentError) {
+        qDebug() << QString("xml err: %1 (%2)\nLine %3, column %4")
+                     .arg(xmlReader.errorString())
+                     .arg(xmlReader.error())
+                     .arg(xmlReader.lineNumber())
+                     .arg(xmlReader.columnNumber());
+        xmlReader.clear();
+      }
+    }
+    else {
+      xmlReader.clear(); // must be reset after each document
     }
   }
 }
@@ -167,17 +212,16 @@ void OscXmlClient::processData( )
 void OscXmlClient::disconnected( )
 {
   shuttingDown = true;
-  emit msg( tr("Peer at %1 disconnected.").arg(peerAddress), MsgType::Notice, FROM_STRING );
+  emit msg(tr("Peer at %1 disconnected.").arg(socket->peerAddress().toString()), MsgType::Notice, FROM_STRING);
   disconnect( ); // don't want to respond to any more signals
   socket->abort( );
   socket->deleteLater( ); // these will get deleted when control returns to the main event loop
-  handler->deleteLater( );
   exit( ); // shut this thread down
 }
 
 void OscXmlClient::wroteBytes( qint64 bytes )
 {
-  qDebug() << tr("XML, wrote %1 bytes to %2").arg(bytes).arg(peerAddress);
+  qDebug() << tr("XML, wrote %1 bytes to %2").arg(bytes).arg(socket->peerAddress().toString());
 }
 
 bool OscXmlClient::isConnected( )
@@ -311,99 +355,4 @@ void OscXmlClient::sendXmlPacket( const QList<OscMessage*> & messageList, const 
   xmlWriter.writeEndDocument();
   char terminator = '\0';
   socket->write(&terminator, 1);
-}
-
-/************************************************************************************
-
-                                    XmlHandler
-
-  When parsing an XML packet, XmlHandler will call back on start and end of packets
-  so we can create OSC messages out of them.  When complete messages have been assembled,
-  send them out to the appropriate boards, and print the messages to the activity window.
-
-************************************************************************************/
-
-XmlHandler::XmlHandler( MainWindow *mainWindow, OscXmlClient *xmlClient ) : QXmlDefaultHandler( )
-{
-  this->mainWindow = mainWindow;
-  this->xmlClient = xmlClient;
-  currentMessage = NULL;
-  connect(this, SIGNAL(msg(QStringList, MsgType::Type, QString)), mainWindow, SLOT(message(QStringList, MsgType::Type, QString)));
-}
-
-bool XmlHandler::fatalError (const QXmlParseException & exception)
-{
-  error( exception );
-  return true;
-}
-
-bool XmlHandler::error (const QXmlParseException & exception)
-{
-   qDebug() << tr("incoming XML error on line, %1, column %2 : %3").arg(
-            exception.lineNumber()).arg(exception.columnNumber()).arg(exception.message());
-   return false;
-}
-
-bool XmlHandler::startElement( const QString & namespaceURI, const QString & localName,
-                        const QString & qName, const QXmlAttributes & atts )
-{
-  (void) namespaceURI;
-  (void) qName;
-
-  if( localName == "OSCPACKET" ) {
-    currentDestination = atts.value( "ADDRESS" );
-    currentPort = atts.value( "PORT" ).toInt( );
-    if( currentDestination.isEmpty( ) )
-      return false;
-  }
-  else if( localName == "MESSAGE" ) {
-    currentMessage = new OscMessage( );
-    currentMessage->addressPattern = atts.value( "NAME" );
-  }
-  else if( localName == "ARGUMENT" ) {
-    QString type = atts.value( "TYPE" );
-    QString val = atts.value( "VALUE" );
-    if( type.isEmpty( ) || val.isEmpty( ) )
-      return false;
-
-    QVariant msgData;
-    switch(type.at(0).toAscii())
-    {
-      case 'i':
-        msgData.setValue(val.toInt());
-        break;
-      case 'f':
-        msgData.setValue(val.toFloat());
-        break;
-      case 's':
-        msgData.setValue(val);
-        break;
-      case 'b': // TODO, unpack this appropriately
-        msgData.setValue(val.toAscii());
-        break;
-    }
-    if(msgData.isValid()) currentMessage->data.append( msgData );
-  }
-  return true;
-}
-
-bool XmlHandler::endElement( const QString & namespaceURI, const QString & localName, const QString & qName )
-{
-  (void) namespaceURI;
-  (void) qName;
-
-  if( localName == "OSCPACKET" ) {
-    mainWindow->newXmlPacketReceived( oscMessageList, currentDestination );
-    QStringList strings;
-    foreach( OscMessage* msg, oscMessageList )
-      strings << msg->toString( );
-    emit msg( strings, MsgType::XMLMessage, FROM_STRING);
-    qDeleteAll( oscMessageList );
-    oscMessageList.clear( );
-    xmlClient->resetParser( );
-  }
-  else if( localName == "MESSAGE" )
-    oscMessageList.append( currentMessage );
-
-  return true;
 }
