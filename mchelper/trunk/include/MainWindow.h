@@ -104,7 +104,8 @@ private:
   void closeEvent( QCloseEvent *qcloseevent );
   void boardInit(Board *board);
   QColor msgColor(MsgType::Type type);
-  void addMessage( const QString & time, const QString & msg, const QString & tofrom, const QTextBlockFormat & bkgnd );
+  QString msgColorStr(MsgType::Type type);
+  void addMessage(const QString & time, const QString & msg, const QString & tofrom, const QString & bkgnd);
   bool messagesEnabled( MsgType::Type type );
 
 private slots:
