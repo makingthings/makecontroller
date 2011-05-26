@@ -152,7 +152,7 @@ bool Osc::receivePacket(QByteArray* pkt, QList<OscMessage*>* oscMessageList)
     while (!dstream.atEnd() && dstream.status() == QDataStream::Ok) {
       dstream >> msg; // unpacks as int32 len followed by raw data, just like OSC wants
       if (msg.size() > 16384 || msg.size() <= 0) {
-        qDebug() << QApplication::tr("got insane length - %d, bailing.").arg(msg.size());
+        qDebug() << QApplication::tr("got insane length - %1, bailing.").arg(msg.size());
         return false;
       }
       if (!receivePacket(&msg, oscMessageList))
