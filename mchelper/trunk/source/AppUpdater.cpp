@@ -33,36 +33,36 @@
 
 AppUpdater::AppUpdater(QWidget * parent) : QDialog(parent)
 {
-  setModal( true );
-  setWindowTitle( tr("Software Update") );
+  setModal(true);
+  setWindowTitle(tr("Software Update"));
 
-  acceptButton.setDefault( true );
-  ignoreButton.setText( tr("Not Right Now") );
+  acceptButton.setDefault(true);
+  ignoreButton.setText(tr("Not Right Now"));
 
-  buttonLayout.addStretch( );
-  buttonLayout.addWidget( &acceptButton );
+  buttonLayout.addStretch();
+  buttonLayout.addWidget(&acceptButton);
 
-  mchelperIcon.load( ":icons/mticon64.png" );
-  icon.setPixmap( mchelperIcon );
-  icon.setAlignment( Qt::AlignHCenter );
+  mchelperIcon.load(":icons/mticon64.png");
+  icon.setPixmap(mchelperIcon);
+  icon.setAlignment(Qt::AlignHCenter);
 
-  headline.setWordWrap( false );
-  details.setWordWrap( false );
-  browser.setReadOnly( true );
+  headline.setWordWrap(false);
+  details.setWordWrap(false);
+  browser.setReadOnly(true);
 
-  textLayout.addWidget( &headline );
-  textLayout.addWidget( &details );
-  textLayout.addLayout( &buttonLayout );
-  topLevelLayout.addWidget( &icon );
-  topLevelLayout.addLayout( &textLayout );
-  topLevelLayout.setAlignment( Qt::AlignHCenter );
+  textLayout.addWidget(&headline);
+  textLayout.addWidget(&details);
+  textLayout.addLayout(&buttonLayout);
+  topLevelLayout.addWidget(&icon);
+  topLevelLayout.addLayout(&textLayout);
+  topLevelLayout.setAlignment(Qt::AlignHCenter);
 
-  this->setLayout( &topLevelLayout );
+  this->setLayout(&topLevelLayout);
   checkingOnStartup = true; // hide the dialog by default
-  connect( &netAccess, SIGNAL(finished(QNetworkReply*)), this, SLOT(finishedRead(QNetworkReply*)) );
+  connect(&netAccess, SIGNAL(finished(QNetworkReply*)), this, SLOT(finishedRead(QNetworkReply*)));
 }
 
-void AppUpdater::checkForUpdates( bool inBackground )
+void AppUpdater::checkForUpdates(bool inBackground)
 {
   checkingOnStartup = inBackground;
   netAccess.get(QNetworkRequest(QUrl(UPDATE_URL)));
@@ -109,45 +109,45 @@ void AppUpdater::finishedRead(QNetworkReply* reply)
   delete reply;
 
   // add the appropriate elements/info depending on whether an update is available
-  if( updateAvailable ) {
-    headline.setText( tr("<font size=4>A new version of mchelper is available!</font>") );
-    QString d = QString( tr("mchelper %1 is now available (you have %2).  Would you like to download it?") )
+  if (updateAvailable) {
+    headline.setText(tr("<font size=4>A new version of mchelper is available!</font>") );
+    QString d = tr("mchelper %1 is now available (you have %2).  Would you like to download it?")
                           .arg(latest.first).arg( MCHELPER_VERSION );
-    details.setText( d );
-    browser.setHtml( latest.second );
-    acceptButton.setText( tr("Visit Download Page") );
-    acceptButton.disconnect( );
-    ignoreButton.disconnect( );
-    connect( &acceptButton, SIGNAL( clicked() ), this, SLOT( visitDownloadsPage() ) );
-    connect( &ignoreButton, SIGNAL( clicked() ), this, SLOT( accept() ) );
-    if( textLayout.indexOf( &browser ) < 0 ) // if the browser's not in the layout, then insert it after the details line
-      textLayout.insertWidget( textLayout.indexOf( &details ) + 1, &browser );
-    if( buttonLayout.indexOf( &ignoreButton ) < 0 ) // put the ignore button on the left
-      buttonLayout.insertWidget( 0, &ignoreButton );
+    details.setText(d);
+    browser.setHtml(latest.second);
+    acceptButton.setText(tr("Visit Download Page"));
+    acceptButton.disconnect();
+    ignoreButton.disconnect();
+    connect(&acceptButton, SIGNAL(clicked()), this, SLOT(visitDownloadsPage()));
+    connect(&ignoreButton, SIGNAL(clicked()), this, SLOT(accept()));
+    if (textLayout.indexOf(&browser) < 0) // if the browser's not in the layout, then insert it after the details line
+      textLayout.insertWidget(textLayout.indexOf(&details) + 1, &browser);
+    if (buttonLayout.indexOf(&ignoreButton) < 0) // put the ignore button on the left
+      buttonLayout.insertWidget(0, &ignoreButton);
 
-    this->show( );
+    this->show();
   }
   else {
-    headline.setText( tr("<font size=4>You're up to date!</font>") );
-    details.setText( QString( tr("You're running the latest version of mchelper, version %1.") ).arg( MCHELPER_VERSION ) );
-    acceptButton.setText( tr("OK") );
-    acceptButton.disconnect( );
-    connect( &acceptButton, SIGNAL( clicked() ), this, SLOT( accept() ) );
-    removeBrowserAndIgnoreButton( );
-    if(!checkingOnStartup)
-      this->show( );
+    headline.setText(tr("<font size=4>You're up to date!</font>"));
+    details.setText(tr("You're running the latest version of mchelper, version %1.").arg(MCHELPER_VERSION));
+    acceptButton.setText(tr("OK"));
+    acceptButton.disconnect();
+    connect(&acceptButton, SIGNAL(clicked()), this, SLOT(accept()));
+    removeBrowserAndIgnoreButton();
+    if (!checkingOnStartup)
+      this->show();
   }
 }
 
-void AppUpdater::removeBrowserAndIgnoreButton( )
+void AppUpdater::removeBrowserAndIgnoreButton()
 {
-  if( textLayout.indexOf( &browser ) >= 0 ) // if the browser's in the layout, rip it out
-    textLayout.removeWidget( &browser );
-  browser.setParent( NULL );
+  if (textLayout.indexOf(&browser) >= 0) // if the browser's in the layout, rip it out
+    textLayout.removeWidget(&browser);
+  browser.setParent(0);
 
-  if( textLayout.indexOf( &ignoreButton ) >= 0 ) // if the ignoreButton's in the layout, rip it out
-    textLayout.removeWidget( &ignoreButton );
-  ignoreButton.setParent( NULL );
+  if (textLayout.indexOf(&ignoreButton) >= 0) // if the ignoreButton's in the layout, rip it out
+    textLayout.removeWidget(&ignoreButton);
+  ignoreButton.setParent(0);
 }
 
 int AppUpdater::versionCompare(const QString & left, const QString & right)
