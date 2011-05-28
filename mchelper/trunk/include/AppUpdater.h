@@ -25,6 +25,7 @@
 #include <QLabel>
 #include <QNetworkAccessManager>
 #include <QTextEdit>
+#include <QXmlStreamReader>
 
 #define APPUPDATE_BACKGROUND true
 #define APPUPDATE_FOREGROUND false
@@ -33,7 +34,7 @@ class AppUpdater : public QDialog
 {
   Q_OBJECT
   public:
-    AppUpdater( );
+    AppUpdater(QWidget* parent = 0);
     ~AppUpdater( ){ }
     void checkForUpdates( bool inBackground );
     bool checkingOnStartup;
@@ -47,6 +48,7 @@ class AppUpdater : public QDialog
     QHBoxLayout buttonLayout, topLevelLayout;
     QTextEdit browser;
     QNetworkAccessManager netAccess;
+    QXmlStreamReader xmlReader;
     int versionCompare(const QString & left, const QString & right);
     void removeBrowserAndIgnoreButton( );
 
@@ -56,11 +58,3 @@ class AppUpdater : public QDialog
 };
 
 #endif // APP_UPDATER_H
-
-
-
-
-
-
-
-

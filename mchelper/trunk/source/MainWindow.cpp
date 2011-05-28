@@ -35,7 +35,7 @@ MainWindow::MainWindow(bool no_ui, QWidget *parent) : QMainWindow(parent)
 {
   ui.setupUi(this);
   this->no_ui = no_ui;
-  appUpdater = new AppUpdater();
+  appUpdater = new AppUpdater(this);
   readSettings();
 
   // add an item to the list as a UI cue that no boards were found.

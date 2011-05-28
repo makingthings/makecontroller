@@ -23,15 +23,15 @@
 
 #include "AppUpdater.h"
 
-#include <QDomDocument>
 #include <QDesktopServices>
 #include <QUrl>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QtDebug>
 
 #define UPDATE_URL "http://www.makingthings.com/updates/mchelper.xml"
 
-AppUpdater::AppUpdater( ) : QDialog( )
+AppUpdater::AppUpdater(QWidget * parent) : QDialog(parent)
 {
   setModal( true );
   setWindowTitle( tr("Software Update") );
@@ -71,60 +71,42 @@ void AppUpdater::checkForUpdates( bool inBackground )
 
 void AppUpdater::finishedRead(QNetworkReply* reply)
 {
-  QDomDocument doc;
-  QString err;
-  int line, col;
+  if (reply->error() != QNetworkReply::NoError || reply->url().toString() != UPDATE_URL) {
+    headline.setText(tr("<font size=4>Couldn't contact the update server...</font>"));
+    details.setText(tr("Make sure you're connected to the internet."));
+    acceptButton.setText(tr("OK"));
+    acceptButton.disconnect(); // make sure it wasn't connected by anything else previously
+    connect(&acceptButton, SIGNAL(clicked()), this, SLOT(accept()));
+    removeBrowserAndIgnoreButton();
 
-  if( reply->error() != QNetworkReply::NoError ||
-      reply->url().toString() != UPDATE_URL ||
-      !doc.setContent(reply, true, &err, &line, &col) )
-  {
-    headline.setText( tr("<font size=4>Couldn't contact the update server...</font>") );
-    details.setText( QString( tr("Make sure you're connected to the internet.") ) );
-    acceptButton.setText( tr("OK") );
-    acceptButton.disconnect( ); // make sure it wasn't connected by anything else previously
-    connect( &acceptButton, SIGNAL( clicked() ), this, SLOT( accept() ) );
-    removeBrowserAndIgnoreButton( );
-
-    if(!checkingOnStartup)
-      this->show( );
+    if (!checkingOnStartup)
+      this->show();
     delete reply;
     return;
   }
-  delete reply;
 
-  QDomElement channel = doc.documentElement().firstChild().toElement();
-  QDomNodeList items = channel.elementsByTagName("item");
   QPair<QString, QString> latest(MCHELPER_VERSION, "");
   bool updateAvailable = false;
 
-  for (int i=0, j=items.size(); i<j; i++) {
-    QDomElement item = items.item(i).toElement();
-    if( item.isNull() )
-      continue;
-    QDomNodeList enclosures = item.elementsByTagName("enclosure");
-
-    for (int k=0, l=enclosures.size(); k<l; k++) {
-      QDomElement enclosure = enclosures.item(k).toElement();
-      if (enclosure.isNull()) continue;
-      QString version = enclosure.attributeNS(
-        "http://www.andymatuschak.org/xml-namespaces/sparkle", "version", "not-found" );
-
-      // each item can have multiple enclosures, of which at least one
-      // should have a version field
-      if (version == "not-found") continue;
-
-      if( versionCompare(version, latest.first) > 0 ) {
-        latest.first = version;
-        QDomNodeList descs = item.elementsByTagName("description");
-        //I(descs.size() == 1);
-        QDomElement desc = descs.item(0).toElement();
-        //I(!desc.isNull());
-        latest.second = desc.text();
-        updateAvailable = true;
+  xmlReader.setDevice(reply);
+  while (!xmlReader.atEnd() && !updateAvailable) {
+    if (xmlReader.readNext() == QXmlStreamReader::StartElement) {
+      if (xmlReader.name() == "description") {
+        // store the desc since it comes first
+        latest.second = xmlReader.readElementText();
+      }
+      else if (xmlReader.name() == "enclosure") {
+        QString version = xmlReader.attributes().value("sparkle:version").toString();
+        if (!version.isEmpty() && versionCompare(version, latest.first) > 0 ) {
+          latest.first = version;
+          updateAvailable = true;
+          break;
+        }
       }
     }
   }
+
+  delete reply;
 
   // add the appropriate elements/info depending on whether an update is available
   if( updateAvailable ) {
@@ -196,6 +178,3 @@ void AppUpdater::visitDownloadsPage( )
   QDesktopServices::openUrl( QUrl( "http://www.makingthings.com/resources/downloads" ) );
   accept( );
 }
-
-
-
