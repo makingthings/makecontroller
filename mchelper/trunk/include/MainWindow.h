@@ -22,16 +22,11 @@
 #include <QListWidget>
 #include <QContextMenuEvent>
 
-#include "Board.h"
-#include "Inspector.h"
-#include "OscXmlServer.h"
-#include "Uploader.h"
-#include "About.h"
+#include "Osc.h"
 #include "PacketInterface.h"
 #include "MsgType.h"
 #include "BoardType.h"
 #include "UsbMonitor.h"
-#include "AppUpdater.h"
 
 #ifdef MCHELPER_TEST_SUITE
 #include "TestXmlServer.h"
@@ -44,6 +39,8 @@ class Preferences;
 class OscXmlServer;
 class Uploader;
 class Board;
+class AppUpdater;
+class About;
 
 // subclassed so we have access to the context menu events
 class DeviceList : public QListWidget
