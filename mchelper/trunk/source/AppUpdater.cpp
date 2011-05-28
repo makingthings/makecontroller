@@ -93,8 +93,7 @@ void AppUpdater::finishedRead(QNetworkReply* reply)
     QString d = tr("mchelper %1 is now available (you have %2).  Would you like to download it?")
                           .arg(latest.first).arg(MCHELPER_VERSION);
     ui.detailsLabel->setText(d);
-    ui.browser->clear();
-    ui.browser->appendHtml(latest.second);
+    ui.browser->setHtml(latest.second);
     ui.buttonBox->button(QDialogButtonBox::Ok)->setText(tr("Visit Download Page"));
     ui.buttonBox->button(QDialogButtonBox::Cancel)->setText(tr("Not Right Now"));
     setBrowserAndIgnoreButtonVisible(true);
