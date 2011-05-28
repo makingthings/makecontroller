@@ -42,7 +42,7 @@ SOURCES = source/main.cpp \
 
 TRANSLATIONS = translations/mchelper_fr.ts
 
-QT += network xml
+QT += network
 DEFINES += MCHELPER_VERSION=\\\"$${MCHELPER_VERSION}\\\"
 RESOURCES   += resources/mchelper.qrc
 INCLUDEPATH += include
