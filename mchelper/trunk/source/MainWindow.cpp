@@ -26,6 +26,10 @@
 #include <QUrl>
 #include "MainWindow.h"
 #include "PacketUsbSerial.h"
+#include "AppUpdater.h"
+#include "Inspector.h"
+#include "Uploader.h"
+#include "About.h"
 
 /**
   MainWindow represents, not surprisingly, the main window of the application.

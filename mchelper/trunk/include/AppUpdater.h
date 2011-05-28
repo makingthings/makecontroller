@@ -18,14 +18,11 @@
 #ifndef APP_UPDATER_H
 #define APP_UPDATER_H
 
-#include <QDialog>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QPushButton>
-#include <QLabel>
 #include <QNetworkAccessManager>
 #include <QTextEdit>
 #include <QXmlStreamReader>
+
+#include "ui_appupdater.h"
 
 #define APPUPDATE_BACKGROUND true
 #define APPUPDATE_FOREGROUND false
@@ -35,26 +32,19 @@ class AppUpdater : public QDialog
   Q_OBJECT
   public:
     AppUpdater(QWidget* parent = 0);
-    ~AppUpdater( ){ }
-    void checkForUpdates( bool inBackground );
-    bool checkingOnStartup;
+    void checkForUpdates(bool inBackground);
+    bool checkingInBackground;
 
   private:
-    QPushButton acceptButton, ignoreButton;
-    QLabel icon;
-    QLabel headline, details;
-    QPixmap mchelperIcon;
-    QVBoxLayout textLayout;
-    QHBoxLayout buttonLayout, topLevelLayout;
-    QTextEdit browser;
     QNetworkAccessManager netAccess;
     QXmlStreamReader xmlReader;
     int versionCompare(const QString & left, const QString & right);
-    void removeBrowserAndIgnoreButton( );
+    void setBrowserAndIgnoreButtonVisible(bool visible);
+    Ui::AppUpdaterUi ui;
 
   private slots:
-    void finishedRead( QNetworkReply* reply );
-    void visitDownloadsPage( );
+    void finishedRead(QNetworkReply* reply);
+    void visitDownloadsPage();
 };
 
 #endif // APP_UPDATER_H

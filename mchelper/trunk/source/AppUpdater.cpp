@@ -28,60 +28,39 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QtDebug>
+#include <QPushButton>
 
 #define UPDATE_URL "http://www.makingthings.com/updates/mchelper.xml"
 
-AppUpdater::AppUpdater(QWidget * parent) : QDialog(parent)
+AppUpdater::AppUpdater(QWidget * parent)
+  : QDialog(parent),
+    checkingInBackground(true) // hidden by default
 {
-  setModal(true);
-  setWindowTitle(tr("Software Update"));
+  ui.setupUi(this);
+//  setModal(true);
 
-  acceptButton.setDefault(true);
-  ignoreButton.setText(tr("Not Right Now"));
-
-  buttonLayout.addStretch();
-  buttonLayout.addWidget(&acceptButton);
-
-  mchelperIcon.load(":icons/mticon64.png");
-  icon.setPixmap(mchelperIcon);
-  icon.setAlignment(Qt::AlignHCenter);
-
-  headline.setWordWrap(false);
-  details.setWordWrap(false);
-  browser.setReadOnly(true);
-
-  textLayout.addWidget(&headline);
-  textLayout.addWidget(&details);
-  textLayout.addLayout(&buttonLayout);
-  topLevelLayout.addWidget(&icon);
-  topLevelLayout.addLayout(&textLayout);
-  topLevelLayout.setAlignment(Qt::AlignHCenter);
-
-  this->setLayout(&topLevelLayout);
-  checkingOnStartup = true; // hide the dialog by default
+  connect(ui.buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
   connect(&netAccess, SIGNAL(finished(QNetworkReply*)), this, SLOT(finishedRead(QNetworkReply*)));
 }
 
 void AppUpdater::checkForUpdates(bool inBackground)
 {
-  checkingOnStartup = inBackground;
+  checkingInBackground = inBackground;
   netAccess.get(QNetworkRequest(QUrl(UPDATE_URL)));
 }
 
 
 void AppUpdater::finishedRead(QNetworkReply* reply)
 {
-  if (reply->error() != QNetworkReply::NoError || reply->url().toString() != UPDATE_URL) {
-    headline.setText(tr("<font size=4>Couldn't contact the update server...</font>"));
-    details.setText(tr("Make sure you're connected to the internet."));
-    acceptButton.setText(tr("OK"));
-    acceptButton.disconnect(); // make sure it wasn't connected by anything else previously
-    connect(&acceptButton, SIGNAL(clicked()), this, SLOT(accept()));
-    removeBrowserAndIgnoreButton();
-
-    if (!checkingOnStartup)
+  if (reply->error() != QNetworkReply::NoError) {
+    reply->deleteLater();
+    if (!checkingInBackground) {
+      ui.headlineLabel->setText(tr("<font size=4>Couldn't contact the update server...</font>"));
+      ui.detailsLabel->setText(tr("Maybe you're not connected to the internet?"));
+      ui.buttonBox->button(QDialogButtonBox::Ok)->setText(tr("OK"));
+      setBrowserAndIgnoreButtonVisible(false);
       this->show();
-    delete reply;
+    }
     return;
   }
 
@@ -97,7 +76,7 @@ void AppUpdater::finishedRead(QNetworkReply* reply)
       }
       else if (xmlReader.name() == "enclosure") {
         QString version = xmlReader.attributes().value("sparkle:version").toString();
-        if (!version.isEmpty() && versionCompare(version, latest.first) > 0 ) {
+        if (!version.isEmpty() && versionCompare(version, latest.first) > 0) {
           latest.first = version;
           updateAvailable = true;
           break;
@@ -106,48 +85,37 @@ void AppUpdater::finishedRead(QNetworkReply* reply)
     }
   }
 
-  delete reply;
+  reply->deleteLater();
 
   // add the appropriate elements/info depending on whether an update is available
   if (updateAvailable) {
-    headline.setText(tr("<font size=4>A new version of mchelper is available!</font>") );
+    ui.headlineLabel->setText(tr("<font size=4>A new version of mchelper is available!</font>") );
     QString d = tr("mchelper %1 is now available (you have %2).  Would you like to download it?")
-                          .arg(latest.first).arg( MCHELPER_VERSION );
-    details.setText(d);
-    browser.setHtml(latest.second);
-    acceptButton.setText(tr("Visit Download Page"));
-    acceptButton.disconnect();
-    ignoreButton.disconnect();
-    connect(&acceptButton, SIGNAL(clicked()), this, SLOT(visitDownloadsPage()));
-    connect(&ignoreButton, SIGNAL(clicked()), this, SLOT(accept()));
-    if (textLayout.indexOf(&browser) < 0) // if the browser's not in the layout, then insert it after the details line
-      textLayout.insertWidget(textLayout.indexOf(&details) + 1, &browser);
-    if (buttonLayout.indexOf(&ignoreButton) < 0) // put the ignore button on the left
-      buttonLayout.insertWidget(0, &ignoreButton);
-
+                          .arg(latest.first).arg(MCHELPER_VERSION);
+    ui.detailsLabel->setText(d);
+    ui.browser->clear();
+    ui.browser->appendHtml(latest.second);
+    ui.buttonBox->button(QDialogButtonBox::Ok)->setText(tr("Visit Download Page"));
+    ui.buttonBox->button(QDialogButtonBox::Cancel)->setText(tr("Not Right Now"));
+    setBrowserAndIgnoreButtonVisible(true);
     this->show();
   }
   else {
-    headline.setText(tr("<font size=4>You're up to date!</font>"));
-    details.setText(tr("You're running the latest version of mchelper, version %1.").arg(MCHELPER_VERSION));
-    acceptButton.setText(tr("OK"));
-    acceptButton.disconnect();
-    connect(&acceptButton, SIGNAL(clicked()), this, SLOT(accept()));
-    removeBrowserAndIgnoreButton();
-    if (!checkingOnStartup)
+    if (!checkingInBackground) {
+      ui.headlineLabel->setText(tr("<font size=4>You're up to date!</font>"));
+      ui.detailsLabel->setText(tr("You're running the latest version of mchelper, version %1.").arg(MCHELPER_VERSION));
+      ui.buttonBox->button(QDialogButtonBox::Ok)->setText(tr("OK"));
+      setBrowserAndIgnoreButtonVisible(false);
       this->show();
+    }
   }
 }
 
-void AppUpdater::removeBrowserAndIgnoreButton()
+void AppUpdater::setBrowserAndIgnoreButtonVisible(bool visible)
 {
-  if (textLayout.indexOf(&browser) >= 0) // if the browser's in the layout, rip it out
-    textLayout.removeWidget(&browser);
-  browser.setParent(0);
-
-  if (textLayout.indexOf(&ignoreButton) >= 0) // if the ignoreButton's in the layout, rip it out
-    textLayout.removeWidget(&ignoreButton);
-  ignoreButton.setParent(0);
+  ui.browser->setVisible(visible);
+  ui.buttonBox->button(QDialogButtonBox::Cancel)->setVisible(visible);
+  resize(ui.gridLayout->sizeHint());
 }
 
 int AppUpdater::versionCompare(const QString & left, const QString & right)
@@ -175,6 +143,6 @@ int AppUpdater::versionCompare(const QString & left, const QString & right)
 
 void AppUpdater::visitDownloadsPage( )
 {
-  QDesktopServices::openUrl( QUrl( "http://www.makingthings.com/resources/downloads" ) );
-  accept( );
+  QDesktopServices::openUrl(QUrl("http://www.makingthings.com/resources/downloads"));
+  accept();
 }
