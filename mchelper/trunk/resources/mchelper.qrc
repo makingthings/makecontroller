@@ -1,9 +1,10 @@
-<!DOCTYPE RCC><RCC version="1.0">
- <qresource>
-  <file>icons/mticon128.png</file>
-  <file>icons/mticon64.png</file>
-  <file>icons/usb_icon.png</file>
-  <file>icons/usb_1.png</file>
-  <file>icons/network_icon.png</file>
- </qresource>
- </RCC>
+<RCC>
+    <qresource prefix="/">
+        <file>icons/mticon128.png</file>
+        <file>icons/mticon64.png</file>
+        <file>icons/usb_icon.png</file>
+        <file>icons/usb_1.png</file>
+        <file>icons/network_icon.png</file>
+        <file>rnotes.css</file>
+    </qresource>
+</RCC>
