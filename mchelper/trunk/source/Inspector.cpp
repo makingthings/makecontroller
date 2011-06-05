@@ -48,7 +48,7 @@ Inspector::Inspector(MainWindow *mainWindow) : QDialog(0)
   resize(gridLayout->sizeHint());
 }
 
-void Inspector::loadAndShow( )
+void Inspector::loadAndShow()
 {
   getBoardInfo();
   infoTimer.start(1000);
@@ -78,15 +78,13 @@ void Inspector::setData(Board* board)
   gatewayEdit->setText(board->gateway);
   listenPortEdit->setText(board->udp_listen_port);
   sendPortEdit->setText(board->udp_send_port);
-
-  Qt::CheckState boardDhcpState = (board->dhcp) ? Qt::Checked : Qt::Unchecked;
-  dhcpBox->setCheckState( boardDhcpState );
+  dhcpBox->setChecked(board->dhcp);
 }
 
 /*
   Clear out the inspector.
 */
-void Inspector::clear( )
+void Inspector::clear()
 {
   nameEdit->text().clear();
   serialEdit->text().clear();
@@ -135,36 +133,35 @@ void Inspector::onApply()
 
   QString newName = nameEdit->text();
   if (!newName.isEmpty() && board->name != newName) {
-    msgs << QString( "/system/name %1" ).arg( QString( "\"%1\"" ).arg( newName ) );
-    mainWindow->setBoardName( board->key(), QString( "%1 : %2" ).arg(newName).arg(board->key()) );
+    msgs << QString("/system/name \"%1\"").arg(newName);
+    mainWindow->setBoardName(board->key(), QString("%1 : %2").arg(newName).arg(board->key()));
   }
 
   // serial number
   QString newNumber = serialEdit->text();
-  if( !newNumber.isEmpty() && board->serialNumber != newNumber )
-    msgs << QString( "/system/serialnumber %1" ).arg( newNumber );
+  if (!newNumber.isEmpty() && board->serialNumber != newNumber)
+    msgs << QString("/system/serialnumber %1").arg(newNumber);
 
   // IP address
   QString newAddress = ipEdit->text();
-  if( !newAddress.isEmpty() && board->ip_address != newAddress )
-    msgs << QString( "/network/address %1" ).arg( newAddress );
+  if (!newAddress.isEmpty() && board->ip_address != newAddress)
+    msgs << QString("/network/address %1").arg(newAddress);
 
   // dhcp
-  bool newState = dhcpBox->checkState( );
-  if( newState == true && !board->dhcp )
+  if (dhcpBox->isChecked() && !board->dhcp)
     msgs << "/network/dhcp 1";
-  if( newState == false && board->dhcp )
+  else if (dhcpBox->isChecked() && board->dhcp)
     msgs << "/network/dhcp 0";
 
   // udp listen port
   QString newPort = listenPortEdit->text();
-  if( !newPort.isEmpty() && board->udp_listen_port != newPort )
-    msgs << QString( "/network/osc_udp_listen_port %1" ).arg( newPort );
+  if (!newPort.isEmpty() && board->udp_listen_port != newPort)
+    msgs << QString("/network/osc_udp_listen_port %1").arg(newPort);
 
   // udp send port
   newPort = sendPortEdit->text();
-  if( !newPort.isEmpty() && board->udp_send_port != newPort )
-    msgs << QString( "/network/osc_udp_send_port %1" ).arg( newPort );
+  if (!newPort.isEmpty() && board->udp_send_port != newPort)
+    msgs << QString("/network/osc_udp_send_port %1").arg(newPort);
 
   setLabelsRole(QPalette::WindowText);
   if (!msgs.isEmpty()) {
@@ -204,6 +201,3 @@ void Inspector::setLabelsRole(QPalette::ColorRole role)
   sendPortLabel->setForegroundRole(role);
   dhcpBox->setForegroundRole(role); // how to actually get at the text?
 }
-
-
-
