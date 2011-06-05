@@ -31,13 +31,13 @@ class PacketUsbSerial : public QObject, public PacketInterface
   Q_OBJECT
 public:
   PacketUsbSerial(const QString & portName);
-  ~PacketUsbSerial( );
-  bool open( );
-  void close( ) { port->close( ); }
-  bool sendPacket( const char* packet, int length );
-  void setBoard( Board *board ) {this->board = board;}
-  bool isOpen( ) { return port->isOpen(); }
-  QString key( ) { return port->portName(); }
+  ~PacketUsbSerial();
+  bool open();
+  void close() { port->close(); }
+  bool sendPacket(const char* packet, int length);
+  void setBoard(Board *board) {this->board = board;}
+  bool isOpen() { return port->isOpen(); }
+  QString key() { return port->portName(); }
 
 private slots:
   void processNewData( );
@@ -47,7 +47,8 @@ private:
   Board* board;
   MainWindow *mainWindow;
   QextSerialPort *port;
-  void slipDecode( QByteArray & data );
+  QDataStream* instream;
+  void slipDecode();
 };
 
 #endif // PACKET_USB_SERIAL_H
