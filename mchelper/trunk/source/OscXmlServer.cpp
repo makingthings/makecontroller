@@ -21,6 +21,8 @@
 
 #define FROM_STRING "XML Server"
 
+static const char g_Terminator = '\0';
+
 OscXmlServer::OscXmlServer(MainWindow *mainWindow, QObject *parent)
   : QTcpServer(parent),
     mainWindow (mainWindow)
@@ -44,21 +46,21 @@ void OscXmlServer::incomingConnection(int handle)
   client->start();
 }
 
-bool OscXmlServer::setListenPort( int port, bool announce )
+bool OscXmlServer::setListenPort(int port, bool announce)
 {
-  if(listenPort == port) // don't need to do anything
+  if (listenPort == port) // don't need to do anything
     return true;
-  close( );
-  if( !listen( QHostAddress::Any, port ) ) {
-    emit msg( tr("Error - can't listen on port %1.  Make sure it's available.").arg(port), MsgType::Error, FROM_STRING );
+
+  close();
+  if (!listen(QHostAddress::Any, port)) {
+    emit msg(tr("Error - can't listen on port %1.  Make sure it's available.").arg(port), MsgType::Error, FROM_STRING);
     return false;
   }
-  else {
-    listenPort = port;
-    if(announce)
-      emit msg( tr("Now listening on port %1 for XML connections.").arg(port), MsgType::Notice, FROM_STRING );
-    return true;
-  }
+
+  listenPort = port;
+  if (announce)
+    emit msg(tr("Now listening on port %1 for XML connections.").arg(port), MsgType::Notice, FROM_STRING);
+  return true;
 }
 
 /*
@@ -116,7 +118,7 @@ void OscXmlClient::run()
   //connect( socket, SIGNAL(bytesWritten(qint64)), this, SLOT(wroteBytes(qint64)), Qt::DirectConnection);
   qRegisterMetaType< QList<OscMessage*> >("QList<OscMessage*>");
 
-  emit msg( tr("New connection from peer at %1").arg(socket->peerAddress().toString()), MsgType::Notice, FROM_STRING );
+  emit msg(tr("New connection from peer at %1").arg(socket->peerAddress().toString()), MsgType::Notice, FROM_STRING);
 
   xmlWriter.setDevice(socket);
   sendCrossDomainPolicy();
@@ -140,18 +142,21 @@ void OscXmlClient::processData()
         case QXmlStreamReader::StartElement: {
           QXmlStreamAttributes atts = xmlReader.attributes();
           if (xmlReader.name() == "OSCPACKET") {
-              currentDestination = atts.value("ADDRESS").toString();
-              currentPort = atts.value("PORT").toString().toInt();
-//              if (currentDestination.isEmpty())
-//                return false;
+            Q_ASSERT(oscMessageList.isEmpty());
+            currentDestination = atts.value("ADDRESS").toString();
+            currentPort = atts.value("PORT").toString().toInt();
+            if (currentDestination.isEmpty()) {
+              qWarning() << "destination is empty";
+            }
           }
           else if (xmlReader.name() == "MESSAGE") {
             currentMessage = new OscMessage(atts.value("NAME").toString());
           }
           else if (xmlReader.name() == "ARGUMENT") {
             QString val = atts.value("VALUE").toString();
-//              if (type.isEmpty( ) || val.isEmpty())
-//                return false;
+            if (atts.value("TYPE").isEmpty() || val.isEmpty()) {
+              qWarning() << "bad argument attributes";
+            }
 
             QVariant msgData;
             switch (atts.value("TYPE").at(0).toAscii()) {
@@ -163,6 +168,9 @@ void OscXmlClient::processData()
             }
             if (msgData.isValid()) {
               currentMessage->data.append(msgData);
+            }
+            else {
+              qWarning() << "msgdata not valid";
             }
           }
         }
@@ -189,18 +197,15 @@ void OscXmlClient::processData()
     // atEnd() could be true because we're truly at the end, or because of an error.
     // unless we got PrematureEndOfDocumentError, we need to clear the reader
     // to reset its internal state so it can start a new document
-    if (xmlReader.hasError()) {
-      if (xmlReader.error() != QXmlStreamReader::PrematureEndOfDocumentError) {
+    if (xmlReader.error() != QXmlStreamReader::PrematureEndOfDocumentError) {
+      if (xmlReader.hasError()) {
         qDebug() << QString("xml err: %1 (%2)\nLine %3, column %4")
                      .arg(xmlReader.errorString())
                      .arg(xmlReader.error())
                      .arg(xmlReader.lineNumber())
                      .arg(xmlReader.columnNumber());
-        xmlReader.clear();
       }
-    }
-    else {
-      xmlReader.clear(); // must be reset after each document
+      xmlReader.clear();
     }
   }
 }
@@ -209,25 +214,25 @@ void OscXmlClient::processData()
   Called when our TCP peer disconnects.
   Clean up.
 */
-void OscXmlClient::disconnected( )
+void OscXmlClient::disconnected()
 {
   shuttingDown = true;
   emit msg(tr("Peer at %1 disconnected.").arg(socket->peerAddress().toString()), MsgType::Notice, FROM_STRING);
-  disconnect( ); // don't want to respond to any more signals
-  socket->abort( );
-  socket->deleteLater( ); // these will get deleted when control returns to the main event loop
-  exit( ); // shut this thread down
+  disconnect(); // don't want to respond to any more signals
+  socket->abort();
+  socket->deleteLater(); // these will get deleted when control returns to the main event loop
+  exit(); // shut this thread down
 }
 
-void OscXmlClient::wroteBytes( qint64 bytes )
+void OscXmlClient::wroteBytes(qint64 bytes)
 {
   qDebug() << tr("XML, wrote %1 bytes to %2").arg(bytes).arg(socket->peerAddress().toString());
 }
 
-bool OscXmlClient::isConnected( )
+bool OscXmlClient::isConnected()
 {
-  if( socket != NULL && !shuttingDown )
-    return ( socket->state( ) == QAbstractSocket::ConnectedState );
+  if (socket != NULL && !shuttingDown)
+    return (socket->state() == QAbstractSocket::ConnectedState);
   return false;
 }
 
@@ -239,6 +244,7 @@ void OscXmlClient::boardInfoUpdate( Board* board )
 {
   if (!board)
     return;
+
   xmlWriter.writeStartDocument();
   xmlWriter.writeStartElement("BOARD_INFO");
   xmlWriter.writeStartElement("BOARD");
@@ -248,15 +254,14 @@ void OscXmlClient::boardInfoUpdate( Board* board )
   xmlWriter.writeEndElement(); // BOARD
   xmlWriter.writeEndElement(); // BOARD_INFO
   xmlWriter.writeEndDocument();
-  char terminator = '\0';
-  socket->write(&terminator, 1);
+  socket->write(&g_Terminator, 1);
 }
 
 /*
   Called when boards have arrived or been removed.
   Pass the info on to our TCP peer.
 */
-void OscXmlClient::boardListUpdate( const QList<Board*> & boardList, bool arrived )
+void OscXmlClient::boardListUpdate(const QList<Board*> & boardList, bool arrived)
 {
   if (boardList.isEmpty())
     return;
@@ -265,17 +270,16 @@ void OscXmlClient::boardListUpdate( const QList<Board*> & boardList, bool arrive
   xmlWriter.writeStartElement(arrived ? "BOARD_ARRIVAL" : "BOARD_REMOVAL");
   foreach (Board *board, boardList) {
     xmlWriter.writeStartElement("BOARD");
-    if (board->type() == BoardType::UsbSerial )
+    if (board->type() == BoardType::UsbSerial)
       xmlWriter.writeAttribute("TYPE", "USB");
-    else if( board->type() == BoardType::Ethernet )
+    else if (board->type() == BoardType::Ethernet)
       xmlWriter.writeAttribute("TYPE", "Ethernet");
     xmlWriter.writeAttribute("LOCATION", board->key());
     xmlWriter.writeEndElement();
   }
   xmlWriter.writeEndElement(); // board arrival/removal
   xmlWriter.writeEndDocument();
-  char terminator = '\0';
-  socket->write(&terminator, 1);
+  socket->write(&g_Terminator, 1);
 }
 
 /*
@@ -297,11 +301,10 @@ void OscXmlClient::sendCrossDomainPolicy()
   xmlWriter.writeEndElement(); // cross-domain-policy
 
   xmlWriter.writeEndDocument();
-  char terminator = '\0';
-  socket->write(&terminator, 1);
+  socket->write(&g_Terminator, 1);
 }
 
-void OscXmlClient::sendXmlPacket( const QList<OscMessage*> & messageList, const QString & srcAddress )
+void OscXmlClient::sendXmlPacket(const QList<OscMessage*> & messageList, const QString & srcAddress)
 {
   if (!isConnected() || messageList.isEmpty())
     return;
