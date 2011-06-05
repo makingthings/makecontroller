@@ -19,7 +19,7 @@
 #define PACKET_INTERFACE_H
 
 #include <QString>
-#include "Board.h"
+class Board;
 
 class PacketInterface
 {
@@ -31,6 +31,3 @@ public:
 };
 
 #endif
-
-
-
