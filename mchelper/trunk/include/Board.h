@@ -38,7 +38,7 @@ class Board : public QObject, public QListWidgetItem
   Q_OBJECT
 public:
   enum Type { UsbSerial, UsbSamba, Ethernet };
-  Board(MainWindow *mw, PacketInterface *pi,  OscXmlServer *oxs, BoardType::Type type, QString key);
+  Board(MainWindow *mw, PacketInterface *pi,  OscXmlServer *oxs, BoardType::Type type, const QString & key, QListWidget* parent = 0);
   ~Board();
   void sendMessage( const QString & rawMessage );
   void sendMessage( const QList<OscMessage*> & messageList );
