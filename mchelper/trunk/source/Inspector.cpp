@@ -18,10 +18,12 @@
 #include "Inspector.h"
 #include <QSettings>
 
+#define INSPECTOR_GEOM  "inspector/geometry"
+
 /*
  A dialog for getting/setting general info about a Make Controller
 */
-Inspector::Inspector(MainWindow *mainWindow) : QDialog( 0 )
+Inspector::Inspector(MainWindow *mainWindow) : QDialog(0)
 {
   this->mainWindow = mainWindow;
   setupUi(this);
@@ -42,10 +44,7 @@ Inspector::Inspector(MainWindow *mainWindow) : QDialog( 0 )
   connect(dhcpBox, SIGNAL(clicked(bool)), this, SLOT(onAnyValueEdited()));
 
   QSettings settings;
-  QPoint inspectorPos = settings.value("inspector_pos").toPoint();
-  if(!inspectorPos.isNull())
-    move(inspectorPos);
-
+  restoreGeometry(settings.value(INSPECTOR_GEOM).toByteArray());
   resize(gridLayout->sizeHint());
 }
 
@@ -54,6 +53,13 @@ void Inspector::loadAndShow( )
   getBoardInfo();
   infoTimer.start(1000);
   show();
+}
+
+void Inspector::closeEvent(QCloseEvent *e)
+{
+  QSettings settings;
+  settings.setValue(INSPECTOR_GEOM, saveGeometry());
+  e->accept();
 }
 
 /*
@@ -82,16 +88,16 @@ void Inspector::setData(Board* board)
 */
 void Inspector::clear( )
 {
-  nameEdit->setText("");
-  serialEdit->setText("");
-  versionEdit->setText("");
-  freememEdit->setText("");
-  ipEdit->setText("");
-  netmaskEdit->setText("");
-  gatewayEdit->setText("");
-  listenPortEdit->setText("");
-  sendPortEdit->setText("");
-  dhcpBox->setCheckState( Qt::Unchecked );
+  nameEdit->text().clear();
+  serialEdit->text().clear();
+  versionEdit->text().clear();
+  freememEdit->text().clear();
+  ipEdit->text().clear();
+  netmaskEdit->text().clear();
+  gatewayEdit->text().clear();
+  listenPortEdit->text().clear();
+  sendPortEdit->text().clear();
+  dhcpBox->setChecked(false);
 }
 
 /*
@@ -110,7 +116,7 @@ void Inspector::onFinished()
 void Inspector::getBoardInfo()
 {
   Board *board = mainWindow->getCurrentBoard();
-  if(board)
+  if (board)
     board->sendMessage("/system/info-internal");
 }
 
@@ -121,15 +127,14 @@ void Inspector::getBoardInfo()
 */
 void Inspector::onApply()
 {
-  Board* board = mainWindow->getCurrentBoard( );
-  if( board == NULL )
+  Board* board = mainWindow->getCurrentBoard();
+  if (board == NULL)
     return;
 
   QStringList msgs;
 
   QString newName = nameEdit->text();
-  if( !newName.isEmpty() && board->name != newName )
-  {
+  if (!newName.isEmpty() && board->name != newName) {
     msgs << QString( "/system/name %1" ).arg( QString( "\"%1\"" ).arg( newName ) );
     mainWindow->setBoardName( board->key(), QString( "%1 : %2" ).arg(newName).arg(board->key()) );
   }
@@ -161,10 +166,9 @@ void Inspector::onApply()
   if( !newPort.isEmpty() && board->udp_send_port != newPort )
     msgs << QString( "/network/osc_udp_send_port %1" ).arg( newPort );
 
-  setLabelsRole( QPalette::WindowText );
-  if( msgs.size( ) > 0 )
-  {
-    board->sendMessage( msgs );
+  setLabelsRole(QPalette::WindowText);
+  if (!msgs.isEmpty()) {
+    board->sendMessage(msgs);
     mainWindow->updateBoardInfo(board);
     mainWindow->message(msgs, MsgType::Command, board->location());
   }
@@ -178,7 +182,7 @@ void Inspector::onRevert()
 {
   setLabelsRole(QPalette::WindowText);
   Board *brd = mainWindow->getCurrentBoard();
-  if(brd)
+  if (brd)
     setData(brd);
 }
 
@@ -189,16 +193,16 @@ void Inspector::onAnyValueEdited()
 
 void Inspector::setLabelsRole(QPalette::ColorRole role)
 {
-  nameLabel->setForegroundRole( role );
-  sernumLabel->setForegroundRole( role );
-  versionLabel->setForegroundRole( role );
-  freememLabel->setForegroundRole( role );
-  ipLabel->setForegroundRole( role );
-  netmaskLabel->setForegroundRole( role );
-  gatewayLabel->setForegroundRole( role );
-  listenPortLabel->setForegroundRole( role );
-  sendPortLabel->setForegroundRole( role );
-  dhcpBox->setForegroundRole( role ); // how to actually get at the text?
+  nameLabel->setForegroundRole(role);
+  sernumLabel->setForegroundRole(role);
+  versionLabel->setForegroundRole(role);
+  freememLabel->setForegroundRole(role);
+  ipLabel->setForegroundRole(role);
+  netmaskLabel->setForegroundRole(role);
+  gatewayLabel->setForegroundRole(role);
+  listenPortLabel->setForegroundRole(role);
+  sendPortLabel->setForegroundRole(role);
+  dhcpBox->setForegroundRole(role); // how to actually get at the text?
 }
 
 

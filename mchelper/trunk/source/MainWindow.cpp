@@ -31,6 +31,9 @@
 #include "Uploader.h"
 #include "About.h"
 
+#define MAINWIN_GEOM  "mainwindow/geometry"
+#define MAINWIN_SPLITTER "mainwindow/splitter"
+
 /**
   MainWindow represents, not surprisingly, the main window of the application.
   It handles all the menu items and the UI.
@@ -99,21 +102,8 @@ MainWindow::MainWindow(bool no_ui, QWidget *parent) : QMainWindow(parent)
 void MainWindow::readSettings()
 {
   QSettings settings;
-  QSize size = settings.value("size").toSize();
-  if (size.isValid())
-    resize(size);
-
-  QPoint mainWinPos = settings.value("mainwindow_pos").toPoint();
-  if (!mainWinPos.isNull())
-    move(mainWinPos);
-
-  QList<QVariant> splitterSettings = settings.value("splitterSizes").toList();
-  if (!splitterSettings.isEmpty()) {
-    QList<int> splitterSizes;
-    foreach (const QVariant & setting, splitterSettings)
-      splitterSizes << setting.toInt();
-    ui.splitter->setSizes(splitterSizes);
-  }
+  restoreGeometry(settings.value(MAINWIN_GEOM).toByteArray());
+  ui.splitter->restoreState(settings.value(MAINWIN_SPLITTER).toByteArray());
 
   QStringList commands = settings.value( "commands" ).toStringList();
   foreach (const QString & cmd, commands)
@@ -141,15 +131,8 @@ void MainWindow::setMaxMessages(int msgs)
 void MainWindow::writeSettings()
 {
   QSettings settings;
-  settings.setValue("size", size());
-  settings.setValue("mainwindow_pos", pos());
-  settings.setValue("inspector_pos", inspector->pos());
-
-  QList<QVariant> splitterSettings;
-  QList<int> splitterSizes = ui.splitter->sizes();
-  foreach (int splitterSize, splitterSizes)
-    splitterSettings << splitterSize;
-  settings.setValue("splitterSizes", splitterSettings);
+  settings.setValue(MAINWIN_GEOM, saveGeometry());
+  settings.setValue(MAINWIN_SPLITTER, ui.splitter->saveState());
 
   QStringList commands;
   for (int i = 0; i < ui.commandLine->count(); i++)

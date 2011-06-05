@@ -48,6 +48,7 @@ private:
   MainWindow *mainWindow;
   QTimer infoTimer;
   void setLabelsRole(QPalette::ColorRole role);
+  void closeEvent(QCloseEvent *e);
 };
 
 #endif // INSPECTOR_H
