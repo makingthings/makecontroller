@@ -29,6 +29,7 @@
 #include <QNetworkReply>
 #include <QtDebug>
 #include <QPushButton>
+#include <QFile>
 
 #define UPDATE_URL "http://www.makingthings.com/updates/mchelper.xml"
 
@@ -37,7 +38,11 @@ AppUpdater::AppUpdater(QWidget * parent)
     checkingInBackground(true) // hidden by default
 {
   ui.setupUi(this);
-//  setModal(true);
+
+  QFile cssFile(":/rnotes.css");
+  cssFile.open(QIODevice::ReadOnly);
+  QTextStream in(&cssFile);
+  ui.browser->document()->setDefaultStyleSheet(in.readAll());
 
   connect(ui.buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
   connect(&netAccess, SIGNAL(finished(QNetworkReply*)), this, SLOT(finishedRead(QNetworkReply*)));
@@ -140,7 +145,7 @@ int AppUpdater::versionCompare(const QString & left, const QString & right)
     return 0;
 }
 
-void AppUpdater::visitDownloadsPage( )
+void AppUpdater::visitDownloadsPage()
 {
   QDesktopServices::openUrl(QUrl("http://www.makingthings.com/resources/downloads"));
   accept();
