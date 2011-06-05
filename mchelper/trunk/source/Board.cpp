@@ -20,14 +20,19 @@
 #include <QStringList>
 #include <QList>
 
-Board::Board(MainWindow *mw, PacketInterface* pi, OscXmlServer *oxs, BoardType::Type type, QString key) : QListWidgetItem()
+#define OSC_MSG_NET_FIND_SIZE   4
+#define OSC_MSG_SYSINFO_A_SIZE  5
+#define OSC_MSG_SYSINFO_B_SIZE  6
+
+Board::Board(MainWindow *mw, PacketInterface* pi, OscXmlServer *oxs, BoardType::Type type, const QString & key, QListWidget* parent)
+  : QListWidgetItem(parent),
+    mainWindow(mw),
+    packetInterface(pi),
+    oscXmlServer(oxs),
+    _key(key),
+    _type(type)
 {
-  mainWindow = mw;
-  packetInterface = pi;
-  oscXmlServer = oxs;
-  _type = type;
-  _key = key;
-  if(packetInterface)
+  if (packetInterface)
     packetInterface->setBoard(this);
 
   connect(this, SIGNAL(msg(QString, MsgType::Type, QString)),
@@ -42,7 +47,7 @@ Board::~Board()
   delete packetInterface;
 }
 
-QString Board::friendlyKey( )
+QString Board::friendlyKey()
 {
   QString k = _key;
   #ifdef Q_OS_WIN
@@ -51,10 +56,9 @@ QString Board::friendlyKey( )
   return k;
 }
 
-QString Board::location( )
+QString Board::location()
 {
-  switch( _type )
-  {
+  switch( _type ) {
     case BoardType::UsbSamba:
       return tr("Unprogrammed Board");
     case BoardType::UsbSerial:
@@ -80,171 +84,119 @@ QString Board::location( )
 void Board::msgReceived(const QByteArray & packet)
 {
   QStringList messageList;
-  QList<OscMessage*> oscMessageList = osc.processPacket( packet.data(), packet.size() );
+  QList<OscMessage*> oscMessageList = osc.processPacket(packet.data(), packet.size());
   bool new_info = false;
 
-  foreach(OscMessage *oscMsg, oscMessageList)
-  {
-    if( oscMsg->addressPattern == "/system/info-internal-a" )
-      new_info = extractSystemInfoA( oscMsg );
+  foreach (OscMessage *oscMsg, oscMessageList) {
+    if (oscMsg->addressPattern == "/system/info-internal-a")
+      new_info = extractSystemInfoA(oscMsg);
 
-    else if( oscMsg->addressPattern == "/system/info-internal-b" )
-      new_info = extractSystemInfoB( oscMsg );
+    else if (oscMsg->addressPattern == "/system/info-internal-b")
+      new_info = extractSystemInfoB(oscMsg);
 
-    else if( oscMsg->addressPattern == "/network/find" )
-      new_info = extractNetworkFind( oscMsg );
+    else if (oscMsg->addressPattern == "/network/find")
+      new_info = extractNetworkFind(oscMsg);
 
-    else if( oscMsg->addressPattern.contains( "error", Qt::CaseInsensitive ) )
-      emit msg( oscMsg->toString(), MsgType::Warning, location() );
+    else if (oscMsg->addressPattern.contains("error", Qt::CaseInsensitive))
+      emit msg(oscMsg->toString(), MsgType::Warning, location());
 
     else
-      messageList.append( oscMsg->toString( ) );
+      messageList.append(oscMsg->toString());
   }
-  if( messageList.count( ) > 0 ) {
-    oscXmlServer->sendPacket( oscMessageList, key() );
-    emit msgs( messageList, MsgType::Response, location() );
+
+  if (messageList.isEmpty()) {
+    oscXmlServer->sendPacket(oscMessageList, key());
+    emit msgs(messageList, MsgType::Response, location());
   }
-  if(new_info)
+  if (new_info)
     emit newInfo(this);
-  qDeleteAll( oscMessageList );
+  qDeleteAll(oscMessageList);
 }
 
-bool Board::extractSystemInfoA( OscMessage* msg )
+bool Board::extractSystemInfoA(OscMessage* msg)
 {
   bool newInfo = false;
 
-  int datalen = msg->data.size();
-  for( int i = 0; i < datalen; i++ )
-  {
-    QVariant data = msg->data.at( i );
-    if( !data.isValid() )
-      break;
-    switch( i ) // we're counting on the board to send the pieces of data in this order
-    {
-      case 0:
-        if( name != data.toString() ) {
-          name = data.toString(); //name
-          emit newBoardName(_key, (name + " : " + location()));
-          newInfo = true;
-        }
-        break;
-      case 1:
-        if(serialNumber != data.toString()) {
-          serialNumber = data.toString(); // serial number
-          newInfo = true;
-        }
-        break;
-      case 2:
-        if(ip_address != data.toString()) {
-          ip_address = data.toString(); // IP address
-          newInfo = true;
-        }
-        break;
-      case 3:
-        if(firmwareVersion != data.toString()) {
-          firmwareVersion = data.toString();
-          newInfo = true;
-        }
-        break;
-      case 4:
-        if(freeMemory != data.toString()) {
-          freeMemory = data.toString();
-          newInfo = true;
-        }
-        break;
+  if (msg->data.size() >= OSC_MSG_SYSINFO_A_SIZE) {
+    if (name != msg->data.at(0).toString()) {
+      name = msg->data.at(0).toString(); //name
+      emit newBoardName(_key, (name + " : " + location()));
+      newInfo = true;
+    }
+    if (serialNumber != msg->data.at(1).toString()) {
+      serialNumber = msg->data.at(1).toString(); // serial number
+      newInfo = true;
+    }
+    if (ip_address != msg->data.at(2).toString()) {
+      ip_address = msg->data.at(2).toString(); // IP address
+      newInfo = true;
+    }
+    if (firmwareVersion != msg->data.at(3).toString()) {
+      firmwareVersion = msg->data.at(3).toString();
+      newInfo = true;
+    }
+    if (freeMemory != msg->data.at(4).toString()) {
+      freeMemory = msg->data.at(4).toString();
+      newInfo = true;
     }
   }
   return newInfo;
 }
 
-bool Board::extractSystemInfoB( OscMessage* msg )
+bool Board::extractSystemInfoB(OscMessage* msg)
 {
   bool newInfo = false;
 
-  int datalen = msg->data.size();
-  for( int j = 0; j < datalen; j++ ) {
-    QVariant data = msg->data.at( j );
-    if(!data.isValid())
-      break;
-    switch( j ) // we're counting on the board to send the pieces of data in this order
-    {
-      case 0:
-        if(dhcp != data.toInt()) {
-          dhcp = data.toInt();
-          newInfo = true;
-        }
-        break;
-      case 1:
-        if(webserver != data.toInt()) {
-          webserver = data.toInt();
-          newInfo = true;
-        }
-        break;
-      case 2:
-        if(gateway != data.toString()) {
-          gateway = data.toString();
-          newInfo = true;
-        }
-        break;
-      case 3:
-        if(netMask != data.toString()) {
-          netMask = data.toString();
-          newInfo = true;
-        }
-        break;
-      case 4:
-        if(udp_listen_port != data.toString()) {
-          udp_listen_port = data.toString();
-          newInfo = true;
-        }
-        break;
-      case 5:
-        if(udp_send_port != data.toString()) {
-          udp_send_port = data.toString();
-          newInfo = true;
-        }
-        break;
+  if (msg->data.size() >= OSC_MSG_SYSINFO_B_SIZE) {
+    if (dhcp != msg->data.at(0).toInt()) {
+      dhcp = msg->data.at(0).toInt();
+      newInfo = true;
+    }
+    if (webserver != msg->data.at(1).toInt()) {
+      webserver = msg->data.at(1).toInt();
+      newInfo = true;
+    }
+    if (gateway != msg->data.at(2).toString()) {
+      gateway = msg->data.at(2).toString();
+      newInfo = true;
+    }
+    if (netMask != msg->data.at(3).toString()) {
+      netMask = msg->data.at(3).toString();
+      newInfo = true;
+    }
+    if (udp_listen_port != msg->data.at(4).toString()) {
+      udp_listen_port = msg->data.at(4).toString();
+      newInfo = true;
+    }
+    if (udp_send_port != msg->data.at(5).toString()) {
+      udp_send_port = msg->data.at(5).toString();
+      newInfo = true;
     }
   }
   return newInfo;
 }
 
-bool Board::extractNetworkFind( OscMessage* msg )
+bool Board::extractNetworkFind(OscMessage* msg)
 {
   bool newInfo = false;
 
-  int datalen = msg->data.size();
-  for( int j = 0; j < datalen; j++ ) {
-    QVariant data = msg->data.at( j );
-    if( !data.isValid() )
-      break;
-    switch( j ) // we're counting on the board to send the pieces of data in this order
-    {
-      case 0:
-        if( ip_address != data.toString() ) {
-          ip_address = data.toString(); // IP address
-          newInfo = true;
-        }
-        break;
-      case 1:
-        if( udp_listen_port != data.toString() ) {
-          udp_listen_port = data.toString();
-          newInfo = true;
-        }
-        break;
-      case 2:
-        if( udp_send_port != data.toString() ) {
-          udp_send_port = data.toString();
-          newInfo = true;
-        }
-        break;
-      case 3:
-        if( name != data.toString() ) {
-          name = data.toString();
-          emit newBoardName(_key, (name + " : " + location()));
-          newInfo = true;
-        }
-        break;
+  if (msg->data.size() >= OSC_MSG_NET_FIND_SIZE) {
+    if (ip_address != msg->data.at(0).toString()) {
+      ip_address = msg->data.at(0).toString(); // IP address
+      newInfo = true;
+    }
+    if (udp_listen_port != msg->data.at(1).toString()) {
+      udp_listen_port = msg->data.at(1).toString();
+      newInfo = true;
+    }
+    if (udp_send_port != msg->data.at(2).toString()) {
+      udp_send_port = msg->data.at(2).toString();
+      newInfo = true;
+    }
+    if (name != msg->data.at(3).toString()) {
+      name = msg->data.at(3).toString();
+      emit newBoardName(_key, (name + " : " + location()));
+      newInfo = true;
     }
   }
   return newInfo;
@@ -255,30 +207,29 @@ bool Board::extractNetworkFind( OscMessage* msg )
   Create an appropriate message and send it out
   through our packet interface.
 */
-void Board::sendMessage( const QString & rawMessage )
+void Board::sendMessage(const QString & rawMessage)
 {
-  if( packetInterface && !rawMessage.isEmpty() ) {
-    QByteArray packet = osc.createPacket( rawMessage );
-    if( !packet.isEmpty( ) )
-      packetInterface->sendPacket( packet.data( ), packet.size( ) );
+  if (packetInterface && !rawMessage.isEmpty()) {
+    QByteArray packet = OscMessage(rawMessage).toByteArray();
+    if (!packet.isEmpty())
+      packetInterface->sendPacket(packet.data(), packet.size());
   }
 }
 
-void Board::sendMessage( const QList<OscMessage*> & messageList )
+void Board::sendMessage(const QList<OscMessage*> & messageList)
 {
-  if( packetInterface && messageList.count() ) {
-    QByteArray packet = osc.createPacket( messageList );
-    if( !packet.isEmpty( ) )
-      packetInterface->sendPacket( packet.data( ), packet.size( ) );
+  if (packetInterface && messageList.count()) {
+    QByteArray packet = osc.createPacket(messageList);
+    if (!packet.isEmpty())
+      packetInterface->sendPacket(packet.data(), packet.size());
   }
 }
 
-void Board::sendMessage( const QStringList & messageList )
+void Board::sendMessage(const QStringList & messageList)
 {
-  if( packetInterface && messageList.count() ) {
-    QByteArray packet = osc.createPacket( messageList );
-    if( !packet.isEmpty( ) )
-      packetInterface->sendPacket( packet.data( ), packet.size( ) );
+  if (packetInterface && messageList.count()) {
+    QByteArray packet = osc.createPacket(messageList);
+    if (!packet.isEmpty())
+      packetInterface->sendPacket(packet.data(), packet.size());
   }
 }
-
