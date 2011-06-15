@@ -218,7 +218,7 @@ int networkAddressToString(char* data, int address)
   @param str The string to convert.
   @return The address as an integer, or -1 on failure.
 */
-int networkAddressFromString(char *str)
+int networkAddressFromString(const char *str)
 {
   int a1, a2, a3, a4;
   if (siscanf(str, "%d.%d.%d.%d", &a1, &a2, &a3, &a4) == 4)
