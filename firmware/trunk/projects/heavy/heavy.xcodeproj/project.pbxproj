@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		0C94D0C1116F7B8300174FFE /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		0C94D52B116F7BC900174FFE /* board.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = board.c; sourceTree = "<group>"; };
 		0C94D52C116F7BC900174FFE /* board.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = board.h; sourceTree = "<group>"; };
 		0C94D52D116F7BC900174FFE /* board.mk */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = board.mk; sourceTree = "<group>"; };
@@ -850,6 +849,7 @@
 		0C94D903116F7C5800174FFE /* xbee.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = xbee.xml; sourceTree = "<group>"; };
 		6EEDC60F0BEFB38200A867A6 /* config.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		6EEDC6620BEFB38200A867A6 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		C659AAB013A8885200C689A2 /* heavy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = heavy.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -2766,7 +2766,7 @@
 		6EEDC5FE0BEFB38200A867A6 /* heavy */ = {
 			isa = PBXGroup;
 			children = (
-				0C94D0C1116F7B8300174FFE /* main.c */,
+				C659AAB013A8885200C689A2 /* heavy.c */,
 				6EEDC60F0BEFB38200A867A6 /* config.h */,
 				6EEDC6620BEFB38200A867A6 /* Makefile */,
 			);
@@ -2796,7 +2796,14 @@
 			isa = PBXProject;
 			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "heavy" */;
 			compatibilityVersion = "Xcode 2.4";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
 			mainGroup = 08FB7794FE84155DC02AAC07 /* heavy */;
 			projectDirPath = "";
 			projectRoot = "";
