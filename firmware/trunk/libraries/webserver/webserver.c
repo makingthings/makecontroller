@@ -179,7 +179,7 @@ msg_t webServerLoop(void *arg)
 void webserverProcessRequest(int socket)
 {
   bool responded = false;
-  HttpMethod method;
+  HttpMethod method = 0;
   WebHandler* h = webserver.handlers;
   char* path = webserverGetRequestAddress(socket, webserver.buf, sizeof(webserver.buf), &method);
 
