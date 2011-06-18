@@ -18,6 +18,8 @@
 #ifndef HWTIMER_H
 #define HWTIMER_H
 
+#include "types.h"
+
 #define TIMER_COUNT 8
 #define TIMER_MARGIN 2
 
@@ -32,13 +34,12 @@
 
   \code
   // first, we'll create a function that will get called by the timer.
-  void myHandler( int id );
+  void myHandler(int id);
   int count = 0; // our current count
-  void myHandler( int id )
+  void myHandler(int id)
   {
     count++;
-    if(count > 500 )
-    {
+    if (count > 500) {
       // then do something here
       count = 0; // and reset the count
     }
