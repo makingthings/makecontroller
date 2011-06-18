@@ -15,11 +15,8 @@
 
 *********************************************************************************/
 
-#include "types.h"
 #include "hwtimer.h"
-#include "error.h"
-#include "at91lib/aic.h"
-#include <ch.h>
+#include "core.h"
 
 #define TIMER_CYCLES_PER_MS 48
 
@@ -51,8 +48,8 @@ struct HwTimerManager
 static struct HwTimerManager manager;
 
 static int  hwtimerGetTimeTarget(void);
-static int  hwtimerGetTime(void);
-static void hwtimerSetTimeTarget( int target );
+static void hwtimerSetTimeTarget(int target);
+static int  hwtimerCurrentTime(void);
 static void hwtimerEnable(void);
 
 /**
@@ -65,7 +62,7 @@ static void hwtimerEnable(void);
   @param millis The number of milliseconds 
   @param repeat Whether or not to repeat - true by default.
 */
-int hwtimerStart( HwTimer* hwt, int millis, bool repeat )
+int hwtimerStart(HwTimer* hwt, int millis, bool repeat)
 {
   hwt->timeCurrent = 0;
   hwt->timeInitial = millis * TIMER_CYCLES_PER_MS;
@@ -73,18 +70,18 @@ int hwtimerStart( HwTimer* hwt, int millis, bool repeat )
   hwt->next = NULL;
 
   // this could be a lot smarter - for example, modifying the current period?
-  if ( !manager.servicing ) 
+  if (!manager.servicing)
     chSysLock();
 
-  if ( !manager.running ) {
+  if (!manager.running) {
 //    Timer_SetActive( true );
-    hwtimerSetTimeTarget( hwt->timeInitial );
+    hwtimerSetTimeTarget(hwt->timeInitial);
     hwtimerEnable();
   }  
 
   // Calculate how long remaining
   int target = hwtimerGetTimeTarget();
-  int timeCurrent = hwtimerGetTime();
+  int timeCurrent = hwtimerCurrentTime();
   int remaining = target - timeCurrent;
 
   // Get the entry ready to roll
@@ -96,11 +93,11 @@ int hwtimerStart( HwTimer* hwt, int millis, bool repeat )
   hwt->next = first;
 
   // Are we actually servicing an interrupt right now?
-  if ( !manager.servicing ) {
+  if (!manager.servicing) {
     // No - so does the time requested by this new timer make the time need to come earlier?
-    if ( hwt->timeCurrent < ( remaining - TIMER_MARGIN ) ) {
+    if (hwt->timeCurrent < (remaining - TIMER_MARGIN)) {
       // Damn it!  Reschedule the next callback
-      hwtimerSetTimeTarget( target - ( remaining - hwt->timeCurrent ));
+      hwtimerSetTimeTarget(target - (remaining - hwt->timeCurrent));
     }
     else {
       // pretend that the existing time has been with us for the whole slice so that when the 
@@ -114,17 +111,17 @@ int hwtimerStart( HwTimer* hwt, int millis, bool repeat )
     // Make sure the previous pointer is OK.  This comes up if we were servicing the first item
     // and it subsequently wants to delete itself, it would need to alter the next pointer of the 
     // the new head... err... kind of a pain, this
-    if ( manager.previous == NULL )
+    if (manager.previous == NULL)
       manager.previous = hwt;
 
     // Need to make sure that if this new time is the lowest yet, that the IRQ routine 
     // knows that.  Since we added this entry onto the beginning of the list, the IRQ
     // won't look at it again
-    if ( manager.nextTime == -1 || manager.nextTime > hwt->timeCurrent )
+    if (manager.nextTime == -1 || manager.nextTime > hwt->timeCurrent)
       manager.nextTime = hwt->timeCurrent;
   }
 
-  if ( !manager.servicing ) 
+  if (!manager.servicing)
     chSysUnlock();
 
   return CONTROLLER_OK;
@@ -134,28 +131,28 @@ int hwtimerStart( HwTimer* hwt, int millis, bool repeat )
   Stop a timer.
   @return 0 on success.
 */
-int hwtimerStop( HwTimer* hwt )
+int hwtimerStop(HwTimer* hwt)
 {
-  if ( !manager.servicing ) 
+  if (!manager.servicing)
     chSysLock();
 
   // Look through the running list - clobber the entry
   HwTimer* te = manager.first;
   HwTimer* previousEntry = NULL;
-  while ( te != NULL ) {
+  while (te != NULL) {
     // check for the requested entry
-    if ( te == hwt ) {
+    if (te == hwt) {
       // remove the entry from the list
-      if ( te == manager.first )
+      if (te == manager.first)
         manager.first = te->next;
       else
         previousEntry->next = te->next;
       
       // make sure the in-IRQ pointers are all OK
-      if ( manager.servicing ) {
-        if ( manager.previous == hwt )
+      if (manager.servicing) {
+        if (manager.previous == hwt)
           manager.previous = previousEntry;
-        if ( manager.next == hwt )
+        if (manager.next == hwt)
           manager.next = te->next;
       }
 
@@ -168,38 +165,38 @@ int hwtimerStop( HwTimer* hwt )
     }
   }
 
-  if ( !manager.servicing ) 
+  if (!manager.servicing)
     chSysUnlock();
 
   return CONTROLLER_OK;
 }
 
 // Enable the timer.  Disable is performed by the ISR when timer is at an end
-void hwtimerEnable( )
+void hwtimerEnable()
 {
   manager.tc->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
   manager.running = true;
 }
 
-int hwtimerGetTimeTarget( )
+int hwtimerGetTimeTarget()
 {
   return manager.tc->TC_RC;
 }
 
-int hwtimerGetTime( )
+int hwtimerCurrentTime()
 {
   return manager.tc->TC_CV;
 }
 
-void hwtimerSetTimeTarget( int target )
+void hwtimerSetTimeTarget(int target)
 {
-  manager.tc->TC_RC = ( target < 0xFFFF ) ? target : 0xFFFF;
+  manager.tc->TC_RC = (target < 0xFFFF) ? target : 0xFFFF;
 }
 
-static void hwtimerServeInterrupt( void )
+static void hwtimerServeInterrupt(void)
 {
   int status = manager.tc->TC_SR;
-  if ( status & AT91C_TC_CPCS ) {
+  if (status & AT91C_TC_CPCS) {
     manager.servicing = true;
 
     manager.count++;
@@ -218,33 +215,33 @@ static void hwtimerServeInterrupt( void )
     manager.next = NULL;
     manager.previous = NULL;
     manager.nextTime = -1;
-    while ( timer != NULL ) {
+    while (timer != NULL) {
       manager.next = timer->next;
       timer->timeCurrent -= (manager.tc->TC_RC + manager.tc->TC_CV);
-      if ( timer->timeCurrent <= 0 ) {
-        if ( timer->repeat )
+      if (timer->timeCurrent <= 0) {
+        if (timer->repeat)
           timer->timeCurrent += timer->timeInitial;
         else {
           // remove it if necessary (do this first!)
-          if ( manager.previous == NULL )
+          if (manager.previous == NULL)
             manager.first = manager.next;
           else
             manager.previous->next = manager.next;
         }
 
-        if ( timer->callback != NULL ) {
+        if (timer->callback != NULL) {
           // in this callback, the callee is free to add and remove any members of this list
           // which might effect the first, next and previous pointers
           // so don't assume any of those local variables are good anymore
-          (*timer->callback)( timer->id );
+          (*timer->callback)(timer->id);
         }
 
         // Assuming we're still on the list (if we were removed, then re-added, we'd be on the beggining of
         // the list with this task already performed) see whether our time is the next to run
-        if ( ( manager.previous == NULL && manager.first == timer ) ||
-             ( manager.previous != NULL && manager.previous->next == timer ) )
+        if ((manager.previous == NULL && manager.first == timer) ||
+             (manager.previous != NULL && manager.previous->next == timer))
         {
-          if ( manager.nextTime == -1 || timer->timeCurrent < manager.nextTime )
+          if (manager.nextTime == -1 || timer->timeCurrent < manager.nextTime)
             manager.nextTime = timer->timeCurrent;
         }
       }
@@ -254,11 +251,11 @@ static void hwtimerServeInterrupt( void )
       timer = manager.next;
     }
 
-    if ( manager.first != NULL ) {
+    if (manager.first != NULL) {
       // Add in whatever we're at now
       manager.nextTime += manager.tc->TC_CV;
       // Make sure it's not too big
-      if ( manager.nextTime > 0xFFFF )
+      if (manager.nextTime > 0xFFFF)
         manager.nextTime = 0xFFFF;
       manager.tc->TC_RC = manager.nextTime;
     }
@@ -281,8 +278,7 @@ CH_IRQ_HANDLER(hwtimerIsr) {
 
 int hwtimerInit(int channel)
 {
-  switch(channel)
-  {
+  switch (channel) {
     case 1:
       manager.tc = AT91C_BASE_TC1;
       manager.channel_id = AT91C_ID_TC1;
@@ -340,11 +336,8 @@ int hwtimerInit(int channel)
   return CONTROLLER_OK;
 }
 
-void hwtimerDeinit( )
+void hwtimerDeinit()
 {
   AT91C_BASE_AIC->AIC_IDCR = manager.channel_id; // disable the interrupt
   AT91C_BASE_PMC->PMC_PCDR = manager.channel_id; // power down
 }
-
-
-
