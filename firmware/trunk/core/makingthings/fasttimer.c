@@ -39,7 +39,6 @@ struct FastTimerManager {
   int durationMaxAllDay;
 #endif
 
-  char running;
   char servicing;
 
   int nextTime;
@@ -55,10 +54,11 @@ struct FastTimerManager {
 
 static struct FastTimerManager manager;
 
-static void fasttimerEnable(void);
-static int  fasttimerGetTimeTarget(void);
-static int  fasttimerGetTime(void);
-static void fasttimerSetTimeTarget(int target);
+#define fasttimerEnable() (manager.tc->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG)
+#define fasttimerTimeTarget() (manager.tc->TC_RC)
+#define fasttimerCurrentTime() (manager.tc->TC_CV)
+#define fasttimerSetTimeTarget(target) (manager.tc->TC_RC = (uint16_t)target)
+#define fasttimerIsRunning()  (manager.tc->TC_CCR & AT91C_TC_CLKSTA)
 
 static void fasttimerServeInterrupt(void);
 
@@ -100,23 +100,21 @@ static void fasttimerServeInterrupt(void);
   t.start(250); // call myHandler every 250 microseconds
   \endcode
   */
-int fasttimerStart(FastTimer *ft, int micros, bool repeat)
+int fasttimerStart(FastTimer *ft, int micros)
 {
-  ft->timeCurrent = 0;
   ft->timeInitial = micros * FAST_TIMER_CYCLES_PER_US;
-  ft->repeat = repeat;
   ft->next = NULL;
   // this could be a lot smarter - for example, modifying the current period?
   if (!manager.servicing)
     chSysLock();
 
-  if (!manager.running) {
+  if (!fasttimerIsRunning()) {
     fasttimerSetTimeTarget(ft->timeInitial);
     fasttimerEnable();
   }  
 
-  int target = fasttimerGetTimeTarget();
-  int remaining = target - fasttimerGetTime(); // Calculate how long remaining
+  int target = fasttimerTimeTarget();
+  int remaining = target - fasttimerCurrentTime(); // Calculate how long remaining
   ft->timeCurrent = ft->timeInitial; // Get the entry ready to roll
 
   // Add entry
@@ -208,29 +206,7 @@ void fasttimerStop(FastTimer *ft)
     chSysUnlock();
 }
 
-// Enable the timer.  Disable is performed by the ISR when timer is at an end
-void fasttimerEnable()
-{
-  manager.tc->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
-  manager.running = true;
-}
-
-int fasttimerGetTimeTarget()
-{
-  return manager.tc->TC_RC;
-}
-
-int fasttimerGetTime()
-{
-  return manager.tc->TC_CV;
-}
-
-void fasttimerSetTimeTarget( int target )
-{
-  manager.tc->TC_RC = (target < FASTTIMER_MAXCOUNT) ? target : FASTTIMER_MAXCOUNT;
-}
-
-static __attribute__((interrupt("FIQ"))) void fasttimerIsr(void) {
+CH_FAST_IRQ_HANDLER(FiqHandler) {
   fasttimerServeInterrupt();
 }
 
@@ -253,7 +229,6 @@ void fasttimerInit(int channel)
   
   manager.first = NULL;
   manager.count = 0;
-  manager.running = false;
   manager.servicing = false;
 #ifdef FASTIRQ_STATS
   manager.jitterTotal = 0;
@@ -268,7 +243,7 @@ void fasttimerInit(int channel)
 
   // Disable the interrupt, configure it, reenable it
   AT91C_BASE_AIC->AIC_IDCR = mask;
-  AT91C_BASE_AIC->AIC_SVR[AT91C_ID_FIQ] = (unsigned int)fasttimerIsr;
+//  AT91C_BASE_AIC->AIC_SVR[AT91C_ID_FIQ] = (unsigned int)fasttimerIsr;
   AT91C_BASE_AIC->AIC_SMR[manager.channel_id] = AT91C_AIC_SRCTYPE_INT_HIGH_LEVEL | 7  ;
   AT91C_BASE_AIC->AIC_ICCR = mask ;
 
@@ -310,9 +285,8 @@ void fasttimerInit(int channel)
 
 void fasttimerServeInterrupt()
 {
-//  portENTER_FIQ( );
-  int status = manager.tc->TC_SR;
-  if (status & AT91C_TC_CPCS) {
+  // only process if RC compare match has happened
+  if (manager.tc->TC_SR & AT91C_TC_CPCS) {
     manager.servicing = true;
 
     //AT91C_BASE_TC2->TC_CCR = AT91C_TC_CLKDIS;
@@ -322,7 +296,7 @@ void fasttimerServeInterrupt()
     manager.tc->TC_RC = 0xFF00;
 
 #ifdef FASTIRQ_MONITOR_IO
-    Io_SetTrue(FASTIRQ_MONITOR_IO);
+    pinOn(FASTIRQ_MONITOR_IO);
 #endif
 
 #ifdef FASTIRQ_STATS
@@ -362,13 +336,13 @@ void fasttimerServeInterrupt()
 
     while (ftimer != NULL) {
       manager.next = ftimer->next;
-      ftimer->timeCurrent -= (timeReference + manager.tc->TC_CV);
+      ftimer->timeCurrent -= (timeReference + fasttimerCurrentTime());
       if (ftimer->timeCurrent <= FASTTIMER_MINCOUNT) {
         // Watch out for gross errors
         //if ( ftimer->timeCurrent < -FASTTIMER_MINCOUNT)
         //  ftimer->timeCurrent = -FASTTIMER_MINCOUNT;
 
-        if (ftimer->repeat)
+        if (0) //ftimer->repeat)
           ftimer->timeCurrent += ftimer->timeInitial;
         else {
           // remove it if necessary (do this first!)
@@ -409,7 +383,6 @@ void fasttimerServeInterrupt()
     }
     else {
       manager.tc->TC_CCR = AT91C_TC_CLKDIS;
-      manager.running = false;
     }
 
 #ifdef FASTIRQ_STATS
@@ -422,13 +395,12 @@ void fasttimerServeInterrupt()
 #endif
 
 #ifdef FASTIRQ_MONITOR_IO
-    Io_SetFalse(FASTIRQ_MONITOR_IO);
+    pinOff(FASTIRQ_MONITOR_IO);
 #endif
 
     // AT91C_BASE_TC2->TC_CCR = AT91C_TC_CLKEN | AT91C_TC_SWTRG;
     manager.servicing = false;
   }
-//  portEXIT_FIQ( );
 }
 
 void fasttimerDeinit()
