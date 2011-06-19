@@ -70,11 +70,6 @@ void PrefetchHandler(void)
 #endif
 }
 
-void FiqHandler(void)
-{
-  while(1);
-}
-
 void AbortHandler(void)
 {
 #ifdef NO_RESTART_ON_FAILURE

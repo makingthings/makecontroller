@@ -27,7 +27,6 @@ typedef struct FastTimer_t {
   short id;
   int   timeCurrent;
   int   timeInitial;
-  bool  repeat;
   struct FastTimer_t* next;
 } FastTimer;
 
@@ -37,7 +36,7 @@ extern "C" {
 #endif
 void fasttimerInit(int channel);
 void fasttimerDeinit(void);
-int  fasttimerStart(FastTimer *ft, int micros, bool repeat);
+int  fasttimerStart(FastTimer *ft, int micros);
 void fasttimerStop(FastTimer *ft);
 #ifdef __cplusplus
 }
